@@ -19,7 +19,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
@@ -30,7 +29,6 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.bean.SetEquateDialog;
 import ghidra.app.util.bean.SetEquateDialog.SelectionType;
 import ghidra.app.util.datatype.ApplyEnumDialog;
-import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.CompoundBackgroundCommand;
 import ghidra.framework.plugintool.*;
@@ -74,23 +72,14 @@ public class EquatePlugin extends Plugin {
 	private SetEquateDialog setEquateDialog;
 	private ApplyEnumDialog applyEnumDialog;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param tool
-	 */
 	public EquatePlugin(PluginTool tool) {
 		super(tool);
 		createActions();
 	}
 
-	/**
+	/*
 	 * Returns the GUI for the {@link SetEquateDialog}.  Note that this function will close
 	 * any instance of the dialog that is currently open and construct a new one.
-	 *
-	 * @param context
-	 * @param scalar
-	 * @return
 	 */
 	private SetEquateDialog createEquateDialog(ListingActionContext context, Scalar scalar) {
 		if (setEquateDialog != null) {
@@ -105,11 +94,9 @@ public class EquatePlugin extends Plugin {
 		return setEquateDialog;
 	}
 
-	/**
+	/*
 	 * Returns the GUI for the {@link DataTypeSelectionDialog}. Note that this function will
 	 * close any instance of the dialog that is currently open and construct a new one.
-	 * @param context
-	 * @return
 	 */
 	private ApplyEnumDialog applyEnumDialog(ListingActionContext context) {
 		DataTypeManager dtm = context.getProgram().getDataTypeManager();
@@ -122,11 +109,6 @@ public class EquatePlugin extends Plugin {
 		return applyEnumDialog;
 	}
 
-	/**
-	 * Destroys the {@link SetEquateDialog}.
-	 *
-	 * @param dialog
-	 */
 	private void dispose(SetEquateDialog dialog) {
 		if (setEquateDialog == dialog) {
 			setEquateDialog.dispose();
@@ -146,7 +128,7 @@ public class EquatePlugin extends Plugin {
 	 * array or composite (CreateEquateCmd does not currently support such data cases)</li>
 	 * </ul>
 	 * Currently markup of equates is not supported within composite or array data
-	 * @param context
+	 * @param context the action context
 	 * @return true if current location satisfies the above constraints
 	 */
 	protected boolean isEquatePermitted(ListingActionContext context) {
@@ -182,7 +164,7 @@ public class EquatePlugin extends Plugin {
 	 * ultimately create the background tasks that will create the proper equate(s) for
 	 * the selected addresses.
 	 *
-	 * @param context
+	 * @param context the action context
 	 */
 	private void setEquate(ListingActionContext context) {
 
@@ -252,7 +234,7 @@ public class EquatePlugin extends Plugin {
 	/**
 	 * Called in response to the user selecting the Apply Enum action from the popup menu. This
 	 * action will apply enum values to scalars in a selection.
-	 * @param context
+	 * @param context the action context
 	 */
 	private void applyEnum(ListingActionContext context) {
 		applyEnumDialog = applyEnumDialog(context);
@@ -281,7 +263,7 @@ public class EquatePlugin extends Plugin {
 	/**
 	 * Called in response to the user activating rename action from the context menu.
 	 *
-	 * @param context
+	 * @param context the action context
 	 */
 	private void renameEquate(ListingActionContext context) {
 
@@ -348,12 +330,6 @@ public class EquatePlugin extends Plugin {
 		dispose(setEquateDialog);
 	}
 
-	/**
-	 * Returns the equate for the given context listing.
-	 *
-	 * @param context
-	 * @return
-	 */
 	private Equate getEquate(ListingActionContext context) {
 		EquateTable equateTable = context.getProgram().getEquateTable();
 		Scalar s = getScalar(context);
@@ -363,15 +339,6 @@ public class EquatePlugin extends Plugin {
 		return equateTable.getEquate(context.getAddress(), getOperandIndex(context), s.getValue());
 	}
 
-	/**
-	 * Renames all equates matching the given old equate name, within the address space identified
-	 * by the iterator.
-	 *
-	 * @param context
-	 * @param oldEquate
-	 * @param newEquateName
-	 * @param iter
-	 */
 	private void renameEquate(ListingActionContext context, Equate oldEquate, String newEquateName,
 			CodeUnitIterator iter) {
 
@@ -406,8 +373,8 @@ public class EquatePlugin extends Plugin {
 			Program program = context.getProgram();
 			List<Integer> opIndices = getInstructionMatches(program, inst, equate);
 			Address addr = inst.getAddress();
-			for (int i = 0; i < opIndices.size(); i++) {
-				bgCmd.add(createRenameCmd(oldName, newName, addr, opIndices.get(i)));
+			for (Integer opIndice : opIndices) {
+				bgCmd.add(createRenameCmd(oldName, newName, addr, opIndice));
 			}
 		}
 		else if (cu instanceof Data) {
@@ -461,9 +428,9 @@ public class EquatePlugin extends Plugin {
 
 			Program program = context.getProgram();
 			List<Integer> opIndexes = getInstructionMatches(program, instr, equate);
-			for (int i = 0; i < opIndexes.size(); i++) {
+			for (Integer opIndexe : opIndexes) {
 				bckCmd.add(
-					new ClearEquateCmd(equate.getName(), instr.getAddress(), opIndexes.get(i)));
+					new ClearEquateCmd(equate.getName(), instr.getAddress(), opIndexe));
 			}
 		}
 		else if (cu instanceof Data) {
@@ -476,14 +443,6 @@ public class EquatePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Returns the list of operands for the given {@link Instruction} that match the given
-	 * {@link Equate}.
-	 *
-	 * @param instruction
-	 * @param equate
-	 * @return an array of matches, in the format: [operand][operand-obj]
-	 */
 	private List<Integer> getInstructionMatches(Program program, Instruction instruction,
 			Equate equate) {
 
@@ -521,15 +480,6 @@ public class EquatePlugin extends Plugin {
 		return matches;
 	}
 
-	/**
-	 * Returns true if the given {@link Data} object is a scalar value that has an equate
-	 * that matches the one passed-in.
-	 *
-	 * @param data
-	 * @param context
-	 * @param equate
-	 * @return
-	 */
 	private boolean isDataMatch(Data data, ListingActionContext context, Equate equate) {
 
 		if (!data.isDefined()) {
@@ -560,12 +510,10 @@ public class EquatePlugin extends Plugin {
 		return false;
 	}
 
-	/**
+	/*
 	 * Removes equates within the selected region, or a single equate if there's
 	 * no selection.  The user will be prompted for confirmation before
 	 * removing multiple equates in a selection.
-	 *
-	 * @param context
 	 */
 	private void removeSelectedEquates(ListingActionContext context) {
 
@@ -606,7 +554,8 @@ public class EquatePlugin extends Plugin {
 	}
 
 	/**
-	 * Get the instruction at the location provided by the ProgramLocationProvider
+	 * Get the instruction at the location provided by the context
+	 * @param context the action context
 	 * @return code unit containing current location if found (component data unsupported)
 	 */
 	CodeUnit getCodeUnit(ListingActionContext context) {
@@ -619,7 +568,7 @@ public class EquatePlugin extends Plugin {
 
 	/**
 	 * Get the operand index at the location
-	 *
+	 * @param context the action context
 	 * @return 0-3 for a good operand location, -1 otherwise
 	 */
 	int getOperandIndex(ListingActionContext context) {
@@ -630,11 +579,6 @@ public class EquatePlugin extends Plugin {
 		return -1;
 	}
 
-	/**
-	 *
-	 * @param context
-	 * @return
-	 */
 	int getSubOperandIndex(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
 		if (location instanceof OperandFieldLocation) {
@@ -649,10 +593,6 @@ public class EquatePlugin extends Plugin {
 		return scalar;
 	}
 
-	////////////////////////////////////////////////////////////////
-	// *** private methods ***
-	////////////////////////////////////////////////////////////////
-
 	private Scalar getScalar(CodeUnit cu, ListingActionContext context) {
 		int opIndex = getOperandIndex(context);
 		int subOpIndex = getSubOperandIndex(context);
@@ -664,7 +604,7 @@ public class EquatePlugin extends Plugin {
 	 * Get scalar value associated with the specified code unit,
 	 * opIndex and subOpindex.  NOTE: this method does not support
 	 * composite or array data (null will always be returned).
-	 * @param cu cpde unit
+	 * @param cu code unit
 	 * @param opIndex operand index
 	 * @param subOpIndex sub-operand index
 	 * @return scalar value or null
@@ -787,12 +727,6 @@ public class EquatePlugin extends Plugin {
 			protected boolean isEnabledForContext(ListingActionContext context) {
 				return getEquate(context) != null;
 			}
-
-			@Override
-			public boolean isValidGlobalContext(ActionContext globalContext) {
-				return false; // only work on active provider context.
-			}
-
 		};
 		removeAction.setPopupMenuData(new MenuData(REMOVE_MENUPATH, null, GROUP_NAME));
 		removeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));

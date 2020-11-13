@@ -310,6 +310,7 @@ public class NumericUtilitiesTest {
 		assertEquals(0, NumericUtilities.getUnsignedAlignedValue(0, 5));
 		assertEquals(5, NumericUtilities.getUnsignedAlignedValue(3, 5));
 		assertEquals(0xa, NumericUtilities.getUnsignedAlignedValue(8, 5));
+		assertEquals(0xa, NumericUtilities.getUnsignedAlignedValue(0xa, 0));
 
 	}
 

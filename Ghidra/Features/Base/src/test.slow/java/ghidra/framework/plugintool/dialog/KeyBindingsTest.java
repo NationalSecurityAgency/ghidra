@@ -89,8 +89,10 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// look for the info panel
 		MultiLineLabel label = findComponent(panel, MultiLineLabel.class);
 		String str = "To add or change a key binding, select an action\n" +
-			" and type any key combination.\n" + "To remove a key binding, select an action and\n" +
-			"press <Enter> or <Backspace>.";
+			"and type any key combination\n" +
+			" \n" +
+			"To remove a key binding, select an action and\n" +
+			"press <Enter> or <Backspace>";
 
 		assertEquals(str, label.getLabel());
 
@@ -98,11 +100,13 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action1);
 
-		String actualText = statusPane.getText();
+		String actualText = getText(statusPane);
+		String description = action1.getDescription();
+		String escaped = description.replaceAll("&", "&amp;");
 		assertTrue(
 			"Description is not updated for action '" + action1.getName() + "'; instead the " +
-				"description is '" + actualText + "'",
-			actualText.indexOf(action1.getDescription()) != -1);
+				"description is '" + actualText + "'\n\tDescrption: " + escaped,
+			actualText.indexOf(escaped) != -1);
 	}
 
 	@Test
@@ -374,6 +378,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 				return;
 			}
 		}
+		waitForSwing();
 	}
 
 	private KeyStroke getKeyStroke(DockingActionIf action) {

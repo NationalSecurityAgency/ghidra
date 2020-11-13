@@ -15,8 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.io.FileNotFoundException;
@@ -94,13 +93,8 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	public void setUp() throws Exception {
 		vtTestEnv = new VTTestEnv();
 		session = vtTestEnv.createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
-		try {
-			correlator = vtTestEnv.correlate(new ExactMatchInstructionsProgramCorrelatorFactory(),
-				null, TaskMonitorAdapter.DUMMY_MONITOR);
-		}
-		catch (Exception e) {
-			failWithException("Exceptioin correlating", e);
-		}
+		correlator = vtTestEnv.correlate(new ExactMatchInstructionsProgramCorrelatorFactory(),
+			null, TaskMonitor.DUMMY);
 		sourceProgram = vtTestEnv.getSourceProgram();
 		destinationProgram = vtTestEnv.getDestinationProgram();
 		controller = vtTestEnv.getVTController();
@@ -117,7 +111,6 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		session = null;
 		controller = null;
 		correlator = null;
-		vtTestEnv.releaseSession();
 		vtTestEnv.dispose();
 		saveOrDisplayImage();
 	}
@@ -308,7 +301,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		controller.runVTTask(task);
 
 		vtTestEnv.correlate(new SymbolNameProgramCorrelatorFactory(), null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		sourceAddress = sourceProgram.getAddressFactory().getAddress("0x00411860");
 		sourceFunction = sourceProgram.getFunctionManager().getFunctionAt(sourceAddress);
@@ -347,7 +340,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		controller.runVTTask(task);
 
 		vtTestEnv.correlate(new SymbolNameProgramCorrelatorFactory(), null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		sourceAddress = sourceProgram.getAddressFactory().getAddress("0x00411860");
 		sourceFunction = sourceProgram.getFunctionManager().getFunctionAt(sourceAddress);
@@ -580,7 +573,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	private void replaceMarkup(VTMatch match, String markupSourceAddress, String markupType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address itemSourceAddress = vtMarkupItem.getSourceAddress();
 			VTMarkupType itemMarkupType = vtMarkupItem.getMarkupType();
@@ -599,7 +592,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	private void addMarkup(VTMatch match, String markupSourceAddress, String markupType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address itemSourceAddress = vtMarkupItem.getSourceAddress();
 			VTMarkupType itemMarkupType = vtMarkupItem.getMarkupType();
@@ -619,7 +612,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 			String markupSourceAddress, String markupType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address itemSourceAddress = vtMarkupItem.getSourceAddress();
 			VTMarkupType itemMarkupType = vtMarkupItem.getMarkupType();

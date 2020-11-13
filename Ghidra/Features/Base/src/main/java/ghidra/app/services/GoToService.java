@@ -53,7 +53,7 @@ public interface GoToService {
 	 * overloaded version of {@link #goTo(Address)} uses the given program as the program 
 	 * within which to perform the GoTo.  If the given program does not contain the given 
 	 * address, then the GoTo will not be performed and false will be returned.  Passing 
-	 * <tt>null</tt> as the <tt>program</tt> parameter will cause this method to attempt to find
+	 * <code>null</code> as the <code>program</code> parameter will cause this method to attempt to find
 	 * a program that contains the given ProgramLocation.
 	 * 
 	 * @param loc location to go to
@@ -91,8 +91,8 @@ public interface GoToService {
 	 * Generates a GoTo event to the gotoAddress.   This overloaded version of
 	 * {@link #goTo(Address)} uses the given program as the program within which to
 	 * perform the GoTo.  If the given program does not contain the given address, then the 
-	 * GoTo will not be performed and false will be returned.  Passing <tt>null</tt> as the 
-	 * <tt>program</tt> parameter will cause this method to attempt to find
+	 * GoTo will not be performed and false will be returned.  Passing <code>null</code> as the 
+	 * <code>program</code> parameter will cause this method to attempt to find
 	 * a program that contains the given ProgramLocation.
 	 * 
 	 * @param goToAddress the address to goto

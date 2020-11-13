@@ -1073,7 +1073,7 @@ public class Pic17c7xxAnalyzer extends AbstractAnalyzer {
 				Msg.warn(this, "Unhandled PCLATH change at: " + instr.getMinAddress());
 			}
 		}
-		else if (REG_MODIFICATION_MNEMONICS.contains(mnemonic)) {
+		else if (REG_S_MODIFICATION_MNEMONICS.contains(mnemonic)) {
 			pclathContext.setValueUnknown();
 			Msg.warn(this, "Unhandled PCLATH change at: " + instr.getMinAddress());
 		}

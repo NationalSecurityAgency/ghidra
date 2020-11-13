@@ -45,7 +45,6 @@ public class CheckInTask extends VersionControlTask implements CheckinHandler {
 	 * Construct a new CheckInTask.
 	 * @param tool tool that has the files to be checked in
 	 * @param list list of domain files to be checked in
-	 * @param taskListener listener that is notified when this task completes
 	 * @param parent parent of error dialog if an error occurs
 	 */
 	public CheckInTask(PluginTool tool, List<DomainFile> list, Component parent) {

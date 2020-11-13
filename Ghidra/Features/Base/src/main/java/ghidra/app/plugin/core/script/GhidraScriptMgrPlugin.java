@@ -25,7 +25,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.eclipse.EclipseConnection;
 import ghidra.app.plugin.core.eclipse.EclipseIntegrationOptionsPlugin;
-import ghidra.app.script.GhidraState;
+import ghidra.app.plugin.core.osgi.BundleHost;
+import ghidra.app.script.*;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.ToolOptions;
@@ -47,19 +48,30 @@ import ghidra.util.task.TaskListener;
 )
 //@formatter:on
 public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScriptService {
+	private final GhidraScriptComponentProvider provider;
 
-	private GhidraScriptComponentProvider provider;
+	private final BundleHost bundleHost;
 
+	/**
+	 * {@link GhidraScriptMgrPlugin} is the entry point for all {@link GhidraScript} capabilities.
+	 * 
+	 * @param tool the tool this plugin is added to
+	 */
 	public GhidraScriptMgrPlugin(PluginTool tool) {
 		super(tool, true, true, true);
 
-		provider = new GhidraScriptComponentProvider(this);
+		// Each tool starts a new script manager plugin, but we only ever want one bundle host.
+		// GhidraScriptUtil (creates and) manages one instance.
+		bundleHost = GhidraScriptUtil.acquireBundleHostReference();
+		
+		provider = new GhidraScriptComponentProvider(this, bundleHost);
 	}
 
 	@Override
 	protected void dispose() {
 		super.dispose();
 		provider.dispose();
+		GhidraScriptUtil.releaseBundleHostReference();
 	}
 
 	@Override
@@ -94,6 +106,11 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 		provider.runScript(scriptName, listener);
 	}
 
+	/**
+	 * Attempts to run a script in a {@link RunScriptTask}. 
+	 * 
+	 * @param scriptFile the script's source file
+	 */
 	public void runScript(ResourceFile scriptFile) {
 		provider.runScript(scriptFile);
 	}

@@ -898,7 +898,11 @@ xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-
       <H2><A name="Overlay"></A>Overlay</H2>
 
       <BLOCKQUOTE>
-        <P>A memory block that occupies the same memory address range as some other block.</P>
+        <P>A memory block which corresponds to a physical memory space address within a corresponding
+        overlay address space identified by the block name.  This allows multiple memory blocks to be defined which correspond
+        to the same physical address region.  While the use of overlay blocks are useful to 
+        represent a memory range its' use has significant limitations for the decompiler and
+        analysis which may be unable to determine when an overlay should be referenced.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 

@@ -27,6 +27,11 @@ artifacts {
 	helpPath jar
 }
 
+compileJava {
+    sourceCompatibility = ghidraProps.getProperty('application.java.compiler')
+    targetCompatibility = ghidraProps.getProperty('application.java.compiler')
+}
+
 dependencies {
 	compile fileTree(dir: 'lib', include: "*.jar")
 	compile fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
@@ -92,6 +97,10 @@ task buildExtension (type: Zip) {
 		exclude '.settings/**'
 		exclude 'developer_scripts'
 		exclude '.antProperties.xml'
+		exclude 'gradlew'
+		exclude 'gradlew.bat'
+		exclude 'gradle/wrapper/gradle-wrapper.jar'
+		exclude 'gradle/wrapper/gradle-wrapper.properties'
 		
 		into pathInZip
 	}

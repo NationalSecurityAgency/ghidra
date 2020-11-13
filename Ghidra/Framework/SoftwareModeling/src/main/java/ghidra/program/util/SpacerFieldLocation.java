@@ -31,7 +31,7 @@ public class SpacerFieldLocation extends CodeUnitLocation {
 	/**
 	 *Construct a new SpacerFieldLocation.
 	 *
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr the address of the codeunit.
 	 * @param componentPath the componentPath of the codeUnit
 	 * @param charOffset the character position on the row of the location.

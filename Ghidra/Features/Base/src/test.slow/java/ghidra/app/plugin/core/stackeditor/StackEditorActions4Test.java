@@ -315,7 +315,7 @@ public class StackEditorActions4Test extends AbstractStackEditorTest {
 		assertEquals(0xa, getOffset(model.getNumComponents() - 1));
 
 		FavoritesAction fav = getFavorite("word");
-		assertTrue(fav.isEnabled());
+		assertTrue(fav.isEnabledForContext(null)); // context not utilized
 		assertEquals("", model.getStatus());
 		invoke(fav);
 		assertEquals("", model.getStatus());

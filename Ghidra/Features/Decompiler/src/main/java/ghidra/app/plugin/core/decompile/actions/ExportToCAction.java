@@ -23,9 +23,11 @@ import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.app.decompiler.*;
-import ghidra.app.decompiler.component.DecompilerController;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.preferences.Preferences;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.ResourceManager;
@@ -33,11 +35,10 @@ import resources.ResourceManager;
 public class ExportToCAction extends AbstractDecompilerAction {
 	private static final ImageIcon EXPORT_ICON = ResourceManager.loadImage("images/page_edit.png");
 	private static final String LAST_USED_C_FILE = "last.used.decompiler.c.export.file";
-	private final DecompilerController controller;
 
-	public ExportToCAction(DecompilerController controller) {
+	public ExportToCAction() {
 		super("Export to C");
-		this.controller = controller;
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarExport"));
 		setToolBarData(new ToolBarData(EXPORT_ICON, "Local"));
 		setDescription("Export the current function to C");
 	}
@@ -55,11 +56,11 @@ public class ExportToCAction extends AbstractDecompilerAction {
 		Preferences.store();
 	}
 
-	private File getFile() {
+	private File getFile(DecompilerPanel decompilerPanel) {
 		File lastUsedFile = readLastUsedFile();
 
 		String[] extensions = new String[] { "h", "c", "cpp" };
-		GhidraFileChooser fileChooser = new GhidraFileChooser(controller.getDecompilerPanel());
+		GhidraFileChooser fileChooser = new GhidraFileChooser(decompilerPanel);
 		fileChooser.setFileFilter(new ExtensionFileFilter(extensions, "C/C++ Files"));
 		if (lastUsedFile != null) {
 			fileChooser.setSelectedFile(lastUsedFile);
@@ -87,19 +88,19 @@ public class ExportToCAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		return controller.getFunction() != null && controller.getCCodeModel() != null;
+		return context.getFunction() != null && context.getCCodeModel() != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 
-		File file = getFile();
+		File file = getFile(context.getDecompilerPanel());
 		if (file == null) {
 			return;
 		}
 
 		if (file.exists()) {
-			if (OptionDialog.showYesNoDialog(controller.getDecompilerPanel(),
+			if (OptionDialog.showYesNoDialog(context.getDecompilerPanel(),
 				"Overwrite Existing File?",
 				"Do you want to overwrite the existing file?") == OptionDialog.OPTION_TWO) {
 				return;
@@ -108,16 +109,16 @@ public class ExportToCAction extends AbstractDecompilerAction {
 
 		try {
 			PrintWriter writer = new PrintWriter(new FileOutputStream(file));
-			ClangTokenGroup grp = controller.getCCodeModel();
-			PrettyPrinter printer = new PrettyPrinter(controller.getFunction(), grp);
+			ClangTokenGroup grp = context.getCCodeModel();
+			PrettyPrinter printer = new PrettyPrinter(context.getFunction(), grp);
 			DecompiledFunction decompFunc = printer.print(true);
 			writer.write(decompFunc.getC());
 			writer.close();
-			controller.setStatusMessage(
+			context.setStatusMessage(
 				"Successfully exported function(s) to " + file.getAbsolutePath());
 		}
 		catch (IOException e) {
-			Msg.showError(getClass(), controller.getDecompilerPanel(), "Export to C Failed",
+			Msg.showError(getClass(), context.getDecompilerPanel(), "Export to C Failed",
 				"Error exporting to C: " + e);
 		}
 	}

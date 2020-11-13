@@ -20,10 +20,11 @@ import java.awt.Component;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.GhidraScriptInfoManager;
 import ghidra.app.script.ScriptInfo;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -35,19 +36,21 @@ import ghidra.util.table.column.GColumnRenderer;
 import resources.Icons;
 
 class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Object> {
+	static final String SCRIPT_ACTION_COLUMN_NAME = "In Tool";
+	static final String SCRIPT_STATUS_COLUMN_NAME = "Status";
 
 	private static final String EMPTY_STRING = "";
 	private static final ImageIcon ERROR_IMG = Icons.ERROR_ICON;
 
-	final static String SCRIPT_ACTION_COLUMN_NAME = "In Tool";
-	final static String SCRIPT_STATUS_COLUMN_NAME = "Status";
-
 	private GhidraScriptComponentProvider provider;
 	private List<ResourceFile> scriptList = new ArrayList<>();
+	private final GhidraScriptInfoManager infoManager;
 
-	GhidraScriptTableModel(GhidraScriptComponentProvider provider) {
+	GhidraScriptTableModel(GhidraScriptComponentProvider provider,
+			GhidraScriptInfoManager infoManager) {
 		super(provider.getTool());
 		this.provider = provider;
+		this.infoManager = infoManager;
 	}
 
 	@Override
@@ -99,12 +102,13 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	void insertScripts(List<ResourceFile> scriptFiles) {
+		int rowStart = scriptList.size();
 		for (ResourceFile script : scriptFiles) {
 			if (!scriptList.contains(script)) {
 				scriptList.add(script);
 			}
 		}
-		fireTableDataChanged();
+		fireTableRowsInserted(rowStart, rowStart + scriptFiles.size() - 1);
 	}
 
 	void removeScript(ResourceFile script) {
@@ -139,7 +143,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	@Override
 	public boolean isCellEditable(int row, int col) {
 
-		DynamicTableColumn<ResourceFile, ?, ?> column = tableColumns.get(col);
+		DynamicTableColumn<ResourceFile, ?, ?> column = getColumn(col);
 		String columnName = column.getColumnName();
 		if (SCRIPT_ACTION_COLUMN_NAME.equals(columnName)) {
 			return true;
@@ -149,7 +153,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 	@Override
 	public void setValueAt(Object value, int row, int col) {
-		DynamicTableColumn<ResourceFile, ?, ?> column = tableColumns.get(col);
+		DynamicTableColumn<ResourceFile, ?, ?> column = getColumn(col);
 		String columnName = column.getColumnName();
 		if (SCRIPT_ACTION_COLUMN_NAME.equals(columnName)) {
 			ResourceFile script = getScriptAt(row);
@@ -209,6 +213,16 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		}
 	}
 
+	@Override
+	public void fireTableChanged(TableModelEvent e) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			super.fireTableChanged(e);
+			return;
+		}
+		final TableModelEvent e1 = e;
+		SwingUtilities.invokeLater(() -> GhidraScriptTableModel.super.fireTableChanged(e1));
+	}
+
 	private class StatusColumn extends AbstractDynamicTableColumn<ResourceFile, ImageIcon, Object> {
 		private Comparator<ImageIcon> comparator = (i1, i2) -> {
 			if (i1 == i2) {
@@ -231,25 +245,27 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 			return SystemUtilities.compareTo(d1, d2);
 		};
 
-		private GColumnRenderer<ImageIcon> renderer = new AbstractGColumnRenderer<ImageIcon>() {
+		private GColumnRenderer<ImageIcon> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 
 				ResourceFile file = (ResourceFile) data.getRowObject();
-				ScriptInfo info = GhidraScriptUtil.getScriptInfo(file);
+				ScriptInfo info = infoManager.getExistingScriptInfo(file);
 
 				label.setText(null);
 				label.setToolTipText(null);
-				if (info.hasErrors()) {
-					label.setToolTipText("Status: " + info.getErrorMessage());
-				}
 
 				ImageIcon icon = (ImageIcon) data.getValue();
 				label.setIcon(null);
 				if (icon != null) {
-					label.setToolTipText("Status: Script has toolbar icon");
 					label.setIcon(icon);
+					if (info.hasErrors()) {
+						label.setToolTipText("Status: " + info.getErrorMessage());
+					}
+					else {
+						label.setToolTipText("Status: Script has toolbar icon");
+					}
 				}
 				else {
 					label.setToolTipText("Status: No script toolbar icon has been set");
@@ -272,13 +288,13 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 		@Override
 		public String getColumnName() {
-			return "Status";
+			return SCRIPT_STATUS_COLUMN_NAME;
 		}
 
 		@Override
 		public ImageIcon getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			if (info.isCompileErrors() || info.isDuplicate()) {
 				return ERROR_IMG;
 			}
@@ -328,7 +344,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public String getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			return info.getDescription();
 		}
 
@@ -341,53 +357,51 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	private class KeyBindingColumn
 			extends AbstractDynamicTableColumn<ResourceFile, KeyBindingsInfo, Object> {
 
-		private GColumnRenderer<KeyBindingsInfo> renderer =
-			new AbstractGColumnRenderer<KeyBindingsInfo>() {
+		private GColumnRenderer<KeyBindingsInfo> renderer = new AbstractGColumnRenderer<>() {
 
-				@Override
-				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-					JComponent component = (JComponent) super.getTableCellRendererComponent(data);
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+				JComponent component = (JComponent) super.getTableCellRendererComponent(data);
 
-					Object value = data.getValue();
-					boolean isSelected = data.isSelected();
+				Object value = data.getValue();
+				boolean isSelected = data.isSelected();
 
-					KeyBindingsInfo info = (KeyBindingsInfo) value;
+				KeyBindingsInfo info = (KeyBindingsInfo) value;
 
-					if (info.errorMessage != null) {
-						component.setForeground(Color.RED);
-						component.setToolTipText(info.errorMessage);
+				if (info.errorMessage != null) {
+					component.setForeground(Color.RED);
+					component.setToolTipText(info.errorMessage);
+				}
+				else {
+					String keybindingText = "";
+					if (!info.keystroke.isEmpty()) {
+						keybindingText = ": " + info.toString();
+					}
+
+					if (info.hasAction) {
+						component.setForeground(Color.BLACK);
+						component.setToolTipText("Keybinding for action in tool" + keybindingText);
 					}
 					else {
-						String keybindingText = "";
-						if (!info.keystroke.isEmpty()) {
-							keybindingText = ": " + info.toString();
-						}
-
-						if (info.hasAction) {
-							component.setForeground(Color.BLACK);
-							component.setToolTipText(
-								"Keybinding for action in tool" + keybindingText);
-						}
-						else {
-							component.setForeground(Color.LIGHT_GRAY);
-							component.setToolTipText("Keybinding for script" + keybindingText);
-						}
+						component.setForeground(Color.LIGHT_GRAY);
+						component.setToolTipText("Keybinding for script" + keybindingText);
 					}
-
-					if (isSelected) {
-						Color selectedForegroundColor =
-							(info.errorMessage != null) ? Color.PINK : Color.WHITE;
-						component.setForeground(selectedForegroundColor);
-					}
-					return component;
-
 				}
 
-				@Override
-				public String getFilterString(KeyBindingsInfo t, Settings settings) {
-					return t.toString();
+				if (isSelected) {
+					Color selectedForegroundColor =
+						(info.errorMessage != null) ? Color.PINK : Color.WHITE;
+					component.setForeground(selectedForegroundColor);
 				}
-			};
+				return component;
+
+			}
+
+			@Override
+			public String getFilterString(KeyBindingsInfo t, Settings settings) {
+				return t.toString();
+			}
+		};
 
 		@Override
 		public GColumnRenderer<KeyBindingsInfo> getColumnRenderer() {
@@ -402,7 +416,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public KeyBindingsInfo getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			KeyStroke actionKeyStroke = provider.getActionManager().getKeyBinding(rowObject);
 			boolean isActionBinding = false;
 			KeyStroke keyBinding = info.getKeyBinding();
@@ -460,7 +474,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public String getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			return getCategoryString(info);
 		}
 
@@ -537,7 +551,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
 			// not sure about this: it could be USE_COLUMN_CONSTRAINTS_ONLY, but then the text
 			// filter would not match the formatted date.  This allows for both.
-			return ColumnConstraintFilterMode.USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS;
+			return ColumnConstraintFilterMode.ALLOW_ALL_FILTERS;
 		}
 
 		@Override

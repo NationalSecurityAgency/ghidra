@@ -36,7 +36,8 @@ import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 
@@ -92,8 +93,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * Constructor for a panel that has a blank line in unlocked mode and
 	 * composite name and description that are editable.
 	 * 
-	 * @param program
-	 *            the current program open in the tool.
 	 * @param model
 	 *            the model for editing the composite data type
 	 * @param provider
@@ -116,11 +115,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		setCompositeSize(model.getLength());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModelListener#compositeInfoChanged()
-	 */
 	@Override
 	public void compositeInfoChanged() {
 		adjustCompositeInfo();
@@ -161,19 +155,19 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	@Override
 	protected JPanel createBitViewerPanel() {
 
-		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite);
+		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite, false);
 		model.addCompositeViewerModelListener(new CompositeEditorModelAdapter() {
 			@Override
 			public void selectionChanged() {
-				update();
+				update(false);
 			}
 
 			@Override
 			public void componentDataChanged() {
-				update();
+				update(true);
 			}
 
-			private void update() {
+			private void update(boolean dataChanged) {
 				if (!model.isLoaded()) {
 					bitViewComponent.setComposite(null);
 					return;
@@ -183,18 +177,24 @@ public class CompEditorPanel extends CompositeEditorPanel {
 					bitViewComponent.setComposite(model.viewComposite);
 				}
 
-				bitViewComponent.updateAllocation(model.viewComposite.getLength(), 0);
+				int length = model.viewComposite.getLength();
+				if (length != bitViewComponent.getAllocationByteSize()) {
+					bitViewComponent.updateAllocation(length, 0);
+				}
 
 				DataTypeComponent dtc = null;
 				if (model.isSingleComponentRowSelection()) {
 					dtc = model.getComponent(model.getSelectedRows()[0]);
 				}
-				bitViewComponent.init(dtc);
-				Rectangle selectedRectangle = bitViewComponent.getComponentRectangle(dtc, true);
+
+				Rectangle selectedRectangle = bitViewComponent.getComponentRectangle(dtc);
 				if (selectedRectangle != null) {
-					SwingUtilities.invokeLater(
-						() -> bitViewComponent.scrollRectToVisible(selectedRectangle));
+					bitViewComponent.scrollRectToVisible(selectedRectangle);
+					validate();
 				}
+
+				bitViewComponent.init(dtc);
+
 			}
 		});
 
@@ -661,12 +661,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				"Note: An individual data type's alignment may override this value.</HTML>";
 
 		noPackingButton.addActionListener(e -> {
-			try {
-				((CompEditorModel) model).setPackingValue(Composite.NOT_PACKING);
-			}
-			catch (InvalidInputException e1) {
-				throw new AssertException("Error setting packing value to NotPacking.");
-			}
+			((CompEditorModel) model).setPackingValue(Composite.NOT_PACKING);
 		});
 
 		noPackingButton.setToolTipText(packingToolTipText);
@@ -719,12 +714,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	protected void chooseByValuePacking() {
-		try {
-			((CompEditorModel) model).setPackingValue(1);
-		}
-		catch (InvalidInputException e1) {
-			throw new AssertException("Error setting packing value to 1.");
-		}
+		((CompEditorModel) model).setPackingValue(1);
 		packingValueTextField.selectAll();
 		packingValueTextField.requestFocus();
 	}
@@ -739,14 +729,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			if (!value.toLowerCase().equals(NO_PACKING_STRING)) {
 				packingAlignment = Integer.decode(value);
 			}
-			try {
-				((CompEditorModel) model).setPackingValue(packingAlignment);
-				adjustCompositeInfo();
-			}
-			catch (InvalidInputException e1) {
-				refreshGUIPackingValue();
-				setStatus(value + " is not a valid packing value.");
-			}
+
+			((CompEditorModel) model).setPackingValue(packingAlignment);
+			adjustCompositeInfo();
 		}
 		catch (NumberFormatException e1) {
 			refreshGUIPackingValue();
@@ -774,9 +759,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	/**
-	 * Sets the currently displayed structure packing value (maximum component alignment).
-	 * 
-	 * @param packingValue the new packing value.
+	 * Sets the currently displayed structure packing value (maximum component alignment)
 	 */
 	public void refreshGUIPackingValue() {
 		int packingValue = ((CompEditorModel) model).getPackingValue();
@@ -997,30 +980,15 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	protected void chooseDefaultMinAlign() {
-		try {
-			((CompEditorModel) model).setAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		}
-		catch (InvalidInputException e1) {
-			throw new AssertException("Error setting minimum alignment type to default.");
-		}
+		((CompEditorModel) model).setAlignmentType(AlignmentType.DEFAULT_ALIGNED);
 	}
 
 	protected void chooseMachineMinAlign() {
-		try {
-			((CompEditorModel) model).setAlignmentType(AlignmentType.MACHINE_ALIGNED);
-		}
-		catch (InvalidInputException e1) {
-			throw new AssertException("Error setting minimum alignment type to machine.");
-		}
+		((CompEditorModel) model).setAlignmentType(AlignmentType.MACHINE_ALIGNED);
 	}
 
 	protected void chooseByValueMinAlign() {
-		try {
-			((CompEditorModel) model).setAlignmentType(AlignmentType.ALIGNED_BY_VALUE);
-		}
-		catch (InvalidInputException e1) {
-			throw new AssertException("Error setting minimum alignment type to ByValue.");
-		}
+		((CompEditorModel) model).setAlignmentType(AlignmentType.ALIGNED_BY_VALUE);
 		minAlignValueTextField.selectAll();
 		minAlignValueTextField.requestFocus();
 	}
@@ -1107,6 +1075,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Returns the currently displayed structure category name.
+	 * @return the name
 	 */
 	public String getCategoryName() {
 		return categoryStatusTextField.getText();
@@ -1124,6 +1093,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Returns the currently displayed structure name in the edit area.
+	 * @return the name
 	 */
 	public String getCompositeName() {
 		return nameTextField.getText().trim();
@@ -1148,6 +1118,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Returns the currently displayed structure description.
+	 * @return the description
 	 */
 	public String getDescription() {
 		return descriptionTextField.getText().trim();
@@ -1164,16 +1135,17 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	/**
-	 * Checks the GUI to determine if this composite is internally aligned.
+	 * Checks the GUI to determine if this composite is internally aligned
+	 * @return true if interanlly aligned
 	 */
 	public boolean isInternallyAlignedInGui() {
 		return internalAlignmentCheckBox.isSelected();
 	}
 
 	/**
-	 * Sets the currently displayed structure minimum alignment type.
+	 * Sets the currently displayed structure minimum alignment type
 	 * 
-	 * @param minAlignment the new MinimumAlignment type.
+	 * @param aligned true if aligned
 	 */
 	public void setInternallyAligned(boolean aligned) {
 		boolean alignedInGui = internalAlignmentCheckBox.isSelected();
@@ -1220,6 +1192,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Returns the currently displayed composite's size.
+	 * @return the size
 	 */
 	public int getCompositeSize() {
 		return Integer.decode(sizeStatusTextField.getText());
@@ -1228,8 +1201,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	/**
 	 * Sets the currently displayed composite's size.
 	 * 
-	 * @param id
-	 *            the new size
+	 * @param size the new size
 	 */
 	public void setCompositeSize(int size) {
 		boolean sizeIsEditable = ((CompEditorModel) model).isSizeEditable();
@@ -1241,14 +1213,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		sizeStatusTextField.setText(sizeStr);
 	}
 
-	/**
-	 * Called from the DropTgtAdapter when the drag operation is going over a
-	 * drop site; indicate when the drop is ok by providing appropriate
-	 * feedback.
-	 * 
-	 * @param ok
-	 *            true means ok to drop
-	 */
 	@Override
 	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
 		synchronized (table) {

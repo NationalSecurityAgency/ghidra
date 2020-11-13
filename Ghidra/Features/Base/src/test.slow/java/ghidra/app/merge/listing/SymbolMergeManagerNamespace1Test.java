@@ -94,15 +94,7 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	// 01005c6f		FUN_01005c6f	body:[1005c6f-1005fbd][1005ff5-10061e2]
 	// 01006420		entry			body:[1006420-1006581][10065a4-10065cd]
 
-	/**
-	 *
-	 * @param arg0
-	 */
-	public SymbolMergeManagerNamespace1Test() {
-		super();
-	}
-
-	/**
+	/*
 	 * Test generic Namespace symbols being removed from either the LATEST or
 	 * CHECKED OUT program when it doesn't result in a conflict.
 	 * @throws Exception
@@ -169,7 +161,7 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 		assertNull(funcMgr.getFunctionAt(addr("0x01004bc0")));
 	}
 
-	/**
+	/*
 	 * Test Class symbols being removed from either the LATEST or
 	 * CHECKED OUT program when it doesn't result in a conflict.
 	 * @throws Exception
@@ -566,17 +558,21 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 				try {
 					Namespace ns;
 					GhidraClass gc;
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Blue", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Blue", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Green", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Green", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(), "Red",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(), "Red",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(),
-						"Yellow", SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(),
+								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(gc);
 					commit = true;
 				}
@@ -598,17 +594,21 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 				try {
 					Namespace ns;
 					GhidraClass gc;
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(), "Blue",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(), "Blue",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(), "Green",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(), "Green",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Red", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Red", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Yellow", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(ns);
 					commit = true;
 				}
@@ -665,17 +665,21 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						"EmptyNamespace", program.getGlobalNamespace()).getObject();
 					Namespace ns;
 					GhidraClass gc;
-					ns = program.getSymbolTable().createNameSpace(emptyNamespace, "Blue",
-						SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(emptyNamespace, "Blue",
+								SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					ns = program.getSymbolTable().createNameSpace(emptyNamespace, "Green",
-						SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(emptyNamespace, "Green",
+								SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					gc = program.getSymbolTable().createClass(emptyNamespace, "Red",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(emptyNamespace, "Red",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					gc = program.getSymbolTable().createClass(emptyNamespace, "Yellow",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(emptyNamespace, "Yellow",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
 					commit = true;
 				}
@@ -699,17 +703,21 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						"EmptyNamespace", program.getGlobalNamespace()).getObject();
 					Namespace ns;
 					GhidraClass gc;
-					gc = program.getSymbolTable().createClass(emptyNamespace, "Blue",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(emptyNamespace, "Blue",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					gc = program.getSymbolTable().createClass(emptyNamespace, "Green",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(emptyNamespace, "Green",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					ns = program.getSymbolTable().createNameSpace(emptyNamespace, "Red",
-						SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(emptyNamespace, "Red",
+								SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					ns = program.getSymbolTable().createNameSpace(emptyNamespace, "Yellow",
-						SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(emptyNamespace, "Yellow",
+								SourceType.USER_DEFINED);
 					assertNotNull(ns);
 					commit = true;
 				}
@@ -773,17 +781,21 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 				try {
 					Namespace ns;
 					GhidraClass gc;
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Blue", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Blue", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Green", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Green", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(), "Red",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(), "Red",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(),
-						"Yellow", SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(),
+								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(gc);
 					commit = true;
 				}
@@ -805,23 +817,29 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 				try {
 					Namespace ns;
 					GhidraClass gc;
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(), "Blue",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(), "Blue",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					gc = program.getSymbolTable().createClass(program.getGlobalNamespace(), "Green",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(program.getGlobalNamespace(), "Green",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Red", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Red", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					gc = program.getSymbolTable().createClass(ns, "SubRed",
-						SourceType.USER_DEFINED);
+					gc = program.getSymbolTable()
+							.createClass(ns, "SubRed",
+								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					ns = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-						"Yellow", SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(program.getGlobalNamespace(),
+								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					ns = program.getSymbolTable().createNameSpace(ns, "SubYellow",
-						SourceType.USER_DEFINED);
+					ns = program.getSymbolTable()
+							.createNameSpace(ns, "SubYellow",
+								SourceType.USER_DEFINED);
 					assertNotNull(ns);
 					commit = true;
 				}
@@ -1271,15 +1289,6 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 			"The following namespaces were not removed", 4000);
 		waitForMergeCompletion();
 
-		SymbolTable symtab = resultProgram.getSymbolTable();
-		Namespace globalNS = resultProgram.getGlobalNamespace();
-		SymbolIterator iter = symtab.getSymbols(globalNS);
-		while (iter.hasNext()) {
-			Symbol s = iter.next();
-			if (s.getSymbolType().equals(SymbolType.NAMESPACE)) {
-				System.out.println("Namespace = " + s.getName(true));
-			}
-		}
 		Symbol firstNsSymbol =
 			getUniqueSymbol(resultProgram, "FirstNamespace", resultProgram.getGlobalNamespace());
 		assertNotNull(firstNsSymbol);

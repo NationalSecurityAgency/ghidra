@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,12 @@
  */
 package ghidra.program.model.listing;
 
+import java.math.BigInteger;
+import java.util.List;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-
-import java.math.BigInteger;
 
 /**
  * Interface to define a processor register context over the address space.
@@ -35,14 +35,14 @@ public interface ProgramContext {
 
 	/**
 	 * Modify register value to eliminate non-flowing bits
-	 * @param value
+	 * @param value register value to be modified
 	 * @return value suitable for flowing
 	 */
 	public RegisterValue getFlowValue(RegisterValue value);
 
 	/**
 	 * Modify register value to only include non-flowing bits
-	 * @param value
+	 * @param value register value to be modified
 	 * @return new value or null
 	 */
 	public RegisterValue getNonFlowValue(RegisterValue value);
@@ -58,9 +58,9 @@ public interface ProgramContext {
 	/**
 	 * Get all the register descriptions defined for this program context.
 	 *
-	 * @return array of defined register descriptions
+	 * @return unmodifiable list of defined register descriptions
 	 */
-	public Register[] getRegisters();
+	public List<Register> getRegisters();
 
 	/**
 	 * Returns an array of all registers that at least one value associated with an address.
@@ -93,6 +93,8 @@ public interface ProgramContext {
 	 * @param start   the start address to set values
 	 * @param end     the end address to set values
 	 * @param value   the actual values to store at address
+	 * @throws ContextChangeException if failed to modifiy context across specified range 
+	 * (e.g., instruction exists).
 	 */
 	public void setRegisterValue(Address start, Address end, RegisterValue value)
 			throws ContextChangeException;
@@ -113,6 +115,8 @@ public interface ProgramContext {
 	 * @param start the start address.
 	 * @param end the end address (inclusive).
 	 * @param value the value to assign.  A value of null will effective clear any existing values.
+	 * @throws ContextChangeException if failed to modifiy context across specified range 
+	 * (e.g., instruction exists).
 	 */
 	public void setValue(Register register, Address start, Address end, BigInteger value)
 			throws ContextChangeException;
@@ -131,6 +135,8 @@ public interface ProgramContext {
 	 * given range for the given register.  Each range returned will have the same value
 	 * associated with the register for all addresses in that range.
 	 * @param register the register for which to get set value ranges.
+	 * @param start start of address range to search
+	 * @param end end of address range to search
 	 * @return An AddressRangeIterator over all address within the given range that have values
 	 *  for the given register.
 	 */
@@ -140,8 +146,8 @@ public interface ProgramContext {
 	/**
 	 * Returns the bounding address-range containing addr and the the same RegisterValue throughout.
 	 * The range returned may be limited by other value changes associated with register's base-register.
-	 * @param register
-	 * @param addr
+	 * @param register program register
+	 * @param addr program address
 	 * @return single register-value address-range containing addr
 	 */
 	public AddressRange getRegisterValueRangeContaining(Register register, Address addr);
@@ -160,6 +166,8 @@ public interface ProgramContext {
 	 * given range for the given register.  Each range returned will have the same default value
 	 * associated with the register for all addresses in that range.
 	 * @param register the register for which to get default value ranges.
+	 * @param start start of address range to search
+	 * @param end end of address range to search
 	 * @return An AddressRangeIterator over all address within the given range that have default values
 	 *  for the given register.
 	 */
@@ -170,20 +178,26 @@ public interface ProgramContext {
 	 * Gets the registers for this context that are used for processor context states.
 	 * @return all processor context registers
 	 */
-	public Register[] getProcessorStateRegisters();
+	public List<Register> getContextRegisters();
 
 	/**
 	 * Remove (unset) the register values for a given address range.
 	 * @param start starting address.
 	 * @param end ending adddress.
 	 * @param register handle to the register to be set.
+	 * @throws ContextChangeException thrown if context change not permitted over specified 
+	 * range (e.g., instructions exist)
 	 */
 	public void remove(Address start, Address end, Register register) throws ContextChangeException;
 
 	/**
-	 * Returns the list of register names
+	 * Get an alphabetical sorted unmodifiable list of original register names 
+	 * (including context registers).  Names correspond to orignal register
+	 * name and not aliases which may be defined.
+	 * 
+	 * @return alphabetical sorted unmodifiable list of original register names.
 	 */
-	public String[] getRegisterNames();
+	public List<String> getRegisterNames();
 
 	/**
 	 * Returns true if the given register has the value over the addressSet
@@ -198,7 +212,6 @@ public interface ProgramContext {
 	 * Returns the default value of a register at a given address.
 	 * @param register the register for which to get a default value.
 	 * @param address the address at which to get a default value.
-	 * @param signed if true, the fix-bit register value will be interpreted as a signed number.
 	 * @return the default value of the register at the given address or null if no default value
 	 * has been assigned.
 	 */
@@ -226,7 +239,7 @@ public interface ProgramContext {
 	 * from the default disassembly context and the context register value stored
 	 * at the specified address.  Those bits specified by the stored context value
 	 * take precedence.
-	 * @param address
+	 * @param address program address
 	 * @return disassembly context register value
 	 */
 	public RegisterValue getDisassemblyContext(Address address);

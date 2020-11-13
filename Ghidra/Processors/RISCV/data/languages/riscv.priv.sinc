@@ -1,0 +1,142 @@
+# RISC-V Privileged Instructions
+
+define pcodeop wfi;
+define pcodeop sfence.vm;
+define pcodeop sfence.vma;
+
+# Trap-Return
+
+
+# dret  7b200073 ffffffff SIMPLE (0, 0) 
+:dret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0xf640
+{
+	return [dpc];
+}
+
+# hret  20200073 ffffffff SIMPLE (0, 0)
+# deprecated instruction in latest spec
+#:hret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x4040
+
+# mret  30200073 ffffffff SIMPLE (0, 0) 
+:mret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x6040
+{
+	return [mepc];
+}
+
+# sret  10200073 ffffffff SIMPLE (0, 0) 
+:sret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x2040
+{
+	return [sepc];
+}
+
+
+# uret  00200073 ffffffff SIMPLE (0, 0) 
+:uret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x40
+{
+	return [uepc];
+}
+
+
+# Interrupt-Management
+
+# wfi  10500073 ffffffff SIMPLE (0, 0) 
+:wfi  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x20a0
+{
+	wfi();
+}
+
+
+# Supervisor Memory-Management
+
+# sfence.vm  10400073 ffffffff SIMPLE (0, 0) 
+:sfence.vm  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x2080
+{
+	sfence.vm();
+}
+
+# sfence.vm s 10400073 fff07fff SIMPLE (0, 0) 
+:sfence.vm rs1 is rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031=0x104
+{
+	sfence.vm(rs1);
+}
+
+# sfence.vma s,t 12000073 fe007fff SIMPLE (0, 0) 
+:sfence.vma rs1,rs2 is rs2 & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2531=0x9
+{
+	sfence.vma(rs1, rs2);
+}
+
+
+
+
+# Hypervisor Memory-Management
+#TODO  move to rv32h and rv64h?
+
+:hlv.b rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x30 & rs1 & rd & op2024=0x0
+{
+	rd = sext(*[ram]:1 rs1);
+}
+
+:hlv.bu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x30 & rs1 & rd & op2024=0x1
+{
+	rd = zext(*[ram]:1 rs1);
+}
+
+:hlv.h rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x0
+{
+	rd = sext(*[ram]:2 rs1);
+}
+
+:hlv.hu rd,rs1, is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x1
+{
+	rd = zext(*[ram]:2 rs1);
+}
+
+:hlvx.hu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x3
+{
+	rd = zext(*[ram]:2 rs1);
+}
+
+:hlv.w rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x0
+{
+	assignW(rd, *[ram]:4 rs1);
+}
+
+:hlvx.wu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x3
+{
+	zassignW(rd, *[ram]:4 rs1);
+}
+
+:hsv.b rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x31 & op0711=0x0 & rs1 & rs2
+{
+	*[ram]:1 rs1 = rs2:1;
+}
+
+:hsv.h rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x33 & op0711=0x0 & rs1 & rs2
+{
+	*[ram]:2 rs1 = rs2:2;
+}
+
+:hsv.w rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x35 & op0711=0x0 & rs1 & rs2
+{
+	*[ram]:4 rs1 = rs2:4;
+}
+
+@if ADDRSIZE == "64"
+
+:hlv.wu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x1
+{
+	rd = zext(*[ram]:4 rs1);
+}
+
+:hlv.d rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x36 & rs1 & rd & op2024=0x0
+{
+	rd = *[ram]:8 rs1;
+}
+
+:hsv.d rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x37 & op0711=0x0 & rs1 & rs2
+{
+	*[ram]:8 rs1 = rs2;
+}
+
+@endif

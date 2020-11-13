@@ -15,7 +15,7 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -46,7 +46,7 @@ public class MDMangExtraTests extends AbstractGenericTest {
 		String demangled = item.toString();
 		assertEquals(wholeTruth, demangled);
 		DemangledObject obj = demangler.getObject();
-		String mangledFunctionNamespace = obj.getNamespace().getNamespace().getOriginalMangled();
+		String mangledFunctionNamespace = obj.getNamespace().getNamespace().getMangledString();
 		assertEquals(functionNamespaceMangledTruth, mangledFunctionNamespace);
 
 		item = demangler.demangle(mangledFunctionNamespace, true);

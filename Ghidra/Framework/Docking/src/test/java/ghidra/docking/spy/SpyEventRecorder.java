@@ -57,6 +57,11 @@ public class SpyEventRecorder {
 		}
 	}
 
+	// synchronized because we spy on multiple threads (like Test and Swing)
+	public synchronized void record(String message, Object... args) {
+		record(String.format(message, args));
+	}
+
 	private synchronized String eventsToString() {
 
 		int size = events.size();

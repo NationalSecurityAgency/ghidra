@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +26,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
@@ -35,10 +35,13 @@ import docking.widgets.filter.TextFilterStrategy;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.test.TestUtils;
+import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.feature.vt.api.correlator.program.ExactMatchInstructionsProgramCorrelatorFactory;
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.VTTestEnv;
+import ghidra.feature.vt.gui.actions.CreateManualMatchFromToolsAction;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableModel;
@@ -62,7 +65,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 	private VTController controller;
 	private Program sourceProgram;
 	private Program destinationProgram;
-	private PluginTool tool;
+	private PluginTool vtTool;
 	private VTPlugin versionTrackingPlugin;
 	private FunctionManager sourceFunctionManager;
 	private FunctionManager destinationFunctionManager;
@@ -81,10 +84,6 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 	private GhidraTableFilterPanel<?> destinationFilter;
 	private VTFunctionAssociationProvider functionAssociationProvider;
 
-	public VTFunctionAssociationTest() {
-		super();
-	}
-
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
@@ -92,8 +91,8 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		setErrorGUIEnabled(false);
 
 		env = new VTTestEnv();
-		tool = env.showTool();
-		tool.setSize(800, 800);
+		vtTool = env.showTool();
+		vtTool.setSize(800, 800);
 		env.createSession("VersionTracking/WallaceSrc", "VersionTracking/WallaceVersion2",
 			new ExactMatchInstructionsProgramCorrelatorFactory());
 		sourceProgram = env.getSourceProgram();
@@ -153,11 +152,8 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 	@After
 	public void tearDown() throws Exception {
 
-		runSwing(() -> tool.close());
-
-		env.releaseSession();
+		runSwing(() -> vtTool.close());
 		env.dispose();
-
 	}
 
 	@Test
@@ -342,6 +338,36 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		VTMatch match = findMatch("deployGadget", "FUN_00412340");
 		assertNotNull(match);
 		assertEquals(VTAssociationStatus.AVAILABLE, match.getAssociation().getStatus());
+	}
+
+	@Test
+	public void testCreateManualMatchFromCodeBrowserToolAction() throws Exception {
+
+		PluginTool sourceTool = env.getSourceTool();
+		PluginTool destinationTool = env.getDestinationTool();
+
+		// pick to addresses to 'match'
+		goTo(destinationTool, destinationProgram, "00412340");
+		goTo(sourceTool, sourceProgram, "004118f0");
+
+		assertFalse(hasMatch("deployGadget", "FUN_00412340"));
+
+		DockingActionIf matchAction =
+			getAction(destinationTool, CreateManualMatchFromToolsAction.NAME);
+		performActionInCodeBrowser(destinationTool, matchAction);
+
+		VTMatch match = findMatch("deployGadget", "FUN_00412340");
+		assertNotNull(match);
+		assertEquals(VTAssociationStatus.AVAILABLE, match.getAssociation().getStatus());
+	}
+
+	private void performActionInCodeBrowser(PluginTool ghidraTool,
+			DockingActionIf matchAction) {
+
+		CodeBrowserPlugin cb = getPlugin(ghidraTool, CodeBrowserPlugin.class);
+		CodeViewerProvider provider = cb.getProvider();
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
+		performAction(matchAction, context, true);
 	}
 
 	@Test
@@ -617,7 +643,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		final VTFunctionAssociationProvider provider =
 			(VTFunctionAssociationProvider) TestUtils.getInstanceField(
 				"functionAssociationProvider", versionTrackingPlugin);
-		runSwing(() -> tool.showComponentProvider(provider, true));
+		runSwing(() -> vtTool.showComponentProvider(provider, true));
 		waitForSwing();
 		waitForTasks();
 		waitForSwing();

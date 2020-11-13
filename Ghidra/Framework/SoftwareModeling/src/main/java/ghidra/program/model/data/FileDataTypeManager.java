@@ -31,8 +31,8 @@ import ghidra.util.task.TaskMonitorAdapter;
  * DataTypeManager for a file. Can import categories from a file, or export
  * categories to a packed database.
  */
-public class FileDataTypeManager extends StandAloneDataTypeManager implements
-		FileArchiveBasedDataTypeManager {
+public class FileDataTypeManager extends StandAloneDataTypeManager
+		implements FileArchiveBasedDataTypeManager {
 
 	public final static String EXTENSION = "gdt"; // Ghidra Data Types
 	/**
@@ -105,19 +105,18 @@ public class FileDataTypeManager extends StandAloneDataTypeManager implements
 	 * Saves the data type manager to the given file with a specific databaseId.
 	 * NOTE: This method is intended for use in transforming one archive database to
 	 * match another existing archive database.
-	 * @param outputFilename filename for output
-	 * @param databaseId new databaseId
+	 * @param saveFile the file to save
+	 * @param newUniversalId the new id to use
 	 */
-	public void saveAs(File saveFile, UniversalID newUniversalId) throws DuplicateFileException,
-			IOException {
+	public void saveAs(File saveFile, UniversalID newUniversalId)
+			throws DuplicateFileException, IOException {
 		ResourceFile resourceSaveFile = new ResourceFile(saveFile);
 // TODO: this should really be a package method and not public!
 		validateFilename(resourceSaveFile);
 		try {
 			universalID = newUniversalId;
-			packedDB =
-				((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
-					saveFile.getName(), newUniversalId.getValue(), TaskMonitorAdapter.DUMMY_MONITOR);
+			packedDB = ((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
+				saveFile.getName(), newUniversalId.getValue(), TaskMonitorAdapter.DUMMY_MONITOR);
 			file = resourceSaveFile;
 			updateRootCategoryName(resourceSaveFile, getRootCategory());
 		}
@@ -128,15 +127,14 @@ public class FileDataTypeManager extends StandAloneDataTypeManager implements
 
 	/**
 	 * Saves the data type manager to the given file
-	 * @param outputFilename filename for output
+	 * @param saveFile the file to save
 	 */
 	public void saveAs(File saveFile) throws DuplicateFileException, IOException {
 		ResourceFile resourceSaveFile = new ResourceFile(saveFile);
 		validateFilename(resourceSaveFile);
 		try {
-			packedDB =
-				((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
-					saveFile.getName(), TaskMonitorAdapter.DUMMY_MONITOR);
+			packedDB = ((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
+				saveFile.getName(), TaskMonitorAdapter.DUMMY_MONITOR);
 			file = resourceSaveFile;
 			updateRootCategoryName(resourceSaveFile, getRootCategory());
 		}
@@ -268,4 +266,8 @@ public class FileDataTypeManager extends StandAloneDataTypeManager implements
 		return ArchiveType.FILE;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " - " + getName();
+	}
 }

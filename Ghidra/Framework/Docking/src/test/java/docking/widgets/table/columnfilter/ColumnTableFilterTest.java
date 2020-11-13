@@ -37,7 +37,7 @@ import mockit.Mock;
 import mockit.MockUp;
 
 /**
- * This test performs operations on swing components in the test thread.  I beleive this is ok
+ * This test performs operations on swing components in the test thread.  I believe this is ok
  * since in this test, the widgets are never realized and the swing thread in generally not
  * involved.  If this test has displays intermittent failures, then more work will be needed to
  * fix the threading when accessing swing components.

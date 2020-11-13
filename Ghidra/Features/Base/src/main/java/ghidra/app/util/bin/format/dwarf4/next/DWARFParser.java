@@ -116,7 +116,7 @@ public class DWARFParser {
 		CategoryPath origCompositeNSCP =
 			new CategoryPath(origCategoryPath, compositeDataType.getName());
 		CategoryPath destCompositeNSCP = new CategoryPath(newCP, compositeDataType.getName());
-		for (DataTypeComponent component : compositeDataType.getComponents()) {
+		for (DataTypeComponent component : compositeDataType.getDefinedComponents()) {
 			DataType dtcDT = component.getDataType();
 			if (dtcDT instanceof Array || dtcDT instanceof Pointer) {
 				dtcDT = DataTypeUtils.getNamedBaseDataType(dtcDT);
@@ -175,7 +175,7 @@ public class DWARFParser {
 	/**
 	 * Imports DWARF information according to the {@link DWARFImportOptions} set.
 	 * <p>
-	 * {@link #checkPreconditions()} must be called before this.
+	 * {@link DWARFProgram#checkPreconditions(TaskMonitor)} must be called before this.
 	 * <p>
 	 * @return
 	 * @throws IOException

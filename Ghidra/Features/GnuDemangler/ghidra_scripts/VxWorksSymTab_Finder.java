@@ -50,13 +50,7 @@ import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemoryBlock;
@@ -143,8 +137,9 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 		// Add SYMBOL data type to Program DataTypeManager
 		// (if data type already exists, replace it)
 		public void createGhidraType() {
-			currentProgram.getDataTypeManager().addDataType(dt,
-				DataTypeConflictHandler.REPLACE_HANDLER);
+			currentProgram.getDataTypeManager()
+					.addDataType(dt,
+						DataTypeConflictHandler.REPLACE_HANDLER);
 		}
 	}
 
@@ -351,8 +346,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			}
 		}
 
-		if (_byte == 0x00)
-		 {
+		if (_byte == 0x00) {
 			return true;  // Scan stopped at null.
 		}
 		return false; // Scan stopped at invalid char.
@@ -657,8 +651,9 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 		if (demangled != null) {
 			new DemanglerCmd(addr, mangled).applyTo(currentProgram, monitor);
-			currentProgram.getSymbolTable().removeSymbolSpecial(
-				getSymbol(mangled, currentProgram.getGlobalNamespace()));
+			currentProgram.getSymbolTable()
+					.removeSymbolSpecial(
+						getSymbol(mangled, currentProgram.getGlobalNamespace()));
 		}
 
 		return;
@@ -772,7 +767,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			// Demangle symName
 			String symDemangledName = null;
 			try {
-				symDemangledName = demangler.demangle(symName, true).getSignature(false);
+				symDemangledName = demangler.demangle(symName).getSignature(false);
 			}
 			catch (DemangledException e) {		// report demangling error
 				if (!e.isInvalidMangledName()) {

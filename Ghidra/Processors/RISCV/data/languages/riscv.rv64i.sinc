@@ -1,0 +1,121 @@
+# RV64I  Base Instruction Set (in addition to RV32I)
+
+# addiw d,s,j 0000001b 0000707f SIMPLE (64, 0) 
+:addiw rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x0
+{
+	local result = rs1 + immI;
+	rd = sext(result:4);
+}
+
+:sext.w rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x0 & op2031=0
+{
+	local result = rs1;
+	rd = sext(result:4);
+}
+
+
+
+# addw d,s,t 0000003b fe00707f SIMPLE (64, 0) 
+:addw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x0
+{
+	local tmpr1:4 = rs1:4;
+	local tmpr2:4 = rs2:4;
+	local result:4 = tmpr1 + tmpr2;
+	rd = sext(result);
+}
+
+
+# ld d,o(s) 00003003 0000707f QWORD|DREF (64, 8) 
+:ld rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x3
+{
+	local ea:$(XLEN) = rs1 + immI;
+	rd = *[ram]:8 ea;
+}
+
+
+# lwu d,o(s) 00006003 0000707f DWORD|DREF (64, 4) 
+:lwu rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x6
+{
+	local ea:$(XLEN) = rs1 + immI;
+	rd = zext(*[ram]:4 ea);
+}
+
+
+# sd t,q(s) 00003023 0000707f QWORD|DREF (64, 8) 
+:sd rs2,immS(rs1) is immS & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x1 & funct3=0x3
+{
+	local ea:$(XLEN) = rs1 + immS;
+	*[ram]:8 ea = rs2;
+}
+
+
+# slliw d,s,< 0000101b fe00707f SIMPLE (64, 0) 
+:slliw rd,rs1,shamt5 is rs1 & shamt5 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x1 & op2531=0x0
+{
+	local tmp:4 = rs1:4;
+	tmp = tmp << shamt5;
+	rd = sext(tmp);
+}
+
+
+# sllw d,s,t 0000103b fe00707f SIMPLE (64, 0) 
+:sllw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x1 & funct7=0x0
+{
+	local shift:$(XLEN) = rs2 & 0x1f;
+	local tmp:4 = rs1:4;
+	tmp = tmp << shift;
+	rd = sext(tmp);
+}
+
+
+# sraiw d,s,< 4000501b fe00707f SIMPLE (64, 0) 
+:sraiw rd,rs1,shamt5 is rs1 & shamt5 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x5 & op2531=0x20
+{
+	local tmp:4 = rs1:4;
+	tmp = tmp s>> shamt5;
+	rd = sext(tmp);
+}
+
+
+# sraw d,s,t 4000503b fe00707f SIMPLE (64, 0) 
+:sraw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x5 & funct7=0x20
+{
+	local shift:$(XLEN) = rs2 & 0x1f;
+	local tmp:4 = rs1:4;
+	tmp = tmp s>> shift;
+	rd = sext(tmp);
+}
+
+
+# srliw d,s,< 0000501b fe00707f SIMPLE (64, 0) 
+:srliw rd,rs1,shamt5 is rs1 & shamt5 & rd & op0001=0x3 & op0204=0x6 & op0506=0x0 & funct3=0x5 & op2531=0x0
+{
+	local tmp:4 = rs1:4;
+	tmp = tmp >> shamt5;
+	rd = sext(tmp);
+}
+
+
+# srlw d,s,t 0000503b fe00707f SIMPLE (64, 0) 
+:srlw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x5 & funct7=0x0
+{
+	local shift:$(XLEN) = rs2 & 0x1f;
+	local tmp:4 = rs1:4;
+	tmp = tmp >> shift;
+	rd = sext(tmp);
+}
+
+
+# subw d,s,t 4000003b fe00707f SIMPLE (64, 0) 
+:subw rd,rs1W,rs2W is rs1W & rs2W & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20
+{
+	local result = rs1W - rs2W;
+	rd = sext(result);
+}
+
+# negw d,t 4000003b fe0ff07f ALIAS (64, 0)
+:negw rd,rs2W is rs2W & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20 & op1519=0x0
+{
+	local tmp = -rs2W;
+	rd = sext(tmp);
+}

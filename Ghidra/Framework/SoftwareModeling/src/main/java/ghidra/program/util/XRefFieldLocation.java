@@ -29,7 +29,7 @@ public class XRefFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new XRefFieldLocation object.
 	 *
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location
 	 * appear at more than one group path); may be null
 	 * @param componentPath array of indexes for each nested data component;

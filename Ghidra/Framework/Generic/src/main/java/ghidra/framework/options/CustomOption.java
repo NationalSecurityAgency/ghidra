@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,5 +30,15 @@ public interface CustomOption {
 	 * @param saveState container of state information
 	 */
 	public void writeState(SaveState saveState);
+
+	/**
+	 * CustomOption should implement this method to provide a formatted 
+	 * string value of this option value.  The returned value will 
+	 * be used in support of the {@link Options#getValueAsString(String)}
+	 * and {@link Options#getDefaultValueAsString(String)}.
+	 * @return option value as string
+	 */
+	@Override
+	public String toString();
 
 }

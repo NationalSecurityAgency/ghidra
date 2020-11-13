@@ -15,6 +15,11 @@
  */
 package ghidra.app.services;
 
+import javax.swing.JComponent;
+
+import docking.action.DockingAction;
+import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.util.HighlightProvider;
@@ -23,18 +28,10 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-
-import javax.swing.JComponent;
-
-import docking.action.DockingAction;
-import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.Layout;
-import docking.widgets.fieldpanel.field.Field;
 
 /**
  * Service provided by a plugin that shows the listing from a Program, i.e., a
@@ -120,7 +117,6 @@ public interface CodeViewerService {
 	/**
 	 * Set a listing panel on the code viewer.
 	 * @param listingPanel the panel to add.
-	 * @param listener the listener to be notified if the new listingPanel is to be removed.
 	 */
 	public void setListingPanel(ListingPanel listingPanel);
 
@@ -166,12 +162,6 @@ public interface CodeViewerService {
 	 * @param comp component to place in the North area of the CodeViewer
 	 */
 	public void setNorthComponent(JComponent comp);
-
-	/**
-	 * Returns the Layout of Fields for the given Address.
-	 * @param addr the address at which to get a Layout
-	 */
-	public Layout getLayout(Address addr);
 
 	/**
 	 * tells the browser to rebuild the display.
@@ -224,4 +214,16 @@ public interface CodeViewerService {
 	 * @return the current program selection.
 	 */
 	public ProgramSelection getCurrentSelection();
+
+	/**
+	 * Adds a listener to be notified when the set of visible addresses change.
+	 * @param listener the listener to be notified;
+	 */
+	public void addListingDisplayListener(ListingDisplayListener listener);
+
+	/**
+	 * Removes listener from being notified when the set of visible addresses change.
+	 * @param listener the listener to be notified;
+	 */
+	public void removeListingDisplayListener(ListingDisplayListener listener);
 }

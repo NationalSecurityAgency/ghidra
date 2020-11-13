@@ -33,7 +33,7 @@ import util.CollectionUtils;
  * the {@link Task} interface, which means less boiler-plate code.
  * 
  * <P>An example of usage:
- * <pre>
+ * <pre>{@literal
  * 		MonitoredRunnable r = 
  *			monitor -> doWork(parameter, monitor);
  *		new TaskBuilder("Task Title", r)
@@ -41,18 +41,18 @@ import util.CollectionUtils;
  *			.setCanCancel(true)
  *			.setStatusTextAlignment(SwingConstants.LEADING)
  *			.launchModal();		
- * </pre>
+ * }</pre>
  * 
  * Or,
  * 
- * <pre>
+ * <pre>{@literal
  *	    TaskBuilder.withRunnable(monitor -> doWork(parameter, monitor))
  *			.setTitle("Task Title")
  *			.setHasProgress(true)
  *			.setCanCancel(true)
  *			.setStatusTextAlignment(SwingConstants.LEADING)
  *			.launchModal();		
- * </pre>
+ * }</pre>
  * 
  *  Or,
  *  
@@ -141,7 +141,7 @@ public class TaskBuilder {
 	}
 
 	/**
-	 * Sets whether this task reports progress.   The default is <tt>true</tt>.
+	 * Sets whether this task reports progress.   The default is <code>true</code>.
 	 * 
 	 * @param hasProgress true if the task reports progress
 	 * @return this builder
@@ -152,7 +152,7 @@ public class TaskBuilder {
 	}
 
 	/**
-	 * Sets whether the task can be cancelled.  The default is <tt>true</tt>.
+	 * Sets whether the task can be cancelled.  The default is <code>true</code>.
 	 * 
 	 * @param canCancel true if the task can be cancelled.
 	 * @return this builder
@@ -163,7 +163,7 @@ public class TaskBuilder {
 	}
 
 	/**
-	 * Sets the component over which the task dialog will be shown.  The default is <tt>null</tt>,
+	 * Sets the component over which the task dialog will be shown.  The default is <code>null</code>,
 	 * which shows the dialog over the active window.
 	 * 
 	 * @param parent the parent

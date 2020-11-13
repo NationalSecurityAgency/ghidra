@@ -21,7 +21,6 @@ import java.awt.dnd.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -59,7 +58,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	private String domainFilePath;
 	private VersionHistoryTableModel tableModel;
 	private GTable table;
-	private SimpleDateFormat formatter;
 
 	private DragSource dragSource;
 	private DragGestureAdapter dragGestureAdapter;
@@ -87,7 +85,6 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		super(new BorderLayout());
 		this.tool = tool;
 		create();
-		formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 		if (enableUserInteraction) {
 			setUpDragSite();
 			table.addMouseListener(new MyMouseListener());
@@ -389,7 +386,7 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 			int col = data.getColumnModelIndex();
 
 			if (value instanceof Date) {
-				setText(formatter.format((Date) value));
+				setText(DateUtils.formatDateTimestamp((Date) value));
 			}
 
 			setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));

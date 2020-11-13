@@ -35,7 +35,7 @@ public class CommentFieldLocation extends CodeUnitLocation {
 
 	/**
 	 * Construct a new CommentFieldLocation.
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location; should not be null
 	 * hierarchy names; this parameter may be null
 	 * @param componentPath if not null, it is the array of indexes that point

@@ -318,7 +318,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 									}
 								}
 								symEval.makeReference(context, lastSetInstr, -1,
-									instr.getMinAddress().getAddressSpace().getBaseSpaceID(),
+									instr.getMinAddress().getAddressSpace().getSpaceID(),
 									unsignedValue, 1, RefType.DATA, PcodeOp.UNIMPLEMENTED, true,
 									monitor);
 								if (localGPAssumptionValue == null) {
@@ -349,7 +349,13 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 						BigInteger val = context.getValue(reg, false);
 						if (val != null) {
 							long lval = val.longValue();
-							Address refAddr = instr.getMinAddress().getNewAddress(lval);
+							Address refAddr = null;
+							try {
+								refAddr = instr.getMinAddress().getNewAddress(lval);
+							} catch (AddressOutOfBoundsException e) {
+								// invalid reference
+								return;
+							}
 							if ((lval > 4096 || lval < 0) && lval != 0xffff &&
 								program.getMemory().contains(refAddr)) {
 
@@ -505,7 +511,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 		if (addr != null) {
 			MemoryBlock block = program.getMemory().getBlock(addr);
 			if (block == null || !block.isExecute() || !block.isInitialized() ||
-				block.getName().equals("EXTERNAL")) {
+				block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
 				return addr;
 			}
 

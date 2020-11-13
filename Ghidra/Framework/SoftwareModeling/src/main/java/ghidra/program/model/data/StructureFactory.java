@@ -47,7 +47,7 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if <tt>dataLength</tt> is not greater than zero
+	 *              <li>if <code>dataLength</code> is not greater than zero
 	 *              <li>if the number of components to add exceeds the available
 	 *                  address space
 	 *              <li>if there are any instructions in the provided 
@@ -55,7 +55,8 @@ public class StructureFactory {
 	 *              <li>if there are no data components to add to the structure
 	 *         </ul>
 	 */
-	public static Structure createStructureDataType(Program program, Address address, int dataLength) {
+	public static Structure createStructureDataType(Program program, Address address,
+			int dataLength) {
 		return createStructureDataType(program, address, dataLength, DEFAULT_STRUCTURE_NAME, true);
 	}
 
@@ -72,8 +73,8 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if <tt>structureName</tt> is <tt>null</tt>
-	 *              <li>if <tt>dataLength</tt> is not greater than zero
+	 *              <li>if <code>structureName</code> is <code>null</code>
+	 *              <li>if <code>dataLength</code> is not greater than zero
 	 *              <li>if the number of components to add exceeds the available
 	 *                  address space
 	 *              <li>if there are any instructions in the provided 
@@ -89,8 +90,8 @@ public class StructureFactory {
 		}
 
 		if (dataLength <= 0) {
-			throw new IllegalArgumentException("Structure length must be positive, not " +
-				dataLength);
+			throw new IllegalArgumentException(
+				"Structure length must be positive, not " + dataLength);
 		}
 
 		Address endAddress;
@@ -116,7 +117,7 @@ public class StructureFactory {
 			name = providerContext.getUniqueName(name);
 		}
 
-		Structure newStructure = new StructureDataType(name, 0);
+		Structure newStructure = new StructureDataType(name, 0, program.getDataTypeManager());
 
 		initializeStructureFromContext(newStructure, providerContext, dataLength);
 
@@ -145,8 +146,8 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if the component at <tt>fromPath</tt> or the component
-	 *                  at <tt>toPath</tt> are null
+	 *              <li>if the component at <code>fromPath</code> or the component
+	 *                  at <code>toPath</code> are null
 	 *              <li>if there is not data to add to the structure
 	 *              <li>if the parent data type is not a structure
 	 *         </ul>
@@ -175,9 +176,9 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if <tt>structureName</tt> is <tt>null</tt>
-	 *              <li>if the component at <tt>fromPath</tt> or the component
-	 *                  at <tt>toPath</tt> are null
+	 *              <li>if <code>structureName</code> is <code>null</code>
+	 *              <li>if the component at <code>fromPath</code> or the component
+	 *                  at <code>toPath</code> are null
 	 *              <li>if there is not data to add to the structure
 	 *              <li>if the parent data type is not a structure
 	 *         </ul>
@@ -211,16 +212,15 @@ public class StructureFactory {
 		}
 
 		// create the context
-		DataTypeProviderContext providerContext =
-			new ProgramStructureProviderContext(program, data.getMinAddress(),
-				(Structure) parentDataType, comp1.getParentOffset());
+		DataTypeProviderContext providerContext = new ProgramStructureProviderContext(program,
+			data.getMinAddress(), (Structure) parentDataType, comp1.getParentOffset());
 
 		String name = structureName;
 		if (makeUniqueName) {
 			name = providerContext.getUniqueName(name);
 		}
 
-		Structure newStructure = new StructureDataType(name, 0);
+		Structure newStructure = new StructureDataType(name, 0, program.getDataTypeManager());
 
 		initializeStructureFromContext(newStructure, providerContext, dataLength);
 

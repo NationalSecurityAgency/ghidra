@@ -19,71 +19,46 @@ import java.awt.event.KeyEvent;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
-import ghidra.app.decompiler.ClangFunction;
-import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerController;
-import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Function;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.*;
 
 public class CommitParamsAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
 
-	public CommitParamsAction(PluginTool tool, DecompilerController controller) {
+	public CommitParamsAction() {
 		super("Commit Params/Return");
-		this.controller = controller;
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionCommitParams"));
 		setPopupMenuData(new MenuData(new String[] { "Commit Params/Return" }, "Commit"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));
 		setDescription(
 			"Save Parameters/Return definitions to Program, locking them into their current type definitions");
 	}
 
-	private HighFunction getHighFunction() {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-
-		// getTokenAtCursor can explicitly return null, so we must check here
-		// before dereferencing it.
-		if (tokenAtCursor == null) {
-			return null;
-		}
-
-		ClangFunction clfunc = tokenAtCursor.getClangFunction();
-		if (clfunc == null) {
-			return null;
-		}
-		return clfunc.getHighFunction();
-	}
-
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-
-		Function function = controller.getFunction();
-		if (function == null || function instanceof UndefinedFunction) {
+		if (!context.hasRealFunction()) {
 			return false;
 		}
-		return getHighFunction() != null;
+		return context.getHighFunction() != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Program program = controller.getProgram();
+		Program program = context.getProgram();
 		int transaction = program.startTransaction("Commit Params/Return");
 		try {
-			HighFunction hfunc = getHighFunction();
+			HighFunction hfunc = context.getHighFunction();
 			SourceType source = SourceType.ANALYSIS;
 			if (hfunc.getFunction().getSignatureSource() == SourceType.USER_DEFINED) {
 				source = SourceType.USER_DEFINED;
 			}
-			
+
 			HighFunctionDBUtil.commitReturnToDatabase(hfunc, source);
 			HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, source);
 		}

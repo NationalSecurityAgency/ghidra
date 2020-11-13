@@ -1,0 +1,28 @@
+<opinions>
+  <constraint loader="Executable and Linking Format (ELF)">
+    <constraint compilerSpecID="gcc">
+      <!-- e_ident:  ELFCLASS64 or ELFCLASS32 -->
+      <!-- e_type: nothing specific           -->
+      <!-- e_machine: EM_RISCV, primary       -->
+      <!-- e_flags: used as secondary         -->
+      <!-- EF_RISCV_RVC               0x0001  -->
+      <!-- EF_RISCV_FLOAT_ABI_SINGLE  0x0002  -->
+      <!-- EF_RISCV_FLOAT_ABI_DOUBLE  0x0004  -->
+      <!-- EF_RISCV_ABI_QUAD          0x0006  -->
+      <!-- EF_RISCV_RVE               0x0008  -->
+      <!-- EF_RISCV_TSO               0x0010  -->
+      <constraint primary="243" secondary="0" processor="RISCV" endian="little" size="32" variant="RV32I"/>
+      <constraint primary="243" secondary="0" processor="RISCV" endian="little" size="64" variant="RV64I"/>
+      <constraint primary="243" secondary="1" processor="RISCV" endian="little" size="32" variant="RV32IMC"/>
+      <constraint primary="243" secondary="1" processor="RISCV" endian="little" size="64" variant="RV64IC"/>
+      <constraint primary="243" secondary="2" processor="RISCV" endian="little" size="32" variant="RV32IF"/>
+      <constraint primary="243" secondary="3" processor="RISCV" endian="little" size="32" variant="RV32GC"/> <!-- RV32IMAFC -->
+      <constraint primary="243" secondary="4" processor="RISCV" endian="little" size="32" variant="RV32G"/>
+      <constraint primary="243" secondary="4" processor="RISCV" endian="little" size="64" variant="RV64G"/>
+      <constraint primary="243" secondary="5" processor="RISCV" endian="little" size="32" variant="RV32GC"/>
+      <constraint primary="243" secondary="5" processor="RISCV" endian="little" size="64" variant="RV64GC"/>
+      <constraint primary="243" processor="RISCV" endian="little" size="32" variant="RV32GC"/>
+      <constraint primary="243" processor="RISCV" endian="little" size="64" variant="RV64GC"/>
+    </constraint>
+  </constraint>
+</opinions>

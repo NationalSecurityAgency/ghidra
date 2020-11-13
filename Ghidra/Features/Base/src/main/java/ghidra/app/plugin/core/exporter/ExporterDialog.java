@@ -116,6 +116,10 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		addCancelButton();
 		setHelpLocation(new HelpLocation("ExporterPlugin", "Exporter_Dialog"));
 
+		// This dialog is temporary and will be closed when the task is finished.  Mark
+		// it transient so no other windows will be parented to this dialog.
+		setTransient(true);
+
 		// need to initialize a few things
 		selectedFormatChanged();
 		validate();
@@ -495,15 +499,13 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		resultsBuffer.append("Format:                 " + exporter.getName() + "\n\n");
 
 		MessageLog log = exporter.getMessageLog();
-		if (log != null) {
-			resultsBuffer.append(log.toString());
-		}
+		resultsBuffer.append(log.toString());
 
 		HelpLocation helpLocation = new HelpLocation(GenericHelpTopics.ABOUT, "About_Program");
 
 		Object tmpConsumer = new Object();
 		obj.addConsumer(tmpConsumer);
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			try {
 				AboutDomainObjectUtils.displayInformation(tool, obj.getDomainFile(),
 					obj.getMetadata(), "Export Results Summary", resultsBuffer.toString(),
@@ -516,9 +518,10 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 
 	}
 
-	/**************************************************
-	 * Methods for testing
-	 **************************************************/
+//==================================================================================================
+// Methods for Testing
+//==================================================================================================
+
 	JCheckBox getSelectionCheckBox() {
 		return selectionCheckBox;
 	}

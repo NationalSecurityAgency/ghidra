@@ -108,8 +108,18 @@ public class ElfSectionHeaderConstants {
 	public static final int SHT_GROUP = 17;
 	/**Extended section indeces*/
 	public static final int SHT_SYMTAB_SHNDX = 18;
+	/**Experimental support - see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg */
+	public static final int SHT_RELR = 19;
 
 	// OS Specific Section Types
+
+	/**Android relocation entries w/o explicit addends*/
+	public static final int SHT_ANDROID_REL = 0x60000001;
+	/**Android relocation entries with explicit addends*/
+	public static final int SHT_ANDROID_RELA = 0x60000002;
+
+	/**Android's experimental support for SHT_RELR sections (see above) */
+	public static final int SHT_ANDROID_RELR = 0x6fffff00;
 
 	/**Object attributes */
 	public static final int SHT_GNU_ATTRIBUTES = 0x6ffffff5;
@@ -177,7 +187,7 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_ABS = (short) 0xfff1;
 	/**common symbols, such as Fortran COMMON or unallocated C external vars*/
 	public static final short SHN_COMMON = (short) 0xfff2;
-	/** Mark that the index is >= SHN_LORESERVE */
+	/** Mark that the index is &gt;= SHN_LORESERVE */
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;

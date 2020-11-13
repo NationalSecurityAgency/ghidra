@@ -110,6 +110,9 @@ public enum OpCode {
 	CPUI_SEGMENTOP,
 	CPUI_CPOOLREF,
 	CPUI_NEW,
+	CPUI_INSERT,
+	CPUI_EXTRACT,
+	CPUI_POPCOUNT,
 
 	CPUI_MAX;
 
@@ -200,16 +203,16 @@ public enum OpCode {
 		"UNUSED1", "FLOAT_NAN", "FLOAT_ADD", "FLOAT_DIV", "FLOAT_MULT", "FLOAT_SUB",
 		"FLOAT_NEG", "FLOAT_ABS", "FLOAT_SQRT", "INT2FLOAT", "FLOAT2FLOAT", "TRUNC", "CEIL",
 		"FLOOR", "ROUND", "BUILD", "DELAY_SLOT", "PIECE", "SUBPIECE", "CAST", "LABEL",
-		"CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW" };
+		"CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW", "INSERT", "EXTRACT", "POPCOUNT" };
 
 	public static String get_opname(OpCode op) {
 		return opcode_name[op.ordinal()];
 	}
 
 	static final int opcode_indices[] = { 0, 39, 37, 40, 38, 4, 6, 60, 7, 8, 9, 64, 5, 57, 1, 68, 66,
-		61, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 54, 24, 19, 27, 21, 33, 11,
-		29, 15, 16, 32, 25, 12, 28, 35, 30, 23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17, 65, 2, 69, 62,
-		10, 59, 67, 3, 63, 56, 45 };
+			61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70, 54, 24, 19, 27, 21,
+			33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30, 23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17,
+			65, 2, 69, 62, 72, 10, 59, 67, 3, 63, 56, 45 };
 
 	public static OpCode get_opcode(String nm) { // Use binary search to find name
 		int min = 1; // Don't include BLANK
@@ -220,12 +223,15 @@ public enum OpCode {
 			cur = (min + max) / 2;
 			ind = opcode_indices[cur]; // Get opcode in cur's sort slot
 			int result = opcode_name[ind].compareTo(nm);
-			if (result < 0)
+			if (result < 0) {
 				min = cur + 1; // Everything equal or below cur is less
-			else if (result > 0)
+			}
+			else if (result > 0) {
 				max = cur - 1; // Everything equal or above cur is greater
-			else
+			}
+			else {
 				return OpCode.values()[ind]; // Found the match
+			}
 		}
 		return null; // Name isn't an op
 	}

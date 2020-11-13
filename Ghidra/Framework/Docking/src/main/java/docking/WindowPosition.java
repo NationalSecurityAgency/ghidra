@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +27,7 @@ public enum WindowPosition {
 	 * be placed into their own window.
 	 * <p>
 	 * <b>This position is ignored when used with components that share the same group (a.k.a., 
-	 * when used as an intragroup positioning item).
+	 * when used as an intragroup positioning item).</b>
 	 */
 	WINDOW,
 

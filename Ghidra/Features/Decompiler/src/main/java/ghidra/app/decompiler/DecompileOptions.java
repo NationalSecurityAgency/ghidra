@@ -22,6 +22,7 @@ import java.awt.Font;
 import java.awt.event.MouseEvent;
 
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
@@ -39,7 +40,7 @@ import ghidra.util.SystemUtilities;
  *
  *
  */
-public class DecompileOptions { //
+public class DecompileOptions {
 	private final static String PREDICATE_OPTIONSTRING = "Analysis.Simplify predication";
 	private final static String PREDICATE_OPTIONDESCRIPTION =
 		"If set, multiple conditionally executed instructions " +
@@ -99,6 +100,38 @@ public class DecompileOptions { //
 			"for appropriate expressions. '+='   '*='   '&='   '<<=' etc.";
 	private final static boolean INPLACEOP_OPTIONDEFAULT = false;
 	private boolean inplaceTokens;
+
+	private final static String ALIASBLOCK_OPTIONSTRING = "Analysis.Alias Blocking";
+	private final static String ALIASBLOCK_OPTIONDESCRIPTION =
+		"Specify which data-types prevent a pointer alias from reaching across them on the stack.";
+
+	public enum AliasBlockEnum {
+
+		None("none", "None"),
+		Struct("struct", "Structures"),
+		Array("array", "Arrays and Structures"),
+		All("all", "All Data-types");
+
+		private String label;
+		private String optionString;
+
+		private AliasBlockEnum(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	private final static AliasBlockEnum ALIASBLOCK_OPTIONDEFAULT = AliasBlockEnum.Array;
+	private AliasBlockEnum aliasBlock;
 
 	private final static String CONVENTION_OPTIONSTRING = "Display.Print calling convention name";
 	private final static String CONVENTION_OPTIONDESCRIPTION =
@@ -198,18 +231,55 @@ public class DecompileOptions { //
 	private final static boolean COMMENTHEAD_OPTIONDEFAULT = true;
 	private boolean commentHeadInclude;
 
+	public enum NamespaceStrategy {
+		Minimal("minimal", "Minimally"),
+		All("all", "Always"),
+		Never("none", "Never");
+
+		private String label;
+		private String optionString;
+
+		private NamespaceStrategy(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	private final static String NAMESPACE_OPTIONSTRING = "Display.Display Namespaces";
+	private final static String NAMESPACE_OPTIONDESCRIPTION =
+		"Choose how/if namespace tokens should be displayed along with symbol names";
+	private final static NamespaceStrategy NAMESPACE_OPTIONDEFAULT = NamespaceStrategy.Minimal;
+	private NamespaceStrategy namespaceStrategy;
+
 	private final static String INTEGERFORMAT_OPTIONSTRING = "Display.Integer format";
 	private final static String INTEGERFORMAT_OPTIONDESCRIPTION =
 		"Choose how to display integers: as hexadecimal, decimal, or best fit";
 
 	public enum IntegerFormatEnum {
 
-		Hexadecimal("Force Hexadecimal"), Decimal("Force Decimal"), BestFit("Best Fit");
+		Hexadecimal("hex", "Force Hexadecimal"),
+		Decimal("dec", "Force Decimal"),
+		BestFit("best", "Best Fit");
 
 		private String label;
+		private String optionString;
 
-		private IntegerFormatEnum(String label) {
+		private IntegerFormatEnum(String optString, String label) {
 			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
 		}
 
 		@Override
@@ -277,13 +347,10 @@ public class DecompileOptions { //
 		"Number of Decompiled Functions to Cache in the Decompile Window";
 
 	private final static String LINE_NUMBER_MSG = "Display.Display Line Numbers";
-	private final static String NAMESPACE_MSG = "Display.Display Namespaces";
 	private final static String DECOMPILE_TIMEOUT = "Decompiler Timeout (seconds)";
 	private final static String PAYLOAD_LIMIT = "Decompiler Max-Payload (MBytes)";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
-	private final static Boolean NAMESPACES_DEF = Boolean.FALSE;
 	private boolean displayLineNumbers;
-	private boolean displayNamespaces;
 	private int decompileTimeoutSeconds;
 	private int payloadLimitMBytes;
 	private int cachedResultsSize;
@@ -301,6 +368,7 @@ public class DecompileOptions { //
 		inferconstptr = INFERCONSTPTR_OPTIONDEFAULT;
 		nullToken = NULLTOKEN_OPTIONDEFAULT;
 		inplaceTokens = INPLACEOP_OPTIONDEFAULT;
+		aliasBlock = ALIASBLOCK_OPTIONDEFAULT;
 		conventionPrint = CONVENTION_OPTIONDEFAULT;
 		noCastPrint = NOCAST_OPTIONDEFAULT;
 		maxwidth = MAXWIDTH_OPTIONDEFAULT;
@@ -313,6 +381,7 @@ public class DecompileOptions { //
 		commentEOLInclude = COMMENTEOL_OPTIONDEFAULT;
 		commentWARNInclude = COMMENTWARN_OPTIONDEFAULT;
 		commentHeadInclude = COMMENTHEAD_OPTIONDEFAULT;
+		namespaceStrategy = NAMESPACE_OPTIONDEFAULT;
 		integerFormat = INTEGERFORMAT_OPTIONDEFAULT;
 		keywordColor = HIGHLIGHT_KEYWORD_DEF;
 		functionColor = HIGHLIGHT_FUNCTION_DEF;
@@ -326,7 +395,6 @@ public class DecompileOptions { //
 		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
 		defaultFont = DEFAULT_FONT;
 		displayLineNumbers = LINE_NUMBER_DEF;
-		displayNamespaces = NAMESPACES_DEF;
 		displayLanguage = BasicCompilerSpec.DECOMPILER_OUTPUT_DEF;
 		protoEvalModel = "default";
 		decompileTimeoutSeconds = SUGGESTED_DECOMPILE_TIMEOUT_SECS;
@@ -360,6 +428,7 @@ public class DecompileOptions { //
 		inferconstptr = opt.getBoolean(INFERCONSTPTR_OPTIONSTRING, INFERCONSTPTR_OPTIONDEFAULT);
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
+		aliasBlock = opt.getEnum(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT);
 		conventionPrint = opt.getBoolean(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT);
 		noCastPrint = opt.getBoolean(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT);
 		maxwidth = opt.getInt(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT);
@@ -372,6 +441,7 @@ public class DecompileOptions { //
 		commentPLATEInclude = opt.getBoolean(COMMENTPLATE_OPTIONSTRING, COMMENTPLATE_OPTIONDEFAULT);
 		commentWARNInclude = opt.getBoolean(COMMENTWARN_OPTIONSTRING, COMMENTWARN_OPTIONDEFAULT);
 		commentHeadInclude = opt.getBoolean(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT);
+		namespaceStrategy = opt.getEnum(NAMESPACE_OPTIONSTRING, NAMESPACE_OPTIONDEFAULT);
 		integerFormat = opt.getEnum(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT);
 		keywordColor = opt.getColor(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF);
 		typeColor = opt.getColor(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF);
@@ -390,7 +460,6 @@ public class DecompileOptions { //
 		defaultFont = SystemUtilities.adjustForFontSizeOverride(defaultFont);
 		defaultSearchHighlightColor = opt.getColor(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF);
 		displayLineNumbers = opt.getBoolean(LINE_NUMBER_MSG, LINE_NUMBER_DEF);
-		displayNamespaces = opt.getBoolean(NAMESPACE_MSG, NAMESPACES_DEF);
 		decompileTimeoutSeconds = opt.getInt(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS);
 		payloadLimitMBytes = opt.getInt(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES);
 		cachedResultsSize = opt.getInt(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE);
@@ -452,90 +521,169 @@ public class DecompileOptions { //
 	 * @param ownerPlugin  the plugin to which the options should be registered
 	 * @param opt          the options object to register with
 	 * @param program      the program
-	 * @param hlep
 	 */
-	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program,
-			HelpLocation help) {
-		opt.registerOption(PREDICATE_OPTIONSTRING, PREDICATE_OPTIONDEFAULT, help,
+	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program) {
+		opt.registerOption(PREDICATE_OPTIONSTRING,
+			PREDICATE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisPredicate"),
 			PREDICATE_OPTIONDESCRIPTION);
-		opt.registerOption(READONLY_OPTIONSTRING, READONLY_OPTIONDEFAULT, help,
+		opt.registerOption(READONLY_OPTIONSTRING,
+			READONLY_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisReadOnly"),
 			READONLY_OPTIONDESCRIPTION);
-		opt.registerOption(ELIMINATE_UNREACHABLE_OPTIONSTRING, ELIMINATE_UNREACHABLE_OPTIONDEFAULT,
-			help, ELIMINATE_UNREACHABLE_OPTIONDESCRIPTION);
+		opt.registerOption(ELIMINATE_UNREACHABLE_OPTIONSTRING,
+			ELIMINATE_UNREACHABLE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisUnreachable"),
+			ELIMINATE_UNREACHABLE_OPTIONDESCRIPTION);
 		opt.registerOption(SIMPLIFY_DOUBLEPRECISION_OPTIONSTRING,
-			SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT, help,
+			SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisExtendedPrecision"),
 			SIMPLIFY_DOUBLEPRECISION_OPTIONDESCRIPTION);
-		opt.registerOption(IGNOREUNIMPL_OPTIONSTRING, IGNOREUNIMPL_OPTIONDEFAULT, help,
+		opt.registerOption(IGNOREUNIMPL_OPTIONSTRING,
+			IGNOREUNIMPL_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisIgnoreUnimplemented"),
 			IGNOREUNIMPL_OPTIONDESCRIPTION);
-		opt.registerOption(INFERCONSTPTR_OPTIONSTRING, INFERCONSTPTR_OPTIONDEFAULT, help,
+		opt.registerOption(INFERCONSTPTR_OPTIONSTRING,
+			INFERCONSTPTR_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisInferConstants"),
 			INFERCONSTPTR_OPTIONDESCRIPTION);
-		opt.registerOption(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT, help,
+		opt.registerOption(NULLTOKEN_OPTIONSTRING,
+			NULLTOKEN_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNull"),
 			NULLTOKEN_OPTIONDESCRIPTION);
-		opt.registerOption(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT, help,
+		opt.registerOption(INPLACEOP_OPTIONSTRING,
+			INPLACEOP_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisInPlace"),
 			INPLACEOP_OPTIONDESCRIPTION);
-		opt.registerOption(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT, help,
+		opt.registerOption(ALIASBLOCK_OPTIONSTRING,
+			ALIASBLOCK_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisAliasBlocking"),
+			ALIASBLOCK_OPTIONDESCRIPTION);
+		opt.registerOption(CONVENTION_OPTIONSTRING,
+			CONVENTION_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayConvention"),
 			CONVENTION_OPTIONDESCRIPTION);
-		opt.registerOption(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT, help,
+		opt.registerOption(NOCAST_OPTIONSTRING,
+			NOCAST_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayDisableCasts"),
 			NOCAST_OPTIONDESCRIPTION);
-		opt.registerOption(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT, help,
+		opt.registerOption(MAXWIDTH_OPTIONSTRING,
+			MAXWIDTH_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayMaxChar"),
 			MAXWIDTH_OPTIONDESCRIPTION);
-		opt.registerOption(INDENTWIDTH_OPTIONSTRING, INDENTWIDTH_OPTIONDEFAULT, help,
+		opt.registerOption(INDENTWIDTH_OPTIONSTRING,
+			INDENTWIDTH_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayIndentLevel"),
 			INDENTWIDTH_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTINDENT_OPTIONSTRING, COMMENTINDENT_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTINDENT_OPTIONSTRING,
+			COMMENTINDENT_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentIndent"),
 			COMMENTINDENT_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTSTYLE_OPTIONSTRING, COMMENTSTYLE_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTSTYLE_OPTIONSTRING,
+			COMMENTSTYLE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentStyle"),
 			COMMENTSTYLE_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTEOL_OPTIONSTRING, COMMENTEOL_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTEOL_OPTIONSTRING,
+			COMMENTEOL_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTEOL_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTPRE_OPTIONSTRING, COMMENTPRE_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTPRE_OPTIONSTRING,
+			COMMENTPRE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTPRE_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTPOST_OPTIONSTRING, COMMENTPOST_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTPOST_OPTIONSTRING,
+			COMMENTPOST_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTPOST_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTPLATE_OPTIONSTRING, COMMENTPLATE_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTPLATE_OPTIONSTRING,
+			COMMENTPLATE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTPLATE_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTWARN_OPTIONSTRING, COMMENTWARN_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTWARN_OPTIONSTRING,
+			COMMENTWARN_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayWarningComments"),
 			COMMENTWARN_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTHEAD_OPTIONSTRING,
+			COMMENTHEAD_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayHeaderComment"),
 			COMMENTHEAD_OPTIONDESCRIPTION);
-		opt.registerOption(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT, help,
+		opt.registerOption(NAMESPACE_OPTIONSTRING,
+			NAMESPACE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNamespaces"),
+			NAMESPACE_OPTIONDESCRIPTION);
+		opt.registerOption(INTEGERFORMAT_OPTIONSTRING,
+			INTEGERFORMAT_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayIntegerFormat"),
 			INTEGERFORMAT_OPTIONDESCRIPTION);
-		opt.registerOption(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF, help,
+		opt.registerOption(HIGHLIGHT_KEYWORD_MSG,
+			HIGHLIGHT_KEYWORD_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting keywords.");
-		opt.registerOption(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF, help,
+		opt.registerOption(HIGHLIGHT_TYPE_MSG,
+			HIGHLIGHT_TYPE_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting types.");
-		opt.registerOption(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_DEF, help,
+		opt.registerOption(HIGHLIGHT_FUNCTION_MSG,
+			HIGHLIGHT_FUNCTION_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting function names.");
-		opt.registerOption(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_DEF, help,
+		opt.registerOption(HIGHLIGHT_COMMENT_MSG,
+			HIGHLIGHT_COMMENT_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting comments.");
-		opt.registerOption(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_DEF, help,
+		opt.registerOption(HIGHLIGHT_VARIABLE_MSG,
+			HIGHLIGHT_VARIABLE_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting variables.");
-		opt.registerOption(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF, help,
+		opt.registerOption(HIGHLIGHT_CONST_MSG,
+			HIGHLIGHT_CONST_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting constants.");
-		opt.registerOption(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF, help,
+		opt.registerOption(HIGHLIGHT_PARAMETER_MSG,
+			HIGHLIGHT_PARAMETER_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting parameters.");
-		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF, help,
+		opt.registerOption(HIGHLIGHT_GLOBAL_MSG,
+			HIGHLIGHT_GLOBAL_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
-		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF, help,
+		opt.registerOption(HIGHLIGHT_DEFAULT_MSG,
+			HIGHLIGHT_DEFAULT_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
-		opt.registerOption(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR, help,
+		opt.registerOption(CODE_VIEWER_BACKGROUND_COLOR_MSG,
+			CODE_VIEWER_BACKGROUND_COLOR,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBackgroundColor"),
 			"The background color of the decompiler window.");
-		opt.registerOption(FONT_MSG, DEFAULT_FONT, help,
+		opt.registerOption(FONT_MSG,
+			DEFAULT_FONT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFont"),
 			"The font used to render text in the decompiler.");
-		opt.registerOption(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF, help,
+		opt.registerOption(SEARCH_HIGHLIGHT_MSG,
+			SEARCH_HIGHLIGHT_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFindHighlight"),
 			"The color used to highlight matches using the Find Dialog.");
-		opt.registerOption(LINE_NUMBER_MSG, LINE_NUMBER_DEF, help,
+		opt.registerOption(LINE_NUMBER_MSG,
+			LINE_NUMBER_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayLineNumbers"),
 			"Toggle for displaying line numbers in the decompiler.");
-		opt.registerOption(NAMESPACE_MSG, NAMESPACES_DEF, help,
-			"Toggle for dislaying namespaces for functions.");
-		opt.registerOption(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS, help,
+		opt.registerOption(DECOMPILE_TIMEOUT,
+			SUGGESTED_DECOMPILE_TIMEOUT_SECS,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralTimeout"),
 			"The number of seconds to allow the decompiler to run before terminating the " +
 				"decompiler.\nCurrently this does not affect the UI, which will run indefinitely. " +
 				"This setting currently only affects background analysis that uses the decompiler.");
-		opt.registerOption(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES, help,
+		opt.registerOption(PAYLOAD_LIMIT,
+			SUGGESTED_MAX_PAYLOAD_BYTES,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxPayload"),
 			"The maximum size of the decompiler result payload in MBYtes (Suggested value: 50).");
-		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG, HIGHLIGHT_CURRENT_VARIABLE_DEF, help,
+		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG,
+			HIGHLIGHT_CURRENT_VARIABLE_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
 			"Current variable highlight");
-		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE, help,
+		opt.registerOption(CACHED_RESULTS_SIZE_MSG,
+			SUGGESTED_CACHED_RESULTS_SIZE,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralCacheSize"),
 			CACHE_RESULTS_DESCRIPTION);
 		grabFromToolAndProgram(ownerPlugin, opt, program);
 	}
@@ -585,10 +733,15 @@ public class DecompileOptions { //
 			eliminateUnreachable ? "on" : "off");
 		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "doubleprecis",
 			simplifyDoublePrecision ? "on" : "off");
+
+		// Must set language early so that the object is in place before other option changes
+		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
+
 		appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
 		appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
 		appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
 		appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
+		appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");
 		appendOption(buf, "conventionprinting", conventionPrint ? "on" : "off", "", "");
 		appendOption(buf, "nocastprinting", noCastPrint ? "on" : "off", "", "");
 		appendOption(buf, "maxlinewidth", Integer.toString(maxwidth), "", "");
@@ -605,16 +758,9 @@ public class DecompileOptions { //
 		appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
 		appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off", "");
 
-		String curformat = "best";
-		if (IntegerFormatEnum.Hexadecimal.equals(integerFormat)) {
-			curformat = "hex";
-		}
-		else if (IntegerFormatEnum.Decimal.equals(integerFormat)) {
-			curformat = "dec";
-		}
-		appendOption(buf, "integerformat", curformat, "", "");
+		appendOption(buf, "namespacestrategy", namespaceStrategy.getOptionString(), "", "");
 
-		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
+		appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
 
 		appendOption(buf, "protoeval", protoEvalModel, "", "");
 		buf.append("</optionslist>\n");
@@ -623,6 +769,10 @@ public class DecompileOptions { //
 
 	public int getMaxWidth() {
 		return maxwidth;
+	}
+
+	public void setMaxWidth(int maxwidth) {
+		this.maxwidth = maxwidth;
 	}
 
 	public Color getKeywordColor() {
@@ -747,10 +897,6 @@ public class DecompileOptions { //
 
 	public boolean isDisplayLineNumbers() {
 		return displayLineNumbers;
-	}
-
-	public boolean isDisplayNamespaces() {
-		return displayNamespaces;
 	}
 
 	public DecompilerLanguage getDisplayLanguage() {

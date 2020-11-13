@@ -88,6 +88,16 @@ public:
   /// \return \b true if a cast is required before extending
   virtual bool checkIntPromotionForExtension(const PcodeOp *op) const=0;
 
+
+  /// \brief Is the given ZEXT/SEXT cast implied by the expression its in?
+  ///
+  /// We've already determined that the given ZEXT or SEXT op can be viewed as a natural \e cast operation.
+  /// Determine if the cast is implied by the expression its and doesn't need to be printed.
+  /// \param op is the given ZEXT or SEXT PcodeOp
+  /// \param readOp is the PcodeOp consuming the output of the extensions (or null)
+  /// \return \b true if the op as a cast does not need to be printed
+  virtual bool isExtensionCastImplied(const PcodeOp *op,const PcodeOp *readOp) const=0;
+
   /// \brief Does there need to be a visible cast between the given data-types
   ///
   /// The cast is from a \e current data-type to an \e expected data-type. NULL is returned
@@ -151,6 +161,7 @@ public:
   virtual int4 intPromotionType(const Varnode *vn) const;
   virtual bool checkIntPromotionForCompare(const PcodeOp *op,int4 slot) const;
   virtual bool checkIntPromotionForExtension(const PcodeOp *op) const;
+  virtual bool isExtensionCastImplied(const PcodeOp *op,const PcodeOp *readOp) const;
   virtual Datatype *castStandard(Datatype *reqtype,Datatype *curtype,bool care_uint_int,bool care_ptr_uint) const;
   virtual Datatype *arithmeticOutputStandard(const PcodeOp *op);
   virtual bool isSubpieceCast(Datatype *outtype,Datatype *intype,uint4 offset) const;

@@ -1,7 +1,5 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
- * REVIEWED: YES
  * NOTE: This was included for debugging purposes; while it has utility, better and more complete options should be considered...
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

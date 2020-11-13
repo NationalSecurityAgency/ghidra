@@ -665,10 +665,11 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	/**
 	 * Recompute function body.  An open transaction must already exist.
 	 * @param program the program the function is in.
-	 * @param function the function to be fixed up.  A null function will return false.
+	 * @param func the function to be fixed up.  A null function will return false.
 	 * @param monitor task monitor
-	 * @return true if successful, false if cancelled or unable to fixup function or
+	 * @return true if successful, false if unable to fixup function or
 	 * no function found containing the start address of the indicated instruction
+	 * @throws CancelledException if the function fixup is cancelled.
 	 */
 	public static boolean fixupFunctionBody(Program program, Function func, TaskMonitor monitor)
 			throws CancelledException {

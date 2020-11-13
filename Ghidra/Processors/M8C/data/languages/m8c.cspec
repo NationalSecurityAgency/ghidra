@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="CODE" />
+    <range space="RAM" />
+    <range space="BANK0" />
+    <range space="BANK1" />
+  </global>
+  <stackpointer register="SP" space="RAM" growth="positive"/>
+  <returnaddress>
+    <varnode space="stack" offset="-2" size="2"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__fastcall" extrapop="-2" stackshift="-2" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="X"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xf"/>
+      </localrange>
+      <killedbycall>
+        <register name="X" />
+      </killedbycall>
+    </prototype>
+  </default_proto>
+    <prototype name="stdcall" extrapop="-2" stackshift="-2" >
+      <input>
+        <pentry minsize="1" maxsize="16" align="1">
+          <addr space="stack" offset="0xee" />
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="A"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="SP"/>
+        <register name="X" />
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xf"/>
+      </localrange>
+    </prototype>
+</compiler_spec>

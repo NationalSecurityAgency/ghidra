@@ -22,7 +22,7 @@ import java.awt.Component;
  * more detailed message (e.g., stacktrace).
  * 
  * <P>The 'message' parameter for these calls is typically a String.  However, it can also 
- * be a log4j <tt>Message</tt> object as well.   (See log4j2 for details.) 
+ * be a log4j <code>Message</code> object as well.   (See log4j2 for details.) 
  */
 public class Msg {
 	private static ErrorLogger errorLogger = new DefaultErrorLogger();
@@ -222,33 +222,6 @@ public class Msg {
 		else {
 			errorDisplay.displayWarningMessage(errorLogger, originator, parent, title, message,
 				null);
-		}
-	}
-
-	/**
-	 * Used to display a warning message to the user with a pop-up GUI dialog.
-	 * Also records the message to the logging system.
-	 * 
-	 * @param originator
-	 *            a Logger instance, "this", or YourClass.class
-	 * @param parent
-	 *            a parent component used to center the dialog (or null if you
-	 *            don't have one)
-	 * @param title
-	 *            the title of the pop-up dialog (main subject of message)
-	 * @param message
-	 *            the details of the message
-	 * @param throwable
-	 *            the Throwable that describes the cause of the warning
-	 */
-	public static void showWarn(Object originator, Component parent, String title, Object message,
-			Throwable throwable) {
-		if (SystemUtilities.isInHeadlessMode()) {
-			Msg.warn(originator, message, throwable);
-		}
-		else {
-			errorDisplay.displayWarningMessage(errorLogger, originator, parent, title, message,
-				throwable);
 		}
 	}
 

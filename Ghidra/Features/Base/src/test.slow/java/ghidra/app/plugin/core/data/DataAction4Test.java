@@ -818,7 +818,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		d = getContextData();
 		assertEquals("ChooseFontW\0\u0015\0ReplaceTextW\0\0\u0004", d.getValue());
-		assertEquals("\"ChooseFontW\\0\",15,\"\\0ReplaceTextW\\0\\0\",04",
+		assertEquals("\"ChooseFontW\\0\",15h,\"\\0ReplaceTextW\\0\\0\",04h",
 			d.getDefaultValueRepresentation());
 
 	}
@@ -851,7 +851,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		assertEquals("\"ChooseFontW\"", d.getDefaultValueRepresentation());
 
 		d = checkNextData(dit, TerminatedStringDataType.class, 0x01006a0e, 2);
-		assertEquals("15", d.getDefaultValueRepresentation());
+		assertEquals("15h", d.getDefaultValueRepresentation());
 
 		d = checkNextData(dit, TerminatedStringDataType.class, 0x01006a10, 13);
 		assertEquals("ReplaceTextW", d.getValue());
@@ -862,7 +862,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		assertEquals("\"\"", d.getDefaultValueRepresentation());
 
 		d = checkNextData(dit, TerminatedStringDataType.class, 0x01006a1e, 2);
-		assertEquals("04", d.getDefaultValueRepresentation());
+		assertEquals("04h", d.getDefaultValueRepresentation());
 	}
 
 	@Test
@@ -890,7 +890,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		checkOnDefined(null, UnicodeDataType.class);
 
 		d = getContextData();
-		assertEquals("01,00,\"\\0Sample\"", d.getDefaultValueRepresentation());
+		assertEquals("01h,00h,\"\\0Sample\"", d.getDefaultValueRepresentation());
 		assertEquals("\1\0Sample", d.getValue());
 
 	}
@@ -925,7 +925,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// check for wchar16[2] garbage string
 		d = checkNextData(dit, TerminatedUnicodeDataType.class, 0x01008014, 4);
 		assertEquals(d.getLength(), 4);
-		assertEquals("01,00", d.getDefaultValueRepresentation());
+		assertEquals("01h,00h", d.getDefaultValueRepresentation());
 		assertEquals("\1", d.getValue());
 
 		// check for "Sample" string

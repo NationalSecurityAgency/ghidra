@@ -24,7 +24,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
  * <p>
  * Example:
  * <pre>
- * @PluginInfo(
+ * &#64;PluginInfo(
  * 	status = PluginStatus.RELEASED,
  * 	packageName = CorePluginPackage.NAME,
  * 	category = PluginCategoryNames.COMMON,
@@ -32,7 +32,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
  * 	description = "Longer description of plugin.",
  * 	servicesProvided = { ServiceInterfaceThisPluginProvides.class }
  * 	servicesRequired = { RequiredServiceInterface1.class, RequiredServiceInterface2.class },
- * 	servicesUsed = { OptionalServiceInterface1.class, OptionalServiceInterface2.class },
  * 	eventsConsumed = { SomePluginEvent.class },
  * 	eventsProduced = { AnotherPluginEvent.class },
  * 	isSlowInstallation = false
@@ -68,6 +67,7 @@ public @interface PluginInfo {
 	 * <li>PluginCategoryNames.COMMON
 	 * <li>PluginCategoryNames.SUPPORT
 	 * <li>PluginCategoryNames.etc
+	 * </ul>
 	 * @return String category
 	 */
 	String category();

@@ -65,7 +65,7 @@ public class CodeBrowserNavigationSegmentedAddressTest extends AbstractGhidraHea
 		tool.addPlugin(LocationReferencesPlugin.class.getName());
 		tool.addPlugin(MarkerManagerPlugin.class.getName());
 		NextPrevAddressPlugin np = env.getPlugin(NextPrevAddressPlugin.class);
-		prev = getAction(np, "Previous in History Buffer");
+		prev = getAction(np, "Previous Location in History");
 		clearHistory = getAction(np, "Clear History Buffer");
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		nextFunction = getAction(cb, "Go to next function");

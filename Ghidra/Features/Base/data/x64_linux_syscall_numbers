@@ -18,7 +18,7 @@
 17 pread64
 18 pwrite64
 19 readv
-2 writev
+20 writev
 21 access
 22 pipe
 23 select

@@ -21,10 +21,10 @@ import db.Record;
 import ghidra.util.Lock;
 
 /**
- * Base class for an cached object in the database. Database objects have keys.  They are marked
- * as invalid when a database cache is cleared and can be revived on a refresh as long
- * as they haven't been deleted.  Instantiating an object will cause it to be added
- * immediately to the associated cache.
+ * Base class for an cached object in the database. Database objects have keys. They are marked as
+ * invalid when a database cache is cleared and can be revived on a refresh as long as they haven't
+ * been deleted. Instantiating an object will cause it to be added immediately to the associated
+ * cache.
  */
 abstract public class DatabaseObject {
 
@@ -36,6 +36,7 @@ abstract public class DatabaseObject {
 
 	/**
 	 * Constructs a new DatabaseObject and adds it to the specified cache.
+	 * 
 	 * @param cache to be used for this object or null if object will not be cached
 	 * @param key database key to uniquely identify this object
 	 */
@@ -64,10 +65,11 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * Returns true if this object has been deleted.  Note: once an object has been deleted,
-	 * it will never be "refreshed".  For example, if an object is ever deleted and is
-	 * resurrected via an "undo", you will have get a fresh instance of the object.
-	 * @return  true if this object has been deleted.
+	 * Returns true if this object has been deleted. Note: once an object has been deleted, it will
+	 * never be "refreshed". For example, if an object is ever deleted and is resurrected via an
+	 * "undo", you will have get a fresh instance of the object.
+	 * 
+	 * @return true if this object has been deleted.
 	 */
 	public boolean isDeleted() {
 		return deleted;
@@ -75,8 +77,8 @@ abstract public class DatabaseObject {
 
 	/**
 	 *
-	 * Invalidate this object. This does not necessarily mean that this object can
-	 * never be used again.  If the object can refresh itself, it may still be useable.
+	 * Invalidate this object. This does not necessarily mean that this object can never be used
+	 * again. If the object can refresh itself, it may still be useable.
 	 */
 	public void setInvalid() {
 		invalidateCount = getCurrentValidationCount() - 1;
@@ -99,8 +101,9 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * Returns true if object is currently invalid.  Calling checkIsValid may
-	 * successfully refresh object making it valid.
+	 * Returns true if object is currently invalid. Calling checkIsValid may successfully refresh
+	 * object making it valid.
+	 * 
 	 * @see #checkIsValid()
 	 */
 	public boolean isInvalid() {
@@ -108,8 +111,8 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * Checks if this object has been deleted, in which case any use of the object is
-	 * not allowed.
+	 * Checks if this object has been deleted, in which case any use of the object is not allowed.
+	 * 
 	 * @throws ConcurrentModificationException if the object has been deleted from the database.
 	 */
 	public void checkDeleted() {
@@ -119,8 +122,9 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * Check whether this object is still valid. If the object is invalid, the object will
-	 * attempt to refresh itself.  If the refresh fails, the object will be marked as deleted.
+	 * Check whether this object is still valid. If the object is invalid, the object will attempt
+	 * to refresh itself. If the refresh fails, the object will be marked as deleted.
+	 * 
 	 * @return true if the object is valid.
 	 */
 	public boolean checkIsValid() {
@@ -128,10 +132,11 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * Check whether this object is still valid. If the object is invalid, the object will
-	 * attempt to refresh itself using the specified record.  If the refresh fails, the
-	 * object will be marked as deleted and removed from cache.  If this object is already
-	 * marked as deleted, the record can not be used to refresh the object.
+	 * Check whether this object is still valid. If the object is invalid, the object will attempt
+	 * to refresh itself using the specified record. If the refresh fails, the object will be marked
+	 * as deleted and removed from cache. If this object is already marked as deleted, the record
+	 * can not be used to refresh the object.
+	 * 
 	 * @param record optional record which may be used to refresh invalid object
 	 * @return true if the object is valid.
 	 */
@@ -153,8 +158,9 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * This method provides a cheap (lock free) way to test if an object is valid.  If
-	 * this object is invalid, then the lock will be used to refresh as needed.
+	 * This method provides a cheap (lock free) way to test if an object is valid. If this object is
+	 * invalid, then the lock will be used to refresh as needed.
+	 * 
 	 * @param lock the lock that will be used if the object needs to be refreshed.
 	 * @return true if object is valid, else false
 	 */
@@ -173,24 +179,25 @@ abstract public class DatabaseObject {
 
 	/**
 	 * Tells the object to refresh its state from the database.
-	 * @return true if the object was able to refresh itself. Return false if the object
-	 * was deleted. Objects that extend this class must implement a refresh method.  If
-	 * an object can never refresh itself, then it should always return false.
+	 * 
+	 * @return true if the object was able to refresh itself. Return false if the object was
+	 *         deleted. Objects that extend this class must implement a refresh method. If an object
+	 *         can never refresh itself, then it should always return false.
 	 */
 	protected abstract boolean refresh();
 
 	/**
-	 * Tells the object to refresh its state from the database using the specified
-	 * record if not null.  NOTE: The default implementation ignores the record
-	 * and invokes refresh().  Implementations of this method must take care if
-	 * multiple database tables are used since the record supplied could correspond
-	 * to another object.  In some cases it may be best not to override this method
-	 * or ignore the record provided.
+	 * Tells the object to refresh its state from the database using the specified record if not
+	 * null. NOTE: The default implementation ignores the record and invokes refresh().
+	 * Implementations of this method must take care if multiple database tables are used since the
+	 * record supplied could correspond to another object. In some cases it may be best not to
+	 * override this method or ignore the record provided.
+	 * 
 	 * @param record valid record associated with object's key (optional, may be null to force
-	 * record lookup or other refresh technique)
-	 * @return true if the object was able to refresh itself. Return false if record is null
-	 * and object was deleted. Objects that extend this class must implement a refresh method.
-	 * If an object can never refresh itself, then it should always return false.
+	 *            record lookup or other refresh technique)
+	 * @return true if the object was able to refresh itself. Return false if record is null and
+	 *         object was deleted. Objects that extend this class must implement a refresh method.
+	 *         If an object can never refresh itself, then it should always return false.
 	 */
 	protected boolean refresh(Record record) {
 		return refresh();

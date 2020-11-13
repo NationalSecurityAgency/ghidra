@@ -30,9 +30,9 @@ public interface GComponent {
 	/**
 	 * Enables and disables the rendering of HTML content in this component.  If enabled, this
 	 * component will interpret HTML content when the text this component is showing begins with
-	 * <tt>&lt;html&gt;</tt>
+	 * {@code <html>}
 	 *
-	 * @param enable true to enable HTML rendering; false to disable it
+	 * @param enabled true to enable HTML rendering; false to disable it
 	 */
 	public default void setHTMLRenderingEnabled(boolean enabled) {
 		setHTMLRenderingFlag((JComponent) this, enabled);

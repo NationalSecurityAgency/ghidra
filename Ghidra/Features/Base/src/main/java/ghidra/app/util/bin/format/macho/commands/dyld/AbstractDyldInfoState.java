@@ -58,8 +58,7 @@ abstract public class AbstractDyldInfoState {
 
 		long offset = symbol.getAddress().getOffset();
 
-		DataConverter converter = program.getLanguage().isBigEndian() ? new BigEndianDataConverter()
-				: new LittleEndianDataConverter();
+		DataConverter converter = DataConverter.getInstance(program.getLanguage().isBigEndian());
 
 		byte[] bytes = (program.getDefaultPointerSize() == 8) ? converter.getBytes(offset)
 				: converter.getBytes((int) offset);

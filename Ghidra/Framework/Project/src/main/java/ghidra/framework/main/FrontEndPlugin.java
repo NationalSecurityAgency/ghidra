@@ -209,34 +209,27 @@ public class FrontEndPlugin extends Plugin
 
 	private void createActions() {
 		String owner = getName();
+
 		String groupName = "Cut/copy/paste/new1";
+		newFolderAction = new FrontEndProjectDataNewFolderAction(owner, groupName);
 
-		newFolderAction = new ProjectDataNewFolderAction(owner, groupName);
 		groupName = "Cut/copy/paste/new2";
-
 		cutAction = new ProjectDataCutAction(owner, groupName);
-
 		clearCutAction = new ClearCutAction(owner);
-
 		copyAction = new ProjectDataCopyAction(owner, groupName);
-
 		pasteAction = new ProjectDataPasteAction(owner, groupName);
 
 		groupName = "Delete/Rename";
 		renameAction = new ProjectDataRenameAction(owner, groupName);
-
 		deleteAction = new ProjectDataDeleteAction(owner, groupName);
-
 		openAction = new ProjectDataOpenDefaultToolAction(owner, "Open");
 
 		groupName = "Expand/Collapse";
-		expandAction = new ProjectDataExpandAction(owner, groupName);
-
-		collapseAction = new ProjectDataCollapseAction(owner, groupName);
+		expandAction = new FrontEndProjectDataExpandAction(owner, groupName);
+		collapseAction = new FrontEndProjectDataCollapseAction(owner, groupName);
 
 		groupName = "Select/Toggle";
 		selectAction = new ProjectDataSelectAction(owner, groupName);
-
 		readOnlyAction = new ProjectDataReadOnlyAction(owner, groupName);
 
 		groupName = "XRefresh";
@@ -660,9 +653,9 @@ public class FrontEndPlugin extends Plugin
 	private ToolTemplate getUpToDateTemplate(ToolTemplate template) {
 
 		ToolManager toolManager = activeProject.getToolManager();
-		Tool[] runningTools = toolManager.getRunningTools();
+		PluginTool[] runningTools = toolManager.getRunningTools();
 		String templateName = template.getName();
-		for (Tool runningTool : runningTools) {
+		for (PluginTool runningTool : runningTools) {
 			if (runningTool.getName().equals(templateName)) {
 				return runningTool.getToolTemplate(true);
 			}
@@ -960,8 +953,8 @@ public class FrontEndPlugin extends Plugin
 
 			private boolean isToolRunning(ToolTemplate template) {
 				ToolManager toolManager = activeProject.getToolManager();
-				Tool[] runningTools = toolManager.getRunningTools();
-				for (Tool runningTool : runningTools) {
+				PluginTool[] runningTools = toolManager.getRunningTools();
+				for (PluginTool runningTool : runningTools) {
 					if (runningTool.getToolName().equals(template.getName())) {
 						return true;
 					}
@@ -982,14 +975,14 @@ public class FrontEndPlugin extends Plugin
 			@Override
 			public void actionPerformed(ActionContext context) {
 				ToolButton tb = (ToolButton) context.getContextObject();
-				PluginTool pluginTool = (PluginTool) tb.getRunningTool();
+				PluginTool pluginTool = tb.getRunningTool();
 				pluginTool.showConfig(true, false);
 			}
 
 			@Override
 			boolean isEnabledForContext(ToolButton toolButton) {
 				if (toolButton.isRunningTool()) {
-					PluginTool pluginTool = (PluginTool) toolButton.getRunningTool();
+					PluginTool pluginTool = toolButton.getRunningTool();
 					return pluginTool.isConfigurable();
 				}
 				return false;
@@ -1009,9 +1002,6 @@ public class FrontEndPlugin extends Plugin
 		tool.addLocalAction(frontEndProvider, propertiesAction);
 	}
 
-	/**
-	 * Delete the tool template from the tool chest.
-	 */
 	private void delete(String toolName) {
 		if (!confirmDelete(toolName + " from your local tool chest?")) {
 			return;
@@ -1049,17 +1039,11 @@ public class FrontEndPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.main.FrontEndService#addProjectListener(ghidra.framework.model.ProjectListener)
-	 */
 	@Override
 	public void addProjectListener(ProjectListener l) {
 		((FrontEndTool) tool).addProjectListener(l);
 	}
 
-	/**
-	 * @see ghidra.framework.main.FrontEndService#removeProjectListener(ghidra.framework.model.ProjectListener)
-	 */
 	@Override
 	public void removeProjectListener(ProjectListener l) {
 		if (tool != null) { // tool is null when we've been disposed

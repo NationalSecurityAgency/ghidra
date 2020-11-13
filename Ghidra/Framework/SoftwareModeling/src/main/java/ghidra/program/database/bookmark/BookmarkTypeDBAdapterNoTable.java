@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +28,7 @@ public class BookmarkTypeDBAdapterNoTable extends BookmarkTypeDBAdapter {
 	private Record[] records = new Record[0];
 
 	/**
-	 * @param dbHandle
-	 * @param openMode
+	 * @param dbHandle the database handle
 	 */
 	public BookmarkTypeDBAdapterNoTable(DBHandle dbHandle) {
 	}
@@ -45,9 +43,6 @@ public class BookmarkTypeDBAdapterNoTable extends BookmarkTypeDBAdapter {
 		records = oldMgr.getTypeRecords();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.bookmark.BookmarkTypeDBAdapter#getRecords()
-	 */
 	@Override
 	Record[] getRecords() throws IOException {
 		return records;

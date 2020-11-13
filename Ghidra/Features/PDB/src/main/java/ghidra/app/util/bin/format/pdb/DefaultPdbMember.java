@@ -48,11 +48,11 @@ public class DefaultPdbMember extends PdbMember {
 	 * @param dataTypeName field datatype or the base datatype associated with a bitfield
 	 * @param offset member offset
 	 * @param kind kind of member (only {@link PdbKind#MEMBER} are supported as composite members)
-	 * @param dataTypeParser
+	 * @param dataTypeParser PDB datatype parser
 	 */
 	DefaultPdbMember(String name, String dataTypeName, int offset, PdbKind kind,
 			PdbDataTypeParser dataTypeParser) {
-		super(getMemberName(name, kind), dataTypeName, offset);
+		super(getMemberName(name, kind), dataTypeName, offset, null);
 		this.kind = kind;
 		this.dataTypeParser = dataTypeParser;
 		parseBitField(name);

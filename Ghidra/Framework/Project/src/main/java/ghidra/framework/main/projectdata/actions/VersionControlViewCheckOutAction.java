@@ -20,7 +20,7 @@ import java.util.List;
 
 import docking.action.MenuData;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.remote.User;
@@ -28,25 +28,25 @@ import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.util.Msg;
 
 /**
- * Action to view the current check outs for a single domain file in the repository.
+ * Action to view the current checkouts for a single domain file in the repository.
  */
 public class VersionControlViewCheckOutAction extends VersionControlAction {
 
 	/**
-	 * Creates an action to view the current check outs for a single domain file in the repository.
+	 * Creates an action to view the current checkouts for a single domain file in the repository.
 	 * @param plugin the plug-in that owns this action.
 	 */
 	public VersionControlViewCheckOutAction(Plugin plugin) {
-		super("View Check Outs", plugin.getName(), plugin.getTool());
-		setPopupMenuData(new MenuData(new String[] { "View Check Outs..." }, null, GROUP));
+		super("View Checkouts", plugin.getName(), plugin.getTool());
+		setPopupMenuData(new MenuData(new String[] { "View Checkouts..." }, null, GROUP));
 
-		setDescription("View current check outs");
+		setDescription("View current checkouts");
 
 		setEnabled(false);
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		viewCheckouts(context.getSelectedFiles());
 	}
 
@@ -54,7 +54,7 @@ public class VersionControlViewCheckOutAction extends VersionControlAction {
 	 * Returns true if a single version controlled domain file is being provided.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		if (domainFiles.size() != 1) {
 			return false;

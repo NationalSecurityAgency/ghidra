@@ -23,7 +23,10 @@ import javax.swing.KeyStroke;
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.widgets.OptionDialog;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 /**
@@ -32,19 +35,17 @@ import resources.ResourceManager;
  */
 public class UnpackageAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon unpackageIcon =
-		ResourceManager.loadImage("images/Unpackage.gif");
-	private final static String ACTION_NAME = "Unpackage Component";
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/Unpackage.gif");
+	public final static String ACTION_NAME = "Unpackage Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Replace the selected composite with its components";
-	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
-	private static String[] popupPath = new String[] { ACTION_NAME };
+	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public UnpackageAction(StructureEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null,
-			unpackageIcon);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
-		setKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();
 	}
 
@@ -63,18 +64,26 @@ public class UnpackageAction extends CompositeEditorTableAction {
 				return;
 			}
 		}
+
+		TaskLauncher.launchModal("Unpackaging Component",
+			monitor -> doUnpackage(currentRowIndex, monitor));
+
+		requestTableFocus();
+	}
+
+	private void doUnpackage(int row, TaskMonitor monitor) {
 		try {
-			((StructureEditorModel) model).unpackage(currentRowIndex);
+			((StructureEditorModel) model).unpackage(row, monitor);
+		}
+		catch (CancelledException e) {
+			// user cancelled
 		}
 		catch (UsrException e1) {
 			model.setStatus(e1.getMessage(), true);
 		}
-		requestTableFocus();
+		model.fireTableDataChanged();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorAction#adjustEnablement()
-	 */
 	@Override
 	public void adjustEnablement() {
 		setEnabled(model.isUnpackageAllowed());

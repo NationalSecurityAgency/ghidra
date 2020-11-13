@@ -19,8 +19,8 @@ import java.awt.Font;
 import java.io.*;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.function.Supplier;
 
 import javax.swing.SwingUtilities;
@@ -34,8 +34,6 @@ import utilities.util.reflection.ReflectionUtilities;
  * static.
  */
 public class SystemUtilities {
-
-	private final static String DATE_TIME_FORMAT = "MMM d yyyy HH:mm:ss";
 
 	private static String userName;
 
@@ -154,7 +152,7 @@ public class SystemUtilities {
 	/**
 	 * Checks to see if the font size override setting is enabled and adjusts
 	 * the given font as necessary to match the override setting. If the setting
-	 * is not enabled, then <tt>font</tt> is returned.
+	 * is not enabled, then <code>font</code> is returned.
 	 *
 	 * @param font
 	 *            The current font to adjust, if necessary.
@@ -166,32 +164,6 @@ public class SystemUtilities {
 		}
 
 		return font.deriveFont((float) FONT_SIZE_OVERRIDE_VALUE.intValue());
-	}
-
-	/**
-	 * returns the current date/time using default DATE/TIME format
-	 * @return the current date/time using default DATE/TIME format
-	 */
-	public static String getDateTime() {
-		return getDateTime(DATE_TIME_FORMAT);
-	}
-
-	public static String currentTimeStamp() {
-		SimpleDateFormat formatter = new SimpleDateFormat("dd.MMM.yyyy_HH.mm.ss");
-		return formatter.format(new Date());
-	}
-
-	/**
-	 * returns the current date/time using specified DATE/TIME format
-	 * 
-	 * @param dateTimeFormat the format for the time
-	 * @return the formatted date 
-	 */
-	public static String getDateTime(String dateTimeFormat) {
-		SimpleDateFormat formatter = new SimpleDateFormat(dateTimeFormat, Locale.getDefault());
-		formatter.setTimeZone(TimeZone.getDefault());
-
-		return formatter.format(new Date());
 	}
 
 	/**
@@ -231,9 +203,9 @@ public class SystemUtilities {
 	 * {@link SwingUtilities#invokeAndWait(Runnable)}.  Use this method when you need to get
 	 * a value while being on the Swing thread.
 	 *
-	 * <pre>
+	 * <pre>{@literal
 	 * 		String value = runSwingNow(() -> label.getText());
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param s the supplier that will be called on the Swing thread
 	 * @return the result of the supplier
@@ -436,7 +408,7 @@ public class SystemUtilities {
 	 * This method is useful to print values of code that you cannot edit while debugging.
 	 * <p>
 	 * Example, inside of your conditional breakpoint for a method on a Sun Java file you
-	 * can put something like: <tt>printString("Value of first arg: " + arg0, System.err)</tt>
+	 * can put something like: <code>printString("Value of first arg: " + arg0, System.err)</code>
 	 * <p>
 	 * Note: Don't remove this method simply because no code is referencing it, as it is used
 	 * by conditional breakpoints.

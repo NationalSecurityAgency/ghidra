@@ -53,7 +53,6 @@ public abstract class ConflictPanel extends ChoiceComponent {
 	 * row or 0 is returned.
 	 * Each button or check box has an associated value that can be bitwise 'OR'ed together
 	 * to get the entire choice for the row.
-	 * @param row the row of the conflict resolution table.
 	 * @return the choice(s) currently selected.
 	 */
 	public abstract int getUseForAllChoice();

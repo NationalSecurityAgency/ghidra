@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +42,6 @@ public class UserDataChangeRecord extends DomainObjectChangeRecord {
 	/**
 	 * Constructor for change record for removing a range of properties.
 	 * @param propertyName name of the property
-	 * @param start start of the range of properties being removed
-	 * @param end end of the range of properties being removed
 	 */
 	public UserDataChangeRecord(String propertyName) {
 		super(ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED);

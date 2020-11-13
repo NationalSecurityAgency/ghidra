@@ -70,9 +70,8 @@ public class ContextState {
 
 	/**
 	 * Constructs an empty state.
-	 * @param pcodeEntry instruction identifies the instruction entry point for this context state.
-	 * A pcodeIndex of 0 is assumed.  Initial state utilizes the program's stored context.
-	 * @param program
+	 * @param entryPt the entry point for the context state
+	 * @param program the program
 	 */
 	public ContextState(Address entryPt, Program program) {
 		this(entryPt, program.getProgramContext(), program);
@@ -80,10 +79,9 @@ public class ContextState {
 
 	/**
 	 * Constructs an empty state.
-	 * @param pcodeEntry instruction identifies the instruction entry point for this context state.
-	 * A pcodeIndex of 0 is assumed.
+	 * @param entryPt the entry point for the context state
 	 * @param programCtx initial program context or null
-	 * @param program
+	 * @param program the program
 	 */
 	public ContextState(Address entryPt, ProgramContext programCtx, Program program) {
 		this.program = program;
@@ -100,8 +98,7 @@ public class ContextState {
 
 	/**
 	 * Derive a new context state from an initial state
-	 * @param instructionAddr instruction identifies the instruction entry point for this context state.
-	 * @param pcodeIndex pcode identifies the pcode entry point for this context state.
+	 * @param pcodeEntry the pcode entry sequence number
 	 * @param previousState previous context state flowing into the specified pcode location
 	 */
 	public ContextState(SequenceNumber pcodeEntry, ContextState previousState) {

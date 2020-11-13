@@ -22,7 +22,6 @@ import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;

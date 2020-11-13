@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +55,6 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	 * @param monitor the task monitor
 	 * @throws VersionException
 	 * @throws IOException
-	 * @throws CancelledException
 	 */
 	public RelocationManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {

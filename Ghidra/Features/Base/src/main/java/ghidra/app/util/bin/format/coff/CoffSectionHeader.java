@@ -29,6 +29,9 @@ import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A 0x28 byte COFF section header
+ */
 public class CoffSectionHeader implements StructConverter {
 
 	protected String s_name;       // section name
@@ -145,7 +148,7 @@ public class CoffSectionHeader implements StructConverter {
 	/**
 	 * Returns true if this section is byte oriented and aligned and should assume
 	 * an addressable unit size of 1.
-	 * @returns true if byte aligned, false if word aligned
+	 * @return true if byte aligned, false if word aligned
 	 */
 	public boolean isExplicitlyByteAligned() {
 		return (s_reserved & CoffSectionHeaderReserved.EXPLICITLY_BYTE_ALIGNED) != 0;

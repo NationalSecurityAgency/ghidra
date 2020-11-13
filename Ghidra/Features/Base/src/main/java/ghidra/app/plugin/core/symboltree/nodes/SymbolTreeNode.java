@@ -19,6 +19,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.*;
 
 import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.app.plugin.core.symboltree.SymbolTreeProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -27,10 +28,10 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Interface for all nodes that live in the {@link SymbolTreeProvider Symbol Tree}.  
+ * Base class for all nodes that live in the {@link SymbolTreeProvider Symbol Tree}.  
  * 
  * <p>All nodes will provide a way to search for the node that represents a given symbol.  The
- * 'find' logic lives in this interface so all nodes have this capability.  Some subclasses
+ * 'find' logic lives in this class so all nodes have this capability.  Some subclasses
  * of this interface, those with the potential for thousands of children, will break their 
  * children up into subgroups by name.  The search algorithm in this class will uses each 
  * node's {@link #getChildrenComparator()} method in order to be able to find the correct
@@ -38,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  * to keep its default {@link GTreeNode#compareTo(GTreeNode)} method, while allow each 
  * parent node to sort its children differently.
  */
-public interface SymbolTreeNode {
+public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 
 	public static final int MAX_CHILD_NODES = 40;
 
@@ -94,39 +95,39 @@ public interface SymbolTreeNode {
 	 * Returns true if this node can be cut and moved to a different location.
 	 * @return true if this node can be cut and moved to a different location.
 	 */
-	public boolean canCut();
+	public abstract boolean canCut();
 
 	/**
 	 * Returns true if this nodes handles paste operations
 	 * @return true if this nodes handles paste operations
 	 */
-	public boolean canPaste(List<GTreeNode> pastedNodes);
+	public abstract boolean canPaste(List<GTreeNode> pastedNodes);
 
 	/**
 	 * Signals to this node that it has been cut during a cut operation, for example, like during
 	 * a cut/paste operation.
 	 * @param isCut true signals that the node has been cut; false that it is not cut.
 	 */
-	public void setNodeCut(boolean isCut);
+	public abstract void setNodeCut(boolean isCut);
 
 	/**
 	 * Return true if the node has been cut.
 	 * @return true if the node has been cut.
 	 */
-	public boolean isCut();
+	public abstract boolean isCut();
 
 	/**
 	 * Gets the data flavor that this node supports for dragging.
 	 * @return the data flavor that this node supports for dragging.
 	 */
-	public DataFlavor getNodeDataFlavor();
+	public abstract DataFlavor getNodeDataFlavor();
 
 	/**
 	 * Returns true if this node can accept any of the given data flavors for dropping.
 	 * @param dataFlavors the data flavors of an object being dragged.
 	 * @return true if this node can accept any of the given data flavors for dropping.
 	 */
-	public boolean supportsDataFlavors(DataFlavor[] dataFlavors);
+	public abstract boolean supportsDataFlavors(DataFlavor[] dataFlavors);
 
 	/**
 	 * Returns the namespace for this symbol tree node.  Not all implementations contain symbols,
@@ -134,7 +135,7 @@ public interface SymbolTreeNode {
 	 * namespace.
 	 * @return the namespace for this symbol tree node.
 	 */
-	public Namespace getNamespace();
+	public abstract Namespace getNamespace();
 
 	/**
 	 * Returns the comparator used to sort the children of this node.  This node will still 
@@ -143,7 +144,7 @@ public interface SymbolTreeNode {
 	 * 
 	 * @return the comparator used to sort this node's children
 	 */
-	default public Comparator<GTreeNode> getChildrenComparator() {
+	public Comparator<GTreeNode> getChildrenComparator() {
 		return DEFAULT_NODE_COMPARATOR;
 	}
 
@@ -152,7 +153,7 @@ public interface SymbolTreeNode {
 	 * 
 	 * @return the symbol for this node; null if it not associated with a symbol
 	 */
-	default public Symbol getSymbol() {
+	public Symbol getSymbol() {
 		// We use an odd inheritance hierarchy, where all nodes share this interface.  Not all
 		// nodes have symbols, like a category node.  Stub this method out here and allow 
 		// symbol nodes to return their value.
@@ -162,13 +163,9 @@ public interface SymbolTreeNode {
 	/**
 	 * Locates the node that contains the given symbol.
 	 * 
-	 * <p><b>Note: </b>This is can degenerate into a brute-force search algorithm, but works in 
+	 * <p><b>Note: </b>This can degenerate into a brute-force search algorithm, but works in 
 	 * all normal cases using a binary search.
-	 * 
-	 * <p>Implementation Note: It is a bit unusual to put this logic into a <code>default</code>
-	 * methods.  However, this code needed to be shared by classes that do not share a 
-	 * concrete hierarchy, but do share this interface.
-	 * 
+	 *  
 	 * @param key the node used to find an existing node.  This node is a node created that is
 	 *        used by the Comparators to perform binary searches.  These can be fabricated 
 	 *        by using {@link SymbolNode#createNode(Symbol, Program)}
@@ -177,15 +174,15 @@ public interface SymbolTreeNode {
 	 * @param monitor the task monitor
 	 * @return the node that contains the given symbol.
 	 */
-	default public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren,
+	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren,
 			TaskMonitor monitor) {
 
 		// if we don't have to loadChildren and we are not loaded get out.
-		if (!loadChildren && !isChildrenLoadedOrInProgress()) {
+		if (!loadChildren && !isLoaded()) {
 			return null;
 		}
 
-		List<GTreeNode> children = getAllChildren();
+		List<GTreeNode> children = getChildren();
 		int index = Collections.binarySearch(children, key, getChildrenComparator());
 		if (index >= 0) {
 			GTreeNode node = children.get(index);
@@ -222,12 +219,4 @@ public interface SymbolTreeNode {
 
 		return null;
 	}
-
-//==================================================================================================
-// CoreGTreeNode Methods - redefined here so this class can use them
-//==================================================================================================	
-
-	public boolean isChildrenLoadedOrInProgress();
-
-	public List<GTreeNode> getAllChildren();
 }

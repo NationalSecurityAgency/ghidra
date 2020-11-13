@@ -27,6 +27,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.InvalidNameException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
@@ -112,27 +113,27 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(4, list.size());
 
 		ArrayList<DataType> dataTypeList = new ArrayList<DataType>();
-		dataMgr.findDataTypes("nu", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("nu", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(0, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*num", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*num", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*num*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*num*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("num*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("num*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(0, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*n*m*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*n*m*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*n*u*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*n*u*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 	}
 
@@ -309,7 +310,67 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 //		program.saveAs(programFile, "testdb", null);
 //
 //				
-//	}	
+//	}
+
+// TODO: This should be addressed at some point
+//	
+//	@Test
+//	public void testReplaceBuiltInDataType() throws Exception {
+//		// Byte based types
+//		TypeDef btd =
+//			(TypeDef) dataMgr.resolve(new TypedefDataType("ByteTypedef", ByteDataType.dataType),
+//				null);
+//		Array barray =
+//			(Array) dataMgr.resolve(new ArrayDataType(ByteDataType.dataType, 5, btd.getLength()),
+//				null);
+//		Array barray2 =
+//			(Array) dataMgr.resolve(new ArrayDataType(barray, 2, barray.getLength()), null);
+//		TypeDef btd1 = (TypeDef) dataMgr.resolve(new TypedefDataType("ByteTypedef1", barray), null);
+//		Pointer bp = (Pointer) dataMgr.resolve(new PointerDataType(btd), null);
+//		Pointer bp2 = (Pointer) dataMgr.resolve(new PointerDataType(bp), null);
+//		TypeDef btd2 = (TypeDef) dataMgr.resolve(new TypedefDataType("ByteTypedef2", bp2), null);
+//
+//		// Int based types
+//		TypeDef itd =
+//			(TypeDef) dataMgr.resolve(new TypedefDataType("ByteTypedef", IntegerDataType.dataType),
+//				null);
+//		Array iarray =
+//			(Array) dataMgr.resolve(new ArrayDataType(ByteDataType.dataType, 5, itd.getLength()),
+//				null);
+//		Array iarray2 =
+//			(Array) dataMgr.resolve(new ArrayDataType(iarray, 2, iarray.getLength()), null);
+//		TypeDef itd1 = (TypeDef) dataMgr.resolve(new TypedefDataType("ByteTypedef1", iarray), null);
+//		Pointer ip = (Pointer) dataMgr.resolve(new PointerDataType(itd), null);
+//		Pointer ip2 = (Pointer) dataMgr.resolve(new PointerDataType(ip), null);
+//		TypeDef itd2 = (TypeDef) dataMgr.resolve(new TypedefDataType("ByteTypedef2", ip2), null);
+//
+//		dataMgr.replaceDataType(btd.getBaseDataType(), IntegerDataType.dataType, false);
+//
+//		assertTrue(btd.getBaseDataType().isEquivalent(IntegerDataType.dataType));
+//
+//		if (!barray.isDeleted()) {
+//			Msg.debug(this, "barray: " + barray.getDisplayName());
+//			fail("Expected barray to be replaced by iarray");
+//		}
+//
+//		if (!barray2.isDeleted()) {
+//			Msg.debug(this, "barray2: " + barray.getDisplayName());
+//			fail("Expected barray2 to be replaced by iarray2");
+//		}
+//
+//		if (!bp.isDeleted()) {
+//			Msg.debug(this, "bp: " + bp.getDisplayName());
+//			fail("Expected bp to be replaced by ip");
+//		}
+//
+//		if (!bp2.isDeleted()) {
+//			Msg.debug(this, "bp2: " + bp2.getDisplayName());
+//			fail("Expected bp2 to be replaced by ip2");
+//		}
+//
+//		assertTrue(itd.getBaseDataType() == btd.getBaseDataType());
+//		assertTrue(itd2.getBaseDataType() == btd2.getBaseDataType());
+//	}
 
 	@Test
 	public void testCreateStructure() {

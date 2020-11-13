@@ -29,10 +29,9 @@ import ghidra.util.exception.ClosedException;
 public class SwingExceptionHandler implements UncaughtExceptionHandler {
 
 	/**
-	 * Handle exception caught within the EventDispatchThread.
+	 * Handle exception caught within the Swing event dispatch thread.
 	 * @param t exception
 	 * @throws Throwable error occurred while attempting to handle exception
-	 * @see java.awt.EventDispatchThread#handleException(java.lang.Throwable)
 	 */
 	public void handle(Throwable t) throws Throwable {
 		handleUncaughtException(t);

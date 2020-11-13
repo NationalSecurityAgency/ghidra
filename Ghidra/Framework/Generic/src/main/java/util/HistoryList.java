@@ -16,7 +16,10 @@
 package util;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.FixedSizeStack;
@@ -47,7 +50,7 @@ import ghidra.util.datastruct.FixedSizeStack;
 public class HistoryList<T> {
 
 	private final FixedSizeStack<T> historyStack;
-	private final Consumer<T> itemSelectedCallback;
+	private final BiConsumer<T, T> itemSelectedCallback;
 	private int historyIndex;
 	private boolean isBroadcasting;
 
@@ -64,6 +67,20 @@ public class HistoryList<T> {
 	 *        going back or forward
 	 */
 	public HistoryList(int size, Consumer<T> itemSelectedCallback) {
+		this(size, asBiConsumer(itemSelectedCallback));
+	}
+
+	/**
+	 * The sized passed here limits the size of the list, with the oldest items being dropped
+	 * as the list grows.  The given callback will be called when {@link #goBack()} or 
+	 * {@link #goForward()} are called.
+	 * 
+	 * @param size the max number of items to keep in the list
+	 * @param itemSelectedCallback the function to call when the client selects an item by 
+	 *        going back or forward.  This callback will be passed the newly selected item as 
+	 *        the first argument and the previously selected item as the second argument.
+	 */
+	public HistoryList(int size, BiConsumer<T, T> itemSelectedCallback) {
 		Objects.requireNonNull(itemSelectedCallback, "Item selected callback cannot be null");
 
 		if (size < 1) {
@@ -74,6 +91,10 @@ public class HistoryList<T> {
 		this.historyStack = new FixedSizeStack<>(size);
 	}
 
+	private static <T> BiConsumer<T, T> asBiConsumer(Consumer<T> consumer) {
+		return (t, ignored) -> consumer.accept(t);
+	}
+
 //==================================================================================================
 // Interface Methods
 //==================================================================================================	
@@ -82,6 +103,10 @@ public class HistoryList<T> {
 	 * True signals that this list will allow duplicate entries.  False signals to not only not
 	 * allow duplicates, but to also move the position of an item if it is re-added to the 
 	 * list.
+	 *   
+	 * <p>For correct behavior when not allowing duplicates, ensure you have defined an 
+	 * <code>equals</code> method to work as you expect.  If two different items are considered
+	 * equal, then this class will only remove the duplicate if the equals method returns true.
 	 * 
 	 * <p>The default is false
 	 * 
@@ -103,7 +128,7 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Adds an item to this history list.  <tt>null</tt> values are ignored.
+	 * Adds an item to this history list.  <code>null</code> values are ignored.
 	 * 
 	 * <p>Calls to this method during selection notification will have no effect.  If you need
 	 * to update the history during a notification, then you must do so at a later time, perhaps
@@ -162,14 +187,26 @@ public class HistoryList<T> {
 	 * <p>No action is taken if the current pointer is already at the beginning of the list.
 	 */
 	public void goBack() {
-
 		if (historyIndex == 0) {
 			return;
 		}
 
+		T leaving = getCurrentHistoryItem();
 		T t = historyStack.get(--historyIndex);
 		dropNull();
-		broadcast(t);
+		broadcast(t, leaving);
+	}
+
+	/**
+	 * Performs a {@link #goBack()} until the given item becomes the current item.  This is 
+	 * useful if you wish to go backward to a specific item in the list.
+	 * 
+	 * @param t the item
+	 */
+	public void goBackTo(T t) {
+		while (!getCurrentHistoryItem().equals(t) && hasPrevious()) {
+			goBack();
+		}
 	}
 
 	/**
@@ -183,8 +220,21 @@ public class HistoryList<T> {
 			return;
 		}
 
+		T leaving = getCurrentHistoryItem();
 		T t = historyStack.get(++historyIndex);
-		broadcast(t);
+		broadcast(t, leaving);
+	}
+
+	/**
+	 * Performs a {@link #goForward()} until the given item becomes the current item.  This is 
+	 * useful if you wish to go forward to a specific item in the list.
+	 * 
+	 * @param t the item
+	 */
+	public void goForwardTo(T t) {
+		while (!getCurrentHistoryItem().equals(t) && hasNext()) {
+			goForward();
+		}
 	}
 
 	/**
@@ -217,7 +267,7 @@ public class HistoryList<T> {
 
 	/**
 	 * Get all items in the history that come after the current history item.  They are 
-	 * returned in navigation order, as traversed if {@link #goForward() is called.
+	 * returned in navigation order, as traversed if {@link #goForward()} is called.
 	 * 
 	 * @return the items
 	 */
@@ -315,10 +365,10 @@ public class HistoryList<T> {
 		historyStack.remove(itemIndex);
 	}
 
-	private void broadcast(T t) {
+	private void broadcast(T t, T leaving) {
 		try {
 			isBroadcasting = true;
-			itemSelectedCallback.accept(t);
+			itemSelectedCallback.accept(t, leaving);
 		}
 		finally {
 			isBroadcasting = false;
@@ -335,6 +385,9 @@ public class HistoryList<T> {
 	@Override
 	public String toString() {
 
+		String key = "    items: ";
+		String newlinePad = StringUtils.repeat(' ', key.length());
+
 		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < historyStack.size(); i++) {
 			T t = historyStack.get(i);
@@ -350,13 +403,13 @@ public class HistoryList<T> {
 			}
 
 			if (i != historyStack.size() - 1) {
-				buffy.append(',').append(' ');
+				buffy.append(',').append('\n').append(newlinePad);
 			}
 		}
 
 		//@formatter:off
 		return "{\n" +
-			"\titems: " + buffy.toString() + "\n" + 
+			key + buffy.toString() + "\n" + 
 		"}";
 		//@formatter:on				
 	}

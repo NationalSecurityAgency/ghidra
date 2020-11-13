@@ -17,8 +17,7 @@ package utility.application;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
@@ -42,8 +41,9 @@ public abstract class ApplicationLayout {
 	protected File userTempDir;
 	protected File userCacheDir;
 	protected File userSettingsDir;
+	protected ResourceFile patchDir;
 	protected ResourceFile extensionArchiveDir;
-	protected ResourceFile extensionInstallationDir;
+	protected List<ResourceFile> extensionInstallationDirs;
 
 	/**
 	 * Gets the application properties from the application layout
@@ -109,10 +109,10 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the directory where archived Ghidra Extensions are stored.
+	 * Returns the directory where archived application Extensions are stored.
 	 * 
-	 * @return The Ghidra Extensions archive directory.  Could be null if the 
-	 *   {@link ApplicationLayout} does not support Ghidra Extensions.
+	 * @return the application Extensions archive directory.  Could be null if the 
+	 *   {@link ApplicationLayout} does not support application Extensions.
 	 * 
 	 */
 	public final ResourceFile getExtensionArchiveDir() {
@@ -120,13 +120,22 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the Ghidra Extensions installation folder.
+	 * Returns an {@link List ordered list} of the application Extensions installation directories.
 	 * 
-	 * @return The Ghidra Extensions installation directory.  Could be null if the 
-	 *   {@link ApplicationLayout} does not support Ghidra Extensions.
+	 * @return an {@link List ordered list} of the application Extensions installation directories.
+	 *   Could be empty if the {@link ApplicationLayout} does not support application Extensions.
 	 */
-	public final ResourceFile getExtensionInstallationDir() {
-		return extensionInstallationDir;
+	public final List<ResourceFile> getExtensionInstallationDirs() {
+		return extensionInstallationDirs;
+	}
+
+	/**
+	 * Returns the location of the application patch directory.  The patch directory can be
+	 * used to modify existing code within a distribution.
+	 * @return the patch directory; may be null
+	 */
+	public final ResourceFile getPatchDir() {
+		return patchDir;
 	}
 
 	/**

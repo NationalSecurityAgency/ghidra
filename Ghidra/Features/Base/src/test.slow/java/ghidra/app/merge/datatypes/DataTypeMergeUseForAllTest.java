@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 	@Test
-    public void testDataTypeDeletedChangedDoNotUseForAll() throws Exception {
+	public void testDataTypeDeletedChangedDoNotUseForAll() throws Exception {
 
 		setupTestDataTypeDeletedChangedUseForAll();
 
@@ -135,7 +135,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedChangedUseForAllPickLatest() throws Exception {
+	public void testDataTypeDeletedChangedUseForAllPickLatest() throws Exception {
 
 		setupTestDataTypeDeletedChangedUseForAll();
 
@@ -170,7 +170,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedChangedUseForAllPickMy() throws Exception {
+	public void testDataTypeDeletedChangedUseForAllPickMy() throws Exception {
 
 		setupTestDataTypeDeletedChangedUseForAll();
 
@@ -208,7 +208,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedChangedUseForAllPickOriginal() throws Exception {
+	public void testDataTypeDeletedChangedUseForAllPickOriginal() throws Exception {
 
 		setupTestDataTypeDeletedChangedUseForAll();
 

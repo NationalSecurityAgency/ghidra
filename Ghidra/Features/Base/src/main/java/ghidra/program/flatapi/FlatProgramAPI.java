@@ -16,8 +16,8 @@
 package ghidra.program.flatapi;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -25,10 +25,12 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
+import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.clear.ClearOptions;
 import ghidra.app.plugin.core.searchmem.RegExSearchData;
+import ghidra.app.script.GhidraScript;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -42,7 +44,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
 import ghidra.util.Conv;
-import ghidra.util.SystemUtilities;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
@@ -323,11 +324,13 @@ public class FlatProgramAPI {
 	public final MemoryBlock createMemoryBlock(String name, Address start, InputStream input,
 			long length, boolean overlay) throws Exception {
 		if (input == null) {
-			return currentProgram.getMemory().createUninitializedBlock(name, start, length,
-				overlay);
+			return currentProgram.getMemory()
+					.createUninitializedBlock(name, start, length,
+						overlay);
 		}
-		return currentProgram.getMemory().createInitializedBlock(name, start, input, length,
-			monitor, overlay);
+		return currentProgram.getMemory()
+				.createInitializedBlock(name, start, input, length,
+					monitor, overlay);
 	}
 
 	/**
@@ -341,8 +344,9 @@ public class FlatProgramAPI {
 	public final MemoryBlock createMemoryBlock(String name, Address start, byte[] bytes,
 			boolean overlay) throws Exception {
 		ByteArrayInputStream input = new ByteArrayInputStream(bytes);
-		return currentProgram.getMemory().createInitializedBlock(name, start, input, bytes.length,
-			monitor, overlay);
+		return currentProgram.getMemory()
+				.createInitializedBlock(name, start, input, bytes.length,
+					monitor, overlay);
 	}
 
 	/**
@@ -391,7 +395,7 @@ public class FlatProgramAPI {
 	 * @param address the address to create the symbol
 	 * @param name the name of the symbol
 	 * @param makePrimary true if the symbol should be made primary
-	 * @return the newly created symbol
+	 * @return the newly created code or function symbol
 	 */
 	public final Symbol createLabel(Address address, String name, boolean makePrimary)
 			throws Exception {
@@ -417,15 +421,35 @@ public class FlatProgramAPI {
 	 * @param name the name of the symbol
 	 * @param makePrimary true if the symbol should be made primary
 	 * @param sourceType the source type.
-	 * @return the newly created symbol
+	 * @return the newly created code or function symbol
 	 */
 	public final Symbol createLabel(Address address, String name, boolean makePrimary,
 			SourceType sourceType) throws Exception {
+		return createLabel(address, name, null, makePrimary, sourceType);
+	}
+
+	/**
+	 * Creates a label at the specified address in the specified namespace.
+	 * If makePrimary==true, then the new label is made primary if permitted.
+	 * If makeUnique==true, then if the name is a duplicate, the address
+	 * will be concatenated to name to make it unique.
+	 * @param address the address to create the symbol
+	 * @param name the name of the symbol
+	 * @param namespace label's parent namespace
+	 * @param makePrimary true if the symbol should be made primary
+	 * @param sourceType the source type.
+	 * @return the newly created code or function symbol
+	 */
+	public final Symbol createLabel(Address address, String name, Namespace namespace,
+			boolean makePrimary, SourceType sourceType) throws Exception {
 		Symbol symbol;
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
-		symbol = symbolTable.createLabel(address, name, null, sourceType);
-		if (makePrimary) {
-			symbol.setPrimary();
+		symbol = symbolTable.createLabel(address, name, namespace, sourceType);
+		if (makePrimary && !symbol.isPrimary()) {
+			SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(address, name, namespace);
+			if (cmd.applyTo(currentProgram)) {
+				symbol = cmd.getSymbol();
+			}
 		}
 		return symbol;
 	}
@@ -500,7 +524,7 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Sets a EOL comment at the specified address
+	 * Sets an EOL comment at the specified address
 	 * @param address the address to set the EOL comment
 	 * @param comment the EOL comment
 	 * @return true if the EOL comment was successfully set
@@ -511,14 +535,25 @@ public class FlatProgramAPI {
 	}
 
 	/**
+	 * Sets a repeatable comment at the specified address
+	 * @param address the address to set the repeatable comment
+	 * @param comment the repeatable comment
+	 * @return true if the repeatable comment was successfully set
+	 */
+	public final boolean setRepeatableComment(Address address, String comment) {
+		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.REPEATABLE_COMMENT, comment);
+		return cmd.applyTo(currentProgram);
+	}
+
+	/**
 	 * Returns the PLATE comment at the specified address.  The comment returned is the raw text
-	 * of the comment.  Contrastingly, calling {@link #getPlateCommentAsRendered(Address)} will
+	 * of the comment.  Contrastingly, calling {@link GhidraScript#getPlateCommentAsRendered(Address)} will
 	 * return the text of the comment as it is rendered in the display.
 	 *
 	 * @param address the address to get the comment
 	 * @return the PLATE comment at the specified address or null
 	 * if one does not exist
-	 * @see #getPlateCommentAsRendered(Address)
+	 * @see GhidraScript#getPlateCommentAsRendered(Address)
 	 */
 	public final String getPlateComment(Address address) {
 		return currentProgram.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
@@ -526,13 +561,13 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the PRE comment at the specified address.  The comment returned is the raw text
-	 * of the comment.  Contrastingly, calling {@link #getPreCommentAsRendered(Address)} will
+	 * of the comment.  Contrastingly, calling {@link GhidraScript#getPreCommentAsRendered(Address)} will
 	 * return the text of the comment as it is rendered in the display.
 	 *
 	 * @param address the address to get the comment
 	 * @return the PRE comment at the specified address or null
 	 * if one does not exist
-	 * @see #getPreCommentAsRendered(Address)
+	 * @see GhidraScript#getPreCommentAsRendered(Address)
 	 */
 	public final String getPreComment(Address address) {
 		return currentProgram.getListing().getComment(CodeUnit.PRE_COMMENT, address);
@@ -540,13 +575,13 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the POST comment at the specified address.  The comment returned is the raw text
-	 * of the comment.  Contrastingly, calling {@link #getPostCommentAsRendered(Address)} will
+	 * of the comment.  Contrastingly, calling {@link GhidraScript#getPostCommentAsRendered(Address)} will
 	 * return the text of the comment as it is rendered in the display.
 	 *
 	 * @param address the address to get the comment
 	 * @return the POST comment at the specified address or null
 	 * if one does not exist
-	 * @see #getPostCommentAsRendered(Address)
+	 * @see GhidraScript#getPostCommentAsRendered(Address)
 	 */
 	public final String getPostComment(Address address) {
 		return currentProgram.getListing().getComment(CodeUnit.POST_COMMENT, address);
@@ -554,15 +589,28 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the EOL comment at the specified address.  The comment returned is the raw text
-	 * of the comment.  Contrastingly, calling {@link #getEOLCommentAsRendered(Address)} will
+	 * of the comment.  Contrastingly, calling {@link GhidraScript#getEOLCommentAsRendered(Address)} will
 	 * return the text of the comment as it is rendered in the display.
 	 * @param address the address to get the comment
 	 * @return the EOL comment at the specified address or null
 	 * if one does not exist
-	 * @see #getEOLCommentAsRendered(Address)
+	 * @see GhidraScript#getEOLCommentAsRendered(Address)
 	 */
 	public final String getEOLComment(Address address) {
 		return currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+	}
+
+	/**
+	 * Returns the repeatable comment at the specified address.  The comment returned is the raw text
+	 * of the comment.  Contrastingly, calling {@link GhidraScript#getRepeatableCommentAsRendered(Address)} will
+	 * return the text of the comment as it is rendered in the display.
+	 * @param address the address to get the comment
+	 * @return the repeatable comment at the specified address or null
+	 * if one does not exist
+	 * @see GhidraScript#getRepeatableCommentAsRendered(Address)
+	 */
+	public final String getRepeatableComment(Address address) {
+		return currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
 	}
 
 	/**
@@ -600,7 +648,7 @@ public class FlatProgramAPI {
 	 * starting from the address. If the start address is null, then the find will start
 	 * from the minimum address of the program.
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -625,11 +673,11 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Finds the first <matchLimit> occurrences of the byte array sequence that matches the given byte string,
-	 * starting from the address. If the start address is null, then the find will start
-	 * from the minimum address of the program.
+	 * Finds the first {@code <matchLimit>} occurrences of the byte array sequence that matches
+	 * the given byte string, starting from the address. If the start address is null, then the
+	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -651,11 +699,11 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Finds the first <matchLimit> occurrences of the byte array sequence that matches the given byte string,
-	 * starting from the address. If the start address is null, then the find will start
-	 * from the minimum address of the program.
+	 * Finds the first {@code <matchLimit>} occurrences of the byte array sequence that matches
+	 * the given byte string, starting from the address. If the start address is null, then the
+	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -699,7 +747,7 @@ public class FlatProgramAPI {
 	 *
 	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -731,7 +779,7 @@ public class FlatProgramAPI {
 	 * treated as a contiguous set when searching.
 	 *
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -1007,7 +1055,7 @@ public class FlatProgramAPI {
 	public final Function getFunctionBefore(Address address) {
 		FunctionIterator iterator = currentProgram.getListing().getFunctions(address, false);
 		// skip over this function.
-		// This is wierd, but if you have multiple overlay spaces or address spaces,
+		// This is weird, but if you have multiple overlay spaces or address spaces,
 		// you WILL miss functions by not using the iterator and doing address math yourself.
 		if (!iterator.hasNext()) {
 			return null;
@@ -1047,7 +1095,7 @@ public class FlatProgramAPI {
 	public final Function getFunctionAfter(Address address) {
 		FunctionIterator iterator = currentProgram.getListing().getFunctions(address, true);
 		// skip over this function.
-		// This is wierd, but if you have multiple overlay spaces or address spaces,
+		// This is weird, but if you have multiple overlay spaces or address spaces,
 		// you WILL miss functions by not using the iterator and doing address math yourself.
 		if (!iterator.hasNext()) {
 			return null;
@@ -1181,7 +1229,7 @@ public class FlatProgramAPI {
 	 * Returns the instruction defined before the specified address or null
 	 * if no instruction exists.
 	 * The instruction that is returned does not have to be contiguous.
-	 * @param instruction the instruction
+	 * @param address the address of the instruction
 	 * @return the instruction defined before the specified address or null if no instruction exists
 	 */
 	public final Instruction getInstructionBefore(Address address) {
@@ -1203,7 +1251,7 @@ public class FlatProgramAPI {
 	 * Returns the instruction defined after the specified address or null
 	 * if no instruction exists.
 	 * The instruction that is returned does not have to be contiguous.
-	 * @param instruction the instruction
+	 * @param address the address of the prior instruction
 	 * @return the instruction defined after the specified address or null if no instruction exists
 	 */
 	public final Instruction getInstructionAfter(Address address) {
@@ -1256,7 +1304,7 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the defined data before the specified data or null if no data exists.
-	 * @param address the data address
+	 * @param data the succeeding data
 	 * @return the defined data before the specified data or null if no data exists
 	 */
 	public final Data getDataBefore(Data data) {
@@ -1274,7 +1322,7 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the defined data after the specified data or null if no data exists.
-	 * @param address the data address
+	 * @param data preceeding data
 	 * @return the defined data after the specified data or null if no data exists
 	 */
 	public final Data getDataAfter(Data data) {
@@ -1389,7 +1437,7 @@ public class FlatProgramAPI {
 	/**
 	 * Returns the previous non-default primary symbol defined
 	 * after the previous address.
-	 * @param symbol the symbol to use as a starting point
+	 * @param address the address to use as a starting point
 	 * @return the next non-default primary symbol
 	 */
 	public final Symbol getSymbolBefore(Address address) {
@@ -1773,8 +1821,9 @@ public class FlatProgramAPI {
 	 */
 	public final Reference addInstructionXref(Address from, Address to, int opIndex,
 			FlowType type) {
-		return currentProgram.getReferenceManager().addMemoryReference(from, to, type,
-			SourceType.USER_DEFINED, opIndex);
+		return currentProgram.getReferenceManager()
+				.addMemoryReference(from, to, type,
+					SourceType.USER_DEFINED, opIndex);
 	}
 
 	/**
@@ -1797,8 +1846,7 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns a new address inside the specified program as indicated by the string.
-	 * @param p the program to use for determining the address
-	 * @param s string representation of the address desired
+	 * @param addressString string representation of the address desired
 	 * @return the address. Otherwise, return null if the string fails to evaluate
 	 * to a legitimate address
 	 */
@@ -1844,7 +1892,7 @@ public class FlatProgramAPI {
 	/**
 	 * Sets the 'byte' values starting at the specified address.
 	 * @param address the address to set the bytes
-	 * @param second the values to set
+	 * @param values the values to set
 	 * @throws MemoryAccessException if memory does not exist or is uninitialized
 	 */
 	public final void setBytes(Address address, byte[] values) throws MemoryAccessException {
@@ -2245,8 +2293,9 @@ public class FlatProgramAPI {
 	 * @return the equate defined at the operand index of the instruction
 	 */
 	public final Equate getEquate(Instruction instruction, int operandIndex, long value) {
-		return currentProgram.getEquateTable().getEquate(instruction.getMinAddress(), operandIndex,
-			value);
+		return currentProgram.getEquateTable()
+				.getEquate(instruction.getMinAddress(), operandIndex,
+					value);
 	}
 
 	/**
@@ -2256,8 +2305,9 @@ public class FlatProgramAPI {
 	 * @return the equate defined at the operand index of the instruction
 	 */
 	public final List<Equate> getEquates(Instruction instruction, int operandIndex) {
-		return currentProgram.getEquateTable().getEquates(instruction.getMinAddress(),
-			operandIndex);
+		return currentProgram.getEquateTable()
+				.getEquates(instruction.getMinAddress(),
+					operandIndex);
 	}
 
 	/**
@@ -2268,8 +2318,9 @@ public class FlatProgramAPI {
 	public final Equate getEquate(Data data) {
 		Object obj = data.getValue();
 		if (obj instanceof Scalar) {
-			return currentProgram.getEquateTable().getEquate(data.getMinAddress(), 0,
-				((Scalar) obj).getValue());
+			return currentProgram.getEquateTable()
+					.getEquate(data.getMinAddress(), 0,
+						((Scalar) obj).getValue());
 		}
 		return null;
 	}
@@ -2304,7 +2355,6 @@ public class FlatProgramAPI {
 	 * Removes the equates defined at the operand index of the instruction.
 	 * @param instruction the instruction
 	 * @param operandIndex the operand index
-	 * @param second scalar value corresponding to equate
 	 */
 	public final void removeEquates(Instruction instruction, int operandIndex) {
 		Address address = instruction.getMinAddress();
@@ -2337,39 +2387,41 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Creates a NOTE book mark at the specified address.
-	 * NOTE: if a NOTE book mark already exists at the
-	 * address with same category, it will be replaced.
-	 * @param address  the address to create the book mark
-	 * @param category the book mark category (it can be null)
-	 * @param note  the book mark text
-	 * @return the newly created book mark
+	 * Creates a <code>NOTE</code> bookmark at the specified address
+	 * <br>
+	 * NOTE: if a <code>NOTE</code> bookmark already exists at the address, it will be replaced.
+	 * This is intentional and is done to match the behavior of setting bookmarks from the UI.
+	 * 
+	 * @param address  the address to create the bookmark
+	 * @param category the bookmark category (it may be null)
+	 * @param note  the bookmark text
+	 * @return the newly created bookmark
 	 */
 	public final Bookmark createBookmark(Address address, String category, String note) {
-		/**
-		 * Are you wondering why is this check here? ...SEE SCR #2296
-		 */
+
+		// enforce one bookmark per address, as this is what the UI does
 		Bookmark[] existingBookmarks = getBookmarks(address);
 		if (existingBookmarks != null && existingBookmarks.length > 0) {
 			existingBookmarks[0].set(category, note);
 			return existingBookmarks[0];
 		}
-		return currentProgram.getBookmarkManager().setBookmark(address, BookmarkType.NOTE, category,
-			note);
+
+		BookmarkManager bkm = currentProgram.getBookmarkManager();
+		return bkm.setBookmark(address, BookmarkType.NOTE, category, note);
 	}
 
 	/**
-	 * Returns all of the NOTE book marks defined at the specified address.
-	 * @param address the address to retrieve the book mark
-	 * @return the book marks at the specified address
+	 * Returns all of the NOTE bookmarks defined at the specified address
+	 * @param address the address to retrieve the bookmark
+	 * @return the bookmarks at the specified address
 	 */
 	public final Bookmark[] getBookmarks(Address address) {
 		return currentProgram.getBookmarkManager().getBookmarks(address, BookmarkType.NOTE);
 	}
 
 	/**
-	 * Removes the specified book mark.
-	 * @param bookmark the book mark to remove
+	 * Removes the specified bookmark.
+	 * @param bookmark the bookmark to remove
 	 */
 	public final void removeBookmark(Bookmark bookmark) {
 		currentProgram.getBookmarkManager().removeBookmark(bookmark);
@@ -2456,8 +2508,9 @@ public class FlatProgramAPI {
 			folder.createFile(program.getName(), program, monitor);
 		}
 		catch (DuplicateFileException e) {
-			folder.createFile(program.getName() + "_" + SystemUtilities.currentTimeStamp(), program,
-				monitor);
+			SimpleDateFormat formatter = new SimpleDateFormat("dd.MMM.yyyy_HH.mm.ss");
+			String time = formatter.format(new Date());
+			folder.createFile(program.getName() + "_" + time, program, monitor);
 		}
 		finally {
 			if (program == currentProgram) {
@@ -2473,7 +2526,7 @@ public class FlatProgramAPI {
 	 * the root domain folder.
 	 * @return the root domain folder of the current project
 	 */
-	protected DomainFolder getProjectRootFolder() {
+	public DomainFolder getProjectRootFolder() {
 		Project project = AppInfo.getActiveProject();
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getRootFolder();

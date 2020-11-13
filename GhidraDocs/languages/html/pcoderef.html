@@ -25,8 +25,8 @@
 <div class="titlepage">
 <div>
 <div><h1 class="title">
-<a name="idm140369391421344"></a>P-Code Reference Manual</h1></div>
-<div><p class="releaseinfo">Last updated September 21, 2017</p></div>
+<a name="idm140035470386944"></a>P-Code Reference Manual</h1></div>
+<div><p class="releaseinfo">Last updated September 5, 2019</p></div>
 </div>
 <hr>
 </div>
@@ -111,55 +111,55 @@
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_equal" title="INT_EQUAL">INT_EQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_popcount" title="POPCOUNT">POPCOUNT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_sright" title="INT_SRIGHT">INT_SRIGHT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_ceil" title="FLOAT_CEIL">FLOAT_CEIL</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_notequal" title="INT_NOTEQUAL">INT_NOTEQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_equal" title="INT_EQUAL">INT_EQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_mult" title="INT_MULT">INT_MULT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_floor" title="FLOAT_FLOOR">FLOAT_FLOOR</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_less" title="INT_LESS">INT_LESS</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_notequal" title="INT_NOTEQUAL">INT_NOTEQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_div" title="INT_DIV">INT_DIV</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_round" title="FLOAT_ROUND">FLOAT_ROUND</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_sless" title="INT_SLESS">INT_SLESS</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_less" title="INT_LESS">INT_LESS</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_rem" title="INT_REM">INT_REM</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_nan" title="FLOAT_NAN">FLOAT_NAN</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_lessequal" title="INT_LESSEQUAL">INT_LESSEQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_sless" title="INT_SLESS">INT_SLESS</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_sdiv" title="INT_SDIV">INT_SDIV</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int2float" title="INT2FLOAT">INT2FLOAT</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_slessequal" title="INT_SLESSEQUAL">INT_SLESSEQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_lessequal" title="INT_LESSEQUAL">INT_LESSEQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_srem" title="INT_SREM">INT_SREM</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float2float" title="FLOAT2FLOAT">FLOAT2FLOAT</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_zext" title="INT_ZEXT">INT_ZEXT</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_slessequal" title="INT_SLESSEQUAL">INT_SLESSEQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_bool_negate" title="BOOL_NEGATE">BOOL_NEGATE</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_trunc" title="TRUNC">TRUNC</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_sext" title="INT_SEXT">INT_SEXT</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_zext" title="INT_ZEXT">INT_ZEXT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_bool_xor" title="BOOL_XOR">BOOL_XOR</a></td>
  <td><a class="link" href="pseudo-ops.html#cpui_cpoolref" title="CPOOLREF">CPOOLREF</a></td>
 </tr>
 <tr>
  <td></td>
- <td></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_sext" title="INT_SEXT">INT_SEXT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_bool_and" title="BOOL_AND">BOOL_AND</a></td>
  <td><a class="link" href="pseudo-ops.html#cpui_new" title="NEW">NEW</a></td>
 </tr>
@@ -215,7 +215,7 @@ The core concepts of p-code are:
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140369383722496"></a>Address Space</h3></div></div></div>
+<a name="idm140035470234080"></a>Address Space</h3></div></div></div>
 <p>
 The <span class="bold"><strong>address space</strong></span> for p-code is a generalization
 of RAM. It is defined simply as an indexed sequence of bytes that can
@@ -256,7 +256,7 @@ any of the other p-code operations.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140369383712800"></a>Varnode</h3></div></div></div>
+<a name="idm140035470224608"></a>Varnode</h3></div></div></div>
 <p>
 A <span class="bold"><strong>varnode</strong></span> is a generalization of
 either a register or a memory location. It is represented by the formal triple:
@@ -303,7 +303,7 @@ on them by the p-code operations that use them.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140369383704432"></a>P-code Operation</h3></div></div></div>
+<a name="idm140035470216864"></a>P-code Operation</h3></div></div></div>
 <p>
 A <span class="bold"><strong>p-code operation</strong></span> is the analog of a
 machine instruction. All p-code operations have the same basic format

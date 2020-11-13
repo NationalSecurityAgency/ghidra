@@ -21,10 +21,10 @@ import java.util.List;
 
 import org.xml.sax.*;
 
+import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -48,25 +48,24 @@ public class HighFunction extends PcodeSyntaxTree {
 	private CompilerSpec compilerSpec;
 	private FunctionPrototype proto; // The high-level prototype associated with the function
 	private LocalSymbolMap localSymbols;
+	private GlobalSymbolMap globalSymbols;
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
-	private boolean showNamespace = true;
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
 	 * @param language  description of the processor language of the function
 	 * @param compilerSpec description of the compiler that produced the function
 	 * @param dtManager data type manager
-	 * @param showNamespace true signals to print function names with their namespace
 	 */
 	public HighFunction(Function function, Language language, CompilerSpec compilerSpec,
-			PcodeDataTypeManager dtManager, boolean showNamespace) {
+			PcodeDataTypeManager dtManager) {
 		super(function.getProgram().getAddressFactory(), dtManager);
 		func = function;
 		this.language = language;
 		this.compilerSpec = compilerSpec;
-		this.showNamespace = showNamespace;
 		localSymbols = new LocalSymbolMap(this, "stack");
+		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
 		jumpTables = null;
 		protoOverrides = null;
@@ -77,6 +76,18 @@ public class HighFunction extends PcodeSyntaxTree {
 	 */
 	public Function getFunction() {
 		return func;
+	}
+
+	/**
+	 * Get the id with the associated function symbol, if it exists.
+	 * Otherwise return a dynamic id based on the entry point.
+	 * @return the symbol id, or possibly a dynamic id
+	 */
+	public long getID() {
+		if (func instanceof FunctionDB) {
+			return func.getSymbol().getID();
+		}
+		return func.getProgram().getSymbolTable().getDynamicSymbolID(func.getEntryPoint());
 	}
 
 	/**
@@ -115,12 +126,19 @@ public class HighFunction extends PcodeSyntaxTree {
 		return localSymbols;
 	}
 
+	/**
+	 * @return a map describing global variables accessed by this function
+	 */
+	public GlobalSymbolMap getGlobalSymbolMap() {
+		return globalSymbols;
+	}
+
 	public HighSymbol getMappedSymbol(Address addr, Address pcaddr) {
 		return localSymbols.findLocal(addr, pcaddr);
 	}
 
 	@Override
-	public HighSymbol getSymbol(int symbolId) {
+	public HighSymbol getSymbol(long symbolId) {
 		return localSymbols.getSymbol(symbolId);
 	}
 
@@ -200,41 +218,29 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	private void readHighXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("high");
+		XmlElement el = parser.peek();
 		String classstring = el.getAttribute("class");
-		int symref = SpecXmlUtils.decodeInt(el.getAttribute("symref"));
-		int repref = SpecXmlUtils.decodeInt(el.getAttribute("repref"));
-		Varnode rep = getRef(repref);
-		if (rep == null) {
-			throw new PcodeXMLException("Undefined varnode reference");
+		HighVariable var;
+		switch (classstring.charAt(0)) {
+			case 'o':
+				var = new HighOther(this);
+				break;
+			case 'g':
+				var = new HighGlobal(this);
+				break;
+			case 'l':
+				var = new HighLocal(this);
+				break;
+			case 'p':
+				var = new HighParam(this);
+				break;
+			case 'c':
+				var = new HighConstant(this);
+				break;
+			default:
+				throw new PcodeXMLException("Unknown HighVariable class string: " + classstring);
 		}
-
-		DataType type = null;
-
-		ArrayList<Varnode> vnlist = new ArrayList<Varnode>();
-		int sz = -1;
-		if (parser.peek().isStart()) {
-			type = getDataTypeManager().readXMLDataType(parser);
-		}
-
-		if (type == null) {
-			throw new PcodeXMLException("Missing <type> for HighVariable");
-		}
-
-		// TODO: I'm not sure the decompiler's type size is preserved
-		// by the conversion to a GHIDRA type
-		sz = type.getLength();
-
-		while (parser.peek().isStart()) {
-			Varnode vn = Varnode.readXML(parser, this);
-			vnlist.add(vn);
-		}
-		Varnode[] vnarray = new Varnode[vnlist.size()];
-		vnlist.toArray(vnarray);
-		// VARDO: does rep varnode size differ from type length ?
-		newHigh(symref, type, sz, vnarray, rep, classstring);
-
-		parser.end(el);
+		var.restoreXml(parser);
 	}
 
 	private void readHighlistXML(XmlPullParser parser) throws PcodeXMLException {
@@ -252,9 +258,9 @@ public class HighFunction extends PcodeSyntaxTree {
 	public void readXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement start = parser.start("function");
 		String name = start.getAttribute("name");
-		if (!func.getName(showNamespace).equals(name)) {
+		if (!func.getName().equals(name)) {
 			throw new PcodeXMLException(
-				"Function name mismatch: " + func.getName(showNamespace) + " + " + name);
+				"Function name mismatch: " + func.getName() + " + " + name);
 		}
 		while (!parser.peek().isEnd()) {
 			XmlElement subel = parser.peek();
@@ -320,78 +326,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		parser.end(el);
 	}
 
-	private HighVariable newHigh(int symref, DataType tp, int sz, Varnode[] inst, Varnode rep,
-			String classstring) throws PcodeXMLException {
-		try {
-			HighVariable var = null;
-			if (classstring.equals("local")) {
-				HighSymbol sym = null;
-				if (symref != 0) {
-					sym = localSymbols.getSymbol(symref);
-				}
-				if (sym != null) {
-					var = sym.getHighVariable();
-				}
-				if (var == null) {
-					if (sym instanceof DynamicSymbol) {
-						// establish HighLocal for DynamicSymbol
-						var = new HighLocal(tp, rep, inst, sym.getPCAddress(), sym);
-						sym.setHighVariable(var);
-					}
-					else {
-						// The variable may be a partial, in which case
-						// we treat it as special
-						var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
-					}
-				}
-			}
-			else if (classstring.equals("constant")) {
-				HighSymbol sym = null;
-				if (symref != 0) {
-					sym = localSymbols.getSymbol(symref);
-					if (sym != null) {
-						var = sym.getHighVariable();
-					}
-				}
-				if (var == null) {
-					if (sym instanceof DynamicSymbol) {
-						var = new HighConstant(sym.getName(), tp, rep, getPCAddress(rep),
-							(DynamicSymbol) sym);
-						sym.setHighVariable(var);
-					}
-					else {
-						var = new HighConstant(null, tp, rep, getPCAddress(rep), this);
-					}
-				}
-			}
-			else if (classstring.equals("global")) {
-// TODO: should we have access to global symbols
-				var = new HighGlobal(null, tp, rep, inst, this);
-			}
-			else if (classstring.equals("other")) {
-// TODO: How do these compare with local ??
-				var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
-			}
-			else {
-				throw new PcodeXMLException("Bad class string: " + classstring);
-			}
-			if (rep.getSize() == var.getSize()) {
-				var.attachInstances(inst, rep);
-			}
-			else { // Make sure varnodes are linked to HighVariable even if not formal instances, why do we do this???
-				for (Varnode element : inst) {
-					((VarnodeAST) element).setHigh(var);
-				}
-			}
-			var.setHighOnInstances();
-			return var;
-		}
-		catch (InvalidInputException e) {
-			throw new PcodeXMLException("Bad storage node", e);
-		}
-	}
-
-	private Address getPCAddress(Varnode rep) {
+	protected Address getPCAddress(Varnode rep) {
 		Address pcaddr = null;
 		if (!rep.isAddrTied()) {
 			pcaddr = rep.getPCAddress();
@@ -469,9 +404,8 @@ public class HighFunction extends PcodeSyntaxTree {
 				// Note that we don't need to distinguish between unique,register,ram etc. and don't
 				// need to separate out first use versus mapped use.  When the high local is written
 				// to database, these issues will be resolved at that point.
-				sym = localSymbols.newMappedSymbol(highloc.getName(), highloc.getDataType(),
-					new VariableStorage(func.getProgram(), vn), vn.getPCAddress(), -1,
-					vn.hashCode());
+				sym = localSymbols.newMappedSymbol(0, highloc.getName(), highloc.getDataType(),
+					new VariableStorage(func.getProgram(), vn), vn.getPCAddress(), -1);
 				reslocal = new HighLocal(highloc.getDataType(), vn, null, vn.getPCAddress(), sym);
 
 				resremain = highloc; // Keep remaining varnodes in old high
@@ -499,16 +433,21 @@ public class HighFunction extends PcodeSyntaxTree {
 	 * this doesn't need to be strictly accurate as it is only used to associate the function with
 	 * addresses near its entry point.
 	 *
+	 * @param id is the id associated with the function symbol
+	 * @param namespace is the namespace containing the function symbol
 	 * @param entryPoint pass null to use the function entryPoint, pass an address to force an entry point
 	 * @param size describes how many bytes the function occupies as code
 	 * @return the XML string
 	 */
-	public String buildFunctionXML(Address entryPoint, int size) {
+	public String buildFunctionXML(long id, Namespace namespace, Address entryPoint, int size) {
 		// Functions aren't necessarily contiguous with the smallest address being the entry point
 		// So size needs to be smaller than size of the contiguous chunk containing the entry point
 		StringBuilder resBuf = new StringBuilder();
 		resBuf.append("<function");
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName(showNamespace));
+		if (id != 0) {
+			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+		}
+		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName());
 		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 		if (func.isInline()) {
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "inline", true);
@@ -523,12 +462,12 @@ public class HighFunction extends PcodeSyntaxTree {
 		else {
 			resBuf.append(Varnode.buildXMLAddress(entryPoint)); // Address is forced on XML
 		}
-		resBuf.append(localSymbols.buildLocalDbXML());
+		localSymbols.buildLocalDbXML(resBuf, namespace);
 		proto.buildPrototypeXML(resBuf, getDataTypeManager());
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
 			resBuf.append("<jumptablelist>\n");
-			for (int i = 0; i < jumpTables.size(); ++i) {
-				jumpTables.get(i).buildXml(resBuf);
+			for (JumpTable jumpTable : jumpTables) {
+				jumpTable.buildXml(resBuf);
 			}
 			resBuf.append("</jumptablelist>\n");
 		}
@@ -538,8 +477,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 		if ((protoOverrides != null) && (protoOverrides.size() > 0)) {
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
-			for (int i = 0; i < protoOverrides.size(); ++i) {
-				DataTypeSymbol sym = protoOverrides.get(i);
+			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
@@ -554,26 +492,6 @@ public class HighFunction extends PcodeSyntaxTree {
 		if (hasOverrideTag) {
 			resBuf.append("</override>\n");
 		}
-		resBuf.append("</function>\n");
-		return resBuf.toString();
-	}
-
-	/**
-	 * Build the XML representation of only the shell function info not including everything known
-	 * about the function.
-	 *
-	 * @param name name of the function
-	 * @param addr address the function is located at
-	 *
-	 * @return the XML string
-	 */
-	static public String buildFunctionShellXML(String name, Address addr) {
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<function");
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", name);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", 1);
-		resBuf.append(">\n");
-		resBuf.append(Varnode.buildXMLAddress(addr));
 		resBuf.append("</function>\n");
 		return resBuf.toString();
 	}
@@ -698,22 +616,48 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 	}
 
-	static public void createNamespaceTag(StringBuilder buf, Namespace namespc) {
-		if (namespc == null) {
-			return;
+	/**
+	 * The decompiler treats some namespaces as equivalent to the "global" namespace.
+	 * Return true if the given namespace is treated as equivalent.
+	 * @param namespace is the namespace
+	 * @return true if equivalent
+	 */
+	static final public boolean collapseToGlobal(Namespace namespace) {
+		if (namespace instanceof Library) {
+			return true;
 		}
-		ArrayList<String> arr = new ArrayList<String>();
-		Namespace curspc = namespc;
-		while (curspc != null) {
-			arr.add(0, curspc.getName());
-			curspc = curspc.getParentNamespace();
+		return false;
+	}
+
+	/**
+	 * Append an XML &lt;parent&gt; tag to the buffer describing the formal path elements
+	 * from the root (global) namespace up to the given namespace
+	 * @param buf is the buffer to write to
+	 * @param namespace is the namespace being described
+	 */
+	static public void createNamespaceTag(StringBuilder buf, Namespace namespace) {
+		buf.append("<parent>\n");
+		if (namespace != null) {
+			ArrayList<Namespace> arr = new ArrayList<Namespace>();
+			Namespace curspc = namespace;
+			while (curspc != null) {
+				arr.add(0, curspc);
+				if (collapseToGlobal(curspc)) {
+					break;		// Treat library namespace as root
+				}
+				curspc = curspc.getParentNamespace();
+			}
+			buf.append("<val/>\n"); // Force global scope to have empty name
+			for (int i = 1; i < arr.size(); ++i) {
+				Namespace curScope = arr.get(i);
+				buf.append("<val");
+				SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", curScope.getID());
+				buf.append('>');
+				SpecXmlUtils.xmlEscape(buf, curScope.getName());
+				buf.append("</val>\n");
+			}
 		}
-		buf.append("<val/>\n"); // Force global scope to have empty name
-		for (int i = 1; i < arr.size(); ++i) {
-			buf.append("<val>");
-			SpecXmlUtils.xmlEscape(buf, arr.get(i));
-			buf.append("</val>\n");
-		}
+		buf.append("</parent>\n");
 	}
 
 	/**

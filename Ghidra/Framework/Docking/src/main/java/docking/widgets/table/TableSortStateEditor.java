@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +20,7 @@ import java.util.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 
 public class TableSortStateEditor {
-	private List<ColumnSortState> sortStates = new ArrayList<ColumnSortState>();
+	private List<ColumnSortState> sortStates = new ArrayList<>();
 
 	public TableSortStateEditor() {
 		// for creating from scratch
@@ -46,6 +45,10 @@ public class TableSortStateEditor {
 		addSortedColumn(new ColumnSortState(columnIndex, direction, getNextColumnSortOrder()));
 	}
 
+	public ColumnSortState getColumnSortState(int sortStateIndex) {
+		return sortStates.get(sortStateIndex);
+	}
+
 	private int getNextColumnSortOrder() {
 		return getSortedColumnCount() + 1;
 	}
@@ -68,8 +71,8 @@ public class TableSortStateEditor {
 	public void flipColumnSortDirection(int columnIndex) {
 		int existingIndex = indexOf(columnIndex);
 		if (existingIndex < 0) {
-			throw new IllegalArgumentException("Cannot change sort direction "
-				+ "when column is not sorted");
+			throw new IllegalArgumentException(
+				"Cannot change sort direction " + "when column is not sorted");
 		}
 
 		ColumnSortState sortState = sortStates.get(existingIndex);

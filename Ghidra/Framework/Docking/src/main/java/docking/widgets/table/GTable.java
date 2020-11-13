@@ -33,6 +33,7 @@ import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.actions.ToolActions;
+import docking.widgets.AutoLookup;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -70,7 +71,7 @@ import resources.ResourceManager;
  *
  * @see GTableFilterPanel
  */
-public class GTable extends JTable implements KeyStrokeConsumer {
+public class GTable extends JTable {
 
 	private static final KeyStroke COPY_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_C, CONTROL_KEY_MODIFIER_MASK);
@@ -80,17 +81,13 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		KeyStroke.getKeyStroke(KeyEvent.VK_A, CONTROL_KEY_MODIFIER_MASK);
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
-
-	private int userDefinedRowHeight;
+	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
 
 	private boolean isInitialized;
-	private boolean allowActions;
+	private boolean enableActionKeyBindings;
 	private KeyListener autoLookupListener;
-	private long lastLookupTime;
-	private String lookupString;
-	private int lookupColumn = -1;
-	private AutoLookupKeyStrokeConsumer autoLookupKeyStrokeConsumer =
-		new AutoLookupKeyStrokeConsumer();
+
+	private AutoLookup autoLookup = createAutoLookup();
 
 	/** A list of default renderers created by this table */
 	protected List<TableCellRenderer> defaultGTableRendererList = new ArrayList<>();
@@ -108,10 +105,9 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	private SelectionManager selectionManager;
 	private Integer visibleRowCount;
 
-	public static final long KEY_TIMEOUT = 800;//made public for JUnits...
-	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
-
+	private int userDefinedRowHeight;
 	private TableModelListener rowHeightListener = e -> adjustRowHeight();
+
 	private TableColumnModelListener tableColumnModelListener = null;
 	private final Map<Integer, GTableCellRenderingData> columnRenderingDataMap = new HashMap<>();
 
@@ -191,6 +187,14 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		return new GTableColumnModel(this);
 	}
 
+	/**
+	 * Allows subclasses to change the type of {@link AutoLookup} created by this table
+	 * @return the auto lookup 
+	 */
+	protected AutoLookup createAutoLookup() {
+		return new GTableAutoLookup(this);
+	}
+
 	@Override
 	public void setColumnModel(TableColumnModel columnModel) {
 		super.setColumnModel(columnModel);
@@ -221,7 +225,15 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 
 		initializeRowHeight();
 
-		selectionManager = createSelectionManager(dataModel);
+		selectionManager = createSelectionManager();
+	}
+
+	protected <T> SelectionManager createSelectionManager() {
+		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+		if (rowModel != null) {
+			return new RowObjectSelectionManager<>(this, rowModel);
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -229,16 +241,17 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	// an arbitrary type T defined here.  So, T doesn't really exist and therefore the cast isn't
 	// really casting to anything.  The SelectionManager will take on the type of the given model.
 	// The T is just there on the SelectionManager to make its internal methods consistent.
-	protected <T> SelectionManager createSelectionManager(TableModel model) {
+	private <T> RowObjectTableModel<T> getRowObjectTableModel() {
+		TableModel model = getModel();
 		if (model instanceof RowObjectTableModel) {
-			return new RowObjectSelectionManager<>(this, (RowObjectTableModel<T>) model);
+			return (RowObjectTableModel<T>) model;
 		}
 
 		return null;
 	}
 
 	/**
-	 * Returns the {@link SelectionManager} in use by this GTable.  <tt>null</tt> is returned
+	 * Returns the {@link SelectionManager} in use by this GTable.  <code>null</code> is returned
 	 * if the user has installed their own {@link ListSelectionModel}.
 	 * 
 	 * @return the selection manager
@@ -273,177 +286,57 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		if (columnModel instanceof GTableColumnModel) {
 			((GTableColumnModel) columnModel).dispose();
 		}
+		columnRenderingDataMap.clear();
 	}
 
-	private int getRow(TableModel model, String keyString) {
-		if (keyString == null) {
-			return -1;
-		}
-
-		int currRow = getSelectedRow();
-		if (currRow >= 0 && currRow < getRowCount() - 1) {
-			if (keyString.length() == 1) {
-				++currRow;
-			}
-			Object obj = getValueAt(currRow, convertColumnIndexToView(lookupColumn));
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return currRow;
-			}
-		}
-		if (model instanceof SortedTableModel) {
-			SortedTableModel sortedModel = (SortedTableModel) model;
-			if (lookupColumn == sortedModel.getPrimarySortColumnIndex()) {
-				return autoLookupBinary(sortedModel, keyString);
-			}
-		}
-		return autoLookupLinear(keyString);
+	/**
+	 * Sets the delay between keystrokes after which each keystroke is considered a new lookup
+	 * @param timeout the timeout
+	 * @see #setAutoLookupColumn(int)
+	 * @see AutoLookup#KEY_TYPING_TIMEOUT
+	 */
+	public void setAutoLookupTimeout(long timeout) {
+		autoLookup.setTimeout(timeout);
 	}
 
-	private int autoLookupLinear(String keyString) {
-		int rowCount = getRowCount();
-		int startRow = getSelectedRow();
-		int counter = 0;
-		int col = convertColumnIndexToView(lookupColumn);
-		for (int i = startRow + 1; i < rowCount; i++) {
-			Object obj = getValueAt(i, col);
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return i;
-			}
-			if (counter++ > TableUtils.MAX_SEARCH_ROWS) {
-				return -1;
-			}
-		}
-		for (int i = 0; i < startRow; i++) {
-			Object obj = getValueAt(i, col);
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return i;
-			}
-			if (counter++ > TableUtils.MAX_SEARCH_ROWS) {
-				return -1;
-			}
-		}
-		return -1;
-	}
-
-	private int autoLookupBinary(SortedTableModel model, String keyString) {
-		String modifiedLookupString = keyString;
-
-		int sortedOrder = 1;
-		int primarySortColumnIndex = model.getPrimarySortColumnIndex();
-		TableSortState columnSortState = model.getTableSortState();
-		ColumnSortState sortState = columnSortState.getColumnSortState(primarySortColumnIndex);
-
-		if (!sortState.isAscending()) {
-			sortedOrder = -1;
-			int lastCharPos = modifiedLookupString.length() - 1;
-			char lastChar = modifiedLookupString.charAt(lastCharPos);
-			++lastChar;
-			modifiedLookupString = modifiedLookupString.substring(0, lastCharPos) + lastChar;
-		}
-
-		int min = 0;
-		int max = model.getRowCount() - 1;
-		int col = convertColumnIndexToView(lookupColumn);
-		while (min < max) {
-			int i = (min + max) / 2;
-
-			Object obj = getValueAt(i, col);
-			if (obj == null) {
-				obj = "";
-			}
-
-			int compare = modifiedLookupString.toString().compareToIgnoreCase(obj.toString());
-			compare *= sortedOrder;
-
-			if (compare < 0) {
-				max = i - 1;
-			}
-			else if (compare > 0) {
-				min = i + 1;
-			}
-			else {//compare == 0, MATCH!
-				return i;
-			}
-		}
-
-		String value = getValueAt(min, col).toString();
-		if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-			return min;
-		}
-		if (min - 1 >= 0) {
-			value = getValueAt(min - 1, col).toString();
-			if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-				return min - 1;
-			}
-		}
-		if (min + 1 < dataModel.getRowCount()) {
-			value = getValueAt(min + 1, col).toString();
-			if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-				return min + 1;
-			}
-		}
-
-		return -1;
+	protected AutoLookup getAutoLookup() {
+		return autoLookup;
 	}
 
 	/**
 	 * Sets the column in which auto-lookup will be enabled.
+	 * 
+	 * <p>Note: calling this method with a valid column index will disable key binding support
+	 * of actions.  See {@link #setActionsEnabled(boolean)}.  Passing an invalid column index
+	 * will disable the auto-lookup feature.
+	 * 
 	 * @param lookupColumn the column in which auto-lookup will be enabled
 	 */
 	public void setAutoLookupColumn(int lookupColumn) {
-		this.lookupColumn = lookupColumn;
+		autoLookup.setColumn(convertColumnIndexToView(lookupColumn));
 
 		if (autoLookupListener == null) {
 			autoLookupListener = new KeyAdapter() {
 				@Override
 				public void keyPressed(KeyEvent e) {
+					if (enableActionKeyBindings) {
+						// actions will consume key bindings, so don't process them
+						return;
+					}
+
 					if (getRowCount() == 0) {
 						return;
 					}
 
-					if (isIgnorableKeyEvent(e)) {
-						return;
-					}
-
-					long when = e.getWhen();
-					if (when - lastLookupTime > KEY_TIMEOUT) {
-						lookupString = "" + e.getKeyChar();
-					}
-					else {
-						lookupString += "" + e.getKeyChar();
-					}
-
-					int row = getRow(dataModel, lookupString);
-					if (row >= 0) {
-						setRowSelectionInterval(row, row);
-						Rectangle rect = getCellRect(row, 0, false);
-						scrollRectToVisible(rect);
-					}
-					lastLookupTime = when;
-				}
-
-				private boolean isIgnorableKeyEvent(KeyEvent event) {
-					// ignore modified keys
-					if (event.isAltDown() || event.isAltGraphDown() || event.isControlDown() ||
-						event.isMetaDown()) {
-						return true;
-					}
-
-					if (event.isActionKey() || event.getKeyChar() == KeyEvent.CHAR_UNDEFINED ||
-						Character.isISOControl(event.getKeyChar())) {
-						return true;
-					}
-
-					return false;
+					autoLookup.keyTyped(e);
 				}
 			};
 		}
 
+		removeKeyListener(autoLookupListener);
 		if (lookupColumn >= 0 && lookupColumn < getModel().getColumnCount()) {
 			addKeyListener(autoLookupListener);
-		}
-		else {
-			removeKeyListener(autoLookupListener);
+			enableActionKeyBindings = false;
 		}
 	}
 
@@ -460,25 +353,22 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	 * @param b true allows keyboard actions to pass up the component hierarchy.
 	 */
 	public void setActionsEnabled(boolean b) {
-		allowActions = b;
+		enableActionKeyBindings = b;
 	}
 
 	/**
-	 * This method is implemented to signal interest in any typed text that may help the user
-	 * change the row in the table.  For example, if the user types 'a', then the table will move
-	 * to the first symbol that begins with the letter 'a'.  This method also wants to handle
-	 * text when the 'shift' key is down.  This method will return false if the control key is
-	 * pressed.
-	 *
-	 * @see docking.KeyStrokeConsumer#isKeyConsumed(javax.swing.KeyStroke)
+	 * Returns true if key strokes are used to trigger actions. 
+	 * 
+	 * <p>This method has a relationship with {@link #setAutoLookupColumn(int)}.  If this method 
+	 * returns <code>true</code>, then the auto-lookup feature is disabled.  If this method 
+	 * returns <code>false</code>, then the auto-lookup may or may not be enabled.
+	 *   
+	 * @return true if key strokes are used to trigger actions
+	 * @see #setActionsEnabled(boolean)
+	 * @see #setAutoLookupColumn(int)
 	 */
-	@Override
-	public boolean isKeyConsumed(KeyStroke keyStroke) {
-		if (allowActions) {
-			return false;
-		}
-
-		return autoLookupKeyStrokeConsumer.isKeyConsumed(keyStroke);
+	public boolean areActionsEnabled() {
+		return enableActionKeyBindings;
 	}
 
 	/**
@@ -683,9 +573,6 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		return super.processKeyBinding(ks, e, condition, pressed);
 	}
 
-	/**
-	 * @see javax.swing.JTable#getDefaultRenderer(java.lang.Class)
-	 */
 	@Override
 	public TableCellRenderer getDefaultRenderer(Class<?> columnClass) {
 		if (columnClass == null) {
@@ -865,7 +752,7 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	 * <ul>
 	 *     <li>Wrap tooltip text content with an &lt;html&gt; tag so that it is possible for
 	 *         the content to be formatted in a manner that is easier for the user read, and</li>
-	 *     <li>Enable any <tt>default</tt> {@link GTableCellRenderer} instances to render
+	 *     <li>Enable any <code>default</code> {@link GTableCellRenderer} instances to render
 	 *         HTML content, which they do not do by default.</li>
 	 * </ul>
 	 * <p>
@@ -1117,14 +1004,26 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 	 */
 	@Override
 	public Object getValueAt(int row, int column) {
-		Object value = super.getValueAt(row, column);
-
 		if (!copying) {
-			return value;
+			return super.getValueAt(row, column);
 		}
 
+		Object value = getCellValue(row, column);
 		Object updated = maybeConvertValue(value);
 		return updated;
+	}
+
+	private Object getCellValue(int row, int viewColumn) {
+		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+		if (rowModel == null) {
+			Object value = super.getValueAt(row, viewColumn);
+			return maybeConvertValue(value);
+		}
+
+		Object rowObject = rowModel.getRowObject(row);
+		int modelColumn = convertColumnIndexToModel(viewColumn);
+		String stringValue = TableUtils.getTableCellStringValue(rowModel, rowObject, modelColumn);
+		return maybeConvertValue(stringValue);
 	}
 
 	private Object maybeConvertValue(Object value) {
@@ -1324,8 +1223,7 @@ public class GTable extends JTable implements KeyStrokeConsumer {
 		GTableToCSV.writeCSVUsingColunns(file, GTable.this, columnList);
 	}
 
-	public static void createSharedActions(DockingTool tool, ToolActions toolActions,
-			String owner) {
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
 
 		String actionMenuGroup = "zzzTableGroup";
 		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");

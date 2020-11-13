@@ -169,8 +169,8 @@ if "%BACKGROUND%"=="y" (
 	REM NOTE: The below check isn't perfect because they might have other javaw's running, but
 	REM without the PID of the thing we launched, it's the best we can do (maybe use WMI?).  
 	REM Worst case, they just won't see the error message.
-	timeout /NOBREAK 1 > NUL
-	tasklist | find "javaw" > NUL
+	%SystemRoot%\System32\timeout.exe /NOBREAK 1 > NUL
+	%SystemRoot%\System32\tasklist.exe | %SystemRoot%\System32\findstr.exe "javaw" > NUL
 	if not "!ERRORLEVEL!"=="0" (
 		echo Exited with error.  Run in foreground ^(fg^) mode for more details.
 	)

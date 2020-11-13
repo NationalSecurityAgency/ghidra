@@ -18,8 +18,6 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
-
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
@@ -34,7 +32,7 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
  */
 public abstract class AssemblyResolution implements Comparable<AssemblyResolution> {
 	protected final String description;
-	protected final ImmutableList<? extends AssemblyResolution> children;
+	protected final List<? extends AssemblyResolution> children;
 
 	private boolean hashed = false;
 	private int hash;
@@ -55,9 +53,9 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * @param description a textual description used as part of {@link #toString()}
 	 * @param children for record keeping, any children used in constructing this resolution
 	 */
-	AssemblyResolution(String description, ImmutableList<? extends AssemblyResolution> children) {
+	AssemblyResolution(String description, List<? extends AssemblyResolution> children) {
 		this.description = description;
-		this.children = children == null ? ImmutableList.of() : children;
+		this.children = children == null ? List.of() : children;
 	}
 
 	/* ********************************************************************************************
@@ -67,7 +65,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	/**
 	 * Build the result of successfully resolving a SLEIGH constructor
 	 * 
-	 * @note This is not used strictly for resolved SLEIGH constructors. It may also be used to
+	 * NOTE: This is not used strictly for resolved SLEIGH constructors. It may also be used to
 	 * store intermediates, e.g., encoded operands, during constructor resolution.
 	 * @param ins the instruction pattern block
 	 * @param ctx the context pattern block
@@ -77,7 +75,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 */
 	public static AssemblyResolvedConstructor resolved(AssemblyPatternBlock ins,
 			AssemblyPatternBlock ctx, String description,
-			ImmutableList<? extends AssemblyResolution> sel) {
+			List<? extends AssemblyResolution> sel) {
 		return new AssemblyResolvedConstructor(description, sel, ins, ctx, null, null);
 	}
 
@@ -90,7 +88,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedConstructor instrOnly(AssemblyPatternBlock ins,
-			String description, ImmutableList<AssemblyResolution> children) {
+			String description, List<AssemblyResolution> children) {
 		return resolved(ins, AssemblyPatternBlock.nop(), description, children);
 	}
 
@@ -103,7 +101,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedConstructor contextOnly(AssemblyPatternBlock ctx,
-			String description, ImmutableList<AssemblyResolution> children) {
+			String description, List<AssemblyResolution> children) {
 		return resolved(AssemblyPatternBlock.nop(), ctx, description, children);
 	}
 
@@ -141,7 +139,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedConstructor nop(String description,
-			ImmutableList<? extends AssemblyResolution> sel) {
+			List<? extends AssemblyResolution> sel) {
 		return resolved(AssemblyPatternBlock.nop(), AssemblyPatternBlock.nop(), description, sel);
 	}
 
@@ -153,7 +151,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedError error(String error, String description,
-			ImmutableList<? extends AssemblyResolution> children) {
+			List<? extends AssemblyResolution> children) {
 		return new AssemblyResolvedError(description, children, error);
 	}
 

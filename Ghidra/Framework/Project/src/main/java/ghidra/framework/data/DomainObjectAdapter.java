@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,18 @@
  */
 package ghidra.framework.data;
 
-import ghidra.framework.model.*;
-import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.LockException;
-import ghidra.util.Lock;
-import ghidra.util.classfinder.ClassSearcher;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import ghidra.framework.model.*;
+import ghidra.framework.store.FileSystem;
+import ghidra.framework.store.LockException;
+import ghidra.util.Lock;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * An abstract class that provides default behavior for
@@ -488,7 +487,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		contentHandlerClassMap = new HashMap<Class<?>, ContentHandler>();
 		contentHandlerTypeMap = new HashMap<String, ContentHandler>();
 
-		Set<ContentHandler> handlers = ClassSearcher.getInstances(ContentHandler.class);
+		List<ContentHandler> handlers = ClassSearcher.getInstances(ContentHandler.class);
 		for (ContentHandler ch : handlers) {
 			String type = ch.getContentType();
 			Class<?> DOClass = ch.getDomainObjectClass();

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
-import ghidra.app.plugin.core.datamgr.tree.CategoryNode;
-import ghidra.program.model.data.Category;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -29,6 +22,12 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
+import ghidra.app.plugin.core.datamgr.tree.BuiltInArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.CategoryNode;
+import ghidra.program.model.data.Category;
 
 public abstract class CreateDataTypeAction extends DockingAction {
 	protected final DataTypeManagerPlugin plugin;
@@ -43,7 +42,10 @@ public abstract class CreateDataTypeAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		CategoryNode categoryNode = getSelectedCategoryNode(context);
-		if ((categoryNode == null) || !categoryNode.isEnabled()) {
+		if (categoryNode == null || !categoryNode.isEnabled()) {
+			return false;
+		}
+		if (categoryNode instanceof BuiltInArchiveNode) {
 			return false;
 		}
 
@@ -86,5 +88,6 @@ public abstract class CreateDataTypeAction extends DockingAction {
 		createNewDataType(editorManager, category);
 	}
 
-	protected abstract void createNewDataType(DataTypeEditorManager editorManager, Category category);
+	protected abstract void createNewDataType(DataTypeEditorManager editorManager,
+			Category category);
 }

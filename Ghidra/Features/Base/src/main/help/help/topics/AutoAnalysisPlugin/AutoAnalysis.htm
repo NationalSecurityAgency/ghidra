@@ -5,7 +5,7 @@
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Auto-analysis</TITLE>
+    <TITLE>Auto Analysis</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
     <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
   </HEAD>
@@ -24,7 +24,7 @@
 
     <BLOCKQUOTE>
       <OL>
-        <LI>User Disassembles</LI>
+        <LI>The user triggers disassembly</LI>
 
         <LI>Function Analyzer - looks at all calls and creates Functions</LI>
 
@@ -34,9 +34,8 @@
         <LI>Operand Analyzer - looks at scalar operands for possible address references</LI>
 
         <LI>Data Reference Analyzer - looks at references for possible strings or pointers to
-        code.<BR>
-         References to code are disassembled.<BR>
-         ..... Cycle repeats with 2) as additional code is disassembled.</LI>
+        code. References to code are disassembled.<BR>
+         .....The cycle repeats with 2) as additional code is disassembled.</LI>
       </OL>
 
       <P>One program change might cause several Analyzers to become active, however only one
@@ -210,46 +209,46 @@
         <H4><B>Options</B></H4>
 
         <UL>
-          <LI><B>Create strings containing existing strings</B> - if checked, strings will be
+          <LI><B>Create Strings Containing Existing Strings</B> - if checked, strings will be
           created even if they contain existing substrings (existing strings will be cleared). The
           string will be created only if existing strings (a) are wholly contained within the
           potential string, (b) do not share the same starting address as the potential string, (c)
           share the same ending address as the potential string, and (d) are the same datatype as
           the potential string to be created).</LI>
 
-          <LI><B>Create strings containing references</B> - if checked, strings that contain, but
+          <LI><B>Create Strings Containing References</B> - if checked, strings that contain, but
           do not start with, one or more references will be created.</LI>
 
-          <LI><B>Force model reload</B> - if checked, forces the model to be reloaded every time
+          <LI><B>Force Model Reload</B> - if checked, forces the model to be reloaded every time
           the analyzer is run (in cases where the user wishes to see the effect of changing a model
           without restarting Ghidra).</LI>
 
-          <LI><B>Minimum string length</B> - specifies the smallest number of characters in a
+          <LI><B>Minimum String Length</B> - specifies the smallest number of characters in a
           string for it to be considered a valid string. For this analyzer, null termination
           characters are ignored for the purposes of counting characters. Note that smaller numbers
           will result in a larger number of false positives. String length must be at least 4.</LI>
 
-          <LI><B>Model file</B> - Specifies the model file built using the BuildStringModels class
+          <LI><B>Model File</B> - Specifies the model file built using the BuildStringModels class
           (default is 'StringModel.sng'). Note that the location of the model file does not need to
           be specified, as models should always be placed in the
-          'Ghidra/Features/Base/data/stringngrams' directory.</LI>
+          <CODE CLASS="path">&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/stringngrams/</CODE> directory.</LI>
 
-          <LI><B>Require null termination for string</B> - if checked, only null-terminated strings
+          <LI><B>Require Null Termination for String</B> - if checked, only null-terminated strings
           are created.</LI>
 
-          <LI><B>Search only in accessible memory blocks</B> - if checked, searches only in memory
+          <LI><B>Search Only in Accessible Memory Blocks</B> - if checked, searches only in memory
           blocks that have at least one of the Read (R), Write (W), or Execute (X) permissions set
-          to true. Enabling this option ensures strings are not created in areas such as overlays
-          or debug sections.</LI>
+          to true. Enabling this option ensures strings are not created in areas such as non-loaded 
+          overlays or debug sections.</LI>
 
-          <LI><B>String end alignment</B> - specifies the byte alignment requirement for the end of
+          <LI><B>String End Alignment</B> - specifies the byte alignment requirement for the end of
           the string. An alignment of 1 means the string can end at any address. Alignments greater
           than 1 require that (a) the 'require null termination' option be enabled, and (b) if the
           null-terminated string does not end at an aligned boundary, that there exist enough
           trailing '0' bytes following the string to allow alignment. If neither (a) nor (b) apply,
           end alignment is not enforced.</LI>
 
-          <LI><B>String start alignment</B> - specifies the byte alignment requirement for the
+          <LI><B>String Start Alignment</B> - specifies the byte alignment requirement for the
           start of the string. An alignment of 1 means that strings can start at any address. An
           alignment of 2 means that strings must start on an even address. An alignment of 4 means
           that strings must start on an address that is a multiple of 4.</LI>
@@ -344,7 +343,100 @@
         name and create a new primary symbol for the demangled name. It will also assign the
         appropriate datatypes to the parameters and return type.</P>
 
-        <P><U>Started By:</U> New defined functions</P>
+		<P>
+		The default demangler options are:
+		<TABLE BORDER="1">
+			<TR>
+				<TH WIDTH="25%">Name</TH>
+				<TH WIDTH="75%">Description</TH>
+			</TR>
+			<TR>
+				<TD>Apply Function Signatures
+				</TD>
+				<TD>
+				Apply any recovered function signature type information
+				 in addition to the function name
+				</TD>				
+			</TR>
+			<TR>
+				<TD>Only Demangle Known Mangled Symbols
+				</TD>
+				<TD>
+				Only demangle symbols that follow known compiler mangling patterns. 
+				Leaving this option off may cause non-mangled symbols to get demangled.
+				</TD>				
+			</TR>		
+		</TABLE>
+		</P>
+
+		<P><A name="Gnu_Demangler_Options">
+		<BR>
+		<BR>
+		<B>The GNU Demangler</B> adds the following analysis options:
+		
+		<BLOCKQUOTE>
+		<P>
+			<U><B>Use Deprecated Demangler</B></U> -
+				By default, GCC symbols will be demangled using the most up-to-date demangler
+				that Ghidra contains (<B>version 2.33.1</B> as of this writing).   Turning this 
+				option on will also invoke the now deprecated previous version of the demangler
+				(<B>version 2.24</B>) if the preferred demangler cannot demangle a given symbol.
+		</P>
+		<P>	
+				Support for older demangling styles was removed in <CODE>c++filt (v2.32)</CODE>.
+				Specifically, the following formats are no longer supported: 
+				<CODE>Lucid, ARM, HP, and EDG</CODE>.   To use these formats, you must enable
+				usage of the deprecated demangler, which is <B>version 2.24</B>.  Further, you 
+				may have to pass the required external demangler options using the Ghidra 
+				option below.
+		</P>
+		<P>
+		
+			<U><B>Use External Demangler Options</B></U> - 
+			
+				This allows users to pass settings to the demangler. As an example, you can enter 
+				in this Ghidra option text field the following text to use the <CODE>rust</CODE>
+				format: <CODE>-s rust</CODE>.  This is not needed for
+				normal operation.   To see a full list of supported options, query each demangler
+				directly using the <CODE>--help</CODE> switch.
+			</P>
+			<P>
+				The GNU demanglers can be found at: 
+				<CODE CLASS="path">
+				&lt;GHIDRA_INSTALL_DIR&gt;/GPL/DemanglerGnu/build/os/&lt;OS&gt;/
+				</CODE><BR>				
+		</P>
+		
+				
+			<BLOCKQUOTE>
+				<P>
+				The available programs are:
+					<UL>
+						<LI><CODE>demangler_gnu_v2_33_1</CODE></LI>
+						<LI><CODE>demangler_gnu_v2_24</CODE></LI>
+					</UL>	
+				</P>
+				<P style="background-color: #FFF0E0;">
+					<IMG SRC="../../shared/warning.png" />When using an external GNU demangler, 
+					please understand the risks associated with using that version of the 
+					software.   The <CODE>demangler_gnu_v2_24</CODE> version of the
+					demangler is a modified version of GNU's <CODE>c++filt (v2.24)</CODE>.  The
+					original version has known vulnerabilities, some of which have been 
+					mitigated in the version created for Ghidra.  Use caution when enabling this
+					feature.
+				</P>
+			</BLOCKQUOTE>
+		
+		<P>
+		<IMG SRC="../../shared/tip.png" />The Demangler Analyzer is designed to be extensible.
+		You can extend <CODE>ghidra.app.plugin.core.analysis.AbstractDemanglerAnalyzer</CODE> 
+		to add your demangler analyzer callback.  This allows you to precisely control
+		which demanglers get called, as well as which options are used.
+		</P>
+		
+		</BLOCKQUOTE>
+
+        <P STYLE="margin-top: 30px;"><U>Started By:</U> New defined functions</P>
       </BLOCKQUOTE>
 
       <H3><A name="Auto_Analysis_Option_Byte"></A>Entry Point Analyzer</H3>

@@ -15,13 +15,16 @@
  */
 package ghidra.pcodeCPort.slgh_compile;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
+import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.semantics.*;
@@ -76,11 +79,11 @@ public abstract class PcodeCompile {
 	public abstract SectionVector finalNamedSection(SectionVector vec, ConstructTpl section);
 
 	/**
-	 * 
-	 * @param location
-	 * @param sym MacroSymbol
-	 * @param param
-	 * @return
+	 * Handle a sleigh 'macro' invocation, returning the resulting p-code op templates (OpTpl)
+	 * @param location is the file/line where the macro is invoked
+	 * @param sym MacroSymbol is the macro symbol
+	 * @param param is the parsed list of operand expressions
+	 * @return a list of p-code op templates
 	 */
 	public abstract VectorSTL<OpTpl> createMacroUse(Location location, MacroSymbol sym,
 			VectorSTL<ExprTree> param);
@@ -89,12 +92,9 @@ public abstract class PcodeCompile {
 
 	public void reportError(Location location, String msg) {
 		entry("reportError", location, msg);
-		if (location == null) {
-			log.error(msg);
-		}
-		else {
-			log.error(location + ": " + msg);
-		}
+
+		log.error(MessageFormattingUtils.format(location, msg));
+
 		++errors;
 	}
 
@@ -104,12 +104,9 @@ public abstract class PcodeCompile {
 
 	public void reportWarning(Location location, String msg) {
 		entry("reportWarning", location, msg);
-		if (location == null) {
-			log.warn(msg);
-		}
-		else {
-			log.warn(location + ": " + msg);
-		}
+
+		log.warn(MessageFormattingUtils.format(location, msg));
+
 		++warnings;
 	}
 
@@ -147,7 +144,8 @@ public abstract class PcodeCompile {
 					if ((size.getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getReal() != 0) && (vn.getSize().getReal() != size.getReal())) {
-						throw new SleighError("Localtemp size mismatch", null);
+						throw new SleighError(String.format("Localtemp size mismatch: %d vs %d",
+							vn.getSize().getReal(), size.getReal()), op.location);
 					}
 					vn.setSize(size);
 				}
@@ -158,7 +156,8 @@ public abstract class PcodeCompile {
 					if ((size.getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getReal() != 0) && (vn.getSize().getReal() != size.getReal())) {
-						throw new SleighError("Localtemp size mismatch", null);
+						throw new SleighError(String.format("Input size mismatch: %d vs %d",
+							vn.getSize().getReal(), size.getReal()), op.location);
 					}
 					vn.setSize(size);
 				}
@@ -189,9 +188,8 @@ public abstract class PcodeCompile {
 	public VectorSTL<OpTpl> placeLabel(Location location, LabelSymbol labsym) {
 		entry("placeLabel", location, labsym);
 		if (labsym.isPlaced()) {
-			String errmsg = "Label " + labsym.getName();
-			errmsg += " is placed more than once";
-			reportError(labsym.getLocation(), errmsg);
+			reportError(labsym.getLocation(),
+				String.format("Label '%s' is placed more than once", labsym.getName()));
 		}
 		labsym.setPlaced();
 		VectorSTL<OpTpl> res = new VectorSTL<OpTpl>();
@@ -272,7 +270,7 @@ public abstract class PcodeCompile {
 				tmpvn.getOffset().getReal(), (int) tmpvn.getSize().getReal());
 		addSymbol(sym);
 		if ((!usesLocalKey) && enforceLocalKey) {
-			reportError(location, "Must use 'local' keyword to define symbol: " + varname);
+			reportError(location, "Must use 'local' keyword to define symbol '" + varname + "'");
 		}
 		return ExprTree.toVector(rhs);
 	}
@@ -465,7 +463,8 @@ public abstract class PcodeCompile {
 				return null;
 			}
 			if (byteoffset + numbytes > fullsz) {
-				throw new SleighError("Requested bit range out of bounds", loc);
+				throw new SleighError(String.format("Requested bit range out of bounds -- %d > %d",
+					(byteoffset + numbytes), fullsz), loc);
 			}
 		}
 
@@ -841,10 +840,12 @@ public abstract class PcodeCompile {
 				}
 				break;
 			case CPUI_CPOOLREF:
-				if (op.getOut().isZeroSize() && (!op.getIn(0).isZeroSize()))
+				if (op.getOut().isZeroSize() && (!op.getIn(0).isZeroSize())) {
 					force_size(op.getOut(),op.getIn(0).getSize(),ops);
-				if (op.getIn(0).isZeroSize() && (!op.getOut().isZeroSize()))
+				}
+				if (op.getIn(0).isZeroSize() && (!op.getOut().isZeroSize())) {
 					force_size(op.getIn(0),op.getOut().getSize(),ops);
+				}
 				for(i=1;i<op.numInput();++i) {
 					force_size(op.getIn(i), new ConstTpl(ConstTpl.const_type.real, 8), ops);
 				}
@@ -891,19 +892,10 @@ public abstract class PcodeCompile {
 
 	public static void entry(String name, Object... args) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(name);
-		sb.append("(");
-		int argsSoFar = 0;
-		for (int ii = 0; ii < args.length; ++ii) {
-			if (!isLocationIsh(args[ii])) {
-				if (argsSoFar > 0) {
-					sb.append(", ");
-				}
-				sb.append(args[ii]);
-				++argsSoFar;
-			}
-		}
+		sb.append(name).append("(");
+		sb.append(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(", ")));
 		sb.append(")");
+
 		log.trace(sb.toString());
 	}
 
@@ -912,7 +904,7 @@ public abstract class PcodeCompile {
 			return true;
 		}
 		if (o instanceof List) {
-			List l = (List) o;
+			List<?> l = (List<?>) o;
 			for (Object t : l) {
 				if (isLocationIsh(t)) {
 					return true;
@@ -920,7 +912,7 @@ public abstract class PcodeCompile {
 			}
 		}
 		if (o instanceof VectorSTL) {
-			VectorSTL v = (VectorSTL) o;
+			VectorSTL<?> v = (VectorSTL<?>) o;
 			for (Object t : v) {
 				if (isLocationIsh(t)) {
 					return true;
@@ -932,8 +924,12 @@ public abstract class PcodeCompile {
 
 	/**
 	 * EXTREMELY IMPORTANT: keep this up to date with isInternalFunction below!!!
-	 * @param name
-	 * @return
+	 * Lookup the given identifier as part of parsing p-code with functional syntax.
+	 * Build the resulting p-code expression object from the parsed operand expressions.
+	 * @param location identifies the file/line where the p-code is parsed from
+	 * @param name is the given functional identifier
+	 * @param operands is the ordered list of operand expressions
+	 * @return the new expression (ExprTree) object
 	 */
 	public Object findInternalFunction(Location location, String name, VectorSTL<ExprTree> operands) {
 		ExprTree r = null;
@@ -991,14 +987,19 @@ public abstract class PcodeCompile {
 			return createOpConst(location, OpCode.CPUI_INDIRECT, r.outvn.getOffset().getReal());
 		}
 		if ("cpool".equals(name)) {
-			if (operands.size() >= 2)		// At least two parameters
+			if (operands.size() >= 2) {
 				return createVariadic(location, OpCode.CPUI_CPOOLREF, operands);
+			}
 			reportError(location,name+"() expects at least two arguments");
 		}
 		if ("newobject".equals(name)) {
-			if (operands.size() >= 1)		// At least one parameter
+			if (operands.size() >= 1) {
 				return createVariadic(location, OpCode.CPUI_NEW, operands);
+			}
 			reportError(location,name+"() expects at least one argument");
+		}
+		if ("popcount".equals(name) && hasOperands(1, operands, location, name)) {
+			return createOp(location, OpCode.CPUI_POPCOUNT, r);
 		}
 
 		return null;
@@ -1016,8 +1017,10 @@ public abstract class PcodeCompile {
 
 	/**
 	 * EXTREMELY IMPORTANT: keep this up to date with findInternalFunction above!!!
-	 * @param name
-	 * @return
+	 * Determine if the given identifier is a sleigh internal function. Used to
+	 * prevent user-defined p-code names from colliding with internal names
+	 * @param name is the given identifier to check
+	 * @return true if the identifier is a reserved internal function
 	 */
 	public boolean isInternalFunction(String name) {
 		if ("zext".equals(name)) {
@@ -1069,6 +1072,9 @@ public abstract class PcodeCompile {
 			return true;
 		}
 		if ("newobject".equals(name)) {
+			return true;
+		}
+		if ("popcount".equals(name)) {
 			return true;
 		}
 

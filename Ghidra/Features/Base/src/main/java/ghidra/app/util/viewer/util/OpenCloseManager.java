@@ -40,19 +40,21 @@ public class OpenCloseManager {
 	/**
 	 * Marks the given data as open.  This method notifies listeners of changes.
 	 * @param data The data to open.
+	 * @return true if the data location was opened (false if already open or can't be opened)
 	 */
-	public void openData(Data data) {
+	public boolean openData(Data data) {
 		if (data.getComponent(0) == null) {
-			return;
+			return false;
 		}
 
 		Address addr = data.getMinAddress();
 		int[] path = data.getComponentPath();
 		if (isOpen(addr, path)) {
-			return;
+			return false;
 		}
 		open(addr, path);
 		notifyDataToggled();
+		return true;
 	}
 
 	/**
@@ -241,8 +243,7 @@ public class OpenCloseManager {
 	}
 
 	private void notifyDataToggled() {
-		for (int i = 0; i < listeners.size(); i++) {
-			ChangeListener l = listeners.get(i);
+		for (ChangeListener l : listeners) {
 			l.stateChanged(null);
 		}
 	}

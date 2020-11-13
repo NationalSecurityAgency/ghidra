@@ -55,7 +55,7 @@ uint4 DynamicHash::transtable[] = {
 
   0,				// CAST is skipped
   CPUI_INT_ADD,  CPUI_INT_ADD, 	// PTRADD and PTRSUB hash same as INT_ADD
-  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW
+  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT, CPUI_POPCOUNT
   
 };
 
@@ -393,7 +393,7 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
 /// \param addr is the given address
 /// \param h is the hash
 /// \return the matching Varnode or NULL
-Varnode *DynamicHash::findVarnode(Funcdata *fd,const Address &addr,uint8 h)
+Varnode *DynamicHash::findVarnode(const Funcdata *fd,const Address &addr,uint8 h)
 
 {
   uint4 method = getMethodFromHash(h);
@@ -423,7 +423,7 @@ Varnode *DynamicHash::findVarnode(Funcdata *fd,const Address &addr,uint8 h)
 /// \param fd is the function holding the data-flow
 /// \param addr is the given address
 /// \param h is the given hash
-void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,Funcdata *fd,const Address &addr,uint8 h)
+void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h)
 
 {
   OpCode opc = getOpCodeFromHash(h);

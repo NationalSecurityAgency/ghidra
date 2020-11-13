@@ -159,9 +159,9 @@ PCodeTest({
 })
 
 PCodeTest({
-    'name': 'AVR8_X5',
+    'name': 'AVR8_6',
     'toolchain': 'AVR/avr-elf',
-    'ccflags': '-mmcu=avrxmega5 -lgcc',
+    'ccflags': '-mmcu=avr6 -lgcc',
     'language_id': 'avr8:LE:16:atmega256',
     'has_float': 0,
     'has_double': 0,

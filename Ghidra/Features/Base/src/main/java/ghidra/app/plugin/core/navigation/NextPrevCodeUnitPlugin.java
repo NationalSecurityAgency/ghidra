@@ -15,24 +15,23 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import ghidra.app.CorePluginPackage;
-import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
-import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
-import ghidra.app.services.GoToService;
-import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
-import ghidra.util.HelpLocation;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import ghidra.app.CorePluginPackage;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
+import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.services.GoToService;
+import ghidra.app.util.HelpTopics;
+import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.HelpLocation;
+import resources.ResourceManager;
 
 /**
  * The NextPrevCodeUnitPlugin generates a GoTo event based on where the cursor
@@ -45,7 +44,6 @@ import docking.tool.ToolConstants;
  * <LI>Next-Previous Non-Function
  * <LI>Next-Previous Label
  * <LI>Next-Previous Bookmark
- * <LI>Next-Previous Marker
  * </UL>
  */
 //@formatter:off
@@ -67,22 +65,13 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 	private AbstractNextPreviousAction nonFunctionAction;
 	private AbstractNextPreviousAction labelAction;
 	private NextPreviousBookmarkAction bookmarkAction;
-	private NextPreviousMarkerAction markerAction;
 	private NextPreviousDifferentByteAction differentValueAction;
 
-	/**
-	 * Constructor for NextCodeUnitPlugin
-	 * @param plugintool the tool the plugin will be operating in
-	 */
-	public NextPrevCodeUnitPlugin(PluginTool pluginTool) {
-		super(pluginTool);
+	public NextPrevCodeUnitPlugin(PluginTool tool) {
+		super(tool);
 		createActions();
 	}
 
-	/**
-	 * Create menu for finding next/previous instruction, defined data, and
-	 * undefined data actions.
-	 */
 	private void createActions() {
 		// use this index to make sure that the following actions are ordered in the way that 
 		// they are inserted
@@ -117,15 +106,8 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 
 		bookmarkAction = new NextPreviousBookmarkAction(tool, getName(), "" + subGroupIndex++);
 		tool.addAction(bookmarkAction);
-
-/*		markerAction = new NextPreviousMarkerAction(tool, getName(), "" + subGroupIndex++);
-		tool.addAction(markerAction);*/
 	}
 
-	/**
-	 * Set next/previous in action menu item names and action tooltips given
-	 * code unit direction toggle.
-	 */
 	private void updateActions(boolean searchForward) {
 		instructionAction.setDirection(searchForward);
 		dataAction.setDirection(searchForward);
@@ -135,35 +117,30 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 		labelAction.setDirection(searchForward);
 		differentValueAction.setDirection(searchForward);
 		bookmarkAction.setDirection(searchForward);
-		//	markerAction.setDirection(searchForward);
 	}
 
-	private class ToggleDirectionAction extends CodeViewerContextAction {
+	private class ToggleDirectionAction extends NavigatableContextAction {
 		Icon forwardIcon = ResourceManager.loadImage("images/down.png");
 		Icon backwardIcon = ResourceManager.loadImage("images/up.png");
 		private boolean isForward = true;
 
 		ToggleDirectionAction(String subGroup) {
-			super("Toggle Code Unit Search Direction", NextPrevCodeUnitPlugin.this.getName());
-			MenuData menuData =
-				new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getName() },
-					forwardIcon, ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
-			menuData.setMenuSubGroup(subGroup);
-			setMenuBarData(menuData);
+			super("Toggle Search Direction", NextPrevCodeUnitPlugin.this.getName());
 			setToolBarData(new ToolBarData(forwardIcon,
-				ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP, subGroup));
+				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK |
 				InputEvent.ALT_DOWN_MASK));
 
-			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
-			setDescription("Toggle Code Unit Search Direction");
+			String longName = "Toggle Code Unit Search Direction";
+			setHelpLocation(
+				new HelpLocation(HelpTopics.NAVIGATION, longName));
+			setDescription(longName);
 
 		}
 
 		@Override
-		public void actionPerformed(CodeViewerActionContext context) {
+		public void actionPerformed(NavigatableActionContext context) {
 			isForward = !isForward;
-			getMenuBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			getToolBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			updateActions(isForward);
 		}

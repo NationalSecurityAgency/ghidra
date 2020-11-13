@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +42,12 @@ public class BookmarkEditCmd implements Command {
 	private String presentationName;
 
 	/**
-	 * Set a Bookmark. When setting a bookmark, all fields are used except the address
+	 * Edit a Bookmark. When editing a bookmark, all fields are used except the address
 	 * which is determined by the first address within each range of the set.
-	 * @param template bookmark template
-	 * @param set list off bookmark addresses
+	 * @param set list of bookmark addresses.
+	 * @param type the bookmark type.
+	 * @param category the bookmark category.
+	 * @param comment the bookmark comment.
 	 */
 	public BookmarkEditCmd(AddressSetView set, String type, String category, String comment) {
 		this.type = type;
@@ -59,10 +60,12 @@ public class BookmarkEditCmd implements Command {
 	}
 
 	/**
-	 * Set a Bookmark. When setting a bookmark, all fields are used except the address
+	 * Edit a Bookmark. When editing a bookmark, all fields are used except the address
 	 * which is provided by the addrs parameter.
-	 * @param template bookmark template
-	 * @param set list off bookmark addresses
+	 * @param addr the bookmark address.
+	 * @param type the bookmark type.
+	 * @param category the bookmark category.
+	 * @param comment the bookmark comment.
 	 */
 	public BookmarkEditCmd(Address addr, String type, String category, String comment) {
 		this.type = type;
@@ -90,9 +93,7 @@ public class BookmarkEditCmd implements Command {
 		return presentationName;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
-	 */
+	@Override
 	public boolean applyTo(DomainObject obj) {
 
 		BookmarkManager mgr = ((Program) obj).getBookmarkManager();
@@ -113,16 +114,12 @@ public class BookmarkEditCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return presentationName;
 	}

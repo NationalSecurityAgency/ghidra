@@ -112,7 +112,7 @@ public class ExportToHeaderAction extends DockingAction {
 	 */
 	private void exportToC(GTree gTree, DataTypeManager programDataTypeMgr) {
 
-		Set<Class<? extends AnnotationHandler>> classes =
+		List<Class<? extends AnnotationHandler>> classes =
 			ClassSearcher.getClasses(AnnotationHandler.class);
 
 		List<AnnotationHandler> list = new ArrayList<>();
@@ -210,8 +210,9 @@ public class ExportToHeaderAction extends DockingAction {
 				finally {
 					writer.close();
 				}
-				plugin.getTool().setStatusInfo(
-					"Successfully exported data type(s) to " + file.getAbsolutePath());
+				plugin.getTool()
+						.setStatusInfo(
+							"Successfully exported data type(s) to " + file.getAbsolutePath());
 			}
 			catch (CancelledException e) {
 				// user cancelled; ignore
@@ -242,7 +243,7 @@ public class ExportToHeaderAction extends DockingAction {
 		}
 		else if (last instanceof CategoryNode) {
 			CategoryNode node = (CategoryNode) last;
-			List<GTreeNode> children = node.getAllChildren();
+			List<GTreeNode> children = node.getChildren();
 			for (GTreeNode cnode : children) {
 				addToManager(cnode.getTreePath(), managersToDataTypesMap);
 			}

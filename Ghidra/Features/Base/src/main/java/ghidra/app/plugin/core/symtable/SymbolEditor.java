@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +15,38 @@
  */
 package ghidra.app.plugin.core.symtable;
 
-import ghidra.program.model.symbol.Symbol;
-
 import java.awt.Component;
 
 import javax.swing.*;
 
+import ghidra.program.model.symbol.Symbol;
+
 class SymbolEditor extends DefaultCellEditor {
 
-    private JTextField symbolField = null;
+	private JTextField symbolField = null;
 
-    SymbolEditor() {
-        super(new JTextField());
-        symbolField = (JTextField)super.getComponent();
-        symbolField.setBorder(BorderFactory.createEmptyBorder());
-    }
+	SymbolEditor() {
+		super(new JTextField());
+		symbolField = (JTextField) super.getComponent();
+		symbolField.setBorder(BorderFactory.createEmptyBorder());
+	}
 
-    @Override
-    public Object getCellEditorValue() {
-        return symbolField.getText().trim();
-    }
+	@Override
+	public Object getCellEditorValue() {
+		return symbolField.getText().trim();
+	}
 
-    @Override
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-        if (value instanceof Symbol) {
-	        Symbol symbol = (Symbol) value;
-	        symbolField.setText(symbol.getName());
-        }
-        else {
-            symbolField.setText("");
-        }
-        return symbolField;
-    }
+	@Override
+	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+			int row, int column) {
+
+		Symbol symbol = (Symbol) value;
+		if (symbol != null) {
+			symbolField.setText(symbol.getName());
+		}
+		else {
+			symbolField.setText("");
+		}
+		return symbolField;
+	}
 }

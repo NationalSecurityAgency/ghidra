@@ -23,7 +23,7 @@ import javax.swing.ImageIcon;
 
 import docking.action.MenuData;
 import docking.action.ToolBarData;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.ChangedFilesDialog;
 import ghidra.framework.main.datatree.CheckInTask;
 import ghidra.framework.model.DomainFile;
@@ -57,7 +57,7 @@ public class VersionControlCheckInAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		doCheckIn(context.getSelectedFiles());
 	}
 
@@ -66,7 +66,7 @@ public class VersionControlCheckInAction extends VersionControlAction {
 	 * checked into the repository.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isCheckedOut() && domainFile.modifiedSinceCheckout()) {
@@ -105,7 +105,6 @@ public class VersionControlCheckInAction extends VersionControlAction {
 	 * Check in the list of domain files. 
 	 * Domain files that cannot be closed are skipped in the list.
 	 * @param fileList list of DomainFile objects
-	 * @param listener the task listener that is notified when task completes
 	 */
 	public void checkIn(List<DomainFile> fileList) {
 

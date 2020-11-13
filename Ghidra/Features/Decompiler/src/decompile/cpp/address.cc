@@ -179,6 +179,14 @@ bool Address::isContiguous(int4 sz,const Address &loaddr,int4 losz) const
   return false;
 }
 
+/// If \b this is (originally) a \e join address, reevaluate it in terms of its new
+/// \e offset and \e siz, changing the space and offset if necessary.
+/// \param size is the new size in bytes of the underlying object
+void Address::renormalize(int4 size) {
+  if (base->getType() == IPTR_JOIN)
+    base->getManager()->renormalizeJoinAddress(*this,size);
+}
+
 /// This is usually used to build an address from an \b \<addr\>
 /// tag, but it can be used to create an address from any tag
 /// with the appropriate attributes
@@ -289,7 +297,7 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
       s >> last;
     }
     else if (el->getAttributeName(i) == "name") {
-      const Translate *trans = manage->getDefaultSpace()->getTrans();
+      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
       const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
       spc = point.space;
       first = point.offset;
@@ -709,6 +717,22 @@ int4 mostsigbit_set(uintb val)
     }
     sz >>= 1;
   } while(sz != 0);
+  return res;
+}
+
+/// Count the number (population) bits set.
+/// \param val is the given value
+/// \return the number of one bits
+int4 popcount(uintb val)
+
+{
+  val = (val & 0x5555555555555555L) + ((val >> 1) & 0x5555555555555555L);
+  val = (val & 0x3333333333333333L) + ((val >> 2) & 0x3333333333333333L);
+  val = (val & 0x0f0f0f0f0f0f0f0fL) + ((val >> 4) & 0x0f0f0f0f0f0f0f0fL);
+  val = (val & 0x00ff00ff00ff00ffL) + ((val >> 8) & 0x00ff00ff00ff00ffL);
+  val = (val & 0x0000ffff0000ffffL) + ((val >> 16) & 0x0000ffff0000ffffL);
+  int4 res = (int4)(val & 0xff);
+  res += (int4)((val >> 32) & 0xff);
   return res;
 }
 

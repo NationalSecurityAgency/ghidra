@@ -65,7 +65,7 @@ public class PCodeTestResults {
 	}
 
 	/**
-	 * @return collection of group/testNames in the form "<groupName>.<testName>"
+	 * @return collection of group/testNames in the form {@code "<groupName>.<testName>"}
 	 */
 	public Collection<String> getGroupTestNames() {
 		return results.keySet();

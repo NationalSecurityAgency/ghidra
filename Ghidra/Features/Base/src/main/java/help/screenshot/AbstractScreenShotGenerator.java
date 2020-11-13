@@ -35,6 +35,7 @@ import org.junit.*;
 
 import docking.*;
 import docking.action.DockingActionIf;
+import docking.action.ToolBarData;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.options.editor.OptionsDialog;
 import docking.tool.ToolConstants;
@@ -77,6 +78,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.AssertException;
+import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
 
@@ -588,6 +590,27 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 			componentProvider.setVisible(false);
 		}
 		waitForPostedSwingRunnables();
+	}
+
+	public void captureActionIcon(String actionName) {
+		waitForSwing();
+		DockingActionIf action = getAction(tool, actionName);
+		ToolBarData tbData = action.getToolBarData();
+		Icon icon = tbData.getIcon();
+		captureIcon(icon);
+	}
+
+	public void captureIcon(Icon icon) {
+		runSwing(() -> {
+			ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
+			image = imageIcon.getImage();
+
+			// The image returned here must be a BufferedImage, so create one
+			// if not. It may be a ToolkitImage (eg: if the icon in question
+			// is retrieved from Icons.java), which would fail on a cast to 
+			// BufferedImage during the save operation.
+			image = ImageUtils.getBufferedImage(image);
+		});
 	}
 
 	public void captureDialog() {
@@ -1364,7 +1387,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	 * screen coordinates.   This allows you to capture a sub-component of a UI, drawing
 	 * rectangles around children of said sub-component.
 	 * 
-	 * <P>If you are unsure of what to pass for <tt>root</tt>, the call 
+	 * <P>If you are unsure of what to pass for <code>root</code>, the call 
 	 * {@link #drawRectangleAround(JComponent, Color, int)} instead.
 	 * 
 	 * @param component the component to be en-rectangled

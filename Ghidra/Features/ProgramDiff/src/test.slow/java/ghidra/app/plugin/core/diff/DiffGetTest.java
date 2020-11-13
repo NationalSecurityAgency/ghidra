@@ -24,7 +24,6 @@ import javax.swing.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.widgets.MultiLineLabel;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.AddressSet;
@@ -353,9 +352,6 @@ public class DiffGetTest extends DiffTestAdapter {
 
 		assertNull(fp2.getTopLevelAncestor());
 		Window win = waitForWindow("Can't Open Selected Program");
-		assertNotNull(win);
-		String msg = findComponent(win, MultiLineLabel.class).getLabel();
-		assertTrue(msg.startsWith("Programs languages don't match."));
 		pressButton(win, "OK");
 		win = waitForWindow("Select Other Program");
 		assertNotNull(win);

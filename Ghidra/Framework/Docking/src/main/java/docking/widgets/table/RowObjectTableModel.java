@@ -59,7 +59,7 @@ public interface RowObjectTableModel<T> extends TableModel {
 	 * <b>Note: the index returned is always the 'view' index.  For non-filtering table models,
 	 * the 'view' and the 'model' index are the same.  However, for filtering table models,
 	 * the 'view' may be a subset of the 'model' index.   Thus, it is possible, if this model
-	 * is a filtering model, that the given <tt>t</tt> may not have a row value for the current
+	 * is a filtering model, that the given <code>t</code> may not have a row value for the current
 	 * state of the model (i.e., when the model is filtered in the view.  If you really need to
 	 * get the model index in such a situation, see {@link RowObjectFilterModel}.
 	 * </b>
@@ -74,7 +74,7 @@ public interface RowObjectTableModel<T> extends TableModel {
 	 * filtering, this will be the filtered version of the data.  Furthermore, the data should be
 	 * the underlying data and not a copy, as this method will potentially sort the given data.
 	 * <p>
-	 * For those subclasses using an array, you may use the <tt>Arrays</tt> class to create
+	 * For those subclasses using an array, you may use the <code>Arrays</code> class to create
 	 * a list backed by the array ({@link Arrays#asList(Object...)}).
 	 * @return the model data.
 	 */

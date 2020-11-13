@@ -15,9 +15,7 @@
  */
 package ghidra.feature.vt.gui;
 
-import static docking.test.AbstractDockingTest.performAction;
-import static docking.test.AbstractDockingTest.waitForTableModel;
-import static generic.test.AbstractGenericTest.*;
+import static docking.test.AbstractDockingTest.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,8 +30,7 @@ import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableModel;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
 import ghidra.framework.plugintool.Plugin;
@@ -132,13 +129,19 @@ public class VTTestEnv extends TestEnv {
 		return correlator;
 	}
 
-	public void releaseSession() {
+	private void releaseSession() {
 		if (sourceProgram != null) {
 			release(sourceProgram);
 		}
 		if (destinationProgram != null) {
 			release(destinationProgram);
 		}
+	}
+
+	@Override
+	public void dispose() {
+		releaseSession();
+		super.dispose();
 	}
 
 	public VTController getVTController() {
@@ -151,6 +154,16 @@ public class VTTestEnv extends TestEnv {
 
 	public Program getSourceProgram() {
 		return sourceProgram;
+	}
+
+	public PluginTool getSourceTool() {
+		VTSubToolManager toolManager = plugin.getToolManager();
+		return (PluginTool) invokeInstanceMethod("getSourceTool", toolManager);
+	}
+
+	public PluginTool getDestinationTool() {
+		VTSubToolManager toolManager = plugin.getToolManager();
+		return (PluginTool) invokeInstanceMethod("getDestinationTool", toolManager);
 	}
 
 	public Program getDestinationProgram() {

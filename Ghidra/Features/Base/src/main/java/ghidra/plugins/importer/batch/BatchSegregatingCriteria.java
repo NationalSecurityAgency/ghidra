@@ -29,9 +29,10 @@ import ghidra.app.util.opinion.Loader;
  * <p>
  * Criteria are:
  * <ul>
- * <li>Filename extension of source file
- * <li>Loader name
- * <li>Set of LanguageCompilerSpecs & preferred flags (ie. {@link BatchGroupLoadSpec})
+ * <li>Filename extension of source file</li>
+ * <li>Loader name</li>
+ * <li>Set of LanguageCompilerSpecs and preferred flags (ie. {@link BatchGroupLoadSpec})</li>
+ * </ul>
  */
 public class BatchSegregatingCriteria {
 

@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.util.*;
+import java.util.Set;
 
 import ghidra.app.nav.Navigatable;
 import ghidra.app.util.XReferenceUtil;
@@ -28,10 +28,9 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
 
 /**
- * A handler to process {@link VariableXRefFieldLocation} clicks.
+ * A handler to process {@link VariableXRefFieldLocation} clicks
  */
 public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
-
 
 	private final static Class<?>[] SUPPORTED_CLASSES = new Class<?>[] {
 		VariableXRefFieldLocation.class, VariableXRefHeaderFieldLocation.class };
@@ -60,9 +59,6 @@ public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 		return ((VariableXRefFieldLocation) programLocation).getIndex();
 	}
 
-	/**
-	 * @see XRefFieldMouseHandler#getSupportedProgramLocations()
-	 */
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
 		return SUPPORTED_CLASSES;
@@ -80,27 +76,10 @@ public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 			return;
 		}
 
-		Address toAddress = location.getAddress();
-		Program program = navigatable.getProgram();
-
 		VariableLocation variableLocation = (VariableLocation) location;
 		Variable variable = variableLocation.getVariable();
 
-		List<Reference> refs = getReferences(variable);
-		showReferenceTable(navigatable, serviceProvider, service, toAddress, program, refs);
-	}
-
-	private List<Reference> getReferences(Variable variable) {
-
-		List<Reference> refs = new ArrayList<>();
-		List<Reference> offcutRefs = new ArrayList<>();
-		XReferenceUtil.getVariableRefs(variable, refs, offcutRefs);
-
-		// Convert to a set before combining lists, to remove duplicates.
-		Set<Reference> refsSet = new HashSet<Reference>(refs);
-		Set<Reference> offcutRefsSet = new HashSet<Reference>(offcutRefs);
-		refsSet.addAll(offcutRefsSet);
-
-		return new ArrayList<>(refsSet);
+		Set<Reference> refs = XReferenceUtil.getVariableRefs(variable);
+		XReferenceUtil.showAllXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 }

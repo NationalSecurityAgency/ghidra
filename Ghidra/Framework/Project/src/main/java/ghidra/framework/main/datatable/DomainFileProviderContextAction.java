@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,8 @@ package ghidra.framework.main.datatable;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.FrontEndTool;
 
 public abstract class DomainFileProviderContextAction extends DockingAction {
 
@@ -27,45 +28,56 @@ public abstract class DomainFileProviderContextAction extends DockingAction {
 
 	@Override
 	public final boolean isEnabledForContext(ActionContext actionContext) {
-		if (!(actionContext instanceof DomainFileProvider)) {
+		if (!(actionContext instanceof DomainFileContext)) {
 			return false;
 		}
-		DomainFileProvider context = (DomainFileProvider) actionContext;
-		return isEnabledForContext(context);
+
+		FrontEndTool tool = AppInfo.getFrontEndTool();
+		if (tool.isExecutingCommand()) {
+			return false;
+		}
+
+		return isEnabledForContext((DomainFileContext) actionContext);
 	}
 
-	protected boolean isEnabledForContext(DomainFileProvider context) {
+	protected boolean isEnabledForContext(DomainFileContext context) {
 		return context.getFileCount() > 0;
 	}
 
 	@Override
 	public final void actionPerformed(ActionContext context) {
-		actionPerformed((DomainFileProvider) context);
+		actionPerformed((DomainFileContext) context);
 	}
 
-	protected abstract void actionPerformed(DomainFileProvider context);
+	protected abstract void actionPerformed(DomainFileContext context);
 
 	@Override
 	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof DomainFileProvider)) {
+		if (!(context instanceof DomainFileContext)) {
 			return false;
 		}
-		return isValidContext((DomainFileProvider) context);
+		return isValidContext((DomainFileContext) context);
 	}
 
-	protected boolean isValidContext(DomainFileProvider context) {
+	protected boolean isValidContext(DomainFileContext context) {
 		return true;
 	}
 
 	@Override
-	public boolean isAddToPopup(ActionContext context) {
-		if (!(context instanceof DomainFileProvider)) {
+	public final boolean isAddToPopup(ActionContext context) {
+		if (!(context instanceof DomainFileContext)) {
 			return false;
 		}
-		return isAddToPopup((DomainFileProvider) context);
+
+		FrontEndTool tool = AppInfo.getFrontEndTool();
+		if (tool.isExecutingCommand()) {
+			return false;
+		}
+
+		return isAddToPopup((DomainFileContext) context);
 	}
 
-	protected boolean isAddToPopup(DomainFileProvider context) {
+	protected boolean isAddToPopup(DomainFileContext context) {
 		return isEnabledForContext(context);
 	}
 

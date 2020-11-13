@@ -17,9 +17,7 @@ package ghidra.feature.fid.service;
 
 import java.util.Map.Entry;
 
-import javax.swing.JDialog;
-
-import docking.DockingDialog;
+import docking.DockingWindowManager;
 import ghidra.feature.fid.plugin.TextAreaDialog;
 import ghidra.feature.fid.service.FidPopulateResult.Disposition;
 
@@ -70,9 +68,7 @@ public class DefaultFidPopulateResultReporter implements FidPopulateResultReport
 		}
 		TextAreaDialog dialog =
 			new TextAreaDialog("FidDb Popluate Results", buffer.toString(), true);
-		JDialog d = new DockingDialog(dialog, null);
-		dialog.setOuterDialog(d);
-		d.setVisible(true);
+		DockingWindowManager.showDialog(dialog);
 	}
 
 }

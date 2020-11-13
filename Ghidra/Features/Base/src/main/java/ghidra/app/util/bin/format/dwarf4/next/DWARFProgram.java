@@ -22,8 +22,7 @@ import java.util.*;
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeFactory;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
@@ -31,7 +30,10 @@ import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.*;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.app.util.opinion.MachoLoader;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
@@ -108,7 +110,7 @@ public class DWARFProgram implements Closeable {
 		new HashMap<>();
 
 	private BinaryReader debugLocation;
-	private ByteProvider debugRanges;
+	private BinaryReader debugRanges;
 	private BinaryReader debugInfoBR;
 	private BinaryReader debugLineBR;
 	private BinaryReader debugAbbrBR;
@@ -185,15 +187,11 @@ public class DWARFProgram implements Closeable {
 		this.importOptions = importOptions;
 		this.nameLengthCutoffSize = Math.max(MIN_NAME_LENGTH_CUTOFF,
 			Math.min(importOptions.getNameLengthCutoff(), MAX_NAME_LENGTH_CUTOFF));
-		Long oib = ElfLoader.getElfOriginalImageBase(program);
-		if (oib != null && oib.longValue() != program.getImageBase().getOffset()) {
-			this.programBaseAddressFixup = program.getImageBase().getOffset() - oib.longValue();
-		}
 
 		monitor.setMessage("Reading DWARF debug string table");
 		this.debugStrings = StringTable.readStringTable(
 			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR));
-		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
+//		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
 
 		this.attributeFactory = new DWARFAttributeFactory(this);
 
@@ -201,7 +199,17 @@ public class DWARFProgram implements Closeable {
 		this.debugInfoBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_INFO);
 		this.debugLineBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE);
 		this.debugAbbrBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_ABBREV);
-		this.debugRanges = sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_RANGES);
+		this.debugRanges = getBinaryReaderFor(DWARFSectionNames.DEBUG_RANGES);// sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_RANGES);
+
+		// if there are relocations (already handled by the ghidra loader) anywhere in the debuginfo or debugrange sections, then
+		// we don't need to manually fix up addresses extracted from DWARF data.
+		boolean hasRelocations = hasRelocations(debugInfoBR) || hasRelocations(debugRanges);
+		if (!hasRelocations) {
+			Long oib = ElfLoader.getElfOriginalImageBase(program);
+			if (oib != null && oib.longValue() != program.getImageBase().getOffset()) {
+				this.programBaseAddressFixup = program.getImageBase().getOffset() - oib.longValue();
+			}
+		}
 
 		dwarfRegisterMappings =
 			DWARFRegisterMappingsManager.hasDWARFRegisterMapping(program.getLanguage())
@@ -219,10 +227,7 @@ public class DWARFProgram implements Closeable {
 		debugInfoBR = null;
 		debugLineBR = null;
 		debugLocation = null;
-		if (debugRanges != null) {
-			debugRanges.close();
-			debugRanges = null;
-		}
+		debugRanges = null;
 		debugStrings.clear();
 		dniCache.clear();
 		clearDIEIndexes();
@@ -247,6 +252,23 @@ public class DWARFProgram implements Closeable {
 	private BinaryReader getBinaryReaderFor(String sectionName) throws IOException {
 		ByteProvider bp = sectionProvider.getSectionAsByteProvider(sectionName);
 		return (bp != null) ? new BinaryReader(bp, !isBigEndian()) : null;
+	}
+
+	private boolean hasRelocations(BinaryReader br) throws IOException {
+		if (br == null) {
+			return false;
+		}
+		ByteProvider bp = br.getByteProvider();
+		if (bp instanceof MemoryByteProvider && bp.length() > 0) {
+			MemoryByteProvider mbp = (MemoryByteProvider) bp;
+			Address startAddr = mbp.getAddress(0);
+			Address endAddr = mbp.getAddress(mbp.length() - 1);
+			if (program.getRelocationTable().getRelocations(
+				new AddressSet(startAddr, endAddr)).hasNext()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	//-------------------------------------------------------------------------
@@ -370,7 +392,7 @@ public class DWARFProgram implements Closeable {
 
 		// Name was not found
 		if (isAnonDWARFName(name)) {
-			name = "anon_" + DWARFUtil.getContainerTypeName(diea);
+			name = createAnonName("anon_" + DWARFUtil.getContainerTypeName(diea), diea);
 			isAnon = true;
 		}
 
@@ -394,19 +416,25 @@ public class DWARFProgram implements Closeable {
 		try {
 			int dwarfSize = diea.parseInt(DWARFAttribute.DW_AT_byte_size, 0);
 			int dwarfEncoding = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_encoding, -1);
-			String name =
-				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize;
+			String name = createAnonName(
+				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize,
+				diea);
 			return name;
 		}
 		catch (IOException | DWARFExpressionException e) {
-			return "anon_basetype_unknown";
+			return createAnonName("anon_basetype_unknown", diea);
 		}
 	}
 
 	private String getAnonEnumName(DIEAggregate diea) {
 		int enumSize = Math.max(1, (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, 1));
-		String name = "anon_enum_" + (enumSize * 8);
+		String name = createAnonName("anon_enum_" + (enumSize * 8), diea);
 		return name;
+	}
+
+	private static String createAnonName(String baseName, DIEAggregate diea) {
+		return baseName + DataType.CONFLICT_SUFFIX + diea.getHexOffset();
+
 	}
 
 	/**
@@ -594,7 +622,7 @@ public class DWARFProgram implements Closeable {
 		return debugLocation;
 	}
 
-	public ByteProvider getDebugRanges() {
+	public BinaryReader getDebugRanges() {
 		return debugRanges;
 	}
 
@@ -657,7 +685,8 @@ public class DWARFProgram implements Closeable {
 	/**
 	 * Returns the count of the DIE records in this compilation unit.
 	 * <p>
-	 * Only valid if called after {@link #readDIEs()} and before {@link #clearEntries()}.
+	 * Only valid if called after {@link #checkPreconditions(TaskMonitor)}
+	 * and before {@link #clearDIEIndexes()}.
 	 * @return number of DIE records in the compunit.
 	 * @throws IOException
 	 * @throws CancelledException
@@ -667,7 +696,8 @@ public class DWARFProgram implements Closeable {
 	}
 
 	/**
-	 * Releases the memory used by the DIE entries read by {@link #readDIEs()}.
+	 * Releases the memory used by the DIE entries read when invoking
+	 * {@link #checkPreconditions(TaskMonitor)}.
 	 */
 	public void clearDIEIndexes() {
 		offsetMap.clear();

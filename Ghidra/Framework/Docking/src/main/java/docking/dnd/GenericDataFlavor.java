@@ -59,9 +59,9 @@ public class GenericDataFlavor extends DataFlavor {
 	/**
 	 * Construct a GenericDataFlavor that represents a MimeType 
 	 * If the mimeType is 
-	 * "application/x-java-serialized-object; class=<representation class>",
+	 * {@code "application/x-java-serialized-object; class=<representation class>",
 	 * the result is the same as calling 
-	 * new GenericDataFlavor(Class:forName(<representation class>)
+	 * new GenericDataFlavor(Class:forName(<representation class>)}
 	 * @param mimeType the string used to identify the MIME type for 
 	 * this flavor
 	 * @param humanPresentableName  the human-readable string used to 
@@ -77,9 +77,9 @@ public class GenericDataFlavor extends DataFlavor {
 	/**
 	 * Construct a GenericDataFlavor that represents a MimeType 
 	 * If the mimeType is 
-	 * "application/x-java-serialized-object; class=<representation class>",
+	 * {@code "application/x-java-serialized-object; class=<representation class>",
 	 * the result is the same as calling 
-	 * new GenericDataFlavor(Class:forName(<representation class>).
+	 * new GenericDataFlavor(Class:forName(<representation class>).}
 	 *
 	 * @param mimeType the string used to identify the MIME type for this flavor
 	 * @param humanPresentableName the human-readable string used to 

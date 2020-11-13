@@ -1,0 +1,368 @@
+# RVC  Standard Extension for Compressed Instructions
+
+# c.add d,CV 00009002 0000f003 SIMPLE (0, 0) 
+:c.add crd,crs2 is crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x1
+{
+	crd = crd + crs2;
+}
+
+# c.addi d,Co 00000001 0000e003 SIMPLE (0, 0)
+# There may be other nop forms here if (cop0711=0) or (cop1212=0 & cop0206=0)
+:c.addi crd,cimmI is crd & cimmI & cop0001=0x1 & cop1315=0x0
+{
+	crd = crd + cimmI;
+}
+
+:c.nop is cop0001=0x1 & cop1315=0x0 & cop0711=0 & cop1212=0 & cop0206=0
+{
+	local NOP:1 = 0;
+	NOP = NOP;
+}
+
+# c.addi16sp Cc,CL 00006101 0000ef83 SIMPLE (0, 0) 
+:c.addi16sp sp,caddi16spimm is cop0711=0x2 & caddi16spimm & sp & cop0001=0x1 & cop1315=0x3
+{
+	sp = sp + caddi16spimm;
+}
+
+# c.addi4spn Ct,Cc,CK 00000000 0000e003 SIMPLE (0, 0) 
+:c.addi4spn cr0204s,sp,caddi4spnimm is caddi4spnimm & cr0204s & sp & cop0001=0x0 & cop1315=0x0
+{
+	cr0204s = sp + caddi4spnimm;
+}
+
+@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
+# c.addiw d,Co 00002001 0000e003 SIMPLE (64, 0) 
+:c.addiw crd,cimmI is crd & cimmI & cop0001=0x1 & cop1315=0x1
+{
+	local tmp:$(XLEN) = crd + cimmI;
+	crd = sext(tmp:$(WXLEN));
+}
+@endif
+
+@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
+# c.addw Cs,Ct 00009c21 0000fc63 SIMPLE (64, 0) 
+:c.addw cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x7
+{
+	local tmp:4 = cr0709s:4 + cr0204s:4;
+	cr0709s = sext(tmp);
+}
+@endif
+
+# c.and Cs,Ct 00008c61 0000fc63 SIMPLE (0, 0) 
+:c.and cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x3 & cop1012=0x3
+{
+	cr0709s = cr0709s & cr0204s;
+}
+
+# c.andi Cs,Co 00008801 0000ec03 SIMPLE (0, 0) 
+:c.andi cr0709s,cimmI is cimmI & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x2
+{
+	cr0709s = cr0709s & cimmI;
+}
+
+# c.beqz Cs,Cp 0000c001 0000e003 CONDBRANCH (0, 0) 
+:c.beqz cr0709s,cbimm is cbimm & cr0709s & cop0001=0x1 & cop1315=0x6
+{
+	if (cr0709s == 0) goto cbimm;
+}
+
+# c.bnez Cs,Cp 0000e001 0000e003 CONDBRANCH (0, 0) 
+:c.bnez cr0709s,cbimm is cbimm & cr0709s & cop0001=0x1 & cop1315=0x7
+{
+	if (cr0709s != 0) goto cbimm;
+}
+
+# c.ebreak  00009002 0000ffff SIMPLE (0, 0) 
+:c.ebreak  is cop0001=0x2 & cop1315=0x4 & cop0212=0x400
+{
+	ebreak();
+}
+
+@if ADDRSIZE == "32" || ADDRSIZE == "64"
+@if FPSIZE == "64"
+# c.fld CD,Cl(Cs) 00002000 0000e003 QWORD|DREF (0, 8) 
+:c.fld cfr0204s,cldimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x1 & cldimm
+{
+	local ea:$(XLEN) = cldimm:$(XLEN) + cr0709s;
+	cfr0204s = *[ram]:$(DFLEN) ea;
+}
+
+
+# c.fldsp D,Cn(Cc) 00002002 0000e003 QWORD|DREF (0, 8) 
+:c.fldsp cfrd,cldspimm(sp) is cfrd & sp & cop0001=0x2 & cop1315=0x1 & cldspimm
+{
+	local ea:$(XLEN) = cldspimm:$(XLEN) + sp;
+	cfrd = *[ram]:$(DFLEN) ea;
+}
+@endif
+@endif
+
+@if ADDRSIZE == "32"
+# c.flw CD,Ck(Cs) 00006000 0000e003 DWORD|DREF (32, 4) 
+:c.flw cfr0204s,clwimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x3 & clwimm
+{
+	local ea:$(XLEN) = clwimm:$(XLEN) + cr0709s;
+	cfr0204s = *[ram]:$(SFLEN) ea;
+}
+
+
+# c.flwsp D,Cm(Cc) 00006002 0000e003 DWORD|DREF (32, 4) 
+:c.flwsp cfrd,clwspimm(sp) is cfrd & sp & cop0001=0x2 & cop1315=0x3 & clwspimm
+{
+	local ea:$(XLEN) = clwspimm:$(XLEN) + sp;
+	cfrd = *[ram]:$(SFLEN) ea;
+}
+@endif
+
+@if ADDRSIZE == "32" || ADDRSIZE == "64"
+@if FPSIZE == "64"
+# c.fsd CD,Cl(Cs) 0000a000 0000e003 QWORD|DREF (0, 8) 
+:c.fsd cfr0204s,cldimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x5 & cldimm
+{
+	local ea:$(XLEN) = cldimm + cr0709s;
+	*[ram]:8 ea = cfr0204s;
+}
+
+# c.fsdsp CT,CN(Cc) 0000a002 0000e003 QWORD|DREF (0, 8) 
+:c.fsdsp cfr0206,csdspimm(sp) is cfr0206 & sp & cop0001=0x2 & cop1315=0x5 & csdspimm
+{
+	local ea:$(XLEN) = csdspimm + sp;
+	*[ram]:8 ea = cfr0206;
+}
+@endif
+@endif
+
+@if ADDRSIZE == "32"
+@if FPSIZE == "32" || FPSIZE == "64"
+# c.fsw CD,Ck(Cs) 0000e000 0000e003 DWORD|DREF (32, 4) 
+:c.fsw cfr0204s,clwimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x7 & clwimm
+{
+	local ea:$(XLEN) = clwimm + cr0709s;
+	*[ram]:4 ea = cfr0204s;
+}
+
+# c.fswsp CT,CM(Cc) 0000e002 0000e003 DWORD|DREF (32, 4) 
+:c.fswsp cfr0206,cswspimm(sp) is cfr0206 & sp & cop0001=0x2 & cop1315=0x7 & cswspimm
+{
+	local ea:$(XLEN) = cswspimm + sp;
+	*[ram]:4 ea = cfr0206:4;
+}
+@endif
+@endif
+
+# c.j Ca 0000a001 0000e003 BRANCH (0, 0) 
+:c.j cjimm is cjimm & cop0001=0x1 & cop1315=0x5
+{
+	goto cjimm;
+}
+
+@if ADDRSIZE == "32"
+# c.jal Ca 00002001 0000e003 JSR (32, 0) 
+:c.jal cjimm is cjimm & cop0001=0x1 & cop1315=0x1
+{
+	ra = inst_next;
+	call cjimm;
+}
+@endif
+
+# c.jalr d 00009002 0000f07f JSR (0, 0) 
+:c.jalr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x1
+{
+	ra = inst_next;
+	call [crd];
+}
+
+# c.jr d 00008002 0000f07f BRANCH (0, 0) 
+:c.jr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0
+{
+	goto [crd];
+}
+
+# ret  00008082 0000ffff BRANCH|ALIAS (0, 0)
+:ret is cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0 & cop0711=1
+{
+	return [ra];
+}
+
+@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
+# c.ld Ct,Cl(Cs) 00006000 0000e003 QWORD|DREF (64, 8) 
+:c.ld cr0204s,cldimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x3 & cldimm
+{
+	local ea:$(XLEN) = cldimm:$(XLEN) + cr0709s;
+	assignD(cr0204s, *[ram]:$(DXLEN) ea);
+}
+@endif
+
+@if ADDRSIZE == "128"
+:c.lq cr0204s,clqimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x1 & clqimm
+{
+	local ea:$(XLEN) = clqimm:$(XLEN) + cr0709s;
+	cr0204s = *[ram]:$(QXLEN) ea;
+}
+@endif
+
+@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
+# c.ldsp d,Cn(Cc) 00006002 0000e003 QWORD|DREF (64, 8) 
+:c.ldsp crd,cldspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x3 & cldspimm
+{
+	local ea:$(XLEN) = cldspimm + sp;
+	assignD(crd, *[ram]:$(DXLEN) ea);
+}
+@endif
+
+@if ADDRSIZE == "128"
+:c.lqsp crd,clqspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x1 & clqspimm
+{
+	local ea:$(XLEN) = clqspimm + sp;
+	crd = *[ram]:$(QXLEN) ea;
+}
+@endif
+
+# c.li d,Co 00004001 0000e003 SIMPLE (0, 0) 
+:c.li crd,cimmI is crd & cimmI & cop0001=0x1 & cop1315=0x2
+{
+	crd = cimmI;
+}
+
+# c.lui d,Cu 00006001 0000e003 SIMPLE (0, 0) 
+:c.lui crd,cbigimm is crd & cbigimm & cop0001=0x1 & cop1315=0x3
+{
+	crd = cbigimm;
+}
+
+# c.lw Ct,Ck(Cs) 00004000 0000e003 DWORD|DREF (0, 4) 
+:c.lw cr0204s,clwimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x2 & clwimm
+{
+	local ea:$(XLEN) = clwimm + cr0709s;
+	assignW(cr0204s, *[ram]:4 ea);
+}
+
+# c.lwsp d,Cm(Cc) 00004002 0000e003 SIMPLE (0, 0) 
+:c.lwsp crd,clwspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x2 & clwspimm
+{
+	local ea:$(XLEN) = clwspimm + sp;
+	assignW(crd, *[ram]:4 ea);
+}
+
+# c.mv d,CV 00008002 0000f003 SIMPLE (0, 0) 
+:c.mv crd,crs2 is crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x0
+{
+	crd = crs2;
+}
+
+# c.or Cs,Ct 00008c41 0000fc63 SIMPLE (0, 0) 
+:c.or cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x2 & cop1012=0x3
+{
+	cr0709s = cr0709s | cr0204s;
+}
+
+@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
+# c.sd Ct,Cl(Cs) 0000e000 0000e003 QWORD|DREF (64, 8) 
+:c.sd cr0204s,cldimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x7 & cldimm
+{
+	local ea:$(XLEN) = cldimm:$(XLEN) + cr0709s;
+	*[ram]:$(DXLEN) ea = cr0204s:$(DXLEN);
+}
+
+# c.sdsp CV,CN(Cc) 0000e002 0000e003 QWORD|DREF (64, 8) 
+:c.sdsp crs2,csdspimm(sp) is crs2 & sp & cop0001=0x2 & cop1315=0x7 & csdspimm
+{
+	local ea:$(XLEN) = csdspimm:$(XLEN) + sp;
+	*[ram]:$(DXLEN) ea = crs2:$(DXLEN);
+}
+@endif
+
+# c.slli d,C> 00000002 0000e003 SIMPLE (0, 0) 
+:c.slli crd,c6imm is crd & c6imm & cop0001=0x2 & cop1315=0x0
+{
+	crd = crd << c6imm;
+}
+
+#TODO  hint?
+# c.slli64 d 00000002 0000f07f SIMPLE (0, 0) 
+:c.slli64 crd is crd & cop0001=0x2 & cop1315=0x0 & cop0206=0x0 & cop1212=0x0
+{
+	crd = crd << 0;
+}
+
+# c.srai Cs,C> 00008401 0000ec03 SIMPLE (0, 0) 
+:c.srai cr0709s,c6imm is c6imm & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x1
+{
+	cr0709s = cr0709s s>> c6imm;
+}
+
+#TODO  hint?
+# c.srai64 Cs 00008401 0000fc7f SIMPLE (0, 0) 
+:c.srai64 cr0709s is cr0709s & cop0001=0x1 & cop1315=0x4 & cop0206=0x0 & cop1012=0x1
+{
+	cr0709s = cr0709s s>> 0;
+}
+
+# c.srli Cs,C> 00008001 0000ec03 SIMPLE (0, 0) 
+:c.srli cr0709s,c6imm is c6imm & cr0709s & cop0001=0x1 & cop1315=0x4 & cop1011=0x0
+{
+	cr0709s = cr0709s >> c6imm;
+}
+
+#TODO  hint?
+# c.srli64 Cs 00008001 0000fc7f SIMPLE (0, 0) 
+:c.srli64 cr0709s is cr0709s & cop0001=0x1 & cop1315=0x4 & cop0206=0x0 & cop1012=0x0
+{
+	cr0709s = cr0709s >> 0;
+}
+
+# c.sub Cs,Ct 00008c01 0000fc63 SIMPLE (0, 0) 
+:c.sub cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x0 & cop1012=0x3
+{
+	cr0709s = cr0709s - cr0204s;
+}
+
+@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
+# c.subw Cs,Ct 00009c01 0000fc63 SIMPLE (64, 0) 
+:c.subw cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x0 & cop1012=0x7
+{
+	local tmp:4 = cr0709s:4 - cr0204s:4;
+	cr0709s = sext(tmp);
+}
+@endif
+
+# c.sw Ct,Ck(Cs) 0000c000 0000e003 DWORD|DREF (0, 4) 
+:c.sw cr0204s,clwimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x6 & clwimm
+{
+	local ea:$(XLEN) = clwimm + cr0709s;
+	*[ram]:4 ea = cr0204s:4;
+}
+
+@if ADDRSIZE == "128"
+:c.sq cr0204s,clqimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x5 & clqimm
+{
+	local ea:$(XLEN) = clqimm + cr0709s;
+	*[ram]:16 ea = cr0204s;
+}
+
+:c.sqsp crs2,csqspimm(sp) is crs2 & sp & cop0001=0x2 & cop1315=0x5 & csqspimm
+{
+	local ea:$(XLEN) = csqspimm + sp;
+	*[ram]:16 ea = crs2;
+}
+@endif
+
+# c.swsp CV,CM(Cc) 0000c002 0000e003 DWORD|DREF (0, 4) 
+:c.swsp crs2,cswspimm(sp) is crs2 & sp & cop0001=0x2 & cop1315=0x6 & cswspimm
+{
+	local ea:$(XLEN) = cswspimm + sp;
+	*[ram]:4 ea = crs2:4;
+}
+
+# c.unimp  00000000 0000ffff SIMPLE (0, 0) 
+:c.unimp  is cop0001=0x0 & cop1315=0x0 & cop0212=0x0
+{
+	trap();
+}
+
+# c.xor Cs,Ct 00008c21 0000fc63 SIMPLE (0, 0) 
+:c.xor cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x3
+{
+	cr0709s = cr0709s ^ cr0204s;
+}

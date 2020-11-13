@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,6 @@ import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
 import ghidra.program.model.data.*;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
@@ -78,7 +78,7 @@ public class FileHeader implements StructConverter {
      */
     public final static int IMAGE_FILE_AGGRESIVE_WS_TRIM         = 0x0010;
     /**
-     * App can handle >2gb addresses
+     * App can handle &gt;2gb addresses
      */
     public final static int IMAGE_FILE_LARGE_ADDRESS_AWARE       = 0x0020;
     /**
@@ -145,7 +145,7 @@ public class FileHeader implements StructConverter {
     private short characteristics;
 
     private SectionHeader [] sectionHeaders;
-    private List<DebugCOFFSymbol>symbols = new ArrayList<DebugCOFFSymbol>();
+    private List<DebugCOFFSymbol>symbols = new ArrayList<>();
 
     private FactoryBundledWithBinaryReader reader;
     private int startIndex;
@@ -313,13 +313,17 @@ public class FileHeader implements StructConverter {
 			for (int i = 0; i < numberOfSections; ++i) {
 				sectionHeaders[i] = SectionHeader.createSectionHeader(reader, tmpIndex);
 
+				// Ensure PointerToRawData + SizeOfRawData doesn't exceed the length of the file
+				int pointerToRawData = sectionHeaders[i].getPointerToRawData();
+				int sizeOfRawData = (int) Math.min(reader.length() - pointerToRawData,
+					sectionHeaders[i].getSizeOfRawData());
+
 				// Ensure VirtualSize is large enough to accommodate SizeOfRawData, but do not
 				// exceed the next alignment boundary.  We can only do this if the VirtualAddress is
 				// already properly aligned, since we currently don't support moving sections to
 				// different addresses to enforce alignment.
 				int virtualAddress = sectionHeaders[i].getVirtualAddress();
 				int virtualSize = sectionHeaders[i].getVirtualSize();
-				int sizeOfRawData = sectionHeaders[i].getSizeOfRawData();
 				int alignedVirtualAddress = PortableExecutable.computeAlignment(virtualAddress,
 					optHeader.getSectionAlignment());
 				int alignedVirtualSize = PortableExecutable.computeAlignment(virtualSize,
@@ -442,7 +446,7 @@ public class FileHeader implements StructConverter {
 	 * file.
 	 * @param block the memory block template
 	 * @param optionalHeader the related optional header
-	 * @throws MemoryAccessException if the memory block is uninitialized
+	 * @throws RuntimeException if the memory block is uninitialized
 	 */
 	public void addSection(MemoryBlock block, OptionalHeader optionalHeader) {
 		DataDirectory [] directories = optionalHeader.getDataDirectories();
@@ -557,8 +561,4 @@ public class FileHeader implements StructConverter {
 		}
 		return PortableExecutable.computeAlignment( lastPos, optionalHeader.getFileAlignment( ) );
 	}
-
-    public InputStream getDataStream() throws IOException {
-        return reader.getByteProvider().getInputStream(0);
-    }
 }

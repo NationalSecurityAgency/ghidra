@@ -50,7 +50,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	private DataTree tree;
 	private ProjectData projectData;
-	private GTreeRootNode root;
+	private GTreeNode root;
 	private DomainFileFilter filter;
 	private ChangeManager changeMgr;
 	private boolean isActiveProject;
@@ -107,9 +107,10 @@ public class ProjectDataTreePanel extends JPanel {
 		}
 		this.projectData = projectData;
 
-		root.removeAll();
+		GTreeNode oldRoot = root;
 		root = createRootNode(projectName);
 		tree.setRootNode(root);
+		oldRoot.dispose();
 
 		changeMgr = new ChangeManager(this);
 		projectData.addDomainFolderChangeListener(changeMgr);
@@ -118,8 +119,8 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	/**
-	 * Update the project name.
-	 * @param newName
+	 * Update the project name
+	 * @param newName the new name
 	 */
 	public void updateProjectName(String newName) {
 		if (root instanceof DomainFolderRootNode) {
@@ -133,7 +134,7 @@ public class ProjectDataTreePanel extends JPanel {
 	public void closeRootFolder() {
 		isActiveProject = false;
 		tree.setProjectActive(false);
-		GTreeRootNode oldRoot = root;
+		GTreeNode oldRoot = root;
 		root = new NoProjectNode();
 		tree.setRootNode(root);
 		oldRoot.removeAll();
@@ -148,7 +149,7 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	public void selectDomainFolder(DomainFolder domainFolder) {
-		DepthFirstIterator it = new DepthFirstIterator(tree, root);
+		Iterator<GTreeNode> it = root.iterator(true);
 		while (it.hasNext()) {
 			GTreeNode child = it.next();
 			if (child instanceof DomainFolderNode) {
@@ -174,7 +175,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	private List<GTreeNode> getNodesForFiles(Set<DomainFile> files) {
 		List<GTreeNode> nodes = new ArrayList<>();
-		DepthFirstIterator it = new DepthFirstIterator(tree, root);
+		DepthFirstIterator it = new DepthFirstIterator(root);
 		while (it.hasNext()) {
 			GTreeNode node = it.next();
 			if (node instanceof DomainFileNode) {
@@ -190,7 +191,7 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	public void selectDomainFile(DomainFile domainFile) {
-		DepthFirstIterator it = new DepthFirstIterator(tree, root);
+		Iterator<GTreeNode> it = root.iterator(true);
 		while (it.hasNext()) {
 			GTreeNode child = it.next();
 			if (child instanceof DomainFileNode) {
@@ -337,11 +338,14 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 
-		ProjectDataTreeActionContext context = new ProjectDataTreeActionContext(provider,
-			projectData, selectionPaths, domainFolderList, domainFileList, tree, isActiveProject);
-		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
-		context.setTransient(isTransient);
-		return context;
+		// provider is null when called from the DataTreeDialog, use different context
+		if (provider == null) {
+			return new DialogProjectTreeContext(projectData, selectionPaths, domainFolderList,
+				domainFileList, tree);
+		}
+
+		return new FrontEndProjectTreeContext(provider, projectData, selectionPaths,
+			domainFolderList, domainFileList, tree, isActiveProject);
 	}
 
 	public DataTree getDataTree() {
@@ -355,14 +359,6 @@ public class ProjectDataTreePanel extends JPanel {
 	 */
 	public void setTreeFilterEnabled(boolean enabled) {
 		tree.setFilterVisible(enabled);
-	}
-
-	boolean domainFolderListenerAdded() {
-		return changeMgr != null;
-	}
-
-	DomainFolderChangeListener getFolderChangeListener() {
-		return changeMgr;
 	}
 
 	public String[] getExpandedPathsByNodeName() {
@@ -426,14 +422,6 @@ public class ProjectDataTreePanel extends JPanel {
 		return null;
 	}
 
-	FrontEndTool getFrontEndTool() {
-		return tool;
-	}
-
-	boolean isInActiveProject() {
-		return isActiveProject;
-	}
-
 	private void create(String projectName) {
 
 		root = createRootNode(projectName);
@@ -463,7 +451,7 @@ public class ProjectDataTreePanel extends JPanel {
 	/**
 	 * Create the root node for this data tree.
 	 */
-	private GTreeRootNode createRootNode(String projectName) {
+	private GTreeNode createRootNode(String projectName) {
 		if (projectData == null) {
 			return new NoProjectNode();
 		}
@@ -501,7 +489,7 @@ public class ProjectDataTreePanel extends JPanel {
 	 */
 	public void findAndSelect(String s) {
 		tree.expandTree(root);
-		DepthFirstIterator it = new DepthFirstIterator(tree, root);
+		Iterator<GTreeNode> it = root.iterator(true);
 		while (it.hasNext()) {
 			GTreeNode node = it.next();
 			if (node.getName().equals(s)) {

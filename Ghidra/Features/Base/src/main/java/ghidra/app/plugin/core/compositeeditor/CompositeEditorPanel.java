@@ -21,7 +21,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EventObject;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -31,7 +32,6 @@ import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
 import docking.DockingWindowManager;
-import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
 import docking.help.Help;
@@ -68,7 +68,7 @@ import ghidra.util.layout.VerticalLayout;
  */
 public abstract class CompositeEditorPanel extends JPanel
 		implements CompositeEditorModelListener, ComponentCellEditorListener, Draggable, Droppable {
-	private static final long serialVersionUID = 1L;
+
 	// Normal color for selecting components in the table.
 	// TODO: Why do we choose a different selection color?
 	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
@@ -178,12 +178,12 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.addPropertyChangeListener("tableCellEditor", evt -> {
 			TableCellEditor fieldEditor = (TableCellEditor) evt.getNewValue();
 			if (fieldEditor == null) {
-				// Ending cell edit.
-				SwingUtilities.invokeLater(() -> model.endEditingField());
+				// Ending cell edit
+				Swing.runLater(() -> model.endEditingField());
 			}
 			else {
-				// Starting cell edit.
-				SwingUtilities.invokeLater(() -> {
+				// Starting cell edit
+				Swing.runLater(() -> {
 					int editingRow = table.getEditingRow();
 					if (editingRow < 0) {
 						return;
@@ -254,11 +254,11 @@ public abstract class CompositeEditorPanel extends JPanel
 	public void moveCellEditor(final int direction, final String value) {
 		stopCellEditing();
 
-		// Note: We perform an invokeLater here due to focus dependencies (SCR 6915).  When we call
+		// Note: We run this later due to focus dependencies.  When we call
 		// stopCellEditing() this will trigger a focusLost() event, which itself happens in
-		// an invokeLater().  If we do not trigger the moving of the cell editor after that focus
+		// a Swing.runLater().  If we do not trigger the moving of the cell editor after that focus
 		// event, then the focusLost() will trigger our new edit to be cancelled.
-		SwingUtilities.invokeLater(() -> doMoveCellEditor(direction, value));
+		Swing.runLater(() -> doMoveCellEditor(direction, value));
 	}
 
 	private void doMoveCellEditor(int direction, String value) {
@@ -456,8 +456,10 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Puts the next editable cell into edit mode.
-	 * @return true if there was a table cell that could be edited.
+	 * Puts the next editable cell into edit mode
+	 * 
+	 * @param currentRow the current row
+	 * @return true if there was a table cell that could be edited
 	 */
 	protected boolean editNextField(int currentRow) {
 		if (locateNextEditField(currentRow)) {
@@ -476,13 +478,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			return beginEditField(model.getRow(), model.getColumn());
 		}
 		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorModelListener#lockStateChanged(int)
-	 */
-	public void lockStateChanged(int type) {
-		// no-op
 	}
 
 	/**
@@ -584,7 +579,15 @@ public abstract class CompositeEditorPanel extends JPanel
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			model.setColumn(e.getFirstIndex());
+
+			TableColumnModel cm = table.getColumnModel();
+			int[] selected = cm.getSelectedColumns();
+			if (selected.length == 1) {
+				model.setColumn(selected[0]);
+			}
+			else {
+				model.setColumn(-1);
+			}
 		});
 
 		JPanel tablePanel = new JPanel(new BorderLayout());
@@ -835,11 +838,11 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	/**
 	 * Get the drag actions supported by this drag source:
-	 * <UL>
+	 * <ul>
 	 * <li>DnDConstants.ACTION_MOVE
 	 * <li>DnDConstants.ACTION_COPY
 	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </li>
+	 * </ul>
 	 *
 	 * @return the drag actions
 	 */
@@ -869,23 +872,14 @@ public abstract class CompositeEditorPanel extends JPanel
 		return new DataTypeTransferable(dt);
 	}
 
-	/**
-	 * Return true if it is OK to drop the transferable at the location
-	 * specified by the event.
-	 * Data Types can only be dropped on undefined bytes in locked state
-	 * and only if they fit there.
-	 *
-	 * @param e event that has current state of drag and drop operation
-	 * @param obj the DataType being dropped
-	 */
 	@Override
 	public boolean isDropOk(DropTargetDragEvent e) {
 		return true;
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter
-	 * calls this method from its drop() method.
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * drop() method.
 	 *
 	 * @param obj Transferable object that is to be dropped.
 	 * @param e  has current state of drop operation
@@ -912,13 +906,11 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter
-	 * calls this method from its drop() method.
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * drop() method.
 	 *
-	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
-	 * @param f represents the opaque concept of a data format as
-	 * would appear on a clipboard, during drag and drop.
+	 * @param p the point of insert
+	 * @param dt the data type to insert
 	 */
 	public void insertAtPoint(Point p, DataType dt) {
 		endFieldEditing(); // Make sure a field isn't being edited.
@@ -933,13 +925,11 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter
-	 * calls this method from its drop() method.
-	 *
-	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
-	 * @param f represents the opaque concept of a data format as
-	 * would appear on a clipboard, during drag and drop.
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * drop() method.
+	 * 
+	 * @param p the point of insert
+	 * @param dt the data type to insert
 	 */
 	public void addAtPoint(Point p, DataType dt) {
 		endFieldEditing(); // Make sure a field isn't being edited.
@@ -1216,10 +1206,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			super(new JTextField());
 		}
 
-		/**
-		 * Calls <code>fireEditingStopped</code> and returns true.
-		 * @return true
-		 */
 		@Override
 		public boolean stopCellEditing() {
 			try {
@@ -1237,7 +1223,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private class ComponentDataTypeCellEditor extends AbstractCellEditor
 			implements TableCellEditor {
-		private static final long serialVersionUID = 1L;
+
 		private DataTypeSelectionEditor editor;
 		private DataType dt;
 		private int maxLength;
@@ -1294,8 +1280,6 @@ public abstract class CompositeEditorPanel extends JPanel
 
 			// force a small button for the table's cell editor
 			JButton dataTypeChooserButton = new JButton("...") {
-				private static final long serialVersionUID = 1L;
-
 				@Override
 				public Dimension getPreferredSize() {
 					Dimension preferredSize = super.getPreferredSize();
@@ -1304,28 +1288,22 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			};
 
-			dataTypeChooserButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
-				DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
-				DataType dataType = service.getDataType((String) null);
-				if (dataType != null) {
-					editor.setCellEditorValue(dataType);
-					editor.stopCellEditing();
+			dataTypeChooserButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Swing.runLater(() -> stopEdit(tool));
 				}
-				else {
-					editor.cancelCellEditing();
-				}
-			}));
-			FocusAdapter focusListener = new FocusAdapter() {
+			});
+
+			textField.addFocusListener(new FocusAdapter() {
 				@Override
 				public void focusGained(FocusEvent e) {
 					textField.selectAll();
 					textField.removeFocusListener(this);
 				}
-			};
-			textField.addFocusListener(focusListener);
+			});
 
 			editorPanel = new JPanel() {
-
 				@Override
 				public void requestFocus() {
 					textField.requestFocus();
@@ -1334,6 +1312,18 @@ public abstract class CompositeEditorPanel extends JPanel
 			editorPanel.setLayout(new BorderLayout());
 			editorPanel.add(textField, BorderLayout.CENTER);
 			editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
+		}
+
+		private void stopEdit(PluginTool tool) {
+			DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
+			DataType dataType = service.getDataType((String) null);
+			if (dataType != null) {
+				editor.setCellEditorValue(dataType);
+				editor.stopCellEditing();
+			}
+			else {
+				editor.cancelCellEditing();
+			}
 		}
 
 		@Override
@@ -1502,35 +1492,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		// overridden because the editor component was not being given focus
 		public Component prepareEditor(TableCellEditor editor, int row, int column) {
 			final Component component = super.prepareEditor(editor, row, column);
-			SwingUtilities.invokeLater(() -> component.requestFocus());
+			Swing.runLater(() -> component.requestFocus());
 			return component;
-		}
-
-		@Override
-		public boolean isKeyConsumed(KeyStroke keyStroke) {
-			if (isEditing()) {
-				// don't let actions through when editing our table
-				return true;
-			}
-
-			// TODO this should no longer be needed
-			return !hasLocalActionForKeyStroke(keyStroke);
-		}
-
-		private boolean hasLocalActionForKeyStroke(KeyStroke keyStroke) {
-			Plugin plugin = provider.getPlugin();
-			PluginTool tool = plugin.getTool();
-			Set<DockingActionIf> actions = tool.getDockingActionsByOwnerName(plugin.getName());
-			for (DockingActionIf action : actions) {
-				if (!(action instanceof CompositeEditorTableAction)) {
-					continue;
-				}
-				KeyStroke keyBinding = action.getKeyBinding();
-				if (keyStroke.equals(keyBinding)) {
-					return true;
-				}
-			}
-			return false;
 		}
 	}
 

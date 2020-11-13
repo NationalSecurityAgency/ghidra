@@ -1,5 +1,4 @@
-define endian=little;
-
+@define ENDIAN "little"
 @define SIZE "8"
 
 @define INSTR_PHASE "" # not used by basic toy language

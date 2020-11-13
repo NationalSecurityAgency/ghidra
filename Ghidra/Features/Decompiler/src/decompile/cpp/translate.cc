@@ -118,6 +118,41 @@ void SpacebaseSpace::restoreXml(const Element *el)
   contain = getManager()->getSpaceByName(el->getAttributeValue("contain"));
 }
 
+/// The \e join space range maps to the underlying pieces in a natural endian aware way.
+/// Given an offset in the range, figure out what address it is mapping to.
+/// The particular piece is passed back as an index, and the Address is returned.
+/// \param offset is the offset within \b this range to map
+/// \param pos will hold the passed back piece index
+/// \return the Address mapped to
+Address JoinRecord::getEquivalentAddress(uintb offset,int4 &pos) const
+
+{
+  if (offset < unified.offset)
+    return Address();		// offset comes before this range
+  int4 smallOff = (int4)(offset - unified.offset);
+  if (pieces[0].space->isBigEndian()) {
+    for(pos=0;pos<pieces.size();++pos) {
+      int4 pieceSize = pieces[pos].size;
+      if (smallOff < pieceSize)
+	break;
+      smallOff -= pieceSize;
+    }
+    if (pos == pieces.size())
+      return Address();		// offset comes after this range
+  }
+  else {
+    for (pos = pieces.size() - 1; pos >= 0; --pos) {
+      int4 pieceSize = pieces[pos].size;
+      if (smallOff < pieceSize)
+	break;
+      smallOff -= pieceSize;
+    }
+    if (pos < 0)
+      return Address();		// offset comes after this range
+  }
+  return Address(pieces[pos].space,pieces[pos].offset + smallOff);
+}
+
 /// Allow sorting on JoinRecords so that a collection of pieces can be quickly mapped to
 /// its logical whole, specified with a join address
 bool JoinRecord::operator<(const JoinRecord &op2) const
@@ -143,7 +178,8 @@ bool JoinRecord::operator<(const JoinRecord &op2) const
 AddrSpaceManager::AddrSpaceManager(void)
 
 {
-  defaultspace = (AddrSpace *)0;
+  defaultcodespace = (AddrSpace *)0;
+  defaultdataspace = (AddrSpace *)0;
   constantspace = (AddrSpace *)0;
   iopspace = (AddrSpace *)0;
   fspecspace = (AddrSpace *)0;
@@ -207,23 +243,36 @@ void AddrSpaceManager::restoreXmlSpaces(const Element *el,const Translate *trans
   AddrSpace *spc = getSpaceByName(defname);
   if (spc == (AddrSpace *)0)
     throw LowlevelError("Bad 'defaultspace' attribute: "+defname);
-  setDefaultSpace(spc->getIndex());
+  setDefaultCodeSpace(spc->getIndex());
 }
 
 /// Once all the address spaces have been initialized, this routine
 /// should be called once to establish the official \e default
 /// space for the processor, via its index. Should only be
 /// called during initialization.
-/// \todo This really shouldn't be public
 /// \param index is the index of the desired default space
-void AddrSpaceManager::setDefaultSpace(int4 index)
+void AddrSpaceManager::setDefaultCodeSpace(int4 index)
 
 {
-  if (defaultspace != (AddrSpace *)0)
+  if (defaultcodespace != (AddrSpace *)0)
     throw LowlevelError("Default space set multiple times");
   if (baselist.size()<=index || baselist[index] == (AddrSpace *)0)
     throw LowlevelError("Bad index for default space");
-  defaultspace = baselist[index];
+  defaultcodespace = baselist[index];
+  defaultdataspace = defaultcodespace;		// By default the default data space is the same
+}
+
+/// If the architecture has different code and data spaces, this routine can be called
+/// to set the \e data space after the \e code space has been set.
+/// \param index is the index of the desired default space
+void AddrSpaceManager::setDefaultDataSpace(int4 index)
+
+{
+  if (defaultcodespace == (AddrSpace *)0)
+    throw LowlevelError("Default data space must be set after the code space");
+  if (baselist.size()<=index || baselist[index] == (AddrSpace *)0)
+    throw LowlevelError("Bad index for default data space");
+  defaultdataspace = baselist[index];
 }
 
 /// For spaces with alignment restrictions, the address of a small variable must be justified
@@ -343,7 +392,8 @@ void AddrSpaceManager::copySpaces(const AddrSpaceManager *op2)
     if (spc != (AddrSpace *)0)
       insertSpace(spc);
   }
-  setDefaultSpace(op2->getDefaultSpace()->getIndex());
+  setDefaultCodeSpace(op2->getDefaultCodeSpace()->getIndex());
+  setDefaultDataSpace(op2->getDefaultDataSpace()->getIndex());
 }
 
 /// Perform the \e privileged act of associating a base register with an existing \e virtual space
@@ -369,6 +419,16 @@ void AddrSpaceManager::insertResolver(AddrSpace *spc,AddressResolver *rsolv)
   if (resolvelist[ind] != (AddressResolver *)0)
     delete resolvelist[ind];
   resolvelist[ind] = rsolv;
+}
+
+/// This method establishes for a single address space, what range of constants are checked
+/// as possible symbol starts, when it is not known apriori that a constant is a pointer.
+/// \param range is the range of values for a single address space
+void AddrSpaceManager::setInferPtrBounds(const Range &range)
+
+{
+  range.getSpace()->pointerLowerBound = range.getFirst();
+  range.getSpace()->pointerUpperBound = range.getLast();
 }
 
 /// Base destructor class, cleans up AddrSpace pointers which
@@ -454,6 +514,16 @@ void AddrSpaceManager::assignShortcut(AddrSpace *spc)
       shortcut = 'a';
   }
   spc->shortcut = (char)shortcut;
+}
+
+/// \param spc is the AddrSpace to mark
+/// \param size is the (minimum) size of a near pointer in bytes
+void AddrSpaceManager::markNearPointers(AddrSpace *spc,int4 size)
+
+{
+  spc->setFlags(AddrSpace::has_nearpointers);
+  if (spc->minimumPointerSize == 0 && spc->addressSize != size)
+    spc->minimumPointerSize = size;
 }
 
 /// All address spaces have a unique name associated with them.
@@ -588,13 +658,37 @@ JoinRecord *AddrSpaceManager::findAddJoin(const vector<VarnodeData> &pieces,uint
 }
 
 /// Given a specific \e offset into the \e join address space, recover the JoinRecord that
+/// contains the offset, as a range in the \e join address space.  If there is no existing
+/// record, null is returned.
+/// \param offset is an offset into the join space
+/// \return the JoinRecord containing that offset or null
+JoinRecord *AddrSpaceManager::findJoinInternal(uintb offset) const
+
+{
+  int4 min=0;
+  int4 max=splitlist.size()-1;
+  while(min<=max) {		// Binary search
+    int4 mid = (min+max)/2;
+    JoinRecord *rec = splitlist[mid];
+    uintb val = rec->unified.offset;
+    if (val + rec->unified.size <= offset)
+      min = mid + 1;
+    else if (val > offset)
+      max = mid - 1;
+    else
+      return rec;
+  }
+  return (JoinRecord *)0;
+}
+
+/// Given a specific \e offset into the \e join address space, recover the JoinRecord that
 /// lists the pieces corresponding to that offset.  The offset must originally have come from
 /// a JoinRecord returned by \b findAddJoin, otherwise this method throws an exception.
 /// \param offset is an offset into the join space
 /// \return the JoinRecord for that offset
 JoinRecord *AddrSpaceManager::findJoin(uintb offset) const
 
-{ // Find a split record given the unified (join space) offset
+{
   int4 min=0;
   int4 max=splitlist.size()-1;
   while(min<=max) {		// Binary search
@@ -674,8 +768,8 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
       ((lotp != IPTR_SPACEBASE)&&(lotp != IPTR_PROCESSOR)))
     throw LowlevelError("Trying to join in appropriate locations");
   if ((hitp == IPTR_SPACEBASE)||(lotp == IPTR_SPACEBASE)||
-      (hiaddr.getSpace() == getDefaultSpace())||
-      (loaddr.getSpace() == getDefaultSpace()))
+      (hiaddr.getSpace() == getDefaultCodeSpace())||
+      (loaddr.getSpace() == getDefaultCodeSpace()))
     usejoinspace = false;
   if (hiaddr.isContiguous(hisz,loaddr,losz)) { // If we are contiguous
     if (!usejoinspace) { // and in a mappable space, just return the earliest address
@@ -706,6 +800,48 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
   pieces[1].size = losz;
   JoinRecord *join = findAddJoin(pieces,0);
   return join->getUnified().getAddr();
+}
+
+/// If an Address in the \e join AddressSpace is shifted from its original offset, it may no
+/// longer have a valid JoinRecord.  The shift or size change may even make the address of
+/// one of the pieces a more natural representation.  Given a new Address and size, this method
+/// decides if there is a matching JoinRecord. If not it either constructs a new JoinRecord or
+/// computes the address within the containing piece.  The given Address is changed if necessary
+/// either to the offset corresponding to the new JoinRecord or to a normal \e non-join Address.
+/// \param addr is the given Address
+/// \param size is the size of the range in bytes
+void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
+
+{
+  JoinRecord *joinRecord = findJoinInternal(addr.getOffset());
+  if (joinRecord == (JoinRecord *)0)
+    throw LowlevelError("Join address not covered by a JoinRecord");
+  if (addr.getOffset() == joinRecord->unified.offset && size == joinRecord->unified.size)
+    return;		// JoinRecord matches perfectly, no change necessary
+  int4 pos1;
+  Address addr1 = joinRecord->getEquivalentAddress(addr.getOffset(), pos1);
+  int4 pos2;
+  Address addr2 = joinRecord->getEquivalentAddress(addr.getOffset() + (size-1), pos2);
+  if (addr2.isInvalid())
+    throw LowlevelError("Join address range not covered");
+  if (pos1 == pos2) {
+    addr = addr1;
+    return;
+  }
+  vector<VarnodeData> newPieces;
+  newPieces.push_back(joinRecord->pieces[pos1]);
+  int4 sizeTrunc1 = (int4)(addr1.getOffset() - joinRecord->pieces[pos1].offset);
+  pos1 += 1;
+  while(pos1 <= pos2) {
+    newPieces.push_back(joinRecord->pieces[pos1]);
+    pos1 += 1;
+  }
+  int4 sizeTrunc2 = joinRecord->pieces[pos2].size - (int4)(addr2.getOffset() - joinRecord->pieces[pos2].offset) - 1;
+  newPieces.front().offset = addr1.getOffset();
+  newPieces.front().size -= sizeTrunc1;
+  newPieces.back().size -= sizeTrunc2;
+  JoinRecord *newJoinRecord = findAddJoin(newPieces, size);
+  addr = Address(newJoinRecord->unified.space,newJoinRecord->unified.offset);
 }
 
 /// This constructs only a shell for the Translate object.  It

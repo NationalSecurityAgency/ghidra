@@ -46,7 +46,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	public static final VariableStorage BAD_STORAGE = new VariableStorage();
 
 	/**
-	 * <code>UNMASSIGNED_STORAGE</code> used to identify parameter storage which is "unmapped"
+	 * <code>UNASSIGNED_STORAGE</code> used to identify parameter storage which is "unmapped"
 	 * or could not be determined.
 	 */
 	public static final VariableStorage UNASSIGNED_STORAGE = new VariableStorage();
@@ -450,8 +450,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * @return true if this is a simple variable consisting of a single register varnode
-	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
-	 * {@link getLastStorageVarnode()} methods.  The register can be obtained using the 
+	 * which will be returned by either the {@link Variable#getFirstStorageVarnode()} or 
+	 * {@link Variable#getLastStorageVarnode()} methods.  The register can be obtained using the 
 	 * {@link #getRegister()} method.  Keep in mind that registers
 	 * may exist in a memory space or the register space.
 	 */
@@ -462,7 +462,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	/**
 	 * @return first storage register associated with this register or compound storage, else
 	 * null is returned.
-	 * @see #isRegisterVariable()
+	 * @see Variable#isRegisterVariable()
 	 */
 	public Register getRegister() {
 		return registers != null ? registers.get(0) : null;
@@ -471,7 +471,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	/**
 	 * @return storage register(s) associated with this register or compound storage, else
 	 * null is returned.
-	 * @see #isRegisterVariable()
+	 * @see Variable#isRegisterVariable()
 	 * @see #isCompoundStorage()
 	 */
 	public List<Register> getRegisters() {
@@ -648,8 +648,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * Determine if this storage intersects the specified register
-	 * @param set address set
-	 * @return true if this storage intersects the specified address set
+	 * @param reg the register
+	 * @return true if this storage intersects the specified register
 	 */
 	public boolean intersects(Register reg) {
 		if (varnodes == null || reg == null) {

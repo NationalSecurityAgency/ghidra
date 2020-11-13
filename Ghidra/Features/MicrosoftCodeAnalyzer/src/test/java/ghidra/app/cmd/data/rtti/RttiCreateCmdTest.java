@@ -15,8 +15,7 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -166,7 +165,7 @@ public class RttiCreateCmdTest extends AbstractRttiTest {
 
 		// ---- check Base ----
 		checkNoData(program, 0x01003340L);
-		checkNoData(program, 0x01003368L);
+		checkRtti3Data(program, 0x01003368L);
 		checkRtti2Data(program, 0x01003390L, 1);
 		checkRtti1Data(program, 0x010033a8L);
 		checkTypeDescriptorData(program, 0x01005200L, 8, 12, ".?AVBase@@");
@@ -202,8 +201,8 @@ public class RttiCreateCmdTest extends AbstractRttiTest {
 
 		// ---- check Base ----
 		checkNoData(program, 0x01003340L);
-		checkNoData(program, 0x01003368L);
-		checkNoData(program, 0x01003390L);
+		checkRtti3Data(program, 0x01003368L);
+		checkRtti2Data(program, 0x01003390L, 1);
 		checkRtti1Data(program, 0x010033a8L);
 		checkTypeDescriptorData(program, 0x01005200L, 8, 12, ".?AVBase@@");
 		checkNoData(program, 0x010032f0L);
@@ -384,7 +383,7 @@ public class RttiCreateCmdTest extends AbstractRttiTest {
 
 		// ---- check Base ----
 		checkNoData(program, 0x101003340L);
-		checkNoData(program, 0x101003368L);
+		checkRtti3Data(program, 0x101003368L);
 		checkRtti2Data(program, 0x101003390L, 1);
 		checkRtti1Data(program, 0x1010033a8L);
 		checkTypeDescriptorData(program, 0x101005200L, 16, 16, ".?AVBase@@");
@@ -420,8 +419,8 @@ public class RttiCreateCmdTest extends AbstractRttiTest {
 
 		// ---- check Base ----
 		checkNoData(program, 0x101003340L);
-		checkNoData(program, 0x101003368L);
-		checkNoData(program, 0x101003390L);
+		checkRtti3Data(program, 0x101003368L);
+		checkRtti2Data(program, 0x101003390L, 1);
 		checkRtti1Data(program, 0x1010033a8L);
 		checkTypeDescriptorData(program, 0x101005200L, 16, 16, ".?AVBase@@");
 		checkNoData(program, 0x1010032f0L);

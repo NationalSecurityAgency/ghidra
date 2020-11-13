@@ -20,40 +20,54 @@
     <P>The <I>Memory Map</I> window displays a list of memory blocks that make up the memory
     structure of the current program.&nbsp; The component provides actions for adding, renaming,
     moving, splitting, extending, joining, and deleting memory blocks.</P>
+    
+    <P><IMG src="../../shared/note.png" border="0">When working with a versioned program within a 
+    shared project an exclusive checkout of the program project file is required to perform any 
+    modifications to the memory map.</P>
 
-    <P>Ghidra supports four different block types through the Memory Map window:</P>
+    <P>Ghidra supports three different block types through the Memory Map window:</P>
 
     <OL>
       <LI>
         <A name="DefaultType"></A><I><B>Default</B> -</I> The normal block type that can be
-        <I>initialized</I> or <I>uninitialized</I>. 
+        <I>Initialized</I>, <I>File Bytes</I> or <I>Uninitialized</I>. 
 
         <UL>
-          <LI><A name="InitializeBlockType"></A><I>Initialized</I> - The block has an initial value
-          specified for the bytes</LI>
+          <LI><A name="InitializedBlock"></A><I>Initialized</I> - The block has an initial value
+          specified for all bytes</LI>
+          
+          <LI><A name="FileBytesBlock"></A><I>File Bytes</I> - An initialized block whose data corresponds
+          to a specified range within an existing loaded File Bytes instance.</LI>
 
-          <LI><A name="UninitializedBlockType"></A><I>Uninitialized</I> - The block has no initial
+          <LI><A name="UninitializedBlock"></A><I>Uninitialized</I> - The block has no initial
           value specified for the bytes</LI>
         </UL>
       </LI>
 
       <LI><A name="BitMappedType"></A><I><B>Bit Mapped</B></I> - The block provides a
-      bit-addressable map onto other blocks. This is useful when a processor can access some or all
-      of the bits in memory directly using an alternative addressing space.</LI>
+      bit-addressable map onto other blocks. This is useful when a processor can indirectly access 
+      individual bits within memory using an alternative byte address.  Such blocks have a fixed
+      mapping of 8-bytes to 1-source-byte..</LI>
 
       <LI><A name="ByteMappedType"></A><I><B>Byte Mapped</B></I> - The block provides a
-      byte-addressable map onto other blocks.&nbsp; This can be useful when the same bytes can be
-      accessed via two or more addresses.</LI>
-
-      <LI><A name="OverlayType"></A><I><B>Overlay</B></I> - The block is created in a new
-      <I>overlay</I> address space. Overlay blocks can be <I>initialized</I> or
-      <I>unitialized</I>.&nbsp;Using Overlays is a way to get around the problem where the program
-      is too large to fit completely in the target system's memory.&nbsp; Overlay blocks contain
-      code that would get swapped in when the program needs to execute it.&nbsp;&nbsp; Note that
-      Overlay blocks are fixed and may not be moved, split or expanded.&nbsp; In addition, Overlays
-      do not relocate with image base changes.<BR>
-      </LI>
+      byte-addressable map onto other blocks.&nbsp; This can be useful when a range of 
+      bytes can be accessed via an alternative address range.  While the default mapping
+      is 1-byte to 1-source-byte (1:1), other decimations are permitted specified using a
+      mapping ratio (e.g., 2:4).</LI>
     </OL>
+    
+    <P><IMG src="../../shared/note.png" border="0"><I>File Bytes</I> are currently only created
+        by importers.  At this point in time there is no capability provided by the Memory Map provider to create a
+        new File Bytes instance.</P>
+    
+    <P><A name="OverlayType"></A><B>Overlay</B> - Each of the above memory block types may optionally be specified as an <I>Overlay</I> at the 
+    time of creation.  If this option is selected, the block is created in a new
+      overlay address space.&nbsp; Overlay blocks can serve various 
+      purposes where a memory range may contain different data/code or map to different areas of memory 
+      at any given point in time or processor state.  &nbsp; Note that
+      overlay blocks are fixed and may not be moved, split, merged or expanded.&nbsp; In addition, Overlays
+      do not relocate with image base changes and have significant limitations in conjunction with
+      decompilation and analysis.</P>
 
     <P>To view the <I>Memory Map</I>, select <B>Window<IMG src="../../shared/arrow.gif" border="0">
     Memory Map</B> from the main tool menu, or click on the&nbsp; <IMG src="images/memory16.gif"
@@ -86,16 +100,14 @@
 
       <P><I><B>W -</B></I> Indicates write permission.</P>
 
-      <P><I><B>X -</B></I> Indicates execute permission.<BR>
-      </P>
+      <P><I><B>X -</B></I> Indicates execute permission.</P>
+       
+      <P><B>Volatile</B> - Indicates a region of volatile I/O Memory.</P>
 
-      <P><SPAN style="font-weight: bold;">Volatile</SPAN> - Indicates a region of volatile I/O
-      Memory.<BR>
-      </P>
+	  <P><I><B>Overlay -</B></I> Indicates if block is defined as a memory overlay.</P>
 
       <P><I><B>Type -</B></I> Indicates whether the block is a <A href="#DefaultType">Default</A>,
-      <A href="#BitMappedType">Bit Mapped</A>, <A href="#ByteMappedType">Byte Mapped</A> or <A
-      href="#OverlayType">Overlay</A> type of block.</P>
+      <A href="#BitMappedType">Bit Mapped</A> or <A href="#ByteMappedType">Byte Mapped</A> type of block.</P>
 
       <P><I><B>Initialized -</B></I> Indicates whether the block has been initialized with values;
       this property applies to Default and Overlay blocks.</P>
@@ -107,10 +119,7 @@
       	sources.  In that case, source information about the first several regions will be d
       	displayed.</P>
 
-      <P><I><B>Source -</B></I> The name of the file that produced the bytes that make up this
-      block as set by the file importer; for <A href="#BitMappedType">Bit Mapped</A> or <A href=
-      "#ByteMappedType">Byte Mapped</A> blocks, the <I>Source</I> shows the mapped source
-      address.</P>
+      <P><I><B>Source -</B></I> Description of block origination.</P>
 
       <P><I><B>Comment -</B></I> User added comment about this memory block.</P>
 
@@ -221,15 +230,14 @@
 
         <P><I><B>Write</B></I> - Sets the write permission.</P>
 
-        <P><B><I>Execute</I></B> - Sets the execute permission.<BR>
-        </P>
+        <P><B><I>Execute</I></B> - Sets the execute permission.</P>
 
-        <P><SPAN style="font-weight: bold;">Volatile</SPAN> - Marks this block as volatile I/O
-        memory.<BR>
-        </P>
+        <P><B>Volatile</B> - Marks this block as volatile I/O memory.</P>
+        
+        <P><B>Overlay</B> - Creates the block as an overlay within a corresponding overlay address space.</P>
 
         <P><B><I>Block Types</I></B> - Select the block type from the combo box: <I><B>Default, Bit
-        Mapped, Byte Mapped, or Overlay</B></I>.</P>
+        Mapped or Byte Mapped</B></I>.</P>
 
         <BLOCKQUOTE>
           <UL>
@@ -245,15 +253,7 @@
 				<P><I><IMG src="../../shared/note.png" border="0"> You can use the "Add To Program"
 				using "Binary Import" to create new FileBytes that you can use here.</I></P>
 			</UL>
-            <LI><B><I>Overlay -</I></B> An overlay block is used to give an alternative set of
-            bytes (and related information) for a range in memory.&nbsp; This is achieved by
-            creating a new address space related to the actual processor address space and placing
-            the block in the new space at the same offsets as the start address in the processor
-            space.&nbsp; Overlay blocks can be either initialized or uninitialized. If you select
-            <I>Initialized</I> you can enter a byte value that will be used to fill all the bytes
-            in the new memory block.</LI>
-
-            <LI><B><I>Bit Mapped -</I></B> This is a block that allow bit addressing of a section
+            <LI><B><I>Bit Mapped -</I></B> This is a block that allows bit addressing of a section
             of bytes in memory.&nbsp; For example, the first bit of the byte at memory location
             0x1000 might also be addressed as BIT:0. The second bit at the same byte would then be
             addressed as BIT:1 and so on.</LI>
@@ -261,10 +261,9 @@
             <LI style="list-style: none">
               <P>The illustration below depicts a Bit Mapped block of <I>Length</I> 16 with a
               <I>Start Addr</I> of (BIT:) 0000, and a <I>Source Address</I> of 00008100.&nbsp; Note
-              that Bit Overlay addresses are assigned from least significant bit to most
+              that bit-mapped addresses are assigned from least significant bit to most
               significant bit.</P>
-            </LI>
-          </UL>
+            
 
           <TABLE x-use-null-cells="" width="100%">
             <TBODY>
@@ -274,16 +273,21 @@
               </TR>
             </TBODY>
           </TABLE>
-
-          <UL>
-            <LI>This is used to model certain processors that allow this sort of addressing such as
+          
+          <BR>This is used to model certain processors that allow this sort of addressing such as
             the INTEL 8051. When a Bit Mapped block is created you must specify the byte address on
             which the bit addressing will be based.</LI>
+          </UL>
+
+          <UL>
 
             <LI>&nbsp;<B><I>Byte Mapped</I></B> - This is a block that allows access to a range of
-            bytes in memory using an alternative address.&nbsp; In other words, it allows the same
-            set of bytes to be accessed by two different logical addresses. A source address must
-            be specified that contains the actual bytes for this block.</LI>
+            bytes in memory using an alternative address.&nbsp; A <I>Source Address</I> must
+            be specified which corresponds to the source of the actual bytes for this block, although all or part of the
+            mapping may correspond to an uninitialized block or no block at all.  The default mapping ratio
+      is 1-byte to 1-source-byte (1:1), although other decimations may be specified using a mapping ratio.  When specifying a <I>Mapping
+      Ratio</I> both values must be in the range 1..127 where the right (source-byte count) value must be greater-than-or-equal
+      to the left value (e.g., 2:4).</LI>
           </UL>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -517,9 +521,9 @@
         be created.&nbsp; Disregarding the warning may cause Ghidra to fail with an "out of memory"
         error.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0"></I> Only blocks of the same type can be
-        merged. For example, <A href="#DefaultType">default</A> blocks can only be merged with
-        another default block.&nbsp;</P>
+        <P><I><IMG src="../../shared/note.png" border="0"></I> Only adjacent <I>Default</I> blocks of the same 
+        initialization state can be merged.</P>
+        <P><I><IMG src="../../shared/note.png" border="0"></I>Overlay type blocks cannot be merged.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 

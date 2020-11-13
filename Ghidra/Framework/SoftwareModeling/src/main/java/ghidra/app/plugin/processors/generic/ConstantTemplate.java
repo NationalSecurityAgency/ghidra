@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.app.plugin.processors.generic;
 
-import ghidra.program.model.address.Address;
-
 import java.io.Serializable;
 import java.util.HashMap;
+
+import ghidra.program.model.address.Address;
 
 /**
  * 
@@ -60,8 +59,8 @@ public class ConstantTemplate implements Serializable {
 
 	/**
 	 * Constructor ConstantTemplate.
-	 * @param o
-	 * @param i
+	 * @param o the operand
+	 * @param sel1 the first selection
 	 */
 	public ConstantTemplate(Operand o, int sel1) throws SledException {
 		this(o,sel1,0);
@@ -84,9 +83,8 @@ public class ConstantTemplate implements Serializable {
 	
 	/**
 	 * Method resolve.
-	 * @param handles
-	 * @param position
-	 * @param off
+	 * @param position the position of the constant to resolve
+	 * @param off the offset of the constant
 	 * @return long
 	 */
 	public long resolve(Position position, int off) throws Exception {
@@ -103,7 +101,7 @@ public class ConstantTemplate implements Serializable {
 		
 		case JUMP_CODESPACE:
 			Address addr =  position.buffer().getAddress();
-			return addr.getAddressSpace().getBaseSpaceID();
+				return addr.getAddressSpace().getSpaceID();
 		
 		default:			// Should never reach here
 			return 0;
@@ -111,14 +109,14 @@ public class ConstantTemplate implements Serializable {
 	}
 
 	/**
-	 * @param handles
-	 * @param position
-	 * @param off
+	 * @param handles optional map of handles to be used for resolving
+	 * @see #resolve(Position, int)
 	 * @return long
 	 */
 	public long resolve(HashMap<Object, Handle> handles, Position position, int off) throws Exception {
-		if (type == HANDLE)
+		if (type == HANDLE) {
 			return handles.get(op).getLong(select1,select2);
+		}
         return resolve(position,off);
 	}
 
@@ -129,14 +127,26 @@ public class ConstantTemplate implements Serializable {
 	
 	@Override
     public boolean equals(Object o) {
-		if (o.getClass() != ConstantTemplate.class) return false;
+		if (o.getClass() != ConstantTemplate.class) {
+			return false;
+		}
 		ConstantTemplate ct = (ConstantTemplate) o;
-		if (ct.hashCode() != hashCode) return false;
-		if (ct.type() != type) return false;
+		if (ct.hashCode() != hashCode) {
+			return false;
+		}
+		if (ct.type() != type) {
+			return false;
+		}
 		if (type == HANDLE) {
-			if (!ct.operand().equals(op)) return false;
-			if (ct.select1() != select1) return false;
-			if (ct.select2() != select2) return false;
+			if (!ct.operand().equals(op)) {
+				return false;
+			}
+			if (ct.select1() != select1) {
+				return false;
+			}
+			if (ct.select2() != select2) {
+				return false;
+			}
 		}
 
 		return true;

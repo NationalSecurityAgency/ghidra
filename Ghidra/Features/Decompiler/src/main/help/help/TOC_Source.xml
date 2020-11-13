@@ -54,108 +54,49 @@
 	            
 	    <tocdef id="Decompiler" 
 	            text="Decompiler"  
-	            target="help/topics/DecompilePlugin/Decompiler.htm" >
+	            target="help/topics/DecompilePlugin/DecompilerIntro.html" >
 	            
-	        <tocdef id="Decompiler Capabilities" 
+	        <tocdef id="Decompiler Concepts" 
 				    sortgroup="a"
-	                text="Decompiler Capabilities"	                  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#Capabilities" />
-	        <tocdef id="Variables" 
+	                text="Decompiler Concepts"	                  
+	                target="help/topics/DecompilePlugin/DecompilerConcepts.html">
+		  <tocdef id="ConceptPcode" sortgroup="a" text="P-code" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptPcode"/>
+		  <tocdef id="ConceptHighFunction" sortgroup="b" text="The HighFunction" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptHighFunction"/>
+		</tocdef>
+	        <tocdef id="Program Annotations Affecting the Decompiler" 
 	        		sortgroup="b"
-	                text="Variables"  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#Variables" />
-	        <tocdef id="Parameter Variables"
+	                text="Program Annotations Affecting the Decompiler"  
+	                target="help/topics/DecompilePlugin/DecompilerAnnotations.html">
+		  <tocdef id="AnnoteFunctionBody" sortgroup="a" text="Machine Instructions" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteFunctionBody"/>
+		  <!-- Space added to text="Comments" attribute below to distinguish it from the CommentsPlugin section of the same name -->
+		  <tocdef id="AnnoteComments" sortgroup="b" text="Comments " target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteComments"/>
+		  <tocdef id="AnnoteVariables" sortgroup="c" text="Variable Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteVariables"/>
+		  <tocdef id="AnnotePrototype" sortgroup="d" text="Function Prototypes" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnotePrototype"/>
+		  <tocdef id="AnnoteMutability" sortgroup="e" text="Data Mutability" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteMutability"/>
+		  <tocdef id="AnnoteConstants" sortgroup="f" text="Constant Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteConstants"/>
+		  <tocdef id="AnnoteRegister" sortgroup="g" text="Register Values" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteRegister"/>
+		</tocdef>
+	        <tocdef id="Decompiler Options"
 	        		sortgroup="c" 
-	                text="Parameter Variables"  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#Parameter_Variables" />
-	        <tocdef id="Internal Decompiler Functions" 
-	        		sortgroup="d"
-	        	    text="Internal Decompiler Functions"  
-	        	    target="help/topics/DecompilePlugin/Decompiler.htm#Internal_Decompiler_Functions" />
-	        <tocdef id="Register Settings"
-	        		sortgroup="e" 
-	                text="Register Settings"  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#Register_Settings" />
-	        <tocdef id="Decompiler Options" 
-	        		sortgroup="f"
 	                text="Decompiler Options"  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#DecompileOptions" />
-	        <tocdef id="Data Mutability"
-	        		sortgroup="g" 
-	                text="Data Mutability"  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#Data_Mutability" />
-	        <tocdef id="Decompiler Window Commands"
-	        		sortgroup="h" 
-	                text="Decompiler Window Commands"  
-	                target="help/topics/DecompilePlugin/Decompiler.htm#Decompiler_Window" >
-	                
-	            <tocdef id="Copy/Copy Special" 
-	            		sortgroup="a"
-	                    text="Copy/Copy Special"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Copy" />
-	            <tocdef id="Set Comments"
-	            		sortgroup="b" 
-	                    text="Set Comments"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Comments" />
-	            <tocdef id="Saving decompiler parameters to database"
-	            		sortgroup="c" 
-	                    text="Saving decompiler parameters to database"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Commit_Params_Return" />
-	            <tocdef id="Saving decompiler local variables to database"
-	            		sortgroup="d" 
-	                    text="Saving decompiler local variables to database"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Commit_Locals" />
-	            <tocdef id="Highlighting all places a value is used"
-	            		sortgroup="e" 
-	                    text="Highlighting all places a value is used"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Highlight_Defined_Use" />
-	            <tocdef id="Highlighting Forward Slice"
-	            		sortgroup="f" 
-	                    text="Highlighting Forward Slice"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Highlight_Forward_Slice" />
-	            <tocdef id="Highlighting Backward Slice"
-	            		sortgroup="g" 
-	            	    text="Highlighting Backward Slice"  
-	            	    target="help/topics/DecompilePlugin/Decompiler.htm#Highlight_Backward_Slice" />
-	            <tocdef id="Highlighting Forward Instruction Slice"
-	            		sortgroup="f" 
-	                    text="Highlighting Forward Instruction Slice"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Highlight_Forward_Inst_Slice" />
-	            <tocdef id="Highlighting Backward Instruction Slice"
-	            		sortgroup="g" 
-	            	    text="Highlighting Backward Instruction Slice"  
-	            	    target="help/topics/DecompilePlugin/Decompiler.htm#Highlight_Backward_Inst_Slice" />
-	            <tocdef id="Renaming Variables"
-	            		sortgroup="h" 
-	                    text="Renaming Variables"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Rename_Variable" />
-	            <tocdef id="Retyping Variables"
-	             		sortgroup="i"
-	                    text="Retyping Variables"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Retype_Variable" />
-	            <tocdef id="Editing Function Signatures"
-						sortgroup="j"
-	                    text="Editing Function Signatures"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Edit_Function_Signature" />
-	            <tocdef id="Searching for text in decompiled functions"
-	            	    sortgroup="j" 
-	                    text="Searching for text in decompiled functions"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Find" />
-	            <tocdef id="Debugging Function Decompilation" 
-	            		sortgroup="k"
-	                    text="Debugging Function Decompilation"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Debug_Function_Decompilation" />
-	            <tocdef id="Exporting to C"
-	            		sortgroup="m" 
-	                    text="Exporting to C"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#Export_to_C" />
-	            <tocdef id="Changing appearance of Decompiler window"
-	            		sortgroup="n" 
-	                    text="Changing appearance of Decompiler window"  
-	                    target="help/topics/DecompilePlugin/Decompiler.htm#DecompilerProperties" />
-	        </tocdef>
-	    </tocdef>      
-	            
-	</tocref>
+	                target="help/topics/DecompilePlugin/DecompilerOptions.html">
+		  <tocdef id="GeneralOptions" sortgroup="a" text="General Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#GeneralOptions"/>
+		  <tocdef id="AnalysisOptions" sortgroup="b" text="Analysis Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#AnalysisOptions"/>
+		  <tocdef id="DisplayOptions" sortgroup="c" text="Display Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#DisplayOptions"/>
+		  <tocdef id="ProgramOptions" sortgroup="d" text="Program Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#ProgramOptions"/>
+		</tocdef>
+	        <tocdef id="Decompiler Window" 
+	        		sortgroup="d"
+	        	    text="Decompiler Window"  
+	        	    target="help/topics/DecompilePlugin/DecompilerWindow.html">
+		  <tocdef id="DecompilerDisplay" sortgroup="a" text="Display" target="help/topics/DecompilePlugin/DecompilerWindow.html#DecompilerDisplay"/>
+		  <tocdef id="MainWindow" sortgroup="b" text="Main Window" target="help/topics/DecompilePlugin/DecompilerWindow.html#MainWindow"/>
+		  <tocdef id="Snapshot" sortgroup="c" text="Snapshot Windows" target="help/topics/DecompilePlugin/DecompilerWindow.html#Snapshot"/>
+		  <tocdef id="ToolBar" sortgroup="d" text="Tool Bar" target="help/topics/DecompilePlugin/DecompilerWindow.html#ToolBar"/>
+		  <tocdef id="MouseActions" sortgroup="e" text="Mouse Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MouseActions"/>
+		  <tocdef id="MenuActions" sortgroup="f" text="Pop-up Menu Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MenuActions"/>
+		</tocdef>
+	   </tocdef>
+	 </tocref>
 
 </tocroot>

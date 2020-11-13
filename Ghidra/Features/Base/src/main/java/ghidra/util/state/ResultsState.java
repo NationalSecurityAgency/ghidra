@@ -110,10 +110,10 @@ public class ResultsState {
 	/**
 	 * Constructor from a function entry point.  Program context is used to establish the entry context state.
 	 * Analysis is performed during construction.
-	 * @param entryAddr function entry point
+	 * @param entryPt function entry point
 	 * @param analyzer function analysis call-back handler
 	 * @param program program containing function
-	 * @param maintainInstructionResults
+	 * @param maintainInstructionResults true to maintain the instruction results
 	 * @param monitor task monitor
 	 * @throws CancelledException
 	 */

@@ -287,12 +287,12 @@ cnt3b:  "$"tmp  is b0_2         [ tmp = b0_2 + 1; ]     { export *[const]:1 tmp;
 
 # If (abs20 > 0xEFFFF) the resulting address is logically ORed with 0xF00000 
 #   i.e. addresses from 1M-64k to 1M are re-mapped by the core to 16M-64k to 16M.
+abs20:  tmp     is n5=0xf & dw_w2       [ tmp = 0xff0000 | dw_w2; ]   { 
+    export *[const]:3 tmp; 
+}
+
 abs20:  tmp     is n5 & dw_w2       [ tmp = (n5 << 16) + dw_w2; ]   { 
-    tmp2:3 = tmp;
-    if (tmp2 <= 0xefffff) goto <abs20end>;
-        tmp2 = tmp2 | 0xf00000;
-    <abs20end>
-    export *[const]:3 tmp2; 
+    export *[const]:3 tmp; 
 }
 
 abs24:  "*"tmp  is n5 & n7 & b0_15  

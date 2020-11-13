@@ -70,9 +70,6 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 
 	public FileFormatsPlugin(PluginTool tool) {
 		super(tool);
-
-		chooserEclipse = new GhidraFileChooser(null);
-		chooserJarFolder = new GhidraFileChooser(null);
 	}
 
 	@Override
@@ -107,6 +104,9 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 						return;
 					}
 
+					if (chooserEclipse == null) {
+						chooserEclipse = new GhidraFileChooser(null);
+					}
 					chooserEclipse.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 					chooserEclipse.setTitle("Select Eclipe Project Directory");
 					chooserEclipse.setApproveButtonText("SELECT");
@@ -115,8 +115,9 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 					if (outputDirectory == null) {
 						return;
 					}
-					fsbContext.getTree().runTask(
-						monitor -> doExportToEclipse(fsrl, outputDirectory, monitor));
+					fsbContext.getTree()
+							.runTask(
+								monitor -> doExportToEclipse(fsrl, outputDirectory, monitor));
 				}
 			}
 
@@ -127,7 +128,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 						new AndroidProjectCreator(refdFile.file, outputDirectory);
 					creator.create(monitor);
 
-					if (creator.getLog().getMsgCount() > 0) {
+					if (creator.getLog().hasMessages()) {
 						Msg.showInfo(this, getTool().getActiveWindow(), "Export to Eclipse Project",
 							creator.getLog().toString());
 					}
@@ -170,35 +171,40 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 				if (context instanceof FSBActionContext) {
 					FSBActionContext fsbContext = (FSBActionContext) context;
 					FSRL jarFSRL = FSBUtils.getFileFSRLFromContext(context);
-					if (jarFSRL != null) {
-						chooserJarFolder.setFileSelectionMode(
-							GhidraFileChooserMode.DIRECTORIES_ONLY);
-						chooserJarFolder.setTitle("Select JAR Output Directory");
-						chooserJarFolder.setApproveButtonText("SELECT");
-						chooserJarFolder.setSelectedFile(null);
-						File outputDirectory = chooserJarFolder.getSelectedFile();
-						if (outputDirectory == null) {
-							return;
-						}
-						GTree gTree = fsbContext.getTree();
-						gTree.runTask(monitor -> {
-							try {
-								JarDecompiler decompiler =
-									new JarDecompiler(jarFSRL, outputDirectory);
-								decompiler.decompile(monitor);
-
-								if (decompiler.getLog().getMsgCount() > 0) {
-									Msg.showInfo(this, gTree,
-										"Decompiling Jar " + jarFSRL.getName(),
-										decompiler.getLog().toString());
-								}
-							}
-							catch (Exception e) {
-								FSUtilities.displayException(this, gTree, "Error Decompiling Jar",
-									e.getMessage(), e);
-							}
-						});
+					if (jarFSRL == null) {
+						return;
 					}
+
+					if (chooserJarFolder == null) {
+						chooserJarFolder = new GhidraFileChooser(null);
+					}
+					chooserJarFolder.setFileSelectionMode(
+						GhidraFileChooserMode.DIRECTORIES_ONLY);
+					chooserJarFolder.setTitle("Select JAR Output Directory");
+					chooserJarFolder.setApproveButtonText("SELECT");
+					chooserJarFolder.setSelectedFile(null);
+					File outputDirectory = chooserJarFolder.getSelectedFile();
+					if (outputDirectory == null) {
+						return;
+					}
+					GTree gTree = fsbContext.getTree();
+					gTree.runTask(monitor -> {
+						try {
+							JarDecompiler decompiler =
+								new JarDecompiler(jarFSRL, outputDirectory);
+							decompiler.decompile(monitor);
+
+							if (decompiler.getLog().hasMessages()) {
+								Msg.showInfo(this, gTree,
+									"Decompiling Jar " + jarFSRL.getName(),
+									decompiler.getLog().toString());
+							}
+						}
+						catch (Exception e) {
+							FSUtilities.displayException(this, gTree, "Error Decompiling Jar",
+								e.getMessage(), e);
+						}
+					});
 				}
 			}
 
@@ -217,6 +223,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 			public boolean isAddToPopup(ActionContext context) {
 				return context instanceof FSBActionContext;
 			}
+
 		};
 		action.setPopupMenuData(
 			new MenuData(new String[] { action.getMenuText() }, ImageManager.JAR, "J"));
@@ -278,7 +285,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 			writer.open();
 			try {
 				// gTree.expandAll( node );
-				writeFile(writer, node.getAllChildren());
+				writeFile(writer, node.getChildren());
 			}
 			finally {
 				writer.close();
@@ -303,7 +310,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 				writer.write(childFSRL.getName());
 			}
 			else {
-				writeFile(writer, child.getAllChildren());
+				writeFile(writer, child.getChildren());
 			}
 		}
 	}

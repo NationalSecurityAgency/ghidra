@@ -166,7 +166,7 @@ public class PCodeTestCombinedTestResults {
 
 		/**
 		 * 
-		 * @param groupTestName <group-name>.<test-name>
+		 * @param groupTestName {@code <group-name>.<test-name>}
 		 */
 		NamedTestColumn(String groupTestName) {
 			this.groupTestName = groupTestName;
@@ -183,14 +183,14 @@ public class PCodeTestCombinedTestResults {
 		}
 
 		/**
-		 * @return <group-name>.<test-name>
+		 * @return {@code <group-name>.<test-name>}
 		 */
 		public String getGroupTestName() {
 			return groupTestName;
 		}
 
 		/**
-		 * @return <test-name>
+		 * @return {@code <test-name>}
 		 */
 		public String getTestName() {
 			return testName;

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +35,7 @@ class FileByteBlock implements ByteBlock {
 
 	FileByteBlock(byte[] b) {
 		buf = b;
-		converter = new LittleEndianDataConverter();
+		converter = LittleEndianDataConverter.INSTANCE;
 	}
 
 	/* (non-Javadoc)
@@ -153,12 +152,7 @@ class FileByteBlock implements ByteBlock {
 	public void setBigEndian(boolean bigEndian) {
 		if (this.bigEndian != bigEndian) {
 			this.bigEndian = bigEndian;
-			if (bigEndian) {
-				converter = new BigEndianDataConverter();
-			}
-			else {
-				converter = new LittleEndianDataConverter();
-			}
+			converter = DataConverter.getInstance(bigEndian);
 		}
 	}
 

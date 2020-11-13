@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //Script to compare analysis between current and chosen program.
-//@category Testing
+//@category Analysis
 
 import java.util.Iterator;
 
@@ -399,8 +399,8 @@ public class CompareAnalysisScript extends GhidraScript {
 	}
 
 	boolean isSwitch(Symbol[] syms, String name) {
-		for (int i = 0; i < syms.length; i++) {
-			if (syms[i].getName().startsWith(name)) {
+		for (Symbol sym : syms) {
+			if (sym.getName().startsWith(name)) {
 				return true;
 			}
 		}

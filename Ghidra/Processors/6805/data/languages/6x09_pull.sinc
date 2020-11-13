@@ -1,0 +1,48 @@
+# sleigh specification file for Motorola 6809/Hitachi 6309
+
+#################################################################
+# PULS helper
+################################################################
+
+puls0: CC           is CC & imm80=1         { Pull1(S, CC); }
+puls0:              is imm80=0              { }
+puls1: puls0" "A    is A & imm81=1 & puls0  { Pull1(S, A); }
+puls1: puls0        is imm81=0 & puls0      { }
+puls2: puls1" "B    is B & imm82=1 & puls1  { Pull1(S, B); }
+puls2: puls1        is imm82=0 & puls1      { }
+puls3: puls2" "DP   is DP & imm83=1 & puls2 { Pull1(S, DP); }
+puls3: puls2        is imm83=0 & puls2      { }
+puls4: puls3" "X    is X & imm84=1 & puls3  { Pull2(S, X); }
+puls4: puls3        is imm84=0 & puls3      { }
+puls5: puls4" "Y    is Y & imm85=1 & puls4  { Pull2(S, Y); }
+puls5: puls4        is imm85=0 & puls4      { }
+puls6: puls5" "U    is U & imm86=1 & puls5  { Pull2(S, U); }
+puls6: puls5        is imm86=0 & puls5      { }
+puls7: puls6" "PC   is PC & imm87=1 & puls6 { local t:2 = 0; Pull2(S, t); goto [t]; }
+puls7: puls6        is imm87=0 & puls6      { }
+
+:PULS puls7    is op=0x35; puls7 { }                                                                                           
+
+################################################################
+# PULU helper
+################################################################
+
+pulu0: CC           is CC & imm80=1         { Pull1(U, CC); }
+pulu0:              is imm80=0              { }
+pulu1: pulu0" "A    is A & imm81=1 & pulu0  { Pull1(U, A); }
+pulu1: pulu0        is imm81=0 & pulu0      { }
+pulu2: pulu1" "B    is B & imm82=1 & pulu1  { Pull1(U, B); }
+pulu2: pulu1        is imm82=0 & pulu1      { }
+pulu3: pulu2" "DP   is DP & imm83=1 & pulu2 { Pull1(U, DP); }
+pulu3: pulu2        is imm83=0 & pulu2      { }
+pulu4: pulu3" "X    is X & imm84=1 & pulu3  { Pull2(U, X); }
+pulu4: pulu3        is imm84=0 & pulu3      { }
+pulu5: pulu4" "Y    is Y & imm85=1 & pulu4  { Pull2(U, Y); }
+pulu5: pulu4        is imm85=0 & pulu4      { }
+pulu6: pulu5" "S    is S & imm86=1 & pulu5  { Pull2(U, S); }
+pulu6: pulu5        is imm86=0 & pulu5      { }
+pulu7: pulu6" "PC   is PC & imm87=1 & pulu6 { local t:2 = 0; Pull2(U, t); goto [t]; }
+pulu7: pulu6        is imm87=0 & pulu6      { }
+
+:PULU pulu7    is op=0x37; pulu7 { }
+

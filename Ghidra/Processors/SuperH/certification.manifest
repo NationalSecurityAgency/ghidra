@@ -8,3 +8,4 @@ data/languages/superh.cspec||GHIDRA||||END|
 data/languages/superh.ldefs||GHIDRA||||END|
 data/languages/superh.pspec||GHIDRA||||END|
 data/languages/superh.sinc||GHIDRA||||END|
+data/languages/superh2a.cspec||GHIDRA||||END|

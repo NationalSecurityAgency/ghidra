@@ -40,8 +40,8 @@ import docking.widgets.fieldpanel.support.FieldSelection;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.util.exception.UsrException;
+import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 class UnionEditorModel extends CompEditorModel {
 
@@ -132,12 +132,12 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Gets called to update/validate the current editable location in the table.
+	 * Gets called to update/validate the current editable location in the table
+	 * 
 	 * @param value the new cell value
-	 * @param rowIndex the row index in the component table.
-	 * @param mColumn the column index for the table cell in the 
-	 * current model.
-	 * @return true if the field was updated or validated successfully.
+	 * @param rowIndex the row index in the component table
+	 * @param columnIndex the column index for the table cell in the current model
+	 * @return true if the field was updated or validated successfully
 	 */
 	@Override
 	protected boolean fieldEdited(Object value, int rowIndex, int columnIndex) {
@@ -170,29 +170,21 @@ class UnionEditorModel extends CompEditorModel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#clearComponent(int)
-	 */
 	@Override
 	public void clearComponent(int rowIndex) {
 		// clearing not supported
 	}
 
 	/**
-	 *  Clear the selected components.
+	 * Clear the selected components
 	 *
-	 * @return true if cleared.
-	 *
-	 * @throws UsrException if clearing isn't allowed.
+	 * @throws UsrException if clearing isn't allowed
 	 */
 	@Override
 	public void clearSelectedComponents() throws UsrException {
 		throw new UsrException("Clearing is not allowed.");
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorModel#createArray(int)
-	 */
 	@Override
 	protected void createArray(int numElements)
 			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
@@ -202,16 +194,13 @@ class UnionEditorModel extends CompEditorModel {
 		super.createArray(numElements);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.EditorModel#isLockable()
-	 */
 	public boolean isLockable() {
 		return false;
 	}
 
-	// *************************************************************
-	// Begin methods for determining if a type of edit action is allowed.
-	// *************************************************************
+//==================================================================================================
+// Begin methods for determining if a type of edit action is allowed.
+//==================================================================================================	
 
 	@Override
 	public boolean isBitFieldAllowed() {
@@ -233,10 +222,7 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Returns whether or not clearing the component at the specified index
-	 * is allowed.
-	 *
-	 * @param currentIndex index of the component in the union
+	 * Returns whether or not clearing the component at the specified index is allowed
 	 */
 	@Override
 	public boolean isClearAllowed() {
@@ -244,10 +230,7 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Returns whether or not delete of the component at the selected index
-	 * is allowed.
-	 *
-	 * @param currentIndex index of the component in the union
+	 * Returns whether or not delete of the component at the selected index is allowed
 	 */
 	@Override
 	public boolean isDeleteAllowed() {
@@ -255,10 +238,7 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Returns whether or not the component at the selected index
-	 * is allowed to be duplicated.
-	 *
-	 * @param currentIndex index of the component in the union
+	 * Returns whether or not the component at the selected index is allowed to be duplicated
 	 */
 	@Override
 	public boolean isDuplicateAllowed() {
@@ -307,9 +287,6 @@ class UnionEditorModel extends CompEditorModel {
 		return rowIndex <= viewComposite.getNumComponents();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorModel#isReplaceAllowed(int, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isReplaceAllowed(int currentIndex, DataType dataType) {
 		try {
@@ -324,9 +301,9 @@ class UnionEditorModel extends CompEditorModel {
 		return true;
 	}
 
-	// *************************************************************
-	// End of methods for determining if a type of edit action is allowed.
-	// *************************************************************
+//==================================================================================================
+// End of methods for determining if a type of edit action is allowed.
+//==================================================================================================	
 
 	/**
 	 * Gets the maximum number of bytes available for a data type that is added at the indicated
@@ -345,7 +322,7 @@ class UnionEditorModel extends CompEditorModel {
 	 * will replace the current data type at the indicated index.
 	 * If there isn't a component with the indicated index, the max length 
 	 * will be determined by the lock mode.
-	 * Note: This method doesn't care whther there is a selection or not.
+	 * Note: This method doesn't care whether there is a selection or not.
 	 *
 	 * @param currentIndex index of the component in the union.
 	 * @return the maximum number of bytes that can be replaced 
@@ -397,9 +374,6 @@ class UnionEditorModel extends CompEditorModel {
 		return super.insert(rowIndex, dt, dtLength);
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.data.editor.CompositeEditorModel#insert(int, ghidra.program.model.data.DataType, int, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public DataTypeComponent insert(int rowIndex, DataType dataType, int length, String name,
 			String comment) throws InvalidDataTypeException {
@@ -420,16 +394,17 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void insert(int rowIndex, DataType dataType, int length, int numCopies)
-			throws InvalidDataTypeException {
-		for (int ii = 0; ii < numCopies; ++ii) {
-			insert(rowIndex + ii, dataType, length, null, null);
+	public void insert(int rowIndex, DataType dataType, int length, int numCopies,
+			TaskMonitor monitor) throws InvalidDataTypeException, CancelledException {
+
+		monitor.initialize(numCopies);
+		for (int i = 0; i < numCopies; i++) {
+			monitor.checkCanceled();
+			insert(rowIndex + i, dataType, length, null, null);
+			monitor.incrementProgress(1);
 		}
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.compositeeditor.CompEditorModel#replace(int, ghidra.program.model.data.DataType, int, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public DataTypeComponent replace(int rowIndex, DataType dataType, int length, String name,
 			String comment) throws InvalidDataTypeException {
@@ -451,12 +426,10 @@ class UnionEditorModel extends CompEditorModel {
 		}
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.data.editor.CompositeEditorModel#replaceRange(int, int, ghidra.program.model.data.DataType, int)
-	 */
 	@Override
 	protected boolean replaceRange(int startRowIndex, int endRowIndex, DataType datatype,
-			int length) throws InvalidDataTypeException, InsufficientBytesException {
+			int length, TaskMonitor monitor)
+			throws InvalidDataTypeException, InsufficientBytesException, CancelledException {
 
 		if (length <= 0) {
 			throw new InvalidDataTypeException(
@@ -484,9 +457,11 @@ class UnionEditorModel extends CompEditorModel {
 		FieldSelection overlap = new FieldSelection();
 		overlap.addRange(startRowIndex, endRowIndex + 1);
 		overlap.intersect(selection);
-		boolean replacedSelected = (overlap.getNumRanges() > 0);
+
 		// Union just replaces entire selection range with single instance of new component.
-		deleteComponentRange(startRowIndex, endRowIndex);
+		deleteComponentRange(startRowIndex, endRowIndex, monitor);
+
+		boolean replacedSelected = (overlap.getNumRanges() > 0);
 		insert(startRowIndex, datatype, length, null, null);
 		if (replacedSelected) {
 			selection.addRange(startRowIndex, startRowIndex + 1);
@@ -495,25 +470,16 @@ class UnionEditorModel extends CompEditorModel {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.data.editor.CompositeEditorModel#replaceComponents()
-	 */
 	@Override
 	public void replaceOriginalComponents() {
 		((Union) getOriginalComposite()).replaceWith(viewComposite);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorModel#clearComponents(int[])
-	 */
 	@Override
 	public void clearComponents(int[] rows) throws UsrException {
 		throw new UsrException("Can't clear components in a union.");
 	}
 
-	/**
-	 * 
-	 */
 	@Override
 	void removeDtFromComponents(Composite comp) {
 		DataType newDt = viewDTM.getDataType(comp.getDataTypePath());

@@ -1,0 +1,65 @@
+# RV32M Standard Extension
+
+# div d,s,t 02004033 fe00707f SIMPLE (0, 0) 
+:div rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x4 & funct7=0x1
+{
+	rd = rs1 s/ rs2;
+}
+
+
+# divu d,s,t 02005033 fe00707f SIMPLE (0, 0) 
+:divu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x5 & funct7=0x1
+{
+	rd = rs1 / rs2;
+}
+
+
+# mul d,s,t 02000033 fe00707f SIMPLE (0, 0) 
+:mul rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x0 & funct7=0x1
+{
+	rd = rs1 * rs2;
+}
+
+
+# mulh d,s,t 02001033 fe00707f SIMPLE (0, 0) 
+:mulh rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x1 & funct7=0x1
+{
+	local trs1:$(XLEN2) = sext(rs1);
+	local trs2:$(XLEN2) = sext(rs2);
+	local tmp:$(XLEN2) = trs1 * trs2;
+	rd = tmp($(XLEN));
+}
+
+
+# mulhsu d,s,t 02002033 fe00707f SIMPLE (0, 0) 
+:mulhsu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x2 & funct7=0x1
+{
+	local trs1:$(XLEN2) = sext(rs1);
+	local trs2:$(XLEN2) = zext(rs2);
+	local tmp:$(XLEN2) = trs1 * trs2;
+	rd = tmp($(XLEN));
+}
+
+
+# mulhu d,s,t 02003033 fe00707f SIMPLE (0, 0) 
+:mulhu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x3 & funct7=0x1
+{
+	local trs1:$(XLEN2) = zext(rs1);
+	local trs2:$(XLEN2) = zext(rs2);
+	local tmp:$(XLEN2) = trs1 * trs2;
+	rd = tmp($(XLEN));
+}
+
+
+# rem d,s,t 02006033 fe00707f SIMPLE (0, 0) 
+:rem rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x6 & funct7=0x1
+{
+	rd = rs1 s% rs2;
+}
+
+
+# remu d,s,t 02007033 fe00707f SIMPLE (0, 0) 
+:remu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x7 & funct7=0x1
+{
+	rd = rs1 % rs2;
+}

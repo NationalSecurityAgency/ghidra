@@ -27,7 +27,7 @@ import ghidra.app.plugin.processors.sleigh.expression.EndInstructionValue;
  * Works like the constant solver, but takes the value of {@code inst_next}, which is given by the
  * assembly address and the resulting instruction length.
  * 
- * @note This solver requires backfill.
+ * NOTE: This solver requires backfill.
  */
 public class EndInstructionValueSolver extends AbstractExpressionSolver<EndInstructionValue> {
 

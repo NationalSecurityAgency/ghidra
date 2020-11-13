@@ -14,89 +14,10 @@
  * limitations under the License.
  */
 #include "pcode_test.h"
-
 #ifdef HAS_DOUBLE
-f8 biopEqf8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
 
-	z = lhs == rhs;
-	return z;
-}
-
-f8 biopNef8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs != rhs;
-	return z;
-}
-
-f8 biopLogicOrf8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-f8 biopLogicAndf8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-f8 unopNotf8(f8 lhs)
-{
-	f8 z;
-
-	z = !lhs;
-	return z;
-}
-
-f8 unopNegativef8(f8 lhs)
-{
-	f8 z;
-
-	z = -lhs;
-	return z;
-}
-
-f8 unopPlusf8(f8 lhs)
-{
-	f8 z;
-
-	z = +lhs;
-	return z;
-}
-
-f8 biopMultf8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-f8 biopSubf8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-f8 biopAddf8f8(f8 lhs, f8 rhs)
-{
-	f8 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-f8 biopGtf8f8(f8 lhs, f8 rhs)
+/* Comparison operators */
+f8 f8_greaterThan(f8 lhs, f8 rhs)
 {
 	f8 z;
 
@@ -104,7 +25,7 @@ f8 biopGtf8f8(f8 lhs, f8 rhs)
 	return z;
 }
 
-f8 biopGef8f8(f8 lhs, f8 rhs)
+f8 f8_greaterThanEquals(f8 lhs, f8 rhs)
 {
 	f8 z;
 
@@ -112,7 +33,7 @@ f8 biopGef8f8(f8 lhs, f8 rhs)
 	return z;
 }
 
-f8 biopLtf8f8(f8 lhs, f8 rhs)
+f8 f8_lessThan(f8 lhs, f8 rhs)
 {
 	f8 z;
 
@@ -120,11 +41,95 @@ f8 biopLtf8f8(f8 lhs, f8 rhs)
 	return z;
 }
 
-f8 biopLef8f8(f8 lhs, f8 rhs)
+f8 f8_lessThanEquals(f8 lhs, f8 rhs)
 {
 	f8 z;
 
 	z = lhs <= rhs;
+	return z;
+}
+
+f8 f8_equals(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs == rhs;
+	return z;
+}
+
+f8 f8_notEquals(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs != rhs;
+	return z;
+}
+
+/* Bitwise operators */
+
+/* Logical operators */
+f8 f8_logicalAnd(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs && rhs;
+	return z;
+}
+
+f8 f8_logicalOr(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs || rhs;
+	return z;
+}
+
+f8 f8_logicalNot(f8 lhs)
+{
+	f8 z;
+
+	z = !lhs;
+	return z;
+}
+
+/* Arithmetic operators */
+f8 f8_unaryMinus(f8 lhs)
+{
+	f8 z;
+
+	z = -lhs;
+	return z;
+}
+
+f8 f8_unaryPlus(f8 lhs)
+{
+	f8 z;
+
+	z = +lhs;
+	return z;
+}
+
+f8 f8_addition(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs + rhs;
+	return z;
+}
+
+f8 f8_subtract(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs - rhs;
+	return z;
+}
+
+f8 f8_multiply(f8 lhs, f8 rhs)
+{
+	f8 z;
+
+	z = lhs * rhs;
 	return z;
 }
 

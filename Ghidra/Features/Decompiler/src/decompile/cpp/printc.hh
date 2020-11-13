@@ -82,6 +82,7 @@ protected:
   static OpToken binary_minus;		///< The \e binary \e subtraction operator
   static OpToken shift_left;		///< The \e left \e shift operator
   static OpToken shift_right;		///< The \e right \e shift operator
+  static OpToken shift_sright;		///< The signed \e right \e shift operator
   static OpToken less_than;		///< The \e less \e than operator
   static OpToken less_equal;		///< The \e less \e than \e or \e equal operator
   static OpToken greater_than;		///< The \e greater \e than operator
@@ -124,6 +125,8 @@ protected:
   // Routines that are specific to C/C++
   void buildTypeStack(const Datatype *ct,vector<const Datatype *> &typestack);	///< Prepare to push components of a data-type declaration
   void pushPrototypeInputs(const FuncProto *proto);				///< Push input parameters
+  void pushSymbolScope(const Symbol *symbol);			///< Push tokens resolving a symbol's scope
+  void emitSymbolScope(const Symbol *symbol);			///< Emit tokens resolving a symbol's scope
   virtual void pushTypeStart(const Datatype *ct,bool noident);	///< Push part of a data-type declaration onto the RPN stack, up to the identifier
   virtual void pushTypeEnd(const Datatype *ct);			///< Push the tail ends of a data-type declaration onto the RPN stack
   void pushBoolConstant(uintb val,const TypeBase *ct,const Varnode *vn,
@@ -157,9 +160,9 @@ protected:
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack
   void opTypeCast(const PcodeOp *op);			///< Push the given p-code op using type-cast syntax to the RPN stack
   void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
-  static bool hasCharTerminator(uint1 *buffer,int4 size,int4 charsize);
-  bool printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const;
-  bool isExtensionCastImplied(const PcodeOp *op) const;
+  bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
+  int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
+  void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
   virtual void pushConstant(uintb val,const Datatype *ct,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
@@ -201,9 +204,9 @@ public:
   void setDisplayUnplaced(bool val) { option_unplaced = val; }	///< Toggle whether \e unplaced comments are displayed in the header
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
   virtual ~PrintC(void) {}
+  virtual void resetDefaults(void);
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
-  virtual bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const;
   virtual void docTypeDefinitions(const TypeFactory *typegrp);
   virtual void docAllGlobals(void);
   virtual void docSingleGlobal(const Symbol *sym);
@@ -238,8 +241,8 @@ public:
   virtual void opIntSlessEqual(const PcodeOp *op) { opBinary(&less_equal,op); }
   virtual void opIntLess(const PcodeOp *op) { opBinary(&less_than,op); }
   virtual void opIntLessEqual(const PcodeOp *op) { opBinary(&less_equal,op); }
-  virtual void opIntZext(const PcodeOp *op);
-  virtual void opIntSext(const PcodeOp *op);
+  virtual void opIntZext(const PcodeOp *op,const PcodeOp *readOp);
+  virtual void opIntSext(const PcodeOp *op,const PcodeOp *readOp);
   virtual void opIntAdd(const PcodeOp *op) { opBinary(&binary_plus,op); }
   virtual void opIntSub(const PcodeOp *op) { opBinary(&binary_minus,op); }
   virtual void opIntCarry(const PcodeOp *op) { opFunc(op); }
@@ -252,7 +255,7 @@ public:
   virtual void opIntOr(const PcodeOp *op) { opBinary(&bitwise_or,op); }
   virtual void opIntLeft(const PcodeOp *op) { opBinary(&shift_left,op); }
   virtual void opIntRight(const PcodeOp *op) { opBinary(&shift_right,op); }
-  virtual void opIntSright(const PcodeOp *op) { opBinary(&shift_right,op); }
+  virtual void opIntSright(const PcodeOp *op) { opBinary(&shift_sright,op); }
   virtual void opIntMult(const PcodeOp *op) { opBinary(&multiply,op); }
   virtual void opIntDiv(const PcodeOp *op) { opBinary(&divide,op); }
   virtual void opIntSdiv(const PcodeOp *op) { opBinary(&divide,op); }
@@ -290,6 +293,9 @@ public:
   virtual void opSegmentOp(const PcodeOp *op);
   virtual void opCpoolRefOp(const PcodeOp *op);
   virtual void opNewOp(const PcodeOp *op);
+  virtual void opInsertOp(const PcodeOp *op);
+  virtual void opExtractOp(const PcodeOp *op);
+  virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
 };
 
 #endif

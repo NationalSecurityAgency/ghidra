@@ -35,6 +35,7 @@ import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
+import ghidra.app.script.GhidraScript;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.app.services.ProgramManager;
 import ghidra.base.project.GhidraProject;
@@ -67,7 +68,7 @@ public class TestEnv {
 
 	/**
 	 * Used to perform emergency cleanup.  Tests are expected to call {@link #dispose()} in
-	 * their <tt>tearDown</tt> method.  This is here to catch the case where the is some fatal
+	 * their <code>tearDown</code> method.  This is here to catch the case where the is some fatal
 	 * error that prevents that from taking place.
 	 */
 	private static Set<TestEnv> instances = new HashSet<>();
@@ -362,7 +363,7 @@ public class TestEnv {
 	 * @param ghidraClass The class of the dialog the user desires
 	 * @param maxTimeMS The max amount of time in milliseconds to wait for the requested dialog
 	 *        to appear.
-	 * @return The first occurrence of a dialog that extends the given <tt>ghirdraClass</tt>
+	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
 	 * @deprecated use instead {@link AbstractDockingTest#waitForDialogComponent(Class)}
 	 */
 	@Deprecated
@@ -480,7 +481,7 @@ public class TestEnv {
 
 	/**
 	 * This method differs from {@link #launchDefaultTool()} in that this method does not set the
-	 * <tt>tool</tt> variable in of this <tt>TestEnv</tt> instance.
+	 * <code>tool</code> variable in of this <code>TestEnv</code> instance.
 	 * @return the tool
 	 */
 	public PluginTool createDefaultTool() {
@@ -532,7 +533,7 @@ public class TestEnv {
 			Workspace workspace = toolManager.getActiveWorkspace();
 
 			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
-			return (PluginTool) workspace.runTool(toolTemplate);
+			return workspace.runTool(toolTemplate);
 		});
 	}
 
@@ -549,29 +550,32 @@ public class TestEnv {
 		});
 	}
 
-	public ScriptTaskListener runScript(File script) throws PluginException {
+	public ScriptTaskListener runScript(File scriptFile) throws PluginException {
+		GhidraScriptMgrPlugin scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
+		if (scriptManagerPlugin == null) {
+			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
+			scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
+		}
 
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
 		PrintWriter writer = new PrintWriter(System.out);
-		ResourceFile resourceFile = new ResourceFile(script);
-		Boolean result = (Boolean) AbstractGenericTest.invokeInstanceMethod("compile",
-			scriptProvider, new Class<?>[] { ResourceFile.class, PrintWriter.class },
-			new Object[] { resourceFile, writer });
+		ResourceFile resourceFile = new ResourceFile(scriptFile);
+		GhidraScript script = null;
+		try {
+			script = scriptProvider.getScriptInstance(resourceFile, writer);
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
 
-		if (!result) {
+		}
+		if (script == null) {
 			writer.flush();
-			throw new RuntimeException("Failed to compile script " + script.getAbsolutePath());
+			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 
-		GhidraScriptMgrPlugin sm = getPlugin(GhidraScriptMgrPlugin.class);
-		if (sm == null) {
-			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
-			sm = getPlugin(GhidraScriptMgrPlugin.class);
-		}
-
-		String scriptName = script.getName();
+		String scriptName = scriptFile.getName();
 		ScriptTaskListener listener = new ScriptTaskListener(scriptName);
-		sm.runScript(scriptName, listener);
+		scriptManagerPlugin.runScript(scriptName, listener);
 		return listener;
 	}
 
@@ -640,7 +644,7 @@ public class TestEnv {
 	 * NOTE: This array will not contain any of the TestTools!
 	 * @return an array of tools spawned by the Ghidra environment
 	 */
-	public Tool[] getGhidraCreatedTools() {
+	public PluginTool[] getGhidraCreatedTools() {
 		return gp.getProject().getToolManager().getRunningTools();
 	}
 
@@ -881,7 +885,7 @@ public class TestEnv {
 
 			Project project = frontEndToolInstance.getProject();
 			ToolServices toolServices = project.getToolServices();
-			PluginTool newTool = (PluginTool) toolServices.launchTool(toolName, null);
+			PluginTool newTool = toolServices.launchTool(toolName, null);
 			if (newTool == null) {
 				// couldn't find the tool in the workspace...check the test area
 				newTool = launchDefaultToolByName(toolName);
@@ -922,19 +926,6 @@ public class TestEnv {
 		});
 	}
 
-	/**
-	 * Import a program as binary.
-	 * @param programName resource name that is the name of the program
-	 * @param language language
-	 * @param compilerSpec compiler spec
-	 * @return program
-	 * @throws IOException
-	 * @throws LanguageNotFoundException
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 */
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
 			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
@@ -945,18 +936,6 @@ public class TestEnv {
 		return gp.importProgram(file, language, compilerSpec);
 	}
 
-	/**
-	 * Import a program as binary.
-	 * @param programName resource name that is the name of the program
-	 * @param processor processor
-	 * @return program
-	 * @throws IOException
-	 * @throws LanguageNotFoundException
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 */
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
 			throws CancelledException, DuplicateNameException, InvalidNameException,
 			VersionException, IOException {

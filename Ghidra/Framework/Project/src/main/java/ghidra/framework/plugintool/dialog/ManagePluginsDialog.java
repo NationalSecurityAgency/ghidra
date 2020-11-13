@@ -110,7 +110,7 @@ public class ManagePluginsDialog extends DialogComponentProvider implements Chan
 		addAction(configureAllPluginsAction);
 
 		if (addSaveActions) {
-			saveAction = new DockingAction("Save Tool", ToolConstants.TOOL_OWNER) {
+			saveAction = new DockingAction("Save New Tool", ToolConstants.TOOL_OWNER) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					save();
@@ -125,7 +125,7 @@ public class ManagePluginsDialog extends DialogComponentProvider implements Chan
 			saveAction.setDescription("Save tool to tool chest");
 			addAction(saveAction);
 
-			saveAsAction = new DockingAction("Save Tool As", ToolConstants.TOOL_OWNER) {
+			saveAsAction = new DockingAction("Save New Tool As", ToolConstants.TOOL_OWNER) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					saveAs();

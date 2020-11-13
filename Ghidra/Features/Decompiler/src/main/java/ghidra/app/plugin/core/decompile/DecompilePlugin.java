@@ -48,7 +48,7 @@ import ghidra.util.task.SwingUpdateManager;
 	servicesRequired = { 
 		GoToService.class, NavigationHistoryService.class, ClipboardService.class, 
 		DataTypeManagerService.class /*, ProgramManager.class */
-	},
+	},	
 	servicesProvided = { DecompilerHighlightService.class },
 	eventsConsumed = { 
 		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class, 
@@ -102,10 +102,6 @@ public class DecompilePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Tells the Plugin to write any data-dependent state to the
-	 * output stream.
-	 */
 	@Override
 	public void writeDataState(SaveState saveState) {
 		if (connectedProvider != null) {
@@ -128,11 +124,6 @@ public class DecompilePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Read data state; called after readConfigState(). Events generated
-	 * by plugins we depend on should have been already been thrown by the
-	 * time this method is called.
-	 */
 	@Override
 	public void readDataState(SaveState saveState) {
 		ProgramManager programManagerService = tool.getService(ProgramManager.class);

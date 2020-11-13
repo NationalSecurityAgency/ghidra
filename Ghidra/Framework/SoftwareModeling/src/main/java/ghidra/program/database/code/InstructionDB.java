@@ -59,7 +59,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	 * @param address min address of this instruction
 	 * @param addr database key
 	 * @param proto instruction prototype
-	 * @param protoID ID for the prototype
+	 * @param flags flow override flags
 	 */
 	public InstructionDB(CodeManager codeMgr, DBObjectCache<? extends CodeUnitDB> cache,
 			Address address, long addr, InstructionPrototype proto, byte flags) {

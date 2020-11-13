@@ -17,6 +17,7 @@ package ghidra.program.database.code;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import db.*;
@@ -130,8 +131,9 @@ class PrototypeManager {
 			RecordIterator it = contextTable.iterator();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
+				}
 				Record rec = it.next();
 				String oldValue = rec.getString(0);
 				rec.setString(0, convertString(oldValue));
@@ -143,8 +145,9 @@ class PrototypeManager {
 			it = tempTable.iterator();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
+				}
 				Record rec = it.next();
 				contextTable.putRecord(rec);
 			}
@@ -187,8 +190,9 @@ class PrototypeManager {
 			RecordIterator it = protoAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
+				}
 				Record rec = it.next();
 				tempAdapter.createRecord((int) rec.getKey(), rec.getLongValue(ADDR_COL),
 					rec.getBinaryData(BYTES_COL), rec.getBooleanValue(DELAY_COL));
@@ -201,8 +205,9 @@ class PrototypeManager {
 			it = tempAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.setProgress(++count);
-				if (monitor.isCancelled())
+				if (monitor.isCancelled()) {
 					throw new IOException("Upgrade Cancelled");
+				}
 				Record rec = it.next();
 				protoAdapter.createRecord((int) rec.getKey(), rec.getLongValue(ADDR_COL),
 					rec.getBinaryData(BYTES_COL), rec.getBooleanValue(DELAY_COL));
@@ -287,19 +292,10 @@ class PrototypeManager {
 		return 0;
 	}
 
-//	private boolean shouldSave(BigInteger value, BigInteger defaultValue) {
-//    	if (value == null) {
-//    		return false;
-//    	}
-//    	if (defaultValue == null) {
-//    		return true;
-//    	}
-//    	return !value.equals(defaultValue);
-//
-//	}
-
 	/**
 	 * Get the prototype with the given ID.
+	 * @param protoID prototype ID
+	 * @return instruction prototype or null if not found
 	 */
 	InstructionPrototype getPrototype(int protoID) {
 		if (protoID < 0) {
@@ -449,25 +445,16 @@ class PrototypeManager {
 			this.address = address;
 		}
 
-		/**
-		 * @see ghidra.program.model.lang.ProcessorContext#getRegister(java.lang.String)
-		 */
 		@Override
 		public Register getRegister(String name) {
 			return programContext.getRegister(name);
 		}
 
-		/**
-		 * @see ghidra.program.model.lang.ProcessorContext#getRegisters()
-		 */
 		@Override
-		public Register[] getRegisters() {
+		public List<Register> getRegisters() {
 			return programContext.getRegisters();
 		}
 
-		/**
-		 * @see ghidra.program.model.lang.ProcessorContext#hasValue(ghidra.program.model.lang.Register)
-		 */
 		@Override
 		public boolean hasValue(Register register) {
 			return false;

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import java.awt.Event;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
@@ -33,19 +33,20 @@ import resources.ResourceManager;
  */
 public class InsertUndefinedAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon insertUndefinedIcon =
+	private final static ImageIcon ICON =
 		ResourceManager.loadImage("images/Plus.png");
-	private final static String ACTION_NAME = "Insert Undefined Byte";
+	public final static String ACTION_NAME = "Insert Undefined Byte";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Insert an undefined byte before the selection";
-	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_U, Event.ALT_MASK);
-	private static String[] popupPath = new String[] { ACTION_NAME };
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
+
+	private final static KeyStroke KEY_STROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK);
 
 	public InsertUndefinedAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null,
-			insertUndefinedIcon);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
-		setKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();
 	}
 

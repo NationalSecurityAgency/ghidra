@@ -80,7 +80,7 @@ public interface TaskMonitor {
 	 * Set the progress maximum value
 	 * <p><b>
 	 * Note: setting this value will reset the progress to be the max if the progress is currently
-	 * greater than the new new max value.
+	 * greater than the new new max value.</b>
 	 * @param max maximum value for progress
 	 */
 	public void setMaximum(long max);

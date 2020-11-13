@@ -22,7 +22,8 @@ import java.io.*;
  * data to be read, as long as there are no operations that request data from a previous
  * offset.
  * <p>
- * In other words, this ByteProvider can only be used to read data at ever increasing offsets.
+ * In other words, this {@link ByteProvider} can only be used to read data at ever increasing 
+ * offsets.
  * <p>
  */
 public class InputStreamByteProvider implements ByteProvider {
@@ -30,6 +31,12 @@ public class InputStreamByteProvider implements ByteProvider {
 	private long length;
 	private long currentIndex;
 
+	/**
+	 * Constructs a {@link InputStreamByteProvider} from the specified {@link InputStream}
+	 * 
+	 * @param inputStream the underlying {@link InputStream}
+	 * @param length the length of the {@link InputStreamByteProvider}
+	 */
 	public InputStreamByteProvider(InputStream inputStream, long length) {
 		this.inputStream = inputStream;
 		this.length = length;

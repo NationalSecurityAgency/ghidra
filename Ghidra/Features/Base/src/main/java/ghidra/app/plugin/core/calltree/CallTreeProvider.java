@@ -182,7 +182,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			public void actionPerformed(ActionContext context) {
 				Object contextObject = context.getContextObject();
 				GTree gTree = (GTree) contextObject;
-				GTreeRootNode rootNode = gTree.getRootNode();
+				GTreeNode rootNode = gTree.getViewRoot();
 				List<GTreeNode> children = rootNode.getChildren();
 				for (GTreeNode child : children) {
 					gTree.collapseAll(child);
@@ -283,7 +283,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node instanceof OutgoingCallsRootNode ||
+							node instanceof IncomingCallsRootNode) {
 							return false;
 						}
 					}
@@ -343,7 +344,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 				for (TreePath path : selectionPaths) {
 					GTreeNode node = (GTreeNode) path.getLastPathComponent();
-					if (node instanceof GTreeRootNode) {
+					if (node.isRoot()) {
 						return false;
 					}
 				}
@@ -496,7 +497,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -551,7 +552,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -604,7 +605,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		// Show new call tree action
 		//
 		DockingAction newCallTree =
-			new DockingAction("Show Call Tree For Function", plugin.getName()) {
+			new DockingAction("Show Call Trees For Function", plugin.getName()) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					GTree gTree = (GTree) context.getContextObject();
@@ -660,7 +661,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeRootNode) {
+						if (node.isRoot()) {
 							return false;
 						}
 					}
@@ -671,6 +672,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			"Call_Tree_Context_Action_Show_Call_Tree_For_Function"));
 		newCallTree.setPopupMenuData(new MenuData(new String[] { "Show Call Tree For Function" },
 			CallTreePlugin.PROVIDER_ICON, newTreeMenu));
+		newCallTree.setDescription("Show the Function Call Tree window for the function " +
+			"selected in the call tree");
 		tool.addLocalAction(this, newCallTree);
 	}
 
@@ -915,7 +918,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void clearTrees() {
-		if (incomingTree.getRootNode() instanceof EmptyRootNode) {
+		if (incomingTree.getModelRoot() instanceof EmptyRootNode) {
 			// already empty
 			return;
 		}
@@ -937,7 +940,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void updateIncomingReferencs(Function function) {
-		GTreeRootNode rootNode = null;
+		GTreeNode rootNode = null;
 		if (function == null) {
 			rootNode = new EmptyRootNode();
 		}
@@ -949,7 +952,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private void updateOutgoingReferences(Function function) {
-		GTreeRootNode rootNode = null;
+		GTreeNode rootNode = null;
 		if (function == null) {
 			rootNode = new EmptyRootNode();
 		}
@@ -1083,16 +1086,21 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private boolean isEmpty() {
-		GTreeRootNode rootNode = incomingTree.getRootNode();
+		GTreeNode rootNode = incomingTree.getModelRoot();
 		return rootNode instanceof EmptyRootNode;
 	}
 
 	private boolean updateRootNodes(Function function) {
-		CallNode callNode = (CallNode) incomingTree.getRootNode();
-		Function nodeFunction = callNode.getContainingFunction();
-		if (nodeFunction.equals(function)) {
-			reloadUpdateManager.update();
-			return true;
+		GTreeNode root = incomingTree.getModelRoot();
+		// root might be a "PendingRootNode"
+		//TODO do we need to use a PendingRootNode?
+		if (root instanceof CallNode) {
+			CallNode callNode = (CallNode) root;
+			Function nodeFunction = callNode.getRemoteFunction();
+			if (nodeFunction.equals(function)) {
+				reloadUpdateManager.update();
+				return true;
+			}
 		}
 
 		return false;
@@ -1109,7 +1117,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			CallNode rootNode = (CallNode) tree.getRootNode();
+			CallNode rootNode = (CallNode) tree.getModelRoot();
 			List<GTreeNode> children = rootNode.getChildren();
 			for (GTreeNode node : children) {
 				updateFunction((CallNode) node);
@@ -1117,14 +1125,14 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		private void updateFunction(CallNode node) {
-			if (!node.isChildrenLoadedOrInProgress()) {
+			if (!node.isLoaded()) {
 				// children not loaded, don't force a load by asking for them
 				return;
 			}
 
 			// first, if the given node represents the function we have, then we don't need to 
 			// go any further
-			if (function.equals(node.getContainingFunction())) {
+			if (function.equals(node.getRemoteFunction())) {
 				GTreeNode parent = node.getParent();
 				parent.removeNode(node);
 				parent.addNode(node.recreate());
@@ -1189,6 +1197,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		this.recurseIcon.setNumber(depth);
 
 		removeFilterCache();
+		incomingTree.refilterLater();
+		outgoingTree.refilterLater();
 
 		saveRecurseDepth();
 	}
@@ -1203,9 +1213,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		// you have done.  Normally this is not that big of a problem.  However, if the loading
 		// takes a long time, then you lose some work.
 		//
-		GTreeRootNode rootNode = incomingTree.getRootNode();
+		GTreeNode rootNode = incomingTree.getModelRoot();
 		rootNode.removeAll();
-		rootNode = outgoingTree.getRootNode();
+		rootNode = outgoingTree.getModelRoot();
 		rootNode.removeAll();
 	}
 
@@ -1364,7 +1374,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private class PendingRootNode extends AbstractGTreeRootNode {
+	private class PendingRootNode extends GTreeNode {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
@@ -1387,7 +1397,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private class EmptyRootNode extends AbstractGTreeRootNode {
+	private class EmptyRootNode extends GTreeNode {
 
 		@Override
 		public Icon getIcon(boolean expanded) {

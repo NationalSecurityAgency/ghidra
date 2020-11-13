@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh.parse;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -24,8 +23,6 @@ import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableSet;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
@@ -522,7 +519,7 @@ public class ParserTest {
 			assertTrue(res instanceof AssemblyParseErrorResult);
 			AssemblyParseErrorResult err = (AssemblyParseErrorResult) res;
 			Collection<String> sug = err.getSuggestions();
-			assertEquals(ImmutableSet.builder().add("b").build(), sug);
+			assertEquals(Set.of("b"), sug);
 		}
 	}
 
@@ -542,7 +539,7 @@ public class ParserTest {
 			assertTrue(res instanceof AssemblyParseErrorResult);
 			AssemblyParseErrorResult err = (AssemblyParseErrorResult) res;
 			Collection<String> sug = err.getSuggestions();
-			assertEquals(ImmutableSet.builder().add(" ").build(), sug);
+			assertEquals(Set.of(" "), sug);
 		}
 	}
 

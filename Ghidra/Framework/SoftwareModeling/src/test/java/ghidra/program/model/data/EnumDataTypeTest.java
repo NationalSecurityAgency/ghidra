@@ -17,15 +17,12 @@ package ghidra.program.model.data;
 
 import org.junit.*;
 
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.mem.ByteMemBufferImpl;
+import ghidra.util.BigEndianDataConverter;
 import ghidra.util.UniversalIdGenerator;
-import mockit.Expectations;
-import mockit.Mocked;
 
 public class EnumDataTypeTest {
-	@Mocked
-	MemBuffer memBuffer;
 
 	@Before
 	public void setUp() {
@@ -33,32 +30,26 @@ public class EnumDataTypeTest {
 	}
 
 	@Test
-	public void testNegativeValue() throws MemoryAccessException {
-		new Expectations() {
-			{
-				memBuffer.getInt(anyInt);
-				result = 0xffffffff;
-			}
-		};
+	public void testNegativeValue() {
 
 		EnumDataType enumDt = new EnumDataType("Test", 4);
 		enumDt.add("bob", 0xffffffffL);
+
+		ByteMemBufferImpl memBuffer = new ByteMemBufferImpl(Address.NO_ADDRESS,
+			BigEndianDataConverter.INSTANCE.getBytes(-1), true);
 
 		Assert.assertEquals("bob", enumDt.getRepresentation(memBuffer, null, 0));
 
 	}
 
 	@Test
-	public void testUpperBitLongValue() throws MemoryAccessException {
-		new Expectations() {
-			{
-				memBuffer.getInt(anyInt);
-				result = 0x80000000;
-			}
-		};
+	public void testUpperBitLongValue() {
 
 		EnumDataType enumDt = new EnumDataType("Test", 4);
 		enumDt.add("bob", 0x80000000L);
+
+		ByteMemBufferImpl memBuffer = new ByteMemBufferImpl(Address.NO_ADDRESS,
+			BigEndianDataConverter.INSTANCE.getBytes(Integer.MIN_VALUE), true);
 
 		Assert.assertEquals("bob", enumDt.getRepresentation(memBuffer, null, 0));
 

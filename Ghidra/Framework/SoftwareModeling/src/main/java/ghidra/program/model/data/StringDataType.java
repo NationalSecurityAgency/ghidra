@@ -25,9 +25,9 @@ import ghidra.util.classfinder.ClassTranslator;
  * <ul>
  * <li>{@link StringDataType} - this type, fixed length, user settable charset.
  * <li>{@link StringUTF8DataType} - fixed length UTF-8 string.
- * <li>{@link TerminatedStringDataType} - terminated & unbounded string, user settable charset.
- * <li>{@link TerminatedUnicodeDataType} - terminated & unbounded UTF-16 string.
- * <li>{@link TerminatedUnicode32DataType} - terminated & unbounded UTF-32 string.
+ * <li>{@link TerminatedStringDataType} - terminated and unbounded string, user settable charset.
+ * <li>{@link TerminatedUnicodeDataType} - terminated and unbounded UTF-16 string.
+ * <li>{@link TerminatedUnicode32DataType} - terminated and unbounded UTF-32 string.
  * <li>{@link PascalString255DataType} - length-prefixed string (limited to 255 chars), user settable charset.
  * <li>{@link PascalStringDataType} - length-prefixed string (limited to 64k), user settable charset.
  * <li>{@link PascalUnicodeDataType} - length-prefixed UTF-16 (limited to 64k).

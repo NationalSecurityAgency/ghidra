@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +79,7 @@ public class FieldPanelCoordinator implements ViewListener {
 		panels = newPanels;
 	}
 	
-	/**
-	 * @see docking.widgets.fieldpanel.listener.ViewListener#viewChanged(docking.widgets.fieldpanel.FieldPanel, int, int)
-	 */
+	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
 		if (valuesChanging) return;
 		valuesChanging = true;

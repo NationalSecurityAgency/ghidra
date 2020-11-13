@@ -26,7 +26,7 @@ import ghidra.util.HTMLUtilities;
 public class InvalidArchiveNode extends ArchiveNode {
 
 	public InvalidArchiveNode(InvalidFileArchive archive) {
-		super(archive);
+		super(archive, new ArrayPointerFilterState());
 	}
 
 	@Override
@@ -73,8 +73,8 @@ public class InvalidArchiveNode extends ArchiveNode {
 	}
 
 	@Override
-	public boolean isSystemNode() {
-		return true;
+	public boolean canDelete() {
+		return false;
 	}
 
 	@Override

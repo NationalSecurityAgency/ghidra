@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +30,6 @@ public interface FileChangeListener {
 	 * on behalf of the caller.  This method should not attempt to alter the 
 	 * lock.
 	 * @param file the modified file.
-	 * @param haveLock is true if a file lock has been granted (LockFile was
-	 * supplied at time of construction).
 	 */
 	public void fileModified(File file);
 	

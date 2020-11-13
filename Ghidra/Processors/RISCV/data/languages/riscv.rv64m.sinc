@@ -1,0 +1,44 @@
+# RV64M  Standard Exention (in addition to RV32M)
+
+# divuw d,s,t 0200503b fe00707f SIMPLE (64, 0) 
+:divuw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x5 & funct7=0x1
+{
+	local tmpr1:4 = rs1:4;
+	local tmpr2:4 = rs2:4;
+	rd = sext(tmpr1 / tmpr2);
+}
+
+
+# divw d,s,t 0200403b fe00707f SIMPLE (64, 0) 
+:divw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x4 & funct7=0x1
+{
+	local tmpr1:4 = rs1:4;
+	local tmpr2:4 = rs2:4;
+	rd = sext(tmpr1 s/ tmpr2);
+}
+
+
+# mulw d,s,t 0200003b fe00707f SIMPLE (64, 0) 
+:mulw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x1
+{
+	local tmp:4 = rs1:4 * rs2:4;
+	rd = sext(tmp);
+}
+
+
+# remuw d,s,t 0200703b fe00707f SIMPLE (64, 0) 
+:remuw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x7 & funct7=0x1
+{
+	local tmpr1:4 = rs1:4;
+	local tmpr2:4 = rs2:4;
+	rd = sext(tmpr1 % tmpr2);
+}
+
+
+# remw d,s,t 0200603b fe00707f SIMPLE (64, 0) 
+:remw rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x6 & funct7=0x1
+{
+	local tmpr1:4 = rs1:4;
+	local tmpr2:4 = rs2:4;
+	rd = sext(tmpr1 s% tmpr2);
+}

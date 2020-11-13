@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +146,7 @@ public class PropertyFile {
 
 	/**
 	 * Returns the FileID associated with this file.
-	 * @returns FileID associated with this file
+	 * @return FileID associated with this file
 	 */
 	public String getFileID() {
 		return getString(FILE_ID, null);

@@ -16,7 +16,7 @@
 #include "pcode_test.h"
 
 #ifdef HAS_FLOAT
-f4 biopCmpf4f4(f4 lhs, f4 rhs)
+f4 f4_compareLogic(f4 lhs, f4 rhs)
 {
 	if (lhs < 0)
 		lhs += 2;
@@ -29,7 +29,7 @@ f4 biopCmpf4f4(f4 lhs, f4 rhs)
 	return lhs;
 }
 
-f8 biopCmpf8f8(f8 lhs, f8 rhs)
+f8 f8_compareLogic(f8 lhs, f8 rhs)
 {
 	if (lhs < 0)
 		lhs += 2;
@@ -42,103 +42,8 @@ f8 biopCmpf8f8(f8 lhs, f8 rhs)
 	return lhs;
 }
 
-f4 biopLtf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-f4 biopLef4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-f4 biopEqf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-f4 biopNef4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs != rhs;
-	return z;
-}
-
-f4 biopLogicOrf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-f4 biopLogicAndf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-f4 unopNotf4(f4 lhs)
-{
-	f4 z;
-
-	z = !lhs;
-	return z;
-}
-
-f4 unopNegativef4(f4 lhs)
-{
-	f4 z;
-
-	z = -lhs;
-	return z;
-}
-
-f4 unopPlusf4(f4 lhs)
-{
-	f4 z;
-
-	z = +lhs;
-	return z;
-}
-
-f4 biopMultf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-f4 biopSubf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-f4 biopAddf4f4(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-f4 biopGtf4f4(f4 lhs, f4 rhs)
+/* Comparison operators */
+f4 f4_greaterThan(f4 lhs, f4 rhs)
 {
 	f4 z;
 
@@ -146,11 +51,109 @@ f4 biopGtf4f4(f4 lhs, f4 rhs)
 	return z;
 }
 
-f4 biopGef4f4(f4 lhs, f4 rhs)
+f4 f4_greaterThanEquals(f4 lhs, f4 rhs)
 {
 	f4 z;
 
 	z = lhs >= rhs;
+	return z;
+}
+
+f4 f4_lessThan(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs < rhs;
+	return z;
+}
+
+f4 f4_lessThanEquals(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs <= rhs;
+	return z;
+}
+
+f4 f4_equals(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs == rhs;
+	return z;
+}
+
+f4 f4_notEquals(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs != rhs;
+	return z;
+}
+
+/* Logical operators */
+f4 f4_logicalAnd(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs && rhs;
+	return z;
+}
+
+f4 f4_logicalOr(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs || rhs;
+	return z;
+}
+
+f4 f4_logicalNot(f4 lhs)
+{
+	f4 z;
+
+	z = !lhs;
+	return z;
+}
+
+/* Arithmetic operators */
+f4 f4_unaryMinus(f4 lhs)
+{
+	f4 z;
+
+	z = -lhs;
+	return z;
+}
+
+f4 f4_unaryPlus(f4 lhs)
+{
+	f4 z;
+
+	z = +lhs;
+	return z;
+}
+
+f4 f4_addition(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs + rhs;
+	return z;
+}
+
+f4 f4_subtract(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs - rhs;
+	return z;
+}
+
+f4 f4_multiply(f4 lhs, f4 rhs)
+{
+	f4 z;
+
+	z = lhs * rhs;
 	return z;
 }
 

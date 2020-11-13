@@ -38,7 +38,6 @@ public class RedBlackTree<K extends Comparable<K>, V> implements Iterable<RedBla
 
 	/**
 	 * Creates a new RedBlackKeySet that can store keys between 0 and n.
-	 * @param n the maximum key for this set.
 	 */
 	public RedBlackTree() {
 	}

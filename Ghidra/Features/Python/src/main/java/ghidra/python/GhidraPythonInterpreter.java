@@ -100,7 +100,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 		// Store the default python path in case we need to reset it later.
 		defaultPythonPath = new ArrayList<>();
 		for (Object object : systemState.path) {
-			defaultPythonPath.add(Py.newString(object.toString()));
+			defaultPythonPath.add(Py.newStringOrUnicode(object.toString()));
 		}
 
 		// Allow interruption of python code to occur when various code paths are
@@ -135,18 +135,18 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 
 		// Add in Ghidra script source directories
 		for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
-			systemState.path.append(Py.newString(resourceFile.getFile(false).getAbsolutePath()));
+			systemState.path.append(Py.newStringOrUnicode(resourceFile.getFile(false).getAbsolutePath()));
 		}
 
-		for (ResourceFile resourceFile : GhidraScriptUtil.getScriptBinDirectories()) {
-			systemState.path.append(Py.newString(resourceFile.getFile(false).getAbsolutePath()));
+		for (ResourceFile resourceFile : GhidraScriptUtil.getExplodedCompiledSourceBundlePaths()) {
+			systemState.path.append(Py.newStringOrUnicode(resourceFile.getFile(false).getAbsolutePath()));
 		}
 
 		// Add in the PyDev remote debugger module
 		if (!SystemUtilities.isInDevelopmentMode()) {
 			File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
 			if (pyDevSrcDir != null) {
-				systemState.path.append(Py.newString(pyDevSrcDir.getAbsolutePath()));
+				systemState.path.append(Py.newStringOrUnicode(pyDevSrcDir.getAbsolutePath()));
 			}
 		}
 	}
@@ -343,7 +343,12 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				}
 			}
 
-			// Add public methods only once. Ignore inner classes.
+			// Add public methods (only once). Ignore inner classes.
+			//
+			// NOTE: We currently do not have a way to safely add protected methods.  Disabling
+			// python.security.respectJavaAccessibility and adding in protected methods in the below
+			// loop caused an InaccessibleObjectException for some users (relating to core Java 
+			// modules, not the GhidraScript class hierarchy).
 			if (!scriptMethodsInjected) {
 				for (Method method : scriptClass.getDeclaredMethods()) {
 					if (!method.getName().contains("$") &&
@@ -467,7 +472,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	}
 
 	/**
-	 * Returns a Map of property->string_substitution pairs.
+	 * Returns a Map of property-&gt;string_substitution pairs.
 	 *
 	 * @param cmd current command
 	 * @param includeBuiltins True if we should include python built-ins; otherwise, false.

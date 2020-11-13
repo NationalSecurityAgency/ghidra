@@ -23,6 +23,7 @@ import ghidra.program.model.data.FunctionDefinitionDataType;
  *
  * @deprecated FunctionDefinitionDataType should be used for defining a function signature
  */
+@Deprecated
 public class FunctionSignatureImpl extends FunctionDefinitionDataType {
 
 	/**
@@ -36,7 +37,7 @@ public class FunctionSignatureImpl extends FunctionDefinitionDataType {
 
 	/**
 	 * Creates new FunctionSignatureImpl based upon an existing function signature.
-	 * @param name the name of the function
+	 * @param signature the signature of the function
 	 */
 	public FunctionSignatureImpl(FunctionSignature signature) {
 		super(signature);

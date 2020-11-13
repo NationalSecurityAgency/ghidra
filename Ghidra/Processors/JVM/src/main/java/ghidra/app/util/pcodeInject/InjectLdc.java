@@ -19,20 +19,25 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.PcodeOp;
 
 public class InjectLdc extends InjectPayloadJava {
 
-	public InjectLdc(String sourceName, SleighLanguage language) {
-		super(sourceName, language);
+	public InjectLdc(String sourceName, SleighLanguage language, long uniqBase) {
+		super(sourceName, language, uniqBase);
 	}
 
 	@Override
-	public String getPcodeText(Program program, String context) {
-		InjectContext injectContext = getInjectContext(program, context);
-		AbstractConstantPoolInfoJava[] constantPool = getConstantPool(program);
-		int constantPoolIndex = (int) injectContext.inputlist.get(0).getOffset();
-		String pcodeText = LdcMethods.getPcodeForLdc(constantPoolIndex, constantPool);
-		return pcodeText;
+	public String getName() {
+		return PcodeInjectLibraryJava.LDC;
 	}
 
+	@Override
+	public PcodeOp[] getPcode(Program program, InjectContext con) {
+		AbstractConstantPoolInfoJava[] constantPool = getConstantPool(program);
+		int constantPoolIndex = (int) con.inputlist.get(0).getOffset();
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, con.baseAddr, uniqueBase);
+		LdcMethods.getPcodeForLdc(pCode, constantPoolIndex, constantPool);
+		return pCode.getPcodeOps();
+	}
 }

@@ -35,7 +35,7 @@ struct SizePass {
 /// \brief Map object for keeping track of which address ranges have been heritaged
 ///
 /// We keep track of a fairly fine grained description of when each address range
-/// was entered in SSA form, refered to as \b heritaged or, for Varnode objects,
+/// was entered in SSA form, referred to as \b heritaged or, for Varnode objects,
 /// no longer \b free.  An address range is added using the add() method, which includes
 /// the particular pass when it was entered.  The map can be queried using findPass()
 /// that informs the caller whether the address has been heritaged and if so in which pass.
@@ -47,12 +47,12 @@ private:
   map<Address,SizePass> themap;	///< Heritaged addresses mapped to range size and pass number
 public:
   iterator add(Address addr,int4 size,int4 pass,int4 &intersect); ///< Mark new address as \b heritaged
-  iterator find(Address addr);			      ///< Look up if/how given address was heritaged
-  int4 findPass(Address addr) const;		      ///< Look up if/how given address was heritaged
-  void erase(iterator iter) { themap.erase(iter); }   ///< Remove a particular entry from the map
-  iterator begin(void) { return themap.begin(); }     ///< Get starting iterator over heritaged ranges
-  iterator end(void) { return themap.end(); }	      ///< Get ending iterator over heritaged ranges
-  void clear(void) { themap.clear(); }		      ///< Clear the map of heritaged ranges
+  iterator find(const Address &addr);			///< Look up if/how given address was heritaged
+  int4 findPass(const Address &addr) const;		///< Look up if/how given address was heritaged
+  void erase(iterator iter) { themap.erase(iter); }	///< Remove a particular entry from the map
+  iterator begin(void) { return themap.begin(); }	///< Get starting iterator over heritaged ranges
+  iterator end(void) { return themap.end(); }		///< Get ending iterator over heritaged ranges
+  void clear(void) { themap.clear(); }			///< Clear the map of heritaged ranges
 };
 
 /// \brief Priority queue for the phi-node (MULTIEQUAL) placement algorithm
@@ -92,7 +92,7 @@ class HeritageInfo {
   bool warningissued;		///< \b true if warning issued previously
   void set(AddrSpace *spc,int4 dl,int4 dcdl) {
     space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; warningissued=false; loadGuardSearch = false; } ///< Set all fields
-  bool isHeritaged(void) const { return (space != (AddrSpace *)0); }
+  bool isHeritaged(void) const { return (space != (AddrSpace *)0); }	///< Return \b true if heritage is performed on this space
   void reset(void) {
     deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
 };
@@ -219,7 +219,7 @@ class Heritage {
   /// \brief Get the heritage status for the given address space
   HeritageInfo *getInfo(AddrSpace *spc) { return &(infolist[spc->getIndex()]); }
 
-  /// \brief Get the heriage status for the given address space
+  /// \brief Get the heritage status for the given address space
   const HeritageInfo *getInfo(AddrSpace *spc) const { return &(infolist[spc->getIndex()]); }
 
   void splitJoinLevel(vector<Varnode *> &lastcombo,vector<Varnode *> &nextlev,JoinRecord *joinrec);
@@ -229,7 +229,8 @@ class Heritage {
   void floatExtensionWrite(Varnode *vn,JoinRecord *joinrec);
   void processJoins(void);
   void buildADT(void);		///< Build the augmented dominator tree
-  int4 collect(Address addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &input) const;
+  void removeRevisitedMarkers(const vector<Varnode *> &remove,const Address &addr,int4 size);
+  int4 collect(Address addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &input,vector<Varnode *> &remove) const;
   bool callOpIndirectEffect(const Address &addr,int4 size,PcodeOp *op) const;
   Varnode *normalizeReadSize(Varnode *vn,const Address &addr,int4 size);
   Varnode *normalizeWriteSize(Varnode *vn,const Address &addr,int4 size);
@@ -246,7 +247,7 @@ class Heritage {
   void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
-  void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size);
+  void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size);
   void guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
   void guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
@@ -266,6 +267,8 @@ class Heritage {
   void rename(void);
 public:
   Heritage(Funcdata *data);	///< Constructor
+
+  int4 getPass(void) const { return pass; }	///< Get overall count of heritage passes
 
   /// \brief Get the pass number when the given address was heritaged
   ///

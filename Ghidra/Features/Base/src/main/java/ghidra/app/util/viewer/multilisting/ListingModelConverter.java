@@ -133,8 +133,8 @@ public class ListingModelConverter implements ListingModel {
 	}
 
 	@Override
-	public void openData(Data data) {
-		model.openData(data);
+	public boolean openData(Data data) {
+		return model.openData(data);
 	}
 
 	@Override
@@ -190,6 +190,11 @@ public class ListingModelConverter implements ListingModel {
 	 */
 	public void setAddressTranslator(AddressTranslator translator) {
 		this.translator = translator;
+	}
+
+	@Override
+	public ListingModel copy() {
+		return new ListingModelConverter(primaryModel.copy(), model.copy());
 	}
 
 }

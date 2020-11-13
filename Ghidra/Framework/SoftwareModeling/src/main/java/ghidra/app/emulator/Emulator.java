@@ -172,8 +172,7 @@ public class Emulator {
 	 * @param restore if true restore modified registers within the register space only
 	 */
 	private void initRegisters(boolean restore) {
-		DataConverter conv =
-			language.isBigEndian() ? new BigEndianDataConverter() : new LittleEndianDataConverter();
+		DataConverter conv = DataConverter.getInstance(language.isBigEndian());
 		Set<String> keys = mstate.getKeys();
 		for (String key : keys) {
 			List<byte[]> vals = mstate.getVals(key);

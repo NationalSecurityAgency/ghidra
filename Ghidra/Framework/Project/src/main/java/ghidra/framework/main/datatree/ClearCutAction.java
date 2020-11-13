@@ -18,9 +18,9 @@ package ghidra.framework.main.datatree;
 import java.awt.event.KeyEvent;
 
 import docking.action.KeyBindingData;
-import ghidra.framework.main.datatable.ProjectDataTreeContextAction;
+import ghidra.framework.main.datatable.ProjectTreeAction;
 
-public class ClearCutAction extends ProjectDataTreeContextAction {
+public class ClearCutAction extends ProjectTreeAction {
 
 	public ClearCutAction(String owner) {
 		super("Clear Cut", owner);
@@ -30,12 +30,12 @@ public class ClearCutAction extends ProjectDataTreeContextAction {
 	}
 
 	@Override
-	public boolean isEnabledForContext(ProjectDataTreeActionContext context) {
+	public boolean isEnabledForContext(FrontEndProjectTreeContext context) {
 		return DataTreeClipboardUtils.isCuttablePresent();
 	}
 
 	@Override
-	public void actionPerformed(ProjectDataTreeActionContext context) {
+	public void actionPerformed(FrontEndProjectTreeContext context) {
 		DataTreeClipboardUtils.clearCuttables();
 	}
 }

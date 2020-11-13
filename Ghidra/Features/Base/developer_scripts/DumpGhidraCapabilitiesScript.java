@@ -42,7 +42,7 @@ public class DumpGhidraCapabilitiesScript extends GhidraScript {
 			addPlugin(moduleName, pluginDescription);
 		}
 
-		Set<Analyzer> instances = ClassSearcher.getInstances(Analyzer.class);
+		List<Analyzer> instances = ClassSearcher.getInstances(Analyzer.class);
 		for (Analyzer analyzer : instances) {
 			Class<? extends Analyzer> clazz = analyzer.getClass();
 

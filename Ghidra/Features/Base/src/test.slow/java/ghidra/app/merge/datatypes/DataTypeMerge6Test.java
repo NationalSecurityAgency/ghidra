@@ -117,7 +117,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMachineAlignedVsValuePickLatest() throws Exception {
+	public void testStructureMachineAlignedVsValuePickLatest() throws Exception {
 
 		setupStructureMachineAlignedVsValue();
 		executeMerge();
@@ -143,7 +143,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMachineAlignedVsValuePickMy() throws Exception {
+	public void testStructureMachineAlignedVsValuePickMy() throws Exception {
 
 		setupStructureMachineAlignedVsValue();
 		executeMerge();
@@ -169,7 +169,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMachineAlignedVsValuePickOriginal() throws Exception {
+	public void testStructureMachineAlignedVsValuePickOriginal() throws Exception {
 
 		setupStructureMachineAlignedVsValue();
 		executeMerge();
@@ -289,7 +289,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructurePack1VsPack2PickLatest() throws Exception {
+	public void testStructurePack1VsPack2PickLatest() throws Exception {
 
 		setupStructurePack1VsPack2();
 		executeMerge();
@@ -316,7 +316,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructurePack1VsPack2PickMy() throws Exception {
+	public void testStructurePack1VsPack2PickMy() throws Exception {
 
 		setupStructurePack1VsPack2();
 		executeMerge();
@@ -343,7 +343,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructurePack1VsPack2PickOriginal() throws Exception {
+	public void testStructurePack1VsPack2PickOriginal() throws Exception {
 
 		setupStructurePack1VsPack2();
 		executeMerge();
@@ -461,7 +461,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMinAlignVsPackPickLatest() throws Exception {
+	public void testStructureMinAlignVsPackPickLatest() throws Exception {
 
 		setupStructureMinAlignVsPack();
 		executeMerge();
@@ -488,7 +488,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureMinAlignVsPackPickMy() throws Exception {
+	public void testStructureMinAlignVsPackPickMy() throws Exception {
 
 		setupStructureMinAlignVsPack();
 		executeMerge();
@@ -583,7 +583,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureAddVsAlignPickLatest() throws Exception {
+	public void testStructureAddVsAlignPickLatest() throws Exception {
 
 		setupStructureAddVsAlign();
 		executeMerge();
@@ -611,7 +611,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureAddVsAlignPickMy() throws Exception {
+	public void testStructureAddVsAlignPickMy() throws Exception {
 
 		setupStructureAddVsAlign();
 		executeMerge();
@@ -733,7 +733,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureNameVsPackPickLatest() throws Exception {
+	public void testStructureNameVsPackPickLatest() throws Exception {
 
 		setupStructureFieldNameVsPack();
 		executeMerge();
@@ -760,7 +760,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureNameVsPackPickMy() throws Exception {
+	public void testStructureNameVsPackPickMy() throws Exception {
 
 		setupStructureFieldNameVsPack();
 		executeMerge();
@@ -876,7 +876,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureRemoveVsPackPickLatest() throws Exception {
+	public void testStructureRemoveVsPackPickLatest() throws Exception {
 
 		setupStructureRemoveVsPack();
 		executeMerge();
@@ -893,7 +893,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureRemoveVsPackPickMy() throws Exception {
+	public void testStructureRemoveVsPackPickMy() throws Exception {
 
 		setupStructureRemoveVsPack();
 		executeMerge();
@@ -1006,10 +1006,12 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureInUnionAndViceVersa() throws Exception {
+	public void testStructureInUnionAndViceVersa() throws Exception {
 
 		setupStructureInUnionAndViceVersa();
 		executeMerge();
+
+		close(waitForWindow("Union Update Failed")); // expected dependency error on CoolUnion
 
 		waitForCompletion();
 
@@ -1148,7 +1150,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionMachineAlignedVsValuePickLatest() throws Exception {
+	public void testUnionMachineAlignedVsValuePickLatest() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1175,7 +1177,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionMachineAlignedVsValuePickMy() throws Exception {
+	public void testUnionMachineAlignedVsValuePickMy() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1202,7 +1204,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionMachineAlignedVsValuePickOriginal() throws Exception {
+	public void testUnionMachineAlignedVsValuePickOriginal() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1320,7 +1322,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionPack1VsPack2PickLatest() throws Exception {
+	public void testUnionPack1VsPack2PickLatest() throws Exception {
 
 		setupUnionPack1VsPack2();
 		executeMerge();
@@ -1347,7 +1349,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionPack1VsPack2PickMy() throws Exception {
+	public void testUnionPack1VsPack2PickMy() throws Exception {
 
 		setupUnionPack1VsPack2();
 		executeMerge();
@@ -1374,7 +1376,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testUnionPack1VsPack2PickOriginal() throws Exception {
+	public void testUnionPack1VsPack2PickOriginal() throws Exception {
 
 		setupUnionMachineAlignedVsValue();
 		executeMerge();
@@ -1401,7 +1403,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testStructureAddSameNameDiffCompsPickMy() throws Exception {
+	public void testStructureAddSameNameDiffCompsPickMy() throws Exception {
 
 		final StructureDataType struct1 =
 			new StructureDataType(new CategoryPath("/Category1"), "ABCStructure", 0);

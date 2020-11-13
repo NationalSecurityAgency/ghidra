@@ -47,7 +47,7 @@ public class DefaultProjectManager implements ProjectManager {
 	 */
 	private final static String LAST_OPENED_PROJECT = "LastOpenedProject";
 
-	private static final Logger LOGGER = LogManager.getLogger(DefaultProjectManager.class);
+	private static final Logger LOG = LogManager.getLogger(DefaultProjectManager.class);
 
 	private static final String RECENT_PROJECTS = "RecentProjects";
 	private static final String VIEWED_PROJECTS = "ViewedProjects";
@@ -151,11 +151,11 @@ public class DefaultProjectManager implements ProjectManager {
 			return null;
 		}
 		catch (ReadOnlyException e) {
-			Msg.showError(LOGGER, null, "Read-only Project!",
+			Msg.showError(LOG, null, "Read-only Project!",
 				"Cannot open project for update: " + projectLocator);
 		}
 		catch (IOException e) {
-			Msg.showError(LOGGER, null, "Open Project Failed!",
+			Msg.showError(LOG, null, "Open Project Failed!",
 				"Could not open project " + projectLocator + "\n \nCAUSE: " + e.getMessage());
 		}
 		finally {
@@ -310,7 +310,7 @@ public class DefaultProjectManager implements ProjectManager {
 
 		Set<ToolTemplate> tools = ToolUtils.getDefaultApplicationTools();
 		if (tools == null || tools.isEmpty()) {
-			Msg.showError(LOGGER, null, "Default Tools Not Found",
+			Msg.showError(LOG, null, "Default Tools Not Found",
 				"Could not find default tools for project.");
 			return;
 		}
@@ -321,10 +321,11 @@ public class DefaultProjectManager implements ProjectManager {
 	}
 
 	private void installTools(ToolChest toolChest) {
-		LOGGER.debug("No tools found; Installing default tools");
+		LOG.debug("No tools found; Installing default tools");
 
 		File recoveryDirectory = getMostRecentValidProjectDirectory();
 		if (recoveryDirectory == null) {
+			LOG.debug("\tno recent project directories found");
 			addDefaultTools(toolChest);
 			return;
 		}
@@ -332,7 +333,7 @@ public class DefaultProjectManager implements ProjectManager {
 		// get old tools
 		Set<ToolTemplate> tools = ToolUtils.getDefaultApplicationTools();
 		if (tools == null || tools.isEmpty()) {
-			Msg.showError(LOGGER, null, "Default Tools Not Found",
+			Msg.showError(LOG, null, "Default Tools Not Found",
 				"Could not find default tools for project.");
 			return;
 		}
@@ -376,14 +377,14 @@ public class DefaultProjectManager implements ProjectManager {
 			return new HashSet<>(defaultTools);
 		}
 
-		LOGGER.debug("Found the following default tools: ");
+		LOG.debug("Found the following default tools: ");
 		for (ToolTemplate tool : defaultTools) {
-			LOGGER.debug("-" + tool);
+			LOG.debug("-" + tool);
 		}
 
-		LOGGER.debug("Found existing tools; merging existing tools: ");
+		LOG.debug("Found existing tools; merging existing tools: ");
 		for (ToolTemplate tool : userTools) {
-			LOGGER.debug("-" + tool);
+			LOG.debug("-" + tool);
 		}
 
 		//@formatter:off
@@ -425,7 +426,7 @@ public class DefaultProjectManager implements ProjectManager {
 			file -> file.isDirectory() && file.getName().equals(APPLICATION_TOOLS_DIR_NAME);
 		File[] toolDirs = previousUserDir.listFiles(dirFilter);
 		if (toolDirs == null || toolDirs.length != 1) {
-			LOGGER.debug("No user tools found in '" + previousUserDir + "'");
+			LOG.debug("No user tools found in '" + previousUserDir + "'");
 			return Collections.emptySet();
 		}
 
@@ -450,7 +451,7 @@ public class DefaultProjectManager implements ProjectManager {
 			saveTool(template);
 		}
 		catch (Exception e) {
-			Msg.error(LOGGER,
+			Msg.error(LOG,
 				"Unable to save user tool '" + template.getName() + "': " + e.getMessage(), e);
 		}
 	}
@@ -465,9 +466,9 @@ public class DefaultProjectManager implements ProjectManager {
 		// this implies that there exist multiple *default* tools with the same name, which
 		// is an error condition.
 		if (toolChest.getToolTemplate(template.getName()) != null) {
-			Msg.showWarn(LOGGER, null, "Error Adding Tool",
+			Msg.showWarn(LOG, null, "Error Adding Tool",
 				"Found multiple default tools with the same name: " + template.getName() +
-					".  Check the classpath for " +
+					".\nCheck the classpath for " +
 					"entries that contain tools that share the same tool name");
 		}
 
@@ -487,7 +488,7 @@ public class DefaultProjectManager implements ProjectManager {
 			}
 		}
 		catch (Exception e) {
-			Msg.showError(LOGGER, null, "Tool Chest Error", "Failed to create tool chest.", e);
+			Msg.showError(LOG, null, "Tool Chest Error", "Failed to create tool chest.", e);
 		}
 	}
 

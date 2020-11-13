@@ -767,8 +767,7 @@ public class VariableUtilities {
 	 * within the function's program.  
 	 * The preferred structure will utilize a namespace-based category path, however, 
 	 * the match criteria can be fuzzy and relies primarily on the class name.
-	 * @param classNamespace class namespace
-	 * @param dataTypeManager data type manager which should be searched.
+	 * @param func the function.
 	 * @return existing structure whose name matches the specified function's class namespace
 	 * or null if not found.
 	 */

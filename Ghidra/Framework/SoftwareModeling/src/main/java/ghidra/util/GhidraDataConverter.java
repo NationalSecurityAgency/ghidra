@@ -23,37 +23,54 @@ import ghidra.program.model.mem.MemoryAccessException;
 public interface GhidraDataConverter extends DataConverter {
 
 	/**
-	 * Generate a little-endian short value by invoking buf.getBytes at the specified offset.
-	 * @param buf
-	 * @param offset
-	 * @return little-endian short value
+	 * Returns the correct GhidraDataConverter static instance for the requested endian-ness.
+	 * 
+	 * @param isBigEndian boolean flag, true means big endian
+	 * @return static GhidraDataConverter instance
+	 */
+	public static GhidraDataConverter getInstance(boolean isBigEndian) {
+		return isBigEndian ? GhidraBigEndianDataConverter.INSTANCE
+				: GhidraLittleEndianDataConverter.INSTANCE;
+	}
+
+	/**
+	 * Generate a short value by invoking buf.getBytes at the specified offset.
+	 * 
+	 * @param buf MemBuffer source of bytes
+	 * @param offset offset in mem buffer to read
+	 * @return short value
 	 * @throws MemoryAccessException if failed to read 2-bytes at the specified offset
 	 */
 	public short getShort(MemBuffer buf, int offset) throws MemoryAccessException;
 
 	/**
-	 * Generate a little-endian int value by invoking buf.getBytes at the specified offset.
-	 * @param buf
-	 * @param offset
-	 * @return little-endian int value
+	 * Generate a int value by invoking buf.getBytes at the specified offset.
+	 * 
+	 * @param buf MemBuffer source of bytes
+	 * @param offset offset in mem buffer to read
+	 * @return int value
 	 * @throws MemoryAccessException if failed to read 4-bytes at the specified offset
 	 */
 	public int getInt(MemBuffer buf, int offset) throws MemoryAccessException;
 
 	/**
-	 * Generate a little-endian long value by invoking buf.getBytes at the specified offset.
-	 * @param buf
-	 * @param offset
-	 * @return little-endian long value
+	 * Generate a long value by invoking buf.getBytes at the specified offset.
+	 * 
+	 * @param buf MemBuffer source of bytes
+	 * @param offset offset in mem buffer to read
+	 * @return long value
 	 * @throws MemoryAccessException if failed to read 8-bytes at the specified offset
 	 */
 	public long getLong(MemBuffer buf, int offset) throws MemoryAccessException;
 
 	/**
-	 * Generate a little-endian BigInteger value by invoking buf.getBytes at the specified offset.
-	 * @param buf
-	 * @param offset
-	 * @return little-endian BigInteger value
+	 * Generate a BigInteger value by invoking buf.getBytes at the specified offset.
+	 * 
+	 * @param buf MemBuffer source of bytes
+	 * @param offset offset in mem buffer to read
+	 * @param size number of bytes
+	 * @param signed boolean flag
+	 * @return BigInteger value
 	 * @throws MemoryAccessException if failed to read specified number of bytes
 	 * at the specified offset
 	 */

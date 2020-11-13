@@ -405,6 +405,11 @@ class DetachedWindowNode extends WindowNode {
 		}
 	}
 
+	@Override
+	boolean isVisible() {
+		return window != null && window.isVisible();
+	}
+
 	void updateDialog() {
 
 		if (window != null && childComp != null) {

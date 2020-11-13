@@ -140,9 +140,9 @@ public class SegmentCommand extends LoadCommand {
 	/**
 	 * Returns a octal model value reflecting the
 	 * segment's maximum protection value allowed.
-	 * For example:
+	 * For example:{@code
 	 * 7 -> 0x111 -> rwx
-	 * 5 -> 0x101 -> rx
+	 * 5 -> 0x101 -> rx}
 	 * @return the maximum protections of a segment
 	 */
 	public int getMaxProtection() {
@@ -152,9 +152,9 @@ public class SegmentCommand extends LoadCommand {
 	/**
 	 * Returns a octal model value reflecting the
 	 * segment's initial protection value.
-	 * For example:
+	 * For example:{@code
 	 * 7 -> 0x111 -> rwx
-	 * 5 -> 0x101 -> rx
+	 * 5 -> 0x101 -> rx}
 	 * @return the initial protections of a segment
 	 */
 	public int getInitProtection() {

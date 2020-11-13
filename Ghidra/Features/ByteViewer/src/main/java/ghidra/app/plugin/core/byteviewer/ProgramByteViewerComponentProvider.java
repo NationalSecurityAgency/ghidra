@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.byteviewer;
 
 import java.awt.event.*;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.*;
@@ -696,7 +697,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	protected Set<DataFormatModel> getDataFormatModels() {
 		Set<DataFormatModel> dataFormatModels = super.getDataFormatModels();
-		Set<ProgramDataFormatModel> instances =
+		List<ProgramDataFormatModel> instances =
 			ClassSearcher.getInstances(ProgramDataFormatModel.class);
 		dataFormatModels.addAll(instances);
 		return dataFormatModels;

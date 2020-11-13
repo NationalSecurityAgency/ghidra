@@ -58,7 +58,7 @@ import ghidra.util.task.*;
  * indicates locations for where classes for plugins and data types should 
  * be searched; the Plugin path can include jar files just like a classpath. 
  * The Plugin path can be changed by using the <i>Edit Plugin Path</i> dialog, 
- * displayed from the <i>Edit->Edit Plugin Path...</i> menu option on the main 
+ * displayed from the <i>Edit-&gt;Edit Plugin Path...</i> menu option on the main 
  * Ghidra project window.
  * 
  * @see ghidra.GhidraLauncher

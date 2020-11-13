@@ -46,6 +46,7 @@ private:
   int4 exp_size;		///< Number of bits in exponent
   int4 bias;			///< What to add to real exponent to get encoding
   int4 maxexponent;		///< Maximum possible exponent
+  int4 decimal_precision;	///< Number of decimal digits of precision
   bool jbitimplied;		///< Set to \b true if integer bit of 1 is assumed
   static double createFloat(bool sign,uintb signif,int4 exp);	 ///< Create a double given sign, fractional, and exponent
   static floatclass extractExpSig(double x,bool *sgn,uintb *signif,int4 *exp);
@@ -55,12 +56,14 @@ private:
   uintb getZeroEncoding(bool sgn) const;			///< Get an encoded zero value
   uintb getInfinityEncoding(bool sgn) const;			///< Get an encoded infinite value
   uintb getNaNEncoding(bool sgn) const;				///< Get an encoded NaN value
+  void calcPrecision(void);					///< Calculate the decimal precision of this format
 public:
   FloatFormat(void) {}	///< Construct for use with restoreXml()
   FloatFormat(int4 sz);	///< Construct default IEEE 754 standard settings
   int4 getSize(void) const { return size; }			///< Get the size of the encoding in bytes
   double getHostFloat(uintb encoding,floatclass *type) const;	///< Convert an encoding into host's double
   uintb getEncoding(double host) const;				///< Convert host's double into \b this encoding
+  int4 getDecimalPrecision(void) const { return decimal_precision; }	///< Get number of digits of precision
   uintb convertEncoding(uintb encoding,const FloatFormat *formin) const;	///< Convert between two different formats
 
   uintb extractFractionalCode(uintb x) const;			///< Extract the fractional part of the encoding

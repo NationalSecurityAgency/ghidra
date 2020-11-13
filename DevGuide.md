@@ -1,5 +1,27 @@
 # Developer's Guide
 
+## References
+
+- [Catalog of Dependencies](#catalog-of-dependencies)
+- [Install Development and Build Tools](#install-development-and-build-tools)
+- [Setup Source Repository](#setup-source-repository)
+- [Setup Build Dependency Repository](#setup-build-dependency-repository)
+  * [Automatic script instructions](#automatic-script-instructions)
+  * [Manual download instructions](#manual-download-instructions)
+- [Building Ghidra](#building-ghidra)
+- [Developing Ghidra](#developing-ghidra)
+  * [Prepare the Environment](#prepare-the-environment)
+  * [Import Eclipse Projects](#import-eclipse-projects)
+  * [Building the natives](#building-the-natives)
+  * [Pre-compile Language Modules](#pre-compile-language-modules-optional)
+  * [Import and Build GhidraDev project](#import-and-build-ghidradev-project-optional)
+  * [Run and Debug Ghidra from Eclipse](#run-and-debug-ghidra-from-eclipse)
+  * [Running tests](#running-tests)
+- [Setup build in CI](#setup-build-in-ci)
+- [Building Supporting Data](#building-supporting-data)
+  * [Building Data Type Archives](#building-data-type-archives)
+  * [Building FID Databases](#building-fid-databases)
+
 ## Catalog of Dependencies
 
 The following is a list of dependencies, in no particular order.
@@ -13,9 +35,9 @@ You may not need all of these, depending on which portions you are building or d
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
 * Eclipse - It must support JDK 11. Eclipse 2018-12 or later should work. Other IDEs may work, but we have not tested them.
     - https://www.eclipse.org/downloads/
-* Gradle 5.0 or later - We use version 5.0, and tested with up to 5.6.1.
+* Gradle 5.0 or later - We use version 5.0, and tested with up to 5.6.3.
     - https://gradle.org/next-steps/?version=5.0&format=bin
-* A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio 2017 on Windows.
+* A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/
     - https://developer.apple.com/xcode/
     - https://visualstudio.microsoft.com/downloads/
@@ -55,7 +77,7 @@ Install OpenJDK 11 and make sure it's the default java.
 
 Install Eclipse.
 You can launch Eclipse with any JRE/JDK, but you'll need to ensure Eclipse knows about your JDK 11 installation.
-In Eclipse, select Window -> Prefereces (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
+In Eclipse, select Window -> Preferences (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
 
 Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 11.
 
@@ -176,8 +198,8 @@ Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
 
 ```bash
 cd ~/Downloads   # Or wherever
-curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
-curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'http://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+curl -OL 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'https://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
 mkdir -p ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
 cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
@@ -223,15 +245,8 @@ gradle prepDev
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
 
 ### Import Eclipse Projects
-To develop/modify Ghidra, import Ghidra into Eclipse using the integrated BuildShip plugin.
-Select __File -> Import__, expand Gradle, and select "Existing Gradle Project."
-Select the root of the source repo as the root Gradle project.
-Be sure to select Gradle 5.0, or point it at your local installation.
-You may see build path errors until the environment is properly prepared, as described below.
-
-*Alternatively*, you may have Gradle generate the Eclipse projects and import those instead.
-This is the way to go if you'd prefer not to activate Gradle's BuildShip plugin.
-From the project root:
+To develop/modify Ghidra, you must first use Gradle to generate Eclipse projects.  From the project 
+root:
 
 ```bash
 gradle eclipse
@@ -299,7 +314,7 @@ and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target
 See `~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt`
 for instructions on how to build the GhidraDev plugin.
 
-### Run/Debug Ghidra from Eclipse
+### Run and Debug Ghidra from Eclipse
 
 To run or debug Ghidra from Eclipse, use the provided launch configuration (usually under the "Run" or "Debug" buttons).
 If the launcher does not appear, it probably has not been marked as a favorite.
@@ -334,7 +349,7 @@ this is required to make AWT happy.
 Some features of Ghidra require the curation of rather extensive databases.
 These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
 Much of this work is done by hand.
-The archives included in our official builds can be found in the __[ghidra-data]__ repository.
+The archives included in our official builds can be found in the [ghidra-data] repository.
 
 ### Building Data Type Archives
 
@@ -359,3 +374,5 @@ Now, select __Tools -> Function ID -> Populate FidDb__ from programs.
 Fill out the options appropriately and click OK.
 
 If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.
+
+[ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data

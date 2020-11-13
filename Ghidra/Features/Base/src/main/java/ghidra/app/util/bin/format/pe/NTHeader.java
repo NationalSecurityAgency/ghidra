@@ -44,10 +44,6 @@ import ghidra.util.task.TaskMonitorAdapter;
  */
 public class NTHeader implements StructConverter, OffsetValidator {
 	/**
-	 * The name to use when converting into a structure data type.
-	 */
-	public final static String NAME = "IMAGE_NT_HEADERS32";
-	/**
 	 * The size of the NT header signature.
 	 */
 	public final static int SIZEOF_SIGNATURE = BinaryReader.SIZEOF_INT;
@@ -98,6 +94,14 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		parse();
 	}
 
+	/**
+	 * Returns the name to use when converting into a structure data type.
+	 * @return the name to use when converting into a structure data type
+	 */
+	public String getName() {
+		return "IMAGE_NT_HEADERS" + (optionalHeader.is64bit() ? "64" : "32");
+	}
+
 	public boolean isRVAResoltionSectionAligned() {
 		return layout == SectionLayout.MEMORY;
 	}
@@ -123,7 +127,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 */
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(NAME, 0);
+		StructureDataType struct = new StructureDataType(getName(), 0);
 
 		struct.add(new ArrayDataType(ASCII, 4, 1), "Signature", null);
 		struct.add(fileHeader.toDataType(), "FileHeader", null);

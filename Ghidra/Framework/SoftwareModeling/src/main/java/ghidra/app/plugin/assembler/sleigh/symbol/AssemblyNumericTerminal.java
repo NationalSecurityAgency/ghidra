@@ -63,7 +63,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	/**
 	 * This is only a convenience for testing
 	 * 
-	 * Please use {@link #match(String, AssemblyGrammar, Map<String, Long>)}.
+	 * Please use {@link #match(String, int, AssemblyGrammar, Map) match(String, int, AssemblyGrammar, Map&lt;String, Long&gt;)}.
 	 * @param buffer the input buffer
 	 * @return the parsed token
 	 */

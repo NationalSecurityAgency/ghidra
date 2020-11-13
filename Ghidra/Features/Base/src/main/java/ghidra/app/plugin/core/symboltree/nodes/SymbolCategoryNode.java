@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.symboltree.nodes;
 import java.awt.datatransfer.DataFlavor;
 import java.util.*;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.Program;
@@ -27,7 +27,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
-public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements SymbolTreeNode {
+public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	protected SymbolCategory symbolCategory;
 	protected SymbolTable symbolTable;
 	protected GlobalNamespace globalNamespace;
@@ -73,12 +73,14 @@ public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements
 		List<GTreeNode> list = new ArrayList<>();
 
 		SymbolType symbolType = symbolCategory.getSymbolType();
+		monitor.initialize(symbolTable.getNumSymbols());
 		SymbolIterator it =
 			globalOnly ? symbolTable.getSymbols(globalNamespace) : symbolTable.getSymbolIterator();
 		while (it.hasNext()) {
 			Symbol s = it.next();
+			monitor.incrementProgress(1);
+			monitor.checkCanceled();
 			if (s != null && (s.getSymbolType() == symbolType)) {
-				monitor.checkCanceled();
 				list.add(SymbolNode.createNode(s, program));
 			}
 		}
@@ -151,20 +153,19 @@ public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements
 			dataFlavor == ClassSymbolNode.LOCAL_DATA_FLAVOR;
 	}
 
-	public void symbolAdded(Symbol symbol) {
+	public SymbolNode symbolAdded(Symbol symbol) {
 
-		if (!isChildrenLoadedOrInProgress()) {
-			return;
+		if (!isLoaded()) {
+			return null;
 		}
 
 		if (!supportsSymbol(symbol)) {
-			return;
+			return null;
 		}
 
 		GTreeNode parentNode = this;
 		if (symbol.isGlobal()) {
-			doAddSymbol(symbol, parentNode);
-			return;
+			return doAddSymbol(symbol, parentNode);
 		}
 
 		Namespace parentNamespace = symbol.getParentNamespace();
@@ -172,26 +173,27 @@ public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
 		parentNode = findSymbolTreeNode(key, false, TaskMonitorAdapter.DUMMY_MONITOR);
 		if (parentNode == null) {
-			return;
+			return null;
 		}
 
-		doAddSymbol(symbol, parentNode);
+		return doAddSymbol(symbol, parentNode);
 	}
 
-	protected void doAddSymbol(Symbol symbol, GTreeNode parentNode) {
-		if (!((AbstractGTreeNode) parentNode).isChildrenLoadedOrInProgress()) {
-			return; // the node's not open, we don't care
+	protected SymbolNode doAddSymbol(Symbol symbol, GTreeNode parentNode) {
+		if (!parentNode.isLoaded()) {
+			return null; // the node's not open, we don't care
 		}
 
 		SymbolNode newNode = SymbolNode.createNode(symbol, program);
 		doAddNode(parentNode, newNode);
+		return newNode;
 	}
 
 	protected void doAddNode(GTreeNode parentNode, GTreeNode newNode) {
 
 		SymbolTreeNode symbolTreeNode = (SymbolTreeNode) parentNode;
 		Comparator<GTreeNode> comparator = symbolTreeNode.getChildrenComparator();
-		List<GTreeNode> children = parentNode.getAllChildren();
+		List<GTreeNode> children = parentNode.getChildren();
 		int index = Collections.binarySearch(children, newNode, comparator);
 		if (index >= 0) { // found a match			
 			GTreeNode matchingNode = getChild(index);
@@ -215,7 +217,7 @@ public abstract class SymbolCategoryNode extends GTreeSlowLoadingNode implements
 	}
 
 	public void symbolRemoved(Symbol symbol, String oldName, TaskMonitor monitor) {
-		if (!isChildrenLoadedOrInProgress()) {
+		if (!isLoaded()) {
 			return;
 		}
 

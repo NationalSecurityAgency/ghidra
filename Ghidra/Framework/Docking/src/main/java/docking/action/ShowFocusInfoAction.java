@@ -105,7 +105,14 @@ public class ShowFocusInfoAction extends DockingAction {
 				System.identityHashCode(printComponent);
 		}
 
-		return printComponent.getClass().getName() + ": " + System.identityHashCode(printComponent);
+		String name = "";
+		String componentName = printComponent.getName();
+		if (componentName != null) {
+			name = " - '" + componentName + "' ";
+		}
+
+		return printComponent.getClass().getName() + name + ": " +
+			System.identityHashCode(printComponent);
 	}
 
 }

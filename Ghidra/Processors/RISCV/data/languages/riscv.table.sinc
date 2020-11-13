@@ -1,0 +1,380 @@
+
+#TODO  these names are madeup. do real ones exist?
+#TODO  go through and use these instead of numbers
+@define HFLEN 2
+@define SFLEN 4
+@define DFLEN 8
+@define QFLEN 16
+
+@define HXLEN 2
+@define WXLEN 4
+@define DXLEN 8
+@define QXLEN 16
+
+
+define pcodeop unimp;
+define pcodeop trap;
+define pcodeop ebreak;
+define pcodeop ecall;
+define pcodeop fence;
+define pcodeop fence.i;
+
+
+# possible tokens:  r0711 r1519 r2024 r2731 cr0206 cr0711 cd0711
+rs1: r1519 is r1519  { export r1519; }
+rs1: zero is zero & op1519=0 { export 0:$(XLEN); }
+
+rs2: r2024 is r2024 { export r2024; }
+rs2: zero is zero & op2024=0 { export 0:$(XLEN); }
+
+rs3: r2731 is r2731 { export r2731; }
+rs3: zero is zero & op2731=0 { export 0:$(XLEN); }
+
+rd: r0711 is r0711 { export r0711; }
+rd: zero is r0711 & zero & op0711=0 { export 0:$(XLEN); }
+rdDst: r0711 is r0711 { export r0711; }
+
+
+rs1W: r1519 is r1519 { local tmp:$(WXLEN) = r1519:$(WXLEN); export tmp; }
+rs1W: zero is r1519 & zero & op1519=0 { export 0:$(WXLEN); }
+
+rs2W: r2024 is r2024 { local tmp:$(WXLEN) = r2024:$(WXLEN); export tmp; }
+rs2W: zero is r2024 & zero & op2024=0 { export 0:$(WXLEN); }
+
+#TODO  dest may be bad, might need an assign macro
+rdW: r0711 is r0711 { local tmp:$(WXLEN) = r0711:$(WXLEN); export tmp; }
+rdW: zero is r0711 & zero & op0711=0 { export 0:$(WXLEN); }
+
+
+
+#TODO  does this need to be in an if/endif
+@if ADDRSIZE == "64"
+rs1L: r1519 is r1519 { local tmp:8 = r1519:8; export tmp; }
+rs1L: zero is r1519 & zero & op1519=0 { export 0:8; }
+
+rs2L: r2024 is r2024 { local tmp:8 = r2024:8; export tmp; }
+rs2L: zero is r2024 & zero & op2024=0 { export 0:8; }
+
+#TODO  dest may be bad, might need an assign macro
+rdL: r0711 is r0711 { export r0711; }
+rdL: zero is r0711 & zero & op0711=0 { export 0:8; }
+@endif
+
+
+#TODO  eh not sure if this is usable
+#      would only make sense to use this if the float operation
+#      tables for frd,frs1,frs2 could be different sizes or
+#      if the cast could use this export, but they have to export
+#      the same size and you cant 'local tmp:fmt'
+# # 32-bit single-precision  $(SFLEN)
+# fmt: ".s" is op2526=0 { export $(SFLEN):1; }
+# # 64-bit double-precision  $(DFLEN)
+# fmt: ".d" is op2526=1 { export $(DFLEN):1; }
+# # 16-bit half-precision  $(HFLEN)
+# fmt: ".h" is op2526=2 { export $(HFLEN):1; }
+# # 128-bit quad-precision  $(QFLEN)
+# fmt: ".q" is op2526=3 { export $(QFLEN):1; }
+
+
+frd:  fr0711 is fr0711 { export fr0711; }
+frs1: fr1519 is fr1519 { export fr1519; }
+frs2: fr2024 is fr2024 { export fr2024; }
+frs3: fr2731 is fr2731 { export fr2731; }
+
+#TODO  dest may be bad, might need an assign macro
+#frdS:  fr0711 is fr0711 { local tmp = fr0711:$(SFLEN); export tmp; }
+frs1S: fr1519 is fr1519 { local tmp = fr1519:$(SFLEN); export tmp; }
+frs2S: fr2024 is fr2024 { local tmp = fr2024:$(SFLEN); export tmp; }
+frs3S: fr2731 is fr2731 { local tmp = fr2731:$(SFLEN); export tmp; }
+
+@if ((FPSIZE == "64") || (FPSIZE == "128"))
+#TODO  dest may be bad, might need an assign macro
+#frdD:  fr0711 is fr0711 { local tmp = fr0711:$(DFLEN); export tmp; }
+frs1D: fr1519 is fr1519 { local tmp = fr1519:$(DFLEN); export tmp; }
+frs2D: fr2024 is fr2024 { local tmp = fr2024:$(DFLEN); export tmp; }
+frs3D: fr2731 is fr2731 { local tmp = fr2731:$(DFLEN); export tmp; }
+@endif
+
+macro fassignS(dest, src) {
+@if FPSIZE == "32"
+	dest = src;
+@else
+	dest = zext(src);
+@endif
+}
+
+
+macro assignW(dest, src) {
+@if ADDRSIZE == "32"
+	dest = src;
+@else
+	dest = sext(src);
+@endif
+}
+
+macro zassignW(dest, src) {
+@if ADDRSIZE == "32"
+	dest = src;
+@else
+	dest = zext(src);
+@endif
+}
+
+macro zassignD(dest, src) {
+@if ADDRSIZE == "128"
+	dest = zext(src);
+@else
+	dest = src;
+@endif
+}
+
+macro assignD(dest, src) {
+@if ADDRSIZE == "128"
+	dest = sext(src);
+@else
+	dest = src;
+@endif
+}
+
+
+immI: sop2031 is sop2031 { local tmp:$(XLEN) = sop2031; export tmp; }
+
+immS: imm is op0711 & sop2531 [ imm = (sop2531 << 5) | op0711; ] { local tmp:$(XLEN) = imm; export tmp; }
+
+# used for goto
+immSB: reloc is op0707 & op0811 & op2530 & sop3131 [ reloc = inst_start + ((sop3131 << 12) | (op2530 << 5) | (op0811 << 1) | (op0707 << 11)); ] { export *[ram]:$(XLEN) reloc; }
+#immSB: reloc is op0707 & op0811 & op2530 & sop3131 [ reloc = inst_start + ((sop3131 << 12) | (op2530 << 5) | (op0811 << 1) | (op0707 << 11)); ] { export reloc; }
+
+immU: op1231 is op1231 & sop1231 { local tmp:$(XLEN) = sop1231 << 12; export tmp; }
+
+# used for goto
+immUJ: reloc is op1219 & op2020 & op2130 & sop3131 [ reloc = inst_start + ((sop3131 << 20) | (op2130 << 1) | (op2020 << 11) | (op1219 << 12)); ] { export *[ram]:$(XLEN) reloc; }
+
+@if ADDRSIZE == "32"
+shamt6: op2024 is op2024 & op2525=0 { local tmp:$(XLEN) = op2024; export tmp; }
+@else
+shamt5: op2024 is op2024 { local tmp:$(XLEN) = op2024; export tmp; }
+shamt6: imm is op2024 & op2525 [ imm = (op2525 << 5) | op2024; ] { local tmp:$(XLEN) = imm; export tmp; }
+@endif
+
+FRM: "rne" is op1214=0 { local tmp:1 = 0; export tmp; }
+FRM: "rtz" is op1214=1 { local tmp:1 = 1; export tmp; }
+FRM: "rdn" is op1214=2 { local tmp:1 = 2; export tmp; }
+FRM: "rup" is op1214=3 { local tmp:1 = 3; export tmp; }
+FRM: "rmm" is op1214=4 { local tmp:1 = 4; export tmp; }
+# 5  Invalid.  Reserved for future use
+# 6  Invalid.  Reserved for future use
+FRM: "dyn" is op1214=7 { local tmp:1 = 7; export tmp; }
+
+# used to specify additional memory ordering constraints
+aqrl: ""      is op2526=0 { export 0:$(XLEN); }
+aqrl: ".rl"   is op2526=1 { export 1:$(XLEN); }
+aqrl: ".aq"   is op2526=2 { export 2:$(XLEN); }
+aqrl: ".aqrl" is op2526=3 { export 3:$(XLEN); }
+
+
+
+crs1: cr0711 is cr0711 { export cr0711; }
+crs1: zero is cr0711 & zero & cop0711=0 { export 0:$(XLEN); }
+
+crd: cd0711 is cd0711 { export cd0711; }
+crd: zero is zero & cop0711=0 { export 0:$(XLEN); }
+
+crs2: cr0206 is cr0206 { export cr0206; }
+crs2: zero is cr0206 & zero & cop0206=0 { export 0:$(XLEN); }
+
+cfrs1: cfr0711 is cfr0711 { export cfr0711; }
+
+cfrd: cfr0711 is cfr0711 { export cfr0711; }
+
+cfrs2: cfr0206 is cfr0206 { export cfr0206; }
+
+#ATTN  Not doing tables for the RVC registers since there is no
+#      zero register to worry about
+
+
+
+cimmI: imm is scop1212 & cop0206 [ imm = (scop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = imm; export tmp; }
+
+# used for goto
+cbimm: reloc is scop1212 & cop1011 & cop0506 & cop0304 & cop0202 [ reloc = inst_start + ((scop1212 << 8) | (cop0506 << 6) | (cop0202 << 5) | (cop1011 << 3) | (cop0304 << 1)); ] { export *[ram]:$(XLEN) reloc; }
+#cbimm: reloc is scop1212 & cop1011 & cop0506 & cop0304 & cop0202 [ reloc = inst_start + ((scop1212 << 8) | (cop0506 << 6) | (cop0202 << 5) | (cop1011 << 3) | (cop0304 << 1)); ] { export reloc; }
+
+# used for goto
+cjimm: reloc is scop1212 & cop1111 & cop0910 & cop0808 & cop0707 & cop0606 & cop0305 & cop0202 [ reloc = inst_start + ((scop1212 << 11) | (cop1111 << 4) | (cop0910 << 8) | (cop0808 << 10) | (cop0707 << 6) | (cop0606 << 7) | (cop0305 << 1) | (cop0202 << 5)); ] { export *[ram]:$(XLEN) reloc; }
+
+@if ADDRSIZE == "32"
+#TODO  nonzero, would like to have cop0205>0
+c6imm: uimm is cop1212=0 & cop0206 [ uimm = (cop0206 + 0); ] { local tmp:$(XLEN) = uimm; export tmp; }
+@elif ADDRSIZE == "64"
+#TODO  nonzero, would like to have cop0205>0 | cop0206>0
+c6imm: uimm is cop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm; export tmp; }
+@elif ADDRSIZE == "128"
+c6imm: uimm is cop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm + (64 * (uimm == 0)); export tmp; }
+@endif
+
+cbigimm: uimm is cop1212 & scop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = (scop1212 << 17) | (cop0206 << 12); export tmp; }
+
+caddi4spnimm: uimm is cop1112 & cop0710 & cop0606 & cop0505 [ uimm = (cop0710 << 6) | (cop1112 << 4) | (cop0505 << 3) | (cop0606 << 2); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+caddi16spimm: imm is scop1212 & cop0606 & cop0505 & cop0304 & cop0202 [ imm = (scop1212 << 9) | (cop0304 << 7) | (cop0505 << 6) | (cop0202 << 5) | (cop0606 << 4); ] { local tmp:$(XLEN) = imm; export tmp; }
+
+
+clwimm: uimm is cop1012 & cop0606 & cop0505 [ uimm = (cop1012 << 3) | (cop0606 << 2) | (cop0505 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+clwspimm: uimm is cop1212 & cop0406 & cop0203 [ uimm = (cop1212 << 5) | (cop0406 << 2) | (cop0203 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+cswspimm: uimm is cop0708 & cop0912 [ uimm = (cop0708 << 6) | (cop0912 << 2); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+cldimm: uimm is cop1012 & cop0506 [ uimm = (cop1012 << 3) | (cop0506 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+cldspimm: uimm is cop1212 & cop0506 & cop0204 [ uimm = (cop1212 << 5) | (cop0506 << 3) | (cop0204 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+csdspimm: uimm is cop0709 & cop1012 [ uimm = (cop0709 << 6) | (cop1012 << 3); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+@if ADDRSIZE == "128"
+clqimm: uimm is cop1112 & cop1010 & cop0506 [ uimm = (cop1112 << 4) | (cop1010 << 8) | (cop0506 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+clqspimm: uimm is cop1212 & cop0606 & cop0205 [ uimm = (cop1212 << 5) | (cop0606 << 4) | (cop0205 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+csqspimm: uimm is cop0710 & cop1112 [ uimm = (cop0710 << 6) | (cop1112 << 4); ] { local tmp:$(XLEN) = uimm; export tmp; }
+@endif
+
+
+
+
+
+# SEE riscv-privileged.pdf Section 'CSR Listing' for description
+# This implementation aligns with the table breakdown
+
+# csr[11:10] - read/write (00, 01, 10) or read-only (11)
+# csr[9:8] - lowest privilege that can access the CSR
+
+# 0x000-0x0ff
+with csr: op3031=0 & op2829=0 {
+	: csr_0 is csr_0 { export csr_0; } # user, standard read/write
+}
+
+# 0x100-0x1ff
+with csr: op3031=0 & op2829=1 {
+	: csr_1 is csr_1 { export csr_1; } # supervisor, standard read/write
+}
+
+# 0x200-0x2ff
+with csr: op3031=0 & op2829=2 {
+	: csr_2 is csr_2 { export csr_2; } # hypervisor, standard read/write
+}
+
+# 0x300-0x3ff
+with csr: op3031=0 & op2829=3 {
+	: csr_3 is csr_3 { export csr_3; } # machine, standard read/write
+}
+
+# 0x400-0x4ff
+with csr: op3031=1 & op2829=0 {
+	: csr_4 is csr_4 { export csr_4; } # user, standard read/write
+}
+
+# 0x500-0x5ff
+with csr: op3031=1 & op2829=1 {
+	: csr_50 is csr_50 & op2727=0 { export csr_50; } # supervisor, standard read/write
+	: csr_58 is csr_58 & op2627=2 { export csr_58; } # supervisor, standard read/write
+	: csr_5C is csr_5C & op2627=3 { export csr_5C; } # supervisor, custom read/write
+}
+
+# 0x600-0x6ff
+with csr: op3031=1 & op2829=2 {
+	: csr_60 is csr_60 & op2727=0 { export csr_60; } # hypervisor, standard read/write
+	: csr_68 is csr_68 & op2627=2 { export csr_68; } # hypervisor, standard read/write
+	: csr_6C is csr_6C & op2627=3 { export csr_6C; } # hypervisor, custom read/write
+}
+
+# 0x700-0x7ff
+with csr: op3031=1 & op2829=3 {
+	: csr_70 is csr_70 & op2727=0   { export csr_70; } # machine, standard read/write
+	: csr_78 is csr_78 & op2527=4   { export csr_78; } # machine, standard read/write
+	: csr_7A is csr_7A & op2427=0xa { export csr_7A; } # machine, standard read/write debug
+	: csr_7B is csr_7B & op2427=0xb { export csr_7B; } # machine, debug-mode-only
+	: csr_7C is csr_7C & op2627=3   { export csr_7C; } # machine, custom read/write
+}
+
+# 0x800-0x8ff
+with csr: op3031=2 & op2829=0 {
+	: csr_8 is csr_8 { export csr_8; } # user, custom read/write
+}
+
+# 0x900-0x9ff
+with csr: op3031=2 & op2829=1 {
+	: csr_90 is csr_90 & op2727=0 { export csr_90; } # supervisor, standard read/write
+	: csr_98 is csr_98 & op2627=2 { export csr_98; } # supervisor, standard read/write
+	: csr_9C is csr_9C & op2627=3 { export csr_9C; } # supervisor, custom read/write
+}
+
+# 0xa00-0xaff
+with csr: op3031=2 & op2829=2 {
+	: csr_A0 is csr_A0 & op2727=0 { export csr_A0; } # hypervisor, standard read/write
+	: csr_A8 is csr_A8 & op2627=2 { export csr_A8; } # hypervisor, standard read/write
+	: csr_AC is csr_AC & op2627=3 { export csr_AC; } # hypervisor, custom read/write
+}
+
+# 0xb00-0xbff
+with csr: op3031=2 & op2829=3 {
+	: csr_B0 is csr_B0 & op2727=0 { export csr_B0; } # machine, standard read/write
+	: csr_B8 is csr_B8 & op2627=2 { export csr_B8; } # machine, standard read/write
+	: csr_BC is csr_BC & op2627=3 { export csr_BC; } # machine, custom read/write
+}
+
+# 0xc00-0xcff
+with csr: op3031=3 & op2829=0 {
+	: csr_C0 is csr_C0 & op2727=0 { export csr_C0; } # user, standard read-only
+	: csr_C8 is csr_C8 & op2627=2 { export csr_C8; } # user, standard read-only
+	: csr_CC is csr_CC & op2627=3 { export csr_CC; } # user, custom read-only
+}
+
+# 0xd00-0xdff
+with csr: op3031=3 & op2829=1 {
+	: csr_D0 is csr_D0 & op2727=0 { export csr_D0; } # supervisor, standard read-only
+	: csr_D8 is csr_D8 & op2627=2 { export csr_D8; } # supervisor, standard read-only
+	: csr_DC is csr_DC & op2627=3 { export csr_DC; } # supervisor, custom read-only
+}
+
+# 0xe00-0xeff
+with csr: op3031=3 & op2829=2 {
+	: csr_E0 is csr_E0 & op2727=0 { export csr_E0; } # hypervisor, standard read-only
+	: csr_E8 is csr_E8 & op2627=2 { export csr_E8; } # hypervisor, standard read-only
+	: csr_EC is csr_EC & op2627=3 { export csr_EC; } # hypervisor, custom read-only
+}
+
+# 0xf00-0xfff
+with csr: op3031=3 & op2829=3 {
+	: csr_F0 is csr_F0 & op2727=0 { export csr_F0; } # machine, standard read-only
+	: csr_F8 is csr_F8 & op2627=2 { export csr_F8; } # machine, standard read-only
+	: csr_FC is csr_FC & op2627=3 { export csr_FC; } # machine, custom read-only
+}
+
+
+
+vm: op2525 is op2525 { local tmp:1 = op2525; export tmp; }
+
+vs1: v1519 is v1519 { export v1519; }
+vs2: v2024 is v2024 { export v2024; }
+vs3: v0711 is v0711 { export v0711; }
+vd:  v0711 is v0711 { export v0711; }
+
+simm5: sop1519 is sop1519 { local tmp:$(XLEN) = sop1519; export tmp; }
+# zimm: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
+
+nf: op2931 is op2931 { local tmp:$(XLEN) = op2931; export tmp; }
+
+vtypei: op2030 is op2030 { local tmp:$(XLEN) = op2030; export tmp; }
+
+
+bs: op3031 is op3031 { local tmp:$(XLEN) = op3031; export tmp; }
+rcon: op2023 is op2023 { local tmp:$(XLEN) = op2023; export tmp; }
+
+# imm=0 for baseline operation, nonzero values are reserved
+shamtw: 0 is op2024=0 { local tmp:$(XLEN) = 0; export tmp; }
+
+imm3u: op2022 is op2022 { local tmp:$(XLEN) = op2022; export tmp; }
+imm4u: op2023 is op2023 { local tmp:$(XLEN) = op2023; export tmp; }
+imm5u: op2024 is op2024 { local tmp:$(XLEN) = op2024; export tmp; }

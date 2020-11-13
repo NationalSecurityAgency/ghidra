@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,16 @@
  */
 package ghidra.app.nav;
 
-import ghidra.framework.model.Tool;
-
 import java.util.*;
+
+import ghidra.framework.plugintool.PluginTool;
 
 public class NavigatableRegistry {
 	private static Map<Long, Navigatable> navigatableMap = new HashMap<Long, Navigatable>();
-	private static Map<Tool, List<Navigatable>> toolMap = new HashMap<Tool, List<Navigatable>>();
+	private static Map<PluginTool, List<Navigatable>> toolMap =
+		new HashMap<PluginTool, List<Navigatable>>();
 
-	
-	public static void registerNavigatable(Tool tool, Navigatable navigatable) {
+	public static void registerNavigatable(PluginTool tool, Navigatable navigatable) {
 		navigatableMap.put(navigatable.getInstanceID(), navigatable);
 		List<Navigatable> list = toolMap.get(tool);
 		if (list == null) {
@@ -35,7 +34,7 @@ public class NavigatableRegistry {
 		list.add(navigatable);
 	}
 
-	public static void unregisterNavigatable(Tool tool, Navigatable navigatable) {
+	public static void unregisterNavigatable(PluginTool tool, Navigatable navigatable) {
 		navigatableMap.remove(navigatable.getInstanceID());
 		List<Navigatable> list = toolMap.get(tool);
 		if (list == null) {
@@ -46,13 +45,15 @@ public class NavigatableRegistry {
 			toolMap.remove(tool);
 		}
 	}
-	public static List<Navigatable> getRegisteredNavigatables(Tool tool) {
+
+	public static List<Navigatable> getRegisteredNavigatables(PluginTool tool) {
 		List<Navigatable> list = toolMap.get(tool);
 		if (list == null) {
 			list = new ArrayList<Navigatable>(navigatableMap.values());
 		}
 		return list;
 	}
+
 	public static Navigatable getNavigatable(long navigationID) {
 		return navigatableMap.get(navigationID);
 	}

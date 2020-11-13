@@ -41,10 +41,6 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 
-	public CloseToolTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -53,10 +49,8 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		executeOnSwingWithoutBlocking(() -> env.dispose());
-
+		env.dispose();
 		closeAllWindows();
-
 	}
 
 	@Test

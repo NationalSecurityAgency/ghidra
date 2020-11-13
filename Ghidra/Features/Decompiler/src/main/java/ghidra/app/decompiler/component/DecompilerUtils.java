@@ -680,7 +680,7 @@ public class DecompilerUtils {
 		// prefer the selection over the current location
 		ClangToken token = decompilerPanel.getSelectedToken();
 		if (token == null) {
-			token = decompilerPanel.getTokenAtCursor();
+			token = context.getTokenAtCursor();
 		}
 
 		Varnode varnode = DecompilerUtils.getVarnodeRef(token);

@@ -22,8 +22,8 @@ import java.util.List;
  * Interface for managing function tags. Tags are simple objects consisting of
  * a name and an optional comment, which can be applied to functions in Ghidra.
  * 
- * @see FunctionTagAdapter
- * @see FunctionTagMappingAdapter
+ * @see ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter
+ * @see ghidra.program.database.function.FunctionTagMappingAdapter FunctionTagMappingAdapter
  */
 public interface FunctionTagManager {
 
@@ -47,7 +47,6 @@ public interface FunctionTagManager {
 	 * Returns all function tags in the database.
 	 * 
 	 * @return list of function tags
-	 * @throws IOException
 	 */
 	List<? extends FunctionTag> getAllFunctionTags();
 

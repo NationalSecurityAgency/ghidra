@@ -43,10 +43,6 @@ public class CheckoutDialog extends DialogComponentProvider {
 	private boolean exclusiveCheckout;
 	private int actionID = DO_NOT_CHECKOUT;
 
-	/**
-	 * Constructor
-	 * @param fileList list of DomainFile objects that are checked out
-	 */
 	public CheckoutDialog(DomainFile df, User user) {
 		super("Versioned File not Checked Out", true);
 

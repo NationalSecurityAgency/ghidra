@@ -17,6 +17,7 @@ package ghidra.framework.plugintool;
 
 import java.util.*;
 
+import docking.ComponentProvider;
 import docking.action.DockingAction;
 import ghidra.framework.main.*;
 import ghidra.framework.model.DomainFile;
@@ -67,7 +68,8 @@ import ghidra.util.classfinder.ExtensionPoint;
  * 			{@link Plugin#registerServiceProvided(Class, Object) registerServiceProvided()}.
  * 			(required)
  *  			<LI>Create Actions (optional)
- *  			<LI>Register {@link Options} with the {@link PluginTool#getOptions(String)}. (optional)<br>
+ *  			<LI>Register {@link ghidra.framework.options.Options Options} with the
+ * {@link PluginTool#getOptions(String)}. (optional)<br>
  * 		</OL>
  * 	<LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
  * 	If your dependencies are not available (ie. not installed, threw an exception during their
@@ -104,18 +106,18 @@ import ghidra.util.classfinder.ExtensionPoint;
  * All Plugins must be tagged with a {@link PluginInfo @PluginInfo(...)} annotation.
  * <p>
  * The annotation gives you the ability to declare a dependency on another Plugin
- * via the {@link PluginInfo#servicesRequired() servicesRequired} /
- * {@link PluginInfo#servicesUsed() servicesUsed}
+ * via the {@link PluginInfo#servicesRequired() servicesRequired}
  * <p>
  * Ghidra will ensure that your Plugin will not be {@link #init() initialized} until all
  * of its required services are loaded successfully and are available for use when your Plugin
  * calls the {@link PluginTool#getService(Class)} method.
  * <p>
  * Conversely, any services your Plugin advertises in &#64;PluginInfo must be published via calls to
- * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's constructor.
+ * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's 
+ * constructor.
  * <p>
- * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to load
- * your Plugin. (ie. PluginA requires a service that PluginB provides, which requires a service
+ * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to 
+ * load your Plugin. (ie. PluginA requires a service that PluginB provides, which requires a service
  * that PluginA provides)
  *
  * <h2>Plugin Service implementation</h2>
@@ -132,7 +134,8 @@ import ghidra.util.classfinder.ExtensionPoint;
  * &nbsp;&nbsp;<code>public MyPlugin(PluginTool tool) {</code><br>
  * &nbsp;&nbsp;&nbsp;&nbsp;<code>...</code><br>
  * &nbsp;&nbsp;&nbsp;&nbsp;<code>MyService serviceObj = new MyService() { ... };</code><br>
- * &nbsp;&nbsp;&nbsp;&nbsp;<code><b>registerServiceProvided(MyService.class, serviceObj);</b></code><br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;<code><b>registerServiceProvided(MyService.class, serviceObj);</b>
+ * </code><br>
  * &nbsp;&nbsp;<code>}</code><br>
  * <p>
  * When your Plugin directly implements the advertised service interface, you should <b>not</b>
@@ -159,25 +162,26 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <h2>Plugin Events</h2>
  * <UL>
  * 	<LI>Every type of plugin event should be represented by some class extending {@link PluginEvent}.
- *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some natural grouping.
+ *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some 
+ *  natural grouping.
  * </UL>
  *
  * <h2>Component Providers</h2>
  * <UL>
- *  <LI>A plugin may supply a ComponentProvider that provides a visual component when the plugin is added to the tool.
- *  <LI>TODO - needs more
+ *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when 
+ *  the plugin is added to the tool.
  * </UL>
  *
  * <h2>Important interfaces Plugins often need to implement</h2>
  * <UL>
  * 	<LI>{@link OptionsChangeListener} - to receive notification when a configuration option
  * 	is changed by the user.
- * 	<LI>{@link FrontEndable} - marks this Plugin as being suitable for inclusion in the FrontEnd tool.
- * 	<LI>{@link FrontEndOnly} - marks this Plugin as FrontEnd only, not usable in CodeBrowser or other tools.
+ * 	<LI>{@link FrontEndable} - marks this Plugin as being suitable for inclusion in the FrontEnd 
+ * 		tool.
+ * 	<LI>{@link FrontEndOnly} - marks this Plugin as FrontEnd only, not usable in CodeBrowser or 
+ * 		other tools.
  * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.
- * 	<LI>TODO
  * </UL>
- *
  *
  */
 public abstract class Plugin implements ExtensionPoint, PluginEventListener, ServiceListener {
@@ -273,11 +277,12 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Returns plugin name or null if pluginClass does not extend Plugin.
+	 * Returns plugin name or null if given class does not extend {@link Plugin}
 	 * <p>
 	 * Deprecated, use {@link PluginUtils#getPluginNameFromClass(Class)}
 	 * <p>
-	 * @param pluginClass
+	 * @param pluginClass the plugin class
+	 * @return the plugin name
 	 */
 	@Deprecated
 	public static String getPluginName(Class<?> pluginClass) {
@@ -491,7 +496,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Plugins should override this method if they update their state
 	 * when a particular service is added.
 	 *
-	 * @param interfaceClass The <b>interface</i> of the added service
+	 * @param interfaceClass The <b>interface</b> of the added service
 	 * @param service service that is being added
 	 */
 	@Override
@@ -505,7 +510,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Plugins should override this method if they update their state
 	 * when a particular service is removed.
 	 *
-	 * @param interfaceClass The <b>interface</i> of the added service
+	 * @param interfaceClass The <b>interface</b> of the added service
 	 * @param service that is being removed.
 	 */
 	@Override
@@ -514,8 +519,10 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Check if this plugin depends on the given plugin.
-	 * <p>
+	 * Check if this plugin depends on the given plugin
+	 * 
+	 * @param plugin the plugin
+	 * @return true if this plugin depends on the given plugin
 	 */
 	public boolean dependsUpon(Plugin plugin) {
 		for (Class<?> c : getList(pluginDescription.getServicesRequired(),
@@ -791,8 +798,8 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Override this method if the plugin needs to cancel the closing of
-	 * the domain object.
+	 * Override this method if the plugin needs to cancel the closing of the domain object
+	 * @param dObj the domain object
 	 * @return false if the domain object should NOT be closed
 	 */
 	protected boolean canCloseDomainObject(DomainObject dObj) {
@@ -826,7 +833,11 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Close the plugin.
+	 * Close the plugin.   This is when the plugin should release resources, such as those from
+	 * other services.  This method should not close resources being used by others (that should
+	 * happen in dispose()).
+	 * 
+	 * <p>This method will be called before {@link #dispose()}.
 	 */
 	protected void close() {
 		// do nothing by default; subclasses should override as needed
@@ -886,6 +897,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Returns an object containing the plugin's state as needed to restore itself after an undo
 	 * or redo operation.  Plugins should override this method if they have special undo/redo handling.
 	 * @param domainObject the object that is about to or has had undoable changes made to it.
+	 * @return the state object
 	 */
 	public Object getUndoRedoState(DomainObject domainObject) {
 		// do nothing by default; subclasses should override as needed

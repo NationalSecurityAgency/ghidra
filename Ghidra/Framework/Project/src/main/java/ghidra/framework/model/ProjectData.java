@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,12 +87,11 @@ public interface ProjectData {
 	public DomainFile getFileByID(String fileID);
 
 	/**
-	 * Get a GhidraURL for a shared domain file which is available 
+	 * Get a URL for a shared domain file which is available 
 	 * within a remote repository.
 	 * @param path the absolute path of domain file relative to the root folder.
 	 * @return URL object for accessing shared file from outside of a project, or
 	 * null if file does not exist or is not shared.
-	 * @see ghidra.framework.data.URLGhidraRepository
 	 */
 	public URL getSharedFileURL(String path);
 
@@ -177,7 +175,7 @@ public interface ProjectData {
 	public void close();
 
 	/**
-	 * @returns the maximum name length permitted for folders or items.
+	 * @return the maximum name length permitted for folders or items.
 	 */
 	public int getMaxNameLength();
 

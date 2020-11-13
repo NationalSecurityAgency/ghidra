@@ -28,16 +28,51 @@
 #include "action.hh"
 
 /// \brief Structure for sorting out pointer expression trees
+///
+/// Given a base pointer of known data-type and an additive expression involving
+/// the pointer, group the terms of the expression into:
+///   - A constant multiple of the base data-type
+///   - Non-constant multiples of the base data-type
+///   - An constant offset to a sub-component of the base data-type
+///   - An remaining terms
+///
+/// The \e multiple terms are rewritten using a CPUI_PTRADD. The constant offset
+/// is rewritten using a CPUI_PTRSUB.  Other terms are added back in.  Analysis may cause
+/// multiplication (CPUI_INT_MULT) by a constant to be distributed to its CPUI_INT_ADD input.
 class AddTreeState {
-public:
+  Funcdata &data;		///< The function containing the expression
+  PcodeOp *baseOp;		///< Base of the ADD tree
   Varnode *ptr;			///< The pointer varnode
-  int4 size;			///< Size of ptr type in question
+  const TypePointer *ct;	///< The pointer data-type
+  const Datatype *baseType;	///< The base data-type being pointed at
+  int4 ptrsize;			///< Size of the pointer
+  int4 size;			///< Size of data-type being pointed to (in address units) or 0 for open ended pointer
+  uintb ptrmask;		///< Mask for modulo calculations in ptr space
+  uintb offset;			///< Number of bytes we dig into the base data-type
+  uintb correct;		///< Number of bytes being double counted
   vector<Varnode *> multiple;	///< Varnodes which are multiples of size
-  vector<uintb> coeff;		///< Associated constant multiple
+  vector<intb> coeff;		///< Associated constant multiple
   vector<Varnode *> nonmult;	///< Varnodes which are not multiples
+  PcodeOp *distributeOp;	///< A CPUI_INT_MULT op that needs to be distributed
   uintb multsum;		///< Sum of multiple constants
   uintb nonmultsum;		///< Sum of non-multiple constants
-  bool valid;			///< Full tree search was performed
+  bool preventDistribution;	///< Do not distribute "multiply by constant" operation
+  bool isDistributeUsed;	///< Are terms produced by distributing used
+  bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
+  bool valid;			///< Set to \b true if the whole expression can be transformed
+  uint4 findArrayHint(void) const;	///< Look for evidence of an array in a sub-component
+  bool hasMatchingSubType(uintb off,uint4 arrayHint,uintb *newoff) const;
+  bool checkMultTerm(Varnode *vn,PcodeOp *op, uintb treeCoeff);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
+  bool checkTerm(Varnode *vn, uintb treeCoeff);			///< Accumulate details of given term and continue tree traversal
+  bool spanAddTree(PcodeOp *op, uintb treeCoeff);		///< Walk the given sub-tree accumulating details
+  void calcSubtype(void);		///< Calculate final sub-type offset
+  Varnode *buildMultiples(void);	///< Build part of tree that is multiple of base size
+  Varnode *buildExtra(void);		///< Build part of tree not accounted for by multiples or \e offset
+  void buildTree(void);			///< Build the transformed ADD tree
+  void clear(void);			///< Reset for a new ADD tree traversal
+public:
+  AddTreeState(Funcdata &d,PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
+  bool apply(void);		///< Attempt to transform the pointer expression
 };
 
 class RuleEarlyRemoval : public Rule {
@@ -58,7 +93,6 @@ public:
 // };
 class RuleCollectTerms : public Rule {
   static Varnode *getMultCoeff(Varnode *vn,uintb &coef);	///< Get the multiplicative coefficient
-  static int4 doDistribute(Funcdata &data,PcodeOp *op);		///< Distribute coefficient within one term
 public:
   RuleCollectTerms(const string &g) : Rule(g, 0, "collect_terms") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -124,6 +158,16 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleAndMask(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleOrConsume : public Rule {
+public:
+  RuleOrConsume(const string &g) : Rule(g, 0, "orconsume") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleOrConsume(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -983,9 +1027,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RulePtrArith : public Rule {
-  static bool checkTerm(Varnode *vn,AddTreeState *state);
-  static bool spanAddTree(PcodeOp *op,AddTreeState *state);
-  static int4 transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Funcdata &data);
+  static bool verifyAddTreeBottom(PcodeOp *op,int4 slot);
 public:
   RulePtrArith(const string &g) : Rule(g, 0, "ptrarith") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -1115,6 +1157,17 @@ public:
 //   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 // };
 
+class RulePositiveDiv : public Rule {
+public:
+  RulePositiveDiv(const string &g) : Rule( g, 0, "positivediv") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePositiveDiv(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleDivTermAdd : public Rule {
 public:
   RuleDivTermAdd(const string &g) : Rule( g, 0, "divtermadd") {}	///< Constructor
@@ -1141,6 +1194,7 @@ public:
 class RuleDivOpt : public Rule {
   static uintb calcDivisor(uintb n,uint8 y,int4 xsize);		///< Calculate the divisor
   static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
+  static bool checkFormOverlap(PcodeOp *op);	///< If form rooted at given PcodeOp is superseded by an overlapping form
 public:
   RuleDivOpt(const string &g) : Rule( g, 0, "divopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -1397,6 +1451,42 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   static PcodeOp *detectThreeWay(PcodeOp *op,bool &isPartial);
   static int4 testCompareEquivalence(PcodeOp *lessop,PcodeOp *lessequalop);
+};
+
+class RulePopcountBoolXor : public Rule {
+public:
+  RulePopcountBoolXor(const string &g) : Rule( g, 0, "popcountboolxor") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePopcountBoolXor(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  static Varnode *getBooleanResult(Varnode *vn,int4 bitPos,int4 &constRes);
+};
+
+class RulePiecePathology : public Rule {
+  static bool isPathology(Varnode *vn,Funcdata &data);
+  static int4 tracePathologyForward(PcodeOp *op,Funcdata &data);
+public:
+  RulePiecePathology(const string &g) : Rule( g, 0, "piecepathology") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePiecePathology(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RuleXorSwap : public Rule {
+public:
+  RuleXorSwap(const string &g) : Rule(g,0,"xorswap") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleXorSwap(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
 #endif

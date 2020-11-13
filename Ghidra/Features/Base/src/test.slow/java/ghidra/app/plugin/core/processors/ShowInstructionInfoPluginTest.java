@@ -92,7 +92,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	@Test
-	public void testShowProcessorManual() throws Exception {
+	public void testGetProcessorManualEntry() throws Exception {
 
 		changeLocationToAddress(beyondAddressString);
 
@@ -103,10 +103,11 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		Instruction currentInstruction = plugin.getInstructionForContext(context);
 		assertNull("The current Instruction is not null as expected", currentInstruction);
 
-		// now try the calling the method with an invalid Instruction
+		// now try the calling the method with an invalid Instruction - 
 		Language language = program.getLanguage();
 		manualEntry = plugin.locateManualEntry(context, language);
 		assertNotNull(manualEntry);
+		assertNull(manualEntry.getPageNumber()); // default entry has no page number
 
 		// now move to a valid Instruction to test that condition
 		currentInstruction = changeLocationToAddress("01000000");
@@ -116,10 +117,16 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		// now try the calling the method with an valid Instruction
 		context = getCurrentContext();
 		manualEntry = plugin.locateManualEntry(context, language);
+		assertNotNull(manualEntry);
+		assertNotNull(manualEntry.getPageNumber());
 	}
 
-	@Test
+//	@Test
 	public void testShowProcessorManual_ErrorDialog() throws Exception {
+
+		// FIXME: This test is bogus and needs to be corrected by refering to
+		// an instruction whose manual is missing.  Test apepars to work with 
+		// CI test environment because none of the manuals are found
 
 		changeLocationToAddress(beyondAddressString);
 

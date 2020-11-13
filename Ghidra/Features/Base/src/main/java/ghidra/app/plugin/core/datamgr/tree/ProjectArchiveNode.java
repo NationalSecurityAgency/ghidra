@@ -21,16 +21,15 @@ import ghidra.util.HTMLUtilities;
 
 public class ProjectArchiveNode extends DomainFileArchiveNode {
 
-	public ProjectArchiveNode(ProjectArchive archive) {
-		super(archive);
+	public ProjectArchiveNode(ProjectArchive archive, ArrayPointerFilterState filterState) {
+		super(archive, filterState);
 	}
 
 	@Override
 	protected void dataTypeManagerChanged() {
-		removeAll(); // old children are no longer valid.
+		setChildren(null); // old children are no longer valid.
 		installDataTypeManagerListener();
 		nodeChanged();
-		fireNodeStructureChanged(this); // all the children have changed.
 	}
 
 	@Override

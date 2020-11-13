@@ -1,0 +1,368 @@
+# RV32I  Base Instruction Set
+
+# add d,s,t 00000033 fe00707f SIMPLE (0, 0) 
+:add rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x0 & funct7=0x0
+{
+	rd = rs1 + rs2;
+}
+
+
+# addi d,s,j 00000013 0000707f SIMPLE (0, 0) 
+:addi rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0
+{
+	rd = rs1 + immI;
+}
+
+# nop  00000013 ffffffff ALIAS (0, 0)
+:nop  is op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op0711=0x0 & op1531=0x0
+{
+	local NOP:1 = 0;
+	NOP = NOP;
+}
+
+# mv d,s 00000013 fff0707f ALIAS (0, 0)
+:mv rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op2031=0x0
+{
+	rd = rs1;
+}
+
+# li d,j 00000013 000ff07f ALIAS (0, 0)
+:li rd,immI is immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op1519=0x0
+{
+	#TODO  alias of addi rd,zero,0x0 is an issue
+	rd = immI;
+}
+
+# Resolve conflict between: mv rd,zero  and  li rd,0x0
+# ATTN  this implementation uses mv rd,zero
+:mv rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op1531=0x0
+{
+	rd = rs1;
+}
+
+
+# and d,s,t 00007033 fe00707f SIMPLE (0, 0) 
+:and rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x7 & funct7=0x0
+{
+	rd = rs1 & rs2;
+}
+
+
+# andi d,s,j 00007013 0000707f SIMPLE (0, 0) 
+:andi rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x7
+{
+	rd = rs1 & immI;
+}
+
+
+# auipc d,u 00000017 0000007f SIMPLE (0, 0) 
+:auipc rd,immU is immU & rd & op0001=0x3 & op0204=0x5 & op0506=0x0
+{
+	rd = immU + inst_start;
+}
+
+
+# beq s,t,p 00000063 0000707f CONDBRANCH (0, 0) 
+:beq rs1,rs2,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x0
+{
+	if (rs1 == rs2) goto immSB;
+}
+
+
+# bge s,t,p 00005063 0000707f CONDBRANCH (0, 0) 
+:bge rs1,rs2,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x5
+{
+	if (rs1 s>= rs2) goto immSB;
+}
+
+
+# bgeu s,t,p 00007063 0000707f CONDBRANCH (0, 0) 
+:bgeu rs1,rs2,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x7
+{
+	if (rs1 >= rs2) goto immSB;
+}
+
+
+# blt s,t,p 00004063 0000707f CONDBRANCH (0, 0) 
+:blt rs1,rs2,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x4
+{
+	if (rs1 s< rs2) goto immSB;
+}
+
+
+# bltu s,t,p 00006063 0000707f CONDBRANCH (0, 0) 
+:bltu rs1,rs2,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x6
+{
+	if (rs1 < rs2) goto immSB;
+}
+
+
+# bne s,t,p 00001063 0000707f CONDBRANCH (0, 0) 
+:bne rs1,rs2,immSB is immSB & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x3 & funct3=0x1
+{
+	if (rs1 != rs2) goto immSB;
+}
+
+# ebreak  00100073 ffffffff SIMPLE (0, 0) 
+:ebreak  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x20
+{
+	ebreak();
+}
+
+# ecall  00000073 ffffffff SIMPLE (0, 0) 
+:ecall  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x0
+{
+	ecall();
+}
+
+
+# fence P,Q 0000000f f00fffff SIMPLE (0, 0) 
+:fence pred,succ is pred & succ & op0001=0x3 & op0204=0x3 & op0506=0x0 & funct3=0x0 & fm=0x0 & op0711=0x0 & op1519=0x0
+{
+	fence();
+}
+
+# jal d,a 0000006f 0000007f JSR (0, 0) 
+:jal rd,immUJ is immUJ & rd & op0001=0x3 & op0204=0x3 & op0506=0x3
+{
+	#TODO  RAS: push inst_next if rd=x1/x5
+	rd = inst_next;
+	call immUJ;
+}
+
+# j a 0000006f 00000fff BRANCH|ALIAS (0, 0)
+:j immUJ is immUJ & op0001=0x3 & op0204=0x3 & op0506=0x3 & op0711=0x0
+{
+	goto immUJ;
+}
+
+
+# jalr d,s,j 00000067 0000707f JSR (0, 0)
+:jalr rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
+{
+	#TODO  RAS: push inst_next/pop based on rd=x1/x5 or rs1=x1/x5
+	local ea:$(XLEN) = (rs1 + immI) & ~1;
+	rd = inst_next;
+	call [ea];
+}
+
+# jr o(s) 00000067 00007fff BRANCH|ALIAS (0, 0)
+:jr immI(rs1) is immI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0
+{
+	local ea:$(XLEN) = (rs1 + immI) & ~1;
+	goto [ea];
+}
+
+# jr s 00000067 fff07fff BRANCH|ALIAS (0, 0)
+:jr rs1 is rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031=0x0
+{
+	local ea:$(XLEN) = rs1 & ~1;
+	goto [ea];
+}
+
+# ret  00008067 ffffffff BRANCH|ALIAS (0, 0)
+:ret  is op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031=0x0 & op1519=1
+{
+	local ea:$(XLEN) = ra & ~1;
+	return [ea];
+}
+
+
+# lb d,o(s) 00000003 0000707f BYTE|DREF (0, 1) 
+:lb rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x0
+{
+	local ea:$(XLEN) = rs1 + immI;
+	rd = sext(*[ram]:1 ea);
+}
+
+
+# lbu d,o(s) 00004003 0000707f BYTE|DREF (0, 1) 
+:lbu rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x4
+{
+	local ea:$(XLEN) = rs1 + immI;
+	rd = zext(*[ram]:1 ea);
+}
+
+
+# lh d,o(s) 00001003 0000707f WORD|DREF (0, 2) 
+:lh rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x1
+{
+	local ea:$(XLEN) = rs1 + immI;
+	rd = sext(*[ram]:2 ea);
+}
+
+
+# lhu d,o(s) 00005003 0000707f WORD|DREF (0, 2) 
+:lhu rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x5
+{
+	local ea:$(XLEN) = rs1 + immI;
+	rd = zext(*[ram]:2 ea);
+}
+
+
+# lui d,u 00000037 0000007f SIMPLE (0, 0) 
+:lui rd,immU is immU & rd & op0001=0x3 & op0204=0x5 & op0506=0x1
+{
+	rd = immU;
+}
+
+
+# lw d,o(s) 00002003 0000707f DWORD|DREF (0, 4) 
+:lw rd,immI(rs1) is immI & rs1 & rd & op0001=0x3 & op0204=0x0 & op0506=0x0 & funct3=0x2
+{
+	local ea:$(XLEN) = rs1 + immI;
+	assignW(rd, *[ram]:4 ea);
+}
+
+
+# or d,s,t 00006033 fe00707f SIMPLE (0, 0) 
+:or rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x6 & funct7=0x0
+{
+	rd = rs1 | rs2;
+}
+
+
+# ori d,s,j 00006013 0000707f SIMPLE (0, 0) 
+:ori rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x6
+{
+	rd = rs1 | immI;
+}
+
+
+# sb t,q(s) 00000023 0000707f BYTE|DREF (0, 1) 
+:sb rs2,immS(rs1) is immS & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x1 & funct3=0x0
+{
+	local ea:$(XLEN) = rs1 + immS;
+	*[ram]:1 ea = rs2:1;
+}
+
+
+# sh t,q(s) 00001023 0000707f WORD|DREF (0, 2) 
+:sh rs2,immS(rs1) is immS & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x1 & funct3=0x1
+{
+	local ea:$(XLEN) = rs1 + immS;
+	*[ram]:2 ea = rs2:2; 
+}
+
+
+# sll d,s,t 00001033 fe00707f SIMPLE (0, 0) 
+:sll rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x1 & funct7=0x0
+{
+	local shift:$(XLEN) = rs2 & ($(ADDRSIZE) - 1);
+	rd = rs1 << shift;
+}
+
+
+# slli d,s,> 00001013 fc00707f SIMPLE (0, 0) 
+:slli rd,rs1,shamt6 is rs1 & shamt6 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x1 & op2631=0x0
+{
+	rd = rs1 << shamt6;
+}
+
+
+# slt d,s,t 00002033 fe00707f SIMPLE (0, 0) 
+:slt rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x2 & funct7=0x0
+{
+	rd = zext(rs1 s< rs2);
+}
+
+
+# slti d,s,j 00002013 0000707f SIMPLE (0, 0) 
+:slti rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x2
+{
+	rd = zext(rs1 s< immI);
+}
+
+
+# sltiu d,s,j 00003013 0000707f SIMPLE (0, 0) 
+:sltiu rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x3
+{
+	rd = zext(rs1 < immI);
+}
+
+
+# sltu d,s,t 00003033 fe00707f SIMPLE (0, 0) 
+:sltu rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x3 & funct7=0x0
+{
+	rd = zext(rs1 < rs2);
+}
+
+
+# sra d,s,t 40005033 fe00707f SIMPLE (0, 0) 
+:sra rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x5 & funct7=0x20
+{
+	local shift:$(XLEN) = rs2 & ($(ADDRSIZE) - 1);
+	rd = rs1 s>> shift;
+}
+
+
+# srai d,s,> 40005013 fc00707f SIMPLE (0, 0) 
+:srai rd,rs1,shamt6 is rs1 & shamt6 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x5 & op2631=0x10
+{
+	rd = rs1 s>> shamt6;
+}
+
+
+# srl d,s,t 00005033 fe00707f SIMPLE (0, 0) 
+:srl rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x5 & funct7=0x0
+{
+	local shift:$(XLEN) = rs2 & ($(ADDRSIZE) - 1);
+	rd = rs1 >> shift;
+}
+
+
+# srli d,s,> 00005013 fc00707f SIMPLE (0, 0) 
+:srli rd,rs1,shamt6 is rs1 & shamt6 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x5 & op2631=0x0
+{
+	rd = rs1 >> shamt6;
+}
+
+
+# sub d,s,t 40000033 fe00707f SIMPLE (0, 0) 
+:sub rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x0 & funct7=0x20
+{
+	rd = rs1 - rs2;
+}
+
+# neg d,t 40000033 fe0ff07f ALIAS (0, 0)
+:neg rd,rs2 is rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x0 & funct7=0x20 & op1519=0x0
+{
+	rd = -rs2;
+}
+
+
+# sw t,q(s) 00002023 0000707f DWORD|DREF (0, 4) 
+:sw rs2,immS(rs1) is immS & rs2 & rs1 & op0001=0x3 & op0204=0x0 & op0506=0x1 & funct3=0x2
+{
+	local ea:$(XLEN) = rs1 + immS;
+	*[ram]:4 ea = rs2:4;
+}
+
+
+# unimp  c0001073 ffffffff SIMPLE (0, 0) 
+:unimp  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0 & op1531=0x18000
+{
+    local excaddr:$(XLEN) = inst_start;
+    local target:$(XLEN) = unimp(excaddr);
+    goto [target];
+}
+
+
+# xor d,s,t 00004033 fe00707f SIMPLE (0, 0) 
+:xor rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x4 & funct7=0x0
+{
+	rd = rs1 ^ rs2;
+}
+
+
+# xori d,s,j 00004013 0000707f SIMPLE (0, 0) 
+:xori rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x4
+{
+	rd = rs1 ^ immI;
+}
+
+# not d,s fff04013 fff0707f ALIAS (0, 0)
+:not rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x4 & op2031=0xfff
+{
+	rd = ~rs1;
+}

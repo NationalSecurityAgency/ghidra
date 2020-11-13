@@ -21,7 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.cmd.label.DemanglerCmd;
-import ghidra.app.util.demangler.*;
+import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.DemangledObject;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -56,15 +57,41 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 		String mangled = "MyFunction__11MyNamespacePQ215$ParamNamespace9paramName";
 
 		GnuDemangler demangler = new GnuDemangler();
-		demangler.canDemangle(program);// this perform initialization
+		demangler.canDemangle(program);// this performs initialization
 
-		DemangledObject result = demangler.demangle(mangled, false);
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
+		options = options.withDeprecatedDemangler();
+		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined MyNamespace::MyFunction($ParamNamespace::paramName *)",
 			result.getSignature(false));
 
-		DemanglerOptions options = new DemanglerOptions();
+		DemanglerCmd cmd = new DemanglerCmd(addr("01001000"), mangled, options);
+
+		// this used to trigger an exception
+		boolean success = applyCmd(program, cmd);
+		assertTrue("Demangler command failed: " + cmd.getStatusMsg(), success);
+
+		assertNotNull(cmd.getDemangledObject());
+	}
+
+	@Test
+	public void testParsingReturnType_UnnamedType() throws Exception {
+
+		String mangled = "_ZN13SoloGimbalEKFUt_C2Ev";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this performs initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
+		options = options.withDeprecatedDemangler();
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined SoloGimbalEKF::{unnamed_type#1}::SoloGimbalEKF(void)",
+			result.getSignature(false));
+
 		DemanglerCmd cmd = new DemanglerCmd(addr("01001000"), mangled, options);
 
 		// this used to trigger an exception

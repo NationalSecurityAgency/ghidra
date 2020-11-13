@@ -62,9 +62,11 @@ class Funcdata {
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
   uint4 high_level_index;	///< Creation index of first Varnode created after HighVariables are created
   uint4 cast_phase_index;	///< Creation index of first Varnode created after ActionSetCasts
-  Architecture *glb;		///< Global configuration data
-  string name;			///< Name of function
+  uint4 minLanedSize;		///< Minimum Varnode size to check as LanedRegister
   int4 size;			///< Number of bytes of binary data in function body
+  Architecture *glb;		///< Global configuration data
+  FunctionSymbol *functionSymbol;	///< The symbol representing \b this function
+  string name;			///< Name of function
   Address baseaddr;		///< Starting code address of binary data
   FuncProto funcp;		///< Prototype of this function
   ScopeLocal *localmap;		///< Local variables (symbols in the function scope)
@@ -80,16 +82,19 @@ class Funcdata {
   Merge covermerge;		///< Variable range intersection algorithms
   ParamActive *activeoutput;	///< Data for assessing which parameters are passed to \b this function
   Override localoverride;	///< Overrides of data-flow, prototypes, etc. that are local to \b this function
+  map<VarnodeData,const LanedRegister *> lanedMap;	///< Current storage locations which may be laned registers
 
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
-  bool updateFlags(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct);
+  Symbol *handleSymbolConflict(SymbolEntry *entry,Varnode *vn);	///< Handle two variables with matching storage
+  bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
   void splitUses(Varnode *vn);			///< Make all reads of the given Varnode unique
   Varnode *cloneVarnode(const Varnode *vn);	///< Clone a Varnode (between copies of the function)
   void destroyVarnode(Varnode *vn);		///< Delete the given Varnode from \b this function
+  void coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list);
 				// Low level op functions
   void opZeroMulti(PcodeOp *op);		///< Transform trivial CPUI_MULTIEQUAL to CPUI_COPY
 				// Low level block functions
@@ -117,12 +122,13 @@ class Funcdata {
   static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
 				    bool findbranch,bool findcall,bool findreturn);
 public:
-  Funcdata(const string &nm,Scope *conf,const Address &addr,int4 sz=0);	///< Constructor
+  Funcdata(const string &nm,Scope *conf,const Address &addr,FunctionSymbol *sym,int4 sz=0);	///< Constructor
   ~Funcdata(void);							///< Destructor
   const string &getName(void) const { return name; }			///< Get the function's local symbol name
   const Address &getAddress(void) const { return baseaddr; }		///< Get the entry point address
   int4 getSize(void) const { return size; }				///< Get the function body size in bytes
-  Architecture *getArch(void) const { return glb; }			///< Get the program/architecture owning the function
+  Architecture *getArch(void) const { return glb; }			///< Get the program/architecture owning \b this function
+  FunctionSymbol *getSymbol(void) const { return functionSymbol; }	///< Return the symbol associated with \b this function
   bool isHighOn(void) const { return ((flags&highlevel_on)!=0); }	///< Are high-level variables assigned to Varnodes
   bool isProcStarted(void) const { return ((flags&processing_started)!=0); }	///< Has processing of the function started
   bool isProcComplete(void) const { return ((flags&processing_complete)!=0); }	///< Is processing of the function complete
@@ -130,6 +136,7 @@ public:
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Has data-type recovery processes started
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
+  void setLanedRegGenerated(void) { minLanedSize = 1000000; }	///< Mark that laned registers have been collected
 
   /// \brief Toggle whether \b this is being used for jump-table recovery
   ///
@@ -157,7 +164,7 @@ public:
   void startCleanUp(void) { clean_up_index = vbank.getCreateIndex(); }	///< Start \e clean-up phase
   uint4 getCleanUpIndex(void) const { return clean_up_index; }	///< Get creation index at the start of \b clean-up phase
 
-  void followFlow(const Address &baddr,const Address &eadddr,uint4 insn_max);
+  void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
   bool inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
   void overrideFlow(const Address &addr,uint4 type);
@@ -167,8 +174,8 @@ public:
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void saveXml(ostream &s,bool savetree) const;		///< Emit an XML description of \b this function to stream
-  void restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
+  void saveXml(ostream &s,uint8 id,bool savetree) const;	///< Emit an XML description of \b this function to stream
+  uint8 restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
   void saveXmlJumpTable(ostream &s) const;		///< Emit an XML description of jump-tables to stream
   void restoreXmlJumpTable(const Element *el);		///< Restore jump-tables from an XML description
   void saveXmlTree(ostream &s) const;			///< Save an XML description of the p-code tree to stream
@@ -196,6 +203,8 @@ public:
   Varnode *newSpacebasePtr(AddrSpace *id);	///< Construct a new \e spacebase register for a given address space
   Varnode *findSpacebaseInput(AddrSpace *id) const;
   void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
+
+  int4 getHeritagePass(void) const { return heritage.getPass(); }	///< Get overall count of heritage passes
 
   /// \brief Get the number of heritage passes performed for the given address space
   ///
@@ -258,6 +267,8 @@ public:
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
   void adjustInputVarnodes(const Address &addr,int4 size);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
+
+  Address findDisjointCover(Varnode *vn,int4 &sz);	///< Find range covering given Varnode and any intersecting Varnodes
 
   /// \brief Find the first input Varnode covered by the given range
   ///
@@ -346,13 +357,18 @@ public:
   /// \brief End of (input or free) Varnodes at a given storage address
   VarnodeDefSet::const_iterator endDef(uint4 fl,const Address &addr) const { return vbank.endDef(fl,addr); }
 
+  void checkForLanedRegister(int4 size,const Address &addr);	///< Check for a potential laned register
+  map<VarnodeData,const LanedRegister *>::const_iterator beginLaneAccess(void) const { return lanedMap.begin(); }	///< Beginning iterator over laned accesses
+  map<VarnodeData,const LanedRegister *>::const_iterator endLaneAccess(void) const { return lanedMap.end(); }	///< Ending iterator over laned accesses
+  void clearLanedAccessMap(void) { lanedMap.clear(); }	///< Clear records from the laned access list
+
   HighVariable *findHigh(const string &name) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial) const;
-  bool updateFlags(const ScopeLocal *lm,bool typesyes);
-  void splitVarnode(Varnode *vn,int4 lowsize,Varnode *&vnlo,Varnode *& vnhi);
+  bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
+  void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
   void markIndirectOnly(void);			///< Mark \e illegal \e input Varnodes used only in INDIRECTs
@@ -373,9 +389,16 @@ public:
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
   void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
+  void clearSymbolLinks(HighVariable *high);			///< Clear Symbols attached to Varnodes in the given HighVariable
+  void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
+  void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
+  Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
+  Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
+  void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
   bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
+  bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
 
   // op routines
@@ -383,11 +406,10 @@ public:
   PcodeOp *newOp(int4 inputs,const SeqNum &sq);			/// Allocate a new PcodeOp with sequence number
   PcodeOp *newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *in2,Varnode *in3=(Varnode *)0);
   PcodeOp *cloneOp(const PcodeOp *op,const SeqNum &seq);	/// Clone a PcodeOp into \b this function
-  PcodeOp *canonicalReturnOp(void) const;			/// Find a representative CPUI_RETURN op for \b this function
+  PcodeOp *getFirstReturnOp(void) const;			/// Find a representative CPUI_RETURN op for \b this function
   PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size,uint4 extraFlags);
-  void setIndirectCreation(PcodeOp *op,PcodeOp *indeffect,Varnode *outvn,bool possibleout);
   PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 size,bool possibleout);
-  void truncateIndirect(PcodeOp *indop);			///< Convert CPUI_INDIRECT into an \e indirect \e creation
+  void markIndirectCreation(PcodeOp *indop,bool possibleOutput);	///< Convert CPUI_INDIRECT into an \e indirect \e creation
   PcodeOp *findOp(const SeqNum &sq) { return obank.findOp(sq); }	///< Find PcodeOp with given sequence number
   void opInsertBefore(PcodeOp *op,PcodeOp *follow);		///< Insert given PcodeOp before a specific op
   void opInsertAfter(PcodeOp *op,PcodeOp *prev);		///< Insert given PcodeOp after a specific op
@@ -419,7 +441,7 @@ public:
   void opMarkNonPrinting(PcodeOp *op) { op->setFlag(PcodeOp::nonprinting); }	///< Mark PcodeOp as not being printed
   void opMarkSpecialPrint(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::special_print); }	///< Mark PcodeOp as needing special printing
   void opMarkNoCollapse(PcodeOp *op) { op->setFlag(PcodeOp::nocollapse); }	///< Mark PcodeOp as not collapsible
-  void opMarkCpoolTransformed(PcodeOp *op) { op->setFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
+  void opMarkCpoolTransformed(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
   void opMarkCalculatedBool(PcodeOp *op) { op->setFlag(PcodeOp::calculated_bool); }	///< Mark PcodeOp as having boolean output
   void opMarkSpacebasePtr(PcodeOp *op) { op->setFlag(PcodeOp::spacebase_ptr); }	///< Mark PcodeOp as LOAD/STORE from spacebase ptr
   void opClearSpacebasePtr(PcodeOp *op) { op->clearFlag(PcodeOp::spacebase_ptr); }	///< Unmark PcodeOp as using spacebase ptr
@@ -428,6 +450,7 @@ public:
   Varnode *createStackRef(AddrSpace *spc,uintb off,PcodeOp *op,Varnode *stackptr,bool insertafter);
   Varnode *opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Varnode *stackptr,bool insertafter);
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
+  void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }
@@ -492,7 +515,9 @@ public:
   void switchEdge(FlowBlock *inblock,BlockBasic *outbefore,FlowBlock *outafter);
   void spliceBlockBasic(BlockBasic *bl);	///< Merge the given basic block with the block it flows into
   void installSwitchDefaults(void);		///< Make sure default switch cases are properly labeled
-  static bool replaceLessequal(Funcdata &data,PcodeOp *op);	///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
+  bool replaceLessequal(PcodeOp *op);		///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
+  bool distributeIntMultAdd(PcodeOp *op);	///< Distribute constant coefficient to additive input
+  bool collapseIntMultMult(Varnode *vn);	///< Collapse constant coefficients for two chained CPUI_INT_MULT
   static bool compareCallspecs(const FuncCallSpecs *a,const FuncCallSpecs *b);
 
 #ifdef OPACTION_DEBUG

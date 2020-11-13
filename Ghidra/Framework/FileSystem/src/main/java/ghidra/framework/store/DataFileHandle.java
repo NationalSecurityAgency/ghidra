@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +36,7 @@ public interface DataFileHandle {
      * read, the end of the stream is detected, or an exception is thrown. 
      *
      * @param      b   the buffer into which the data is read.
-     * @exception  EOFException  if this file reaches the end before reading
+     * @exception  java.io.EOFException if this file reaches the end before reading
      *               all the bytes.
      * @exception  IOException   if an I/O error occurs.       
      */
@@ -53,7 +52,7 @@ public interface DataFileHandle {
      * @param      b     the buffer into which the data is read.
      * @param      off   the start offset of the data.
      * @param      len   the number of bytes to read.
-     * @exception  EOFException  if this file reaches the end before reading
+     * @exception  java.io.EOFException  if this file reaches the end before reading
      *               all the bytes.
      * @exception  IOException   if an I/O error occurs.
      */

@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.comments;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.text.SimpleDateFormat;
 
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
@@ -26,6 +25,7 @@ import javax.swing.text.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CommentHistory;
 import ghidra.program.model.listing.Program;
+import ghidra.util.DateUtils;
 import ghidra.util.Msg;
 
 /**
@@ -44,7 +44,6 @@ class CommentHistoryPanel extends JPanel {
 	private StyledDocument doc;
 	private JTextPane textPane;
 
-	private SimpleDateFormat formatter;
 	private int commentType;
 
 	/**
@@ -56,7 +55,6 @@ class CommentHistoryPanel extends JPanel {
 		super(new BorderLayout());
 		setUpAttributes();
 		this.commentType = commentType;
-		formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 		create();
 	}
 
@@ -105,8 +103,8 @@ class CommentHistoryPanel extends JPanel {
 		doc.insertString(offset, userName, userAttrSet);
 
 		offset = doc.getLength();
-		doc.insertString(offset, "\t" + formatter.format(history.getModificationDate()),
-			dateAttrSet);
+		doc.insertString(offset,
+			"\t" + DateUtils.formatDateTimestamp(history.getModificationDate()), dateAttrSet);
 		doc.setParagraphAttributes(offset, 1, tabAttrSet, false);
 
 		offset = doc.getLength();

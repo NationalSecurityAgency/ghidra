@@ -3,7 +3,7 @@ Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/build.xml||GHIDRA||||END|
 data/languages/CR16.cspec||GHIDRA||||END|
-data/languages/CR16.ldefs||GHIDRA||reviewed||END|
+data/languages/CR16.ldefs||GHIDRA||||END|
 data/languages/CR16.opinion||GHIDRA||reviewed||END|
 data/languages/CR16.pspec||GHIDRA||reviewed||END|
 data/languages/CR16B.sinc||GHIDRA||reviewed||END|

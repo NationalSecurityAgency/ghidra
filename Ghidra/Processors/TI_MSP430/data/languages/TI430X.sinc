@@ -46,7 +46,7 @@ XREG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 &
 XREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
 XREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
 XREG_B_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
-XREG_B_AS: "#"^indexExtWord16_0_16 		 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {tmp:1 = indexExtWord16_0_16[0,8]; export *[const]:1 tmp; } # Immediate
+XREG_B_AS: "#"^indexExtWord16_0_16 		 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16; } # Immediate
 XREG_B_AS: "&"^indexExtWord16_0_16 		 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 XREG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
 XREG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Constant
@@ -159,7 +159,7 @@ XSRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 &
 XSRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
 XSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
 XSRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
-XSRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {tmp:1 = indexExtWord16_0_16[0,8]; export *[const]:1 tmp;} # Immediate
+XSRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16;} # Immediate
 XSRC_B_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 XSRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
 XSRC_B_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:1; }		# Constant

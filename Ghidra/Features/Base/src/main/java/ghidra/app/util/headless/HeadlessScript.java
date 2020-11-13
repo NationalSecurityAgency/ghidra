@@ -16,7 +16,6 @@
 package ghidra.app.util.headless;
 
 import java.io.IOException;
-import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
@@ -35,28 +34,28 @@ public abstract class HeadlessScript extends GhidraScript {
 	 */
 	public enum HeadlessContinuationOption {
 		/**
-		 * Continue running scripts and/or analysis; <tt>-import</tt> and <tt>-process</tt> 
+		 * Continue running scripts and/or analysis; <code>-import</code> and <code>-process</code> 
 		 * modes complete normally.
 		 */
 		CONTINUE,
 
 		/**
 		 *  Continue running scripts and/or analysis; 
-		 *  <tt>-import</tt> mode does not save program, 
-		 *  <tt>-process</tt> mode deletes program.
+		 *  <code>-import</code> mode does not save program, 
+		 *  <code>-process</code> mode deletes program.
 		 */
 		CONTINUE_THEN_DELETE,
 
 		/**
 		 *  Abort any scripts or analysis that come after this script;
-		 *  <tt>-import</tt> mode does not save program, <tt>-process</tt> mode deletes program.
+		 *  <code>-import</code> mode does not save program, <code>-process</code> mode deletes program.
 		 */
 		ABORT_AND_DELETE,
 
 		/**
-		 * Abort any scripts or analysis that come after this script; <tt>-import</tt> mode does 
+		 * Abort any scripts or analysis that come after this script; <code>-import</code> mode does 
 		 * save program (but it may not be processed completely),
-		 * <tt>-process</tt> mode completes normally, minus scripts or analysis that 
+		 * <code>-process</code> mode completes normally, minus scripts or analysis that 
 		 * runs after the ABORT request.
 		 */
 		ABORT
@@ -285,7 +284,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * </pre>
 	 * 
 	 * Then the following usage would ensure that any files imported after this call would
-	 * be saved in the <tt>MyGhidraProject:/dir1/innerDir2</tt> folder.
+	 * be saved in the <code>MyGhidraProject:/dir1/innerDir2</code> folder.
 	 * <pre>
 	 * 		setHeadlessImportDirectory("dir1/innerDir2");
 	 * </pre>
@@ -330,16 +329,16 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * If a file with the same name already exists in the desired location, it will only be 
 	 * overwritten if "-overwrite" is true.
 	 * <p>
-	 * This method is only applicable when using the HeadlessAnalyzer <tt>-import</tt> mode and 
-	 * is ineffective in <tt>-process</tt> mode.
+	 * This method is only applicable when using the HeadlessAnalyzer <code>-import</code> mode and 
+	 * is ineffective in <code>-process</code> mode.
 	 * 
 	 * @param importDir  the absolute path (relative to root) where inputs will be saved
 	 * @throws ImproperUseException if not in headless mode or headless instance not set	 
 	 * @throws IOException if there are issues creating the folder
 	 * @throws InvalidNameException if folder name is invalid
 	 */
-	public void setHeadlessImportDirectory(String importDir) throws ImproperUseException,
-			IOException, InvalidNameException {
+	public void setHeadlessImportDirectory(String importDir)
+			throws ImproperUseException, IOException, InvalidNameException {
 		checkHeadlessStatus();
 
 		// Do nothing if not importing -- we don't want to have arbitrary folders
@@ -372,7 +371,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * Analysis will time out only in the case where:
 	 * <ol>
-	 * 		<li>the users has set an analysis timeout period using the <tt>-analysisTimeoutPerFile</tt>
+	 * 		<li>the users has set an analysis timeout period using the <code>-analysisTimeoutPerFile</code>
 	 * 	parameter</li>
 	 * 		<li>analysis is enabled and has completed</li>
 	 * 		<li>the current script is being run as a postScript (since postScripts run after
@@ -397,57 +396,52 @@ public abstract class HeadlessScript extends GhidraScript {
 			resolveContinuationOptionWith(scriptSetOption);
 			scriptSetOption = null;
 		}
+		ResourceFile scriptSource = GhidraScriptUtil.findScriptByName(scriptName);
+		if (scriptSource != null) {
+			GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
 
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : dirs) {
-			ResourceFile scriptSource = new ResourceFile(dir, scriptName);
-			if (scriptSource.exists()) {
-
-				GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
-
-				if (provider == null) {
-					throw new IOException("Attempting to run subscript '" + scriptName +
-						"': unable to run this script type.");
-				}
-
-				GhidraScript script = provider.getScriptInstance(scriptSource, writer);
-				isHeadlessScript = script instanceof HeadlessScript ? true : false;
-
-				if (potentialPropertiesFileLocs.size() > 0) {
-					script.setPotentialPropertiesFileLocations(potentialPropertiesFileLocs);
-				}
-
-				if (scriptState == state) {
-					updateStateFromVariables();
-				}
-
-				if (isHeadlessScript) {
-					((HeadlessScript) script).setHeadlessInstance(headless);
-					((HeadlessScript) script).setRunningInnerScript(true);
-				}
-
-				script.setScriptArgs(scriptArguments);
-
-				script.execute(scriptState, monitor, writer);
-
-				if (scriptState == state) {
-					loadVariablesFromState();
-				}
-
-				// Resolve continuations options, if they have changed
-				if (isHeadlessScript) {
-					HeadlessContinuationOption innerScriptOpt =
-						((HeadlessScript) script).getHeadlessContinuationOption();
-
-					if (innerScriptOpt != null) {
-						resolveContinuationOptionWith(innerScriptOpt);
-					}
-
-					((HeadlessScript) script).setRunningInnerScript(false);
-				}
-
-				return;
+			if (provider == null) {
+				throw new IOException("Attempting to run subscript '" + scriptName +
+					"': unable to run this script type.");
 			}
+
+			GhidraScript script = provider.getScriptInstance(scriptSource, writer);
+			isHeadlessScript = script instanceof HeadlessScript ? true : false;
+
+			if (potentialPropertiesFileLocs.size() > 0) {
+				script.setPotentialPropertiesFileLocations(potentialPropertiesFileLocs);
+			}
+
+			if (scriptState == state) {
+				updateStateFromVariables();
+			}
+
+			if (isHeadlessScript) {
+				((HeadlessScript) script).setHeadlessInstance(headless);
+				((HeadlessScript) script).setRunningInnerScript(true);
+			}
+
+			script.setScriptArgs(scriptArguments);
+
+			script.execute(scriptState, monitor, writer);
+
+			if (scriptState == state) {
+				loadVariablesFromState();
+			}
+
+			// Resolve continuations options, if they have changed
+			if (isHeadlessScript) {
+				HeadlessContinuationOption innerScriptOpt =
+					((HeadlessScript) script).getHeadlessContinuationOption();
+
+				if (innerScriptOpt != null) {
+					resolveContinuationOptionWith(innerScriptOpt);
+				}
+
+				((HeadlessScript) script).setRunningInnerScript(false);
+			}
+
+			return;
 		}
 
 		throw new IllegalArgumentException("Script does not exist: " + scriptName);

@@ -17,15 +17,28 @@ package ghidra.util;
 
 import static java.util.Calendar.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
+import java.util.function.Predicate;
 
 import ghidra.util.exception.AssertException;
 
 public class DateUtils {
-	private static final String DATEFORMAT_STR = "MM/dd/yyyy";
-	private static final String TIMEFORMAT_STR = "h:mm";
+
+	/** Example: Oct 31, 2019 03:24 PM */
+	private static final String DATE_TIME_FORMAT_STRING = "MMM dd, yyyy hh:mm a";
+	private static final String DATE_FORMAT_STRING = "MM/dd/yyyy";
+	private static final String TIME_FORMAT_STRING = "h:mm";
+
+	private static final DateTimeFormatter DATE_TIME_FORMATTER =
+		DateTimeFormatter.ofPattern(DATE_TIME_FORMAT_STRING);
+	private static final DateTimeFormatter DATE_FORMATTER =
+		DateTimeFormatter.ofPattern(DATE_FORMAT_STRING);
+	private static final DateTimeFormatter TIME_FORMATTER =
+		DateTimeFormatter.ofPattern(TIME_FORMAT_STRING);
 
 	public static final long MS_PER_SEC = 1000;
 	public static final long MS_PER_MIN = MS_PER_SEC * 60;
@@ -170,16 +183,6 @@ public class DateUtils {
 		}
 	}
 
-	public static Date normalizeDate(Date date) {
-		try {
-			SimpleDateFormat sdf = new SimpleDateFormat(DATEFORMAT_STR);
-			return sdf.parse(sdf.format(date));
-		}
-		catch (ParseException e) {
-			throw new AssertException("Can't happend parsing date from formated date");
-		}
-	}
-
 	private static Calendar getLastDayOfWeekInMonth(int year, int month, int dayOfWeek) {
 		Calendar cal = new GregorianCalendar(year, month, 1);
 		cal.add(MONTH, 1);
@@ -201,36 +204,131 @@ public class DateUtils {
 		return dayOfWeek == SATURDAY || dayOfWeek == SUNDAY;
 	}
 
-	public static String formatDate(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat(DATEFORMAT_STR);
-		return sdf.format(date);
+	public static Date normalizeDate(Date date) {
+		try {
+			DateTimeFormatter dtf = DATE_FORMATTER;
+			TemporalAccessor ta = dtf.parse(dtf.format(toLocalDate(date)));
+			LocalDate localDateTime = LocalDate.from(ta);
+			return toDate(localDateTime);
+		}
+		catch (DateTimeParseException e) {
+			throw new AssertException("Unexpected exception parsing date from a known format", e);
+		}
 	}
 
 	/**
-	 * Returns the current local timezone time-of-day as an HOUR:MIN string.
-	 *
-	 * @return current time-of-day as "HOUR:MIN"
+	 * Formats the given date into a string.   This is in contrast to 
+	 * {@link #formatDateTimestamp(Date)}, which will also return the time portion of the date.
+	 * 
+	 * @param date the date to format
+	 * @return the date string
 	 */
-	public static String getTimeNow() {
-		SimpleDateFormat sdf = new SimpleDateFormat(TIMEFORMAT_STR);
-		return sdf.format(new Date());
+	public static String formatDate(Date date) {
+		return DATE_FORMATTER.format(toLocalDate(date));
 	}
 
+	/**
+	 * Formats the given date into a string that contains the date and time.  This is in 
+	 * contrast to {@link #formatDate(Date)}, which only returns a date string.
+	 * 
+	 * @param date the date to format
+	 * @return the date and time string
+	 */
+	public static String formatDateTimestamp(Date date) {
+		return DATE_TIME_FORMATTER.format(toLocalDate(date));
+	}
+
+	/**
+	 * Returns the current local time zone time-of-day as simple time string. 
+	 * See {@value #TIME_FORMAT_STRING}.
+	 *
+	 * @return current time-of-day a a string
+	 */
+	public static String formatCurrentTime() {
+		return TIME_FORMATTER.format(toLocalDate(new Date()));
+	}
+
+	private static LocalDateTime toLocalDate(Date d) {
+		//@formatter:off
+		return Instant.ofEpochMilli(d.getTime())
+			       .atZone(ZoneId.systemDefault())
+	               .toLocalDateTime()
+	               ;
+		//@formatter:on
+	}
+
+	private static Date toDate(LocalDate ld) {
+		//@formatter:off
+		  return Date.from(ld.atStartOfDay()
+			  		 .atZone(ZoneId.systemDefault())
+			  		 .toInstant())
+				  	 ;
+		//@formatter:on
+	}
+
+	/**
+	 * Returns a date for the given numeric values
+	 * 
+	 * @param year the year 
+	 * @param month the month; 0-based
+	 * @param day the day of month; 1-based
+	 * @return the date
+	 */
 	public static Date getDate(int year, int month, int day) {
 		Calendar cal = new GregorianCalendar(year, month, day);
 		return cal.getTime();
 	}
 
+	/**
+	 * Returns all days between the two dates.  Returns 0 if the same date is passed for both
+	 * parameters.  The order of the dates does not matter.
+	 * 
+	 * @param date1 the first date
+	 * @param date2 the second date
+	 * @return the number of days
+	 */
 	public static int getDaysBetween(Date date1, Date date2) {
-		date1 = normalizeDate(date1);
-		date2 = normalizeDate(date2);
+		return doGetDaysBetween(date1, date2, DateUtils::anyDay);
+	}
+
+	/**
+	 * Returns the <b>business days</b> between the two dates.  Returns 0 if the same date is 
+	 * passed for both parameters.  The order of the dates does not matter.
+	 * 
+	 * @param date1 the first date
+	 * @param date2 the second date
+	 * @return the number of days
+	 */
+	public static int getBusinessDaysBetween(Date date1, Date date2) {
+		return doGetDaysBetween(date1, date2, DateUtils::isBusinessDay);
+	}
+
+	private static boolean anyDay(Calendar c) {
+		return true;
+	}
+
+	private static boolean isBusinessDay(Calendar c) {
+		return !(isWeekend(c) || isHoliday(c));
+	}
+
+	private static int doGetDaysBetween(Date date1, Date date2, Predicate<Calendar> dayFilter) {
+
+		Date d1 = date1;
+		Date d2 = date2;
+		if (date1.compareTo(date2) > 0) {
+			d1 = date2;
+			d2 = date1;
+		}
+
+		d1 = normalizeDate(d1);
+		d2 = normalizeDate(d2);
 
 		Calendar cal = new GregorianCalendar();
-		cal.setTime(date1);
+		cal.setTime(d1);
 		int days = 0;
-		while (cal.getTime().compareTo(date2) < 0) {
+		while (cal.getTime().compareTo(d2) < 0) {
 			cal.add(Calendar.DAY_OF_MONTH, 1);
-			if (!DateUtils.isWeekend(cal) && !DateUtils.isHoliday(cal)) {
+			if (dayFilter.test(cal)) {
 				days++;
 			}
 		}
@@ -239,8 +337,8 @@ public class DateUtils {
 
 	/**
 	 * Formats a millisecond duration as a English string expressing the number of
-	 * hours, minutes and seconds in the duration.
-	 * <p>
+	 * hours, minutes and seconds in the duration
+	 *
 	 * @param millis Count of milliseconds of an elapsed duration.
 	 * @return String such as "5 hours, 3 mins, 22 secs".
 	 */

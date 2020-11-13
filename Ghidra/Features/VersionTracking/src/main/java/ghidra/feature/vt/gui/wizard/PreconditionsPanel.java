@@ -15,13 +15,6 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
-import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.validator.VTPreconditionValidator;
-import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import ghidra.util.classfinder.ClassSearcher;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +26,12 @@ import javax.swing.*;
 
 import docking.widgets.conditiontestpanel.*;
 import docking.wizard.*;
+import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.gui.validator.VTPreconditionValidator;
+import ghidra.program.model.listing.Program;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 public class PreconditionsPanel extends AbstractMageJPanel<VTWizardStateKey> implements Scrollable {
 	private static final Dimension DEFAULT_SIZE = new Dimension(650, 480);
@@ -148,7 +147,7 @@ public class PreconditionsPanel extends AbstractMageJPanel<VTWizardStateKey> imp
 			Program destinationProgram, VTSession existingResults) throws SecurityException {
 		List<ConditionTester> list = new ArrayList<ConditionTester>();
 
-		Set<Class<? extends VTPreconditionValidator>> vtValidatorClasses =
+		List<Class<? extends VTPreconditionValidator>> vtValidatorClasses =
 			ClassSearcher.getClasses(VTPreconditionValidator.class);
 		for (Class<? extends VTPreconditionValidator> validatorClass : vtValidatorClasses) {
 			try {

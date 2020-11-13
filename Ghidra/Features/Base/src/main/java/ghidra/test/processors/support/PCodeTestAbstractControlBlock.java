@@ -18,14 +18,16 @@ package ghidra.test.processors.support;
 import java.util.*;
 
 import ghidra.app.emulator.EmulatorHelper;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.lang.InstructionBlock;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -41,6 +43,8 @@ import ghidra.util.task.TaskMonitor;
 public abstract class PCodeTestAbstractControlBlock {
 
 	static final int SIZEOF_U4 = 4;
+
+	private final Disassembler disassembler;
 
 	protected final Program program;
 	protected final AddressSpace codeSpace;
@@ -69,6 +73,9 @@ public abstract class PCodeTestAbstractControlBlock {
 
 		codeSpace = program.getAddressFactory().getDefaultAddressSpace();
 		dataSpace = program.getLanguage().getDefaultDataSpace();
+
+		disassembler = Disassembler.getDisassembler(program, TaskMonitor.DUMMY, m -> {
+			/* ignore */ });
 	}
 
 	public Address getInfoStructureAddress() {
@@ -175,8 +182,13 @@ public abstract class PCodeTestAbstractControlBlock {
 		return (Address) data.getValue();
 	}
 
-	protected Address readCodePointer(MemBuffer buffer, int bufferOffset, boolean updateReference) {
+	protected Address readCodePointer(MemBuffer buffer, int bufferOffset, boolean updateReference) throws MemoryAccessException {
 		Address codePtr = readPointer(buffer, bufferOffset, codeSpace, updateReference);
+
+		// treat null pointer as special case - just return it
+		if (codePtr.getOffset() == 0) {
+			return codePtr;
+		}
 
 		// shift the pointer if code pointers are stored in memory shifted.
 		int ptrShift = program.getDataTypeManager().getDataOrganization().getPointerShift();
@@ -191,7 +203,26 @@ public abstract class PCodeTestAbstractControlBlock {
 
 		Address ptr = readDefinedDataPointer(codePtr);
 		if (ptr != null) {
+			// use stored pointer from procedure descriptor table
 			codePtr = ptr;
+		}
+		else {
+			// if pointer refers to simple jump/thunk - follow it
+			Address addr = PseudoDisassembler.getNormalizedDisassemblyAddress(program, codePtr);
+			InstructionBlock codeBlock = disassembler.pseudoDisassembleBlock(addr, null, 1);
+			if (codeBlock == null || codeBlock.isEmpty() || codeBlock.hasInstructionError()) {
+				throw new MemoryAccessException(
+					"Code pointer " + codePtr.toString(true) + " does not refer to valid code");
+			}
+			// TODO: may need to handle more complex thunks
+			Instruction instr = codeBlock.getInstructionAt(addr);
+			FlowType flowType = instr.getFlowType();
+			if (flowType.isJump()) {
+				Address[] flows = instr.getFlows();
+				if (flows.length == 1) {
+					codePtr = flows[0];
+				}
+			}
 		}
 
 		return codePtr;
@@ -266,7 +297,7 @@ public abstract class PCodeTestAbstractControlBlock {
 	}
 
 	protected int getStructureComponent(Structure testInfoStruct, String fieldName) {
-		for (DataTypeComponent component : testInfoStruct.getComponents()) {
+		for (DataTypeComponent component : testInfoStruct.getDefinedComponents()) {
 			if (fieldName.equals(component.getFieldName())) {
 				return component.getOffset();
 			}

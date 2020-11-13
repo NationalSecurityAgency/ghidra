@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +38,9 @@ public class GhidraProgramUtilities {
 	}
 
 	/**
-	 * Returns true if the program contains the analyzed flag.
+	 * Returns true if the program does not contain the analyzed flag.
 	 * @param program the program to check for the property
-	 * @return true if the program contains the analyzed flag
+	 * @return true if the program does not contain the analyzed flag
 	 */
 	public static boolean shouldAskToAnalyze(Program program) {
 		try {

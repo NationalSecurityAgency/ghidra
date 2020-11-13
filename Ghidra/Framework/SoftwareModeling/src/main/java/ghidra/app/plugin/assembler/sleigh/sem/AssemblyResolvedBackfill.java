@@ -27,7 +27,7 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
  * before the final result(s) are assembled. This is typically required by instructions that refer
  * to the {@code inst_next} symbol.
  * 
- * @note These are used internally. The user ought never to see these from the assembly API.
+ * NOTE: These are used internally. The user ought never to see these from the assembly API.
  */
 public class AssemblyResolvedBackfill extends AssemblyResolution {
 	protected final PatternExpression exp;

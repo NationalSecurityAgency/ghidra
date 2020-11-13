@@ -28,7 +28,7 @@ import ghidra.util.Swing;
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
  * 
- * <p><b><a name="modal_usage">Modal Usage</a></b><br>
+ * <p><b><a id="modal_usage">Modal Usage</a></b><br>
  * Most clients of this class should not be concerned with where 
  * the dialog used by this class will appear.  By default, it will be shown over 
  * the active window, which is the desired
@@ -69,7 +69,7 @@ public class TaskLauncher {
 	 * <code>
 	 * TaskLauncher.launchNonModal( "My task", <br>
 	 *  &nbsp;&nbsp;null, // parent<br>
-	 * 	&nbsp;&nbsp;monitor -> { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
+	 * 	&nbsp;&nbsp;monitor -&gt; { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
 	 * );
 	 * </code>
 	 *
@@ -99,7 +99,7 @@ public class TaskLauncher {
 	 * <code>
 	 * TaskLauncher.launchModal( "My task", <br>
 	 *  &nbsp;&nbsp;null, // parent<br>
-	 * 	&nbsp;&nbsp;monitor -> { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
+	 * 	&nbsp;&nbsp;monitor -&gt; { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
 	 * );
 	 * </code>
 	 *
@@ -132,7 +132,7 @@ public class TaskLauncher {
 	 *
 	 * <p><code>
 	 * TaskLauncher.launchModal( "My task", <br>
-	 * 	&nbsp;&nbsp;monitor -> { { foo(); }<br>
+	 * 	&nbsp;&nbsp;monitor -&gt; { { foo(); }<br>
 	 * );
 	 * </code>
 	 *

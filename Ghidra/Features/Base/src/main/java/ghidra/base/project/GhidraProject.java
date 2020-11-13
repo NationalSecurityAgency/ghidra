@@ -452,8 +452,6 @@ public class GhidraProject {
 	 * @param overWrite
 	 *            if true, any existing program with that name will be
 	 *            over-written.
-	 * @throws DuplicateNameException
-	 *             if a file exists with that name and overwrite is false or overwrite failed
 	 * @throws InvalidNameException
 	 *             the name is null or has invalid characters.
 	 * @throws IOException

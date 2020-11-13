@@ -53,6 +53,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	protected String languageName;
@@ -232,7 +233,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 				return action;
 			}
 		}
-		Assert.fail("Can't find favorite " + name + ".");
+		fail("Can't find favorite " + name + ".");
 		return null;
 	}
 
@@ -245,9 +246,10 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void checkSelection(int[] rows) {
+		waitForSwing();
 		int[] tRows = getTable().getSelectedRows();
 		if (!Arrays.equals(rows, tRows)) {
-			Assert.fail("Expected row selection (" + arrayToString(rows) + ") but was (" +
+			fail("Expected row selection (" + arrayToString(rows) + ") but was (" +
 				arrayToString(tRows) + ").");
 		}
 		assertEquals(createSelection(rows), runSwing(() -> model.getSelection()));
@@ -333,7 +335,8 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertNotNull(action);
 		boolean isEnabled = runSwing(() -> action.isEnabled());
 		if (!isEnabled) {
-			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName());
+			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName(),
+				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 		runSwing(() -> action.actionPerformed(new ActionContext()), false);
 		waitForSwing();
@@ -467,24 +470,13 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		// no-op?
 	}
 
-	protected void backspace(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_BACK_SPACE);
-		}
+	protected void leftArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_LEFT);
 		waitForSwing();
 	}
 
-	protected void leftArrowKey(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_LEFT);
-		}
-		waitForSwing();
-	}
-
-	protected void rightArrowKey(int repeat) {
-		for (int i = 0; i < repeat; i++) {
-			triggerActionKey(getTable(), 0, KeyEvent.VK_RIGHT);
-		}
+	protected void rightArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_RIGHT);
 		waitForSwing();
 	}
 
@@ -771,12 +763,20 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertEquals(status, getStatus());
 	}
 
-	private int getRow() {
+	protected int getRow() {
 		return runSwing(() -> model.getRow());
 	}
 
-	private int getColumn() {
+	protected void assertRow(int row) {
+		assertEquals(row, getRow());
+	}
+
+	protected int getColumn() {
 		return runSwing(() -> model.getColumn());
+	}
+
+	protected void assertColumn(int column) {
+		assertEquals(column, getColumn());
 	}
 
 	private String getStatus() {

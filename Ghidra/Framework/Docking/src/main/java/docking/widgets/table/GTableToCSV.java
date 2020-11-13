@@ -35,18 +35,25 @@ public final class GTableToCSV {
 	final static String TITLE = "Export to CSV";
 
 	public final static void writeCSV(File file, GTable table) {
-		ConvertTask task = new ConvertTask(file, table, table.getModel());
+		ConvertTask task = new ConvertTask(file, table);
 		new TaskLauncher(task, table, 0);
 	}
 
 	public final static void writeCSVUsingColunns(File file, GTable table,
 			List<Integer> selectedColumns) {
-		ConvertTask task = new ConvertTask(file, table, table.getModel(), selectedColumns);
+		ConvertTask task = new ConvertTask(file, table, selectedColumns);
 		new TaskLauncher(task, table, 0);
 	}
 
-	private final static void writeCSV(File file, GTable table, GTableColumnModel columnModel,
-			TableModel model, List<Integer> columns, TaskMonitor monitor) throws IOException {
+	final static void writeCSV(File file, GTable table,
+			List<Integer> columns, TaskMonitor monitor) throws IOException {
+
+		PrintWriter writer = new PrintWriter(file);
+		writeCSV(writer, table, columns, monitor);
+	}
+
+	final static void writeCSV(PrintWriter writer, GTable table,
+			List<Integer> columns, TaskMonitor monitor) {
 
 		List<TableColumn> tableColumns = null;
 		if (columns.isEmpty()) {
@@ -56,7 +63,7 @@ public final class GTableToCSV {
 			tableColumns = getTableColumnsByIndex(table, columns);
 		}
 
-		PrintWriter writer = new PrintWriter(file);
+		TableModel model = table.getModel();
 		try {
 			writeColumnNames(writer, tableColumns, model, monitor);
 			writeNewLine(writer);
@@ -142,7 +149,8 @@ public final class GTableToCSV {
 			final int column) {
 		final String[] result = new String[1];
 		try {
-			SwingUtilities.invokeAndWait(() -> result[0] = getTableCellValue(table, model, row, column));
+			SwingUtilities
+					.invokeAndWait(() -> result[0] = getTableCellValue(table, model, row, column));
 		}
 		catch (InterruptedException e) {
 			return null;
@@ -301,14 +309,19 @@ public final class GTableToCSV {
 	 * <p>
 	 * Note: when importing into Excel, the quotes are stripped off.
 	 */
-	private final static void writeField(PrintWriter writer, String fieldValue, TaskMonitor monitor) {
+	private final static void writeField(PrintWriter writer, String fieldValue,
+			TaskMonitor monitor) {
 		writer.print("\"");
 		for (int i = 0; i < fieldValue.length(); ++i) {
 			if (monitor.isCancelled()) {
 				break;
 			}
+
 			if (fieldValue.charAt(i) == '"') {//embedded separator
-				writer.print("\"");
+				writer.print("\\\"");
+			}
+			else if (fieldValue.charAt(i) == ',') {
+				writer.print("\\,");
 			}
 			else {
 				writer.print(fieldValue.charAt(i));
@@ -319,36 +332,30 @@ public final class GTableToCSV {
 
 	private static class ConvertTask extends Task {
 		private final GTable table;
-		private TableModel model;
-		private GTableColumnModel columnModel;
 
 		private File file;
 		private List<Integer> columns = new ArrayList<Integer>();
 
-		ConvertTask(File file, GTable table, TableModel model) {
+		ConvertTask(File file, GTable table) {
 			super(GTableToCSV.TITLE, true, true, true);
 			this.file = file;
 			this.table = table;
-			this.columnModel = (GTableColumnModel) table.getColumnModel();
-			this.model = model;
 		}
 
-		ConvertTask(File file, GTable table, TableModel model, List<Integer> columns) {
+		ConvertTask(File file, GTable table, List<Integer> columns) {
 			super(GTableToCSV.TITLE, true, true, true);
 			this.file = file;
 			this.table = table;
 			this.columns = columns;
-			this.columnModel = (GTableColumnModel) table.getColumnModel();
-			this.model = model;
 		}
 
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
-				GTableToCSV.writeCSV(file, table, columnModel, model, columns, monitor);
+				GTableToCSV.writeCSV(file, table, columns, monitor);
 			}
 			catch (IOException e) {
-				Msg.error(GTable.class.getName(), e.getMessage());
+				Msg.error(GTableToCSV.class.getName(), e.getMessage());
 			}
 
 			DockingWindowManager manager = DockingWindowManager.getInstance(table);

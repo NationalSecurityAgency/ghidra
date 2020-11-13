@@ -32,7 +32,7 @@ public class MnemonicFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new MnemonicFieldLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location; should not be null
 	 * @param componentPath array of indexes for each nested data component; the
 	 *            index is the data component's index within its parent; may be
@@ -49,7 +49,7 @@ public class MnemonicFieldLocation extends CodeUnitLocation {
 	/**
 	 * Construct a new MnemonicFieldLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param addr address of the location; should not be null
 	 * @param refAddr the "referred to" address if the location is over a
 	 *            reference; may be null
@@ -68,7 +68,7 @@ public class MnemonicFieldLocation extends CodeUnitLocation {
 	}
 
 	/**
-	 * @see CodeUnitLocation#ProgramLocation(Program, Address)
+	 * @see ProgramLocation#ProgramLocation(Program, Address)
 	 */
 	public MnemonicFieldLocation(Program program, Address address) {
 		super(program, address, 0, 0, 0);

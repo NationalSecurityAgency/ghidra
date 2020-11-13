@@ -74,9 +74,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 		showContextRegisters = fieldOptions.getBoolean(DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, false);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#fieldOptionsChanged(ghidra.framework.options.ToolOptions, java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
@@ -89,9 +86,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getField(int, ghidra.app.util.viewer.proxy.ProxyObj, int)
-	 */
 	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
@@ -172,9 +166,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 		return valueStr;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -248,9 +239,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 		return value1.equals(value2);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation programLoc) {
@@ -262,9 +250,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 		return new FieldLocation(index, fieldNum, loc.getRow(), loc.getCharOffset());
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		if (!CodeUnit.class.isAssignableFrom(proxyObjectClass)) {
@@ -280,9 +265,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 			fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
 	@Override
 	public Color getDefaultColor() {
 		return OptionsGui.MNEMONIC.getDefaultColor();

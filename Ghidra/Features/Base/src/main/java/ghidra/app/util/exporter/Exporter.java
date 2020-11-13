@@ -104,7 +104,7 @@ abstract public class Exporter implements ExtensionPoint {
 	 * Returns true if this exporter knows how to export the given domain object.  For example,
 	 * some exporters know how to export programs, other exporters can export project data type
 	 * archives.
-	 * @param domainObject the domain object to test for exporting.
+	 * @param domainObjectClass the class of the domain object to test for exporting.
 	 * @return true if this exporter knows how to export the given domain object.
 	 */
 	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {

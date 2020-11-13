@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +27,7 @@ import db.ChainedBuffer;
 /**
  * <code>ChangeMapFile</code> tracks which buffers within a LocalBufferFile 
  * have been modified between an older and newer version.  The older
- * file is also refered to as the target file.
+ * file is also referred to as the target file.
  */
 public class ChangeMapFile {
 

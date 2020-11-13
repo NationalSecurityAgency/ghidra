@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +18,15 @@ package ghidra.app.plugin.core.symtable;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class SymbolRowObjectToProgramLocationTableRowMapper extends
-		ProgramLocationTableRowMapper<SymbolRowObject, ProgramLocation> {
+public class SymbolRowObjectToProgramLocationTableRowMapper
+		extends ProgramLocationTableRowMapper<Symbol, ProgramLocation> {
 
 	@Override
-	public ProgramLocation map(SymbolRowObject rowObject, Program data,
-			ServiceProvider serviceProvider) {
-		SymbolTable symbolTable = data.getSymbolTable();
-		Symbol symbol = symbolTable.getSymbol(rowObject.getKey());
-		if (symbol == null) {
-			return null;
-		}
-
-		return symbol.getProgramLocation();
+	public ProgramLocation map(Symbol rowObject, Program data, ServiceProvider serviceProvider) {
+		return rowObject.getProgramLocation();
 	}
 
 }

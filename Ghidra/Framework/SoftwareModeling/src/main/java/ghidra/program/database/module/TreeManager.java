@@ -486,8 +486,12 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Move a memory block to new place.
-	 * @param fromRange old place
-	 * @param toRange new place
+	 * @param fromAddr old place
+	 * @param toAddr new place
+	 * @param length the length of the address range to move
+	 * @param monitor the current task monitor
+	 * @throws AddressOverflowException if an address overflow occurs.
+	 * @throws CancelledException if the task is cancelled.
 	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
@@ -685,7 +689,7 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Get the root module for the tree that has the given ID.
-	 * @param ID of the tree
+	 * @param treeID ID of the tree
 	 * @return root module
 	 */
 	public ProgramModule getRootModule(long treeID) {

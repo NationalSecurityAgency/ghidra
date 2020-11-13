@@ -162,7 +162,7 @@ class LibraryHints {
 			}
 		}
 		catch (Exception e) {
-			Msg.error(this, "Error occured while parsing hints file: " + hintsFile, e);
+			Msg.error(this, "Error occurred while parsing hints file: " + hintsFile, e);
 		}
 		finally {
 			if (is != null) {

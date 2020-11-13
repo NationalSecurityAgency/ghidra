@@ -18,6 +18,8 @@ package ghidra.file.formats.sevenzip;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.Msg;
@@ -70,7 +72,13 @@ public class SevenZipFileSystem implements GFileSystem {
 					throw new CancelledException();
 				}
 
-				fsIndexHelper.storeFile(item.getPath(), item.getItemIndex(), item.isFolder(),
+				String itemPath = item.getPath();
+				if (items.length == 1 && itemPath.isBlank()) {
+					// special case when there is a single unnamed file.
+					// use the name of the 7zip file itself, minus the extension
+					itemPath = FilenameUtils.getBaseName(fsrl.getContainer().getName());
+				}
+				fsIndexHelper.storeFile(itemPath, item.getItemIndex(), item.isFolder(),
 					getSize(item), item);
 			}
 			preCacheAll(monitor);

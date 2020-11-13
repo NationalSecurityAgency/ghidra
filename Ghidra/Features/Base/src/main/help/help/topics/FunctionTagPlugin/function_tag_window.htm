@@ -25,7 +25,7 @@
       <TABLE border="0" width="100%">
         <TR>
           <TD width="100%" align="center"><IMG alt="" border="0" src=
-          "images/FunctionTagPlugin.png"></TD>
+          "images/FullWindow.png"></TD>
         </TR>
       </TABLE>
     </CENTER>     
@@ -33,24 +33,24 @@
     <H2>Window Components</H2>
 
     <BLOCKQUOTE>
-      <P>This window has five distinct sections:</P>
-
       <UL>
-        <LI><B>Available Tags List</B>: Displays all tags that are available to assign to the
-        current function.</LI>
+        <LI><B>All Tags TAble</B>: Displays all tags that are available to assign to the
+        current function, as well as a count of the number of times each tag has been used
+        in the current program.</LI>
 
         <LI><B>Assigned Tags List</B>: Displays all tags that have been assigned to the current
         function.</LI>
+        
+        <LI><B>Function Panel</B>: Displays functions that contain any selected tags. If multiple
+        tags are selected, functions containing ANY of the tags will be displayed.</LI>
 
         <LI>
           <B>Tag Input Field</B>: Allows users to create new tags. Multiple tags may be created at one time.
-
           <P style="margin: 20px;"><IMG alt="" border="0" src="images/InputField.png"></P>
         </LI>
 
         <LI>
           <B>Filter Field</B>: Allows users to filter what is shown in the Available and Assigned tag lists. 
-
           <P style="margin: 20px;"><IMG alt="" border="0" src="images/FilterField.png"></P>
         </LI>
       </UL>
@@ -58,10 +58,10 @@
       <UL class="noindent">
         <LI><B>Action Buttons</B></LI>
           <UL>
-            <LI><IMG alt="" border="0" src="images/2rightarrow.png"> &nbsp;
+            <LI><IMG alt="" border="0" src="images/2rightarrow.png" width="16" height="16"> &nbsp;
             Assigns the selected tag(s) to the current function</LI>
 
-            <LI><IMG alt="" border="0" src="images/2leftarrow.png"> &nbsp;
+            <LI><IMG alt="" border="0" src="images/2leftarrow.png" width="16" height="16"> &nbsp;
             Removes the selected tag(s) from the current function</LI>
 
             <LI><IMG alt="" border="0" src="Icons.DELETE_ICON"> &nbsp;
@@ -80,7 +80,7 @@
 	    <BLOCKQUOTE>
 	      <P>Tags can be created by using the <I>Tag Input Field</I> described above. Users may enter
 	      multiple tag names delimited by a comma. All newly-created tags will be displayed in the
-	      Available Tags List and are NOT assigned to any function.</P>
+	      Available Tags List but are NOT yet assigned to any function.</P>
 	
 	      <P><IMG alt="" border="0" src="../../shared/tip.png">Each tag may have an associated comment that
 	      is visible as a tooltip. This can be assigned after the tag has been created (see <code>edit</code> section below).</P>
@@ -112,6 +112,14 @@
 	      <P>If editing is allowed, the following dialog will be shown:</P>
 	
 	      <P align="center"><IMG alt="" border="0" src="images/EditTag.png"></P>
+	    
+	      <P><IMG alt="" border="0" src="../../shared/tip.png">An <i>italicized</i> tag name
+	      indicates that the tag was loaded from an external source and has not yet been
+	      added to the program, making it immutable. As soon as the tag is assigned to a function it becomes
+	      editable. If you delete the tag using the <IMG alt="" border="0" src=
+	      "Icons.DELETE_ICON" width="16" height="16"> icon it will be removed from 
+	      the program and once again be immutable.</P>
+
 	    </BLOCKQUOTE>
 
 	    <H3><A name="Add_Tag_To_Function"></A>Add to Function</H3>
@@ -119,7 +127,7 @@
 	    <BLOCKQUOTE>
 	      <P>Tags may be added to a function by selecting a set of tags and pressing the <IMG alt=""
 	      border="0" src="images/2rightarrow.png" width="16" height="16"> button. The tags will be
-	      removed from the Available Tags List and added to the Assigned Tags List.</P>
+	      added to the Assigned Tags list, and shown as disabled in the Available Tags list.</P>
 	    </BLOCKQUOTE>
 
 	    <H3><A name="Remove_Tag_From_Function"></A>Remove from Function</H3>
@@ -134,10 +142,12 @@
     <H2><a name="loading_tags">Loading External Tags</a></H2>
 
     <BLOCKQUOTE>
-      <P>Tags may be loaded on startup from an external source if desired. These will be shown in
-      <FONT color="blue">blue</FONT> and cannot be edited or deleted, with one caveat: once a tag has
-      been assigned to a function it ceases to have any special protections and can be edited/deleted
-      just as any other.</P>
+      <P>Tags may be loaded on startup from an external source if desired. These tags will be shown with 
+      an asterisk (*) after the name and cannot be edited or deleted; with one caveat: once a tag has
+      been assigned to a function it ceases to have any special protections and can be edited
+      like any other. If the tag is ever removed from all functions using the 
+      <IMG alt="" border="0" src="Icons.DELETE_ICON"> button, it will again be present in the 
+      Available Tags list.</P>
       
       <P>To make these available there must be a file named <I>functionTags.xml</I> available on
       the classpath. Edit (or create) this file and add tags as needed. The format is

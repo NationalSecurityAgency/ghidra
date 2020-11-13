@@ -38,37 +38,36 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 		"This analyzer searches for valid ASCII strings and automatically creates them in the binary.";
 
 	// Option Names
-	private static final String MODELFILE_OPTION_NAME = "Model file";
+	private static final String MODELFILE_OPTION_NAME = "Model File";
 	private static final String MODELFILE_OPTION_DESCRIPTION =
-		"Model file built using Ghidra's BuildStringModels class. Any model files for this analyzer " +
-			"should be located in the Ghidra/Features/Base/data/stringngrams directory and " +
-			"end in \".sng\".";
+		"Any model files for this analyzer should be located in the " +
+			"Ghidra/Features/Base/data/stringngrams directory and end in \".sng\".";
 
-	private static final String FORCE_MODEL_RELOAD_OPTION_NAME = "Force model reload";
+	private static final String FORCE_MODEL_RELOAD_OPTION_NAME = "Force Model Reload";
 	private static final String FORCE_MODEL_RELOAD_OPTION_DESCRIPTION =
 		"When checked, forces reload of model files every time the analyzer is run. When unchecked, " +
 			"model files will only be reloaded when Ghidra is restarted or when model file option " +
 			"name is changed.";
 
-	private static final String MINIMUM_STRING_LENGTH_OPTION_NAME = "Minimum string length";
+	private static final String MINIMUM_STRING_LENGTH_OPTION_NAME = "Minimum String Length";
 	private static final String MINIMUM_STRING_LENGTH_OPTION_DESCRIPTION =
 		"The smallest number of characters in a string to be considered a valid string. " +
 			"(Smaller numbers will give more false positives). String length must be 4 " +
 			"or greater.";
 
 	private static final String REQUIRE_NULL_TERMINATION_OPTION_NAME =
-		"Require null termination for string";
+		"Require Null Termination for String";
 	private static final String REQUIRE_NULL_TERMINATION_OPTION_DESCRIPTION =
 		"If set to true, requires all strings to end in null.";
 
 	private static final String ALLOW_STRING_CREATION_WITH_MIDDLE_REF_NAME =
-		"Create strings containing references";
+		"Create Strings Containing References";
 	private static final String ALLOW_STRING_CREATION_WITH_MIDDLE_REF_DESCRIPTION =
 		"If checked, allows a string that contains, but does not start with, one or more references" +
 			" to be created.";
 
 	private static final String ALLOW_STRING_CREATION_WITH_EXISTING_SUBSTR_NAME =
-		"Create strings containing existing strings";
+		"Create Strings Containing Existing Strings";
 	private static final String ALLOW_STRING_CREATION_WITH_EXISTING_SUBSTR_DESCRIPTION =
 		"If checked, allows a string to be created even if it contains existing strings (existing " +
 			"strings will be cleared). The string will be created only if existing strings (a) " +
@@ -76,7 +75,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 			"address as the potential string, (c) share the same ending address as the potential " +
 			"string, and (d) are the same datatype as the potential string.";
 
-	private static final String START_ALIGNMENT_OPTION_NAME = "String start alignment";
+	private static final String START_ALIGNMENT_OPTION_NAME = "String Start Alignment";
 	private static final String START_ALIGNMENT_OPTION_DESCRIPTION =
 		"Specifies an alignment requirement for the start of the string. An alignment of 1 " +
 			"means the string can start at any address.  An alignment of 2 means the string " +
@@ -92,7 +91,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 			"alignment is not enforced.";
 
 	private static final String SEARCH_ONLY_ACCESSIBLE_MEM_BLOCKS_NAME =
-		"Search only in accessible memory blocks";
+		"Search Only in Accessible Memory Blocks";
 	private static final String SEARCH_ONLY_ACCESSIBLE_MEM_BLOCKS_DESCRIPTION =
 		"If checked, this " +
 			"analyzer only searches in memory blocks that have at least one of the Read (R), Write " +

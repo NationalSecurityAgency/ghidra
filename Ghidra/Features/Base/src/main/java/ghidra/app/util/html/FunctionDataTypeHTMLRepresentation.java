@@ -18,7 +18,7 @@ package ghidra.app.util.html;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.datatype.DataTypeIdUrl;
+import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.*;
@@ -185,7 +185,7 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		// Markup the name with info for later hyperlink capability, as needed by the client
 		//
 		DataType dataType = line.getDataType();
-		DataTypeIdUrl url = new DataTypeIdUrl(dataType);
+		DataTypeUrl url = new DataTypeUrl(dataType);
 		String wrapped = HTMLUtilities.wrapWithLinkPlaceholder(type, url.toString());
 		return wrapped;
 	}

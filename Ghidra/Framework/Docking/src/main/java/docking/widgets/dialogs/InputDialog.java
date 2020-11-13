@@ -65,21 +65,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * <P>
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
-	 * @param listener listener that is called when the OK button is hit
-	 */
-	public InputDialog(String dialogTitle, String label, InputDialogListener listener) {
-		this(dialogTitle, new String[] { label }, new String[] { DEFAULT_VALUE }, true, listener);
-	}
-
-	/**
-	 * Creates a generic input dialog with the specified title, a text field,
-	 * labeled by the specified label. The user should check the value of
-	 * "isCanceled()" to know whether or not the user canceled the operation.
-	 * Otherwise, use the "getValue()" or "getValues()" to get the value(s)
-	 * entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
-	 * @param dialogTitle used as the name of the dialog's title bar
-	 * @param label value to use for the label of the text field
 	 * @param initialValue initial value to use for the text field
 	 */
 	public InputDialog(String dialogTitle, String label, String initialValue) {
@@ -96,25 +81,11 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
 	 * @param initialValue initial value to use for the text field
+	 * @param listener the dialog listener (may be null)
 	 */
 	public InputDialog(String dialogTitle, String label, String initialValue,
 			InputDialogListener listener) {
 		this(dialogTitle, new String[] { label }, new String[] { initialValue }, true, listener);
-	}
-
-	/**
-	 * Creates a generic input dialog with the specified title, a text field,
-	 * labeled by the specified label. The user should check the value of
-	 * "isCanceled()" to know whether or not the user canceled the operation.
-	 * Otherwise, use the "getValue()" or "getValues()" to get the value(s)
-	 * entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
-	 * @param dialogTitle used as the name of the dialog's title bar
-	 * @param label values to use for the label of the text field
-	 * @param isModal whether or not the dialog is to be modal
-	 */
-	public InputDialog(String dialogTitle, String label, boolean isModal) {
-		this(dialogTitle, new String[] { label }, new String[] { DEFAULT_VALUE }, isModal, null);
 	}
 
 	/**
@@ -163,8 +134,8 @@ public class InputDialog extends DialogComponentProvider {
 	 */
 	public InputDialog(String dialogTitle, String[] labels, String[] initialValues, boolean isModal,
 			InputDialogListener listener) {
-		super(dialogTitle, isModal, (listener != null), // status area needed?
-			true, false); // do need button panel
+		super(dialogTitle, isModal, (listener != null) /* status */, true /* buttons */,
+			false /* no tasks */);
 		this.listener = listener;
 
 		// create the key listener all the text fields will use
@@ -253,40 +224,36 @@ public class InputDialog extends DialogComponentProvider {
 		close();
 	}
 
-	//***************************************************************************
-	//* API methods
-	//**************************************************************************/
-
 	/**
-	 * Returns if this dialog is cancelled.
+	 * Returns if this dialog is cancelled
+	 * @return true if cancelled
 	 */
 	public boolean isCanceled() {
 		return isCanceled;
 	}
 
 	/**
-	 * return the value of the first (and maybe only) text field
+	 * Return the value of the first (and maybe only) text field
+	 * @return the text field value
 	 */
 	public String getValue() {
 		return inputValues[0];
 	}
 
 	/**
-	 * return the values for all the text field(s)
+	 * Sets the text of the primary text field
+	 * @param text the text
 	 */
-	public String[] getValues() {
-		return inputValues;
+	public void setValue(String text) {
+		textFields[0].setText(text);
 	}
 
 	/**
-	 * reset all the text fields to their initial values
+	 * Return the values for all the text field(s)
+	 * @return the text field values
 	 */
-	public void resetValues() {
-		for (int v = 0; v < inputValues.length; v++) {
-			String value = initialValues[v];
-			inputValues[v] = value;
-			textFields[v].setText(value);
-		}
+	public String[] getValues() {
+		return inputValues;
 	}
 
 	private class MyTextField extends JTextField {

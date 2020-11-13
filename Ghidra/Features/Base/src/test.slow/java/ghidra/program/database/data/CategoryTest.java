@@ -21,7 +21,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
@@ -576,6 +575,37 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testDataTypeConflictHandling() throws Exception {
+		Category sub1 = root.createCategory("Cat1");
+		DataType dt1 = new StructureDataType("DT", 1);
+		DataType dt2 = new StructureDataType("DT", 2);
+		DataType added1 = sub1.addDataType(dt1, null);
+		DataType added2 = sub1.addDataType(dt2, null);
+		assertEquals("DT", added1.getName());
+		assertEquals("DT.conflict", added2.getName());
+
+		List<DataType> list = sub1.getDataTypesByBaseName("DT");
+		assertEquals(2, list.size());
+		assertEquals(added1, list.get(0));
+		assertEquals(added2, list.get(1));
+
+		list = sub1.getDataTypesByBaseName("DT.conflict");
+		assertEquals(2, list.size());
+		assertEquals(added1, list.get(0));
+		assertEquals(added2, list.get(1));
+
+		sub1.remove(added2, TaskMonitor.DUMMY);
+		list = sub1.getDataTypesByBaseName("DT");
+		assertEquals(1, list.size());
+		assertEquals(added1, list.get(0));
+
+		list = sub1.getDataTypesByBaseName("DT.conflict");
+		assertEquals(1, list.size());
+		assertEquals(added1, list.get(0));
+
+	}
+
+	@Test
 	public void testGetDataTypeManager() throws Exception {
 		Category sub1 = root.createCategory("SubCat-A");
 		Category s = sub1.createCategory("Sub-cat");
@@ -671,17 +701,17 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(dt.isEquivalent(ev.dt));
 		assertEquals(null, ev.parent);
 
-		ev = getEvent(4);
-		assertEquals("DT Changed", ev.evName);
-		assertTrue(dt.isEquivalent(ev.dt));
-		assertEquals(null, ev.parent);
+//		ev = getEvent(4);  // eliminated size change event during creation
+//		assertEquals("DT Changed", ev.evName);
+//		assertTrue(dt.isEquivalent(ev.dt));
+//		assertEquals(null, ev.parent);
 
-		ev = getEvent(5);
+		ev = getEvent(4);
 		assertEquals("DT Added", ev.evName);
 		assertTrue(dt.isEquivalent(ev.dt));
 		assertEquals(sub1.getCategoryPath(), ev.parent);
 
-		assertEquals(6, getEventCount());
+		assertEquals(5, getEventCount());
 
 	}
 
@@ -772,12 +802,9 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		clearEvents();
 
 		struct2 = (Structure) newDt.insert(3, struct2).getDataType();
-		int eventCount = getEventCount();
-		if (4 != eventCount) {
-			System.err.println("halt!");
-		}
-		assertEquals(5, getEventCount());
-		Event ev = getEvent(4);
+
+		assertEquals(4, getEventCount());
+		Event ev = getEvent(3);
 		assertEquals("DT Changed", ev.evName);
 		assertEquals(newDt, ev.dt);
 	}

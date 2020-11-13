@@ -139,8 +139,8 @@ macro setSubtractCFlags(op1,op2) {
 macro setSubtractFlags(op1,op2) {
 	# op1 and op2 are assumed to be 8-bit values
 	# NOTE:  carry flag is SET if there is NO borrow
-	C = (op1 >= op2);
-	DC = ((op1<<4) < (op2<<4));
+	$(C) = (op1 >= op2);
+	$(DC) = ((op1<<4) < (op2<<4));
 }
 
 macro push(val) {	# TODO: Uncertain about this !!
@@ -890,17 +890,16 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 :SUBWFB srcREG, D		is op6=0x3b & srcREG & D & destREG {
 	val:1 = srcREG;
 	bor:1 = !$(C);
-	
-	setSubtractFlags(val, W); 
+
+	setSubtractFlags(val, W);
 	val = val - W;
 	tb:1 = $(C);
 
 	setSubtractFlags(val,bor);
 	# first subtraction could cause borrow
-	$(C) = $(C) & tb;   # borrow if C not set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-	
+	$(C) = $(C) & tb;   # borrow if C not set
 	val = val - bor;
-	
+
 	setResultFlags(val);
 	destREG = val;
 }

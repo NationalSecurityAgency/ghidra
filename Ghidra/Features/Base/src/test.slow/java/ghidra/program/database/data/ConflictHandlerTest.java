@@ -17,13 +17,13 @@ package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
+import org.junit.*;
+
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-
-import org.junit.*;
 
 /**
  * Tests for the {@link DataTypeConflictHandler conflict handler} stuff.
@@ -90,14 +90,6 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		return struct;
 	}
 
-	private StructureDataType createPopulated2Partial(DataTypeManager dtm) {
-		StructureDataType struct = createPopulated2(dtm);
-		struct.clearComponent(2);
-		struct.clearComponent(1);
-
-		return struct;
-	}
-
 	private StructureDataType createStub(DataTypeManager dtm, int size) {
 		return new StructureDataType(root, "struct1", size, dtm);
 	}
@@ -145,8 +137,9 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 					addedResult.isEquivalent(addingCopy));
 				assertFalse("Added DataType should not be equiv to existing DataType",
 					addedResult.isEquivalent(existingResult_copy));
-				assertTrue("Overwritten DataType should have a deleted flag",
-					existingResult.isDeleted());
+// NOTE: direct member replacement works in most cases
+//				assertTrue("Overwritten DataType should have a deleted flag",
+//					existingResult.isDeleted());
 				break;
 			case RENAME_AND_ADD:
 				Assert.assertNotEquals("DataType name should have changed", addingCopy.getName(),
@@ -171,17 +164,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testAddEmptyStructResolveToPopulatedStruct2() {
-		assertStruct(createPopulated(dataMgr), createStub(dataMgr, 1), ConflictResult.USE_EXISTING);
-	}
-
-	@Test
-	public void testAddEmptyStructResolveToPopulatedStruct3() {
 		assertStruct(createPopulated(null), createStub(null, 0), ConflictResult.USE_EXISTING);
-	}
-
-	@Test
-	public void testAddEmptyStructResolveToPopulatedStruct4() {
-		assertStruct(createPopulated(null), createStub(null, 1), ConflictResult.USE_EXISTING);
 	}
 
 	/**
@@ -198,32 +181,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testAddPopulatedStructOverwriteStub2() {
-		assertStruct(createStub(dataMgr, 1), createPopulated(dataMgr),
-			ConflictResult.REPLACE_EXISTING);
-	}
-
-	@Test
-	public void testAddPopulatedStructOverwriteStub3() {
 		assertStruct(createStub(null, 0), createPopulated(null), ConflictResult.REPLACE_EXISTING);
-	}
-
-	@Test
-	public void testAddPopulatedStructOverwriteStub4() {
-		assertStruct(createStub(null, 1), createPopulated(null), ConflictResult.REPLACE_EXISTING);
-	}
-
-	@Test
-	public void testAddPopulatedStructOverwriteSameSizedStub() {
-		StructureDataType populated = createPopulated(dataMgr);
-		assertStruct(createStub(dataMgr, populated.getLength()), populated,
-			ConflictResult.REPLACE_EXISTING);
-	}
-
-	@Test
-	public void testAddStubStructUseSameSizedPopulated() {
-		StructureDataType populated = createPopulated(dataMgr);
-		assertStruct(populated, createStub(dataMgr, populated.getLength()),
-			ConflictResult.USE_EXISTING);
 	}
 
 	@Test
@@ -231,18 +189,6 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		StructureDataType populated = createPopulated(dataMgr);
 		assertStruct(populated, createStub(dataMgr, populated.getLength() + 1),
 			ConflictResult.RENAME_AND_ADD);
-	}
-
-	@Test
-	public void testAddPartialStructResolveToPopulatedStruct() {
-		assertStruct(createPopulated2(dataMgr), createPopulated2Partial(dataMgr),
-			ConflictResult.USE_EXISTING);
-	}
-
-	@Test
-	public void testAddPopulatedStructOverwritePartialStruct() {
-		assertStruct(createPopulated2Partial(dataMgr), createPopulated2(dataMgr),
-			ConflictResult.REPLACE_EXISTING);
 	}
 
 	@Test
@@ -268,19 +214,6 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testAddPopulatedUnionOverwritePartial() {
-		Union populated = new UnionDataType(root, "union1", dataMgr);
-		populated.add(new CharDataType(dataMgr), 1, "blah1", null);
-		populated.add(new IntegerDataType(dataMgr), 4, "blah2", null);
-		populated.add(new IntegerDataType(dataMgr), 4, "blah3", null);
-
-		Union partial = new UnionDataType(root, "union1", dataMgr);
-		partial.add(new CharDataType(dataMgr), 1, "blah1", null);
-
-		assertStruct(partial, populated, ConflictResult.REPLACE_EXISTING);
-	}
-
-	@Test
 	public void testAddConflictUnion() {
 		Union populated = new UnionDataType(root, "union1", dataMgr);
 		populated.add(new CharDataType(dataMgr), 1, "blah1", null);
@@ -291,21 +224,6 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		populated2.add(new CharDataType(dataMgr), 1, "blahA", null);
 
 		assertStruct(populated, populated2, ConflictResult.RENAME_AND_ADD);
-	}
-
-	@Test
-	public void testAddPartialUnionWithStubStructResolveToExisting() {
-		Structure s1a = createPopulated(dataMgr);
-		Union populated = new UnionDataType(root, "union1", dataMgr);
-		populated.add(new CharDataType(dataMgr), 1, "blah1", null);
-		populated.add(s1a, s1a.getLength(), "blah2", null);
-		populated.add(s1a, s1a.getLength(), null, null);
-
-		Structure s1b = createStub(dataMgr, 0);
-		Union partial = new UnionDataType(root, "union1", dataMgr);
-		partial.add(s1b, s1b.getLength(), "blah2", null);
-
-		assertStruct(populated, partial, ConflictResult.USE_EXISTING);
 	}
 
 	/**
@@ -477,32 +395,122 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 			struct1a_pathname, struct1b_pathname);
 	}
 
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the aligned version is chosen
+	 * over the unaligned version.
+	 * <p>
+	 * Success is the aligned version is chosen over the unaligned version.
+	 */
 	@Test
-	public void testResolveDataTypeStructConflict() throws Exception {
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
-		int id = dtm.startTransaction("");
-		Category otherRoot = dataMgr.getRootCategory();
-		Category subc = otherRoot.createCategory("subc");
+	public void testChooseNewAlignedOverExistingUnalignedWhenAllElseIsEqualForEmptyStructures() {
+		// Unaligned exists first.
+		Structure empty1Unaligned = new StructureDataType(root, "empty1", 0, dataMgr);
+		Composite empty1AlignedToAdd = (Composite) empty1Unaligned.copy(dataMgr);
+		empty1AlignedToAdd.setInternallyAligned(true);
 
-		Structure struct = new StructureDataType(subc.getCategoryPath(), "struct1", 10);
+		String empty1UnalignedString = empty1Unaligned.toString();
+		String empty1AlignedToAddString = empty1AlignedToAdd.toString();
 
-		DataType resolvedStruct = dtm.resolve(struct,
+		Structure empty1AddResult = (Structure) dataMgr.addDataType(empty1AlignedToAdd,
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-		assertTrue(struct.isEquivalent(resolvedStruct));
-		assertEquals("/subc/struct1", resolvedStruct.getPathName());
-
-		struct.replace(0, dtm.resolve(new PointerDataType(resolvedStruct, 4, dtm),
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER), 4);
-
-		DataType resolvedStructA = dtm.resolve(struct,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-		assertTrue(struct.isEquivalent(resolvedStructA));
-		assertEquals("/subc/struct1", resolvedStructA.getPathName());
-
-		dtm.endTransaction(id, true);
-		dtm.close();
+		String empty1AddResultString = empty1AddResult.toString();
+		assertEquals(empty1AlignedToAddString, empty1AddResultString);
+		assertNotEquals(empty1UnalignedString, empty1AddResultString);
 	}
 
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the aligned version is chosen
+	 * over the unaligned version.
+	 * <p>
+	 * Success is the aligned version is chosen over the unaligned version.
+	 */
+	@Test
+	public void testChooseNewAlignedOverExistingUnalignedWhenAllElseIsEqualForNonEmptyStructures() {
+		// Unaligned exists first.
+		StructureDataType struct1Unaligned = createPopulated(dataMgr);
+		Composite struct1AlignedToAdd = (Composite) struct1Unaligned.copy(dataMgr);
+		struct1AlignedToAdd.setInternallyAligned(true);
+
+		String struct1UnalignedString = struct1Unaligned.toString();
+		String struct1AlignedToAddString = struct1AlignedToAdd.toString();
+
+		Structure struct1AddResult = (Structure) dataMgr.addDataType(struct1AlignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String struct1AddResultString = struct1AddResult.toString();
+		assertEquals(struct1AlignedToAddString, struct1AddResultString);
+		assertNotEquals(struct1UnalignedString, struct1AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the new unaligned version is
+	 * chosen over the existing unaligned version.
+	 * <p>
+	 * Success is the new unaligned version is chosen over the existing aligned version.
+	 */
+	// TODO: consider whether we want to change the logic of the conflict handler to favor
+	//  aligned over unaligned.
+	@Test
+	public void testChooseNewUnalignedOverExistingAlignedWhenAllElseIsEqualForEmptyStructures() {
+
+		// Aligned exists first.
+		Structure empty2Aligned = new StructureDataType(root, "empty2", 0, dataMgr);
+		Composite empty2UnalignedToAdd = (Composite) empty2Aligned.copy(dataMgr);
+		// aligning only after making unaligned copy.
+		empty2Aligned.setInternallyAligned(true);
+
+		String empty2AlignedString = empty2Aligned.toString();
+		String empty2UnalignedToAddString = empty2UnalignedToAdd.toString();
+
+		Structure empty2AddResult = (Structure) dataMgr.addDataType(empty2UnalignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String empty2AddResultString = empty2AddResult.toString();
+		assertEquals(empty2UnalignedToAddString, empty2AddResultString);
+		assertNotEquals(empty2AlignedString, empty2AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the new unaligned version is
+	 * chosen over the existing aligned version.
+	 * <p>
+	 * Success is the new unaligned version is chosen over the existing aligned version.
+	 */
+	// TODO: consider whether we want to change the logic of the conflict handler to favor
+	//  aligned over unaligned.
+	@Test
+	public void testChooseNewUnalignedOverExistingAlignedWhenAllElseIsEqualForNonEmptyStructures() {
+
+		// Aligned exists first.
+		StructureDataType struct2Aligned = createPopulated(dataMgr);
+		Composite struct2UnalignedToAdd = (Composite) struct2Aligned.copy(dataMgr);
+		// aligning only after making unaligned copy.
+		struct2Aligned.setInternallyAligned(true);
+
+		String struct2AlignedString = struct2Aligned.toString();
+		String struct2UnalignedToAddString = struct2UnalignedToAdd.toString();
+
+		Structure struct2AddResult = (Structure) dataMgr.addDataType(struct2UnalignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String struct2AddResultString = struct2AddResult.toString();
+		assertEquals(struct2UnalignedToAddString, struct2AddResultString);
+		assertNotEquals(struct2AlignedString, struct2AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the aligned version is chosen
+	 * over the unaligned version.
+	 * <p>
+	 * Success is the aligned version is chosen over the unaligned version.
+	 */
 	@Test
 	public void testResolveDataTypeNonStructConflict() throws Exception {
 		DataTypeManager dtm = new StandAloneDataTypeManager("Test");

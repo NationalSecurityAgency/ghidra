@@ -30,7 +30,7 @@ public class FunctionNameFieldLocation extends FunctionSignatureFieldLocation {
 	/**
 	 * Construct a new FunctionNameFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
 	 * @param charOffset the position within the function signature string for this location.
@@ -46,7 +46,7 @@ public class FunctionNameFieldLocation extends FunctionSignatureFieldLocation {
 	/**
 	 * Construct a new FunctionNameFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param functionAddr the function address
 	 * @param col the position within the function signature string for this location.
 	 * @param signature the function signature string for this location.

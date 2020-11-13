@@ -22,32 +22,29 @@ import java.util.regex.Pattern;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledObject;
-import util.demangler.GenericDemangledType;
 
 /**
  * A class to represent a demangled object.
  */
-public abstract class DemangledObject {
+public abstract class DemangledObject implements Demangled {
 
 	protected static final String SPACE = " ";
 	protected static final Pattern SPACE_PATTERN = Pattern.compile(SPACE);
 
-	protected static final String NAMESPACE_SEPARATOR = Namespace.NAMESPACE_DELIMITER;
+	protected static final String NAMESPACE_SEPARATOR = Namespace.DELIMITER;
 	protected static final String EMPTY_STRING = "";
 
-	protected String originalMangled;
-	protected String utilDemangled;
+	protected final String mangled; // original mangled string
+	protected final String originalDemangled;
 	protected String specialPrefix;
-	protected String specialMidfix;
-	protected String specialSuffix;
-	protected DemangledType namespace;
+	protected Demangled namespace;
 	protected String visibility;//public, protected, etc.
 
 	//TODO: storageClass refers to things such as "static" but const and volatile are 
@@ -73,54 +70,17 @@ public abstract class DemangledObject {
 
 	private String signature;
 
-	DemangledObject() {
-		// default
+	DemangledObject(String mangled, String originalDemangled) {
+		this.mangled = mangled;
+		this.originalDemangled = originalDemangled;
 	}
 
-	DemangledObject(GenericDemangledObject other) {
-		originalMangled = other.getOriginalMangled();
-		specialPrefix = other.getSpecialPrefix();
-		specialMidfix = other.getSpecialMidfix();
-		specialSuffix = other.getSpecialSuffix();
-
-		GenericDemangledType otherNamespace = other.getNamespace();
-		if (otherNamespace != null) {
-			namespace = DemangledType.convertToNamespace(otherNamespace);
-		}
-
-		visibility = other.getVisibility();
-		storageClass = other.getStorageClass();
-		setName(other.getName());
-		isConst = other.isConst();
-		isVolatile = other.isVolatile();
-		isPointer64 = other.isPointer64();
-		isStatic = other.isStatic();
-		isVirtual = other.isVirtual();
-		isThunk = other.isThunk();
-
-		isUnaligned = other.isUnaligned();
-		isRestrict = other.isRestrict();
-		basedName = other.getBasedName();
-		memberScope = other.getMemberScope();
-	}
-
-	/** 
-	 * Returns the unmodified demangled name of this object.
-	 * This name may contain whitespace and other characters not
-	 * supported for symbol or data type creation.  See {@link #getName()} 
-	 * for the same name modified for use within Ghidra.
-	 * @return name of this DemangledObject
-	 */
+	@Override
 	public String getDemangledName() {
 		return demangledName;
 	}
 
-	/** 
-	 * Returns the demangled name of this object.
-	 * NOTE: unsupported symbol characters, like whitespace, will be
-	 * converted to an underscore.
-	 * @return name of this DemangledObject with unsupported characters converted to underscore
-	 */
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -209,6 +169,7 @@ public abstract class DemangledObject {
 	 * Sets the name of the demangled object
 	 * @param name the new name
 	 */
+	@Override
 	public void setName(String name) {
 		this.demangledName = name;
 		this.name = name;
@@ -220,39 +181,23 @@ public abstract class DemangledObject {
 		}
 	}
 
-	/**
-	 * Sets the original mangled name
-	 * @param mangled the original mangled name
-	 */
-	public void setOriginalMangled(String mangled) {
-		this.originalMangled = mangled;
+	@Override
+	public String getMangledString() {
+		return mangled;
 	}
 
-	/**
-	 * Sets the demangled output from a supplemental utility.
-	 * @param utilDemangled the demangled string
-	 */
-	public void setUtilDemangled(String utilDemangled) {
-		this.utilDemangled = utilDemangled;
+	@Override
+	public String getOriginalDemangled() {
+		return originalDemangled;
 	}
 
-	/**
-	 * Gets the demangled output from a supplemental utility.
-	 * @return the demangled String created for this object.
-	 */
-	public String getUtilDemangled() {
-		return utilDemangled;
-	}
-
-	/**
-	 * Returns the namespace containing this demangled object.
-	 * @return the namespace containing this demangled object
-	 */
-	public DemangledType getNamespace() {
+	@Override
+	public Demangled getNamespace() {
 		return namespace;
 	}
 
-	public void setNamespace(DemangledType namespace) {
+	@Override
+	public void setNamespace(Demangled namespace) {
 		this.namespace = namespace;
 	}
 
@@ -280,34 +225,28 @@ public abstract class DemangledObject {
 		this.specialPrefix = special;
 	}
 
-	public String getSpecialMidfix() {
-		return specialMidfix;
-	}
-
-	public void setSpecialMidfix(String chargeType) {
-		this.specialMidfix = chargeType;
-	}
-
-	public String getSpecialSuffix() {
-		return specialSuffix;
-	}
-
-	public void setSpecialSuffix(String specialSuffix) {
-		this.specialSuffix = specialSuffix;
-	}
-
 	/**
 	 * Returns a complete signature for the demangled symbol.
-	 * For example:
+	 * <br>For example:
 	 *            "unsigned long foo"
 	 *            "unsigned char * ClassA::getFoo(float, short *)"
-	 *            "void * getBar(int **, MyStruct &)"
-	 * <b>Note: based on the underlying mangling scheme, the
+	 *            "void * getBar(int **, MyStruct &amp;)"
+	 * <br><b>Note: based on the underlying mangling scheme, the
 	 * return type may or may not be specified in the signature.</b>
 	 * @param format true if signature should be pretty printed
 	 * @return a complete signature for the demangled symbol
 	 */
 	public abstract String getSignature(boolean format);
+
+	@Override
+	public final String getSignature() {
+		return getSignature(false);
+	}
+
+	@Override
+	public String getNamespaceName() {
+		return getName();
+	}
 
 	/**
 	 * Sets the signature. Calling this method will
@@ -321,6 +260,17 @@ public abstract class DemangledObject {
 	@Override
 	public String toString() {
 		return getSignature(false);
+	}
+
+	@Override
+	public String getNamespaceString() {
+		StringBuilder buffer = new StringBuilder();
+		if (namespace != null) {
+			buffer.append(namespace.getNamespaceString());
+			buffer.append(Namespace.DELIMITER);
+		}
+		buffer.append(getNamespaceName());
+		return buffer.toString();
 	}
 
 	/**
@@ -356,7 +306,16 @@ public abstract class DemangledObject {
 
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
-		if (originalMangled.equals(name)) {
+		return applyPlateCommentOnly(program, address);
+	}
+
+	/**
+	 * @param program The program for which to apply the comment 
+	 * @param address The address for the comment
+	 * @return {@code true} if a comment was applied
+	 */
+	public boolean applyPlateCommentOnly(Program program, Address address) {
+		if (mangled.equals(name)) {
 			return false;
 		}
 		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
@@ -374,8 +333,8 @@ public abstract class DemangledObject {
 	}
 
 	protected String generatePlateComment() {
-		if (utilDemangled != null) {
-			return utilDemangled;
+		if (originalDemangled != null) {
+			return originalDemangled;
 		}
 		return (signature == null) ? getSignature(true) : signature;
 	}
@@ -424,7 +383,7 @@ public abstract class DemangledObject {
 	}
 
 	private Symbol updateExternalSymbol(Program program, Address externalAddr, String symbolName,
-			DemangledType demangledNamespace) {
+			Demangled demangledNamespace) {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol s = symbolTable.getPrimarySymbol(externalAddr);
@@ -453,11 +412,11 @@ public abstract class DemangledObject {
 	 * @param typeNamespace demangled namespace object
 	 * @return list of namespace names
 	 */
-	private static List<String> getNamespaceList(DemangledType typeNamespace) {
-		ArrayList<String> list = new ArrayList<>();
-		DemangledType ns = typeNamespace;
+	private static List<String> getNamespaceList(Demangled typeNamespace) {
+		List<String> list = new ArrayList<>();
+		Demangled ns = typeNamespace;
 		while (ns != null) {
-			list.add(0, ns.getName());
+			list.add(0, ns.getNamespaceName());
 			ns = ns.getNamespace();
 		}
 		return list;
@@ -466,16 +425,15 @@ public abstract class DemangledObject {
 	/**
 	 * Get or create the specified typeNamespace.  The returned namespace may only be a partial 
 	 * namespace if errors occurred.  The caller should check the returned namespace and adjust
-	 * any symbol creation accordingly.  Caller should use 
-	 * {@link #getResidualNamespacePath(DemangledType, Namespace)} to handle the case where
-	 * only a partial namespace has been returned.
-	 * @param program
+	 * any symbol creation accordingly.  
+	 * 
+	 * @param program the program
 	 * @param typeNamespace demangled namespace
 	 * @param parentNamespace root namespace to be used (e.g., library, global, etc.)
 	 * @param functionPermitted if true an existing function may be used as a namespace
 	 * @return namespace or partial namespace if error occurs
 	 */
-	public static Namespace createNamespace(Program program, DemangledType typeNamespace,
+	public static Namespace createNamespace(Program program, Demangled typeNamespace,
 			Namespace parentNamespace, boolean functionPermitted) {
 
 		Namespace namespace = parentNamespace;
@@ -558,39 +516,6 @@ public abstract class DemangledObject {
 		buffy.append("...");
 		buffy.append(name.substring(length - 100)); // trailing data
 		return buffy.toString();
-	}
-
-	protected Structure createClassStructure(Program prog, Function func) {
-		DataTypeManager dataTypeManager = prog.getDataTypeManager();
-
-		if (namespace == null) {
-			// unexpected
-			return null;
-		}
-		String structureName = namespace.getName();
-
-		Symbol parentSymbol = func.getSymbol().getParentSymbol();
-		if (parentSymbol.getSymbolType() == SymbolType.NAMESPACE) {
-			try {
-				NamespaceUtils.convertNamespaceToClass((Namespace) parentSymbol.getObject());
-			}
-			catch (InvalidInputException e) {
-				throw new AssertException(e); // unexpected condition
-			}
-		}
-
-		// Store class structure in parent namespace
-		DemangledType classStructureNamespace = namespace.getNamespace();
-
-		Structure classStructure = (Structure) DemangledDataType.findDataType(dataTypeManager,
-			classStructureNamespace, structureName);
-		if (classStructure == null) {
-			classStructure = DemangledDataType.createPlaceHolderStructure(structureName,
-				classStructureNamespace);
-		}
-		classStructure = (Structure) dataTypeManager.resolve(classStructure,
-			DataTypeConflictHandler.DEFAULT_HANDLER);
-		return classStructure;
 	}
 
 }

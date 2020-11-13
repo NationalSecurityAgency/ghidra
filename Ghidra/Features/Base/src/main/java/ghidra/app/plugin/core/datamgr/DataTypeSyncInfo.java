@@ -15,18 +15,16 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.util.DateUtils;
 import ghidra.util.UniversalID;
 
 public class DataTypeSyncInfo {
-	private static DateFormat dateFormat;
 
 	private final DataType refDt;
 	private final DataType sourceDt;
@@ -106,7 +104,7 @@ public class DataTypeSyncInfo {
 	/**
 	 * Commits the data type to the source archive.
 	 * Call canCommit() to check the state before calling this.
-	 * @see canCommit()
+	 * @see #canCommit()
 	 */
 	public void commit() {
 		DataTypeSynchronizer.commitAssumingTransactionsOpen(sourceDTM, refDt);
@@ -115,7 +113,7 @@ public class DataTypeSyncInfo {
 	/**
 	 * Updates the data type from the one in the source archive.
 	 * Call canUpdate() to check the state before calling this.
-	 * @see canUpdate()
+	 * @see #canUpdate()
 	 */
 	public void update() {
 		DataTypeSynchronizer.updateAssumingTransactionsOpen(refDt.getDataTypeManager(), sourceDt);
@@ -124,7 +122,7 @@ public class DataTypeSyncInfo {
 	/**
 	 * Reverts the data type to match the one in the source archive.
 	 * Call canRevert() to check the state before calling this.
-	 * @see canRevert()
+	 * @see #canRevert()
 	 */
 	public void revert() {
 		DataTypeSynchronizer.updateAssumingTransactionsOpen(refDt.getDataTypeManager(), sourceDt);
@@ -177,10 +175,7 @@ public class DataTypeSyncInfo {
 		if (date == 0) {
 			return "";
 		}
-		if (dateFormat == null) {
-			dateFormat = new SimpleDateFormat("MM/dd/yy HH:mm:ss");
-		}
-		return dateFormat.format(new Date(date));
+		return DateUtils.formatDateTimestamp(new Date(date));
 	}
 
 	public DataType getRefDataType() {

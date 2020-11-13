@@ -1,7 +1,6 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
- * NOTE: Interface to GNU BFD library which is GPL 3
+ * NOTE: Excluded from Build.  Used for development only in support of console mode - Links to GNU BFD library which is GPL 3
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +110,8 @@ void BfdArchitecture::resolveArchitecture(void)
 void BfdArchitecture::postSpecFile(void)
 
 { // Attach default space to loader
-  ((LoadImageBfd *)loader)->attachToSpace(getDefaultSpace());
+  Architecture::postSpecFile();
+  ((LoadImageBfd *)loader)->attachToSpace(getDefaultCodeSpace());
 }
 
 /// This just wraps the base class constructor

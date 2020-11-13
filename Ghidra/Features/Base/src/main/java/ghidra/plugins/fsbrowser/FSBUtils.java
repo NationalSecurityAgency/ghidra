@@ -22,7 +22,6 @@ import docking.ActionContext;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
-import ghidra.framework.model.Tool;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 
@@ -102,13 +101,11 @@ public class FSBUtils {
 
 	public static List<PluginTool> getRunningProgramManagerTools(PluginTool tool) {
 		List<PluginTool> pluginTools = new ArrayList<>();
-		for (Tool runningTool : tool.getToolServices().getRunningTools()) {
-			if (runningTool instanceof PluginTool) {
-				PluginTool pt = (PluginTool) runningTool;
-				ProgramManager pmService = pt.getService(ProgramManager.class);
-				if (pmService != null) {
-					pluginTools.add(pt);
-				}
+		for (PluginTool runningTool : tool.getToolServices().getRunningTools()) {
+			PluginTool pt = runningTool;
+			ProgramManager pmService = pt.getService(ProgramManager.class);
+			if (pmService != null) {
+				pluginTools.add(pt);
 			}
 		}
 		return pluginTools;

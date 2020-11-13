@@ -16,12 +16,12 @@
 package ghidra.program.database.mem;
 
 import java.io.IOException;
-import java.util.List;
 
 import db.Record;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlockType;
 
 /**
  * Class for handling bit mapped memory sub blocks
@@ -36,7 +36,7 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 		this.memMap = adapter.getMemoryMap();
 		AddressMapDB addressMap = memMap.getAddressMap();
 		mappedAddress = addressMap.decodeAddress(
-			record.getLongValue(MemoryMapDBAdapter.SUB_SOURCE_OFFSET_COL), false);
+			record.getLongValue(MemoryMapDBAdapter.SUB_LONG_DATA2_COL), false);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 		}
 	}
 
-	public AddressRange getMappedRange() {
+	AddressRange getMappedRange() {
 		Address endMappedAddress = mappedAddress.add((subBlockLength - 1) / 8);
 		return new AddressRangeImpl(mappedAddress, endMappedAddress);
 	}
@@ -180,57 +180,6 @@ class BitMappedSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected String getDescription() {
 		return "Bit Mapped: " + mappedAddress;
-	}
-
-	@Override
-	protected ByteSourceRangeList getByteSourceRangeList(MemoryBlock block, Address start,
-			long memBlockOffset,
-			long size) {
-		ByteSourceRangeList result = new ByteSourceRangeList();
-
-		// Since mapped blocks are mapped onto other memory blocks, find those blocks and
-		// handle each one separately
-
-		// converts to byte space since 8 bytes in this block's space maps to 1 byte in real memory
-		Address startMappedAddress = mappedAddress.add(memBlockOffset / 8);
-		Address endMappedAddress = mappedAddress.add((memBlockOffset + size - 1) / 8);
-		List<MemoryBlockDB> blocks = memMap.getBlocks(startMappedAddress, endMappedAddress);
-
-		// for each block, get its ByteSourceSet and then translate that set back into this block's
-		// addresses
-		for (MemoryBlockDB mappedBlock : blocks) {
-			Address startInBlock = max(mappedBlock.getStart(), startMappedAddress);
-			Address endInBlock = min(mappedBlock.getEnd(), endMappedAddress);
-			long blockSize = endInBlock.subtract(startInBlock) + 1;
-			ByteSourceRangeList ranges =
-				mappedBlock.getByteSourceRangeList(startInBlock, blockSize);
-			for (ByteSourceRange bsRange : ranges) {
-				result.add(translate(block, bsRange, start, memBlockOffset, size));
-			}
-		}
-		return result;
-	}
-
-	// translates the ByteSourceRange back to addresse
-	private ByteSourceRange translate(MemoryBlock block, ByteSourceRange bsRange, Address start,
-			long offset,
-			long bitLength) {
-		Address startMappedAddress = mappedAddress.add(offset / 8);
-		Address normalizedStart = start.subtract(offset % 8);
-		long mappedOffsetFromStart = bsRange.getStart().subtract(startMappedAddress);
-		long offsetFromStart = mappedOffsetFromStart * 8;
-		Address startAddress = normalizedStart.add(offsetFromStart);
-
-		return new BitMappedByteSourceRange(block, startAddress, bsRange.getSourceId(),
-			bsRange.getOffset(), bsRange.getSize());
-	}
-
-	Address min(Address a1, Address a2) {
-		return a1.compareTo(a2) <= 0 ? a1 : a2;
-	}
-
-	Address max(Address a1, Address a2) {
-		return a1.compareTo(a2) >= 0 ? a1 : a2;
 	}
 
 }

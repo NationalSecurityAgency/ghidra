@@ -24,6 +24,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
@@ -450,16 +452,14 @@ public class ListingHighlightProvider
 			text = StringUtilities.findWord(text, pos, UNDERSCORE_AND_PERIOD_OK);
 		}
 
-		if (text != null) {
-			text = text.trim();
-			if (text.length() == 0) {
-				text = null;
-			}
+		if (StringUtils.isBlank(text)) {
+			text = null;
 		}
-
-		if (text != null) {
+		else {
+			text = text.trim();
 			currentHighlightPattern = Pattern.compile(text, Pattern.LITERAL);
 		}
+
 		return text;
 	}
 

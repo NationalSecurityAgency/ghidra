@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +39,10 @@ public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
 	private boolean markAsAnalyzed;
 
 	/**
-	 * When command is called, call this analyzer with the given address set
+	 * Background Command to perform Auto Analysis on a program.
 	 * 
-	 * @param analyzer the analyzer to call
-	 * @param set the set to pass to the analyzer
+	 * @param mgr the program's AutoAnalysisManager.
+	 * @param markAsAnalyzed true to set the analyzed flag after analysis.
 	 */
 	public AnalysisBackgroundCommand(AutoAnalysisManager mgr, boolean markAsAnalyzed) {
 		super("Auto Analysis", true, true, false);
@@ -51,9 +50,6 @@ public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
 		this.markAsAnalyzed = markAsAnalyzed;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		if (markAsAnalyzed) {

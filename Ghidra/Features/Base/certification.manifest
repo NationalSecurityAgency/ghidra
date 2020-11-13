@@ -1,13 +1,16 @@
 ##VERSION: 2.0
+##MODULE IP: Apache License 2.0
 ##MODULE IP: BSD
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
+##MODULE IP: MIT
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 .gitignore||GHIDRA||||END|
+.launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
@@ -35,6 +38,7 @@ data/parserprofiles/objc_mac_carbon.prf||GHIDRA||reviewed||END|
 data/parserprofiles/vs12Local.prf||GHIDRA||||END|
 data/pcodetest/EmuTesting.gdt||GHIDRA||||END|
 data/stringngrams/StringModel.sng||GHIDRA||reviewed||END|
+data/symbols/README.txt||GHIDRA||||END|
 data/symbols/win32/kernel32.hints||GHIDRA||||END|
 data/symbols/win32/mfc100.exports||GHIDRA||||END|
 data/symbols/win32/mfc100u.exports||GHIDRA||||END|
@@ -81,7 +85,6 @@ ghidra_scripts/world.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||||END|
 src/main/help/help/shared/close16.gif||GHIDRA||||END|
-src/main/help/help/shared/helpWarning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/help/help/shared/menu16.gif||GHIDRA||||END|
 src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||renamed from flag-red.png|END|
 src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||renamed from flag-green.png|END|
@@ -116,6 +119,7 @@ src/main/help/help/topics/BookmarkPlugin/images/BookmarksFilter.png||GHIDRA||||E
 src/main/help/help/topics/BookmarkPlugin/images/MarkerForBookmark.png||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/NextSelectionBlock16.gif||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/PreviousSelectionBlock16.gif||GHIDRA||||END|
+src/main/help/help/topics/BundleManager/BundleManager.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/CParser.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseCSource.png||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseError.png||GHIDRA||||END|
@@ -368,10 +372,15 @@ src/main/help/help/topics/FrontEndPlugin/images/program_obj.png||GHIDRA|||Custom
 src/main/help/help/topics/FrontEndPlugin/images/up.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/user.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/FunctionComparison/FunctionComparison.htm||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/AddFunctionsPanel.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/AddToComparisonIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/FunctionComparisonWindow.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/FunctionScope.gif||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/ListingCodeComparisonOptions.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/MultiFunctionComparisonWindow.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/NavNextIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/NavPreviousIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/RemoveFromComparisonIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/binaryData.gif||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/class.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/cursor_arrow_flipped.gif||GHIDRA||||END|
@@ -400,7 +409,7 @@ src/main/help/help/topics/FunctionTagPlugin/images/DeleteWarning.png||GHIDRA||||
 src/main/help/help/topics/FunctionTagPlugin/images/EditNotAllowedWarning.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionTagPlugin/images/EditTag.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionTagPlugin/images/FilterField.png||GHIDRA||||END|
-src/main/help/help/topics/FunctionTagPlugin/images/FunctionTagPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionTagPlugin/images/FullWindow.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionTagPlugin/images/InputField.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionWindowPlugin/function_window.htm||GHIDRA||||END|
 src/main/help/help/topics/FunctionWindowPlugin/images/FunctionWindow.png||GHIDRA||||END|
@@ -434,6 +443,8 @@ src/main/help/help/topics/GhidraServer/GhidraServer.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/glossary.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/images/BigEndian.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Glossary/images/LittleEndian.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Graph/GraphIntro.html||GHIDRA||||END|
+src/main/help/help/topics/Graph/GraphServicesIntro.html||GHIDRA||||END|
 src/main/help/help/topics/HeadlessAnalyzer/HeadlessAnalyzer.htm||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/About_pdb.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/ImporterPlugin/images/BatchImportDialog.png||GHIDRA||||END|
@@ -718,7 +729,7 @@ src/main/help/help/topics/ShowInstructionInfoPlugin/images/ProcessorManualOption
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/RawInstructionDisplay.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/ShowInstructionInfo.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/UnableToLaunch.png||GHIDRA||||END|
-src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||reviewed||END|
+src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||||END|
 src/main/help/help/topics/Snapshots/images/camera-photo.png||Tango Icons - Public Domain|||tango|END|
 src/main/help/help/topics/StackEditor/StackEditor.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/Array.png||GHIDRA||||END|
@@ -945,6 +956,7 @@ src/main/resources/images/arrow_up.png||FAMFAMFAM Icons - CC 2.5|||famfamfam sil
 src/main/resources/images/binaryData.gif||GHIDRA||||END|
 src/main/resources/images/browser.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/bullet_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/bullet_star.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/cUnion.png||GHIDRA||||END|
 src/main/resources/images/camera-photo.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/carry.png||GHIDRA||||END|
@@ -1048,7 +1060,6 @@ src/main/resources/images/functions.gif||GHIDRA||||END|
 src/main/resources/images/go-down.tango.16.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/go-home.png||Tango Icons - Public Domain|||Tango|END|
 src/main/resources/images/go-up.tango.16.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/help-browser.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/help-hint.png||Oxygen Icons - LGPL 3.0|||renamed from help-hing.png|END|
 src/main/resources/images/hexData.png||GHIDRA||||END|
 src/main/resources/images/house.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -1185,3 +1196,4 @@ src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||END|
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
+src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|

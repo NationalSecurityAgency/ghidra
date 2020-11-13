@@ -27,6 +27,7 @@ import org.junit.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
+import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.util.AddEditDialog;
@@ -93,6 +94,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
+		dialog.close();
 		env.dispose();
 	}
 
@@ -107,14 +109,14 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(globalScope, scope);
 		assertTrue(primaryCheckBox.isSelected());
 		assertTrue(!primaryCheckBox.isEnabled());
-		dialogCancel();
+		pressCancel();
 	}
 
 	@Test
 	public void testLabelChangeOne() {
 		addLabel(addr(0x0100642a));
 		setText("printf");
-		dialogOK();
+		pressOk();
 
 		Symbol s = getUniqueSymbol(program, "printf", null);
 		assertNotNull(s);
@@ -126,14 +128,14 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testDuplicateLabelForAdd() {
 		addLabel(addr(0x0100642a));
 		setText("printf");
-		dialogOK();
+		pressOk();
 
 		addLabel(addr(0x0100642c));
 		setText("printf");
 		assertEquals(" ", dialog.getStatusText());
-		dialogOK();
+		pressOk();
 		assertTrue(dialog.getStatusText().length() > 0);
-		dialogCancel();
+		pressCancel();
 	}
 
 	@Test
@@ -141,7 +143,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		addLabel(addr(0x0100642a));
 		setText("printf");
 		setCheckbox(entryCheckBox, true);
-		dialogOK();
+		pressOk();
 		assertTrue(!dialog.isVisible());
 		Symbol s = getUniqueSymbol(program, "printf", null);
 		assertNotNull(s);
@@ -153,7 +155,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		addLabel(addr(0x0100642a));
 		setText("printf");
 		setCheckbox(pinnedCheckBox, true);
-		dialogOK();
+		pressOk();
 		assertTrue(!dialog.isVisible());
 		Symbol s = getUniqueSymbol(program, "printf", null);
 		assertNotNull(s);
@@ -161,7 +163,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 
 		editLabel(s);
 		setCheckbox(pinnedCheckBox, false);
-		dialogOK();
+		pressOk();
 		assertTrue(!s.isPinned());
 
 	}
@@ -169,7 +171,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEmptyLabel() {
 		addLabel(addr(0x0100642a));
-		dialogOK();
+		pressOk();
 		assertTrue(dialog.isVisible());
 		assertTrue(dialog.getStatusText().length() > 0);
 
@@ -239,7 +241,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		setText("printf");
 		Namespace scope = st.getNamespace(a);
 		setScope(scope);
-		dialogOK();
+		pressOk();
 		s = getUniqueSymbol(program, "printf", scope);
 		assertNotNull(s);
 		assertTrue(!s.isGlobal());
@@ -259,7 +261,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		setText("printf");
 
 		setCheckbox(primaryCheckBox, true);
-		dialogOK();
+		pressOk();
 		s = getUniqueSymbol(program, "entry", null);
 		assertTrue(!s.isPrimary());
 		s = getUniqueSymbol(program, "printf", null);
@@ -286,7 +288,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		addLabel(addr(0x100642a));
 		setText("aaaa");
 		assertEquals(0, recentLabels.size());
-		dialogOK();
+		pressOk();
 
 		assertEquals(1, recentLabels.size());
 		assertEquals("aaaa", recentLabels.get(0));
@@ -295,7 +297,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("", getText());
 		//assertEquals("aaaa", getText());
 		setText("bbbb");
-		dialogOK();
+		pressOk();
 
 		assertEquals(2, recentLabels.size());
 		assertEquals("bbbb", recentLabels.get(0));
@@ -308,7 +310,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		for (int i = 0; i < 12; i++) {
 			addLabel(addr(0x100642a));
 			setText("l" + i);
-			dialogOK();
+			pressOk();
 		}
 
 		assertEquals(10, recentLabels.size());
@@ -328,7 +330,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(entryCheckBox.isSelected());
 		assertTrue(primaryCheckBox.isSelected());
 		assertTrue(!primaryCheckBox.isEnabled());
-		dialogCancel();
+		pressCancel();
 
 	}
 
@@ -352,7 +354,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		editLabel(s);
 		assertEquals("entry", getText());
 		setText("bob");
-		dialogOK();
+		pressOk();
 		program.flushEvents();
 		waitForSwing();
 		assertEquals("bob", function.getName());
@@ -378,7 +380,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 
 		editLabel(fredSymbol);
 		setCheckbox(primaryCheckBox, true);
-		dialogOK();
+		pressOk();
 		program.flushEvents();
 		waitForSwing();
 		assertEquals("fred", function.getName());
@@ -400,7 +402,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object selectedItem = namespacesComboBox.getSelectedItem();
 		assertEquals(ns, ((AddEditDialog.NamespaceWrapper) selectedItem).getNamespace());
-		dialogCancel();
+		pressCancel();
 
 	}
 
@@ -414,7 +416,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(primaryCheckBox.isSelected());
 		assertTrue(!primaryCheckBox.isEnabled());
 		setText("aaaa");
-		dialogOK();
+		pressOk();
 		s = st.getPrimarySymbol(refAddr);
 		assertEquals("aaaa", s.getName());
 	}
@@ -426,7 +428,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		editLabel(s);
 
 		setText("fred");
-		dialogOK();
+		pressOk();
 		assertEquals("fred", s.getName());
 
 		s = st.getPrimarySymbol(a);
@@ -438,17 +440,17 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testDuplicateLabelForEdit() {
 		addLabel(addr(0x100642a));
 		setText("printf");
-		dialogOK();
+		pressOk();
 
 		addLabel(addr(0x100642a));
 		setText("fred");
-		dialogOK();
+		pressOk();
 
 		Symbol s = getUniqueSymbol(program, "printf", null);
 		editLabel(s);
 
 		setText("fred");
-		dialogOK();
+		pressOk();
 		assertTrue(dialog.isVisible());
 		assertTrue(dialog.getStatusText().length() > 0);
 
@@ -459,18 +461,18 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		Address a = addr(0x100642a);
 		addLabel(a);
 		setText("aaaa");
-		dialogOK();
+		pressOk();
 		addLabel(a);
 		setText("bbbb");
-		dialogOK();
+		pressOk();
 		addLabel(a);
 		setText("cccc");
-		dialogOK();
+		pressOk();
 
 		Symbol s = getUniqueSymbol(program, "bbbb", null);
 		editLabel(s);
 		setText("zzzz");
-		dialogOK();
+		pressOk();
 		assertNotNull(getUniqueSymbol(program, "aaaa", null));
 		assertNotNull(getUniqueSymbol(program, "zzzz", null));
 		assertNotNull(getUniqueSymbol(program, "cccc", null));
@@ -491,7 +493,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(!primaryCheckBox.isSelected());
 		assertTrue(primaryCheckBox.isEnabled());
 		setText("foo");
-		dialogOK();
+		pressOk();
 
 		s = st.getPrimarySymbol(a);
 		assertNotNull(s);
@@ -509,16 +511,16 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 
 		addLabel(s.getAddress());
 		setText("aaaa");
-		dialogOK();
+		pressOk();
 
 		s = getUniqueSymbol(program, "aaaa", null);
 		editLabel(s);
 		setText("zzzz");
-		dialogOK();
+		pressOk();
 
 		editLabel(s);
 		setText("bbbb");
-		dialogOK();
+		pressOk();
 
 		assertEquals(3, recentLabels.size());
 		assertEquals("bbbb", recentLabels.get(0));
@@ -532,13 +534,13 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		addLabel(s.getAddress());
 		setScope(s.getParentNamespace());
 		setText("foo");
-		dialogOK();
+		pressOk();
 
 		s = getUniqueSymbol(program, "foo", null);
 		editLabel(s);
 		assertTrue(primaryCheckBox.isEnabled());
 		assertTrue(!primaryCheckBox.isSelected());
-		dialogOK();
+		pressOk();
 	}
 
 	@Test
@@ -579,7 +581,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		Address entryAddress = s.getAddress();
 		addLabel(entryAddress);
 		setText("label_1");
-		dialogOK();
+		pressOk();
 
 		assertTrue("Encountered a problem adding a label to the Global " + "namespace",
 			!dialog.isVisible());
@@ -588,7 +590,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		s = getUniqueSymbol(program, "label_1", null);
 		editLabel(s);
 		setText("namespace_1::label_1");
-		dialogOK();
+		pressOk();
 
 		// make sure there were no problems
 		assertTrue(
@@ -599,18 +601,128 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		s = st.getSymbols("label_1").next();
 		editLabel(s);
 		setText("Global::label_1");
-		dialogOK();
+		pressOk();
 
 		assertTrue("Encountered a problem changing a symbol's namespace to " +
 			"the Global namespace while editing the symbol", !dialog.isVisible());
 	}
 
 	@Test
-	public void testEntryNamespacePathWithAmbiguousFunctionName() {
-		Symbol origEntry = getUniqueSymbol(program, "entry", null);
-		assertNotNull(origEntry);
+	public void testSetLabelNamespace_InsideFunctionBody_ToFunctionNamespace() {
+		Symbol entry = getUniqueSymbol(program, "entry", null);
+		assertNotNull(entry);
 
-		Symbol dupEntry = st.getPrimarySymbol(addr(0x1002239));
+		Address inBodyAddress = entry.getAddress().add(1);
+		addLabel(inBodyAddress);
+		String newName = "label_1";
+		setText("entry" + Namespace.DELIMITER + newName);
+		pressOk();
+		assertFalse("Encountered a problem adding a label to the Global namespace",
+			dialog.isVisible());
+
+		Symbol label1 = getSymbol(newName);
+		Namespace parentNamespace = label1.getParentNamespace();
+		assertTrue("Namespace is not a function", parentNamespace instanceof Function);
+		Function fun = (Function) parentNamespace;
+		assertEquals(entry.getAddress(), fun.getEntryPoint());
+	}
+
+	@Test
+	public void testSetLabelNamespace_InsideFunctionBody_ToExistingNonFunctionNamespace() {
+
+		Symbol entry = getUniqueSymbol(program, "entry", null);
+		assertNotNull(entry);
+
+		String namespaceName = "NewNamespace";
+		createNamespace(namespaceName);
+
+		Address inBodyAddress = entry.getAddress().add(1);
+		addLabel(inBodyAddress);
+		String newName = "label_1";
+		setText(namespaceName + Namespace.DELIMITER + newName);
+		pressOk();
+		assertFalse("Encountered a problem adding a label to the Global namespace",
+			dialog.isVisible());
+
+		Symbol label1 = getSymbol(newName);
+		Namespace parentNamespace = label1.getParentNamespace();
+		assertFalse("Namespace is not a function", parentNamespace instanceof Function);
+	}
+
+	@Test
+	public void testSetLabelNamespace_InsideFunctionBody_ToNonExistentNonFunctionNamespace() {
+
+		Symbol entry = getUniqueSymbol(program, "entry", null);
+		assertNotNull(entry);
+
+		String namespaceName = "NewNamespace";
+		Address inBodyAddress = entry.getAddress().add(1);
+		addLabel(inBodyAddress);
+		String newName = "label_1";
+		setText(namespaceName + Namespace.DELIMITER + newName);
+		pressOk();
+		assertFalse("Encountered a problem adding a label to the Global namespace",
+			dialog.isVisible());
+
+		Symbol label1 = getSymbol(newName);
+		Namespace parentNamespace = label1.getParentNamespace();
+		assertFalse("Namespace is not a function", parentNamespace instanceof Function);
+	}
+
+	@Test
+	public void testEntryNamespacePathWithAmbiguousFunctionName() {
+		Symbol entry = getUniqueSymbol(program, "entry", null);
+		assertNotNull(entry);
+
+		Address otherEntryAddress = addr(0x1002239);
+		Symbol dupEntry = createOtherEntry(otherEntryAddress);
+
+		Address inBodyAddress = otherEntryAddress.add(1);
+		addLabel(inBodyAddress);
+		String newName = "label_1";
+		setText("entry" + Namespace.DELIMITER + newName);
+		pressOk();
+		assertFalse("Encountered a problem adding a label to the Global namespace",
+			dialog.isVisible());
+
+		Symbol label1 = getSymbol(newName);
+		Namespace parentNamespace = label1.getParentNamespace();
+		assertTrue("Namespace is not a function", parentNamespace instanceof Function);
+		Function fun = (Function) parentNamespace;
+		assertEquals(dupEntry.getAddress(), fun.getEntryPoint());
+	}
+
+	@Test
+	public void testSetNamespace_NonExistentNamespace_SameNameAsFunction() throws Exception {
+
+		// 
+		// Test that we can create a new namespace using the dialog when:
+		// 1) that namespace does not exist
+		// 2) the namespace matches the existing function name
+		// 3) the function name is not default
+		//
+
+		String functionName = "Foo";
+		Symbol function = createFunction(functionName);
+
+		editLabel(function);
+		String nsName = functionName;
+		setText(nsName + Namespace.DELIMITER + functionName);
+		pressOk();
+		assertFalse("Rename unsuccesful", dialog.isShowing());
+
+		Symbol newFunction = getSymbol(functionName);
+		Namespace parentNs = newFunction.getParentNamespace();
+		assertFalse(parentNs instanceof Function);
+		assertEquals(nsName, parentNs.getName());
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
+
+	private Symbol createOtherEntry(Address otherAddress) {
+		Symbol dupEntry = st.getPrimarySymbol(otherAddress);
 		assertNotNull(dupEntry);
 
 		int id = program.startTransaction("test");
@@ -618,42 +730,48 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 			dupEntry.setName("entry", SourceType.USER_DEFINED);
 		}
 		catch (Exception e) {
-			fail("Got Exception trying to set the function name to entry at 0x1002239 ");
+			fail("Got Exception trying to set the function name to entry at " + otherAddress);
 		}
 		finally {
 			program.endTransaction(id, true);
 		}
-
-		Address entryAddress = dupEntry.getAddress();
-		addLabel(entryAddress);
-		setText("entry::label_1");
-		dialogOK();
-
-		assertTrue("Encountered a problem adding a label to the Global " + "namespace",
-			!dialog.isVisible());
-
-		SymbolIterator symbolIt = st.getSymbols("label_1");
-		Symbol label1 = symbolIt.next();
-		assertNotNull(label1);
-		Namespace parentNamespace = label1.getParentNamespace();
-		assertTrue(parentNamespace instanceof Function);
-		Function fun = (Function) parentNamespace;
-		assertEquals(dupEntry.getAddress(), fun.getEntryPoint());
+		return dupEntry;
 	}
-//==================================================================================================
-// Private Methods
-//==================================================================================================
+
+	private Symbol getSymbol(String functionName) {
+
+		SymbolIterator it = st.getSymbols(functionName);
+		Symbol newLabel = it.next();
+		assertNotNull(newLabel);
+		assertEquals(functionName, newLabel.getName());
+		return newLabel;
+	}
+
+	private Symbol createFunction(String name) throws Exception {
+		Symbol entry = getUniqueSymbol(program, "entry", null);
+		createEntryFunction();
+		editLabel(entry);
+		setText(name);
+		pressOk();
+
+		SymbolIterator it = st.getSymbols(name);
+		Symbol newLabel = it.next();
+		assertNotNull(newLabel);
+		assertEquals(name, newLabel.getName());
+		return newLabel;
+	}
 
 	private Address addr(long addr) {
 		return program.getAddressFactory().getAddress(Long.toHexString(addr));
 	}
 
-	private void dialogCancel() {
+	private void pressCancel() {
 		runSwing(() -> invokeInstanceMethod("cancelCallback", dialog));
 	}
 
-	private void dialogOK() {
-		runSwing(() -> invokeInstanceMethod("okCallback", dialog));
+	private void pressOk() {
+		runSwing(() -> invokeInstanceMethod("okCallback", dialog), false);
+		waitForSwing();
 	}
 
 	private void setText(final String text) {
@@ -737,5 +855,9 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 				new CreateFunctionCmd(null, addr, body, SourceType.USER_DEFINED);
 			assertTrue(tool.execute(cmd, program));
 		}
+	}
+
+	private void createNamespace(String name) {
+		applyCmd(program, new CreateNamespacesCmd(name, SourceType.USER_DEFINED));
 	}
 }

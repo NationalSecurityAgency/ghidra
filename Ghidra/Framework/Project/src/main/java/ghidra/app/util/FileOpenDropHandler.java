@@ -21,7 +21,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import javax.swing.CellRendererPane;
@@ -40,8 +40,10 @@ import ghidra.util.CascadedDropTarget;
  *  in order to properly support drag/drop with all components.
  */
 public class FileOpenDropHandler implements DropTargetHandler, Droppable, ContainerListener {
-	private static HashMap<DataFlavor, FileOpenDataFlavorHandler> handlers =
-		new HashMap<DataFlavor, FileOpenDataFlavorHandler>();
+
+	// note: we wish to maintain insertion order
+	private static LinkedHashMap<DataFlavor, FileOpenDataFlavorHandler> handlers =
+		new LinkedHashMap<DataFlavor, FileOpenDataFlavorHandler>();
 
 	private DropTgtAdapter dropTargetAdapter;
 	private DropTarget globalDropTarget;

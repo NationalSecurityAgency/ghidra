@@ -19,7 +19,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -31,12 +32,13 @@ import docking.widgets.MultiLineLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.app.script.*;
 import ghidra.util.HelpLocation;
 
 public class SaveDialog extends DialogComponentProvider implements ListSelectionListener {
-	private GhidraScriptComponentProvider componentProvider;
+	protected GhidraScriptComponentProvider componentProvider;
+	protected ResourceFile scriptFile;
+
 	private GhidraScriptProvider provider;
 
 	private List<ResourceFile> paths;
@@ -44,14 +46,22 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	private JTextField nameField;
 	private boolean cancelled;
 
-	protected ResourceFile scriptFile;
-
-	public SaveDialog(Component parent, String title,
-			GhidraScriptComponentProvider componentProvider, ResourceFile scriptFile,
-			HelpLocation help) {
-		this(parent, title, componentProvider, getScriptPaths(), scriptFile, help);
+	SaveDialog(Component parent, String title, GhidraScriptComponentProvider componentProvider,
+			ResourceFile scriptFile, HelpLocation help) {
+		this(parent, title, componentProvider, componentProvider.getWritableScriptDirectories(),
+			scriptFile, help);
 	}
 
+	/**
+	 * Only called directly from testing!
+	 * 
+	 * @param parent parent component
+	 * @param title dialog title
+	 * @param componentProvider the provider
+	 * @param scriptDirs list of directories to give as options when saving
+	 * @param scriptFile the default save location
+	 * @param help contextual help, e.g. for rename or save
+	 */
 	public SaveDialog(Component parent, String title,
 			GhidraScriptComponentProvider componentProvider, List<ResourceFile> scriptDirs,
 			ResourceFile scriptFile, HelpLocation help) {
@@ -83,21 +93,6 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 		setHelpLocation(help);
 
 		DockingWindowManager.showDialog(parent, this);
-	}
-
-	private static List<ResourceFile> getScriptPaths() {
-		List<ResourceFile> newPaths = new ArrayList<>();
-
-		List<ResourceFile> scriptPaths = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile directory : scriptPaths) {
-			Path path = GhidraScriptUtil.getScriptPath(directory);
-			if (path != null && !path.isReadOnly()) {
-				newPaths.add(directory);
-			}
-		}
-
-		Collections.sort(newPaths);
-		return newPaths;
 	}
 
 	private JPanel buildNamePanel() {
@@ -176,7 +171,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	}
 
 	protected String getDuplicateNameErrorMessage(String name) {
-		ScriptInfo existingInfo = GhidraScriptUtil.getExistingScriptInfo(name);
+		ScriptInfo existingInfo = componentProvider.getInfoManager().getExistingScriptInfo(name);
 		if (existingInfo != null) {
 			// make sure the script has not been deleted
 			ResourceFile sourceFile = existingInfo.getSourceFile();

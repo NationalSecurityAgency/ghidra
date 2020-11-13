@@ -15,6 +15,10 @@
  */
 package resources;
 
+import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.image.BufferedImage;
 import java.util.Objects;
 
 import javax.swing.Icon;
@@ -24,18 +28,39 @@ import resources.icons.TranslateIcon;
 
 /**
  * A builder to allow for easier creation of an icon that is composed of a base icon, with 
- * other icons overlayed.  The {@link #build()} method returns an {@link ImageIcon}, as this
- * allows Java's buttons to create analogue disabled icons correctly.
+ * other icons overlaid.  The {@link #build()} method returns an {@link ImageIcon}, as this
+ * allows Java's buttons to automatically create disabled icons correctly.
  * 
  * <P>Note: this class is a work-in-progress.  Add more methods for locating overlays as needed. 
  */
 public class MultiIconBuilder {
-
 	private MultiIcon multiIcon;
 	private String description;
 
 	public MultiIconBuilder(Icon baseIcon) {
 		this.multiIcon = new MultiIcon(Objects.requireNonNull(baseIcon));
+	}
+
+	/**
+	 * Adds the specified icon as an overlay to the base icon, possibly scaled according
+	 * to the specified width and height, in the specified quadrant corner.
+	 * 
+	 * @param icon the icon to overlay
+	 * @param w width of the overlaid icon
+	 * @param h height of the overlaid icon
+	 * @param quandrant corner to place the overlay on
+	 * @return this builder (for chaining)
+	 */
+	public MultiIconBuilder addIcon(Icon icon, int w, int h, QUADRANT quandrant) {
+		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+
+		int x = (multiIcon.getIconWidth() - scaled.getIconWidth()) * quandrant.x;
+		int y = (multiIcon.getIconHeight() - scaled.getIconHeight()) * quandrant.y;
+
+		TranslateIcon txIcon = new TranslateIcon(scaled, x, y);
+		multiIcon.addIcon(txIcon);
+		return this;
+
 	}
 
 	/**
@@ -45,7 +70,7 @@ public class MultiIconBuilder {
 	 * @return this builder
 	 */
 	public MultiIconBuilder addLowerRightIcon(Icon icon) {
-		return addLowerRightIcon(icon, icon.getIconWidth(), icon.getIconHeight());
+		return addIcon(icon, icon.getIconWidth(), icon.getIconHeight(), QUADRANT.LR);
 	}
 
 	/**
@@ -58,14 +83,7 @@ public class MultiIconBuilder {
 	 * @return this builder
 	 */
 	public MultiIconBuilder addLowerRightIcon(Icon icon, int w, int h) {
-
-		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
-
-		int x = multiIcon.getIconWidth() - scaled.getIconWidth();
-		int y = multiIcon.getIconHeight() - scaled.getIconHeight();
-		TranslateIcon txIcon = new TranslateIcon(scaled, x, y);
-		multiIcon.addIcon(txIcon);
-		return this;
+		return addIcon(icon, w, h, QUADRANT.LR);
 	}
 
 	/**
@@ -75,7 +93,7 @@ public class MultiIconBuilder {
 	 * @return this builder
 	 */
 	public MultiIconBuilder addLowerLeftIcon(Icon icon) {
-		return addLowerLeftIcon(icon, icon.getIconWidth(), icon.getIconHeight());
+		return addIcon(icon, icon.getIconWidth(), icon.getIconHeight(), QUADRANT.LL);
 	}
 
 	/**
@@ -88,14 +106,34 @@ public class MultiIconBuilder {
 	 * @return this builder
 	 */
 	public MultiIconBuilder addLowerLeftIcon(Icon icon, int w, int h) {
+		return addIcon(icon, w, h, QUADRANT.LL);
+	}
 
-		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+	/**
+	 * Add text overlaid on the base icon, aligned to the specified quadrant.
+	 * 
+	 * @param text Text string to write onto the icon.  Probably can only fit a letter or two
+	 * @param font The font to use to render the text.  You know the size of the base icon, so
+	 * you should be able to figure out the size of the font to use for the text
+	 * @param color The color to use when rendering the text
+	 * @param quandrant The {@link QUADRANT} to align the text to different parts of the icon
+	 * @return this builder (for chaining)
+	 */
+	public MultiIconBuilder addText(String text, Font font, Color color, QUADRANT quandrant) {
 
-		int x = 0;
-		int y = multiIcon.getIconHeight() - scaled.getIconHeight();
-		TranslateIcon txIcon = new TranslateIcon(scaled, x, y);
-		multiIcon.addIcon(txIcon);
-		return this;
+		FontRenderContext frc = new FontRenderContext(null, true, true);
+		TextLayout tl = new TextLayout(text, font, frc);
+
+		BufferedImage bi = new BufferedImage((int) Math.ceil(tl.getAdvance()),
+			(int) Math.ceil(tl.getAscent() + tl.getDescent()), BufferedImage.TYPE_INT_ARGB);
+
+		Graphics2D g2d = (Graphics2D) bi.getGraphics();
+		g2d.setFont(font);
+		g2d.setColor(color);
+		tl.draw(g2d, 0, tl.getAscent());
+		g2d.dispose();
+
+		return addIcon(new ImageIcon(bi), bi.getWidth(), bi.getHeight(), quandrant);
 	}
 
 	/**

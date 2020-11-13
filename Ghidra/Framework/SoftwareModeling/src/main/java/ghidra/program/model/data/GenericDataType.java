@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
@@ -44,9 +43,6 @@ public abstract class GenericDataType extends DataTypeImpl {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#setNameAndCategory(ghidra.program.model.data.CategoryPath, java.lang.String)
-	 */
 	@Override
 	public void setNameAndCategory(CategoryPath path, String name)
 			throws InvalidNameException, DuplicateNameException {
@@ -55,9 +51,6 @@ public abstract class GenericDataType extends DataTypeImpl {
 		doSetCategoryPath(path);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String name) throws InvalidNameException {
 		doSetName(name);
@@ -73,9 +66,6 @@ public abstract class GenericDataType extends DataTypeImpl {
 		notifyNameChanged(oldName);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataType#setCategoryPath(ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void setCategoryPath(CategoryPath path) {
 		doSetCategoryPath(path);

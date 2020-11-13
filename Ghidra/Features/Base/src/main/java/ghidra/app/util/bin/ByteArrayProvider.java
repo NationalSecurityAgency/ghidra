@@ -18,9 +18,9 @@ package ghidra.app.util.bin;
 import java.io.*;
 
 /**
- * An implementation of ByteProvider where the underlying
- * bytes are supplied by a static byte array.
- *
+ * An implementation of {@link ByteProvider} where the underlying bytes are supplied by a static 
+ * byte array.
+ * <p>
  * NOTE: Use of this class is discouraged when the byte array could be large.
  */
 public class ByteArrayProvider implements ByteProvider {
@@ -28,18 +28,19 @@ public class ByteArrayProvider implements ByteProvider {
 	private String name;
 
 	/**
-	 * Constructs a byte array provider using the specified
-	 * byte array
-	 * @param bytes the underlying byte array.
+	 * Constructs a {@link ByteArrayProvider} using the specified byte array
+	 * 
+	 * @param bytes the underlying byte array
 	 */
 	public ByteArrayProvider(byte[] bytes) {
 		this.srcBytes = bytes;
 	}
 
 	/**
-	 * Constructs a byte array provider using the specified
-	 * byte array
-	 * @param bytes the underlying byte array.
+	 * Constructs a {@link ByteArrayProvider} using the specified byte array
+	 * 
+	 * @param name the name of the {@link ByteProvider} 
+	 * @param bytes the underlying byte array
 	 */
 	public ByteArrayProvider(String name, byte[] bytes) {
 		this.name = name;
@@ -83,7 +84,7 @@ public class ByteArrayProvider implements ByteProvider {
 	}
 
 	/**
-	 * Throws IOException if index is not a valid position in the buffer.
+	 * Throws {@link IOException} if index is not a valid position in the buffer
 	 *
 	 * @param index position in buffer to test
 	 * @param inclusiveMax allow buffer.length as index

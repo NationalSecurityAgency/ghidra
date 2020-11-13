@@ -26,16 +26,16 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.SourceArchive;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 public class DisassociateAction extends DockingAction {
-	public static final String MENU_NAME = "Disassociate Datatypes from";
+	public static final String MENU_NAME = "Disassociate Datatypes From";
 
 	private final SourceArchive sourceArchive;
 	private final DataTypeManager dtm;

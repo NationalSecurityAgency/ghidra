@@ -349,8 +349,11 @@ void Funcdata::opInsertAfter(PcodeOp *op,PcodeOp *prev)
   if (prev->isMarker()) {
     if (prev->code() == CPUI_INDIRECT) {
       Varnode *invn = prev->getIn(1);
-      if (invn->getSpace()->getType()==IPTR_IOP)
-	prev = PcodeOp::getOpFromConst(invn->getAddr()); // Store or call
+      if (invn->getSpace()->getType()==IPTR_IOP) {
+	PcodeOp *targOp = PcodeOp::getOpFromConst(invn->getAddr()); // Store or call
+	if (!targOp->isDead())
+	  prev = targOp;
+      }
     }
   }
   list<PcodeOp *>::iterator iter = prev->getBasicIter();
@@ -521,6 +524,43 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
     return res;
 }
 
+/// Convert the given CPUI_PTRADD into the equivalent CPUI_INT_ADD.  This may involve inserting a
+/// CPUI_INT_MULT PcodeOp. If finalization is requested and a new PcodeOp is needed, the output
+/// Varnode is marked as \e implicit and has its data-type set
+/// \param op is the given PTRADD
+/// \param finalize is \b true if finalization is needed for any new PcodeOp
+void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
+
+{
+  Varnode *multVn = op->getIn(2);
+  int4 multSize = multVn->getOffset(); // Size the PTRADD thinks we are pointing
+
+  opRemoveInput(op,2);
+  opSetOpcode(op,CPUI_INT_ADD);
+  if (multSize == 1) return;	// If no multiplier, we are done
+  Varnode *offVn = op->getIn(1);
+  if (offVn->isConstant()) {
+    uintb newVal = multSize * offVn->getOffset();
+    newVal &= calc_mask(offVn->getSize());
+    Varnode *newOffVn = newConstant(offVn->getSize(), newVal);
+    if (finalize)
+      newOffVn->updateType(offVn->getType(), false, false);
+    opSetInput(op,newOffVn,1);
+    return;
+  }
+  PcodeOp *multOp = newOp(2,op->getAddr());
+  opSetOpcode(multOp,CPUI_INT_MULT);
+  Varnode *addVn = newUniqueOut(offVn->getSize(),multOp);
+  if (finalize) {
+    addVn->updateType(multVn->getType(), false, false);
+    addVn->setImplied();
+  }
+  opSetInput(multOp,offVn,0);
+  opSetInput(multOp,multVn,1);
+  opSetInput(op,addVn,1);
+  opInsertBefore(multOp,op);
+}
+
 /// Make a clone of the given PcodeOp, copying control-flow properties as well.  The data-type
 /// is \e not cloned.
 /// \param op is the PcodeOp to clone
@@ -540,37 +580,20 @@ PcodeOp *Funcdata::cloneOp(const PcodeOp *op,const SeqNum &seq)
   return newop;
 }
 
-/// Return the CPUI_RETURN op with the most specialized data-type, which is not
-/// dead and is not a special halt. If HighVariables are not available, just
-/// return the first CPUI_RETURN op.
-/// \return the representative CPUI_RETURN op or NULL
-PcodeOp *Funcdata::canonicalReturnOp(void) const
+/// Return the first CPUI_RETURN operation that is not dead or an artificial halt
+/// \return a representative CPUI_RETURN op or NULL if there are none
+PcodeOp *Funcdata::getFirstReturnOp(void) const
 
 {
-  bool hasnohigh = !isHighOn();
-  PcodeOp *res = (PcodeOp *)0;
-  Datatype *bestdt = (Datatype *)0;
   list<PcodeOp *>::const_iterator iter,iterend;
   iterend = endOp(CPUI_RETURN);
   for(iter=beginOp(CPUI_RETURN);iter!=iterend;++iter) {
     PcodeOp *retop = *iter;
     if (retop->isDead()) continue;
     if (retop->getHaltType()!=0) continue;
-    if (retop->numInput() > 1) {
-      if (hasnohigh) return retop;
-      Varnode *vn = retop->getIn(1);
-      Datatype *ct = vn->getHigh()->getType();
-      if (bestdt == (Datatype *)0) {
-	res = retop;
-	bestdt = ct;
-      }
-      else if (ct->typeOrder(*bestdt) < 0) {
-	res = retop;
-	bestdt = ct;
-      }
-    }
+    return retop;
   }
-  return res;
+  return (PcodeOp *)0;
 }
 
 /// \brief Create new PcodeOp with 2 or 3 given operands
@@ -627,31 +650,6 @@ PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 siz
   return newop;
 }
 
-/// \brief Turn given PcodeOp into a CPUI_INDIRECT that \e indirectly \e creates a Varnode
-///
-/// An \e indirectly \e created Varnode effectively has no data-flow before the INDIRECT op
-/// that defines it, and the value contained by the Varnode is not explicitly calculable.
-/// \param op is the given PcodeOp to convert to a CPUI_INDIRECT
-/// \param indeffect is the p-code causing the indirect effect
-/// \param outvn is the (preexisting) Varnode that will be marked as \e created by the INDIRECT
-/// \param possibleout is \b true if the output should be treated as a \e directwrite.
-void Funcdata::setIndirectCreation(PcodeOp *op,PcodeOp *indeffect,Varnode *outvn,bool possibleout)
-
-{
-  Varnode *newin;
-
-  newin = newConstant(outvn->getSize(),0);
-  op->flags |= PcodeOp::indirect_creation;
-  opSetOutput(op,outvn);
-  if (!possibleout)
-    newin->flags |= Varnode::indirect_creation;
-  outvn->flags |= Varnode::indirect_creation;
-  opSetOpcode(op,CPUI_INDIRECT);
-  opSetInput(op,newin,0);
-  opSetInput(op,newVarnodeIop(indeffect),1);
-  opInsertBefore(op,indeffect);
-}
-
 /// \brief Build a CPUI_INDIRECT op that \e indirectly \e creates a Varnode
 ///
 /// An \e indirectly \e created Varnode effectively has no data-flow before the INDIRECT op
@@ -682,33 +680,33 @@ PcodeOp *Funcdata::newIndirectCreation(PcodeOp *indeffect,const Address &addr,in
   return newop;
 }
 
-/// Data-flow through the given CPUI_INDIRECT op is truncated causing the output Varnode
-/// to be \e indirectly \e created.
+/// Data-flow through the given CPUI_INDIRECT op is marked so that the output Varnode
+/// is considered \e indirectly \e created.
 /// An \e indirectly \e created Varnode effectively has no data-flow before the INDIRECT op
 /// that defines it, and the value contained by the Varnode is not explicitly calculable.
 /// \param indop is the given CPUI_INDIRECT op
-void Funcdata::truncateIndirect(PcodeOp *indop)
+/// \param possibleOutput is \b true if INDIRECT should be marked as a possible call output
+void Funcdata::markIndirectCreation(PcodeOp *indop,bool possibleOutput)
 
 {
   Varnode *outvn = indop->getOut();
-  Varnode *newin = newConstant(outvn->getSize(),0);
+  Varnode *in0 = indop->getIn(0);
 
   indop->flags |= PcodeOp::indirect_creation;
-  newin->flags |= Varnode::indirect_creation;
+  if (!in0->isConstant())
+    throw LowlevelError("Indirect creation not properly formed");
+  if (!possibleOutput)
+    in0->flags |= Varnode::indirect_creation;
   outvn->flags |= Varnode::indirect_creation;
-
-  opSetInput(indop,newin,0);
 }
 
 /// \brief Generate raw p-code for the function
 ///
 /// Follow flow from the entry point generating PcodeOps for each instruction encountered.
-/// The caller can provide a bounding range that constrains where control can flow to
-/// and can also provide a maximum number of instructions that will be followed.
+/// The caller can provide a bounding range that constrains where control can flow to.
 /// \param baddr is the beginning of the constraining range
 /// \param eaddr is the end of the constraining range
-/// \param insn_max is the maximum number of instructions to follow
-void Funcdata::followFlow(const Address &baddr,const Address &eaddr,uint4 insn_max)
+void Funcdata::followFlow(const Address &baddr,const Address &eaddr)
 
 {
   if (!obank.empty()) {
@@ -722,8 +720,7 @@ void Funcdata::followFlow(const Address &baddr,const Address &eaddr,uint4 insn_m
   FlowInfo flow(*this,obank,bblocks,qlst);
   flow.setRange(baddr,eaddr);
   flow.setFlags(fl);
-  if (insn_max != 0)
-    flow.setMaximumInstructions(insn_max);
+  flow.setMaximumInstructions(glb->max_instructions);
   flow.generateOps();
   size = flow.getSize();
   // Cannot keep track of function sizes in general because of non-contiguous functions
@@ -929,7 +926,7 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
   else if (type == Override::CALL)
     op = findPrimaryBranch(iter,enditer,true,false,true);
   else if (type == Override::CALL_RETURN)
-    op = findPrimaryBranch(iter,enditer,true,false,true);
+    op = findPrimaryBranch(iter,enditer,true,true,true);
   else if (type == Override::RETURN)
     op = findPrimaryBranch(iter,enditer,true,true,false);
 
@@ -975,10 +972,9 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
 ///   - `c <= x`   with  `c-1 < x`   OR
 ///   - `x <= c`   with  `x < c+1`
 ///
-/// \param data is the function being analyzed
 /// \param op is comparison PcodeOp
 /// \return true if a valid replacement was performed
-bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
+bool Funcdata::replaceLessequal(PcodeOp *op)
 
 {
   Varnode *vn;
@@ -1001,17 +997,105 @@ bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
   if (op->code() == CPUI_INT_SLESSEQUAL) {
     if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
     if ((val>0)&&(val+diff<0)) return false;
-    data.opSetOpcode(op,CPUI_INT_SLESS);
+    opSetOpcode(op,CPUI_INT_SLESS);
   }
   else {			// Check for unsigned overflow
     if ((diff==-1)&&(val==0)) return false;
     if ((diff==1)&&(val==-1)) return false;
-    data.opSetOpcode(op,CPUI_INT_LESS);
+    opSetOpcode(op,CPUI_INT_LESS);
   }
   uintb res = (val+diff) & calc_mask(vn->getSize());
-  Varnode *newvn = data.newConstant(vn->getSize(),res);
+  Varnode *newvn = newConstant(vn->getSize(),res);
   newvn->copySymbol(vn);	// Preserve data-type (and any Symbol info)
-  data.opSetInput(op,newvn,i);
+  opSetInput(op,newvn,i);
+  return true;
+}
+
+/// If a term has a multiplicative coefficient, but the underlying term is still additive,
+/// in some situations we may need to distribute the coefficient before simplifying further.
+/// The given PcodeOp is a INT_MULT where the second input is a constant. We also
+/// know the first input is formed with INT_ADD. Distribute the coefficient to the INT_ADD inputs.
+/// \param op is the given PcodeOp
+/// \return \b true if the action was performed
+bool Funcdata::distributeIntMultAdd(PcodeOp *op)
+
+{
+  Varnode *newvn0,*newvn1;
+  PcodeOp *addop = op->getIn(0)->getDef();
+  Varnode *vn0 = addop->getIn(0);
+  Varnode *vn1 = addop->getIn(1);
+  if ((vn0->isFree())&&(!vn0->isConstant())) return false;
+  if ((vn1->isFree())&&(!vn1->isConstant())) return false;
+  uintb coeff = op->getIn(1)->getOffset();
+  int4 size = op->getOut()->getSize();
+				// Do distribution
+  if (vn0->isConstant()) {
+    uintb val = coeff * vn0->getOffset();
+    val &= calc_mask(size);
+    newvn0 = newConstant(size,val);
+  }
+  else {
+    PcodeOp *newop0 = newOp(2,op->getAddr());
+    opSetOpcode(newop0,CPUI_INT_MULT);
+    newvn0 = newUniqueOut(size,newop0);
+    opSetInput(newop0, vn0, 0); // To first input of original add
+    Varnode *newcvn = newConstant(size,coeff);
+    opSetInput(newop0, newcvn, 1);
+    opInsertBefore(newop0, op);
+  }
+
+  if (vn1->isConstant()) {
+    uintb val = coeff * vn1->getOffset();
+    val &= calc_mask(size);
+    newvn1 = newConstant(size,val);
+  }
+  else {
+    PcodeOp *newop1 = newOp(2,op->getAddr());
+    opSetOpcode(newop1,CPUI_INT_MULT);
+    newvn1 = newUniqueOut(size,newop1);
+    opSetInput(newop1, vn1, 0); // To second input of original add
+    Varnode *newcvn = newConstant(size,coeff);
+    opSetInput(newop1, newcvn, 1);
+    opInsertBefore(newop1, op);
+  }
+
+  opSetInput( op, newvn0, 0); // new ADD's inputs are outputs of new MULTs
+  opSetInput( op, newvn1, 1);
+  opSetOpcode(op, CPUI_INT_ADD);
+
+  return true;
+}
+
+/// If:
+///   - The given Varnode is defined by a CPUI_INT_MULT.
+///   - The second input to the INT_MULT is a constant.
+///   - The first input is defined by another CPUI_INT_MULT,
+///   - This multiply is also by a constant.
+///
+/// The constants are combined and \b true is returned.
+/// Otherwise no change is made and \b false is returned.
+/// \param vn is the given Varnode
+/// \return \b true if a change was made
+bool Funcdata::collapseIntMultMult(Varnode *vn)
+
+{
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  if (op->code() != CPUI_INT_MULT) return false;
+  Varnode *constVnFirst = op->getIn(1);
+  if (!constVnFirst->isConstant()) return false;
+  if (!op->getIn(0)->isWritten()) return false;
+  PcodeOp *otherMultOp = op->getIn(0)->getDef();
+  if (otherMultOp->code() != CPUI_INT_MULT) return false;
+  Varnode *constVnSecond = otherMultOp->getIn(1);
+  if (!constVnSecond->isConstant()) return false;
+  Varnode *invn = otherMultOp->getIn(0);
+  if (invn->isFree()) return false;
+  int4 size = invn->getSize();
+  uintb val = (constVnFirst->getOffset() * constVnSecond->getOffset()) & calc_mask(size);
+  Varnode *newvn = newConstant(size,val);
+  opSetInput(op,newvn,1);
+  opSetInput(op,invn,0);
   return true;
 }
 
@@ -1112,7 +1196,7 @@ void opFlipInPlaceExecute(Funcdata &data,vector<PcodeOp *> &fliplist)
 	data.opSwapInput(op,0,1);
 
 	if ((opc == CPUI_INT_LESSEQUAL)||(opc == CPUI_INT_SLESSEQUAL))
-	  Funcdata::replaceLessequal(data,op);
+	  data.replaceLessequal(op);
       }
     }
   }

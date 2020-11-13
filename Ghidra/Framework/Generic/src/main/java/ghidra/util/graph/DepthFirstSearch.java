@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,7 +388,7 @@ public class DepthFirstSearch
    * portion of the graph with the following
    * property:
    * <ol>
-   * <li>If the graph is acyclic then v[i] -> v[j] => i < j .</li>
+   * <li>{@literal If the graph is acyclic then v[i] -> v[j] => i < j .}</li>
    * <li>If the graph contains cycles, then the above is true except when
    *     (v[i],v[j]) is a back edge.</li>
    * </ol>

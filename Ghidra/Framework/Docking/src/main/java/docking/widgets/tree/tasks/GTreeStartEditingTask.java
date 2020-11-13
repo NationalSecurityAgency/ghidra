@@ -15,7 +15,8 @@
  */
 package docking.widgets.tree.tasks;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.CellEditor;
 import javax.swing.JTree;
@@ -27,7 +28,9 @@ import docking.widgets.tree.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 public class GTreeStartEditingTask extends GTreeTask {
 
@@ -41,7 +44,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	@Override
-	public void run(final TaskMonitor monitor) {
+	public void run(final TaskMonitor monitor) throws CancelledException {
 		runOnSwingThread(() -> {
 			if (monitor.isCancelled()) {
 				return; // we can be cancelled while waiting for Swing to run us
@@ -56,19 +59,22 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	private void edit() {
-		final GTreeNode child = parent.getChild(childName);
-		if (child == null) {
+
+		GTreeNode editNode = parent.getChild(childName);
+		if (editNode == null) {
 			if (tree.isFiltered()) {
 				Msg.showWarn(getClass(), tree, "Cannot Edit Tree Node",
-					"Cannot edit tree node \"" + childName + "\" while tree is filtered.");
+					"Can't edit tree node \"" + childName + "\" while tree is filtered.");
 			}
-			Msg.debug(this,
-				"Can't find node for \"" + childName + "\". Perhaps it is filtered out?");
+			else {
+				Msg.debug(this,
+					"Can't find node \"" + childName + "\" to edit.");
+			}
 			return;
 		}
 
-		TreePath path = child.getTreePath();
-		final List<GTreeNode> childrenBeforeEdit = parent.getChildren();
+		TreePath path = editNode.getTreePath();
+		final Set<GTreeNode> childrenBeforeEdit = new HashSet<>(parent.getChildren());
 
 		final CellEditor cellEditor = tree.getCellEditor();
 		cellEditor.addCellEditorListener(new CellEditorListener() {
@@ -93,7 +99,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			 *                       has finished and been applied.
 			 */
 			private void reselectNode() {
-				String newName = child.getName();
+				String newName = editNode.getName();
 				GTreeNode newChild = parent.getChild(newName);
 				if (newChild == null) {
 					throw new AssertException("Unable to find new node by name: " + newName);
@@ -121,7 +127,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			}
 
 			private void doReselectNodeHandlingPotentialChildChange() {
-				List<GTreeNode> childrenAfterEdit = parent.getChildren();
+				Set<GTreeNode> childrenAfterEdit = new HashSet<>(parent.getChildren());
 				if (childrenAfterEdit.equals(childrenBeforeEdit)) {
 					reselectNode(); // default re-select--the original child is still there
 					return;
@@ -133,12 +139,12 @@ public class GTreeStartEditingTask extends GTreeTask {
 					return; // no way for us to figure out the correct child to edit
 				}
 
-				GTreeNode newChild = childrenAfterEdit.get(0);
+				GTreeNode newChild = CollectionUtils.any(childrenAfterEdit);
 				tree.setSelectedNode(newChild);
 			}
 		});
 
-		tree.setNodeEditable(child);
+		tree.setNodeEditable(editNode);
 		jTree.startEditingAtPath(path);
 
 	}

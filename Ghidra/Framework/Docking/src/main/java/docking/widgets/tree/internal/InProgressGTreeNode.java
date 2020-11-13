@@ -15,19 +15,18 @@
  */
 package docking.widgets.tree.internal;
 
-
 import javax.swing.Icon;
 
-import docking.widgets.tree.AbstractGTreeNode;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeNode;
 import resources.ResourceManager;
 
-
-public class InProgressGTreeNode extends AbstractGTreeNode {
+public class InProgressGTreeNode extends GTreeNode {
 	private static final Icon ICON = ResourceManager.loadImage("images/magnifier.png");
 
 	public InProgressGTreeNode() {
 	}
+
 	@Override
 	public Icon getIcon(boolean expanded) {
 		return ICON;
@@ -51,11 +50,6 @@ public class InProgressGTreeNode extends AbstractGTreeNode {
 	@Override
 	public int compareTo(GTreeNode o) {
 		return 0;
-	}
-	@Override
-	protected void loadChildren() {
-		// TODO Auto-generated method stub
-
 	}
 
 }

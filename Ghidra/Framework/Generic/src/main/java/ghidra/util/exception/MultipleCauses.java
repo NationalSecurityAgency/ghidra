@@ -36,7 +36,7 @@ public class MultipleCauses extends Throwable {
 
 	/**
 	 * Constructs a new MultipleCauses wrapper with no causes
-	 * @note it is rude to leave this empty
+	 * NOTE: it is rude to leave this empty
 	 */
 	public MultipleCauses() {
 		super("Multiple Causes");
@@ -64,7 +64,7 @@ public class MultipleCauses extends Throwable {
 	/**
 	 * Returns the causes of the parent throwable (possibly an empty collection)
 	 * @return the collection of causes of the parent throwable
-	 * @note it is rude to leave this empty. If the parent throwable has no cause, or the cause is
+	 * NOTE: it is rude to leave this empty. If the parent throwable has no cause, or the cause is
 	 * unknown, leave its cause null. 
 	 */
 	public synchronized Collection<Throwable> getCauses() {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package docking.widgets.tree.tasks;
 
+import docking.widgets.tree.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import docking.widgets.tree.*;
 
 public class GTreeLoadChildrenTask extends GTreeTask {
 
@@ -43,11 +42,11 @@ public class GTreeLoadChildrenTask extends GTreeTask {
 				runOnSwingThread(new Runnable() {
 					@Override
 					public void run() {
-						tree.collapseAll(tree.getRootNode());
+						tree.collapseAll(tree.getViewRoot());
 					}
 				});
 			}
-			node.removeAll();
+			node.unloadChildren();
 		}
 		finally {
 			monitor.initialize(maxValue);

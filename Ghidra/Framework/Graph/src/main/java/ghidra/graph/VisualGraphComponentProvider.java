@@ -59,11 +59,11 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 
 	private List<VisualGraphFeaturette<V, E, G>> subFeatures = new ArrayList<>();
 
-	protected VisualGraphComponentProvider(DockingTool tool, String name, String owner) {
+	protected VisualGraphComponentProvider(Tool tool, String name, String owner) {
 		super(tool, name, owner);
 	}
 
-	protected VisualGraphComponentProvider(DockingTool tool, String name, String owner,
+	protected VisualGraphComponentProvider(Tool tool, String name, String owner,
 			Class<?> contextType) {
 		super(tool, name, owner, contextType);
 	}
@@ -165,7 +165,7 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 		Undo/redo for graph operations (delete; group/ungroup; move)
 			-rapid pressing will shortcut items
 			-undo/redo allows us to prune nodes 
-				--how to maintain old nodes/edges?  (FitleringVisualGraph)	
+				--how to maintain old nodes/edges?  (FilteringVisualGraph)	
 	
 	*/
 

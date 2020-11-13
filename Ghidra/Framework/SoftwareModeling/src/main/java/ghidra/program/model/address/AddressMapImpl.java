@@ -21,7 +21,7 @@ import java.util.*;
 
 /**
  * <code>AddressMapImpl</code> provides a stand-alone AddressMap.
- * An AddressMapimpl instance should only be used to decode keys which it has generated.
+ * An AddressMapImpl instance should only be used to decode keys which it has generated.
  * If this map is used for a specific program instance, the map should be discard if any changes 
  * are made to that programs address map (e.g., removing or renaming overlay spaces).
  */
@@ -169,7 +169,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#decodeAddress(long)
+	 * @see ghidra.program.database.map.AddressMap#decodeAddress(long)
 	 */
 	public synchronized Address decodeAddress(long value) {
 		if ((value & MAP_ID_MASK) != mapIdBits) {
@@ -192,7 +192,7 @@ public class AddressMapImpl {
 	 * single program should be passed to this method. Only limited checking is not performed in order to 
 	 * improve performance.
 	 * @param addr address
-	 * @see ghidra.program.model.address.AddressMap#getKey(ghidra.program.model.address.Address)
+	 * @see ghidra.program.database.map.AddressMap#getKey(Address, boolean)
 	 */
 	public synchronized long getKey(Address addr) {
 		return mapIdBits | ((long) getBaseAddressIndex(addr) << ADDR_OFFSET_SIZE) |
@@ -200,7 +200,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#findKeyRange(java.util.List, ghidra.program.model.address.Address)
+	 * @see ghidra.program.database.map.AddressMap#findKeyRange(List, Address)
 	 */
 	public int findKeyRange(List<KeyRange> keyRangeList, Address addr) {
 		if (addr == null) {
@@ -210,7 +210,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#getKeyRanges(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
+	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(Address, Address, boolean)
 	 */
 	public List<KeyRange> getKeyRanges(Address start, Address end) {
 		if (start.getAddressSpace() != end.getAddressSpace() || start.getOffset() > end.getOffset()) {
@@ -222,7 +222,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.address.AddressMap#getKeyRanges(ghidra.program.model.address.AddressSetView)
+	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(AddressSetView, boolean)
 	 */
 	public synchronized List<KeyRange> getKeyRanges(AddressSetView set) {
 

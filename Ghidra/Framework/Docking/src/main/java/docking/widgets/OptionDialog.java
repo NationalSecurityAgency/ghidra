@@ -35,16 +35,16 @@ import ghidra.util.exception.AssertException;
  * A utility class to easily show dialogs that require input from the user.
  *
  *
- * <h3>Option Dialogs</h3><br>
+ * <h2>Option Dialogs</h2><br>
  * <blockquote>
  * <p>
  * The primary type of
  * dialog provided herein is the basic option dialog that allows the user to specify the buttons
  * that appear on the dialog.  By default, the given option text will appear as a button(s),
- * followed by a <tt>Cancel</tt> button (you can call the
+ * followed by a <code>Cancel</code> button (you can call the
  * {@link #showOptionNoCancelDialog(Component, String, String, String, String, int)} methods if
- * you do not want a <tt>Cancel</tt> button.  To use this type of dialog you can use the
- * various <b><tt>showOptionDialog*</tt></b> methods.
+ * you do not want a <code>Cancel</code> button.  To use this type of dialog you can use the
+ * various <b><code>showOptionDialog*</code></b> methods.
  * </p>
  * <p>
  * Each of the option dialog methods will return a result, which is a number indicating the
@@ -70,8 +70,8 @@ import ghidra.util.exception.AssertException;
  * <h3>Yes/No Dialogs</h3><br>
  * <blockquote>
  * <p>
- * Finally, there are a series of methods that present <tt>Yes</tt> and <tt>No</tt> buttons in
- * a dialog.  There are versions that do and do not have a <tt>Cancel</tt> button.
+ * Finally, there are a series of methods that present <code>Yes</code> and <code>No</code> buttons in
+ * a dialog.  There are versions that do and do not have a <code>Cancel</code> button.
  * </p>
  * </blockquote>
  *
@@ -99,7 +99,7 @@ import ghidra.util.exception.AssertException;
  * @see OptionDialogBuilder
  */
 public class OptionDialog extends DialogComponentProvider {
-	private static final String MESSAGE_COMPONENT_NAME = "MESSAGE-COMPONENT";
+	public static final String MESSAGE_COMPONENT_NAME = "MESSAGE-COMPONENT";
 	/** Used for error messages. */
 	public static final int ERROR_MESSAGE = 0;
 	/** Used for information messages. */
@@ -789,8 +789,8 @@ public class OptionDialog extends DialogComponentProvider {
 	/**
 	 * Dialog with only YES/NO options, <b>no CANCEL</b>
 	 * <p>
-	 * The dialog shown by this method will have the <tt>No</tt> button set as the default button so
-	 * that an Enter key press will trigger a <tt>No</tt> action.
+	 * The dialog shown by this method will have the <code>No</code> button set as the default button so
+	 * that an Enter key press will trigger a <code>No</code> action.
 	 *
 	 * @param parent    The parent component of this dialog. If the given component is
 	 * a frame or dialog, then the component will be used to parent the option dialog.

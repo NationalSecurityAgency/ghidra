@@ -26,13 +26,25 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.timer.GTimer;
 
 /**
  * Dialog that is displayed to show activity for a Task that is running outside of the 
  * Swing Thread.
+ * 
+ * <p>Implementation note: 
+ * if this class is constructed with a {@code hasProgress} value of {@code false},
+ * then an activity component will be shown, not a progress monitor.   Any calls to update 
+ * progress will not affect the display.   However, the display can be converted to use progress
+ * by first calling {@link #setIndeterminate(boolean)} with a {@code false} value and then calling
+ * {@link #initialize(long)}.    Once this has happened, this dialog will no longer use the
+ * activity display--the progress bar is in effect for the duration of this dialog's usage.   
+ * 
+ * <p>This dialog can be toggled between indeterminate mode and progress mode via calls to 
+ * {@link #setIndeterminate(boolean)}.
  */
 public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
@@ -50,6 +62,8 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	private Component centerOnComp;
 	private Runnable shouldCancelRunnable;
 	private boolean taskDone;
+	private boolean supportsProgress;
+
 	private JPanel mainPanel;
 	private JPanel activityPanel;
 	private TaskMonitorComponent monitorComponent;
@@ -107,10 +121,11 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 			boolean hasProgress) {
 		super(title, isModal, true, canCancel, true);
 		this.centerOnComp = centerOnComp;
-		setup(canCancel, hasProgress);
+		this.supportsProgress = hasProgress;
+		setup(canCancel);
 	}
 
-	private void setup(boolean canCancel, boolean hasProgress) {
+	private void setup(boolean canCancel) {
 		monitorComponent = new TaskMonitorComponent(false, false);
 		activityPanel = new ChompingBitsAnimationPanel();
 
@@ -135,7 +150,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		mainPanel = new JPanel(new BorderLayout());
 		addWorkPanel(mainPanel);
 
-		if (hasProgress) {
+		if (supportsProgress) {
 			installProgressMonitor();
 		}
 		else {
@@ -165,7 +180,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 * Adds the panel that contains the progress bar to the dialog
 	 */
 	private void installProgressMonitor() {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			mainPanel.removeAll();
 			mainPanel.add(monitorComponent, BorderLayout.CENTER);
 			repack();
@@ -177,7 +192,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 * dialog. This should only be called if the dialog has no need to display progress.
 	 */
 	private void installActivityDisplay() {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			mainPanel.removeAll();
 			mainPanel.add(activityPanel, BorderLayout.CENTER);
 			repack();
@@ -273,7 +288,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	protected void doShow() {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			DockingWindowManager.showDialog(centerOnComp, TaskDialog.this);
 		});
 	}
@@ -302,7 +317,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 			}
 		};
 
-		SystemUtilities.runSwingNow(disposeTask);
+		Swing.runNow(disposeTask);
 	}
 
 //==================================================================================================
@@ -332,9 +347,8 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	@Override
 	public void initialize(long max) {
-		if (monitorComponent.isIndeterminate()) {
-			// don't show the progress bar if we have already been marked as indeterminate (this
-			// allows us to prevent low-level algorithms from changing the display settings).
+
+		if (!supportsProgress) {
 			return;
 		}
 
@@ -356,7 +370,8 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	@Override
-	public void setIndeterminate(final boolean indeterminate) {
+	public void setIndeterminate(boolean indeterminate) {
+		supportsProgress = !indeterminate;
 		monitorComponent.setIndeterminate(indeterminate);
 	}
 

@@ -29,9 +29,6 @@ public class AnnotatedStringFieldMouseHandler implements FieldMouseHandlerExtens
 	private static final Class<?>[] SUPPORTED_CLASSES =
 		new Class[] { AnnotatedTextFieldElement.class };
 
-	/**
-	 * @see FieldMouseHandlerExtension#fieldElementClicked(Object, Navigatable, MouseEvent, ServiceProvider)
-	 */
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,
 			ProgramLocation location, MouseEvent mouseEvent, ServiceProvider serviceProvider) {
@@ -42,9 +39,6 @@ public class AnnotatedStringFieldMouseHandler implements FieldMouseHandlerExtens
 			serviceProvider);
 	}
 
-	/**
-	 * @see FieldMouseHandlerExtension#getSupportedProgramLocations()
-	 */
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
 		return SUPPORTED_CLASSES;

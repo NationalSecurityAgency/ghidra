@@ -16,20 +16,18 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.*;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import docking.help.Help;
+import docking.help.HelpService;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GLabel;
@@ -39,11 +37,11 @@ import ghidra.app.services.Analyzer;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.ColorUtils;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 
 class AnalysisPanel extends JPanel implements PropertyChangeListener {
-	private static final long serialVersionUID = 1L;
 
 	public static final String PROTOTYPE = " (Prototype)";
 
@@ -132,24 +130,22 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(programs.get(0));
 
 		List<String> propertyNames = analysisOptions.getOptionNames();
-		Collections.sort(propertyNames, new Comparator<String>() {
-			@Override
-			public int compare(String o1, String o2) {
-				return o1.compareToIgnoreCase(o2);
-			}
-		});
+		Collections.sort(propertyNames, (o1, o2) -> o1.compareToIgnoreCase(o2));
 		for (String analyzerName : propertyNames) {
 			if (analyzerName.indexOf('.') == -1) {
 				if (analysisOptions.getType(analyzerName) != OptionType.BOOLEAN_TYPE) {
 					throw new AssertException(
 						"Analyzer enable property that is not boolean - " + analyzerName);
 				}
-				analyzerNames.add(analyzerName);
+
 				Analyzer analyzer = manager.getAnalyzer(analyzerName);
-				if (analyzer != null && analyzer.isPrototype()) {
-					prototypeAnalyzers.add(analyzerName);
+				if (analyzer != null) {
+					analyzerNames.add(analyzerName);
+					if (analyzer.isPrototype()) {
+						prototypeAnalyzers.add(analyzerName);
+					}
+					analyzerEnablement.add(analysisOptions.getBoolean(analyzerName, false));
 				}
-				analyzerEnablement.add(analysisOptions.getBoolean(analyzerName, false));
 			}
 		}
 	}
@@ -217,26 +213,11 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	private JPanel buildButtonPanel() {
 		JButton selectAllButton = new JButton("Select All");
-		selectAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				selectAll();
-			}
-		});
+		selectAllButton.addActionListener(e -> selectAll());
 		JButton deselectAllButton = new JButton("Deselect All");
-		deselectAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				deselectAll();
-			}
-		});
+		deselectAllButton.addActionListener(e -> deselectAll());
 		JButton restoreDefaultsButton = new JButton("Restore Defaults");
-		restoreDefaultsButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				restoreDefaults();
-			}
-		});
+		restoreDefaultsButton.addActionListener(e -> restoreDefaults());
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		buttonPanel.add(selectAllButton);
 		buttonPanel.add(deselectAllButton);
@@ -343,25 +324,23 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private void buildTable() {
 		table = new GTable(model);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting()) {
-					return;
-				}
-				ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-
-				int selectedRow = lsm.getMinSelectionIndex();
-				if (selectedRow == -1) {//TODO
-					analyzerOptionsPanel.removeAll();
-					analyzerOptionsPanel.validate();
-					analyzerOptionsPanel.repaint();
-					descriptionComponent.setText("");
-					return;
-				}
-				String analyzerName = analyzerNames.get(selectedRow);
-				setAnalyzerSelected(analyzerName);
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
 			}
+
+			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+			int selectedRow = lsm.getMinSelectionIndex();
+			if (selectedRow == -1) {
+				analyzerOptionsPanel.removeAll();
+				analyzerOptionsPanel.validate();
+				analyzerOptionsPanel.repaint();
+				descriptionComponent.setText("");
+				return;
+			}
+
+			String analyzerName = analyzerNames.get(selectedRow);
+			setAnalyzerSelected(analyzerName);
 		});
 	}
 
@@ -532,6 +511,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		noOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
 		noOptionsPanel.add(new GLabel("No options available."));
 
+		HelpService help = Help.getHelpService();
+
 		for (Options optionsGroup : optionGroups) {
 			String analyzerName = optionsGroup.getName();
 
@@ -550,10 +531,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			List<GenericOptionsComponent> optionComponents = new ArrayList<>();
 
 			for (String childOptionName : optionNames) {
+
 				EditorState childState =
 					editorStateFactory.getEditorState(optionsGroup, childOptionName, this);
 				GenericOptionsComponent comp =
 					GenericOptionsComponent.createOptionComponent(childState);
+
+				HelpLocation helpLoc = analysisOptions
+						.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
+				if (helpLoc != null) {
+					help.registerHelp(comp, helpLoc);
+				}
+
 				optionsContainer.add(comp);
 				optionComponents.add(comp);
 				analyzerManagedComponentsMap.get(analyzerName).add(comp);

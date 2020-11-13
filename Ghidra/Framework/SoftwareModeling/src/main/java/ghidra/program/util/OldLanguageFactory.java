@@ -115,7 +115,7 @@ public class OldLanguageFactory {
 	/**
 	 * Validate all old language definitions contained within the old language map.  
 	 * This is intended to be used by a unit test.
-	 * @returns number of validation errors
+	 * @return number of validation errors
 	 */
 	int validateAllOldLanguages() {
 		int errorCnt = 0;
@@ -270,7 +270,6 @@ public class OldLanguageFactory {
 
 	private static Element getRegistersElement(Language lang) {
 
-		Register[] registers = lang.getRegisters();
 		Register contextReg = lang.getContextBaseRegister();
 		Element registersElement = new Element("registers");
 		if (contextReg != null) {
@@ -292,7 +291,7 @@ public class OldLanguageFactory {
 			}
 			registersElement.addContent(ctxElement);
 		}
-		for (Register reg : registers) {
+		for (Register reg : lang.getRegisters()) {
 			if (!reg.getBaseRegister().isProcessorContext()) {
 				Element regElement = getRegisterElement(reg);
 				registersElement.addContent(regElement);

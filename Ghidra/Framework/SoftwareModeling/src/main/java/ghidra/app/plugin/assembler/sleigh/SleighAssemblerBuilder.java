@@ -75,9 +75,9 @@ import ghidra.util.SystemUtilities;
  * semantic errors, then the overall result is an error.
  * 
  * Some productions are "purely recursive," e.g., {@code :^instruction} lines in the SLEIGH. These
- * are ignored during parser construction. Let such a production be given as I => I. When resolving
+ * are ignored during parser construction. Let such a production be given as I =&gt; I. When resolving
  * the parse tree to bytes, and we encounter a production with I on the left hand side, we then
- * consider the possible application of the production I => I and its consequential constructors.
+ * consider the possible application of the production I =&gt; I and its consequential constructors.
  * Ideally, we could repeat this indefinitely, stopping when all further applications result in
  * semantic errors; however, there is no guarantee in the SLEIGH specification that such an
  * algorithm will actually halt, so a maximum number (default of 1) of applications are attempted.

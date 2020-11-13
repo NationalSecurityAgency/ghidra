@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.widgets.button.GRadioButton;
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
+import ghidra.util.Msg;
 
 /**
  * Allows the user to specify whether the input mode is BINARY or HEX for the {@link InsertBytesWidget}.
@@ -78,16 +79,10 @@ public class SelectionModeWidget extends ControlPanelWidget {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 
-				// If input is invalid, just exit.
-				if (!parent.validateInput()) {
-					return;
-				}
-
 				// If we're already in hex, do nothing.
 				if (inputMode == InputMode.HEX) {
 					return;
 				}
-
 				inputMode = InputMode.HEX;
 
 				// CONVERSION
@@ -102,7 +97,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 					groups = InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(),
 						InputMode.BINARY);
 
-					// Now convert whatever is in the input box to binary.				
+					// Now convert whatever is in the input box to hex.				
 					String hexStr =
 						InstructionSearchUtils.toHex(parent.getInputString().trim(), true);
 
@@ -114,8 +109,11 @@ public class SelectionModeWidget extends ControlPanelWidget {
 					parent.setInputString(hexStr);
 					parent.validateInput();
 				}
+				catch (NumberFormatException e2) {
+					parent.setInputInvalid();
+				}
 				catch (Exception e1) {
-					e1.printStackTrace();
+					Msg.error(this, e1.getMessage());
 				}
 			}
 
@@ -125,11 +123,6 @@ public class SelectionModeWidget extends ControlPanelWidget {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
-				// If input is invalid, just exit.
-				if (!parent.validateInput()) {
-					return;
-				}
 
 				// If we're already in binary, do nothing.
 				if (inputMode == InputMode.BINARY) {
@@ -161,8 +154,11 @@ public class SelectionModeWidget extends ControlPanelWidget {
 					parent.setInputString(binaryStr);
 					parent.validateInput();
 				}
+				catch (NumberFormatException e2) {
+					parent.setInputInvalid();
+				}
 				catch (Exception e1) {
-					e1.printStackTrace();
+					Msg.error(this, e1.getMessage());
 				}
 
 			}

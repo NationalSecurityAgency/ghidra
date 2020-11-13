@@ -160,7 +160,9 @@ public interface DataTypeComponent {
 	 * Returns true if the given dataTypeComponent is equivalent to this dataTypeComponent.
 	 * A dataTypeComponent is "equivalent" if the other component has a data type
 	 * that is equivalent to this component's data type. The dataTypeComponents must
-	 * also have the same offset, length, ordinal, field name, and comment.
+	 * also have the same offset, field name, and comment.  The length is only checked
+	 * for components which are dyanmic and whose size must be specified when creating
+	 * a component.
 	 * @param dtc the dataTypeComponent being tested for equivalence.
 	 * @return true if the given dataTypeComponent is equivalent to this dataTypeComponent.
 	 */

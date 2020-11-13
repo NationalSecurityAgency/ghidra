@@ -15,7 +15,12 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import org.junit.Before;
 import org.junit.Test;
+
+import ghidra.app.decompiler.DecompileOptions.NamespaceStrategy;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.util.OptionsService;
 
 /**
  * This test is very similar in concept to {@link DecompilerFindReferencesToActionTest}, 
@@ -35,6 +40,16 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 		return "ghidra/app/extension/datatype/finder/functions_with_structure_usage.gzf";
 	}
 
+	@Override
+	@Before
+	public void setUp() throws Exception {
+
+		super.setUp();
+		OptionsService service = provider.getTool().getService(OptionsService.class);
+		ToolOptions opt = service.getOptions("Decompiler");
+		opt.setEnum("Display.Display Namespaces", NamespaceStrategy.Never);
+	}
+
 	@Test
 	public void testActionEnablementOnNestedStructureField() throws Exception {
 
@@ -48,10 +63,10 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 			7|   _printf("call_structure_A: %s\n",(a->b).c.name);
 			8|   _printf("call_structure_A: %s\n",(a->b).c.d.name);
 			9|   _printf("call_structure_A: %s\n",(a->b).c.d.e.name);
-			10|  _call_structure_B(&a->b);
-			11|  return;
-			12| }
-			13| 
+		   10|  _call_structure_B(&a->b);
+		   11|  return;
+		   12| }
+		   13| 
 		
 		 */
 		decompile(CALL_STRUCTURE_A_ADDRESS);

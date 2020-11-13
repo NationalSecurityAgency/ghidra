@@ -30,7 +30,6 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
  * in the grammar starting with the start symbol. We ignore that if only for the sake of naming.
  * 
  * @param <NT> the type of non-terminals
- * @param <T> the type of terminals
  */
 public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 		AbstractListDecorator<AssemblySymbol> implements Comparable<AssemblySentential<NT>> {
@@ -150,7 +149,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 					return Collections.singleton(new WhiteSpaceParseToken(grammar, this, ""));
 				}
 				if (Character.isLetterOrDigit(buffer.charAt(b)) &&
-					Character.isLetterOrDigit(buffer.charAt(b - 1))) {
+					(b == 0 || Character.isLetterOrDigit(buffer.charAt(b - 1)))) {
 					return Collections.emptySet();
 				}
 			}

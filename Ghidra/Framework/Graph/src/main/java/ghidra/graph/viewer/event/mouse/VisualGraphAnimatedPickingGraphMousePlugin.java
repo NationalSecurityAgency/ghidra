@@ -24,7 +24,10 @@ import edu.uci.ics.jung.visualization.control.AnimatedPickingGraphMousePlugin;
 import ghidra.graph.viewer.*;
 
 /**
- * A mouse handler to center a vertex when the header is double-clicked.
+ * A mouse handler to center a vertex when the header is double-clicked
+ * 
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class VisualGraphAnimatedPickingGraphMousePlugin<V extends VisualVertex, E extends VisualEdge<V>>
 		extends AnimatedPickingGraphMousePlugin<V, E> implements VisualGraphMousePlugin<V, E> {
@@ -32,7 +35,7 @@ public class VisualGraphAnimatedPickingGraphMousePlugin<V extends VisualVertex, 
 	private boolean isHandlingMouseEvents;
 
 	public VisualGraphAnimatedPickingGraphMousePlugin() {
-		super(InputEvent.BUTTON1_MASK);
+		super(InputEvent.BUTTON1_DOWN_MASK);
 		this.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 	}
 

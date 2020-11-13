@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.util.HashMap;
 import java.util.Map;
 
+import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -90,16 +91,50 @@ public class ElfDynamicType {
 		"Size in bytes of DT_FINI_ARRAY", ElfDynamicValueType.VALUE);
 	public static ElfDynamicType DT_RUNPATH = addDefaultDynamicType(29, "DT_RUNPATH",
 		"Library search path (string ref)", ElfDynamicValueType.STRING);
+	// see DF_ constants for flag definitions
 	public static ElfDynamicType DT_FLAGS = addDefaultDynamicType(30, "DT_FLAGS",
 		"Flags for the object being loaded", ElfDynamicValueType.VALUE);
 
-	public static ElfDynamicType DT_ENCODING = addDefaultDynamicType(32, "DT_ENCODING",
-		"Start of encoded range", ElfDynamicValueType.VALUE);
-	// public static ElfDynamicType DT_PREINIT_ARRAY = addDefaultDynamicType(32, "DT_PREINIT_ARRAY", "Array with addresses of preinit fct", ElfDynamicValueType.VALUE);
+	// Experimental RELR relocation support
+	// - see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg
+	public static ElfDynamicType DT_RELRSZ = addDefaultDynamicType(35, "DT_RELRSZ",
+		"Total size of Relr relocs", ElfDynamicValueType.VALUE);
+	public static ElfDynamicType DT_RELR =
+		addDefaultDynamicType(36, "DT_RELR", "Address of Relr relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_RELRENT = addDefaultDynamicType(37, "DT_RELRENT",
+		"Size of Relr relocation entry", ElfDynamicValueType.VALUE);
+
+	public static final int DF_ORIGIN = 0x1; 		// $ORIGIN processing required
+	public static final int DF_SYMBOLIC = 0x2;		// Symbolic symbol resolution required
+	public static final int DF_TEXTREL = 0x4;		// Text relocations exist
+	public static final int DF_BIND_NOW = 0x8;		// Non-lazy binding required
+	public static final int DF_STATIC_TLS = 0x10;	// Object uses static TLS scheme
+
+	// glibc and BSD disagree for DT_ENCODING
+	//  public static ElfDynamicType DT_ENCODING = addDefaultDynamicType(32, "DT_ENCODING",
+	//	  "Start of encoded range", ElfDynamicValueType.VALUE);
+	public static ElfDynamicType DT_PREINIT_ARRAY = addDefaultDynamicType(32, "DT_PREINIT_ARRAY",
+		"Array with addresses of preinit fct", ElfDynamicValueType.VALUE);
 	public static ElfDynamicType DT_PREINIT_ARRAYSZ = addDefaultDynamicType(33,
 		"DT_PREINIT_ARRAYSZ", "Size in bytes of DT_PREINIT_ARRAY", ElfDynamicValueType.VALUE);
 
 	// OS-specific range: 0x6000000d - 0x6ffff000
+
+	public static ElfDynamicType DT_ANDROID_REL = addDefaultDynamicType(0x6000000F,
+		"DT_ANDROID_REL", "Address of Rel relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_ANDROID_RELSZ = addDefaultDynamicType(0x60000010,
+		"DT_ANDROID_RELSZ", "Total size of Rel relocs", ElfDynamicValueType.VALUE);
+	public static ElfDynamicType DT_ANDROID_RELA = addDefaultDynamicType(0x60000011,
+		"DT_ANDROID_RELA", "Address of Rela relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_ANDROID_RELASZ = addDefaultDynamicType(0x60000012,
+		"DT_ANDROID_RELASZ", "Total size of Rela relocs", ElfDynamicValueType.VALUE);
+
+	public static ElfDynamicType DT_ANDROID_RELR = addDefaultDynamicType(0x6FFFE000,
+		"DT_ANDROID_RELR", "Address of Relr relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_ANDROID_RELRSZ = addDefaultDynamicType(0x6FFFE001,
+		"DT_ANDROID_RELRSZ", "Total size of Relr relocs", ElfDynamicValueType.VALUE);
+	public static ElfDynamicType DT_ANDROID_RELRENT = addDefaultDynamicType(0x6FFFE003,
+		"DT_ANDROID_RELRENT", "Size of Relr relocation entry", ElfDynamicValueType.VALUE);
 
 	// Value Range (??): 0x6ffffd00 - 0x6ffffdff
 
@@ -158,8 +193,23 @@ public class ElfDynamicType {
 		addDefaultDynamicType(0x6ffffff9, "DT_RELACOUNT", "", ElfDynamicValueType.VALUE);
 	public static ElfDynamicType DT_RELCOUNT =
 		addDefaultDynamicType(0x6ffffffa, "DT_RELCOUNT", "", ElfDynamicValueType.VALUE);
+
+	// see DF_1_ constants for flag definitions
 	public static ElfDynamicType DT_FLAGS_1 =
 		addDefaultDynamicType(0x6ffffffb, "DT_FLAGS_1", "State flags", ElfDynamicValueType.VALUE);
+
+	public static final int DF_1_NOW = 0x1;
+	public static final int DF_1_GLOBAL = 0x2;
+	public static final int DF_1_GROUP = 0x4;
+	public static final int DF_1_NODELETE = 0x8;
+	public static final int DF_1_LOADFLTR = 0x10;
+	public static final int DF_1_INITFIRST = 0x20;
+	public static final int DF_1_NOOPEN = 0x40;
+	public static final int DF_1_ORIGIN = 0x80;
+	public static final int DF_1_DIRECT = 0x100;
+	public static final int DF_1_INTERPOSE = 0x400;
+	public static final int DF_1_NODEFLIB = 0x800;
+
 	public static ElfDynamicType DT_VERDEF = addDefaultDynamicType(0x6ffffffc, "DT_VERDEF",
 		"Address of version definition table", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_VERDEFNUM = addDefaultDynamicType(0x6ffffffd, "DT_VERDEFNUM",
@@ -184,7 +234,9 @@ public class ElfDynamicType {
 			return type;
 		}
 		catch (DuplicateNameException e) {
-			throw new RuntimeException("ElfDynamicType initialization error", e);
+			// Make sure error is properly logged during static initialization
+			Msg.error(ElfDynamicType.class, "ElfDynamicType initialization error", e);
+			throw new RuntimeException(e);
 		}
 	}
 

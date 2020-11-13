@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package generic.concurrent;
 
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A helper class to build up the potentially complicated {@link ConcurrentQ}.
@@ -34,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * <P>
  * Examples:
  * <p>
- * <pre>
+ * <pre>{@literal
  * QCallback<I, R> callback = new AbstractQCallback<I, R>() {
  *     public R process(I item, TaskMonitor monitor) {
  *         // do work here...
@@ -53,7 +51,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 				setMaxInProgress(1).
  * 				build(callback);
  * 
- * </pre>
+ * }</pre>
  * <p>
  *  
  * Note: if you wish to take advantage of blocking when adding items to the {@link ConcurrentQ}, 
@@ -72,7 +70,7 @@ public class ConcurrentQBuilder<I, R> {
 	private boolean collectResults;
 	private int maxInProgress;
 	private boolean jobsReportProgress = false;
-	private TaskMonitor monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+	private TaskMonitor monitor = TaskMonitor.DUMMY;
 	private boolean cancelClearsAllJobs = true;
 
 	/**
@@ -180,9 +178,14 @@ public class ConcurrentQBuilder<I, R> {
 	}
 
 	/**
-	 * @see {@link ConcurrentQ#setMonitor(TaskMonitor, boolean)}
-	 * <p>
-	 * The default value is <tt>true</tt>. 
+	 * Sets whether a cancel will clear all jobs (current and pending) or just the 
+	 * current jobs being processed.  The default value is {@code true}.
+	 * 
+	 * @param clearAllJobs if true, cancelling the monitor will cancel all items currently being 
+	 *        processed by a thread and clear the scheduled items that haven't yet run. If false, 
+	 *        only the items currently being processed will be cancelled. 
+	 * @return this builder
+	 * @see ConcurrentQ#setMonitor(TaskMonitor, boolean)
 	 */
 	public ConcurrentQBuilder<I, R> setCancelClearsAllJobs(boolean clearAllJobs) {
 		this.cancelClearsAllJobs = clearAllJobs;
@@ -192,7 +195,7 @@ public class ConcurrentQBuilder<I, R> {
 	public ConcurrentQ<I, R> build(QCallback<I, R> callback) {
 
 		ConcurrentQ<I, R> concurrentQ =
-			new ConcurrentQ<I, R>(callback, getQueue(), getThreadPool(), listener, collectResults,
+			new ConcurrentQ<>(callback, getQueue(), getThreadPool(), listener, collectResults,
 				maxInProgress, jobsReportProgress);
 
 		if (monitor != null) {
@@ -217,6 +220,6 @@ public class ConcurrentQBuilder<I, R> {
 		if (queue != null) {
 			return queue;
 		}
-		return new LinkedList<I>();
+		return new LinkedList<>();
 	}
 }

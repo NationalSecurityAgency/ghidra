@@ -502,5 +502,11 @@ public:
   virtual uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const;
 };
 
+/// CPUI_POPCOUNT behavior
+class OpBehaviorPopcount : public OpBehavior {
+public:
+  OpBehaviorPopcount(void) : OpBehavior(CPUI_POPCOUNT,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
 
 #endif

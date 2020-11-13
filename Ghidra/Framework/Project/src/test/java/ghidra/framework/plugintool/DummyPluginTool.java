@@ -15,7 +15,6 @@
  */
 package ghidra.framework.plugintool;
 
-import ghidra.framework.model.Tool;
 import ghidra.framework.plugintool.util.PluginClassManager;
 
 /**
@@ -37,7 +36,7 @@ public class DummyPluginTool extends PluginTool {
 	private static class DummyToolServices extends ToolServicesAdapter {
 
 		@Override
-		public void closeTool(Tool t) {
+		public void closeTool(PluginTool t) {
 			// If we call this, then the entire test VM will exit, which is bad
 			// System.exit(0);
 		}

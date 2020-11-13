@@ -1,5 +1,4 @@
-define endian=big;
-
+@define ENDIAN "big"
 @define SIZE "4"
 
 @include "toy_builder.sinc"

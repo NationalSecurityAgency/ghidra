@@ -15,10 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh.expr;
 
-import java.util.Map;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableList;
+import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.Constructor;
@@ -79,7 +76,7 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 			AssemblyResolvedError err = (AssemblyResolvedError) result;
 			return AssemblyResolution.error(err.getError(),
 				"Solution to " + sym.getName() + " := " + goal + " = " + patexp,
-				ImmutableList.of(result));
+				List.of(result));
 		}
 		// TODO: Shifting here seems like a hack to me.
 		// I assume this only comes at the top of an expression

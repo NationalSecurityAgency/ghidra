@@ -15,10 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.util.*;
-
-import ghidra.util.Msg;
-
 public abstract class DataTypeConflictHandler {
 
 	/**
@@ -61,26 +57,19 @@ public abstract class DataTypeConflictHandler {
 		RENAME_AND_ADD, USE_EXISTING, REPLACE_EXISTING;
 	}
 
-	/**
-	 * Due to the locking concerns which can arise with a DataTypeConflictHandler,
-	 * definition of new implementations must be done here.
-	 */
-	private DataTypeConflictHandler() {
-	}
-
 	public final static DataTypeConflictHandler DEFAULT_HANDLER = new DataTypeConflictHandler() {
 		@Override
 		public ConflictResult resolveConflict(DataType addedDataType, DataType existingDataType) {
-			Msg.info(this,
-				"Conflict with existing type " + existingDataType.getName() + "(" +
-					existingDataType.getDescription() +
-					"), new type will be renamed with .conflict suffix");
+//			Msg.info(this,
+//				"Conflict with existing type " + existingDataType.getName() + "(" +
+//					existingDataType.getDescription() +
+//					"), new type will be renamed with .conflict suffix");
 			return ConflictResult.RENAME_AND_ADD;
 		}
 
 		@Override
 		public boolean shouldUpdate(DataType sourceDataType, DataType localDataType) {
-			return true;
+			return true;  // TODO: uncertain this is appropriate
 		}
 
 		@Override
@@ -151,8 +140,8 @@ public abstract class DataTypeConflictHandler {
 	public final static DataTypeConflictHandler KEEP_HANDLER = new DataTypeConflictHandler() {
 		@Override
 		public ConflictResult resolveConflict(DataType addedDataType, DataType existingDataType) {
-			Msg.info(this, "New type not added in favor of existing type " +
-				existingDataType.getName() + "(" + existingDataType.getDescription() + ")");
+//			Msg.info(this, "New type not added in favor of existing type " +
+//				existingDataType.getName() + "(" + existingDataType.getDescription() + ")");
 			return ConflictResult.USE_EXISTING;
 		}
 
@@ -168,276 +157,47 @@ public abstract class DataTypeConflictHandler {
 	};
 
 	/**
-	 * This {@link DataTypeConflictHandler conflict handler} attempts to match conflicting
-	 * {@link Composite composite data types} (structure or union) when they have compatible
-	 * data layouts.  (Data types that are exactly equiv will not be subjected to conflict
-	 * handling and will never reach here)
-	 * <p>
-	 * A default/empty sized structure, or structures with the same size are candidates
-	 * for matching.
-	 * <p>
-	 * Structures that have a subset of the other's field definition are candidates for matching.
-	 * <p>
-	 * When a candidate data type is matched with an existing data type, this conflict handler
-	 * will specify that the new data type is:<p>
-	 * <ul>
-	 * <li>discarded and replaced by the existing data type ({@link ConflictResult#USE_EXISTING})
-	 * <li>used to overwrite the existing data type ({@link ConflictResult#REPLACE_EXISTING})
-	 * </ul>
-	 * or the candidate data type was <b>NOT</b> matched with an existing data type, and the new data type is:<p>
-	 * <ul>
-	 * <li>kept, but renamed with a .conflictNNNN suffix to make it unique ({@link ConflictResult#RENAME_AND_ADD})
-	 * </ul>
-	 * <b>NOTE:</b> structures with alignment (instead of being statically laid out) are not
-	 * treated specially and will not match other aligned or non-aligned structures.
-	 *
+	 * This {@link DataTypeConflictHandler conflict handler} behaves similar to 
+	 * the {@link #DEFAULT_HANDLER} with the difference being that a 
+	 * empty composite (see {@link Composite#isNotYetDefined()}) will be 
+	 * replaced by a similar non-empty composite type.  Alignment (e.g., packing)
+	 * is not considered when determining conflict resolution.
+	 * <br>
+	 * For datatypes originating from a source archive with matching ID, the 
+	 * replacment strategy will utilize the implementation with the 
+	 * latest timestamp.
+	 * <br>
+	 * Unlike the {@link #DEFAULT_HANDLER}, follow-on dependency datatype 
+	 * resolutions will retain the same conflict resolution strategy.
 	 */
 	public final static DataTypeConflictHandler REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER =
 		new DataTypeConflictHandler() {
 
-			/**
-			 * Returns true if src can overwrite the target composite based on size
-			 * @param src
-			 * @param target
-			 * @return
-			 */
-			private boolean isSizeCompatible(Composite src, Composite target) {
-				return (target.getLength() <= 1) || (src.getLength() == target.getLength());
-			}
-
-			/**
-			 * Returns true if the {@link Composite composite} is empty (to get around the lying that
-			 * {@link Composite#getLength()} does.)
-			 * @param composite
-			 * @return
-			 */
-			private boolean isCompositeEmpty(Composite composite) {
-				return composite.getLength() <= 1 && composite.getNumComponents() == 0;
-			}
-
-			/**
-			 * Determines if the given composite is filled with default values (all components are default).
-			 * @param composite composite to check
-			 * @return true if default and false otherwise
-			 */
-			private boolean isCompositeDefault(Composite composite) {
-				if (composite.getLength() == composite.getNumComponents()) {
-					DataTypeComponent[] comps = composite.getComponents();
-					boolean isDefault = true;
-					for (int i = 0; i < comps.length; i++) {
-						if (comps[i].getDataType() != DataType.DEFAULT) {
-							isDefault = false;
-							break;
-						}
-					}
-					if (isDefault) {
-						return true;
-					}
-				}
-				return false;
-			}
-
-			private boolean isCompositePart(Composite full, Composite part,
-					Map<DataType, DataType> visitedDataTypes) {
-				if (full instanceof Structure && part instanceof Structure) {
-					return isStructurePart((Structure) full, (Structure) part, visitedDataTypes);
-				}
-				else if (full instanceof Union && part instanceof Union) {
-					return isUnionPart((Union) full, (Union) part, visitedDataTypes);
-				}
-				else {
-					return false;
-				}
-			}
-
-			/**
-			 * Returns true if one union is a subset of another union.
-			 * <p>
-			 * Each component of the candidate partial union must be present in the
-			 * 'full' union and must be 'equiv'.
-			 * <p>
-			 * Order of components is ignored, except for unnamed components, which receive
-			 * a default name created using their ordinal position.
-			 *
-			 * @param full {@link Union} datatype that is expected to be a superset of the next param.
-			 * @param part {@link Union} datatype that is expected to be a subset of the previous param.
-			 * @param visitedDataTypes identity map of datatypes to prevent loops.
-			 * @return true if part is a subset (or equal) to full.
-			 */
-			private boolean isUnionPart(Union full, Union part,
-					Map<DataType, DataType> visitedDataTypes) {
-				if (full.getLength() < part.getLength()) {
-					return false;
-				}
-
-				Map<String, DataTypeComponent> fullComponentsByName = new HashMap<>();
-				for (DataTypeComponent dtc : full.getComponents()) {
-					String name = dtc.getFieldName();
-					if (name == null) {
-						name = dtc.getDefaultFieldName();
-					}
-					fullComponentsByName.put(name, dtc);
-				}
-				for (DataTypeComponent dtc : part.getComponents()) {
-					String name = dtc.getFieldName();
-					if (name == null) {
-						name = dtc.getDefaultFieldName();
-					}
-					DataTypeComponent fullDTC = fullComponentsByName.get(name);
-					if (fullDTC == null) {
-						return false;
-					}
-					DataType partDT = dtc.getDataType();
-					DataType fullDT = fullDTC.getDataType();
-					if (doRelaxedCompare(partDT, fullDT,
-						visitedDataTypes) == ConflictResult.RENAME_AND_ADD) {
-						return false;
-					}
-				}
-				return true;
-			}
-
-			/*
-			 * Returns true if one structure is a partial definition of another structure.
-			 * <p>
-			 * Each defined component in the candidate partial structure must be present
-			 * in the 'full' structure and must be equiv.
-			 * <p>
-			 * The order and sparseness of the candidate partial structure is not important,
-			 * only that all of its defined components are present in the full structure.
-			 * <p>
-			 */
-			private boolean isStructurePart(Structure full, Structure part,
-					Map<DataType, DataType> visitedDataTypes) {
-				// Both structures should be equal in length
-				if (full.getLength() != part.getLength()) {
-					return false;
-				}
-
-				boolean[] fullCompsUsedFlag = new boolean[full.getComponents().length];
-				DataTypeComponent[] partComps = part.getDefinedComponents();
-
-				// Find a match in the full structure's component list for each
-				// component in the partial structure.
-				// Use resolveConflict() == USE_EXISTING to test for equiv in addition to
-				// isEquiv().
-				// Ensure that two components in the partial struct don't map to the same
-				// component in the full structure.
-				for (int i = 0; i < partComps.length; i++) {
-					DataTypeComponent partDTC = partComps[i];
-					DataTypeComponent fullDTCAt = full.getComponentAt(partDTC.getOffset());
-					int fullOrd = fullDTCAt.getOrdinal();
-					if (fullCompsUsedFlag[fullOrd]) {
-						return false;
-					}
-					DataType partDT = partDTC.getDataType();
-					DataType fullDT = fullDTCAt.getDataType();
-					if (doRelaxedCompare(partDT, fullDT,
-						visitedDataTypes) == ConflictResult.RENAME_AND_ADD) {
-						return false;
-					}
-					fullCompsUsedFlag[fullOrd] = true;
-				}
-
-				return true;
-			}
-
-			/*
-			 * Strict compare will compare its parameters.
-			 * The contents of these datatypes (ie. contents of structs, pointers, arrays)
-			 * will be compared with relaxed typedef checking.
-			 */
-			private ConflictResult doStrictCompare(DataType addedDataType,
-					DataType existingDataType, Map<DataType, DataType> visitedDataTypes) {
-				visitedDataTypes.put(existingDataType, addedDataType);
-				if (existingDataType.isEquivalent(addedDataType)) {
+			private ConflictResult resolveConflictReplaceEmpty(DataType addedDataType,
+					DataType existingDataType) {
+				if (addedDataType.isNotYetDefined()) {
 					return ConflictResult.USE_EXISTING;
 				}
-				else if (existingDataType instanceof Composite &&
-					addedDataType instanceof Composite) {
-					Composite existingComposite = (Composite) existingDataType;
-					Composite addedComposite = (Composite) addedDataType;
-
-					// Check to see if we are adding a default/empty data type
-					if ((isCompositeEmpty(addedComposite) || isCompositeDefault(addedComposite)) &&
-						isSizeCompatible(existingComposite, addedComposite)) {
-						return ConflictResult.USE_EXISTING;
-					}
-					// Check to see if the existing type is a default/empty data type
-					if ((isCompositeEmpty(existingComposite) ||
-						isCompositeDefault(existingComposite)) &&
-						isSizeCompatible(addedComposite, existingComposite)) {
-						return ConflictResult.REPLACE_EXISTING;
-					}
-					// Check to see if the added type is part of the existing type first to
-					// generate more USE_EXISTINGS when possible.
-					if (isCompositePart(existingComposite, addedComposite, visitedDataTypes)) {
-						return ConflictResult.USE_EXISTING;
-					}
-					// Check to see if the existing type is a part of the added type
-					if (isCompositePart(addedComposite, existingComposite, visitedDataTypes)) {
-						return ConflictResult.REPLACE_EXISTING;
-					}
+				if (existingDataType.isNotYetDefined()) {
+					return ConflictResult.REPLACE_EXISTING;
 				}
-				else if (existingDataType instanceof TypeDef && addedDataType instanceof TypeDef) {
-					TypeDef addedTypeDef = (TypeDef) addedDataType;
-					TypeDef existingTypeDef = (TypeDef) existingDataType;
-					return doRelaxedCompare(addedTypeDef.getBaseDataType(),
-						existingTypeDef.getBaseDataType(), visitedDataTypes);
-				}
-				else if (existingDataType instanceof Array && addedDataType instanceof Array) {
-					Array addedArray = (Array) addedDataType;
-					Array existingArray = (Array) existingDataType;
-
-					if (addedArray.getNumElements() != existingArray.getNumElements() ||
-						addedArray.getElementLength() != existingArray.getElementLength()) {
-						return ConflictResult.RENAME_AND_ADD;
-					}
-
-					return doRelaxedCompare(addedArray.getDataType(), existingArray.getDataType(),
-						visitedDataTypes);
-				}
-
 				return ConflictResult.RENAME_AND_ADD;
-			}
-
-			/*
-			 * Relaxed compare will take liberties in skipping typedefs to try to compare
-			 * the types that the typedef are hiding.  This is useful when comparing types
-			 * that were embedded in differently compiled files, where you might end up with
-			 * a raw basetype in one file and a typedef to a basetype in another file.
-			 */
-			private ConflictResult doRelaxedCompare(DataType addedDataType,
-					DataType existingDataType, Map<DataType, DataType> visitedDataTypes) {
-
-				if (existingDataType instanceof Pointer && addedDataType instanceof Pointer) {
-					DataType ptrAddedDataType = ((Pointer) addedDataType).getDataType();
-					DataType ptrExistingDataType = ((Pointer) existingDataType).getDataType();
-					// only descend into the pointed-to-type if we haven't looked at it before.
-					// if you don't do this, you will have a stack-overflow issue when a struct
-					// has a pointer to its same type.
-					if (!visitedDataTypes.containsKey(ptrExistingDataType)) {
-						visitedDataTypes.put(ptrExistingDataType, ptrAddedDataType);
-						addedDataType = ptrAddedDataType;
-						existingDataType = ptrExistingDataType;
-					}
-
-				}
-				// unwrap typedefs, possibly asymmetrically. (ie. only unwrap added vs. existing)
-				if (addedDataType instanceof TypeDef) {
-					addedDataType = ((TypeDef) addedDataType).getBaseDataType();
-				}
-				if (existingDataType instanceof TypeDef) {
-					existingDataType = ((TypeDef) existingDataType).getBaseDataType();
-				}
-				return doStrictCompare(addedDataType, existingDataType, visitedDataTypes);
 			}
 
 			@Override
 			public ConflictResult resolveConflict(DataType addedDataType,
 					DataType existingDataType) {
-				IdentityHashMap<DataType, DataType> visitedDataTypes = new IdentityHashMap<>();
-				return doStrictCompare(addedDataType, existingDataType, visitedDataTypes);
+				if (addedDataType instanceof Structure) {
+					if (existingDataType instanceof Structure) {
+						return resolveConflictReplaceEmpty(addedDataType, existingDataType);
+					}
+				}
+				else if (addedDataType instanceof Union) {
+					if (existingDataType instanceof Union) {
+						return resolveConflictReplaceEmpty(addedDataType, existingDataType);
+					}
+				}
+				return ConflictResult.RENAME_AND_ADD;
 			}
 
 			@Override

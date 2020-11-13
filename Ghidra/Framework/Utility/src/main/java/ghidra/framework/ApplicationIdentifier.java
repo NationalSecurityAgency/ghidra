@@ -26,7 +26,9 @@ package ghidra.framework;
  * converted to all uppercase.  Both will have spaces removed from their names.
  * <p>
  * Examples:
+ * <ul>
  * <li>ghidra-7.4_DEV
+ * </ul>
  */
 public class ApplicationIdentifier {
 

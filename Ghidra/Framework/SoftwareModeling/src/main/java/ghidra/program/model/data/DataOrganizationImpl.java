@@ -171,7 +171,7 @@ public class DataOrganizationImpl implements DataOrganization {
 
 	/**
 	 * Defines the size of a pointer data type.
-	 * @param shortSize the size of a short.
+	 * @param pointerSize the size of a pointer.
 	 */
 	public void setPointerSize(int pointerSize) {
 		this.pointerSize = pointerSize;
@@ -197,7 +197,7 @@ public class DataOrganizationImpl implements DataOrganization {
 
 	/**
 	 * Defines the size of a char (char) data type.
-	 * @param wideCharSize the size of a char (char).
+	 * @param charSize the size of a char (char).
 	 */
 	public void setCharSize(int charSize) {
 		this.charSize = charSize;
@@ -558,14 +558,7 @@ public class DataOrganizationImpl implements DataOrganization {
 
 			// Check each component and get the least common multiple of their forced minimum alignments.
 			int componentForcedLCM = 0;
-			DataTypeComponent[] dataTypeComponents;
-			if (composite instanceof Structure) {
-				dataTypeComponents = ((Structure) composite).getDefinedComponents();
-			}
-			else {
-				dataTypeComponents = composite.getComponents();
-			}
-			for (DataTypeComponent dataTypeComponent : dataTypeComponents) {
+			for (DataTypeComponent dataTypeComponent : composite.getDefinedComponents()) {
 				if (dataTypeComponent.isBitFieldComponent()) {
 					continue;
 				}

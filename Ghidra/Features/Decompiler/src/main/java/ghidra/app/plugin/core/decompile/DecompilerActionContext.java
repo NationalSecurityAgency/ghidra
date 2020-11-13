@@ -21,15 +21,24 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.RestrictedAddressSetContext;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.ClangTokenGroup;
 import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.pcode.HighFunction;
 import ghidra.util.Msg;
+import ghidra.util.UndefinedFunction;
 import utility.function.Callback;
 
 public class DecompilerActionContext extends NavigatableActionContext
 		implements RestrictedAddressSetContext {
 	private final Address functionEntryPoint;
 	private final boolean isDecompiling;
+
+	private ClangToken tokenAtCursor = null;
+	private boolean tokenIsInitialized = false;
 
 	public DecompilerActionContext(DecompilerProvider provider, Address functionEntryPoint,
 			boolean isDecompiling) {
@@ -51,8 +60,41 @@ public class DecompilerActionContext extends NavigatableActionContext
 		return (DecompilerProvider) super.getComponentProvider();
 	}
 
+	public PluginTool getTool() {
+		return getComponentProvider().getTool();
+	}
+
+	public ClangToken getTokenAtCursor() {
+		if (!tokenIsInitialized) {
+			tokenAtCursor = getDecompilerPanel().getTokenAtCursor();
+			tokenIsInitialized = true;
+		}
+		return tokenAtCursor;
+	}
+
 	public DecompilerPanel getDecompilerPanel() {
 		return getComponentProvider().getDecompilerPanel();
+	}
+
+	public Function getFunction() {
+		return getComponentProvider().getController().getFunction();
+	}
+
+	public HighFunction getHighFunction() {
+		return getComponentProvider().getController().getHighFunction();
+	}
+
+	public ClangTokenGroup getCCodeModel() {
+		return getComponentProvider().getController().getCCodeModel();
+	}
+
+	public boolean hasRealFunction() {
+		Function f = getFunction();
+		return f != null && !(f instanceof UndefinedFunction);
+	}
+
+	public void setStatusMessage(String msg) {
+		getComponentProvider().getController().setStatusMessage(msg);
 	}
 
 	/**

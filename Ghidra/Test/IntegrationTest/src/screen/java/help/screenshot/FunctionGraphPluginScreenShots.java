@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -40,7 +40,6 @@ import docking.widgets.dialogs.MultiLineInputDialog;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.picking.PickedState;
 import generic.test.TestUtils;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
@@ -772,24 +771,6 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 	private void pickVertices(FGVertex... vertices) {
 		pickVertices(new HashSet<>(Arrays.asList(vertices)));
-	}
-
-	private void pickVertices(final Set<FGVertex> vertices) {
-		runSwing(() -> {
-			PickedState<FGVertex> pickedState = getPickedState();
-			pickedState.clear();
-
-			for (FGVertex vertex : vertices) {
-				pickedState.pick(vertex, true);
-			}
-		});
-	}
-
-	private PickedState<FGVertex> getPickedState() {
-		FGComponent functionGraphViewer = getGraphComponent();
-		VisualizationViewer<FGVertex, FGEdge> primaryViewer =
-			functionGraphViewer.getPrimaryViewer();
-		return primaryViewer.getPickedVertexState();
 	}
 
 	private JComponent getComponent(final FGVertex vertex) {

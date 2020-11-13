@@ -38,9 +38,9 @@ public class KeyBindingsManager implements PropertyChangeListener {
 	// this map exists to update the MultiKeyBindingAction when the key binding changes
 	private Map<DockingActionIf, ComponentProvider> actionToProviderMap;
 	private Map<KeyStroke, DockingKeyBindingAction> dockingKeyMap;
-	private DockingTool tool;
+	private Tool tool;
 
-	public KeyBindingsManager(DockingTool tool) {
+	public KeyBindingsManager(Tool tool) {
 		this.tool = tool;
 		dockingKeyMap = new HashMap<>();
 		actionToProviderMap = new HashMap<>();

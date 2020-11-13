@@ -81,11 +81,11 @@ class MemoryMapManager {
 
 		Listing listing = program.getListing();
 		String[] treeNames = listing.getTreeNames();
-		for (int i = 0; i < treeNames.length; i++) {
+		for (String treeName : treeNames) {
 			boolean duplicate = false;
 			int index = 0;
 
-			ProgramFragment frag = listing.getFragment(treeNames[i], start);
+			ProgramFragment frag = listing.getFragment(treeName, start);
 			do {
 				try {
 					frag.setName("Frag" + index + "-" + name);
@@ -121,6 +121,11 @@ class MemoryMapManager {
 			// make sure that the block after the first block is the second block
 			Address nextStart = blockA.getEnd();
 			AddressSpace space = nextStart.getAddressSpace();
+			if (space.isOverlaySpace()) {
+				Msg.showError(this, plugin.getMemoryMapProvider().getComponent(),
+					"Merge Blocks Failed", "Can't merge overlay blocks");
+				return false;
+			}
 
 			Address blockBstart = blockB.getStart();
 			if (!space.isSuccessor(nextStart, blockBstart)) {
@@ -171,19 +176,9 @@ class MemoryMapManager {
 		return true;
 	}
 
-	boolean isValidBlockName(String name) {
-		if (name == null || name.length() == 0) {
-			return false;
-		}
-
-		Memory memory = program.getMemory();
-		MemoryBlock[] blocks = memory.getBlocks();
-		for (int i = 0; i < blocks.length; i++) {
-			if (blocks[i].getName().equals(name)) {
-				return false;
-			}
-		}
-		return true;
+	boolean isDuplicateName(String name) {
+		// block names may not duplicate existing address spaces (includes overlay blocks)
+		return program.getAddressFactory().getAddressSpace(name) != null;
 	}
 
 	void setProgram(Program program) {
@@ -332,8 +327,7 @@ class MemoryMapManager {
 				return false;
 			}
 
-			for (int i = 0; i < blocks.size(); i++) {
-				MemoryBlock nextBlock = blocks.get(i);
+			for (MemoryBlock nextBlock : blocks) {
 				if (min == null || nextBlock.getStart().compareTo(min) < 0) {
 					min = nextBlock.getStart();
 				}
@@ -412,8 +406,8 @@ class MemoryMapManager {
 
 		private boolean allBlocksInSameSpace() {
 			AddressSpace lastSpace = null;
-			for (int i = 0; i < blocks.size(); i++) {
-				Address start = blocks.get(i).getStart();
+			for (MemoryBlock block : blocks) {
+				Address start = block.getStart();
 				AddressSpace space = start.getAddressSpace();
 				if (lastSpace != null && !lastSpace.equals(space)) {
 					return false;

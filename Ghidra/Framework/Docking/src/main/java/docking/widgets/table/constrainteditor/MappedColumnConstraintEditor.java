@@ -66,7 +66,7 @@ public class MappedColumnConstraintEditor<T, M> implements ColumnConstraintEdito
 	}
 
 	/**
-	 * Sets the <tt>T</tt>-converted-to-<tt>W</tt> type in the delegate editor
+	 * Sets the <code>T</code>-converted-to-<code>W</code> type in the delegate editor
 	 * <p>
 	 * {@inheritDoc}
 	 *

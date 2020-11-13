@@ -96,8 +96,12 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
     public long subtract(Address addr1, Address addr2) {
 		AddressSpace space1 = addr1.getAddressSpace();
 		AddressSpace space2 = addr2.getAddressSpace();
-		if (space1.equals(this)) space1 = originalSpace;
-		if (space2.equals(this)) space2 = originalSpace;
+		if (space1.equals(this)) {
+			space1 = originalSpace;
+		}
+		if (space2.equals(this)) {
+			space2 = originalSpace;
+		}
 		if (!space1.equals(space2)) {
 			throw new IllegalArgumentException("Address are in different spaces " +
 						              addr1.getAddressSpace().getName() + " != " + addr2.getAddressSpace().getName());
@@ -113,9 +117,6 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 //		return translateAddress(super.subtractWrap(addr, displacement));
 //	}
 	
-	/**
-	 * @see ghidra.program.model.address.GenericAddressSpace#isOverlaySpace()
-	 */
 	@Override
     public boolean isOverlaySpace() {
 		return originalSpace != null;
@@ -125,17 +126,11 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		return originalSpace;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getPhysicalSpace()
-	 */
 	@Override
     public AddressSpace getPhysicalSpace() {
 		return originalSpace.getPhysicalSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#hasMappedRegisters()
-	 */
 	@Override
     public boolean hasMappedRegisters() {
 		return originalSpace.hasMappedRegisters();
@@ -157,9 +152,6 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		return new GenericAddress(offset, this);
 	}
 	
-	/**
-	 * @see ghidra.program.model.address.AddressSpace#getAddress(long)
-	 */
 	@Override
     public Address getAddress(long offset) {
 		if (contains(offset)) {
@@ -168,9 +160,6 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		return originalSpace.getAddress(offset);
 	}
 	
-	/**
-	 * @see ghidra.program.model.address.AbstractAddressSpace#getUncheckedAddress(long, long)
-	 */
 	@Override
     protected Address getUncheckedAddress(long offset) {
 		return new GenericAddress(offset, this);
@@ -219,9 +208,11 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		return new GenericAddress(originalSpace, addr.getOffset());
 	}
 	
-	@Override
+	/**
+	 * @return the ID of the address space underlying this space
+	 */
     public int getBaseSpaceID() {
-		return originalSpace.getBaseSpaceID();
+		return originalSpace.getSpaceID();
 	}
 	
 	@Override
@@ -239,10 +230,6 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 		return databaseKey;
 	}
 	
-	/**
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
     public boolean equals(Object obj) {
 		if (obj == this) {

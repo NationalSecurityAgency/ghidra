@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,7 @@
 package ghidra.program.model.lang;
 
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * An implementation of processor context which contains the state of all
@@ -29,47 +27,41 @@ import java.util.Map;
  */
 public final class ProcessorContextImpl implements ProcessorContext {
 	Map<Register, byte[]> values = new HashMap<Register, byte[]>();
-	Register[] registers;
-	Register baseContextRegister;
+	Language language;
 
-	public ProcessorContextImpl(ProcessorContext context) {
-		this(context.getRegisters());
-		for (Register register : registers) {
-			if (!register.isBaseRegister()) {
-				continue;
-			}
-			if (register.isProcessorContext()) {
-				baseContextRegister = register;
-			}
-			RegisterValue value = context.getRegisterValue(register);
-			if (value != null) {
-				setRegisterValue(value);
-			}
-		}
-	}
+//	public ProcessorContextImpl(ProcessorContext context) {
+//		this(context.getRegisters());
+//		for (Register register : registers) {
+//			if (!register.isBaseRegister()) {
+//				continue;
+//			}
+//			if (register.isProcessorContext()) {
+//				baseContextRegister = register;
+//			}
+//			RegisterValue value = context.getRegisterValue(register);
+//			if (value != null) {
+//				setRegisterValue(value);
+//			}
+//		}
+//	}
 
-	public ProcessorContextImpl(Register[] registers) {
-		this.registers = registers;
+	public ProcessorContextImpl(Language language) {
+		this.language = language;
 	}
 
 	@Override
 	public Register getBaseContextRegister() {
-		return baseContextRegister;
+		return language.getContextBaseRegister();
 	}
 
 	@Override
 	public Register getRegister(String name) {
-		for (Register register : registers) {
-			if (register.getName().equals(name)) {
-				return register;
-			}
-		}
-		return null;
+		return language.getRegister(name);
 	}
 
 	@Override
-	public Register[] getRegisters() {
-		return registers;
+	public List<Register> getRegisters() {
+		return language.getRegisters();
 	}
 
 	@Override

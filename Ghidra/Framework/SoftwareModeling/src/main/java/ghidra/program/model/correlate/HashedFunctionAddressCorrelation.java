@@ -400,7 +400,7 @@ public class HashedFunctionAddressCorrelation implements FunctionAddressCorrelat
 	}
 
 	/**
-	 * Given the src -> dest map, build the dest -> src map
+	 * {@literal Given the src -> dest map, build the dest -> src map}
 	 */
 	private void buildFinalMaps() {
 		for(Entry<Address,Address> entry : srcToDest.entrySet()) {

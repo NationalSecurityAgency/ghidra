@@ -51,6 +51,12 @@ public abstract class DecompilerVariable {
 			return ((ClangTypeToken) variable).getDataType();
 		}
 
+// not sure if we need this; the type returned here is the structure and not the 
+// field's type
+//		if (variable instanceof ClangFieldToken) {
+//			return ((ClangFieldToken) variable).getDataType();
+//		}
+
 		// Note: this is the icky part of the API.  How to know from where to get the data type?
 		HighVariable highVariable = variable.getHighVariable();
 		if (highVariable != null) {
@@ -61,6 +67,16 @@ public abstract class DecompilerVariable {
 		DataType dataType = getDataType(varnode);
 		if (dataType != null) {
 			return dataType;
+		}
+
+		// The parent variable declaration node has the type
+		ClangNode parent = variable.Parent();
+		if (parent instanceof ClangVariableDecl) {
+			ClangVariableDecl decl = (ClangVariableDecl) parent;
+			dataType = decl.getDataType();
+			if (dataType != null) {
+				return dataType;
+			}
 		}
 
 		// Prefer the type of the first input varnode, unless that type is a 'void *'.  

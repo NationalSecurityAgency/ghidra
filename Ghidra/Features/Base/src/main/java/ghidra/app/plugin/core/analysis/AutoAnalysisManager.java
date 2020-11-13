@@ -36,10 +36,12 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.PriorityQueue;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -158,7 +160,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		taskArray = new AnalysisTaskList[] { byteTasks, instructionTasks, functionTasks,
 			functionModifierChangedTasks, functionSignatureChangedTasks, dataTasks };
 
-		Set<Analyzer> analyzers = ClassSearcher.getInstances(Analyzer.class);
+		List<Analyzer> analyzers = ClassSearcher.getInstances(Analyzer.class);
 		for (Analyzer analyzer : analyzers) {
 			if (!analyzer.canAnalyze(program)) {
 				continue;
@@ -393,6 +395,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				case DomainObject.DO_PROPERTY_CHANGED:
 					if (!optionsChanged) {
 						initializeOptions();
+						Preferences.store();
 						optionsChanged = true;
 					}
 					break;
@@ -799,6 +802,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				notifyAnalysisEnded();
 				if (printTaskTimes) {
 					printTimedTasks();
+					saveTaskTimes();
 				}
 			}
 		}
@@ -848,9 +852,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 		for (AutoAnalysisManagerListener listener : listeners) {
 			listener.analysisEnded(this);
-		}
-		if (log.getMsgCount() > 0) {
-			Msg.info(AutoAnalysisManager.class, log.toString());
 		}
 		log.clear();
 	}
@@ -1051,7 +1052,16 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	public void initializeOptions() {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		initializeOptions(options);
+
+		try {
+			initializeOptions(options);
+		}
+		catch (OptionsVetoException e) {
+// FIXME!! Not good to popup for all use cases
+			// This will only happen if an Analyzer author makes a mistake 
+			Msg.showError(this, null, "Invalid Analysis Option",
+				"Invalid Analysis option set during initialization", e);
+		}
 	}
 
 	public void initializeOptions(Options options) {
@@ -1278,6 +1288,19 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 		String taskTimeString = getTaskTimesString();
 		Msg.info(this, taskTimeString);
+	}
+
+	private void saveTaskTimes() {
+
+		StoredAnalyzerTimes times = StoredAnalyzerTimes.getStoredAnalyzerTimes(program);
+
+		String taskNames[] = getTimedTasks();
+		for (String element : taskNames) {
+			long taskTimeMSec = getTaskTime(timedTasks, element);
+			times.addTime(element, taskTimeMSec);
+		}
+
+		StoredAnalyzerTimes.setStoredAnalyzerTimes(program, times);
 	}
 
 	/**

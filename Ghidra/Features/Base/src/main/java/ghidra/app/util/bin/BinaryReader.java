@@ -72,7 +72,7 @@ public class BinaryReader {
 	 * @param newIndex the new index
 	 * @return a clone of this reader positioned at the new index
 	 */
-	public BinaryReader clone(int newIndex) {
+	public BinaryReader clone(long newIndex) {
 		BinaryReader clone = new BinaryReader(provider, isLittleEndian());
 		clone.converter = converter;
 		clone.currentIndex = newIndex;
@@ -93,12 +93,7 @@ public class BinaryReader {
 	 * @param isLittleEndian true for little-endian and false for big-endian
 	 */
 	public void setLittleEndian(boolean isLittleEndian) {
-		if (isLittleEndian) {
-			converter = new LittleEndianDataConverter();
-		}
-		else {
-			converter = new BigEndianDataConverter();
-		}
+		converter = DataConverter.getInstance(!isLittleEndian);
 	}
 
 	/**
@@ -319,7 +314,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readNextNullTerminatedAsciiString() throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		while (currentIndex < provider.length()) {
 			byte b = provider.readByte(currentIndex++);
 			if (b == 0) {
@@ -435,7 +430,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (true) {
 			if (index == len) {
@@ -464,7 +459,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index, int length) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < length; ++i) {
 			byte b = provider.readByte(index++);
 			buffer.append((char) (b & 0x00FF));
@@ -484,7 +479,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readTerminatedString(long index, char termChar) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (index < len) {
 			char c = (char) provider.readByte(index++);
@@ -508,7 +503,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readTerminatedString(long index, String termChars) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (index < len) {
 			char c = (char) provider.readByte(index++);
@@ -549,7 +544,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readUnicodeString(long index) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		while (index < length()) {
 			int ch = readUnsignedShort(index);
 			if (ch == 0) {
@@ -576,7 +571,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readUnicodeString(long index, int length) throws IOException {
-		StringBuffer buffer = new StringBuffer(length);
+		StringBuilder buffer = new StringBuilder(length);
 		long endOffset = index + (length * 2);
 		while (index < endOffset) {
 			int ch = readUnsignedShort(index);
@@ -649,22 +644,7 @@ public class BinaryReader {
 	}
 
 	/**
-	 * Returns the INTEGER at <code>index</code>, after coercing it into the range
-	 * [minClamp-maxClamp].
-	 *
-	 * @param index the index where the INTEGER begins
-	 * @param minClamp minimum value that will be returned
-	 * @param maxClamp maximum value that will be returned
-	 * @return the INTEGER
-	 * @exception IOException if an I/O error occurs
-	 */
-	public int readInt(long index, int minClamp, int maxClamp) throws IOException {
-		int i = readInt(index);
-		return clampInt(i, minClamp, maxClamp);
-	}
-
-	/**
-	 * Returns the LONG at <code>index</code>.
+	 * Returns the signed LONG at <code>index</code>.
 	 * @param index the index where the LONG begins
 	 * @return the LONG
 	 * @exception IOException if an I/O error occurs
@@ -672,6 +652,34 @@ public class BinaryReader {
 	public long readLong(long index) throws IOException {
 		byte[] bytes = provider.readBytes(index, SIZEOF_LONG);
 		return converter.getLong(bytes);
+	}
+
+	/**
+	 * Returns the signed value of the integer (of the specified length) at the specified offset.
+	 * 
+	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
+	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
+	 * 4 (int), 8 (long)
+	 * @return value of requested length, with sign bit extended, in a long
+	 * @throws IOException 
+	 */
+	public long readValue(long index, int len) throws IOException {
+		byte[] bytes = provider.readBytes(index, len);
+		return converter.getSignedValue(bytes, len);
+	}
+
+	/**
+	 * Returns the unsigned value of the integer (of the specified length) at the specified offset.
+	 * 
+	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
+	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
+	 * 4 (int), 8 (long)
+	 * @return unsigned value of requested length, in a long
+	 * @throws IOException 
+	 */
+	public long readUnsignedValue(long index, int len) throws IOException {
+		byte[] bytes = provider.readBytes(index, len);
+		return converter.getValue(bytes, len);
 	}
 
 	/**
@@ -776,29 +784,6 @@ public class BinaryReader {
 	 */
 	public ByteProvider getByteProvider() {
 		return provider;
-	}
-
-	/**
-	 * Returns the specified integer after it has been forced to be within the range of
-	 * [minClamp-maxClamp].
-	 * <p>
-	 * @param i value to force into range
-	 * @param minClamp minimum value the integer is allowed to take (inclusive)
-	 * @param maxClamp maximum value the integer is allowed to take (inclusive)
-	 * @return value of {@code i} if it is within the range [min-max], otherwise min if {@code i} is less than min
-	 * or max if {@code i} is greater than max.
-	 */
-	private int clampInt(int i, int minClamp, int maxClamp) {
-		if (maxClamp < minClamp) {
-			throw new IllegalArgumentException("maxClamp < minClamp not allowed");
-		}
-		if (i < minClamp) {
-			i = minClamp;
-		}
-		else if (i > maxClamp) {
-			i = maxClamp;
-		}
-		return i;
 	}
 
 }

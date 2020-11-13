@@ -15,15 +15,13 @@
  */
 package ghidra.feature.vt.gui.filters;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.*;
 
 import org.junit.*;
 
-import db.DBHandle;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
@@ -32,7 +30,7 @@ import ghidra.feature.vt.db.DummyTestProgramCorrelator;
 import ghidra.feature.vt.db.VTBaseTestCase;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTControllerListener;
-import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.DummyDomainObject;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
@@ -430,23 +428,6 @@ public class TagFilterTest extends VTBaseTestCase {
 		public Map<String, VTMatchTag> getExcludedTags(Map<String, VTMatchTag> allTags,
 				Map<String, VTMatchTag> currentExcludedTags) {
 			return excludedTags;
-		}
-	}
-
-	class DummyDomainObject extends DomainObjectAdapterDB {
-
-		protected DummyDomainObject(Object consumer) throws IOException {
-			super(new DBHandle(), "Dummy", 10, 1, consumer);
-		}
-
-		@Override
-		public String getDescription() {
-			return "Test object: " + getName();
-		}
-
-		@Override
-		public boolean isChangeable() {
-			return true;
 		}
 	}
 

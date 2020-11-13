@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
+import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
@@ -70,7 +71,7 @@ public class DWARFDataTypeImporter {
 	 * This identity mapping doesn't always work because datatype instances are often clone()'d
 	 * which will break this mapping.
 	 * <p>
-	 * Places where we know clone()ing happens the mapping is
+	 * Places where we know cloning happens the mapping is
 	 * {@link #updateMapping(DataType, DataType) updated}.
 	 */
 	private IdentityHashMap<DataType, DWARFDataType> dataTypeInstanceToDDTMap =
@@ -271,12 +272,6 @@ public class DWARFDataTypeImporter {
 			foundThisParam |= DWARFUtil.isThisParam(childDIEA);
 		}
 
-		if (dni.isAnon() && mangleAnonFuncNames) {
-			dni = dni.replaceName(
-				dni.getName() + "_" + getMangledFuncDefName(returnType.dataType, params),
-				dni.getOriginalName());
-		}
-
 		FunctionDefinitionDataType funcDef =
 			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
 		funcDef.setReturnType(returnType.dataType);
@@ -288,6 +283,12 @@ public class DWARFDataTypeImporter {
 
 		if (foundThisParam) {
 			funcDef.setGenericCallingConvention(GenericCallingConvention.thiscall);
+		}
+
+		if (dni.isAnon() && mangleAnonFuncNames) {
+			String mangledName =
+				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef, dni.getName());
+			dni = dni.replaceName(mangledName, dni.getOriginalName());
 		}
 
 		for (int i = 0; i < funcDef.getArguments().length; i++) {
@@ -343,27 +344,27 @@ public class DWARFDataTypeImporter {
 		return refdDT;
 	}
 
-	/**
-	 * Mash parameter datatype names together to make a mangling suffix to append to
-	 * a function def name.
-	 * <p>
-	 * @param returnTypeDT
-	 * @param parameters
-	 * @return
-	 */
-	private String getMangledFuncDefName(DataType returnTypeDT,
-			List<ParameterDefinition> parameters) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(mangleDTName(returnTypeDT.getName()));
-		for (ParameterDefinition p : parameters) {
-			sb.append("_").append(mangleDTName(p.getDataType().getName()));
-		}
-		return sb.toString();
-	}
-
-	private String mangleDTName(String s) {
-		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
-	}
+//	/**
+//	 * Mash parameter datatype names together to make a mangling suffix to append to
+//	 * a function def name.
+//	 * <p>
+//	 * @param returnTypeDT
+//	 * @param parameters
+//	 * @return
+//	 */
+//	private String getMangledFuncDefName(DataType returnTypeDT,
+//			List<ParameterDefinition> parameters) {
+//		StringBuilder sb = new StringBuilder();
+//		sb.append(mangleDTName(returnTypeDT.getName()));
+//		for (ParameterDefinition p : parameters) {
+//			sb.append("_").append(mangleDTName(p.getDataType().getName()));
+//		}
+//		return sb.toString();
+//	}
+//
+//	private String mangleDTName(String s) {
+//		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
+//	}
 
 	/**
 	 * Creates a Ghidra {@link Enum} datatype.
@@ -371,7 +372,7 @@ public class DWARFDataTypeImporter {
 	 * If an existing Enum with the same name is found in the DTM, and it doesn't have
 	 * any conflicting enum values, merge this enum into the existing enum.
 	 * <p>
-	 * This method takes liberties with the normal DWARF->Ghidra Impl DataType->Ghidra DB DataType
+	 * This method takes liberties with the normal{@literal DWARF->Ghidra Impl DataType->Ghidra DB DataType}
 	 * workflow to be able to merge values into previous db enum datatypes.
 	 * <p>
 	 *
@@ -408,8 +409,8 @@ public class DWARFDataTypeImporter {
 			}
 		}
 
-		DataType result = dataTypeManager.addDataType(enumDT,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType result =
+			dataTypeManager.addDataType(enumDT, DWARFDataTypeConflictHandler.INSTANCE);
 
 		return new DWARFDataType(result, dni, diea.getOffset());
 	}
@@ -1101,14 +1102,13 @@ public class DWARFDataTypeImporter {
 	 * <p>
 	 * There is some hacky logic here to handle situations where a pointer refers back to
 	 * itself via a struct:
-	 * <pre>
-	 * PTRa
+	 * <pre>{@literal
 	 *   +-> STRUCT1 (creates empty struct)
 	 *         +-> Field1: PTRa
 	 *               +-> STRUCT1 (empty struct returned from cache)
 	 *               ( ptr instance created pointing to empty struct)
 	 *         ( struct fields populated )
-	 * </pre>
+	 * }</pre>
 	 * The struct creation code will stop the recursive loop after the second time
 	 * makeDataTypeForPointer() is hit because there will be an empty struct in the cache.
 	 *
@@ -1340,7 +1340,7 @@ public class DWARFDataTypeImporter {
 
 		@Override
 		public String toString() {
-			return dataType.toString() + "|" + (dni != null ? dni.toString() : "na") + "|" +
+			return dataType.getName() + " | " + (dni != null ? dni.toString() : "na") + " | " +
 				hexOffsets();
 		}
 

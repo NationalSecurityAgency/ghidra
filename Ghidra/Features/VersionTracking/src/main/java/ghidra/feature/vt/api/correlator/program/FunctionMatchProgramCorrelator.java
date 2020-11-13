@@ -18,7 +18,6 @@ package ghidra.feature.vt.api.correlator.program;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.plugin.core.entropy.EntropyCalculate;
 import ghidra.app.plugin.match.FunctionHasher;
 import ghidra.app.plugin.match.MatchFunctions;
 import ghidra.app.plugin.match.MatchFunctions.MatchedFunctions;
@@ -30,7 +29,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -51,8 +49,6 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 		this.hasher = hasher;
 	}
 
-	private EntropyCalculate[] entropy;
-
 	@Override
 	protected void doCorrelate(VTMatchSet matchSet, TaskMonitor monitor) throws CancelledException {
 		int functionMinimumSize = getOptions().getInt(
@@ -62,8 +58,6 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 		List<MatchedFunctions> matchedFunctions = MatchFunctions.matchFunctions(getSourceProgram(),
 			getSourceAddressSet(), getDestinationProgram(), getDestinationAddressSet(),
 			functionMinimumSize, oneToOne, !oneToOne, hasher, monitor);
-
-		buildEntropy(1024);
 
 		monitor.setMessage("Scoring " + matchedFunctions.size() + " matches...");
 		monitor.initialize(matchedFunctions.size());
@@ -91,31 +85,6 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 		}
 	}
 
-	private void buildEntropy(int chunksize) {
-		MemoryBlock[] blocks = getDestinationProgram().getMemory().getBlocks();
-		entropy = new EntropyCalculate[blocks.length];
-		for (int ii = 0; ii < entropy.length; ++ii) {
-			entropy[ii] = new EntropyCalculate(blocks[ii], chunksize);
-		}
-	}
-
-	private int getEntropyIndex(Address addr) {
-		MemoryBlock[] blocks = getDestinationProgram().getMemory().getBlocks();
-		int i = 0;
-		while (i < blocks.length) {
-			if (blocks[i].contains(addr)) {
-				break;
-			}
-			i += 1;
-		}
-		if (i == blocks.length) {
-			return -1;
-		}
-		int offset = (int) addr.subtract(blocks[i].getStart());
-
-		return entropy[i].getValue(offset);
-	}
-
 	private VTMatchInfo generateMatchFromMatchedFunctions(VTMatchSet matchSet,
 			MatchedFunctions matchedFunction, TaskMonitor monitor) {
 
@@ -135,12 +104,6 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 		if (sourceLength != destinationLength) {
 			return null;
 		}
-
-		int commonBitCount = hasher.commonBitCount(sourceFunction, destinationFunction, monitor);
-		int totalMaxBits = Math.max(sourceLength, destinationLength) * 8;
-		double entropyIndex = getEntropyIndex(destinationAddress);
-		double bits = commonBitCount * entropyIndex / 255.0;
-		double realSimilarity = (double) commonBitCount / totalMaxBits;
 
 		VTMatchInfo matchInfo = new VTMatchInfo(matchSet);
 

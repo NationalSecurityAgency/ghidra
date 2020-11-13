@@ -474,9 +474,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#addRegisterReference(ghidra.program.model.address.Address, int, ghidra.program.model.lang.Register, ghidra.program.model.symbol.RefType, int)
-	 */
 	@Override
 	public Reference addRegisterReference(Address fromAddr, int opIndex, Register register,
 			RefType type, SourceType sourceType) {
@@ -494,9 +491,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#addOffsetMemReference(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.program.model.symbol.RefType, int, int)
-	 */
 	@Override
 	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, long offset,
 			RefType type, SourceType sourceType, int opIndex) {
@@ -513,9 +507,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#addShiftedMemReference(ghidra.program.model.address.Address, ghidra.program.model.address.Address, int, ghidra.program.model.symbol.RefType, int, int)
-	 */
 	@Override
 	public Reference addShiftedMemReference(Address fromAddr, Address toAddr, int shiftValue,
 			RefType type, SourceType sourceType, int opIndex) {
@@ -764,9 +755,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#setPrimary(ghidra.program.model.symbol.Reference, boolean)
-	 */
 	@Override
 	public void setPrimary(Reference ref, boolean isPrimary) {
 		lock.acquire();
@@ -803,9 +791,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferencesFrom(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public Reference[] getReferencesFrom(Address addr) {
 		lock.acquire();
@@ -825,9 +810,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getFlowReferencesFrom(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public Reference[] getFlowReferencesFrom(Address addr) {
 		Reference[] refs = getReferencesFrom(addr);
@@ -841,9 +823,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return list.toArray(refs);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReference(ghidra.program.model.address.Address, ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public Reference getReference(Address fromAddr, Address toAddr, int opIndex) {
 		lock.acquire();
@@ -870,9 +849,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceCountFrom(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public int getReferenceCountFrom(Address fromAddr) {
 		RefList fromRefs = getFromRefs(fromAddr);
@@ -882,9 +858,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceCountTo(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public int getReferenceCountTo(Address toAddr) {
 		if (toAddr.isStackAddress() || toAddr.isRegisterAddress()) {
@@ -898,17 +871,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceDestinationCount()
-	 */
 	@Override
 	public int getReferenceDestinationCount() {
 		return toAdapter.getRecordCount();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceSourceCount()
-	 */
 	@Override
 	public int getReferenceSourceCount() {
 		return fromAdapter.getRecordCount();
@@ -944,9 +911,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getPrimaryReferenceFrom(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public Reference getPrimaryReferenceFrom(Address addr, int opIndex) {
 		lock.acquire();
@@ -965,9 +929,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceDestinationIterator(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public AddressIterator getReferenceDestinationIterator(Address startAddr, boolean forward) {
 		try {
@@ -979,9 +940,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceDestinationIterator(ghidra.program.model.address.AddressSetView, boolean)
-	 */
 	@Override
 	public AddressIterator getReferenceDestinationIterator(AddressSetView addrSet,
 			boolean forward) {
@@ -994,9 +952,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceSourceIterator(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public AddressIterator getReferenceSourceIterator(Address startAddr, boolean forward) {
 		try {
@@ -1008,17 +963,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceIterator(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public ReferenceIterator getReferenceIterator(Address startAddr) {
 		return new FromRefIterator(startAddr);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferenceSourceIterator(ghidra.program.model.address.AddressSetView, boolean)
-	 */
 	@Override
 	public AddressIterator getReferenceSourceIterator(AddressSetView addrSet, boolean forward) {
 		try {
@@ -1030,9 +979,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return new EmptyAddressIterator();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#hasFlowReferencesFrom(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean hasFlowReferencesFrom(Address addr) {
 		lock.acquire();
@@ -1058,9 +1004,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#hasReferencesFrom(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean hasReferencesFrom(Address fromAddr) {
 		lock.acquire();
@@ -1084,9 +1027,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#hasReferencesFrom(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public boolean hasReferencesFrom(Address fromAddr, int opIndex) {
 		lock.acquire();
@@ -1112,9 +1052,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#hasReferencesTo(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean hasReferencesTo(Address toAddr) {
 		if (toAddr.isStackAddress() || toAddr.isRegisterAddress()) {
@@ -1142,9 +1079,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#removeAllReferencesFrom(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void removeAllReferencesFrom(Address beginAddr, Address endAddr) {
 		try {
@@ -1161,9 +1095,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#removeAllReferencesFrom(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void removeAllReferencesFrom(Address fromAddr) {
 		try {
@@ -1263,9 +1194,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#setAssociation(ghidra.program.model.symbol.Symbol, ghidra.program.model.symbol.Reference)
-	 */
 	@Override
 	public void setAssociation(Symbol s, Reference ref) {
 		if (s.getSymbolType() != SymbolType.LABEL || s.isDynamic()) {
@@ -1304,9 +1232,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#removeAssociation(ghidra.program.model.symbol.Reference)
-	 */
 	@Override
 	public void removeAssociation(Reference ref) {
 		lock.acquire();
@@ -1323,9 +1248,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#updateRefType(ghidra.program.model.symbol.Reference, ghidra.program.model.symbol.RefType)
-	 */
 	@Override
 	public Reference updateRefType(Reference ref, RefType refType) {
 		lock.acquire();
@@ -1360,9 +1282,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferencesTo(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public ReferenceIterator getReferencesTo(Address addr) {
 		lock.acquire();
@@ -1385,9 +1304,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return new EmptyMemReferenceIterator();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) {
 		lock.acquire();
@@ -1457,17 +1373,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return refs.length;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor) {
 		removeAllReferencesFrom(startAddr, endAddr);
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
@@ -1826,17 +1736,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			fromIter = getReferenceSourceIterator(set, true);
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 
-		/**
-		 * @see ghidra.program.model.symbol.ReferenceIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() {
 			try {
@@ -1862,9 +1766,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			return (refIter != null);
 		}
 
-		/**
-		 * @see ghidra.program.model.symbol.ReferenceIterator#next()
-		 */
 		@Override
 		public Reference next() {
 			if (hasNext()) {
@@ -1888,30 +1789,17 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			this.iter = iter;
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see ghidra.program.model.address.AddressIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() {
 			findNext();
 			return currentAddress != null;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see ghidra.program.model.address.AddressIterator#next()
-		 */
 		@Override
 		public Address next() {
 			findNext();
@@ -1943,17 +1831,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	/**
-	 * @see db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		program.dbError(e);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#delete(ghidra.program.model.symbol.Reference)
-	 */
 	@Override
 	public void delete(Reference ref) {
 		removeReference(ref.getFromAddress(), ref.getToAddress(), ref.getOperandIndex());
@@ -1969,9 +1851,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 //		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getExternalReferences()
-	 */
 	@Override
 	public ReferenceIterator getExternalReferences() {
 		AddressSet set = new AddressSet(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
@@ -1980,9 +1859,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return new ExternalReferenceIterator(it);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#addReference(ghidra.program.model.symbol.Reference)
-	 */
 	@Override
 	public Reference addReference(Reference ref) {
 		Address from = ref.getFromAddress();
@@ -2029,9 +1905,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return memRef;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ReferenceManager#getReferencesFrom(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public Reference[] getReferencesFrom(Address fromAddr, int opIndex) {
 		Reference[] retRefs = null;
@@ -2072,17 +1945,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			this.it = it;
 		}
 
-		/**
-		 * @see ghidra.program.model.symbol.ReferenceIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() {
 			return (refIt != null && refIt.hasNext()) || it.hasNext();
 		}
 
-		/**
-		 * @see ghidra.program.model.symbol.ReferenceIterator#next()
-		 */
 		@Override
 		public Reference next() {
 			if (refIt == null || !refIt.hasNext()) {
@@ -2098,9 +1965,6 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			return null;
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();

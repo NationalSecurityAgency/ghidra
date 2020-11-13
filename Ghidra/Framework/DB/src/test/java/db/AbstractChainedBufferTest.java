@@ -884,11 +884,12 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		assertEquals(0, mgr.getLockCount());
 
 		// Grow buffer (single index buffer)
-		int newSize = 2 * BUFFER_SIZE;
+		int newSize = (int) (2.3 * BUFFER_SIZE);
 		if (doSetSize(cb, newSize, true)) {
 			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
 			int addSize = newSize - size;
 			byte[] addBytes = new byte[addSize];
+			assertTrue(Arrays.equals(addBytes, cb.get(size, addBytes.length)));
 			random.nextBytes(addBytes);
 			cb.put(size, addBytes);
 			assertTrue(Arrays.equals(bytes, cb.get(0, size)));

@@ -171,7 +171,7 @@ public class DWARFUtil {
 	 * A lightweight attempt to get nesting (ie. namespaces and such) information
 	 * from gnu mangled name strings.
 	 * <p>
-	 * For example, "_ZN19class1_inline_funcs3fooEv" ->
+	 * For example, "_ZN19class1_inline_funcs3fooEv" -&gt;
 	 * [19 chars]'class1_inline_funcs', [3 chars]'foo'
 	 * <p>
 	 * @param s
@@ -257,8 +257,8 @@ public class DWARFUtil {
 	/**
 	 * Creates a name for anon types based on their position in their parent's childList.
 	 * <p>
-	 * @param die
-	 * @return
+	 * @param diea the die aggregate.
+	 * @return the anonymous name of the die aggregate.
 	 */
 	public static String getAnonNameForMeFromParentContext(DIEAggregate diea) {
 		DebugInfoEntry parent = diea.getHeadFragment().getParent();
@@ -286,9 +286,9 @@ public class DWARFUtil {
 	 * <p>
 	 * Example: "anon_struct_for_field1_field2"
 	 * <p>
-	 * Falls back to {@link #getAnonNameForMeFromParentContext(DebugInfoEntry)} if no siblings found.
-	 * @param die
-	 * @return
+	 * Falls back to {@link #getAnonNameForMeFromParentContext(DIEAggregate)} if no siblings found.
+	 * @param diea the die aggregate.
+	 * @return the anonymous name of the die aggregate.
 	 */
 	public static String getAnonNameForMeFromParentContext2(DIEAggregate diea) {
 		DebugInfoEntry parent = diea.getHeadFragment().getParent();

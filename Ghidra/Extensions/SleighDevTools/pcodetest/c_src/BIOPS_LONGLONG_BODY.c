@@ -16,7 +16,7 @@
 #include "pcode_test.h"
 
 #ifdef HAS_LONGLONG
-i8 pcode_i8_complexLogic(i8 a, i8 b, i8 c, i8 d, i8 e, i8 f)
+i8 i8_complexLogic(i8 a, i8 b, i8 c, i8 d, i8 e, i8 f)
 {
 	i8 ret = 0;
 
@@ -35,7 +35,7 @@ i8 pcode_i8_complexLogic(i8 a, i8 b, i8 c, i8 d, i8 e, i8 f)
 	return ret;
 }
 
-u8 pcode_u8_complexLogic(u8 a, u8 b, u8 c, u8 d, u8 e, u8 f)
+u8 u8_complexLogic(u8 a, u8 b, u8 c, u8 d, u8 e, u8 f)
 {
 	u8 ret = 0;
 
@@ -54,7 +54,7 @@ u8 pcode_u8_complexLogic(u8 a, u8 b, u8 c, u8 d, u8 e, u8 f)
 	return ret;
 }
 
-i8 biopCmpi8i8(i8 lhs, i8 rhs)
+i8 i8_compareLogic(i8 lhs, i8 rhs)
 {
 	if (lhs < 0)
 		lhs += 2;
@@ -67,7 +67,7 @@ i8 biopCmpi8i8(i8 lhs, i8 rhs)
 	return lhs;
 }
 
-u8 biopCmpu8u8(u8 lhs, u8 rhs)
+u8 u8_compareLogic(u8 lhs, u8 rhs)
 {
 	if (lhs < rhs)
 		lhs += 2;
@@ -79,8 +79,96 @@ u8 biopCmpu8u8(u8 lhs, u8 rhs)
 		lhs += 16;
 	return lhs;
 }
+/* Comparison operators */
+u8 u8_greaterThan(u8 lhs, u8 rhs)
+{
+	u8 z;
 
-i8 biopNei8i8(i8 lhs, i8 rhs)
+	z = lhs > rhs;
+	return z;
+}
+
+u8 u8_greaterThanEquals(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs >= rhs;
+	return z;
+}
+
+u8 u8_lessThan(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs < rhs;
+	return z;
+}
+
+u8 u8_lessThanEquals(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs <= rhs;
+	return z;
+}
+
+u8 u8_equals(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs == rhs;
+	return z;
+}
+
+u8 u8_notEquals(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs != rhs;
+	return z;
+}
+
+i8 i8_greaterThan(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs > rhs;
+	return z;
+}
+
+i8 i8_greaterThanEquals(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs >= rhs;
+	return z;
+}
+
+i8 i8_lessThan(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs < rhs;
+	return z;
+}
+
+i8 i8_lessThanEquals(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs <= rhs;
+	return z;
+}
+
+i8 i8_equals(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs == rhs;
+	return z;
+}
+
+i8 i8_notEquals(i8 lhs, i8 rhs)
 {
 	i8 z;
 
@@ -88,7 +176,8 @@ i8 biopNei8i8(i8 lhs, i8 rhs)
 	return z;
 }
 
-u8 biopAndu8u8(u8 lhs, u8 rhs)
+/* Bitwise operators */
+u8 u8_bitwiseAnd(u8 lhs, u8 rhs)
 {
 	u8 z;
 
@@ -96,7 +185,23 @@ u8 biopAndu8u8(u8 lhs, u8 rhs)
 	return z;
 }
 
-i8 biopAndi8i8(i8 lhs, i8 rhs)
+u8 u8_bitwiseOr(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs | rhs;
+	return z;
+}
+
+u8 u8_bitwiseXor(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs ^ rhs;
+	return z;
+}
+
+i8 i8_bitwiseAnd(i8 lhs, i8 rhs)
 {
 	i8 z;
 
@@ -104,23 +209,7 @@ i8 biopAndi8i8(i8 lhs, i8 rhs)
 	return z;
 }
 
-u8 biopOru8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-u8 biopXOru8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-i8 biopOri8i8(i8 lhs, i8 rhs)
+i8 i8_bitwiseOr(i8 lhs, i8 rhs)
 {
 	i8 z;
 
@@ -128,15 +217,7 @@ i8 biopOri8i8(i8 lhs, i8 rhs)
 	return z;
 }
 
-u8 biopLogicOru8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-i8 biopXOri8i8(i8 lhs, i8 rhs)
+i8 i8_bitwiseXor(i8 lhs, i8 rhs)
 {
 	i8 z;
 
@@ -144,15 +225,40 @@ i8 biopXOri8i8(i8 lhs, i8 rhs)
 	return z;
 }
 
-i8 biopRemainderi8i8(i8 lhs, i8 rhs)
+/* Logical operators */
+u8 u8_logicalAnd(u8 lhs, u8 rhs)
 {
-	i8 z;
+	u8 z;
 
-	z = lhs % rhs;
+	z = lhs && rhs;
 	return z;
 }
 
-i8 biopLogicOri8i8(i8 lhs, i8 rhs)
+u8 u8_logicalOr(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs || rhs;
+	return z;
+}
+
+u8 u8_logicalNot(u8 lhs)
+{
+	u8 z;
+
+	z = !lhs;
+	return z;
+}
+
+i8 i8_logicalAnd(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs && rhs;
+	return z;
+}
+
+i8 i8_logicalOr(i8 lhs, i8 rhs)
 {
 	i8 z;
 
@@ -160,47 +266,7 @@ i8 biopLogicOri8i8(i8 lhs, i8 rhs)
 	return z;
 }
 
-u8 biopLogicAndu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-i8 biopDividi8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs / rhs;
-	return z;
-}
-
-u8 biopDividu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs / rhs;
-	return z;
-}
-
-i8 biopLogicAndi8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-u8 unopNotu8(u8 lhs)
-{
-	u8 z;
-
-	z = !lhs;
-	return z;
-}
-
-i8 unopNoti8(i8 lhs)
+i8 i8_logicalNot(i8 lhs)
 {
 	i8 z;
 
@@ -208,7 +274,41 @@ i8 unopNoti8(i8 lhs)
 	return z;
 }
 
-u8 unopPlusu8(u8 lhs)
+/* Shift operators */
+u8 u8_shiftLeft(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs << rhs;
+	return z;
+}
+
+u8 u8_shiftRight(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs >> rhs;
+	return z;
+}
+
+i8 i8_shiftLeft(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs << rhs;
+	return z;
+}
+
+i8 i8_shiftRight(i8 lhs, i8 rhs)
+{
+	i8 z;
+
+	z = lhs >> rhs;
+	return z;
+}
+
+/* Arithmetic operators */
+u8 u8_unaryPlus(u8 lhs)
 {
 	u8 z;
 
@@ -216,7 +316,40 @@ u8 unopPlusu8(u8 lhs)
 	return z;
 }
 
-i8 unopNegativei8(i8 lhs)
+u8 u8_addition(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs + rhs;
+	return z;
+}
+
+u8 u8_subtract(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs - rhs;
+	return z;
+}
+
+u8 u8_multiply(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs * rhs;
+	return z;
+}
+
+u8 u8_divide(u8 lhs, u8 rhs)
+{
+	u8 z;
+
+	z = lhs / rhs;
+	return z;
+}
+
+
+i8 i8_unaryMinus(i8 lhs)
 {
 	i8 z;
 
@@ -224,7 +357,7 @@ i8 unopNegativei8(i8 lhs)
 	return z;
 }
 
-i8 unopPlusi8(i8 lhs)
+i8 i8_unaryPlus(i8 lhs)
 {
 	i8 z;
 
@@ -232,55 +365,7 @@ i8 unopPlusi8(i8 lhs)
 	return z;
 }
 
-u8 biopMultu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-i8 biopMulti8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-u8 biopSubu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-i8 biopSubi8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-u8 biopAddu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-u8 biopShtLftu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-i8 biopAddi8i8(i8 lhs, i8 rhs)
+i8 i8_addition(i8 lhs, i8 rhs)
 {
 	i8 z;
 
@@ -288,116 +373,37 @@ i8 biopAddi8i8(i8 lhs, i8 rhs)
 	return z;
 }
 
-u8 biopShtRhtu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs >> rhs;
-	return z;
-}
-
-i8 biopShtLfti8i8(i8 lhs, i8 rhs)
+i8 i8_subtract(i8 lhs, i8 rhs)
 {
 	i8 z;
 
-	z = lhs << rhs;
+	z = lhs - rhs;
 	return z;
 }
 
-i8 biopShtRhti8i8(i8 lhs, i8 rhs)
+i8 i8_multiply(i8 lhs, i8 rhs)
 {
 	i8 z;
 
-	z = lhs >> rhs;
+	z = lhs * rhs;
 	return z;
 }
 
-u8 biopGtu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs > rhs;
-	return z;
-}
-
-i8 biopGti8i8(i8 lhs, i8 rhs)
+i8 i8_divide(i8 lhs, i8 rhs)
 {
 	i8 z;
 
-	z = lhs > rhs;
+	z = lhs / rhs;
 	return z;
 }
 
-u8 biopGeu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs >= rhs;
-	return z;
-}
-
-i8 biopGei8i8(i8 lhs, i8 rhs)
+i8 i8_remainder(i8 lhs, i8 rhs)
 {
 	i8 z;
 
-	z = lhs >= rhs;
+	z = lhs % rhs;
 	return z;
 }
 
-u8 biopLtu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-u8 biopLeu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-i8 biopLti8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-u8 biopEqu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-i8 biopLei8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-i8 biopEqi8i8(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-u8 biopNeu8u8(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs != rhs;
-	return z;
-}
 
 #endif /* #ifdef HAS_LONGLONG */

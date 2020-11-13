@@ -394,7 +394,7 @@ public class GoToHelper {
 		StringBuilder buf = new StringBuilder();
 		while (!nameStack.isEmpty()) {
 			buf.append(nameStack.pop());
-			buf.append(Namespace.NAMESPACE_DELIMITER);
+			buf.append(Namespace.DELIMITER);
 		}
 		buf.append(externalLoc.getLabel());
 		return buf.toString();

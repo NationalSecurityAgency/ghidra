@@ -186,4 +186,7 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 		filterPanel.requestFocus();
 	}
 
+	public void setFiterText(String text) {
+		filterPanel.setFilterText(text);
+	}
 }

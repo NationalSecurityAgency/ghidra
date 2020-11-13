@@ -106,9 +106,6 @@ public class VerticalLayoutTextField implements TextField {
 		return widest;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getText()
-	 */
 	@Override
 	public String getText() {
 		if (text == null) {
@@ -122,18 +119,11 @@ public class VerticalLayoutTextField implements TextField {
 		return generateText("\n");
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return getText();
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getWidth()
-	 */
 	@Override
 	public int getWidth() {
 		return width;
@@ -144,45 +134,27 @@ public class VerticalLayoutTextField implements TextField {
 		return preferredWidth;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getHeight()
-	 */
 	@Override
 	public int getHeight() {
 		return height;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getStartX()
-	 */
 	@Override
 	public int getStartX() {
 		return startX;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
 	@Override
 	public int getNumRows() {
 		return subFields.size();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
-	 */
 	@Override
 	public int getNumCols(int row) {
 		Field f = subFields.get(row);
 		return f.getNumCols(0);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
-	 */
 	@Override
 	public int getRow(int y) {
 		if (y < -heightAbove) {
@@ -201,20 +173,12 @@ public class VerticalLayoutTextField implements TextField {
 		return n - 1;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
-	 */
 	@Override
 	public int getCol(int row, int x) {
 		Field f = subFields.get(row);
 		return f.getCol(0, x);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
-	 */
 	@Override
 	public int getY(int row) {
 
@@ -226,20 +190,12 @@ public class VerticalLayoutTextField implements TextField {
 		return y;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
-	 */
 	@Override
 	public int getX(int row, int col) {
 		Field f = subFields.get(row);
 		return f.getX(0, col);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
-	 */
 	@Override
 	public boolean isValid(int row, int col) {
 
@@ -250,12 +206,10 @@ public class VerticalLayoutTextField implements TextField {
 		return f.isValid(0, col);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, boolean, docking.widgets.fieldpanel.support.RowColLocation)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc,
+			int rowHeight) {
 		if (context.isPrinting()) {
 			print(g, context);
 			return;
@@ -271,29 +225,62 @@ public class VerticalLayoutTextField implements TextField {
 		Highlight[] highlights = hlFactory.getHighlights(this, getText(), cursorTextOffset);
 		int columns = 0;
 		int n = subFields.size();
+
+		// the graphics have been translated such that the first line of text's base line is
+		// at y=0  (So if we are not clipped, we will drawing from negative the fonts height above
+		// the baseline (-heightAbove) to rowHeight -heightAbove
+		int myStartY = -heightAbove;
+		int myEndY = myStartY + rowHeight;
+		int clipStartY = clip.y;
+		int clipEndY = clip.y + clip.height;
+
 		Color fieldBackgroundColor = colorManager.getBackgroundColor();
 		if (fieldBackgroundColor != null) {
 			g.setColor(fieldBackgroundColor);
-			g.fillRect(startX, -heightAbove, width, rowHeight);
+
+			// restrict background rectangle to clipping rectangle
+			int startY = Math.max(myStartY, clipStartY);
+			int endY = Math.min(myEndY, clipEndY);
+			int clippedHeight = endY - startY;
+			g.fillRect(startX, startY, width, clippedHeight);
 		}
+
+		int startY = myStartY;
+		int translatedY = 0;
+
 		for (int i = 0; i < n; i++) {
-			ClippingTextField clippingField = (ClippingTextField) subFields.get(i);
+			ClippingTextField subField = (ClippingTextField) subFields.get(i);
+			int subFieldHeight = subField.getHeight();
+			int endY = startY + subFieldHeight;
 
-			// translate the highlights
-			for (Highlight highlight : highlights) {
-				highlight.setOffset(-columns);
-			}
-			clippingField.paintSelection(g, colorManager, i, rowHeight);
-			clippingField.paintHighlights(g, highlights);
-			clippingField.paintText(c, g, context);
-			if (cursorRow == i) {
-				clippingField.paintCursor(g, context.getCursorColor(), cursorLoc);
+			// if past clipping region we are done
+			if (startY > clipEndY) {
+				break;
 			}
 
-			g.translate(0, clippingField.getHeight());
-			columns += clippingField.getText().length() + lineDelimiter.length();
+			// if any part of the line is in the clip region, draw it
+			if (endY >= clipStartY) {
+				// translate the highlights
+				for (Highlight highlight : highlights) {
+					highlight.setOffset(-columns);
+				}
+				subField.paintSelection(g, colorManager, i, rowHeight);
+				subField.paintHighlights(g, highlights);
+				subField.paintText(c, g, context);
+				if (cursorRow == i) {
+					subField.paintCursor(g, context.getCursorColor(), cursorLoc);
+				}
+			}
+
+			// translate for next row of text
+			startY += subFieldHeight;
+			g.translate(0, subFieldHeight);
+			translatedY += subFieldHeight;
+			columns += subField.getText().length() + lineDelimiter.length();
 		}
-		g.translate(0, -height);
+
+		// restore the graphics to where it was when we started.
+		g.translate(0, -translatedY);
 	}
 
 	private void print(Graphics g, PaintContext context) {
@@ -308,10 +295,6 @@ public class VerticalLayoutTextField implements TextField {
 		g.translate(0, -height);
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getCursorBounds(int, int)
-	 */
 	@Override
 	public Rectangle getCursorBounds(int row, int col) {
 		if ((row < 0) || (row >= subFields.size())) {
@@ -326,10 +309,6 @@ public class VerticalLayoutTextField implements TextField {
 		return r;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
-	 */
 	@Override
 	public boolean contains(int x, int y) {
 		if ((x >= startX) && (x < startX + width) && (y >= -heightAbove) &&
@@ -339,10 +318,6 @@ public class VerticalLayoutTextField implements TextField {
 		return false;
 	}
 
-	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
 
@@ -364,9 +339,6 @@ public class VerticalLayoutTextField implements TextField {
 		}
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return isPrimary;
@@ -388,25 +360,16 @@ public class VerticalLayoutTextField implements TextField {
 		return Collections.unmodifiableList(subFields);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightAbove()
-	 */
 	@Override
 	public int getHeightAbove() {
 		return heightAbove;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getHeightBelow()
-	 */
 	@Override
 	public int getHeightBelow() {
 		return height - heightAbove;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#rowHeightChanged(int, int)
-	 */
 	@Override
 	public void rowHeightChanged(int heightAbove1, int heightBelow) {
 		// most fields don't care		
@@ -494,9 +457,6 @@ public class VerticalLayoutTextField implements TextField {
 		return buf.toString();
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#screenLocationToTextOffset(int, int)
-	 */
 	@Override
 	public int screenLocationToTextOffset(int row, int col) {
 		if (row >= textElements.length) {
@@ -511,9 +471,6 @@ public class VerticalLayoutTextField implements TextField {
 		return len;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#textOffsetToScreenLocation(int)
-	 */
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		int extraSpace = lineDelimiter.length();
@@ -528,9 +485,6 @@ public class VerticalLayoutTextField implements TextField {
 		return new RowColLocation(n - 1, textElements[n - 1].getText().length());
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.TextField#isClipped()
-	 */
 	@Override
 	public boolean isClipped() {
 		return isClipped;

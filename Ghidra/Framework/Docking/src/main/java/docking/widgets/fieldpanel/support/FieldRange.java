@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +26,8 @@ import org.jdom.Element;
  *  end row (exclusive).  
  *  <p>
  *  Conceptually, this class can be thought of as a range of rows (defined by 
- *  <tt>startIndex</tt> and <tt>endindex</tt>) with sub-positions within those rows (defined by
- *  <tt>startField</tt> and <tt>endField</tt>). As an example, consider a text select that begins on
+ *  <code>startIndex</code> and <code>endindex</code>) with sub-positions within those rows (defined by
+ *  <code>startField</code> and <code>endField</code>). As an example, consider a text select that begins on
  *  some word in a row and ends on another word in a different row.  
  */
 public class FieldRange implements Comparable<FieldRange> {
@@ -82,9 +81,8 @@ public class FieldRange implements Comparable<FieldRange> {
 
 	/**
 	 * checks if the given location is contained in the range.
-	 * @param row
-	 * @param column
-	 * @return
+	 * @param loc the field location.
+	 * @return true if the field range contains the specified location.
 	 */
 	public boolean contains(FieldLocation loc) {
 		return (loc.compareTo(start) >= 0) && (loc.compareTo(end) < 0);

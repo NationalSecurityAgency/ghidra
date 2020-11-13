@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +24,7 @@ import db.*;
 /**
  *
  * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
+ * {@literal Window>Preferences>Java>Code Generation>Code and Comments}
  * 
  * 
  */

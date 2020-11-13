@@ -24,25 +24,29 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
+import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.ExtensionFileFilter;
 
 public class DebugDecompilerAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
+
+	private DecompilerController controller;
 
 	public DebugDecompilerAction(DecompilerController controller) {
 		super("Debug Function Decompilation");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarDebug"));
 		this.controller = controller;
 		setMenuBarData(new MenuData(new String[] { "Debug Function Decompilation" }, "xDebug"));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		return controller.getFunction() != null;
+		return context.getFunction() != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		JComponent parentComponent = controller.getDecompilerPanel();
+		JComponent parentComponent = context.getDecompilerPanel();
 		GhidraFileChooser fileChooser = new GhidraFileChooser(parentComponent);
 		fileChooser.setTitle("Please Choose Output File");
 		fileChooser.setFileFilter(new ExtensionFileFilter(new String[] { "xml" }, "XML Files"));

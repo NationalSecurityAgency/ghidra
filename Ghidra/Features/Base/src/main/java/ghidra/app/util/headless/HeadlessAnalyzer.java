@@ -26,6 +26,7 @@ import generic.util.Path;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraJarApplicationLayout;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.AutoImporter;
@@ -58,10 +59,12 @@ import utilities.util.FileUtilities;
  * broken out into their own class: {@link HeadlessOptions}.  This class is intended to be used 
  * one of two ways:
  * <ul>
- *   <li>Used by analyzeHeadless.bat and {@link AnalyzeHeadless} to perform headless analysis based
- *   on arguments specified on the command line.</li>
+ *   <li>Used by {@link AnalyzeHeadless} to perform headless analysis based on arguments specified 
+ *   on the command line.</li>
  *   <li>Used by another tool as a library to perform headless analysis.</li>
  * </ul>
+ * <p>
+ * Note: This class is not thread safe.  
  */
 public class HeadlessAnalyzer {
 
@@ -207,14 +210,12 @@ public class HeadlessAnalyzer {
 	 * Resets the state of the headless analyzer to the default settings.
 	 */
 	public void reset() {
-		synchronized (options) {
-			options.reset();
-			project = null;
-			analysisTimedOut = false;
-			saveDomainFolder = null;
-			storage = new HashMap<>();
-			classLoaderForDotClassScripts = null;
-		}
+		options.reset();
+		project = null;
+		analysisTimedOut = false;
+		saveDomainFolder = null;
+		storage = new HashMap<>();
+		classLoaderForDotClassScripts = null;
 	}
 
 	/**
@@ -246,54 +247,54 @@ public class HeadlessAnalyzer {
 	public void processURL(URL ghidraURL, List<File> filesToImport)
 			throws IOException, MalformedURLException {
 
-		synchronized (options) {
-			if (options.readOnly && options.commit) {
-				Msg.error(this,
-					"Abort due to Headless analyzer error: The requested readOnly option is in conflict " +
-						"with the commit option");
+		if (options.readOnly && options.commit) {
+			Msg.error(this,
+				"Abort due to Headless analyzer error: The requested readOnly option is in conflict " +
+					"with the commit option");
+			return;
+		}
+
+		if (!"ghidra".equals(ghidraURL.getProtocol())) {
+			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
+		}
+
+		if (GhidraURL.isLocalProjectURL(ghidraURL)) {
+			Msg.error(this,
+				"Ghidra URL command form does not supported local project URLs (ghidra:/path...)");
+			return;
+		}
+
+		String path = ghidraURL.getPath();
+		if (path == null) {
+			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
+		}
+
+		path = path.trim();
+		if (path.length() == 0) {
+			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
+		}
+
+		if (!options.runScriptsNoImport) { // Running in -import mode
+			if ((filesToImport == null || filesToImport.size() == 0) &&
+				options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
+				Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
 				return;
 			}
 
-			if (!"ghidra".equals(ghidraURL.getProtocol())) {
-				throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
+			if (!path.endsWith("/")) {
+				// force explicit folder path so that non-existent folders are created on import
+				ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(), path + "/");
 			}
-
-			if (GhidraURL.isLocalProjectURL(ghidraURL)) {
-				Msg.error(this,
-					"Ghidra URL command form does not supported local project URLs (ghidra:/path...)");
-				return;
+		}
+		else { // Running in -process mode
+			if (path.endsWith("/") && path.length() > 1) {
+				ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(),
+					path.substring(0, path.length() - 1));
 			}
+		}
 
-			String path = ghidraURL.getPath();
-			if (path == null) {
-				throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
-			}
-
-			path = path.trim();
-			if (path.length() == 0) {
-				throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
-			}
-
-			if (!options.runScriptsNoImport) { // Running in -import mode
-				if ((filesToImport == null || filesToImport.size() == 0) &&
-					options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
-					Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
-					return;
-				}
-
-				if (!path.endsWith("/")) {
-					// force explicit folder path so that non-existent folders are created on import
-					ghidraURL =
-						new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(), path + "/");
-				}
-			}
-			else { // Running in -process mode
-				if (path.endsWith("/") && path.length() > 1) {
-					ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(),
-						path.substring(0, path.length() - 1));
-				}
-			}
-
+		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
+		try {
 			initializeScriptPaths();
 			compileScripts();
 
@@ -346,6 +347,9 @@ public class HeadlessAnalyzer {
 				}
 			}
 		}
+		finally {
+			GhidraScriptUtil.dispose();
+		}
 	}
 
 	/**
@@ -369,34 +373,35 @@ public class HeadlessAnalyzer {
 	public void processLocal(String projectLocation, String projectName, String rootFolderPath,
 			List<File> filesToImport) throws IOException {
 
-		synchronized (options) {
-			if (options.readOnly && options.commit) {
-				Msg.error(this,
-					"Abort due to Headless analyzer error: The requested readOnly option is " +
-						"in conflict with the commit option");
+		if (options.readOnly && options.commit) {
+			Msg.error(this,
+				"Abort due to Headless analyzer error: The requested readOnly option is " +
+					"in conflict with the commit option");
+			return;
+		}
+
+		// If not importing, remove trailing slash so that non-existent folders aren't created
+		if (options.runScriptsNoImport) {
+			if ((rootFolderPath.endsWith("/")) && (rootFolderPath.length() > 1)) {
+				rootFolderPath = rootFolderPath.substring(0, rootFolderPath.length() - 1);
+			}
+		}
+		else {
+			// If we are importing, need some files to import or at least a script to run!
+			if ((filesToImport == null || filesToImport.size() == 0) &&
+				options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
+				Msg.warn(this, "REPORT: Nothing to do ... must specify file(s) for import.");
 				return;
 			}
 
-			// If not importing, remove trailing slash so that non-existent folders aren't created
-			if (options.runScriptsNoImport) {
-				if ((rootFolderPath.endsWith("/")) && (rootFolderPath.length() > 1)) {
-					rootFolderPath = rootFolderPath.substring(0, rootFolderPath.length() - 1);
-				}
+			// If importing, add trailing slash if it isn't there so that non-existent folders are created
+			if (!rootFolderPath.endsWith("/")) {
+				rootFolderPath += "/";
 			}
-			else {
-				// If we are importing, need some files to import or at least a script to run!
-				if ((filesToImport == null || filesToImport.size() == 0) &&
-					options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
-					Msg.warn(this, "REPORT: Nothing to do ... must specify file(s) for import.");
-					return;
-				}
+		}
 
-				// If importing, add trailing slash if it isn't there so that non-existent folders are created
-				if (!rootFolderPath.endsWith("/")) {
-					rootFolderPath += "/";
-				}
-			}
-
+		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
+		try {
 			initializeScriptPaths();
 			compileScripts();
 
@@ -446,6 +451,9 @@ public class HeadlessAnalyzer {
 				}
 			}
 		}
+		finally {
+			GhidraScriptUtil.dispose();
+		}
 	}
 
 	/**
@@ -454,47 +462,37 @@ public class HeadlessAnalyzer {
 	 * @return true if the most recent analysis timed out; otherwise, false. 
 	 */
 	public boolean checkAnalysisTimedOut() {
-		synchronized (options) {
-			return analysisTimedOut;
-		}
+		return analysisTimedOut;
 	}
 
 	void setSaveFolder(DomainFolder domFolder) {
-		synchronized (options) {
-			saveDomainFolder = domFolder;
+		saveDomainFolder = domFolder;
 
-			if (domFolder != null) {
-				Msg.info(this, "Save location changed to: " + domFolder.getPathname());
-			}
+		if (domFolder != null) {
+			Msg.info(this, "Save location changed to: " + domFolder.getPathname());
 		}
 	}
 
 	void addVariableToStorage(String nameOfVar, Object valOfVar) {
-		synchronized (options) {
-			if (storage.containsKey(nameOfVar)) {
-				Msg.warn(this, "Overwriting existing storage variable: " + nameOfVar);
-			}
-
-			storage.put(nameOfVar, valOfVar);
+		if (storage.containsKey(nameOfVar)) {
+			Msg.warn(this, "Overwriting existing storage variable: " + nameOfVar);
 		}
+
+		storage.put(nameOfVar, valOfVar);
 	}
 
 	Set<String> getStorageKeys() {
-		synchronized (options) {
-			return storage.keySet();
-		}
+		return storage.keySet();
 	}
 
 	Object getVariableFromStorage(String nameOfVar) {
-		synchronized (options) {
-			if (!storage.containsKey(nameOfVar)) {
-				Msg.warn(this, "The storage variable '" + nameOfVar +
-					"' does not exist in HeadlessAnalyzer storage.");
-				return null;
-			}
-
-			return storage.get(nameOfVar);
+		if (!storage.containsKey(nameOfVar)) {
+			Msg.warn(this, "The storage variable '" + nameOfVar +
+				"' does not exist in HeadlessAnalyzer storage.");
+			return null;
 		}
+
+		return storage.get(nameOfVar);
 	}
 
 	/**
@@ -509,52 +507,48 @@ public class HeadlessAnalyzer {
 	DomainFolder getDomainFolder(String folderPath, boolean create)
 			throws IOException, InvalidNameException {
 
-		synchronized (options) {
-			DomainFolder domFolder = project.getProjectData().getFolder(folderPath);
+		DomainFolder domFolder = project.getProjectData().getFolder(folderPath);
 
-			if (create && domFolder == null) {
-				// Create any folder that doesn't exist
-				String cleanPath = folderPath.replaceAll("^" + DomainFolder.SEPARATOR + "+", "");
-				cleanPath = cleanPath.replaceAll(DomainFolder.SEPARATOR + "+$", "");
+		if (create && domFolder == null) {
+			// Create any folder that doesn't exist
+			String cleanPath = folderPath.replaceAll("^" + DomainFolder.SEPARATOR + "+", "");
+			cleanPath = cleanPath.replaceAll(DomainFolder.SEPARATOR + "+$", "");
 
-				String[] subfolders = cleanPath.split(DomainFolder.SEPARATOR + "+");
+			String[] subfolders = cleanPath.split(DomainFolder.SEPARATOR + "+");
 
-				int folderIndex = 0;
-				String currPath = DomainFolder.SEPARATOR + subfolders[folderIndex];
+			int folderIndex = 0;
+			String currPath = DomainFolder.SEPARATOR + subfolders[folderIndex];
 
-				DomainFolder testFolder = project.getProjectData().getFolder(currPath);
-				DomainFolder baseFolder = null;
+			DomainFolder testFolder = project.getProjectData().getFolder(currPath);
+			DomainFolder baseFolder = null;
 
-				// Stay in loop while we see folders that exist
-				while ((testFolder != null) && (folderIndex < (subfolders.length - 1))) {
-					folderIndex++;
-					baseFolder = testFolder;
-					testFolder = baseFolder.getFolder(subfolders[folderIndex]);
-				}
-
-				// If none of the folders exist, create new files starting from the root
-				if (folderIndex == 0) {
-					baseFolder = project.getProjectData().getRootFolder();
-				}
-
-				// Since this method is only called by import, we create any folder that
-				// does not exist.
-				for (int i = folderIndex; i < subfolders.length; i++) {
-					baseFolder = baseFolder.createFolder(subfolders[i]);
-					Msg.info(this, "Created project folder: " + subfolders[i]);
-				}
-
-				domFolder = baseFolder;
+			// Stay in loop while we see folders that exist
+			while ((testFolder != null) && (folderIndex < (subfolders.length - 1))) {
+				folderIndex++;
+				baseFolder = testFolder;
+				testFolder = baseFolder.getFolder(subfolders[folderIndex]);
 			}
 
-			return domFolder;
+			// If none of the folders exist, create new files starting from the root
+			if (folderIndex == 0) {
+				baseFolder = project.getProjectData().getRootFolder();
+			}
+
+			// Since this method is only called by import, we create any folder that
+			// does not exist.
+			for (int i = folderIndex; i < subfolders.length; i++) {
+				baseFolder = baseFolder.createFolder(subfolders[i]);
+				Msg.info(this, "Created project folder: " + subfolders[i]);
+			}
+
+			domFolder = baseFolder;
 		}
+
+		return domFolder;
 	}
 
 	boolean storageContainsKey(String nameOfVar) {
-		synchronized (options) {
-			return storage.containsKey(nameOfVar);
-		}
+		return storage.containsKey(nameOfVar);
 	}
 
 	/**
@@ -678,24 +672,6 @@ public class HeadlessAnalyzer {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-
-		List<Path> paths;
-		if (options.scriptPaths == null || options.scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getDefaultScriptDirectories();
-		}
-		else {
-			paths = new ArrayList<>();
-			for (String path : options.scriptPaths) {
-				paths.add(new Path(path, true, false, true));
-			}
-			for (Path path : GhidraScriptUtil.getDefaultScriptDirectories()) {
-				if (path.isEnabled() && !paths.contains(path)) {
-					paths.add(path);
-				}
-			}
-		}
-		GhidraScriptUtil.setScriptDirectories(paths);
-
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
 			buf.append("\n    ");
@@ -710,12 +686,9 @@ public class HeadlessAnalyzer {
 		if (scriptSource.exists()) {
 			return scriptSource;
 		}
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : dirs) {
-			scriptSource = new ResourceFile(dir, scriptName);
-			if (scriptSource.exists()) {
-				return scriptSource;
-			}
+		scriptSource = GhidraScriptUtil.findScriptByName(scriptName);
+		if (scriptSource != null) {
+			return scriptSource;
 		}
 		throw new IllegalArgumentException("Script not found: " + scriptName);
 	}
@@ -886,7 +859,7 @@ public class HeadlessAnalyzer {
 					File parentFile = new File(
 						c.getResource(c.getSimpleName() + ".class").toURI()).getParentFile();
 
-					currScript = (GhidraScript) c.newInstance();
+					currScript = (GhidraScript) c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
 
 					if (options.propertiesFilePaths.size() > 0) {
@@ -956,7 +929,7 @@ public class HeadlessAnalyzer {
 	}
 
 	/**
-	 * Run prescripts -> analysis -> postscripts (any of these steps is optional).
+	 *{@literal Run prescripts -> analysis -> postscripts (any of these steps is optional).}
 	 * @param fileAbsolutePath Path of the file to analyze.
 	 * @param program The program to analyze.
 	 * @return true if the program file should be kept.  If analysis or scripts have marked
@@ -1220,7 +1193,8 @@ public class HeadlessAnalyzer {
 			// This can never happen because there is no user interaction in headless!
 		}
 		catch (Exception exc) {
-			Msg.error(this, domFile.getPathname() + " Error during analysis: " + exc.getMessage());
+			Msg.error(this, domFile.getPathname() + " Error during analysis: " + exc.getMessage(),
+				exc);
 		}
 		finally {
 
@@ -1233,7 +1207,7 @@ public class HeadlessAnalyzer {
 			if (!readOnlyFile) { // can't change anything if read-only file
 
 				// Undo checkout of it is still checked-out and either the file is to be 
-				// deleted, or we just checked it out and file changes have been comitted
+				// deleted, or we just checked it out and file changes have been committed
 				if (domFile.isCheckedOut()) {
 					if (!keepFile ||
 						(terminateCheckoutWhenDone && !domFile.modifiedSinceCheckout())) {
@@ -1667,11 +1641,11 @@ public class HeadlessAnalyzer {
 		}
 
 		if (program == null) {
-			Msg.error(this,
-				"The AutoImporter could not successfully load " + file.getAbsolutePath() +
-					" with the provided import parameters. Please ensure that any specified" +
-					" processor/cspec arguments are compatible with the loader that is used during" +
-					" import and try again.");
+			Msg.error(this, "The AutoImporter could not successfully load " +
+				file.getAbsolutePath() +
+				" with the provided import parameters. Please ensure that any specified" +
+				" processor/cspec arguments are compatible with the loader that is used during" +
+				" import and try again.");
 
 			if (options.loaderClass != null && options.loaderClass != BinaryLoader.class) {
 				Msg.error(this,
@@ -1750,8 +1724,7 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private void processWithImport(String folderPath, List<File> inputDirFiles)
-			throws IOException {
+	private void processWithImport(String folderPath, List<File> inputDirFiles) throws IOException {
 
 		storage.clear();
 

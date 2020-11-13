@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +36,7 @@ public class ViewerPosition implements Serializable {
 	 * @param xOffset The horizontal scroll position (NOT CURRENTLY USED)
 	 * @param yOffset the vertical position of the layout at the top of the screen.
 	 * If the the layout is totally visible, then the yOffset will be 0. Otherwise,
-	 * it will be < 0 indicating that it begins above the top of the screen.
+	 * it will be &lt; 0 indicating that it begins above the top of the screen.
 	 */
     public ViewerPosition(BigInteger index, int xOffset, int yOffset) {
 		this.index = index;

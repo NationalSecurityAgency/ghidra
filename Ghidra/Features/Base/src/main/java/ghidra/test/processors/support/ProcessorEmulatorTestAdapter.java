@@ -72,7 +72,7 @@ import utility.application.ApplicationLayout;
  * contained within the binary repository (e.g., ghidra.bin).
  * <p>
  * Within the pcodetests directory all files and folders which start with the prefix
- * <processor-designator>_pcodetest* will be processed.  All files contained within a matching
+ * {@literal <processor-designator>_pcodetest*} will be processed.  All files contained within a matching
  * subdirectory will be treated as related binaries and imported.  Any *.gzf file will be
  * imported but assumed to be pre-analyzed.  Binary files to be imported and analyzed must
  * utilize the *.out file extension.
@@ -1191,7 +1191,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 			if (pass < 0 || fail < 0) {
 				failTest(testRunner,
-					"ERROR Invalid pass/fail counts - test may not have run properly or improper TestInfo structure updates occured: pass " +
+					"ERROR Invalid pass/fail counts - test may not have run properly or improper TestInfo structure updates occurred: pass " +
 						pass + " fail " + fail);
 			}
 
@@ -1243,8 +1243,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		}
 		catch (Exception e) {
-			log(testGroup, "Exception occured during test", e);
-			fail("Exception occured during test: " + e.getMessage());
+			log(testGroup, "Exception occurred during test", e);
+			fail("Exception occurred during test: " + e.getMessage());
 		}
 		finally {
 			if (testRunner != null) {
@@ -1390,7 +1390,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		catch (UsrException e) {
 			if (inDelaySlot) {
 				log(testRunner.getTestGroup(),
-					"Instruction parse error occured in delay-slot at: " +
+					"Instruction parse error occurred in delay-slot at: " +
 						memBuf.getAddress().toString(true));
 			}
 			// parse failed
@@ -2167,6 +2167,10 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	}
 
 	public final void test_BIOPS2() {
+		// stub
+	}
+
+	public final void test_BIOPS4() {
 		// stub
 	}
 

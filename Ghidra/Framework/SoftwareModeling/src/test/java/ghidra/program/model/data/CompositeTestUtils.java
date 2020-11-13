@@ -15,8 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -111,7 +110,7 @@ public class CompositeTestUtils {
 	}
 
 	private static void collectComposites(Composite composite, Set<Composite> collection) {
-		for (DataTypeComponent c : composite.getComponents()) {
+		for (DataTypeComponent c : composite.getDefinedComponents()) {
 			DataType dt = c.getDataType();
 			if (dt instanceof Composite) {
 				Composite childComposite = (Composite) dt;

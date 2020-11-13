@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.NoSuchElementException;
 
@@ -65,7 +64,7 @@ public class AddressKeyIteratorTest extends AbstractGhidraHeadedIntegrationTest 
 		// Create fragmented memory
 		memMap.createInitializedBlock("Block1", addr(0x8000), 0x10, (byte) 0, null, false);// startKey: 0x0
 		memMap.createUninitializedBlock("Block2", addr(0x5000), 0x10, false);// startKey: 0x10000
-		memMap.createBitMappedBlock("Block3", addr(0x9000), addr(0x5000), 0x10);// startKey: 0x20000
+		memMap.createBitMappedBlock("Block3", addr(0x9000), addr(0x5000), 0x10, false);// startKey: 0x20000
 		memMap.createUninitializedBlock("Block4", addr(0x3000), 0x10, false);// startKey: 0x30000
 
 		// Create table keyed on address

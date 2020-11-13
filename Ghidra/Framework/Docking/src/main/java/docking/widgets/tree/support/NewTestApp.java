@@ -55,9 +55,10 @@ public class NewTestApp extends JPanel {
 		container.add(tree, BorderLayout.CENTER);
 		JButton button = new JButton("Push Me");
 		container.add(button, BorderLayout.SOUTH);
-		frame.setSize(400,600);
+		frame.setSize(400, 600);
 		frame.setVisible(true);
 		button.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				TreePath selectionPath = tree.getSelectionPath();
 				if (selectionPath != null) {
@@ -68,29 +69,36 @@ public class NewTestApp extends JPanel {
 		});
 
 	}
+
 	public static long getMemoryUsage() {
 		Runtime rt = Runtime.getRuntime();
-		return rt.totalMemory()-rt.freeMemory();
+		return rt.totalMemory() - rt.freeMemory();
 	}
 }
+
 interface FileData {
 	File getFile();
 }
-class FileNode extends AbstractGTreeNode implements FileData {
+
+class FileNode extends GTreeNode implements FileData {
 	protected File file;
 	public String tempName;
 
 	FileNode(File file) {
 		this.file = file;
 	}
+
 	@Override
 	public File getFile() {
 		return file;
 	}
+
+	@Override
 	public Icon getIcon(boolean expanded) {
 		return null;
 	}
 
+	@Override
 	public String getName() {
 		if (tempName != null) {
 			return tempName;
@@ -102,6 +110,7 @@ class FileNode extends AbstractGTreeNode implements FileData {
 		return file.getName();
 	}
 
+	@Override
 	public String getToolTip() {
 		return file.getAbsolutePath();
 	}
@@ -118,22 +127,26 @@ class FileNode extends AbstractGTreeNode implements FileData {
 	public String toString() {
 		return file.getAbsolutePath();
 	}
+
 	@Override
 	public boolean equals(Object obj) {
-		if ( obj instanceof FileNode ) {
-			return file.equals( ((FileNode) obj).file );
+		if (obj instanceof FileNode) {
+			return file.equals(((FileNode) obj).file);
 		}
 		return false;
 	}
+
 	@Override
 	public int hashCode() {
 		return file.getAbsolutePath().hashCode();
 	}
+
 	@Override
 	public boolean isLeaf() {
 		return true;
 	}
 }
+
 class DirectoryNode extends GTreeLazyNode implements FileData {
 	private final File file;
 
@@ -141,14 +154,17 @@ class DirectoryNode extends GTreeLazyNode implements FileData {
 		this.file = file;
 
 	}
+
 	@Override
 	public boolean isLeaf() {
 		return false;
 	}
+
 	@Override
 	public File getFile() {
 		return file;
 	}
+
 	@Override
 	public List<GTreeNode> generateChildren() {
 		List<GTreeNode> children = new ArrayList<GTreeNode>();
@@ -174,18 +190,22 @@ class DirectoryNode extends GTreeLazyNode implements FileData {
 		}
 		return getName().compareTo(o.getName());
 	}
+
 	@Override
 	public Icon getIcon(boolean expanded) {
 		return null;
 	}
+
 	@Override
 	public String getName() {
 		return file.getName();
 	}
+
 	@Override
 	public String getToolTip() {
 		return file.getAbsolutePath();
 	}
+
 	@Override
 	public int hashCode() {
 		return file.getAbsolutePath().hashCode();
@@ -193,55 +213,50 @@ class DirectoryNode extends GTreeLazyNode implements FileData {
 
 }
 
-class RootNode extends DirectoryNode implements GTreeRootNode {
-	GTree tree;
-
+class RootNode extends DirectoryNode {
 	RootNode(File file) {
 		super(file);
-
-	}
-
-	@Override
-	public GTree getGTree() {
-		return tree;
-	}
-
-	@Override
-	public void setGTree(GTree tree) {
-		this.tree = tree;
 	}
 }
 
 class DragNDropHandler implements GTreeDragNDropHandler {
 	public static DataFlavor[] supportedFlavors = {
-			DataFlavor.stringFlavor,
-			DataFlavor.javaFileListFlavor
+		DataFlavor.stringFlavor,
+		DataFlavor.javaFileListFlavor
 	};
 
+	@Override
 	public void drop(GTreeNode destUserData, Transferable transferable, int dropAction) {
-		Msg.info(this, "Dropped the following Files onto "+destUserData);
+		Msg.info(this, "Dropped the following Files onto " + destUserData);
 		try {
-			List<?> list = (List<?>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+			List<?> list = (List<?>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
 			Iterator<?> it = list.iterator();
-			while(it.hasNext()) {
-				Msg.info(this, "\t"+it.next());
+			while (it.hasNext()) {
+				Msg.info(this, "\t" + it.next());
 			}
-		} catch (UnsupportedFlavorException e) {
-		} catch (IOException e) {
+		}
+		catch (UnsupportedFlavorException e) {
+		}
+		catch (IOException e) {
 		}
 	}
+
+	@Override
 	public DataFlavor[] getSupportedDataFlavors(List<GTreeNode> dragUserData) {
 		return supportedFlavors;
 	}
+
+	@Override
 	public int getSupportedDragActions() {
 		return DnDConstants.ACTION_COPY;
 	}
 
+	@Override
 	public Object getTransferData(List<GTreeNode> dragUserData, DataFlavor flavor) {
 		if (flavor.equals(DataFlavor.javaFileListFlavor)) {
 			List<File> fileList = new ArrayList<File>();
 			for (GTreeNode node : dragUserData) {
-				FileData fileData = (FileData)node;
+				FileData fileData = (FileData) node;
 				fileList.add(fileData.getFile());
 			}
 			return fileList;
@@ -249,7 +264,7 @@ class DragNDropHandler implements GTreeDragNDropHandler {
 		else if (flavor.equals(DataFlavor.stringFlavor)) {
 			StringBuffer buf = new StringBuffer();
 			Iterator<?> it = dragUserData.iterator();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				buf.append(it.next().toString());
 				buf.append("\n");
 			}
@@ -258,12 +273,15 @@ class DragNDropHandler implements GTreeDragNDropHandler {
 		return null;
 
 	}
+
+	@Override
 	public boolean isDropSiteOk(GTreeNode destUserData, DataFlavor[] flavors, int dropAction) {
 		if (containsFlavor(flavors, DataFlavor.javaFileListFlavor)) {
 			return (destUserData instanceof DirectoryNode);
 		}
 		return false;
 	}
+
 	private boolean containsFlavor(DataFlavor[] flavors, DataFlavor flavor) {
 		for (DataFlavor flavor2 : flavors) {
 			if (flavor2.equals(flavor)) {
@@ -272,6 +290,8 @@ class DragNDropHandler implements GTreeDragNDropHandler {
 		}
 		return false;
 	}
+
+	@Override
 	public boolean isStartDragOk(List<GTreeNode> dragUserData, int dragAction) {
 		return true;
 	}

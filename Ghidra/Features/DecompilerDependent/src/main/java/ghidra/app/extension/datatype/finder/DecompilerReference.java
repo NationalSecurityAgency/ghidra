@@ -18,8 +18,7 @@ package ghidra.app.extension.datatype.finder;
 import java.util.Arrays;
 import java.util.List;
 
-import ghidra.app.decompiler.ClangLine;
-import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.app.services.DataTypeReference;
 import ghidra.program.model.address.Address;
@@ -103,12 +102,26 @@ public abstract class DecompilerReference {
 	public static boolean isEquivalent(DataType dt1, DataType dt2) {
 		DataType base1 = getBaseType(dt1);
 		DataType base2 = getBaseType(dt2);
+
+		if (base1 == null || base2 == null) {
+			// this should not happen, but we have seen sometimes that ClangVariableDecl
+			// cannot find its HighSymbol from which to get a datatype
+			return false;
+		}
+
 		return base1.isEquivalent(base2);
 	}
 
 	public static boolean isEqual(DataType dt1, DataType dt2) {
 		DataType base1 = getBaseType(dt1);
 		DataType base2 = getBaseType(dt2);
+
+		if (base1 == null || base2 == null) {
+			// this should not happen, but we have seen sometimes that ClangVariableDecl
+			// cannot find its HighSymbol from which to get a datatype
+			return false;
+		}
+
 		return base1.equals(base2);
 	}
 
@@ -127,6 +140,21 @@ public abstract class DecompilerReference {
 			return getBaseType(baseDataType);
 		}
 		return dt;
+	}
+
+	public static DataType getFieldDataType(ClangFieldToken field) {
+		DataType fieldDt = field.getDataType();
+		fieldDt = DecompilerReference.getBaseType(fieldDt);
+		if (fieldDt instanceof Structure) {
+			Structure parent = (Structure) fieldDt;
+			int offset = field.getOffset();
+			int n = parent.getLength();
+			if (offset >= 0 && offset < n) {
+				DataTypeComponent dtc = parent.getComponentAt(field.getOffset());
+				fieldDt = dtc.getDataType();
+			}
+		}
+		return fieldDt;
 	}
 
 	@Override

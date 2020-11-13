@@ -19,23 +19,20 @@ import static org.junit.Assert.*;
 
 import java.awt.event.KeyEvent;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.*;
 
 import org.junit.*;
 
 import docking.*;
-import docking.actions.KeyEntryDialog;
-import docking.actions.ToolActions;
+import docking.actions.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.data.DataPlugin;
-import ghidra.app.plugin.core.function.FunctionPlugin;
-import ghidra.app.plugin.core.memory.MemoryMapPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
-import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import util.CollectionUtils;
 
 public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -47,21 +44,13 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-
 		env = new TestEnv();
-		tool = env.getTool();
-		tool.addPlugin(NavigationHistoryPlugin.class.getName());
-		tool.addPlugin(CodeBrowserPlugin.class.getName());
-		tool.addPlugin(MemoryMapPlugin.class.getName());
-		tool.addPlugin(GoToAddressLabelPlugin.class.getName());
-		tool.addPlugin(DataPlugin.class.getName());
-		tool.addPlugin(FunctionPlugin.class.getName());
-
-		env.showTool();
+		tool = env.launchDefaultTool();
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		close(keyEntryDialog);
 		env.dispose();
 	}
 
@@ -101,6 +90,39 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		acceleratorKey = boundAction.getKeyBinding();
 		assertNotNull(acceleratorKey);
 		assertEquals(acceleratorKey.getKeyCode(), KeyEvent.VK_Q);
+	}
+
+	@Test
+	public void testClearDefaultKeyBinding() throws Exception {
+
+		DockingAction boundAction = getBoundAction_Shared();
+		showDialog(boundAction);
+
+		assertEquals("OPEN_BRACKET", keyEntryField.getText());
+		triggerBackspaceKey(keyEntryField);
+
+		pressDialogOK();
+		KeyStroke ks = boundAction.getKeyBinding();
+		assertNull(ks);
+	}
+
+	@Test
+	public void testClearDefaultKeyBinding_SharedKeybinding() throws Exception {
+
+		DockingAction boundAction = getBoundAction_Shared();
+		showDialog(boundAction);
+
+		KeyStroke oldKs = boundAction.getKeyBinding();
+		assertEquals("OPEN_BRACKET", keyEntryField.getText());
+		triggerBackspaceKey(keyEntryField);
+
+		pressDialogOK();
+		KeyStroke ks = boundAction.getKeyBinding();
+		assertNull(ks);
+
+		ToolActions toolActions = (ToolActions) tool.getToolActions();
+		Action toolAction = toolActions.getAction(oldKs);
+		assertNull("Shared actions' keybinding not cleared", toolAction);
 	}
 
 	@Test
@@ -163,6 +185,26 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(acceleratorKey.getKeyCode(), KeyEvent.VK_G);
 	}
 
+	@Test
+	public void testPlaceholderActionsAppearInDialog() throws Exception {
+
+		DockingAction unboundAction = getUnboundAction();
+		showDialog(unboundAction);
+
+		int modifiers = 0;
+		int keyCode = KeyEvent.VK_DELETE;
+		triggerActionKey(keyEntryField, modifiers, keyCode);
+
+		String placeholderText = "Remove Items";
+		assertTrue("Placeholder action is not registered with the KeyEntryDialog",
+			collisionPane.getText().contains(placeholderText));
+
+		// this can be any of the plugins that register this action placeholder
+		placeholderText = "TableServicePlugin";
+		assertTrue("Placeholder action is not registered with the KeyEntryDialog",
+			collisionPane.getText().contains(placeholderText));
+	}
+
 //==================================================================================================
 // Private methods
 //==================================================================================================    
@@ -177,6 +219,13 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		return (DockingAction) getInstanceField("action", goToPlugin);
 	}
 
+	private DockingAction getBoundAction_Shared() {
+		Set<DockingActionIf> sharedActions =
+			getActionsByOwnerAndName(tool, "Shared", "Define Array");
+		assertFalse(sharedActions.isEmpty());
+		return (DockingAction) CollectionUtils.any(sharedActions);
+	}
+
 	private void pressDialogOK() {
 		JButton okButton = (JButton) getInstanceField("okButton", keyEntryDialog);
 		pressButton(okButton);
@@ -189,9 +238,10 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	public DockingAction getKeyBindingAction() {
 
-		ToolActions toolActions = tool.getToolActions();
+		DockingToolActions toolActions = tool.getToolActions();
 		KeyBindingsManager kbm =
 			(KeyBindingsManager) getInstanceField("keyBindingsManager", toolActions);
+		@SuppressWarnings("unchecked")
 		Map<KeyStroke, DockingKeyBindingAction> dockingKeyMap =
 			(Map<KeyStroke, DockingKeyBindingAction>) getInstanceField("dockingKeyMap", kbm);
 		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0);

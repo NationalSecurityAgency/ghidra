@@ -43,7 +43,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	private final static String NAME = "Disassemble Entry Points";
 	private static final String DESCRIPTION = "Disassembles entry points in newly added memory.";
-	
+
 	private final static String OPTION_NAME_RESPECT_EXECUTE_FLAG = "Respect Execute Flag";
 
 	private static final String OPTION_DESCRIPTION_RESPECT_EXECUTE_FLAG =
@@ -52,7 +52,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	private final static boolean OPTION_DEFAULT_RESPECT_EXECUTE_ENABLED = true;
 
 	private boolean respectExecuteFlags = OPTION_DEFAULT_RESPECT_EXECUTE_ENABLED;
-	
+
 	private AddressSetView executeSet;
 
 	public EntryPointAnalyzer() {
@@ -60,12 +60,11 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		setPriority(AnalysisPriority.BLOCK_ANALYSIS);
 		setDefaultEnablement(true);
 	}
-	
+
 	@Override
 	public void registerOptions(Options options, Program program) {
 		HelpLocation helpLocation =
-			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option_Instruction" +
-				getAnalysisType());
+			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option_Instructions");
 
 		options.registerOption(OPTION_NAME_RESPECT_EXECUTE_FLAG, respectExecuteFlags, helpLocation,
 			OPTION_DESCRIPTION_RESPECT_EXECUTE_FLAG);
@@ -73,7 +72,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		respectExecuteFlags = options.getBoolean(OPTION_NAME_RESPECT_EXECUTE_FLAG, respectExecuteFlags);
+		respectExecuteFlags =
+			options.getBoolean(OPTION_NAME_RESPECT_EXECUTE_FLAG, respectExecuteFlags);
 	}
 
 	@Override
@@ -83,8 +83,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 		monitor.initialize(addressSet.getNumAddresses());
 
-		Set<Address> doNowSet = new HashSet<Address>();
-		Set<Address> doLaterSet = new HashSet<Address>();
+		Set<Address> doNowSet = new HashSet<>();
+		Set<Address> doLaterSet = new HashSet<>();
 
 		executeSet = program.getMemory().getExecuteSet();
 
@@ -100,8 +100,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		// Someone created them as a placeholder
 		//   Disassemble them
 		//   Remember them so the function body can be fixed later
-		Set<Address> dummyFunctionSet = new HashSet<Address>();
-		Set<Address> redoFunctionSet = new HashSet<Address>();
+		Set<Address> dummyFunctionSet = new HashSet<>();
+		Set<Address> redoFunctionSet = new HashSet<>();
 		findDummyFunctions(program, addressSet, dummyFunctionSet, redoFunctionSet);
 
 		// disassemble dummy functions now, re-create the function bodies later
@@ -138,7 +138,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Process the items on the do later set.  If doing block analysis, then this is the initial
-	 * analysis of the program, so schedule the do later set after some analysis has occured.
+	 * analysis of the program, so schedule the do later set after some analysis has occurred.
 	 * 
 	 * @param program - this program
 	 * @param monitor - monitor
@@ -150,14 +150,15 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		if (doLaterSet.isEmpty()) {
 			return;
 		}
-		
+
 		// 		Put off the do-later until later if doing block analysis...
 		if (this.getPriority() == AnalysisPriority.BLOCK_ANALYSIS) {
 			AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
 			EntryPointAnalyzer entryPointAnalyzer = new EntryPointAnalyzer();
 			entryPointAnalyzer.setPriority(AnalysisPriority.REFERENCE_ANALYSIS.before());
 			analysisManager.scheduleOneTimeAnalysis(entryPointAnalyzer, toAddressSet(doLaterSet));
-		} else {
+		}
+		else {
 			// came back in, just do it now
 			doDisassembly(program, monitor, doLaterSet);
 		}
@@ -195,7 +196,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	private void fixDummyFunctionBodies(Program program, TaskMonitor monitor,
 			Set<Address> redoFunctionSet) throws CancelledException {
-		Set<Address> recreateFunctionSet = new HashSet<Address>();
+		Set<Address> recreateFunctionSet = new HashSet<>();
 		for (Address entry : redoFunctionSet) {
 			Function function = program.getFunctionManager().getFunctionAt(entry);
 			if (function == null) {
@@ -219,7 +220,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			if (!foundNonJumpRef) {
 				// check if we have been thunked
 				Address[] functionThunkAddresses = function.getFunctionThunkAddresses();
-				foundNonJumpRef = functionThunkAddresses != null && functionThunkAddresses.length != 0;
+				foundNonJumpRef =
+					functionThunkAddresses != null && functionThunkAddresses.length != 0;
 			}
 
 			// if found non-jump ref, or is external
@@ -232,8 +234,9 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 				while (referencesTo.hasNext()) {
 					Reference reference = referencesTo.next();
 					Function func =
-						program.getFunctionManager().getFunctionContaining(
-							reference.getFromAddress());
+						program.getFunctionManager()
+								.getFunctionContaining(
+									reference.getFromAddress());
 					if (func != null) {
 						recreateFunctionSet.add(func.getEntryPoint());
 					}
@@ -246,7 +249,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 						recreateFunctionSet.add(func.getEntryPoint());
 					}
 				}
-				
+
 				recreateFunctionSet.add(entry);
 				// Never clear functions that are already created
 				//    program.getFunctionManager().removeFunction(entry);
@@ -274,7 +277,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 				laterIter.remove();
 				continue;
 			}
-			
+
 			// relocation at this place, don't trust it
 			if (program.getRelocationTable().getRelocation(entry) != null) {
 				laterIter.remove();
@@ -313,7 +316,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 
 			//  It isn't smart enough to pick up
-			//    valid wierd code.  Need to look at things that are marked as an entry point
+			//    valid weird code.  Need to look at things that are marked as an entry point
 			//    to see if we should disassemble...
 			//  Save the bad ones to do last.
 			Symbol symbol = symbolTable.getPrimarySymbol(entry);
@@ -340,8 +343,9 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		int defaultPointerSize = program.getDefaultPointerSize();
 		try {
 			Data data =
-				program.getListing().createData(entry,
-					PointerDataType.getPointer(null, defaultPointerSize));
+				program.getListing()
+						.createData(entry,
+							PointerDataType.getPointer(null, defaultPointerSize));
 			Object value = data.getValue();
 			if (value instanceof Address) {
 				Address codeLoc = (Address) value;
@@ -401,7 +405,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	private void disassembleCodeMapMarkers(Program program, TaskMonitor monitor) {
 		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
 		if (codeProp != null) {
-			Set<Address> codeSet = new HashSet<Address>();
+			Set<Address> codeSet = new HashSet<>();
 			AddressIterator aiter = codeProp.getAddresses();
 			while (aiter.hasNext()) {
 				codeSet.add(aiter.next());
@@ -439,7 +443,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean isLanguageDefinedEntry(Program program, Address addr) {
-		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultLabels();
+		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultSymbols();
 		for (AddressLabelInfo info : labelList) {
 			if (addr.equals(info.getAddress())) {
 				return info.isEntry();
@@ -449,7 +453,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean isLanguageDefinedEntryPointer(Program program, Address addr) {
-		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultLabels();
+		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultSymbols();
 		for (AddressLabelInfo info : labelList) {
 			if (addr.equals(info.getAddress())) {
 				ProcessorSymbolType type = info.getProcessorSymbolType();

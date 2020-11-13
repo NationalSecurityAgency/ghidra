@@ -15,4 +15,5 @@ dependencies {
 	helpPath project(path: ":Base", configuration: "helpPath")
 	
 	testCompile "org.jmockit:jmockit:1.44"
+	testCompile project(path: ':Project', configuration: 'testArtifacts')
 }

@@ -61,13 +61,10 @@ PrintLanguage::PrintLanguage(Architecture *g,const string &nm)
   castStrategy = (CastStrategy *)0;
   name = nm;
   curscope = (Scope *)0;
-  emit = new EmitPrettyPrint(100);
+  emit = new EmitPrettyPrint();
 
-  mods = 0;
   pending = 0;
-  line_commentindent = 20;
-  instr_comment_type = Comment::user2 | Comment::warning;
-  head_comment_type = Comment::header | Comment::warningheader;
+  resetDefaultsInternal();
 }
 
 PrintLanguage::~PrintLanguage(void)
@@ -106,6 +103,16 @@ void PrintLanguage::setCommentDelimeter(const string &start,const string &stop,b
       spaces += ' ';
     emit->setCommentFill(spaces);
   }
+}
+
+void PrintLanguage::popScope(void)
+
+{
+  scopestack.pop_back();
+  if (scopestack.empty())
+    curscope = (Scope *)0;
+  else
+    curscope = scopestack.back();
 }
 
 /// This generally will recursively push an entire expression onto the RPN stack,
@@ -263,7 +270,6 @@ void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
 /// ending with the given operator token, needs to be surrounded by parentheses to convey
 /// the proper meaning.
 /// \param op2 is the input token to \b this operator
-/// \param stage is the stage of \b this operator currently being printed
 /// \return \b true if \b op2 (as input to \b this) should be parenthesized
 bool PrintLanguage::parentheses(const OpToken *op2)
 
@@ -482,136 +488,6 @@ bool PrintLanguage::unicodeNeedsEscape(int4 codepoint)
   return false;
 }
 
-/// Encode the given unicode codepoint as UTF8 (1, 2, 3, or 4 bytes) and
-/// write the bytes to the stream.
-/// \param s is the output stream
-/// \param codepoint is the unicode codepoint
-void PrintLanguage::writeUtf8(ostream &s,int4 codepoint)
-
-{
-  uint1 bytes[4];
-  int4 size;
-
-  if (codepoint < 0)
-    throw LowlevelError("Negative unicode codepoint");
-  if (codepoint < 128) {
-    s.put((uint1)codepoint);
-    return;
-  }
-  int4 bits = mostsigbit_set(codepoint) + 1;
-  if (bits > 21)
-    throw LowlevelError("Bad unicode codepoint");
-  if (bits < 12) {	// Encode with two bytes
-    bytes[0] = 0xc0 ^ ((codepoint >> 6)&0x1f);
-    bytes[1] = 0x80 ^ (codepoint & 0x3f);
-    size = 2;
-  }
-  else if (bits < 17) {
-    bytes[0] = 0xe0 ^ ((codepoint >> 12)&0xf);
-    bytes[1] = 0x80 ^ ((codepoint >> 6)&0x3f);
-    bytes[2] = 0x80 ^ (codepoint & 0x3f);
-    size = 3;
-  }
-  else {
-    bytes[0] = 0xf0 ^ ((codepoint >> 18) & 7);
-    bytes[1] = 0x80 ^ ((codepoint >> 12) & 0x3f);
-    bytes[2] = 0x80 ^ ((codepoint >> 6) & 0x3f);
-    bytes[3] = 0x80 ^ (codepoint & 0x3f);
-    size = 4;
-  }
-  s.write((char *)bytes, size);
-}
-
-/// Pull the first two bytes from the byte array and combine them in the indicated endian order
-/// \param buf is the byte array
-/// \param bigend is \b true to request big endian encoding
-/// \return the decoded UTF16 element
-inline int4 PrintLanguage::readUtf16(const uint1 *buf,bool bigend)
-
-{
-  int4 codepoint;
-  if (bigend) {
-    codepoint = buf[0];
-    codepoint <<= 8;
-    codepoint += buf[1];
-  }
-  else {
-    codepoint = buf[1];
-    codepoint <<= 8;
-    codepoint += buf[0];
-  }
-  return codepoint;
-}
-
-/// \brief Extract the next \e unicode \e codepoint from an array of character data
-///
-/// One or more bytes is consumed from the array, and the number of bytes used is passed back.
-/// \param buf is a pointer to the bytes in the character array
-/// \param charsize is 1 for UTF8, 2 for UTF16, or 4 for UTF32
-/// \param bigend is \b true for big endian encoding of the UTF element
-/// \param skip is a reference for passing back the number of bytes consumed
-/// \return the codepoint or -1 if the encoding is invalid
-int4 PrintLanguage::getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip)
-
-{
-  int4 codepoint;
-  int4 sk = 0;
-  if (charsize==2) {		// UTF-16
-    codepoint = readUtf16(buf,bigend);
-    sk += 2;
-    if ((codepoint>=0xD800)&&(codepoint<=0xDBFF)) { // high surrogate
-      int4 trail=readUtf16(buf+2,bigend);
-      sk += 2;
-      if ((trail<0xDC00)||(trail>0xDFFF)) return -1; // Bad trail
-      codepoint = (codepoint<<10) + trail + (0x10000 - (0xD800 << 10) - 0xDC00);
-    }
-    else if ((codepoint>=0xDC00)&&(codepoint<=0xDFFF)) return -1; // trail before high
-  }
-  else if (charsize==1) {	// UTF-8
-    int4 val = buf[0];
-    if ((val&0x80)==0) {
-      codepoint = val;
-      sk = 1;
-    }
-    else if ((val&0xe0)==0xc0) {
-      int4 val2 = buf[1];
-      sk = 2;
-      if ((val2&0xc0)!=0x80) return -1; // Not a valid UTF8-encoding
-      codepoint = ((val&0x1f)<<6) | (val2 & 0x3f);
-    }
-    else if ((val&0xf0)==0xe0) {
-      int4 val2 = buf[1];
-      int4 val3 = buf[2];
-      sk = 3;
-      if (((val2&0xc0)!=0x80)||((val3&0xc0)!=0x80)) return -1; // invalid encoding
-      codepoint = ((val&0xf)<<12) | ((val2&0x3f)<<6) | (val3 & 0x3f);
-    }
-    else if ((val&0xf8)==0xf0) {
-      int4 val2 = buf[1];
-      int4 val3 = buf[2];
-      int4 val4 = buf[3];
-      sk = 4;
-      if (((val2&0xc0)!=0x80)||((val3&0xc0)!=0x80)||((val4&0xc0)!=0x80)) return -1;	// invalid encoding
-      codepoint = ((val&7)<<18) | ((val2&0x3f)<<12) | ((val3&0x3f)<<6) | (val4 & 0x3f);
-    }
-    else
-      return -1;
-  }
-  else if (charsize == 4) {	// UTF-32
-    sk = 4;
-    if (bigend)
-      codepoint = (buf[0]<<24) + (buf[1]<<16) + (buf[2]<<8) + buf[3];
-    else
-      codepoint = (buf[3]<<24) + (buf[2]<<16) + (buf[1]<<8) + buf[0];
-  }
-  else
-    return -1;
-  if (codepoint >= 0xd800 && codepoint <= 0xdfff)
-    return -1;		// Reserved for surrogates, invalid codepoints
-  skip = sk;
-  return codepoint;
-}
-
 /// \brief Emit a byte buffer to the stream as unicode characters.
 ///
 /// Characters are emitted until we reach a terminator character or \b count bytes is consumed.
@@ -628,7 +504,7 @@ bool PrintLanguage::escapeCharacterData(ostream &s,const uint1 *buf,int4 count,i
   int4 skip = charsize;
   int4 codepoint = 0;
   while(i<count) {
-    codepoint = getCodepoint(buf+i,charsize,bigend,skip);
+    codepoint = StringManager::getCodepoint(buf+i,charsize,bigend,skip);
     if (codepoint == 0 || codepoint == -1) break;
     printUnicode(s,codepoint);
     i += skip;
@@ -649,8 +525,10 @@ void PrintLanguage::recurse(void)
     mods = nodepend.back().vnmod;
     nodepend.pop_back();
     pending -= 1;
-    if (vn->isImplied())
-      vn->getDef()->push(this);
+    if (vn->isImplied()) {
+      const PcodeOp *defOp = vn->getDef();
+      defOp->getOpcode()->push(this,defOp,op);
+    }
     else
       pushVnExplicit(vn,op);
     pending = nodepend.size();
@@ -689,6 +567,16 @@ void PrintLanguage::opUnary(const OpToken *tok,const PcodeOp *op)
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
   pushVnImplied(op->getIn(0),op,mods);
+}
+
+void PrintLanguage::resetDefaultsInternal(void)
+
+{
+  mods = 0;
+  head_comment_type = Comment::header | Comment::warningheader;
+  line_commentindent = 20;
+  namespc_strategy = MINIMAL_NAMESPACES;
+  instr_comment_type = Comment::user2 | Comment::warning;
 }
 
 /// The comment will get emitted as a single line using the high-level language's
@@ -766,6 +654,13 @@ void PrintLanguage::setFlat(bool val)
     mods &= ~flat;
 }
 
+void PrintLanguage::resetDefaults(void)
+
+{
+  emit->resetDefaults();
+  resetDefaultsInternal();
+}
+
 void PrintLanguage::clear(void)
 
 {
@@ -774,10 +669,8 @@ void PrintLanguage::clear(void)
     mods = modstack.front();
     modstack.clear();
   }
-  if (!scopestack.empty()) {
-    curscope = scopestack.front();
-    scopestack.clear();
-  }
+  scopestack.clear();
+  curscope = (const Scope *)0;
   revpol.clear();
   pending = 0;
 

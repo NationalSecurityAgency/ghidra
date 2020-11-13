@@ -20,6 +20,7 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.ProcessorContext;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.DataConverter;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
@@ -48,45 +49,26 @@ public class ShiftedAddressDataType extends BuiltIn {
 		super(null, "ShiftedAddress", dtm);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
-	 */
 	@Override
 	public String getMnemonic(Settings settings) {
 		return "addr";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return getDataOrganization().getPointerSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
 	@Override
 	public boolean isDynamicallySized() {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "shifted address (as specified by compiler spec)";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.program.model.lang.ProcessorContext, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		DataOrganization dataOrg = getDataOrganization();
@@ -124,21 +106,7 @@ public class ShiftedAddressDataType extends BuiltIn {
 			return null;
 		}
 
-		boolean isBigEndian = buf.isBigEndian(); // ENDIAN.isBigEndian(settings, buf);
-
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
-		}
-
-		// Use long when possible
-		long val = 0;
-		for (byte b : bytes) {
-			val = (val << 8) + (b & 0x0ffL);
-		}
+		long val = DataConverter.getInstance(buf.isBigEndian()).getValue(bytes, size);
 
 		val = val << shift;
 
@@ -166,18 +134,11 @@ public class ShiftedAddressDataType extends BuiltIn {
 		return "??";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, ProcessorContext, Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return getString(buf, settings);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.BuiltIn#getBuiltInSettingsDefinitions()
-	 */
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return SETTINGS_DEFS;

@@ -26,14 +26,22 @@ import ghidra.program.model.listing.FunctionTag;
 
 /**
  * Displays a list of tags that have been assigned to the currently-selected
- * function in the listing. If no function is selected, the list will be 
- * empty.
+ * function in the listing
  */
 public class TargetTagsPanel extends TagListPanel {
 
+	/**
+	 * Constructor
+	 * 
+	 * @param provider the component provider
+	 * @param tool the plugin tool
+	 * @param title the panel title
+	 */
 	public TargetTagsPanel(FunctionTagsComponentProvider provider,
 			PluginTool tool, String title) {
 		super(provider, tool, title);
+		
+		table.setDisabled(false);
 	}
 
 	/******************************************************************************
@@ -42,18 +50,27 @@ public class TargetTagsPanel extends TagListPanel {
 
 	@Override
 	public void refresh(Function function) {
+		
 		model.clear();
+		
+		this.function = function;
+		
+		if (function == null) {
+			setTitle("No Function Selected");
+		}
+		else {
+			setTitle(function.getName() + " " + "(" + function.getEntryPoint().toString() + ")");
+		}
 
 		List<FunctionTag> assignedTags = getAssignedTags(function);
 		Collections.sort(assignedTags);
 		for (FunctionTag tag : assignedTags) {
-			model.addElement(tag);
+			model.addTag(tag);
 		}
-
-		this.function = function;
-
-		sortList();
+		
+		model.reload();
 		applyFilter();
+		table.setFunction(function);
 	}
 
 	/**

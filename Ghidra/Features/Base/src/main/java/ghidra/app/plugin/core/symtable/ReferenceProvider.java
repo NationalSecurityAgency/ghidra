@@ -85,9 +85,9 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	void symbolRemoved(long symbolID) {
+	void symbolRemoved(Symbol symbol) {
 		if (isVisible()) {
-			referenceKeyModel.symbolRemoved(symbolID);
+			referenceKeyModel.symbolRemoved(symbol);
 		}
 	}
 
@@ -157,5 +157,4 @@ class ReferenceProvider extends ComponentProviderAdapter {
 	public void updateTitle() {
 		setSubTitle(generateSubTitle());
 	}
-
 }

@@ -15,10 +15,10 @@
  */
 package ghidra.pcode.opbehavior;
 
-import ghidra.program.model.pcode.PcodeOp;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import ghidra.program.model.pcode.PcodeOp;
 
 public class OpBehaviorFactory {
 
@@ -101,6 +101,9 @@ public class OpBehaviorFactory {
 		opBehaviorMap.put(PcodeOp.SEGMENTOP, new SpecialOpBehavior(PcodeOp.SEGMENTOP));
 		opBehaviorMap.put(PcodeOp.CPOOLREF, new SpecialOpBehavior(PcodeOp.CPOOLREF));
 		opBehaviorMap.put(PcodeOp.NEW, new SpecialOpBehavior(PcodeOp.NEW));
+		opBehaviorMap.put(PcodeOp.INSERT, new SpecialOpBehavior(PcodeOp.INSERT));
+		opBehaviorMap.put(PcodeOp.EXTRACT, new SpecialOpBehavior(PcodeOp.EXTRACT));
+		opBehaviorMap.put(PcodeOp.POPCOUNT, new OpBehaviorPopcount());
 	}
 
 	private OpBehaviorFactory() {

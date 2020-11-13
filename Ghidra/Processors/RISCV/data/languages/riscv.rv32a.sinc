@@ -1,0 +1,132 @@
+# RV32A  Standard Extension
+
+# amoadd.w d,t,0(s) 0000202f fe00707f DWORD|DREF (0, 4) 
+:amoadd.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	tmp = tmp + tmprs2;
+	*[ram]:4 tmprs1 = tmp;
+}
+
+
+# amoand.w d,t,0(s) 6000202f fe00707f DWORD|DREF (0, 4) 
+:amoand.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0xc & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	tmp = tmp & tmprs2;
+	*[ram]:4 tmprs1 = tmp;
+}
+
+
+# amomax.w d,t,0(s) a000202f fe00707f DWORD|DREF (0, 4) 
+:amomax.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x14 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	if (tmprs2 s<= tmp) goto inst_next;
+	*[ram]:4 tmprs1 = tmprs2;
+}
+
+
+# amomaxu.w d,t,0(s) e000202f fe00707f DWORD|DREF (0, 4) 
+:amomaxu.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x1c & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	if (tmprs2 <= tmp) goto inst_next;
+	*[ram]:4 tmprs1 = tmprs2;
+}
+
+
+# amomin.w d,t,0(s) 8000202f fe00707f DWORD|DREF (0, 4) 
+:amomin.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x10 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);  
+	if (tmprs2 s>= tmp) goto inst_next;
+	*[ram]:4 tmprs1 = tmprs2;
+}
+
+
+# amominu.w d,t,0(s) c000202f fe00707f DWORD|DREF (0, 4) 
+:amominu.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x18 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	if (tmprs2 >= tmp) goto inst_next;
+	*[ram]:4 tmprs1 = tmprs2;
+}
+
+
+# amoor.w d,t,0(s) 4000202f fe00707f DWORD|DREF (0, 4) 
+:amoor.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x8 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	tmp = tmp | tmprs2;
+	*[ram]:4 tmprs1 = tmp;
+}
+
+
+# amoswap.w d,t,0(s) 0800202f fe00707f DWORD|DREF (0, 4) 
+:amoswap.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x1 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	*[ram]:4 tmprs1 = tmprs2;
+}
+
+
+# amoxor.w d,t,0(s) 2000202f fe00707f DWORD|DREF (0, 4) 
+:amoxor.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x4 & aqrl
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2W;
+	local tmp:4 = *[ram]:4 tmprs1;
+	assignW(rd, tmp);
+	tmp = tmp ^ tmprs2;
+	*[ram]:4 tmprs1 = tmp;
+}
+
+
+# lr.w d,0(s) 1000202f fff0707f DWORD|DREF (0, 4) 
+:lr.w^aqrl rd,(rs1) is rs1 & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x2 & op2024=0x0 & aqrl
+{
+	RESERVE_ADDRESS = rs1;
+	RESERVE = 1;
+	RESERVE_LENGTH = 4;
+	assignW(rd, *[ram]:4 rs1);
+}
+
+
+# sc.w d,t,0(s) 1800202f fe00707f DWORD|DREF (0, 4) 
+:sc.w^aqrl rd,rs2W,(rs1) is rs1 & rs2W & rd & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x2 & op2731=0x3 & aqrl
+{
+	local tmprs2 = rs2W;
+	local tmprs1 = rs1;
+	rd = 1;
+	if ((RESERVE == 0)||(RESERVE_ADDRESS != tmprs1)||(RESERVE_LENGTH != 4)) goto inst_next;
+	*[ram]:4 tmprs1 = tmprs2;
+	rd = 0;
+	RESERVE_ADDRESS = 0;
+	RESERVE = 0;
+	RESERVE_LENGTH = 0;
+}

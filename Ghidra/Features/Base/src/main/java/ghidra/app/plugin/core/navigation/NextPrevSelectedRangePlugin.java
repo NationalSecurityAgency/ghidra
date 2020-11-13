@@ -41,10 +41,6 @@ public class NextPrevSelectedRangePlugin extends Plugin {
 	private NextSelectedRangeAction nextAction;
 	private PreviousSelectedRangeAction previousAction;
 
-	/**
-	 * Constructor
-	 * @param tool
-	 */
 	public NextPrevSelectedRangePlugin(PluginTool tool) {
 		super(tool);
 		navOptions = new NavigationOptions(tool);

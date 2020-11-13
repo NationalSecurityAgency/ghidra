@@ -77,7 +77,6 @@ public class MemoryBlockUtils {
 	 * @param isOverlay if true, the block will be created in a new overlay space for that block
 	 * @param name the name of the new block.
 	 * @param start the starting address of the new block.
-	 * @param is source of the data used to fill the block or null for zero initialization.
 	 * @param length the length of the new block
 	 * @param comment the comment text to associate with the new block.
 	 * @param source the source of the block (This field is not well defined - currently another comment)
@@ -122,17 +121,18 @@ public class MemoryBlockUtils {
 	 * @param r the read permission for the new block.
 	 * @param w the write permission for the new block.
 	 * @param x the execute permission for the new block.
+	 * @param overlay create overlay block if true otherwise a normal mapped block will be created
 	 * @param log a {@link StringBuffer} for appending error messages
 	 * @return the new created block
 	 */
 	public static MemoryBlock createBitMappedBlock(Program program, String name, Address start,
 			Address base, int length, String comment, String source, boolean r, boolean w,
-			boolean x, MessageLog log) {
+			boolean x, boolean overlay, MessageLog log) {
 
 		Memory memory = program.getMemory();
 		try {
 
-			MemoryBlock block = memory.createBitMappedBlock(name, start, base, length);
+			MemoryBlock block = memory.createBitMappedBlock(name, start, base, length, overlay);
 
 			setBlockAttributes(block, comment, source, r, w, x);
 			adjustFragment(program, start, name);
@@ -149,7 +149,8 @@ public class MemoryBlockUtils {
 	}
 
 	/**
-	 * Creates a new byte mapped memory block. (A byte mapped block is a block where each byte value
+	 * Creates a new byte mapped memory block with a 1:1 byte mapping scheme. 
+	 * (A byte mapped block is a block where each byte value
 	 * is taken from a byte at some other address in memory)
 	 * 
 	 * @param program the program in which to create the block.
@@ -162,17 +163,18 @@ public class MemoryBlockUtils {
 	 * @param r the read permission for the new block.
 	 * @param w the write permission for the new block.
 	 * @param x the execute permission for the new block.
+	 * @param overlay create overlay block if true otherwise a normal mapped block will be created
 	 * @param log a {@link MessageLog} for appending error messages
 	 * @return the new created block
 	 */
 	public static MemoryBlock createByteMappedBlock(Program program, String name, Address start,
 			Address base, int length, String comment, String source, boolean r, boolean w,
-			boolean x, MessageLog log) {
+			boolean x, boolean overlay, MessageLog log) {
 
 		Memory memory = program.getMemory();
 		try {
 
-			MemoryBlock block = memory.createByteMappedBlock(name, start, base, length);
+			MemoryBlock block = memory.createByteMappedBlock(name, start, base, length, overlay);
 
 			setBlockAttributes(block, comment, source, r, w, x);
 			adjustFragment(program, start, name);

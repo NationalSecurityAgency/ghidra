@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="V850:LE:32:default">
+    <patternfile>V850_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

@@ -42,7 +42,7 @@ import ghidra.util.timer.GTimer;
  * is always valid and does not force the instantiation of parent objects)
  * <p>
  * {@link GFileSystem Filesystems} should be used via {@link FileSystemRef filesystem ref}
- * handles that ensure the filesystem is pinned in memory and won't be close()ed while
+ * handles that ensure the filesystem is pinned in memory and won't be closed while
  * you are using it.
  * <p>
  * If you are working with {@link GFile} instances, you should have a
@@ -51,15 +51,15 @@ import ghidra.util.timer.GTimer;
  * Thread-safe.
  * <p>
  *
- *
+ * <pre>{@literal
  * TODO list:
  *
  * Refactor fileInfo -> needs dialog to show properties
  * Refactor GFile.getInfo() to return Map<> instead of String.
- * Persistant filesystem - when reopen tool, filesystems should auto-reopen
- * Unify GhidraFileChooser with GFileSystem
- *   add "Mounted Filesystems" button to show currently opened GFilesystems?
- * Dockable filesystem browser in FrontEnd
+ * Persistant filesystem - when reopen tool, filesystems should auto-reopen.
+ * Unify GhidraFileChooser with GFileSystem.
+ * Add "Mounted Filesystems" button to show currently opened GFilesystems?
+ * Dockable filesystem browser in FrontEnd.
  * Reorg filesystem browser right-click popup menu to be more Eclipse action-like
  * 	Show In -> Project tree
  *             Tool [CodeBrowser name]
@@ -78,17 +78,26 @@ import ghidra.util.timer.GTimer;
  *
  * More format tests
  * Large test binary support
- *
+ * }</pre>
  */
 public class FileSystemService {
 	private static int FSRL_INTERN_SIZE = 1000;
 
-	private static class Singleton {
-		private static final FileSystemService instance = new FileSystemService();
+	private static FileSystemService instance;
+
+	public static synchronized FileSystemService getInstance() {
+		if (instance == null) {
+			instance = new FileSystemService();
+		}
+		return instance;
 	}
 
-	public static FileSystemService getInstance() {
-		return Singleton.instance;
+	/**
+	 * Returns true if this service has been loaded
+	 * @return true if this service has been loaded
+	 */
+	public static synchronized boolean isInitialized() {
+		return instance != null;
 	}
 
 	private final LocalFileSystem localFS = LocalFileSystem.makeGlobalRootFS();
@@ -224,6 +233,15 @@ public class FileSystemService {
 			throw new IOException("Invalid FSRL specified: " + fsrl);
 		}
 		String md5 = fsrl.getMD5();
+		if (md5 == null && fsrl.getNestingDepth() == 1) {
+			// if this is a real file on the local file system, and the FSRL doesn't specify
+			// its MD5, try to fetch the MD5 from the fingerprint cache based on its
+			// size and lastmod time, which will help us locate the file in the cache
+			File f = localFS.getLocalFile(fsrl);
+			if (f.isFile()) {
+				md5 = fileFingerprintCache.getMD5(f.getPath(), f.lastModified(), f.length());
+			}
+		}
 		FSRLRoot fsRoot = fsrl.getFS();
 
 		FileCacheEntry result = (md5 != null) ? fileCache.getFile(md5) : null;
@@ -258,6 +276,16 @@ public class FileSystemService {
 							", md5 now " + result.md5);
 					}
 				}
+				if (fsrl.getNestingDepth() == 1) {
+					// if this is a real file on the local filesystem, now that we have its
+					// MD5, save it in the fingerprint cache so it can be found later
+					File f = localFS.getLocalFile(fsrl);
+					if (f.isFile()) {
+						fileFingerprintCache.add(f.getPath(), result.md5, f.lastModified(),
+							f.length());
+					}
+				}
+
 			}
 		}
 
@@ -296,8 +324,9 @@ public class FileSystemService {
 				if (containerFSRL.getMD5() == null) {
 					containerFSRL = containerFSRL.withMD5(cfi.md5);
 				}
-				GFileSystem fs = FileSystemFactoryMgr.getInstance().mountFileSystem(
-					fsFSRL.getProtocol(), containerFSRL, cfi.file, this, monitor);
+				GFileSystem fs = FileSystemFactoryMgr.getInstance()
+						.mountFileSystem(
+							fsFSRL.getProtocol(), containerFSRL, cfi.file, this, monitor);
 				ref = fs.getRefManager().create();
 				filesystemCache.add(fs);
 			}
@@ -351,6 +380,9 @@ public class FileSystemService {
 	 */
 	public File getFile(FSRL fsrl, TaskMonitor monitor) throws CancelledException, IOException {
 		if (fsrl.getNestingDepth() == 1) {
+			// If this is a real files on the local filesystem, verify any
+			// MD5 embedded in the FSRL before returning the live local file
+			// as the result.
 			File f = localFS.getLocalFile(fsrl);
 			if (f.isFile() && fsrl.getMD5() != null) {
 				if (!fileFingerprintCache.contains(f.getPath(), fsrl.getMD5(), f.lastModified(),
@@ -394,8 +426,9 @@ public class FileSystemService {
 	 * @return {@link FSRL} pointing to the same file, never null
 	 */
 	public FSRL getLocalFSRL(File f) {
-		return localFS.getFSRL().withPath(
-			FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
+		return localFS.getFSRL()
+				.withPath(
+					FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
 	}
 
 	/**
@@ -452,7 +485,7 @@ public class FileSystemService {
 	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
 	 * @param producer a {@link DerivedFileProducer callback or lambda} that returns an
 	 * {@link InputStream} that will be streamed into a file and placed into the file cache.
-	 * Example: <pre>(file) -> { return new XYZDecryptorInputStream(file); }</pre>
+	 * Example:{@code (file) -> { return new XYZDecryptorInputStream(file); }}
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
 	 * with file io progress
 	 * @return {@link FileCacheEntry} with file and md5 fields
@@ -493,7 +526,7 @@ public class FileSystemService {
 	 * @param fsrl {@link FSRL} of the source (or container) file that this derived file is based on
 	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
 	 * @param pusher a {@link DerivedFilePushProducer callback or lambda} that recieves a {@link OutputStream}.
-	 * Example: <pre>(os) -> { ...write to outputstream os here...; }</pre>
+	 * Example:{@code (os) -> { ...write to outputstream os here...; }}
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
 	 * with file io progress
 	 * @return {@link FileCacheEntry} with file and md5 fields

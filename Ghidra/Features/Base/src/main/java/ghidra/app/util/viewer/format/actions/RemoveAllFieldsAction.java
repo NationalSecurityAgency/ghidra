@@ -32,8 +32,8 @@ public class RemoveAllFieldsAction extends DockingAction {
 	/**
 	 * Constructor takes the CodeBrowserPlugin that created it and the header
 	 * component so that it can be repainted when fields are added.
-	 * @param owner the action owner
-	 * @param model the mode from which to remove all fields
+	 * @param owner the action owner.
+	 * @param panel the listing panel.
 	 */
     public RemoveAllFieldsAction(String owner, FieldHeader panel) {
         super("Remove All Fields", owner, false);

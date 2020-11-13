@@ -36,7 +36,7 @@ protected:
   uint4 maxdelayslotbytes;	///< Maximum number of bytes in a delay-slot directive
   uint4 unique_allocatemask;	///< Bits that are guaranteed to be zero in the unique allocation scheme
   uint4 numSections;		///< Number of \e named sections
-  void buildXrefs(void);	///< Build register map. Collect user-ops and context-fields.
+  void buildXrefs(vector<string> &errorPairs);	///< Build register map. Collect user-ops and context-fields.
   void reregisterContext(void);	///< Reregister context fields for a new executable
   void restoreXml(const Element *el);	///< Read a SLEIGH specification from XML
 public:

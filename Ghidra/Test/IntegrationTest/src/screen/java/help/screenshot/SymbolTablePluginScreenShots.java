@@ -96,7 +96,7 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 		ComponentProvider provider = getProvider("Symbol Table");
 		tool.showComponentProvider(provider, true);
 
-		moveProviderToItsOwnWindow(provider, 950, 750);
+		moveProviderToItsOwnWindow(provider, 950, 400);
 		GTable table = getTable(provider);
 		setColumnSizes(table);
 
@@ -172,13 +172,25 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 				TableColumn column = columnModel.getColumn(i);
 				Object headerValue = column.getHeaderValue();
 				if ("Name".equals(headerValue)) {
-					column.setPreferredWidth(175);
+					column.setPreferredWidth(300);
 				}
 				else if ("Reference Count".equals(headerValue)) {
-					column.setPreferredWidth(15);
+					column.setPreferredWidth(25);
 				}
 				else if ("Offcut Ref Count".equals(headerValue)) {
-					column.setPreferredWidth(15);
+					column.setPreferredWidth(25);
+				}
+				else if ("Namespace".equals(headerValue)) {
+					column.setPreferredWidth(160);
+				}
+				else if ("Location".equals(headerValue)) {
+					column.setPreferredWidth(170);
+				}
+				else if ("Source".equals(headerValue)) {
+					column.setPreferredWidth(170);
+				}
+				else if ("Type".equals(headerValue)) {
+					column.setPreferredWidth(170);
 				}
 			}
 		});

@@ -85,7 +85,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	// maps for mapping old provider names and owner to new names and/or owner
 	private static Map<String, String> oldOwnerMap = new HashMap<>();
 	private static Map<String, String> oldNameMap = new HashMap<>();
-	protected DockingTool dockingTool;
+	protected Tool dockingTool;
 	private String name;
 	private final String owner;
 	private String title;
@@ -121,7 +121,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *        the same window.
 	 * @param owner The owner of this provider, usually a plugin name.
 	 */
-	public ComponentProvider(DockingTool tool, String name, String owner) {
+	public ComponentProvider(Tool tool, String name, String owner) {
 		this(tool, name, owner, null);
 	}
 
@@ -134,7 +134,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param contextType the type of context supported by this provider; may be null (see
 	 *        {@link #getContextType()}
 	 */
-	public ComponentProvider(DockingTool tool, String name, String owner, Class<?> contextType) {
+	public ComponentProvider(Tool tool, String name, String owner, Class<?> contextType) {
 		this.dockingTool = tool;
 		this.name = name;
 		this.owner = owner;
@@ -175,7 +175,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	public abstract JComponent getComponent();
 
 	/**
-	 * A method that allows children to set the <tt>instanceID</tt> to a desired value (useful for
+	 * A method that allows children to set the <code>instanceID</code> to a desired value (useful for
 	 * restoring saved IDs).
 	 * <p>
 	 * Note: this can be called only once during the lifetime of the calling instance; otherwise, an 
@@ -248,6 +248,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * Removes this provider from the tool.
 	 */
 	public void removeFromTool() {
+		dockingTool.removeAction(showProviderAction);
 		dockingTool.removeComponentProvider(this);
 	}
 
@@ -255,7 +256,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * Adds the given action to the system and associates it with this provider.
 	 * @param action The action to add.
 	 */
-	protected void addLocalAction(DockingActionIf action) {
+	public void addLocalAction(DockingActionIf action) {
 		if (actionSet.contains(action)) {
 			return;
 		}
@@ -266,7 +267,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Removes the given action from the system.
+	 * Removes the given action from this component provider.
 	 * @param action The action to remove.
 	 */
 	protected void removeLocalAction(DockingAction action) {
@@ -274,6 +275,16 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		if (isInTool()) {
 			dockingTool.removeLocalAction(this, action);
 		}
+	}
+
+	/**
+	 * Removes all local actions from this component provider
+	 */
+	protected void removeAllLocalActions() {
+		if (isInTool()) {
+			actionSet.forEach(action -> dockingTool.removeLocalAction(this, action));
+		}
+		actionSet.clear();
 	}
 
 	/**
@@ -532,7 +543,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * text returned from {@link #getTitle()} will be used by default.
 	 * 
 	 * @return the optionally set text to display in the tab for a component provider.
-	 * @set {@link #setTabText(String)}
+	 * @see #setTabText(String)
 	 */
 
 	public String getTabText() {
@@ -744,7 +755,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return this;
 	}
 
-	public DockingTool getTool() {
+	public Tool getTool() {
 		return dockingTool;
 	}
 
@@ -853,8 +864,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		@Override
-		protected String getInceptionFromTheFirstClassThatIsNotUs() {
-			// overridden to show who created the provider, as that is what this action represents
+		protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
 			return inceptionInformation;
 		}
 	}

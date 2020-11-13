@@ -21,7 +21,6 @@ import java.util.*;
 import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.dwarf4.attribs.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
@@ -113,7 +112,7 @@ public class DIEAggregate {
 	 * which is skipped.
 	 * <p>
 	 * Used when a DIEA is composed of a head DIE with a different TAG type than the rest of
-	 * the DIEs.  (ie. a dw_tag_call_site -> dw_tag_sub DIEA)
+	 * the DIEs.  (ie. a dw_tag_call_site -&gt; dw_tag_sub DIEA)
 	 *
 	 * @param source
 	 * @return
@@ -794,20 +793,13 @@ public class DIEAggregate {
 	 * Parses a range list from the debug_ranges section.
 	 * See DWARF4 Section 2.17.3 (Non-Contiguous Address Ranges).
 	 * <p>
-	 * This method is similar to {@link DWARFLocation#parseLocationList(long, DebugInfoEntry)}
-	 * and may have the same gotchas that need to be ported over.
-	 * <p>
 	 * @param attribute attribute ie. {@link DWARFAttribute#DW_AT_ranges}
-	 * @param debug_ranges debug_ranges section byte provider
 	 * @return list of ranges
 	 * @throws IOException if an I/O error occurs
 	 */
 	public List<DWARFRange> parseDebugRange(int attribute) throws IOException {
 		byte pointerSize = getCompilationUnit().getPointerSize();
-		boolean isLittleEndian = getCompilationUnit().getProgram().isLittleEndian();
-
-		ByteProvider debug_ranges = getCompilationUnit().getProgram().getDebugRanges();
-		BinaryReader reader = new BinaryReader(debug_ranges, isLittleEndian);
+		BinaryReader reader = getCompilationUnit().getProgram().getDebugRanges();
 
 		long offset = getUnsignedLong(attribute, -1);
 		if (offset == -1) {
@@ -873,15 +865,20 @@ public class DIEAggregate {
 
 			// if the DWARF attr was a DW_FORM_addr, it doesn't need fixing up
 			if (high.form == DWARFForm.DW_FORM_addr) {
-				return highVal.getUnsignedValue() + getProgram().getProgramBaseAddressFixup();
+				return highVal.getUnsignedValue() + getProgram().getProgramBaseAddressFixup() - 1;
 			}
 
 			// else it was a DW_FORM_data value and is relative to the lowPC value
 			DWARFNumericAttribute low =
 				getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
-			if (low != null && highVal.getUnsignedValue() > 0) {
+			
+			long lhighVal = highVal.getUnsignedValue();
+			if (lhighVal == 0) {
+				lhighVal = 1;
+			}
+			if (low != null && lhighVal > 0) {
 				return low.getUnsignedValue() + getProgram().getProgramBaseAddressFixup() +
-					highVal.getUnsignedValue() - 1;
+						lhighVal - 1;
 			}
 		}
 		throw new IOException("Bad/unsupported DW_AT_high_pc attribute value or type");

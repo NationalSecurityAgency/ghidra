@@ -20,11 +20,13 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.awt.Container;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.AbstractErrDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
@@ -38,7 +40,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging memory blocks.
@@ -86,25 +88,22 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(program);
 		env.dispose();
 	}
 
 	@Test
 	public void testMergeBlocks() throws Exception {
 		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
-		int transactionID = program.startTransaction("test");
-		memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		memory.createInitializedBlock("block4", getAddr(0x40), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForPostedSwingRunnables();
+		tx(program, () -> {
+			memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block4", getAddr(0x40), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+		});
 
 		assertEquals("0000004f", model.getValueAt(3, MemoryMapModel.END));
 		// select rows 0 through 3
@@ -112,7 +111,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
 		performAction(action, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals("block1", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("00000000", model.getValueAt(0, MemoryMapModel.START));
@@ -127,18 +126,17 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testMergeBlocksDisjoint() throws Exception {
 		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
-		int transactionID = program.startTransaction("test");
-		memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		memory.createInitializedBlock("block4", getAddr(0x40), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForPostedSwingRunnables();
+		tx(program, () -> {
+			memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
+
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block4", getAddr(0x40), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+		});
 
 		assertEquals("block1", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("block2", model.getValueAt(1, MemoryMapModel.NAME));
@@ -153,26 +151,20 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
 		performAction(action, false);
-		waitForPostedSwingRunnables();
-		final OptionDialog d =
-			waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
-		assertNotNull(d);
-		assertEquals("Merge Blocks Failed", d.getTitle());
-		assertEquals("Can't merge blocks because they are not contiguous",
-			findMessage(d.getComponent()));
+		AbstractErrDialog d = waitForErrorDialog();
 
-		runSwing(() -> d.close());
+		assertEquals("Merge Blocks Failed", d.getTitle());
+		assertEquals("Can't merge blocks because they are not contiguous", d.getMessage());
+		close(d);
 	}
 
 	@Test
 	public void testMergeBlocksFarApart() throws Exception {
 
-		int transactionID = program.startTransaction("test");
-		memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForPostedSwingRunnables();
+		tx(program, () -> {
+			memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
+				TaskMonitor.DUMMY, false);
+		});
 
 		// select rows 0 and 1
 		table.setRowSelectionInterval(0, 1);
@@ -180,20 +172,19 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
 		performAction(action, false);
-		waitForPostedSwingRunnables();
-		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
-		assertNotNull(d);
+		waitForSwing();
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 
 		assertEquals("Merge Memory Blocks", d.getTitle());
 		String message = findMessage(d.getComponent());
 		assertTrue(
 			message.startsWith("Merging these blocks will create 16387K extra bytes in memory"));
 
-		final JButton b = findButton(d.getComponent(), "Merge Blocks");
+		JButton b = findButton(d.getComponent(), "Merge Blocks");
 		assertNotNull(b);
-		SwingUtilities.invokeAndWait(() -> b.getActionListeners()[0].actionPerformed(null));
+		runSwing(() -> b.getActionListeners()[0].actionPerformed(null));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals("block1", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("00000000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
@@ -217,10 +208,10 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// select rows 0 and 1
 		table.setRowSelectionInterval(0, 1);
@@ -228,24 +219,21 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
 		performAction(action, false);
-		waitForPostedSwingRunnables();
-		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
-		assertNotNull(d);
-
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertEquals("Merge Memory Blocks", d.getTitle());
 		assertTrue(findMessage(d.getComponent()).startsWith(
 			"Merging these blocks will create 16387K extra bytes in memory"));
 
-		final JButton b = findButton(d.getComponent(), "Cancel");
+		JButton b = findButton(d.getComponent(), "Cancel");
 		assertNotNull(b);
-		SwingUtilities.invokeAndWait(() -> b.getActionListeners()[0].actionPerformed(null));
+		runSwing(() -> b.getActionListeners()[0].actionPerformed(null));
 		assertEquals("0000004f", model.getValueAt(0, MemoryMapModel.END));
 	}
 
 	private void showProvider() {
 		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();
 		model = table.getModel();

@@ -154,7 +154,7 @@ public class CollapseAllArchivesAction extends DockingAction {
 	}
 
 	private void collapseAll(GTree archiveGTree) {
-		GTreeNode rootNode = archiveGTree.getRootNode();
+		GTreeNode rootNode = archiveGTree.getViewRoot();
 		List<GTreeNode> children = rootNode.getChildren();
 		for (GTreeNode childNode : children) {
 			archiveGTree.collapseAll(childNode);

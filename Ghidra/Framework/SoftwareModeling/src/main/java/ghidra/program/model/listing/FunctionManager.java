@@ -72,7 +72,6 @@ public interface FunctionManager {
 	 * @param source the source of this function
 	 * @return new function or null if one or more functions overlap the specified body address set.
 	 * @throws InvalidInputException if the name has invalid characters
-	 * @throws DuplicateNameException if a function with the given name already exists
 	 * @throws OverlappingFunctionException if the address set of the body overlaps an existing
 	 *             function
 	 */
@@ -89,7 +88,6 @@ public interface FunctionManager {
 	 * @param source the source of this function
 	 * @return new function or null if one or more functions overlap the specified body address set.
 	 * @throws InvalidInputException if the name has invalid characters
-	 * @throws DuplicateNameException if a function with the given name already exists
 	 * @throws OverlappingFunctionException if the address set of the body overlaps an existing
 	 *             function
 	 */
@@ -164,7 +162,7 @@ public interface FunctionManager {
 	 *
 	 * @return an iterator over functions.
 	 */
-	public FunctionIterator getFunctions(Address start, boolean foward);
+	public FunctionIterator getFunctions(Address start, boolean forward);
 
 	/**
 	 * Get an iterator over functions with entry points in the specified address set. Function are
@@ -193,7 +191,7 @@ public interface FunctionManager {
 	 *
 	 * @return an iterator over functions.
 	 */
-	public FunctionIterator getFunctionsNoStubs(Address start, boolean foward);
+	public FunctionIterator getFunctionsNoStubs(Address start, boolean forward);
 
 	/**
 	 * Get an iterator over REAL functions with entry points in the specified address set (real
@@ -272,7 +270,7 @@ public interface FunctionManager {
 	 *
 	 * @param instrAddr
 	 * @param storageAddr
-	 * @param size varnode size in bytes (1 is assumed if value <= 0)
+	 * @param size varnode size in bytes (1 is assumed if value &lt;= 0)
 	 * @param isRead
 	 * @return referenced variable or null if one not found
 	 */

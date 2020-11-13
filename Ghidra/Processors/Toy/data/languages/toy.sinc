@@ -1,8 +1,15 @@
-# Main slaspec must define endianess and alignment
+# Main slaspec must define ENDIAN and ALIGN
 
 @ifndef WORDSIZE
 @define WORDSIZE "1"
 @endif
+
+@ifndef ALIGN
+@define ALIGN "1"
+@endif
+
+define endian=$(ENDIAN);
+define alignment=$(ALIGN);
 
 define space ram type=ram_space size=$(SIZE) wordsize=$(WORDSIZE) default;
 
@@ -23,3 +30,22 @@ define register offset=0x1100 size=1 [
        C   Z   N   V
 ];
 
+
+@if SIZE == "4"
+@define HALFSIZE "2"
+@endif
+@if SIZE == "8"
+@define HALFSIZE "4"
+@endif
+
+@if ENDIAN == "little"
+define register offset=0x1000 size=$(HALFSIZE) [
+       r0l  r0h  r1l  r1h  r2l  r2h  r3l  r3h  r4l  r4h  r5l  r5h  r6l  r6h  r7l  r7h
+       r8l  r8h  r9l  r9h r10l r10h r11l r11h r12l r12h  spl  sph  lrl  lrh  pcl  pch
+];
+@else # ENDIAN == "big"
+define register offset=0x1000 size=$(HALFSIZE) [
+       r0h  r0l  r1h  r1l  r2h  r2l  r3h  r3l  r4h  r4l  r5h  r5l  r6h  r6l  r7h  r7l
+       r8h  r8l  r9h  r9l r10h r10l r11h r11l r12h r12l  sph  spl  lrh  lrl  pch  pcl
+];
+@endif # ENDIAN

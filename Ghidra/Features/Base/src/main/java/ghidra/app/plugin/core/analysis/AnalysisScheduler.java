@@ -31,6 +31,7 @@ public class AnalysisScheduler {
 	private AddressSet removeSet;
 	private AddressSet addSet;
 
+	private boolean defaultEnablement;
 	private boolean enabled;
 	private boolean scheduled;
 
@@ -42,15 +43,30 @@ public class AnalysisScheduler {
 			throw new IllegalArgumentException("Analyzer name may not contain a period: " +
 				analyzer.getName());
 		}
-		this.enabled = analyzer.getDefaultEnablement(analysisMgr.getProgram());
+		defaultEnablement = getDefaultEnablement();
+		enabled = defaultEnablement;
 		removeSet = new AddressSet();
 		addSet = new AddressSet();
+	}
+
+	private boolean getDefaultEnablement() {
+		Program program = analysisMgr.getProgram();
+		boolean defaultEnable = analyzer.getDefaultEnablement(program);
+		boolean override = getEnableOverride(defaultEnable);
+		if (defaultEnable != override) {
+			Msg.warn(AnalysisScheduler.class,
+				"Analyzer \'" + analyzer.getName() + "\' for " + program.getName() + " " +
+					(override ? "enabled" : "disabled") + " by PSPEC file override");
+			defaultEnable = override;
+		}
+		return defaultEnable;
 	}
 
 	synchronized void schedule() {
 		// if not scheduled right now, schedule it
 		if (!scheduled && (!addSet.isEmpty() || !removeSet.isEmpty())) {
-			analysisMgr.schedule(new AnalysisTask(this, analysisMgr.getMessageLog()), getPriority());
+			analysisMgr.schedule(new AnalysisTask(this, analysisMgr.getMessageLog()),
+				getPriority());
 			scheduled = true;
 		}
 	}
@@ -112,30 +128,14 @@ public class AnalysisScheduler {
 	}
 
 	public void optionsChanged(Options options) {
-		
-		boolean defaultEnable = analyzer.getDefaultEnablement(analysisMgr.getProgram());
-		defaultEnable = getEnableOverride(defaultEnable);
-		enabled = options.getBoolean(analyzer.getName(), defaultEnable);
-
+		enabled = options.getBoolean(analyzer.getName(), defaultEnablement);
 		analyzer.optionsChanged(options.getOptions(analyzer.getName()), analysisMgr.getProgram());
 	}
 
 	public void registerOptions(Options options) {
 		Options analyzerOptions = options.getOptions(analyzer.getName());
-		
-		boolean defaultEnable = analyzer.getDefaultEnablement(analysisMgr.getProgram());
-		
-		boolean overrideEnable = getEnableOverride(defaultEnable);
-		
-		// only warn when option registered
-		if (defaultEnable != overrideEnable) {
-			Msg.warn(this,  "Analyzer \'" + analyzer.getName() + "\' for "+ analysisMgr.getProgram().getName() + " " + (overrideEnable ? "enabled" : "disabled") + " by PSPEC file override");
-		}
-		
-		options.registerOption(analyzer.getName(),
-			overrideEnable, null,
+		options.registerOption(analyzer.getName(), defaultEnablement, null,
 			analyzer.getDescription());
-
 		analyzer.registerOptions(analyzerOptions, analysisMgr.getProgram());
 	}
 
@@ -152,10 +152,11 @@ public class AnalysisScheduler {
 		String propertyName = "Analyzers." + analyzer.getName();
 		if (language.hasProperty(propertyName)) {
 			overrideEnable = language.getPropertyAsBoolean(propertyName, defaultEnable);
-		} else if (allOverriden) {
+		}
+		else if (allOverriden) {
 			overrideEnable = false;
 		}
-		
+
 		return overrideEnable;
 	}
 
@@ -202,4 +203,8 @@ public class AnalysisScheduler {
 		scheduled = false;
 	}
 
+	@Override
+	public String toString() {
+		return analyzer.getName();
+	}
 }

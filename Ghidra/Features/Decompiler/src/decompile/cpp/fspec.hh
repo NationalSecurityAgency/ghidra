@@ -292,6 +292,14 @@ public:
 
 /// \brief Basic elements of a parameter: address, data-type, properties
 struct ParameterPieces {
+  enum {
+    isthis = 1,		///< Parameter is "this" pointer
+    hiddenretparm = 2,	///< Parameter is hidden pointer to return value, mirrors Varnode::hiddenretparm
+    indirectstorage = 4,	///< Parameter is indirect pointer to true parameter, mirrors Varnode::indirectstorage
+    namelock = 8,	///< Parameter's name is locked, mirrors Varnode::namelock
+    typelock = 16,	///< Parameter's data-type is locked, mirrors Varnode::typelock
+    sizelock = 32	///< Size of the parameter is locked (but not the data-type)
+  };
   Address addr;			///< Storage address of the parameter
   Datatype *type;		///< The datatype of the parameter
   uint4 flags;			///< additional attributes of the parameter
@@ -619,6 +627,7 @@ class ProtoModel {
   int4 extrapop;		///< Extra bytes popped from stack
   ParamList *input;		///< Resource model for input parameters
   ParamList *output;		///< Resource model for output parameters
+  const ProtoModel *compatModel;	///< The model \b this is a copy of
   vector<EffectRecord> effectlist; ///< List of side-effects
   vector<VarnodeData> likelytrash;	///< Storage locations potentially carrying \e trash values
   int4 injectUponEntry;		///< Id of injection to perform at beginning of function (-1 means not used)
@@ -645,6 +654,7 @@ public:
   void setExtraPop(int4 ep) { extrapop = ep; }		///< Set the stack-pointer \e extrapop
   int4 getInjectUponEntry(void) const { return injectUponEntry; }	///< Get the inject \e uponentry id
   int4 getInjectUponReturn(void) const { return injectUponReturn; }	///< Get the inject \e uponreturn id
+  bool isCompatible(const ProtoModel *op2) const;	///< Return \b true if other given model can be substituted for \b this
 
   /// \brief Given a list of input \e trials, derive the most likely input prototype
   ///
@@ -911,11 +921,13 @@ public:
   virtual bool isTypeLocked(void) const=0;		///< Is the parameter data-type locked
   virtual bool isNameLocked(void) const=0;		///< Is the parameter name locked
   virtual bool isSizeTypeLocked(void) const=0;		///< Is the size of the parameter locked
+  virtual bool isThisPointer(void) const=0;		///< Is \b this the "this" pointer for a class method
   virtual bool isIndirectStorage(void) const=0;		///< Is \b this really a pointer to the true parameter
   virtual bool isHiddenReturn(void) const=0;		///< Is \b this a pointer to storage for a return value
   virtual bool isNameUndefined(void) const=0;		///< Is the name of \b this parameter undefined
   virtual void setTypeLock(bool val)=0;			///< Toggle the lock on the data-type
   virtual void setNameLock(bool val)=0;			///< Toggle the lock on the name
+  virtual void setThisPointer(bool val)=0;		///< Toggle whether \b this is the "this" pointer for a class method
 
   /// \brief Change (override) the data-type of a \e size-locked parameter.
   ///
@@ -965,7 +977,7 @@ class ParameterBasic : public ProtoParameter {
   string name;			///< The name of the parameter, "" for undefined or return value parameters
   Address addr;			///< Storage address of the parameter
   Datatype *type;		///< Data-type of the parameter
-  uint4 flags;			///< Lock properties. Varnode::mark is co-opted to hold the \e size-lock flag
+  uint4 flags;			///< Lock and other properties from ParameterPieces flags
 public:
   ParameterBasic(const string &nm,const Address &ad,Datatype *tp,uint4 fl) {
     name = nm; addr = ad; type = tp; flags=fl; }		///< Construct from components
@@ -973,14 +985,16 @@ public:
   virtual Datatype *getType(void) const { return type; }
   virtual Address getAddress(void) const { return addr; }
   virtual int4 getSize(void) const { return type->getSize(); }
-  virtual bool isTypeLocked(void) const { return ((flags&Varnode::typelock)!=0); }
-  virtual bool isNameLocked(void) const { return ((flags&Varnode::namelock)!=0); }
-  virtual bool isSizeTypeLocked(void) const { return ((flags&Varnode::mark)!=0); }
-  virtual bool isIndirectStorage(void) const { return ((flags&Varnode::indirectstorage)!=0); }
-  virtual bool isHiddenReturn(void) const { return ((flags&Varnode::hiddenretparm)!=0); }
+  virtual bool isTypeLocked(void) const { return ((flags&ParameterPieces::typelock)!=0); }
+  virtual bool isNameLocked(void) const { return ((flags&ParameterPieces::namelock)!=0); }
+  virtual bool isSizeTypeLocked(void) const { return ((flags&ParameterPieces::sizelock)!=0); }
+  virtual bool isThisPointer(void) const { return ((flags&ParameterPieces::isthis)!=0); }
+  virtual bool isIndirectStorage(void) const { return ((flags&ParameterPieces::indirectstorage)!=0); }
+  virtual bool isHiddenReturn(void) const { return ((flags&ParameterPieces::hiddenretparm)!=0); }
   virtual bool isNameUndefined(void) const { return (name.size()==0); }
   virtual void setTypeLock(bool val);
   virtual void setNameLock(bool val);
+  virtual void setThisPointer(bool val);
   virtual void overrideSizeLockType(Datatype *ct);
   virtual void resetSizeLockType(TypeFactory *factory);
   virtual ProtoParameter *clone(void) const;
@@ -1061,11 +1075,13 @@ public:
   virtual bool isTypeLocked(void) const;
   virtual bool isNameLocked(void) const;
   virtual bool isSizeTypeLocked(void) const;
+  virtual bool isThisPointer(void) const;
   virtual bool isIndirectStorage(void) const;
   virtual bool isHiddenReturn(void) const;
   virtual bool isNameUndefined(void) const;
   virtual void setTypeLock(bool val);
   virtual void setNameLock(bool val);
+  virtual void setThisPointer(bool val);
   virtual void overrideSizeLockType(Datatype *ct);
   virtual void resetSizeLockType(TypeFactory *factory);
   virtual ProtoParameter *clone(void) const;
@@ -1168,6 +1184,8 @@ class FuncProto {
   vector<EffectRecord> effectlist;	///< Side-effects associated with non-parameter storage locations
   vector<VarnodeData> likelytrash;	///< Locations that may contain \e trash values
   int4 injectid;		///< (If non-negative) id of p-code snippet that should replace this function
+  int4 returnBytesConsumed;	///< Number of bytes of return value that are consumed by callers (0 = all bytes)
+  void updateThisPointer(void);	///< Make sure any "this" parameter is properly marked
 protected:
   void paramShift(int4 paramshift);	///< Add parameters to the front of the input parameter list
   bool isParamshiftApplied(void) const { return ((flags&paramshift_applied)!=0); }	///< Has a parameter shift been applied
@@ -1220,6 +1238,14 @@ public:
   /// \return the id value corresponding to the specific call-fixup or -1 if there is no call-fixup
   int4 getInjectId(void) const { return injectid; }
 
+  /// \brief Get an estimate of the number of bytes consumed by callers of \b this prototype.
+  ///
+  /// A value of 0 means \e all possible bytes of the storage location are consumed.
+  /// \return the number of bytes or 0
+  int4 getReturnBytesConsumed(void) const { return returnBytesConsumed; }
+
+  bool setReturnBytesConsumed(int4 val);	///< Set the number of bytes consumed by callers of \b this
+
   /// \brief Does a function with \b this prototype never return
   bool isNoReturn(void) const { return ((flags & no_return)!=0); }
 
@@ -1230,11 +1256,6 @@ public:
 
   /// \brief Is \b this a prototype for a class method, taking a \e this pointer.
   bool hasThisPointer(void) const { return ((flags & has_thisptr)!=0); }
-
-  /// \brief Toggle the \e this-call setting for \b this prototype
-  ///
-  /// \param val is \b true if \b this prototype uses a \e this pointer
-  void setThisPointer(bool val) { flags = val ? (flags|has_thisptr) : (flags & ~((uint4)has_thisptr)); }
 
   /// \brief Is \b this prototype for a class constructor method
   bool isConstructor(void) const { return ((flags & is_constructor)!=0); }
@@ -1318,8 +1339,8 @@ public:
   bool checkInputSplit(const Address &loc,int4 size,int4 splitpoint) const {
     return model->checkInputSplit(loc,size,splitpoint); }
 
-  void updateInputTypes(const vector<Varnode *> &triallist,ParamActive *activeinput);
-  void updateInputNoTypes(const vector<Varnode *> &triallist,ParamActive *activeinput,TypeFactory *factory);
+  void updateInputTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput);
+  void updateInputNoTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput);
   void updateOutputTypes(const vector<Varnode *> &triallist);
   void updateOutputNoTypes(const vector<Varnode *> &triallist,TypeFactory *factory);
   void updateAllTypes(const vector<string> &namelist,const vector<Datatype *> &typelist,bool dtdtdt);
@@ -1436,6 +1457,7 @@ class FuncCallSpecs : public FuncProto {
   int4 matchCallCount;		///< Number of calls to this sub-function within the calling function
   ParamActive activeinput;	///< Info for recovering input parameters
   ParamActive activeoutput;	///< Info for recovering output parameters
+  mutable vector<int4> inputConsume;	///< Number of bytes consumed by sub-function, for each input parameter
   bool isinputactive; 		///< Are we actively trying to recover input parameters
   bool isoutputactive;		///< Are we actively trying to recover output parameters
   bool isbadjumptable;		///< Was the call originally a jump-table we couldn't recover
@@ -1496,6 +1518,8 @@ public:
   void checkOutputTrialUse(Funcdata &data,vector<Varnode *> &trialvn);
   void buildInputFromTrials(Funcdata &data);
   void buildOutputFromTrials(Funcdata &data,vector<Varnode *> &trialvn);
+  int4 getInputBytesConsumed(int4 slot) const;
+  bool setInputBytesConsumed(int4 slot,int4 val) const;
   void paramshiftModifyStart(void);
   bool paramshiftModifyStop(Funcdata &data);
   uint4 hasEffectTranslate(const Address &addr,int4 size) const;
