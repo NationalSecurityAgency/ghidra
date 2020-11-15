@@ -35,7 +35,7 @@ public final class Leb128 {
 
 	/**
 	 * Gets the number of bytes in the unsigned LEB128 encoding of the given value.
-	 * 
+	 *
 	 * @param value
 	 *            the value in question
 	 * @return its write size, in bytes
@@ -43,11 +43,11 @@ public final class Leb128 {
 	public static int unsignedLeb128Size( int value ) {
 		// TODO: This could be much cleverer.
 
-		int remaining = value >> 7;
+		int remaining = value >>> 7;
 		int count = 0;
 
 		while ( remaining != 0 ) {
-			remaining >>= 7;
+			remaining >>>= 7;
 			count++;
 		}
 
@@ -56,7 +56,7 @@ public final class Leb128 {
 
 	/**
 	 * Gets the number of bytes in the signed LEB128 encoding of the given value.
-	 * 
+	 *
 	 * @param value
 	 *            the value in question
 	 * @return its write size, in bytes
@@ -197,6 +197,6 @@ public final class Leb128 {
 
 		System.out.println( readUnsignedLeb128( NumericUtilities.convertStringToBytes("807f" ) ) );
 
-		
+
 	}
 }
