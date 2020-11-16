@@ -82,7 +82,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * Returns the program's datatype manager.
 	 */
 	@Override
-	public DataTypeManager getDataTypeManager();
+	public ProgramBasedDataTypeManager getDataTypeManager();
 
 	/**
 	 * Returns the programs function manager.

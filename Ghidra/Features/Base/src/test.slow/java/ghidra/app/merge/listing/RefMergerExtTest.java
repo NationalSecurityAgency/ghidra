@@ -674,7 +674,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		assertEquals("Bar", ((ExternalReference) refs[0]).getExternalLocation().getLabel());
 		assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
 	}
-	
+
 	@Test
 	public void testExtRefChangeRefTypeConflictPickMy() throws Exception {
 
@@ -688,19 +688,20 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				int txId = program.startTransaction("Modify Original Program");
 				boolean commit = false;
 				try {
-					ExternalLocation extLoc = createExternalLabel(program, new String[] { "Library", "Namespace", "Label1" },
+					ExternalLocation extLoc = createExternalLabel(program,
+						new String[] { "Library", "Namespace", "Label1" },
 						addr(program, "77db1020"), SourceType.ANALYSIS);
-					
+
 					ReferenceManager refMgr = program.getReferenceManager();
-					
+
 					Reference[] refs = refMgr.getReferencesFrom(addr(program, "0x1001000"), 0);
 					assertEquals(1, refs.length);
 					Address fromAddress = refs[0].getFromAddress();
 					int operandIndex = refs[0].getOperandIndex();
 					refMgr.delete(refs[0]);
-					
+
 					refMgr.addExternalReference(fromAddress, operandIndex, extLoc,
-							extLoc.getSource(), RefType.DATA);
+						extLoc.getSource(), RefType.DATA);
 
 					commit = true;
 				}
@@ -721,12 +722,12 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
-					
+
 					ExternalLocation extLoc = getExternalLocation(program,
-							new String[] { "Library", "Namespace", "Label1" });
-					
+						new String[] { "Library", "Namespace", "Label1" });
+
 					refMgr.addExternalReference(addr(program, "0x1001000"), 0, extLoc,
-							extLoc.getSource(), RefType.COMPUTED_CALL);
+						extLoc.getSource(), RefType.COMPUTED_CALL);
 
 					commit = true;
 				}
@@ -747,12 +748,12 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
-					
+
 					ExternalLocation extLoc = getExternalLocation(program,
-							new String[] { "Library", "Namespace", "Label1" });
-					
+						new String[] { "Library", "Namespace", "Label1" });
+
 					refMgr.addExternalReference(addr(program, "0x1001000"), 0, extLoc,
-							extLoc.getSource(), RefType.COMPUTED_CALL_TERMINATOR);
+						extLoc.getSource(), RefType.COMPUTED_CALL_TERMINATOR);
 
 					commit = true;
 				}
@@ -1328,13 +1329,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				finally {
 					program.endTransaction(txId, commit);
 				}
-				ExternalManager externalManager = program.getExternalManager();
-				ExternalLocationIterator externalLocations =
-					externalManager.getExternalLocations("ADVAPI32.DLL");
-				while (externalLocations.hasNext()) {
-					ExternalLocation next = externalLocations.next();
-					System.out.println("Location=" + next.getSymbol().getName(true));
-				}
+
 				ExternalLocation externalLocation1 =
 					getExternalLocation(program, new String[] { "USER32.DLL", "printf" });
 				assertNotNull(externalLocation1);
@@ -1452,13 +1447,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				finally {
 					program.endTransaction(txId, commit);
 				}
-				ExternalManager externalManager = program.getExternalManager();
-				ExternalLocationIterator externalLocations =
-					externalManager.getExternalLocations("ADVAPI32.DLL");
-				while (externalLocations.hasNext()) {
-					ExternalLocation next = externalLocations.next();
-					System.out.println("Location=" + next.getSymbol().getName(true));
-				}
+
 				ExternalLocation externalLocation1 =
 					getExternalLocation(program, new String[] { "USER32.DLL", "printf" });
 				assertNotNull(externalLocation1);

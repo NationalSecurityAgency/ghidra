@@ -148,6 +148,14 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
+	protected RecordIterator getRecords() throws IOException {
+		if (table == null) {
+			return new EmptyRecordIterator();
+		}
+		return table.iterator();
+	}
+
+	@Override
 	boolean isTagAssigned(long tagID) throws IOException {
 		if (table == null) {
 			return false;

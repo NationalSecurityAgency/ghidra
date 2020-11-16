@@ -16,6 +16,7 @@
 package ghidra.program.model.lang;
 
 import java.math.BigInteger;
+import java.util.List;
 
 /**
  * Defines the interface for an object containing the state
@@ -30,10 +31,10 @@ public interface ProcessorContextView {
 	public Register getBaseContextRegister();
 
 	/**
-	 * Returns all the Registers for the processor
+	 * Returns all the Registers for the processor as an unmodifiable list
 	 * @return all the Registers for the processor
 	 */
-	public Register[] getRegisters();
+	public List<Register> getRegisters();
 
 	/**
 	 * Get a Register given the name of a register

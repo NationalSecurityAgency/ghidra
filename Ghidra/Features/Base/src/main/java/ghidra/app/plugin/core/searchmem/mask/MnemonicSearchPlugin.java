@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.searchmem.mask;
 
-import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
@@ -33,7 +32,7 @@ import ghidra.util.Msg;
 
 /**
  * Defines a set of actions that can be performed on a selection to initiate a memory search.  All
- * actions will ultimately open the {@link MemSearchDialog} with the search string field 
+ * actions will ultimately open the {@code MemSearchDialog} with the search string field 
  * pre-populated.
  * 
  */
@@ -57,76 +56,67 @@ public class MnemonicSearchPlugin extends Plugin {
 	static final String MENU_PULLRIGHT = "For Matching Instructions";
 	static final String POPUP_MENU_GROUP = "Search";
 
-	// Actions (accessible via Tools menu).
+	// Actions (accessible via Tools menu)
 	private NavigatableContextAction setSearchMnemonicOpsNoConstAction;
 	private NavigatableContextAction setSearchMnemonicOpsConstAction;
 	private NavigatableContextAction setSearchMnemonicNoOpsNoConstAction;
 
-	// Final bit string used to populate the mem search dialog.
+	// Final bit string used to populate the memory search dialog.
 	public String maskedBitString;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param tool
+	 * @param tool the tool
 	 */
 	public MnemonicSearchPlugin(PluginTool tool) {
 		super(tool);
 		createActions();
 	}
 
-	/**
+	/*
 	 * Retrieves the selection region from the program, builds the search string, and pops
-	 * up the {@link MemSearchDialog}.
-	 * 
-	 * @param context
-	 * @param useOps
-	 * @param useConsts
+	 * up the MemSearchDialog
 	 */
-	private void processAction(ActionContext context, boolean useOps, boolean useConsts) {
+	private void processAction(NavigatableActionContext context, boolean useOps,
+			boolean useConsts) {
 
-		// Make sure the action is of the right type.  Users may create a selection from 
-		// different windows, which will create different action context objects (ie: 
-		// ListingActionContext, CodeViewerActionContext, etc...).  Ultimately they are all
-		// NavigatableActionContext's, so use that.
-		if (context != null && context.getContextObject() instanceof NavigatableActionContext) {
-			NavigatableActionContext newContext =
-				(NavigatableActionContext) context.getContextObject();
+		NavigatableActionContext newContext =
+			(NavigatableActionContext) context.getContextObject();
 
-			// Grab the program and selection from the context.
-			Program program = newContext.getProgram();
-			ProgramSelection selection = newContext.getSelection();
+		// Grab the program and selection from the context.
+		Program program = newContext.getProgram();
+		ProgramSelection selection = newContext.getSelection();
 
-			// If there are multiple regions selected, let the user know via popup and 
-			// exit.  This is not allowed.  
-			// Note: We could disable the menu items and not allow this operation to 
-			//       be initiated at all, but the decision was made to do it this way 
-			//       so it's more obvious to the user why the operation is invalid.
-			if (selection.getNumAddressRanges() > 1) {
-				Msg.showInfo(this, context.getComponentProvider().getComponent(),
-					"Mnemonic Search Error",
-					"Multiple selected regions are not allowed; please limit to one.");
-				return;
-			}
+		// If there are multiple regions selected, let the user know via popup and 
+		// exit.  This is not allowed.  
+		// Note: We could disable the menu items and not allow this operation to 
+		//       be initiated at all, but the decision was made to do it this way 
+		//       so it's more obvious to the user why the operation is invalid.
+		if (selection.getNumAddressRanges() > 1) {
+			Msg.showInfo(this, context.getComponentProvider().getComponent(),
+				"Mnemonic Search Error",
+				"Multiple selected regions are not allowed; please limit to one.");
+			return;
+		}
 
-			// Store the mask information (this is based solely on the menu action
-			// that initiated this whole operation.
-			SLMaskControl maskControl = new SLMaskControl(useOps, useConsts);
-			MaskGenerator generator = new MaskGenerator(maskControl);
-			MaskValue mask = generator.getMask(program, selection);
+		// Store the mask information (this is based solely on the menu action
+		// that initiated this whole operation.
+		SLMaskControl maskControl = new SLMaskControl(useOps, useConsts);
+		MaskGenerator generator = new MaskGenerator(maskControl);
+		MaskValue mask = generator.getMask(program, selection);
 
-			// Now build the search string and set up the search service.  This preps the mem search
-			// dialog with the proper search string.
-			if (mask != null) {
-				maskedBitString = createMaskedBitString(mask.getValue(), mask.getMask());
-				byte[] maskedBytes = maskedBitString.getBytes();
+		// Now build the search string and set up the search service.  This preps the mem search
+		// dialog with the proper search string.
+		if (mask != null) {
+			maskedBitString = createMaskedBitString(mask.getValue(), mask.getMask());
+			byte[] maskedBytes = maskedBitString.getBytes();
 
-				MemorySearchService memorySearchService =
-					tool.getService(MemorySearchService.class);
-				memorySearchService.setIsMnemonic(true);
-				memorySearchService.search(maskedBytes, newContext);
-				memorySearchService.setSearchText(maskedBitString);
-			}
+			MemorySearchService memorySearchService =
+				tool.getService(MemorySearchService.class);
+			memorySearchService.setIsMnemonic(true);
+			memorySearchService.search(maskedBytes, newContext);
+			memorySearchService.setSearchText(maskedBitString);
 		}
 	}
 
@@ -148,7 +138,7 @@ public class MnemonicSearchPlugin extends Plugin {
 			new NavigatableContextAction("Include Operands (except constants)", getName()) {
 
 				@Override
-				public void actionPerformed(ActionContext context) {
+				public void actionPerformed(NavigatableActionContext context) {
 					processAction(context, true, false);
 				}
 
@@ -167,18 +157,19 @@ public class MnemonicSearchPlugin extends Plugin {
 		//
 		// ACTION 2: Search for instructions, including operands. 
 		//
-		setSearchMnemonicOpsConstAction = new NavigatableContextAction("Include Operands", getName()) {
+		setSearchMnemonicOpsConstAction =
+			new NavigatableContextAction("Include Operands", getName()) {
 
-			@Override
-			public void actionPerformed(ActionContext context) {
-				processAction(context, true, true);
-			}
+				@Override
+				public void actionPerformed(NavigatableActionContext context) {
+					processAction(context, true, true);
+				}
 
-			@Override
-			protected boolean isEnabledForContext(NavigatableActionContext context) {
-				return context.hasSelection();
-			}
-		};
+				@Override
+				protected boolean isEnabledForContext(NavigatableActionContext context) {
+					return context.hasSelection();
+				}
+			};
 
 		setSearchMnemonicOpsConstAction.setMenuBarData(new MenuData(new String[] { "&Search",
 			MENU_PULLRIGHT, "Include Operands" }, null, group, MenuData.NO_MNEMONIC, "2"));
@@ -191,7 +182,7 @@ public class MnemonicSearchPlugin extends Plugin {
 			new NavigatableContextAction("Exclude Operands", getName()) {
 
 				@Override
-				public void actionPerformed(ActionContext context) {
+				public void actionPerformed(NavigatableActionContext context) {
 					processAction(context, false, false);
 				}
 
@@ -214,12 +205,8 @@ public class MnemonicSearchPlugin extends Plugin {
 		tool.setMenuGroup(new String[] { MENU_PULLRIGHT }, POPUP_MENU_GROUP);
 	}
 
-	/**
-	 * Returns a single string based on the masked bits.
-	 * 
-	 * @param values
-	 * @param masks
-	 * @return
+	/*
+	 * Returns a single string based on the masked bits
 	 */
 	private String createMaskedBitString(byte values[], byte masks[]) {
 

@@ -21,8 +21,10 @@ import ghidra.app.actions.AbstractFindReferencesToAddressAction;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HelpLocation;
 
 /**
  * An action to show all references to the given address
@@ -32,6 +34,7 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 	public FindReferencesToAddressAction(PluginTool tool, String owner) {
 		super(tool, owner);
 
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionShowReferences"));
 		setPopupMenuData(new MenuData(new String[] { LocationReferencesService.MENU_GROUP, NAME }));
 	}
 

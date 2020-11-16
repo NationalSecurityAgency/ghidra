@@ -32,6 +32,8 @@ import ghidra.program.model.symbol.Namespace;
  */
 public class SymbolPathParser {
 
+	private static String ANONYMOUS_NAMESPACE = "(anonymous_namespace)";
+
 	/**
 	 * Parses a String pathname into its constituent namespace and name components.
 	 * The list does not contain the global namespace, which is implied, but then
@@ -45,12 +47,29 @@ public class SymbolPathParser {
 			throw new IllegalArgumentException(
 				"Symbol list must contain at least one symbol name!");
 		}
-		if (name.indexOf(Namespace.DELIMITER) == -1) {
+
+		if (skipParsing(name)) {
 			List<String> list = new ArrayList<>();
 			list.add(name);
 			return list;
 		}
 		return naiveParse(name);
+	}
+
+	private static boolean skipParsing(String name) {
+
+		//	if (name.indexOf(Namespace.DELIMITER) == -1) {
+		// following is temporary kludge due to struct (blah).  TODO: figure/fix
+		// This particular test for starting with the open parenthesis is to work around a type
+		// seen in "Rust."
+		if (name.startsWith("(")) {
+			// anonymous namespace is a gnu c++ construct.  We do not have any way of modeling
+			// this yet, but still wish not to lose this information, so we do not strip it out of
+			// the name when parsing gnu demangled symbols.
+			return !name.startsWith(ANONYMOUS_NAMESPACE);
+		}
+
+		return !name.contains(Namespace.DELIMITER);
 	}
 
 	/**
@@ -72,8 +91,8 @@ public class SymbolPathParser {
 					int endIndex = i; // could be 0 if i == 0.
 					if (endIndex > startIndex) {
 						list.add(name.substring(startIndex, endIndex));
-						i += 2;
-						startIndex = i;
+						startIndex = i + 2;
+						i++; // Only increment one, because the loop also has an increment.
 					}
 				}
 			}
@@ -100,8 +119,8 @@ public class SymbolPathParser {
 					int endIndex = i; // could be 0 if i == 0.
 					if (endIndex > startIndex) {
 						list.add(name.substring(startIndex, endIndex));
-						i += 2;
-						startIndex = i;
+						startIndex = i + 2;
+						i++; // Only increment one, because the loop also has an increment.
 					}
 				}
 			}

@@ -19,7 +19,6 @@ import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.PriorityJob;
 
@@ -53,6 +52,9 @@ public abstract class GTreeTask extends PriorityJob {
 	 * values on later calls to getSelectedPaths().  So, to handle that 'feature' of the JTree, we
 	 * need to translate the given path to the equivalent path in the current tree (this code may
 	 * not be needed in all uses of this task, but it protects us from the aforementioned case).
+	 * @param path the path to translate
+	 * @param monitor the monitor
+	 * @return the translated path
 	 */
 	protected TreePath translatePath(TreePath path, TaskMonitor monitor) {
 

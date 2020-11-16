@@ -19,9 +19,13 @@ import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Command for adding Bit-mapped memory blocks
+ * Command for adding Bit-mapped memory blocks.
+ * The resulting mapped block will derive its' byte values (1 or 0) from the mapped source bits.
+ * Example: 8 bytes in the resulting block will be derived from 1-byte
+ * in the underlying source region.
  */
 public class AddBitMappedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 
@@ -33,25 +37,27 @@ public class AddBitMappedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	 * @param comment the comment for the block
 	 * @param source indicates what is creating the block
 	 * @param start the start address for the the block
-	 * @param length the length of the new block
+	 * @param length the length of the new block in number of bits to be mapped
 	 * @param read sets the block's read permission flag
 	 * @param write sets the block's write permission flag
 	 * @param execute sets the block's execute permission flag
 	 * @param isVolatile sets the block's volatile flag
 	 * @param mappedAddress the address in memory that will serve as the bytes source for the block
+	 * @param isOverlay if true, the block will be created in a new overlay address space.
 	 */
 	public AddBitMappedMemoryBlockCmd(String name, String comment, String source, Address start,
 			long length, boolean read, boolean write, boolean execute, boolean isVolatile,
-			Address mappedAddress) {
-		super(name, comment, source, start, length, read, write, execute, isVolatile);
+			Address mappedAddress, boolean isOverlay) {
+		super(name, comment, source, start, length, read, write, execute, isVolatile, isOverlay);
 		this.mappedAddress = mappedAddress;
 
 	}
 
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory)
-			throws LockException, MemoryConflictException, AddressOverflowException {
-		return memory.createBitMappedBlock(name, start, mappedAddress, length);
+			throws LockException, MemoryConflictException, AddressOverflowException,
+			IllegalArgumentException, DuplicateNameException {
+		return memory.createBitMappedBlock(name, start, mappedAddress, length, isOverlay);
 	}
 
 }

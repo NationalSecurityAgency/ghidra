@@ -22,12 +22,15 @@ import org.xml.sax.SAXException;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
+import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.pdb.PdbLocator;
+import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
@@ -50,9 +53,6 @@ public class PdbParser {
 	private static final String PDB_EXE = "pdb.exe";
 	private static final String README_FILENAME =
 		Application.getInstallationDirectory() + "\\docs\\README_PDB.html";
-
-	public final static File SPECIAL_PDB_LOCATION = new File("C:/WINDOWS/Symbols");
-	public final static String PDB_STORAGE_PROPERTY = "PDB Storage Directory";
 
 	static final String STRUCTURE_KIND = "Structure";
 	static final String UNION_KIND = "Union";
@@ -228,11 +228,10 @@ public class PdbParser {
 
 	/**
 	 * Open Windows Data Type Archives
-	 *
 	 * @throws IOException  if an i/o error occurs opening the data type archive
-	 * @throws Exception  if any other error occurs
+	 * @throws DuplicateIdException  unexpected archive error
 	 */
-	public void openDataTypeArchives() throws IOException, Exception {
+	public void openDataTypeArchives() throws IOException, DuplicateIdException {
 
 		if (program != null) {
 			List<String> archiveList = DataTypeArchiveUtility.getArchiveList(program);
@@ -294,7 +293,7 @@ public class PdbParser {
 
 		// Ensure that all data types are resolved
 		if (dataTypeParser != null) {
-			dataTypeParser.flushDataTypeCache(monitor);
+			dataTypeParser.flushDataTypeCache();
 		}
 	}
 
@@ -314,7 +313,7 @@ public class PdbParser {
 		checkPdbLoaded();
 
 		errHandler.setMessageLog(log);
-		Msg.debug(this, "Found PDB for " + program.getName());
+		Msg.debug(this, "Found PDB for " + program.getName() + ": " + pdbFile);
 		try {
 
 			ApplyDataTypes applyDataTypes = null;
@@ -390,7 +389,7 @@ public class PdbParser {
 			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 
 			if (dataTypeParser != null && dataTypeParser.hasMissingBitOffsetError()) {
-				log.error("PDB",
+				log.appendMsg("PDB",
 					"One or more bitfields were specified without bit-offset data.\nThe use of old pdb.xml data could be the cause.");
 			}
 		}
@@ -618,8 +617,8 @@ public class PdbParser {
 			pdbGuid = "{" + pdbGuid + "}";
 
 			if (!xmlGuid.equals(pdbGuid)) {
-				warning = "PDB signature does not match.";
-			}
+				warning = "PDB signature does not match.\n" + "Program GUID: " + pdbGuid +
+						"\nXML GUID: " + xmlGuid;			}
 			else {
 				// Also check that PDB ages match, if they are both available
 				if ((xmlAge != null) && (pdbAge != null)) {
@@ -739,6 +738,7 @@ public class PdbParser {
 
 	EnumDataType createEnum(String name, int length) {
 		SymbolPath path = new SymbolPath(name);
+		// Ghidra does not like size of zero.
 		length = Integer.max(length, 1);
 		return new EnumDataType(getCategory(path.getParent(), true), path.getName(), length,
 			dataMgr);
@@ -1043,13 +1043,13 @@ public class PdbParser {
 	}
 
 	/**
-	 * Find the PDB associated with the given program using its attributes
+	 * Find the PDB associated with the given program using its attributes.
+	 * The PDB path information within the program information will not be used.
 	 *
 	 * @param program  program for which to find a matching PDB
 	 * @return  matching PDB for program, or null
-	 * @throws PdbException if there was a problem with the PDB attributes
 	 */
-	public static File findPDB(Program program) throws PdbException {
+	public static File findPDB(Program program) {
 		return findPDB(getPdbAttributes(program), false, null, null);
 	}
 
@@ -1068,13 +1068,12 @@ public class PdbParser {
 	 *
 	 * @param program  program for which to find a matching PDB
 	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
-	 * @param symbolsRepositoryPath  location where downloaded symbols are stored
+	 * @param symbolsRepositoryDir  location where downloaded symbols are stored
 	 * @return  matching PDB for program, or null
-	 * @throws PdbException if there was a problem with the PDB attributes
 	 */
 	public static File findPDB(Program program, boolean includePeSpecifiedPdbPath,
-			String symbolsRepositoryPath) throws PdbException {
-		return findPDB(getPdbAttributes(program), includePeSpecifiedPdbPath, symbolsRepositoryPath,
+			File symbolsRepositoryDir) {
+		return findPDB(getPdbAttributes(program), includePeSpecifiedPdbPath, symbolsRepositoryDir,
 			null);
 	}
 
@@ -1084,14 +1083,12 @@ public class PdbParser {
 	 *
 	 * @param pdbAttributes  PDB attributes associated with the program
 	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
-	 * @param symbolsRepositoryPath  location of the local symbols repository (can be null)
+	 * @param symbolsRepositoryDir  location of the local symbols repository (can be null)
 	 * @param fileType  type of file to search for (can be null)
 	 * @return matching PDB file (or null, if not found)
-	 * @throws PdbException  if there was a problem with the PDB attributes
 	 */
 	public static File findPDB(PdbProgramAttributes pdbAttributes,
-			boolean includePeSpecifiedPdbPath, String symbolsRepositoryPath, PdbFileType fileType)
-			throws PdbException {
+			boolean includePeSpecifiedPdbPath, File symbolsRepositoryDir, PdbFileType fileType) {
 
 		// Store potential names of PDB files and potential locations of those files,
 		// so that all possible combinations can be searched.
@@ -1100,9 +1097,7 @@ public class PdbParser {
 
 		String guidAgeString = pdbAttributes.getGuidAgeCombo();
 		if (guidAgeString == null) {
-			throw new PdbException(
-				"Incomplete PDB information (GUID/Signature and/or age) associated with this program.\n" +
-					"Either the program is not a PE, or it was not compiled with debug information.");
+			return null;
 		}
 
 		List<String> potentialPdbNames = pdbAttributes.getPotentialPdbFilenames();
@@ -1110,7 +1105,7 @@ public class PdbParser {
 			guidSubdirPaths.add(File.separator + potentialName + File.separator + guidAgeString);
 		}
 
-		return checkPathsForPdb(symbolsRepositoryPath, guidSubdirPaths, potentialPdbNames, fileType,
+		return checkPathsForPdb(symbolsRepositoryDir, guidSubdirPaths, potentialPdbNames, fileType,
 			pdbAttributes, includePeSpecifiedPdbPath);
 	}
 
@@ -1131,7 +1126,7 @@ public class PdbParser {
 	 *  		symbolsRepositoryPath, then look for .pdb.xml file, then .pdb.xml file in other
 	 *  		directories.
 	 *
-	 * @param symbolsRepositoryPath  location of the local symbols repository (can be null)
+	 * @param symbolsRepositoryDir  location of the local symbols repository (can be null)
 	 * @param guidSubdirPaths  subdirectory paths (that include the PDB's GUID) that may contain
 	 * 							a matching PDB
 	 * @param potentialPdbNames  all potential filenames for the PDB file(s) that match the program
@@ -1139,16 +1134,17 @@ public class PdbParser {
 	 * @param pdbAttributes    PDB attributes associated with the program
 	 * @return  matching PDB file, if found (else null)
 	 */
-	private static File checkPathsForPdb(String symbolsRepositoryPath, Set<String> guidSubdirPaths,
+	private static File checkPathsForPdb(File symbolsRepositoryDir, Set<String> guidSubdirPaths,
 			List<String> potentialPdbNames, PdbFileType fileType,
 			PdbProgramAttributes pdbAttributes, boolean includePeSpecifiedPdbPath) {
 
 		File foundPdb = null;
 		Set<File> symbolsRepoPaths =
-			getSymbolsRepositoryPaths(symbolsRepositoryPath, guidSubdirPaths);
+			getSymbolsRepositoryPaths(symbolsRepositoryDir, guidSubdirPaths);
 		Set<File> predefinedPaths =
 			getPredefinedPaths(guidSubdirPaths, pdbAttributes, includePeSpecifiedPdbPath);
-		boolean fileTypeSpecified = (fileType != null), checkForXml;
+		boolean fileTypeSpecified = (fileType != null);
+		boolean checkForXml;
 
 		// If the file type is specified, look for that type of file only.
 		if (fileTypeSpecified) {
@@ -1171,7 +1167,7 @@ public class PdbParser {
 		checkForXml = onWindows ? false : true;
 
 		// Start by searching in symbolsRepositoryPath, if available.
-		if (symbolsRepositoryPath != null) {
+		if (!symbolsRepoPaths.isEmpty()) {
 			foundPdb = checkSpecificPathsForPdb(symbolsRepoPaths, potentialPdbNames, checkForXml);
 		}
 
@@ -1197,26 +1193,23 @@ public class PdbParser {
 		return foundPdb;
 	}
 
-	private static Set<File> getSymbolsRepositoryPaths(String symbolsRepositoryPath,
+	private static Set<File> getSymbolsRepositoryPaths(File symbolsRepositoryDir,
 			Set<String> guidSubdirPaths) {
 
 		Set<File> symbolsRepoPaths = new LinkedHashSet<>();
 
 		// Collect sub-directories of the symbol repository that exist
-		File symRepoFile;
-
-		if (symbolsRepositoryPath != null &&
-			(symRepoFile = new File(symbolsRepositoryPath)).isDirectory()) {
+		if (symbolsRepositoryDir != null && symbolsRepositoryDir.isDirectory()) {
 
 			for (String guidSubdir : guidSubdirPaths) {
-				File testDir = new File(symRepoFile, guidSubdir);
+				File testDir = new File(symbolsRepositoryDir, guidSubdir);
 				if (testDir.isDirectory()) {
 					symbolsRepoPaths.add(testDir);
 				}
 			}
 
 			// Check outer folder last
-			symbolsRepoPaths.add(symRepoFile);
+			symbolsRepoPaths.add(symbolsRepositoryDir);
 		}
 
 		return symbolsRepoPaths;
@@ -1229,7 +1222,8 @@ public class PdbParser {
 		Set<File> predefinedPaths = new LinkedHashSet<>();
 
 		getPathsFromAttributes(pdbAttributes, includePeSpecifiedPdbPath, predefinedPaths);
-		getWindowsPaths(guidSubdirPaths, predefinedPaths);
+		getSymbolPaths(PdbLocator.DEFAULT_SYMBOLS_DIR, guidSubdirPaths, predefinedPaths);
+		getSymbolPaths(PdbLocator.WINDOWS_SYMBOLS_DIR, guidSubdirPaths, predefinedPaths);
 		getLibraryPaths(guidSubdirPaths, predefinedPaths);
 
 		return predefinedPaths;
@@ -1255,19 +1249,21 @@ public class PdbParser {
 		}
 	}
 
-	private static void getWindowsPaths(Set<String> guidSubdirPaths, Set<File> predefinedPaths) {
+	private static void getSymbolPaths(File symbolsDir, Set<String> guidSubdirPaths,
+			Set<File> predefinedPaths) {
 		// Don't have to call .exists(), since .isDirectory() does that already
-		if (onWindows && SPECIAL_PDB_LOCATION.isDirectory()) {
-			predefinedPaths.add(SPECIAL_PDB_LOCATION);
+		if (symbolsDir == null || !symbolsDir.isDirectory()) {
+			return;
+		}
+		predefinedPaths.add(symbolsDir);
 
-			// Check alternate locations
-			String specialPdbPath = SPECIAL_PDB_LOCATION.getAbsolutePath();
+		// Check alternate locations
+		String specialPdbPath = symbolsDir.getAbsolutePath();
 
-			for (String guidSubdir : guidSubdirPaths) {
-				File testDir = new File(specialPdbPath + guidSubdir);
-				if (testDir.isDirectory()) {
-					predefinedPaths.add(testDir);
-				}
+		for (String guidSubdir : guidSubdirPaths) {
+			File testDir = new File(specialPdbPath + guidSubdir);
+			if (testDir.isDirectory()) {
+				predefinedPaths.add(testDir);
 			}
 		}
 	}

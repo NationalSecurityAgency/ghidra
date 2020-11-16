@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.label;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -44,7 +43,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.test.*;
 
-public class LabelActionTest extends AbstractGhidraHeadedIntegrationTest implements LocationCallback {
+public class LabelActionTest extends AbstractGhidraHeadedIntegrationTest
+		implements LocationCallback {
 	private static final String ADD_LABEL = "Add Label";
 	private static final String EDIT_LABEL = "Edit Label";
 	private static final String EDIT_EXTERNAL_LOC = "Edit External Location";
@@ -80,6 +80,8 @@ public class LabelActionTest extends AbstractGhidraHeadedIntegrationTest impleme
 		editExternalLocation = getAction(labelMgrPlugin, EDIT_EXTERNAL_LOC);
 		removeLabel = getAction(labelMgrPlugin, REMOVE_LABEL);
 		setLabel = getAction(labelMgrPlugin, SET_LABEL);
+
+		env.showTool();
 	}
 
 	@After
@@ -128,6 +130,7 @@ public class LabelActionTest extends AbstractGhidraHeadedIntegrationTest impleme
 
 		Object author = model.getValueAt(0, 2);
 		assertTrue(author.toString().startsWith(System.getProperty("user.name")));
+		close(provider);
 	}
 
 	@Test

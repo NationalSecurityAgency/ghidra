@@ -27,7 +27,48 @@ import ghidra.program.model.mem.WrappedMemBuffer;
  */
 public abstract class AbstractComplexDataType extends BuiltIn {
 
-	private final static long serialVersionUID = 1;
+	protected static AbstractComplexDataType getDefaultComplexDataType(int size) {
+		if (size == 8) {
+			return Complex8DataType.dataType;
+		}
+		if (size == 16) {
+			return Complex16DataType.dataType;
+		}
+		if (size == 32) {
+			return Complex32DataType.dataType;
+		}
+		return null;
+	}
+
+	public static DataType getComplexDataType(int size, DataTypeManager dtm) {
+		if (size < 1) {
+			return DefaultDataType.dataType;
+		}
+		if (size % 2 != 0) {
+			return Undefined.getUndefinedDataType(size);
+		}
+		int floatSize = size / 2;
+		if (dtm != null) {
+			DataOrganization dataOrganization = dtm.getDataOrganization();
+			if (dataOrganization != null) {
+				if (floatSize == dataOrganization.getFloatSize()) {
+					return FloatComplexDataType.dataType.clone(dtm);
+				}
+				if (floatSize == dataOrganization.getDoubleSize()) {
+					return DoubleComplexDataType.dataType.clone(dtm);
+				}
+				if (floatSize == dataOrganization.getLongDoubleSize()) {
+					return LongDoubleComplexDataType.dataType.clone(dtm);
+				}
+			}
+		}
+		DataType dt = getDefaultComplexDataType(size);
+		if (dt == null) {
+			return Undefined.getUndefinedDataType(size);
+		}
+		return dt;
+	}
+
 	private final AbstractFloatDataType floatType;
 
 	public AbstractComplexDataType(String name, AbstractFloatDataType floats, DataTypeManager dtm) {

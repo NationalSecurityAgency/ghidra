@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import ghidra.app.plugin.core.format.ByteBlock;
 import ghidra.app.plugin.core.format.ByteBlockAccessException;
+import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -139,9 +140,7 @@ public class MemoryByteBlock implements ByteBlock {
 	@Override
 	public boolean hasValue(BigInteger index) {
 		Address addr = getAddress(index);
-		MemoryBlock memBlock = memory.getBlock(addr);
-
-		return (memBlock != null) && memBlock.isInitialized();
+		return memory.getAllInitializedAddressSet().contains(addr);
 	}
 
 	/**
@@ -260,6 +259,23 @@ public class MemoryByteBlock implements ByteBlock {
 		return (int) (start.getOffset() % radix);
 	}
 
+	private Address getMappedAddress(Address addr) {
+		MemoryBlock memBlock = memory.getBlock(addr);
+		if (memBlock != null && memBlock.getType() == MemoryBlockType.BYTE_MAPPED) {
+			try {
+				MemoryBlockSourceInfo info = memBlock.getSourceInfos().get(0);
+				AddressRange mappedRange = info.getMappedRange().get();
+				ByteMappingScheme byteMappingScheme = info.getByteMappingScheme().get();
+				addr = byteMappingScheme.getMappedSourceAddress(mappedRange.getMinAddress(),
+					addr.subtract(memBlock.getStart()));
+			}
+			catch (AddressOverflowException e) {
+				// ignore
+			}
+		}
+		return addr;
+	}
+
 	/**
 	 * Get the address based on the index.
 	 */
@@ -268,7 +284,6 @@ public class MemoryByteBlock implements ByteBlock {
 			mAddr = start;
 			mAddr = mAddr.addNoWrap(index);
 			return mAddr;
-
 		}
 		catch (AddressOverflowException e) {
 			throw new IndexOutOfBoundsException("Index " + index + " is not in this block");

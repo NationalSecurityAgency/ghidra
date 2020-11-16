@@ -180,9 +180,9 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		return results;
 	}
 
-	private void doGetDominated(V a, HashSet<V> results) {
+	private void doGetDominated(V a, Set<V> results) {
+		add(a, results); // a node always dominates itself
 		List<V> dominated = dominatedMap.get(a);
-		results.add(a); // a node always dominates itself
 		dominated.forEach(b -> doGetDominated(b, results));
 	}
 
@@ -198,18 +198,20 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 		dominators.add(a);
 
 		while (a != root) {
-			a = getImmediateDominator(a);
-			dominators.add(a);
+			a = dominatorMap.get(a); // immediate dominator
+			add(a, dominators);
 		}
 		return dominators;
 	}
 
-	private V getImmediateDominator(V v) {
-		V dom = dominatorMap.get(v);
-		if (mutableGraph.isDummy(dom)) {
-			return null;
+	private void add(V v, Collection<V> set) {
+		if (!isDummy(v)) {
+			set.add(v);
 		}
-		return dom;
+	}
+
+	private boolean isDummy(V v) {
+		return v != null && mutableGraph.isDummy(v);
 	}
 
 	/**
@@ -230,15 +232,23 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 			}
 
 			V dominator = getImmediateDominator(v);
-			if (!dominator.equals(v)) {
+			if (!Objects.equals(dominator, v)) {
 				dg.addEdge(new DefaultGEdge<>(dominator, v));
 			}
 		}
 		return dg;
 	}
 
+	private V getImmediateDominator(V v) {
+		V dom = dominatorMap.get(v);
+		if (isDummy(dom)) {
+			return null;
+		}
+		return dom;
+	}
+
 	/**
-	 * Releases cached values used by internal data structures.
+	 * Releases cached values used by internal data structures
 	 */
 	public void clear() {
 		dominatedMap.clear();

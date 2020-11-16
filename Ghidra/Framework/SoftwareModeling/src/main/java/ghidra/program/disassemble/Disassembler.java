@@ -50,6 +50,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class Disassembler implements DisassemblerConflictHandler {
 
+	private static final int DISASSEMBLE_MEMORY_CACHE_SIZE = 8;
+
 	/**
 	 * <code>MARK_BAD_INSTRUCTION_PROPERTY</code> Program Disassembler property 
 	 * enables marking of instruction disassembly errors.  Boolean property is defined
@@ -282,7 +284,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 			bmMgr = program.getBookmarkManager();
 		}
 		else {
-			defaultLanguageContext = new ProgramContextImpl(language.getRegisters());
+			defaultLanguageContext = new ProgramContextImpl(language);
 			language.applyContextSettings(defaultLanguageContext);
 		}
 
@@ -920,9 +922,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 				disassemblerContext.flowToAddress(addr);
 
-				// TODO: An overall better caching of bytes for this block could be done instead
-				//       the previous buffering done here was not doing any buffering
-				MemBuffer instrMemBuffer = new DumbMemBufferImpl(blockMemBuffer.getMemory(), addr);
+				MemBuffer instrMemBuffer = new WrappedMemBuffer(blockMemBuffer, DISASSEMBLE_MEMORY_CACHE_SIZE,
+						(int) addr.subtract(blockMemBuffer.getAddress()));
 
 				adjustPreParseContext(instrMemBuffer);
 
@@ -1471,15 +1472,28 @@ public class Disassembler implements DisassemblerConflictHandler {
 		}
 	}
 
+	/**
+	 * Clear all bookmarks which indicate Bad Instruction within the specified address set.
+	 * @param program program to clear bookmarks
+	 * @param addressSet restricted address set or null for entire program
+	 * @param monitor allow canceling
+	 * @throws CancelledException if monitor canceled
+	 */
+	public static void clearBadInstructionErrors(Program program, AddressSetView addressSet,
+			TaskMonitor monitor) throws CancelledException {
+		BookmarkManager bmMgr = program.getBookmarkManager();
+		if (addressSet == null) {
+			bmMgr.removeBookmarks(BookmarkType.ERROR, ERROR_BOOKMARK_CATEGORY, monitor);
+		}
+		else {
+			bmMgr.removeBookmarks(addressSet, BookmarkType.ERROR, ERROR_BOOKMARK_CATEGORY, monitor);
+		}
+	}
+
 	private void reportMessage(final String msg) {
 		if (listener != null) {
 			listener.disassembleMessageReported(msg);
 		}
-	}
-
-	private static Register[] getContextRegisters(Register baseContextRegister) {
-		return baseContextRegister != null ? new Register[] { baseContextRegister }
-				: new Register[0];
 	}
 
 	/**
@@ -1498,7 +1512,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 		private InstructionContext instructionContextCache = null;
 
 		DisassemblerProgramContext() {
-			super(getContextRegisters(Disassembler.this.baseContextRegister));
+			super(Disassembler.this.language);
 			if (realProgramContext != null) {
 				setDefaultDisassemblyContext(realProgramContext.getDefaultDisassemblyContext());
 			}
@@ -1713,7 +1727,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 		}
 
 		@Override
-		public Register[] getRegisters() {
+		public List<Register> getRegisters() {
 			return langauge.getRegisters();
 		}
 

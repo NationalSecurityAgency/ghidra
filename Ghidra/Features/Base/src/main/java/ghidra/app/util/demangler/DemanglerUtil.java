@@ -102,31 +102,6 @@ public class DemanglerUtil {
 	}
 
 	/**
-	 * Converts the list of names into a namespace demangled type.
-	 * Given names = { "A", "B", "C" }, which represents "A::B::C".
-	 * The following will be created {@literal "Namespace{A}->Namespace{B}->Namespace{C}"}
-	 * and Namespace{C} will be returned.
-	 * 
-	 * NOTE: the list will be empty after the call.
-	 * @param names the names to convert
-	 * @return the newly created type
-	 */
-	public static DemangledType convertToNamespaces(List<String> names) {
-		if (names.size() == 0) {
-			return null;
-		}
-		int index = names.size() - 1;
-		DemangledType myNamespace = new DemangledType(names.get(index));
-		DemangledType namespace = myNamespace;
-		while (--index >= 0) {
-			DemangledType parentNamespace = new DemangledType(names.get(index));
-			namespace.setNamespace(parentNamespace);
-			namespace = parentNamespace;
-		}
-		return myNamespace;
-	}
-
-	/**
 	 * Remove superfluous function signature spaces from specified string
 	 * @param str string
 	 * @return string with unwanted spaces removed
@@ -145,14 +120,5 @@ public class DemanglerUtil {
 		}
 		matcher.appendTail(buffy);
 		return buffy.toString();
-	}
-
-	public static void setNamespace(DemangledType dt, DemangledType namespace) {
-		if (dt.getNamespace() == null) {
-			dt.setNamespace(namespace);
-		}
-		else {
-			setNamespace(dt.getNamespace(), namespace);
-		}
 	}
 }

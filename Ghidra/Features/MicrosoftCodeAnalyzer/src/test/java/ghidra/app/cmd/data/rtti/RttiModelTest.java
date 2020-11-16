@@ -512,23 +512,6 @@ public class RttiModelTest extends AbstractRttiTest {
 	}
 
 	@Test
-	public void testInvalidRtti4_64NonVS() throws Exception {
-		ProgramBuilder builder = build64BitX86NonVS();
-		ProgramDB program = builder.getProgram();
-		setupRtti4_32(builder, 0x101001340L, 0, 0, 0, "0x00005364", "0x0000137c");
-		Address address = builder.addr(0x101001340L);
-		Rtti4Model model = new Rtti4Model(program, address, defaultValidationOptions);
-		try {
-			model.validate();
-		}
-		catch (InvalidDataTypeException e) {
-			assertEquals(
-				"RTTICompleteObjectLocator data type model is only valid for Visual Studio windows PE.",
-				e.getMessage());
-		}
-	}
-
-	@Test
 	public void testValidRtti4Model_64NoFollowFlow() throws Exception {
 
 		ProgramBuilder builder = build64BitX86();

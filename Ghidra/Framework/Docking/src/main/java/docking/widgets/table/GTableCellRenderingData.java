@@ -33,26 +33,25 @@ import ghidra.docking.settings.SettingsImpl;
 public class GTableCellRenderingData {
 
 	/* 
-	 * These fields are inherited from the TableCellRenderer.getTableCellRendererComponent()
-	 * method...
+	 *  Fields inherited from the TableCellRenderer.getTableCellRendererComponent() method
 	 */
 	private final WeakReference<JTable> jTableRef;
 	private int columnViewIndex;
 
 	private int rowViewIndex;
-	private WeakReference<Object> valueRef;
+	private Object value;
 
 	private boolean isSelected;
 	private boolean hasFocus;
 
 	/*
-	 * These fields are extensions, provided for convenience...
+	 * Fields are extensions, provided for convenience
 	 */
 	private final WeakReference<Settings> columnSettingsRef;
 	private WeakReference<Object> rowObjectRef;
 
 	/**
-	 * Create a data object for a specific column in a table.
+	 * Create a data object for a specific column in a table
 	 * @param jTable Reference to the associated JTable
 	 * @param column View index of this column
 	 * @param columnSettings Settings state provided and used by this column
@@ -67,9 +66,13 @@ public class GTableCellRenderingData {
 	}
 
 	/**
-	 * Create a new data object from this data, changing only the cells' value object
+	 * Create a new data object from this data, changing only the cells' value object.
+	 * 
+	 * <p>This method is a convenience for use by renderers that wish to change the value 
+	 * passed to them.
+	 * 
 	 * @param newValue New cell value object
-	 * @return A new data object with the same state as this object.
+	 * @return A new data object with the same state as this object
 	 */
 	public GTableCellRenderingData copyWithNewValue(Object newValue) {
 
@@ -97,11 +100,11 @@ public class GTableCellRenderingData {
 	 * @param value The models' value at row-column
 	 * @param column the view column index
 	 * @param isSelected True if the cell is to be rendered with the 
-	 * selection highlighted; otherwise false.
-	 * @param hasFocus This cell has the users' focus.
+	 * selection highlighted; otherwise false
+	 * @param hasFocus This cell has the users' focus
 	 */
 	public void setCellData(Object value, int column, boolean isSelected, boolean hasFocus) {
-		this.valueRef = new WeakReference<>(value);
+		this.value = value;
 		this.columnViewIndex = column;
 		this.isSelected = isSelected;
 		this.hasFocus = hasFocus;
@@ -145,7 +148,7 @@ public class GTableCellRenderingData {
 	}
 
 	public Object getValue() {
-		return valueRef.get();
+		return value;
 	}
 
 	public Object getRowObject() {

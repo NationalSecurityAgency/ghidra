@@ -33,7 +33,7 @@ import docking.widgets.label.GLabel;
 public class MultiActionDialog extends DialogComponentProvider {
 
 	private String keystrokeName;
-	private List<ExecutableKeyActionAdapter> list;
+	private List<ExecutableAction> list;
 	private JList<String> actionList;
 	private DefaultListModel<String> listModel;
 
@@ -42,7 +42,7 @@ public class MultiActionDialog extends DialogComponentProvider {
 	 * @param keystrokeName keystroke name
 	 * @param list list of actions
 	 */
-	public MultiActionDialog(String keystrokeName, List<ExecutableKeyActionAdapter> list) {
+	public MultiActionDialog(String keystrokeName, List<ExecutableAction> list) {
 		super("Select Action", true);
 		this.keystrokeName = keystrokeName;
 		init();
@@ -65,7 +65,7 @@ public class MultiActionDialog extends DialogComponentProvider {
 
 		close();
 
-		ExecutableKeyActionAdapter actionProxy = list.get(index);
+		ExecutableAction actionProxy = list.get(index);
 		actionProxy.execute();
 	}
 
@@ -73,12 +73,12 @@ public class MultiActionDialog extends DialogComponentProvider {
 	 * Set the list of actions that are enabled
 	 * @param list list of actions selected
 	 */
-	public void setActionList(List<ExecutableKeyActionAdapter> list) {
+	public void setActionList(List<ExecutableAction> list) {
 		okButton.setEnabled(false);
 		this.list = list;
 		listModel.clear();
 		for (int i = 0; i < list.size(); i++) {
-			ExecutableKeyActionAdapter actionProxy = list.get(i);
+			ExecutableAction actionProxy = list.get(i);
 			DockingActionIf action = actionProxy.getAction();
 			listModel.addElement(action.getName() + " (" + action.getOwnerDescription() + ")");
 		}

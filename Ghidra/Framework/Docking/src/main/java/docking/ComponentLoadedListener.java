@@ -26,9 +26,10 @@ public interface ComponentLoadedListener {
 	/**
 	 * Called when the component is made displayable
 	 * 
-	 * @param windowManager the window manager associated with the loaded component
-	 * @param provider the provider that is the parent of the given component; null if this
-	 *        component is not the child of a component provider
+	 * @param windowManager the window manager associated with the loaded component; null if the
+	 *        component for this listener is not parented by a docking window manager
+	 * @param provider the provider that is the parent of the given component; null if the
+	 *        component for this listener is not the child of a component provider
 	 */
 	public void componentLoaded(DockingWindowManager windowManager, ComponentProvider provider);
 }

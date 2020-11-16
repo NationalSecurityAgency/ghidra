@@ -262,10 +262,11 @@ int4 RangeHint::compare(const RangeHint &op2) const
   return 0;
 }
 
+/// \param id is the globally unique id associated with the function scope
 /// \param spc is the (stack) address space associated with this function's local variables
 /// \param fd is the function associated with these local variables
 /// \param g is the Architecture
-ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInternal(fd->getName(),g)
+ScopeLocal::ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInternal(id,fd->getName(),g)
 
 {
   space = spc;
@@ -288,7 +289,18 @@ void ScopeLocal::collectNameRecs(void)
   while(iter!=nametree.end()) {
     Symbol *sym = *iter++;
     if (sym->isNameLocked()&&(!sym->isTypeLocked())) {
-      addRecommendName(sym);
+      if (sym->isThisPointer()) {		// If there is a "this" pointer
+	Datatype *dt = sym->getType();
+	if (dt->getMetatype() == TYPE_PTR) {
+	  if (((TypePointer *)dt)->getPtrTo()->getMetatype() == TYPE_STRUCT) {
+	    // If the "this" pointer points to a class, try to preserve the data-type
+	    // even though the symbol is not preserved.
+	    SymbolEntry *entry = sym->getFirstWholeMap();
+	    typeRecommend.push_back(TypeRecommend(entry->getAddr(),dt));
+	  }
+	}
+      }
+      addRecommendName(sym);	// This deletes the symbol
     }
   }
 }
@@ -1084,6 +1096,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   if (rangemap == (EntryMap *)0) return;
   list<SymbolEntry>::iterator iter,enditer;
 
+  int4 alias_block_level = glb->alias_block_level;
   bool aliason = false;
   uintb curalias=0;
   int4 i=0;
@@ -1107,8 +1120,17 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 	aliason = false;
       if (!aliason)
 	symbol->getScope()->setAttribute(symbol,Varnode::nolocalalias);
-      if (symbol->isTypeLocked())
-	aliason = false;
+      if (symbol->isTypeLocked() && alias_block_level != 0) {
+	if (alias_block_level == 3)
+	  aliason = false;		// For this level, all locked data-types block aliases
+	else {
+	  type_metatype meta = symbol->getType()->getMetatype();
+	  if (meta == TYPE_STRUCT)
+	    aliason = false;		// Only structures block aliases
+	  else if (meta == TYPE_ARRAY && alias_block_level > 1)
+	    aliason = false;		// Only arrays (and structures) block aliases
+	}
+      }
     }
   }
 }
@@ -1187,8 +1209,12 @@ SymbolEntry *ScopeLocal::remapSymbol(Symbol *sym,const Address &addr,const Addre
   SymbolEntry *entry = sym->getFirstWholeMap();
   int4 size = entry->getSize();
   if (!entry->isDynamic()) {
-    if (entry->getAddr() == addr && entry->getFirstUseAddress() == usepoint)
-      return entry;
+    if (entry->getAddr() == addr) {
+      if (usepoint.isInvalid() && entry->getFirstUseAddress().isInvalid())
+	return entry;
+      if (entry->getFirstUseAddress() == usepoint)
+	return entry;
+    }
   }
   removeSymbolMappings(sym);
   RangeList rnglist;
@@ -1230,6 +1256,7 @@ SymbolEntry *ScopeLocal::remapSymbolDynamic(Symbol *sym,uint8 hash,const Address
 void ScopeLocal::recoverNameRecommendationsForSymbols(void)
 
 {
+  Address param_usepoint = fd->getAddress() - 1;
   list<NameRecommend>::const_iterator iter;
   for(iter=nameRecommend.begin();iter!=nameRecommend.end();++iter) {
     const Address &addr((*iter).getAddr());
@@ -1248,7 +1275,10 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
       vn = fd->findLinkedVarnode(entry);
     }
     else {
-      vn = fd->findVarnodeWritten(size,addr,usepoint);
+      if (usepoint == param_usepoint)
+	vn = fd->findVarnodeInput(size, addr);
+      else
+	vn = fd->findVarnodeWritten(size,addr,usepoint);
       if (vn == (Varnode *)0) continue;
       sym = vn->getHigh()->getSymbol();
       if (sym == (Symbol *)0) continue;
@@ -1285,6 +1315,20 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
     setAttribute(sym, Varnode::namelock);
     setSymbolId(sym, dynEntry.getSymbolId());
     fd->remapDynamicVarnode(vn, sym, dynEntry.getAddress(), dynEntry.getHash());
+  }
+}
+
+/// Run through the recommended list, search for an input Varnode matching the storage address
+/// and try to apply the data-type to it.  Do not override existing type lock.
+void ScopeLocal::applyTypeRecommendations(void)
+
+{
+  list<TypeRecommend>::const_iterator iter;
+  for(iter=typeRecommend.begin();iter!=typeRecommend.end();++iter) {
+    Datatype *dt = (*iter).getType();
+    Varnode *vn = fd->findVarnodeInput(dt->getSize(), (*iter).getAddress());
+    if (vn != (Varnode *)0)
+      vn->updateType(dt, true, false);
   }
 }
 

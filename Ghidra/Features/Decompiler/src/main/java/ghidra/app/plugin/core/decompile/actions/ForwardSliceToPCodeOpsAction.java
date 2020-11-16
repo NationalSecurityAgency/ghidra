@@ -22,15 +22,18 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.util.HelpLocation;
 
 public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 
 	public ForwardSliceToPCodeOpsAction() {
-		super("Highlight Forward Inst Slice");
+		super("Highlight Forward Operator Slice");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionHighlight"));
 		setPopupMenuData(
-			new MenuData(new String[] { "Highlight", "Forward Inst Slice" }, "Decompile"));
+			new MenuData(new String[] { "Highlight", "Forward Operator Slice" }, "Decompile"));
 	}
 
 	@Override
@@ -47,7 +50,9 @@ public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 		if (varnode != null) {
 			PcodeOp op = tokenAtCursor.getPcodeOp();
 			Set<PcodeOp> forwardSlice = DecompilerUtils.getForwardSliceToPCodeOps(varnode);
-			forwardSlice.add(op);
+			if (op != null) {
+				forwardSlice.add(op);
+			}
 			DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 			decompilerPanel.clearPrimaryHighlights();
 			decompilerPanel.addPcodeOpHighlights(forwardSlice,

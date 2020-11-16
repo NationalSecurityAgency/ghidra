@@ -28,7 +28,6 @@ import resources.Icons;
 public class ActionBuilderTest {
 	private int actionCount = 0;
 
-
 	@Test
 	public void testDescription() {
 		DockingAction action = new ActionBuilder("Test", "Test")
@@ -163,7 +162,7 @@ public class ActionBuilderTest {
 				.onAction(e -> actionCount++)
 				.build();
 
-		assertEquals(KeyStroke.getKeyStroke("ALT A"), action.getKeyBinding());
+		assertEquals(KeyStroke.getKeyStroke("alt pressed A"), action.getKeyBinding());
 	}
 
 	@Test
@@ -236,6 +235,20 @@ public class ActionBuilderTest {
 
 		assertFalse(action.isEnabledForContext(new ActionContext()));
 		assertTrue(action.isEnabledForContext(new FooActionContext()));
+	}
+
+	@Test
+	public void testManualEnablement() {
+		DockingAction action = new ActionBuilder("Test", "Test")
+				.onAction(e -> actionCount++)
+				.enabled(false)
+				.build();
+
+		assertFalse(action.isEnabledForContext(new ActionContext()));
+		action.setEnabled(true);
+		assertTrue(action.isEnabledForContext(new ActionContext()));
+		action.setEnabled(true);
+		assertTrue(action.isEnabledForContext(new ActionContext()));
 	}
 
 	static class FooActionContext extends ActionContext {

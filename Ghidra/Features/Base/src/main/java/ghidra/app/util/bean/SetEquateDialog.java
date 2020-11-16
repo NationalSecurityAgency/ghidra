@@ -358,7 +358,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		result = CANCELED;
 		overwriteExistingEquates.setVisible(true);
 		setTitle("Set Equate");
-		tool.showDialog(this, (Component) null);
+		tool.showDialog(this);
 		return result;
 	}
 
@@ -374,7 +374,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		overwriteExistingEquates.setVisible(false);
 		overwriteExistingEquates.setEnabled(false);
 		setTitle("Rename Equate");
-		tool.showDialog(this, (Component) null);
+		tool.showDialog(this);
 		return result;
 	}
 

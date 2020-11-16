@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,23 @@
  */
 package ghidra.app.util.xml;
 
-import ghidra.app.util.importer.*;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.util.*;
-import ghidra.util.exception.*;
-import ghidra.util.task.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
-
-import java.io.*;
-import java.math.*;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 
-import org.xml.sax.*;
+import org.xml.sax.SAXParseException;
+
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramContext;
+import ghidra.util.XmlProgramUtilities;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.xml.*;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 /**
  * XML manager for register values.
@@ -87,10 +88,11 @@ class RegisterValuesXmlMgr {
 	 * Returns list of unique registers which do not overlap any smaller 
 	 * registers.
 	 */
-	private Register[] getUniqueRegisters() {
+	private List<Register> getUniqueRegisters() {
 	
-		Register[] regs = context.getRegisters();
-		Arrays.sort(regs, new Comparator<Register>() {
+		ArrayList<Register> regs = new ArrayList<>(context.getRegisters());
+		Collections.sort(regs, new Comparator<Register>() {
+			@Override
 			public int compare(Register r1, Register r2) {
 				int size1 = r1.getMinimumByteSize();
 				int size2 = r2.getMinimumByteSize();
@@ -101,30 +103,6 @@ class RegisterValuesXmlMgr {
 			}
 		});
 		
-//		ArrayList list = new ArrayList();
-//		for (int i = 0; i < regs.length; i++) {
-//			
-//			Register reg = regs[i];
-//			int minOffset = reg.getOffset();
-//			int maxOffset = minOffset + reg.getSize() - 1;
-//			
-//			// Skip if reg is broken into smaller registers
-//			boolean overlap = false;
-//			for (int n = 0; n < i; n++) {	
-//				int off = regs[n].getOffset();
-//				if (off >= minOffset && off <= maxOffset) {
-//					overlap = true;
-//					break;
-//				}
-//			}
-//			if (!overlap) {
-//				list.add(reg);
-//			}
-//		}
-//		
-//		regs = new Register[list.size()];
-//		list.toArray(regs);
-
 		return regs;
 	}
 
@@ -140,11 +118,7 @@ class RegisterValuesXmlMgr {
 
 		writer.startElement("REGISTER_VALUES");
 
-		Register[] regs = getUniqueRegisters();
-
-//for (int i = 0; i < regs.length; i++) {
-//Register reg = regs[i];
-//}
+		List<Register> regs = getUniqueRegisters();
 		if (set == null) {
 			set = program.getMemory();
 		}
@@ -156,8 +130,7 @@ class RegisterValuesXmlMgr {
 
 			AddressRange range = rangeIter.next();
 		
-			for (int i = 0; i < regs.length; i++) {
-				Register reg = regs[i];
+			for (Register reg : regs) {
 				AddressRangeIterator it = context.getRegisterValueAddressRanges(reg, range.getMinAddress(), range.getMaxAddress());
 				while(it.hasNext()) {
 					monitor.checkCanceled();

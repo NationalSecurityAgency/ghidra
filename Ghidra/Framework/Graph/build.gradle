@@ -17,6 +17,8 @@ dependencies {
 	compile "net.sf.jung:jung-graph-impl:2.1.1"
 	compile "net.sf.jung:jung-visualization:2.1.1"
 	
+	compile "org.jgrapht:jgrapht-core:1.4.0"
+	
 	// These have abstract test classes and stubs needed by this module	
 	testCompile project(path: ':Docking', configuration: 'testArtifacts')
 }

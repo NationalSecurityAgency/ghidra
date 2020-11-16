@@ -18,7 +18,8 @@ package ghidra.app.util.pcodeInject;
 import ghidra.javaclass.format.DescriptorDecoder;
 import ghidra.javaclass.format.JavaClassConstants;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 
 /**
  * 
@@ -43,6 +44,7 @@ public class ArrayMethods {
 	private ArrayMethods(){
 		throw new AssertionError();
 	}
+	
 	/**
 	 * Emits pcode for the multianewarray op, which is used to create new multi-dimensional arrays
 	 * It is modeled with two black-box pcode ops: multianewarrayOp and multianewarrayProcessAdditionalDimensionsOp.
@@ -53,23 +55,22 @@ public class ArrayMethods {
 	 * are array dimensions.  Additional array dimensions are consumed from the stack with calls to 
 	 * multianewarrayProcessAdditionalDimensionsOp, which takes a reference returned by multianewarrayOp as its first argument 
 	 * and a dimension as its second argument.
+	 * @param pCode is the pcode accumulator
 	 * @param constantPoolIndex
 	 * @param constantPool
 	 * @param dimensions
-	 * @return
 	 */
-	public static String getPcodeForMultiANewArray(int constantPoolIndex, AbstractConstantPoolInfoJava[] constantPool,
+	public static void getPcodeForMultiANewArray(PcodeOpEmitter pCode, int constantPoolIndex,
+			AbstractConstantPoolInfoJava[] constantPool,
 			int dimensions) {
-		StringBuilder pCode = new StringBuilder();
-
-
 		//pop all of the dimensions off the stack
 		for (int i = dimensions; i >= 1; --i){
 			String iAsString = Integer.toString(i);
-			PcodeTextEmitter.emitPopCat1Value(pCode, DIMENSION + iAsString);
+			pCode.emitPopCat1Value(DIMENSION + iAsString);
 		}
 		
-		PcodeTextEmitter.emitAssignVarnodeFromPcodeOpCall(pCode, CLASS_NAME, 4, ConstantPoolJava.CPOOL_OP, "0", Integer.toString(constantPoolIndex),ConstantPoolJava.CPOOL_MULTIANEWARRAY);
+		pCode.emitAssignVarnodeFromPcodeOpCall(CLASS_NAME, 4, ConstantPoolJava.CPOOL_OP, "0",
+			Integer.toString(constantPoolIndex), ConstantPoolJava.CPOOL_MULTIANEWARRAY);
 
 
 		//emit the call to multianewarrayOp
@@ -92,18 +93,18 @@ public class ArrayMethods {
 				multianewarrayOpArgs[i] = DIMENSION + Integer.toString(i);
 			}
 		}
-		PcodeTextEmitter.emitAssignVarnodeFromPcodeOpCall(pCode, ARRAY_REF, 4, MULTIANEWARRAY, CLASS_NAME,"dim1","dim2");
+		pCode.emitAssignVarnodeFromPcodeOpCall(ARRAY_REF, 4, MULTIANEWARRAY, CLASS_NAME, "dim1",
+			"dim2");
 		
 
 
 		//consume any additional arguments
 		for (int i = MAX_PCODE_OP_ARGS; i <= dimensions; ++i){
 			String[] args = {ARRAY_REF, DIMENSION + Integer.toString(i)};
-			PcodeTextEmitter.emitVoidPcodeOpCall(pCode, PROCESS_ADDITIONAL_DIMENSIONS, args);
+			pCode.emitVoidPcodeOpCall(PROCESS_ADDITIONAL_DIMENSIONS, args);
 		}
 
-		PcodeTextEmitter.emitPushCat1Value(pCode, ARRAY_REF);
-		return pCode.toString();
+		pCode.emitPushCat1Value(ARRAY_REF);
 	}
 	/**
 	 * The array type codes can be found in the JVM documentation for the 

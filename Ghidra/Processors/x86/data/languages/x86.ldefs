@@ -12,6 +12,7 @@
             id="x86:LE:32:default">
     <description>Intel/AMD 32-bit x86</description>
     <compiler name="Visual Studio" spec="x86win.cspec" id="windows"/>
+    <compiler name="clang" spec="x86win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86gcc.cspec" id="gcc"/>
     <compiler name="Borland C++" spec="x86borland.cspec" id="borlandcpp"/>
     <compiler name="Delphi" spec="x86delphi.cspec" id="borlanddelphi"/>
@@ -58,6 +59,8 @@
 	<external_name tool="IDA-PRO" name="80486r"/>
 	<external_name tool="IDA-PRO" name="80586r"/>
 	<external_name tool="IDA-PRO" name="metapc"/>
+    <external_name tool="gnu" name="i8086"/>
+    <external_name tool="gdis.disassembler.options.file" name="x86-16.gdis"/>
     </language>
   <language processor="x86"
             endian="little"
@@ -71,6 +74,8 @@
     <description>Intel/AMD 16-bit x86 Protected Mode</description>
     <compiler name="default" spec="x86-16.cspec" id="default"/>
 	<external_name tool="IDA-PRO" name="8086p"/>
+    <external_name tool="gnu" name="i8086"/>
+    <external_name tool="gdis.disassembler.options.file" name="x86-16.gdis"/>
     </language>
     <language processor="x86"
             endian="little"
@@ -83,6 +88,7 @@
             id="x86:LE:64:default">
     <description>Intel/AMD 64-bit x86</description>
     <compiler name="Visual Studio" spec="x86-64-win.cspec" id="windows"/>
+    <compiler name="clang" spec="x86-64-win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86-64-gcc.cspec" id="gcc"/>
     <external_name tool="gnu" name="i386:x86-64:intel"/>
     <external_name tool="IDA-PRO" name="metapc"/>

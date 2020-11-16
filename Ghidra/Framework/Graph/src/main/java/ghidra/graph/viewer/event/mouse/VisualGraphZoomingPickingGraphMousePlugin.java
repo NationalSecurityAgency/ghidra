@@ -24,13 +24,15 @@ import ghidra.graph.viewer.*;
 /**
  * A handler to zoom nodes when double-clicked.  If the vertex is zoomed out, then we will zoom
  * in and center.  If the vertex is zoomed to full size, then we will zoom out and center.
+ * 
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class VisualGraphZoomingPickingGraphMousePlugin<V extends VisualVertex, E extends VisualEdge<V>>
 		extends VisualGraphAbstractGraphMousePlugin<V, E> {
 
-	// TODO for deprecated usage note, see the VisualGraphMousePlugin interface
 	public VisualGraphZoomingPickingGraphMousePlugin() {
-		super(InputEvent.BUTTON1_MASK);
+		super(InputEvent.BUTTON1_DOWN_MASK);
 		this.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 	}
 

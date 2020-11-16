@@ -23,9 +23,9 @@ import javax.swing.Icon;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
-import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.*;
@@ -119,18 +119,13 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 		bookmarkAction.setDirection(searchForward);
 	}
 
-	private class ToggleDirectionAction extends CodeViewerContextAction {
+	private class ToggleDirectionAction extends NavigatableContextAction {
 		Icon forwardIcon = ResourceManager.loadImage("images/down.png");
 		Icon backwardIcon = ResourceManager.loadImage("images/up.png");
 		private boolean isForward = true;
 
 		ToggleDirectionAction(String subGroup) {
 			super("Toggle Search Direction", NextPrevCodeUnitPlugin.this.getName());
-			MenuData menuData =
-				new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getName() },
-					forwardIcon, ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
-			menuData.setMenuSubGroup(subGroup);
-			setMenuBarData(menuData);
 			setToolBarData(new ToolBarData(forwardIcon,
 				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK |
@@ -144,9 +139,8 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 		}
 
 		@Override
-		public void actionPerformed(CodeViewerActionContext context) {
+		public void actionPerformed(NavigatableActionContext context) {
 			isForward = !isForward;
-			getMenuBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			getToolBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			updateActions(isForward);
 		}

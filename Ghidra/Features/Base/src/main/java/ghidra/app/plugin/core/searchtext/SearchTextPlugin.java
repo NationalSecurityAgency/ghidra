@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.searchtext;
 
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -26,13 +24,14 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 
 import docking.*;
-import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.*;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -96,8 +95,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private static final String DESCRIPTION = "Search program text for string";
 	private final static int DEFAULT_SEARCH_LIMIT = 500;
 	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private DockingAction searchAction;
-	private DockingAction searchAgainAction;
 
 	private boolean waitingForSearchAll;
 	private SearchTextDialog searchDialog;
@@ -379,49 +376,34 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private void createActions() {
 		String subGroup = getClass().getName();
 
-		searchAction = new ListingContextAction("Search Text", getName()) {
-			@Override
-			public void actionPerformed(ListingActionContext context) {
-				setNavigatable(context.getNavigatable());
-				displayDialog(context);
-			}
-		};
-		searchAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAction.getName()));
-		String[] menuPath = new String[] { "&Search", "Program &Text..." };
-		MenuData menuData = new MenuData(menuPath, "search");
-		menuData.setMenuSubGroup(subGroup);
-		searchAction.setMenuBarData(menuData);
-		searchAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_E,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+		new ActionBuilder("Search Text", getName())
+				.menuPath("&Search", "Program &Text...")
+				.menuGroup("search", subGroup)
+				.keyBinding("ctrl shift E")
+				.description(DESCRIPTION)
+				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
+				.withContext(NavigatableActionContext.class)
+				.supportsDefaultToolContext(true)
+				.onAction(c -> {
+					setNavigatable(c.getNavigatable());
+					displayDialog(c);
+				})
+				.buildAndInstall(tool);
 
-		searchAction.setDescription(DESCRIPTION);
-		searchAction.setEnabled(false);
-		//searchAction.setAddToPopup(false);
-		tool.addAction(searchAction);
-
-		searchAgainAction = new ListingContextAction("Repeat Text Search", getName()) {
-			@Override
-			public void actionPerformed(ListingActionContext context) {
-				setNavigatable(context.getNavigatable());
-				searchDialog.repeatSearch();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ListingActionContext context) {
-				return searchedOnce;
-			}
-		};
-		searchAgainAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
-		menuPath = new String[] { "&Search", "Repeat Text Search" };
-		menuData = new MenuData(menuPath, "search");
-		menuData.setMenuSubGroup(subGroup);
-		searchAgainAction.setMenuBarData(menuData);
-		searchAgainAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-
-		searchAgainAction.setDescription(DESCRIPTION);
-		tool.addAction(searchAgainAction);
+		new ActionBuilder("Repeat Text Search", getName())
+				.menuPath("&Search", "Repeat Text Search")
+				.menuGroup("search", subGroup)
+				.keyBinding("ctrl shift F3")
+				.description(DESCRIPTION)
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
+				.withContext(NavigatableActionContext.class)
+				.enabledWhen(c -> searchedOnce)
+				.onAction(c -> {
+					setNavigatable(c.getNavigatable());
+					searchDialog.repeatSearch();
+				})
+				.buildAndInstall(tool);
 	}
 
 	protected void updateNavigatable(ActionContext context) {

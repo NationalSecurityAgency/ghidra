@@ -1,0 +1,7 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+extension.properties||GHIDRA||||END|
+scripts_jar1/META-INF/MANIFEST.MF||GHIDRA||||END|
+scripts_jar2/META-INF/MANIFEST.MF||GHIDRA||||END|
+scripts_with_manifest/META-INF/MANIFEST.MF||GHIDRA||||END|

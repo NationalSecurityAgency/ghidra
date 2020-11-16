@@ -183,10 +183,20 @@ tokendef
 				if (sym != null) {
 					redefinedError(sym, n, "token");
 				} else {
-					$tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue());
+					$tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue(), 0);
 				}
 			}
 		} fielddefs)
+	|   ^(OP_TOKEN_ENDIAN n=specific_identifier["token definition"] i=integer s=endian {
+			if (n != null) {
+			    SleighSymbol sym = sc.findSymbol($n.value.getText());
+			    if (sym != null) {
+			        redefinedError(sym, n, "token");
+			    } else {
+			        $tokendef::tokenSymbol = sc.defineToken(find(n), $n.value.getText(), $i.value.intValue(), $s.value ==0 ? -1 : 1);
+			    }
+			}
+	    } fielddefs)
 	;
 
 fielddefs
@@ -212,7 +222,11 @@ fielddef
 		} fieldmods) {
 			if ($fielddef.size() > 0 && $fielddef::fieldQuality != null) {
 				if ($tokendef.size() > 0 && $tokendef::tokenSymbol != null) {
-					sc.addTokenField(find(n), $tokendef::tokenSymbol, $fielddef::fieldQuality);
+					if ($tokendef::tokenSymbol.getToken().getSize()*8 <= $fielddef::fieldQuality.high) {
+						reportError(find($t), "field high must be less than token size");
+					} else {
+						sc.addTokenField(find(n), $tokendef::tokenSymbol, $fielddef::fieldQuality);
+					}
 				} else if ($contextdef.size() > 0 && $contextdef::varnode != null) {
 					if (!sc.addContextField($contextdef::varnode, $fielddef::fieldQuality)) {
 						reportError(find($t), "all context definitions must come before constructors");

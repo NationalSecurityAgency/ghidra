@@ -40,7 +40,7 @@ public class SplashScreen extends JWindow {
 	private static final Color DEFAULT_BACKGROUND_COLOR = new Color(243, 250, 255);
 
 	private static SplashScreen splashWindow; // splash window displayed while ghidra is coming up
-	private static JFrame hiddenFrame;
+	private static DockingFrame hiddenFrame;
 	private static JLabel statusLabel;
 	private static Timer hideSplashWindowTimer;
 
@@ -250,6 +250,7 @@ public class SplashScreen extends JWindow {
 			List<Image> list = ApplicationInformationDisplayFactory.getWindowIcons();
 			hiddenFrame.setIconImages(list);
 			hiddenFrame.setUndecorated(true);
+			hiddenFrame.setTransient(); 
 		}
 		return hiddenFrame;
 	}
@@ -279,10 +280,6 @@ public class SplashScreen extends JWindow {
 		updateStatus(status);
 	}
 
-	/**
-	 * Update the status label on the splash screen window.
-	 * @param status
-	 */
 	private static void updateStatus(String status) {
 		statusLabel.setText(status);
 	}

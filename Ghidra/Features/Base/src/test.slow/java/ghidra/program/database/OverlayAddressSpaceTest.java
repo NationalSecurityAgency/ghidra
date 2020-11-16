@@ -174,11 +174,11 @@ public class OverlayAddressSpaceTest extends AbstractGhidraHeadedIntegrationTest
 		AddressSpace nonOverlaySpace = space3Address.getAddressSpace();
 		Assert.assertNotEquals(overlaySpace, nonOverlaySpace);
 
-		int overlayBaseID = overlaySpace.getBaseSpaceID();
-		int spaceBaseID = space1.getBaseSpaceID();
+		int overlayBaseID = ((OverlayAddressSpace) overlaySpace).getBaseSpaceID();
+		int spaceBaseID = space1.getSpaceID();
 		assertEquals(overlayBaseID, spaceBaseID);
 
-		int nonBaseID = nonOverlaySpace.getBaseSpaceID();
+		int nonBaseID = nonOverlaySpace.getSpaceID();
 		Assert.assertNotEquals(overlayBaseID, nonBaseID);
 	}
 

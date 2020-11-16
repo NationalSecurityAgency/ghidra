@@ -16,8 +16,8 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.xml.sax.*;
 
@@ -29,9 +29,12 @@ import ghidra.xml.*;
 
 /**
  * Reads function tags from  @see ghidra.framework.Application#getModuleDataFile(java.lang.String)
- * or a File on the filesytem.
+ * or a File on the filesystem.
  */
 public class FunctionTagLoader {
+
+	// TODO this class should provide a system property to allow users to load files defined in
+	//      the property
 
 	/**
 	 * Load function tags from filesystem. Useful for unit tests.
@@ -39,7 +42,7 @@ public class FunctionTagLoader {
 	 * @param tagFile tag file
 	 * @return List list of function tags
 	 */
-	protected static List<FunctionTag> loadTags(File tagFile) {
+	protected static Set<FunctionTag> loadTags(File tagFile) {
 		return loadTags(new ResourceFile(tagFile));
 	}
 
@@ -49,18 +52,19 @@ public class FunctionTagLoader {
 	 * @param moduleDataFilePath data file loaded by Application
 	 * @return List list of function tags
 	 */
-	protected static List<FunctionTag> loadTags(String moduleDataFilePath) {
+	protected static Set<FunctionTag> loadTags(String moduleDataFilePath) {
 		try {
 			return loadTags(Application.getModuleDataFile(moduleDataFilePath));
 		}
 		catch (FileNotFoundException e) {
-			Msg.error(null, "Error loading function tags file from " + moduleDataFilePath, e);
+			Msg.error(FunctionTagLoader.class,
+				"Error loading function tags file from " + moduleDataFilePath, e);
 		}
-		return new ArrayList<FunctionTag>();
+		return new HashSet<>();
 	}
 
-	protected static List<FunctionTag> loadTags(final ResourceFile tagDataFile) {
-		List<FunctionTag> tags = new ArrayList<>();
+	protected static Set<FunctionTag> loadTags(final ResourceFile tagDataFile) {
+		Set<FunctionTag> tags = new HashSet<>();
 
 		try {
 			ErrorHandler errHandler = new ErrorHandler() {
@@ -101,7 +105,7 @@ public class FunctionTagLoader {
 							el = parser.next();
 							comment = parser.end().getText();
 						}
-						FunctionTagTemp tag = new FunctionTagTemp(name, comment);
+						InMemoryFunctionTag tag = new InMemoryFunctionTag(name, comment);
 						tags.add(tag);
 					}
 				}
@@ -109,10 +113,12 @@ public class FunctionTagLoader {
 			parser.dispose();
 		}
 		catch (XmlException e) {
-			Msg.error(null, "Error parsing function tags from " + tagDataFile, e);
+			Msg.error(FunctionTagLoader.class, "Error parsing function tags from " + tagDataFile,
+				e);
 		}
 		catch (SAXException | IOException e) {
-			Msg.error(null, "Error loading function tags from " + tagDataFile, e);
+			Msg.error(FunctionTagLoader.class, "Error loading function tags from " + tagDataFile,
+				e);
 		}
 
 		return tags;

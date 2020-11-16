@@ -17,18 +17,15 @@ package ghidra.app.plugin.core.function.tags;
 
 import java.awt.BorderLayout;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionTag;
-import ghidra.program.model.listing.Program;
-import ghidra.util.table.GhidraThreadedTablePanel;
+import ghidra.program.model.listing.*;
+import ghidra.util.table.*;
 
 /**
  * Displays all functions that are associated with the selected tag in the
@@ -37,6 +34,8 @@ import ghidra.util.table.GhidraThreadedTablePanel;
 public class AllFunctionsPanel extends JPanel {
 
 	private FunctionTableModel model;
+	private GhidraTable table;
+	private GhidraTableFilterPanel<Function> filterPanel;
 	private JLabel titleLabel;
 
 	/**
@@ -49,18 +48,23 @@ public class AllFunctionsPanel extends JPanel {
 	public AllFunctionsPanel(Program program, ComponentProviderAdapter provider, String title) {
 
 		model = new FunctionTableModel(title, provider.getTool(), program, null);
-		GhidraThreadedTablePanel<Function> tablePanel = new GhidraThreadedTablePanel<>(model);
+		GhidraThreadedTablePanel<Function> tablePanel =
+			new GhidraThreadedTablePanel<>(model);
+
+		table = tablePanel.getTable();
+		filterPanel = new GhidraTableFilterPanel<>(table, model);
 		setLayout(new BorderLayout());
-		
+
 		titleLabel = new JLabel(title);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
-		
+
 		add(titleLabel, BorderLayout.NORTH);
 		add(tablePanel, BorderLayout.CENTER);
-		
+		add(filterPanel, BorderLayout.SOUTH);
+
 		GoToService goToService = provider.getTool().getService(GoToService.class);
 		if (goToService != null) {
-			tablePanel.getTable().installNavigation(goToService, goToService.getDefaultNavigatable());
+			table.installNavigation(goToService, goToService.getDefaultNavigatable());
 		}
 	}
 
@@ -68,7 +72,7 @@ public class AllFunctionsPanel extends JPanel {
 	 * Updates the table with whatever is in the {@link #model}
 	 */
 	public void refresh() {
-		model.fireTableDataChanged();
+		model.reload();
 	}
 
 	/**
@@ -76,7 +80,7 @@ public class AllFunctionsPanel extends JPanel {
 	 * 
 	 * @param selectedTags the selected function tags
 	 */
-	public void refresh(List<FunctionTag> selectedTags) {
+	public void refresh(Set<FunctionTag> selectedTags) {
 		setSelectedTags(selectedTags);
 	}
 
@@ -95,11 +99,11 @@ public class AllFunctionsPanel extends JPanel {
 	 * 
 	 * @param tags the selected tags
 	 */
-	public void setSelectedTags(List<FunctionTag> tags) {
+	public void setSelectedTags(Set<FunctionTag> tags) {
 		String tagNames = tags.stream()
-							  .map(t -> t.getName())
-							  .collect(Collectors.joining(" or "))
-							  .toString();
+				.map(t -> t.getName())
+				.collect(Collectors.joining(" or "))
+				.toString();
 
 		titleLabel.setText("Functions With Tag: " + tagNames);
 		model.setSelectedTags(tags);
@@ -115,7 +119,7 @@ public class AllFunctionsPanel extends JPanel {
 	public List<Function> getFunctions() {
 		return model.getFunctions();
 	}
-	
+
 	/**
 	 * Returns the functions table model
 	 * 

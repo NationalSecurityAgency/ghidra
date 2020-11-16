@@ -51,10 +51,16 @@ public enum OptionType {
 	private StringAdapter stringAdapter;
 
 	public Object convertStringToObject(String string) {
+		if (string == null) {
+			return null;
+		}
 		return stringAdapter.stringToObject(string);
 	}
 
 	public String convertObjectToString(Object object) {
+		if (object == null) {
+			return null;
+		}
 		return stringAdapter.objectToString(object);
 	}
 
@@ -217,8 +223,13 @@ public enum OptionType {
 				option.readState(saveState);
 				return option;
 			}
+			catch (ClassNotFoundException e) {
+				Msg.warn(this,
+					"Ignoring unsupported customOption instance for: " + customOptionClassName);
+			}
 			catch (Exception e) {
-				Msg.error(this, "Can't create customOption instance for: " + customOptionClassName,
+				Msg.error(this,
+					"Can't create customOption instance for: " + customOptionClassName + 
 					e);
 			}
 			return null;

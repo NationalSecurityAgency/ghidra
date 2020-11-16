@@ -75,7 +75,7 @@ public class UserManager {
 	 * @param enableLocalPasswords if true user passwords will be maintained 
 	 * 			within local 'users' file
 	 * @param defaultPasswordExpirationDays password expiration in days when 
-	 * 			local passwords are enabled
+	 * 			local passwords are enabled (0 = no expiration)
 	 */
 	UserManager(RepositoryManager repositoryMgr, boolean enableLocalPasswords,
 			int defaultPasswordExpirationDays) {
@@ -195,7 +195,22 @@ public class UserManager {
 	 * @throws IOException if IO error occurs
 	 */
 	public void addUser(String username) throws DuplicateNameException, IOException {
-		addUser(username, null);
+		addUser(username, (char[]) null);
+	}
+
+	/**
+	 * Add a user with optional salted password hash.
+	 * @param username user name/SID
+	 * @param saltedPasswordHash optional user password hash (may be null)
+	 * @throws DuplicateNameException if username already exists
+	 * @throws IOException if IO error occurs
+	 */
+	void addUser(String username, char[] saltedPasswordHash)
+			throws DuplicateNameException, IOException {
+		if (saltedPasswordHash == null && enableLocalPasswords) {
+			saltedPasswordHash = getDefaultPasswordHash();
+		}
+		addUser(username, saltedPasswordHash, null);
 	}
 
 	/**
@@ -401,14 +416,16 @@ public class UserManager {
 	/**
 	 * Reset the local password to the 'changeme' for the specified user.
 	 * @param username
+	 * @param saltedPasswordHash optional user password hash (may be null)
 	 * @return true if password updated successfully.
 	 * @throws IOException
 	 */
-	public boolean resetPassword(String username) throws IOException {
+	public boolean resetPassword(String username, char[] saltedPasswordHash) throws IOException {
 		if (!enableLocalPasswords) {
 			return false;
 		}
-		return setPassword(username, getDefaultPasswordHash(), true);
+		return setPassword(username,
+			saltedPasswordHash != null ? saltedPasswordHash : getDefaultPasswordHash(), true);
 	}
 
 	private char[] getDefaultPasswordHash() {

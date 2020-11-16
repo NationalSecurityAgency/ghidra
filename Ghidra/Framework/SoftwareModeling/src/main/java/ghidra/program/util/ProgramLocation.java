@@ -15,24 +15,27 @@
  */
 package ghidra.program.util;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
+
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 
 /**
- * <CODE>ProgramLocation</CODE> provides information about a location in a
- * program in the most generic way.
+ * <CODE>ProgramLocation</CODE> provides information about a location in a program in the most
+ * generic way.
  *
- * ProgramLocations refer to a specific location in a program and can be specified down
- * to an address, a field at that address, and within that field, a row, col, and character
- * offset.  The field is not recorded directly, but by the subclass of the ProgramLocation.
- * The "cursor position" within a field is specified by three variables: row, col, and character
- * offset.  The row is literally the row (line #) the cursor is on  within the field, the
- * column represents the display item on that row (For example, in the bytes field
- * the column will represent which "byte" the cursor is on.  Most fields only have one
- * column item per row.)  And finally, the character offset
- * is the character position within the display item specified by the row and column.  Simple fields
+ * <p>
+ * ProgramLocations refer to a specific location in a program and can be specified down to an
+ * address, a field at that address, and within that field, a row, col, and character offset. The
+ * field is not recorded directly, but by the subclass of the ProgramLocation. The "cursor position"
+ * within a field is specified by three variables: row, col, and character offset. The row is
+ * literally the row (line #) the cursor is on within the field, the column represents the display
+ * item on that row (For example, in the bytes field the column will represent which "byte" the
+ * cursor is on. Most fields only have one column item per row.) And finally, the character offset
+ * is the character position within the display item specified by the row and column. Simple fields
  * like the address field and Mnemonic field will always have a row and column of 0.
  */
 public class ProgramLocation implements Comparable<ProgramLocation> {
@@ -48,19 +51,19 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Construct a new ProgramLocation.
-	 * <br>Note: A NullPointerException will be logged if addr is null.
 	 *
 	 * @param program the program of the location
-	 * @param addr address of the location; cannot be null; This could be a
-	 * code unit minimum address where the byteAddr is within the code unit.
+	 * @param addr address of the location; cannot be null; This could be a code unit minimum
+	 *            address where the byteAddr is within the code unit.
 	 * @param byteAddr address of the location; cannot be null
-	 * @param componentPath array of indexes for each nested data component;
-	 * the data index is the data component's index within its parent; may be null
-	 * @param refAddr the "referred to" address if the location is
-	 * over a reference; may be null
+	 * @param componentPath array of indexes for each nested data component; the data index is the
+	 *            data component's index within its parent; may be null
+	 * @param refAddr the "referred to" address if the location is over a reference; may be null
 	 * @param row the row within the field.
-	 * @param col - the display item index on the given row. (Note most fields only have one display item per row)
-	 * @param charOffset - the character offset within the display item.
+	 * @param col the display item index on the given row. (Note most fields only have one display
+	 *            item per row)
+	 * @param charOffset the character offset within the display item.
+	 * @throws NullPointerException if {@code addr} or {@code program} is null
 	 */
 	public ProgramLocation(Program program, Address addr, Address byteAddr, int[] componentPath,
 			Address refAddr, int row, int col, int charOffset) {
@@ -89,20 +92,21 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Construct a new ProgramLocation for the given address.  The address will be adjusted
-	 * to the beginning of the code unit containing that address(if it exists).  The original
-	 * address can be retrieved using the "getByteAddress()" method.
-	 * <br>Note: A NullPointerException will be logged if addr is null.
-	 * @param program the program associated with this program location (also
-	 * used to obtain a code-unit-aligned address)
+	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
+	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
+	 * original address can be retrieved using the {@link #getByteAddress()}" method.
+	 * 
+	 * @param program the program associated with this program location (also used to obtain a
+	 *            code-unit-aligned address)
 	 * @param addr address of the location; cannot be null
-	 * @param componentPath array of indexes for each nested data component;
-	 * the index is the data component's index within its parent; may be null
-	 * @param refAddr the "referred to" address if the location is
-	 * over a reference; may be null
+	 * @param componentPath array of indexes for each nested data component; the index is the data
+	 *            component's index within its parent; may be null
+	 * @param refAddr the "referred to" address if the location is over a reference; may be null
 	 * @param row the row within the field.
-	 * @param col - the display item index on the given row. (Note most fields only have one display item per row)
-	 * @param charOffset - the character offset within the display item.
+	 * @param col the display item index on the given row. (Note most fields only have one display
+	 *            item per row)
+	 * @param charOffset the character offset within the display item.
+	 * @throws NullPointerException if {@code addr} or {@code program} is null
 	 */
 	public ProgramLocation(Program program, Address addr, int[] componentPath, Address refAddr,
 			int row, int col, int charOffset) {
@@ -111,41 +115,47 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Construct a new ProgramLocation for the given address.  The address will be adjusted
-	 * to the beginning of the code unit containing that address(if it exists).  The original
-	 * address can be retrieved using the "getByteAddress()" method.
-	 * @param program the program associated with this program location (also
-	 * used to obtain a code-unit-aligned address)
+	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
+	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
+	 * original address can be retrieved using the {@link #getByteAddress()} method.
+	 * 
+	 * @param program the program associated with this program location (also used to obtain a
+	 *            code-unit-aligned address)
 	 * @param addr address for the location
+	 * @throws NullPointerException if {@code addr} or {@code program} is null
 	 */
 	public ProgramLocation(Program program, Address addr) {
 		this(program, getCodeUnitAddress(program, addr), addr, null, null, 0, 0, 0);
 	}
 
 	/**
-	 * Construct a new ProgramLocation for the given address.  The address will be adjusted
-	 * to the beginning of the code unit containing that address(if it exists).  The original
-	 * address can be retrieved using the "getByteAddress()" method.
-	 * @param program the program associated with this program location (also
-	 * used to obtain a code-unit-aligned address)
+	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
+	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
+	 * original address can be retrieved using the {@link #getByteAddress()} method.
+	 * 
+	 * @param program the program associated with this program location (also used to obtain a
+	 *            code-unit-aligned address)
 	 * @param addr address for the location
 	 * @param row the row within the field.
-	 * @param col - the display item index on the given row. (Note most fields only have one display item per row)
-	 * @param charOffset - the character offset within the display item.
+	 * @param col the display item index on the given row. (Note most fields only have one display
+	 *            item per row)
+	 * @param charOffset the character offset within the display item.
+	 * @throws NullPointerException if {@code addr} or {@code program} is null
 	 */
 	public ProgramLocation(Program program, Address addr, int row, int col, int charOffset) {
 		this(program, getCodeUnitAddress(program, addr), addr, null, null, row, col, charOffset);
 	}
 
 	/**
-	 * Construct a new ProgramLocation for the given address.  The address will be adjusted
-	 * to the beginning of the code unit containing that address(if it exists).  The original
-	 * address can be retrieved using the "getByteAddress()" method.
-	 * @param program the program associated with this program location (also
-	 * used to obtain a code-unit-aligned address)
+	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
+	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
+	 * original address can be retrieved using the {@link #getByteAddress()} method.
+	 * 
+	 * @param program the program associated with this program location (also used to obtain a
+	 *            code-unit-aligned address)
 	 * @param addr address for the location
-	 * @param refAddr the "referred to" address if the location is over a
-	 * reference
+	 * @param refAddr the "referred to" address if the location is over a reference
+	 * @throws NullPointerException if {@code addr} or {@code program} is null
 	 */
 	public ProgramLocation(Program program, Address addr, Address refAddr) {
 		this(program, getCodeUnitAddress(program, addr), addr, null, refAddr, 0, 0, 0);
@@ -158,15 +168,15 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Returns the componentPath for the codeUnit.  Null will be returned if the
-	 * object is an Instruction or a top-level Data object.
+	 * Returns the componentPath for the {@link CodeUnit code unit}. Null will be returned if the
+	 * object is an {@link Instruction} or a top-level {@link Data} object.
 	 */
 	public int[] getComponentPath() {
 		return componentPath;
 	}
 
 	/**
-	 * Returns program associated with location or null if not specified.
+	 * Returns the program associated with this location.
 	 */
 	public Program getProgram() {
 		return program;
@@ -174,9 +184,11 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the address associated with this location.
-	 * <br>Note: this may not be the same as the byte address. For example, in
-	 * a code unit location this may be the minimum address of the code unit
-	 * that contains the byte address.
+	 * 
+	 * <p>
+	 * Note: this may not be the same as the byte address. For example, in a {@link CodeUnit code
+	 * unit} location this may be the minimum address of the code unit that contains the byte
+	 * address.
 	 */
 	public Address getAddress() {
 		return addr;
@@ -190,8 +202,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Returns the "referred to" address if the location is over an
-	 * address in some field.
+	 * Returns the "referred to" address if the location is over an address in some field.
 	 */
 	public Address getRefAddress() {
 		return refAddr;
@@ -199,6 +210,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Save this program location to the given save state object.
+	 * 
 	 * @param obj the save state object for saving the location
 	 */
 	public void saveState(SaveState obj) {
@@ -218,8 +230,8 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Restore this program location using the given program
-	 * and save state object.
+	 * Restore this program location using the given program and save state object.
+	 * 
 	 * @param program1 program to restore from
 	 * @param obj the save state to restore from
 	 */
@@ -240,6 +252,13 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	}
 
+	/**
+	 * Get the program location for the given program and save state object.
+	 * 
+	 * @param program the program for the location
+	 * @param saveState the state to restore
+	 * @return the restored program location
+	 */
 	public static ProgramLocation getLocation(Program program, SaveState saveState) {
 		String className = saveState.getString("_CLASSNAME", null);
 		if (className == null) {
@@ -248,7 +267,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 		try {
 			Class<?> locClass = Class.forName(className);
-			ProgramLocation loc = (ProgramLocation) locClass.newInstance();
+			ProgramLocation loc = (ProgramLocation) locClass.getConstructor().newInstance();
 			loc.restoreState(program, saveState);
 			if (loc.getAddress() != null) {
 				return loc;
@@ -260,23 +279,20 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 		catch (ClassNotFoundException e) {
 			// not sure why we are ignoring this--if you know, then please let everyone else know
 		}
-		catch (InstantiationException e) {
-			Msg.showError(ProgramLocation.class, null, "Programming Error",
-				"Class " + className + " must have default constructor!", e);
-		}
-		catch (IllegalAccessException e) {
+		catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
 			Msg.showError(ProgramLocation.class, null, "Programming Error",
 				"Class " + className + " must have public default constructor!", e);
+		}
+		catch (InvocationTargetException e) {
+			Msg.showError(ProgramLocation.class, null, "Programming Error",
+				"Class " + className + " default constructor threw an exception!", e);
 		}
 		return null;
 	}
 
 	@Override
 	public int hashCode() {
-		if (addr == null) {
-			return 0;
-		}
-		return addr.hashCode();
+		return Objects.hash(program, addr);
 	}
 
 	@Override
@@ -323,6 +339,9 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 			return false;
 		}
 		ProgramLocation other = (ProgramLocation) obj;
+		if (program != other.program) {
+			return false;
+		}
 		if (compareAddr(addr, other.addr) != 0) {
 			return false;
 		}
@@ -343,7 +362,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 		if (other == this) {
 			return 0;
 		}
-		int result = ProgramLocationComparator.instance.compare(this, other);
+		int result = ProgramLocationComparator.INSTANCE.compare(this, other);
 		if (result == 0) {
 			result = row - other.row;
 			if (result == 0) {
@@ -419,6 +438,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns true if this location represents a valid location in the given program
+	 * 
 	 * @param testProgram the program to test if this location is valid.
 	 * @return true if this location represents a valid location in the given program
 	 */
@@ -428,6 +448,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the row within the program location.
+	 * 
 	 * @return the row within the program location.
 	 */
 	public int getRow() {
@@ -436,14 +457,15 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the character offset in the display item at the (row,col)
-	 * @return  the character offset in the display item at the (row,col)
+	 * 
+	 * @return the character offset in the display item at the (row,col)
 	 */
 	public int getCharOffset() {
 		return charOffset;
 	}
 
 	/**
-	 * Returns the column index of the display piece represented by this location.  For most
+	 * Returns the column index of the display piece represented by this location. For most
 	 * locations, there is only one display item per row, in which case this value will be 0.
 	 */
 	public int getColumn() {

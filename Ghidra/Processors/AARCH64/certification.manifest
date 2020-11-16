@@ -9,6 +9,7 @@ data/languages/AARCH64.opinion||GHIDRA||||END|
 data/languages/AARCH64.pspec||GHIDRA||||END|
 data/languages/AARCH64.slaspec||GHIDRA||||END|
 data/languages/AARCH64BE.slaspec||GHIDRA||||END|
+data/languages/AARCH64_base_PACoptions.sinc||GHIDRA||||END|
 data/languages/AARCH64_win.cspec||GHIDRA||||END|
 data/languages/AARCH64base.sinc||GHIDRA||||END|
 data/languages/AARCH64instructions.sinc||GHIDRA||||END|

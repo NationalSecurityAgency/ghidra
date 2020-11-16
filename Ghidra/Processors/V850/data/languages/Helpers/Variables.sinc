@@ -1,0 +1,49 @@
+#####################################################
+#####	     		Variables		#####
+#####################################################
+
+
+attach variables [ _R0004 _R1115 _R2731 R1620 prep1620]
+[ 
+  r0  r1  r2  sp  gp  tp  r6  r7  r8  r9 
+  r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 
+  r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 
+  ep  lp 
+];
+
+attach variables [ R0004x2 R1115x2 R1620x2 R2731x2 ]
+[ 
+  r0r1 	 _  r2sp    _  r4r5   _ r6r7   _  r8r9    _ 
+  r10r11 _  r12r13  _  r14r15 _ r16r17 _  r18r19  _ 
+  r20r21 _  r22r23  _  r24r25 _ r26r27 _  r28r29  _ 
+  _ 	 _ 
+];
+
+attach variables [ SR0004 SR1115 ]
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    FPSR   FPEPC  FPST  FPCC   
+  FPCFG  SCCFG  SCBP   EIIC   FEIC   DBIC   CTPC   CTPSW  DBPC  DBPSW  
+  CTBP   DIR    DBG22  DBG23  DBG24  DBG25  DBG26  DBG27  EIWR  FEWR  
+  DBWR   BSEL
+];
+
+
+attach variables [op0_1720] [r0 r2 gp r6 r8 r10 r12 r14 r16 r18 r20 r22 r24 r26 r28 ep];
+attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 r29 lp];
+
+
+attach names [fcond2730]
+["f" "un" "eq" "ueq" "olt" "ult" "ole" "ule" "sd" "ngle" "seq" "ngl" "lt" "nge" "le" "ngt"];
+
+
+@define NP  	"PSW[7,1]"
+@define EP  	"PSW[6,1]"
+@define ID  	"PSW[5,1]"
+@define SAT 	"PSW[4,1]"
+@define CY  	"PSW[3,1]"
+@define OV  	"PSW[2,1]"
+@define S   	"PSW[1,1]"
+@define Z   	"PSW[0,1]"
+
+@define EICC  	"ECR[0,16]"
+@define FECC  	"ECR[16,16]"

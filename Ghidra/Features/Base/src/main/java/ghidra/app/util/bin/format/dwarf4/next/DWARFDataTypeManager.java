@@ -16,38 +16,14 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
-import ghidra.app.util.bin.format.dwarf4.DWARFException;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
+import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeImporter.DWARFDataType;
-import ghidra.program.model.data.AbstractIntegerDataType;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.Category;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.DataTypePath;
-import ghidra.program.model.data.FunctionDefinition;
-import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.program.model.data.ParameterDefinition;
-import ghidra.program.model.data.ParameterDefinitionImpl;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.program.model.data.WideChar16DataType;
-import ghidra.program.model.data.WideChar32DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -155,8 +131,8 @@ public class DWARFDataTypeManager {
 		}
 
 		// Commit the DataType to the database
-		DataType post = dataTypeManager.resolve(pre.dataType,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType post =
+			dataTypeManager.resolve(pre.dataType, DWARFDataTypeConflictHandler.INSTANCE);
 
 		// While walking the pre and post DataType graph in lockstep, use the mapping of
 		// pre_impl->offset to cache offset->post_datatype for later re-use.
@@ -296,39 +272,12 @@ public class DWARFDataTypeManager {
 	 * @return
 	 */
 	public Iterable<DataType> forAllConflicts(DataTypePath dtp) {
+		Category cat = dataTypeManager.getCategory(dtp.getCategoryPath());
+		List<DataType> list = (cat != null)
+				? cat.getDataTypesByBaseName(dtp.getDataTypeName())
+				: List.of();
 
-		return () -> new DataTypeConflictIterator(dtp);
-	}
-
-	private class DataTypeConflictIterator implements Iterator<DataType> {
-		private DataTypePath dtp;
-		private Category category;
-		private int conflictNum;
-		private DataType dataType;
-
-		public DataTypeConflictIterator(DataTypePath dtp) {
-			this.dtp = dtp;
-			this.category = dataTypeManager.getCategory(dtp.getCategoryPath());
-		}
-
-		String buildName() {
-			String s = dtp.getDataTypeName();
-			return conflictNum == 0 ? s
-					: (s + DataType.CONFLICT_SUFFIX + Integer.toString(conflictNum));
-		}
-
-		@Override
-		public boolean hasNext() {
-			dataType = (category != null) ? category.getDataType(buildName()) : null;
-			return dataType != null;
-		}
-
-		@Override
-		public DataType next() {
-			conflictNum++;
-			return dataType;
-		}
-
+		return list;
 	}
 
 	private DataType findGhidraType(String name) {
@@ -770,8 +719,9 @@ public class DWARFDataTypeManager {
 		DataType returnDataType = getDataType(diea.getTypeRef(), baseDataTypeVoid);
 		boolean foundThisParam = false;
 		List<ParameterDefinition> params = new ArrayList<>();
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
-			DWARFTag.DW_TAG_formal_parameter)) {
+		for (DebugInfoEntry childEntry : diea.getHeadFragment()
+				.getChildren(
+					DWARFTag.DW_TAG_formal_parameter)) {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
 
 			String paramName = childDIEA.getName();

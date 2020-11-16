@@ -34,8 +34,6 @@ def String[] generateExcludesList() {
 					 	!shouldIgnoreLine(line)
 					 })
 					 .collect()
-
-	println "Returning ${lines.size()} exclusion line(s) for jacocoReport."
 	return lines
 }
 

@@ -26,8 +26,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.exception.ClosedException;
 
 /**
- * 
- *
+ * Database implementation of {@link Option}
  */
 class OptionsDB extends AbstractOptions {
 
@@ -42,8 +41,6 @@ class OptionsDB extends AbstractOptions {
 	private Table propertyTable;
 	private DomainObjectAdapterDB domainObj;
 
-	/**
-	 */
 	OptionsDB(DomainObjectAdapterDB domainObj) {
 		super("");
 		this.domainObj = domainObj;
@@ -59,7 +56,7 @@ class OptionsDB extends AbstractOptions {
 	 * the corresponding oldPath properties will be removed.
 	 * @throws IllegalStateException if list has been manipulated since construction
 	 * @throws IllegalArgumentException if invalid property alterations are provided
-	 * @throws IOException
+	 * @throws IOException if there is an exception moving or deleting a property 
 	 */
 	synchronized void performAlterations(Map<String, String> propertyAlterations)
 			throws IOException {
@@ -108,7 +105,7 @@ class OptionsDB extends AbstractOptions {
 		}
 
 		// move records
-		ArrayList<Record> list = new ArrayList<Record>();
+		ArrayList<Record> list = new ArrayList<>();
 		rec = propertyTable.getRecord(new StringField(oldPath));
 		if (rec != null) {
 			propertyTable.deleteRecord(new StringField(oldPath));
@@ -182,7 +179,7 @@ class OptionsDB extends AbstractOptions {
 
 	@Override
 	public synchronized List<String> getOptionNames() {
-		Set<String> names = new HashSet<String>(valueMap.keySet());
+		Set<String> names = new HashSet<>(valueMap.keySet());
 		names.addAll(aliasMap.keySet());
 		try {
 			if (propertyTable != null) {
@@ -196,7 +193,7 @@ class OptionsDB extends AbstractOptions {
 		catch (IOException e) {
 			domainObj.dbError(e);
 		}
-		List<String> optionNames = new ArrayList<String>(names);
+		List<String> optionNames = new ArrayList<>(names);
 		Collections.sort(optionNames);
 		return optionNames;
 	}
@@ -253,16 +250,6 @@ class OptionsDB extends AbstractOptions {
 		}
 	}
 
-//	Property getProperty(String propertyName) {
-//		Record rec = getPropertyRecord(propertyName);
-//		if (rec == null) {
-//			return null;
-//		}
-//		int propertyOrdinal = rec.getByteValue(TYPE_COL);
-//		OptionType propertyType = OptionType.values()[propertyOrdinal];
-//		return createProperty(propertyName, propertyType, null);
-//	}
-
 	class DBOption extends Option {
 		private Object value = null;
 		private boolean isCached = false;
@@ -270,6 +257,8 @@ class OptionsDB extends AbstractOptions {
 		protected DBOption(String name, OptionType type, String description, HelpLocation help,
 				Object defaultValue, boolean isRegistered, PropertyEditor editor) {
 			super(name, type, description, help, defaultValue, isRegistered, editor);
+
+			getCurrentValue(); // initialize our defaults
 		}
 
 		@Override

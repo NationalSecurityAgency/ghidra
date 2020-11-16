@@ -78,7 +78,7 @@ define ram offset=0x22 size=6 [
 
 define ram offset=0x2E size=3 [ PC ];
 
-@if defined(PIC24E) || defined(dsPIC33E)
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 define ram offset=0x32 size=2 [ DSRPAG ];  # 9bit Data Space Read Page Address
 define ram offset=0x34 size=2 [ DSWPAG ];  # 8bit Data Space Write Page Address
 define ram offset=0x36 size=2 [ RCOUNT ];  # Repeat counter
@@ -144,7 +144,7 @@ define register offset=1536 size=1 [
 # Note: actual PC is 23-bits wide, with a fixed 0 for the zeroeth bit
 define register offset=2048 size=3 [
 	# dsPIC33E uses array of registers to have 4 deep zero overhead do loops
-@if defined(dsPIC33E) 
+@if defined(dsPIC33E) || defined(dsPIC33C)
   DOSTART  # 24 bits long bit23=bit0=0       DO Loop Start Address
   DOSTART1
   DOSTART2
@@ -173,20 +173,19 @@ define register offset=3072 size=1 [
   CORCON_IPL3
   CORCON_PSV
   CORCON_SFA
-@ifdef dsPIC33E
+@if defined(dsPIC33E) || defined(dsPIC33C)
   CORCON_DL # DO loop nesting level status bits (3 bit long)
 @endif
 ];
 
 
-# NOTE: Technically this section only apply to dsPIC30F, dsPIC33F, dsPIC33E, but we will allow all profiles to see it.
-# @if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+# NOTE: Technically this section only apply to dsPIC30F, dsPIC33F, dsPIC33E, and dsPIC33C but we will allow all profiles to see it.
 
 # This supports the zero overhead do loop specific registers
 define register offset=4096 size=2 [
 
 # dsPIC33E uses array of registers to have 4 deep zero overhead do loops
-@if defined(dsPIC33E) 
+@if defined(dsPIC33E) || defined(dsPIC33C)
   DCOUNT   # 13 bits long                    DO Loop counter
   DCOUNT1 
   DCOUNT2 
@@ -221,81 +220,98 @@ define context contextreg
 
 define token instr(32)
   padding=(24,31) # padding for 4th byte that is not decoded in actual processor
+  OP_31_0 =(0,31)
+  OP_31_4 =(4,31)
+  
+  OP_23_0 =(0,23)
+  OP_23_1 =(1,23)
+  OP_23_4 =(4,23)
+  OP_23_11=(11,23)
+  OP_23_12=(12,23)
+  OP_23_14=(14,23)
+  OP_23_15=(15,23)
+  OP_23_16=(16,23)
+  OP_23_18=(18,23)
+  OP_23_19=(19,23)
   OP_23_20=(20,23)
-  OP_19_19=(19,19)
-  OP_19_18=(18,19)
-  OP_19_17=(17,19)
+  
+  OP_21_20=(20,21)
+  
   OP_19_16=(16,19)
-  OP_19   =(19,19)
-  OP_14   =(14,14)
-  OP_15   =(15,15)
-  OP_13   =(13,13)
-  OP_12   =(12,12)
-  OP_6_4  =(4,6)
-  OP_5_4  =(4,5)
-  OP_6_5  =(5,6)
-  OP_15_14=(14,15)
-  OP_14_12=(12,14)
-  OP_11_8 =(8,11)
-  OP_7_4  =(4,7)
-  OP_3_0  =(0,3) 
-  OP_11   =(11,11)
-  OP_9_8  =(8,9)
-  OP_7    =(7,7)
+  OP_19_17=(17,19)
+  OP_19_18=(18,19)
+  
+  OP_15_8 =(8,15)
   OP_15_12=(12,15)
+  OP_15_14=(14,15)
+  
+  OP_14_0 =(0,14)
+  OP_14_4 =(4,14)
+  OP_14_6 =(6,14)
+  OP_14_7 =(7,14)
+  OP_14_11=(11,14)
+  OP_14_12=(12,14)
+  
+  OP_13_4 =(4,13)
+  
+  OP_11_7 =(7,11)
+  OP_11_8 =(8,11)
+  OP_11_10=(10,11)
+  
   OP_10_8 =(8,10)
-  OP_0    =(0,0)
+  OP_10_7 =(7,10)
+  OP_10_4 =(4,10)
+  
+  OP_9_4  =(4,9)
+  OP_9_8  =(8,9)
+  
+  OP_7_0  =(0,7)
+  OP_7_4  =(4,7)
   OP_7_5  =(5,7)
   OP_7_6  =(6,7)
-  OP_11_7 =(7,11)
-  OP_10_7 =(7,10)
-  OP_31_4 =(4,31)
-  OP_31_0 =(0,31)
-
-  OP_23_11=(11,23)
-  OP_23_19=(19,23)
-  OP_23_0 =(0,23)
-  OP_23_15=(15,23)
-  OP_13_4 =(4,13)
-  OP_23_16=(16,23)
-  OP_14_0 =(0,14)
-  OP_14_6 =(6,14)
-  OP_14_4 =(4,14)
+  
   OP_6_0  =(0,6)
-  OP_23_4 =(4,23)
-  OP_23_14=(14,23)
-  OP_23_1 =(1,23)
-  OP_0_0  =(0,0)
-  OP_14_7 =(7,14)
-  OP_7_0  =(0,7)
+  OP_6_4  =(4,6)
+  OP_6_5  =(5,6)
+  
+  OP_5_4  =(4,5)
+  
+  OP_3_0  =(0,3) 
+  
   OP_1_0  =(0,1)
-  OP_23_18=(18,23)
-  OP_9_4  =(4,9)
-  OP_23_12=(12,23)
-  OP_10_4 =(4,10)
-  OP_11_10=(10,11)
-  OP_21_20=(20,21)
+  
+  OP_19   =(19,19)
+  OP_15   =(15,15)
+  OP_14   =(14,14)
+  OP_13   =(13,13)
+  OP_12   =(12,12)
+  OP_11   =(11,11)
+  OP_7    =(7,7)
   OP_6    =(6,6)
   OP_5    =(5,5)
- 
-  TOK_n   =(16,16)
-  TOK_A   =(15,15)
-  TOK_B   =(14,14)
-  TOK_Bb  =(10,10)
-  TOK_CCCC=(16,19)
-  TOK_D   =(13,13)
-  TOK_W   =(6,6)
-  TOK_Z   =(15,15)
-  TOK_Zb  =(11,11)
+  OP_3    =(3,3)
+  OP_0    =(0,0)
+  
+  TOK_n    =(16,16)
+  TOK_A    =(15,15)
+  TOK_B    =(14,14)
+  TOK_Bb   =(10,10)
+  TOK_CCCC =(16,19)
+  TOK_D    =(13,13)
+  TOK_W    =(6,6)
+  TOK_Z    =(15,15)
+  TOK_Zb   =(11,11)
 
   TOK_f12  =(1,12)
   TOK_f13  =(0,12)
   TOK_f15  =(1,15)
   TOK_f15b =(4,18)
+  TOK_k3   =(0,2)
   TOK_k4   =(0,3)
   TOK_k5   =(0,4)
   TOK_k6   =(0,5) signed
   TOK_k8a  =(0,4)
+  TOK_k4b  =(4,7)
   TOK_k8b  =(7,9)
   TOK_k8c  =(4,11)
   TOK_k10  =(4,13)
@@ -303,56 +319,61 @@ define token instr(32)
   TOK_k15  =(0,14)
   TOK_k16  =(4,19)
   TOK_k16t =(0,15)
-  TOK_r4   =(7,10) signed
-  TOK_bit4word =(0,0)
-  TOK_b3       =(13,15)
-  TOK_b1       =(0,0)
-  TOK_b4       =(12,15)
-  TOK_n6       =(4,9) signed
-  TOK_n7       =(0,6)
-  TOK_n15      =(1,15)
-  TOK_n16      =(0,15) signed
+  
+  TOK_r4         =(7,10) signed
+  TOK_bit4word   =(0,0)
+  TOK_b3         =(13,15)
+  TOK_b1         =(0,0)
+  TOK_b4         =(12,15)
+  TOK_n6         =(4,9) signed
+  TOK_n7         =(0,6)
+  TOK_n15        =(1,15)
+  TOK_n16        =(0,15) signed
 
   TOK_0          =(0,0)
-
-  TOK_6_4_U      =(4,6)
-
-  TOK_13_11_U    =(11,13)
- 
-  TOK_3_0_Wreg     =(0,3) # 16-bit full reg
-  TOK_3_0_Breg     =(0,3) # 8-bit LSB of reg
-  TOK_3_1_Dreg     =(1,3) # 32-bit reg pair, e.g., W1:W0
-  TOK_3_1_Dregn     =(1,3) # 32-bit reg pair name, e.g., W0
-
-  TOK_4_0_U      =(0,4) 
-
   TOK_7          =(7,7)
-
+  TOK_13		 =(13,13)
+  
+  TOK_3_0_Wreg   =(0,3) # 16-bit full reg
+  TOK_3_0_Breg   =(0,3) # 8-bit LSB of reg
+  TOK_3_1_Dreg   =(1,3) # 32-bit reg pair, e.g., W1:W0
+  TOK_3_1_Dregn  =(1,3) # 32-bit reg pair name, e.g., W0
+  
+  TOK_4_0_U      =(0,4)
+   
+  TOK_6_4_U      =(4,6)
+    
   TOK_9_0_U      =(0,9) 
 
-  TOK_10_7_Wreg    =(7,10) # 16-bit full reg
-  TOK_10_7_Breg    =(7,10) # 8-bit LSB of reg
-  TOK_10_8_Dreg    =(8,10) # 32-bit reg pair, e.g., W1:W0
-  TOK_10_8_Dregn    =(8,10) # 32-bit reg pair name, e.g., W0
+  TOK_10_7_Wreg  =(7,10) # 16-bit full reg
+  TOK_10_7_Breg  =(7,10) # 8-bit LSB of reg
+  TOK_10_7_Wregp =(7,10) # 16-bit full reg offset by one
+  TOK_10_8_Dreg  =(8,10) # 32-bit reg pair, e.g., W1:W0
+  TOK_10_8_Dregn =(8,10) # 32-bit reg pair name, e.g., W0
+  
+  TOK_11_8_Wreg  =(8,11) # 16-bit full reg
 
-  TOK_13		 =(13,13)
+  TOK_13_11_U    =(11,13)
 
-  TOK_14_11_Wreg    =(11,14) # 16-bit full reg
-  TOK_14_11_Breg    =(11,14) # 8-bit LSB of reg
+  TOK_14_12_Dreg =(12,14) # 32-bit reg pair, e.g., W1:W0
+  TOK_14_12_Dregn=(12,14) # 32-bit reg pair name, e.g., W0
+  TOK_14_11_Wreg =(11,14) # 16-bit full reg
+  TOK_14_11_Wregn=(11,14) # 16-bit full reg offset by one
+  TOK_14_11_Breg =(11,14) # 8-bit LSB of reg
 
-  TOK_18_15_Wreg    =(15,18) # 16-bit full reg
-  TOK_18_15_Breg    =(15,18) # 8-bit LSB of reg
-
-  TOK_17_16_mm        =(16,17)
-  TOK_18_16_mmm       =(16,18)
-  TOK_13_12_xx        =(12,13)
-  TOK_11_10_yy        =(10,11)
-  TOK_11_10_PP       =(10,11)
-  TOK_9_6_iiii        =(6,9)
-  TOK_5_2_jjjj        =(2,5)
-  TOK_1_0_aa          =(0,1)
-
-  TOK_18_15_S         =(15,18) signed
+  TOK_18_15_Wreg =(15,18) # 16-bit full reg
+  TOK_18_15_Breg =(15,18) # 8-bit LSB of reg
+  TOK_18_15_S    =(15,18) signed
+  
+  TOK_17_16_mm   =(16,17)
+  TOK_18_16_mmm  =(16,18)
+  TOK_13_12_xx   =(12,13)
+  TOK_13_12_kk   =(12,13)
+  TOK_11_10_yy   =(10,11)
+  TOK_11_10_PP   =(10,11)
+  TOK_9_6_iiii   =(6,9)
+  TOK_5_2_jjjj   =(2,5)
+  TOK_1_0_aa     =(0,1)
   ;
 
 
@@ -361,9 +382,19 @@ define token instr(32)
 # Attach variables =====================================================
 
 # attach normal registers 
-attach variables [ TOK_18_15_Wreg TOK_3_0_Wreg TOK_10_7_Wreg TOK_14_11_Wreg ] [
+attach variables [ TOK_18_15_Wreg TOK_3_0_Wreg TOK_10_7_Wreg TOK_11_8_Wreg TOK_14_11_Wreg ] [
 
   W0   W1   W2   W3   W4   W5   W6   W7   W8   W9   W10  W11  W12  W13  W14  W15
+];
+
+attach variables [ TOK_14_11_Wregn ] [
+	_		W0		W1		W2		W3		W4		W5		W6
+	W7		W8		W9		W10		W11		W12		W13		W14
+];
+
+attach variables [ TOK_10_7_Wregp ] [
+	W0		W1		W2		W3		W4		W5		W6		W7
+	W8		W9		W10		W11		W12		W13		W14		W0
 ];
 
 # attach lower byte sub-registers
@@ -374,11 +405,11 @@ attach variables [ TOK_18_15_Breg TOK_3_0_Breg TOK_10_7_Breg TOK_14_11_Breg ] [
 ];
 
 # attach double registers (ref by even reg only)
-attach variables [ TOK_3_1_Dreg TOK_10_8_Dreg ] [
+attach variables [ TOK_3_1_Dreg TOK_10_8_Dreg TOK_14_12_Dreg ] [
 
    W1W0 		W3W2    W5W4    W7W6    W9W8   W11W10   W13W12   W15W14  
 ];
-attach variables [ TOK_3_1_Dregn TOK_10_8_Dregn ] [
+attach variables [ TOK_3_1_Dregn TOK_10_8_Dregn  TOK_14_12_Dregn ] [
 
    W0 	W2    W4    W6    W8   W10   W12   W14  
 ];
@@ -390,287 +421,313 @@ attach variables [ TOK_3_1_Dregn TOK_10_8_Dregn ] [
 @define WDconstraint "(OP_13=0 | OP_12=0)"
 
 # Use must be constrained by $(WSconstraint)
-Ws_t: TOK_3_0_Wreg                              is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_B=0
+Ws_t: TOK_3_0_Wreg                              is TOK_6_4_U=0x0 & TOK_3_0_Wreg
   { export TOK_3_0_Wreg; }
 
-Ws_t: "["TOK_3_0_Wreg"]"                        is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_B=0
+Ws_t: "["TOK_3_0_Wreg"]"                        is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:2 TOK_3_0_Wreg; }
 
-Ws_t: "["TOK_3_0_Wreg"--]"                      is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_B=0
+Ws_t: "["TOK_3_0_Wreg"--]"                      is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 2; export *[ram]:2  tmp; }
 
-Ws_t: "["TOK_3_0_Wreg"++]"                      is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_B=0
+Ws_t: "["TOK_3_0_Wreg"++]"                      is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { tmp:2 =  TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 2; export *[ram]:2 tmp; }
 
-Ws_t: "[--"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_B=0
+Ws_t: "[--"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 2; export *[ram]:2 TOK_3_0_Wreg; }
 
-Ws_t: "[++"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_B=0
+Ws_t: "[++"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 2; export *[ram]:2 TOK_3_0_Wreg; }
 
 
 # Use must be constrained by $(WSconstraint)
-Wsd_t: TOK_3_0_Wreg                              is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_3_1_Dreg & OP_0=0 & TOK_B=0
+Wsd_t: TOK_3_0_Wreg                              is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_3_1_Dreg & OP_0=0
   { export TOK_3_1_Dreg; }
 
-Wsd_t: "["TOK_3_0_Wreg"]"                        is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_B=0
+Wsd_t: "["TOK_3_0_Wreg"]"                        is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:4 TOK_3_0_Wreg; }
 
-Wsd_t: "["TOK_3_0_Wreg"--]"                      is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_B=0
+Wsd_t: "["TOK_3_0_Wreg"--]"                      is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 4; export *[ram]:4  tmp; }
 
-Wsd_t: "["TOK_3_0_Wreg"++]"                      is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_B=0
+Wsd_t: "["TOK_3_0_Wreg"++]"                      is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { tmp:2 =  TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 4; export *[ram]:4 tmp; }
 
-Wsd_t: "[--"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_B=0
+Wsd_t: "[--"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 4; export *[ram]:4 TOK_3_0_Wreg; }
 
-Wsd_t: "[++"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_B=0
+Wsd_t: "[++"TOK_3_0_Wreg"]"                      is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 4; export *[ram]:4 TOK_3_0_Wreg; }
 
 
 # Use must be constrained by $(WSconstraint)
-Wsb_t: TOK_3_0_Wreg                             is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_Bb=0
+Wsnd_t: TOK_3_0_Wreg                              is TOK_13_11_U=0x0 & TOK_3_0_Wreg & TOK_3_1_Dreg & OP_0=0
+  { export TOK_3_1_Dreg; }
+
+Wsnd_t: "["TOK_3_0_Wreg"]"                        is TOK_13_11_U=0x1 & TOK_3_0_Wreg
+  { export *[ram]:4 TOK_3_0_Wreg; }
+
+Wsnd_t: "["TOK_3_0_Wreg"--]"                      is TOK_13_11_U=0x2 & TOK_3_0_Wreg
+  { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 4; export *[ram]:4  tmp; }
+
+Wsnd_t: "["TOK_3_0_Wreg"++]"                      is TOK_13_11_U=0x3 & TOK_3_0_Wreg
+  { tmp:2 =  TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 4; export *[ram]:4 tmp; }
+
+Wsnd_t: "[--"TOK_3_0_Wreg"]"                      is TOK_13_11_U=0x4 & TOK_3_0_Wreg
+  { TOK_3_0_Wreg = TOK_3_0_Wreg - 4; export *[ram]:4 TOK_3_0_Wreg; }
+
+Wsnd_t: "[++"TOK_3_0_Wreg"]"                      is TOK_13_11_U=0x5 & TOK_3_0_Wreg
+  { TOK_3_0_Wreg = TOK_3_0_Wreg + 4; export *[ram]:4 TOK_3_0_Wreg; }
+
+
+# Use must be constrained by $(WSconstraint)
+Wsb_t: TOK_3_0_Wreg                             is TOK_6_4_U=0x0 & TOK_3_0_Wreg
   { export TOK_3_0_Wreg; }
 
-Wsb_t: "["TOK_3_0_Wreg"]"                       is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_Bb=0
+Wsb_t: "["TOK_3_0_Wreg"]"                       is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:2 TOK_3_0_Wreg; }
 
-Wsb_t: "["TOK_3_0_Wreg"--]"                     is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_Bb=0
+Wsb_t: "["TOK_3_0_Wreg"--]"                     is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 2; export *[ram]:2 tmp; }
 
-Wsb_t: "["TOK_3_0_Wreg"++]"                     is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_Bb=0
+Wsb_t: "["TOK_3_0_Wreg"++]"                     is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 2; export *[ram]:2 tmp; }
 
-Wsb_t: "[--"TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_Bb=0
+Wsb_t: "[--"TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 2; export *[ram]:2 TOK_3_0_Wreg; }
 
-Wsb_t: "[++"TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_Bb=0
+Wsb_t: "[++"TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 2; export *[ram]:2 TOK_3_0_Wreg; }
 
 
 # Use must be constrained by $(WSconstraint)
-Wsbyte_t: TOK_3_0_Wreg                          is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_B=1 & TOK_3_0_Breg
+Wsbyte_t: TOK_3_0_Wreg                          is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_3_0_Breg
   { export TOK_3_0_Breg; }
 
-Wsbyte_t: "["TOK_3_0_Wreg"]"                    is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_B=1
+Wsbyte_t: "["TOK_3_0_Wreg"]"                    is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:1 TOK_3_0_Wreg; }
 
-Wsbyte_t: "["TOK_3_0_Wreg"--]"                  is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_B=1
+Wsbyte_t: "["TOK_3_0_Wreg"--]"                  is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { local tmp =  TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 1; export *[ram]:1 tmp; }
 
-Wsbyte_t: "["TOK_3_0_Wreg"++]"                  is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_B=1
+Wsbyte_t: "["TOK_3_0_Wreg"++]"                  is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { local tmp = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 1; export *[ram]:1 tmp; }
 
-Wsbyte_t: "[--"TOK_3_0_Wreg"]"                  is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_B=1
+Wsbyte_t: "[--"TOK_3_0_Wreg"]"                  is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 1; export *[ram]:1 TOK_3_0_Wreg; }
 
-Wsbyte_t: "[++"TOK_3_0_Wreg"]"                  is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_B=1
+Wsbyte_t: "[++"TOK_3_0_Wreg"]"                  is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 1; export *[ram]:1 TOK_3_0_Wreg; }
 
 
 # Use must be constrained by $(WSconstraint)
-Wsbbyte_t: TOK_3_0_Wreg                         is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_Bb=1 & TOK_3_0_Breg
+Wsbbyte_t: TOK_3_0_Wreg                         is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_3_0_Breg
   { export TOK_3_0_Breg; }
 
-Wsbbyte_t: "["TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_Bb=1
+Wsbbyte_t: "["TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:1 TOK_3_0_Wreg; }
 
-Wsbbyte_t: "["TOK_3_0_Wreg"--]"                 is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_Bb=1
+Wsbbyte_t: "["TOK_3_0_Wreg"--]"                 is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { local tmp = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 1; export *[ram]:1 tmp; }
 
-Wsbbyte_t: "["TOK_3_0_Wreg"++]"                 is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_Bb=1
+Wsbbyte_t: "["TOK_3_0_Wreg"++]"                 is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { local tmp = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 1; export *[ram]:1 tmp; }
 
-Wsbbyte_t: "[--"TOK_3_0_Wreg"]"                 is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_Bb=1
+Wsbbyte_t: "[--"TOK_3_0_Wreg"]"                 is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 1; export *[ram]:1 TOK_3_0_Wreg; }
 
-Wsbbyte_t: "[++"TOK_3_0_Wreg"]"                 is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_Bb=1
+Wsbbyte_t: "[++"TOK_3_0_Wreg"]"                 is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 1; export *[ram]:1 TOK_3_0_Wreg; }
 
 
 # Use must be constrained by $(WDconstraint)
-Wd_t: TOK_10_7_Wreg                             is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_B=0
+Wd_t: TOK_10_7_Wreg                             is TOK_13_11_U=0x0 & TOK_10_7_Wreg
   { export TOK_10_7_Wreg; }
 
-Wd_t: "["TOK_10_7_Wreg"]"                       is TOK_13_11_U=0x1 & TOK_10_7_Wreg & TOK_B=0
+Wd_t: "["TOK_10_7_Wreg"]"                       is TOK_13_11_U=0x1 & TOK_10_7_Wreg
   { export *[ram]:2 TOK_10_7_Wreg; }
 
-Wd_t: "["TOK_10_7_Wreg"--]"                     is TOK_13_11_U=0x2 & TOK_10_7_Wreg & TOK_B=0
+Wd_t: "["TOK_10_7_Wreg"--]"                     is TOK_13_11_U=0x2 & TOK_10_7_Wreg
   { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg - 2; export *[ram]:2 tmp; }
 
-Wd_t: "["TOK_10_7_Wreg"++]"                     is TOK_13_11_U=0x3 & TOK_10_7_Wreg & TOK_B=0
+Wd_t: "["TOK_10_7_Wreg"++]"                     is TOK_13_11_U=0x3 & TOK_10_7_Wreg
   { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg + 2; export *[ram]:2 tmp; }
 
-Wd_t: "[--"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x4 & TOK_10_7_Wreg & TOK_B=0
+Wd_t: "[--"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x4 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg - 2; export *[ram]:2 TOK_10_7_Wreg; }
 
-Wd_t: "[++"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x5 & TOK_10_7_Wreg & TOK_B=0
+Wd_t: "[++"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x5 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg + 2; export *[ram]:2 TOK_10_7_Wreg; }
 
 
 # Use must be constrained by $(WDconstraint)
-Wdd_t: TOK_10_7_Wreg                             is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_10_8_Dreg & OP_7=0 & TOK_B=0
+Wdd_t: TOK_10_7_Wreg                             is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_10_8_Dreg & OP_7=0
   { export TOK_10_8_Dreg; }
 
-Wdd_t: "["TOK_10_7_Wreg"]"                       is TOK_13_11_U=0x1 & TOK_10_7_Wreg & TOK_B=0
+Wdd_t: "["TOK_10_7_Wreg"]"                       is TOK_13_11_U=0x1 & TOK_10_7_Wreg
   { export *[ram]:4 TOK_10_7_Wreg; }
 
-Wdd_t: "["TOK_10_7_Wreg"--]"                     is TOK_13_11_U=0x2 & TOK_10_7_Wreg & TOK_B=0
+Wdd_t: "["TOK_10_7_Wreg"--]"                     is TOK_13_11_U=0x2 & TOK_10_7_Wreg
   { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg - 4; export *[ram]:4 tmp; }
 
-Wdd_t: "["TOK_10_7_Wreg"++]"                     is TOK_13_11_U=0x3 & TOK_10_7_Wreg & TOK_B=0
+Wdd_t: "["TOK_10_7_Wreg"++]"                     is TOK_13_11_U=0x3 & TOK_10_7_Wreg
   { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg + 4; export *[ram]:4 tmp; }
 
-Wdd_t: "[--"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x4 & TOK_10_7_Wreg & TOK_B=0
+Wdd_t: "[--"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x4 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg - 4; export *[ram]:4 TOK_10_7_Wreg; }
 
-Wdd_t: "[++"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x5 & TOK_10_7_Wreg & TOK_B=0
+Wdd_t: "[++"TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x5 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg + 4; export *[ram]:4 TOK_10_7_Wreg; }
 
 
 # Use must be constrained by $(WDconstraint)
-Wdbyte_t: TOK_10_7_Wreg                         is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_B=1 & TOK_10_7_Breg
+Wdbyte_t: TOK_10_7_Wreg                         is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_10_7_Breg
   { export TOK_10_7_Breg; }
 
-Wdbyte_t: "["TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x1 & TOK_10_7_Wreg & TOK_B=1
+Wdbyte_t: "["TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x1 & TOK_10_7_Wreg
   { export *[ram]:1 TOK_10_7_Wreg; }
 
-Wdbyte_t: "["TOK_10_7_Wreg"--]"                 is TOK_13_11_U=0x2 & TOK_10_7_Wreg & TOK_B=1
+Wdbyte_t: "["TOK_10_7_Wreg"--]"                 is TOK_13_11_U=0x2 & TOK_10_7_Wreg
   { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg - 1; export *[ram]:1 tmp; }
 
-Wdbyte_t: "["TOK_10_7_Wreg"++]"                 is TOK_13_11_U=0x3 & TOK_10_7_Wreg & TOK_B=1
+Wdbyte_t: "["TOK_10_7_Wreg"++]"                 is TOK_13_11_U=0x3 & TOK_10_7_Wreg
   { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg + 1; export *[ram]:1 tmp; }
 
-Wdbyte_t: "[--"TOK_10_7_Wreg"]"                 is TOK_13_11_U=0x4 & TOK_10_7_Wreg & TOK_B=1
+Wdbyte_t: "[--"TOK_10_7_Wreg"]"                 is TOK_13_11_U=0x4 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg - 1; export *[ram]:1 TOK_10_7_Wreg; }
 
-Wdbyte_t: "[++"TOK_10_7_Wreg"]"                 is TOK_13_11_U=0x5 & TOK_10_7_Wreg & TOK_B=1
+Wdbyte_t: "[++"TOK_10_7_Wreg"]"                 is TOK_13_11_U=0x5 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg + 1; export *[ram]:1 TOK_10_7_Wreg; }
 
 
 # A lot like WdWRD_t
-movWs: TOK_3_0_Wreg                           is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_B=0
+movWs: TOK_3_0_Wreg                           is TOK_6_4_U=0x0 & TOK_3_0_Wreg
   { export TOK_3_0_Wreg; }
 
-movWs: "["TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_B=0
+movWs: "["TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:2 TOK_3_0_Wreg; }
 
-movWs: "["TOK_3_0_Wreg"--]"                   is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_B=0
+movWs: "["TOK_3_0_Wreg"--]"                   is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 2; export *[ram]:2 tmp; }
 
-movWs: "["TOK_3_0_Wreg"++]"                   is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_B=0
+movWs: "["TOK_3_0_Wreg"++]"                   is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { local tmp = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 2; export *[ram]:2 tmp; }
 
-movWs: "[--"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_B=0
+movWs: "[--"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 2; export *[ram]:2 TOK_3_0_Wreg; }
 
-movWs: "[++"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_B=0
+movWs: "[++"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 2; export *[ram]:2 TOK_3_0_Wreg; }
 
-movWs: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x6 & TOK_18_15_Wreg & TOK_3_0_Wreg & TOK_B=0
+movWs: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x6 & TOK_18_15_Wreg & TOK_3_0_Wreg
   { local tmp = (TOK_3_0_Wreg + TOK_18_15_Wreg); export *[ram]:2 tmp; }
 
-movWs: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x7 & TOK_18_15_Wreg & TOK_3_0_Wreg & TOK_B=0
+movWs: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x7 & TOK_18_15_Wreg & TOK_3_0_Wreg
   { local tmp = (TOK_3_0_Wreg + TOK_18_15_Wreg); export *[ram]:2 tmp; }
 
 
-movWsbyte: TOK_3_0_Wreg                           is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_B=1 & TOK_3_0_Breg
+movWsbyte: TOK_3_0_Wreg                           is TOK_6_4_U=0x0 & TOK_3_0_Wreg & TOK_3_0_Breg
   { export TOK_3_0_Breg; }
 
-movWsbyte: "["TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x1 & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "["TOK_3_0_Wreg"]"                     is TOK_6_4_U=0x1 & TOK_3_0_Wreg
   { export *[ram]:1 TOK_3_0_Wreg; }
 
-movWsbyte: "["TOK_3_0_Wreg"--]"                   is TOK_6_4_U=0x2 & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "["TOK_3_0_Wreg"--]"                   is TOK_6_4_U=0x2 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg - 1; export *[ram]:1 tmp; }
 
-movWsbyte: "["TOK_3_0_Wreg"++]"                   is TOK_6_4_U=0x3 & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "["TOK_3_0_Wreg"++]"                   is TOK_6_4_U=0x3 & TOK_3_0_Wreg
   { tmp:2 = TOK_3_0_Wreg; TOK_3_0_Wreg = TOK_3_0_Wreg + 1; export *[ram]:1 tmp; }
 
-movWsbyte: "[--"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x4 & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "[--"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x4 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg - 1; export *[ram]:1 TOK_3_0_Wreg; }
 
-movWsbyte: "[++"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x5 & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "[++"TOK_3_0_Wreg"]"                   is TOK_6_4_U=0x5 & TOK_3_0_Wreg
   { TOK_3_0_Wreg = TOK_3_0_Wreg + 1; export *[ram]:1 TOK_3_0_Wreg; }
 
-movWsbyte: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x6 & TOK_18_15_Wreg & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x6 & TOK_18_15_Wreg & TOK_3_0_Wreg
   { tmp:2 = (TOK_3_0_Wreg + TOK_18_15_Wreg); export *[ram]:1 tmp; }
 
-movWsbyte: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x7 & TOK_18_15_Wreg & TOK_3_0_Wreg & TOK_B=1
+movWsbyte: "["TOK_3_0_Wreg"+"TOK_18_15_Wreg"]"      is TOK_6_4_U=0x7 & TOK_18_15_Wreg & TOK_3_0_Wreg
   { tmp:2 = (TOK_3_0_Wreg + TOK_18_15_Wreg); export *[ram]:1 tmp; }
 
 
 
-movWd: TOK_10_7_Wreg                           is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_B=0
+movWd: TOK_10_7_Wreg                           is TOK_13_11_U=0x0 & TOK_10_7_Wreg
   { export TOK_10_7_Wreg; }
 
-movWd: "["TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x1 & TOK_10_7_Wreg & TOK_B=0
+movWd: "["TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x1 & TOK_10_7_Wreg
   { export *[ram]:2 TOK_10_7_Wreg; }
 
-movWd: "["TOK_10_7_Wreg"--]"                   is TOK_13_11_U=0x2 & TOK_10_7_Wreg & TOK_B=0
+movWd: "["TOK_10_7_Wreg"--]"                   is TOK_13_11_U=0x2 & TOK_10_7_Wreg
   { tmp:2 = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg - 2; export *[ram]:2 tmp; }
 
-movWd: "["TOK_10_7_Wreg"++]"                   is TOK_13_11_U=0x3 & TOK_10_7_Wreg & TOK_B=0
+movWd: "["TOK_10_7_Wreg"++]"                   is TOK_13_11_U=0x3 & TOK_10_7_Wreg
   { tmp:2 = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg + 2; export *[ram]:2 tmp; }
 
-movWd: "[--"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x4 & TOK_10_7_Wreg & TOK_B=0
+movWd: "[--"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x4 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg - 2; export *[ram]:2 TOK_10_7_Wreg; }
 
-movWd: "[++"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x5 & TOK_10_7_Wreg & TOK_B=0
+movWd: "[++"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x5 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg + 2; export *[ram]:2 TOK_10_7_Wreg; }
 
-movWd: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x6 & TOK_18_15_Wreg & TOK_10_7_Wreg & TOK_B=0
+movWd: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x6 & TOK_18_15_Wreg & TOK_10_7_Wreg
   { tmp:2 = (TOK_10_7_Wreg + TOK_18_15_Wreg); export *[ram]:2 tmp; }
 
-movWd: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x7 & TOK_18_15_Wreg & TOK_10_7_Wreg & TOK_B=0
+movWd: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x7 & TOK_18_15_Wreg & TOK_10_7_Wreg
   { tmp:2 = (TOK_10_7_Wreg + TOK_18_15_Wreg); export *[ram]:2 tmp; }
 
 
 
-movWdbyte: TOK_10_7_Wreg                           is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_B=1 & TOK_10_7_Breg
+movWdbyte: TOK_10_7_Wreg                           is TOK_13_11_U=0x0 & TOK_10_7_Wreg & TOK_10_7_Breg
   { export TOK_10_7_Breg; }
 
-movWdbyte: "["TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x1 & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "["TOK_10_7_Wreg"]"                     is TOK_13_11_U=0x1 & TOK_10_7_Wreg
   { export *[ram]:1 TOK_10_7_Wreg; }
 
-movWdbyte: "["TOK_10_7_Wreg"--]"                   is TOK_13_11_U=0x2 & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "["TOK_10_7_Wreg"--]"                   is TOK_13_11_U=0x2 & TOK_10_7_Wreg
   { tmp:2 = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg - 1; export *[ram]:1  tmp; }
 
-movWdbyte: "["TOK_10_7_Wreg"++]"                   is TOK_13_11_U=0x3 & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "["TOK_10_7_Wreg"++]"                   is TOK_13_11_U=0x3 & TOK_10_7_Wreg
   { tmp:2 = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg + 1; export *[ram]:1 tmp; }
 
-movWdbyte: "[--"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x4 & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "[--"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x4 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg - 1; export *[ram]:1 TOK_10_7_Wreg; }
 
-movWdbyte: "[++"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x5 & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "[++"TOK_10_7_Wreg"]"                   is TOK_13_11_U=0x5 & TOK_10_7_Wreg
   { TOK_10_7_Wreg = TOK_10_7_Wreg + 1; export *[ram]:1 TOK_10_7_Wreg; }
 
-movWdbyte: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x6 & TOK_18_15_Wreg & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x6 & TOK_18_15_Wreg & TOK_10_7_Wreg
   { tmp:2 = (TOK_10_7_Wreg + TOK_18_15_Wreg); export *[ram]:1 tmp; }
 
-movWdbyte: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x7 & TOK_18_15_Wreg & TOK_10_7_Wreg & TOK_B=1
+movWdbyte: "["TOK_10_7_Wreg"+"TOK_18_15_Wreg"]"      is TOK_13_11_U=0x7 & TOK_18_15_Wreg & TOK_10_7_Wreg
   { tmp:2 = (TOK_10_7_Wreg + TOK_18_15_Wreg); export *[ram]:1 tmp; }
 
 
 
 
 
-Wn_t:      TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_B=0
+Wn_t:      TOK_3_0_Wreg                         is TOK_3_0_Wreg
   { export TOK_3_0_Wreg; }
 
-Wnbyte_t:  TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_B=1 & TOK_3_0_Breg
+Wnbyte_t:  TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_3_0_Breg
   { export TOK_3_0_Breg; }
 
 Wnd_t:     TOK_10_7_Wreg                        is TOK_10_7_Wreg
   { export TOK_10_7_Wreg; }
   
-Wndd_t:     TOK_10_8_Dregn                        is TOK_10_8_Dreg & TOK_10_8_Dregn
+Wndd_t:     TOK_10_8_Dregn                      is TOK_10_8_Dreg & TOK_10_8_Dregn
   { export TOK_10_8_Dreg; }
 
-Wnda_t:    TOK_10_7_Wreg                        is TOK_10_7_Wreg & TOK_B=0
+Wnda_t:    TOK_10_7_Wreg                        is TOK_10_7_Wreg
   { export TOK_10_7_Wreg; }
 
-Wndabyte_t: TOK_10_7_Wreg                       is TOK_10_7_Wreg & TOK_B=1 & TOK_10_7_Breg
+Wnbf_t:    TOK_11_8_Wreg                        is TOK_11_8_Wreg
+  { export TOK_11_8_Wreg; }
+  
+Wdpp_t: "["TOK_10_7_Wreg"++]"                   is TOK_10_7_Wreg
+  { local tmp = TOK_10_7_Wreg; TOK_10_7_Wreg = TOK_10_7_Wreg + 2; export *[ram]:2 tmp; }
+  
+Wndabyte_t: TOK_10_7_Wreg                       is TOK_10_7_Wreg & TOK_10_7_Breg
   { export TOK_10_7_Breg; }
 
 Wndb_t:    TOK_3_0_Wreg                         is TOK_3_0_Wreg
@@ -685,22 +742,25 @@ Wns_t:     TOK_3_0_Wreg                         is TOK_3_0_Wreg
 Wnsbyte_t: TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_3_0_Breg
   { export TOK_3_0_Breg; }
 
-Wb_t:      TOK_18_15_Wreg                       is TOK_18_15_Wreg & TOK_B=0
+Wb_t:      TOK_18_15_Wreg                       is TOK_18_15_Wreg
   { export TOK_18_15_Wreg; }
 
-Wbbyte_t:  TOK_18_15_Wreg                       is TOK_18_15_Wreg & TOK_B=1 & TOK_18_15_Breg
+Wbbyte_t:  TOK_18_15_Wreg                       is TOK_18_15_Wreg & TOK_18_15_Breg
   { export TOK_18_15_Breg; }
 
-Wbb_t:     TOK_14_11_Wreg                       is TOK_14_11_Wreg & TOK_Bb=0
+Wbb_t:     TOK_14_11_Wreg                       is TOK_14_11_Wreg
   { export TOK_14_11_Wreg; }
 
-Wbbbyte_t: TOK_14_11_Wreg                       is TOK_14_11_Wreg & TOK_Bb=1 & TOK_14_11_Breg
+Wbds_t:     TOK_14_12_Dregn                     is TOK_14_12_Dreg & TOK_14_12_Dregn
+  { export TOK_14_12_Dreg; }
+
+Wbbbyte_t: TOK_14_11_Wreg                       is TOK_14_11_Wreg & TOK_14_11_Breg
   { export TOK_14_11_Breg; }
 
-Wnb_t:     TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_Bb=0
+Wnb_t:     TOK_3_0_Wreg                         is TOK_3_0_Wreg
   { export TOK_3_0_Wreg; }
 
-Wnbbyte_t: TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_Bb=1 & TOK_3_0_Breg
+Wnbbyte_t: TOK_3_0_Wreg                         is TOK_3_0_Wreg & TOK_3_0_Breg
   { export TOK_3_0_Breg; }
 
 Wbd_t:     TOK_14_11_Wreg                       is TOK_14_11_Wreg 
@@ -746,11 +806,14 @@ f13byte_t:  TOK_f13                           is TOK_B=1 & TOK_f13
   { export *[ram]:1 TOK_f13; }
 
 f15_t:      addr                              is TOK_f15
-  [ addr = ( TOK_f15 << 1 ); ] { tmp:2 = addr; export *[ram]:2 tmp; }
+  [ addr = ( TOK_f15 << 1 ); ] { export *[ram]:2 addr; }
 
 f15b_t:      addr                             is TOK_f15b
-  [ addr = ( TOK_f15b << 1 ); ] { tmp:2 = addr; export *[ram]:2 tmp; }
+  [ addr = ( TOK_f15b << 1 ); ] { export *[ram]:2 addr; }
 
+k3_t:       "#"TOK_k3                         is TOK_k3
+  { export *[const]:1 TOK_k3; }
+  
 k4_t:       "#"TOK_k4                         is TOK_k4
   { export *[const]:1 TOK_k4; }
 
@@ -776,6 +839,9 @@ k10_t:      "#"TOK_k10                        is TOK_B=0 & TOK_k10
 k10byte_t:  "#"TOK_k10                        is TOK_B=1 & TOK_13_12_xx=0 & TOK_k10
   { export *[const]:1 TOK_k10; }
 
+k13_12_t: "#"TOK_13_12_kk                     is TOK_13_12_kk
+  { export *[const]:1 TOK_13_12_kk; }
+  
 k14_t:      "#"TOK_k14                        is TOK_k14
   { export *[const]:2 TOK_k14; }
 
@@ -795,6 +861,7 @@ bit4byte_t: ".b"                              is TOK_bit4word=0  {  } #display o
 Bbit4_t:     "#"TOK_b4                        is TOK_b4
   { export *[const]:1 TOK_b4; }
 
+n15_t:     TOK_n15 is TOK_n15       { export  *:3 TOK_n15; }
 n16_t:     dest is TOK_n16          [ dest = inst_next + ( TOK_n16 << 1 ); ]            { export *:3 dest; }
 dest24_t:  dest is TOK_n15 ; TOK_n7 [ dest = (( TOK_n7 << 16 ) $or ( TOK_n15 << 1 )); ] { export *:3 dest; }
 
@@ -806,26 +873,25 @@ WnRDest_t:  TOK_3_0_Wreg is TOK_3_0_Wreg                      { dest:3 = 2 * zex
 
 
 # *2
-WsSlit10_t: "["TOK_3_0_Wreg"+"val"]" is TOK_18_15_S & TOK_B=0 & TOK_13_11_U & TOK_6_4_U & TOK_3_0_Wreg
+WsSlit10_t: "["TOK_3_0_Wreg"+"val"]" is TOK_18_15_S & TOK_13_11_U & TOK_6_4_U & TOK_3_0_Wreg
   [ val = ((TOK_18_15_S << 6) $or (TOK_13_11_U << 3) $or TOK_6_4_U) << 1; ]
   { tmp:2 = (TOK_3_0_Wreg + val); export *[ram]:2 tmp; } 
 
-WsSlit10byte_t: "["TOK_3_0_Wreg"+"val"]" is TOK_18_15_S & TOK_B=1 & TOK_13_11_U & TOK_6_4_U & TOK_3_0_Wreg
+WsSlit10byte_t: "["TOK_3_0_Wreg"+"val"]" is TOK_18_15_S & TOK_13_11_U & TOK_6_4_U & TOK_3_0_Wreg
   [ val = (TOK_18_15_S << 6) $or (TOK_13_11_U << 3) $or TOK_6_4_U; ]
   { tmp:2 = (TOK_3_0_Wreg + val); export *[ram]:1 tmp; }
 
 # *2
-WdSlit10_t: "["TOK_10_7_Wreg"+"val"]" is TOK_18_15_S & TOK_B=0 & TOK_13_11_U & TOK_10_7_Wreg & TOK_6_4_U
+WdSlit10_t: "["TOK_10_7_Wreg"+"val"]" is TOK_18_15_S & TOK_13_11_U & TOK_10_7_Wreg & TOK_6_4_U
   [ val = ((TOK_18_15_S << 6) $or (TOK_13_11_U << 3) $or TOK_6_4_U) << 1; ]
   { tmp:2 = (TOK_10_7_Wreg + val); export *[ram]:2 tmp; }  
 
-WdSlit10byte_t: "["TOK_10_7_Wreg"+"val"]" is TOK_18_15_S & TOK_B=1 & TOK_13_11_U & TOK_10_7_Wreg & TOK_6_4_U
+WdSlit10byte_t: "["TOK_10_7_Wreg"+"val"]" is TOK_18_15_S & TOK_13_11_U & TOK_10_7_Wreg & TOK_6_4_U
   [ val = (TOK_18_15_S << 6) $or (TOK_13_11_U << 3) $or TOK_6_4_U; ]
   { tmp:2 = (TOK_10_7_Wreg + val); export *[ram]:1 tmp; }
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 n6_t:      dest     is TOK_n6            [ dest = inst_next + ( 2 * TOK_n6 ); ]
   { export *:3 dest; }
 
@@ -837,13 +903,11 @@ k8byte_t:       "#"k8   is TOK_k8b & TOK_k8a [ k8 = (TOK_k8b << 5) | TOK_k8a; ]
 
 WnWn1_t:   TOK_3_0_Wreg is TOK_3_0_Wreg & TOK_14_11_Wreg
   { dest:3 = ( ( zext( TOK_14_11_Wreg & 0x007F ) << 16 ) | zext( TOK_3_0_Wreg & 0xFFFE ) ); export *:3 dest; }
- 
 @endif
 
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 Wbsft_t:      TOK_3_0_Wreg                      is TOK_3_0_Wreg
   { export TOK_3_0_Wreg; }
 
@@ -1095,7 +1159,6 @@ AWB_t: ""                               is TOK_1_0_aa=0x2        # No write back
 
 AWB_t: ",invalid"                       is TOK_1_0_aa=0x3        # invalid
   { tmp:2 = 0; export tmp; }
-
 @endif
 
 
@@ -1390,8 +1453,8 @@ macro packSRL( packByte ) {
 
 # Constructors ====================================================================
 
-@if defined(dsPIC30) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 # The "blockEnd" is the flag to indicate where the goto to cause the loop must be inserted.
 # Previously an :do instruction figured out the address it needed an goto to be inserted and do something like
 # do: .... [ blockEnd=1; globalset(addressForGoto,blockEnd); ]  which will cause the context bit blockEnd to be
@@ -1411,7 +1474,7 @@ getDOSTART: is epsilon { export *:3 DOSTART; }
   DOEND          = DOEND_SHADOW;
   DOSTART        = DOSTART_SHADOW;
 @endif
-@if defined(dsPIC33E) 
+@if defined(dsPIC33E) || defined(dsPIC33C)
   DL:2                               = zext(CORCON_DL);
   *[register]:2 (&:2 DCOUNT  + DL*2) = (*[register]:2 (&:2 DCOUNT + DL*2)) - 1;	
   count:2                            =  *[register]:2 (&:2 DCOUNT + DL*2);
@@ -1456,7 +1519,6 @@ getDOSTART: is epsilon { export *:3 DOSTART; }
 }
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 with : phase = 2 {
 
@@ -1486,10 +1548,6 @@ with : phase = 2 {
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 }
-@endif 
-
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 
 :add.w   k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x0 & OP_15=0 & k10_t & Wn_t {
@@ -1518,11 +1576,9 @@ with : phase = 2 {
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:add.w   Wb_t,k5_t,Wd_t is OP_23_20=0x4 & OP_19_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:add.w   Wb_t,k5_t,Wd_t is OP_23_20=0x4 & OP_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   addflags( k5_t,  Wb_t );
 
@@ -1537,7 +1593,7 @@ with : phase = 2 {
 
 
 :add.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-        OP_23_20=0x4 & OP_19_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+        OP_23_20=0x4 & OP_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   addflags( k5byte_t,  Wbbyte_t );
 
@@ -1549,11 +1605,9 @@ with : phase = 2 {
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:add.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x4 & OP_19_19=0x0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:add.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x4 & OP_19=0x0 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   addflags( Wb_t, src );
@@ -1565,9 +1619,9 @@ with : phase = 2 {
   testSRL_N     ( result );
   testSRL_Z     ( result );
   testSRH_DCword( result );
-} 
+}
 
-:add.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x4 & OP_19_19=0x0 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:add.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x4 & OP_19=0x0 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   addflags( Wbbyte_t,  src );
@@ -1580,10 +1634,9 @@ with : phase = 2 {
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :add ACCA_t is OP_23_20=0xC & OP_19_16=0xB & ACCA_t & OP_14_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
   ACCA = ACCA + ACCB;
@@ -1599,8 +1652,8 @@ with : phase = 2 {
 } 
 @endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :add WsWRO_t^r4_t,ACCA_t is OP_23_20=0xC & OP_19_16=0x9 & ACCA_t & r4_t & WsWRO_t {
 
   ACCA = (sext(WsWRO_t) << (16 - r4_t)) + ACCA;
@@ -1616,7 +1669,6 @@ with : phase = 2 {
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :addc.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x4 & OP_15=1 & WREG_t & f13_t {
 
@@ -1645,10 +1697,7 @@ with : phase = 2 {
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :addc.w   k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x0 & OP_15=1 & k10_t & Wn_t {
 
@@ -1674,11 +1723,9 @@ with : phase = 2 {
   testSRL_Zsticky( Wnbyte_t );
   testSRH_DCbyte ( Wnbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:addc.w   Wb_t,k5_t,Wd_t is OP_23_20=0x4 & OP_19_19=0x1 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:addc.w   Wb_t,k5_t,Wd_t is OP_23_20=0x4 & OP_19=0x1 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   local c:2 = zext(SRL_C);
   addflagsWithCarry( k5_t,  Wb_t, c );
@@ -1694,7 +1741,7 @@ with : phase = 2 {
 
 
 :addc.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-         OP_23_20=0x4 & OP_19_19=0x1 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+         OP_23_20=0x4 & OP_19=0x1 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   local c = SRL_C;
   addflagsWithCarry( k5byte_t,  Wbbyte_t, c );
@@ -1707,11 +1754,9 @@ with : phase = 2 {
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:addc.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x4 & OP_19_19=0x1 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:addc.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x4 & OP_19=0x1 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local c:2 = zext(SRL_C);
   local src = Ws_t;
@@ -1727,7 +1772,7 @@ with : phase = 2 {
 } 
 
 
-:addc.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x4 & OP_19_19=0x1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:addc.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x4 & OP_19=0x1 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local c = SRL_C;
   local src = Wsbyte_t;
@@ -1741,9 +1786,7 @@ with : phase = 2 {
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :and.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x6 & OP_15=0 & WREG_t & f13_t {
 
@@ -1761,9 +1804,7 @@ with : phase = 2 {
   testSRL_N     ( WREGbyte_t );
   testSRL_Z     ( WREGbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :and.w   k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x2 & OP_15=0 & k10_t & Wn_t {
 
@@ -1781,11 +1822,9 @@ with : phase = 2 {
   testSRL_N     ( Wnbyte_t );
   testSRL_Z     ( Wnbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:and.w   Wb_t,k5_t,Wd_t is OP_23_20=0x6 & OP_19_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:and.w   Wb_t,k5_t,Wd_t is OP_23_20=0x6 & OP_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   local result =         k5_t & Wb_t;
   Wd_t = result;
@@ -1796,7 +1835,7 @@ with : phase = 2 {
 
 
 :and.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-        OP_23_20=0x6 & OP_19_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+        OP_23_20=0x6 & OP_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   local result =     k5byte_t & Wbbyte_t;
   Wdbyte_t = result;
@@ -1804,12 +1843,9 @@ with : phase = 2 {
   testSRL_N     ( result );
   testSRL_Z     ( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:and.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x6 & OP_19_19=0x0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:and.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x6 & OP_19=0x0 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local result = Wb_t & Ws_t;
   build Wd_t;
@@ -1820,7 +1856,7 @@ with : phase = 2 {
 } 
 
 
-:and.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x6 & OP_19_19=0x0 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:and.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x6 & OP_19=0x0 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local result = Wbbyte_t & Wsbyte_t;
   build Wdbyte_t;
@@ -1829,9 +1865,7 @@ with : phase = 2 {
   testSRL_N     ( result );
   testSRL_Z     ( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :asr.w   f13_t^WREG_t is OP_23_20=0xD & OP_19_16=0x5 & OP_15=1 & WREG_t & f13_t {
 
@@ -1853,11 +1887,9 @@ with : phase = 2 {
   testSRL_N     ( WREGbyte_t );
   testSRL_Z     ( WREGbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:asr.w   Ws_t,Wd_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x1 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:asr.w   Ws_t,Wd_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   
@@ -1871,7 +1903,7 @@ with : phase = 2 {
 } 
 
 
-:asr.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:asr.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   
@@ -1883,10 +1915,7 @@ with : phase = 2 {
   testSRL_N     ( result );
   testSRL_Z     ( result );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :asr.w   Wbd_t,k4_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xE & OP_15=0x1 & OP_6_4=0x4 & Wbd_t & Wnd_t & k4_t {
 
@@ -1895,9 +1924,7 @@ with : phase = 2 {
   testSRL_N     ( Wnd_t );
   testSRL_Z     ( Wnd_t );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :asr.w  Wbd_t,Wns_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xE & OP_15=0x1 & OP_6_4=0x0 & Wbd_t & Wnd_t & Wns_t {
 
@@ -1906,9 +1933,7 @@ with : phase = 2 {
   testSRL_N     ( Wnd_t );
   testSRL_Z     ( Wnd_t );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # The pdf manual is very confusing for this instruction. The final conclusion is that the .B
 # is really a psuedo instruction and that everything is actually encoded as a word with the
@@ -1918,13 +1943,11 @@ with : phase = 2 {
   local mask:2 = ~(1 << bit4_t);
   f12_t = f12_t & mask;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # DSRPAG ????? 
 :bclr.w  Wsb_t,Bbit4_t is
-  OP_23_20=0xA & OP_19_16=0x1 & Bbit4_t & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
+  OP_23_20=0xA & OP_19_16=0x1 & Bbit4_t & OP_11=0x0 & TOK_Bb=0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
 
   local mask:2 = ~(1 << Bbit4_t);
   Wsb_t = Wsb_t & mask;
@@ -1932,23 +1955,74 @@ with : phase = 2 {
 
 
 :bclr.b  Wsbbyte_t,Bbit4_t is
-  OP_23_20=0xA & OP_19_16=0x1 & Bbit4_t & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
+  OP_23_20=0xA & OP_19_16=0x1 & Bbit4_t & OP_11=0x0 & TOK_Bb=1 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
 
   local mask:1 = ~(1 << Bbit4_t);
   Wsbbyte_t = Wsbbyte_t & mask;
 } 
+
+
+@if defined(dsPIC33C)
+:bfext TOK_k4 "#"wid5, Wsb_t, Wnbf_t is
+	OP_23_16=0x0A & OP_15_12=0x8 & Wnbf_t & TOK_k4b & TOK_k4;
+	OP_23_16=0x0 & OP_15_8=0x0 & OP_7=0x0 & Wsb_t
+[wid5 = TOK_k4b - TOK_k4 + 1;]
+{
+    local mask:2 = (0xff >> (16-(wid5 + 1))) << TOK_k4;
+    local result:2 = (Wsb_t & mask) >> TOK_k4;
+	Wnbf_t = result;
+}
+
+:bfext TOK_k4 "#"wid5, n15_t, Wnbf_t is
+	OP_23_16=0x0A & OP_15_12=0xA & Wnbf_t & TOK_k4b & TOK_k4;
+	OP_23_16=0x0 & OP_0=0x0 & n15_t
+[wid5 = TOK_k4b - TOK_k4 + 1;]
+{
+    local mask:2 = (0xff >> (16-(wid5 + 1))) << TOK_k4;
+    local word = *:2 n15_t;
+    local result:2 = (word & mask) >> TOK_k4;
+	Wnbf_t = result;
+}
+
+:bfins TOK_k4 "#"wid5, Wnbf_t, Wsb_t is
+	OP_23_16=0x0A & OP_15_12=0x0 & Wnbf_t & TOK_k4b & TOK_k4;
+	OP_23_16=0x0 & OP_15_8=0x0 & OP_7=0x0 & Wsb_t
+[wid5 = TOK_k4b - TOK_k4 + 1;]
+{
+    local mask:2 = (0xff >> (16-(wid5 + 1))) << TOK_k4;
+    local result:2 = (Wnbf_t & mask) >> TOK_k4;
+	Wsb_t = result;
+}
+
+:bfins TOK_k4 "#"wid5, Wnbf_t, n15_t is
+	OP_23_16=0x0A & OP_15_12=0x2 & Wnbf_t & TOK_k4b & TOK_k4;
+	OP_23_16=0x0 & OP_0=0x0 & n15_t
+[wid5 = TOK_k4b - TOK_k4 + 1;]
+{
+    local mask:2 = (0xff >> (16-(wid5 + 1))) << TOK_k4;
+    local result:2 = (Wnbf_t & mask) >> TOK_k4;
+	*:2 n15_t = result;
+}
+
+
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+
+@if defined(dsPIC24F) || defined(dsPIC33E) || defined(dsPIC33C)
+define pcodeop bootswap;
+:bootswp is OP_23_0=0xFE2000 {
+  bootswap();
+}
+@endif
+
 
 :bra n16_t is OP_23_20=0x3 & OP_19_16=0x7 & n16_t {
 
   goto n16_t;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :bra Wns_t is  OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x6 & OP_11_8=0x0 & OP_7_4=0x0 & Wns_t & WordInstNext {
 
   #Note: identical operation as below, unique targets
@@ -1957,8 +2031,8 @@ with : phase = 2 {
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :bra Wns_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x6 & OP_7_4=0x0 & Wns_t  {
 
   #Note: identical operation as above, unique targets
@@ -1968,92 +2042,29 @@ with : phase = 2 {
 } 
 @endif
 
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 cond1: "c" is  TOK_CCCC=0x1 { tmpBool:1 = SRL_C; export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 cond1: "ge" is  TOK_CCCC=0xD { tmpBool:1 = ((SRL_N && SRL_OV) || (!SRL_N && !SRL_OV)); export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 #Note: same as branch C, not supported in disassembly
 # cond1: "geu" is  TOK_CCCC=0x1 { tmpBool:1 = SRL_C ); export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 cond1: "gt" is  TOK_CCCC=0xC
                 { tmpBool:1 = ((!SRL_Z && SRL_N && SRL_OV) || (!SRL_Z && !SRL_N && !SRL_OV)); export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 cond1: "gtu" is  TOK_CCCC=0xE { tmpBool:1 = SRL_C && !SRL_Z; export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 cond1: "le" is  TOK_CCCC=0x4
                 { tmpBool:1 = (SRL_Z || (SRL_N && !SRL_OV) || (!SRL_N && SRL_OV)); export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 cond1: "leu" is  TOK_CCCC=0x6 { tmpBool:1 = (!SRL_C || SRL_Z); export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 cond1: "lt" is  TOK_CCCC=0x5 { tmpBool:1 = ((SRL_N && !SRL_OV) || (!SRL_N && SRL_OV)); export tmpBool; }
-# @endif
-
-# @if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-
 cond1: "n" is  TOK_CCCC=0x3 { tmpBool:1 = (SRL_N); export tmpBool; }
-# @endif
-
-
 cond1: "nc" is  TOK_CCCC=0x9 { tmpBool:1 = (!SRL_C); export tmpBool; }
-# @endif
-
 cond1: "nn" is  TOK_CCCC=0xB { tmpBool:1 = (!SRL_N); export tmpBool; }
-# @endif
-
-
 cond1: "nov" is  TOK_CCCC=0x8 { tmpBool:1 = (!SRL_OV); export tmpBool; }
-# @endif
-
-
 cond1: "nz" is  TOK_CCCC=0xA { tmpBool:1 = (!SRL_Z); export tmpBool; }
-# @
-
 cond2: "oa" is  TOK_CCCC=0xC { tmpBool:1 = (SRH_OA); export tmpBool; }
-# @endif
-
-
 cond2: "ob" is  TOK_CCCC=0xD { tmpBool:1 = (SRH_OB); export tmpBool; }
-# @endif
-
-
 cond1: "ov" is  TOK_CCCC=0x0 { tmpBool:1 = (SRL_OV); export tmpBool; }
-# @endif
-
-
 cond2: "sa" is  TOK_CCCC=0xE { tmpBool:1 = (SRH_SA); export tmpBool; }
-# @endif
-
-
 cond2: "sb" is  TOK_CCCC=0xF { tmpBool:1 = (SRH_SB); export tmpBool; }
-# @endif
-
-
 cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
-# @endif
 
 
 
@@ -2082,19 +2093,16 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   if ( cond2 ) goto n16_t;
 } 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :bset.w  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0x8 & bit4byte_t & bit4_t & f12_t {
  
   local mask:2 = 1 << bit4_t;
   f12_t = f12_t | mask;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :bset.w  Wsb_t,Bbit4_t is
-  OP_23_20=0xA & OP_19_16=0x0 & Bbit4_t & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
+  OP_23_20=0xA & OP_19_16=0x0 & Bbit4_t & OP_11=0x0 & TOK_Bb=0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
 
   local mask:2 = 1 << Bbit4_t;
   Wsb_t = Wsb_t | mask;
@@ -2102,14 +2110,12 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :bset.b  Wsbbyte_t,Bbit4_t is
-  OP_23_20=0xA & OP_19_16=0x0 & Bbit4_t & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
+  OP_23_20=0xA & OP_19_16=0x0 & Bbit4_t & OP_11=0x0 & TOK_Bb=1 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
 
   local mask:1 = 1 << Bbit4_t;
   Wsbbyte_t = Wsbbyte_t | mask;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :bsw.c  Ws_t,Wbd_t is OP_23_20=0xA & OP_19_16=0xD & TOK_Z=0 & Wbd_t & OP_10_8=0x0 & OP_7=0x0 & $(WSconstraint) & Ws_t {
 
@@ -2125,22 +2131,18 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   local bit = Wbd_t & 0xF;
   Ws_t = ( Ws_t & ~(1 << bit) ) | (zext(SRL_Z) << bit);
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btg^bit4byte_t  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0xA & bit4byte_t & bit4_t & f12_t {
 
   local mask:2 = 1 << bit4_t;
   f12_t = f12_t ^ mask;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # DSRPAG ????? 
 :btg.w  Wsb_t,Bbit4_t is
-        OP_23_20=0xA & OP_19_16=0x2 & Bbit4_t & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
+        OP_23_20=0xA & OP_19_16=0x2 & Bbit4_t & OP_11=0x0 & TOK_Bb=0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
 
   local mask:2 = 1 << Bbit4_t;
   Wsb_t = Wsb_t ^ mask;
@@ -2148,14 +2150,12 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :btg.b  Wsbbyte_t,Bbit4_t is
-        OP_23_20=0xA & OP_19_16=0x2 & Bbit4_t & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
+        OP_23_20=0xA & OP_19_16=0x2 & Bbit4_t & OP_11=0x0 & TOK_Bb=1 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
 
   local mask:1 = 1 << Bbit4_t;
   Wsbbyte_t = Wsbbyte_t ^ mask;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btsc^bit4byte_t  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0xF & bit4byte_t & bit4_t & f12_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
@@ -2163,9 +2163,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   local mask:2 = 1 << bit4_t;
   SkipNextFlag = ( ( f12_t & mask ) == 0 );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btsc.w  Wsb_t,Bbit4_t is OP_23_16=0xa7 & OP_11_7=0x0 & Bbit4_t & $(WSconstraint) & Wsb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
@@ -2173,9 +2171,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   local mask:2 = 1 << Bbit4_t;
   SkipNextFlag = ( ( Wsb_t & mask ) == 0 );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btss^bit4byte_t  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0xE & bit4byte_t & bit4_t & f12_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
@@ -2183,9 +2179,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   local mask:2 = 1 << bit4_t;
   SkipNextFlag = ( ( f12_t & mask ) != 0 );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btss.w  Wsb_t,Bbit4_t is OP_23_16=0xa6 & OP_11_7=0x0 & Bbit4_t & $(WSconstraint) & Wsb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
@@ -2193,18 +2187,14 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   local mask:2 = 1 << Bbit4_t;
   SkipNextFlag = ( ( Wsb_t & mask ) != 0 );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btst.w  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0xB & bit4byte_t & bit4_t & f12_t {
 
   local mask:2 = 1 << bit4_t;
   SRL_Z = ( ( f12_t & mask ) == 0 );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # 						1010 0011 1111 0000 0000 0001
 :btst.c  Wsb_t,Bbit4_t is 
@@ -2228,9 +2218,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   # set Z to value of bit complemented
   SRL_Z = ( Wsb_t & mask ) == 0;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btst.c  Ws_t,Wbd_t is OP_23_20=0xA & OP_19_16=0x5 & TOK_Z=0 & Wbd_t & OP_10_8=0x0 & OP_7=0x0 & $(WSconstraint) & Ws_t {
 
@@ -2244,9 +2232,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   # set Z to value of bit complemented
   SRL_Z = ( Ws_t & (1 << (Wbd_t & 0xF)) ) == 0;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :btsts^bit4byte_t  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0xC & bit4byte_t & bit4_t & f12_t {
 
@@ -2258,10 +2244,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   # set value of bit to 1
   f12_t = f12_t | mask;
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # DSRPAG ?????  
 :btsts.c  Wsb_t,Bbit4_t is OP_23_20=0xA & OP_19_16=0x4 & Bbit4_t & TOK_Zb=0 & OP_10_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
@@ -2288,10 +2271,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   # set value of bit to 1
   Wsb_t = wsSrc | mask;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F)
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F)
 :call  dest24_t is ( OP_23_20=0x0 & OP_19_16=0x2 & OP_0=0x0 & WordInstNext4;
                      OP_23_20=0x0 & OP_19_16=0x0 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7=0x0 ) & dest24_t  {
 
@@ -2315,8 +2297,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :call  dest24_t is ( OP_23_20=0x0 & OP_19_16=0x2 & OP_0=0x0;
                      OP_23_20=0x0 & OP_19_16=0x0 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7=0x0 ) & dest24_t {
 
@@ -2343,8 +2324,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :call  WnDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & WnDest_t & WordInstNext4 {
 
 @ifdef NEVER
@@ -2367,8 +2347,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :call  WnDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & WnDest_t & WordInstNext4 {
 
 @ifdef NEVER
@@ -2393,8 +2372,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :call.l  WnWn1_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15=0x1 & WnWn1_t & OP_10_8=0x0 & OP_7_4=0x0 & WordInstNext4 {
 
 @ifdef NEVER
@@ -2419,8 +2397,6 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :clr.w   f13b_t is OP_23_20=0xE & OP_19_16=0xF & OP_15=0 & f13b_t {
 
   f13b_t = 0;
@@ -2443,24 +2419,20 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
   WREGbbyte_t = 0;
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:clr.w   Wd_t is OP_23_20=0xE & OP_19_16=0xB & OP_15=0x0 & $(WDconstraint) & Wd_t & OP_6_4=0x0 & OP_3_0=0x0 {
+:clr.w   Wd_t is OP_23_20=0xE & OP_19_16=0xB & OP_15=0x0 & TOK_B=0 & $(WDconstraint) & Wd_t & OP_6_4=0x0 & OP_3_0=0x0 {
 
   Wd_t = 0;
 } 
 
 
-:clr.b  Wdbyte_t is OP_23_20=0xE & OP_19_16=0xB & OP_15=0x0 & $(WDconstraint) & Wdbyte_t & OP_6_4=0x0 & OP_3_0=0x0 {
+:clr.b  Wdbyte_t is OP_23_20=0xE & OP_19_16=0xB & OP_15=0x0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & OP_6_4=0x0 & OP_3_0=0x0 {
 
   Wdbyte_t = 0;
 } 
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 #
 # Note: The following constructors have three optional parameters, Wx, Wy and AWB.  To implement them
 # without if-then-else constructs, the permutations were made.  The TOK tokens correspond, in order,
@@ -2873,17 +2845,13 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :clrwdt is OP_23_20=0xF & OP_19_16=0xE & OP_15_12=0x6 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
   WDTcount      = 0;    # ????? formal name not documented
   WDTprescalarA = 0;    # ????? formal name not documented
   WDTprescalarB = 0;    # ????? formal name not documented
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :com.w   f13_t^WREG_t is OP_23_20=0xE & OP_19_16=0xE & OP_15=1 & WREG_t & f13_t {
 
@@ -2900,11 +2868,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_N     ( WREGbyte_t );
   testSRL_Z     ( WREGbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:com.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0xA & OP_15=0x1 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:com.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0xA & OP_15=0x1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local result  =   ~Ws_t;
   build Wd_t;
@@ -2915,7 +2881,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 
 
-:com.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0xA & OP_15=0x1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:com.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0xA & OP_15=0x1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local result  =   ~Wsbyte_t;
   build Wdbyte_t;
@@ -2924,9 +2890,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_N     ( result );
   testSRL_Z     ( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :cp.w   f13_t is OP_23_20=0xE & OP_19_16=0x3 & OP_15=0 & OP_13=0 & f13_t {
 
@@ -2952,10 +2916,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( tmp );
   testSRH_DCbyte( tmp );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :cp.w   Wbb_t,k5_B10_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & OP_9_8=0x0 & OP_7_5=0x3 & Wbb_t & k5_B10_t {
 
   subflags( Wbb_t,  k5_B10_t );
@@ -2981,9 +2944,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 
-:cp.w   Wbb_t,k8_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & OP_6_5=0x3 & Wbb_t & k8_t {
+:cp.w   Wbb_t,k8_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & TOK_Bb=0 & OP_6_5=0x3 & Wbb_t & k8_t {
 
   subflags( Wbb_t,  k8_t );
 
@@ -2995,7 +2958,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 
 
-:cp.b  Wbbbyte_t,k8byte_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & OP_6_5=0x3 & Wbbbyte_t & k8byte_t {
+:cp.b  Wbbbyte_t,k8byte_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & TOK_Bb=1 & OP_6_5=0x3 & Wbbbyte_t & k8byte_t {
 
   subflags( Wbbbyte_t,  k8byte_t );
 
@@ -3007,9 +2970,8 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:cp.w   Wbb_t,Wsb_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & OP_9_8=0x0 & OP_7=0x0 & Wbb_t & $(WSconstraint) & Wsb_t {
+:cp.w   Wbb_t,Wsb_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & TOK_Bb=0 & OP_9_8=0x0 & OP_7=0x0 & Wbb_t & $(WSconstraint) & Wsb_t {
 
   local src = Wsb_t;
   subflags( Wbb_t,  src );
@@ -3023,7 +2985,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cp.b  Wbbbyte_t,Wsbbyte_t is
-       OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & OP_9_8=0x0 & OP_7=0x0 & Wbbbyte_t & $(WSconstraint) & Wsbbyte_t {
+       OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x0 & TOK_Bb=1 & OP_9_8=0x0 & OP_7=0x0 & Wbbbyte_t & $(WSconstraint) & Wsbbyte_t {
 
   local src = Wsbbyte_t;
   subflags( Wbbbyte_t,  src );
@@ -3034,9 +2996,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( tmp );
   testSRH_DCbyte( tmp );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :cp0.w   f13_t is OP_23_20=0xE & OP_19_16=0x2 & OP_15=0 & OP_13=0 & f13_t {
 
@@ -3060,11 +3020,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( src );
   testSRH_DCbyte( src );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:cp0.w   Wsb_t is OP_23_20=0xE & OP_19_16=0x0 & OP_15_12=0x0 & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
+:cp0.w   Wsb_t is OP_23_20=0xE & OP_19_16=0x0 & OP_15_12=0x0 & OP_11=0x0 & TOK_Bb=0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsb_t {
 
   local src = Wsb_t;
   local zero:2 = 0;
@@ -3076,7 +3034,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 
 
-:cp0.b  Wsbbyte_t is OP_23_20=0xE & OP_19_16=0x0 & OP_15_12=0x0 & OP_11=0x0 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
+:cp0.b  Wsbbyte_t is OP_23_20=0xE & OP_19_16=0x0 & OP_15_12=0x0 & OP_11=0x0 & TOK_Bb=1 & OP_9_8=0x0 & OP_7=0x0 & $(WSconstraint) & Wsbbyte_t {
 
   local src = Wsbbyte_t;
   local zero:1 = 0;
@@ -3086,9 +3044,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( src );
   testSRH_DCbyte( src );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :cpb.w   f13_t is OP_23_20=0xE & OP_19_16=0x3 & OP_15=1 & OP_13=0 & f13_t {
 
@@ -3116,10 +3072,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Zsticky( tmp );
   testSRH_DCbyte ( tmp );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :cpb.w  Wb_t,k5_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & OP_9_8=0x0 & OP_7_5=0x3 & Wb_t & k5_t {
 
   local notCarry:2 = zext(!SRL_C);
@@ -3147,9 +3102,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
-:cpb.w   Wbb_t,k8_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & OP_6_5=0x3 & Wbb_t & k8_t {
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
+:cpb.w   Wbb_t,k8_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & TOK_Bb=0 & OP_6_5=0x3 & Wbb_t & k8_t {
 
   local notCarry:2 = zext(!SRL_C);
   subflagsWithCarry( Wbb_t, k8_t, notCarry );
@@ -3162,7 +3117,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 
 
-:cpb.b  Wbbbyte_t,k8byte_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & OP_6_5=0x3 & Wbbbyte_t & k8byte_t {
+:cpb.b  Wbbbyte_t,k8byte_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & TOK_Bb=1 & OP_6_5=0x3 & Wbbbyte_t & k8byte_t {
 
   local notCarry = !SRL_C;
   subflagsWithCarry( Wbbbyte_t,  k8byte_t,  notCarry );
@@ -3175,9 +3130,8 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:cpb.w   Wbb_t,Wsb_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & OP_9_8=0x0 & OP_7=0x0 & Wbb_t & $(WSconstraint) & Wsb_t {
+:cpb.w   Wbb_t,Wsb_t is OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & TOK_Bb=0 & OP_9_8=0x0 & OP_7=0x0 & Wbb_t & $(WSconstraint) & Wsb_t {
 
   local notCarry:2 = zext(!SRL_C);
   local src = Wsb_t;
@@ -3192,7 +3146,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpb.b  Wbbbyte_t,Wsbbyte_t is
-        OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & OP_9_8=0x0 & OP_7=0x0 & Wbbbyte_t & $(WSconstraint) & Wsbbyte_t {
+        OP_23_20=0xE & OP_19_16=0x1 & OP_15=0x1 & TOK_Bb=1 & OP_9_8=0x0 & OP_7=0x0 & Wbbbyte_t & $(WSconstraint) & Wsbbyte_t {
 
   local notCarry = !SRL_C;
   local src = Wsbbyte_t;
@@ -3204,71 +3158,70 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Zsticky( tmp );
   testSRH_DCbyte ( tmp );
 } 
-@endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
-:cpbeq.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & Wbb_t & n6_t & Wnb_t {
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
+:cpbeq.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & TOK_Bb=0 & Wbb_t & n6_t & Wnb_t {
 
   if (Wbb_t == Wnb_t) goto n6_t; # ????? what about the flags, examples show them setting?
 } 
 
 
 :cpbeq.b  Wbbbyte_t,Wnbbyte_t,n6_t is
-          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & Wbbbyte_t & n6_t & Wnbbyte_t {
+          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & TOK_Bb=1 & Wbbbyte_t & n6_t & Wnbbyte_t {
 
   if (Wbbbyte_t == Wnbbyte_t) goto n6_t;
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
-:cpbgt.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & Wbb_t & n6_t & Wnb_t {
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
+:cpbgt.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & TOK_Bb=0 & Wbb_t & n6_t & Wnb_t {
 
   if (Wbb_t s> Wnb_t) goto n6_t; # ????? what about the flags, examples show them setting?
 } 
 
 
 :cpbgt.b  Wbbbyte_t,Wnbbyte_t,n6_t is
-          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & Wbbbyte_t & n6_t & Wnbbyte_t {
+          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & TOK_Bb=1 & Wbbbyte_t & n6_t & Wnbbyte_t {
 
   if (Wbbbyte_t s> Wnbbyte_t) goto n6_t;
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
-:cpblt.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & Wbb_t & n6_t & Wnb_t {
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
+:cpblt.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & TOK_Bb=0 & Wbb_t & n6_t & Wnb_t {
 
   if (Wbb_t s< Wnb_t) goto n6_t; # ????? what about the flags, examples show them setting?
 } 
 
 
 :cpblt.b  Wbbbyte_t,Wnbbyte_t,n6_t is
-          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & Wbbbyte_t & n6_t & Wnbbyte_t {
+          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & TOK_Bb=1 & Wbbbyte_t & n6_t & Wnbbyte_t {
 
   if (Wbbbyte_t s< Wnbbyte_t) goto n6_t;
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
-:cpbne.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & Wbb_t & n6_t & Wnb_t {
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
+:cpbne.w   Wbb_t,Wnb_t,n6_t is OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & TOK_Bb=0 & Wbb_t & n6_t & Wnb_t {
 
   if (Wbb_t != Wnb_t) goto n6_t; # ????? what about the flags, examples show them setting?
 } 
 
 
-:cpbne.b  Wbbbyte_t,Wnbbyte_t,n6_t is OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & Wbbbyte_t & n6_t & Wnbbyte_t {
+:cpbne.b  Wbbbyte_t,Wnbbyte_t,n6_t is OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & TOK_Bb=1 & Wbbbyte_t & n6_t & Wnbbyte_t {
 
   if (Wbbbyte_t != Wnbbyte_t) goto n6_t;
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :cpseq.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t == Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3276,17 +3229,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpseq.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t == Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :cpseq.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t == Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3294,17 +3247,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpseq.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x1 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t == Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33E) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :cpsgt.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t s> Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3312,17 +3265,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpsgt.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t s> Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :cpsgt.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t s> Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3330,17 +3283,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpsgt.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x0 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t s> Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :cpslt.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t s< Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3348,17 +3301,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpslt.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t s< Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :cpslt.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t s< Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3366,17 +3319,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpslt.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x6 & OP_15=0x1 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t s< Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :cpsne.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t != Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3384,17 +3337,17 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpsne.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x0 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t != Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :cpsne.w   Wbb_t,Wnb_t is
-         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
+         OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & TOK_Bb=0 & Wbb_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnb_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbb_t != Wnb_t); # ????? what about the flags, examples show them setting?
@@ -3402,14 +3355,24 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 
 
 :cpsne.b  Wbbbyte_t,Wnbbyte_t is
-          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
+          OP_23_20=0xE & OP_19_16=0x7 & OP_15=0x0 & TOK_Bb=1 & Wbbbyte_t & OP_9_8=0x0 & OP_7_4=0x1 & Wnbbyte_t
   [ skipInstr = 1; globalset(inst_next,skipInstr); ] {
 
   SkipNextFlag = (Wbbbyte_t != Wnbbyte_t);
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+
+@if defined(dsPIC33E) || defined(dsPIC33C)
+define pcodeop contextswap;
+:ctxtswp k3_t is OP_23_4=0xFE200 & OP_3=0x0 & k3_t {
+  contextswap(k3_t);
+}
+
+:ctxtswp Wndb_t is OP_23_4=0xFEF00 & Wndb_t {
+  contextswap(Wndb_t);
+}
+@endif
 
 :daw.b Wnsbyte_t is OP_23_20=0xF & OP_19_16=0xD & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & Wnsbyte_t {
 
@@ -3422,9 +3385,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
     SRL_C = 1;
   <else2>
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :dec.w   f13_t,^WREG_t  is OP_23_20=0xE & OP_19_16=0xD & OP_15=0 & WREG_t & f13_t {
 
@@ -3452,11 +3413,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( WREGbyte_t );
   testSRH_DCbyte( WREGbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:dec.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:dec.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local one:2 = 1;
@@ -3472,7 +3431,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 
 
-:dec.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x0 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:dec.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   local one:1 = 1;
@@ -3486,9 +3445,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :dec2.w   f13_t^WREG_t is OP_23_20=0xE & OP_19_16=0xD & OP_15=1 & WREG_t & f13_t {
 
@@ -3516,11 +3473,9 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( WREGbyte_t );
   testSRH_DCbyte( WREGbyte_t );
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:dec2.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x1 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:dec2.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local two:2 = 2;
@@ -3536,7 +3491,7 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 } 
 
 
-:dec2.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:dec2.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0x9 & OP_15=0x1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   local two:1 = 2;
@@ -3550,18 +3505,15 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :disi  k14_t is OP_23_20=0xF & OP_19_16=0xC & OP_15_14=0x0 & k14_t {
 
   DISICNT 	= k14_t;
   DISI 		= 1;
 } 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+
 :repeat" 0x11 div.sw"   TOK_10_7_Wreg,TOK_3_0_Wreg is
           OP_31_0=0x090011;
           OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 & TOK_10_7_Wreg & TOK_W=0 & OP_5_4=0x0 & TOK_3_0_Wreg {
@@ -3648,9 +3600,7 @@ define pcodeop isDivideOverflow;
   # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
   SRL_C  = 0;
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :repeat" 0x11 div.uw"   TOK_10_7_Wreg,TOK_3_0_Wreg is
           OP_31_0=0x090011;
@@ -3737,17 +3687,14 @@ define pcodeop isDivideOverflow;
   # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
   SRL_C  = 0;
 }
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :repeat" 0x11 divf"  TOK_14_11_Wreg,TOK_3_0_Wreg is
          OP_31_0=0x090011;
          OP_23_20=0xD & OP_19_16=0x9 & OP_15=0x0 &
          TOK_14_11_Wreg & OP_10_8=0x0 & OP_7_4=0x0 & TOK_3_0_Wreg {
 
-  # Note: this implementation is not iterative, like the actual op.
-  # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
   dividend:4 	= (sext(TOK_14_11_Wreg) << 16);
   local tmp0:4 		= dividend s/ sext(TOK_3_0_Wreg);
   W0 			= tmp0:2;
@@ -3789,8 +3736,112 @@ define pcodeop isDivideOverflow;
 }
 @endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(dsPIC33C)
+define pcodeop pic30_fdiv;
+define pcodeop pic30_frem;
+
+:divf2  TOK_14_11_Wreg,TOK_3_0_Wreg is
+         OP_23_20=0xD & OP_19_16=0x9 & OP_15=0x0 &
+         TOK_14_11_Wreg & OP_10_8=0x0 & OP_7_4=0x2 & TOK_3_0_Wreg & TOK_14_11_Wregn {
+
+  # Note: this implementation is not iterative, like the actual op.
+  # Rather, it will decompile accurately and emulate correctly using the Sleigh divide support.
+  local dividend:4 	= (sext(TOK_14_11_Wreg) << 16);
+  local tmp0:4 		= pic30_fdiv(dividend,TOK_3_0_Wreg,TOK_14_11_Wregn);
+  local tmp1:4 		= pic30_frem(dividend,TOK_3_0_Wreg,TOK_14_11_Wregn);
+  TOK_14_11_Wregn 	= tmp0:2;
+  TOK_14_11_Wreg	= tmp1:2;
+
+  testSRL_N     ( TOK_14_11_Wreg );
+
+  # overflow as defined in note 1
+  SRL_OV = (TOK_14_11_Wreg s>= TOK_3_0_Wreg);
+
+  testSRL_Z     ( TOK_14_11_Wreg );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
+
+define pcodeop pic30_div2;
+define pcodeop pic30_rem2;
+:div2.sw   TOK_10_7_Wreg,TOK_3_0_Wreg is
+          OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 & TOK_10_7_Wreg & TOK_10_7_Wregp & TOK_W=0 & OP_5_4=0x2 & TOK_3_0_Wreg {
+  local div:2 = pic30_div(TOK_10_7_Wreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem(TOK_10_7_Wreg,TOK_3_0_Wreg);
+
+  TOK_10_7_Wreg = div;
+  TOK_10_7_Wregp = rem;
+  
+  testSRL_N     ( TOK_10_7_Wregp );
+  # overflow as defined in note 2
+  SRL_OV = (TOK_10_7_Wreg == 0x8000) && (TOK_3_0_Wreg == 0xFFFF);
+  testSRL_Z     ( TOK_10_7_Wregp );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
+
+:div2.sd  TOK_10_8_Dregn,TOK_3_0_Wreg is
+         OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x0 &
+         TOK_10_8_Dreg & TOK_10_8_Dregn & OP_7=0 & TOK_W=1 & OP_5_4=0x2 & TOK_3_0_Wreg {
+
+  # overflow as defined in note 2
+  SRL_OV = isDivideOverflow(TOK_10_8_Dreg, TOK_3_0_Wreg);
+
+  local div:2 = pic30_div2(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem2(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  
+  TOK_10_8_Dreg = (zext(rem) << 16) + zext(div);
+
+  testSRL_N     ( rem );
+  testSRL_Z     ( rem );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
+
+
+:div2.uw   TOK_10_7_Wreg,TOK_3_0_Wreg is
+          OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 & TOK_10_7_Wreg & TOK_10_7_Wregp & TOK_W=0 & OP_5_4=0x2 & TOK_3_0_Wreg {
+  local div:2 = pic30_div(TOK_10_7_Wreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem(TOK_10_7_Wreg,TOK_3_0_Wreg);
+
+  TOK_10_7_Wreg = div;
+  TOK_10_7_Wregp = rem;
+  
+  testSRL_N     ( TOK_10_7_Wregp );
+  # overflow as defined in note 2
+  SRL_OV = 0;
+  testSRL_Z     ( TOK_10_7_Wregp );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
+
+:div2.ud  TOK_10_8_Dregn,TOK_3_0_Wreg is
+         OP_23_20=0xD & OP_19_16=0x8 & OP_15=0x1 &
+         TOK_10_8_Dreg & TOK_10_8_Dregn & OP_7=0 & TOK_W=1 & OP_5_4=0x2 & TOK_3_0_Wreg {
+
+  # overflow as defined in note 2
+  SRL_OV = isDivideOverflow(TOK_10_8_Dreg, TOK_3_0_Wreg);
+
+  local div:2 = pic30_div2(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  local rem:2 = pic30_rem2(TOK_10_8_Dreg,TOK_3_0_Wreg);
+  
+  TOK_10_8_Dreg = (zext(rem) << 16) + zext(div);
+
+  testSRL_N     ( rem );
+  testSRL_Z     ( rem );
+
+  # Carry is modified, but modification is not defined, just assign to 0 for data flow analysis
+  SRL_C  = 0;
+}
+@endif
+
+
+@if defined(dsPIC30F) || defined(dsPIC33F) 
 :do k14_t,n16_t is OP_23_20=0x0 & OP_19_16=0x8 & OP_15_14=0x0 & k14_t ;
                    OP_23_20=0x0 & OP_19_16=0x0 & n16_t & WordInstNext
                    [ blockEnd=1; globalset(n16_t,blockEnd);] 
@@ -3804,8 +3855,8 @@ define pcodeop isDivideOverflow;
 }
 @endif
 
-@if  defined(dsPIC33E) 
 
+@if defined(dsPIC33E) || defined(dsPIC33C)
 :do k15_t,n16_t is OP_23_20=0x0 & OP_19_16=0x8 & OP_15=0x0 & k15_t ;
                    OP_23_20=0x0 & OP_19_16=0x0 &             n16_t & WordInstNext
                    [ blockEnd=1; globalset(n16_t,blockEnd); ]
@@ -3820,8 +3871,7 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) 
 :do Wns_t,n16_t is OP_23_20=0x0 & OP_19_16=0x8 & OP_15_12=0x8 & OP_11_8=0x0 & OP_7_4=0x0 & Wns_t ;
                    OP_23_20=0x0 & OP_19_16=0x0 & n16_t & WordInstNext
                    [ blockEnd=1; globalset(n16_t,blockEnd); ]
@@ -3836,8 +3886,7 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :ed WmWm_t,ACCA_t,Wx_t,Wy_t,Wxd_t is 
      OP_23_20=0xF & OP_19_18=0x0 & WmWm_t & ACCA_t & OP_14=0x1 &
      Wxd_t & OP_11_10=0x0 & Wx_t & Wy_t & OP_1_0=0x3 {
@@ -3875,8 +3924,7 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :edac WmWm_t,ACCA_t,Wx_t,Wy_t,Wxd_t is 
      OP_23_20=0xF & OP_19_18=0x0 & WmWm_t & ACCA_t & OP_14=0x1 &
      Wxd_t & OP_11_10=0x0 & Wx_t & Wy_t & OP_1_0=0x2 {
@@ -3914,8 +3962,6 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :exch Wns_t,Wnd_t is
   OP_23_20=0xF & OP_19_16=0xD & OP_15_12=0x0 & OP_11=0x0 & Wnd_t & OP_6_4=0x0 & Wns_t {
 
@@ -3923,10 +3969,7 @@ define pcodeop isDivideOverflow;
   Wnd_t = Wns_t;
   Wns_t = tmp;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # OP_23_20=0x0 & OP_19_16=0x0 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 :fbcl Ws_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xF & OP_15_12=0x0 & OP_11=0x0 & Wnd_t & $(WSconstraint) & Ws_t {
@@ -3948,10 +3991,9 @@ define pcodeop isDivideOverflow;
   SRL_C = (shift == 15);
   Wnd_t = -shift;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+# TODO: locate encoding details for FEX instruction 
+# :fex
 
 :ff1l Ws_t,Wnd_t is OP_23_20=0xC & OP_19_16=0xF & OP_15_12=0x8 & OP_11=0x0 & Wnd_t & $(WSconstraint) & Ws_t {
 
@@ -3976,10 +4018,7 @@ define pcodeop isDivideOverflow;
   SRL_C = (shift == 17);
   Wnd_t = shift * zext(!SRL_C);
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :ff1r Ws_t,Wnd_t is OP_23_20=0xC & OP_19_16=0xF & OP_15_12=0x0 & OP_11=0x0 & Wnd_t & $(WSconstraint) & Ws_t {
 
@@ -4004,21 +4043,29 @@ define pcodeop isDivideOverflow;
   SRL_C = (shift == 17);
   Wnd_t = shift * zext(!SRL_C);
 }
+
+
+@if defined(dsPIC33C)
+define pcodeop force_data_range;
+
+:flim Wbds_t, Ws_t is OP_23_16=0xE4 & OP_15=0x0 & OP_10_7=0x0 & Wbds_t & Ws_t {
+  force_data_range(Ws_t, Wbds_t);
+}
+
+:flim.v Wbds_t, Ws_t, Wnd_t is OP_23_16=0xE5 & OP_15=1 & Wnd_t & Wbds_t & Ws_t{
+  Wnd_t = force_data_range(Ws_t, Wbds_t);
+}
 @endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :goto  dest24_t is ( OP_23_20=0x0 & OP_19_16=0x4 & OP_0=0x0 ;
                      OP_23_20=0x0 & OP_19_16=0x0 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7=0x0 ) & dest24_t {
 
   goto dest24_t;
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33E) 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :goto  WnDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & WnDest_t {
 
   goto [WnDest_t];
@@ -4026,8 +4073,7 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :goto  WnDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x4 & OP_7_4=0x0 & WnDest_t {
 
   goto [WnDest_t];
@@ -4035,16 +4081,13 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :goto.l  WnWn1_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15=0x1 & WnWn1_t & OP_10_8=0x4 & OP_7_4=0x0 {
 
   goto [WnWn1_t];
 } 
 @endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :inc.w   f13_t^WREG_t is OP_23_20=0xE & OP_19_16=0xC & OP_15=0 & WREG_t & f13_t {
 
@@ -4072,12 +4115,9 @@ define pcodeop isDivideOverflow;
   testSRL_Z     ( WREGbyte_t );
   testSRH_DCbyte( WREGbyte_t );
 }
-@endif 
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:inc.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0x8 & OP_15=0x0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:inc.w   Ws_t,Wd_t is OP_23_20=0xE & OP_19_16=0x8 & OP_15=0x0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local one:2 = 1;
@@ -4092,7 +4132,7 @@ define pcodeop isDivideOverflow;
   testSRH_DCword( result );
 } 
 
-:inc.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0x8 & OP_15=0x0  & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:inc.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xE & OP_19_16=0x8 & OP_15=0x0 & TOK_B=1  & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   local one:1 = 1;
@@ -4106,10 +4146,7 @@ define pcodeop isDivideOverflow;
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :inc2.w   f13_t^WREG_t is OP_23_16=0xEC & OP_15=1 & WREG_t & f13_t {
 
@@ -4137,12 +4174,9 @@ define pcodeop isDivideOverflow;
   testSRL_Z     ( WREGbyte_t );
   testSRH_DCbyte( WREGbyte_t );
 }
-@endif 
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:inc2.w   Ws_t,Wd_t is OP_23_16=0xE8 & OP_15=0x1 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:inc2.w   Ws_t,Wd_t is OP_23_16=0xE8 & OP_15=0x1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local two:2 = 2;
@@ -4157,7 +4191,7 @@ define pcodeop isDivideOverflow;
   testSRH_DCword( result );
 } 
 
-:inc2.b  Wsbyte_t,Wdbyte_t is OP_23_16=0xE8 & OP_15=0x1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:inc2.b  Wsbyte_t,Wdbyte_t is OP_23_16=0xE8 & OP_15=0x1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   local two:1 = 2;
@@ -4171,10 +4205,7 @@ define pcodeop isDivideOverflow;
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :ior.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x7 & OP_15=0 & WREG_t & f13_t {
 
@@ -4192,10 +4223,7 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( WREGbyte_t );
   testSRL_Z     ( WREGbyte_t );
 }
-@endif 
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :ior.w   k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x3 & OP_15=0 & k10_t & Wn_t {
 
@@ -4213,12 +4241,9 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( Wnbyte_t );
   testSRL_Z     ( Wnbyte_t );
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:ior.w   Wb_t,k5_t,Wd_t is OP_23_20=0x7 & OP_19_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:ior.w   Wb_t,k5_t,Wd_t is OP_23_20=0x7 & OP_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   local result =         k5_t | Wb_t;
   build Wd_t;
@@ -4230,7 +4255,7 @@ define pcodeop isDivideOverflow;
 
 
 :ior.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-        OP_23_20=0x7 & OP_19_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+        OP_23_20=0x7 & OP_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   local result =     k5byte_t | Wbbyte_t;
   build Wdbyte_t;
@@ -4239,12 +4264,9 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( result );
   testSRL_Z     ( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:ior.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x7 & OP_19_19=0x0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:ior.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x7 & OP_19=0x0 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local result = Wb_t | Ws_t;
   build Wd_t;
@@ -4254,7 +4276,7 @@ define pcodeop isDivideOverflow;
   testSRL_Z     ( result );
 } 
 
-:ior.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x7 & OP_19_19=0x0 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:ior.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x7 & OP_19=0x0 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local result = Wbbyte_t | Wsbyte_t;
   build Wdbyte_t;
@@ -4263,11 +4285,9 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( result );
   testSRL_Z     ( result );
 } 
-@endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :lac WsWRO_t^r4_t,ACCA_t is OP_23_20=0xC & OP_19_16=0xA & ACCA_t & r4_t & WsWRO_t {
 
   ACCA = (sext(WsWRO_t) << (16 - r4_t));
@@ -4284,9 +4304,43 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
+@if defined(dsPIC33C)
+:lac.d Wsd_t^r4_t,ACCA_t is OP_23_16=0xDB & OP_14_11=0x0 & ACCA_t & r4_t & Wsd_t {
 
-:lnk1  k14_t is OP_23_20=0xF & OP_19_16=0xA & OP_15_14=0x0 & k14_t & OP_0=0x0 {
+  ACCA = (sext(Wsd_t) << (16 - r4_t));
+  testSRH_OA();
+  testSRH_SA();
+} 
+
+:lac.d Wsd_t^r4_t,ACCB_t is OP_23_16=0xDB & OP_14_11=0x0 & ACCB_t & r4_t & Wsd_t {
+
+  ACCB = (sext(Wsd_t) << (16 - r4_t));
+  testSRH_OB();
+  testSRH_SB();
+} 
+@endif
+
+
+@if defined(dsPIC33C)
+PSV_t: Ws_t is Ws_t {
+	local psv_addr = (Ws_t & 0xf7 ) + (DSRPAG & 0xff) << 0xf;
+	export *[rom]:3 psv_addr;
+}
+
+EDS_t: Wdpp_t is Wdpp_t {
+	local eds_addr = (Wdpp_t & 0xf7 ) + (DSWPAG & 0xff) << 0xf;
+	export *[rom]:2 eds_addr;
+}
+
+define pcodeop loadslave;
+:ldslv PSV_t, EDS_t, k13_12_t is OP_23_16=0x03 & OP_15_14=0x0 & OP_11=0 & k13_12_t & EDS_t & PSV_t {
+  EDS_t = loadslave(PSV_t, k13_12_t);
+}
+@endif
+
+
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
+:lnk  k14_t is OP_23_20=0xF & OP_19_16=0xA & OP_15_14=0x0 & k14_t & OP_0=0x0 {
 
   *[ram]:2 W15 = W14;
   W15 = W15 + 2;
@@ -4297,8 +4351,7 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :lnk  k14_t is OP_23_20=0xF & OP_19_16=0xA & OP_15_14=0x0 & k14_t & OP_0=0x0 {
 
   *[ram]:2 W15 = W14;
@@ -4310,8 +4363,6 @@ define pcodeop isDivideOverflow;
 } 
 @endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :lsr.w   f13_t^WREG_t is OP_23_20=0xD & OP_19_16=0x5 & OP_15=0 & WREG_t & f13_t {
 
@@ -4335,12 +4386,9 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( WREGbyte_t );
   testSRL_Z     ( WREGbyte_t );
 }
-@endif 
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:lsr.w   Ws_t,Wd_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:lsr.w   Ws_t,Wd_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   SRL_C = ( src & 0x0001 ) != 0;
@@ -4353,7 +4401,7 @@ define pcodeop isDivideOverflow;
   testSRL_Z     ( result );
 } 
 
-:lsr.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x0 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:lsr.b  Wsbyte_t,Wdbyte_t is OP_23_20=0xD & OP_19_16=0x1 & OP_15=0x0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   SRL_C = ( src & 0x01 ) != 0;
@@ -4365,10 +4413,7 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( Wdbyte_t );
   testSRL_Z     ( Wdbyte_t );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :lsr.w   Wbd_t,k4_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xE & OP_15=0x0 & OP_6_4=0x4 & Wbd_t & Wnd_t & k4_t {
 
@@ -4377,10 +4422,7 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( Wnd_t );
   testSRL_Z     ( Wnd_t );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :lsr.w  Wbd_t,Wns_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xE & OP_15=0x0 & OP_6_4=0x0 & Wbd_t & Wnd_t & Wns_t {
 
@@ -4389,12 +4431,9 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( Wnd_t );
   testSRL_Z     ( Wnd_t );
 } 
-@endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 ##
 ##
 ## ACCA series
@@ -4807,9 +4846,8 @@ define pcodeop isDivideOverflow;
 } 
 @endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 ##
 ##
 ## ACCA series
@@ -4999,7 +5037,118 @@ define pcodeop isDivideOverflow;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+@if defined(dsPIC33C)
+
+:max ACCA_t is OP_23_16=0xCE & ACCA_t & OP_14_0=0x1000 {
+  local val = ACCA_t - ACCB;
+  ACCA_t = (ACCA)*zext(val s<= 0) + (ACCB)*zext(val s> 0);
+  SRL_Z  = zext(val s<= 0);
+  SRL_N  = 0;
+  SRL_OV = 0;
+}
+
+:max ACCB_t is OP_23_16=0xCE & ACCB_t & OP_14_0=0x1000 {
+  local val = ACCB_t - ACCA;
+  ACCB_t = (ACCB)*zext(val s<= 0) + (ACCA)*zext(val s> 0);
+  SRL_Z  = zext(val s<= 0);
+  SRL_N  = 0;
+  SRL_OV = 0;
+}
+
+
+:max.v ACCA_t, Ws_t is OP_23_16=0xCE & ACCA_t & OP_14_7=0x30 & Ws_t {
+  local val = ACCA_t - ACCB;
+  ACCA_t = (ACCA)*zext(val s<= 0) + (ACCB)*zext(val s> 0);
+  Ws_t   = (val:2)*zext(val s> 0);
+  SRL_Z  = zext(val s<= 0);
+  SRL_N  = 0;
+  SRL_OV = 0;
+}
+
+:max.v ACCB_t, Ws_t is OP_23_16=0xCE & ACCB_t & OP_14_7=0x30 & Ws_t {
+  local val = ACCB_t - ACCA;
+  ACCB_t = (ACCB)*zext(val s<= 0) + (ACCA)*zext(val s> 0);
+  Ws_t   = (val:2)*zext(val s> 0);
+  SRL_Z  = zext(val s<= 0);
+  SRL_N  = 0;
+  SRL_OV = 0;
+}
+
+
+:min ACCA_t is OP_23_16=0xCE & ACCA_t & OP_14_0=0x3000 {
+  local val = ACCA_t - ACCB;
+  ACCA_t = (ACCA)*zext(val s>= 0) + (ACCB)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+:min ACCB_t is OP_23_16=0xCE & ACCB_t & OP_14_0=0x3000 {
+  local val = ACCB_t - ACCA;
+  ACCB_t = (ACCB)*zext(val s>= 0) + (ACCA)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+:min.v ACCA_t, Ws_t is OP_23_16=0xCE & ACCA_t & OP_14_7=0x70 & Ws_t {
+  local val = ACCA_t - ACCB;
+  ACCA_t = (ACCA)*zext(val s>= 0) + (ACCB)*zext(val s< 0);
+  Ws_t   = (val:2)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+:min.v ACCB_t, Ws_t is OP_23_16=0xCE & ACCB_t & OP_14_7=0x70 & Ws_t {
+  local val = ACCB_t - ACCA;
+  ACCB_t = (ACCB)*zext(val s>= 0) + (ACCA)*zext(val s< 0);
+  Ws_t   = (val:2)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+
+:minz ACCA_t is OP_23_16=0xCE & ACCA_t & OP_14_0=0x3400 {
+  if (SRL_Z == 0) goto inst_next;
+  local val = ACCA_t - ACCB;
+  ACCA_t = (ACCA)*zext(val s>= 0) + (ACCB)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+:minz ACCB_t is OP_23_16=0xCE & ACCB_t & OP_14_0=0x3400 {
+  if (SRL_Z == 0) goto inst_next;
+  local val = ACCB_t - ACCA;
+  ACCB_t = (ACCB)*zext(val s>= 0) + (ACCA)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+:minz.v ACCA_t, Ws_t is OP_23_16=0xCE & ACCA_t & OP_14_7=0x78 & Ws_t {
+  if (SRL_Z == 0) goto inst_next;
+  local val = ACCA_t - ACCB;
+  ACCA_t = (ACCA)*zext(val s>= 0) + (ACCB)*zext(val s< 0);
+  Ws_t   = (val:2)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+
+:minz.v ACCB_t, Ws_t is OP_23_16=0xCE & ACCB_t & OP_14_7=0x78 & Ws_t {
+  if (SRL_Z == 0) goto inst_next;
+  local val = ACCB_t - ACCA;
+  ACCB_t = (ACCB)*zext(val s>= 0) + (ACCA)*zext(val s< 0);
+  Ws_t   = (val:2)*zext(val s< 0);
+  SRL_Z  = zext(val s>= 0);
+  SRL_N  = zext(val s< 0);
+  SRL_OV = 0;
+}
+@endif
+
 
 :mov.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0xF & OP_15=1 & WREG_t & f13_t {
 
@@ -5017,10 +5166,7 @@ define pcodeop isDivideOverflow;
   testSRL_N     ( WREGbyte_t );
   testSRL_Z     ( WREGbyte_t );
 }
-@endif 
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mov.w   WREG_W0_t,f13_t is OP_23_20=0xB & OP_19_16=0x7 & OP_15=1 & WREG_W0_t & OP_13=1 & f13_t {
 
@@ -5032,76 +5178,55 @@ define pcodeop isDivideOverflow;
 
   f13byte_t = WREG_W0byte_t;
 }
-@endif 
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mov.w f15b_t,Wndb_t is OP_23_20=0x8 & OP_19=0x0 & f15b_t & Wndb_t {
 
   Wndb_t = f15b_t;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mov.w Wns_t,f15b_t is OP_23_20=0x8 & OP_19=0x1 & f15b_t & Wns_t {
 
   f15b_t = Wns_t;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mov.b TOK_k8c,Wndbyte_t is OP_23_20=0xB & OP_19_16=0x3 & OP_15_12=0xC & TOK_k8c & Wndbyte_t {
 
   Wndbyte_t = TOK_k8c;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mov.w k16_t,Wndb_t is OP_23_20=0x2 & k16_t & Wndb_t {
 
   Wndb_t = k16_t;
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:mov.w WsSlit10_t,Wnda_t is OP_23_20=0x9 & OP_19=0 & WsSlit10_t & Wnda_t {
+:mov.w WsSlit10_t,Wnda_t is OP_23_20=0x9 & OP_19=0 & TOK_B=0 & WsSlit10_t & Wnda_t {
 
   Wnda_t = WsSlit10_t;
 }
 
-:mov.b WsSlit10byte_t,Wndabyte_t is OP_23_20=0x9 & OP_19=0 & WsSlit10byte_t & Wndabyte_t {
+:mov.b WsSlit10byte_t,Wndabyte_t is OP_23_20=0x9 & OP_19=0 & TOK_B=1 & WsSlit10byte_t & Wndabyte_t {
 
   Wndabyte_t = WsSlit10byte_t;
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:mov.w Wn_t,WdSlit10_t is OP_23_20=0x9 & OP_19=1 & WdSlit10_t & Wn_t {
+:mov.w Wn_t,WdSlit10_t is OP_23_20=0x9 & OP_19=1 & TOK_B=0 & WdSlit10_t & Wn_t {
 
   WdSlit10_t = Wn_t;
 }
 
-:mov.b Wnbyte_t,WdSlit10byte_t is OP_23_20=0x9 & OP_19=1 & WdSlit10byte_t & Wnbyte_t {
+:mov.b Wnbyte_t,WdSlit10byte_t is OP_23_20=0x9 & OP_19=1 & TOK_B=1 & WdSlit10byte_t & Wnbyte_t {
 
   WdSlit10byte_t = Wnbyte_t;
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:mov.w movWs,movWd is OP_23_20=0x7 & OP_19=1 & movWd & movWs {
+:mov.w movWs,movWd is OP_23_20=0x7 & OP_19=1 & TOK_B=0 & movWd & movWs {
 
   local result = movWs;
   build movWd;
@@ -5109,23 +5234,20 @@ define pcodeop isDivideOverflow;
 }
 
 
-:mov.b movWsbyte,movWdbyte is OP_23_20=0x7 & OP_19=1 & movWdbyte & movWsbyte {
+:mov.b movWsbyte,movWdbyte is OP_23_20=0x7 & OP_19=1 & TOK_B=1 & movWdbyte & movWsbyte {
 
   local result = movWsbyte;
   build movWdbyte;
   movWdbyte = result;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mov.d Wsd_t,Wndd_t is
   OP_23_20=0xB & OP_19_16=0xE & OP_15_12=0x0 & OP_11=0x0 & Wndd_t & OP_7=0x0 & $(WSconstraint) & Wsd_t {
 
   Wndd_t = Wsd_t;
 }
-@endif
+
 
 :mov.d TOK_3_1_Dregn,Wdd_t is 
   OP_23_20=0xb & OP_19_16=0xe & OP_15_14=0x2 & OP_6_4=0x0 & TOK_3_1_Dreg & TOK_3_1_Dregn & OP_0=0 & $(WDconstraint) & Wdd_t { 
@@ -5135,8 +5257,8 @@ define pcodeop isDivideOverflow;
 	Wdd_t = result;
 }
 
-@if  defined(PIC24E) || defined(dsPIC33E)
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 
 :movpag TOK_9_0_U_t,DSRPAG is OP_23_20=0xF & OP_19_16=0xE & OP_15_12=0xC & TOK_11_10_PP=0 & TOK_9_0_U_t & DSRPAG {
@@ -5162,9 +5284,8 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 } 
 @endif 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 ##
 ##
 ## ACCA series
@@ -5498,9 +5619,7 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :mpy WmWn_t,ACCA_t is 
      OP_23_20=0xC & OP_19=0x0 & WmWn_t & ACCA_t & OP_14=0x0 & OP_1_0=0x3 &
      TOK_9_6_iiii=0x4 & TOK_5_2_jjjj=0x4 &
@@ -5684,8 +5803,7 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :mpy WmWm_t,ACCA_t is 
      OP_23_20=0xF & OP_19_18=0x0 & WmWm_t & ACCA_t & OP_14=0x0 & OP_1_0=0x1 &
      TOK_9_6_iiii=0x4 & TOK_5_2_jjjj=0x4 &
@@ -5869,8 +5987,7 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :mpy.n WmWn_t,ACCA_t is 
      OP_23_20=0xC & OP_19=0x0 & WmWn_t & ACCA_t & OP_14=0x1 & OP_1_0=0x3 &
      TOK_9_6_iiii=0x4 & TOK_5_2_jjjj=0x4 &
@@ -6046,8 +6163,7 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :msc WmWn_t,ACCA_t is 
      OP_23_20=0xC & OP_19=0x0 & WmWn_t & ACCA_t & OP_14=0x1 &
      TOK_9_6_iiii=0x4 & TOK_5_2_jjjj=0x4 & TOK_1_0_aa=0x2 & 
@@ -6455,8 +6571,6 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :mul.w f13_t is OP_23_16=0xbc & OP_15=0 & OP_13=0x0 & OP_14=0 & f13_t  { 
 
   W3W2 = zext(f13_t) * zext(W0);
@@ -6465,20 +6579,16 @@ TOK_9_0_U_t: is TOK_9_0_U { export *[const]:2 TOK_9_0_U; }
 
   W2 = zext(f13byte_t) * zext(W0byte);
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mul.ss Wbd_t,WsMUL_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x9 & OP_15=1 & Wbd_t & Wndd_t & OP_7=0 & $(WSconstraint) & WsMUL_t { 
 
   Wndd_t = sext(Wbd_t) * sext(WsMUL_t);
 }
-@endif
 
-@if  defined(dsPIC33E) 
 
+@if defined(dsPIC33E) || defined(dsPIC33C)
 A7_t:      ACCA                             is TOK_7=0 & ACCA
   { export ACCA; }
 
@@ -6491,7 +6601,6 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mul.su Wbd_t,k5,Wndd_t is OP_23_20=0xb & OP_19_16=0x9 & OP_15=0 & Wbd_t & Wndd_t & OP_7=0 & OP_6_5=3 & k5 { 
 
@@ -6502,18 +6611,15 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 
   Wndd_t = sext(Wbd_t) * zext(WsMUL_t);
 }
-@endif
 
-@if  defined(dsPIC33E) 
 
+@if defined(dsPIC33E) || defined(dsPIC33C)
 :mul.su Wbd_t,WsMUL_t,A7_t is
   OP_23_20=0xb & OP_19_16=0x9 & OP_15=0 & Wbd_t & OP_10_8=0x7 & A7_t & $(WSconstraint) & WsMUL_t { 
 
   A7_t = sext(Wbd_t) * zext(WsMUL_t);
 }
-@endif
 
-@if  defined(dsPIC33E) 
 
 :mul.su Wbd_t,k5,A7_t is
   OP_23_20=0xb & OP_19_16=0x9 & OP_15=0 & Wbd_t & OP_10_8=0x7 & A7_t & OP_6_5=0x3 & k5 {
@@ -6522,17 +6628,15 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mul.us Wbd_t,WsMUL_t,Wndd_t  is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=1 & Wbd_t & Wndd_t & OP_7=0 & $(WSconstraint) & WsMUL_t { 
 
   Wndd_t = zext(Wbd_t) * sext(WsMUL_t);
 }
-@endif 
 
-@if  defined(dsPIC33E) 
 
+@if defined(dsPIC33E) || defined(dsPIC33C)
 :mul.us Wbd_t,WsMUL_t,A7_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=1 & Wbd_t & OP_10_8=0x7 & A7_t & $(WSconstraint) & WsMUL_t { 
 
@@ -6540,7 +6644,6 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :mul.uu Wbd_t,k5,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=0 & Wbd_t & Wndd_t & OP_7=0 & OP_6_5=0x3 & k5  { 
@@ -6552,18 +6655,15 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 
   Wndd_t = zext(Wbd_t) * zext(WsMUL_t);
 }
-@endif
 
-@if  defined(dsPIC33E) 
 
+@if defined(dsPIC33E) || defined(dsPIC33C)
 :mul.uu Wbd_t,WsMUL_t,A7_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=0 & Wbd_t & OP_10_8=0x7 & A7_t & $(WSconstraint) & WsMUL_t { 
 
   A7_t = zext(Wbd_t) * zext(WsMUL_t);
 }
-@endif
 
-@if  defined(dsPIC33E) 
 
 :mul.uu Wbd_t,k5,A7_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=0 & Wbd_t & OP_10_8=0x7 & A7_t & OP_6_5=0x3 & k5 { 
@@ -6572,8 +6672,8 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :mulw.ss Wbd_t,WsMUL_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x9 & OP_15=1 & Wbd_t & Wndd_t & OP_7=1 & $(WSconstraint) & WsMUL_t { 
 
@@ -6581,16 +6681,14 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :mulw.su Wbd_t,WsMUL_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x9 & OP_15=0 & Wbd_t & Wndd_t & OP_7=1 & $(WSconstraint) & WsMUL_t { 
 
   Wndd_t = sext(Wbd_t) * zext(WsMUL_t);
 }
-@endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
 :mulw.su Wbd_t,k5_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x9 & OP_15=0 & Wbd_t & Wndd_t & OP_7=1 & OP_6_5=3 & k5_t { 
@@ -6599,7 +6697,7 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 
 :mulw.us Wbd_t,WsMUL_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=1 & Wbd_t & Wndd_t & OP_7=1 & $(WSconstraint) & WsMUL_t { 
@@ -6608,16 +6706,14 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :mulw.uu Wbd_t,WsMUL_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=0 & Wbd_t & Wndd_t & OP_7=1 & $(WSconstraint) & WsMUL_t { 
 
   Wndd_t = zext(Wbd_t) * zext(WsMUL_t);
 }
-@endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
 :mulw.uu Wbd_t,k5_t,Wndd_t is
   OP_23_20=0xb & OP_19_16=0x8 & OP_15=0 & Wbd_t & Wndd_t & OP_7=1 & OP_6_5=3 & k5_t { 
@@ -6626,7 +6722,6 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 }
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :neg.w f13_t^WREG_t         is OP_23_16=0xee & OP_15=0  & OP_14=0 & WREG_t & f13_t  { 
 
@@ -6649,9 +6744,7 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
     testSRL_N(WREGbyte_t);
     testSRL_Z(WREGbyte_t);	
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :neg.w Ws_t,Wd_t is OP_23_16=0xea & OP_15=0 & OP_14=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t { 
 
@@ -6678,10 +6771,9 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
     testSRL_N(result);
     testSRL_Z(result);
 }
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :neg ACCA_t is OP_23_20=0xC & OP_19_16=0xB & ACCA_t &
      OP_14_12=0x1 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
@@ -6700,32 +6792,23 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-# NOP                           No Operation
-
 :nop is OP_23_16=0x0 { 
   # No definition on purpose 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+
 #
 :nopr is OP_23_16=0xff {
   # No definition on purpose 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :pop f15_t is OP_23_20=0xF & OP_19_16=0x9 & f15_t & OP_0=0x0 {
 
   W15 	= W15 - 2;
   f15_t = *[ram]:2 W15;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :pop movWd is OP_23_20=0x7 & OP_19=0x1 & movWd & OP_14=0x0 & OP_6_4=0x4 & OP_3_0=0xF {
 
@@ -6734,20 +6817,14 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
   build movWd;
   movWd = result;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :pop.d Wndd_t is OP_23_20=0xB & OP_19_16=0xE & OP_15_12=0x0 & OP_11=0x0 & Wndd_t & OP_7_4=0x4 & OP_3_0=0xF {
 
   W15 = W15 - 4;
   Wndd_t = *[ram]:4 W15;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :pop.s is OP_23_20=0xF & OP_19_16=0xE & OP_15_12=0x8 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
@@ -6762,40 +6839,28 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
   SRL_N  = SHADOW_SRL_N;
   SRH_DC = SHADOW_SRH_DC;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :push f15_t is OP_23_20=0xF & OP_19_16=0x8 & f15_t & OP_0=0x0 {
 
   *[ram]:2 W15 	= f15_t;
   W15 = W15 + 2;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :push movWs is OP_23_20=0x7 & OP_19=0x1 & movWs & OP_14_12=0x1 & OP_11_8=0xF & OP_7=0x1 {
 
   *[ram]:2 W15 	= movWs;
   W15 = W15 + 2;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :push.d TOK_3_1_Dregn is OP_23_20=0xB & OP_19_16=0xE & OP_15_12=0x9 & OP_11_8=0xF & OP_7_4=0x8 & TOK_3_1_Dreg & TOK_3_1_Dregn & OP_0=0x0 {
 
   *[ram]:4 W15 	= TOK_3_1_Dreg;
   W15 			= W15 + 4;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :push.s is OP_23_20=0xF & OP_19_16=0xE & OP_15_12=0xA & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
@@ -6810,22 +6875,16 @@ A7_t:      ACCB                             is TOK_7=1 & ACCB
   SHADOW_SRL_N  = SRL_N;
   SHADOW_SRH_DC = SRH_DC;
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 define pcodeop pwrsavOp;
 
 :pwrsav OP_0 is OP_23_1=0x7f2000 & OP_0 { 
 	pwrsavOp();
 }
-@endif
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :rcall  n16_t is OP_23_20=0x0 & OP_19_16=0x7 & n16_t & WordInstNext4 {
 
 @ifdef NEVER
@@ -6848,8 +6907,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :rcall  n16_t is OP_23_20=0x0 & OP_19_16=0x7 & n16_t & WordInstNext4 {
 
 @ifdef NEVER
@@ -6875,8 +6933,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :rcall  WnRDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x2 & OP_11_8=0x0 & OP_7_4=0x0 & WnRDest_t & WordInstNext4 {
 
 @ifdef NEVER
@@ -6899,8 +6956,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :rcall  WnRDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x2 & OP_7_4=0x0 & WnRDest_t & WordInstNext4 {
 
 @ifdef NEVER
@@ -6926,8 +6982,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :repeat k14_t is OP_23_14=0x24 & k14_t
 	[ repeatInstr=1; globalset(inst_next,repeatInstr); ] 
 { 
@@ -6935,8 +6990,8 @@ define pcodeop pwrsavOp;
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :repeat k15_t is OP_23_16=0x09 & OP_15=0 & k15_t
 	[ repeatInstr=1; globalset(inst_next,repeatInstr); ] 
 {
@@ -6944,8 +6999,8 @@ define pcodeop pwrsavOp;
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :repeat TOK_3_0_Wreg is OP_23_4=0x9800 & TOK_3_0_Wreg 
 	[ repeatInstr=1; globalset(inst_next,repeatInstr); ] 
 {  
@@ -6953,8 +7008,8 @@ define pcodeop pwrsavOp;
 } 
 @endif
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
 
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :repeat TOK_3_0_Wreg is OP_23_4=0x9800 & TOK_3_0_Wreg
 	[ repeatInstr=1; globalset(inst_next,repeatInstr); ] 
 { 
@@ -6962,7 +7017,6 @@ define pcodeop pwrsavOp;
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :reset is OP_23_0=0xfe0000 {
   SRH_OA 	= 0;
@@ -6985,10 +7039,9 @@ define pcodeop pwrsavOp;
   PC 		= 0;
   goto [PC];
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
   W15 		= W15 - 2;
@@ -7013,8 +7066,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
   W15 		= W15 - 2;
@@ -7042,8 +7094,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
 
   W15 		= W15 - 2;
@@ -7097,8 +7148,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
 
   W15 = W15 - 2;
@@ -7158,8 +7208,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
-
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :return is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
 @ifdef NEVER
@@ -7182,8 +7231,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :return is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
 @ifdef NEVER
@@ -7212,8 +7260,6 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :rlc.w f13_t^WREG_t         is OP_23_16=0xd6 & OP_15=1 & WREG_t & f13_t  { 
 
   local src = f13_t;
@@ -7231,11 +7277,9 @@ define pcodeop pwrsavOp;
   testSRL_Z(WREGbyte_t);
   SRL_C      = ( src & 0x80 ) != 0; 	
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:rlc.w Ws_t,Wd_t         is OP_23_16=0xd2 & OP_15=1 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:rlc.w Ws_t,Wd_t         is OP_23_16=0xd2 & OP_15=1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
  
   local src = Ws_t;
   local result  = (src << 1) | zext(SRL_C);
@@ -7248,7 +7292,7 @@ define pcodeop pwrsavOp;
 }
 
 
-:rlc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd2 & OP_15=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t { 
+:rlc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd2 & OP_15=1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t { 
  
   local src = Wsbyte_t;
   local result  = (src << 1) | SRL_C;
@@ -7259,9 +7303,7 @@ define pcodeop pwrsavOp;
   testSRL_Z(result);
   SRL_C     = (src & 0x80) != 0; 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :rlnc.w f13_t^WREG_t         is OP_23_16=0xd6 & OP_15=0 & WREG_t & f13_t { 
 
@@ -7277,11 +7319,9 @@ define pcodeop pwrsavOp;
   testSRL_N(WREGbyte_t);
   testSRL_Z(WREGbyte_t);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:rlnc.w Ws_t,Wd_t is OP_23_16=0xd2 & OP_15=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:rlnc.w Ws_t,Wd_t is OP_23_16=0xd2 & OP_15=0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local result  = (src << 1) | ((src & 0x8000) >> 15);
@@ -7292,7 +7332,7 @@ define pcodeop pwrsavOp;
   testSRL_Z(result);
 }
 
-:rlnc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd2 & OP_15=0 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:rlnc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd2 & OP_15=0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   local result  = (src << 1) | ((src & 0x80) >> 7);
@@ -7303,11 +7343,6 @@ define pcodeop pwrsavOp;
   testSRL_Z(result);
 }
 
-
-@endif
-
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :rrc.w f13_t^WREG_t         is OP_23_16=0xd7 & OP_15=1 & WREG_t & f13_t { 
 
@@ -7327,11 +7362,9 @@ define pcodeop pwrsavOp;
   testSRL_Z(WREGbyte_t);
   SRL_C 	= (src & 1) != 0; 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:rrc.w Ws_t,Wd_t         is OP_23_16=0xd3 & OP_15=1 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:rrc.w Ws_t,Wd_t         is OP_23_16=0xd3 & OP_15=1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local result  = ((zext(SRL_C)) * 0x8000) | (src >> 1);
@@ -7344,7 +7377,7 @@ define pcodeop pwrsavOp;
 }
 
 
-:rrc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd3 & OP_15=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t { 
+:rrc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd3 & OP_15=1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t { 
 
   local src = Wsbyte_t;
   local result  = (SRL_C * 0x80) | (src >> 1);
@@ -7355,11 +7388,9 @@ define pcodeop pwrsavOp;
   testSRL_Z(result);
   SRL_C     = (src & 1) != 0; 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:rrnc.w f13_t^WREG_t         is OP_23_16=0xd7 & OP_15=0 & WREG_t & f13_t { 
+:rrnc.w f13_t^WREG_t         is OP_23_16=0xd7 & OP_15=0 & TOK_B=0 & WREG_t & f13_t { 
 
   local src = f13_t;
   WREG_t  = (src >> 1) | ((src & 1) * 0x8000); 
@@ -7368,18 +7399,16 @@ define pcodeop pwrsavOp;
 }
 
 
-:rrnc.b f13byte_t^WREGbyte_t is OP_23_16=0xd7 & OP_15=0 & WREGbyte_t & f13byte_t  {
+:rrnc.b f13byte_t^WREGbyte_t is OP_23_16=0xd7 & OP_15=0 & TOK_B=1 & WREGbyte_t & f13byte_t  {
  
   local src = f13byte_t;
   WREGbyte_t  = (src >> 1) | ((src & 1) * 0x80); 
   testSRL_N(WREGbyte_t);
   testSRL_Z(WREGbyte_t);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:rrnc.w Ws_t,Wd_t         is OP_23_16=0xd3 & OP_15=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:rrnc.w Ws_t,Wd_t         is OP_23_16=0xd3 & OP_15=0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   local result  = (src >> 1) | ((src & 1) * 0x8000); 
@@ -7391,7 +7420,7 @@ define pcodeop pwrsavOp;
 }
 
 
-:rrnc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd3 & OP_15=0 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t { 
+:rrnc.b Wsbyte_t,Wdbyte_t is OP_23_16=0xd3 & OP_15=0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t { 
 
   local src = Wsbyte_t;
   local result  = (src >> 1) | ((src & 1) * 0x80); 
@@ -7401,10 +7430,9 @@ define pcodeop pwrsavOp;
   testSRL_N(result);
   testSRL_Z(result);
 }
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :sac ACCA_t^r4_t,WdWRO_t is OP_23_20=0xC & OP_19_16=0xC & ACCA_t & r4_t & WdWRO_t {
 
   local tmp:6 	= ACCA s>> (16 + r4_t);
@@ -7419,8 +7447,22 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+@if defined(dsPIC33C)
+:sac.d ACCA_t^r4_t,Wsnd_t is OP_23_16=0xDC & OP_14=0x0 & OP_7_4=0x0 & ACCA_t & r4_t & Wsnd_t {
 
+  local tmp:6 	= ACCA s>> (16 + r4_t);
+  Wsnd_t 	= tmp:2;
+} 
+
+:sac.d ACCB_t^r4_t,Wsnd_t is OP_23_16=0xDC & OP_14=0x0 & OP_7_4=0x0 & ACCB_t & r4_t & Wsnd_t {
+
+  local tmp:6 	= ACCB s>> (16 + r4_t);
+  Wsnd_t 	= tmp:2;
+}
+@endif
+
+
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :sac.r ACCA_t^r4_t,WdWRO_t is OP_23_20=0xC & OP_19_16=0xD & ACCA_t & r4_t & WdWRO_t {
 
   local tmp:6 	= ( ACCA + (0x80000000 >> (16 - r4_t)) ) s>> (16 + r4_t);
@@ -7435,8 +7477,6 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :se Ws_t,Wnd_t is OP_23_11=0x1f60 & Wnd_t & $(WSconstraint) & Ws_t { 
 
   Wnd_t = sext(Ws_t:1);
@@ -7444,9 +7484,7 @@ define pcodeop pwrsavOp;
   testSRL_Z(Wnd_t);
   SRL_C = !SRL_N;
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :setm.w f13_t^WREG_t         is OP_23_16=0xef & OP_15=1 & WREG_t & f13_t {
 
@@ -7457,24 +7495,21 @@ define pcodeop pwrsavOp;
 
   WREGbyte_t = 0xFF; 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:setm.w Wd_t     is OP_23_16=0xeb & OP_15=1 & OP_6_0=0x0 & $(WDconstraint) & Wd_t {
+:setm.w Wd_t     is OP_23_16=0xeb & OP_15=1 & OP_6_0=0x0 & TOK_B=0 & $(WDconstraint) & Wd_t {
  
   Wd_t = 0xFFFF;
 }
 
 
-:setm.b Wdbyte_t is OP_23_16=0xeb & OP_15=1 & OP_6_0=0x0 & $(WDconstraint) & Wdbyte_t { 
+:setm.b Wdbyte_t is OP_23_16=0xeb & OP_15=1 & OP_6_0=0x0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t { 
 
   Wdbyte_t = 0xFF;
 }
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :sftac ACCA_t,k6_t is
      OP_23_20=0xC & OP_19_16=0x8 & ACCA_t & OP_14_12=0x0 & OP_11_8=0x0 & OP_7_6=0x1 & k6_t {
 
@@ -7495,8 +7530,7 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :sftac ACCA_t,Wbsft_t is
      OP_23_20=0xC & OP_19_16=0x8 & ACCA_t & OP_14_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & Wbsft_t {
 
@@ -7517,8 +7551,6 @@ define pcodeop pwrsavOp;
 @endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
 :sl.w f13_t^WREG_t is OP_23_20=0xD & OP_19_16=0x4 & OP_15=0x0 & WREG_t & f13_t { 
 
   local src = f13_t;
@@ -7537,12 +7569,9 @@ define pcodeop pwrsavOp;
   testSRL_Z(WREGbyte_t);
   SRL_C = ((src & 0x80) != 0);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-# Encoding:           1101 0000 0Bqq qddd dppp ssss
-:sl.w Ws_t,Wd_t is OP_23_20=0xD & OP_19_16=0x0 & OP_15=0x0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t { 
+:sl.w Ws_t,Wd_t is OP_23_20=0xD & OP_19_16=0x0 & OP_15=0x0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t { 
 
   local src = Ws_t;
   local result 	=  src << 1;
@@ -7554,7 +7583,7 @@ define pcodeop pwrsavOp;
   SRL_C = ((src & 0x8000) != 0);
 }
 
-:sl.b Wsbyte_t,Wdbyte_t is OP_23_20=0xD & OP_19_16=0x0 & OP_15=0x0 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:sl.b Wsbyte_t,Wdbyte_t is OP_23_20=0xD & OP_19_16=0x0 & OP_15=0x0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   local result = src << 1;
@@ -7566,9 +7595,6 @@ define pcodeop pwrsavOp;
   SRL_C = ((src & 0x80) != 0);
 }
 
-@endif
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :sl Wbd_t,k4_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xD & OP_15=0x0 & Wbd_t & Wnd_t & OP_6_4=0x4 & k4_t {
  
@@ -7576,9 +7602,7 @@ define pcodeop pwrsavOp;
   testSRL_N(Wnd_t);
   testSRL_Z(Wnd_t);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :sl Wbd_t,Wns_t,Wnd_t is OP_23_20=0xD & OP_19_16=0xD & OP_15=0x0 & Wbd_t & Wnd_t & OP_6_4=0x0 & Wns_t { 
 
@@ -7586,9 +7610,13 @@ define pcodeop pwrsavOp;
   testSRL_N(Wnd_t);
   testSRL_Z(Wnd_t);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+# SSTEP - ICD instruction compatible with Microchips ICD debugging hardware
+# TODO: locate encoding details for SSTEP instruction 
+# define pcodeop sstep;
+# :sstep is OP_23_0=?? {
+#	sstep(); # In-Circuit Debugger (ICD) Single Step
+# }
 
 :sub.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x5 & OP_15=0 & WREG_t & f13_t {
 
@@ -7614,10 +7642,7 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( WREGbyte_t );
   testSRH_DCbyte( WREGbyte_t );
 }
-@endif 
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :sub.w   k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x1 & OP_15=0 & k10_t & Wn_t {
 
@@ -7641,12 +7666,9 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( Wnbyte_t );
   testSRH_DCbyte( Wnbyte_t );
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:sub.w   Wb_t,k5_t,Wd_t is OP_23_20=0x5 & OP_19_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:sub.w   Wb_t,k5_t,Wd_t is OP_23_20=0x5 & OP_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   subflags( Wb_t,  k5_t );
 
@@ -7661,7 +7683,7 @@ define pcodeop pwrsavOp;
 
 
 :sub.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-        OP_23_20=0x5 & OP_19_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+        OP_23_20=0x5 & OP_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   subflags( Wbbyte_t,  k5byte_t );
 
@@ -7673,12 +7695,9 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:sub.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x5 & OP_19_19=0x0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:sub.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x5 & OP_19=0x0 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t; 
   subflags( Wb_t,  src );
@@ -7693,7 +7712,7 @@ define pcodeop pwrsavOp;
 } 
 
 
-:sub.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x5 & OP_19_19=0x0 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:sub.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x5 & OP_19=0x0 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   subflags( Wbbyte_t,  src );
@@ -7706,11 +7725,9 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
+@if defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) || defined(dsPIC33C)
 :sub ACCA_t is
      OP_23_20=0xC & OP_19_16=0xB & ACCA_t & OP_14_12=0x3 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
@@ -7725,11 +7742,9 @@ define pcodeop pwrsavOp;
   ACCB = ACCA - ACCB;
   testSRH_OB();
   testSRH_SB();
-} 
+}
 @endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :subb.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x5 & OP_15=1 & WREG_t & f13_t {
 
@@ -7754,10 +7769,7 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( WREGbyte_t );
   testSRH_DCbyte ( WREGbyte_t );
 }
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :subb.w   k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x1 & OP_15=1 & k10_t & Wn_t {
 
@@ -7783,12 +7795,9 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( Wnbyte_t );
   testSRH_DCbyte ( Wnbyte_t );
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:subb.w   Wb_t,k5_t,Wd_t is OP_23_20=0x5 & OP_19_19=0x1 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:subb.w   Wb_t,k5_t,Wd_t is OP_23_20=0x5 & OP_19=0x1 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   local notCarry:2 = zext(!SRL_C);
   subflagsWithCarry( Wb_t,  k5_t, notCarry );
@@ -7802,9 +7811,8 @@ define pcodeop pwrsavOp;
   testSRH_DCword ( result );
 } 
 
-
 :subb.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-         OP_23_20=0x5 & OP_19_19=0x1 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+         OP_23_20=0x5 & OP_19=0x1 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   local notCarry = !SRL_C;
   subflagsWithCarry( Wbbyte_t,  k5byte_t,  notCarry );
@@ -7817,12 +7825,9 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:subb.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x5 & OP_19_19=0x1 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:subb.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x5 & OP_19=0x1 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local notCarry:2 = zext(!SRL_C);
   local src = Ws_t;
@@ -7838,7 +7843,7 @@ define pcodeop pwrsavOp;
 } 
 
 
-:subb.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x5 & OP_19_19=0x1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:subb.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x5 & OP_19=0x1 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local notCarry = !SRL_C;
   local src = Wsbyte_t;
@@ -7852,10 +7857,7 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :subbr.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0xD & OP_15=1 & WREG_t & f13_t {
 
@@ -7882,12 +7884,9 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( WREGbyte_t );
   testSRH_DCbyte ( WREGbyte_t );
 }
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:subbr.w   Wb_t,k5_t,Wd_t is OP_23_20=0x1 & OP_19_19=0x1 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:subbr.w   Wb_t,k5_t,Wd_t is OP_23_20=0x1 & OP_19=0x1 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   local notCarry:2 = zext(!SRL_C);
   subflagsWithCarry( k5_t,  Wb_t,  notCarry );
@@ -7903,7 +7902,7 @@ define pcodeop pwrsavOp;
 
 
 :subbr.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-         OP_23_20=0x1 & OP_19_19=0x1 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+         OP_23_20=0x1 & OP_19=0x1 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   local notCarry = !SRL_C;
   subflagsWithCarry( k5byte_t,  Wbbyte_t,  notCarry );
@@ -7916,12 +7915,9 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:subbr.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x1 & OP_19_19=0x1 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:subbr.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x1 & OP_19=0x1 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local notCarry:2 = zext(!SRL_C);
   local src = Ws_t;
@@ -7937,7 +7933,7 @@ define pcodeop pwrsavOp;
 } 
 
 
-:subbr.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x1 & OP_19_19=0x1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:subbr.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x1 & OP_19=0x1 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local notCarry = !SRL_C;
   local src = Wsbyte_t;
@@ -7951,10 +7947,7 @@ define pcodeop pwrsavOp;
   testSRL_Zsticky( result );
   testSRH_DCbyte ( result );
 } 
-@endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :subr.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0xD & OP_15=0 & WREG_t & f13_t {
 
@@ -7980,12 +7973,9 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( WREGbyte_t );
   testSRH_DCbyte( WREGbyte_t );
 }
-@endif 
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:subr.w   Wb_t,k5_t,Wd_t is OP_23_20=0x1 & OP_19_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
+:subr.w   Wb_t,k5_t,Wd_t is OP_23_20=0x1 & OP_19=0x0 & OP_6_5=0x3 & Wb_t & $(WDconstraint) & Wd_t & k5_t {
 
   subflags( k5_t,  Wb_t );
 
@@ -8000,7 +7990,7 @@ define pcodeop pwrsavOp;
 
 
 :subr.b  Wbbyte_t,k5byte_t,Wdbyte_t is
-        OP_23_20=0x1 & OP_19_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
+        OP_23_20=0x1 & OP_19=0x0 & OP_6_5=0x3 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & k5byte_t {
 
   subflags( k5byte_t,  Wbbyte_t );
 
@@ -8012,12 +8002,9 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:subr.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x1 & OP_19_19=0x0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:subr.w   Wb_t,Ws_t,Wd_t is OP_23_20=0x1 & OP_19=0x0 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
 
   local src = Ws_t;
   subflags( src,  Wb_t );
@@ -8032,7 +8019,7 @@ define pcodeop pwrsavOp;
 } 
 
 
-:subr.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x1 & OP_19_19=0x0 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:subr.b  Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x1 & OP_19=0x0 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local src = Wsbyte_t;
   subflags( src,  Wbbyte_t );
@@ -8045,27 +8032,22 @@ define pcodeop pwrsavOp;
   testSRL_Z     ( result );
   testSRH_DCbyte( result );
 } 
-@endif
 
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-:swap.w Wn_t is OP_23_20=0xF & OP_19_16=0xD & OP_15=1 & OP_13_4=0x0 & Wn_t {
+:swap.w Wn_t is OP_23_20=0xF & OP_19_16=0xD & OP_15=1 & OP_13_4=0x0 & TOK_B=0 & Wn_t {
 
   Wn_t = ((Wn_t & 0xFF) << 8) & ((Wn_t & 0xFF00) >> 8);
 }
 
 
-:swap.b Wnbyte_t is OP_23_20=0xF & OP_19_16=0xD & OP_15=1 & OP_13_4=0x0 & Wnbyte_t {
+:swap.b Wnbyte_t is OP_23_20=0xF & OP_19_16=0xD & OP_15=1 & OP_13_4=0x0 & TOK_B=1 & Wnbyte_t {
 
   Wnbyte_t = ((Wnbyte_t & 0xF) << 4) & ((Wnbyte_t & 0xF0) >> 4); 
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # constructor  Encoding: 1011 1010 1Bqq qddd dppp ssss 
-:tblrdh.w WsROM_t,Wd_t         is OP_23_20=0xB & OP_19_16=0xA & OP_15=1 & $(WDconstraint) & Wd_t & $(WSconstraint) & WsROM_t {
+:tblrdh.w WsROM_t,Wd_t         is OP_23_20=0xB & OP_19_16=0xA & OP_15=1 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & WsROM_t {
  
   local src = WsROM_t;
   local result	= zext( *[rom]:1 (src | 1) );
@@ -8073,7 +8055,7 @@ define pcodeop pwrsavOp;
   Wd_t = result;
 }
 
-:tblrdh.b WsROM_t,Wdbyte_t is OP_23_20=0xB & OP_19_16=0xA & OP_15=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & WsROM_t { 
+:tblrdh.b WsROM_t,Wdbyte_t is OP_23_20=0xB & OP_19_16=0xA & OP_15=1 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & WsROM_t { 
 
   local src = WsROM_t;
   local result:1 = 0;
@@ -8085,19 +8067,17 @@ define pcodeop pwrsavOp;
   build Wdbyte_t;
   Wdbyte_t = result;
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 # constructor  Encoding: 1011 1010 0Bqq qddd dppp ssss 
-:tblrdl.w WsROM_t,Wd_t         is OP_23_20=0xB & OP_19_16=0xA & OP_15=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & WsROM_t { 
+:tblrdl.w WsROM_t,Wd_t         is OP_23_20=0xB & OP_19_16=0xA & OP_15=0 & TOK_B=0 & $(WDconstraint) & Wd_t & $(WSconstraint) & WsROM_t { 
   local src = WsROM_t;
   local result	= *[rom]:2 (src & 0xfffffe);
   build Wd_t;
   Wd_t = result;
 }
 
-:tblrdl.b WsROM_t,Wdbyte_t is OP_23_20=0xB & OP_19_16=0xA & OP_15=0 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & WsROM_t { 
+:tblrdl.b WsROM_t,Wdbyte_t is OP_23_20=0xB & OP_19_16=0xA & OP_15=0 & TOK_B=1 & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & WsROM_t { 
   local src = WsROM_t;
   local lbit = src & 1;
   local val = *[rom]:2 (src & 0xfffffe);
@@ -8109,12 +8089,8 @@ define pcodeop pwrsavOp;
   Wdbyte_t = result;
 }
 
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
-
-# constructor  Encoding: 1011 1011 1Bqq qddd dppp ssss 
-:tblwth.w Ws_t,WdROM_t         is OP_23_20=0xB & OP_19_16=0xB & OP_15=1 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Ws_t {
+:tblwth.w Ws_t,WdROM_t         is OP_23_20=0xB & OP_19_16=0xB & OP_15=1 & TOK_B=0 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Ws_t {
  
   local src = Ws_t;
   local addr = WdROM_t | 1;  # add 1, should be word alligned
@@ -8122,7 +8098,7 @@ define pcodeop pwrsavOp;
   *[rom]:1 addr = src;
 }
 
-:tblwth.b Wsbyte_t,WdROM_t is OP_23_20=0xB & OP_19_16=0xB & OP_15=1 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Wsbyte_t { 
+:tblwth.b Wsbyte_t,WdROM_t is OP_23_20=0xB & OP_19_16=0xB & OP_15=1 & TOK_B=1 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Wsbyte_t { 
 
   local src = Wsbyte_t;
   local addr = WdROM_t;
@@ -8134,19 +8110,16 @@ define pcodeop pwrsavOp;
 
   <done>
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-# constructor  Encoding: 1011 1011 0Bqq qddd dppp ssss 
-:tblwtl.w Ws_t,WdROM_t         is OP_23_20=0xB & OP_19_16=0xB & OP_15=0 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Ws_t {
+:tblwtl.w Ws_t,WdROM_t         is OP_23_20=0xB & OP_19_16=0xB & OP_15=0 & TOK_B=0 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Ws_t {
  
   local src = Ws_t;
   local addr = WdROM_t & 0xfffffe;
   *[rom]:2 addr = src;
 }
 
-:tblwtl.b Wsbyte_t,WdROM_t is OP_23_20=0xB & OP_19_16=0xB & OP_15=0 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Wsbyte_t { 
+:tblwtl.b Wsbyte_t,WdROM_t is OP_23_20=0xB & OP_19_16=0xB & OP_15=0 & TOK_B=1 & $(WDconstraint) & WdROM_t & $(WSconstraint) & Wsbyte_t { 
 
   local src = zext(Wsbyte_t);
   local addr = WdROM_t;
@@ -8160,10 +8133,9 @@ define pcodeop pwrsavOp;
  <noalign>
   *[rom]:2 addr = (val & mask) | src;
 }
-@endif
 
-@if  defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(dsPIC30F) || defined(dsPIC33F) 
 define pcodeop Vector;
 
 :trap TOK_n,TOK_k16t is OP_23_20=0 & OP_19_17=5 & TOK_n & TOK_k16t & WordInstNext4 {
@@ -8189,8 +8161,16 @@ define pcodeop Vector;
 } 
 @endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 
+@if defined(dsPIC33C)
+define pcodeop verifyslave;
+:vfslv PSV_t, EDS_t, k13_12_t is OP_23_16=0x03 & OP_15_14=0x2 & OP_11=0 & k13_12_t & EDS_t & PSV_t {
+  verifyslave(PSV_t, EDS_t, k13_12_t);
+}
+@endif
+
+
+@if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :ulnk is OP_23_20=0xF & OP_19_16=0xA & OP_15_12=0x08 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
   W15 = W14;
@@ -8201,8 +8181,7 @@ define pcodeop Vector;
 @endif
 
 
-@if  defined(PIC24E) || defined(dsPIC33E) 
-
+@if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :ulnk is OP_23_20=0xF & OP_19_16=0xA & OP_15_12=0x08 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
   W15 	= W14;
@@ -8213,8 +8192,11 @@ define pcodeop Vector;
 } 
 @endif
 
-
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
+# URUN - ICD instruction compatible with Microchips ICD debugging hardware
+define pcodeop urun;
+:urun is OP_23_0=0xDAC000 {
+	urun(); # In-Circuit Debugger (ICD) Run
+}
 
 :xor.w f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x6 & OP_15=1 & WREG_t & f13_t  { 
 
@@ -8229,9 +8211,7 @@ define pcodeop Vector;
   testSRL_N(WREGbyte_t);
   testSRL_Z(WREGbyte_t);  
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :xor.w k10_t,Wn_t is OP_23_20=0xB & OP_19_16=0x2 & OP_15=1 & k10_t & Wn_t {
  
@@ -8246,9 +8226,7 @@ define pcodeop Vector;
   testSRL_N(Wnbyte_t);
   testSRL_Z(Wnbyte_t);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :xor.w  Wb_t,k5_t,Wd_t is OP_23_20=0x6 & OP_19=0x1 & Wb_t & $(WDconstraint) & Wd_t & OP_6_5=0x3 & k5_t {
  
@@ -8263,11 +8241,9 @@ define pcodeop Vector;
   testSRL_N(Wdbyte_t);
   testSRL_Z(Wdbyte_t);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
-:xor.w Wb_t,Ws_t,Wd_t             is OP_23_20=0x6 & OP_19=0x1 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
+:xor.w Wb_t,Ws_t,Wd_t             is OP_23_20=0x6 & OP_19=0x1 & TOK_B=0 & Wb_t & $(WDconstraint) & Wd_t & $(WSconstraint) & Ws_t {
  
   local result = Wb_t ^ Ws_t;
   build Wd_t;
@@ -8277,7 +8253,7 @@ define pcodeop Vector;
   testSRL_Z(result);
 }
 
-:xor.b Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x6 & OP_19=0x1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
+:xor.b Wbbyte_t,Wsbyte_t,Wdbyte_t is OP_23_20=0x6 & OP_19=0x1 & TOK_B=1 & Wbbyte_t & $(WDconstraint) & Wdbyte_t & $(WSconstraint) & Wsbyte_t {
 
   local result = Wbbyte_t ^ Wsbyte_t;
   build Wdbyte_t;
@@ -8286,9 +8262,7 @@ define pcodeop Vector;
   testSRL_N(result);
   testSRL_Z(result);
 }
-@endif
 
-@if  defined(PIC24F) || defined(PIC24H) || defined(PIC24E) || defined(dsPIC30F) || defined(dsPIC33F) || defined(dsPIC33E) 
 
 :ze Ws_t,Wnd_t  is OP_23_20=0xF & OP_19_16=0xB & OP_15_12=0x8 & OP_11=0x0 & Wnd_t & $(WSconstraint) & Ws_t {
  
@@ -8300,7 +8274,7 @@ define pcodeop Vector;
   testSRL_Z(result);
   SRL_C = 1;
 }
-@endif
+
 
 # UNVERIFIED - not found in manual but was produced by toolchain for PIC30F2010
 # There appear to be a few variations of this encoding produced by toolchain 

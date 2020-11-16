@@ -49,6 +49,7 @@ IsDefined:
 DefineTest:
 	( '(' test=DefineTest ')'
 	| symref=DefineSym OP_EQUAL value=(STRING|intvalue|ID)
+	| symref=DefineSym OP_NOTEQUAL value=(STRING|intvalue|ID)
 	| isdefined=IsDefined )  ( (OP_BOOL_AND andtest=DefineTest) | (OP_BOOL_OR ortest=DefineTest) )?
 ;
 
@@ -658,6 +659,7 @@ exprSingle returns Expression:
 	| pcodeop='ceil' '(' op1=expr ')'
 	| pcodeop='floor' '(' op1=expr ')'
 	| pcodeop='round' '(' op1=expr ')'
+	| pcodeop='popcount' '(' op1=expr ')'
 	| pcodeop='cpool' '(' op1=expr ',' op2=expr ',' op3=expr ')'
 	| pcodeop='newobject' '(' op1=newObjParams ')'
 	| op=[macroOrPcode] op1=paramlist

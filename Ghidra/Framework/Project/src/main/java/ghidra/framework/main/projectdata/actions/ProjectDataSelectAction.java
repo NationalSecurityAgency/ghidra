@@ -22,11 +22,11 @@ import javax.swing.tree.TreePath;
 
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
-import ghidra.framework.main.datatable.ProjectDataTreeContextAction;
+import ghidra.framework.main.datatable.ProjectTreeAction;
 import ghidra.framework.main.datatree.DataTree;
-import ghidra.framework.main.datatree.ProjectDataTreeActionContext;
+import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
 
-public class ProjectDataSelectAction extends ProjectDataTreeContextAction {
+public class ProjectDataSelectAction extends ProjectTreeAction {
 
 	public ProjectDataSelectAction(String owner, String group) {
 		super("Select All", owner);
@@ -35,7 +35,7 @@ public class ProjectDataSelectAction extends ProjectDataTreeContextAction {
 	}
 
 	@Override
-	protected void actionPerformed(ProjectDataTreeActionContext context) {
+	protected void actionPerformed(FrontEndProjectTreeContext context) {
 		DataTree tree = context.getTree();
 		TreePath[] paths = context.getSelectionPaths();
 		GTreeNode node = (GTreeNode) paths[0].getLastPathComponent();
@@ -43,7 +43,7 @@ public class ProjectDataSelectAction extends ProjectDataTreeContextAction {
 	}
 
 	@Override
-	public boolean isAddToPopup(ProjectDataTreeActionContext context) {
+	public boolean isAddToPopup(FrontEndProjectTreeContext context) {
 		return context.getFolderCount() == 1 && context.getFileCount() == 0;
 	}
 

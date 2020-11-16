@@ -15,7 +15,6 @@
 *.jspf text
 *.jspx text
 *.properties text
-*.sh text
 *.tld text
 *.txt text
 *.tag text
@@ -52,5 +51,5 @@
 *.gzf binary
 *.tgz binary
 *.tar binary
-
+*.sh binary
 

@@ -31,5 +31,7 @@ data/languages/avr8eind.slaspec||GHIDRA||||END|
 data/languages/avr8gcc.cspec||GHIDRA||||END|
 data/languages/avr8iarV1.cspec||GHIDRA||||END|
 data/languages/avr8imgCraftV8.cspec||GHIDRA||||END|
+data/languages/avr8xmega.pspec||GHIDRA||||END|
+data/languages/avr8xmega.slaspec||GHIDRA||||END|
 data/manuals/AVR32.idx||GHIDRA||||END|
 data/manuals/AVR8.idx||GHIDRA||||END|

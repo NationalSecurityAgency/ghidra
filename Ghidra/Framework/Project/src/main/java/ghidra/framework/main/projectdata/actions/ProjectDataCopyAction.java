@@ -23,7 +23,7 @@ import javax.swing.tree.TreePath;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.framework.main.datatree.DataTreeClipboardUtils;
-import ghidra.framework.main.datatree.ProjectDataTreeActionContext;
+import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
 import resources.ResourceManager;
 
 public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
@@ -37,7 +37,7 @@ public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 	}
 
 	@Override
-	protected void actionPerformed(ProjectDataTreeActionContext context) {
+	protected void actionPerformed(FrontEndProjectTreeContext context) {
 		TreePath[] paths = adjustSelectionPaths(context.getSelectionPaths());
 
 		DataTreeClipboardUtils.setClipboardContents(context.getTree(), paths);
@@ -45,7 +45,7 @@ public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ProjectDataTreeActionContext context) {
+	protected boolean isEnabledForContext(FrontEndProjectTreeContext context) {
 		if (!context.hasOneOrMoreFilesAndFolders()) {
 			return false;
 		}

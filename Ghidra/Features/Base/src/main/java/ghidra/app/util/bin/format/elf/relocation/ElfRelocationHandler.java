@@ -34,11 +34,23 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	abstract public boolean canRelocate(ElfHeader elf);
 
 	/**
+	 * Get the architecture-specific relative relocation type 
+	 * which should be applied to RELR relocations.  The
+	 * default implementation returns 0 which indicates 
+	 * RELR is unsupported.
+	 * @return RELR relocation type 
+	 */
+	public int getRelrRelocationType() {
+		return 0;
+	}
+
+	/**
 	 * Relocation context for a specific Elf image and relocation table.  The relocation context
 	 * is used to process relocations and manage any data required to process relocations.
 	 * @param loadHelper Elf load helper
 	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
+	 * @return relocation context or null if unsupported
 	 */
 	public ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
 			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
@@ -78,6 +90,18 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 			"Relocation Type " + type,
 			"Unhandled Elf Relocation: Type = " + type + " (0x" + Long.toHexString(type) +
 				") Symbol = " + symbolName + " (0x" + Long.toHexString(symbolIndex) + ").");
+	}
+
+	/**
+	 * Generate error log entry and bookmark at relocationAddress indicating 
+	 * an unsupported RELR relocation.
+	 * @param program 
+	 * @param relocationAddress relocation address to be bookmarked
+	 */
+	public static void markAsUnsupportedRelr(Program program, Address relocationAddress) {
+		BookmarkManager bookmarkManager = program.getBookmarkManager();
+		bookmarkManager.setBookmark(relocationAddress, BookmarkType.ERROR,
+			"Unsupported RELR Relocation", "ELF Extension does not specify type");
 	}
 
 	/**

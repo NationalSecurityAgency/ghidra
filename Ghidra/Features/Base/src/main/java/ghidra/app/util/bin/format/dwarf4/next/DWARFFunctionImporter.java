@@ -605,7 +605,7 @@ public class DWARFFunctionImporter {
 
 	private final Address toAddr(Number offset) {
 		return currentProgram.getAddressFactory().getDefaultAddressSpace().getAddress(
-			offset.longValue());
+			offset.longValue(), true);
 	}
 
 	/**

@@ -205,7 +205,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForSwing();
 
 		waitForTree();
-		SwingUtilities.invokeAndWait(() -> jTree.stopEditing());
+		runSwing(() -> jTree.stopEditing());
 
 		// verify that  the tree opens a new node with the default
 		// category name is "New Category"
@@ -363,7 +363,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertTrue(action.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(action, tree);
 		waitForTree();
-		SwingUtilities.invokeLater(() -> {
+		runSwingLater(() -> {
 			TreePath editingPath = jTree.getEditingPath();
 			GTreeNode editingNode = (GTreeNode) editingPath.getLastPathComponent();
 			int rowForPath = jTree.getRowForPath(editingPath);
@@ -377,11 +377,10 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			jTree.stopEditing();
 		});
 
-		final OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		runSwing(() -> d.close());
+		close(waitForErrorDialog());
 		waitForSwing();
 
-		assertTrue(!jTree.isEditing());
+		assertFalse(jTree.isEditing());
 	}
 
 	@Test
@@ -406,7 +405,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		selectNode(unionNode);
 
 		pasteAction = getAction(plugin, "Paste");
-		assertTrue(!pasteAction.isEnabledForContext(treeContext));
+		assertFalse(pasteAction.isEnabledForContext(treeContext));
 	}
 
 	@Test
@@ -531,7 +530,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		DataTypeTestUtils.performAction(cutAction, tree, false);
 
 		selectNode(builtInNode);
-		assertTrue(!pasteAction.isEnabledForContext(treeContext));
+		assertFalse(pasteAction.isEnabledForContext(treeContext));
 	}
 
 	@Test
@@ -558,13 +557,13 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		DataTypeTestUtils.performAction(cutAction, tree);
 
 		selectNode(builtInNode);
-		assertTrue(!pasteAction.isEnabledForContext(treeContext));
+		assertFalse(pasteAction.isEnabledForContext(treeContext));
 	}
 
 	@Test
 	public void testCloseProgram() throws Exception {
 
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.closeProgram();
 		});
@@ -631,9 +630,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		env.saveRestoreToolState();
 		plugin = env.getPlugin(DataTypeManagerPlugin.class);
 		ToggleDockingActionIf action = (ToggleDockingActionIf) getAction(plugin, "Filter Arrays");
-		assertTrue(!action.isSelected());
+		assertFalse(action.isSelected());
 		action = (ToggleDockingActionIf) getAction(plugin, "Filter Pointers");
-		assertTrue(!action.isSelected());
+		assertFalse(action.isSelected());
 	}
 
 	@Test
@@ -994,7 +993,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	private void checkNodesCollapsed(GTreeNode parent) {
 		if (parent != tree.getModelRoot()) {
-			assertTrue(!tree.isExpanded(parent.getTreePath()));
+			assertFalse(tree.isExpanded(parent.getTreePath()));
 		}
 
 		int nchild = parent.getChildCount();

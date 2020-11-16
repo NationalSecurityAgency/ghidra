@@ -15,43 +15,42 @@
  */
 package ghidra.program.model.listing;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
- * Interface for managing function tags. Tags are simple objects consisting of
- * a name and an optional comment, which can be applied to functions in Ghidra.
+ * Interface for managing function tags. Tags are simple objects consisting of a name and an 
+ * optional comment, which can be applied to functions.
  * 
- * @see ghidra.program.database.function.FunctionTagAdapter FunctionTagAdapter
- * @see ghidra.program.database.function.FunctionTagMappingAdapter FunctionTagMappingAdapter
+ * See ghidra.program.database.function.FunctionTagAdapter 
+ * See ghidra.program.database.function.FunctionTagMappingAdapter 
  */
 public interface FunctionTagManager {
 
 	/**
-	 * Returns the function tag with the given name.
+	 * Returns the function tag with the given name
 	 * 
 	 * @param name the tag name
 	 * @return the function tag, or null if not found
 	 */
-	FunctionTag getFunctionTag(String name);
+	public FunctionTag getFunctionTag(String name);
 
 	/**
-	 * Returns the function tag with the given database id.
+	 * Returns the function tag with the given database id
 	 * 
 	 * @param id the tags database id
 	 * @return the function tag, or null if not found
 	 */
-	FunctionTag getFunctionTag(long id);
+	public FunctionTag getFunctionTag(long id);
 
 	/**
-	 * Returns all function tags in the database.
+	 * Returns all function tags in the database
 	 * 
 	 * @return list of function tags
 	 */
-	List<? extends FunctionTag> getAllFunctionTags();
+	public List<? extends FunctionTag> getAllFunctionTags();
 
 	/**
-	 * Returns true if the given tag is assigned to a function.
+	 * Returns true if the given tag is assigned to a function
 	 * 
 	 * @param name the tag name
 	 * @return true if assigned to a function
@@ -66,13 +65,12 @@ public interface FunctionTagManager {
 	 * @param comment the comment associated with the tag (optional)
 	 * @return the new function tag
 	 */
-	FunctionTag createFunctionTag(String name, String comment);
+	public FunctionTag createFunctionTag(String name, String comment);
 
 	/**
-	 * Sets the program on this manager to allow the manager to persist changes
-	 * and notify subscribers.
-	 * 
-	 * @param program the program
+	 * Returns the number of times the given tag has been applied to a function
+	 * @param tag the tag
+	 * @return the count
 	 */
-	void setProgram(Program program);
+	public int getUseCount(FunctionTag tag);
 }

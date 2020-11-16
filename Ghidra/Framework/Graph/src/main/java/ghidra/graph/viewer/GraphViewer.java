@@ -16,13 +16,13 @@
 package ghidra.graph.viewer;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.util.function.Consumer;
 
 import javax.swing.*;
 
-import docking.widgets.PopupWindow;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.picking.MultiPickedState;
@@ -35,6 +35,7 @@ import ghidra.graph.viewer.event.mouse.*;
 import ghidra.graph.viewer.event.picking.GPickedState;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import ghidra.graph.viewer.options.VisualGraphOptions;
+import ghidra.graph.viewer.popup.*;
 import ghidra.graph.viewer.renderer.VisualGraphRenderer;
 import ghidra.util.layout.PairLayout;
 
@@ -62,9 +63,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 
 	private Consumer<GraphViewer<V, E>> initializedListener;
 
-	private PopupRegulator popupRegulator = new PopupRegulator();
-	private PopupWindow popupWindow;
-	private boolean showPopups = true;
+	private PopupRegulator<V, E> popupRegulator;
 	private VertexTooltipProvider<V, E> vertexTooltipProvider = new DummyTooltipProvider();
 
 	protected VisualGraphOptions options;
@@ -88,6 +87,8 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		PickedState<V> pickedState = getPickedVertexState();
 		gPickedState = new GPickedState<>((MultiPickedState<V>) pickedState);
 		setPickedVertexState(gPickedState);
+
+		popupRegulator = new PopupRegulator<V, E>(new GraphViewerPopupSource());
 	}
 
 	private void buildUpdater() {
@@ -271,23 +272,16 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 // Popups and Tooltips
 //==================================================================================================	
 
+	/*package*/ void setPopupDelay(int delayMs) {
+		popupRegulator.setPopupDelay(delayMs);
+	}
+
 	public void setPopupsVisible(boolean visible) {
-		this.showPopups = visible;
-		if (!showPopups) {
-			hidePopupTooltips();
-		}
+		popupRegulator.setPopupsVisible(visible);
 	}
 
 	/*package*/ boolean isPopupShowing() {
-		return popupWindow != null && popupWindow.isShowing();
-	}
-
-	private void hidePopupTooltips() {
-		if (popupWindow != null && popupWindow.isShowing()) {
-			popupWindow.hide();
-			// don't call dispose, or we don't get our componentHidden() callback 
-			// popupWindow.dispose();
-		}
+		return popupRegulator.isPopupShowing();
 	}
 
 	@Override
@@ -317,47 +311,9 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		return new VertexToolTipInfo(vertex, event);
 	}
 
-	private void showTooltip(ToolTipInfo<?> info) {
-		JComponent tipComponent = info.getToolTipComponent();
-		if (tipComponent == null) {
-			return;
-		}
-
-		MouseEvent event = info.getMouseEvent();
-		showPopupWindow(event, tipComponent);
-	}
-
-	private void showPopupWindow(MouseEvent event, JComponent component) {
-		MenuSelectionManager menuManager = MenuSelectionManager.defaultManager();
-		if (menuManager.getSelectedPath().length != 0) {
-			return;
-		}
-
-		Window parentWindow = WindowUtilities.windowForComponent(this);
-		popupWindow = new PopupWindow(parentWindow, component);
-
-		popupWindow.addComponentListener(new ComponentAdapter() {
-			@Override
-			public void componentShown(ComponentEvent e) {
-				popupRegulator.popupShown();
-			}
-
-			@Override
-			public void componentHidden(ComponentEvent e) {
-				popupRegulator.popupHidden();
-			}
-		});
-
-		popupWindow.showPopup(event);
-	}
-
 	public VertexMouseInfo<V, E> createVertexMouseInfo(MouseEvent e, V v,
 			Point2D vertexBasedClickPoint) {
 		return new VertexMouseInfo<>(e, v, vertexBasedClickPoint, this);
-	}
-
-	/*package*/ void setPopupDelay(int delayMs) {
-		popupRegulator.setPopupDelay(delayMs);
 	}
 
 	public void dispose() {
@@ -369,168 +325,50 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		removeAll();
 	}
 
+	private GraphViewer<V, E> viewer() {
+		return GraphViewer.this;
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================     
 
-	private class PopupRegulator {
-		private int popupDelay = 1000;
+	private class GraphViewerPopupSource implements PopupSource<V, E> {
 
-		/**
-		 * We need this timer because the default mechanism for triggering popups doesn't 
-		 * always work.  We use this timer in conjunction with a mouse motion listener to 
-		 * get the results we want.
-		 */
-		private Timer popupTimer;
-		private MouseEvent popupMouseEvent;
-
-		/** the current target (vertex or edge) of a popup window */
-		private Object nextPopupTarget;
-
-		/** 
-		 * This value is not null when the user moves the cursor over a target for which a 
-		 * popup is already showing.  We use this value to prevent showing a popup multiple times
-		 * while over a single node.
-		 */
-		private Object lastShownPopupTarget;
-
-		/** The tooltip info used when showing the popup */
-		private ToolTipInfo<?> currentToolTipInfo;
-
-		PopupRegulator() {
-			popupTimer = new Timer(popupDelay, e -> {
-				if (isPopupShowing()) {
-					return; // don't show any new popups while the user is perusing
-				}
-				showPopupForMouseEvent(popupMouseEvent);
-			});
-
-			popupTimer.setRepeats(false);
-
-			addMouseMotionListener(new MouseMotionListener() {
-				@Override
-				public void mouseDragged(MouseEvent e) {
-					hidePopupTooltips();
-					popupTimer.stop();
-					popupMouseEvent = null; // clear any queued popups
-				}
-
-				@Override
-				public void mouseMoved(MouseEvent e) {
-					popupMouseEvent = e;
-
-					// this clears out the current last popup shown so that the user can 
-					// move off and on a node to re-show the popup
-					savePopupTarget(e);
-
-					// make sure the popup gets triggered eventually
-					popupTimer.restart();
-				}
-			});
+		@Override
+		public ToolTipInfo<?> getToolTipInfo(MouseEvent event) {
+			return viewer().getToolTipInfo(event);
 		}
 
-		void setPopupDelay(int delayMs) {
-			popupTimer.stop();
-			popupTimer.setDelay(delayMs);
-			popupTimer.setInitialDelay(delayMs);
-			popupDelay = delayMs;
-		}
-
-		private void showPopupForMouseEvent(MouseEvent event) {
-			if (!showPopups) {
-				return;
-			}
-
-			if (event == null) {
-				return;
-			}
-
-			ToolTipInfo<?> toolTipInfo = getToolTipInfo(event);
-			JComponent toolTipComponent = toolTipInfo.getToolTipComponent();
-			boolean isCustomJavaTooltip = !(toolTipComponent instanceof JToolTip);
-			if (lastShownPopupTarget == nextPopupTarget && isCustomJavaTooltip) {
-				// 
-				// Kinda Hacky:
-				// We don't show repeated popups for the same item (the user has to move away
-				// and then come back to re-show the popup).  However, one caveat to this is that
-				// we do want to allow the user to see popups for the toolbar actions always.  So,
-				// only return here if we have already shown a popup for the item *and* we are 
-				// using a custom tooltip (which is used to show a vertex tooltip or an edge 
-				// tooltip)
-				return;
-			}
-
-			currentToolTipInfo = toolTipInfo;
-			showTooltip(currentToolTipInfo);
-		}
-
-		void popupShown() {
-			lastShownPopupTarget = nextPopupTarget;
-			currentToolTipInfo.emphasize();
-			repaint();
-		}
-
-		void popupHidden() {
-			currentToolTipInfo.deEmphasize();
-			repaint();
-		}
-
-		private void savePopupTarget(MouseEvent event) {
-			nextPopupTarget = null;
-			V vertex = getVertexForEvent(event);
-			if (vertex != null) {
-				nextPopupTarget = vertex;
-			}
-			else {
-				E edge = getEdgeForEvent(event);
-				nextPopupTarget = edge;
-			}
-
-			if (nextPopupTarget == null) {
-				// We've moved off of a target. We will clear that last target so the user can
-				// mouse off of a vertex and back on in order to trigger a new popup
-				lastShownPopupTarget = null;
-			}
-		}
-
-		private V getVertexForEvent(MouseEvent event) {
+		@Override
+		public V getVertex(MouseEvent event) {
 			Layout<V, E> viewerLayout = getGraphLayout();
 			Point p = event.getPoint();
 			return getPickSupport().getVertex(viewerLayout, p.getX(), p.getY());
 		}
 
-		private E getEdgeForEvent(MouseEvent event) {
+		@Override
+		public E getEdge(MouseEvent event) {
 			Layout<V, E> viewerLayout = getGraphLayout();
 			Point p = event.getPoint();
 			return getPickSupport().getEdge(viewerLayout, p.getX(), p.getY());
 		}
-	}
 
-	/** Basic container object that knows how to generate tooltips */
-	private abstract class ToolTipInfo<T> {
-		protected final MouseEvent event;
-		protected final T graphObject;
-		private JComponent tooltipComponent;
-
-		ToolTipInfo(MouseEvent event, T t) {
-			this.event = event;
-			this.graphObject = t;
-			tooltipComponent = createToolTipComponent(t);
+		@Override
+		public void addMouseMotionListener(MouseMotionListener l) {
+			viewer().addMouseMotionListener(l);
 		}
 
-		protected abstract JComponent createToolTipComponent(T t);
-
-		protected abstract void emphasize();
-
-		protected abstract void deEmphasize();
-
-		MouseEvent getMouseEvent() {
-			return event;
+		@Override
+		public void repaint() {
+			viewer().repaint();
 		}
 
-		JComponent getToolTipComponent() {
-			return tooltipComponent;
+		@Override
+		public Window getPopupParent() {
+			return WindowUtilities.windowForComponent(viewer());
 		}
+
 	}
 
 	private class VertexToolTipInfo extends ToolTipInfo<V> {
@@ -540,19 +378,20 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		}
 
 		@Override
-		public JComponent createToolTipComponent(V vertex) {
-			if (vertex == null) {
+		public JComponent createToolTipComponent() {
+			if (graphObject == null) {
 				return null;
 			}
 
 			if (isScaledPastInteractionThreshold()) {
-				return vertexTooltipProvider.getTooltip(vertex);
+				return vertexTooltipProvider.getTooltip(graphObject);
 			}
 
 			VertexMouseInfo<V, E> mouseInfo =
 				GraphViewerUtils.convertMouseEventToVertexMouseEvent(GraphViewer.this, event);
 			MouseEvent translatedMouseEvent = mouseInfo.getTranslatedMouseEvent();
-			String toolTip = vertexTooltipProvider.getTooltipText(vertex, translatedMouseEvent);
+			String toolTip =
+				vertexTooltipProvider.getTooltipText(graphObject, translatedMouseEvent);
 			if (toolTip == null) {
 				return null;
 			}
@@ -591,15 +430,15 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		}
 
 		@Override
-		public JComponent createToolTipComponent(E edge) {
-			if (edge == null) {
+		public JComponent createToolTipComponent() {
+			if (graphObject == null) {
 				return null;
 			}
 
-			V start = edge.getStart();
-			V end = edge.getEnd();
+			V start = graphObject.getStart();
+			V end = graphObject.getEnd();
 
-			JComponent startComponent = vertexTooltipProvider.getTooltip(start, edge);
+			JComponent startComponent = vertexTooltipProvider.getTooltip(start, graphObject);
 			if (startComponent == null) {
 				return null;
 			}
@@ -611,7 +450,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 				return component;
 			}
 
-			JComponent endComponent = vertexTooltipProvider.getTooltip(end, edge);
+			JComponent endComponent = vertexTooltipProvider.getTooltip(end, graphObject);
 			if (endComponent == null) {
 				return null;
 			}

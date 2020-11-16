@@ -99,7 +99,7 @@ import ghidra.util.exception.AssertException;
  * @see OptionDialogBuilder
  */
 public class OptionDialog extends DialogComponentProvider {
-	private static final String MESSAGE_COMPONENT_NAME = "MESSAGE-COMPONENT";
+	public static final String MESSAGE_COMPONENT_NAME = "MESSAGE-COMPONENT";
 	/** Used for error messages. */
 	public static final int ERROR_MESSAGE = 0;
 	/** Used for information messages. */

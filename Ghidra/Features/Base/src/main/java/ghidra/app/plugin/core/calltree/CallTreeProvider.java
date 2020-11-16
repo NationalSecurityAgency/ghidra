@@ -283,7 +283,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeNode) {
+						if (node instanceof OutgoingCallsRootNode ||
+							node instanceof IncomingCallsRootNode) {
 							return false;
 						}
 					}
@@ -1090,11 +1091,16 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private boolean updateRootNodes(Function function) {
-		CallNode callNode = (CallNode) incomingTree.getModelRoot();
-		Function nodeFunction = callNode.getContainingFunction();
-		if (nodeFunction.equals(function)) {
-			reloadUpdateManager.update();
-			return true;
+		GTreeNode root = incomingTree.getModelRoot();
+		// root might be a "PendingRootNode"
+		//TODO do we need to use a PendingRootNode?
+		if (root instanceof CallNode) {
+			CallNode callNode = (CallNode) root;
+			Function nodeFunction = callNode.getRemoteFunction();
+			if (nodeFunction.equals(function)) {
+				reloadUpdateManager.update();
+				return true;
+			}
 		}
 
 		return false;
@@ -1126,7 +1132,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 			// first, if the given node represents the function we have, then we don't need to 
 			// go any further
-			if (function.equals(node.getContainingFunction())) {
+			if (function.equals(node.getRemoteFunction())) {
 				GTreeNode parent = node.getParent();
 				parent.removeNode(node);
 				parent.addNode(node.recreate());

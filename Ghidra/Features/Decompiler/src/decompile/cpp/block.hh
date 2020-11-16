@@ -170,7 +170,7 @@ public:
   virtual void flipInPlaceExecute(void);
   virtual bool isComplex(void) const { return true; }	///< Is \b this too complex to be a condition (BlockCondition)
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void orderSwitchCases(void) const {}	///< Order \e case components of any contained BlockSwitch
+  virtual void finalizePrinting(const Funcdata &data) const {}	///< Make any final configurations necessary to print the block
   virtual void saveXmlHeader(ostream &s) const;		///< Save basic information as XML attributes
   virtual void restoreXmlHeader(const Element *el);	///< Restore basic information for XML attributes
   virtual void saveXmlBody(ostream &s) const {}		///< Save detail about components to an XML stream
@@ -296,7 +296,7 @@ public:
   virtual void printRaw(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGraph(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void orderSwitchCases(void) const;
+  virtual void finalizePrinting(const Funcdata &data) const;
   virtual void saveXmlBody(ostream &s) const;
   virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
   void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore \b this BlockGraph from an XML stream
@@ -674,7 +674,7 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockSwitch(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void orderSwitchCases(void) const;
+  virtual void finalizePrinting(const Funcdata &data) const;
 };
 
 /// \brief Helper class for resolving cross-references while deserializing BlockGraph objects

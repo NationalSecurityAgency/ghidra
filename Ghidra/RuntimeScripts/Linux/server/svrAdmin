@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # ***********************************************************
 # ** Arguments (each -argument option may be repeated):
-# **   [-add <sid>] [-dn <sid> "<x500_distinguished_name>"]
+# **   [-add <sid> [--p]] 
+# **   [-dn <sid> "<x500_distinguished_name>"]
 # **   [-remove <sid>] 
-# **   [-reset <sid>]
+# **   [-reset <sid> [--p]]
 # **   [-admin <sid> "<repository-name>"] 
 # **   [-list] [-users] 
 # **   [-migrate "<repository-name>"] [-migrate-all]
 # **
-# **   add - add a new user to the server with the default password 'changeme'
+# **   add - add a new user to the server with the default password 'changeme' [--p prompt for password]
 # **   dn - set a user's distinguished name for PKI authentication
 # **   remove - remove an existing user from the server
-# **   reset - reset an existing user's password to 'changeme'
+# **   reset - reset an existing user's password to 'changeme' [--p prompt for password]
 # **   admin - set the specified existing user as an admin of the specified repository
 # **   list - list all existing named repositories
 # **   users - list all users or those associated with each listed repository

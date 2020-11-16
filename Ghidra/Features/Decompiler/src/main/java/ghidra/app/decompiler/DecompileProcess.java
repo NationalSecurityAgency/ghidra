@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
 /**
- * 
+ *
  *
  * Class for communicating with a single decompiler process.
  * The process controls decompilation for a single Program.
@@ -70,7 +70,6 @@ public class DecompileProcess {
 	private int archId = -1;              // architecture id for decomp process
 	private DecompileCallback callback;   // Callback interface for decompiler
 	private int maxResultSizeMBYtes = 50; // maximum result size in MBytes to allow from decompiler
-	private boolean showNamespace;        // whether to show namespaces for functions
 
 	public enum DisposeState {
 		NOT_DISPOSED,        // Process was/is not disposed
@@ -117,7 +116,7 @@ public class DecompileProcess {
 		}
 		if (nativeProcess != null) {
 			// Something bad happened to the process or the interface
-			// and now we try to restart		    
+			// and now we try to restart
 			nativeProcess.destroy(); // Make sure previous bad process is killed           			
 			nativeProcess = null;
 		}
@@ -142,7 +141,7 @@ public class DecompileProcess {
 
 	private int readToBurst() throws IOException {
 		if (nativeIn == null) {
-			// we've been disposed!  
+			// we've been disposed!
 			// (not sure if throwing an exception the best)
 			throw new IOException("Decompiler disposed!");
 		}
@@ -240,7 +239,7 @@ public class DecompileProcess {
 	/**
 	 * Transfer bytes written to -out- to decompiler process
 	 * @param out has the collected byte for this write
-	 * @throws IOException
+	 * @throws IOException for any problems with the output stream
 	 */
 	private void writeBytes(PackedBytes out) throws IOException {
 		write(string_start);
@@ -288,6 +287,9 @@ public class DecompileProcess {
 							throw new Exception("Bad decompiler query: " + name);
 						}
 						switch (name.charAt(3)) {
+							case 'a':							// isNameUsed
+								isNameUsed();
+								break;
 							case 'B':
 								getBytes();						// getBytes
 								break;
@@ -314,6 +316,9 @@ public class DecompileProcess {
 							case 'M':
 								getMappedSymbolsXML();			// getMappedSymbolsXML
 								break;
+							case 'N':
+								getNamespacePath();
+								break;
 							case 'P':
 								getPcodePacked();				// getPacked
 								break;
@@ -326,7 +331,12 @@ public class DecompileProcess {
 								}
 								break;
 							case 'S':
-								getSymbol();					// getSymbol
+								if (name.equals("getString")) {
+									getStringData();
+								}
+								else {
+									getSymbol();					// getSymbol
+								}
 								break;
 							case 'T':
 								if (name.equals("getType")) {
@@ -422,14 +432,14 @@ public class DecompileProcess {
 	 * @param pspecxml = string containing .pspec xml
 	 * @param cspecxml = string containing .cspec xml
 	 * @param tspecxml = XML string containing translator spec
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @param coretypesxml = XML description of core data-types
+	 * @throws IOException for problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized void registerProgram(DecompileCallback cback, String pspecxml,
 			String cspecxml, String tspecxml, String coretypesxml)
 			throws IOException, DecompileException {
 		callback = cback;
-		callback.setShowNamespace(showNamespace);
 
 		setup();
 		String restring = null;
@@ -452,9 +462,9 @@ public class DecompileProcess {
 
 	/**
 	 * Free decompiler resources
-	 * @return
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @return 1 if a program was actively deregistered, 0 otherwise
+	 * @throws IOException for problems with the pipe to the decompiler
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized int deregisterProgram() throws IOException, DecompileException {
 		if (!statusGood) {
@@ -478,8 +488,8 @@ public class DecompileProcess {
 	 * Send a single command to the decompiler with no parameters and return response
 	 * @param command is the name of the command to execute
 	 * @return the response String
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for any problems executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand(String command)
 			throws IOException, DecompileException {
@@ -510,17 +520,19 @@ public class DecompileProcess {
 	 * @param param an additional parameter for the command
 	 * @param timeoutSecs the number of seconds to run before timing out
 	 * @return the response string
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for any problems while executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand1ParamTimeout(String command, String param,
 			int timeoutSecs) throws IOException, DecompileException {
+
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
+
 		LimitedByteBuffer resbuf = null;
-		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(timeoutSecs * 1000, timeoutRunnable);
-//		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(100 * timeoutSecs * 1000, timeoutRunnable); //epp change timeout for valgrind
+		int validatedTimeoutMs = getTimeoutMs(timeoutSecs);
+		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(validatedTimeoutMs, timeoutRunnable);
 
 		try {
 			write(command_start);
@@ -544,14 +556,21 @@ public class DecompileProcess {
 		return resbuf;
 	}
 
+	private int getTimeoutMs(int timeoutSecs) {
+		if (timeoutSecs == 0) {
+			return -1;
+		}
+		return timeoutSecs * 1000;
+	}
+
 	/**
 	 * Send a command with 2 parameters to the decompiler and read the result
 	 * @param command string to send
 	 * @param param1  is the first parameter string
 	 * @param param2  is the second parameter string
 	 * @return the result string
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand2Params(String command, String param1,
 			String param2) throws IOException, DecompileException {
@@ -579,18 +598,13 @@ public class DecompileProcess {
 		this.maxResultSizeMBYtes = maxResultSizeMBytes;
 	}
 
-	public void setShowNamespace(boolean showNamespace) {
-		this.showNamespace = showNamespace;
-		callback.setShowNamespace(showNamespace);
-	}
-
 	/**
 	 * Send a command to the decompiler with one parameter and return the result
 	 * @param command is the command string
 	 * @param param1 is the parameter as a string
 	 * @return the result string
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand1Param(String command, String param1)
 			throws IOException, DecompileException {
@@ -706,6 +720,31 @@ public class DecompileProcess {
 		write(query_response_end);
 	}
 
+	private void getNamespacePath() throws IOException {
+		String idString = readQueryString();
+		long id = Long.parseLong(idString, 16);
+		String res = callback.getNamespacePath(id);
+		write(query_response_start);
+		if ((res != null) && (res.length() != 0)) {
+			writeString(res);
+		}
+		write(query_response_end);
+	}
+
+	private void isNameUsed() throws IOException {
+		String name = readQueryString();
+		String startString = readQueryString();
+		String stopString = readQueryString();
+		long startId = Long.parseLong(startString, 16);
+		long stopId = Long.parseLong(stopString, 16);
+		boolean res = callback.isNameUsed(name, startId, stopId);
+		write(query_response_start);
+		write(string_start);
+		write(res ? 't' : 'f');
+		write(string_end);
+		write(query_response_end);
+	}
+
 	private void getExternalRefXML() throws IOException {
 		String refaddr = readQueryString();
 		String res = callback.getExternalRefXML(refaddr);
@@ -772,6 +811,35 @@ public class DecompileProcess {
 				dblres[i * 2] = (byte) (((res[i] >> 4) & 0xf) + 65);
 				dblres[i * 2 + 1] = (byte) ((res[i] & 0xf) + 65);
 			}
+			write(dblres);
+			write(byte_end);
+		}
+		write(query_response_end);
+	}
+
+	private void getStringData() throws IOException {
+		String addr = readQueryString();
+		String dtName = readQueryString();
+		String dtId = readQueryString();
+		DecompileCallback.StringData stringData = callback.getStringData(addr, dtName, dtId);
+		write(query_response_start);
+		if (stringData != null) {
+			byte[] res = stringData.byteData;
+			int sz = res.length + 1;		// We add a null terminator character
+			int sz1 = (sz & 0x3f) + 0x20;
+			sz >>>= 6;
+			int sz2 = (sz & 0x3f) + 0x20;
+			write(byte_start);
+			write(sz1);
+			write(sz2);
+			write(stringData.isTruncated ? 1 : 0);
+			byte[] dblres = new byte[res.length * 2 + 2];
+			for (int i = 0; i < res.length; i++) {
+				dblres[i * 2] = (byte) (((res[i] >> 4) & 0xf) + 65);
+				dblres[i * 2 + 1] = (byte) ((res[i] & 0xf) + 65);
+			}
+			dblres[res.length * 2] = 65;		// Adding null terminator
+			dblres[res.length * 2 + 1] = 65;
 			write(dblres);
 			write(byte_end);
 		}

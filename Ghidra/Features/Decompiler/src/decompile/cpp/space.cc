@@ -24,6 +24,7 @@ void AddrSpace::calcScaleMask(void)
   pointerLowerBound = (addressSize < 3) ? 0x100: 0x1000;
   highest = calc_mask(addressSize); // Maximum address
   highest = highest * wordsize + (wordsize-1); // Maximum byte address
+  pointerUpperBound = highest;
 }
 
 /// Initialize an address space with its basic attributes

@@ -15,13 +15,13 @@
  */
 package ghidra.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ToyProgramBuilder extends ProgramBuilder {
 
@@ -106,7 +106,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	/**
 	 * Get address in default ram space
 	 * @param offset address offset
-	 * @return address
+	 * @return the address
 	 */
 	public Address getAddress(long offset) {
 		return defaultSpace.getAddress(offset);

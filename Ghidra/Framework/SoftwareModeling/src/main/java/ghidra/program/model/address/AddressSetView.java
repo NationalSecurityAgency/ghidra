@@ -235,4 +235,57 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * @return the first address that is contained in this set and the given set.
 	 */
 	public Address findFirstAddressInCommon(AddressSetView set);
+
+	/**
+	 * Trim address set removing all addresses less-than-or-equal to specified 
+	 * address based upon {@link Address#compareTo(Address)} behavior.  
+	 * The address set may contain address ranges from multiple 
+	 * address spaces.
+	 * @param set address set to be trimmed
+	 * @param addr trim point.  Only addresses greater than this address will be returned.
+	 * @return trimmed address set view
+	 */
+	public static AddressSetView trimStart(AddressSetView set, Address addr) {
+		AddressSet trimmedSet = new AddressSet();
+		AddressRangeIterator addressRanges = set.getAddressRanges();
+		while (addressRanges.hasNext()) {
+			AddressRange range = addressRanges.next();
+			Address rangeMin = range.getMinAddress();
+			Address rangeMax = range.getMaxAddress();
+			if (rangeMin.compareTo(addr) > 0) {
+				trimmedSet.add(range);
+			}
+			else if (rangeMax.compareTo(addr) > 0) {
+				trimmedSet.add(addr.next(), rangeMax);
+
+			}
+		}
+		return trimmedSet;
+	}
+
+	/**
+	 * Trim address set removing all addresses greater-than-or-equal to specified 
+	 * address based upon {@link Address#compareTo(Address)} behavior.  
+	 * The address set may contain address ranges from multiple 
+	 * address spaces.
+	 * @param set address set to be trimmed
+	 * @param addr trim point.  Only addresses less than this address will be returned.
+	 * @return trimmed address set view
+	 */
+	public static AddressSetView trimEnd(AddressSetView set, Address addr) {
+		AddressSet trimmedSet = new AddressSet();
+		AddressRangeIterator addressRanges = set.getAddressRanges();
+		while (addressRanges.hasNext()) {
+			AddressRange range = addressRanges.next();
+			Address rangeMin = range.getMinAddress();
+			Address rangeMax = range.getMaxAddress();
+			if (rangeMax.compareTo(addr) < 0) {
+				trimmedSet.add(range);
+			}
+			else if (rangeMin.compareTo(addr) < 0) {
+				trimmedSet.add(rangeMin, addr.previous());
+			}
+		}
+		return trimmedSet;
+	}
 }

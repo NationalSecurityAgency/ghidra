@@ -288,8 +288,16 @@ class PlaceholderManager {
 
 		String group = isInvalid ? ComponentProvider.DEFAULT_WINDOW_GROUP : windowGroup;
 
-		// look for a match based upon configuration and not IDs
+		// look for a match based on name and title, first prefer a visible one.
 		String title = provider.getTitle();
+		for (ComponentPlaceholder placeholder : unusedPlaceholders) {
+			if (placeholder.wantsToBeShowing() && name.equals(placeholder.getName()) &&
+				title.equals(placeholder.getTitle())) {
+				return placeholder;
+			}
+		}
+
+		// look for a match based upon name and title, now accept one that is not showing.
 		for (ComponentPlaceholder placeholder : unusedPlaceholders) {
 			if (name.equals(placeholder.getName()) && title.equals(placeholder.getTitle())) {
 				return placeholder;
@@ -299,15 +307,6 @@ class PlaceholderManager {
 		// look for a "close enough" match (same name and group)
 		for (ComponentPlaceholder placeholder : unusedPlaceholders) {
 			if (name.equals(placeholder.getName()) && group.equals(placeholder.getGroup())) {
-				return placeholder;
-			}
-		}
-
-		// backwards compatibility for before group changes (put in on 8/7/2015; take out after
-		// a couple years)
-		for (ComponentPlaceholder placeholder : unusedPlaceholders) {
-			if (name.equals(placeholder.getName()) &&
-				ComponentProvider.DEFAULT_WINDOW_GROUP.equals(placeholder.getGroup())) {
 				return placeholder;
 			}
 		}

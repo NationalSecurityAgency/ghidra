@@ -111,9 +111,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * 
 	 * @return space ID
 	 */
-	int getBaseSpaceID();
-
-	int getUniqueSpaceID();
+	int getSpaceID();
 
 	/** Returns the number of bits that are used to form the address.  Thus
 	 * the maximum offset for this address space will be 2^size-1.

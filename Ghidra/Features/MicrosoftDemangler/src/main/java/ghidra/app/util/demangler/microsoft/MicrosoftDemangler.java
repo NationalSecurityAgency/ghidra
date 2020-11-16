@@ -21,7 +21,6 @@ import ghidra.app.util.opinion.PeLoader;
 import ghidra.program.model.listing.Program;
 import mdemangler.MDException;
 import mdemangler.MDMangGhidra;
-import util.demangler.GenericDemangledException;
 
 /**
  * A class for demangling debug symbols created using Microsoft Visual Studio.
@@ -46,7 +45,7 @@ public class MicrosoftDemangler implements Demangler {
 			DemangledObject demangled = demangleMS(mangled, demangleOnlyKnownPatterns);
 			return demangled;
 		}
-		catch (GenericDemangledException e) {
+		catch (DemangledException e) {
 			throw new DemangledException(true);
 		}
 	}
@@ -59,15 +58,15 @@ public class MicrosoftDemangler implements Demangler {
 			DemangledObject demangled = demangleMS(mangled, options.demangleOnlyKnownPatterns());
 			return demangled;
 		}
-		catch (GenericDemangledException e) {
+		catch (DemangledException e) {
 			throw new DemangledException(true);
 		}
 	}
 
 	private DemangledObject demangleMS(String mangled, boolean demangleOnlyKnownPatterns)
-			throws GenericDemangledException {
+			throws DemangledException {
 		if (mangled == null || mangled.length() == 0) {
-			throw new GenericDemangledException(true);
+			throw new DemangledException(true);
 		}
 
 		MDMangGhidra demangler = new MDMangGhidra();
@@ -77,10 +76,10 @@ public class MicrosoftDemangler implements Demangler {
 			return object;
 		}
 		catch (MDException e) {
-			GenericDemangledException gde =
-				new GenericDemangledException("Unable to demangle symbol: " + mangled);
-			gde.initCause(e);
-			throw gde;
+			DemangledException de =
+				new DemangledException("Unable to demangle symbol: " + mangled);
+			de.initCause(e);
+			throw de;
 		}
 	}
 }

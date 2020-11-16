@@ -138,7 +138,7 @@ public class SwingUpdateManager {
 
 		recordInception();
 		this.minDelay = Math.max(MIN_DELAY_FLOOR, minDelay);
-		timer = new Timer(minDelay, e -> checkForWork());
+		timer = new Timer(minDelay, e -> timerCallback());
 		timer.setRepeats(false);
 		instances.add(this);
 	}
@@ -261,12 +261,23 @@ public class SwingUpdateManager {
 		}
 	}
 
+	// This is similar to checkForWork except that it resets the task buffering when
+	// the time expires and there is no work to do.
+	private void timerCallback() {
+
+		if (shouldDoWork()) {
+			doWork();
+		}
+		else if (requestTime == NONE) {
+			bufferingStartTime = NONE; // The timer has fired and there is no pending work
+		}
+	}
+
 	// note: this is called on the Swing thread
 	private synchronized boolean shouldDoWork() {
 
 		// If no pending request, exit without restarting timer
 		if (requestTime == NONE) {
-			bufferingStartTime = NONE; // The timer has fired and there is no pending work
 			return false;
 		}
 

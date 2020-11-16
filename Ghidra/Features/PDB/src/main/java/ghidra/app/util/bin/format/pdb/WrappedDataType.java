@@ -20,7 +20,7 @@ import ghidra.program.model.data.DataType;
 /**
  * <code>WrappedDataType</code> provide the ability to wrap 
  * a {@link DataType} with additional information not conveyed
- * by the datatype on its' own. 
+ * by the datatype on its own. 
  * <P>
  * Note that a BitFieldDataType instance may be specified as the datatype
  * in order to convey bitfield related information.
@@ -40,7 +40,7 @@ public class WrappedDataType {
 	 * @param isNoType if true wrapped type corresponds to NoType as
 	 * used by PDB forced to have a size of 1-byte.
 	 */
-	protected WrappedDataType(DataType dataType, boolean isZeroLengthArray, boolean isNoType) {
+	public WrappedDataType(DataType dataType, boolean isZeroLengthArray, boolean isNoType) {
 		this.dataType = dataType;
 		this.isZeroLengthArray = isZeroLengthArray;
 		this.isNoType = isNoType;

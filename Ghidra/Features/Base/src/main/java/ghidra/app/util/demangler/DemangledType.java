@@ -15,102 +15,43 @@
  */
 package ghidra.app.util.demangler;
 
-import java.util.List;
-
-import ghidra.app.util.SymbolPath;
 import ghidra.program.model.symbol.Namespace;
-import util.demangler.GenericDemangledTemplate;
-import util.demangler.GenericDemangledType;
 
-public class DemangledType {
+/**
+ * Represents a demangled string.  This class is really just a placeholder for demangled 
+ * information.  See {@link DemangledObject} for a class that represents software concepts that
+ * can be applied to a program.   The {@link DemangledObject} may use instances of this class
+ * to compose its internal state for namespace information, return types and parameters.
+ */
+public class DemangledType implements Demangled {
+
+	protected String mangled; // the original mangled string
+	private String originalDemangled;
 	private String demangledName;
-	private String name;
-	protected String originalMangled;
-	protected DemangledType namespace;
+	private String name; // 'safe' name
+
+	protected Demangled namespace;
 	protected DemangledTemplate template;
 	private boolean isConst;
 	private boolean isVolatile;
 
-	/**
-	 * Takes a {@link DemangledType} with a name that contains namespace elements
-	 * (such as Foo::Bar) and breaks it into a hierarchy of types where each type
-	 * represents one item in the list of namespace elements.
-	 *
-	 * @param otherNamespace the type to convert
-	 * @return the original type if the name does not represent a namespace; a new type
-	 *         that contains a child, that contains a child and so on, representing the
-	 *         split-up of the original namespace string.
-	 */
-	public static DemangledType convertToNamespace(GenericDemangledType otherNamespace) {
-		if (otherNamespace == null) {
-			return null;
-		}
-
-		DemangledType newNamespace = new DemangledType(otherNamespace);
-		String demangledName = newNamespace.getName();
-
-		SymbolPath symbolPath = new SymbolPath(demangledName);
-		if (symbolPath.getParent() == null) {
-			return newNamespace;
-		}
-
-		List<String> names = symbolPath.asList();
-
-		DemangledType lastParent = new DemangledType(names.get(0));
-		for (int i = 1; i < names.size(); i++) {
-			DemangledType child = new DemangledType(names.get(i));
-			child.setNamespace(lastParent);
-			lastParent = child;
-		}
-
-		return lastParent;
-	}
-
-	public DemangledType(String name) {
+	public DemangledType(String mangled, String originaDemangled, String name) {
+		this.mangled = mangled;
+		this.originalDemangled = originaDemangled;
 		setName(name);
 	}
 
-	DemangledType(GenericDemangledType toCopy) {
-		GenericDemangledType otherNamespace = toCopy.getNamespace();
-
-		if (otherNamespace != null) {
-			namespace = convertToNamespace(otherNamespace);
-		}
-
-		setName(toCopy.getName());
-		GenericDemangledTemplate otherTemplate = toCopy.getTemplate();
-		if (otherTemplate != null) {
-			template = new DemangledTemplate(otherTemplate);
-		}
-		isConst = toCopy.isConst();
-		isVolatile = toCopy.isVolatile();
-	}
-
-	/** 
-	 * Returns the unmodified demangled name of this object.
-	 * This name may contain whitespace and other characters not
-	 * supported for symbol or data type creation.  See {@link #getName()} 
-	 * for the same name modified for use within Ghidra.
-	 * @return name of this DemangledObject
-	 */
+	@Override
 	public String getDemangledName() {
 		return demangledName;
 	}
 
-	/**
-	 * Get the name of this type.
-	 * NOTE: unsupported symbol characters, like whitespace, will be
-	 * converted to an underscore.
-	 * @return name of this DemangledType suitable for namespace creation.
-	 */
+	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * Sets the name of the demangled type object.
-	 * @param name the new name
-	 */
+	@Override
 	public void setName(String name) {
 		demangledName = name;
 		this.name = name;
@@ -120,20 +61,14 @@ public class DemangledType {
 		}
 	}
 
-	/**
-	 * Sets the original mangled name
-	 * @param mangled the original mangled name
-	 */
-	public void setOriginalMangled(String mangled) {
-		this.originalMangled = mangled;
+	@Override
+	public String getOriginalDemangled() {
+		return originalDemangled;
 	}
 
-	/**
-	 * Gets the original mangled name
-	 * @return the original mangled name
-	 */
-	public String getOriginalMangled() {
-		return originalMangled;
+	@Override
+	public String getMangledString() {
+		return mangled;
 	}
 
 	public boolean isConst() {
@@ -144,10 +79,6 @@ public class DemangledType {
 		isConst = true;
 	}
 
-	public boolean isFunction() {
-		return false;
-	}
-
 	public boolean isVolatile() {
 		return isVolatile;
 	}
@@ -156,11 +87,13 @@ public class DemangledType {
 		isVolatile = true;
 	}
 
-	public DemangledType getNamespace() {
+	@Override
+	public Demangled getNamespace() {
 		return namespace;
 	}
 
-	public void setNamespace(DemangledType namespace) {
+	@Override
+	public void setNamespace(Demangled namespace) {
 		if (this == namespace) {
 			throw new IllegalArgumentException("Attempt to set this.namespace == this!");
 		}
@@ -175,15 +108,23 @@ public class DemangledType {
 		this.template = template;
 	}
 
-	public String toSignature() {
-		return toNamespace();
+	@Override
+	public String getSignature() {
+		return getNamespaceName();
 	}
 
-	public String toNamespace() {
-		StringBuffer buffer = new StringBuffer();
-		if (namespace != null) {
-			buffer.append(namespace.toNamespace());
+	@Override
+	public String getNamespaceString() {
+		return getName(true);
+	}
+
+	private String getName(boolean includeNamespace) {
+		StringBuilder buffer = new StringBuilder();
+		if (includeNamespace && namespace != null) {
+			buffer.append(namespace.getNamespaceString());
+			buffer.append(Namespace.DELIMITER);
 		}
+
 		buffer.append(demangledName);
 		if (template != null) {
 			buffer.append(template.toTemplate());
@@ -193,12 +134,16 @@ public class DemangledType {
 			return "";
 		}
 
-		buffer.append(Namespace.DELIMITER);
 		return buffer.toString();
 	}
 
 	@Override
+	public String getNamespaceName() {
+		return name;
+	}
+
+	@Override
 	public String toString() {
-		return toNamespace();
+		return getNamespaceString();
 	}
 }

@@ -1663,10 +1663,10 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ProgramContext context = resultProgram.getProgramContext();
-		Register ahReg = context.getRegister("ah");
-		Register dhReg = context.getRegister("dh");
-		Register dr0Reg = context.getRegister("dr0");
-		Register alReg = context.getRegister("al");
+		Register ahReg = context.getRegister("AH");
+		Register dhReg = context.getRegister("DH");
+		Register dr0Reg = context.getRegister("DR0");
+		Register alReg = context.getRegister("AL");
 
 		Function func;
 		Parameter[] params;
@@ -1739,10 +1739,10 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ProgramContext context = resultProgram.getProgramContext();
-		Register ahReg = context.getRegister("ah");
-		Register dhReg = context.getRegister("dh");
-		Register dr0Reg = context.getRegister("dr0");
-		Register alReg = context.getRegister("al");
+		Register ahReg = context.getRegister("AH");
+		Register dhReg = context.getRegister("DH");
+		Register dr0Reg = context.getRegister("DR0");
+		Register alReg = context.getRegister("AL");
 
 		Function func;
 		Parameter[] params;

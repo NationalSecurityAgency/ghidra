@@ -59,6 +59,21 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testRegisterNameLookup() {
+		ProgramContext programContext = program.getProgramContext();
+		boolean didSomething = false;
+		for (String regName : programContext.getRegisterNames()) {
+			Register reg = programContext.getRegister(regName);
+			assertNotNull(reg);
+			assertEquals(regName, reg.getName());
+			assertTrue(reg == programContext.getRegister(regName.toLowerCase()));
+			assertTrue(reg == programContext.getRegister(regName.toUpperCase()));
+			didSomething = true;
+		}
+		assertTrue(didSomething);
+	}
+
+	@Test
 	public void testAll() {
 		int id = program.startTransaction("Test");
 		try {
@@ -73,10 +88,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 
 			ProgramContext programContext = program.getProgramContext();
-			Register[] registers = null;
-			if (programContext != null) {
-				registers = programContext.getRegisters();
-			}
+			boolean didSomething = false;
 
 			Address startAddress = start;
 			Address endAddress = getAddress(0x30);
@@ -84,7 +96,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 			// stick a value into each one!
 			BigInteger value = BigInteger.valueOf(255);
 
-			for (Register register : registers) {
+			for (Register register : programContext.getRegisters()) {
 				Register reg = register;
 				if (!reg.isBaseRegister() && reg.isProcessorContext()) {
 					continue;
@@ -136,7 +148,9 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 						endAddress.getAddressSpace().getMaxAddress()),
 					programContext.getRegisterValueRangeContaining(reg, badAddress));
 
+				didSomething = true;
 			}
+			assertTrue(didSomething);
 		}
 		finally {
 			program.endTransaction(id, false);

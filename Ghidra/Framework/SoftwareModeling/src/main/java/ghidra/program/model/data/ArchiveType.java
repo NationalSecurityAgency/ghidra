@@ -15,13 +15,12 @@
  */
 package ghidra.program.model.data;
 
-
 public enum ArchiveType {
 	//@formatter:off
-	BUILT_IN, 
-	FILE, 
-	PROJECT, 
-	PROGRAM, 
+	BUILT_IN,
+	FILE,
+	PROJECT,
+	PROGRAM,
 	TEST;
 	//@formatter:on
 

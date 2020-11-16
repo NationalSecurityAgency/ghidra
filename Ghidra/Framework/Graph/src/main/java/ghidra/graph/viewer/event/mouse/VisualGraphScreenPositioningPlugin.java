@@ -16,8 +16,7 @@
 package ghidra.graph.viewer.event.mouse;
 
 import java.awt.Point;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.*;
 
 import docking.DockingUtils;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
@@ -32,8 +31,13 @@ public class VisualGraphScreenPositioningPlugin<V extends VisualVertex, E extend
 	}
 
 	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == modifiers;
+	}
+
+	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		int eventModifiers = e.getModifiers();
+		int eventModifiers = e.getModifiersEx();
 		boolean controlKeyDown = (eventModifiers & DockingUtils.CONTROL_KEY_MODIFIER_MASK) != 0;
 		if (!controlKeyDown) {
 			return;

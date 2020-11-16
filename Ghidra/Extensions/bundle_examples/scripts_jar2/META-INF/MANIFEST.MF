@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+Bundle-SymbolicName: org.jarlib
+Bundle-Version: 2.0.0
+Bundle-Name: Example library
+Export-Package: org.jarlib;version=2.0.0

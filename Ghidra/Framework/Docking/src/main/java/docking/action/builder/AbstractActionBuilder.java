@@ -15,6 +15,7 @@
  */
 package docking.action.builder;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -23,6 +24,7 @@ import javax.swing.KeyStroke;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import resources.ResourceManager;
@@ -50,7 +52,7 @@ import resources.ResourceManager;
  * the {@link #withContext(Class)} call.
  */
 public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends ActionContext, B extends AbstractActionBuilder<T, C, B>> {
-
+	private final Predicate<C> ALWAYS_TRUE = e -> true;
 	/**
 	 * Name for the {@code DockingAction}
 	 */
@@ -115,7 +117,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * The mnemonic for the menu action (optional)
 	 */
 	private int menuMnemonic = MenuData.NO_MNEMONIC;
-
 	/**
 	 * The icon for the  menu item (optional)
 	 */
@@ -159,17 +160,22 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Predicate for determining if an action is enabled for a given context
 	 */
-	private Predicate<C> enabledPredicate;
+	private Predicate<C> enabledPredicate = null;
 
 	/**
 	 * Predicate for determining if an action should be included on the pop-up menu
 	 */
-	private Predicate<C> popupPredicate;
+	private Predicate<C> popupPredicate = ALWAYS_TRUE;
 
 	/**
 	 * Predicate for determining if an action is applicable for a given context
 	 */
-	private Predicate<C> validContextPredicate;
+	private Predicate<C> validContextPredicate = ALWAYS_TRUE;
+
+	/**
+	 * Set to true if the action supports using the default tool context if the local context is invalid
+	 */
+	private boolean supportsDefaultToolContext;
 
 	/**
 	 * Builder constructor
@@ -484,7 +490,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * @return this builder (for chaining)
 	 */
 	public B keyBinding(String keyStrokeString) {
-		this.keyBinding = KeyStroke.getKeyStroke(keyStrokeString);
+		this.keyBinding = KeyBindingUtils.parseKeyStroke(keyStrokeString);
 		if (keyBinding == null && keyStrokeString != null) {
 			Msg.warn(this, "Can't parse KeyStroke: " + keyStrokeString);
 		}
@@ -510,14 +516,15 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * 
 	 * <p>If this predicate is not set, the action's enable state must be controlled 
 	 * directly using the {@link DockingAction#setEnabled(boolean)} method.  We do not recommend
-	 * controlling enablement directly.
+	 * controlling enablement directly. And, of course, if you do set this predicate, you should 
+	 * not later call {@link DockingAction#setEnabled(boolean)} to manually manage enablement.
 	 *  
 	 * @param predicate the predicate that will be used to dynamically determine an action's 
 	 *        enabled state
 	 * @return this builder (for chaining)
 	 */
 	public B enabledWhen(Predicate<C> predicate) {
-		enabledPredicate = predicate;
+		enabledPredicate = Objects.requireNonNull(predicate);
 		return self();
 	}
 
@@ -540,7 +547,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * @see #popupMenuPath(String...)
 	 */
 	public B popupWhen(Predicate<C> predicate) {
-		popupPredicate = predicate;
+		popupPredicate = Objects.requireNonNull(predicate);
 		return self();
 	}
 
@@ -550,13 +557,39 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * 
 	 * <p>Note: most actions will not use this method, but rely instead on 
 	 * {@link #enabledWhen(Predicate)}. 
+	 * 
+	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
 	 *  
 	 * @param predicate the predicate that will be used to dynamically determine an action's 
 	 * validity for a given {@link ActionContext}
 	 * @return this builder (for chaining)
 	 */
 	public B validContextWhen(Predicate<C> predicate) {
-		validContextPredicate = predicate;
+		validContextPredicate = Objects.requireNonNull(predicate);
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
+		}
+
+		return self();
+	}
+
+	/**
+	 * Sets whether the action will support using the default tool context if the focused provider's
+	 * context is invalid.
+	 * <P>
+	 * By default, actions only work on the current focused provider's context.  Setting this
+	 * to true will cause the action to be evaluated against the default tool context if the
+	 * focused context is not valid for this action.
+	 * 
+	 * @param b the new value
+	 * @return this builder (for chaining)
+	 */
+	public B supportsDefaultToolContext(boolean b) {
+		supportsDefaultToolContext = b;
 		return self();
 	}
 
@@ -592,6 +625,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * {@literal builder.enabledWhen(context -> return context.isAwesome() }}
 	 * </pre>
 	 *
+	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
+	 *  
+	
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.
@@ -602,6 +639,16 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	@SuppressWarnings("unchecked")
 	public <AC2 extends ActionContext, B2 extends AbstractActionBuilder<T, AC2, B2>> B2 withContext(
 			Class<AC2> newActionContextClass) {
+
+		if (actionContextClass != ActionContext.class) {
+			throw new IllegalStateException("Can't set the ActionContext type more than once");
+		}
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
+		}
 
 		// To make this work, we need to return a builder whose ActionContext is AC2 and not AC
 		//    (which is what this builder is now)
@@ -627,6 +674,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	protected void decorateAction(DockingAction action) {
 		action.setEnabled(isEnabled);
 		action.setDescription(description);
+		action.setSupportsDefaultToolContext(supportsDefaultToolContext);
 
 		setMenuData(action);
 		setToolbarData(action);
@@ -640,12 +688,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		if (enabledPredicate != null) {
 			action.enabledWhen(adaptPredicate(enabledPredicate));
 		}
-		if (validContextPredicate != null) {
-			action.validContextWhen(adaptPredicate(validContextPredicate));
-		}
-		if (popupPredicate != null) {
-			action.popupWhen(adaptPredicate(popupPredicate));
-		}
+
+		action.validContextWhen(adaptPredicate(validContextPredicate));
+		action.popupWhen(adaptPredicate(popupPredicate));
 	}
 
 	/**

@@ -8,8 +8,8 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features Python'
 
 
-def JYTHON = "org.python:jython-standalone:2.7.1"
-def JYTHON_DIR = "jython-2.7.1"
+def JYTHON = "org.python:jython-standalone:2.7.2"
+def JYTHON_DIR = "jython-2.7.2"
 
 configurations {
 	jython

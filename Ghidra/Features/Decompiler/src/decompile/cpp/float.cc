@@ -71,6 +71,7 @@ FloatFormat::FloatFormat(int4 sz)
     jbitimplied = true;
   }
   maxexponent = (1<<exp_size)-1;
+  calcPrecision();
 }
 
 /// \param sign is set to \b true if the value should be negative
@@ -225,6 +226,13 @@ uintb FloatFormat::getNaNEncoding(bool sgn) const
   res = setFractionalCode(res,mask);
   res = setExponentCode(res,(uintb)maxexponent);
   return setSign(res,sgn);
+}
+
+void FloatFormat::calcPrecision(void)
+
+{
+  float val = frac_size * 0.30103;
+  decimal_precision = (int4)floor(val + 0.5);
 }
 
 /// \param encoding is the encoding value
@@ -613,4 +621,5 @@ void FloatFormat::restoreXml(const Element *el)
   }
   jbitimplied = xml_readbool(el->getAttributeValue("jbitimplied"));
   maxexponent = (1<<exp_size)-1;
+  calcPrecision();
 }

@@ -32,7 +32,6 @@ import ghidra.app.cmd.function.AddRegisterParameterCommand;
 import ghidra.app.merge.*;
 import ghidra.app.merge.listing.*;
 import ghidra.app.merge.tool.ListingMergePanel;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.TitledPanel;
 import ghidra.framework.main.FrontEndTool;

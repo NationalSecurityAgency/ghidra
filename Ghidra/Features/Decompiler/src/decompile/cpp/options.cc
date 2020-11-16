@@ -79,6 +79,9 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionSetLanguage());
   registerOption(new OptionJumpLoad());
   registerOption(new OptionToggleRule());
+  registerOption(new OptionAliasBlock());
+  registerOption(new OptionMaxInstruction());
+  registerOption(new OptionNamespaceStrategy());
 }
 
 OptionDatabase::~OptionDatabase(void)
@@ -783,4 +786,71 @@ string OptionToggleRule::apply(Architecture *glb,const string &p1,const string &
     res += " rule";
   }
   return res;
+}
+
+/// \class OptionAliasBlock
+/// \brief Set how locked data-types on the stack affect alias heuristics
+///
+/// Stack analysis uses the following simple heuristic: a pointer is unlikely to reference (alias)
+/// a stack location if there is a locked data-type between the pointer base and the location.
+/// This option determines what kind of locked data-types \b block aliases in this way.
+///   - none - no data-types will block an alias
+///   - struct - only structure data-types will block an alias
+///   - array - array data-types (and structure data-types) will block an alias
+///   - all - all locked data-types will block an alias
+string OptionAliasBlock::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  if (p1.size() == 0)
+    throw ParseError("Must specify alias block level");
+  int4 oldVal = glb->alias_block_level;
+  if (p1 == "none")
+    glb->alias_block_level = 0;
+  else if (p1 == "struct")
+    glb->alias_block_level = 1;
+  else if (p1 == "array")
+    glb->alias_block_level = 2;		// The default. Let structs and arrays block aliases
+  else if (p1 == "all")
+    glb->alias_block_level = 3;
+  else
+    throw ParseError("Unknown alias block level: "+p1);
+  if (oldVal == glb->alias_block_level)
+    return "Alias block level unchanged";
+  return "Alias block level set to " + p1;
+}
+
+string OptionMaxInstruction::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  if (p1.size() == 0)
+    throw ParseError("Must specify number of instructions");
+
+  int4 newMax = -1;
+  istringstream s1(p1);
+  s1.unsetf(ios::dec | ios::hex | ios::oct); // Let user specify base
+  s1 >> newMax;
+  if (newMax < 0)
+    throw ParseError("Bad maxinstruction parameter");
+  glb->max_instructions = newMax;
+  return "Maximum instructions per function set";
+}
+
+/// \class OptionNamespaceStrategy
+/// \brief How should namespace tokens be displayed
+///
+/// The first parameter gives the strategy identifier, mapping to PrintLanguage::namespace_strategy.
+string OptionNamespaceStrategy::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  PrintLanguage::namespace_strategy strategy;
+  if (p1 == "minimal")
+    strategy = PrintLanguage::MINIMAL_NAMESPACES;
+  else if (p1 == "all")
+    strategy = PrintLanguage::ALL_NAMESPACES;
+  else if (p1 == "none")
+    strategy = PrintLanguage::NO_NAMESPACES;
+  else
+    throw ParseError("Must specify a valid strategy");
+  glb->print->setNamespaceStrategy(strategy);
+  return "Namespace strategy set";
 }

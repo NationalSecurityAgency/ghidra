@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,8 @@ package ghidra.app.util.bin.format.pdb;
 public class PdbParserConstants {
 	public final static String PDB_LOADED    = "PDB Loaded";
 	public final static String PDB_FILE      = "PDB File";
-	public final static String PDB_AGE       = "PDB Age";
+	// NOTE: PDB_AGE stored as Hex string value without 0x or other format indicator
+	public final static String PDB_AGE       = "PDB Age"; 
 	public final static String PDB_SIGNATURE = "PDB Signature";
 	public final static String PDB_VERSION   = "PDB Version";
 	public final static String PDB_GUID      = "PDB GUID";

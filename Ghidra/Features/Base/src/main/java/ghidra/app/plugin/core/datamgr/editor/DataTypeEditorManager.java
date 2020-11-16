@@ -29,7 +29,6 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.function.EditFunctionSignatureDialog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;

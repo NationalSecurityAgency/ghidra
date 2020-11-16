@@ -92,6 +92,15 @@ public class ElfRelocationContext {
 		}
 	}
 
+	/**
+	 * Get the RELR relocation type associated with the underlying
+	 * relocation handler.
+	 * @return RELR relocation type or 0 if not supported
+	 */
+	public long getRelrRelocationType() {
+		return handler != null ? handler.getRelrRelocationType() : 0;
+	}
+
 	private void handleUnsupportedTLSRelocation(ElfRelocation relocation,
 			Address relocationAddress) {
 		long symbolIndex = relocation.getSymbolIndex();
@@ -116,7 +125,7 @@ public class ElfRelocationContext {
 	 * @param loadHelper Elf load helper
 	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
-	 * @return relocation context
+	 * @return relocation context or null
 	 */
 	public static ElfRelocationContext getRelocationContext(ElfLoadHelper loadHelper,
 			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
@@ -257,6 +266,16 @@ public class ElfRelocationContext {
 		catch (DuplicateNameException | NotEmptyException | NotFoundException e) {
 			Msg.error(this, "Failed to reconcile extended EXTERNAL block fragment");
 		}
+	}
+
+	/**
+	 * Get relocation address
+	 * @param baseAddress base address
+	 * @param relocOffset relocation offset relative to baseAddress
+	 * @return relocation address
+	 */
+	public Address getRelocationAddress(Address baseAddress, long relocOffset) {
+		return baseAddress.addWrap(relocOffset);
 	}
 
 }

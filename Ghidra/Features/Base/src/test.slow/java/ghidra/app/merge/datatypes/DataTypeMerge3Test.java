@@ -20,13 +20,11 @@ import static org.junit.Assert.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import docking.widgets.OptionDialog;
 import ghidra.program.database.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * More data type merge tests.
@@ -47,7 +45,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					// 2 components should get removed from CoolUnion
 					commit = true;
 				}
@@ -120,7 +118,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					// 2 components should get removed from CoolUnion
 					commit = true;
 				}
@@ -193,7 +191,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					// 2 components should get removed from CoolUnion
 					commit = true;
 				}
@@ -297,11 +295,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 
-		setErrorsExpected(true);
+		executeMerge();
 
-		executeMerge(true);
+		close(waitForWindow("Structure Update Failed")); // expected dependency error on Foo
 
-		setErrorsExpected(false);
+		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
@@ -380,12 +378,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// LATEST CoolUnion
 
-		setErrorsExpected(true);
-
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY Foo
-		waitForCompletion();
 
-		setErrorsExpected(false);
+		close(waitForWindow("Structure Update Failed")); // expected dependency error on Foo
+
+		waitForCompletion();
 
 		checkConflictCount(0);
 
@@ -534,21 +531,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// Latest CoolUnion
 
-		setErrorsExpected(true);
-
 		chooseOption(DataTypeMergeManager.OPTION_MY);// My Bar
 
-		//
-		// This last choice shows an error dialog
-		//
-		OptionDialog errorDialog =
-			waitForDialogComponent(null, OptionDialog.class, DEFAULT_WINDOW_TIMEOUT);
+		close(waitForWindow("Structure Update Failed")); // expected dependency error on Bar
 
-		setErrorsExpected(false);
-
-		assertNotNull(errorDialog);
-		errorDialog.close();
-		window.setVisible(false);
+		waitForCompletion();
 
 		checkConflictCount(0);
 
@@ -585,7 +572,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -661,7 +648,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					// causes Bar to be marked as changed
 					commit = true;
 				}
@@ -736,7 +723,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					// causes Bar to be marked as changed
 					commit = true;
 				}
@@ -813,7 +800,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Structure ms = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 					"MyStruct");
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					Structure s1 = new StructureDataType(
 						new CategoryPath("/Category1/Category2/Category5"), "s1", 0);
 					s1.add(ms);
@@ -928,7 +915,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2"), "BF");
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 				}
 				finally {
 					program.endTransaction(transactionID, true);
@@ -1095,6 +1082,172 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
+	public void testConflictUpdate7() throws Exception {
+
+		TypeDef td = new TypedefDataType(new CategoryPath("/Category1/Category2"), "TD",
+			IntegerDataType.dataType);
+
+		mtf.initialize("notepad2", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure s1 =
+						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+							"Structure_1");
+					s1.setFlexibleArrayComponent(td, null, null);
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure s1 =
+						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+							"Structure_1");
+					s1.setFlexibleArrayComponent(IntegerDataType.dataType, "flex1", "cmt1");
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+		});
+
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_MY);// MY Structure_1
+
+		waitForCompletion();
+
+		checkConflictCount(0);
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		Structure s1 =
+			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
+		assertNotNull(s1);
+		DataTypeComponent[] dtcs = s1.getComponents();
+		assertEquals(4, dtcs.length);
+
+		DataTypeComponent flexDtc = s1.getFlexibleArrayComponent();
+		assertNotNull(flexDtc);
+		assertTrue(IntegerDataType.class == flexDtc.getDataType().getClass());
+		assertEquals("flex1", flexDtc.getFieldName());
+		assertEquals("cmt1", flexDtc.getComment());
+	}
+
+	@Test
+	public void testConflictUpdate8() throws Exception {
+
+		TypeDef td = new TypedefDataType(new CategoryPath("/Category1/Category2"), "TD",
+			IntegerDataType.dataType);
+
+		mtf.initialize("notepad2", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure s1 =
+						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+							"Structure_1");
+					s1.setFlexibleArrayComponent(IntegerDataType.dataType, null, null);
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure s1 =
+						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+							"Structure_1");
+					s1.setFlexibleArrayComponent(td, "flex1", "cmt1");
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure s1 =
+						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+							"Structure_1");
+					s1.insertBitFieldAt(3, 2, 6, td, 2, "bf1", "my bf1");
+					s1.insertBitFieldAt(3, 2, 4, td, 2, "bf2", "my bf2");
+					s1.clearFlexibleArrayComponent();
+				}
+				catch (InvalidDataTypeException e) {
+					e.printStackTrace();
+					Assert.fail();
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+		});
+
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_MY);// MY Structure_1
+
+		waitForCompletion();
+
+		checkConflictCount(0);
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		Structure s1 =
+			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
+		assertNotNull(s1);
+
+		DataTypeComponent flexDtc = s1.getFlexibleArrayComponent();
+		assertNull(flexDtc);
+
+		DataTypeComponent[] dtcs = s1.getComponents();
+		assertEquals(7, dtcs.length);
+
+		assertEquals(4, dtcs[3].getOffset()); // base on original 2-byte length 1st byte remains undefined
+		assertEquals("bf1", dtcs[3].getFieldName());
+		assertEquals("my bf1", dtcs[3].getComment());
+
+		DataType dt = dtcs[3].getDataType();
+		assertTrue(dt instanceof BitFieldDataType);
+		BitFieldDataType bfDt = (BitFieldDataType) dt;
+		assertTrue(td.isEquivalent(bfDt.getBaseDataType()));
+		assertEquals(2, bfDt.getDeclaredBitSize());
+		assertEquals(6, bfDt.getBitOffset());
+
+		assertEquals(4, dtcs[4].getOffset()); // base on original 2-byte length 1st byte remains undefined
+		assertEquals("bf2", dtcs[4].getFieldName());
+		assertEquals("my bf2", dtcs[4].getComment());
+
+		dt = dtcs[4].getDataType();
+		assertTrue(dt instanceof BitFieldDataType);
+		bfDt = (BitFieldDataType) dt;
+		assertTrue(td.isEquivalent(bfDt.getBaseDataType()));
+		assertEquals(2, bfDt.getDeclaredBitSize());
+		assertEquals(4, bfDt.getBitOffset());
+
+	}
+
+	@Test
 	public void testEditUnions() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -1106,7 +1259,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					// 2 components should get removed from CoolUnion
 					commit = true;
 				}
@@ -1199,7 +1352,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					// 2 components should get removed from CoolUnion
 					commit = true;
 				}
@@ -1282,10 +1435,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1370,10 +1523,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1459,10 +1612,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1547,10 +1700,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1641,10 +1794,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1743,10 +1896,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {

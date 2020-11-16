@@ -71,7 +71,7 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected boolean createAssociatedData() throws CancelledException {
 
-		return createRtti0();
+		return createRtti0() | createRtti3();
 	}
 
 	private boolean createRtti0() throws CancelledException {
@@ -80,6 +80,15 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 
 		CreateTypeDescriptorBackgroundCmd cmd =
 			new CreateTypeDescriptorBackgroundCmd(model.getRtti0Model(), applyOptions);
+		return cmd.applyTo(model.getProgram(), monitor);
+	}
+
+	private boolean createRtti3() throws CancelledException {
+
+		monitor.checkCanceled();
+
+		CreateRtti3BackgroundCmd cmd =
+			new CreateRtti3BackgroundCmd(model.getRtti3Model(), applyOptions);
 		return cmd.applyTo(model.getProgram(), monitor);
 	}
 
@@ -101,14 +110,15 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 			}
 			catch (InvalidDataTypeException e) {
 				// Couldn't get pmd and attributes so leave it off and simply log the error.
-				String message = "Unable to get PMD and attributes for RTTI1 at " + getDataAddress() + ".";
+				String message =
+					"Unable to get PMD and attributes for RTTI1 at " + getDataAddress() + ".";
 				handleError(message);
 			}
 
 			// Plate Comment
 			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
-				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
-				RTTI_1_NAME, suffix, getDataAddress(), applyOptions);
+				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER, RTTI_1_NAME,
+				suffix, getDataAddress(), applyOptions);
 
 			monitor.checkCanceled();
 
@@ -116,7 +126,8 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 			if (applyOptions.shouldCreateLabel()) {
 				String rtti1Suffix = RTTI_1_NAME + suffix;
 				rtti1Suffix = SymbolUtilities.replaceInvalidChars(rtti1Suffix, true);
-				RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model, rtti1Suffix);
+				RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model,
+					rtti1Suffix);
 			}
 
 		}

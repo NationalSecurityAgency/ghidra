@@ -65,4 +65,9 @@ class FunctionTagMappingAdapterNoTable extends FunctionTagMappingAdapter {
 	boolean isTagAssigned(long id) throws IOException {
 		return false;
 	}
+
+	@Override
+	protected RecordIterator getRecords() throws IOException {
+		return new EmptyRecordIterator();
+	}
 }

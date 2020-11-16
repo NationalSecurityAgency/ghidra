@@ -2,3 +2,4 @@ MODULE FILE LICENSE: lib/jung-visualization-2.1.1.jar BSD
 MODULE FILE LICENSE: lib/jung-algorithms-2.1.1.jar BSD
 MODULE FILE LICENSE: lib/jung-api-2.1.1.jar BSD
 MODULE FILE LICENSE: lib/jung-graph-impl-2.1.1.jar BSD
+MODULE FILE LICENSE: lib/jgrapht-core-1.4.0.jar LGPL 2.1

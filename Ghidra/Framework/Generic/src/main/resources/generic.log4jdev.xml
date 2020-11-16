@@ -73,9 +73,11 @@
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
 		<logger name="ghidra.util.classfinder" level="DEBUG" />			
 		<logger name="ghidra.util.task" level="DEBUG" />		
+		<logger name="org.jungrapht.visualization" level="WARN" />
+		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" />
 
 		<Root level="ALL">
-			<AppenderRef ref="console" level="DEBUG"/>      
+			<AppenderRef ref="console" level="DEBUG"/>
 			<AppenderRef ref="detail" level="DEBUG"/> 
 			<AppenderRef ref="script" level="DEBUG"/> 
 			<AppenderRef ref="logPanel" level="INFO"/> 

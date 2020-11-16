@@ -91,7 +91,8 @@ public class PopupActionManager implements PropertyChangeListener {
 		popupMenu.show(c, e.getX(), e.getY());
 	}
 
-	JPopupMenu createPopupMenu(Iterator<DockingActionIf> localActions, ActionContext context) {
+	protected JPopupMenu createPopupMenu(Iterator<DockingActionIf> localActions,
+			ActionContext context) {
 
 		if (localActions == null) {
 			localActions = IteratorUtils.emptyIterator();

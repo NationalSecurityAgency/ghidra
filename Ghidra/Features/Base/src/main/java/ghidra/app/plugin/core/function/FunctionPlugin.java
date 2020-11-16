@@ -71,7 +71,6 @@ public class FunctionPlugin extends Plugin implements DataService {
 
 	public final static String FUNCTION_SUBGROUP_BEGINNING = "A_Beginning";
 	public final static String FUNCTION_SUBGROUP_MIDDLE = "M_Middle";
-	public final static String FUNCTION_SUBGROUP_END = "Z_End";
 
 	public static final String SET_DATA_TYPE_PULLRIGHT = "Set Data Type";
 

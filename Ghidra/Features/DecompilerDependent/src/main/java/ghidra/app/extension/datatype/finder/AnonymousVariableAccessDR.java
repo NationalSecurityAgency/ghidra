@@ -45,7 +45,7 @@ import ghidra.program.model.data.DataType;
  * being accessed anonymously, since there is no variable of <code>Foo</code> declared 
  * in the current function. 
  */
-public class AnonymousVariableAccessDR extends DecompilerReference {
+public class AnonymousVariableAccessDR extends VariableAccessDR {
 
 	protected AnonymousVariableAccessDR(ClangLine line, ClangFieldToken token) {
 		super(line, token);
@@ -54,16 +54,40 @@ public class AnonymousVariableAccessDR extends DecompilerReference {
 	@Override
 	public void accumulateMatches(DataType dt, String fieldName, List<DataTypeReference> results) {
 
+		//
+		// This class is backed by a ClangFieldToken.  That class's data type is the composite 
+		// that contains the field being accessed.   A variable being accessed has 2 types being
+		// touched: the aforementioned composite and the type of the field itself.
+		//
+		// This can match in one of two cases:
+		// 1) the client seeks to match a given field inside of the containing composite, or
+		// 2) the client seeks to match only the type, which means that the field type itself must match
+		//
+
 		ClangFieldToken field = (ClangFieldToken) sourceToken;
-		DataType fieldDt = field.getDataType();
-		if (!isEqual(dt, fieldDt)) {
+		DataType compositeType = field.getDataType();
+		DataType fieldDt = DecompilerReference.getFieldDataType(field);
+
+		boolean matchesComposite = isEqual(dt, compositeType);
+		boolean matchesField = isEqual(dt, fieldDt);
+		boolean noMatch = !(matchesComposite || matchesField);
+		if (noMatch) {
 			return;
 		}
 
-		if (field.getText().equals(fieldName)) {
-			results.add(new DataTypeReference(fieldDt, fieldName, getFunction(), getAddress(),
-				getContext()));
+		if (fieldName == null) {
+			// case 2; no field name to check
+			if (matchesField) {
+				results.add(createReference(variable));
+			}
+			return;
+		}
+
+		// case 1; check the field name and the composite type
+		if (matchesComposite && field.getText().equals(fieldName)) {
+			results.add(
+				new DataTypeReference(compositeType, fieldName, getFunction(), getAddress(),
+					getContext()));
 		}
 	}
-
 }

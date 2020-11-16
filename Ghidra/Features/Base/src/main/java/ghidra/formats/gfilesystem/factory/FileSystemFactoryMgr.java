@@ -212,27 +212,35 @@ public class FileSystemFactoryMgr {
 		try (ByteProvider bp = new RandomAccessByteProvider(containerFile, containerFSRL)) {
 			byte[] startBytes = bp.readBytes(0, pboByteCount);
 			for (FileSystemInfoRec fsir : sortedFactories) {
-				if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
-					GFileSystemProbeBytesOnly factoryProbe =
-						(GFileSystemProbeBytesOnly) fsir.getFactory();
-					if (factoryProbe.getBytesRequired() <= startBytes.length) {
-						if (factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
+				try {
+					if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
+						GFileSystemProbeBytesOnly factoryProbe =
+							(GFileSystemProbeBytesOnly) fsir.getFactory();
+						if (factoryProbe.getBytesRequired() <= startBytes.length) {
+							if (factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
+								return true;
+							}
+						}
+					}
+					if (fsir.getFactory() instanceof GFileSystemProbeWithFile) {
+						GFileSystemProbeWithFile factoryProbe =
+							(GFileSystemProbeWithFile) fsir.getFactory();
+						if (factoryProbe.probe(containerFSRL, containerFile, fsService, monitor)) {
+							return true;
+						}
+					}
+					if (fsir.getFactory() instanceof GFileSystemProbeFull) {
+						GFileSystemProbeFull factoryProbe =
+							(GFileSystemProbeFull) fsir.getFactory();
+						if (factoryProbe.probe(containerFSRL, bp, containerFile, fsService,
+							monitor)) {
 							return true;
 						}
 					}
 				}
-				if (fsir.getFactory() instanceof GFileSystemProbeWithFile) {
-					GFileSystemProbeWithFile factoryProbe =
-						(GFileSystemProbeWithFile) fsir.getFactory();
-					if (factoryProbe.probe(containerFSRL, containerFile, fsService, monitor)) {
-						return true;
-					}
-				}
-				if (fsir.getFactory() instanceof GFileSystemProbeFull) {
-					GFileSystemProbeFull factoryProbe = (GFileSystemProbeFull) fsir.getFactory();
-					if (factoryProbe.probe(containerFSRL, bp, containerFile, fsService, monitor)) {
-						return true;
-					}
+				catch (IOException e) {
+					Msg.trace(this, "File system probe error for " + fsir.getDescription() +
+						" with " + containerFSRL, e);
 				}
 			}
 		}
@@ -303,34 +311,41 @@ public class FileSystemFactoryMgr {
 			byte[] startBytes = probeBP.readBytes(0, pboByteCount);
 			List<FileSystemInfoRec> probeMatches = new ArrayList<>();
 			for (FileSystemInfoRec fsir : sortedFactories) {
-				if (fsir.getPriority() < priorityFilter) {
-					break;
-				}
-				if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
-					GFileSystemProbeBytesOnly factoryProbe =
-						(GFileSystemProbeBytesOnly) fsir.getFactory();
-					if (factoryProbe.getBytesRequired() <= startBytes.length) {
-						if (factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
+				try {
+					if (fsir.getPriority() < priorityFilter) {
+						break;
+					}
+					if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
+						GFileSystemProbeBytesOnly factoryProbe =
+							(GFileSystemProbeBytesOnly) fsir.getFactory();
+						if (factoryProbe.getBytesRequired() <= startBytes.length) {
+							if (factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
+								probeMatches.add(fsir);
+								continue;
+							}
+						}
+					}
+					if (fsir.getFactory() instanceof GFileSystemProbeWithFile) {
+						GFileSystemProbeWithFile factoryProbe =
+							(GFileSystemProbeWithFile) fsir.getFactory();
+						if (factoryProbe.probe(containerFSRL, containerFile, fsService, monitor)) {
+							probeMatches.add(fsir);
+							continue;
+						}
+					}
+					if (fsir.getFactory() instanceof GFileSystemProbeFull) {
+						GFileSystemProbeFull factoryProbe =
+							(GFileSystemProbeFull) fsir.getFactory();
+						if (factoryProbe.probe(containerFSRL, probeBP, containerFile, fsService,
+							monitor)) {
 							probeMatches.add(fsir);
 							continue;
 						}
 					}
 				}
-				if (fsir.getFactory() instanceof GFileSystemProbeWithFile) {
-					GFileSystemProbeWithFile factoryProbe =
-						(GFileSystemProbeWithFile) fsir.getFactory();
-					if (factoryProbe.probe(containerFSRL, containerFile, fsService, monitor)) {
-						probeMatches.add(fsir);
-						continue;
-					}
-				}
-				if (fsir.getFactory() instanceof GFileSystemProbeFull) {
-					GFileSystemProbeFull factoryProbe = (GFileSystemProbeFull) fsir.getFactory();
-					if (factoryProbe.probe(containerFSRL, probeBP, containerFile, fsService,
-						monitor)) {
-						probeMatches.add(fsir);
-						continue;
-					}
+				catch (IOException e) {
+					Msg.trace(this, "File system probe error for " + fsir.getDescription() +
+						" with " + containerFSRL, e);
 				}
 			}
 

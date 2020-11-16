@@ -102,7 +102,7 @@ public class ScrollableTextArea extends JScrollPane {
 	}
 
 	/**
-	 * Appends the text to the text area maintained in this scrollpane
+	 * Appends the text to the text area maintained in this scroll pane
 	 * @param text the text to append.
 	 */
 	public void append(String text) {
@@ -111,13 +111,15 @@ public class ScrollableTextArea extends JScrollPane {
 
 	/**
 	 * Returns the number of lines current set in the text area
+	 * @return the count
 	 */
 	public int getLineCount() {
 		return textArea.getLineCount();
 	}
 
 	/**
-	 * Returns the tabsize set in the text area
+	 * Returns the tab size set in the text area
+	 * @return the size
 	 */
 	public int getTabSize() {
 		return textArea.getTabSize();
@@ -125,6 +127,7 @@ public class ScrollableTextArea extends JScrollPane {
 
 	/**
 	 * Returns the total area height of the text area (row height * line count)
+	 * @return the height
 	 */
 	public int getTextAreaHeight() {
 		return (textArea.getAreaHeight());
@@ -132,6 +135,7 @@ public class ScrollableTextArea extends JScrollPane {
 
 	/**
 	 * Returns the visible height of the text area
+	 * @return the height
 	 */
 	public int getTextVisibleHeight() {
 		return textArea.getVisibleHeight();
@@ -200,6 +204,7 @@ public class ScrollableTextArea extends JScrollPane {
 
 	/**
 	 * Returns the text contained within the text area
+	 * @return the text
 	 */
 	public String getText() {
 		return textArea.getText();

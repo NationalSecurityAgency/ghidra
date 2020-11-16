@@ -38,37 +38,15 @@ public class MDMangGhidra extends MDMang {
 	private DemangledObject objectResult;
 	private DemangledDataType dataTypeResult;
 
+	private String mangledSource;
+	private String demangledSource;
+
 	public DemangledObject getObject() {
 		return objectResult;
 	}
 
 	public DemangledDataType getDataType() {
 		return dataTypeResult;
-	}
-
-	public DemangledType processNamespace(MDQualifiedName qualifiedName) {
-		return processNamespace(qualifiedName.getQualification());
-	}
-
-	private DemangledType processNamespace(MDQualification qualification) {
-		Iterator<MDQualifier> it = qualification.iterator();
-		if (!it.hasNext()) {
-			return null;
-		}
-
-		MDQualifier qual = it.next();
-		DemangledType type = new DemangledType(qual.toString());
-		DemangledType parentType = type;
-		while (it.hasNext()) {
-			qual = it.next();
-			DemangledType newType = new DemangledType(qual.toString());
-			if (qual.isNested()) {
-				newType.setOriginalMangled(qual.getNested().getMangled());
-			}
-			parentType.setNamespace(newType);
-			parentType = newType;
-		}
-		return type;
 	}
 
 	@Override
@@ -83,14 +61,44 @@ public class MDMangGhidra extends MDMang {
 				return null;
 			}
 		}
+
+		this.mangledSource = mangledArg;
+
 		MDParsableItem returnedItem = super.demangle(mangledArg, true);
+
+		this.demangledSource = item.toString();
+
 		objectResult = processItem();
-		if (objectResult != null) {
-			objectResult.setOriginalMangled(mangledArg);
-			// Make our version of the demangled string available (could be large).
-			objectResult.setUtilDemangled(item.toString());
-		}
 		return returnedItem;
+	}
+
+	public DemangledType processNamespace(MDQualifiedName qualifiedName) {
+		return processNamespace(qualifiedName.getQualification());
+	}
+
+	private DemangledType processNamespace(MDQualification qualification) {
+		Iterator<MDQualifier> it = qualification.iterator();
+		if (!it.hasNext()) {
+			return null;
+		}
+
+		MDQualifier qual = it.next();
+		DemangledType type = new DemangledType(mangledSource, demangledSource, qual.toString());
+		DemangledType parentType = type;
+		while (it.hasNext()) {
+			qual = it.next();
+			DemangledType newType;
+			if (qual.isNested()) {
+				String subMangled = qual.getNested().getMangled();
+				newType = new DemangledType(subMangled, demangledSource, qual.toString());
+			}
+			else {
+				newType = new DemangledType(mangledSource, demangledSource, qual.toString());
+			}
+			parentType.setNamespace(newType);
+			parentType = newType;
+		}
+		return type;
 	}
 
 	private DemangledObject processItem() {
@@ -137,7 +145,7 @@ public class MDMangGhidra extends MDMang {
 		}
 		//TODO: put other objectReserved derivative types here and return something that Ghidra can use.
 		else {
-			object = new DemangledUnknown();
+			object = new DemangledUnknown(mangledSource, demangledSource, null);
 		}
 		return object;
 	}
@@ -175,11 +183,11 @@ public class MDMangGhidra extends MDMang {
 				MDType mdtype = variableInfo.getMDType();
 				DemangledDataType dt = processDataType(null, (MDDataType) mdtype);
 				if ("std::nullptr_t".equals(dt.getName())) {
-					variable = new DemangledVariable("");
+					variable = new DemangledVariable(mangledSource, demangledSource, "");
 				}
 				else {
-					variable = new DemangledVariable(
-						objectCPP.getName());
+					variable =
+						new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
 					variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				}
 				variable.setDatatype(dt);
@@ -200,7 +208,7 @@ public class MDMangGhidra extends MDMang {
 			}
 			else if (typeinfo instanceof MDFunctionInfo) {
 				DemangledFunction function =
-					new DemangledFunction(objectCPP.getName());
+					new DemangledFunction(mangledSource, demangledSource, objectCPP.getName());
 				function.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = function;
 				objectResult = processFunction((MDFunctionInfo) typeinfo, function);
@@ -229,7 +237,7 @@ public class MDMangGhidra extends MDMang {
 			else if (typeinfo instanceof MDVxTable) { //Includes VFTable, VBTable, and RTTI4
 				MDVxTable vxtable = (MDVxTable) typeinfo;
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getName());
+					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
 				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				variable.setConst(vxtable.isConst());
 				variable.setVolatile(vxtable.isVolatile());
@@ -241,7 +249,7 @@ public class MDMangGhidra extends MDMang {
 			}
 			else if (typeinfo instanceof AbstractMDMetaClass) { //Includes all RTTI, except RTTI4
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getName());
+					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
 				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
@@ -250,7 +258,7 @@ public class MDMangGhidra extends MDMang {
 			}
 			else if (typeinfo instanceof MDGuard) {
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getName());
+					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
 				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
@@ -260,7 +268,7 @@ public class MDMangGhidra extends MDMang {
 			else {
 				// Any others (e.g., case '9')
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getName());
+					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
 				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
@@ -287,13 +295,14 @@ public class MDMangGhidra extends MDMang {
 			String baseName = objectCPP.getName();
 			if (objectCPP.isString()) {
 				MDString mstring = objectCPP.getMDString();
-				DemangledString demangledString = new DemangledString(mstring.getName(),
-					mstring.toString(), mstring.getLength(), mstring.isUnicode());
+				DemangledString demangledString =
+					new DemangledString(mangledSource, demangledSource, mstring.getName(),
+						mstring.toString(), mstring.getLength(), mstring.isUnicode());
 				resultObject = demangledString;
 			}
 			else if (baseName.length() != 0) {
 				DemangledVariable variable;
-				variable = new DemangledVariable(baseName);
+				variable = new DemangledVariable(mangledSource, demangledSource, baseName);
 				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 			}
@@ -314,7 +323,8 @@ public class MDMangGhidra extends MDMang {
 	// doesn't match
 	// well to the current DemangledObject hierarchy.
 	private DemangledVariable processTemplate(MDTemplateNameAndArguments template) {
-		DemangledVariable variable = new DemangledVariable(template.toString());
+		DemangledVariable variable =
+			new DemangledVariable(mangledSource, demangledSource, template.toString());
 		// NO NAMESPACE for high level template: variable.setNamespace(XXX);
 		// DemangledTemplate objectTemplate = new DemangledTemplate();
 		// DemangledDataType dataType = new DemangledDataType((String) null);
@@ -340,12 +350,14 @@ public class MDMangGhidra extends MDMang {
 			convention = CompilerSpec.CALLING_CONVENTION_thiscall;
 		}
 		function.setCallingConvention(convention);
-		MDDataType retType = functionType.getReturnType();
-		if ((retType != null) && !retType.toString().isEmpty()) {
-			function.setReturnType(processDataType(null, retType));
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
+			MDDataType retType = functionType.getReturnType();
+			if (!retType.toString().isEmpty()) {
+				function.setReturnType(processDataType(null, retType));
+			}
 		}
 		MDArgumentsList args = functionType.getArgumentsList();
-		if (args != null) {
+		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
 				function.addParameter(processDataType(null, args.getArg(index)));
 			}
@@ -397,14 +409,19 @@ public class MDMangGhidra extends MDMang {
 	}
 
 	private DemangledFunctionPointer processDemangledFunctionPointer(MDPointerType pointerType) {
-		DemangledFunctionPointer functionPointer = new DemangledFunctionPointer();
+		DemangledFunctionPointer functionPointer =
+			new DemangledFunctionPointer(mangledSource, demangledSource);
 		MDFunctionType functionType = (MDFunctionType) pointerType.getReferencedType();
 		functionPointer.setCallingConvention(functionType.getCallingConvention().toString());
 		functionPointer.setModifier(pointerType.getCVMod().toString());
-		functionPointer.setReturnType(processDataType(null, functionType.getReturnType()));
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
+			functionPointer.setReturnType(processDataType(null, functionType.getReturnType()));
+		}
 		MDArgumentsList args = functionType.getArgumentsList();
-		for (int index = 0; index < args.getNumArgs(); index++) {
-			functionPointer.addParameter(processDataType(null, args.getArg(index)));
+		if (functionType.hasArgs() && args != null) {
+			for (int index = 0; index < args.getNumArgs(); index++) {
+				functionPointer.addParameter(processDataType(null, args.getArg(index)));
+			}
 		}
 		MDCVMod thisPointerCVMod = functionType.getThisPointerCVMod();
 		if (thisPointerCVMod != null) {
@@ -432,14 +449,19 @@ public class MDMangGhidra extends MDMang {
 		if (!((refType instanceof MDReferenceType) || (refType instanceof MDDataRefRefType))) {
 			return null; // Not planning on anything else yet.
 		}
-		DemangledFunctionReference functionReference = new DemangledFunctionReference();
+		DemangledFunctionReference functionReference =
+			new DemangledFunctionReference(mangledSource, demangledSource);
 		MDFunctionType functionType = (MDFunctionType) refType.getReferencedType();
 		functionReference.setCallingConvention(functionType.getCallingConvention().toString());
 		functionReference.setModifier(refType.getCVMod().toString());
-		functionReference.setReturnType(processDataType(null, functionType.getReturnType()));
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
+			functionReference.setReturnType(processDataType(null, functionType.getReturnType()));
+		}
 		MDArgumentsList args = functionType.getArgumentsList();
-		for (int index = 0; index < args.getNumArgs(); index++) {
-			functionReference.addParameter(processDataType(null, args.getArg(index)));
+		if (functionType.hasArgs() && args != null) {
+			for (int index = 0; index < args.getNumArgs(); index++) {
+				functionReference.addParameter(processDataType(null, args.getArg(index)));
+			}
 		}
 		// TODO: fill in lots of functionReference.____ items
 		return functionReference;
@@ -447,15 +469,20 @@ public class MDMangGhidra extends MDMang {
 
 	private DemangledFunctionIndirect processDemangledFunctionIndirect(
 			MDFunctionIndirectType functionIndirectType) {
-		DemangledFunctionIndirect functionDefinition = new DemangledFunctionIndirect();
+		DemangledFunctionIndirect functionDefinition =
+			new DemangledFunctionIndirect(mangledSource, demangledSource);
 		MDFunctionType functionType = (MDFunctionType) functionIndirectType.getReferencedType();
 		functionDefinition.setCallingConvention(functionType.getCallingConvention().toString());
 		functionDefinition.setModifier(functionIndirectType.getCVMod().toString());
 		functionDefinition.incrementPointerLevels();
-		functionDefinition.setReturnType(processDataType(null, functionType.getReturnType()));
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
+			functionDefinition.setReturnType(processDataType(null, functionType.getReturnType()));
+		}
 		MDArgumentsList args = functionType.getArgumentsList();
-		for (int index = 0; index < args.getNumArgs(); index++) {
-			functionDefinition.addParameter(processDataType(null, args.getArg(index)));
+		if (functionType.hasArgs() && args != null) {
+			for (int index = 0; index < args.getNumArgs(); index++) {
+				functionDefinition.addParameter(processDataType(null, args.getArg(index)));
+			}
 		}
 		// TODO: fill in lots of functionIndirect.____ items
 		return functionDefinition;
@@ -466,15 +493,20 @@ public class MDMangGhidra extends MDMang {
 	// indirect might be clouded between the real, two underlying types.
 	private DemangledFunctionIndirect processDemangledFunctionQuestion(
 			MDModifierType modifierType) {
-		DemangledFunctionIndirect functionDefinition = new DemangledFunctionIndirect();
+		DemangledFunctionIndirect functionDefinition =
+			new DemangledFunctionIndirect(mangledSource, demangledSource);
 		MDFunctionType functionType = (MDFunctionType) modifierType.getReferencedType();
 		functionDefinition.setCallingConvention(functionType.getCallingConvention().toString());
 		functionDefinition.setModifier(modifierType.getCVMod().toString());
 		functionDefinition.incrementPointerLevels();
-		functionDefinition.setReturnType(processDataType(null, functionType.getReturnType()));
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
+			functionDefinition.setReturnType(processDataType(null, functionType.getReturnType()));
+		}
 		MDArgumentsList args = functionType.getArgumentsList();
-		for (int index = 0; index < args.getNumArgs(); index++) {
-			functionDefinition.addParameter(processDataType(null, args.getArg(index)));
+		if (functionType.hasArgs() && args != null) {
+			for (int index = 0; index < args.getNumArgs(); index++) {
+				functionDefinition.addParameter(processDataType(null, args.getArg(index)));
+			}
 		}
 		// TODO: fill in lots of functionIndirect.____ items
 		return functionDefinition;
@@ -488,7 +520,8 @@ public class MDMangGhidra extends MDMang {
 	private DemangledDataType processDataType(DemangledDataType resultDataType,
 			MDDataType datatype) {
 		if (resultDataType == null) {
-			resultDataType = new DemangledDataType(datatype.getTypeName());
+			resultDataType =
+				new DemangledDataType(mangledSource, demangledSource, datatype.getTypeName());
 		}
 		if (datatype.isSpecifiedSigned()) {
 			// Returns true if default signed or specified signed. TODO: There is no place to
@@ -805,4 +838,3 @@ public class MDMangGhidra extends MDMang {
 
 /******************************************************************************/
 /******************************************************************************/
-

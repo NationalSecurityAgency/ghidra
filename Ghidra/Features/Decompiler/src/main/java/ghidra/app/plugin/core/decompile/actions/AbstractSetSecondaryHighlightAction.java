@@ -18,11 +18,15 @@ package ghidra.app.plugin.core.decompile.actions;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.TokenHighlights;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
+import ghidra.util.HelpLocation;
 
 public abstract class AbstractSetSecondaryHighlightAction extends AbstractDecompilerAction {
 
 	AbstractSetSecondaryHighlightAction(String name) {
 		super(name);
+		setHelpLocation(
+			new HelpLocation(HelpTopics.DECOMPILER, "ActionSecondaryHighlight"));
 	}
 
 	@Override

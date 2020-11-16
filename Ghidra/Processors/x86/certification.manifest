@@ -30,6 +30,7 @@ data/languages/sha.sinc||GHIDRA||||END|
 data/languages/smx.sinc||GHIDRA||||END|
 data/languages/x86-16-real.pspec||GHIDRA||||END|
 data/languages/x86-16.cspec||GHIDRA||||END|
+data/languages/x86-16.gdis||GHIDRA||||END|
 data/languages/x86-16.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
 data/languages/x86-64-win.cspec||GHIDRA||||END|

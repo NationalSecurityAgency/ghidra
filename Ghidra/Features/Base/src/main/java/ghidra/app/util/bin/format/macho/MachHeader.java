@@ -16,13 +16,11 @@
 package ghidra.app.util.bin.format.macho;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import generic.continues.GenericFactory;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.program.model.data.*;
@@ -44,12 +42,28 @@ public class MachHeader implements StructConverter {
 	private int reserved;//only used in 64-bit
 
 	private boolean _is32bit;
-	private List<LoadCommand> _commands = new ArrayList<LoadCommand>();
+	private List<LoadCommand> _commands = new ArrayList<>();
 	private long _commandIndex;
 	private FactoryBundledWithBinaryReader _reader;
 	private long _machHeaderStartIndexInProvider;
 	private boolean _parsed = false;
 
+	/**
+	 * Returns true if the specified ByteProvider starts with a Mach header magic signature.
+	 * 
+	 * @param provider {@link ByteProvider} to check
+	 * @return boolean true if byte provider starts with a MachHeader
+	 */
+	public static boolean isMachHeader(ByteProvider provider) {
+		try {
+			return provider.length() > Integer.BYTES &&
+				MachConstants.isMagic(readMagic(provider, 0));
+		}
+		catch (IOException e) {
+			// dont care
+		}
+		return false;
+	}
 	/**
 	 * Assumes the MachHeader starts at index 0 in the ByteProvider.
 	 * @param provider the ByteProvider
@@ -233,7 +247,7 @@ public class MachHeader implements StructConverter {
 	}
 
 	public List<Section> getAllSections() {
-		List<Section> tmp = new ArrayList<Section>();
+		List<Section> tmp = new ArrayList<>();
 		for (SegmentCommand segment : getAllSegments()) {
 			tmp.addAll(segment.getSections());
 		}
@@ -245,7 +259,7 @@ public class MachHeader implements StructConverter {
 	}
 
 	public <T> List<T> getLoadCommands(Class<T> classType) {
-		List<T> tmp = new ArrayList<T>();
+		List<T> tmp = new ArrayList<>();
 		for (LoadCommand command : _commands) {
 			if (classType.isAssignableFrom(command.getClass())) {
 				tmp.add(classType.cast(command));
@@ -282,22 +296,14 @@ public class MachHeader implements StructConverter {
 		return buffer.toString();
 	}
 
-	public InputStream getDataStream() throws IOException {
-		return _reader.getByteProvider().getInputStream(0);
-	}
-
 	@Override
 	public String toString() {
 		return getDescription();
 	}
 
-	private int readMagic(ByteProvider provider, long machHeaderStartIndexInProvider)
+	private static int readMagic(ByteProvider provider, long machHeaderStartIndexInProvider)
 			throws IOException {
-		int value = 0;
-		value |= (provider.readByte(machHeaderStartIndexInProvider + 0) << 0x18) & 0xff000000;
-		value |= (provider.readByte(machHeaderStartIndexInProvider + 1) << 0x10) & 0x00ff0000;
-		value |= (provider.readByte(machHeaderStartIndexInProvider + 2) << 0x08) & 0x0000ff00;
-		value |= (provider.readByte(machHeaderStartIndexInProvider + 3) << 0x00) & 0x000000ff;
-		return value;
+		BinaryReader br = new BinaryReader(provider, false);
+		return br.readInt(machHeaderStartIndexInProvider);
 	}
 }

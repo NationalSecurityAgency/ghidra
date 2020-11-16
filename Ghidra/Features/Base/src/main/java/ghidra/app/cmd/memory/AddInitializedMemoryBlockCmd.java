@@ -28,7 +28,6 @@ import ghidra.util.exception.DuplicateNameException;
 public class AddInitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 
 	private final byte initialValue;
-	private final boolean isOverlay;
 
 	/**
 	 * Create a new AddFileBytesMemoryBlockCmd
@@ -47,10 +46,9 @@ public class AddInitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	public AddInitializedMemoryBlockCmd(String name, String comment, String source, Address start,
 			long length, boolean read, boolean write, boolean execute, boolean isVolatile,
 			byte initialValue, boolean isOverlay) {
-		super(name, comment, source, start, length, read, write, execute, isVolatile);
+		super(name, comment, source, start, length, read, write, execute, isVolatile, isOverlay);
 
 		this.initialValue = initialValue;
-		this.isOverlay = isOverlay;
 	}
 
 	@Override

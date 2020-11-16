@@ -126,6 +126,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return true;
 		}
 		finally {
+			provider.updateTitle();
 //			selection = saveSelection;
 			setSelection(saveSelection);
 			originalDTM.endTransaction(transactionID, true);

@@ -35,6 +35,7 @@ public interface Navigatable {
 
 	/**
 	 * Commands this navigatable to goto (display) the given program and location
+	 * @param program the program
 	 * 
 	 * @param location the location in that program to display
 	 * @return true if the goto was successful

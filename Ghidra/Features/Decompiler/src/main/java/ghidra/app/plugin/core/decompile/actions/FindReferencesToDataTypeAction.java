@@ -23,8 +23,10 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
+import ghidra.util.HelpLocation;
 
 public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTypeAction {
 
@@ -35,6 +37,7 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 		super(tool, NAME, owner, DEFAULT_KEY_STROKE);
 		this.controller = controller;
 
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFindUses"));
 		setPopupMenuData(
 			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, "Find Uses of " }));
 	}

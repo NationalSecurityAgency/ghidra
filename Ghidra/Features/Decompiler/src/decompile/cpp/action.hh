@@ -99,6 +99,7 @@ public:
   virtual void printStatistics(ostream &s) const;		///< Dump statistics to stream
   int4 perform(Funcdata &data); 				///< Perform this action (if necessary)
   bool setBreakPoint(uint4 tp,const string &specify);		///< Set a breakpoint on this action
+  virtual void clearBreakPoints(void);				///< Clear all breakpoints set on \b this Action
   bool setWarning(bool val,const string &specify);		///< Set a warning on this action
   bool disableRule(const string &specify);			///< Disable a specific Rule within \b this
   bool enableRule(const string &specify);			///< Enable a specific Rule within \b this
@@ -147,6 +148,7 @@ public:
   ActionGroup(uint4 f,const string &nm) : Action(f,nm,"") {}	///< Construct given properties and a name
   virtual ~ActionGroup(void);				///< Destructor
   void addAction(Action *ac);				///< Add an Action to the group
+  virtual void clearBreakPoints(void);
   virtual Action *clone(const ActionGroupList &grouplist) const;
   virtual void reset(Funcdata &data);
   virtual void resetStats(void);
@@ -199,7 +201,7 @@ public:
     warnings_given = 8		///< Set if a warning for this rule has been given before
   };
 private:
-  friend struct ActionPool;
+  friend class ActionPool;
   uint4 flags;			///< Properties enabled with \b this Rule
   uint4 breakpoint;		///< Breakpoint(s) enabled for \b this Rule
   string name;			///< Name of the Rule
@@ -216,6 +218,7 @@ public:
   uint4 getNumApply(void) { return count_apply; }		///< Get number of successful applications
   void setBreak(uint4 tp) { breakpoint |= tp; }			///< Set a breakpoint on \b this Rule
   void clearBreak(uint4 tp) { breakpoint &= ~tp; }		///< Clear a breakpoint on \b this Rule
+  void clearBreakPoints(void) { breakpoint = 0; }		///< Clear all breakpoints on \b this Rule
   void turnOnWarnings(void) { flags |= warnings_on; }		///< Enable warnings for \b this Rule
   void turnOffWarnings(void) { flags &= ~warnings_on; }		///< Disable warnings for \b this Rule
   bool isDisabled(void) const { return ((flags & type_disable)!=0); }	///< Return \b true if \b this Rule is disabled
@@ -266,6 +269,7 @@ public:
   ActionPool(uint4 f,const string &nm) : Action(f,nm,"") {}	///< Construct providing properties and name
   virtual ~ActionPool(void);				///< Destructor
   void addRule(Rule *rl);				///< Add a Rule to the pool
+  virtual void clearBreakPoints(void);
   virtual Action *clone(const ActionGroupList &grouplist) const;
   virtual void reset(Funcdata &data);
   virtual void resetStats(void);
@@ -296,14 +300,16 @@ class ActionDatabase {
   string currentactname;			///< The name associated with the current root Action
   map<string,ActionGroupList> groupmap;		///< Map from root Action name to the grouplist it uses
   map<string,Action *> actionmap;		///< Map from name to root Action
+  bool isDefaultGroups;				///< \b true if only the default groups are set
   static const char universalname[];		///< The name of the \e universal root Action
   void registerAction(const string &nm,Action *act);	///< Register a \e root Action
+  void buildDefaultGroups(void);		///< Set up descriptions of preconfigured root Actions
   Action *getAction(const string &nm) const;				///< Look up a \e root Action by name
   Action *deriveAction(const string &baseaction,const string &grp);	///< Derive a \e root Action
 public:
-  ActionDatabase(void) { currentact = (Action *)0; }	///< Constructor
+  ActionDatabase(void) { currentact = (Action *)0; isDefaultGroups = false; }	///< Constructor
   ~ActionDatabase(void);				///< Destructor
-  void registerUniversal(Action *act);			///< Register the \e universal root Action
+  void resetDefaults(void);			///< (Re)set the default configuration
   Action *getCurrent(void) const { return currentact; }	///< Get the current \e root Action
   const string &getCurrentName(void) const { return currentactname; }	///< Get the name of the current \e root Action
   const ActionGroupList &getGroup(const string &grp) const;	///< Get a specific grouplist by name
@@ -314,6 +320,7 @@ public:
   void cloneGroup(const string &oldname,const string &newname);		///< Clone a \e root Action
   bool addToGroup(const string &grp,const string &basegroup);		///< Add a group to a \e root Action
   bool removeFromGroup(const string &grp,const string &basegroup);	///< Remove a group from a \e root Action
+  void universalAction(Architecture *glb);		///< Build the universal action
 };
 
 #endif

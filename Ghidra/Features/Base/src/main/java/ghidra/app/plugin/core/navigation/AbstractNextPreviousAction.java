@@ -17,12 +17,12 @@ package ghidra.app.plugin.core.navigation;
 
 import javax.swing.*;
 
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.ToolBarData;
 import docking.tool.ToolConstants;
-import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
-import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
@@ -33,7 +33,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
-public abstract class AbstractNextPreviousAction extends CodeViewerContextAction {
+public abstract class AbstractNextPreviousAction extends NavigatableContextAction {
 
 	private boolean isForward = true;
 	private PluginTool tool;
@@ -41,16 +41,12 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 	public AbstractNextPreviousAction(PluginTool tool, String name, String owner, String subGroup) {
 		super(name, owner);
 		this.tool = tool;
+		setSupportsDefaultToolContext(true);
 
 		ToolBarData toolBarData =
 			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
-		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getMenuName() }, getIcon(),
-				ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
-		menuData.setMenuSubGroup(subGroup);
-		setMenuBarData(menuData);
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 		setDescription(getDescriptionString());
@@ -61,7 +57,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 	protected abstract KeyStroke getKeyStroke();
 
 	@Override
-	public void actionPerformed(final CodeViewerActionContext context) {
+	public void actionPerformed(final NavigatableActionContext context) {
 		Task t = new Task("Searching for " + getNavigationTypeName() + "...", true, false, true) {
 			@Override
 			public void run(TaskMonitor monitor) {
@@ -71,7 +67,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		new TaskLauncher(t, tool.getToolFrame(), 500);
 	}
 
-	void gotoNextPrevious(TaskMonitor monitor, final CodeViewerActionContext context) {
+	void gotoNextPrevious(TaskMonitor monitor, final NavigatableActionContext context) {
 
 		try {
 			final Address address =
@@ -87,10 +83,11 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 
 		}
 		catch (CancelledException e) {
+			// cancelled
 		}
 	}
 
-	private void gotoAddress(ListingActionContext actionContext, Address address) {
+	private void gotoAddress(NavigatableActionContext actionContext, Address address) {
 		if (address == null) {
 			tool.setStatusInfo("Unable to locate another \"" + getNavigationTypeName() +
 				"\" past the current range, in the current direction.");
@@ -113,13 +110,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 
 	void setDirection(boolean isForward) {
 		this.isForward = isForward;
-		getMenuBarData().setMenuItemName(getMenuName());
-		setDescription(getDescription());
-	}
-
-	private String getMenuName() {
-		String prefix = isForward ? "Next " : "Previous ";
-		return prefix + getNavigationTypeName();
+		setDescription(getDescriptionString());
 	}
 
 	private String getDescriptionString() {

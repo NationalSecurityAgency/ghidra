@@ -110,10 +110,10 @@ public class SplashScreenTest extends AbstractDockingTest {
 		showSplashScreen(false);
 	}
 
-	/**
+	/*
 	 * Test that the modal password dialog does not get hidden behind the
-	 * splash screen. 
-	 * 
+	 * splash screen.
+	 *
 	 * @since Tracker Id 275
 	 */
 	@Test
@@ -125,7 +125,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 		// show a modal dialog with no parent (this will use the Splash Screen's parent)
 		showModalPasswordDialog(null);
 
-		// When the splash screen and the dialog share a parent, then the dialog should NOT 
+		// When the splash screen and the dialog share a parent, then the dialog should NOT
 		// cause the splash screen to go away
 		ensureSpashScreenVisible(true);
 	}
@@ -145,7 +145,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void ensureSplashScreenWillClose() {
 		waitForCondition(() -> {
@@ -172,7 +172,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 		return (DockingDialog) dialog;
 	}
 
-	// handles showing the modal info window, which must be done from a  thread outside of the 
+	// handles showing the modal info window, which must be done from a  thread outside of the
 	// test thread
 	private void showModalInfoWindow(final JFrame parentFrame) {
 		// create a thread to show the modal dialog so that the current thread doesn't block

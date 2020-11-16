@@ -32,8 +32,7 @@ import ghidra.framework.plugintool.ModalPluginTool;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.listing.DomainObjectChangeSet;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -458,6 +457,16 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 		if (currentIndex < mergeResolvers.length && !isCancelled) {
 			runManager.runLater(r, mergeResolvers[currentIndex].getName(), 250);
 		}
+	}
+
+	/**
+	 * Display error message dialog in a blocking fashion.
+	 * @param originator message originator
+	 * @param title dialog title
+	 * @param msg dialog message
+	 */
+	public static void displayErrorAndWait(Object originator, String title, String msg) {
+		Swing.runNow(() -> Msg.showError(originator, null, title, msg));
 	}
 
 	/**

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,12 @@
  */
 package ghidra.pcode.emulate;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
-import ghidra.program.util.ProgramContextImpl;
-
 import java.math.BigInteger;
 import java.util.*;
 
-import java.lang.UnsupportedOperationException;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.*;
+import ghidra.program.util.ProgramContextImpl;
 
 public class EmulateDisassemblerContext implements DisassemblerContext {
 
@@ -72,7 +69,7 @@ public class EmulateDisassemblerContext implements DisassemblerContext {
 			contextRegValue = null;
 		}
 		if (contextRegValue == null) {
-			ProgramContextImpl defaultContext = new ProgramContextImpl(language.getRegisters());
+			ProgramContextImpl defaultContext = new ProgramContextImpl(language);
 			language.applyContextSettings(defaultContext);
 			contextRegValue = defaultContext.getDefaultValue(contextReg, addr);
 			if (contextRegValue == null) {
@@ -157,7 +154,7 @@ public class EmulateDisassemblerContext implements DisassemblerContext {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		throw new UnsupportedOperationException();
 	}
 

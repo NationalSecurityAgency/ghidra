@@ -1558,6 +1558,62 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testExtendedTypes__P() throws Exception {
+		mangled = "?Name@@3_PA";
+		msTruth = "UNKNOWN Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__Q() throws Exception {
+		mangled = "?Name@@3_QA";
+		msTruth = "char8_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__R() throws Exception {
+		mangled = "?Name@@3_RA";
+		msTruth = "<unknown> Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__S() throws Exception {
+		mangled = "?Name@@3_SA";
+		msTruth = "char16_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__T() throws Exception {
+		mangled = "?Name@@3_TA";
+		msTruth = "UNKNOWN Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__U() throws Exception {
+		mangled = "?Name@@3_UA";
+		msTruth = "char32_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__V() throws Exception {
+		mangled = "?Name@@3_VA";
+		msTruth = "UNKNOWN Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
 	public void testExtendedTypes__W() throws Exception {
 		mangled = "?Name@@3_WA";
 		msTruth = "wchar_t Name";
@@ -14489,6 +14545,21 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "?catch$0@?0???@f4873c94f485cd6716c2319fc51ac714@@4HA";
 		msTruth = "";
 		mdTruth = "int ``f4873c94f485cd6716c2319fc51ac714''::`1'::catch$0";
+		demangleAndTest();
+	}
+
+	// Contrived example to make sure that the nameModifier (pushed into MDBasicName) and
+	//  the recent addition, castTypeString (pushed to MDBasicName and below), play well
+	//  together.  It also shows, that they should probably both be considered separate
+	//  (i.e., do not use nameModifier to push in the castTypeString... we would have to
+	//  manage merging and multiple calls... does not make sense to even consider it).
+	// Note: the cast operator used to have the cast-to type emitted in MDFunctionType,
+	//  and me moved it to MDSpecialName.
+	@Test
+	public void testCastOperatorWithAdjustorModifier() throws Exception {
+		mangled = "??Bname@@O7AAHXZ";
+		msTruth = "[thunk]:protected: virtual __cdecl name::operator int`adjustor{8}' (void)";
+		mdTruth = msTruth;
 		demangleAndTest();
 	}
 

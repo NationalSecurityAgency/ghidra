@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="M8C"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="m8c.sla"
+            processorspec="m8c.pspec"
+            id="M8C:BE:16:default">
+    <description>Cypress M8C Microcontroller Family</description>
+    <compiler name="default" spec="m8c.cspec" id="default"/>
+  </language>
+</language_definitions>

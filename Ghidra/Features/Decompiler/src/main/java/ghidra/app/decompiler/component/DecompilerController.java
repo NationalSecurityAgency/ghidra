@@ -214,6 +214,13 @@ public class DecompilerController {
 		decompilerMgr.decompile(program, location, null, debugFile, true);
 	}
 
+	public boolean hasDecompileResults() {
+		if (currentDecompileData != null) {
+			return currentDecompileData.hasDecompileResults();
+		}
+		return false;
+	}
+
 	public ClangTokenGroup getCCodeModel() {
 		return currentDecompileData.getCCodeMarkup();
 	}

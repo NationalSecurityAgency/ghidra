@@ -498,7 +498,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 			if (message != null && message.toLowerCase().startsWith("<html>")) {
 				JEditorPane editorPane = new JEditorPane();
 				editorPane.setEditorKit(new HTMLEditorKit());
-				editorPane.setName("MESSAGE-COMPONENT");
+				editorPane.setName(MESSAGE_COMPONENT_NAME);
 				editorPane.setText(message);
 
 				editorPane.setBackground(new GLabel().getBackground());

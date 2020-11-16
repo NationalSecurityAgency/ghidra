@@ -231,6 +231,11 @@ ULONGLONG getLength(IDiaSymbol& symbol) {
 	symbol.get_length( &len );
 	return len;
 }
+DWORD getCount(IDiaSymbol &symbol) {
+	DWORD count = 0;
+	symbol.get_count( &count );
+	return count;
+}
 DWORD getTag(IDiaSymbol& symbol) {
 	DWORD tag = 0;
 	symbol.get_symTag( &tag );

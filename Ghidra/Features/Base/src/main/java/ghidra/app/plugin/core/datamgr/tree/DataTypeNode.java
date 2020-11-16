@@ -24,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
@@ -35,7 +34,7 @@ import ghidra.util.exception.DuplicateNameException;
 public class DataTypeNode extends DataTypeTreeNode {
 	private final DataType dataType;
 	private final String name;
-	private String displayName;
+	private String displayText;
 
 	private boolean isCut;
 	private boolean useHighlight = false;
@@ -45,7 +44,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 	public DataTypeNode(DataType dataType) {
 		this.dataType = dataType;
 		this.name = dataType.getName();
-		this.displayName = getCurrentDisplayName();
+		this.displayText = getCurrentDisplayText();
 	}
 
 	@Override
@@ -246,29 +245,30 @@ public class DataTypeNode extends DataTypeTreeNode {
 		}
 	}
 
-	public String getDisplayName() {
+	@Override
+	public String getDisplayText() {
 		// note: we have to check the name each time, as the optional underlying 
 		//       source archive may have changed.
-		String currentDisplayName = getCurrentDisplayName();
-		if (!displayName.equals(currentDisplayName)) {
-			displayName = currentDisplayName;
+		String currentDisplayText = getCurrentDisplayText();
+		if (!displayText.equals(currentDisplayText)) {
+			displayText = currentDisplayText;
 			fireNodeChanged(getParent(), this);
 		}
-		return displayName;
+		return displayText;
 	}
 
-	private String getCurrentDisplayName() {
+	private String getCurrentDisplayText() {
 
-		String baseDisplayName = dataType.getName();
+		String baseDisplayText = dataType.getName();
 
 		UniversalID localID = dataType.getDataTypeManager().getUniversalID();
 		SourceArchive sourceArchive = dataType.getSourceArchive();
 		if (sourceArchive != null && sourceArchive.getArchiveType() != ArchiveType.BUILT_IN &&
 			!sourceArchive.getSourceArchiveID().equals(localID)) {
-			return baseDisplayName + "  (" + sourceArchive.getName() + ")";
+			return baseDisplayText + "  (" + sourceArchive.getName() + ")";
 		}
 
-		return baseDisplayName;
+		return baseDisplayText;
 	}
 
 	@Override
