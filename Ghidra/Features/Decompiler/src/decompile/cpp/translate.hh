@@ -243,6 +243,7 @@ protected:
   void copySpaces(const AddrSpaceManager *op2);	///< Copy spaces from another manager
   void addSpacebasePointer(SpacebaseSpace *basespace,const VarnodeData &ptrdata,int4 truncSize,bool stackGrowth); ///< Set the base register of a spacebase space
   void insertResolver(AddrSpace *spc,AddressResolver *rsolv); ///< Override the base resolver for a space
+  void setInferPtrBounds(const Range &range);		///< Set the range of addresses that can be inferred as pointers
   JoinRecord *findJoinInternal(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
 public:
   AddrSpaceManager(void);	///< Construct an empty address space manager

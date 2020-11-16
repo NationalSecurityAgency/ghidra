@@ -498,7 +498,7 @@ public abstract class PcodeEmit {
 				dyncache[2].size = incache[i].size;
 				AddressSpace spc = generatePointer(vn, dyncache[1]);
 				dyncache[0].space = const_space;
-				dyncache[0].offset = spc.getBaseSpaceID();
+				dyncache[0].offset = spc.getSpaceID();
 				dyncache[0].size = 4;		// Size of spaceid
 				dump(startAddress, PcodeOp.LOAD, dyncache, 2, dyncache[2]);
 				numOps += 1;
@@ -529,7 +529,7 @@ public abstract class PcodeEmit {
 				dyncache[2].size = outcache.size;
 				AddressSpace spc = generatePointer(outvn, dyncache[1]);
 				dyncache[0].space = const_space;
-				dyncache[0].offset = spc.getBaseSpaceID();
+				dyncache[0].offset = spc.getSpaceID();
 				dyncache[0].size = 4;		// Size of spaceid;
 				dump(startAddress, PcodeOp.STORE, dyncache, 3, null);
 				numOps += 1;
@@ -738,7 +738,7 @@ public abstract class PcodeEmit {
 				AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
 				if (space.isOverlaySpace()) {
 					space = ((OverlayAddressSpace) space).getOverlayedSpace();
-					in[0].offset = space.getBaseSpaceID();
+					in[0].offset = space.getSpaceID();
 				}
 			}
 			for (int i = 0; i < isize; ++i) {

@@ -433,8 +433,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * other.  (gcc linking options can cause types from different namespaces to be
 	 * forced into the root namespace)
 	 * <p>
-	 * Currently this causes a collision and a failure, resulting in just one of the structures
-	 * being defined, which isn't great but there is no other workable solution.
+	 * Currently this produces two structures one renamed with .conflict.
 	 * <p>
 	 * If this test starts failing it means this behavior in Ghidra's DTM has changed and
 	 * the DWARF logic needs to be examined in light of those changes.
@@ -460,7 +459,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		DataType dt1b = dwarfDTM.getDataType(struct1bDIE.getOffset(), null);
 
 		assertEquals("mystruct", dt1a.getName());
-		assertNull(dt1b);
+		assertEquals("mystruct.conflict", dt1b.getName());
 	}
 
 	/**
@@ -497,8 +496,10 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * datatype name as the impl struct.  The embedded db struct needs to be empty and default
 	 * sized (1 byte), and the outer impl struct needs to be bigger.
 	 * <p>
-	 * Currently the DTM resolve() will return the new outer struct, but its field that
-	 * refs the conflicting 1-byte struct has been changed to undefined (but name is still there).
+	 * Currently the DTM resolve() will ignore the conflict handlers attempt to 
+	 * replace since it will result in cyclic dependency issue.  It will instead
+	 * rename the new structure as a conflict with its field refering to the original
+	 * structure.
 	 * <p>
 	 * This situation happens in DWARF when there is a base class and a derived class
 	 * that have the same name.  They are in different namespaces, but during compilation
@@ -515,10 +516,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		StructureDataType x2 = new StructureDataType(rootCP, "X", 4);
 		x2.replaceAtOffset(0, x, 1, "f1", null);
 		Structure x3 = (Structure) dataMgr.resolve(x2, DataTypeConflictHandler.REPLACE_HANDLER);
+		assertEquals("X.conflict", x3.getName());
 		DataTypeComponent dtc = x3.getComponent(0);
 		DataType dtcDT = dtc.getDataType();
 		assertEquals("f1", dtc.getFieldName());
-		assertEquals("undefined", dtcDT.getName()); // undefined field is current behavior 
+		assertEquals("X", dtcDT.getName()); // undefined field is current behavior 
 	}
 
 	@Test
@@ -699,7 +701,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	List<DataTypeComponent> getBitFieldComponents(Structure struct) {
 		List<DataTypeComponent> results = new ArrayList<>();
-		for (DataTypeComponent dtc : struct.getComponents()) {
+		for (DataTypeComponent dtc : struct.getDefinedComponents()) {
 			if (dtc.getDataType() instanceof BitFieldDataType) {
 				results.add(dtc);
 			}

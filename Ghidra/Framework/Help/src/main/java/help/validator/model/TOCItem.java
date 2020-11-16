@@ -15,11 +15,11 @@
  */
 package help.validator.model;
 
-import help.validator.LinkDatabase;
-
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.*;
+
+import help.validator.LinkDatabase;
 
 /**
  * A Table of Contents entry, which is represented in the help output as an xml tag.
@@ -27,15 +27,15 @@ import java.util.*;
 public abstract class TOCItem {
 
 	//@formatter:off
-	protected static final String[] INDENTS = { 
-		"", 
-		"\t", 
-		"\t\t", 
-		"\t\t\t", 
+	protected static final String[] INDENTS = {
+		"",
+		"\t",
+		"\t\t",
+		"\t\t\t",
 		"\t\t\t\t",
-		"\t\t\t\t\t", 
-		"\t\t\t\t\t\t", 
-		"\t\t\t\t\t\t\t", 
+		"\t\t\t\t\t",
+		"\t\t\t\t\t\t",
+		"\t\t\t\t\t\t\t",
 		"\t\t\t\t\t\t\t\t"
 	};
 	//@formatter:on
@@ -63,7 +63,8 @@ public abstract class TOCItem {
 			String sortPreference, int lineNumber) {
 		this.parentItem = parentItem;
 		this.sourceFile = sourceFile;
-		this.IDAttribute = ID;
+		this.IDAttribute = Objects.requireNonNull(ID,
+			"TOC Tag missing 'id' attribute: " + sourceFile + ":" + lineNumber);
 		this.textAttribute = text;
 
 		this.targetAttribute = target;
@@ -157,82 +158,108 @@ public abstract class TOCItem {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		TOCItem other = (TOCItem) obj;
 		if (IDAttribute == null) {
-			if (other.IDAttribute != null)
+			if (other.IDAttribute != null) {
 				return false;
+			}
 		}
-		else if (!IDAttribute.equals(other.IDAttribute))
+		else if (!IDAttribute.equals(other.IDAttribute)) {
 			return false;
+		}
 		if (sortPreference == null) {
-			if (other.sortPreference != null)
+			if (other.sortPreference != null) {
 				return false;
+			}
 		}
-		else if (!sortPreference.equals(other.sortPreference))
+		else if (!sortPreference.equals(other.sortPreference)) {
 			return false;
+		}
 		if (sourceFile == null) {
-			if (other.sourceFile != null)
+			if (other.sourceFile != null) {
 				return false;
+			}
 		}
-		else if (!sourceFile.equals(other.sourceFile))
+		else if (!sourceFile.equals(other.sourceFile)) {
 			return false;
+		}
 		if (targetAttribute == null) {
-			if (other.targetAttribute != null)
+			if (other.targetAttribute != null) {
 				return false;
+			}
 		}
-		else if (!targetAttribute.equals(other.targetAttribute))
+		else if (!targetAttribute.equals(other.targetAttribute)) {
 			return false;
+		}
 		if (textAttribute == null) {
-			if (other.textAttribute != null)
+			if (other.textAttribute != null) {
 				return false;
+			}
 		}
-		else if (!textAttribute.equals(other.textAttribute))
+		else if (!textAttribute.equals(other.textAttribute)) {
 			return false;
+		}
 		return true;
 	}
 
 	/**
 	 * True if the two items are the same, except that they come from a different source file.
+	 * @param other the other item
+	 * @return true if equivalent
 	 */
 	public boolean isEquivalent(TOCItem other) {
-		if (this == other)
+		if (this == other) {
 			return true;
-		if (other == null)
+		}
+		if (other == null) {
 			return false;
-		if (getClass() != other.getClass())
+		}
+		if (getClass() != other.getClass()) {
 			return false;
+		}
 
 		if (IDAttribute == null) {
-			if (other.IDAttribute != null)
+			if (other.IDAttribute != null) {
 				return false;
+			}
 		}
-		else if (!IDAttribute.equals(other.IDAttribute))
+		else if (!IDAttribute.equals(other.IDAttribute)) {
 			return false;
+		}
 		if (sortPreference == null) {
-			if (other.sortPreference != null)
+			if (other.sortPreference != null) {
 				return false;
+			}
 		}
-		else if (!sortPreference.equals(other.sortPreference))
+		else if (!sortPreference.equals(other.sortPreference)) {
 			return false;
+		}
 
 		if (targetAttribute == null) {
-			if (other.targetAttribute != null)
+			if (other.targetAttribute != null) {
 				return false;
+			}
 		}
-		else if (!targetAttribute.equals(other.targetAttribute))
+		else if (!targetAttribute.equals(other.targetAttribute)) {
 			return false;
+		}
 		if (textAttribute == null) {
-			if (other.textAttribute != null)
+			if (other.textAttribute != null) {
 				return false;
+			}
 		}
-		else if (!textAttribute.equals(other.textAttribute))
+		else if (!textAttribute.equals(other.textAttribute)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -253,14 +280,15 @@ public abstract class TOCItem {
 		}
 	}
 
-	public String generateTOCItemTag(LinkDatabase linkDatabase, boolean isInlineTag, int indentLevel) {
+	public String generateTOCItemTag(LinkDatabase linkDatabase, boolean isInlineTag,
+			int indentLevel) {
 		StringBuilder buildy = new StringBuilder();
 		buildy.append(INDENTS[indentLevel]);
 		buildy.append('<').append(TOC_TAG_NAME).append(' ');
 
 		// text attribute
 		// NOTE: we do not put our display text in this attribute.  This is because JavaHelp uses
-		//       this attribute for sorting.  We want to separate sorting from display, so we 
+		//       this attribute for sorting.  We want to separate sorting from display, so we
 		//       manipulate the JavaHelp software by setting this attribute the desired sort value.
 		//       We have overridden JavaHelp to use a custom renderer that will paint the display
 		//       text with the attribute we set below.

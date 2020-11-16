@@ -48,23 +48,20 @@ public class HighParamID extends PcodeSyntaxTree {
 	private Integer protoextrapop;
 	private List<ParamMeasure> inputlist = new ArrayList<ParamMeasure>();
 	private List<ParamMeasure> outputlist = new ArrayList<ParamMeasure>();
-	private boolean showNamespace = true;
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
 	 * @param language language parser used to disassemble/get info on the language.
 	 * @param compilerSpec the compiler spec.
 	 * @param dtManager data type manager.
-	 * @param showNamespace true to show the parameters namespace.
 	 */
 	public HighParamID(Function function, Language language, CompilerSpec compilerSpec,
-			PcodeDataTypeManager dtManager, boolean showNamespace) {
+			PcodeDataTypeManager dtManager) {
 		super(function.getProgram().getAddressFactory(), dtManager);
 		func = function;
 
 		modelname = null;
 		protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-		this.showNamespace = showNamespace;
 	}
 
 	/**
@@ -137,8 +134,8 @@ public class HighParamID extends PcodeSyntaxTree {
 	public void readXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement start = parser.start("parammeasures");
 		functionname = start.getAttribute("name");
-		if (!func.getName(showNamespace).equals(functionname)) {
-			throw new PcodeXMLException("Function name mismatch: " + func.getName(showNamespace) +
+		if (!func.getName().equals(functionname)) {
+			throw new PcodeXMLException("Function name mismatch: " + func.getName() +
 				" + " + functionname);
 		}
 		while (!parser.peek().isEnd()) {
@@ -157,10 +154,12 @@ public class HighParamID extends PcodeSyntaxTree {
 				subel = parser.start("proto");
 				modelname = subel.getAttribute("model");
 				String val = subel.getAttribute("extrapop");
-				if (val.equals("unknown"))
+				if (val.equals("unknown")) {
 					protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-				else
+				}
+				else {
 					protoextrapop = SpecXmlUtils.decodeInt(val);
+				}
 				parser.end(subel);
 			}
 			else if (subel.getName().equals("input")) {
@@ -243,23 +242,28 @@ public class HighParamID extends PcodeSyntaxTree {
 		try {
 			//TODO: Currently, only storing one output, so looking for the best to report.  When possible, change this to report all
 			int best_index = 0;
-			if (getNumOutputs() > 1)
-				for (int i = 1; i < getNumOutputs(); i++)
+			if (getNumOutputs() > 1) {
+				for (int i = 1; i < getNumOutputs(); i++) {
 					if (getOutput(i).getRank() < getOutput(best_index).getRank()) {//TODO: create mirror of ranks on high side (instead of using numbers?)
 						best_index = i;
 					}
+				}
+			}
 			if (getNumOutputs() != 0) {
 				ParamMeasure pm = getOutput(best_index);
 				pm.getRank(); //TODO (maybe): this value is not used or stored on the java side at this point
 				Varnode vn = pm.getVarnode();
 				DataType dataType;
-				if (storeDataTypes)
+				if (storeDataTypes) {
 					dataType = pm.getDataType();
-				else
+				}
+				else {
 					dataType = dtManage.findUndefined(vn.getSize());
+				}
 				//Msg.debug(this, "func: " + func.getName() + " -- type: " + dataType.getName());
-				if (!(dataType == null || dataType instanceof VoidDataType))
+				if (!(dataType == null || dataType instanceof VoidDataType)) {
 					func.setReturn(dataType, buildStorage(vn), SourceType.ANALYSIS);
+				}
 			}
 		}
 		catch (InvalidInputException e) {
@@ -282,10 +286,12 @@ public class HighParamID extends PcodeSyntaxTree {
 				DataType dataType;
 				//Msg.debug(this, "function(" + func.getName() + ")--param size: " + vn.getSize() +
 				//	"--type before store: " + pm.getDataType().getName());
-				if (storeDataTypes)
+				if (storeDataTypes) {
 					dataType = pm.getDataType();
-				else
+				}
+				else {
 					dataType = dtManage.findUndefined(vn.getSize());
+				}
 				Variable v =
 					new ParameterImpl(null, dataType, buildStorage(vn),
 						func.getProgram());

@@ -15,15 +15,16 @@
  */
 package ghidra.app.util.bin.format.coff.archive;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.coff.CoffException;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.coff.CoffException;
+import ghidra.program.model.data.*;
+import ghidra.util.Msg;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A class that represents a COFF archive file (ie. MS .lib files, Unix .ar files)
@@ -74,39 +75,54 @@ public final class CoffArchiveHeader implements StructConverter {
 
 		CoffArchiveHeader cah = new CoffArchiveHeader();
 
-		while (reader.getPointerIndex() < reader.length() - 1) {
+		long eofPos = reader.length() - CoffArchiveMemberHeader.CAMH_MIN_SIZE;
+
+		while (reader.getPointerIndex() < eofPos) {
 			if (monitor.isCancelled()) {
 				break;
 			}
 
-			CoffArchiveMemberHeader camh =
-				CoffArchiveMemberHeader.read(reader, cah._longNameMember);
+			try {
+				CoffArchiveMemberHeader camh =
+					CoffArchiveMemberHeader.read(reader, cah._longNameMember);
 
-			if (camh.getName().equals(CoffArchiveMemberHeader.SLASH)) {
-				switch (memberNum) {
-					case 0:
-						cah._firstLinkerMember = new FirstLinkerMember(reader, camh, true);
-						break;
-					case 1:
-						cah._secondLinkerMember = new SecondLinkerMember(reader, camh, true);
-						break;
-					default:
+				if (camh.getName().equals(CoffArchiveMemberHeader.SLASH)) {
+					switch (memberNum) {
+						case 0:
+							cah._firstLinkerMember = new FirstLinkerMember(reader, camh, true);
+							break;
+						case 1:
+							cah._secondLinkerMember = new SecondLinkerMember(reader, camh, true);
+							break;
+						default:
+							throw new CoffException(
+								"Invalid COFF: multiple 1st and 2nd linker members detected.");
+					}
+				}
+				else if (camh.getName().equals(CoffArchiveMemberHeader.SLASH_SLASH)) {
+					if (cah._longNameMember == null) {
+						cah._longNameMember = new LongNamesMember(reader, camh);
+					}
+					else {
 						throw new CoffException(
-							"Invalid COFF: multiple 1st and 2nd linker members detected.");
+							"Invalid COFF: multiple long name members detected.");
+					}
 				}
-			}
-			else if (camh.getName().equals(CoffArchiveMemberHeader.SLASH_SLASH)) {
-				if (cah._longNameMember == null) {
-					cah._longNameMember = new LongNamesMember(reader, camh);
-				}
-				else {
-					throw new CoffException("Invalid COFF: multiple long name members detected.");
-				}
-			}
-			cah._memberHeaders.add(camh);
-			memberNum++;
+				cah._memberHeaders.add(camh);
+				memberNum++;
 
-			reader.setPointerIndex(camh.getPayloadOffset() + camh.getSize());
+				reader.setPointerIndex(camh.getPayloadOffset() + camh.getSize());
+			}
+			catch (IOException e) {
+				// if we run into bad data, return partial success if there has been at least some
+				// good ones, otherwise propagate the exception upwards
+				if (memberNum <= 3) {
+					throw e;
+				}
+				Msg.warn(CoffArchiveMemberHeader.class, "Problem reading COFF archive headers in " +
+					provider.getFSRL() + ", only " + memberNum + " members found.", e);
+				break;
+			}
 		}
 
 		// TODO: check for null terminators in the longname string table vs. \n terminators
@@ -125,6 +141,7 @@ public final class CoffArchiveHeader implements StructConverter {
 	protected CoffArchiveHeader() {
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(StructConverterUtil.parseName(CoffArchiveHeader.class), 0);
 		struct.add(STRING, CoffArchiveConstants.MAGIC_LEN, "magic", null);

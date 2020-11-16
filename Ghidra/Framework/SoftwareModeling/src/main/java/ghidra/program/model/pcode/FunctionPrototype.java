@@ -52,7 +52,9 @@ public class FunctionPrototype {
 	private boolean isDestruct;		// Function is an object destructor
 
 	/**
-	 * Construct a FunctionPrototype backed by a local symbolmap
+	 * Construct a FunctionPrototype backed by a local symbolmap.
+	 * This is only a partial initialization.  It is intended to be followed either by
+	 * grabFromFunction() or readPrototypeXML()
 	 * 
 	 * @param ls is the LocalSymbolMap backing the prototype
 	 * @param func is the function using the symbolmap
@@ -102,7 +104,7 @@ public class FunctionPrototype {
 		noreturn = false;
 		custom = false;
 		extrapop = model.getExtrapop();
-		hasThis = false;
+		hasThis = model.hasThisPointer();
 		isConstruct = false;
 		isDestruct = false;
 		// FIXME: If the FunctionDefinition has no parameters
@@ -126,6 +128,11 @@ public class FunctionPrototype {
 	 */
 	void grabFromFunction(Function f, int overrideExtrapop, boolean doOverride) {
 		modelname = f.getCallingConventionName();
+		PrototypeModel protoModel = f.getCallingConvention();
+		if (protoModel == null) {
+			protoModel = f.getProgram().getCompilerSpec().getDefaultCallingConvention();
+		}
+		hasThis = protoModel.hasThisPointer();
 		modellock =
 			((modelname != null) && (modelname != Function.UNKNOWN_CALLING_CONVENTION_STRING));
 		injectname = f.getCallFixup();
@@ -164,10 +171,6 @@ public class FunctionPrototype {
 			extrapop = overrideExtrapop;
 		}
 		else {
-			PrototypeModel protoModel = f.getCallingConvention();
-			if (protoModel == null) {
-				protoModel = f.getProgram().getCompilerSpec().getDefaultCallingConvention();
-			}
 			if (purge == Function.INVALID_STACK_DEPTH_CHANGE ||
 				purge == Function.UNKNOWN_STACK_DEPTH_CHANGE) {
 				extrapop = protoModel.getExtrapop();
@@ -343,9 +346,6 @@ public class FunctionPrototype {
 		if (custom) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "custom", custom);
 		}
-		if (hasThis) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "hasthis", hasThis);
-		}
 		if (isConstruct) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "constructor", isConstruct);
 		}
@@ -421,6 +421,12 @@ public class FunctionPrototype {
 			throws PcodeXMLException {
 		XmlElement node = parser.start("prototype");
 		modelname = node.getAttribute("model");
+		PrototypeModel protoModel =
+			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
+		if (protoModel == null) {
+			throw new PcodeXMLException("Bad prototype model name: " + modelname);
+		}
+		hasThis = protoModel.hasThisPointer();
 		String val = node.getAttribute("extrapop");
 		if (val.equals("unknown")) {
 			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
@@ -451,10 +457,6 @@ public class FunctionPrototype {
 		custom = false;
 		if (node.hasAttribute("custom")) {
 			custom = SpecXmlUtils.decodeBoolean(node.getAttribute("custom"));
-		}
-		hasThis = false;
-		if (node.hasAttribute("hasthis")) {
-			hasThis = SpecXmlUtils.decodeBoolean(node.getAttribute("hasthis"));
 		}
 		isConstruct = false;
 		if (node.hasAttribute("constructor")) {

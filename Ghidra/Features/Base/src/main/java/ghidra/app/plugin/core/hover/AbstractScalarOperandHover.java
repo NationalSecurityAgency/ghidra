@@ -175,7 +175,7 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 		AddressSpace space = factory.getDefaultAddressSpace();
 		Address asAddress;
 		try {
-			asAddress = factory.getAddress(space.getBaseSpaceID(), scalarLong);
+			asAddress = factory.getAddress(space.getSpaceID(), scalarLong);
 		}
 		catch (AddressOutOfBoundsException ex) {
 			asAddress = null;	// Constant doesn't make sense as an address

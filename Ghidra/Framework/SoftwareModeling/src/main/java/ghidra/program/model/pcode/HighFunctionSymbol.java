@@ -17,7 +17,9 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -55,10 +57,24 @@ public class HighFunctionSymbol extends HighSymbol {
 	}
 
 	@Override
+	public Namespace getNamespace() {
+		Function func = function.getFunction();
+		Namespace namespc = func.getParentNamespace();
+		while (func.isThunk() && namespc.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
+			// Thunks can be in a different namespace than the thunked function.
+			// We choose the thunk's namespace unless it is the global namespace
+			func = func.getThunkedFunction(false);
+			namespc = func.getParentNamespace();
+		}
+		return namespc;
+	}
+
+	@Override
 	public void saveXML(StringBuilder buf) {
 		MappedEntry entry = (MappedEntry) getFirstWholeMap();
 		String funcString =
-			function.buildFunctionXML(getId(), entry.getStorage().getMinAddress(), entry.getSize());
+			function.buildFunctionXML(getId(), getNamespace(), entry.getStorage().getMinAddress(),
+				entry.getSize());
 		buf.append(funcString);
 	}
 }

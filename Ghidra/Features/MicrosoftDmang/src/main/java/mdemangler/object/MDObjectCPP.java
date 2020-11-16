@@ -15,7 +15,9 @@
  */
 package mdemangler.object;
 
+import ghidra.util.Msg;
 import mdemangler.*;
+import mdemangler.functiontype.MDFunctionType;
 import mdemangler.naming.*;
 import mdemangler.typeinfo.MDTypeInfo;
 import mdemangler.typeinfo.MDTypeInfoParser;
@@ -142,8 +144,25 @@ public class MDObjectCPP extends MDObject {
 				if (!typeInfo.getNameModifier().isEmpty()) {
 					qualifiedName.setNameModifier(typeInfo.getNameModifier());
 				}
+				if (qualifiedName.isTypeCast()) {
+					applyFunctionReturnTypeToTypeCastOperatorName();
+				}
 			}
 		}
+	}
+
+	private void applyFunctionReturnTypeToTypeCastOperatorName() {
+		// Make sure there is a function with a return type
+		if (!(typeInfo.getMDType() instanceof MDFunctionType)) {
+			Msg.warn(this, "Cannot get function return type from non-function");
+			return;
+		}
+		MDFunctionType functionType = (MDFunctionType) typeInfo.getMDType();
+		if (!functionType.hasReturn() || functionType.getReturnType() == null) {
+			Msg.warn(this, "No return type available to set to cast operator name");
+			return;
+		}
+		qualifiedName.setCastTypeString(functionType.getReturnType().toString());
 	}
 
 	/**

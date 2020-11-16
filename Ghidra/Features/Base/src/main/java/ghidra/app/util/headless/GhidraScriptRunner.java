@@ -16,13 +16,12 @@
 package ghidra.app.util.headless;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
+import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;
@@ -31,7 +30,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
 /**
@@ -50,8 +49,14 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 			System.exit(0);
 		}
 		String logFile = null; //TODO get from arguments?
-		initialize(layout, logFile, true);
-		runScript(args[0]);
+		GhidraScriptUtil.initialize(new BundleHost(), scriptPaths);
+		try {
+			initialize(layout, logFile, true);
+			runScript(args[0]);
+		}
+		finally {
+			GhidraScriptUtil.dispose();
+		}
 	}
 
 	private void runScript(String string) throws Exception {
@@ -76,7 +81,7 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 		try {
 			PrintWriter writer = new PrintWriter(System.out);
 			Msg.info(this, "SCRIPT: " + scriptName);
-			script.execute(scriptState, TaskMonitorAdapter.DUMMY_MONITOR, writer);
+			script.execute(scriptState, TaskMonitor.DUMMY, writer);
 			writer.flush();
 		}
 		catch (Exception exc) {
@@ -100,8 +105,8 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSourceFile);
 
 		if (provider == null) {
-			throw new IOException("Missing plugin needed to run scripts of this type. Please "
-				+ "ensure you have installed the necessary plugin.");
+			throw new IOException("Missing plugin needed to run scripts of this type. Please " +
+				"ensure you have installed the necessary plugin.");
 		}
 
 		PrintWriter writer = new PrintWriter(System.out);
@@ -130,13 +135,10 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 		if (scriptSource.exists()) {
 			return scriptSource;
 		}
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : dirs) {
-			scriptSource = new ResourceFile(dir, scriptName);
 
-			if (scriptSource.exists()) {
-				return scriptSource;
-			}
+		scriptSource = GhidraScriptUtil.findScriptByName(scriptName);
+		if (scriptSource != null) {
+			return scriptSource;
 		}
 		throw new IllegalArgumentException("Script not found: " + scriptName);
 	}
@@ -192,23 +194,6 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-		List<Path> paths;
-		if (scriptPaths == null || scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getDefaultScriptDirectories();
-		}
-		else {
-			paths = new ArrayList<Path>();
-			for (String path : scriptPaths) {
-				paths.add(new Path(path, true, false, true));
-			}
-			for (Path path : GhidraScriptUtil.getDefaultScriptDirectories()) {
-				if (path.isEnabled() && !paths.contains(path)) {
-					paths.add(path);
-				}
-			}
-		}
-		GhidraScriptUtil.setScriptDirectories(paths);
-
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
 			buf.append("\n    ");

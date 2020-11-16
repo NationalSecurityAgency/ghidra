@@ -172,6 +172,7 @@ task findUnusedHelp(type: JavaExec) {
 
 // include the help into the module's jar
 jar {
+    duplicatesStrategy 'exclude'
 	from "build/help/main"		// include the generated help index files
 	from "src/main/help"		// include the help source files
 }

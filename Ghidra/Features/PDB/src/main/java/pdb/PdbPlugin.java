@@ -18,15 +18,17 @@ package pdb;
 import java.io.File;
 
 import docking.action.MenuData;
+import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorRestrictions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
@@ -89,13 +91,40 @@ public class PdbPlugin extends Plugin {
 			return;
 		}
 
+		boolean analyzed =
+			program.getOptions(Program.PROGRAM_INFO).getBoolean(Program.ANALYZED, false);
+
+		if (analyzed) {
+			int response =
+				OptionDialog.showOptionDialogWithCancelAsDefaultButton(null, "Load PDB Warning",
+					"Loading PDB after running analysis may produce poor results." +
+						"\nPDBs should generally be loaded prior to analysis or" +
+						"\nautomatically during auto-analysis.",
+					"Continue");
+			if (response != OptionDialog.OPTION_ONE) {
+				return;
+			}
+		}
+
 		try {
 			File pdb = getPdbFile(program);
 			if (pdb == null) {
 				tool.setStatusInfo("Loading PDB was cancelled.");
 				return;
 			}
+
+			boolean isPdbFile = pdb.getName().toLowerCase().endsWith(".pdb");
+
+			AskPdbOptionsDialog optionsDialog = new AskPdbOptionsDialog(null, isPdbFile);
+			if (optionsDialog.isCanceled()) {
+				return;
+			}
+
+			boolean useMsDiaParser = optionsDialog.useMsDiaParser();
+			PdbApplicatorRestrictions restrictions = optionsDialog.getApplicatorRestrictions();
+
 			tool.setStatusInfo("");
+
 			DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
 			if (service == null) {
 				Msg.showWarn(getClass(), null, "Load PDB",
@@ -103,25 +132,31 @@ public class PdbPlugin extends Plugin {
 				return;
 			}
 
-			TaskLauncher.launch(new LoadPdbTask(program, pdb, service));
+			// note: We intentionally use a 0-delay here.  Our underlying task may show modal
+			//       dialog prompts.  We want the task progress dialog to be showing before any
+			//       promts appear.
+			LoadPdbTask task = new LoadPdbTask(program, pdb, useMsDiaParser, restrictions, service);
+			new TaskLauncher(task, null, 0);
 		}
 		catch (Exception pe) {
-			Msg.showError(getClass(), null, "Error", pe.getMessage());
+			Msg.showError(getClass(), null, "Error Loading PDB", pe.getMessage(), pe);
 		}
 	}
 
-	private File getPdbFile(Program program) throws PdbException {
+	private File getPdbFile(Program program) {
 		File pdbFile = PdbParser.findPDB(program);
 		if (pdbChooser == null) {
 			pdbChooser = new GhidraFileChooser(tool.getToolFrame());
 			pdbChooser.setTitle("Select PDB file to load:");
 			pdbChooser.setApproveButtonText("Select PDB");
-			pdbChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+			pdbChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 			pdbChooser.setFileFilter(new ExtensionFileFilter(new String[] { "pdb", "xml" },
 				"Program Database Files and PDB XML Representations"));
 		}
 
-		pdbChooser.setSelectedFile(pdbFile);
+		if (pdbFile != null) {
+			pdbChooser.setSelectedFile(pdbFile);
+		}
 
 		File selectedFile = pdbChooser.getSelectedFile();
 		return selectedFile;

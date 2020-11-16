@@ -94,12 +94,18 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 	 * @return the associated HighSymbol or null if one can't be found
 	 */
 	public static HighSymbol findHighSymbolFromToken(ClangToken token, HighFunction highFunction) {
+		if (highFunction == null) {
+			return null;
+		}
 		HighVariable variable = token.getHighVariable();
 		HighSymbol highSymbol = null;
 		if (variable == null) {
 			// Token may be from a variable reference, in which case we have to dig to find the actual symbol
-			Address storageAddress =
-				getStorageAddress(token, highFunction.getFunction().getProgram());
+			Function function = highFunction.getFunction();
+			if (function == null) {
+				return null;
+			}
+			Address storageAddress = getStorageAddress(token, function.getProgram());
 			if (storageAddress == null) {
 				return null;
 			}

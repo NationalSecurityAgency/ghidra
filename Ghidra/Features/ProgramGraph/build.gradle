@@ -1,0 +1,18 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'Features Graph ProgramGraph'
+
+
+dependencies {
+	compile project(":Base")
+   
+	helpPath project(path: ":Base", configuration: 'helpPath')
+	helpPath project(path: ":GraphServices", configuration: 'helpPath')
+	
+}
+

@@ -24,9 +24,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic.Kind;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
+import com.google.gson.*;
 import com.sun.source.doctree.*;
 import com.sun.source.util.DocTrees;
 
@@ -35,8 +33,9 @@ import jdk.javadoc.doclet.*;
 /**
  * Doclet that outputs javadoc in JSON format (instead of HTML).  Things like Python can then
  * read in the JSON and easily access all of the javadoc elements.
+ * 
+ * To run: gradle zipJavadocs
  */
-@SuppressWarnings("unchecked")
 public class JsonDoclet implements Doclet {
 
 	private Reporter log;
@@ -44,6 +43,11 @@ public class JsonDoclet implements Doclet {
 
 	private DocletEnvironment docEnv;
 	private DocTrees docTrees;
+
+	private Gson gson = new GsonBuilder()
+			.setPrettyPrinting()
+			.serializeNulls()
+			.create();
 
 	@Override
 	public void init(Locale locale, Reporter reporter) {
@@ -128,13 +132,13 @@ public class JsonDoclet implements Doclet {
 	}
 
 	/**
-	 * Converts a class {@link TypeElement} to a {@link JSONObject}.
+	 * Converts a class {@link TypeElement} to a {@link JsonObject}.
 	 * 
 	 * @param classElement the class {@link TypeElement} to convert
 	 * @return A json object that represents the class.
 	 */
-	private JSONObject classToJson(TypeElement classElement) {
-		JSONObject classObj = new JSONObject();
+	private JsonObject classToJson(TypeElement classElement) {
+		JsonObject classObj = new JsonObject();
 		processClassAttributes(classElement, classObj);
 		processFieldAndMethodAttributes(classElement, classObj);
 		return classObj;
@@ -146,11 +150,11 @@ public class JsonDoclet implements Doclet {
 	 * @param classElement the class element to parse
 	 * @param classObj the json object to populate
 	 */
-	private void processClassAttributes(TypeElement classElement, JSONObject classObj) {
-		classObj.put("name", classElement.getSimpleName().toString());
-		classObj.put("comment", getComment(docTrees.getDocCommentTree(classElement)));
-		classObj.put("javadoc", getJavadoc(docTrees.getDocCommentTree(classElement)));
-		classObj.put("static", classElement.getModifiers().contains(Modifier.STATIC));
+	private void processClassAttributes(TypeElement classElement, JsonObject classObj) {
+		classObj.addProperty("name", classElement.getSimpleName().toString());
+		classObj.addProperty("comment", getComment(docTrees.getDocCommentTree(classElement)));
+		classObj.addProperty("javadoc", getJavadoc(docTrees.getDocCommentTree(classElement)));
+		classObj.addProperty("static", classElement.getModifiers().contains(Modifier.STATIC));
 		addInterfaces(classElement, classObj);
 		addSuperClass(classElement, classObj);
 	}
@@ -162,8 +166,8 @@ public class JsonDoclet implements Doclet {
 	 * @param typeElement the {@link TypeElement} to parse
 	 * @param obj the json object to populate
 	 */
-	private void addInterfaces(TypeElement typeElement, JSONObject obj) {
-		JSONArray interfaceArray = new JSONArray();
+	private void addInterfaces(TypeElement typeElement, JsonObject obj) {
+		JsonArray interfaceArray = new JsonArray();
 
 		//@formatter:off
 		typeElement.getInterfaces()
@@ -176,7 +180,7 @@ public class JsonDoclet implements Doclet {
 			.forEach(ifaceTypeElement -> interfaceArray.add(ifaceTypeElement.getQualifiedName().toString()));
 		//@formatter:on
 
-		obj.put("implements", interfaceArray);
+		obj.add("implements", interfaceArray);
 	}
 
 	/**
@@ -186,12 +190,12 @@ public class JsonDoclet implements Doclet {
 	 * @param typeElement the {@link TypeElement} to parse
 	 * @param obj the json object to populate
 	 */
-	private void addSuperClass(TypeElement typeElement, JSONObject obj) {
+	private void addSuperClass(TypeElement typeElement, JsonObject obj) {
 		if (typeElement.getSuperclass() instanceof DeclaredType) {
 			DeclaredType declaredType = (DeclaredType) typeElement.getSuperclass();
 			if (declaredType.asElement() instanceof TypeElement) {
 				TypeElement typeEl = (TypeElement) declaredType.asElement();
-				obj.put("extends", typeEl.getQualifiedName().toString());
+				obj.addProperty("extends", typeEl.getQualifiedName().toString());
 			}
 		}
 	}
@@ -202,29 +206,29 @@ public class JsonDoclet implements Doclet {
 	 * @param classElement the class to parse
 	 * @param classObj the json object to populate
 	 */
-	private void processFieldAndMethodAttributes(TypeElement classElement, JSONObject classObj) {
+	private void processFieldAndMethodAttributes(TypeElement classElement, JsonObject classObj) {
 
-		JSONArray fieldArray = new JSONArray();
-		JSONArray methodArray = new JSONArray();
+		JsonArray fieldArray = new JsonArray();
+		JsonArray methodArray = new JsonArray();
 
 		for (Element el : classElement.getEnclosedElements()) {
 
-			JSONObject obj = new JSONObject();
-			obj.put("name", el.getSimpleName().toString());
-			obj.put("comment", getComment(docTrees.getDocCommentTree(el)));
-			obj.put("javadoc", getJavadoc(docTrees.getDocCommentTree(el)));
-			obj.put("static", el.getModifiers().contains(Modifier.STATIC));
+			JsonObject obj = new JsonObject();
+			obj.addProperty("name", el.getSimpleName().toString());
+			obj.addProperty("comment", getComment(docTrees.getDocCommentTree(el)));
+			obj.addProperty("javadoc", getJavadoc(docTrees.getDocCommentTree(el)));
+			obj.addProperty("static", el.getModifiers().contains(Modifier.STATIC));
 
 			switch (el.getKind()) {
 				case FIELD:
 					VariableElement varElement = (VariableElement) el;
-					obj.put("type_long", getTypeLong(el.asType()));
-					obj.put("type_short", getTypeShort(el.asType()));
+					obj.addProperty("type_long", getTypeLong(el.asType()));
+					obj.addProperty("type_short", getTypeShort(el.asType()));
 					Object constantValue = varElement.getConstantValue();
 					if (constantValue instanceof String) {
 						constantValue = "\"" + constantValue + "\"";
 					}
-					obj.put("constant_value", Objects.toString(constantValue, null)); // only applies to 'final'
+					obj.addProperty("constant_value", Objects.toString(constantValue, null)); // only applies to 'final'
 					fieldArray.add(obj);
 					break;
 				case CONSTRUCTOR:
@@ -255,8 +259,8 @@ public class JsonDoclet implements Doclet {
 			}
 		}
 
-		classObj.put("fields", fieldArray);
-		classObj.put("methods", methodArray);
+		classObj.add("fields", fieldArray);
+		classObj.add("methods", methodArray);
 	}
 
 	/**
@@ -266,14 +270,14 @@ public class JsonDoclet implements Doclet {
 	 * @param execElement the element to parse
 	 * @param obj the json object
 	 */
-	private void addParams(ExecutableElement execElement, JSONObject obj) {
+	private void addParams(ExecutableElement execElement, JsonObject obj) {
 
-		JSONArray paramsArray = new JSONArray();
+		JsonArray paramsArray = new JsonArray();
 		for (VariableElement varElement : execElement.getParameters()) {
-			JSONObject paramObj = new JSONObject();
-			paramObj.put("name", varElement.getSimpleName().toString());
-			paramObj.put("type_long", getTypeLong(varElement.asType()));
-			paramObj.put("type_short", getTypeShort(varElement.asType()));
+			JsonObject paramObj = new JsonObject();
+			paramObj.addProperty("name", varElement.getSimpleName().toString());
+			paramObj.addProperty("type_long", getTypeLong(varElement.asType()));
+			paramObj.addProperty("type_short", getTypeShort(varElement.asType()));
 			String comment = "";
 			DocCommentTree commentTree = docTrees.getDocCommentTree(execElement);
 			if (commentTree != null) {
@@ -287,10 +291,10 @@ public class JsonDoclet implements Doclet {
 					}
 				}
 			}
-			paramObj.put("comment", comment);
+			paramObj.addProperty("comment", comment);
 			paramsArray.add(paramObj);
 		}
-		obj.put("params", paramsArray);
+		obj.add("params", paramsArray);
 	}
 
 	/**
@@ -300,11 +304,11 @@ public class JsonDoclet implements Doclet {
 	 * @param execElement the element to parse
 	 * @param obj the json object
 	 */
-	private void addReturn(ExecutableElement execElement, JSONObject obj) {
+	private void addReturn(ExecutableElement execElement, JsonObject obj) {
 		TypeMirror returnType = execElement.getReturnType();
-		JSONObject returnObj = new JSONObject();
-		returnObj.put("type_long", getTypeLong(returnType));
-		returnObj.put("type_short", getTypeShort(returnType));
+		JsonObject returnObj = new JsonObject();
+		returnObj.addProperty("type_long", getTypeLong(returnType));
+		returnObj.addProperty("type_short", getTypeShort(returnType));
 		String comment = "";
 		DocCommentTree commentTree = docTrees.getDocCommentTree(execElement);
 		if (commentTree != null) {
@@ -314,8 +318,8 @@ public class JsonDoclet implements Doclet {
 				}
 			}
 		}
-		returnObj.put("comment", comment);
-		obj.put("return", returnObj);
+		returnObj.addProperty("comment", comment);
+		obj.add("return", returnObj);
 	}
 
 	/**
@@ -325,14 +329,14 @@ public class JsonDoclet implements Doclet {
 	 * @param execElement the element to parse
 	 * @param obj the json object
 	 */
-	private void addExceptions(ExecutableElement execElement, JSONObject obj) {
-		JSONArray throwsArray = new JSONArray();
+	private void addExceptions(ExecutableElement execElement, JsonObject obj) {
+		JsonArray throwsArray = new JsonArray();
 		for (TypeMirror thrownType : execElement.getThrownTypes()) {
-			JSONObject throwObj = new JSONObject();
+			JsonObject throwObj = new JsonObject();
 			String typeLong = getTypeLong(thrownType);
 			String typeShort = getTypeShort(thrownType);
-			throwObj.put("type_long", typeLong);
-			throwObj.put("type_short", typeShort);
+			throwObj.addProperty("type_long", typeLong);
+			throwObj.addProperty("type_short", typeShort);
 			String comment = "";
 			DocCommentTree commentTree = docTrees.getDocCommentTree(execElement);
 			if (commentTree != null) {
@@ -346,10 +350,10 @@ public class JsonDoclet implements Doclet {
 					}
 				}
 			}
-			throwObj.put("comment", comment);
+			throwObj.addProperty("comment", comment);
 			throwsArray.add(throwObj);
 		}
-		obj.put("throws", throwsArray);
+		obj.add("throws", throwsArray);
 	}
 
 	/**
@@ -446,11 +450,12 @@ public class JsonDoclet implements Doclet {
 	 * @param qualifiedName The qualified class name.  This name will get converted into a directory
 	 *   structure.
 	 */
-	private void writeJsonToFile(JSONObject json, Name qualifiedName) {
+	private void writeJsonToFile(JsonObject json, Name qualifiedName) {
+
 		File jsonFile = new File(destDir, qualifiedName.toString().replace('.', '/') + ".json");
 		jsonFile.getParentFile().mkdirs();
 		try (PrintWriter writer = new PrintWriter(new FileWriter(jsonFile))) {
-			writer.println(json.toJSONString());
+			writer.println(gson.toJson(json));
 		}
 		catch (IOException e) {
 			e.printStackTrace();

@@ -310,10 +310,12 @@ public class Emulate {
 		else {
 			takeBranch = memstate.getValue(condVar) != 0;
 		}
-		if (takeBranch)
+		if (takeBranch) {
 			executeBranch(op);
-		else
+		}
+		else {
 			fallthruOp();
+		}
 	}
 
 	/// Since the full instruction is cached, we can do relative branches properly
@@ -324,10 +326,12 @@ public class Emulate {
 			long id = destaddr.getOffset();
 			id = id + current_op;
 			current_op = (int) id;
-			if (current_op == pcode.length)
+			if (current_op == pcode.length) {
 				fallthruOp();
-			else if ((current_op < 0) || (current_op >= pcode.length))
+			}
+			else if ((current_op < 0) || (current_op >= pcode.length)) {
 				throw new LowlevelError("Bad intra-instruction branch");
+			}
 		}
 		else {
 			setCurrentAddress(destaddr);
@@ -451,18 +455,18 @@ public class Emulate {
 				"Unsupported pcode op (opcode=" + op.getOpcode() + ", seq=" + op.getSeqnum() + ")");
 		}
 		if (behave instanceof UnaryOpBehavior) {
-			UnaryOpBehavior uniaryBehave = (UnaryOpBehavior) behave;
+			UnaryOpBehavior unaryBehave = (UnaryOpBehavior) behave;
 			Varnode in1var = op.getInput(0);
 			Varnode outvar = op.getOutput();
 			if (in1var.getSize() > 8 || outvar.getSize() > 8) {
 				BigInteger in1 = memstate.getBigInteger(op.getInput(0), false);
-				BigInteger out = uniaryBehave.evaluateUnary(op.getOutput().getSize(),
+				BigInteger out = unaryBehave.evaluateUnary(op.getOutput().getSize(),
 					op.getInput(0).getSize(), in1);
 				memstate.setValue(op.getOutput(), out);
 			}
 			else {
 				long in1 = memstate.getValue(op.getInput(0));
-				long out = uniaryBehave.evaluateUnary(op.getOutput().getSize(),
+				long out = unaryBehave.evaluateUnary(op.getOutput().getSize(),
 					op.getInput(0).getSize(), in1);
 				memstate.setValue(op.getOutput(), out);
 			}

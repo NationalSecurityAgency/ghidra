@@ -113,9 +113,9 @@ public class GnuDemangler implements Demangler {
 			}
 
 			if (globalPrefix != null) {
-				// TODO: may need better naming convention for demangled function
 				DemangledFunction dfunc =
-					new DemangledFunction(globalPrefix + demangledObject.getName());
+					new DemangledFunction(originalMangled, demangled,
+						globalPrefix + demangledObject.getName());
 				dfunc.setNamespace(demangledObject.getNamespace());
 				demangledObject = dfunc;
 			}
@@ -123,14 +123,12 @@ public class GnuDemangler implements Demangler {
 				demangledObject.setSignature(demangled);
 			}
 
-			demangledObject.setOriginalMangled(originalMangled);
-
 			if (isDwarf) {
-				DemangledAddressTable dat = new DemangledAddressTable((String) null, 1);
+				DemangledAddressTable dat =
+					new DemangledAddressTable(originalMangled, demangled, (String) null, false);
 				dat.setSpecialPrefix("DWARF Debug ");
 				dat.setName(demangledObject.getName());
 				dat.setNamespace(demangledObject.getNamespace());
-				dat.setOriginalMangled(originalMangled);
 				return dat;
 			}
 
@@ -209,7 +207,7 @@ public class GnuDemangler implements Demangler {
 			return null;
 		}
 
-		GnuDemanglerParser parser = new GnuDemanglerParser(process);
+		GnuDemanglerParser parser = new GnuDemanglerParser();
 		DemangledObject demangledObject = parser.parse(mangled, demangled);
 		return demangledObject;
 	}

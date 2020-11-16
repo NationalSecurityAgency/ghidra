@@ -63,8 +63,8 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 		clearHistory = getAction(np, "Clear History Buffer");
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 
-		nextFunction = getAction(cb, "Go to next function");
-		prevFunction = getAction(cb, "Go to previous function");
+		nextFunction = getAction(cb, "Go To Next Function");
+		prevFunction = getAction(cb, "Go To Previous Function");
 	}
 
 	@After

@@ -47,7 +47,7 @@ public class GTreeTest extends AbstractDockingTest {
 
 	@Before
 	public void setUp() throws Exception {
-		gTree = new GTree(new TestRootNode());
+		gTree = new GTree(new PopulatedTestRootNode());
 
 		frame = new JFrame("GTree Test");
 		frame.getContentPane().add(gTree);
@@ -61,6 +61,30 @@ public class GTreeTest extends AbstractDockingTest {
 	public void tearDown() throws Exception {
 		gTree.dispose();
 		frame.dispose();
+	}
+
+	@Test
+	public void testFilteringDisplayName() {
+		gTree.setRootNode(new TestRootNodeWithSpecialDisplayNodes());
+		waitForTree();
+
+		GTreeNode node = findNodeInTree("Leaf1");
+		assertNotNull("Did not find existing child node in non filtered tree", node);
+		GTreeNode node2 = findNodeInTree("Leaf2");
+		assertNotNull("Did not find existing child node in non filtered tree", node2);
+
+		typeFilterText("Display");
+
+		node = findNodeInTree("Leaf1");
+		assertNotNull("Did not find matching child node in filtered tree", node);
+		node2 = findNodeInTree("Leaf2");
+		assertNull("Found non-matching child node in filtered tree", node2);
+
+		clearFilterText();
+		node = findNodeInTree("Leaf1");
+		assertNotNull("Did not find existing child node in non filtered tree", node);
+		node2 = findNodeInTree("Leaf2");
+		assertNotNull("Did not find existing child node in non filtered tree", node2);
 	}
 
 	@Test
@@ -746,6 +770,152 @@ public class GTreeTest extends AbstractDockingTest {
 		assertCloseEnough(rowToPath(topRow), selectedPath);
 	}
 
+	@Test
+	public void testAddNodeMatchingFilterWhileFiltered() {
+		TestRootNode rootNode = new TestRootNode();
+		gTree.setRootNode(rootNode);
+		waitForTree();
+		rootNode.addNode(new LeafNode("alpha"));
+		rootNode.addNode(new LeafNode("beta"));
+
+		setFilterText("b");
+		GTreeNode alpha = findNodeInTree("alpha");
+		GTreeNode beta = findNodeInTree("beta");
+
+		assertNull(alpha);
+		assertNotNull(beta);
+
+		rootNode.addNode(new LeafNode("bob"));
+		waitForTree();
+
+		GTreeNode bob = findNodeInTree("bob");
+		assertNotNull(bob);
+
+		clearFilterText();
+
+		alpha = findNodeInTree("alpha");
+		beta = findNodeInTree("beta");
+		bob = findNodeInTree("bob");
+
+		assertNotNull(alpha);
+		assertNotNull(beta);
+		assertNotNull(bob);
+
+	}
+
+	@Test
+	public void testAddNodeNotMatchingFilterWhileFiltered() {
+		TestRootNode rootNode = new TestRootNode();
+		gTree.setRootNode(rootNode);
+		waitForTree();
+		rootNode.addNode(new LeafNode("alpha"));
+		rootNode.addNode(new LeafNode("beta"));
+
+		setFilterText("b");
+		GTreeNode alpha = findNodeInTree("alpha");
+		GTreeNode beta = findNodeInTree("beta");
+
+		assertNull(alpha);
+		assertNotNull(beta);
+
+		rootNode.addNode(new LeafNode("carl"));
+		waitForTree();
+
+		GTreeNode carl = findNodeInTree("carl");
+		assertNull(carl);
+
+		clearFilterText();
+
+		alpha = findNodeInTree("alpha");
+		beta = findNodeInTree("beta");
+		carl = findNodeInTree("carl");
+
+		assertNotNull(alpha);
+		assertNotNull(beta);
+		assertNotNull(carl);
+
+	}
+
+	@Test
+	public void testRemoveMatchingNodeWhileFiltered() {
+		TestRootNode rootNode = new TestRootNode();
+		gTree.setRootNode(rootNode);
+		waitForTree();
+		rootNode.addNode(new LeafNode("alpha"));
+		rootNode.addNode(new LeafNode("beta"));
+		rootNode.addNode(new LeafNode("bob"));
+
+		setFilterText("b");
+		GTreeNode alpha = findNodeInTree("alpha");
+		GTreeNode beta = findNodeInTree("beta");
+		GTreeNode bob = findNodeInTree("bob");
+
+		assertNull(alpha);
+		assertNotNull(beta);
+		assertNotNull(bob);
+
+		rootNode.removeNode(bob);
+		waitForTree();
+
+		alpha = findNodeInTree("alpha");
+		beta = findNodeInTree("beta");
+		bob = findNodeInTree("bob");
+
+		assertNotNull(beta);
+		assertNull(bob);
+
+		clearFilterText();
+
+		alpha = findNodeInTree("alpha");
+		beta = findNodeInTree("beta");
+		bob = findNodeInTree("bob");
+
+		assertNotNull(alpha);
+		assertNotNull(beta);
+		assertNull(bob);
+	}
+
+	@Test
+	public void testRemoveNotMatchingNodeWhileFiltered() {
+		TestRootNode rootNode = new TestRootNode();
+		gTree.setRootNode(rootNode);
+		waitForTree();
+		rootNode.addNode(new LeafNode("alpha"));
+		rootNode.addNode(new LeafNode("beta"));
+		rootNode.addNode(new LeafNode("carl"));
+
+		setFilterText("b");
+		GTreeNode alpha = findNodeInTree("alpha");
+		GTreeNode beta = findNodeInTree("beta");
+		GTreeNode carl = findNodeInTree("carl");
+
+		assertNull(alpha);
+		assertNotNull(beta);
+		assertNull(carl);
+
+		rootNode.removeNode(carl);
+		waitForTree();
+
+		alpha = findNodeInTree("alpha");
+		beta = findNodeInTree("beta");
+		carl = findNodeInTree("carl");
+
+		assertNull(alpha);
+		assertNotNull(beta);
+		assertNull(carl);
+
+		clearFilterText();
+
+		alpha = findNodeInTree("alpha");
+		beta = findNodeInTree("beta");
+		carl = findNodeInTree("bob");
+
+		assertNotNull(alpha);
+		assertNotNull(beta);
+		assertNull(carl);
+
+	}
+
 //==================================================================================================
 // Private methods
 //==================================================================================================	
@@ -1014,7 +1184,31 @@ public class GTreeTest extends AbstractDockingTest {
 
 	private class TestRootNode extends GTreeNode {
 
-		TestRootNode() {
+		@Override
+		public String getName() {
+			return "Test GTree Root Node";
+		}
+
+		@Override
+		public Icon getIcon(boolean expanded) {
+			return null;
+		}
+
+		@Override
+		public String getToolTip() {
+			return null;
+		}
+
+		@Override
+		public boolean isLeaf() {
+			return false;
+		}
+
+	}
+
+	private class PopulatedTestRootNode extends TestRootNode {
+
+		PopulatedTestRootNode() {
 			List<GTreeNode> children = new ArrayList<>();
 			children.add(new NonLeafWithOneLevelOfChildrenNodeA());
 			children.add(new LeafNode("Leaf Child - Root1"));
@@ -1022,28 +1216,19 @@ public class GTreeTest extends AbstractDockingTest {
 			setChildren(children);
 		}
 
-		@Override
-		public Icon getIcon(boolean expanded) {
-			return null;
-		}
+	}
 
-		@Override
-		public String getName() {
-			return "Test GTree Root Node";
-		}
+	private class TestRootNodeWithSpecialDisplayNodes extends TestRootNode {
 
-		@Override
-		public String getToolTip() {
-			return null;
-		}
-
-		@Override
-		public boolean isLeaf() {
-			return false;
+		TestRootNodeWithSpecialDisplayNodes() {
+			List<GTreeNode> children = new ArrayList<>();
+			children.add(new LeafDisplayNode("Leaf1", "Display Leaf1"));
+			children.add(new LeafNode("Leaf2"));
+			setChildren(children);
 		}
 	}
 
-	private class ManyLeafChildrenRootNode extends GTreeNode {
+	private class ManyLeafChildrenRootNode extends TestRootNode {
 
 		ManyLeafChildrenRootNode() {
 			List<GTreeNode> children = new ArrayList<>();
@@ -1051,28 +1236,9 @@ public class GTreeTest extends AbstractDockingTest {
 			setChildren(children);
 		}
 
-		@Override
-		public Icon getIcon(boolean expanded) {
-			return null;
-		}
-
-		@Override
-		public String getName() {
-			return "Test GTree Root Node";
-		}
-
-		@Override
-		public String getToolTip() {
-			return null;
-		}
-
-		@Override
-		public boolean isLeaf() {
-			return false;
-		}
 	}
 
-	private class ManyNonLeafChildrenRootNode extends GTreeNode {
+	private class ManyNonLeafChildrenRootNode extends TestRootNode {
 
 		ManyNonLeafChildrenRootNode() {
 			List<GTreeNode> children = new ArrayList<>();
@@ -1080,25 +1246,6 @@ public class GTreeTest extends AbstractDockingTest {
 			setChildren(children);
 		}
 
-		@Override
-		public Icon getIcon(boolean expanded) {
-			return null;
-		}
-
-		@Override
-		public String getName() {
-			return "Test GTree Root Node";
-		}
-
-		@Override
-		public String getToolTip() {
-			return null;
-		}
-
-		@Override
-		public boolean isLeaf() {
-			return false;
-		}
 	}
 
 	/**
@@ -1203,6 +1350,22 @@ public class GTreeTest extends AbstractDockingTest {
 		public boolean isLeaf() {
 			return true;
 		}
+	}
+
+	private class LeafDisplayNode extends LeafNode {
+
+		private String displayName;
+
+		LeafDisplayNode(String name, String displayName) {
+			super(name);
+			this.displayName = displayName;
+		}
+
+		@Override
+		public String getDisplayText() {
+			return displayName;
+		}
+
 	}
 
 	/**

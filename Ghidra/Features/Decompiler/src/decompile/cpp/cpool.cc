@@ -37,8 +37,6 @@ void CPoolRecord::saveXml(ostream &s) const
     a_v(s,"tag","classref");
   else
     a_v(s,"tag","primitive");
-  if (hasThisPointer())
-    a_v_b(s,"hasthis",true);
   if (isConstructor())
     a_v_b(s,"constructor",true);
   if (isDestructor())
@@ -100,10 +98,6 @@ void CPoolRecord::restoreXml(const Element *el,TypeFactory &typegrp)
       else if (tagstring == "classref")
 	tag = class_reference;
     }
-    else if (attr == "hasthis") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= CPoolRecord::has_thisptr;
-    }
     else if (attr == "constructor") {
       if (xml_readbool(el->getAttributeValue(i)))
 	flags |= CPoolRecord::is_constructor;
@@ -145,10 +139,9 @@ void CPoolRecord::restoreXml(const Element *el,TypeFactory &typegrp)
     throw LowlevelError("Bad constant pool record: missing <data>");
   subel = *iter;
   if (flags != 0) {
-    bool hasThisPtr = ((flags & has_thisptr)!=0);
     bool isConstructor = ((flags & is_constructor)!=0);
     bool isDestructor = ((flags & is_destructor)!=0);
-    type = typegrp.restoreXmlTypeWithCodeFlags(subel,hasThisPtr,isConstructor,isDestructor);
+    type = typegrp.restoreXmlTypeWithCodeFlags(subel,isConstructor,isDestructor);
   }
   else
     type = typegrp.restoreXmlType(subel);

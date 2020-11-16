@@ -56,7 +56,7 @@ public class HintTextField extends JTextField {
 	 *
 	 * @param hint the hint text
 	 * @param required true if the field should be marked as required
-  	 */
+	 */
 	public HintTextField(String hint, boolean required) {
 		this(hint, required, null);
 	}
@@ -81,14 +81,14 @@ public class HintTextField extends JTextField {
 	 * Key listener allows us to check field validity on every key typed
 	 */
 	public void addListeners() {
-	
-		getDocument().addDocumentListener( new DocumentListener() {
+
+		getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
 				validateField();
 			}
-			
+
 			@Override
 			public void insertUpdate(DocumentEvent e) {
 				validateField();
@@ -119,18 +119,20 @@ public class HintTextField extends JTextField {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 
-		if (getText().isEmpty()) {
-			if (g instanceof Graphics2D) {
-				Graphics2D g2 = (Graphics2D) g;
-				g2.setColor(Color.lightGray);
-				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
-
-				if (hint != null) {
-					g2.drawString(hint, 7, 19);
-				}
-			}
+		if (!getText().isEmpty() || hint == null) {
+			return;
 		}
+
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setColor(Color.LIGHT_GRAY);
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+			RenderingHints.VALUE_ANTIALIAS_ON);
+
+		Rectangle bounds = getBounds();
+		int x = 10; // offset
+		int y = bounds.height - bounds.y; // baseline of text; bottom of the text field
+
+		g2.drawString(hint, x, y);
 	}
 
 	/**

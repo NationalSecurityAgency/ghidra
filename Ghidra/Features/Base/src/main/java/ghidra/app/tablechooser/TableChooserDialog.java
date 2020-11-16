@@ -24,7 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
@@ -181,8 +182,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	}
 
 	public void show() {
-		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
-		tool.showDialog(this, manager.getMainWindow());
+		tool.showDialog(this);
 	}
 
 	@Override

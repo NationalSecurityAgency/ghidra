@@ -15,7 +15,11 @@
  */
 package docking.action.builder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
+
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.menu.*;
@@ -30,7 +34,10 @@ public class MultiStateActionBuilder<T> extends
 		AbstractActionBuilder<MultiStateDockingAction<T>, ActionContext, MultiStateActionBuilder<T>> {
 
 	private BiConsumer<ActionState<T>, EventTrigger> actionStateChangedCallback;
-	private boolean performActionOnButtonClick;
+	private boolean performActionOnButtonClick = false;
+	private boolean fireFirstAction = true;
+
+	private List<ActionState<T>> states = new ArrayList<>();
 
 	/**
 	 * Builder constructor
@@ -73,6 +80,52 @@ public class MultiStateActionBuilder<T> extends
 		return self();
 	}
 
+	/**
+	 * Add an action state 
+	 * 
+	 * @param displayName the name to appear in the action menu
+	 * @param icon the icon to appear in the action menu
+	 * @param userData the data associated with this state
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> addState(String displayName, Icon icon, T userData) {
+		states.add(new ActionState<T>(displayName, icon, userData));
+		return self();
+	}
+
+	/**
+	 * Add an action state 
+	 * 
+	 * @param actionState the action state to add
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> addState(ActionState<T> actionState) {
+		states.add(actionState);
+		return self();
+	}
+
+	/**
+	 * Add a list of action states 
+	 * 
+	 * @param list a list of ActionStates;
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> addStates(List<ActionState<T>> list) {
+		states.addAll(list);
+		return self();
+	}
+
+	/**
+	 * controls whether the first action added will automatically fire an event or not
+	 *
+	 * @param fireFirstAction do fire an action on the first action. Defaults to {@code true}
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> fireFirstAction(boolean fireFirstAction) {
+		this.fireFirstAction = fireFirstAction;
+		return self();
+	}
+
 	@Override
 	public MultiStateDockingAction<T> build() {
 		validate();
@@ -84,7 +137,7 @@ public class MultiStateActionBuilder<T> extends
 						EventTrigger trigger) {
 					actionStateChangedCallback.accept(newActionState, trigger);
 				}
-				
+
 				@Override
 				protected void doActionPerformed(ActionContext context) {
 					if (actionCallback != null) {
@@ -92,12 +145,16 @@ public class MultiStateActionBuilder<T> extends
 					}
 				}
 			};
+		action.setFireFirstEvent(fireFirstAction);
+
+		for (ActionState<T> actionState : states) {
+			action.addActionState(actionState);
+		}
 
 		decorateAction(action);
 		action.setPerformActionOnPrimaryButtonClick(performActionOnButtonClick);
 		return action;
 	}
-	
 
 	@Override
 	protected void validate() {

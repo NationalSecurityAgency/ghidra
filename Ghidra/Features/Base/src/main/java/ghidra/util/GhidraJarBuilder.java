@@ -754,7 +754,9 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			long modifiedTime = file.lastModified();
 			addToModuleTree(jarPath, module);
 			if (extensionPointSuffixPattern.matcher(jarPath).matches()) {
-				checkExtensionPointClass(jarPath, new FileInputStream(file));
+				try (FileInputStream inStream = new FileInputStream(file)) {
+					checkExtensionPointClass(jarPath, inStream);
+				}
 			}
 
 			if (prefix != null) {
@@ -775,16 +777,16 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				return;
 			}
 
-			InputStream in = new FileInputStream(file);
+			try (InputStream in = new FileInputStream(file)) {
 
-			byte[] bytes = new byte[4096];
-			int numRead;
+				byte[] bytes = new byte[4096];
+				int numRead;
 
-			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
-				jarOut.write(bytes, 0, numRead);
+				while ((numRead = in.read(bytes)) != -1) {
+					monitor.checkCanceled();
+					jarOut.write(bytes, 0, numRead);
+				}
 			}
-			in.close();
 
 			jarOut.closeEntry();
 

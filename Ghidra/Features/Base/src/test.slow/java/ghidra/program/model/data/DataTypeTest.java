@@ -129,19 +129,19 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Structure struct2 = createStruct("abc", resolvedStruct1, 1);
 
-		// ideally, this would throw some kind of cyclic dependency exception, but would be
-		// a lot of work to do that because by the time it detects the cycle, it may have
-		// already performed some replacements. So the entire resolve would have to be done
-		// in some kind of "dry run" mode first. For now, it just replaces the cyclic reference with
-		// an undefined datatype.
+		// Replacement type refers to existing type preventing existing type from being removed
+		// Resolve reverts to default add behavior producing a conflict name
+		// Uncertain if a dependency exception should be thrown instead
+
 		DataType resolvedStruct2 = dtm.resolve(struct2, DataTypeConflictHandler.REPLACE_HANDLER);
 
 		assertEquals("abc", struct1.getName());
 		assertEquals("abc", struct2.getName());
 
-		assertEquals("abc", resolvedStruct2.getName());
-		assertEquals(DataType.DEFAULT,
-			((Structure) resolvedStruct2).getDataTypeAt(0).getDataType());
+		assertEquals("abc.conflict", resolvedStruct2.getName());
+
+		assertTrue(
+			resolvedStruct1.equals(((Structure) resolvedStruct2).getComponentAt(0).getDataType()));
 
 		program.endTransaction(txId, true);
 

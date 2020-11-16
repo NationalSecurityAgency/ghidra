@@ -228,6 +228,14 @@
           </element>
         </zeroOrMore>
 
+		<zeroOrMore>
+		  <element name="inferptrbounds">
+		    <oneOrMore>
+		      <ref name="range_type"/>
+		    </oneOrMore>
+		  </element>
+		</zeroOrMore>
+
         <zeroOrMore>
           <ref name="segmentop_type"/>
         </zeroOrMore>

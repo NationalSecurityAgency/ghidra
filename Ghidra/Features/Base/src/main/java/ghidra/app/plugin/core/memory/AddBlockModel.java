@@ -20,6 +20,7 @@ import javax.swing.event.ChangeListener;
 import ghidra.app.cmd.memory.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -42,8 +43,11 @@ class AddBlockModel {
 	private String blockName;
 	private Address startAddr;
 	private Address baseAddr;
+	private int schemeDestByteCount;
+	private int schemeSrcByteCount;
 	private long length;
 	private MemoryBlockType blockType;
+	private boolean isOverlay;
 	private int initialValue;
 	private String message;
 	private ChangeListener listener;
@@ -121,6 +125,9 @@ class AddBlockModel {
 		isWrite = true;
 		isExecute = false;
 		isVolatile = false;
+		isOverlay = false;
+		schemeDestByteCount = blockType == MemoryBlockType.BIT_MAPPED ? 8 : 1;
+		schemeSrcByteCount = 1;
 		initializedType = InitializedType.UNITIALIZED;
 		validateInfo();
 		listener.stateChanged(null);
@@ -142,6 +149,12 @@ class AddBlockModel {
 		this.isVolatile = b;
 	}
 
+	void setOverlay(boolean b) {
+		this.isOverlay = b;
+		validateInfo();
+		listener.stateChanged(null);
+	}
+
 	void setInitializedType(InitializedType type) {
 		this.initializedType = type;
 		validateInfo();
@@ -152,6 +165,26 @@ class AddBlockModel {
 		this.baseAddr = baseAddr;
 		validateInfo();
 		listener.stateChanged(null);
+	}
+
+	void setSchemeSrcByteCount(int value) {
+		this.schemeSrcByteCount = value;
+		validateInfo();
+		listener.stateChanged(null);
+	}
+
+	int getSchemeSrcByteCount() {
+		return schemeSrcByteCount;
+	}
+
+	void setSchemeDestByteCount(int value) {
+		this.schemeDestByteCount = value;
+		validateInfo();
+		listener.stateChanged(null);
+	}
+
+	int getSchemeDestByteCount() {
+		return schemeDestByteCount;
 	}
 
 	Address getStartAddress() {
@@ -194,6 +227,10 @@ class AddBlockModel {
 		return isVolatile;
 	}
 
+	boolean isOverlay() {
+		return isOverlay;
+	}
+
 	InitializedType getInitializedType() {
 		return initializedType;
 	}
@@ -217,21 +254,21 @@ class AddBlockModel {
 		switch (blockType) {
 			case BIT_MAPPED:
 				return new AddBitMappedMemoryBlockCmd(blockName, comment, source, startAddr, length,
-					isRead, isWrite, isExecute, isVolatile, baseAddr);
+					isRead, isWrite, isExecute, isVolatile, baseAddr, isOverlay);
 			case BYTE_MAPPED:
+				ByteMappingScheme byteMappingScheme =
+					new ByteMappingScheme(schemeDestByteCount, schemeSrcByteCount);
 				return new AddByteMappedMemoryBlockCmd(blockName, comment, source, startAddr,
-					length, isRead, isWrite, isExecute, isVolatile, baseAddr);
+					length, isRead, isWrite, isExecute, isVolatile, baseAddr, byteMappingScheme,
+					isOverlay);
 			case DEFAULT:
-				return createNonMappedMemoryBlock(source, false);
-			case OVERLAY:
-				return createNonMappedMemoryBlock(source, true);
+				return createNonMappedMemoryBlock(source);
 			default:
 				throw new AssertException("Encountered unexpected block type: " + blockType);
-
 		}
 	}
 
-	private Command createNonMappedMemoryBlock(String source, boolean isOverlay) {
+	private Command createNonMappedMemoryBlock(String source) {
 		switch (initializedType) {
 			case INITIALIZED_FROM_FILE_BYTES:
 				return new AddFileBytesMemoryBlockCmd(blockName, comment, source, startAddr, length,
@@ -299,7 +336,7 @@ class AddBlockModel {
 	}
 
 	private boolean hasUniqueNameIfOverlay() {
-		if (blockType != MemoryBlockType.OVERLAY) {
+		if (!isOverlay) {
 			return true;
 		}
 		AddressFactory factory = program.getAddressFactory();
@@ -315,7 +352,7 @@ class AddBlockModel {
 
 	private boolean isOverlayIfOtherSpace() {
 		if (startAddr.getAddressSpace().equals(AddressSpace.OTHER_SPACE)) {
-			if (blockType != MemoryBlockType.OVERLAY) {
+			if (!isOverlay) {
 				message = "Blocks defined in the " + AddressSpace.OTHER_SPACE.getName() +
 					" space must be overlay blocks";
 				return false;
@@ -325,10 +362,24 @@ class AddBlockModel {
 	}
 
 	private boolean hasMappedAddressIfNeeded() {
-		if (blockType == MemoryBlockType.BIT_MAPPED || blockType == MemoryBlockType.BYTE_MAPPED) {
-			if (baseAddr == null) {
-				String blockTypeStr = (blockType == MemoryBlockType.BIT_MAPPED) ? "bit" : "overlay";
-				message = "Please enter a source address for the " + blockTypeStr + " block";
+		if (blockType != MemoryBlockType.BIT_MAPPED && blockType != MemoryBlockType.BYTE_MAPPED) {
+			return true;
+		}
+		if (baseAddr == null) {
+			String blockTypeStr =
+				(blockType == MemoryBlockType.BIT_MAPPED) ? "bit-mapped" : "byte-mapped";
+			message = "Please enter a source address for the " + blockTypeStr + " block";
+			return false;
+		}
+		if (blockType == MemoryBlockType.BYTE_MAPPED) {
+			if (schemeDestByteCount <= 0 || schemeDestByteCount > Byte.MAX_VALUE ||
+				schemeSrcByteCount <= 0 || schemeSrcByteCount > Byte.MAX_VALUE) {
+				message = "Mapping ratio values must be within range: 1 to 127";
+				return false;
+			}
+			if (schemeDestByteCount > schemeSrcByteCount) {
+				message =
+					"Mapping ratio destination byte count (left-value) must be less than or equal the source byte count (right-value)";
 				return false;
 			}
 		}
@@ -336,7 +387,7 @@ class AddBlockModel {
 	}
 
 	private boolean hasNoMemoryConflicts() {
-		if (blockType == MemoryBlockType.OVERLAY) {
+		if (isOverlay) {
 			return true;
 		}
 		Address endAddr = startAddr.add(length - 1);

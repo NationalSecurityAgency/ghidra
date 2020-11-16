@@ -12,6 +12,10 @@
     <property key="Analyzers.Android ODEX Header Format" value="true"/>
     <property key="pcodeInjectLibraryClass" value="ghidra.dalvik.dex.inject.PcodeInjectLibraryDex"/>
   </properties>
+
+  <inferptrbounds>
+    <range space="ram" first="0" last="0"/>   <!-- Don't try to infer pointers from constants in the body of a function -->
+  </inferptrbounds>
   
   <jumpassist name="switchAssist">
     <case_pcode>

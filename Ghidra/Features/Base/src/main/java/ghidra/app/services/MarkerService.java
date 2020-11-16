@@ -26,24 +26,24 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
 /**
- * <p>Service to manage navigation markers displayed around a scrollable window
- * like the codebrowser.  The navigation bar displays the general location of
- * markers for the entire view.  The marker bar displays a marker at each marked
- * address visible within the view. </p>
  * <p>
- * The interface defines priorities for display of markers in Marker Margin and
- * colored bars in Navigation Margin. The higher the priority, the more likely
- * the marker/bar will be displayed on the top. Areas will always be lower than
- * marker priorities.
+ * Service to manage navigation markers displayed around a scrollable window like the Listing.
+ * The navigation bar displays the general location of markers for the entire view. The marker bar
+ * displays a marker at each marked address visible within the view.
  * </p>
- * <a id="usage"></a>
+ * <p>
+ * The interface defines priorities for display of markers in Marker Margin and colored bars in
+ * Navigation Margin. The higher the priority, the more likely the marker/bar will be displayed on
+ * the top. Areas will always be lower than marker priorities.
+ * </p>
+ * <a name="usage"></a> <u>Recommended Usage</u><br>
  * <u>Recommended Usage</u><br>
- * The service used to work independent of {@link Program}s.  In order to work effectively this
+ * The service used to work independently of {@link Program}s.  In order to work effectively this
  * service has been changed to associate created markers with individual programs.  Thus, it is
  * up to the clients of this class perform lifecycle management of markers created by this
  * service.  For example, a client that creates a marker from
- * {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)} should call
- * {@link #removeMarker(MarkerSet, Program)} when the markers are no longer used, such as when
+ * {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)} should 
+ * call {@link #removeMarker(MarkerSet, Program)} when the markers are no longer used, such as when
  * a program has become deactivated.  In this example usage markers are added and removed as the
  * user tabs through open programs.
  */
@@ -86,7 +86,7 @@ public interface MarkerService {
 	 */
 	public final static int BREAKPOINT_PRIORITY = 50;
 	/**
-	 * Display priority for bookmarked locations.
+	 * Display priority for bookmark locations.
 	 */
 	public final static int BOOKMARK_PRIORITY = 0;
 	/**
@@ -145,23 +145,6 @@ public interface MarkerService {
 			Color color, boolean isPreferred);
 
 	/**
-	 * This version of createAreaMarker() does not take a program and has thus been
-	 * deprecated.  See the <a href="#usage">recommended usage</a> for more information.
-	 *
-	 * @deprecated Instead use {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)}
-	 * @param name name of the navigation markers
-	 * @param markerDescription description of the navigation markers
-	 * @param priority to sort out what displays on top, higher is more likely to be on top
-	 * @param showMarkers true indicates to show area markers (on the left side of the browser.)
-	 * @param showNavigation true indicates to show area navigation markers (on the right side of the browser.)
-	 * @param colorBackground if true, then the browser's background color will reflect the marker.
-	 * @param color the color of marked areas.
-	 */
-	@Deprecated
-	public MarkerSet createAreaMarker(String name, String markerDescription, int priority,
-			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color color);
-
-	/**
 	 * Create a Marker display which shows point type markers.
 	 *
 	 * @param name name of the navigation markers
@@ -199,63 +182,21 @@ public interface MarkerService {
 			Color color, ImageIcon icon, boolean isPreferred);
 
 	/**
-	 * This version of createPointMarker() does not take a program and has thus been
-	 * deprecated.  See the <a href="#usage">recommended usage</a> for more information.
+	 * Remove the marker set
 	 *
-	 * @deprecated Instead use {@link #createPointMarker(String, String, Program, int, boolean, boolean, boolean, Color, ImageIcon)}
-	 * @param name name of the navigation markers
-	 * @param markerDescription description of the navigation markers
-	 * @param priority to sort out what displays on top, higher is more likely to be on top
-	 * @param showMarkers true indicates to show area markers (on the left side of the browser.)
-	 * @param showNavigation true indicates to show area navigation markers (on the right side of the browser.)
-	 * @param colorBackground if true, then the browser's background color will reflect the marker.
-	 * @param color the color of marked areas in navigation bar
-	 *              If navigation color is null, no results are displayed in the navigation bar
-	 * @param icon icon to display in marker bar
-	 * @return set of navigation markers
-	 */
-	@Deprecated
-	public MarkerSet createPointMarker(String name, String markerDescription, int priority,
-			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color color,
-			ImageIcon icon);
-
-	/**
-	 * Remove the marker manager
-	 *
-	 * @param markerManager marker manager to be removed from navigation bars.
+	 * @param markerSet marker set to be removed from navigation bars.
 	 * @param program The program with which the markers are associated.
 	 */
-	public void removeMarker(MarkerSet markerManager, Program program);
+	public void removeMarker(MarkerSet markerSet, Program program);
 
 	/**
-	 * Remove the marker manager.  This method is deprecated,
-	 * see the <a href="#usage">recommended usage</a> for more information.
-	 *
-	 * @deprecated use {@link #removeMarker(MarkerSet,Program)}
-	 * @param markerManager marker manager to be removed from navigation bars.
-	 */
-	@Deprecated
-	public void removeMarker(MarkerSet markerManager);
-
-	/**
-	 * Return the markerset with the given name;
+	 * Return the marker set with the given name;
 	 *
 	 * @param name The name of the marker set for which to search
 	 * @param program The program with which the created markers will be associated.
 	 * @return the markerset with the given name;
 	 */
 	public MarkerSet getMarkerSet(String name, Program program);
-
-	/**
-	 * Return the markerset with the given name.  This method is deprecated,
-	 * see the <a href="#usage">recommended usage</a> for more information.
-	 *
-	 * @deprecated use {@link #getMarkerSet(String, Program)}
-	 * @param name The name of the marker set for which to search
-	 * @return the markerset with the given name;
-	 */
-	@Deprecated
-	public MarkerSet getMarkerSet(String name);
 
 	/**
 	 * Sets a marker set for a given group name.  Any previous marker set associated with the
@@ -289,15 +230,32 @@ public interface MarkerService {
 	public Color getBackgroundColor(Address address);
 
 	/**
-	 * Adds a change listener to be notified when markers are added/removed or the addresses in
-	 * any current markerSets are changed.
-	 * @param listener the listener to be notified.
+	 * Returns the background color associated with the given program and address. Each markerSet
+	 * that supports background coloring is checked in priority order to see if it wants to specify
+	 * a background color for the given address.
+	 * 
+	 * If {@code program} is the current program, this is equivalent to
+	 *  {@link #getBackgroundColor(Address)}.
+	 * 
+	 * @param program the program to check for a background color.
+	 * @param address the address to check for a background color.
+	 * @return the background color to use for that address or null if no markers contain that
+	 *         address.
+	 */
+	public Color getBackgroundColor(Program program, Address address);
+
+	/**
+	 * Adds a change listener to be notified when markers are added/removed or the addresses in any
+	 * current markerSets are changed
+	 * 
+	 * @param listener the listener
 	 */
 	public void addChangeListener(ChangeListener listener);
 
 	/**
-	 * Removes the given change listener from the list of listeners to be notified of changes.
-	 * @param listener
+	 * Removes the given change listener from the list of listeners to be notified of changes
+	 * 
+	 * @param listener the listener
 	 */
 	public void removeChangeListener(ChangeListener listener);
 }

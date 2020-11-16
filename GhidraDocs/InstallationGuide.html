@@ -18,7 +18,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 9.1 and is subject to change with
+The installation information provided is effective as of Ghidra 9.2 and is subject to change with
 future releases.
 </p>
 
@@ -363,17 +363,14 @@ can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions directory.</p>
     </ol>
   </li>
   <li>
-    Installing or uninstalling Ghidra extensions may fail if the user does not have write
-    permissions to <i>&lt;GhidraInstallDir&gt;</i>.  This may occur if the user is running Ghidra
-    from a shared installation location.  In this situation, the owner of the Ghidra installation
-    directory will be responsible for managing what Ghidra extensions are available for that
-    particular installation of Ghidra.
+    Extensions installed from the Ghidra front-end GUI get installed at 
+    <i>&lt;UserDir&gt;</i>/.ghidra/.ghidra-[version]/Extensions.
   </li>
   <li>
-    <p>It is possible to install and uninstall Ghidra extensions manually when the Ghidra front-end
-    GUI is not available.  This may be required if a system administrator is managing the Ghidra
-    extensions of a shared Ghidra installation on behalf of a user, or if a user wishes to install
-    an extension into a Ghidra installation that is only ever used headlessly.<p>
+    <p>It is possible to install Ghidra extensions directly into the Ghidra installation directory.
+    This may be required if a system administrator is managing extensions for multiple users that
+    all use a shared installation of Ghidra.  It may also be more convenient to manage extensions
+    this way if a Ghidra installation is only ever used headlessly.<p>
     <p>To install an extension in these cases, simply extract the desired Ghidra extension archive
     file(s) to the <i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Extensions directory.  For example, on
     Linux or macOS:</p>
@@ -528,7 +525,7 @@ be installed in a pre-existing Eclipse installation.</p>
     lookups.
   </li>
   <li>
-    Image base can not be changed if overlays have been defined.
+    Image base may not be changed to an address which falls within an existing memory block.
   </li>
   <li>
     Language versioning and migration does not handle complex changes in the use of the context

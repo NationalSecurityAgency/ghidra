@@ -165,8 +165,7 @@ public abstract class CompositeEditorPanel extends JPanel
 						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
-				Window w = SwingUtilities.windowForComponent(c);
-				DockingWindowManager.showDialog(w, dlg, c);
+				DockingWindowManager.showDialog(c, dlg);
 				return true;
 			}
 		}

@@ -28,45 +28,45 @@ import util.CollectionUtils;
 /**
  * A builder object that allows clients to launch tasks in the background, with a progress
  * dialog representing the task.
- * 
+ *
  * <P>Using this class obviates the need for clients to create full class objects to implement
  * the {@link Task} interface, which means less boiler-plate code.
- * 
+ *
  * <P>An example of usage:
  * <pre>{@literal
- * 		MonitoredRunnable r = 
+ * 		MonitoredRunnable r =
  *			monitor -> doWork(parameter, monitor);
  *		new TaskBuilder("Task Title", r)
  *			.setHasProgress(true)
  *			.setCanCancel(true)
  *			.setStatusTextAlignment(SwingConstants.LEADING)
- *			.launchModal();		
+ *			.launchModal();
  * }</pre>
- * 
+ *
  * Or,
- * 
+ *
  * <pre>{@literal
  *	    TaskBuilder.withRunnable(monitor -> doWork(parameter, monitor))
  *			.setTitle("Task Title")
  *			.setHasProgress(true)
  *			.setCanCancel(true)
  *			.setStatusTextAlignment(SwingConstants.LEADING)
- *			.launchModal();		
+ *			.launchModal();
  * }</pre>
- * 
+ *
  *  Or,
- *  
+ *
  * <pre>
- *	    TaskBuilder.withTask(new AwesomeTask(awesomeStuff)).launchModal();		
+ *	    TaskBuilder.withTask(new AwesomeTask(awesomeStuff)).launchModal();
  * </pre>
- * 
+ *
  * Or,
- * 
+ *
  * <pre>
- *	    {@link TaskLauncher#launch(Task) TaskLauncher.launch}(new AwesomeTask(awesomeStuff));		
+ *	    {@link TaskLauncher#launch(Task) TaskLauncher.launch}(new AwesomeTask(awesomeStuff));
  * </pre>
- *  
- * 
+ *
+ *
  * <p>Note: this class will check to see if it is in a headless environment before launching
  * its task.  This makes it safe to use this class in headed or headless environments.
  */
@@ -85,11 +85,11 @@ public class TaskBuilder {
 
 	/**
 	 * A convenience method to start a builder using the given runnable.  After calling this
-	 * method you are still required to call {@link #setTitle(String)}. 
-	 * 
-	 * <p>This method allows for a more attractive fluent API usage than does the constructor 
+	 * method you are still required to call {@link #setTitle(String)}.
+	 *
+	 * <p>This method allows for a more attractive fluent API usage than does the constructor
 	 * (see the javadoc header).
-	 * 
+	 *
 	 * @param r the runnable
 	 * @return this builder
 	 */
@@ -99,12 +99,12 @@ public class TaskBuilder {
 
 	/**
 	 * A convenience method to start a builder using the given task.  The
-	 * {@link #setTitle(String) title} of the task will be the value of 
-	 * {@link Task#getTaskTitle()}. 
-	 * 
-	 * <p>This method allows for a more attractive fluent API usage than does the constructor 
+	 * {@link #setTitle(String) title} of the task will be the value of
+	 * {@link Task#getTaskTitle()}.
+	 *
+	 * <p>This method allows for a more attractive fluent API usage than does the constructor
 	 * (see the javadoc header).
-	 * 
+	 *
 	 * @param t the task
 	 * @return this builder
 	 */
@@ -118,7 +118,7 @@ public class TaskBuilder {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param title the required title for your task.  This will appear as the title of the
 	 *        task dialog
 	 * @param runnable the runnable that will be called when the task is run
@@ -129,9 +129,9 @@ public class TaskBuilder {
 	}
 
 	/**
-	 * Sets the title of this task.  The title must be set before calling any of the 
+	 * Sets the title of this task.  The title must be set before calling any of the
 	 * <code>launch</code> methods.
-	 * 
+	 *
 	 * @param title the title
 	 * @return this builder
 	 */
@@ -142,7 +142,7 @@ public class TaskBuilder {
 
 	/**
 	 * Sets whether this task reports progress.   The default is <code>true</code>.
-	 * 
+	 *
 	 * @param hasProgress true if the task reports progress
 	 * @return this builder
 	 */
@@ -153,7 +153,7 @@ public class TaskBuilder {
 
 	/**
 	 * Sets whether the task can be cancelled.  The default is <code>true</code>.
-	 * 
+	 *
 	 * @param canCancel true if the task can be cancelled.
 	 * @return this builder
 	 */
@@ -165,7 +165,7 @@ public class TaskBuilder {
 	/**
 	 * Sets the component over which the task dialog will be shown.  The default is <code>null</code>,
 	 * which shows the dialog over the active window.
-	 * 
+	 *
 	 * @param parent the parent
 	 * @return this builder
 	 */
@@ -176,21 +176,21 @@ public class TaskBuilder {
 
 	/**
 	 * Sets the amount of time that will pass before showing the dialog.  The default is
-	 * {@link TaskLauncher#INITIAL_DELAY_MS} for non-modal tasks and 
+	 * {@link TaskLauncher#INITIAL_DELAY_MS} for non-modal tasks and
 	 * {@link TaskLauncher#INITIAL_MODAL_DELAY_MS} for modal tasks.
-	 *  
+	 *
 	 * @param delay the delay time
 	 * @return this builder
 	 */
 	public TaskBuilder setLaunchDelay(int delay) {
-		SystemUtilities.assertTrue(delay > 0, "Launch delay must be greater than 0");
+		SystemUtilities.assertTrue(delay >= 0, "Launch delay must be greater than 0");
 		this.launchDelay = delay;
 		return this;
 	}
 
 	/**
 	 * The desired width of the dialog.  The default is {@link TaskDialog#DEFAULT_WIDTH}.
-	 * 
+	 *
 	 * @param width the width
 	 * @return this builder
 	 */
@@ -202,10 +202,10 @@ public class TaskBuilder {
 	}
 
 	/**
-	 * Sets the horizontal text alignment of messages shown in the task dialog.  The 
+	 * Sets the horizontal text alignment of messages shown in the task dialog.  The
 	 * default is {@link SwingConstants#CENTER}.  Valid values are {@link SwingConstants}
 	 * LEADING, CENTER and TRAILING.
-	 * 
+	 *
 	 * @param alignment the alignment
 	 * @return this builder
 	 */
@@ -257,10 +257,10 @@ public class TaskBuilder {
 
 	/**
 	 * Runs the task in a background thread with the given monitor that cannot be null.  This
-	 * is a special case for clients that already have a task monitor widget in their UI and 
+	 * is a special case for clients that already have a task monitor widget in their UI and
 	 * they wish to let it show the progress of the given task while not blocking the Swing
 	 * thread.
-	 * 
+	 *
 	 * @param monitor the task monitor; may not be null
 	 */
 	public void launchInBackground(TaskMonitor monitor) {

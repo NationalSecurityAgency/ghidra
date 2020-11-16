@@ -187,4 +187,8 @@ public class FunctionManagerTestDouble implements FunctionManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public FunctionTagManager getFunctionTagManager() {
+		throw new UnsupportedOperationException();
+	}
 }

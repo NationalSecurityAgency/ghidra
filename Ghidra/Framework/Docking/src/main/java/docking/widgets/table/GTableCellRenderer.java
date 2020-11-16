@@ -98,10 +98,9 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 				"Using a GTableCellRenderer in a non-GTable table. (Model class: " +
 					table.getModel().getClass().getName() + ")");
 		}
+
 		GTable gTable = (GTable) table;
-
 		GTableCellRenderingData data = gTable.getRenderingData(column);
-
 		Object rowObject = null;
 
 		if (gTable.getModel() instanceof RowObjectTableModel) {

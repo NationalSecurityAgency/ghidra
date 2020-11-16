@@ -22,6 +22,8 @@ import java.io.ByteArrayOutputStream;
 import org.junit.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.osgi.BundleHost;
+import ghidra.app.script.GhidraScriptUtil;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 /**
@@ -35,6 +37,7 @@ public class PythonInterpreterTest extends AbstractGhidraHeadedIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 		out = new ByteArrayOutputStream();
+		GhidraScriptUtil.initialize(new BundleHost(), null);
 		interpreter = GhidraPythonInterpreter.get();
 		interpreter.setOut(out);
 		interpreter.setErr(out);
@@ -44,6 +47,7 @@ public class PythonInterpreterTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		out.reset();
 		interpreter.cleanup();
+		GhidraScriptUtil.dispose();
 	}
 
 	/**
@@ -81,7 +85,7 @@ public class PythonInterpreterTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testPythonCleanupInvalidation() {
 		interpreter.cleanup();
-		
+
 		try {
 			interpreter.push("pass", null);
 			fail("Push still worked after interpreter cleanup.");

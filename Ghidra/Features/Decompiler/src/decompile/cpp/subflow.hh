@@ -118,7 +118,7 @@ class SubvariableFlow {
   Varnode *getReplaceVarnode(ReplaceVarnode *rvn);
   bool processNextWork(void);		///< Extend the subgraph from the next node in the worklist
 public:
-  SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext);	///< Constructor
+  SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext,bool big);	///< Constructor
   bool doTrace(void);			///< Trace logical value through data-flow, constructing transform
   void doReplacement(void);		///< Perform the discovered transform, making logical values explicit
 };

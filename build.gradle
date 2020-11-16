@@ -55,6 +55,7 @@ allprojects {
 if (file("flatRepo").isDirectory()) {
 	allprojects {
 		repositories {
+			mavenLocal()
 			mavenCentral()
 			jcenter()
 			flatDir name: "flat", dirs:["$rootProject.projectDir/flatRepo"]

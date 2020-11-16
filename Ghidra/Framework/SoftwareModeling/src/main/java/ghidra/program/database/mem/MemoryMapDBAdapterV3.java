@@ -48,8 +48,8 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	public static final int V3_SUB_TYPE_COL = 1;
 	public static final int V3_SUB_LENGTH_COL = 2;
 	public static final int V3_SUB_START_OFFSET_COL = 3;
-	public static final int V3_SUB_SOURCE_ID_COL = 4;
-	public static final int V3_SUB_SOURCE_OFFSET_COL = 5;
+	public static final int V3_SUB_INT_DATA1_COL = 4;
+	public static final int V3_SUB_LONG_DATA2_COL = 5;
 
 	public static final byte V3_SUB_TYPE_BIT_MAPPED = 0;
 	public static final byte V3_SUB_TYPE_BYTE_MAPPED = 1;
@@ -186,17 +186,19 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address mappedAddress, boolean initializeBytes, int permissions)
-			throws AddressOverflowException, IOException {
+			long length, Address mappedAddress, boolean initializeBytes, int permissions,
+			int encodedMappingScheme) throws AddressOverflowException, IOException {
 
-		if (initializeBytes) {
-			return createInitializedBlock(name, startAddr, null, length, permissions);
-		}
-		else if (blockType == MemoryBlockType.BIT_MAPPED) {
+		if (blockType == MemoryBlockType.BIT_MAPPED) {
 			return createBitMappedBlock(name, startAddr, length, mappedAddress, permissions);
 		}
-		else if (blockType == MemoryBlockType.BYTE_MAPPED) {
-			return createByteMappedBlock(name, startAddr, length, mappedAddress, permissions);
+		if (blockType == MemoryBlockType.BYTE_MAPPED) {
+			return createByteMappedBlock(name, startAddr, length, mappedAddress, permissions,
+				encodedMappingScheme);
+		}
+		// DEFAULT block type
+		if (initializeBytes) {
+			return createInitializedBlock(name, startAddr, null, length, permissions);
 		}
 		return createUnitializedBlock(name, startAddr, length, permissions);
 	}
@@ -265,13 +267,14 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	MemoryBlockDB createBitMappedBlock(String name, Address startAddress, long length,
 			Address mappedAddress, int permissions) throws IOException, AddressOverflowException {
 		return createMappedBlock(V3_SUB_TYPE_BIT_MAPPED, name, startAddress, length, mappedAddress,
-			permissions);
+			permissions, 0);
 	}
 
 	MemoryBlockDB createByteMappedBlock(String name, Address startAddress, long length,
-			Address mappedAddress, int permissions) throws IOException, AddressOverflowException {
+			Address mappedAddress, int permissions, int mappingScheme)
+			throws IOException, AddressOverflowException {
 		return createMappedBlock(V3_SUB_TYPE_BYTE_MAPPED, name, startAddress, length, mappedAddress,
-			permissions);
+			permissions, mappingScheme);
 	}
 
 	@Override
@@ -296,7 +299,8 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	private MemoryBlockDB createMappedBlock(byte type, String name, Address startAddress,
-			long length, Address mappedAddress, int permissions)
+			long length, Address mappedAddress, int permissions,
+			int mappingScheme)
 			throws IOException, AddressOverflowException {
 		updateAddressMapForAllAddresses(startAddress, length);
 
@@ -305,7 +309,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		long key = blockRecord.getKey();
 
 		long encoded = addrMap.getKey(mappedAddress, true);
-		Record subRecord = createSubBlockRecord(key, 0, length, type, 0, encoded);
+		Record subRecord = createSubBlockRecord(key, 0, length, type, mappingScheme, encoded);
 		subBlocks.add(createSubBlock(subRecord));
 
 		memBlockTable.putRecord(blockRecord);
@@ -350,15 +354,15 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 
 	@Override
 	Record createSubBlockRecord(long parentKey, long startingOffset, long length, byte type,
-			int sourceId, long sourceOffset) throws IOException {
+			int data1, long data2) throws IOException {
 
 		Record record = V3_SUB_BLOCK_SCHEMA.createRecord(subBlockTable.getKey());
 		record.setLongValue(V3_SUB_PARENT_ID_COL, parentKey);
 		record.setByteValue(V3_SUB_TYPE_COL, type);
 		record.setLongValue(V3_SUB_LENGTH_COL, length);
 		record.setLongValue(V3_SUB_START_OFFSET_COL, startingOffset);
-		record.setIntValue(V3_SUB_SOURCE_ID_COL, sourceId);
-		record.setLongValue(V3_SUB_SOURCE_OFFSET_COL, sourceOffset);
+		record.setIntValue(V3_SUB_INT_DATA1_COL, data1);
+		record.setLongValue(V3_SUB_LONG_DATA2_COL, data2);
 		subBlockTable.putRecord(record);
 
 		return record;

@@ -37,7 +37,6 @@ import ghidra.program.util.ChangeManager;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * The database memory map manager.
@@ -67,7 +66,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private final static MemoryBlock NoBlock = new MemoryBlockStub();  // placeholder for no block, not given out
 
 	Lock lock;
-	private Set<MemoryBlock> potentialOverlappingBlocks;
 
 	private static Comparator<Object> BLOCK_ADDRESS_COMPARATOR = (o1, o2) -> {
 		MemoryBlock block = (MemoryBlock) o1;
@@ -134,32 +132,96 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		// we have to process the non-mapped blocks first because to process the mapped
 		// blocks we need the address sets for the non-mapped blocks to be complete
 		for (MemoryBlockDB block : blocks) {
+			block.clearMappedBlockList();
 			if (!block.isMapped()) {
-				addBlockAddresses(block);
+				addBlockAddresses(block, false);
 			}
 		}
+		// process all mapped blocks after non-mapped-blocks above
 		for (MemoryBlockDB block : blocks) {
 			if (block.isMapped()) {
-				addBlockAddresses(block);
+				addBlockAddresses(block, false);
 			}
 		}
-
 	}
 
-	private void addBlockAddresses(MemoryBlockDB block) {
+	/**
+	 * Update the <code>allInitializedAddrSet</code> and <code>initializedLoadedAddrSet</code>
+	 * with relevant initialized addresses from the specified memory block.  If block is not 
+	 * a mapped-block and it may be a source to existing mapped-blocks then 
+	 * <code>scanAllMappedBlocksIfNeeded</code> should be passed as <code>true</code> unless
+	 * all mapped blocks will be processed separately.
+	 * @param block memory block
+	 * @param scanAllMappedBlocksIfNeeded if true and block is initialized and not a mapped block all
+	 * mapped blocks will be processed for possible introduction of newly initialized mapped regions. 
+	 */
+	private void addBlockAddresses(MemoryBlockDB block, boolean scanAllMappedBlocksIfNeeded) {
 		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
 		addrSet = addrSet.union(blockSet);
 		if (block.isMapped()) {
-			allInitializedAddrSet =
-				allInitializedAddrSet.union(getMappedIntersection(block, allInitializedAddrSet));
+
+			// Identify source-blocks which block maps onto and add as a mapped-block to each of these
+			AddressRange mappedRange = block.getSourceInfos().get(0).getMappedRange().get();
+			for (MemoryBlockDB b : getBlocks(mappedRange.getMinAddress(),
+				mappedRange.getMaxAddress())) {
+				b.addMappedBlock(block);
+			}
+
+			AddressSet mappedSet = getMappedIntersection(block, allInitializedAddrSet);
+			allInitializedAddrSet = allInitializedAddrSet.union(mappedSet);
 			initializedLoadedAddrSet = initializedLoadedAddrSet.union(
 				getMappedIntersection(block, initializedLoadedAddrSet));
-
 		}
 		else if (block.isInitialized()) {
 			allInitializedAddrSet = allInitializedAddrSet.union(blockSet);
 			if (block.isLoaded()) {
 				initializedLoadedAddrSet = initializedLoadedAddrSet.union(blockSet);
+			}
+			if (scanAllMappedBlocksIfNeeded) {
+				// If only adding one initialized non-mapped-block we must scan all mapped-blocks
+				// which may utilize block as a byte source
+				for (MemoryBlockDB b : blocks) {
+					b.clearMappedBlockList();
+				}
+				for (MemoryBlockDB b : blocks) {
+					if (b.isMapped()) {
+						addBlockAddresses(b, false);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Update initialized address set for those mapped blocks which map onto the 
+	 * specified block which has just completed a transition of its' initialized state.
+	 * @param block block whose initialized state has changed
+	 * @param isInitialized true if block transitioned from uninitialized to initialized,
+	 * else transition is from initialized to uninitialized.
+	 */
+	private void updateMappedAddresses(MemoryBlockDB block, boolean isInitialized) {
+
+		Collection<MemoryBlockDB> mappedBlocks = block.getMappedBlocks();
+		if (mappedBlocks == null) {
+			return;
+		}
+
+		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
+		boolean isLoaded = block.getStart().isLoadedMemoryAddress();
+
+		for (MemoryBlockDB mappedBlock : block.getMappedBlocks()) {
+			AddressSet mappedSet = getMappedIntersection(mappedBlock, blockSet);
+			if (isInitialized) {
+				allInitializedAddrSet = allInitializedAddrSet.union(mappedSet);
+				if (isLoaded) {
+					initializedLoadedAddrSet = initializedLoadedAddrSet.union(mappedSet);
+				}
+			}
+			else {
+				allInitializedAddrSet = allInitializedAddrSet.subtract(mappedSet);
+				if (isLoaded) {
+					initializedLoadedAddrSet = initializedLoadedAddrSet.union(mappedSet);
+				}
 			}
 		}
 	}
@@ -181,9 +243,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		List<MemoryBlockDB> newBlocks = adapter.getMemoryBlocks();
 		lastBlock = null;
 		blocks = newBlocks;
-		addrMap.memoryMapChanged(this);
 		nameBlockMap = new HashMap<>();
 		executeSet = null;
+		addrMap.memoryMapChanged(this);
 	}
 
 	public void setLanguage(Language newLanguage) {
@@ -223,6 +285,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns the address factory for the program.
+	 * @return program address factory
 	 */
 	AddressFactory getAddressFactory() {
 		return addrMap.getAddressFactory();
@@ -230,6 +293,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns the AddressMap from the program.
+	 * @return program address map
 	 */
 	AddressMapDB getAddressMap() {
 		return addrMap;
@@ -255,34 +319,90 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	void checkMemoryWrite(MemoryBlockDB block, Address start, long length)
 			throws MemoryAccessException {
-		checkRangeForInstructions(start, start.add(length - 1));
 
-		Set<MemoryBlock> overlappingBlocks = getPotentialOverlappingBlocks();
-		ByteSourceRangeList changeingByteSource = block.getByteSourceRangeList(start, length);
-		if (overlappingBlocks.contains(block)) {
-			for (MemoryBlock b : overlappingBlocks) {
-				if (b.equals(block)) {
-					continue;
-				}
-				ByteSourceRangeList set =
-					((MemoryBlockDB) b).getByteSourceRangeList(b.getStart(), b.getSize());
-				ByteSourceRangeList intersect = set.intersect(changeingByteSource);
-				for (ByteSourceRange range : intersect) {
-					checkRangeForInstructions(range.getStart(), range.getEnd());
-				}
+		if (!block.contains(start)) {
+			throw new MemoryAccessException(
+				block.getName() + " does not contain address " + start.toString(true));
+		}
+
+		try {
+			Address endAddr = start.addNoWrap(length - 1);
+			if (!block.contains(start)) {
+				throw new MemoryAccessException(block.getName() + " does not contain range " +
+					start.toString(true) + "-" + endAddr);
 			}
+			
+			if (block.isMapped()) {
+				checkMemoryWriteMappedBlock(block, start, endAddr);
+			}
+			else {
+				checkMemoryWriteNonMappedBlock(block, start, endAddr);
+			}
+		}
+		catch (AddressOverflowException e) {
+			throw new MemoryAccessException("invalid address range specified for address " +
+				start.toString(true) + " (length: " + length + ")");
 		}
 	}
 
-	private Set<MemoryBlock> getPotentialOverlappingBlocks() {
-		if (potentialOverlappingBlocks == null) {
-			ByteSourceRangeList byteSourceList = new ByteSourceRangeList();
-			for (MemoryBlockDB block : blocks) {
-				byteSourceList.add(block.getByteSourceRangeList(block.getStart(), block.getSize()));
-			}
-			potentialOverlappingBlocks = byteSourceList.getOverlappingBlocks();
+	private void checkMemoryWriteMappedBlock(MemoryBlockDB mappedBlock, Address start,
+			Address endAddr)
+			throws AddressOverflowException, MemoryAccessException {
+		long startOffset = start.subtract(mappedBlock.getStart());
+		long endOffset = endAddr.subtract(mappedBlock.getStart());
+
+		// determine source block(s) for mapped block
+		MemoryBlockSourceInfo info = mappedBlock.getSourceInfos().get(0);
+		AddressRange mappedRange = info.getMappedRange().get();
+		Address mappedRangeMinAddr = mappedRange.getMinAddress();
+
+		Address mappedStartAddress, mappedEndAddress;
+		if (mappedBlock.getType() == MemoryBlockType.BIT_MAPPED) {
+			mappedStartAddress = mappedRangeMinAddr.addNoWrap(startOffset / 8);
+			mappedEndAddress = mappedRangeMinAddr.addNoWrap(endOffset / 8);
 		}
-		return potentialOverlappingBlocks;
+		else { // BYTE_MAPPED
+			ByteMappingScheme byteMappingScheme = info.getByteMappingScheme().get();
+			mappedStartAddress =
+				byteMappingScheme.getMappedSourceAddress(mappedRangeMinAddr, startOffset);
+			mappedEndAddress =
+				byteMappingScheme.getMappedSourceAddress(mappedRangeMinAddr, endOffset);
+		}
+		
+		for (MemoryBlockDB b : getBlocks(mappedStartAddress, mappedEndAddress)) {
+			Address minAddr = Address.min(b.getEnd(), mappedEndAddress);
+			Address maxAddr = Address.max(b.getStart(), mappedStartAddress);
+			checkMemoryWrite(b, minAddr, maxAddr.subtract(minAddr) + 1);
+		}
+	}
+
+	private void checkMemoryWriteNonMappedBlock(MemoryBlockDB nonMappedBlock, Address start,
+			Address endAddr)
+			throws MemoryAccessException {
+		// TODO: could contain uninitialized region which is illegal to write to although block.isInitialized
+		// may not be of much help since it reflects the first sub-block only - seems like mixing is a bad idea
+		
+		checkRangeForInstructions(start, endAddr);
+		
+		// Check all mapped-block address ranges which map onto the range to be modified
+		Collection<MemoryBlockDB> mappedBlocks = nonMappedBlock.getMappedBlocks();
+		if (mappedBlocks != null) {
+			for (MemoryBlockDB mappedBlock : mappedBlocks) {
+
+				// Determine source intersection with mapped block
+				MemoryBlockSourceInfo info = mappedBlock.getSourceInfos().get(0);
+				AddressRange mappedRange = info.getMappedRange().get();
+				mappedRange = mappedRange.intersectRange(start, endAddr);
+				if (mappedRange == null) {
+					continue; // no intersection with range of interest
+				}
+				AddressRange range = getMappedRange(mappedBlock, mappedRange);
+				if (range == null) {
+					continue; // unexpected
+				}
+				checkRangeForInstructions(range.getMinAddress(), range.getMaxAddress());
+			}
+		}
 	}
 
 	@Override
@@ -362,8 +482,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	/**
 	 * Two blocks have been joined producing newBlock.  The block which was
 	 * eliminated can be identified using the oldBlockStartAddr.
-	 * @param newBlock
-	 * @param oldBlockStartAddr
+	 * @param newBlock new joined memory block
+	 * @param oldBlockStartAddr original start address of affected block
 	 */
 	void fireBlocksJoined(MemoryBlock newBlock, Address oldBlockStartAddr) {
 		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED, oldBlockStartAddr, newBlock);
@@ -477,7 +597,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	public MemoryBlock createInitializedBlock(String name, Address start, InputStream is,
 			long length, TaskMonitor monitor, boolean overlay) throws MemoryConflictException,
 			AddressOverflowException, CancelledException, LockException, DuplicateNameException {
-		Objects.requireNonNull(name);
+		checkBlockName(name, overlay);
 		lock.acquire();
 		try {
 			checkBlockSize(length, true);
@@ -496,7 +616,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				MemoryBlockDB newBlock =
 					adapter.createInitializedBlock(name, start, is, length, MemoryBlock.READ);
 				initializeBlocks();
-				addBlockAddresses(newBlock);
+				addBlockAddresses(newBlock, !overlay);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -523,7 +643,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			long offset, long length, boolean overlay) throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, IndexOutOfBoundsException {
 
-		Objects.requireNonNull(name);
+		checkBlockName(name, overlay);
 		lock.acquire();
 		try {
 			checkBlockSize(length, true);
@@ -540,7 +660,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				MemoryBlockDB newBlock = adapter.createFileBytesBlock(name, start, length,
 					fileBytes, offset, MemoryBlock.READ);
 				initializeBlocks();
-				addBlockAddresses(newBlock);
+				addBlockAddresses(newBlock, !overlay);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -576,7 +696,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			boolean overlay) throws MemoryConflictException, AddressOverflowException,
 			LockException, DuplicateNameException {
 
-		Objects.requireNonNull(name);
+		checkBlockName(name, overlay);
 		lock.acquire();
 		try {
 			checkBlockSize(size, false);
@@ -591,9 +711,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			}
 			try {
 				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.DEFAULT, name, start,
-					size, null, false, MemoryBlock.READ);
+					size, null, false, MemoryBlock.READ, 0);
 				initializeBlocks();
-				addBlockAddresses(newBlock);
+				addBlockAddresses(newBlock, false);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -608,21 +728,27 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public MemoryBlock createBitMappedBlock(String name, Address start, Address overlayAddress,
-			long length) throws MemoryConflictException, AddressOverflowException, LockException {
+	public MemoryBlock createBitMappedBlock(String name, Address start, Address mappedAddress,
+			long length, boolean overlay) throws MemoryConflictException, AddressOverflowException,
+			LockException, IllegalArgumentException, DuplicateNameException {
 
-		Objects.requireNonNull(name);
+		checkBlockName(name, overlay);
 		lock.acquire();
 		try {
 			checkBlockSize(length, false);
 			program.checkExclusiveAccess();
-			checkRange(start, length);
-			overlayAddress.addNoWrap((length - 1) / 8);// just to check if length fits in address space
+			mappedAddress.addNoWrap((length - 1) / 8);// just to check if length fits in address space
+			if (overlay) {
+				start = createOverlaySpace(name, start, length);
+			}
+			else {
+				checkRange(start, length);
+			}
 			try {
 				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.BIT_MAPPED, name,
-					start, length, overlayAddress, false, MemoryBlock.READ);
+					start, length, mappedAddress, false, MemoryBlock.READ, 0);
 				initializeBlocks();
-				addBlockAddresses(newBlock);
+				addBlockAddresses(newBlock, false);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -637,21 +763,37 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public MemoryBlock createByteMappedBlock(String name, Address start, Address overlayAddress,
-			long length) throws MemoryConflictException, AddressOverflowException, LockException {
+	public MemoryBlock createByteMappedBlock(String name, Address start, Address mappedAddress,
+			long length, ByteMappingScheme byteMappingScheme, boolean overlay)
+			throws MemoryConflictException, AddressOverflowException, LockException,
+			DuplicateNameException {
 
-		Objects.requireNonNull(name);
+		checkBlockName(name, overlay);
+
+		int mappingScheme = 0; // use for 1:1 mapping
+		if (byteMappingScheme == null) {
+			byteMappingScheme = new ByteMappingScheme(mappingScheme); // 1:1 mapping
+		}
+		else if (!byteMappingScheme.isOneToOneMapping()) {
+			mappingScheme = byteMappingScheme.getEncodedMappingScheme();
+		}
+
 		lock.acquire();
 		try {
 			checkBlockSize(length, false);
 			program.checkExclusiveAccess();
-			checkRange(start, length);
-			overlayAddress.addNoWrap(length - 1);// just to check if length fits in address space
+			byteMappingScheme.getMappedSourceAddress(mappedAddress, length - 1); // source fit check
+			if (overlay) {
+				start = createOverlaySpace(name, start, length);
+			}
+			else {
+				checkRange(start, length);
+			}
 			try {
 				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.BYTE_MAPPED, name,
-					start, length, overlayAddress, false, MemoryBlock.READ);
+					start, length, mappedAddress, false, MemoryBlock.READ, mappingScheme);
 				initializeBlocks();
-				addBlockAddresses(newBlock);
+				addBlockAddresses(newBlock, false);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -663,29 +805,51 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			lock.release();
 		}
 		return null;
+	}
+
+	/**
+	 * Check new block name for validity
+	 * @param name new block name
+	 * @param isOverlay true if block is overlay
+	 * @throws IllegalArgumentException if invalid block name specified
+	 * @throws DuplicateNameException if name conflicts with an address space name
+	 */
+	void checkBlockName(
+			String name, boolean isOverlay)
+			throws IllegalArgumentException, DuplicateNameException {
+		if (!Memory.isValidAddressSpaceName(name)) {
+			throw new IllegalArgumentException("Invalid block name: " + name);
+		}
+		if (isOverlay && getAddressFactory().getAddressSpace(name) != null) {
+			throw new DuplicateNameException(
+				"Block name conflicts with existing address space: " + name);
+		}
 	}
 
 	@Override
 	public MemoryBlock createBlock(MemoryBlock block, String name, Address start, long length)
-			throws MemoryConflictException, AddressOverflowException, LockException {
-
-		Objects.requireNonNull(name);
+			throws MemoryConflictException, AddressOverflowException, LockException,
+			DuplicateNameException {
+		checkBlockName(name, false);
 		lock.acquire();
 		try {
 			checkBlockSize(length, block.isInitialized());
 			program.checkExclusiveAccess();
 			checkRange(start, length);
-
 			try {
-				Address overlayAddr = null;
+				Address mappedAddr = null;
+				int mappingScheme = 0;
 				if (block.isMapped()) {
 					MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
-					overlayAddr = info.getMappedRange().get().getMinAddress();
+					if (block.getType() == MemoryBlockType.BYTE_MAPPED) {
+						mappingScheme = info.getByteMappingScheme().get().getEncodedMappingScheme();
+					}
+					mappedAddr = info.getMappedRange().get().getMinAddress();
 				}
 				MemoryBlockDB newBlock = adapter.createBlock(block.getType(), name, start, length,
-					overlayAddr, block.isInitialized(), block.getPermissions());
+					mappedAddr, block.isInitialized(), block.getPermissions(), mappingScheme);
 				initializeBlocks();
-				addBlockAddresses(newBlock);
+				addBlockAddresses(newBlock, !block.isMapped() && block.isInitialized());
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -731,7 +895,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			MemoryBlockDB memBlock = (MemoryBlockDB) block;
 
 			Address oldStartAddr = block.getStart();
-			if (block.getType() == MemoryBlockType.OVERLAY) {
+			if (block.isOverlay()) {
 				throw new IllegalArgumentException("Overlay blocks cannot be moved");
 			}
 			if (newStartAddr.getAddressSpace().isOverlaySpace()) {
@@ -788,8 +952,20 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			if (addr.equals(memBlock.getStart())) {
 				throw new IllegalArgumentException("Split cannot be done on block start address");
 			}
-			if (memBlock.getType() == MemoryBlockType.OVERLAY) {
+			if (memBlock.isOverlay()) {
 				throw new IllegalArgumentException("Split cannot be done on an overlay block");
+			}
+			if (memBlock.isMapped()) {
+				if (memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
+					throw new IllegalArgumentException(
+						"Split cannot be done on a bit-mapped block");
+				}
+				ByteMappingScheme byteMappingScheme =
+					memBlock.getSourceInfos().get(0).getByteMappingScheme().get();
+				if (!byteMappingScheme.isOneToOneMapping()) {
+					throw new IllegalArgumentException(
+						"Split cannot be done on a byte-mapped block with " + byteMappingScheme);
+				}
 			}
 			if (memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
 				throw new IllegalArgumentException("Split cannot be done on a bit mapped block");
@@ -850,7 +1026,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private void checkPreconditionsForJoining(MemoryBlock block1, MemoryBlock block2)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 
 		program.checkExclusiveAccess();
 		if (liveMemory != null) {
@@ -874,16 +1050,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	private void checkBlockForJoining(MemoryBlock block) {
 		checkBlock(block);
-		switch (block.getType()) {
-			case BIT_MAPPED:
-				throw new IllegalArgumentException("Cannot join bit mapped blocks");
-			case BYTE_MAPPED:
-				throw new IllegalArgumentException("Cannot join byte mapped blocks");
-			case OVERLAY:
-				throw new IllegalArgumentException("Cannot join overlay blocks");
-			case DEFAULT:
-			default:
-				// do nothing, these types are ok for joining
+		if (block.isOverlay()) {
+			throw new IllegalArgumentException("Cannot join overlay blocks");
+		}
+		if (block.isMapped()) {
+			throw new IllegalArgumentException("Cannot join mapped blocks");
 		}
 	}
 
@@ -909,8 +1080,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				throw new IllegalArgumentException(
 					"Only an Uninitialized Block may be converted to an Initialized Block");
 			}
-			MemoryBlockType type = unitializedBlock.getType();
-			if (!((type == MemoryBlockType.DEFAULT) || (type == MemoryBlockType.OVERLAY))) {
+			if (unitializedBlock.getType() != MemoryBlockType.DEFAULT) {
 				throw new IllegalArgumentException("Block is of a type that cannot be initialized");
 			}
 			long size = unitializedBlock.getSize();
@@ -922,6 +1092,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				memBlock.initializeBlock(initialValue);
 				allInitializedAddrSet.addRange(memBlock.getStart(), memBlock.getEnd());
 				initializedLoadedAddrSet.addRange(memBlock.getStart(), memBlock.getEnd());
+				if (!memBlock.isMapped()) {
+					// update initialized sets for all blocks mapped to memBlock
+					updateMappedAddresses(memBlock, true);
+				}
 				fireBlockChanged(memBlock);
 				fireBytesChanged(memBlock.getStart(), (int) memBlock.getSize());
 				return memBlock;
@@ -949,16 +1123,20 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				throw new IllegalArgumentException(
 					"Only an Initialized Block may be converted to an Uninitialized Block");
 			}
-			MemoryBlockType type = initializedBlock.getType();
-			if (!((type == MemoryBlockType.DEFAULT) || (type == MemoryBlockType.OVERLAY))) {
+			if (initializedBlock.getType() != MemoryBlockType.DEFAULT) {
 				throw new IllegalArgumentException(
 					"Block is of a type that cannot be uninitialized");
 			}
 			MemoryBlockDB memBlock = (MemoryBlockDB) initializedBlock;
 			try {
+// FIXME: clear instructions in initializedBlock or any block which maps to it
 				memBlock.uninitializeBlock();
 				allInitializedAddrSet.deleteRange(memBlock.getStart(), memBlock.getEnd());
 				initializedLoadedAddrSet.deleteRange(memBlock.getStart(), memBlock.getEnd());
+				if (!memBlock.isMapped()) {
+					// update initialized sets for all blocks mapped to memBlock
+					updateMappedAddresses(memBlock, false);
+				}
 				fireBlockChanged(memBlock);
 				fireBytesChanged(memBlock.getStart(), (int) memBlock.getSize());
 				return memBlock;
@@ -979,7 +1157,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	public Address findBytes(Address addr, byte[] bytes, byte[] masks, boolean forward,
 			TaskMonitor monitor) {
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		AddressIterator it = initializedLoadedAddrSet.getAddresses(addr, forward);
@@ -997,6 +1175,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 						monitor.incrementProgress(-moffset);
 					}
 					catch (AddressOverflowException e) {
+						// ignore
 					}
 					continue;
 				}
@@ -1025,7 +1204,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	public Address findBytes(Address startAddr, Address endAddr, byte[] bytes, byte[] masks,
 			boolean forward, TaskMonitor monitor) {
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		AddressIterator it = allInitializedAddrSet.getAddresses(startAddr, forward);
 		byte[] b = new byte[bytes.length];
@@ -1722,7 +1901,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	/**
 	 * Tests if the given addressSpace (overlay space) is used by any blocks.  If not, it
 	 * removes the space.
-	 * @param addressSpace
+	 * @param addressSpace overlay address space to be removed
 	 */
 	private void checkRemoveAddressSpace(AddressSpace addressSpace) {
 		lock.acquire();
@@ -1771,43 +1950,72 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Gets the intersected set of addresses between a list of mapped memory blocks, and some other
+	 * Gets the intersected set of addresses between a mapped memory block, and some other
 	 * address set.
 	 *
-	 * @param block The mapped memory block to use in the intersection.
+	 * @param mappedBlock The mapped memory block to use in the intersection.
 	 * @param set Some other address set to use in the intersection.
 	 * @return The intersected set of addresses between 'mappedMemoryBlock' and other address set
 	 */
-	private AddressSet getMappedIntersection(MemoryBlock block, AddressSet set) {
+	private AddressSet getMappedIntersection(MemoryBlock mappedBlock, AddressSet set) {
 		AddressSet mappedIntersection = new AddressSet();
-		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
+		List<MemoryBlockSourceInfo> sourceInfos = mappedBlock.getSourceInfos();
 		// mapped blocks can only ever have one sourceInfo
 		MemoryBlockSourceInfo info = sourceInfos.get(0);
 		AddressRange range = info.getMappedRange().get();
 		AddressSet resolvedIntersection = set.intersect(new AddressSet(range));
 		for (AddressRange resolvedRange : resolvedIntersection) {
-			mappedIntersection.add(getMappedRange(block, resolvedRange));
+			AddressRange mappedRange = getMappedRange(mappedBlock, resolvedRange);
+			if (mappedRange != null) {
+				mappedIntersection.add(mappedRange);
+			}
 		}
 		return mappedIntersection;
 	}
 
 	/**
 	 * Converts the given address range back from the source range back to the mapped range.
+	 * NOTE: It is important that the specified mappedSourceRange is restricted to the 
+	 * mapped source area of the specified mappedBlock.
+	 * @param mappedBlock mapped memory block
+	 * @param mappedSourceRange source range which maps into mappedBlock.
+	 * @return mapped range or null if source range not mapped to block
 	 */
-	private AddressRange getMappedRange(MemoryBlock mappedBlock, AddressRange resolvedRange) {
+	private AddressRange getMappedRange(MemoryBlock mappedBlock, AddressRange mappedSourceRange) {
 		Address start, end;
 
-		MemoryBlockSourceInfo info = mappedBlock.getSourceInfos().get(0);
-		long startOffset =
-			resolvedRange.getMinAddress().subtract(info.getMappedRange().get().getMinAddress());
-		boolean isBitMapped = mappedBlock.getType() == MemoryBlockType.BIT_MAPPED;
-		if (isBitMapped) {
-			start = mappedBlock.getStart().add(startOffset * 8);
-			end = start.add((resolvedRange.getLength() * 8) - 1);
+		long sourceRangeLength = mappedSourceRange.getLength();
+		if (sourceRangeLength <= 0) {
+			throw new AssertException("invalid mapped source range length");
 		}
-		else {
-			start = mappedBlock.getStart().add(startOffset);
-			end = start.add(resolvedRange.getLength() - 1);
+		MemoryBlockSourceInfo info = mappedBlock.getSourceInfos().get(0);
+
+		long startOffset =
+			mappedSourceRange.getMinAddress().subtract(info.getMappedRange().get().getMinAddress());
+		boolean isBitMapped = mappedBlock.getType() == MemoryBlockType.BIT_MAPPED;
+		try {
+			if (isBitMapped) {
+				startOffset *= 8;
+				start = mappedBlock.getStart().addNoWrap(startOffset);
+				long endOffset = startOffset + (sourceRangeLength * 8) - 1;
+				// since end may only partially consume a byte we must limit end address
+				end = (endOffset < mappedBlock.getSize())
+						? mappedBlock.getStart().addNoWrap(endOffset)
+						: mappedBlock.getEnd();
+			}
+			else { // Byte mapped
+				ByteMappingScheme byteMappingScheme = info.getByteMappingScheme().get();
+				start =
+					byteMappingScheme.getMappedAddress(mappedBlock, startOffset, false);
+				long endOffset = startOffset + sourceRangeLength - 1;
+				end = byteMappingScheme.getMappedAddress(mappedBlock, endOffset, true);
+				if (start == null || start.compareTo(end) > 0) {
+					return null; // mappedSourceRange corresponds to non-mapped/skipped bytes
+				}
+			}
+		}
+		catch (AddressOverflowException e) {
+			throw new AddressOutOfBoundsException(e.getMessage());
 		}
 		return new AddressRangeImpl(start, end);
 	}

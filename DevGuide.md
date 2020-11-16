@@ -198,7 +198,7 @@ Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
 
 ```bash
 cd ~/Downloads   # Or wherever
-curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+curl -OL 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'https://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
 mkdir -p ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
@@ -245,15 +245,8 @@ gradle prepDev
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
 
 ### Import Eclipse Projects
-To develop/modify Ghidra, import Ghidra into Eclipse using the integrated BuildShip plugin.
-Select __File -> Import__, expand Gradle, and select "Existing Gradle Project."
-Select the root of the source repo as the root Gradle project.
-Be sure to select Gradle 5.0, or point it at your local installation.
-You may see build path errors until the environment is properly prepared, as described below.
-
-*Alternatively*, you may have Gradle generate the Eclipse projects and import those instead.
-This is the way to go if you'd prefer not to activate Gradle's BuildShip plugin.
-From the project root:
+To develop/modify Ghidra, you must first use Gradle to generate Eclipse projects.  From the project 
+root:
 
 ```bash
 gradle eclipse
@@ -356,7 +349,7 @@ this is required to make AWT happy.
 Some features of Ghidra require the curation of rather extensive databases.
 These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
 Much of this work is done by hand.
-The archives included in our official builds can be found in the __[ghidra-data]__ repository.
+The archives included in our official builds can be found in the [ghidra-data] repository.
 
 ### Building Data Type Archives
 
@@ -381,3 +374,5 @@ Now, select __Tools -> Function ID -> Populate FidDb__ from programs.
 Fill out the options appropriately and click OK.
 
 If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.
+
+[ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data

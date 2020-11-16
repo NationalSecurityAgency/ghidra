@@ -277,11 +277,9 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 		CompareFunctionsTestUtility.checkTargetFunctions(provider, foo, bar, two);
 	}
 
-	/**
-	 * 
-	 * Data Model tests
-	 * 
-	 */
+//==================================================================================================
+// Data Model tests
+//==================================================================================================	
 
 	@Test
 	public void testGetTargets() {
@@ -344,11 +342,11 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private FunctionComparisonProvider compare(Set<Function> functions) {
-		return runSwing(() -> plugin.compareFunctions(functions));
+		return plugin.compareFunctions(functions);
 	}
 
 	private FunctionComparisonProvider compare(Function f1, Function f2) {
-		return runSwing(() -> plugin.compareFunctions(f1, f2));
+		return plugin.compareFunctions(f1, f2);
 	}
 
 	private ProgramBuilder buildTestProgram1() throws Exception {

@@ -18,7 +18,10 @@ package ghidra.util;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+
+import generic.random.SecureRandomFactory;
 
 public class HashUtilities {
 
@@ -33,10 +36,8 @@ public class HashUtilities {
 	public static final int SHA256_UNSALTED_HASH_LENGTH = 64;
 	public static final int SHA256_SALTED_HASH_LENGTH = SHA256_UNSALTED_HASH_LENGTH + SALT_LENGTH;
 
-	private static Random random = new Random(System.nanoTime());
-
 	static char getRandomLetterOrDigit() {
-		int val = (random.nextInt() % 62); // 0-9,A-Z,a-z (10+26+26=62)
+		int val = (SecureRandomFactory.getSecureRandom().nextInt() % 62); // 0-9,A-Z,a-z (10+26+26=62)
 		if (val < 0) {
 			val = -val;
 		}

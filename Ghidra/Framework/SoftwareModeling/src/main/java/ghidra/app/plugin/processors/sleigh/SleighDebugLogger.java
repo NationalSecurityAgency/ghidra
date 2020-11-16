@@ -1276,7 +1276,7 @@ public class SleighDebugLogger {
 		}
 
 		@Override
-		public Register[] getRegisters() {
+		public List<Register> getRegisters() {
 			if (originalContext != null) {
 				return originalContext.getRegisters();
 			}

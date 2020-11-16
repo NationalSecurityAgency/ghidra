@@ -540,18 +540,18 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		Options propList = getOptions(Program.PROGRAM_INFO);
 		List<String> propNames = propList.getOptionNames();
 		Collections.sort(propNames);
-		for (String name : propNames) {
-			metadata.put(name, propList.getValueAsString(name));
+		for (String propName : propNames) {
+			if (propName.indexOf(Options.DELIMITER) >= 0) {
+				continue; // ignore second tier options
+			}
+			String valueAsString = propList.getValueAsString(propName);
+			if (valueAsString != null) {
+				metadata.put(propName, propList.getValueAsString(propName));
+			}
 		}
 		return metadata;
 	}
 
-//	private static String getString(Object obj) {
-//		if (obj != null) {
-//			return obj.toString();
-//		}
-//		return null;
-//	}
 	@Override
 	protected void updateMetadata() throws IOException {
 		getMetadata(); // updates metadata map

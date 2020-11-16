@@ -2166,12 +2166,6 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		Double scale = getGraphScale(getPrimaryGraphViewer());
 		int result = Double.compare(scale, 1.0);
 		assertEquals("Graph not fully zoomed-in; scale: " + scale, 0, result);
-
-		FGVertex v = getFocusedVertex();
-		Rectangle cursorBounds = v.getCursorBounds();
-		Window graphWindow = windowForComponent(getPrimaryGraphViewer());
-		Rectangle windowBounds = graphWindow.getBounds();
-		assertTrue(windowBounds.contains(cursorBounds));
 	}
 
 	protected void assertZoomedOut() {
@@ -2277,7 +2271,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void goTo(Address address) {
 		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(address);
+		runSwing(() -> goToService.goTo(address));
 		waitForBusyGraph();
 	}
 

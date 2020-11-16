@@ -529,8 +529,8 @@ public class SleighCompile extends SleighBase {
 	static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
 			int operand) {
 		Integer boxOperand = Integer.valueOf(operand);
-		for (int i = 0; i < locals.size(); ++i) {
-			Integer previous = local2Operand.putIfAbsent(locals.get(i), boxOperand);
+		for (Long local : locals) {
+			Integer previous = local2Operand.putIfAbsent(local, boxOperand);
 			if (previous != null) {
 				if (previous.intValue() != operand) {
 					return previous.intValue();
@@ -842,7 +842,7 @@ public class SleighCompile extends SleighBase {
 	}
 
 	// Parser functions
-	public TokenSymbol defineToken(Location location, String name, long sz) {
+	public TokenSymbol defineToken(Location location, String name, long sz, int endian) {
 		entry("defineToken", location, name, sz);
 		int size = (int) sz;
 		if ((size & 7) != 0) {
@@ -853,8 +853,15 @@ public class SleighCompile extends SleighBase {
 		else {
 			size = size / 8;
 		}
+		boolean isBig;
+		if (endian == 0) {
+			isBig = isBigEndian();
+		}
+		else {
+			isBig = (endian > 0);
+		}
 		ghidra.pcodeCPort.context.Token newtoken =
-			new ghidra.pcodeCPort.context.Token(name, size, isBigEndian(), tokentable.size());
+			new ghidra.pcodeCPort.context.Token(name, size, isBig, tokentable.size());
 		tokentable.push_back(newtoken);
 		TokenSymbol res = new TokenSymbol(location, newtoken);
 		addSymbol(res);

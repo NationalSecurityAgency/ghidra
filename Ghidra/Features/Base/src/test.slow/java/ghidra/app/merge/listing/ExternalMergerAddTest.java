@@ -79,8 +79,8 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		boolean showListingPanels = false;
 
 		ProgramMultiUserMergeManager mergeManger =
-				new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
-					latestProgram, resultChangeSet, myChangeSet, showListingPanels);
+			new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
+				latestProgram, resultChangeSet, myChangeSet, showListingPanels);
 
 		return mergeManger;
 	}
@@ -149,7 +149,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -166,7 +166,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -182,7 +182,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -207,7 +207,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -224,7 +224,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -240,7 +240,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -272,7 +272,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -289,7 +289,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -306,7 +306,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -315,7 +315,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(false, externalLocation.isFunction());
 
 		ExternalLocation externalLocation2 =
-				externalManager.getUniqueExternalLocation(libname, label + "_conflict1");
+			externalManager.getUniqueExternalLocation(libname, label + "_conflict1");
 		assertNull(externalLocation2);
 	}
 
@@ -342,7 +342,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -359,7 +359,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -377,7 +377,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertTrue(externalManager.contains(libname));
 
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 		assertEquals(libname + "::" + label, externalLocation.toString());
 		assertEquals(addr(resultProgram, address2), externalLocation.getAddress());
@@ -385,7 +385,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(false, externalLocation.isFunction());
 
 		ExternalLocation externalLocation2 =
-				externalManager.getUniqueExternalLocation(libname, label + "_conflict1");
+			externalManager.getUniqueExternalLocation(libname, label + "_conflict1");
 		assertNull(externalLocation2);
 	}
 
@@ -412,7 +412,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -429,7 +429,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -476,14 +476,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -496,7 +496,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.createNamespace(library, label, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
@@ -517,7 +517,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -526,7 +526,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(false, externalLocation.isFunction());
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		SymbolTable symtab = resultProgram.getSymbolTable();
 
 		assertNotNull(symtab.getNamespace(label, externalLibrary));
@@ -553,7 +553,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.createNamespace(library, label, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
@@ -565,14 +565,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -590,7 +590,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -599,7 +599,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(false, externalLocation.isFunction());
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		SymbolTable symtab = resultProgram.getSymbolTable();
 
 		Namespace blue = symtab.getNamespace(label, externalLibrary);
@@ -623,14 +623,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
@@ -643,14 +643,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -669,7 +669,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -678,7 +678,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(true, externalLocation.isFunction());
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, label, externalLibrary);
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
@@ -708,14 +708,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
@@ -728,14 +728,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -753,7 +753,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -762,7 +762,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(true, externalLocation.isFunction());
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, label, externalLibrary);
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
@@ -792,14 +792,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
@@ -812,7 +812,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, new WordDataType(),
 					SourceType.USER_DEFINED);
 
@@ -820,7 +820,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -839,7 +839,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -848,7 +848,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(true, externalLocation.isFunction());
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, label, externalLibrary);
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
@@ -877,14 +877,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
@@ -897,7 +897,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, new WordDataType(),
 					SourceType.USER_DEFINED);
 
@@ -905,7 +905,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -924,7 +924,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -933,7 +933,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(false, externalLocation.isFunction());
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, label, externalLibrary);
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
@@ -962,7 +962,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, new WordDataType(),
 					SourceType.USER_DEFINED);
 
@@ -970,7 +970,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -983,14 +983,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
@@ -1008,7 +1008,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, label, externalLibrary);
 		Symbol blueConflict = getUniqueSymbol(resultProgram, label + "_conflict1", externalLibrary);
 		assertNotNull(blue);
@@ -1042,7 +1042,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, new WordDataType(),
 					SourceType.USER_DEFINED);
 
@@ -1050,7 +1050,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
@@ -1063,14 +1063,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(library, label, address, SourceType.USER_DEFINED);
 
 				Program program = mergeProgram.getProgram();
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
@@ -1129,7 +1129,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label1);
+					externalManager.getUniqueExternalLocation(libname, label1);
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
 
@@ -1146,7 +1146,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label2);
+					externalManager.getUniqueExternalLocation(libname, label2);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label2, externalLocation.toString());
@@ -1163,7 +1163,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label1);
+			externalManager.getUniqueExternalLocation(libname, label1);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label1, externalLocation.toString());
@@ -1198,7 +1198,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label1);
+					externalManager.getUniqueExternalLocation(libname, label1);
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
 
@@ -1215,7 +1215,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label2);
+					externalManager.getUniqueExternalLocation(libname, label2);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label2, externalLocation.toString());
@@ -1232,7 +1232,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label1);
+			externalManager.getUniqueExternalLocation(libname, label1);
 		assertNull(externalLocation);
 
 		externalLocation = externalManager.getUniqueExternalLocation(libname, label2);
@@ -1245,8 +1245,8 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 	}
 
 	/**
-	 * The external function merger only detects and merges source differences when a
-	 * name difference is being merged.
+	 * The external function merger only detects and merges source differences when a name
+	 * difference is being merged.
 	 */
 	@Test
 	public void testAddSameExtLabelWithDiffSourceNoConflict() throws Exception {
@@ -1270,7 +1270,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
 
@@ -1287,7 +1287,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1303,7 +1303,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1333,9 +1333,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalName(addr(program, address), null);
+					SymbolUtilities.getDefaultExternalName(addr(program, address), null);
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
 
@@ -1352,9 +1352,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalName(addr(program, address), null);
+					SymbolUtilities.getDefaultExternalName(addr(program, address), null);
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::EXT_00000100", externalLocation.toString());
@@ -1370,9 +1370,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		String defaultExternalName =
-				SymbolUtilities.getDefaultExternalName(addr(resultProgram, address), null);
+			SymbolUtilities.getDefaultExternalName(addr(resultProgram, address), null);
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+			externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::EXT_00000100", externalLocation.toString());
@@ -1402,9 +1402,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
+					SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
 
@@ -1421,9 +1421,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
+					SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::EXT_FUN_00000100", externalLocation.toString());
@@ -1439,9 +1439,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		String defaultExternalName =
-				SymbolUtilities.getDefaultExternalFunctionName(addr(resultProgram, address));
+			SymbolUtilities.getDefaultExternalFunctionName(addr(resultProgram, address));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+			externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::EXT_FUN_00000100", externalLocation.toString());
@@ -1471,9 +1471,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
+					SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
 
@@ -1490,9 +1490,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
+					SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::EXT_FUN_00000100", externalLocation.toString());
@@ -1508,9 +1508,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		String defaultExternalName =
-				SymbolUtilities.getDefaultExternalFunctionName(addr(resultProgram, address));
+			SymbolUtilities.getDefaultExternalFunctionName(addr(resultProgram, address));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+			externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::EXT_FUN_00000100", externalLocation.toString());
@@ -1540,9 +1540,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				String defaultExternalName =
-						SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
+					SymbolUtilities.getDefaultExternalFunctionName(addr(program, address));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+					externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::EXT_FUN_00000100", externalLocation.toString());
@@ -1558,9 +1558,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		String defaultExternalName =
-				SymbolUtilities.getDefaultExternalFunctionName(addr(resultProgram, address));
+			SymbolUtilities.getDefaultExternalFunctionName(addr(resultProgram, address));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, defaultExternalName);
+			externalManager.getUniqueExternalLocation(libname, defaultExternalName);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::EXT_FUN_00000100", externalLocation.toString());
@@ -1591,7 +1591,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
 
@@ -1608,7 +1608,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1624,7 +1624,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1654,7 +1654,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
 
@@ -1671,7 +1671,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1687,7 +1687,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1717,7 +1717,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1734,7 +1734,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 				assertEquals(false, externalLocation.isFunction());
 
@@ -1750,7 +1750,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1781,7 +1781,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
 
@@ -1798,7 +1798,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1814,7 +1814,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1845,7 +1845,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1862,7 +1862,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 				assertEquals(true, externalLocation.isFunction());
 
@@ -1878,7 +1878,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		ExternalLocation externalLocation =
-				externalManager.getUniqueExternalLocation(libname, label);
+			externalManager.getUniqueExternalLocation(libname, label);
 		assertNotNull(externalLocation);
 
 		assertEquals(libname + "::" + label, externalLocation.toString());
@@ -1918,7 +1918,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(SymbolType.LIBRARY, externalLibrarySymbol.getSymbolType());
 
 		Symbol conflictSymbol =
-				resultProgram.getSymbolTable().getLibrarySymbol(libname + "_conflict1");
+			resultProgram.getSymbolTable().getLibrarySymbol(libname + "_conflict1");
 		assertNull(conflictSymbol);
 	}
 
@@ -1938,14 +1938,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.createNamespace(library, namespace, SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.createNamespace(library, namespace, SourceType.USER_DEFINED);
 			}
 		});
@@ -1954,14 +1954,14 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 
 		Symbol myNamespaceSymbol = getUniqueSymbol(resultProgram, namespace, externalLibrary);
 		assertNotNull(myNamespaceSymbol);
 		assertEquals(SymbolType.NAMESPACE, myNamespaceSymbol.getSymbolType());
 
 		Symbol conflictSymbol =
-				getUniqueSymbol(resultProgram, "MyNamespace_conflict1", externalLibrary);
+			getUniqueSymbol(resultProgram, "MyNamespace_conflict1", externalLibrary);
 		assertNull(conflictSymbol);
 	}
 
@@ -1979,9 +1979,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace ns =
-						mergeProgram.createNamespace(library, namespace1, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, namespace1, SourceType.USER_DEFINED);
 				assertNotNull(ns);
 
 				ns = mergeProgram.createNamespace(library, namespace2, SourceType.USER_DEFINED);
@@ -1997,9 +1997,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace ns =
-						mergeProgram.createClass(library, namespace1, SourceType.USER_DEFINED);
+					mergeProgram.createClass(library, namespace1, SourceType.USER_DEFINED);
 				assertNotNull(ns);
 
 				ns = mergeProgram.createClass(library, namespace2, SourceType.USER_DEFINED);
@@ -2019,18 +2019,18 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, namespace1, externalLibrary);
 		Symbol blueConflict =
-				getUniqueSymbol(resultProgram, namespace1 + "_conflict1", externalLibrary);
+			getUniqueSymbol(resultProgram, namespace1 + "_conflict1", externalLibrary);
 		Symbol green = getUniqueSymbol(resultProgram, namespace2, externalLibrary);
 		Symbol greenConflict =
-				getUniqueSymbol(resultProgram, namespace2 + "_conflict1", externalLibrary);
+			getUniqueSymbol(resultProgram, namespace2 + "_conflict1", externalLibrary);
 		Symbol red = getUniqueSymbol(resultProgram, class1, externalLibrary);
 		Symbol redConflict = getUniqueSymbol(resultProgram, class1 + "_conflict1", externalLibrary);
 		Symbol yellow = getUniqueSymbol(resultProgram, class2, externalLibrary);
 		Symbol yellowConflict =
-				getUniqueSymbol(resultProgram, class2 + "_conflict1", externalLibrary);
+			getUniqueSymbol(resultProgram, class2 + "_conflict1", externalLibrary);
 		assertEquals(SymbolType.NAMESPACE, blue.getSymbolType());
 		assertEquals(SymbolType.CLASS, blueConflict.getSymbolType());
 		assertEquals(SymbolType.NAMESPACE, green.getSymbolType());
@@ -2056,12 +2056,12 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace parentNS =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 
 				Namespace ns =
-						mergeProgram.createNamespace(parentNS, namespace1, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(parentNS, namespace1, SourceType.USER_DEFINED);
 				assertNotNull(ns);
 
 				ns = mergeProgram.createNamespace(parentNS, namespace2, SourceType.USER_DEFINED);
@@ -2077,12 +2077,12 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace parentNS =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 
 				Namespace ns =
-						mergeProgram.createClass(parentNS, namespace1, SourceType.USER_DEFINED);
+					mergeProgram.createClass(parentNS, namespace1, SourceType.USER_DEFINED);
 				assertNotNull(ns);
 
 				ns = mergeProgram.createClass(parentNS, namespace2, SourceType.USER_DEFINED);
@@ -2102,15 +2102,15 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, namespace1, myNamespace);
 		Symbol blueConflict =
-				getUniqueSymbol(resultProgram, namespace1 + "_conflict1", myNamespace);
+			getUniqueSymbol(resultProgram, namespace1 + "_conflict1", myNamespace);
 		Symbol green = getUniqueSymbol(resultProgram, namespace2, myNamespace);
 		Symbol greenConflict =
-				getUniqueSymbol(resultProgram, namespace2 + "_conflict1", myNamespace);
+			getUniqueSymbol(resultProgram, namespace2 + "_conflict1", myNamespace);
 		Symbol red = getUniqueSymbol(resultProgram, class1, myNamespace);
 		Symbol redConflict = getUniqueSymbol(resultProgram, class1 + "_conflict1", myNamespace);
 		Symbol yellow = getUniqueSymbol(resultProgram, class2, myNamespace);
@@ -2143,9 +2143,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(namespace, label, address,
 					SourceType.USER_DEFINED);
 			}
@@ -2153,9 +2153,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(namespace, label, address,
 					SourceType.USER_DEFINED);
 			}
@@ -2165,7 +2165,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2196,9 +2196,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label1, address1,
 					SourceType.USER_DEFINED);
 
@@ -2207,9 +2207,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label2, address2,
 					SourceType.USER_DEFINED);
 			}
@@ -2219,7 +2219,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2270,9 +2270,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label, address1,
 					SourceType.USER_DEFINED);
 
@@ -2281,9 +2281,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label, address2,
 					SourceType.USER_DEFINED);
 			}
@@ -2294,7 +2294,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2335,9 +2335,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label, address1,
 					SourceType.USER_DEFINED);
 
@@ -2346,9 +2346,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label, address2,
 					SourceType.USER_DEFINED);
 			}
@@ -2359,7 +2359,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2399,9 +2399,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label, address1,
 					SourceType.USER_DEFINED);
 
@@ -2410,9 +2410,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(namespace, label, address2,
 					SourceType.USER_DEFINED);
 			}
@@ -2423,10 +2423,10 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace =
-				resultProgram.getSymbolTable().getNamespace(parentNamespace, externalLibrary);
+			resultProgram.getSymbolTable().getNamespace(parentNamespace, externalLibrary);
 		assertNotNull(myNamespace);
 		SymbolTable symtab = resultProgram.getSymbolTable();
 
@@ -2456,9 +2456,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2475,9 +2475,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2487,7 +2487,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				Program program = mergeProgram.getProgram();
 				Register register = program.getRegister("r0");
 				Parameter parameter1 =
-						new ParameterImpl("Length", new CharDataType(), register, program);
+					new ParameterImpl("Length", new CharDataType(), register, program);
 				parameter1.setComment("Latest Parameter Comment");
 
 				mergeProgram.updateFunction(function, false, new FloatDataType(), parameter1);
@@ -2499,7 +2499,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2540,9 +2540,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2559,9 +2559,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2571,7 +2571,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				Program program = mergeProgram.getProgram();
 				Register register = program.getRegister("r0");
 				Parameter parameter1 =
-						new ParameterImpl(param2, new CharDataType(), register, program);
+					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment("Latest Parameter Comment");
 
 				mergeProgram.updateFunction(function, true, new FloatDataType(), parameter1);
@@ -2583,7 +2583,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2617,7 +2617,6 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		final String param2 = "Length";
 		final String comment1 = "Test Parameter Comment";
 		final String comment2 = "My Parameter Comment";
-		final String registerName = "r0";
 
 		mtf.initialize("NotepadMergeListingTest", new MergeProgramModifier() {
 
@@ -2629,9 +2628,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				mergeProgram.addExternalFunction(namespace, label1, "0x120",
 					SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
@@ -2650,9 +2649,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label2, address, SourceType.USER_DEFINED);
 
@@ -2660,9 +2659,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				assertNotNull(function);
 
 				Program program = mergeProgram.getProgram();
-				Register register = program.getRegister(registerName);
+				Register register = program.getRegister("r0l");
 				Parameter parameter1 =
-						new ParameterImpl(param2, new CharDataType(), register, program);
+					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment(comment2);
 
 				mergeProgram.updateFunction(function, true, new FloatDataType(), parameter1);
@@ -2712,7 +2711,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(param2, f2parameter.getName());
 		assertTrue(new CharDataType().isEquivalent(f2parameter.getDataType()));
 		assertTrue(f2parameter.isRegisterVariable());
-		assertEquals(resultProgram.getRegister(registerName), f2parameter.getRegister());
+		assertEquals(resultProgram.getRegister("r0l"), f2parameter.getRegister());
 		assertEquals(comment2, f2parameter.getComment());
 	}
 
@@ -2736,9 +2735,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2755,9 +2754,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2767,7 +2766,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				Program program = mergeProgram.getProgram();
 				Register register = program.getRegister("r0");
 				Parameter parameter1 =
-						new ParameterImpl(param2, new CharDataType(), register, program);
+					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment("Latest Parameter Comment");
 
 				mergeProgram.updateFunction(function, false, new FloatDataType(), parameter1);
@@ -2779,7 +2778,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2819,9 +2818,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2838,9 +2837,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2848,9 +2847,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				assertNotNull(function);
 
 				Program program = mergeProgram.getProgram();
-				Register register = program.getRegister("r12");
+				Register register = program.getRegister("r12l");
 				Parameter parameter1 =
-						new ParameterImpl(param2, new CharDataType(), register, program);
+					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment(comment2);
 
 				mergeProgram.updateFunction(function, false, new FloatDataType(), parameter1);
@@ -2862,7 +2861,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2879,7 +2878,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(comment2, parameter.getComment());
 		checkParameterDataType(parameter, new CharDataType());
 		assertTrue(parameter.isRegisterVariable());
-		assertEquals("r12", parameter.getRegister().getName());
+		assertEquals("r12l", parameter.getRegister().getName());
 	}
 
 	@Test
@@ -2903,9 +2902,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2922,9 +2921,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, parentNamespace, SourceType.USER_DEFINED);
 				ExternalLocation externalLocation = mergeProgram.addExternalFunction(namespace,
 					label, address, SourceType.USER_DEFINED);
 
@@ -2932,9 +2931,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				assertNotNull(function);
 
 				Program program = mergeProgram.getProgram();
-				Register register = program.getRegister("r12");
+				Register register = program.getRegister("r12l");
 				Parameter parameter1 =
-						new ParameterImpl(param2, new CharDataType(), register, program);
+					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment(comment2);
 
 				mergeProgram.updateFunction(function, false, new FloatDataType(), parameter1);
@@ -2947,7 +2946,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 
 		SymbolTable symbolTable = resultProgram.getSymbolTable();
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
 			externalLibrary).getObject();
@@ -2982,7 +2981,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertEquals(param2, f2parameter.getName());
 		assertTrue(new CharDataType().isEquivalent(f2parameter.getDataType()));
 		assertTrue(f2parameter.isRegisterVariable());
-		assertEquals("r12", f2parameter.getRegister().getName());
+		assertEquals("r12l", f2parameter.getRegister().getName());
 		assertEquals(comment2, f2parameter.getComment());
 
 //
@@ -3033,7 +3032,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				mergeProgram.addExternalLocation(library, label, address, new DoubleDataType(),
 					SourceType.USER_DEFINED);
 			}
@@ -3041,9 +3040,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(MergeProgram mergeProgram) throws Exception {
 				Library library =
-						mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
+					mergeProgram.createExternalLibrary(libname, SourceType.USER_DEFINED);
 				Namespace namespace =
-						mergeProgram.createNamespace(library, label, SourceType.USER_DEFINED);
+					mergeProgram.createNamespace(library, label, SourceType.USER_DEFINED);
 				assertNotNull(namespace);
 			}
 		});
@@ -3052,11 +3051,11 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
 
 		Symbol namespaceSymbol =
-				resultProgram.getSymbolTable().getNamespaceSymbol(label, externalLibrary);
+			resultProgram.getSymbolTable().getNamespaceSymbol(label, externalLibrary);
 		assertNotNull(namespaceSymbol);
 
 		List<Symbol> symbols = resultProgram.getSymbolTable().getSymbols(label, externalLibrary);
@@ -3130,7 +3129,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		SymbolTable symtab = resultProgram.getSymbolTable();
 
 		List<Symbol> symbols = symtab.getSymbols(label, externalLibrary);
@@ -3213,7 +3212,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 
 		SymbolTable symtab = resultProgram.getSymbolTable();
 
@@ -3295,7 +3294,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 		Namespace externalLibrary =
-				(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
+			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 
 		SymbolTable symtab = resultProgram.getSymbolTable();
 
@@ -3357,7 +3356,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -3377,7 +3376,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -3402,11 +3401,11 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertTrue(externalManager.contains(libname));
 
 		List<ExternalLocation> externalLocations =
-				externalManager.getExternalLocations(libname, label);
+			externalManager.getExternalLocations(libname, label);
 		assertEquals(2, externalLocations.size());
 
 		List<ExternalLocation> externalLocations2 =
-				externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
+			externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
 		assertEquals(2, externalLocations2.size());
 	}
 
@@ -3440,7 +3439,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -3460,7 +3459,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				ExternalManager externalManager = program.getExternalManager();
 				assertTrue(externalManager.contains(libname));
 				ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation(libname, label);
+					externalManager.getUniqueExternalLocation(libname, label);
 				assertNotNull(externalLocation);
 
 				assertEquals(libname + "::" + label, externalLocation.toString());
@@ -3483,11 +3482,11 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		assertTrue(externalManager.contains(libname));
 
 		List<ExternalLocation> externalLocations =
-				externalManager.getExternalLocations(libname, label);
+			externalManager.getExternalLocations(libname, label);
 		assertEquals(2, externalLocations.size());
 
 		List<ExternalLocation> externalLocations2 =
-				externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
+			externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
 		assertEquals(2, externalLocations2.size());
 	}
 

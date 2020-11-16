@@ -327,7 +327,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			Symbol s = program.getSymbolTable().getPrimarySymbol(referencedFunctionAddr);
 			if (s != null) {
 				ExternalLocation extLoc = (ExternalLocation) s.getObject();
-				Msg.debug(this,
+				Msg.trace(this,
 					"Converting external location to function as a result of thunk at: " + entry);
 				return extLoc.createFunction();
 			}

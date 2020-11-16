@@ -60,6 +60,7 @@ import ghidra.test.TestEnv;
  */
 public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
+	private static final String MY_PATH_NAME_OPTION_NAME = "My PathName";
 	private static final String TOOL_NODE_NAME = "Tool";
 	private PluginTool tool;
 	private TestEnv env;
@@ -281,7 +282,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ScrollableOptionsEditor editor = showOptions(ToolConstants.TOOL_OPTIONS);
 
-		pressBrowseButton(editor, "My PathName");
+		pressBrowseButton(editor, MY_PATH_NAME_OPTION_NAME);
 
 		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
 		assertNotNull(chooser);
@@ -297,7 +298,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(openButton);
 		waitForSwing();
 
-		JTextField pathField = getEditorTextField(editor, "My PathName");
+		JTextField pathField = getEditorTextField(editor, MY_PATH_NAME_OPTION_NAME);
 		assertEquals(file.getAbsolutePath(), pathField.getText());
 	}
 
@@ -305,7 +306,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFileChooserEditor_ClearValue() throws Exception {
 
 		ScrollableOptionsEditor editor = showOptions(ToolConstants.TOOL_OPTIONS);
-		JTextField pathField = getEditorTextField(editor, "My PathName");
+		JTextField pathField = getEditorTextField(editor, MY_PATH_NAME_OPTION_NAME);
 
 		setText(pathField, "");
 
@@ -313,7 +314,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		showOptionsDialog(tool);
 		editor = showOptions(ToolConstants.TOOL_OPTIONS);
-		pathField = getEditorTextField(editor, "My PathName");
+		pathField = getEditorTextField(editor, MY_PATH_NAME_OPTION_NAME);
 		assertEquals("", pathField.getText());
 	}
 
@@ -1059,10 +1060,13 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		// register this options because it is used in a test that saves and restores and
 		// only registered options are saved.
 		String myOptionsName = "My Options" + Options.DELIMITER;
-		options.registerOption(myOptionsName + "my sub group Boolean Value", true, null, null);
+		options.registerOption(myOptionsName + "my sub group Boolean Value", true, null,
+			"description");
 
-		options.registerOption("My PathName", OptionType.FILE_TYPE, null, null, "");
-		options.setFile("My PathName", new File(System.getProperty("user.dir")));
+		File file = new File(System.getProperty("user.dir"));
+		options.registerOption(MY_PATH_NAME_OPTION_NAME, OptionType.FILE_TYPE, file, null,
+			"description");
+		options.setFile(MY_PATH_NAME_OPTION_NAME, file);
 
 		// the following "get" methods set a value
 		options.getInt(myOptionsName + "my sub group" + Options.DELIMITER + "My Test Value", 10);
@@ -1071,19 +1075,29 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String intOptionName = myOptionsName + "my sub group" + Options.DELIMITER + "Group A" +
 			Options.DELIMITER + "Second Int Value";
+		options.registerOption(intOptionName, 50, null, "description");
 		options.setInt(intOptionName, 50);
-		options.setBoolean(myOptionsName + "my sub group" + Options.DELIMITER + "Group A" +
-			Options.DELIMITER + "First boolean value", true);
 
-		options.setInt(
+		String name = myOptionsName + "my sub group" + Options.DELIMITER + "Group A" +
+			Options.DELIMITER + "First boolean value";
+		options.registerOption(name, true, null, "description");
+		options.setBoolean(name, true);
+
+		name =
 			"New Options" + Options.DELIMITER + " subgroup A" + Options.DELIMITER + " subgroup B" +
-				Options.DELIMITER + " subgroup C" + Options.DELIMITER + "Another int value",
-			300);
+				Options.DELIMITER + " subgroup C" + Options.DELIMITER + "Another int value";
+		options.registerOption(name, 300, null, "description");
+		options.setInt(name, 300);
 
-		options.setColor("Favorite Color", Color.RED);
+		name = "Favorite Color";
+		options.registerOption(name, Color.RED, null, "description");
+		options.setColor(name, Color.RED);
 
 		// select the middle button
-		options.setEnum("Mouse Buttons" + Options.DELIMITER + "Mouse Button To Activate",
+		name = "Mouse Buttons" + Options.DELIMITER + "Mouse Button To Activate";
+		options.registerOption(name, GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE, null,
+			"description");
+		options.setEnum(name,
 			GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
 
 	}

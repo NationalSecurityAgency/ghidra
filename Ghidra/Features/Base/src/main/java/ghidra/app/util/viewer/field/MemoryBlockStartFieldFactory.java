@@ -111,8 +111,21 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) proxyObject;
+
+		String[] comments;
+		List<AttributedString> attributedStrings = createBlockStartText(cu);
+		if (attributedStrings == null) {
+			comments = new String[0];
+		}
+		else {
+			comments = new String[attributedStrings.size()];
+			for (int i = 0; i < comments.length; i++) {
+				comments[i] = attributedStrings.get(i).getText();
+			}
+		}
+
 		return new MemoryBlockStartFieldLocation(cu.getProgram(), cu.getMinAddress(), null, row,
-			col, null, 0);
+			col, comments, 0);
 	}
 
 	/**
@@ -199,11 +212,20 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		String type = block.getType() == MemoryBlockType.DEFAULT ? "" : "(" + block.getType() + ")";
+		MemoryBlockType blockType = block.getType();
+
+		String type = "";
+		if (blockType != MemoryBlockType.DEFAULT) {
+			if (block.isMapped()) {
+				type = "(" + block.getSourceInfos().get(0).getDescription() + ")";
+			}
+			else {
+				type = "(" + blockType + ")";
+			}
+		}
 		String line1 = block.getName() + " " + type;
 		String line2 = block.getComment();
-		String line3 = cu.getMemory().getMinAddress().getAddressSpace().toString() + " " +
-			block.getStart() + "-" + block.getEnd();
+		String line3 = block.getStart().toString(true) + "-" + block.getEnd().toString(true);
 
 		AttributedString borderAS = new AttributedString("//", color, getMetrics());
 		lines.add(borderAS);

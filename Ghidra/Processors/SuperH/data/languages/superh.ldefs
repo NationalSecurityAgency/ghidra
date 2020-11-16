@@ -10,7 +10,7 @@
             processorspec="superh.pspec"
             id="SuperH:BE:32:SH-2A">
     <description>SuperH SH-2A processor 32-bit big-endian</description>
-    <compiler name="default" spec="superh.cspec" id="default"/>
+    <compiler name="default" spec="superh2a.cspec" id="default"/>
   </language>
   <language processor="SuperH"
             endian="big"

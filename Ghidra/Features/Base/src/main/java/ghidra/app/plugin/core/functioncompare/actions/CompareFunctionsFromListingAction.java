@@ -18,7 +18,10 @@ package ghidra.app.plugin.core.functioncompare.actions;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.swing.Icon;
+
 import docking.ActionContext;
+import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.*;
@@ -29,6 +32,8 @@ import ghidra.program.util.ProgramSelection;
  * in the listing
  */
 public class CompareFunctionsFromListingAction extends CompareFunctionsAction {
+
+	private final static String FUNCTION_MENU_SUBGROUP = "Function";
 
 	/**
 	 * Constructor
@@ -41,11 +46,21 @@ public class CompareFunctionsFromListingAction extends CompareFunctionsAction {
 
 		// this action is used as a global action--do not add it to the toolbar
 		setToolBarData(null);
+
+		//
+		// Guilty knowledge of other function-related menu items.
+		// See the FunctionPlugin for this value 
+		// 		
+		String menuSubGroup = "Z_End";
+		Icon icon = null; // we don't use icons in the Listing popup menu
+		setPopupMenuData(new MenuData(new String[] { POPUP_MENU_NAME }, icon,
+			FUNCTION_MENU_SUBGROUP, MenuData.NO_MNEMONIC,
+			menuSubGroup));
 	}
 
 	@Override
 	public boolean isAddToPopup(ActionContext actionContext) {
-		return actionContext instanceof ListingActionContext;
+		return actionContext instanceof ListingActionContext && isEnabledForContext(actionContext);
 	}
 
 	@Override

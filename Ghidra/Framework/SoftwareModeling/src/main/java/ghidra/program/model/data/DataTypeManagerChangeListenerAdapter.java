@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-
 /**
  * Adapter for a Category change listener.
  */

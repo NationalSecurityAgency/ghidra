@@ -421,6 +421,16 @@ void AddrSpaceManager::insertResolver(AddrSpace *spc,AddressResolver *rsolv)
   resolvelist[ind] = rsolv;
 }
 
+/// This method establishes for a single address space, what range of constants are checked
+/// as possible symbol starts, when it is not known apriori that a constant is a pointer.
+/// \param range is the range of values for a single address space
+void AddrSpaceManager::setInferPtrBounds(const Range &range)
+
+{
+  range.getSpace()->pointerLowerBound = range.getFirst();
+  range.getSpace()->pointerUpperBound = range.getLast();
+}
+
 /// Base destructor class, cleans up AddrSpace pointers which
 /// must be explicited created via \e new
 AddrSpaceManager::~AddrSpaceManager(void)

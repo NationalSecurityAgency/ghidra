@@ -32,6 +32,9 @@ import ghidra.graph.viewer.*;
  * 		<li>We clear state on mouseReleased() and mouseExited(), since we will get 
  * 			at least one of those calls</li>
  * </ul>
+ * 
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 //@formatter:off
 public abstract class VisualGraphAbstractGraphMousePlugin<V extends VisualVertex, 
@@ -46,11 +49,16 @@ public abstract class VisualGraphAbstractGraphMousePlugin<V extends VisualVertex
 	protected E selectedEdge;
 
 	public VisualGraphAbstractGraphMousePlugin() {
-		this(InputEvent.BUTTON1_MASK);
+		this(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
 	public VisualGraphAbstractGraphMousePlugin(int selectionModifiers) {
 		super(selectionModifiers);
+	}
+
+	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == modifiers;
 	}
 
 	protected boolean checkForVertex(MouseEvent e) {

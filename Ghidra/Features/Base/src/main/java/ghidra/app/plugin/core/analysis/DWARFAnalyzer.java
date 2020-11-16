@@ -27,6 +27,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.BuiltInDataTypeManager;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -89,6 +90,15 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		setDefaultEnablement(true);
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS.after());
 		setSupportsOneTimeAnalysis();
+	}
+
+	@Override
+	public boolean getDefaultEnablement(Program program) {
+		// TODO: DWARF implementation needs improvements to handle Harvard Architectures properly
+		// Currently unable to produce addresses which should refer to data space resulting in
+		// improperly placed symbols, etc.
+		Language language = program.getLanguage();
+		return language.getDefaultSpace() == language.getDefaultDataSpace();
 	}
 
 	@Override

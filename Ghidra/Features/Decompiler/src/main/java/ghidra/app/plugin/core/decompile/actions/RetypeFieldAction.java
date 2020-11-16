@@ -23,18 +23,18 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 
 /**
  * Action triggered from a specific token in the decompiler window to change the data-type of
  * a field within a structure data-type. The field must already exist, except in the case of a
  * completely undefined structure. The data-type of the field is changed according to the user
- * selection.  If the size of the seleted data-type is bigger, this can trigger other fields in
+ * selection.  If the size of the selected data-type is bigger, this can trigger other fields in
  * the structure to be removed and may change the size of the structure.  The modified data-type
  * is permanently committed to the program's database.
  */
@@ -42,6 +42,7 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 
 	public RetypeFieldAction() {
 		super("Retype Field");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRetypeField"));
 		setPopupMenuData(new MenuData(new String[] { "Retype Field" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 	}

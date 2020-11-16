@@ -44,9 +44,14 @@ public class GTreeModel implements TreeModel {
 		this.root = root;
 	}
 
-	public void setRootNode(GTreeNode root) {
-		this.root = root;
-		fireRootChanged();
+	/**
+	 * Sets the models root node. NOTE: this is intended to only be called from the {@link GTree}
+	 * @param newRoot the new tree model root.  It will either be the actual root or a root
+	 * of a filtered sub-tree
+	 */
+	public void privateSwingSetRootNode(GTreeNode newRoot) {
+		this.root = newRoot;
+		swingFireRootChanged();
 	}
 
 	@Override
@@ -139,16 +144,11 @@ public class GTreeModel implements TreeModel {
 		}
 	}
 
-	public void fireRootChanged() {
-		if (!eventsEnabled) {
-			return;
+	private void swingFireRootChanged() {
+		TreeModelEvent event = new TreeModelEvent(this, (TreePath) null);
+		for (TreeModelListener listener : listeners) {
+			listener.treeStructureChanged(event);
 		}
-		Swing.runIfSwingOrRunLater(() -> {
-			GTreeNode rootNode = root;
-			if (rootNode != null) {
-				fireNodeStructureChanged(rootNode);
-			}
-		});
 	}
 
 	public void fireNodeDataChanged(GTreeNode changedNode) {
@@ -158,7 +158,15 @@ public class GTreeModel implements TreeModel {
 		SystemUtilities.assertThisIsTheSwingThread(
 			"GTreeModel.fireNodeDataChanged() must be " + "called from the AWT thread");
 
-		TreeModelEvent event = getChangedNodeEvent(changedNode);
+		GTreeNode viewNode = convertToViewNode(changedNode);
+		if (viewNode == null) {
+			return;
+		}
+		// Note - we are passing in the treepath of the node that changed.  The javadocs in 
+		// TreemodelListener seems to imply that you need to pass in the treepath of the parent
+		// of the node that changed and then the indexes of the children that changed. But this 
+		// works and is cheaper then computing the index of the node that changed.
+		TreeModelEvent event = new TreeModelEvent(this, viewNode.getTreePath());
 
 		for (TreeModelListener listener : listeners) {
 			listener.treeNodesChanged(event);
@@ -182,7 +190,6 @@ public class GTreeModel implements TreeModel {
 			// the index will be -1 if filtered out
 			return;
 		}
-
 		TreeModelEvent event = new TreeModelEvent(this, parent.getTreePath(), new int[] { index },
 			new Object[] { newNode });
 		for (TreeModelListener listener : listeners) {

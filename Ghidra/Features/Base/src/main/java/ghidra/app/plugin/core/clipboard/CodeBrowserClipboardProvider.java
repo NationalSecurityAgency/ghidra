@@ -376,7 +376,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		try {
 			TextLayoutGraphics g = new TextLayoutGraphics();
 
-			Rectangle rect = new Rectangle(2048, 2048);
+			Rectangle rect = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
 			AddressRangeIterator rangeItr = addressSet.getAddressRanges();
 			while (rangeItr.hasNext()) {

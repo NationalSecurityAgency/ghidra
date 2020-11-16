@@ -40,9 +40,8 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 	// Option Names
 	private static final String MODELFILE_OPTION_NAME = "Model File";
 	private static final String MODELFILE_OPTION_DESCRIPTION =
-		"Model file built using Ghidra's BuildStringModels class. Any model files for this analyzer " +
-			"should be located in the Ghidra/Features/Base/data/stringngrams directory and " +
-			"end in \".sng\".";
+		"Any model files for this analyzer should be located in the " +
+			"Ghidra/Features/Base/data/stringngrams directory and end in \".sng\".";
 
 	private static final String FORCE_MODEL_RELOAD_OPTION_NAME = "Force Model Reload";
 	private static final String FORCE_MODEL_RELOAD_OPTION_DESCRIPTION =

@@ -115,10 +115,6 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		DockingWindowManager.clearMouseOverHelp();
 		ActionContext context = getActionContext();
 
-		if (!toolBarAction.isValidContext(context)) {
-			return;
-		}
-
 		context.setSourceObject(event.getSource());
 
 		// this gives the UI some time to repaint before executing the action
@@ -134,17 +130,21 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		});
 	}
 
-	@Override
-	public String toString() {
-		return toolBarAction.getName();
-	}
-
 	private ActionContext getActionContext() {
+		if (windowManager != null) {
+			return windowManager.getActionContext(toolBarAction);
+		}
+
 		ComponentProvider provider = getComponentProvider();
 		ActionContext context = provider == null ? null : provider.getActionContext(null);
 		final ActionContext actionContext =
 			context == null ? new ActionContext(provider, null) : context;
 		return actionContext;
+	}
+
+	@Override
+	public String toString() {
+		return toolBarAction.getName();
 	}
 
 	private ComponentProvider getComponentProvider() {

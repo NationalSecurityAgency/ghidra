@@ -23,7 +23,6 @@ import javax.swing.Icon;
 import javax.swing.SwingWorker;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeNode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.util.*;
@@ -150,7 +149,8 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 	/**
 	 * Get the name to display in tree.
 	 */
-	String getDisplayName() {
+	@Override
+	public String getDisplayText() {
 		return displayName;
 	}
 

@@ -37,7 +37,7 @@ public class TutorialScreenShotGenerator extends AbstractScreenShotGenerator {
 	@Deprecated
 	public void showImage() {
 		ImageDialogProvider dialog = new ImageDialogProvider(null, null, image);
-		tool.showDialog(dialog, tool.getToolFrame());
+		tool.showDialog(dialog);
 	}
 
 	protected void saveToFile(String absolutePathToImage) {

@@ -32,7 +32,7 @@ import resources.ResourceManager;
 class AreaMarkerSet extends MarkerSetImpl {
 
 	/**
-	 * @param navigationManager manager for these area markers
+	 * @param markerManager manager for these area markers
 	 * @param name the name for this area marker
 	 * @param desc the description associated with this area marker
 	 * @param priority to sort out what displays on top, higher is more likely to be on top
@@ -42,16 +42,18 @@ class AreaMarkerSet extends MarkerSetImpl {
 	 *              If color is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color for the marker
 	 * @param isPreferred true indicates higher priority than all non-preferred MarkerSets
+	 * @param program the program to which the markers apply
 	 */
-	AreaMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
+	AreaMarkerSet(MarkerManager markerManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			boolean isPreferred) {
-		super(navigationManager, name, desc, priority, showMarkers, showNavigation, colorBackground,
+			boolean isPreferred, Program program) {
+		super(markerManager, program, name, desc, priority, showMarkers, showNavigation,
+			colorBackground,
 			markerColor, isPreferred);
 	}
 
 	/**
-	 * @param navigationManager manager for these area markers
+	 * @param markerManager manager for these area markers
 	 * @param name the name for this area marker
 	 * @param desc the description associated with this area marker
 	 * @param priority to sort out what displays on top, higher is more likely to be on top
@@ -60,12 +62,13 @@ class AreaMarkerSet extends MarkerSetImpl {
 	 * @param colorBackground the color of marked areas in navigation bar
 	 *              If color is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color for the marker
+	 * @param program the program to which the markers apply
 	 */
-	AreaMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
+	AreaMarkerSet(MarkerManager markerManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
 			Program program) {
-		this(navigationManager, name, desc, priority, showMarkers, showNavigation, colorBackground,
-			markerColor, false);
+		this(markerManager, name, desc, priority, showMarkers, showNavigation,
+			colorBackground, markerColor, false, program);
 	}
 
 	@Override
@@ -85,9 +88,6 @@ class AreaMarkerSet extends MarkerSetImpl {
 		}
 	}
 
-	/*
-	 * @see ghidra.app.plugin.codebrowser.MarkerSetImpl#doPaintNavigation(java.awt.Graphics, int, int, int)
-	 */
 	@Override
 	protected void doPaintNavigation(Graphics g, int height, int width, SortedRangeList rangeList) {
 
@@ -108,9 +108,6 @@ class AreaMarkerSet extends MarkerSetImpl {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.codebrowser.MarkerSetImpl#getNavIcon()
-	 */
 	@Override
 	public ImageIcon getNavIcon() {
 

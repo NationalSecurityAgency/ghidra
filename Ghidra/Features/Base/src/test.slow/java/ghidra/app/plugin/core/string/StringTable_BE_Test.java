@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -172,13 +172,13 @@ public class StringTable_BE_Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// test that the label was made correctly
 		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr(0x400));
-		assertEquals("u_abcdef@00000400", sym.getName());
+		assertEquals("u_abcdef", sym.getName());
 
 		selectRows(table, address);
 		int selectedRow = table.getSelectedRow();
 
 		// test that the table was updated with the label and preview
-		assertEquals("u_abcdef@00000400", labelCell(model, selectedRow));
+		assertEquals("u_abcdef", labelCell(model, selectedRow));
 
 		CodeUnitTableCellData value = previewCell(model, selectedRow);
 		assertEquals("unicode u\"abcdef\"", value.getDisplayString());

@@ -1,0 +1,11 @@
+# AVR8 with 22-bit addressable code space
+
+@define PCBYTESIZE "3"
+@define HASEIND "1"
+
+@define IO_START "0"
+@define REGISTER_SPACE "register"
+@define EIND "0x3c"
+ 
+@include "avr8.sinc"
+

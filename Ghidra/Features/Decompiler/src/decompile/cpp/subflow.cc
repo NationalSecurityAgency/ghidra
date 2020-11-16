@@ -1260,7 +1260,8 @@ bool SubvariableFlow::processNextWork(void)
 /// \param mask is a mask where 1 bits indicate the position of the logical value within the \e root Varnode
 /// \param aggr is \b true if we should use aggressive (less restrictive) tests during the trace
 /// \param sext is \b true if we should assume sign extensions from the logical value into its container
-SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext)
+/// \param big is \b true if we look for subvariable flow for \e big (8-byte) logical values
+SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext,bool big)
 
 {
   fd = f;
@@ -1280,6 +1281,13 @@ SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,
     flowsize = 3;
   else if (bitsize <= 32)
     flowsize = 4;
+  else if (bitsize <= 64) {
+    if (!big) {
+      fd = (Funcdata *)0;
+      return;
+    }
+    flowsize = 8;
+  }
   else {
     fd = (Funcdata *)0;
     return;
@@ -1769,7 +1777,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     Varnode *outvn = op->getOut();
     if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
       continue;
-    int4 slot = op->getSlot(vn);
     switch(op->code()) {
     case CPUI_COPY:
     case CPUI_FLOAT_CEIL:
@@ -1787,7 +1794,7 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
       TransformOp *rop = newOpReplace(op->numInput(), op->code(), op);
       TransformVar *outrvn = setReplacement(outvn);
       if (outrvn == (TransformVar *)0) return false;
-      opSetInput(rop,rvn,slot);
+      opSetInput(rop,rvn,op->getSlot(vn));
       opSetOutput(rop,outrvn);
       break;
     }
@@ -1805,18 +1812,20 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     case CPUI_FLOAT_LESS:
     case CPUI_FLOAT_LESSEQUAL:
     {
+      int4 slot = op->getSlot(vn);
       TransformVar *rvn2 = setReplacement(op->getIn(1-slot));
       if (rvn2 == (TransformVar *)0) return false;
-      TransformOp *rop = newPreexistingOp(2, op->code(), op);
-      if (slot == 0) {
-	opSetInput(rop,rvn,0);
-	opSetInput(rop,rvn2,1);
+      if (rvn == rvn2) {
+	list<PcodeOp *>::const_iterator ourIter = iter;
+	--ourIter;	// Back up one to our original iterator
+	slot = op->getRepeatSlot(vn, slot, ourIter);
       }
-      else {
-	opSetInput(rop,rvn2,0);
-	opSetInput(rop,rvn,1);
+      if (preexistingGuard(slot, rvn2)) {
+	TransformOp *rop = newPreexistingOp(2, op->code(), op);
+	opSetInput(rop, rvn, 0);
+	opSetInput(rop, rvn2, 1);
+	terminatorCount += 1;
       }
-      terminatorCount += 1;
       break;
     }
     case CPUI_FLOAT_TRUNC:

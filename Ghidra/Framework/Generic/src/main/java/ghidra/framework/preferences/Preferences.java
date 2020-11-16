@@ -120,7 +120,9 @@ public class Preferences {
 
 		File file = new File(pathName);
 		if (file.exists()) {
-			properties.load(new FileInputStream(pathName));
+			try (FileInputStream in = new FileInputStream(pathName)) {
+				properties.load(in);
+			}
 		}
 
 		// Try to load a previous installation's preferences so that they are usable as a 
@@ -131,9 +133,10 @@ public class Preferences {
 	}
 
 	private static void loadPreviousInstallationPreferences() throws IOException {
-		FileInputStream fis = getAlternateFileInputStream();
-		if (fis != null) {
-			previousProperties.load(fis);
+		try (FileInputStream fis = getAlternateFileInputStream()) {
+			if (fis != null) {
+				previousProperties.load(fis);
+			}
 		}
 	}
 

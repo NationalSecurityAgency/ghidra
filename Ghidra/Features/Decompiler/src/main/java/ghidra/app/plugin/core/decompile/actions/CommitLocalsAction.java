@@ -17,18 +17,21 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.HelpLocation;
 
 public class CommitLocalsAction extends AbstractDecompilerAction {
 
 	public CommitLocalsAction() {
 		super("Commit Locals");
-		setPopupMenuData(new MenuData(new String[] { "Commit Locals" }, "Commit"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionCommitLocals"));
+		setPopupMenuData(new MenuData(new String[] { "Commit Local Names" }, "Commit"));
 		setDescription(
-			"Save Local variable definitions to Program, locking them into their current type definitions");
+			"Save Local variable names from Decompiler window to Program");
 	}
 
 	@Override
@@ -42,10 +45,10 @@ public class CommitLocalsAction extends AbstractDecompilerAction {
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Program program = context.getProgram();
-		int transaction = program.startTransaction("Commit Params/Return");
+		int transaction = program.startTransaction("Commit Local Names");
 		try {
 			HighFunction hfunc = context.getHighFunction();
-			HighFunctionDBUtil.commitLocalsToDatabase(hfunc, SourceType.USER_DEFINED);
+			HighFunctionDBUtil.commitLocalNamesToDatabase(hfunc, SourceType.USER_DEFINED);
 		}
 		finally {
 			program.endTransaction(transaction, true);

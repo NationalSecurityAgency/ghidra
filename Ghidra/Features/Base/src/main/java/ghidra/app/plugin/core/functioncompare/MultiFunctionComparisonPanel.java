@@ -89,11 +89,11 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 */
 	@Override
 	public void reload() {
+
 		reloadSourceList();
 		Function selectedSource = (Function) sourceFunctionsCBModel.getSelectedItem();
 		reloadTargetList(selectedSource);
 		loadFunctions(selectedSource, (Function) targetFunctionsCBModel.getSelectedItem());
-
 		updateTabText();
 
 		// Fire a notification to update the UI state; without this the 

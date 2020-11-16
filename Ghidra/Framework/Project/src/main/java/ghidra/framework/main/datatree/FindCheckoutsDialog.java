@@ -31,7 +31,7 @@ import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.Plugin;
@@ -128,7 +128,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ProjectDataActionContext(null, folder.getProjectData(), null, null,
+		return new ProjectDataContext(null, folder.getProjectData(), null, null,
 			getFileList(), null, true);
 	}
 

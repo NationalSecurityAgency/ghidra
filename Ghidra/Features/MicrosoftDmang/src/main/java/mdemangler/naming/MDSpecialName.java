@@ -52,6 +52,7 @@ public class MDSpecialName extends MDParsableItem {
 	private boolean isQualified;
 	private int rttiNumber = -1;
 	private MDString mstring;
+	private String castTypeString;
 
 	public MDSpecialName(MDMang dmang, int startIndexOffset) {
 		super(dmang, startIndexOffset);
@@ -63,6 +64,10 @@ public class MDSpecialName extends MDParsableItem {
 
 	public String getName() {
 		return name;
+	}
+
+	public void setCastTypeString(String castTypeString) {
+		this.castTypeString = castTypeString;
 	}
 
 	public boolean isConstructor() {
@@ -104,6 +109,10 @@ public class MDSpecialName extends MDParsableItem {
 	@Override
 	public void insert(StringBuilder builder) {
 		dmang.insertString(builder, name);
+		if (isTypeCast && castTypeString != null) {
+			dmang.appendString(builder, " ");
+			dmang.appendString(builder, castTypeString);
+		}
 	}
 
 	@Override

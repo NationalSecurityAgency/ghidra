@@ -147,9 +147,6 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		waitForTasks();
 		win = waitForWindow("Can't Open Selected Program");
-		assertNotNull(win);
-		MultiLineLabel mll = findComponent(win, MultiLineLabel.class);
-		assertTrue(mll.getLabel().startsWith("Programs languages don't match."));
 		pressButton(win, "OK");
 
 		win = waitForWindow("Select Other Program");

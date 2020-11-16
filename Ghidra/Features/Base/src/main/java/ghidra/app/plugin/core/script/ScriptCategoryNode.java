@@ -27,7 +27,7 @@ public class ScriptCategoryNode extends GTreeNode {
 
 	private final String name;
 
-	public ScriptCategoryNode(String name) {
+	ScriptCategoryNode(String name) {
 		this.name = name;
 
 	}

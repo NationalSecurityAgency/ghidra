@@ -3,13 +3,13 @@
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/building_fid.txt||GHIDRA|exclude|||END|
-data/common_symbols_win32.txt||GHIDRA|exclude||Symbols used to generate fiddb files distributed with Ghidra|END|
-data/common_symbols_win64.txt||GHIDRA|exclude||Symbols used to generate fiddb files distributed with Ghidra|END|
-src/main/doc/fid.xml||GHIDRA|exclude|||END|
-src/main/doc/fid_common.xsl||GHIDRA|exclude|||END|
-src/main/doc/fid_html.xsl||GHIDRA|exclude|||END|
-src/main/doc/fid_pdf.xsl||GHIDRA|exclude|||END|
+data/building_fid.txt||GHIDRA||||END|
+data/common_symbols_win32.txt||GHIDRA|||Symbols used to generate fiddb files distributed with Ghidra|END|
+data/common_symbols_win64.txt||GHIDRA|||Symbols used to generate fiddb files distributed with Ghidra|END|
+src/main/doc/fid.xml||GHIDRA||||END|
+src/main/doc/fid_common.xsl||GHIDRA||||END|
+src/main/doc/fid_html.xsl||GHIDRA||||END|
+src/main/doc/fid_pdf.xsl||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/FunctionID/FunctionID.html||GHIDRA||||END|

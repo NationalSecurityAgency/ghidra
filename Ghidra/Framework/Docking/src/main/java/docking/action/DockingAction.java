@@ -52,7 +52,14 @@ import utilities.util.reflection.ReflectionUtilities;
  * method is used to determine if an action if applicable to the current context.   Overriding this
  * method allows actions to manage their own enablement.  Otherwise, the default behavior for this
  * method is to return the current enabled property of the action.  This allows for the possibility
- * for plugins to manage the enablement of its actions.
+ * for plugins to externally manage the enablement of its actions.
+ * <P>
+ * NOTE: If you wish to do your own external enablement management for an action (which is highly
+ * discouraged), it is very important that you don't use any of the internal enablement mechanisms
+ * by setting the predicates {@link #enabledWhen(Predicate)}, {@link #validContextWhen(Predicate)}
+ * or overriding {@link #isValidContext(ActionContext)}. These predicates and methods trigger
+ * internal enablement management which will interfere with you own calls to
+ * {@link DockingAction#setEnabled(boolean)}.
  */
 public abstract class DockingAction implements DockingActionIf {
 
@@ -76,6 +83,8 @@ public abstract class DockingAction implements DockingActionIf {
 	private Predicate<ActionContext> enabledPredicate;
 	private Predicate<ActionContext> popupPredicate;
 	private Predicate<ActionContext> validContextPredicate;
+
+	private boolean supportsDefaultToolContext;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -215,13 +224,22 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public boolean setEnabled(boolean newValue) {
+	public void setEnabled(boolean newValue) {
 		if (isEnabled == newValue) {
-			return isEnabled;
+			return;
 		}
 		isEnabled = newValue;
 		firePropertyChanged(ENABLEMENT_PROPERTY, !isEnabled, isEnabled);
-		return !isEnabled;
+	}
+
+	@Override
+	public void setSupportsDefaultToolContext(boolean newValue) {
+		supportsDefaultToolContext = newValue;
+	}
+
+	@Override
+	public boolean supportsDefaultToolContext() {
+		return supportsDefaultToolContext;
 	}
 
 	@Override
@@ -582,7 +600,6 @@ public abstract class DockingAction implements DockingActionIf {
 			inceptionInformation = "";
 			return;
 		}
-
 		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
 	}
 

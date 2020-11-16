@@ -15,15 +15,13 @@
  */
 package ghidra.app.plugin.match;
 
+import java.util.*;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class does the work of matching subroutines. Every subroutine
@@ -44,12 +42,13 @@ public class MatchFunctions {
 			boolean includeOneToOne, boolean includeNonOneToOne, FunctionHasher hasher,
 			TaskMonitor monitor) throws CancelledException {
 
-		LongObjectHashtable<Match> functionHashes = new LongObjectHashtable<Match>();
+		Map<Long, Match> functionHashes = new HashMap<>();
 		List<MatchedFunctions> functionMatches = new ArrayList<MatchedFunctions>();
 		FunctionIterator aProgfIter = aProgram.getFunctionManager().getFunctions(setA, true);
 		FunctionIterator bProgfIter = bProgram.getFunctionManager().getFunctions(setB, true);
 		monitor.setIndeterminate(false);
-		monitor.initialize(2 * (aProgram.getFunctionManager().getFunctionCount() + bProgram.getFunctionManager().getFunctionCount()));
+		monitor.initialize(2 * (aProgram.getFunctionManager().getFunctionCount() +
+			bProgram.getFunctionManager().getFunctionCount()));
 		monitor.setMessage("Hashing functions in " + aProgram.getName());
 
 		// Hash functions in program A
@@ -73,17 +72,15 @@ public class MatchFunctions {
 
 		//Find the remaining hash matches ---> unique code match left and THERE is no symbol that matches
 		//in the other program.
-		long[] keys = functionHashes.getKeys();
 		final long progress = monitor.getProgress();
-		monitor.setMaximum(progress + keys.length);
+		monitor.setMaximum(progress + functionHashes.size());
 		monitor.setProgress(progress);
 		monitor.setMessage("Finding function matches");
-		for (int i = 0; i < keys.length; i++) {
+		for (Match match : functionHashes.values()) {
 			monitor.incrementProgress(1);
 			if (monitor.isCancelled()) {
 				break;
 			}
-			Match match = functionHashes.get(keys[i]);
 			ArrayList<Address> aProgAddrs = match.aAddresses;
 			ArrayList<Address> bProgAddrs = match.bAddresses;
 			if ((includeOneToOne && aProgAddrs.size() == 1 && bProgAddrs.size() == 1) ||
@@ -103,15 +100,17 @@ public class MatchFunctions {
 	}
 
 	public static List<MatchedFunctions> matchOneFunction(Program aProgram, Address aEntryPoint,
-			Program bProgram, FunctionHasher hasher, TaskMonitor monitor) throws CancelledException {
+			Program bProgram, FunctionHasher hasher, TaskMonitor monitor)
+			throws CancelledException {
 		return matchOneFunction(aProgram, aEntryPoint, bProgram, null, hasher, monitor);
 	}
 
 	// Finds all matches in program B to the function in Program A
 	public static List<MatchedFunctions> matchOneFunction(Program aProgram, Address aEntryPoint,
-			Program bProgram, AddressSetView bAddressSet, FunctionHasher hasher, TaskMonitor monitor)
+			Program bProgram, AddressSetView bAddressSet, FunctionHasher hasher,
+			TaskMonitor monitor)
 			throws CancelledException {
-		LongObjectHashtable<Match> functionHashes = new LongObjectHashtable<Match>();
+		Map<Long, Match> functionHashes = new HashMap<>();
 		List<MatchedFunctions> functionMatches = new ArrayList<MatchedFunctions>();
 
 		Function aFunc = aProgram.getFunctionManager().getFunctionContaining(aEntryPoint);
@@ -131,12 +130,12 @@ public class MatchFunctions {
 
 		//Find the remaining hash matches ---> unique code match left and THERE is no symbol that matches
 		//in the other program.
-		long[] keys = functionHashes.getKeys();
-		for (int i = 0; i < keys.length; i++) {
+		List<Long> keys = new ArrayList<>(functionHashes.keySet());
+		for (long key : keys) {
 			if (monitor.isCancelled()) {
 				break;
 			}
-			Match match = functionHashes.get(keys[i]);
+			Match match = functionHashes.get(key);
 			ArrayList<Address> aProgAddrs = match.aAddresses;
 			ArrayList<Address> bProgAddrs = match.bAddresses;
 
@@ -149,7 +148,7 @@ public class MatchFunctions {
 							"Code Only Match");
 					functionMatches.add(functionMatch);
 				}
-				functionHashes.remove(keys[i]);
+				functionHashes.remove(key);
 			}
 		}
 
@@ -157,7 +156,7 @@ public class MatchFunctions {
 	}
 
 	private static void hashFunction(TaskMonitor monitor,
-			LongObjectHashtable<Match> functionHashes, Function function, FunctionHasher hasher,
+			Map<Long, Match> functionHashes, Function function, FunctionHasher hasher,
 			boolean isProgA) throws CancelledException {
 
 		long hash = hasher.hash(function, monitor);

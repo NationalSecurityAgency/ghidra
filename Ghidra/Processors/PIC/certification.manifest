@@ -9,7 +9,10 @@ data/languages/PIC24.sinc||GHIDRA||||END|
 data/languages/PIC24E.slaspec||GHIDRA||reviewed||END|
 data/languages/PIC24F.slaspec||GHIDRA||reviewed||END|
 data/languages/PIC24H.slaspec||GHIDRA||reviewed||END|
+data/languages/PIC30.dwarf||GHIDRA||||END|
+data/languages/PIC33.dwarf||GHIDRA||||END|
 data/languages/dsPIC30F.slaspec||GHIDRA||reviewed||END|
+data/languages/dsPIC33C.slaspec||GHIDRA||||END|
 data/languages/dsPIC33E.slaspec||GHIDRA||reviewed||END|
 data/languages/dsPIC33F.slaspec||GHIDRA||reviewed||END|
 data/languages/pic12.sinc||GHIDRA||reviewed||END|

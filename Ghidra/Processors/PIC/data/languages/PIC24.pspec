@@ -3,7 +3,8 @@
 <processor_spec>
 	<properties>
 		<property key="assemblyRating:dsPIC30F:LE:24:default" value="POOR"/>
-		<property key="assemblyMessage:dsPICdsPIC30F:LE:24:default" value="The language tested with a rating of POOR; however, the failures all deal with extraneous instructions. The assembler may offer you several options. At least one of them will be correct, but others may be erroneous."/>
+		<property key="assemblyMessage:dsPIC30F:LE:24:default" value="The language tested with a rating of POOR; however, the failures all deal with extraneous instructions. The assembler may offer you several options. At least one of them will be correct, but others may be erroneous."/>
+		<property key="minimumDataImageBase" value="0x1000" />
 	</properties>
 	<programcounter register="PC"/>
 	<data_space space="ram"/>

@@ -5,6 +5,16 @@ apply plugin: 'java'
 if (hasProperty("eclipseDSL")) {
 	apply plugin: 'eclipse'
 	eclipse {
+	    // Check to make sure the generated build folders exists
+        def srcGenFolder = file ("src-gen")
+		if (!srcGenFolder.exists()) {
+			srcGenFolder.mkdirs()
+		} 
+        def xtendGenFolder = file ("xtend-gen")
+		if (!xtendGenFolder.exists()) {
+			xtendGenFolder.mkdirs()
+		} 
+
 		project {
 			name = 'Eclipse SleighEditor Tests'
 			buildCommand 'org.eclipse.pde.ManifestBuilder'

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin;
 
+import java.io.PrintWriter;
+
+import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.script.*;
 import ghidra.app.services.*;
@@ -31,8 +33,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.PrintWriter;
 
 public class WindowsResourceReferenceAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "WindowsResourceReference";
@@ -81,23 +81,21 @@ public class WindowsResourceReferenceAnalyzer extends AbstractAnalyzer {
 		PluginTool tool = analysisManager.getAnalysisTool();
 		Project project = findProject(tool);
 
-		GhidraState state =
-			new GhidraState(tool, project, program, new ProgramLocation(program,
-				set.getMinAddress()), new ProgramSelection(set), null);
+		GhidraState state = new GhidraState(tool, project, program,
+			new ProgramLocation(program, set.getMinAddress()), new ProgramSelection(set), null);
 		try {
-			ScriptInfo scriptInfo = GhidraScriptUtil.findScriptByName(scriptName);
-			if (scriptInfo == null) {
+			ResourceFile sourceFile = GhidraScriptUtil.findScriptByName(scriptName);
+			if (sourceFile == null) {
 				throw new IllegalAccessException("Couldn't find script");
 			}
-			GhidraScriptProvider provider =
-				GhidraScriptUtil.getProvider(scriptInfo.getSourceFile());
+			GhidraScriptProvider provider = GhidraScriptUtil.getProvider(sourceFile);
 			if (provider == null) {
 				throw new IllegalAccessException("Couldn't find script provider");
 			}
 
 			PrintWriter writer = getOutputMsgStream(tool);
 
-			GhidraScript script = provider.getScriptInstance(scriptInfo.getSourceFile(), writer);
+			GhidraScript script = provider.getScriptInstance(sourceFile, writer);
 			script.set(state, monitor, writer);
 
 			// This code was added so the analyzer won't print script messages to console

@@ -1,13 +1,16 @@
 ##VERSION: 2.0
+##MODULE IP: Apache License 2.0
 ##MODULE IP: BSD
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
+##MODULE IP: MIT
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 .gitignore||GHIDRA||||END|
+.launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
@@ -116,6 +119,7 @@ src/main/help/help/topics/BookmarkPlugin/images/BookmarksFilter.png||GHIDRA||||E
 src/main/help/help/topics/BookmarkPlugin/images/MarkerForBookmark.png||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/NextSelectionBlock16.gif||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/PreviousSelectionBlock16.gif||GHIDRA||||END|
+src/main/help/help/topics/BundleManager/BundleManager.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/CParser.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseCSource.png||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseError.png||GHIDRA||||END|
@@ -439,6 +443,8 @@ src/main/help/help/topics/GhidraServer/GhidraServer.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/glossary.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/images/BigEndian.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Glossary/images/LittleEndian.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Graph/GraphIntro.html||GHIDRA||||END|
+src/main/help/help/topics/Graph/GraphServicesIntro.html||GHIDRA||||END|
 src/main/help/help/topics/HeadlessAnalyzer/HeadlessAnalyzer.htm||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/About_pdb.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/ImporterPlugin/images/BatchImportDialog.png||GHIDRA||||END|

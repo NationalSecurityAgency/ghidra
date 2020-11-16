@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +15,26 @@
  */
 package ghidra.app.context;
 
+import docking.ComponentProvider;
 import ghidra.app.nav.Navigatable;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import docking.ComponentProvider;
 
 public class ListingActionContext extends NavigatableActionContext {
-	
+
 	public ListingActionContext(ComponentProvider provider, Navigatable navigatable) {
 		super(provider, navigatable);
 	}
-	
-	public ListingActionContext(ComponentProvider provider, Navigatable navigatable, ProgramLocation location) {
+
+	public ListingActionContext(ComponentProvider provider, Navigatable navigatable,
+			ProgramLocation location) {
 		super(provider, navigatable, location);
 	}
-	
-	public ListingActionContext(ComponentProvider provider, Navigatable navigatable, 
-	    Program program, ProgramLocation location, ProgramSelection selection, 
-	    ProgramSelection highlight ) {
-	    super( provider, navigatable, program, location, selection, highlight );
+
+	public ListingActionContext(ComponentProvider provider, Navigatable navigatable,
+			Program program, ProgramLocation location, ProgramSelection selection,
+			ProgramSelection highlight) {
+		super(provider, navigatable, program, location, selection, highlight);
 	}
 }

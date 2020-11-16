@@ -133,6 +133,7 @@ class RootNode extends WindowNode {
 	/**
 	 * Return whether the component for this RootNode is visible.
 	 */
+	@Override
 	boolean isVisible() {
 		return windowWrapper.isVisible();
 	}
@@ -463,7 +464,9 @@ class RootNode extends WindowNode {
 		int width = Integer.parseInt(rootNodeElement.getAttributeValue("WIDTH"));
 		int height = Integer.parseInt(rootNodeElement.getAttributeValue("HEIGHT"));
 		JFrame frame = windowWrapper.getParentFrame();
-		frame.setBounds(x, y, width, height);
+		Rectangle bounds = new Rectangle(x, y, width, height);
+		WindowUtilities.ensureOnScreen(frame, bounds);
+		frame.setBounds(bounds);
 
 		List<ComponentPlaceholder> restoredPlaceholders = new ArrayList<>();
 		Iterator<?> elementIterator = rootNodeElement.getChildren().iterator();

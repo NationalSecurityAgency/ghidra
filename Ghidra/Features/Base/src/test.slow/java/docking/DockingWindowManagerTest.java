@@ -16,8 +16,7 @@
 package docking;
 
 import static docking.WindowPosition.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.util.List;
@@ -245,6 +244,77 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testRestoreFromXML_favorVisiblePlaceholder() {
+		//
+		// Tests that the xml restore doesn't throw away 
+		DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null);
+
+		ComponentProvider provider1 = addProvider(dwm1, "A", "a", "X", STACK);
+		ComponentProvider provider2 = addProvider(dwm1, "A", "a", "X", STACK);
+		moveWindow(dwm1, provider1, provider2, RIGHT);
+
+		show(dwm1);
+
+//		dwm1.showComponent(provider1, false);
+		dwm1.showComponent(provider2, false);
+
+		Element element = new Element("TEST");
+		dwm1.saveToXML(element);
+
+		dwm1.showComponent(provider1, false);
+
+		final DockingWindowManager dwm2 =
+			new DockingWindowManager(new DummyTool("Tool2"), (List<Image>) null);
+		ComponentProvider newProvider = addProvider(dwm2, "A", "a", "X", STACK);
+
+		runSwing(() -> {
+			dwm2.setVisible(true);
+			dwm2.restoreFromXML(element);
+		});
+		waitForSwing();
+		assertTrue(dwm2.isVisible(newProvider));
+
+	}
+
+	@Test
+	public void testRestoreFromXML_duplicateNameAndGroup() {
+		//
+		// Test that, for related groups, the layout info stored in XML is re-used when providers
+		// are shown after that XML is restored--even if the window positioning changes
+		//
+		DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null);
+
+		ComponentProvider providerX = addProvider(dwm1, "A", "a", "X", STACK);
+		ComponentProvider providerY = addProvider(dwm1, "A", "a", "Y", STACK);
+		ComponentProvider providerZ = addProvider(dwm1, "A", "a", "Z", STACK);
+
+		show(dwm1);
+
+		moveWindow(dwm1, providerX, providerY, RIGHT);
+		moveWindow(dwm1, providerX, providerZ, BOTTOM);
+
+		// sanity check
+		assertAbove(dwm1, providerX, providerZ);
+		assertTotheRight(dwm1, providerY, providerX);
+
+		Element element = new Element("TEST");
+		dwm1.saveToXML(element);
+		DockingWindowManager dwm2 = createNewDockingWindowManagerFromXML(element);
+
+		//
+		// Show providers that have the same name and group as those we just added above.  Make 
+		// sure that even though they are changing the window positions, they will still 
+		// be placed where they were when the xml was saved.
+		//
+		ComponentProvider newX = addProvider(dwm2, "A", "a", "X", STACK);
+		ComponentProvider newY = addProvider(dwm2, "A", "a", "Y", STACK);
+		ComponentProvider newZ = addProvider(dwm2, "A", "a", "Z", STACK);
+
+		assertAbove(dwm2, newX, newZ);
+		assertTotheRight(dwm2, newY, newX);
+	}
+
+	@Test
 	public void testParentGroupToSubGroupRelationship_ParentOpenFirst() {
 		//
 		// Test that a parent group 'a' will always open where it wants to, relative to its group, 
@@ -373,6 +443,16 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		return addProvider(dwm, "SomeOwner", name, group, defaultWindowPosition, defaultWindowPosition);
 	}
 	//@formatter:on
+	//@formatter:off
+	private ComponentProvider addProvider(final DockingWindowManager dwm, 
+							 final String name, 
+							 final String group,
+							 final String title,
+							 final WindowPosition defaultWindowPosition) {
+		
+		return addProvider(dwm, "SomeOwner", name, group, title, defaultWindowPosition, defaultWindowPosition);
+	}
+	//@formatter:on
 
 	//@formatter:off
 	private ComponentProvider addProvider(final DockingWindowManager dwm, 
@@ -392,10 +472,23 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 							 final String group,
 							 final WindowPosition defaultWindowPosition, 
 							 final WindowPosition defaultIntragroupPoistion) {
+		return addProvider(dwm, owner, name, group, "Default Title", defaultWindowPosition,
+				defaultIntragroupPoistion);
+	}
+	//@formatter:on
+
+	//@formatter:off
+	private ComponentProvider addProvider(final DockingWindowManager dwm, 
+						 	 final String owner, 
+							 final String name, 
+							 final String group,
+							 final String title,
+							 final WindowPosition defaultWindowPosition, 
+							 final WindowPosition defaultIntragroupPoistion) {
 		
 		final AtomicReference<ComponentProvider> ref = new AtomicReference<>();
 		runSwing(() -> {
-			ComponentProvider p = new MyProvider(owner, name, group, defaultWindowPosition);
+			ComponentProvider p = new MyProvider(owner, name, group, title, defaultWindowPosition);
 			p.setIntraGroupPosition(defaultIntragroupPoistion);
 			dwm.addComponent(p, true);
 			ref.set(p);
@@ -431,6 +524,19 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		Window w1 = windowForComponent(c1);
 		Window w2 = windowForComponent(c2);
 		assertEquals(w1, w2);
+	}
+
+	private void moveWindow(DockingWindowManager dwm, ComponentProvider p1, ComponentProvider p2,
+			WindowPosition position) {
+		runSwing(() -> {
+			ComponentPlaceholder ph1 = dwm.getActivePlaceholder(p1);
+			ComponentPlaceholder ph2 = dwm.getActivePlaceholder(p2);
+			ComponentNode n1 = ph1.getNode();
+			ComponentNode n2 = ph2.getNode();
+			n2.remove(ph2);
+			n1.split(ph2, position);
+		});
+		waitForSwing();
 	}
 
 	private void assertAbove(DockingWindowManager dwm, ComponentProvider p1, ComponentProvider p2) {
@@ -494,11 +600,12 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	class MyProvider extends ComponentProviderAdapter {
 		JLabel label = new GDLabel();
 
-		public MyProvider(String owner, String name, String group,
+		public MyProvider(String owner, String name, String group, String title,
 				WindowPosition defaultWindowPosition) {
 			super(null, name, owner);
 			setWindowGroup(group);
 			setDefaultWindowPosition(defaultWindowPosition);
+			setTitle(title);
 		}
 
 		@Override

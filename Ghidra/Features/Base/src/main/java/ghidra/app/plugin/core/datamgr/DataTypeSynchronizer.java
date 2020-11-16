@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GDHtmlLabel;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.HTMLDataTypeRepresentation;
 import ghidra.app.util.html.MissingArchiveDataTypeHTMLRepresentation;

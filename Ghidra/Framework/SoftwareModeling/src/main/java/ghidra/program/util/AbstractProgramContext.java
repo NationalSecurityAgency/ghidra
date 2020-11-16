@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,18 @@
  */
 package ghidra.program.util;
 
+import java.util.Arrays;
+import java.util.List;
+
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.ProgramContext;
 
-import java.util.*;
-
 abstract public class AbstractProgramContext implements ProgramContext, DefaultProgramContext {
+	
+	protected Language language;
 
-	protected Map<String, Register> registerNameMap;
-	protected Register[] registers;
 	protected Register baseContextRegister;
 
 	private boolean hasNonFlowingContext = false;
@@ -36,18 +35,16 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	protected RegisterValue defaultDisassemblyContext;
 
-	protected AbstractProgramContext(Register[] registers) {
-		this.registers = registers;
+	protected AbstractProgramContext(Language language) {
+		init(language);
+	}
 
-		registerNameMap = new HashMap<String, Register>();
-		initNameMap();
-
-		if (baseContextRegister != null) {
-			nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();
-			Arrays.fill(nonFlowingContextRegisterMask, (byte) 0);
-			flowingContextRegisterMask = nonFlowingContextRegisterMask.clone();
-			initContextBitMasks(baseContextRegister);
-		}
+	/**
+	 * Get underlying language associated with this context and its registers
+	 * @return language
+	 */
+	public Language getLanguage() {
+		return language;
 	}
 
 	/**
@@ -87,7 +84,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	/**
 	 * Modify register value to eliminate non-flowing bits
-	 * @param value
+	 * @param value context register value to be modified
 	 * @return value suitable for flowing
 	 */
 	@Override
@@ -100,8 +97,9 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	/**
 	 * Modify register value to only include non-flowing bits
-	 * @param value
-	 * @return new value or null
+	 * @param value context register value to be modified
+	 * @return new value or null if value does not correspond to a context register or
+	 * non-flowing context fields have not been defined
 	 */
 	@Override
 	public final RegisterValue getNonFlowValue(RegisterValue value) {
@@ -111,53 +109,43 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 		return value.clearBitValues(flowingContextRegisterMask);
 	}
 
-	protected void initNameMap() {
-		baseContextRegister = null;
-		for (Register register : registers) {
-			registerNameMap.put(register.getName().toUpperCase(), register);
-			if (register.isProcessorContext()) {
-				baseContextRegister = register.getBaseRegister();
-			}
-			for (String alias : register.getAliases()) {
-				registerNameMap.put(alias.toUpperCase(), register);
-			}
-		}
+	/**
+	 * Initialize context for the specified language
+	 * @param lang processor language for which this context applies
+	 */
+	protected void init(Language lang) {
+		this.language = lang;
+		baseContextRegister = lang.getContextBaseRegister();
 		if (baseContextRegister == null) {
 			baseContextRegister =
 				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
 		}
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
 
+		nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();
+		Arrays.fill(nonFlowingContextRegisterMask, (byte) 0);
+		flowingContextRegisterMask = nonFlowingContextRegisterMask.clone();
+		initContextBitMasks(baseContextRegister);
 	}
 
 	@Override
-	public final Register[] getProcessorStateRegisters() {
-		List<Register> list = new ArrayList<Register>();
-		for (Register register : registers) {
-			if (register.isProcessorContext()) {
-				list.add(register);
-			}
-		}
-		return list.toArray(new Register[list.size()]);
+	public final List<Register> getContextRegisters() {
+		return language.getContextRegisters();
 	}
 
 	@Override
 	public final Register getRegister(String name) {
-		return registerNameMap.get(name.toUpperCase());
+		return language.getRegister(name);
 	}
 
 	@Override
-	public final String[] getRegisterNames() {
-		List<String> list = new ArrayList<String>();
-		for (Register register : registers) {
-			list.add(register.getName());
-		}
-		return list.toArray(new String[list.size()]);
+	public final List<String> getRegisterNames() {
+		return language.getRegisterNames();
 	}
 
 	@Override
-	public final Register[] getRegisters() {
-		return registers;
+	public final List<Register> getRegisters() {
+		return language.getRegisters();
 	}
 
 	@Override

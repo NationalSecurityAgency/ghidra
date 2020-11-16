@@ -30,6 +30,7 @@ public class ClearSelectionAction extends CodeViewerContextAction {
 
 	public ClearSelectionAction(String owner) {
 		super("Clear Selection", owner);
+		setSupportsDefaultToolContext(true);
 		setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SELECTION, "&Clear Selection" }, null, "Select"));
 
