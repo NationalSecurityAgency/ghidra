@@ -642,8 +642,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 					SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0x0);
 
 				int rawDataSize = sections[i].getSizeOfRawData();
+				int rawDataPtr = sections[i].getPointerToRawData();
 				virtualSize = sections[i].getVirtualSize();
-				if (rawDataSize != 0) {
+				if (rawDataSize != 0 && rawDataPtr != 0) {
 					int dataSize =
 						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
 								? virtualSize
@@ -654,13 +655,12 @@ public class PeLoader extends AbstractPeDebugLoader {
 							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
 								sections[i].getName() + " section");
 						}
-						long offset = sections[i].getPointerToRawData();
 						String sectionName = sections[i].getReadableName();
 						if (sectionName.isBlank()) {
 							sectionName = "SECTION." + i;
 						}
 						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
-							fileBytes, offset, dataSize, "", "", r, w, x, log);
+							fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
 						sectionToAddress.put(sections[i], address);
 					}
 					if (rawDataSize == virtualSize) {

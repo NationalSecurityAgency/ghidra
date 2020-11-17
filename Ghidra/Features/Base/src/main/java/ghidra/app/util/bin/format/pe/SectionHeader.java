@@ -394,6 +394,9 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 * for the section begins. For executables, 
 	 * this value must be a multiple of the file 
 	 * alignment given in the PE header.
+	 * <p>
+	 * If a section is uninitialized, this value will be 0.
+	 * 
 	 * @return the file offset where the data for the section begins
 	 */
 	public int getPointerToRawData() {
