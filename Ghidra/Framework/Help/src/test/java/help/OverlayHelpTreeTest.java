@@ -43,24 +43,24 @@ public class OverlayHelpTreeTest {
 		// in a help <TOCITEM> that lives inside of a pre-built jar file.
 		//
 		/*
-		
+
 		 	Example makeup we will create:
-		
+
 			  	PreBuild_TOC.xml
-		
+
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake" />
 			  		</tocitem>
-		
-		
+
+
 			 	TOC_Source.xml
-		
+
 			 		<tocref id="root">
 			 			<tocref="child_1">
 			 				<tocdef id="child_2" target="fake" />
 			 			</tocref>
 			 		</tocref>
-		
+
 		 */
 
 		TOCItemExternal root = externalItem("root");
@@ -92,26 +92,26 @@ public class OverlayHelpTreeTest {
 	public void testSourceTOCFileThatDependsAnotherTOCSourceFile() {
 
 		/*
-		
+
 		 The first source file defines attributes that the second file references.
-		
+
 		 Example makeup we will create:
-		
+
 		  	TOC_Source.xml
-		
+
 		  		<tocdef id="root" target="fake">
 		  			<tocdef id="child_1" target="fake" />
 		  		</tocdef>
-		
-		
+
+
 		 	Another TOC_Source.xml
-		
+
 		 		<tocref id="root">
 		 			<tocref="child_1">
 		 				<tocdef id="child_2" target="fake" />
 		 			</tocref>
 		 		</tocref>
-		
+
 		*/
 
 		Path toc_1 = Paths.get("/fake/path_1/TOC_Source.xml");
@@ -147,34 +147,34 @@ public class OverlayHelpTreeTest {
 		// in a help <TOCITEM> that lives inside of multiple pre-built jar files.
 		//
 		/*
-		
+
 		 	Example makeup we will create:
-		
+
 			  	PreBuild_TOC.xml
-		
+
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake">
 			  				<tocitem="prebuilt_a_child" target="fake" />
 			  			</tocitem>
 			  		</tocitem>
-		
+
 				Another PreBuild_TOC.xml
-		
+
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake">
 			  				<tocitem="prebuilt_b_child" target="fake" />
 			  			</tocitem>
 			  		</tocitem>
-		
-		
+
+
 			 	TOC_Source.xml
-		
+
 			 		<tocref id="root">
 			 			<tocref="child_1">
 			 				<tocdef id="child_2" target="fake" />
 			 			</tocref>
 			 		</tocref>
-		
+
 		 */
 
 		TOCItemExternal root_a = externalItem("root");
@@ -219,37 +219,37 @@ public class OverlayHelpTreeTest {
 	public void testSourceTOCFileThatHasNodeWithSameTextAttributeAsOneOfItsExternalModluleDependencies() {
 
 		/*
-		
+
 		 The first source file defines attributes that the second file references.   Both files
 		 will have multiple nodes that coincidentally share 'text' attribute values.
-		
+
 		 Note: the 'id' attributes have to be unique; the 'text' attributes do not have to be unique
-		
+
 		 Example makeup we will create:
-		
+
 		  	PreBuild_TOC.xml
-		
+
 		  		<tocitem id="root" target="fake">
 		  			<tocitem id="child_1_1" text="Child 1" target="fake" />
 		  		</tocitem>
-		
+
 			Another PreBuild_TOC.xml
-		
+
 		  		<tocitem id="root" target="fake">
 		  			<tocitem id="child_2_1" text=Child 1" target="fake" />
 		  			<tocitem id="child_2_2" text=Child 2" target="fake" />
 		  		</tocitem>
-		
-		
+
+
 		 	Another TOC_Source.xml
-		
+
 		 		<tocref id="root">
 		 			<tocref="child_1_1">
 		 				<tocdef id="child_2_1a" text="Child 1a" target="fake" />
 		 			</tocref>
 		 			<tocdef id="child_3_2" text="Child 2" target="fake" />
 		 		</tocref>
-		
+
 		*/
 
 		TOCItemExternal root_a = externalItem("root");
@@ -432,12 +432,12 @@ public class OverlayHelpTreeTest {
 		}
 
 		@Override
-		public Map<String, TOCItemExternal> getTOCItemExternalsByDisplayMapping() {
+		public Map<String, TOCItemExternal> getExternalTocItemsById() {
 			return externals;
 		}
 
 		@Override
-		public Map<String, TOCItemDefinition> getTOCItemDefinitionsByIDMapping() {
+		public Map<String, TOCItemDefinition> getTocDefinitionsByID() {
 			return definitions;
 		}
 

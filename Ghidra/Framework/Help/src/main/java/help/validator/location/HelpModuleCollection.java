@@ -32,22 +32,22 @@ import help.TOCItemProvider;
 import help.validator.model.*;
 
 /**
- * A class that is meant to hold a single help <b>input</b> directory and 0 or more 
+ * A class that is meant to hold a single help <b>input</b> directory and 0 or more
  * <b>external, pre-built</b> help sources (i.e., jar file or directory).
  * <p>
  * <pre>
  * 						Note
  * 						Note
  * 						Note
- * 
+ *
  *  This class is a bit conceptually muddled.  Our build system is reflected in this class in that
- *  we currently build one help module at a time.  Thus, any dependencies of that module being 
+ *  we currently build one help module at a time.  Thus, any dependencies of that module being
  *  built can be passed into this "collection" at build time.   We used to build multiple help
- *  modules at once, resolving dependencies for all of the input modules after we built each 
+ *  modules at once, resolving dependencies for all of the input modules after we built each
  *  module.  This class will need to be tweaked in order to go back to a build system with
  *  multiple input builds.
- * 
- * </pre> 
+ *
+ * </pre>
  */
 public class HelpModuleCollection implements TOCItemProvider {
 
@@ -62,6 +62,8 @@ public class HelpModuleCollection implements TOCItemProvider {
 	/**
 	 * Creates a help module collection that contains only a singe help module from a help
 	 * directory, not a pre-built help jar.
+	 * @param dir the directory containing help
+	 * @return the help collection
 	 */
 	public static HelpModuleCollection fromHelpDirectory(File dir) {
 		return new HelpModuleCollection(toHelpLocations(Collections.singleton(dir)));
@@ -70,6 +72,8 @@ public class HelpModuleCollection implements TOCItemProvider {
 	/**
 	 * Creates a help module collection that assumes zero or more pre-built help jar files and
 	 * one help directory that is an input into the help building process.
+	 * @param files the files from which to get help
+	 * @return the help collection
 	 */
 	public static HelpModuleCollection fromFiles(Collection<File> files) {
 		return new HelpModuleCollection(toHelpLocations(files));
@@ -78,6 +82,8 @@ public class HelpModuleCollection implements TOCItemProvider {
 	/**
 	 * Creates a help module collection that assumes zero or more pre-built help jar files and
 	 * one help directory that is an input into the help building process.
+	 * @param locations the locations from which to get help
+	 * @return the help collection
 	 */
 	public static HelpModuleCollection fromHelpLocations(Collection<HelpModuleLocation> locations) {
 		return new HelpModuleCollection(locations);
@@ -240,7 +246,7 @@ public class HelpModuleCollection implements TOCItemProvider {
 	}
 
 	@Override
-	public Map<String, TOCItemDefinition> getTOCItemDefinitionsByIDMapping() {
+	public Map<String, TOCItemDefinition> getTocDefinitionsByID() {
 		Map<String, TOCItemDefinition> map = new HashMap<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		map.putAll(TOC.getTOCDefinitionByIDMapping());
@@ -248,7 +254,7 @@ public class HelpModuleCollection implements TOCItemProvider {
 	}
 
 	@Override
-	public Map<String, TOCItemExternal> getTOCItemExternalsByDisplayMapping() {
+	public Map<String, TOCItemExternal> getExternalTocItemsById() {
 		Map<String, TOCItemExternal> map = new HashMap<>();
 
 		if (externalHelpSets.isEmpty()) {
@@ -282,18 +288,17 @@ public class HelpModuleCollection implements TOCItemProvider {
 			if (parent != null) {
 				CustomTreeItemDecorator dec = (CustomTreeItemDecorator) parent.getUserObject();
 				if (dec != null) {
-					parentItem = mapByDisplay.get(dec.getDisplayText());
+					parentItem = mapByDisplay.get(dec.getTocID());
 				}
 			}
 
 			ID targetID = item.getID();
-
 			String displayText = item.getDisplayText();
-			String tocID = item.getTocID();
+			String tocId = item.getTocID();
 			String target = targetID == null ? null : targetID.getIDString();
-			TOCItemExternal external = new TOCItemExternal(parentItem, tocPath, tocID, displayText,
+			TOCItemExternal external = new TOCItemExternal(parentItem, tocPath, tocId, displayText,
 				target, item.getName(), -1);
-			mapByDisplay.put(displayText, external);
+			mapByDisplay.put(tocId, external);
 		}
 
 		@SuppressWarnings("rawtypes")
@@ -304,7 +309,10 @@ public class HelpModuleCollection implements TOCItemProvider {
 		}
 	}
 
-	/** Input TOC items are those that we are building for the input help module of this collection */
+	/**
+	 * Input TOC items are those that we are building for the input help module of this collection
+	 * @return the items
+	 */
 	public Collection<TOCItem> getInputTOCItems() {
 		Collection<TOCItem> items = new ArrayList<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();

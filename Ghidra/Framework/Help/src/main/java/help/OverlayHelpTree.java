@@ -42,13 +42,11 @@ public class OverlayHelpTree {
 
 	public OverlayHelpTree(TOCItemProvider tocItemProvider, LinkDatabase linkDatabase) {
 		this.linkDatabase = linkDatabase;
-		for (TOCItemExternal external : tocItemProvider.getTOCItemExternalsByDisplayMapping()
-				.values()) {
+		for (TOCItemExternal external : tocItemProvider.getExternalTocItemsById().values()) {
 			addExternalTOCItem(external);
 		}
 
-		for (TOCItemDefinition definition : tocItemProvider.getTOCItemDefinitionsByIDMapping()
-				.values()) {
+		for (TOCItemDefinition definition : tocItemProvider.getTocDefinitionsByID().values()) {
 			addSourceTOCItem(definition);
 		}
 	}
@@ -171,8 +169,16 @@ public class OverlayHelpTree {
 		OverlayNode newRootNode = new OverlayNode(null, rootItem);
 		buildChildren(newRootNode);
 
+		//
+		// The parent to children map is cleared as nodes are created.   The map is populated by
+		// adding any references to the 'parent' key as they are loaded from the help files.
+		// As we build nodes, starting at the root, will will create child nodes for those that
+		// reference the 'parent' key.   If the map is empty, then it means we never built a
+		// node for the 'parent' key, which means we never found a help file containing the
+		// definition for that key.
+		//
 		if (!parentToChildrenMap.isEmpty()) {
-			throw new RuntimeException("Unresolved definitions in tree!");
+			throw new RuntimeException("Unresolved definitions in tree! - " + parentToChildrenMap);
 		}
 		rootNode = newRootNode;
 		return true;
