@@ -77,7 +77,7 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 
 		TestLayoutProvider layoutProvider = createLayoutProvider();
 		graph.setLayout(layoutProvider.getLayout(graph, TaskMonitor.DUMMY));
-		graphComponent = createGraphComponent(layoutProvider);
+		graphComponent = runSwing(() -> createGraphComponent(layoutProvider));
 	}
 
 	protected TestLayoutProvider createLayoutProvider() {
