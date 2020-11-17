@@ -198,9 +198,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		viewer.setInitialDimensionFunction(InitialDimensionFunction
 				.builder(viewer.getRenderContext().getVertexBoundsFunction())
 				.build());
-
-		graphMouse = new JgtPluggableGraphMouse(this);
-
 		createToolbarActions();
 		createPopupActions();
 		connectSelectionStateListeners();
@@ -647,7 +644,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			this.listener.graphClosed();
 		}
 		this.listener = listener;
-		viewer.setGraphMouse(graphMouse);
 	}
 
 	private void deselectEdge(AttributedEdge edge) {
@@ -1121,6 +1117,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		for (MouseListener mouseListener : mouseListeners) {
 			vv.getComponent().removeMouseListener(mouseListener);
 		}
+
+		graphMouse = new JgtPluggableGraphMouse(this);
+		viewer.setGraphMouse(graphMouse);
 
 		return vv;
 	}
