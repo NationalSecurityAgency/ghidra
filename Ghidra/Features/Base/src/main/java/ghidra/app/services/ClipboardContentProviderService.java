@@ -15,9 +15,6 @@
  */
 package ghidra.app.services;
 
-import ghidra.app.util.ClipboardType;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.List;
@@ -26,21 +23,26 @@ import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
+import ghidra.app.util.ClipboardType;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>ClipboardContentProvider</code> determines what types of
- * transfer data can be placed on the clipboard, and cut, copy, and paste.
+ * Determines what types of transfer data can be placed on the clipboard, as well as if 
+ * cut, copy, and paste operations are supported
  */
 public interface ClipboardContentProviderService {
 
 	/**
-	 * Returns the component provider associated with this 
-	 * ClipboardContentProviderService.
+	 * Returns the component provider associated with this service
+	 * @return the provider
 	 */
 	public ComponentProvider getComponentProvider();
 
 	/**
 	 * Triggers the default copy operation
+	 * @param monitor monitor that shows progress of the copy to clipboard, and
+	 * may be canceled
+	 * @return the created transferable; null if the copy was unsuccessful
 	 */
 	public Transferable copy(TaskMonitor monitor);
 
@@ -49,44 +51,49 @@ public interface ClipboardContentProviderService {
 	 * @param copyType contains the data flavor of the clipboard contents
 	 * @param monitor monitor that shows progress of the copy to clipboard, and
 	 * may be canceled
+	 * @return the created transferable; null if the copy was unsuccessful
 	 */
 	public Transferable copySpecial(ClipboardType copyType, TaskMonitor monitor);
 
 	/**
 	 * Triggers the default paste operation for the given transferable
+	 * @param pasteData the paste transferable
+	 * @return true of the paste was successful
 	 */
 	public boolean paste(Transferable pasteData);
 
 	/**
 	 * Gets the currently active ClipboardTypes for copying with the current context
+	 * @return the types
 	 */
 	public List<ClipboardType> getCurrentCopyTypes();
 
 	/**
 	 * Return whether the given context is valid for actions on popup menus.
 	 * @param context the context of where the popup menu will be positioned.
+	 * @return true if valid
 	 */
 	public boolean isValidContext(ActionContext context);
 
-	// TODO needs updating. Assumed copyAddToPopup became copy(TaskMonitor monitor)
 	/**
 	 * Returns true if copy should be enabled; false if it should be disabled.  This method can
 	 * be used in conjunction with {@link #copy(TaskMonitor)} in order to add menu items to
 	 * popup menus but to have them enabled when appropriate.
+	 * @return true if copy should be enabled
 	 */
 	public boolean enableCopy();
 
 	/**
 	 * Returns true if copySpecial actions should be enabled;
-	 * @return
+	 * @return true if copySpecial actions should be enabled;
 	 */
 	public boolean enableCopySpecial();
 
-	// TODO needs updating. Assumed pasteAddToPopup became paste(Transferable pasteData)
 	/**
 	 * Returns true if paste should be enabled; false if it should be disabled.  This method can
 	 * be used in conjunction with {@link #paste(Transferable)} in order to add menu items to
 	 * popup menus but to have them enabled when appropriate.
+	 * @return true if paste should be enabled
 	 */
 	public boolean enablePaste();
 
@@ -130,6 +137,7 @@ public interface ClipboardContentProviderService {
 	/**
 	 * Returns true if the given service provider can currently perform a 'copy special' 
 	 * operation.
+	 * @return true if copy special is enabled
 	 */
 	public boolean canCopySpecial();
 }
