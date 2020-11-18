@@ -1119,7 +1119,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 
 		graphMouse = new JgtPluggableGraphMouse(this);
-		viewer.setGraphMouse(graphMouse);
+		vv.setGraphMouse(graphMouse);
 
 		return vv;
 	}
@@ -1144,7 +1144,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// vertices
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				Collection<AttributedVertex> selectedVertices = getVertices(e.getItem());
-				notifySelectionChanged(new HashSet<AttributedVertex>(selectedVertices));
+				notifySelectionChanged(new HashSet<>(selectedVertices));
 
 				if (selectedVertices.size() == 1) {
 					// if only one vertex was selected, make it the focused vertex
