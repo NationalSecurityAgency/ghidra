@@ -183,6 +183,9 @@ public class ElfDefaultGotPltMarkup {
 				monitor.checkCanceled();
 
 				Data data = createPointer(gotStart, true);
+				if (data == null) {
+					break;
+				}
 
 				try {
 					gotStart = data.getMaxAddress().add(1);
