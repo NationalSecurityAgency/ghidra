@@ -373,8 +373,8 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				return !(context instanceof RestrictedAddressSetContext) && searchInfo != null;
 			}
 		};
-		searchAgainAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
+		searchAgainAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
 		menuPath = new String[] { "&Search", "Repeat Memory Search" };
 		searchAgainAction.setMenuBarData(new MenuData(menuPath, "search"));
 		searchAgainAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
@@ -750,14 +750,19 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 		private Color getHighlightColor(Address highlightStart, int highlightLength) {
 			ProgramLocation location = navigatable != null ? navigatable.getLocation() : null;
-			if (location instanceof BytesFieldLocation) {
-				BytesFieldLocation byteLoc = (BytesFieldLocation) location;
-				Address byteAddress = byteLoc.getAddressForByte();
+			if (!(location instanceof BytesFieldLocation)) {
+				return defaultHighlightColor;
+			}
+
+			BytesFieldLocation byteLoc = (BytesFieldLocation) location;
+			Address byteAddress = byteLoc.getAddressForByte();
+			if (highlightStart.hasSameAddressSpace(byteAddress)) {
 				long diff = byteAddress.subtract(highlightStart);
 				if (diff >= 0 && diff < highlightLength) {
-					return activeHighlightColor;
+					return activeHighlightColor; // the current location is in the highlight
 				}
 			}
+
 			return defaultHighlightColor;
 		}
 
