@@ -491,6 +491,10 @@ public class GTable extends JTable {
 			return userDefinedRowHeight; // prefer user-defined settings
 		}
 
+		if (getColumnCount() == 0) {
+			return userDefinedRowHeight; // no columns yet defined
+		}
+
 		TableCellRenderer defaultRenderer = getDefaultRenderer(String.class);
 		try {
 			Component component =
