@@ -17,10 +17,9 @@ package ghidra.service.graph;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.text.StringEscapeUtils;
-
-import java.util.Set;
 
 /**
  * Graph vertex with attributes
@@ -57,6 +56,12 @@ public class AttributedVertex extends Attributed {
 		setAttribute("Name", name);
 	}
 
+	@Override
+	public String setAttribute(String key, String value) {
+		clearCache();
+		return super.setAttribute(key, value);
+	}
+
 	/**
 	 * Returns the id for this vertex
 	 * @return the id for this vertex
@@ -79,7 +84,7 @@ public class AttributedVertex extends Attributed {
 		return getName() + " (" + id + ")";
 	}
 
-	public void clearCache() {
+	private void clearCache() {
 		this.htmlString = null;
 	}
 

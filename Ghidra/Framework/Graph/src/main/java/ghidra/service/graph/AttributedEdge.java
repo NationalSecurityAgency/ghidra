@@ -79,6 +79,12 @@ public class AttributedEdge extends Attributed {
 	}
 
 	@Override
+	public String setAttribute(String key, String value) {
+		clearCache();
+		return super.setAttribute(key, value);
+	}
+
+	@Override
 	public int hashCode() {
 		return id.hashCode();
 	}
@@ -97,4 +103,9 @@ public class AttributedEdge extends Attributed {
 		AttributedEdge other = (AttributedEdge) obj;
 		return id.equals(other.id);
 	}
+
+	private void clearCache() {
+		this.htmlString = null;
+	}
+
 }

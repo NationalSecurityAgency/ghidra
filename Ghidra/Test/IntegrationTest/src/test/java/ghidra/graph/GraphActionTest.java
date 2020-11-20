@@ -28,18 +28,19 @@ import ghidra.app.plugin.core.graph.GraphDisplayBrokerPlugin;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.graph.visualization.DefaultGraphDisplayComponentProvider;
+import ghidra.graph.visualization.GroupVertex;
 import ghidra.service.graph.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
 
 public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
-	private List<String> listenerCalls = new ArrayList<>();
 	private TestEnv env;
 	private PluginTool tool;
 	private AttributedGraph graph;
 	private ComponentProvider graphComponentProvider;
 	private GraphDisplay display;
+	private GraphSpy graphSpy = new GraphSpy();
 	private AttributedVertex a;
 	private AttributedVertex b;
 	private AttributedVertex c;
@@ -245,6 +246,194 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertFalse(contains(newGraph, "F"));
 	}
 
+	@Test
+	public void testCollapseVertices() {
+		assertEquals(6, display.getGraph().getVertexCount());
+		select(a, b, c);
+
+		collapse();
+
+		assertEquals(4, graph.getVertexCount());
+		GroupVertex groupVertex = findGroupVertex();
+		Set<AttributedVertex> containedVertices = groupVertex.getContainedVertices();
+		assertEquals(3, containedVertices.size());
+		assertTrue(containedVertices.contains(a));
+		assertTrue(containedVertices.contains(b));
+		assertTrue(containedVertices.contains(c));
+	}
+
+	@Test
+	public void testExpandVertices() {
+		assertEquals(6, display.getGraph().getVertexCount());
+		select(a, b, c);
+
+		collapse();
+
+		assertEquals(4, graph.getVertexCount());
+		GroupVertex groupVertex = findGroupVertex();
+		assertNotNull(groupVertex);
+		select(groupVertex);
+
+		expand();
+		assertEquals(6, graph.getVertexCount());
+		groupVertex = findGroupVertex();
+		assertNull(groupVertex);
+	}
+
+	@Test
+	public void testSelectNodeThatIsGrouped() {
+		select(a, b, c);
+		collapse();
+
+		clearSelection();
+		assertTrue(display.getSelectedVertices().isEmpty());
+
+		// 'b' is inside the group, selecting 'b' should select the group node
+		select(b);
+
+		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
+		assertEquals(1, selectedVertices.size());
+		AttributedVertex vertex = selectedVertices.iterator().next();
+		assertTrue(vertex instanceof GroupVertex);
+
+	}
+
+	@Test
+	public void testSelectNodeThatIsDoubleGrouped() {
+		select(a, b, c);
+		collapse();
+		select(findGroupVertex(), d);
+		collapse();
+
+		clearSelection();
+		assertTrue(display.getSelectedVertices().isEmpty());
+
+		select(b);
+		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
+		assertEquals(1, selectedVertices.size());
+		AttributedVertex vertex = selectedVertices.iterator().next();
+		assertTrue(vertex instanceof GroupVertex);
+		assertEquals(4, ((GroupVertex) vertex).getContainedVertices().size());
+
+	}
+
+	@Test
+	public void testFocusNodeThatIsGrouped() {
+		select(a, b, c);
+		collapse();
+
+		clearSelection();
+		assertTrue(display.getSelectedVertices().isEmpty());
+
+		setFocusedVertex(b);
+
+		AttributedVertex vertex = display.getFocusedVertex();
+		assertTrue(vertex instanceof GroupVertex);
+	}
+
+	@Test
+	public void testFocusNodeThatIsDoubleGrouped() {
+		select(a, b, c);
+		collapse();
+		select(findGroupVertex(), d);
+		collapse();
+		setFocusedVertex(e);
+		assertEquals(e, display.getFocusedVertex());
+
+		setFocusedVertex(b);
+
+		AttributedVertex vertex = display.getFocusedVertex();
+		assertTrue(vertex instanceof GroupVertex);
+		assertEquals(4, ((GroupVertex) vertex).getContainedVertices().size());
+	}
+
+	@Test
+	public void testListenerNotificatinWhenGroupNodeFocused() {
+		select(a, b, c);
+		collapse();
+		GroupVertex group = findGroupVertex();
+		setFocusedVertex(e);
+
+		graphSpy.clear();
+		setFocusedVertex(group, true);
+		waitForSwing();
+
+		assertTrue(graphSpy.isFocused(a));
+	}
+
+	@Test
+	public void testListenerNotificatinWhenDoubleGroupedNodeFocused() {
+		select(a, b, c);
+		collapse();
+		select(findGroupVertex(), d);
+		collapse();
+
+		GroupVertex group = findGroupVertex();
+		setFocusedVertex(e);
+
+		graphSpy.clear();
+		setFocusedVertex(group, true);
+
+		waitForSwing();
+		assertTrue(graphSpy.isFocused(a));
+	}
+
+	@Test
+	public void testSelectNotificatinWhenGroupNodeFocused() {
+		select(a, b, c);
+		collapse();
+		GroupVertex group = findGroupVertex();
+		clearSelection();
+		graphSpy.clear();
+		selectFromGui(group);
+
+		waitForSwing();
+		assertTrue(graphSpy.isSelected(a, b, c));
+	}
+
+	@Test
+	public void testSelectNotificatinWhenDoubleGroupedNodeFocused() {
+		select(a, b, c);
+		collapse();
+		select(findGroupVertex(), d);
+		collapse();
+
+		GroupVertex group = findGroupVertex();
+		clearSelection();
+		graphSpy.clear();
+		selectFromGui(group);
+
+		waitForSwing();
+		assertTrue(graphSpy.isSelected(a, b, c, d));
+	}
+
+	private void clearSelection() {
+		select();
+	}
+
+	private void collapse() {
+		DockingActionIf action = getAction(tool, "Collapse Selected");
+		GraphActionContext context =
+			new GraphActionContext(graphComponentProvider, graph, null, null);
+		performAction(action, context, true);
+	}
+
+	private void expand() {
+		DockingActionIf action = getAction(tool, "Expand Selected");
+		GraphActionContext context =
+			new GraphActionContext(graphComponentProvider, graph, null, null);
+		performAction(action, context, true);
+	}
+
+	private GroupVertex findGroupVertex() {
+		for (AttributedVertex vertex : graph.vertexSet()) {
+			if (vertex instanceof GroupVertex) {
+				return (GroupVertex) vertex;
+			}
+		}
+		return null;
+	}
+
 	private boolean contains(AttributedGraph g, String vertexId) {
 		return g.getVertex(vertexId) != null;
 	}
@@ -264,8 +453,20 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		});
 	}
 
+	private void selectFromGui(AttributedVertex... vertices) {
+		runSwing(() -> {
+			Set<AttributedVertex> vetexSet = new HashSet<>(Arrays.asList(vertices));
+			display.selectVertices(vetexSet, EventTrigger.GUI_ACTION);
+		});
+	}
+
 	private void setFocusedVertex(AttributedVertex vertex) {
-		runSwing(() -> display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY));
+		setFocusedVertex(vertex, false);
+	}
+
+	private void setFocusedVertex(AttributedVertex vertex, boolean fireEvent) {
+		EventTrigger trigger = fireEvent ? EventTrigger.GUI_ACTION : EventTrigger.INTERNAL_ONLY;
+		runSwing(() -> display.setFocusedVertex(vertex, trigger));
 	}
 
 	class TestGraphDisplayListener implements GraphDisplayListener {
@@ -278,29 +479,50 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public void graphClosed() {
-			listenerCalls.add(name + ": graph closed");
+			// do nothing
 		}
 
 		@Override
-		public void selectionChanged(Set<AttributedVertex> verrtices) {
-			StringBuilder buf = new StringBuilder();
-			buf.append(name);
-			buf.append(": selected: ");
-			for (AttributedVertex vertex : verrtices) {
-				buf.append(vertex.getId());
-				buf.append(",");
-			}
-			listenerCalls.add(buf.toString());
+		public void selectionChanged(Set<AttributedVertex> vertices) {
+			graphSpy.setSelection(vertices);
 		}
 
 		@Override
 		public void locationFocusChanged(AttributedVertex vertex) {
-			listenerCalls.add(name + ": focus: " + vertex.getId());
+			graphSpy.focusChanged(vertex);
 		}
 
 		@Override
 		public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
 			return new TestGraphDisplayListener("clone");
+		}
+
+	}
+
+	class GraphSpy {
+		AttributedVertex focusedVertex;
+		Set<AttributedVertex> selectedVertices;
+
+		public void focusChanged(AttributedVertex vertex) {
+			this.focusedVertex = vertex;
+		}
+
+		public boolean isSelected(AttributedVertex... vertices) {
+			Set<AttributedVertex> expected = new HashSet<>(Arrays.asList(vertices));
+			return expected.equals(selectedVertices);
+		}
+
+		public boolean isFocused(AttributedVertex a) {
+			return a == focusedVertex;
+		}
+
+		public void clear() {
+			focusedVertex = null;
+			selectedVertices = null;
+		}
+
+		public void setSelection(Set<AttributedVertex> vertices) {
+			this.selectedVertices = vertices;
 		}
 
 	}

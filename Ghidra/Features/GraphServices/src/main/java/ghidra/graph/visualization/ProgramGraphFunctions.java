@@ -15,18 +15,18 @@
  */
 package ghidra.graph.visualization;
 
-import com.google.common.base.Splitter;
-import ghidra.service.graph.Attributed;
-import ghidra.service.graph.AttributedEdge;
+import static org.jungrapht.visualization.VisualizationServer.*;
+
+import java.awt.*;
+import java.util.Map;
+
 import org.apache.commons.text.StringEscapeUtils;
 import org.jungrapht.visualization.util.ShapeFactory;
 
-import java.awt.BasicStroke;
-import java.awt.Shape;
-import java.awt.Stroke;
-import java.util.Map;
+import com.google.common.base.Splitter;
 
-import static org.jungrapht.visualization.VisualizationServer.PREFIX;
+import ghidra.service.graph.Attributed;
+import ghidra.service.graph.AttributedEdge;
 
 /**
  * a container for various functions used by ProgramGraph
@@ -129,9 +129,14 @@ abstract class ProgramGraphFunctions {
 	 */
 	public static String getLabel(Attributed attributed) {
 		Map<String, String> map = attributed.getAttributeMap();
-		if (map.get("Code") != null) {
+		if (map.containsKey("Code")) {
 			String code = StringEscapeUtils.escapeHtml4(map.get("Code"));
 			return "<html>" + String.join("<p>", Splitter.on('\n').split(code));
+		}
+		if ("Collapsed".equals(map.get("VertexType"))) {
+			String name = StringEscapeUtils.escapeHtml4(map.get("Name"));
+			return "<html>" + String.join("<p>",
+				Splitter.on(',').split(name));
 		}
 		return map.get("Name");
 	}
