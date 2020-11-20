@@ -22,12 +22,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
+import generic.test.AbstractGTest;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.format.pe.cli.CliStreamHeader;
 import ghidra.util.LittleEndianDataConverter;
 
-public class CliStreamStringsTest {
+public class CliStreamStringsTest extends AbstractGTest {
 
 	private CliStreamStrings initCliStreamStrings() throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
