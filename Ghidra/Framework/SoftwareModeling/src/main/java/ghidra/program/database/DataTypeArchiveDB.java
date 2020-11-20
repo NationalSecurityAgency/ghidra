@@ -196,6 +196,11 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	}
 
 	@Override
+	protected void close() {
+		dataTypeManager.dispose();
+	}
+
+	@Override
 	protected void setDomainFile(DomainFile df) {
 		super.setDomainFile(df);
 		recordChanges = true;

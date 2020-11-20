@@ -120,6 +120,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 			dbHandle.close();
 			dbHandle = null;
 		}
+		super.close();
 	}
 
 	@Override
