@@ -227,11 +227,11 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 
 	@Override
 	public void close() {
-		super.close();
 		if (packedDB != null) {
 			packedDB.dispose();
 			packedDB = null;
 		}
+		super.close();
 	}
 
 	public boolean isClosed() {

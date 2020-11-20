@@ -2333,6 +2333,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		super.close();
 		intRangePropertyMap.clear();
 		addrSetPropertyMap.clear();
+		for (ManagerDB manager : managers) {
+			manager.dispose();
+		}
 	}
 
 	@Override

@@ -2915,6 +2915,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return (new ArrayList<Composite>()).iterator();
 	}
 
+	public void dispose() {
+		sortedDataTypes = null;
+		enumValueMap = null;
+	}
+
+	@Override
+	public void close() {
+		dispose();
+	}
+
 	/**
 	 * Invalidates the cache.
 	 */
@@ -3875,7 +3885,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			for (DataTypeComponent m : c.getDefinedComponents()) {
 				CompositeDB refC = getCompositeBaseType(m.getDataType());
 				if (refC != null) {
-					graph.addEdge(new DefaultGEdge<CompositeDB>(c, refC));
+					graph.addEdge(new DefaultGEdge<>(c, refC));
 				}
 			}
 		}
