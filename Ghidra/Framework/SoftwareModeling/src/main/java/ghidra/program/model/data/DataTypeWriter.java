@@ -231,6 +231,9 @@ public class DataTypeWriter {
 			return;
 		}
 		if (dt instanceof FunctionDefinition) {
+			writer.write(((FunctionDefinition) dt).getPrototypeString(true));
+			writer.write(";");
+			writer.write(EOL);
 			return;
 		}
 		if (dt instanceof FactoryDataType) {
