@@ -28,6 +28,8 @@ OpToken PrintC::bitwise_not = { "~", 1, 62, false, OpToken::unary_prefix, 0, 0, 
 OpToken PrintC::boolean_not = { "!", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::unary_minus = { "-", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::unary_plus = { "+", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::pre_increment = { "++", 1, 66, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::pre_decrement = { "--", 1, 66, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::addressof = { "&", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::dereference = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::typecast = { "()", 2, 62, false, OpToken::presurround, 0, 0, (OpToken *)0 };
@@ -2107,6 +2109,44 @@ void PrintC::docTypeDefinitions(const TypeFactory *typegrp)
   }
 }
 
+/// Check that the given p-code can be simplified to a C increment or decrement operator.
+/// \param op is the given PcodeOp
+bool PrintC::emitIncDecOp(const PcodeOp *op)
+
+{
+  const OpToken * token;
+  enum OpCode opcode = op->code();
+
+  if (opcode != CPUI_INT_ADD && opcode != CPUI_INT_SUB) return false;
+
+  // is operation modifying inplace?
+  const Varnode *vn = op->getIn(0);
+  if (op->getOut()->getHigh() != vn->getHigh()) return false;
+
+  // get add/sub value
+  const Varnode *value = op->getIn(1);
+
+  if (!value->isConstant()) return false;
+
+  int4 num = (int4)value->getAddr().getOffset();
+
+  // invert subtraction
+  if (opcode == CPUI_INT_SUB)
+    num = -num;
+
+  if (num == 1) {
+    token = &pre_increment;
+  } else if (num == -1) {
+    token = &pre_decrement;
+  } else {
+    return false;
+  }
+
+  pushOp(token,op);
+  pushVnExplicit(vn,op);
+  return true;
+}
+
 /// Check that the given p-code op has an \e in-place token form and if the first input and the output
 /// are references to  the same variable. If so, emit the expression using the \e in-place token.
 /// \param op is the given PcodeOp
@@ -2166,6 +2206,7 @@ void PrintC::emitExpression(const PcodeOp *op)
 {
   const Varnode *outvn = op->getOut();
   if (outvn != (Varnode *)0) {
+    if (option_inplace_ops && emitIncDecOp(op)) return;
     if (option_inplace_ops && emitInplaceOp(op)) return;
     pushOp(&assignment,op);
     pushVnLHS(outvn,op);
