@@ -197,6 +197,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	@Override
 	protected void close() {
+		super.close();
 		dataTypeManager.dispose();
 	}
 
