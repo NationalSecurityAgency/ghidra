@@ -30,7 +30,8 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.*;
 import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 
 public class MemoryMergeManagerTest extends AbstractMergeTest {
 
@@ -48,9 +49,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				try {
 					blocks[0].setName("LatestText");
 					commit = true;
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();
@@ -70,9 +68,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("MY_Text");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();
@@ -106,9 +101,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[0].setName("LatestText");
 					commit = true;
 				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
-				}
 				catch (LockException e) {
 					Assert.fail();
 				}
@@ -127,9 +119,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("MY_Text");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();
@@ -162,9 +151,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[0].setName("LatestText");
 					commit = true;
 				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
-				}
 				catch (LockException e) {
 					Assert.fail();
 				}
@@ -183,9 +169,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("MY_Text");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();
@@ -350,9 +333,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					try {
 						blocks[4].setName("special-debug");
 					}
-					catch (DuplicateNameException e) {
-						Assert.fail();
-					}
 					catch (LockException e) {
 						Assert.fail();
 					}
@@ -383,9 +363,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[4].setWrite(false);
 					blocks[4].setExecute(true);
 					blocks[4].setName("not-used");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();
@@ -715,9 +692,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[2].setComment("LatestResource");
 					commit = true;
 				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
-				}
 				catch (LockException e) {
 					Assert.fail();
 				}
@@ -738,9 +712,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[0].setName("My_Text");
 					blocks[1].setName("My_Data");
 					blocks[2].setComment("My_Resource");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();

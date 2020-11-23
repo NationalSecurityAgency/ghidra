@@ -24,7 +24,8 @@ import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 public class MyTestMemory extends AddressSet implements Memory {
@@ -376,8 +377,7 @@ public class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
-			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
-			MemoryConflictException, AddressOverflowException {
+			long offset, long size, boolean overlay) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -20,7 +20,6 @@ import java.util.List;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * MemoryBlockStub can be extended for use by tests. It throws an UnsupportedOperationException
@@ -81,7 +80,7 @@ public class MemoryBlockStub implements MemoryBlock {
 	}
 
 	@Override
-	public void setName(String name) throws DuplicateNameException, LockException {
+	public void setName(String name) throws LockException {
 		throw new UnsupportedOperationException();
 	}
 

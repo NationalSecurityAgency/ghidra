@@ -25,7 +25,6 @@ import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.NamingUtilities;
 import ghidra.util.datastruct.StringKeyIndexer;
 import ghidra.util.exception.AssertException;
 
@@ -422,13 +421,12 @@ class AddBlockModel {
 			message = "Please enter a name";
 			return false;
 		}
-		if (nameExists(blockName)) {
-			message = "Block name already exists";
-			return false;
-		}
-		if (!NamingUtilities.isValidName(blockName)) {
+		if (!Memory.isValidMemoryBlockName(blockName)) {
 			message = "Block name is invalid";
 			return false;
+		}
+		if (nameExists(blockName)) {
+			message = "Warning! Block name already exists";
 		}
 		return true;
 	}

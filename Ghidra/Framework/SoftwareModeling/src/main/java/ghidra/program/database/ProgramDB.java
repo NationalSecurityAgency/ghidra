@@ -1184,46 +1184,55 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * Creates a new OverlayAddressSpace with the given name and base AddressSpace
-	 * @param overlaySpaceName the name of the overlay space to create
-	 * @param templateSpace the base AddressSpace to overlay	
+	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
+	 * @param blockName the name of the overlay memory block which corresponds to the new overlay address
+	 * space to be created.  This name may be modified to produce a valid overlay space name and avoid 
+	 * duplication.
+	 * @param originalSpace the base AddressSpace to overlay	
 	 * @param minOffset the min offset of the space
 	 * @param maxOffset the max offset of the space
 	 * @return the new space
-	 * @throws DuplicateNameException if an AddressSpace already exists with the given name.
 	 * @throws LockException if the program is shared and not checked out exclusively.
 	 * @throws MemoryConflictException if image base override is active
 	 */
-	public AddressSpace addOverlaySpace(String overlaySpaceName, AddressSpace templateSpace,
+	public AddressSpace addOverlaySpace(String blockName, AddressSpace originalSpace,
 			long minOffset, long maxOffset)
-			throws DuplicateNameException, LockException, MemoryConflictException {
+			throws LockException, MemoryConflictException {
 
 		checkExclusiveAccess();
 		if (imageBaseOverride) {
 			throw new MemoryConflictException(
 				"Overlay spaces may not be created while an image-base override is active");
 		}
-		OverlayAddressSpace ovSpace = addressFactory.addOverlayAddressSpace(overlaySpaceName,
-			templateSpace, minOffset, maxOffset);
+
+		OverlayAddressSpace ovSpace = null;
+		lock.acquire();
 		try {
+			ovSpace = addressFactory.addOverlayAddressSpace(blockName, false, originalSpace,
+				minOffset, maxOffset);
 			overlaySpaceAdapter.addOverlaySpace(ovSpace);
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
+		finally {
+			lock.release();
+		}
 		return ovSpace;
 	}
 
-	public void renameOverlaySpace(String oldName, String newName)
-			throws DuplicateNameException, LockException {
+	public void renameOverlaySpace(String oldOverlaySpaceName, String newName)
+			throws LockException {
 		checkExclusiveAccess();
-		addressFactory.renameOverlaySpace(oldName, newName);
-		try {
-			overlaySpaceAdapter.renameOverlaySpace(oldName, newName);
-			addrMap.renameOverlaySpace(oldName, newName);
-		}
-		catch (IOException e) {
-			dbError(e);
+		String revisedName = addressFactory.renameOverlaySpace(oldOverlaySpaceName, newName);
+		if (!revisedName.equals(oldOverlaySpaceName)) {
+			try {
+				overlaySpaceAdapter.renameOverlaySpace(oldOverlaySpaceName, revisedName);
+				addrMap.renameOverlaySpace(oldOverlaySpaceName, revisedName);
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
 		}
 	}
 

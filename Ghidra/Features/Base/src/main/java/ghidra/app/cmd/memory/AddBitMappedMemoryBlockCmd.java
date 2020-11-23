@@ -19,7 +19,6 @@ import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for adding Bit-mapped memory blocks.
@@ -56,7 +55,7 @@ public class AddBitMappedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			IllegalArgumentException, DuplicateNameException {
+			IllegalArgumentException {
 		return memory.createBitMappedBlock(name, start, mappedAddress, length, isOverlay);
 	}
 
