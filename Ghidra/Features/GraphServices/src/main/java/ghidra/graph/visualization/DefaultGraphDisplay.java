@@ -451,7 +451,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.popupMenuPath("Expand Selected Vertices")
 				.popupMenuGroup("zz", "6")
 				.description("Expands all selected collapsed vertices into their previous form")
-				.onAction(c -> graphCollapser.ungroupSelectedVertices())
+				.onAction(c -> ungroupSelectedVertices())
 				.buildAndInstallLocal(componentProvider);
 
 		togglePopupsAction = new ToggleActionBuilder("Display Popup Windows", ACTION_OWNER)
@@ -475,6 +475,19 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			scrollToSelected(vertex);
 		}
 	}
+
+	/**
+	 * Ungroup the selected vertices. If the focusedVertex is no longer
+	 * in the graph, null it. This will happen if the focusedVertex was
+	 * the GroupVertex
+	 */
+	private void ungroupSelectedVertices() {
+		graphCollapser.ungroupSelectedVertices();
+		if (!graph.containsVertex(focusedVertex)) {
+			focusedVertex = null;
+		}
+	}
+
 
 	private void clearSelection() {
 		viewer.getSelectedVertexState().clear();
