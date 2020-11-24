@@ -43,6 +43,9 @@ public class ByteViewerClipboardProvider extends ByteCopier
 		List<ClipboardType> copyTypesList = new LinkedList<>();
 		copyTypesList.add(BYTE_STRING_TYPE);
 		copyTypesList.add(BYTE_STRING_NO_SPACE_TYPE);
+		copyTypesList.add(PYTHON_BYTE_STRING_TYPE);
+		copyTypesList.add(PYTHON_LIST_TYPE);
+		copyTypesList.add(CPP_BYTE_ARRAY_TYPE);
 		return copyTypesList;
 	}
 
@@ -55,7 +58,6 @@ public class ByteViewerClipboardProvider extends ByteCopier
 			PluginTool tool) {
 		this.provider = provider;
 		this.tool = tool;
-		currentProgram = provider.getProgram();
 	}
 
 	@Override
@@ -77,11 +79,6 @@ public class ByteViewerClipboardProvider extends ByteCopier
 
 	@Override
 	public boolean paste(Transferable pasteData) {
-		if (!supportsPasteTransferable(pasteData)) {
-			tool.setStatusInfo("Paste failed: No valid data on clipboard", true);
-			return false;
-		}
-
 		try {
 			// try the default paste
 			return pasteBytes(pasteData);
@@ -103,30 +100,17 @@ public class ByteViewerClipboardProvider extends ByteCopier
 	@Override
 	public Transferable copy(TaskMonitor monitor) {
 		String byteString = copyBytesAsString(currentSelection, true, monitor);
-		String textSelection = provider.getCurrentTextSelection();
-		return new ByteViewerTransferable(byteString, textSelection);
+		String textSelection = getTextSelection();
+		return new ByteStringTransferable(byteString, textSelection);
+	}
+
+	protected String getTextSelection() {
+		return provider.getCurrentTextSelection();
 	}
 
 	@Override
 	public Transferable copySpecial(ClipboardType copyType, TaskMonitor monitor) {
-
-		String byteString = null;
-		if (copyType == BYTE_STRING_TYPE) {
-			byteString = copyBytesAsString(currentSelection, true, monitor);
-		}
-		else if (copyType == BYTE_STRING_NO_SPACE_TYPE) {
-			byteString = copyBytesAsString(currentSelection, false, monitor);
-		}
-		else {
-			return null;
-		}
-
-		return new ByteViewerTransferable(byteString);
-	}
-
-	void setSelection(ProgramSelection selection) {
-		currentSelection = selection;
-		updateEnablement();
+		return copyBytes(copyType, monitor);
 	}
 
 	private void updateEnablement() {
@@ -136,6 +120,11 @@ public class ByteViewerClipboardProvider extends ByteCopier
 
 	void setLocation(ProgramLocation location) {
 		currentLocation = location;
+	}
+
+	void setSelection(ProgramSelection selection) {
+		currentSelection = selection;
+		updateEnablement();
 	}
 
 	void setProgram(Program p) {

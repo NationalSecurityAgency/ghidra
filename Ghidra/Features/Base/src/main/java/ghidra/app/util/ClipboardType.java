@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +21,7 @@ import java.awt.datatransfer.DataFlavor;
  * Defines a "type" for items in the Clipboard
  */
 public class ClipboardType {
-	
+
 	private DataFlavor flavor;
 	private String typeName;
 
@@ -35,26 +34,25 @@ public class ClipboardType {
 		this.flavor = flavor;
 		this.typeName = typeName;
 	}
-	
+
 	/**
-	 * Returns the DataFlavor for this ClipboardType
+	 * Returns the DataFlavor for this type
+	 * @return the flavor
 	 */
 	public DataFlavor getFlavor() {
 		return flavor;
 	}
 
 	/**
-	 * Returns the name of this Clipboard  Type.
+	 * Returns the name of this type
+	 * @return the name
 	 */
 	public String getTypeName() {
 		return typeName;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
-    public String toString() {
+	public String toString() {
 		return typeName;
 	}
 }
