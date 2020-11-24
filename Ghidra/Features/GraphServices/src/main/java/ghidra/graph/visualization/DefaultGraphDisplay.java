@@ -58,6 +58,7 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
 import docking.menu.ActionState;
 import docking.widgets.EventTrigger;
+import docking.widgets.OptionDialog;
 import generic.util.WindowUtilities;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.graph.AttributeFilters;
@@ -471,9 +472,18 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private void groupSelectedVertices() {
 		AttributedVertex vertex = graphCollapser.groupSelectedVertices();
 		if (vertex != null) {
+			askToNameGroupVertex(vertex);
 			focusedVertex = vertex;
 			scrollToSelected(vertex);
 		}
+	}
+
+	private void askToNameGroupVertex(AttributedVertex vertex) {
+		String name = vertex.getName();
+		String userName = OptionDialog.showInputMultilineDialog(null, "Enter Group Vertex Text",
+			"Text", name);
+
+		updateVertexName(vertex, userName != null ? userName : name);
 	}
 
 	/**
@@ -487,7 +497,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			focusedVertex = null;
 		}
 	}
-
 
 	private void clearSelection() {
 		viewer.getSelectedVertexState().clear();
@@ -1316,17 +1325,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// center point of a vertex
 			AttributedVertex vertex = getVertex(event);
 			if (vertex != null) {
-				return new VertexToolTipInfo(vertex, event);
+				return new AttributedToolTipInfo(vertex, event);
 			}
 
 			AttributedEdge edge = getEdge(event);
 			if (edge != null) {
-				return new EdgeToolTipInfo(edge, event);
+				return new AttributedToolTipInfo(edge, event);
 			}
 
 			// no vertex or edge hit; just create a basic info that is essentially a null-object
 			// placeholder to prevent NPEs
-			return new VertexToolTipInfo(vertex, event);
+			return new AttributedToolTipInfo(vertex, event);
 		}
 
 		@Override
@@ -1365,10 +1374,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 	}
 
-	private class VertexToolTipInfo extends ToolTipInfo<AttributedVertex> {
+	private class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 
-		VertexToolTipInfo(AttributedVertex vertex, MouseEvent event) {
-			super(event, vertex);
+		AttributedToolTipInfo(Attributed graphObject, MouseEvent event) {
+			super(event, graphObject);
 		}
 
 		@Override
@@ -1397,38 +1406,4 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// this graph display does not have a notion of emphasizing
 		}
 	}
-
-	private class EdgeToolTipInfo extends ToolTipInfo<AttributedEdge> {
-
-		EdgeToolTipInfo(AttributedEdge edge, MouseEvent event) {
-			super(event, edge);
-		}
-
-		@Override
-		protected JComponent createToolTipComponent() {
-			if (graphObject == null) {
-				return null;
-			}
-
-			String toolTip = graphObject.getHtmlString();
-			if (StringUtils.isBlank(toolTip)) {
-				return null;
-			}
-
-			JToolTip jToolTip = new JToolTip();
-			jToolTip.setTipText(toolTip);
-			return jToolTip;
-		}
-
-		@Override
-		protected void emphasize() {
-			// this graph display does not have a notion of emphasizing
-		}
-
-		@Override
-		protected void deEmphasize() {
-			// this graph display does not have a notion of emphasizing
-		}
-	}
-
 }

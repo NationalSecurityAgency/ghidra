@@ -15,22 +15,11 @@
  */
 package ghidra.service.graph;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.apache.commons.text.StringEscapeUtils;
-
 /**
  * Generic directed graph edge implementation
  */
 public class AttributedEdge extends Attributed {
 	private final String id;
-
-	/**
-	 * Cache of the edge label parsed as html
-	 */
-	private String htmlString;
 
 	/**
 	 * Constructs a new GhidraEdge
@@ -46,42 +35,11 @@ public class AttributedEdge extends Attributed {
 	}
 
 	/**
-	 * The html representation of the key/values for this edge
-	 * @return html formatted label for the edge
-	 */
-	public String getHtmlString() {
-		if (htmlString != null) {
-			return htmlString;
-		}
-
-		Set<Entry<String, String>> entries = entrySet();
-		if (entries.isEmpty()) {
-			return ""; // empty so tooltip clients can handle empty data
-		}
-
-		StringBuilder buf = new StringBuilder("<html>");
-		for (Map.Entry<String, String> entry : entries) {
-			buf.append(entry.getKey());
-			buf.append(":");
-			buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
-			buf.append("<br>");
-		}
-		htmlString = buf.toString();
-		return htmlString;
-	}
-
-	/**
 	 * Returns the id for this edge
 	 * @return the id for this edge
 	 */
 	public String getId() {
 		return id;
-	}
-
-	@Override
-	public String setAttribute(String key, String value) {
-		clearCache();
-		return super.setAttribute(key, value);
 	}
 
 	@Override
@@ -102,10 +60,6 @@ public class AttributedEdge extends Attributed {
 		}
 		AttributedEdge other = (AttributedEdge) obj;
 		return id.equals(other.id);
-	}
-
-	private void clearCache() {
-		this.htmlString = null;
 	}
 
 }

@@ -129,15 +129,10 @@ abstract class ProgramGraphFunctions {
 	 */
 	public static String getLabel(Attributed attributed) {
 		Map<String, String> map = attributed.getAttributeMap();
+		String name = StringEscapeUtils.escapeHtml4(map.get("Name"));
 		if (map.containsKey("Code")) {
-			String code = StringEscapeUtils.escapeHtml4(map.get("Code"));
-			return "<html>" + String.join("<p>", Splitter.on('\n').split(code));
+			name = StringEscapeUtils.escapeHtml4(map.get("Code"));
 		}
-		if ("Collapsed".equals(map.get("VertexType"))) {
-			String name = StringEscapeUtils.escapeHtml4(map.get("Name"));
-			return "<html>" + String.join("<p>",
-				Splitter.on(',').split(name));
-		}
-		return map.get("Name");
+		return "<html>" + String.join("<p>", Splitter.on('\n').split(name));
 	}
 }

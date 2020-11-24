@@ -74,15 +74,14 @@ public class GroupVertex extends AttributedVertex {
 	private static String getUniqueId(List<AttributedVertex> vertexList) {
 		if (vertexList.size() > MAX_IDS_TO_COMBINE) {
 			int idsNotShownCount = vertexList.size() - MAX_IDS_TO_COMBINE;
-			return combineIds(vertexList.subList(0, MAX_IDS_TO_COMBINE)) + ",..., + " +
-				idsNotShownCount +
-				" Others";
+			return combineIds(vertexList.subList(0, MAX_IDS_TO_COMBINE)) + "\n...\n + " +
+				idsNotShownCount + " Others";
 		}
 		return combineIds(vertexList);
 	}
 
 	private static String combineIds(Collection<AttributedVertex> vertices) {
-		return vertices.stream().map(AttributedVertex::getName).collect(Collectors.joining(","));
+		return vertices.stream().map(AttributedVertex::getName).collect(Collectors.joining("\n"));
 	}
 
 	/** 
