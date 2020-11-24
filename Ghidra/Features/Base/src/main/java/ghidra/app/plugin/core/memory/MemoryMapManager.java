@@ -176,11 +176,6 @@ class MemoryMapManager {
 		return true;
 	}
 
-	boolean isDuplicateName(String name) {
-		// block names may not duplicate existing address spaces (includes overlay blocks)
-		return program.getAddressFactory().getAddressSpace(name) != null;
-	}
-
 	void setProgram(Program program) {
 		this.program = program;
 	}
@@ -279,16 +274,14 @@ class MemoryMapManager {
 				return false;
 			}
 			catch (LockException e) {
+				msg = e.getMessage();
+				return false;
 			}
 			MemoryBlock newBlock = memory.getBlock(newStart);
 			try {
 				newBlock.setName(newBlockName);
 			}
 			catch (LockException e) {
-				msg = e.getMessage();
-				return false;
-			}
-			catch (DuplicateNameException e) {
 				msg = e.getMessage();
 				return false;
 			}

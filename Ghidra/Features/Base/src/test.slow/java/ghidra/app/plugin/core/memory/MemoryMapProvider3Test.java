@@ -437,7 +437,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		runSwing(() -> {
 			blockTwoLength.setText("0x2000");
-			blockTwoName.setText("split &%");
+			blockTwoName.setText("split\t");
 		});
 		assertTrue(okButton.isEnabled());
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));

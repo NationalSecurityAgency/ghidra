@@ -97,21 +97,128 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 		return originalFactory;
 	}
 
-	public void addOverlayAddressSpace(OverlayAddressSpace ovSpace) throws DuplicateNameException {
+	void addOverlayAddressSpace(OverlayAddressSpace ovSpace) throws DuplicateNameException {
 		addAddressSpace(ovSpace);
 	}
 
-	public OverlayAddressSpace addOverlayAddressSpace(String name, AddressSpace originalSpace,
-			long minOffset, long maxOffset) throws DuplicateNameException {
+	/**
+	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
+	 * @param name the preferred name of the overlay address space to be created.  
+	 * This name may be modified if preserveName is false to produce a valid overlay space 
+	 * name and avoid duplication.
+	 * @param preserveName if true specified name will be preserved, if false an unique acceptable 
+	 * overlay space name will be generated from the specified name.
+	 * @param originalSpace the base AddressSpace to overlay	
+	 * @param minOffset the min offset of the space
+	 * @param maxOffset the max offset of the space
+	 * @return the new overlay space
+	 * @throws IllegalArgumentException if originalSpace is not permitted or preserveName is true
+	 * and a space with specified name already exists.
+	 */
+	OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
+			AddressSpace originalSpace, long minOffset, long maxOffset) {
+
+		if (!originalSpace.isMemorySpace() || originalSpace.isOverlaySpace()) {
+			throw new IllegalArgumentException(
+				"Invalid address space for overlay: " + originalSpace.getName());
+		}
+		AddressSpace space = getAddressSpace(originalSpace.getName());
+		if (space != originalSpace) {
+			throw new IllegalArgumentException("Unknown memory address space instance");
+		}
+
+		String spaceName = name;
+		if (!preserveName) {
+			spaceName = fixupOverlaySpaceName(name);
+			spaceName = getUniqueOverlayName(spaceName);
+		}
+		else if (getAddressSpace(name) != null) { // check before allocating unique ID
+			throw new IllegalArgumentException("Space named " + name + " already exists!");
+		}
+
 		int unique = 0;
 		if (originalSpace.getType() == AddressSpace.TYPE_RAM ||
 			originalSpace.getType() == AddressSpace.TYPE_OTHER) {
 			unique = getNextUniqueID();
 		}
+
 		OverlayAddressSpace ovSpace =
-			new OverlayAddressSpace(name, originalSpace, unique, minOffset, maxOffset);
-		addAddressSpace(ovSpace);
+			new OverlayAddressSpace(spaceName, originalSpace, unique, minOffset, maxOffset);
+		try {
+			addAddressSpace(ovSpace);
+		}
+		catch (DuplicateNameException e) {
+			throw new RuntimeException(e); // unexpected
+		}
 		return ovSpace;
+	}
+
+	/**
+	 * Get a unique address space name based on the specified
+	 * baseOverlayName
+	 * @param baseOverlayName base overlay address space name
+	 * @return unique overlay space name
+	 */
+	private String getUniqueOverlayName(String baseOverlayName) {
+		if (getAddressSpace(baseOverlayName) == null) {
+			return baseOverlayName;
+		}
+		int index = 1;
+		while (true) {
+			String revisedName = baseOverlayName + "." + index++;
+			if (getAddressSpace(revisedName) == null) {
+				return revisedName;
+			}
+		}
+	}
+
+	/**
+	 * Get base overlay name removing any numeric suffix which may
+	 * have been added to avoid duplication.  This method is intended
+	 * to be used during rename only.
+	 * @param overlayName existing overlay space name
+	 * @return base overlay name with any trailing index removed
+	 * which may have been added to avoid duplication.
+	 */
+	private String getBaseOverlayName(String overlayName) {
+		int index = overlayName.lastIndexOf('.');
+		if (index < 1) {
+			return overlayName;
+		}
+		int value;
+		try {
+			value = Integer.parseInt(overlayName.substring(index + 1));
+		}
+		catch (NumberFormatException e) {
+			return overlayName;
+		}
+		if (value < 1) {
+			return overlayName;
+		}
+		String baseName = overlayName.substring(0, index);
+		return overlayName.equals(baseName + '.' + value) ? baseName : overlayName;
+	}
+
+	/**
+	 * Generate an allowed address space name from a block name.  Use of unsupported
+	 * characters will be converted to underscore (includes colon and all whitespace chars).
+	 * double-underscore to ensure uniqueness.
+	 * @param blockName corresponding memory block name
+	 * @return overlay space name
+	 */
+	private String fixupOverlaySpaceName(String blockName) {
+		int len = blockName.length();
+		StringBuffer buf = new StringBuffer(len);
+		for (int i = 0; i < len; i++) {
+			char c = blockName.charAt(i);
+			if (c == ':' || c <= 0x20) {
+				buf.append('_');
+			}
+			else {
+				buf.append(c);
+			}
+		}
+		return buf.toString();
 	}
 
 	@Override
@@ -146,10 +253,29 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 		removeAddressSpace(name);
 	}
 
+	/**
+	 * Rename overlay with preferred newName.  Actual name used will be returned
+	 * and may differ from specified newName to ensure validity and avoid
+	 * duplication.
+	 * @param oldOverlaySpaceName the existing overlay address space name
+	 * @param newName the preferred new name of the overlay address space.  
+	 * This name may be modified to produce a valid overlay space 
+	 * name to avoid duplication.
+	 * @return new name applied to existing overlay space
+	 */
 	@Override
-	protected void renameOverlaySpace(String oldName, String newName)
-			throws DuplicateNameException {
-		super.renameOverlaySpace(oldName, newName);
+	protected String renameOverlaySpace(String oldOverlaySpaceName, String newName) {
+		try {
+			String revisedName = fixupOverlaySpaceName(newName);
+			if (revisedName.equals(getBaseOverlayName(oldOverlaySpaceName))) {
+				return oldOverlaySpaceName;
+			}
+			revisedName = getUniqueOverlayName(revisedName);
+			return super.renameOverlaySpace(oldOverlaySpaceName, revisedName);
+		}
+		catch (DuplicateNameException e) {
+			throw new RuntimeException(e); // unexpected
+		}
 	}
 
 	private int getNextUniqueID() {

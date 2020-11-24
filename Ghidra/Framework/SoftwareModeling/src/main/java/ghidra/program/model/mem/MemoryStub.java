@@ -24,7 +24,7 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.exception.*;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -187,24 +187,19 @@ public class MemoryStub extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, InputStream is,
-			long length, TaskMonitor monitor, boolean overlay)
-			throws LockException, MemoryConflictException, AddressOverflowException,
-			CancelledException, DuplicateNameException {
+			long length, TaskMonitor monitor, boolean overlay) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, long size,
-			byte initialValue, TaskMonitor monitor, boolean overlay)
-			throws LockException, DuplicateNameException, MemoryConflictException,
-			AddressOverflowException, CancelledException {
+			byte initialValue, TaskMonitor monitor, boolean overlay) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock createUninitializedBlock(String name, Address start, long size,
-			boolean overlay) throws LockException, DuplicateNameException, MemoryConflictException,
-			AddressOverflowException {
+			boolean overlay) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -463,8 +458,7 @@ public class MemoryStub extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
-			long offset, long size, boolean overlay) throws LockException, DuplicateNameException,
-			MemoryConflictException, AddressOverflowException {
+			long offset, long size, boolean overlay) {
 		throw new UnsupportedOperationException();
 	}
 

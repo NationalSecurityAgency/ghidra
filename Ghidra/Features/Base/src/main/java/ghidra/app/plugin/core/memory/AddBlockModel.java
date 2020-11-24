@@ -25,7 +25,6 @@ import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.util.NamingUtilities;
 import ghidra.util.datastruct.StringKeyIndexer;
 import ghidra.util.exception.AssertException;
 
@@ -294,7 +293,7 @@ class AddBlockModel {
 	private void validateInfo() {
 		message = "";
 		isValid = hasValidName() && hasValidStartAddress() && hasValidLength() &&
-			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() && hasUniqueNameIfOverlay() &&
+			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() &&
 			hasInitialValueIfNeeded() && hasFileBytesInfoIfNeeded() && isOverlayIfOtherSpace();
 	}
 
@@ -333,21 +332,6 @@ class AddBlockModel {
 		}
 		message = "Please enter a valid initial byte value";
 		return false;
-	}
-
-	private boolean hasUniqueNameIfOverlay() {
-		if (!isOverlay) {
-			return true;
-		}
-		AddressFactory factory = program.getAddressFactory();
-		AddressSpace[] spaces = factory.getAddressSpaces();
-		for (AddressSpace space : spaces) {
-			if (space.getName().equals(blockName)) {
-				message = "Address Space named " + blockName + " already exists";
-				return false;
-			}
-		}
-		return true;
 	}
 
 	private boolean isOverlayIfOtherSpace() {
@@ -422,13 +406,12 @@ class AddBlockModel {
 			message = "Please enter a name";
 			return false;
 		}
-		if (nameExists(blockName)) {
-			message = "Block name already exists";
-			return false;
-		}
-		if (!NamingUtilities.isValidName(blockName)) {
+		if (!Memory.isValidMemoryBlockName(blockName)) {
 			message = "Block name is invalid";
 			return false;
+		}
+		if (nameExists(blockName)) {
+			message = "Warning! Block name already exists";
 		}
 		return true;
 	}

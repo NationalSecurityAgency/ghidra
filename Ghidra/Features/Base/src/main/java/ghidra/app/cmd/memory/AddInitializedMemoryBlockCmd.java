@@ -20,7 +20,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for adding a new memory block initialized with a specific byte.
@@ -54,7 +53,7 @@ public class AddInitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			DuplicateNameException, CancelledException {
+			CancelledException {
 		return memory.createInitializedBlock(name, start, length, initialValue, null, isOverlay);
 	}
 

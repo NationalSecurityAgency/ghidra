@@ -556,7 +556,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	public MemoryBlock createInitializedBlock(String name, Address start, long size,
 			byte initialValue, TaskMonitor monitor, boolean overlay)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			CancelledException, DuplicateNameException {
+			CancelledException {
 
 		InputStream fillStream = null;
 		if (initialValue != 0) {
@@ -572,17 +572,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private Address createOverlaySpace(String name, Address start, long dataLength)
-			throws MemoryConflictException, AddressOverflowException, DuplicateNameException,
-			LockException {
-
-		AddressSpace space = start.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			throw new IllegalArgumentException("An overlay block may not be overlayed");
-		}
-		if (!space.isMemorySpace()) {
-			throw new IllegalArgumentException(
-				"Invalid physical address for overlay block: " + start.toString(true));
-		}
+			throws MemoryConflictException, AddressOverflowException, LockException {
 
 		start.addNoWrap(dataLength - 1);// just tests the AddressOverflow condition.
 
@@ -596,8 +586,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, InputStream is,
 			long length, TaskMonitor monitor, boolean overlay) throws MemoryConflictException,
-			AddressOverflowException, CancelledException, LockException, DuplicateNameException {
-		checkBlockName(name, overlay);
+			AddressOverflowException, CancelledException, LockException {
+		checkBlockName(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, true);
@@ -640,10 +630,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, FileBytes fileBytes,
-			long offset, long length, boolean overlay) throws LockException, DuplicateNameException,
+			long offset, long length, boolean overlay) throws LockException,
 			MemoryConflictException, AddressOverflowException, IndexOutOfBoundsException {
 
-		checkBlockName(name, overlay);
+		checkBlockName(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, true);
@@ -694,9 +684,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createUninitializedBlock(String name, Address start, long size,
 			boolean overlay) throws MemoryConflictException, AddressOverflowException,
-			LockException, DuplicateNameException {
+			LockException {
 
-		checkBlockName(name, overlay);
+		checkBlockName(name);
 		lock.acquire();
 		try {
 			checkBlockSize(size, false);
@@ -730,9 +720,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createBitMappedBlock(String name, Address start, Address mappedAddress,
 			long length, boolean overlay) throws MemoryConflictException, AddressOverflowException,
-			LockException, IllegalArgumentException, DuplicateNameException {
+			LockException, IllegalArgumentException {
 
-		checkBlockName(name, overlay);
+		checkBlockName(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, false);
@@ -765,10 +755,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public MemoryBlock createByteMappedBlock(String name, Address start, Address mappedAddress,
 			long length, ByteMappingScheme byteMappingScheme, boolean overlay)
-			throws MemoryConflictException, AddressOverflowException, LockException,
-			DuplicateNameException {
+			throws MemoryConflictException, AddressOverflowException, LockException {
 
-		checkBlockName(name, overlay);
+		checkBlockName(name);
 
 		int mappingScheme = 0; // use for 1:1 mapping
 		if (byteMappingScheme == null) {
@@ -810,27 +799,18 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	/**
 	 * Check new block name for validity
 	 * @param name new block name
-	 * @param isOverlay true if block is overlay
 	 * @throws IllegalArgumentException if invalid block name specified
-	 * @throws DuplicateNameException if name conflicts with an address space name
 	 */
-	void checkBlockName(
-			String name, boolean isOverlay)
-			throws IllegalArgumentException, DuplicateNameException {
-		if (!Memory.isValidAddressSpaceName(name)) {
+	void checkBlockName(String name) throws IllegalArgumentException {
+		if (!Memory.isValidMemoryBlockName(name)) {
 			throw new IllegalArgumentException("Invalid block name: " + name);
-		}
-		if (isOverlay && getAddressFactory().getAddressSpace(name) != null) {
-			throw new DuplicateNameException(
-				"Block name conflicts with existing address space: " + name);
 		}
 	}
 
 	@Override
 	public MemoryBlock createBlock(MemoryBlock block, String name, Address start, long length)
-			throws MemoryConflictException, AddressOverflowException, LockException,
-			DuplicateNameException {
-		checkBlockName(name, false);
+			throws MemoryConflictException, AddressOverflowException, LockException {
+		checkBlockName(name);
 		lock.acquire();
 		try {
 			checkBlockSize(length, block.isInitialized());
@@ -2054,10 +2034,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-	public void overlayBlockRenamed(String oldName, String name)
-			throws DuplicateNameException, LockException {
-		program.renameOverlaySpace(oldName, name);
-
+	public void overlayBlockRenamed(String oldOverlaySpaceName, String name)
+			throws LockException {
+		program.renameOverlaySpace(oldOverlaySpaceName, name);
 	}
 
 	@Override
