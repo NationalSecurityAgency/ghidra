@@ -40,6 +40,7 @@ abstract class EnumValueDBAdapter {
 	static final int ENUMVAL_NAME_COL = EnumValueDBAdapterV0.V0_ENUMVAL_NAME_COL;
 	static final int ENUMVAL_VALUE_COL = EnumValueDBAdapterV0.V0_ENUMVAL_VALUE_COL;
 	static final int ENUMVAL_ID_COL = EnumValueDBAdapterV0.V0_ENUMVAL_ID_COL;
+	static final int ENUMVAL_COMMENT_COL = EnumValueDBAdapterV0.V0_ENUMVAL_COMMENT_COL;
 
 	/**
 	 * Gets an adapter for working with the enumeration data type values database table. The adapter is based 
@@ -95,7 +96,7 @@ abstract class EnumValueDBAdapter {
 		return new EnumValueDBAdapterV0(handle, true);
 	}
 
-	abstract void createRecord(long enumID, String name, long value) throws IOException;
+	abstract void createRecord(long enumID, String name, long value, String comment) throws IOException;
 
 	abstract Record getRecord(long valueID) throws IOException;
 

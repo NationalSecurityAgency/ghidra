@@ -39,7 +39,7 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public void createRecord(long enumID, String name, long value) throws IOException {
+	public void createRecord(long enumID, String name, long value, String comment) throws IOException {
 	}
 
 	@Override
