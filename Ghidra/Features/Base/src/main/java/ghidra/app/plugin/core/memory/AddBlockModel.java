@@ -293,7 +293,7 @@ class AddBlockModel {
 	private void validateInfo() {
 		message = "";
 		isValid = hasValidName() && hasValidStartAddress() && hasValidLength() &&
-			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() && hasUniqueNameIfOverlay() &&
+			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() &&
 			hasInitialValueIfNeeded() && hasFileBytesInfoIfNeeded() && isOverlayIfOtherSpace();
 	}
 
@@ -332,21 +332,6 @@ class AddBlockModel {
 		}
 		message = "Please enter a valid initial byte value";
 		return false;
-	}
-
-	private boolean hasUniqueNameIfOverlay() {
-		if (!isOverlay) {
-			return true;
-		}
-		AddressFactory factory = program.getAddressFactory();
-		AddressSpace[] spaces = factory.getAddressSpaces();
-		for (AddressSpace space : spaces) {
-			if (space.getName().equals(blockName)) {
-				message = "Address Space named " + blockName + " already exists";
-				return false;
-			}
-		}
-		return true;
 	}
 
 	private boolean isOverlayIfOtherSpace() {
