@@ -105,6 +105,11 @@ public class PngDataType extends BuiltIn implements Dynamic, Resource {
 		public ImageIcon getImageIcon() {
 			return new ImageIcon(data, "<PNG-Image>");
 		}
+
+		@Override
+		public String getImageFileType() {
+			return "png";
+		}
 	}
 
 	@Override
