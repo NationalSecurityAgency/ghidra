@@ -93,8 +93,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            Read of old symbol data3 format does not require upgrade.
 	 * 14-May-2020 - version 21 - added support for overlay mapped blocks and byte mapping
 	 *                            schemes other than the default 1:1
+	 * 19-Jun-2020 - version 22 - Corrected fixed length indexing implementation causing
+	 *                            change in index table low-level storage for newly
+	 *                            created tables. 
 	 */
-	static final int DB_VERSION = 21;
+	static final int DB_VERSION = 22;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -133,10 +136,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final String EXECUTE_FORMAT = "Execute Format";
 	private static final String IMAGE_OFFSET = "Image Offset";
 
-	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
+	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
 	private final static String[] COL_TYPES = new String[] { "Value" };
 	private final static Schema SCHEMA =
-		new Schema(0, StringField.class, "Key", COL_CLASS, COL_TYPES);
+		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_TYPES);
 
 	//
 	// The numbering of managers controls the order in which they are notified.

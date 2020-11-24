@@ -105,7 +105,9 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	@Override
 	public String[] getNames() {
-		return nameMap.keySet().toArray(new String[nameMap.size()]);
+		String[] names = nameMap.keySet().toArray(new String[nameMap.size()]);
+		Arrays.sort(names);
+		return names;
 	}
 
 	@Override

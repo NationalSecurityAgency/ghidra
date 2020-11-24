@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package ghidra.app.plugin.debug.dbtable;
 
-import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
-
 import java.io.IOException;
 import java.util.*;
 
@@ -26,6 +22,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import db.*;
+import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 public class DbLargeTableModel implements TableModel {
 	private ArrayList<TableModelListener> listeners = new ArrayList<TableModelListener>();
@@ -43,7 +41,7 @@ public class DbLargeTableModel implements TableModel {
 		this.table = table;
 		schema = table.getSchema();
 		try {
-			keyType = schema.getKeyFieldClass().newInstance();
+			keyType = schema.getKeyFieldType();
 		}
 		catch (Exception e) {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
@@ -59,39 +57,39 @@ public class DbLargeTableModel implements TableModel {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
 
-		columns.add(getColumn(schema.getKeyFieldClass()));
+		columns.add(getColumn(schema.getKeyFieldType()));
 
-		Class<?>[] classes = schema.getFieldClasses();
-		int fieldCount = schema.getFieldCount();
-		for (int i = 0; i < fieldCount; i++) {
-			columns.add(getColumn(classes[i]));
+		Field[] fields = schema.getFields();
+		for (Field field : fields) {
+			columns.add(getColumn(field));
 		}
 
 	}
 
-	private AbstractColumnAdapter getColumn(Class<?> c) {
-		if (c == ByteField.class) {
+	private AbstractColumnAdapter getColumn(Field field) {
+		if (field instanceof ByteField) {
 			return new ByteColumnAdapter();
 		}
-		else if (c == BooleanField.class) {
+		else if (field instanceof BooleanField) {
 			return new BooleanColumnAdapter();
 		}
-		else if (c == ShortField.class) {
+		else if (field instanceof ShortField) {
 			return new ShortColumnAdapter();
 		}
-		else if (c == IntField.class) {
+		else if (field instanceof IntField) {
 			return new IntegerColumnAdapter();
 		}
-		else if (c == LongField.class) {
+		else if (field instanceof LongField) {
 			return new LongColumnAdapter();
 		}
-		else if (c == StringField.class) {
+		else if (field instanceof StringField) {
 			return new StringColumnAdapter();
 		}
-		else if (c == BinaryField.class) {
+		else if (field instanceof BinaryField) {
 			return new BinaryColumnAdapter();
 		}
-		throw new AssertException("New, unexpected DB column class type: " + c);
+		throw new AssertException(
+			"New, unexpected DB column type: " + field.getClass().getSimpleName());
 	}
 
 	private void findMinKey() throws IOException {

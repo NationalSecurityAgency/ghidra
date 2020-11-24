@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,9 @@
  */
 package ghidra.program.database.code;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -27,10 +29,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-
-import db.*;
-
 /**
  * Adapter to access the Data table.
  */
@@ -38,7 +36,7 @@ abstract class DataDBAdapter {
 
 	static final String DATA_TABLE_NAME = "Data";
 
-	static final Schema DATA_SCHEMA = new Schema(0, "Address", new Class[] { LongField.class },
+	static final Schema DATA_SCHEMA = new Schema(0, "Address", new Field[] { LongField.INSTANCE },
 		new String[] { "Data Type ID" });
 
 	static final int DATA_TYPE_ID_COL = 0;
@@ -75,8 +73,8 @@ abstract class DataDBAdapter {
 	}
 
 	private static DataDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			DataDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException, IOException,
-			CancelledException {
+			DataDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 

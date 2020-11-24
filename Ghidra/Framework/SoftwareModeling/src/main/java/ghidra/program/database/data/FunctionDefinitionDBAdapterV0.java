@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,19 @@
  */
 package ghidra.program.database.data;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.VersionException;
 
-import java.io.IOException;
-
-import db.*;
-
 /**
  * Version 0 implementation for accessing the Function Signature Definition database table. 
  */
-class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter implements RecordTranslator {
+class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter
+		implements RecordTranslator {
 	static final int VERSION = 0;
 	static final int V0_FUNCTION_DEF_NAME_COL = 0;
 	static final int V0_FUNCTION_DEF_COMMENT_COL = 1;
@@ -60,9 +59,8 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter implemen
 		}
 		int version = table.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg =
-				"Expected version " + VERSION + " for table " + FUNCTION_DEF_TABLE_NAME +
-					" but got " + table.getSchema().getVersion();
+			String msg = "Expected version " + VERSION + " for table " + FUNCTION_DEF_TABLE_NAME +
+				" but got " + table.getSchema().getVersion();
 			if (version < VERSION) {
 				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 			}
@@ -104,18 +102,16 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter implemen
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V0_FUNCTION_DEF_CAT_ID_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
-	/* (non-Javadoc)
-	 * @see db.RecordTranslator#translateRecord(db.Record)
-	 */
+	@Override
 	public Record translateRecord(Record oldRec) {
 		if (oldRec == null) {
 			return null;

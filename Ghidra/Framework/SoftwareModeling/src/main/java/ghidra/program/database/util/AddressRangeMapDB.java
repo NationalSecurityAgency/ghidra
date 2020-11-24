@@ -15,6 +15,12 @@
  */
 package ghidra.program.database.util;
 
+import java.io.IOException;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -23,13 +29,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-
-import db.*;
-import db.util.ErrorHandler;
 
 /**
  * <code>RangeMapDB</code> provides a generic value range map backed by a database table.
@@ -42,7 +41,7 @@ public class AddressRangeMapDB implements DBListener {
 	private DBHandle dbHandle;
 	private AddressMap addrMap;
 	private ErrorHandler errHandler;
-	private Class<?> valueFieldClass;
+	private Field valueField;
 	private boolean indexed;
 	private Table rangeMapTable;
 	private Schema rangeMapSchema;
@@ -70,17 +69,17 @@ public class AddressRangeMapDB implements DBListener {
 	 * @param name map name used in naming the underlying database table.  
 	 * This name must be unique across all range maps.
 	 * @param errHandler database error handler.
-	 * @param valueFieldClass Field class to be used for stored values.
+	 * @param valueField Field to be used for stored values.
 	 * @param indexed if true, values will be indexed allowing use of the 
 	 * getValueRangeIterator method.
 	 */
 	public AddressRangeMapDB(DBHandle dbHandle, AddressMap addrMap, Lock lock, String name,
-			ErrorHandler errHandler, Class<?> valueFieldClass, boolean indexed) {
+			ErrorHandler errHandler, Field valueField, boolean indexed) {
 		this.dbHandle = dbHandle;
 		this.addrMap = addrMap;
 		this.lock = lock;
 		this.errHandler = errHandler;
-		this.valueFieldClass = valueFieldClass;
+		this.valueField = valueField;
 		this.indexed = indexed;
 		tableName = RANGE_MAP_TABLE_PREFIX + name;
 		findTable();
@@ -133,10 +132,10 @@ public class AddressRangeMapDB implements DBListener {
 		rangeMapTable = dbHandle.getTable(tableName);
 		if (rangeMapTable != null) {
 			rangeMapSchema = rangeMapTable.getSchema();
-			Class<?>[] fieldClasses = rangeMapSchema.getFieldClasses();
-			if (fieldClasses.length != 2 || !fieldClasses[VALUE_COL].equals(valueFieldClass)) {
-				errHandler.dbError(new IOException(
-					"Existing range map table has unexpected value class"));
+			Field[] fields = rangeMapSchema.getFields();
+			if (fields.length != 2 || !fields[VALUE_COL].isSameType(valueField)) {
+				errHandler.dbError(
+					new IOException("Existing range map table has unexpected value class"));
 			}
 			if (indexed) {
 				int[] indexedCols = rangeMapTable.getIndexedColumns();
@@ -149,7 +148,7 @@ public class AddressRangeMapDB implements DBListener {
 
 	private void createTable() throws IOException {
 		rangeMapSchema =
-			new Schema(0, "From", new Class[] { LongField.class, valueFieldClass }, COLUMN_NAMES);
+			new Schema(0, "From", new Field[] { LongField.INSTANCE, valueField }, COLUMN_NAMES);
 		if (indexed) {
 			rangeMapTable = dbHandle.createTable(tableName, rangeMapSchema, INDEXED_COLUMNS);
 		}
@@ -243,9 +242,8 @@ public class AddressRangeMapDB implements DBListener {
 		lock.acquire();
 		try {
 			tmpDb = dbHandle.getScratchPad();
-			tmpMap =
-				new AddressRangeMapDB(tmpDb, addrMap, lock, "TEMP", errHandler, valueFieldClass,
-					indexed);
+			tmpMap = new AddressRangeMapDB(tmpDb, addrMap, lock, "TEMP", errHandler, valueField,
+				indexed);
 
 			Address fromEndAddr = fromAddr.add(length - 1);
 			for (AddressRange range : getAddressRanges(fromAddr, fromEndAddr)) {
@@ -655,9 +653,8 @@ public class AddressRangeMapDB implements DBListener {
 					endIndex = addrMap.getKey(endAddr, false);
 					checkEnd = (endIndex != AddressMap.INVALID_ADDRESS_KEY);
 
-					recIter =
-						new AddressKeyRecordIterator(rangeMapTable, addrMap, startAddr, endAddr,
-							startAddr, true);
+					recIter = new AddressKeyRecordIterator(rangeMapTable, addrMap, startAddr,
+						endAddr, startAddr, true);
 
 				}
 				catch (IOException e) {

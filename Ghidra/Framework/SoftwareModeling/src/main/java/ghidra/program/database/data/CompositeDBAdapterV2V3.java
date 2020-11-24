@@ -54,9 +54,10 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	static final int V2_COMPOSITE_EXTERNAL_ALIGNMENT_COL = 11;
 
 	static final Schema V2_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
-		new Class[] { StringField.class, StringField.class, BooleanField.class, LongField.class,
-			IntField.class, IntField.class, LongField.class, LongField.class, LongField.class,
-			LongField.class, IntField.class, IntField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
+			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE,
+			IntField.INSTANCE },
 		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
 			"Number Of Components", "Source Archive ID", "Source Data Type ID", "Source Sync Time",
 			"Last Change Time", "Internal Alignment", "External Alignment" });
@@ -190,20 +191,20 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return compositeTable.findRecords(new LongField(categoryID),
 			CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
 		return compositeTable.findRecords(new LongField(archiveID),
 			V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL);
 	}
 
 	@Override
 	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
-		long[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
+		Field[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
 			V2_COMPOSITE_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.data;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Version 0 implementation for accessing the Composite database table. 
@@ -38,10 +36,11 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	static final int V0_COMPOSITE_LENGTH_COL = 4;
 	static final int V0_COMPOSITE_NUM_COMPONENTS_COL = 5;
 
-	static final Schema V0_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID", new Class[] {
-		StringField.class, StringField.class, BooleanField.class, LongField.class, IntField.class,
-		IntField.class }, new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
-		"Number Of Components" });
+	static final Schema V0_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
+			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE },
+		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
+			"Number Of Components" });
 
 	private Table compositeTable;
 
@@ -59,9 +58,8 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 		}
 		int version = compositeTable.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg =
-				"Expected version " + VERSION + " for table " + COMPOSITE_TABLE_NAME + " but got " +
-					compositeTable.getSchema().getVersion();
+			String msg = "Expected version " + VERSION + " for table " + COMPOSITE_TABLE_NAME +
+				" but got " + compositeTable.getSchema().getVersion();
 			if (version < VERSION) {
 				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 			}
@@ -98,7 +96,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return compositeTable.findRecords(new LongField(categoryID),
 			CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}
@@ -109,13 +107,11 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
-	/* (non-Javadoc)
-	 * @see db.RecordTranslator#translateRecord(db.Record)
-	 */
+	@Override
 	public Record translateRecord(Record oldRec) {
 		if (oldRec == null) {
 			return null;

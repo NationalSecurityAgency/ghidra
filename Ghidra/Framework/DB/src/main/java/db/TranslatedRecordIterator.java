@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +26,27 @@ public class TranslatedRecordIterator implements RecordIterator {
 		this.translator = translator;
 	}
 	
+	@Override
 	public boolean hasNext() throws IOException {
 		return it.hasNext();
 	}
 
+	@Override
 	public boolean hasPrevious() throws IOException {
 		return it.hasPrevious();
 	}
 
+	@Override
 	public Record next() throws IOException {
 		return translator.translateRecord(it.next());
 	}
 	
+	@Override
 	public Record previous() throws IOException {
 		return translator.translateRecord(it.previous());
 	}
 	
+	@Override
 	public boolean delete() throws IOException {
 		throw new UnsupportedOperationException();
 	}

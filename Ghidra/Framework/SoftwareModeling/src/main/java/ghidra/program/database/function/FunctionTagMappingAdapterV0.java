@@ -34,14 +34,14 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	public static final int V0_FUNCTION_ID_COL = 0;
 	public static final int V0_TAG_ID_COL = 1;
 
-	final static Schema SCHEMA = new Schema(CURRENT_VERSION, "ID",
-		new Class[] { LongField.class, LongField.class }, new String[] { "Function ID", "Tag ID" });
+	final static Schema SCHEMA =
+		new Schema(CURRENT_VERSION, "ID", new Field[] { LongField.INSTANCE, LongField.INSTANCE },
+			new String[] { "Function ID", "Tag ID" });
 
 	private Table table; // lazy creation, null if empty
 	private final DBHandle dbHandle;
 
-	FunctionTagMappingAdapterV0(DBHandle dbHandle, boolean create)
-			throws VersionException {
+	FunctionTagMappingAdapterV0(DBHandle dbHandle, boolean create) throws VersionException {
 
 		this.dbHandle = dbHandle;
 
@@ -72,7 +72,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 
 	@Override
 	Record getRecord(long functionID, long tagID) throws IOException {
-		
+
 		if (table == null) {
 			return null;
 		}
@@ -93,8 +93,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
-	Record createFunctionTagRecord(long functionID, long tagID)
-			throws IOException {
+	Record createFunctionTagRecord(long functionID, long tagID) throws IOException {
 
 		Table t = getTable();
 		Record rec = SCHEMA.createRecord(t.getKey());
@@ -106,8 +105,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
-	boolean removeFunctionTagRecord(long functionID, long tagID)
-			throws IOException {
+	boolean removeFunctionTagRecord(long functionID, long tagID) throws IOException {
 
 		Record record = getRecord(functionID, tagID);
 		if (record != null) {
@@ -123,7 +121,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		if (table == null) {
 			return;
 		}
-		
+
 		// Tag ID is not an indexed column in the mapping table, so we just have to iterate
 		// over all records. This operation is only done when deleting a tag (ie: not often)
 		// so it won't be indexed.
@@ -169,7 +167,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		}
 		return false;
 	}
-	
+
 	private Table getTable() throws IOException {
 		if (table == null) {
 			table = dbHandle.createTable(TABLE_NAME, SCHEMA, new int[] { V0_FUNCTION_ID_COL });
@@ -194,5 +192,5 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	public void tableAdded(DBHandle dbh, Table table) {
 		// do nothing
 	}
-	
+
 }

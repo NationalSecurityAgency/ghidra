@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import db.Field;
 import db.Record;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -84,10 +85,10 @@ class EnumDB extends DataTypeDB implements Enum {
 		nameMap = new HashMap<>();
 		valueMap = new HashMap<>();
 
-		long[] ids = valueAdapter.getValueIdsInEnum(key);
+		Field[] ids = valueAdapter.getValueIdsInEnum(key);
 
-		for (long id : ids) {
-			Record rec = valueAdapter.getRecord(id);
+		for (Field id : ids) {
+			Record rec = valueAdapter.getRecord(id.getLongValue());
 			String valueName = rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL);
 			long value = rec.getLongValue(EnumValueDBAdapter.ENUMVAL_VALUE_COL);
 			addToCache(valueName, value);
@@ -179,7 +180,9 @@ class EnumDB extends DataTypeDB implements Enum {
 		try {
 			checkIsValid();
 			initializeIfNeeded();
-			return nameMap.keySet().toArray(new String[nameMap.size()]);
+			String[] names = nameMap.keySet().toArray(new String[nameMap.size()]);
+			Arrays.sort(names);
+			return names;
 		}
 		finally {
 			lock.release();
@@ -250,12 +253,12 @@ class EnumDB extends DataTypeDB implements Enum {
 			}
 			bitGroups = null;
 
-			long[] ids = valueAdapter.getValueIdsInEnum(key);
+			Field[] ids = valueAdapter.getValueIdsInEnum(key);
 
-			for (long id : ids) {
-				Record rec = valueAdapter.getRecord(id);
+			for (Field id : ids) {
+				Record rec = valueAdapter.getRecord(id.getLongValue());
 				if (valueName.equals(rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL))) {
-					valueAdapter.removeRecord(id);
+					valueAdapter.removeRecord(id.getLongValue());
 					break;
 				}
 			}
@@ -284,9 +287,9 @@ class EnumDB extends DataTypeDB implements Enum {
 			nameMap = new HashMap<>();
 			valueMap = new HashMap<>();
 
-			long[] ids = valueAdapter.getValueIdsInEnum(key);
-			for (long id : ids) {
-				valueAdapter.removeRecord(id);
+			Field[] ids = valueAdapter.getValueIdsInEnum(key);
+			for (Field id : ids) {
+				valueAdapter.removeRecord(id.getLongValue());
 			}
 
 			int oldLength = getLength();

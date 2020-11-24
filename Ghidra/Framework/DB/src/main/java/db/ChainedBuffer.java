@@ -123,7 +123,7 @@ public class ChainedBuffer implements Buffer {
 	 * @param unintializedDataSourceOffset uninitialized data source offset which corresponds to
 	 * this buffers contents.
 	 * @param bufferMgr database buffer manager
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public ChainedBuffer(int size, boolean enableObfuscation, Buffer uninitializedDataSource,
 			int unintializedDataSourceOffset, BufferMgr bufferMgr) throws IOException {
@@ -171,7 +171,7 @@ public class ChainedBuffer implements Buffer {
 	 * @param size {@literal buffer size (0 < size <= 0x7fffffff)}
 	 * @param enableObfuscation true to enable xor-ing of stored data to facilitate data obfuscation.
 	 * @param bufferMgr database buffer manager
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public ChainedBuffer(int size, boolean enableObfuscation, BufferMgr bufferMgr)
 			throws IOException {
@@ -183,7 +183,7 @@ public class ChainedBuffer implements Buffer {
 	 * This method may only be invoked while a database transaction is in progress.
 	 * @param size {@literal buffer size (0 < size <= 0x7fffffff)}
 	 * @param bufferMgr database buffer manager
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public ChainedBuffer(int size, BufferMgr bufferMgr) throws IOException {
 		this(size, false, null, 0, bufferMgr);
@@ -198,7 +198,7 @@ public class ChainedBuffer implements Buffer {
 	 * This should not be specified if buffer will be completely filled/initialized.
 	 * @param unintializedDataSourceOffset uninitialized data source offset which corresponds to
 	 * this buffers contents.
-	 * @throws IOException 
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public ChainedBuffer(BufferMgr bufferMgr, int bufferId, Buffer uninitializedDataSource,
 			int unintializedDataSourceOffset) throws IOException {
@@ -238,6 +238,7 @@ public class ChainedBuffer implements Buffer {
 	 * Construct an existing chained buffer.
 	 * @param bufferMgr database buffer manager
 	 * @param bufferId database buffer ID which corresponds to a stored ChainedBuffer
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public ChainedBuffer(BufferMgr bufferMgr, int bufferId) throws IOException {
 		this(bufferMgr, bufferId, null, 0);
@@ -249,12 +250,12 @@ public class ChainedBuffer implements Buffer {
 	}
 
 	/**
-	 * Generate the XOR value for the specified byteValue which is located at the
+	 * Generate the XOR'd value for the specified byteValue which is located at the
 	 * specified bufferOffset.
 	 * @param bufferOffset offset within a single chained buffer, valid values are in the 
-	 * range 0 to (dataSpace-1).
-	 * @param byteValue
-	 * @return
+	 * range 0 to (dataSpace-1).  This value is used to determine the appropriate XOR mask.
+	 * @param byteValue value to be XOR'd against appropriate mask value
+	 * @return XOR'd value
 	 */
 	private byte xorMaskByte(int bufferOffset, byte byteValue) {
 		byte maskByte = XOR_MASK_BYTES[bufferOffset % XOR_MASK_BYTES.length];
@@ -267,7 +268,7 @@ public class ChainedBuffer implements Buffer {
 	 * @param bufferOffset offset within a single chained buffer, valid values are in the 
 	 * range 0 to (dataSpace-1).  The value (bufferOffset+len-1) must be less than dataSpace.
 	 * @param len mask length (2, 4, or 8)
-	 * @return
+	 * @return XOR mask of specified length which corresponds to specified bufferOffset.
 	 */
 	private long getXorMask(int bufferOffset, int len) {
 		long mask = 0;
@@ -284,8 +285,9 @@ public class ChainedBuffer implements Buffer {
 	 * The same uninitialized read-only dataSource used for a chained buffer should be re-applied
 	 * anytime this chained buffer is re-instantiated. 
 	 * 
-	 * @param dataSource
-	 * @param dataSourceOffset
+	 * @param dataSource data source for unitilized bytes
+	 * @param dataSourceOffset offset within dataSource which corresponds to first byte of
+	 * this chained buffer.
 	 */
 	private void setUnintializedDataSource(Buffer dataSource, int dataSourceOffset) {
 
@@ -321,6 +323,7 @@ public class ChainedBuffer implements Buffer {
 	/**
 	 * Return the maximum number of buffers consumed by the storage of this DBBuffer object.
 	 * The actual number may be less if data has not been written to the entire buffer.
+	 * @return total number of buffers consumed by this ChaninedBuffer.
 	 */
 	int getBufferCount() {
 		return dataBufferIdTable.length +
@@ -734,7 +737,7 @@ public class ChainedBuffer implements Buffer {
 	 * The index buffer provided is always released.
 	 * @param indexBuffer the last index buffer.
 	 * @return DataBuffer
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	private DataBuffer appendIndexBuffer(DataBuffer indexBuffer) throws IOException {
 		try {
@@ -856,6 +859,7 @@ public class ChainedBuffer implements Buffer {
 
 	/**
 	 * Delete and release all underlying DataBuffers. 
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public synchronized void delete() throws IOException {
 		if (readOnly) {
@@ -1115,6 +1119,7 @@ public class ChainedBuffer implements Buffer {
 	 * @param startOffset starting offset, inclusive
 	 * @param endOffset ending offset, exclusive
 	 * @param fillByte byte value
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	public synchronized void fill(int startOffset, int endOffset, byte fillByte)
 			throws IOException {
@@ -1160,7 +1165,7 @@ public class ChainedBuffer implements Buffer {
 	 * @return int actual number of bytes written.  
 	 * This could be smaller than length if the end of buffer is 
 	 * encountered while writing data.
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	private int putBytes(int index, int bufferDataOffset, byte[] data, int dataOffset, int length)
 			throws IOException {
@@ -1370,9 +1375,6 @@ public class ChainedBuffer implements Buffer {
 		return offset + 8;
 	}
 
-	/*
-	 * @see ghidra.framework.store.Buffer#putShort(int, short)
-	 */
 	@Override
 	public synchronized int putShort(int offset, short v) throws IOException {
 		if (readOnly) {
@@ -1406,7 +1408,7 @@ public class ChainedBuffer implements Buffer {
 	 * Get a data buffer.
 	 * @param index index of within buffer chain
 	 * @return requested data buffer.
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	private DataBuffer getBuffer(int index) throws IOException {
 		// if databufferIdTable is null, index must be null.  let it throw null pointer in this case.
@@ -1425,7 +1427,7 @@ public class ChainedBuffer implements Buffer {
 	 * Initialize specified DataBuffer which corresponds to the chain index.
 	 * @param chainBufferIndex chain buffer index
 	 * @param buf newly allocated database buffer
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	private void initializeAllocatedBuffer(int chainBufferIndex, DataBuffer buf)
 			throws IOException {
@@ -1455,7 +1457,7 @@ public class ChainedBuffer implements Buffer {
 	 * Add a new data buffer as an indexed buffer.
 	 * @param index buffer index.
 	 * @param buf new data buffer.
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	private void addBuffer(int index, DataBuffer buf) throws IOException {
 		buf.putByte(NODE_TYPE_OFFSET, NodeMgr.CHAINED_BUFFER_DATA_NODE);

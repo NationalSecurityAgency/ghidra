@@ -881,22 +881,24 @@ public class DBHandle {
 	}
 
 	/**
-	 * Creates a new table with the given name, version and type.
+	 * Creates a new table with the given name and schema.
+	 * @param name table name
+	 * @param schema table schema
+	 * @return new table instance
+	 * @throws IOException if IO error occurs during table creation
 	 */
-	public synchronized Table createTable(String name, Schema schema) throws IOException {
-
-		if (tables.containsKey(name)) {
-			throw new IOException("Table already exists");
-		}
-		Table table = new Table(this, masterTable.createTableRecord(name, schema, -1));
-		tables.put(name, table);
-		tableAdded(table);
-		return table;
+	public Table createTable(String name, Schema schema) throws IOException {
+		return createTable(name, schema, null);
 	}
 
 	/**
-	 * Creates a new table with the given name, version and type.
+	 * Creates a new table with the given name and schema.
 	 * Create secondary indexes as specified by the array of column indexes.
+	 * @param name table name
+	 * @param schema table schema
+	 * @param indexedColumns index table columns or null
+	 * @return new table instance
+	 * @throws IOException if IO error occurs during table creation
 	 */
 	public synchronized Table createTable(String name, Schema schema, int[] indexedColumns)
 			throws IOException {
@@ -906,8 +908,10 @@ public class DBHandle {
 		}
 		Table table = new Table(this, masterTable.createTableRecord(name, schema, -1));
 		tables.put(name, table);
-		for (int indexedColumn : indexedColumns) {
-			IndexTable.createIndexTable(table, indexedColumn);
+		if (indexedColumns != null) {
+			for (int indexedColumn : indexedColumns) {
+				IndexTable.createIndexTable(table, indexedColumn);
+			}
 		}
 		tableAdded(table);
 		return table;

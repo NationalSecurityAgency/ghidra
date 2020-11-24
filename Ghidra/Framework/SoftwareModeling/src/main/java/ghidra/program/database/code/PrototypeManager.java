@@ -68,16 +68,15 @@ class PrototypeManager {
 	final static Schema REGISTER_SCHEMA = createRegisterSchema();
 
 	private static Schema createPrototypeSchema() {
-		Schema schema =
-			new Schema(1, "Keys", new Class[] { BinaryField.class, LongField.class,
-				BooleanField.class }, new String[] { "Bytes", "Address", "InDelaySlot" });
+		Schema schema = new Schema(1, "Keys",
+			new Field[] { BinaryField.INSTANCE, LongField.INSTANCE, BooleanField.INSTANCE },
+			new String[] { "Bytes", "Address", "InDelaySlot" });
 		return schema;
 	}
 
 	private static Schema createRegisterSchema() {
-		Schema schema =
-			new Schema(1, "Keys", new Class[] { StringField.class },
-				new String[] { "Register Context" });
+		Schema schema = new Schema(1, "Keys", new Field[] { StringField.INSTANCE },
+			new String[] { "Register Context" });
 		return schema;
 	}
 
@@ -412,8 +411,8 @@ class PrototypeManager {
 		}
 	}
 
-	private void loadContextTable(DBHandle dbHandle, int openMode) throws VersionException,
-			IOException {
+	private void loadContextTable(DBHandle dbHandle, int openMode)
+			throws VersionException, IOException {
 		contextTable = dbHandle.getTable(CONTEXT_TABLE_NAME);
 		if (contextTable == null) {
 			contextTable = dbHandle.createTable(CONTEXT_TABLE_NAME, REGISTER_SCHEMA);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.module;
 
-import ghidra.util.exception.*;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.*;
 
 /**
  *
@@ -45,11 +43,9 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		testVersion(parentChildTable, 0, parentChildTableName);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#createModule(java.lang.String)
-	 */
-	public Record createModule(long parentModuleID, String name) throws IOException,
-			DuplicateNameException {
+	@Override
+	public Record createModule(long parentModuleID, String name)
+			throws IOException, DuplicateNameException {
 
 		if (getModuleRecord(name) != null || getFragmentRecord(name) != null) {
 			throw new DuplicateNameException(name + " already exists");
@@ -67,11 +63,9 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		return record;
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#createFragment(java.lang.String)
-	 */
-	public Record createFragment(long parentModuleID, String name) throws IOException,
-			DuplicateNameException {
+	@Override
+	public Record createFragment(long parentModuleID, String name)
+			throws IOException, DuplicateNameException {
 
 		if (getFragmentRecord(name) != null || getModuleRecord(name) != null) {
 			throw new DuplicateNameException(name + " already exists");
@@ -94,16 +88,12 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#getFragmentRecord(long)
-	 */
+	@Override
 	public Record getFragmentRecord(long key) throws IOException {
 		return fragmentTable.getRecord(key);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#getModuleRecord(long)
-	 */
+	@Override
 	public Record getModuleRecord(long key) throws IOException {
 		return moduleTable.getRecord(key);
 	}
@@ -112,8 +102,9 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	 * @see ghidra.program.database.module.GroupDBAdapter#getParentChildRecord(long, long)
 	 * @param childID negative value if child is a fragment
 	 */
+	@Override
 	public Record getParentChildRecord(long parentID, long childID) throws IOException {
-		long[] keys =
+		Field[] keys =
 			parentChildTable.findRecords(new LongField(parentID), TreeManager.PARENT_ID_COL);
 		for (int i = 0; i < keys.length; i++) {
 			Record pcRec = parentChildTable.getRecord(keys[i]);
@@ -124,9 +115,7 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#addParentChildRecord(long, long)
-	 */
+	@Override
 	public Record addParentChildRecord(long moduleID, long childID) throws IOException {
 
 		Record pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
@@ -136,25 +125,19 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		return pcRec;
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#removeParentChildRecord(long)
-	 */
+	@Override
 	public boolean removeParentChildRecord(long key) throws IOException {
 		return parentChildTable.deleteRecord(key);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#getParentChildRecords(long)
-	 */
-	public long[] getParentChildKeys(long parentID, int indexedCol) throws IOException {
+	@Override
+	public Field[] getParentChildKeys(long parentID, int indexedCol) throws IOException {
 		return parentChildTable.findRecords(new LongField(parentID), indexedCol);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#getFragmentRecord(java.lang.String)
-	 */
+	@Override
 	public Record getFragmentRecord(String name) throws IOException {
-		long[] keys =
+		Field[] keys =
 			fragmentTable.findRecords(new StringField(name), TreeManager.FRAGMENT_NAME_COL);
 		if (keys.length == 0) {
 			return null;
@@ -165,11 +148,9 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		return fragmentTable.getRecord(keys[0]);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#getModuleRecord(java.lang.String)
-	 */
+	@Override
 	public Record getModuleRecord(String name) throws IOException {
-		long[] keys = moduleTable.findRecords(new StringField(name), TreeManager.MODULE_NAME_COL);
+		Field[] keys = moduleTable.findRecords(new StringField(name), TreeManager.MODULE_NAME_COL);
 		if (keys.length == 0) {
 			return null;
 		}
@@ -179,37 +160,27 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		return moduleTable.getRecord(keys[0]);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#getParentChildRecord(long)
-	 */
+	@Override
 	public Record getParentChildRecord(long key) throws IOException {
 		return parentChildTable.getRecord(key);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#updateRecord(ghidra.framework.store.db.Record)
-	 */
+	@Override
 	public void updateModuleRecord(Record record) throws IOException {
 		moduleTable.putRecord(record);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#updateFragmentRecord(ghidra.framework.store.db.Record)
-	 */
+	@Override
 	public void updateFragmentRecord(Record record) throws IOException {
 		fragmentTable.putRecord(record);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#updateParentChildRecord(ghidra.framework.store.db.Record)
-	 */
+	@Override
 	public void updateParentChildRecord(Record record) throws IOException {
 		parentChildTable.putRecord(record);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#createRootModule()
-	 */
+	@Override
 	public Record createRootModule(String name) throws IOException {
 		Record record = TreeManager.MODULE_SCHEMA.createRecord(0);
 		record.setString(TreeManager.MODULE_NAME_COL, name);
@@ -217,29 +188,26 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		return record;
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#removeFragmentRecord(long)
-	 */
+	@Override
 	public boolean removeFragmentRecord(long childID) throws IOException {
 		return fragmentTable.deleteRecord(childID);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.GroupDBAdapter#removeModuleRecord(long)
-	 */
+	@Override
 	public boolean removeModuleRecord(long childID) throws IOException {
 		return moduleTable.deleteRecord(childID);
 	}
 
-	private void testVersion(Table table, int expectedVersion, String name) throws VersionException {
+	private void testVersion(Table table, int expectedVersion, String name)
+			throws VersionException {
 
 		if (table == null) {
 			throw new VersionException(name + " not found");
 		}
 		int versionNumber = table.getSchema().getVersion();
 		if (versionNumber != expectedVersion) {
-			throw new VersionException(name + ": Expected Version " + expectedVersion + ", got " +
-				versionNumber);
+			throw new VersionException(
+				name + ": Expected Version " + expectedVersion + ", got " + versionNumber);
 		}
 	}
 

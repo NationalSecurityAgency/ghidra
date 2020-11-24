@@ -776,19 +776,18 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				currentHandler = currentHandler.getSubsequentHandler();
 			}
 
-			SourceArchive sourceArchive = dataType.getSourceArchive();
-			if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
-				return resolveBuiltIn(dataType, currentHandler);
-			}
-
 			resolvedDataType = getCachedResolve(dataType);
 			if (resolvedDataType != null) {
 				return resolvedDataType;
 			}
 
-			// if the dataType has no source or it has no ID (datatypes with no ID are
-			// always local i.e. pointers)
-			if (sourceArchive == null || dataType.getUniversalID() == null) {
+			SourceArchive sourceArchive = dataType.getSourceArchive();
+			if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
+				resolvedDataType = resolveBuiltIn(dataType, currentHandler);
+			}
+			else if (sourceArchive == null || dataType.getUniversalID() == null) {
+				// if the dataType has no source or it has no ID (datatypes with no ID are
+				// always local i.e. pointers)
 				resolvedDataType = resolveNoSourceDataType(dataType, currentHandler);
 			}
 			else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
@@ -1848,9 +1847,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param parentID the parentData type's ID
 	 */
 	private void removeParameters(long parentID) throws IOException {
-		long[] paramIDs = paramAdapter.getParameterIdsInFunctionDef(parentID);
-		for (long paramID : paramIDs) {
-			deleteDataTypeRecord(paramID);
+		Field[] paramIDs = paramAdapter.getParameterIdsInFunctionDef(parentID);
+		for (Field paramID : paramIDs) {
+			deleteDataTypeRecord(paramID.getLongValue());
 		}
 	}
 
@@ -1860,9 +1859,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param parentID the parentData type's ID
 	 */
 	private void removeComponents(long parentID) throws IOException {
-		long[] componentIDs = componentAdapter.getComponentIdsInComposite(parentID);
-		for (long componentID : componentIDs) {
-			deleteDataTypeRecord(componentID);
+		Field[] componentIDs = componentAdapter.getComponentIdsInComposite(parentID);
+		for (Field componentID : componentIDs) {
+			deleteDataTypeRecord(componentID.getLongValue());
 		}
 	}
 
@@ -1954,7 +1953,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		ArrayList<DataType> list = new ArrayList<>();
 		try {
-			long[] ids = builtinAdapter.getRecordIdsInCategory(categoryID);
+			Field[] ids = builtinAdapter.getRecordIdsInCategory(categoryID);
 			getDataTypes(ids, list);
 
 			ids = typedefAdapter.getRecordIdsInCategory(categoryID);
@@ -2011,9 +2010,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private void getDataTypes(long[] ids, ArrayList<DataType> list) {
-		for (long id : ids) {
-			DataType dt = getDataType(id);
+	private void getDataTypes(Field[] ids, ArrayList<DataType> list) {
+		for (Field id : ids) {
+			DataType dt = getDataType(id.getLongValue());
 			if (dt == null) {
 				throw new AssertException("Could not find data type id: " + id);
 			}
@@ -2850,14 +2849,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	void dataTypeCategoryPathChanged(DataTypeDB dt, CategoryPath oldPath, long oldCatId) {
 		if (!(dt instanceof Array) && !(dt instanceof Pointer)) {
 			try {
-				for (long arrayId : arrayAdapter.getRecordIdsInCategory(oldCatId)) {
-					Record rec = arrayAdapter.getRecord(arrayId);
-					ArrayDB array = (ArrayDB) getDataType(arrayId, rec);
+				for (Field arrayId : arrayAdapter.getRecordIdsInCategory(oldCatId)) {
+					long id = arrayId.getLongValue();
+					Record rec = arrayAdapter.getRecord(id);
+					ArrayDB array = (ArrayDB) getDataType(id, rec);
 					array.updatePath(dt);
 				}
-				for (long ptrId : pointerAdapter.getRecordIdsInCategory(oldCatId)) {
-					Record rec = pointerAdapter.getRecord(ptrId);
-					PointerDB ptr = (PointerDB) getDataType(ptrId, rec);
+				for (Field ptrId : pointerAdapter.getRecordIdsInCategory(oldCatId)) {
+					long id = ptrId.getLongValue();
+					Record rec = pointerAdapter.getRecord(id);
+					PointerDB ptr = (PointerDB) getDataType(id, rec);
 					ptr.updatePath(dt);
 				}
 			}
@@ -3147,9 +3148,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		try {
 			settingsCache.clear();
-			long[] keys = instanceSettingsAdapter.getInstanceKeys(addrMap.getKey(dataAddr, false));
-			for (long key : keys) {
-				instanceSettingsAdapter.removeInstanceRecord(key);
+			Field[] keys = instanceSettingsAdapter.getInstanceKeys(addrMap.getKey(dataAddr, false));
+			for (Field key : keys) {
+				instanceSettingsAdapter.removeInstanceRecord(key.getLongValue());
 			}
 		}
 		catch (IOException e) {
@@ -3282,10 +3283,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		lock.acquire();
 		try {
-			long[] keys = instanceSettingsAdapter.getInstanceKeys(addrMap.getKey(dataAddr, false));
+			Field[] keys = instanceSettingsAdapter.getInstanceKeys(addrMap.getKey(dataAddr, false));
 			ArrayList<String> list = new ArrayList<>();
-			for (long key : keys) {
-				Record rec = instanceSettingsAdapter.getInstanceRecord(key);
+			for (Field key : keys) {
+				Record rec = instanceSettingsAdapter.getInstanceRecord(key.getLongValue());
 				list.add(rec.getString(InstanceSettingsDBAdapter.INST_NAME_COL));
 			}
 			String[] names = new String[list.size()];
@@ -3392,9 +3393,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private Record getInstanceRecord(long addr, String name) {
 		try {
-			long[] keys = instanceSettingsAdapter.getInstanceKeys(addr);
-			for (long key : keys) {
-				Record rec = instanceSettingsAdapter.getInstanceRecord(key);
+			Field[] keys = instanceSettingsAdapter.getInstanceKeys(addr);
+			for (Field key : keys) {
+				Record rec = instanceSettingsAdapter.getInstanceRecord(key.getLongValue());
 				if (rec.getString(InstanceSettingsDBAdapter.INST_NAME_COL).equals(name)) {
 					return rec;
 				}
@@ -3688,11 +3689,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public DataType getDataType(SourceArchive sourceArchive, UniversalID datatypeID) {
-		if (datatypeID.getValue() == 0) {
-			// DT remove this check
-			throw new AssertException("should not be called with id of 0");
-		}
-
 		UniversalID sourceID = sourceArchive == null ? null : sourceArchive.getSourceArchiveID();
 		return idsToDataTypeMap.getDataType(sourceID, datatypeID);
 	}

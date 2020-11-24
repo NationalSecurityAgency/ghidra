@@ -78,23 +78,23 @@ public class TreeManager implements ManagerDB {
 	static final Schema PARENT_CHILD_SCHEMA = createParentChildSchema();
 
 	private static Schema createTreeSchema() {
-		return new Schema(0, "Key", new Class[] { StringField.class, LongField.class },
+		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, LongField.INSTANCE },
 			new String[] { "Name", "Modification Number" });
 	}
 
 	private static Schema createModuleSchema() {
-		return new Schema(0, "Key", new Class[] { StringField.class, StringField.class },
+		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
 			new String[] { "Name", "Comments" });
 	}
 
 	private static Schema createFragmentSchema() {
-		return new Schema(0, "Key", new Class[] { StringField.class, StringField.class },
+		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
 			new String[] { "Name", "Comments" });
 	}
 
 	private static Schema createParentChildSchema() {
 		return new Schema(0, "Key",
-			new Class[] { LongField.class, LongField.class, IntField.class },
+			new Field[] { LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE },
 			new String[] { "Parent ID", "Child ID", "Child Index" });
 	}
 

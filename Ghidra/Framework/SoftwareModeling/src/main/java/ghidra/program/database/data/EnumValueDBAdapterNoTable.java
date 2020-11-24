@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,9 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
-import db.DBHandle;
-import db.Record;
+import db.*;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
@@ -32,14 +28,14 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 	/**
 	 * Gets a pre-table version of the adapter for the enumeration data type values database table.
 	 * @param handle handle to the database which doesn't contain the table.
-	 * @throws VersionException if the the table's version does not match the expected version
-	 * for this adapter.
 	 */
 	public EnumValueDBAdapterNoTable(DBHandle handle) {
+		// no table needed
 	}
 
 	@Override
 	public void createRecord(long enumID, String name, long value) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -54,11 +50,12 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 
 	@Override
 	public void removeRecord(long valueID) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public long[] getValueIdsInEnum(long enumID) throws IOException {
-		return new long[0];
+	public Field[] getValueIdsInEnum(long enumID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 }

@@ -45,8 +45,11 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 * database schema associated with any of the managers.
 	 * 18-Sep-2008 - version 1 - added fields for synchronizing program data types with project archives.
 	 * 03-Dec-2009 - version 2 - Added source archive updating (consolidating windows.gdt, clib.gdt, ntddk.gdt)
+	 * 14-Nov-2019 - version 3 - Corrected fixed length indexing implementation causing
+	 *                            change in index table low-level storage for newly
+	 *                            created tables. 
 	 */
-	static final int DB_VERSION = 2;
+	static final int DB_VERSION = 3;
 
 	/**
 	 * UPGRADE_REQUIRED_BEFORE_VERSION should be changed to DB_VERSION any time the
@@ -76,10 +79,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	private static final String DEFAULT_POINTER_SIZE = "Default Pointer Size";
 
-	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
+	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
 	private final static String[] COL_TYPES = new String[] { "Value" };
 	private final static Schema SCHEMA =
-		new Schema(0, StringField.class, "Key", COL_CLASS, COL_TYPES);
+		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_TYPES);
 
 	private ProjectDataTypeManager dataTypeManager;
 

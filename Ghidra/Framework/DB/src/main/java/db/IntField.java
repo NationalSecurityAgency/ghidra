@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,35 @@
  */
 package db;
 
-import ghidra.util.exception.AssertException;
-
 import java.io.IOException;
+
+import db.buffers.DataBuffer;
 
 /**
  * <code>IntField</code> provides a wrapper for 4-byte signed integer data 
  * which is read or written to a Record. 
  */
-public class IntField extends Field {
+public final class IntField extends Field {
+
+	/**
+	 * Minimum integer field value
+	 */
+	public static final IntField MIN_VALUE = new IntField(Integer.MIN_VALUE, true);
+
+	/**
+	 * Maximum integer field value
+	 */
+	public static final IntField MAX_VALUE = new IntField(Integer.MAX_VALUE, true);
+
+	/**
+	 * Zero int field value
+	 */
+	public static final IntField ZERO_VALUE = new IntField(0, true);
+
+	/**
+	 * Instance intended for defining a {@link Table} {@link Schema}
+	 */
+	public static final IntField INSTANCE = ZERO_VALUE;
 
 	private int value;
 
@@ -39,69 +58,68 @@ public class IntField extends Field {
 	 * @param i initial value
 	 */
 	public IntField(int i) {
-		value = i;
+		this(i, false);
 	}
 
 	/**
-	 * @see db.Field#getIntValue()
+	 * Construct an integer field with an initial value of i.
+	 * @param i initial value
+	 * @param immutable true if field value is immutable
 	 */
+	IntField(int i, boolean immutable) {
+		super(immutable);
+		value = i;
+	}
+
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
+	}
+
 	@Override
 	public int getIntValue() {
 		return value;
 	}
 
-	/**
-	 * @see db.Field#setIntValue(int)
-	 */
 	@Override
 	public void setIntValue(int value) {
+		checkImmutable();
 		this.value = value;
 	}
 
-	/**
-	 * @see db.Field#length()
-	 */
 	@Override
 	int length() {
 		return 4;
 	}
 
-	/**
-	 * @see db.Field#write(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int write(Buffer buf, int offset) throws IOException {
 		return buf.putInt(offset, value);
 	}
 
-	/**
-	 * @see db.Field#read(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
+		checkImmutable();
 		value = buf.getInt(offset);
 		return offset + 4;
 	}
 
-	/**
-	 * @see db.Field#readLength(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int readLength(Buffer buf, int offset) throws IOException {
 		return 4;
 	}
 
-	/**
-	 * @see db.Field#getFieldType()
-	 */
 	@Override
-	protected byte getFieldType() {
+	byte getFieldType() {
 		return INT_TYPE;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "IntField: " + Integer.toString(value);
@@ -109,80 +127,89 @@ public class IntField extends Field {
 
 	@Override
 	public String getValueAsString() {
-		return Integer.toHexString(value);
+		return "0x" + Integer.toHexString(value);
 	}
 
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof IntField))
+		if (obj == null || !(obj instanceof IntField)) {
 			return false;
+		}
 		return ((IntField) obj).value == value;
 	}
 
-	/**
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Field o) {
 		IntField f = (IntField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
-	/**
-	 * @see db.Field#newField(docking.widgets.fieldpanel.Field)
-	 */
 	@Override
-	public Field newField(Field fieldValue) {
-		if (fieldValue.isVariableLength())
-			throw new AssertException();
-		return new IntField((int) fieldValue.getLongValue());
+	int compareTo(DataBuffer buffer, int offset) {
+		int otherValue = buffer.getInt(offset);
+		if (value == otherValue) {
+			return 0;
+		}
+		else if (value < otherValue) {
+			return -1;
+		}
+		return 1;
 	}
 
-	/**
-	 * @see db.Field#newField()
-	 */
 	@Override
-	public Field newField() {
+	public IntField copyField() {
+		return new IntField((int) getLongValue());
+	}
+
+	@Override
+	public IntField newField() {
 		return new IntField();
 	}
 
-	/**
-	 * @see db.Field#getLongValue()
-	 */
 	@Override
 	public long getLongValue() {
 		return value;
 	}
 
-	/**
-	 * @see db.Field#setLongValue(long)
-	 */
 	@Override
 	public void setLongValue(long value) {
-		this.value = (int) value;
+		setIntValue((int) value);
 	}
 
-	/**
-	 * @see db.Field#getBinaryData()
-	 */
 	@Override
 	public byte[] getBinaryData() {
 		return new byte[] { (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8),
 			(byte) value };
 	}
 
-	/**
-	 * @see java.lang.Object#hashCode()
-	 */
+	@Override
+	public void setBinaryData(byte[] bytes) {
+		checkImmutable();
+		if (bytes.length != 4) {
+			throw new IllegalFieldAccessException();
+		}
+		value = ((bytes[0] & 0xff) << 24) | ((bytes[1] & 0xff) << 16) | ((bytes[2] & 0xff) << 8) |
+			(bytes[3] & 0xff);
+	}
+
 	@Override
 	public int hashCode() {
 		return value;
+	}
+
+	@Override
+	IntField getMinValue() {
+		return MIN_VALUE;
+	}
+
+	@Override
+	IntField getMaxValue() {
+		return MAX_VALUE;
 	}
 }

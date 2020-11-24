@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,41 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package db.util;
+package ghidra.feature.vt.api.db;
 
 import db.Field;
 
 public class TableColumn {
 
-	private final Class<? extends Field> columnClass;
+	private final Field columnField;
 	private boolean indexed;
-	
+
 	private int ordinal;
 	private String name;
-	
-	public TableColumn( Class<? extends Field> columnClass ) {
-		this( columnClass, false );
+
+	public TableColumn(Field columnField) {
+		this(columnField, false);
 	}
-	
-	public TableColumn( Class<? extends Field> columnClass, boolean isIndexed ) {
-		this.columnClass = columnClass;
+
+	public TableColumn(Field columnField, boolean isIndexed) {
+		this.columnField = columnField;
 		indexed = isIndexed;
 	}
 
-	void setName( String name ) {
-		this.name = name;		
+	void setName(String name) {
+		this.name = name;
 	}
-	
-	void setOrdinal( int ordinal ) {
+
+	void setOrdinal(int ordinal) {
 		this.ordinal = ordinal;
 	}
-	
+
 	public boolean isIndexed() {
 		return indexed;
 	}
-	
-	public Class<? extends Field> getColumnClass() {
-		return columnClass;
+
+	public Field getColumnField() {
+		return columnField;
 	}
 
 	public String name() {
@@ -61,6 +60,6 @@ public class TableColumn {
 
 	@Override
 	public String toString() {
-		return name() + "("+ ordinal +")";
+		return name() + "(" + ordinal + ")";
 	}
 }

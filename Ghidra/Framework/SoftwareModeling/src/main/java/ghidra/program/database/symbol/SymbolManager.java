@@ -48,9 +48,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	private static final int OLD_SYMBOL_ADDR_COL = 0;
 	private static final int OLD_SYMBOL_NAME_COL = 1;
 	private static final int OLD_SYMBOL_IS_PRIMARY_COL = 2;
-	private static final Schema OLD_LOCAL_SYMBOLS_SCHEMA =
-		new Schema(0, "ID", new Class[] { LongField.class, StringField.class, BooleanField.class },
-			new String[] { "OldAddress", "Name", "IsPrimary" });
+	private static final Schema OLD_LOCAL_SYMBOLS_SCHEMA = new Schema(0, "ID",
+		new Field[] { LongField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE },
+		new String[] { "OldAddress", "Name", "IsPrimary" });
 
 	static final String OLD_EXTERNAL_ENTRY_TABLE_NAME = "External Entries";
 
@@ -97,9 +97,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		cache = new DBObjectCache<>(100);
 
 		variableStorageMgr = new VariableStorageManagerDB(handle, addrMap, openMode, lock, monitor);
-		if (OldVariableStorageManagerDB.isOldVariableStorageManagerUpgradeRequired(handle)) {
-			oldVariableStorageMgr =
-				new OldVariableStorageManagerDB(handle, addrMap, openMode, lock, monitor);
+
+		if (openMode == DBConstants.UPGRADE &&
+			OldVariableStorageManagerDB.isOldVariableStorageManagerUpgradeRequired(handle)) {
+			oldVariableStorageMgr = new OldVariableStorageManagerDB(handle, addrMap, monitor);
 		}
 	}
 
@@ -139,18 +140,12 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		refManager = (ReferenceDBManager) program.getReferenceManager();
 		namespaceMgr = program.getNamespaceManager();
 		variableStorageMgr.setProgram(program);
-		if (oldVariableStorageMgr != null) {
-			oldVariableStorageMgr.setProgram(program);
-		}
 	}
 
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (oldVariableStorageMgr != null) {
-			oldVariableStorageMgr.programReady(openMode, currentRevision, monitor);
-		}
 		if (openMode == DBConstants.UPGRADE) {
 			processOldLocalSymbols(monitor);
 			processOldExternalEntryPoints(monitor);
@@ -168,12 +163,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 
 			if (oldVariableStorageMgr != null) {
-				if (oldVariableStorageMgr.isUpgradeOldVariableAddressesRequired()) {
-					processOldVariableAddresses(monitor);
-				}
-				else {
-					migrateFromOldVariableStorageManager(monitor);
-				}
+				// migrate from old variable storage table which utilized namespace-specific 
+				// storage addresses
+				migrateFromOldVariableStorageManager(monitor);
 			}
 			else if (currentRevision == ProgramDB.COMPOUND_VARIABLE_STORAGE_ADDED_VERSION) {
 				// Revised (2nd) VariableStorageManager was already added but we may have forgotten
@@ -818,7 +810,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public Symbol[] getSymbols(Address addr) {
 		lock.acquire();
 		try {
-			long[] symbolIDs = adapter.getSymbolIDs(addr);
+			Field[] symbolIDs = adapter.getSymbolIDs(addr);
 			if (symbolIDs.length == 0) {
 				if (addr.isMemoryAddress() && refManager.hasReferencesTo(addr)) {
 					Symbol[] symbols = new SymbolDB[1];
@@ -830,7 +822,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			int primarySymbolIndex = 0;
 			Symbol[] symbols = new Symbol[symbolIDs.length];
 			for (int i = 0; i < symbols.length; i++) {
-				symbols[i] = getSymbol(symbolIDs[i]);
+				symbols[i] = getSymbol(symbolIDs[i].getLongValue());
 				// NOTE: Primary symbol concept only applies to in memory symbols
 				if (addr.isMemoryAddress() && i != 0 && symbols[i].isPrimary()) {
 					primarySymbolIndex = i;
@@ -858,14 +850,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public Symbol[] getUserSymbols(Address addr) {
 		lock.acquire();
 		try {
-			long[] symbolIDs = adapter.getSymbolIDs(addr);
+			Field[] symbolIDs = adapter.getSymbolIDs(addr);
 			if (symbolIDs.length == 0) {
 				return NO_SYMBOLS;
 			}
 
 			Symbol[] symbols = new Symbol[symbolIDs.length];
 			for (int i = 0; i < symbols.length; i++) {
-				symbols[i] = getSymbol(symbolIDs[i]);
+				symbols[i] = getSymbol(symbolIDs[i].getLongValue());
 			}
 			return symbols;
 		}

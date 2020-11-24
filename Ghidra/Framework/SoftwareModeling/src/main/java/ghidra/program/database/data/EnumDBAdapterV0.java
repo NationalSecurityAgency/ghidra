@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.data;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Version 0 implementation for accessing the Enumeration database table. 
@@ -38,9 +36,10 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	static final int V0_ENUM_CAT_COL = 2;
 	static final int V0_ENUM_SIZE_COL = 3;
 
-	static final Schema V0_ENUM_SCHEMA = new Schema(VERSION, "Enum ID", new Class[] {
-		StringField.class, StringField.class, LongField.class, ByteField.class }, new String[] {
-		"Name", "Comment", "Category ID", "Size" });
+	static final Schema V0_ENUM_SCHEMA = new Schema(
+		VERSION, "Enum ID", new Field[] { StringField.INSTANCE, StringField.INSTANCE,
+			LongField.INSTANCE, ByteField.INSTANCE },
+		new String[] { "Name", "Comment", "Category ID", "Size" });
 
 	private Table enumTable;
 
@@ -58,9 +57,8 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 		}
 		int version = enumTable.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg =
-				"Expected version " + VERSION + " for table " + ENUM_TABLE_NAME + " but got " +
-					enumTable.getSchema().getVersion();
+			String msg = "Expected version " + VERSION + " for table " + ENUM_TABLE_NAME +
+				" but got " + enumTable.getSchema().getVersion();
 			if (version < VERSION) {
 				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 			}
@@ -102,18 +100,16 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return enumTable.findRecords(new LongField(categoryID), V0_ENUM_CAT_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
-	/* (non-Javadoc)
-	 * @see db.RecordTranslator#translateRecord(db.Record)
-	 */
+	@Override
 	public Record translateRecord(Record oldRec) {
 		if (oldRec == null) {
 			return null;
@@ -135,16 +131,4 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 		return null;
 	}
 
-//	private void testVersion(Table table, int expectedVersion, String name)
-//			throws DatabaseVersionException {
-//				
-//		if (table == null) {
-//			throw new DatabaseVersionException(name+ " not found");
-//		}
-//		int versionNumber = table.getSchema().getVersion();
-//		if (versionNumber != expectedVersion) {
-//			throw new DatabaseVersionException(
-//				name+": Expected Version "+expectedVersion+ ", got " + versionNumber);
-//		}
-//	}
 }

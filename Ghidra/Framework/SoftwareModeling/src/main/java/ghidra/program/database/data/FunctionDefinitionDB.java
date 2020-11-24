@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.*;
 
+import db.Field;
 import db.Record;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
@@ -57,9 +58,9 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	private void loadParameters() {
 		parameters = new ArrayList<>();
 		try {
-			long[] ids = paramAdapter.getParameterIdsInFunctionDef(key);
-			for (long id : ids) {
-				Record rec = paramAdapter.getRecord(id);
+			Field[] ids = paramAdapter.getParameterIdsInFunctionDef(key);
+			for (Field id : ids) {
+				Record rec = paramAdapter.getRecord(id.getLongValue());
 				parameters.add(new ParameterDefinitionDB(dataMgr, paramAdapter, this, rec));
 			}
 			Collections.sort(parameters);

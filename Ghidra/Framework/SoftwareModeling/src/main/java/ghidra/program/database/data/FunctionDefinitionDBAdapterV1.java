@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.util.Msg;
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.Date;
 
 import db.*;
+import ghidra.program.model.data.GenericCallingConvention;
+import ghidra.util.Msg;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Function Signature Definition database table. 
@@ -40,11 +38,12 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 	static final int V1_FUNCTION_DEF_UNIVERSAL_DT_ID_COL = 6;
 	static final int V1_FUNCTION_DEF_SOURCE_SYNC_TIME_COL = 7;
 	static final int V1_FUNCTION_DEF_LAST_CHANGE_TIME_COL = 8;
-	static final Schema V1_FUN_DEF_SCHEMA = new Schema(VERSION, "Data Type ID", new Class[] {
-		StringField.class, StringField.class, LongField.class, LongField.class, ByteField.class,
-		LongField.class, LongField.class, LongField.class, LongField.class }, new String[] {
-		"Name", "Comment", "Category ID", "Return Type ID", "Flags", "Source Archive ID",
-		"Source Data Type ID", "Source Sync Time", "Last Change Time" });
+	static final Schema V1_FUN_DEF_SCHEMA = new Schema(VERSION, "Data Type ID",
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, LongField.INSTANCE },
+		new String[] { "Name", "Comment", "Category ID", "Return Type ID", "Flags",
+			"Source Archive ID", "Source Data Type ID", "Source Sync Time", "Last Change Time" });
 
 	private Table table;
 
@@ -55,13 +54,12 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public FunctionDefinitionDBAdapterV1(DBHandle handle, boolean create) throws VersionException,
-			IOException {
+	public FunctionDefinitionDBAdapterV1(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
-			table =
-				handle.createTable(FUNCTION_DEF_TABLE_NAME, V1_FUN_DEF_SCHEMA, new int[] {
-					V1_FUNCTION_DEF_CAT_ID_COL, V1_FUNCTION_DEF_UNIVERSAL_DT_ID_COL });
+			table = handle.createTable(FUNCTION_DEF_TABLE_NAME, V1_FUN_DEF_SCHEMA,
+				new int[] { V1_FUNCTION_DEF_CAT_ID_COL, V1_FUNCTION_DEF_UNIVERSAL_DT_ID_COL });
 		}
 		else {
 			table = handle.getTable(FUNCTION_DEF_TABLE_NAME);
@@ -70,9 +68,8 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + FUNCTION_DEF_TABLE_NAME +
-						" but got " + table.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " +
+					FUNCTION_DEF_TABLE_NAME + " but got " + table.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -150,20 +147,19 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V1_FUNCTION_DEF_CAT_ID_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
 		return table.findRecords(new LongField(archiveID), V1_FUNCTION_DEF_SOURCE_ARCHIVE_ID_COL);
 	}
 
 	@Override
 	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
-		long[] keys =
-			table.findRecords(new LongField(datatypeID.getValue()),
-				V1_FUNCTION_DEF_UNIVERSAL_DT_ID_COL);
+		Field[] keys = table.findRecords(new LongField(datatypeID.getValue()),
+			V1_FUNCTION_DEF_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
 			Record record = table.getRecord(keys[i]);

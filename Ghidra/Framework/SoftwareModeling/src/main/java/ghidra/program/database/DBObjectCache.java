@@ -158,6 +158,7 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * within the specified keyRanges.
 	 * @param keyRanges key ranges to delete
 	 */
+//TODO: Discourage large cases by only allowing a single range to be specified
 	public synchronized void delete(List<KeyRange> keyRanges) {
 		hardCache.clear();
 		processQueue();

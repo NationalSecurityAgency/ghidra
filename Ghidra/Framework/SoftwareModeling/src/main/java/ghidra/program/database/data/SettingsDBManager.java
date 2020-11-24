@@ -15,16 +15,14 @@
  */
 package ghidra.program.database.data;
 
+import java.io.IOException;
+import java.util.*;
+
+import db.Field;
+import db.Record;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import db.Record;
 
 /**
  * Database implementation for settings.
@@ -73,9 +71,7 @@ class SettingsDBManager implements Settings {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getLong(java.lang.String)
-	 */
+	@Override
 	public Long getLong(String name) {
 		SettingsDB settingsDB = getSettingsDB(name);
 		if (settingsDB != null) {
@@ -87,9 +83,7 @@ class SettingsDBManager implements Settings {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getString(java.lang.String)
-	 */
+	@Override
 	public String getString(String name) {
 		SettingsDB settingsDB = getSettingsDB(name);
 		if (settingsDB != null) {
@@ -101,9 +95,7 @@ class SettingsDBManager implements Settings {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getByteArray(java.lang.String)
-	 */
+	@Override
 	public byte[] getByteArray(String name) {
 		SettingsDB settingsDB = getSettingsDB(name);
 		if (settingsDB != null) {
@@ -115,9 +107,7 @@ class SettingsDBManager implements Settings {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getValue(java.lang.String)
-	 */
+	@Override
 	public Object getValue(String name) {
 		SettingsDB settingsDB = getSettingsDB(name);
 		if (settingsDB != null) {
@@ -129,9 +119,7 @@ class SettingsDBManager implements Settings {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setLong(java.lang.String, long)
-	 */
+	@Override
 	public void setLong(String name, long value) {
 		try {
 			if (updateSettingsRecord(name, null, value, null)) {
@@ -144,9 +132,7 @@ class SettingsDBManager implements Settings {
 
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setString(java.lang.String, java.lang.String)
-	 */
+	@Override
 	public void setString(String name, String value) {
 
 		try {
@@ -159,9 +145,7 @@ class SettingsDBManager implements Settings {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setByteArray(java.lang.String, byte[])
-	 */
+	@Override
 	public void setByteArray(String name, byte[] value) {
 		try {
 			if (updateSettingsRecord(name, null, -1, value)) {
@@ -173,9 +157,7 @@ class SettingsDBManager implements Settings {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setValue(java.lang.String, java.lang.Object)
-	 */
+	@Override
 	public void setValue(String name, Object value) {
 		if (value instanceof Long) {
 			setLong(name, ((Long) value).longValue());
@@ -191,18 +173,16 @@ class SettingsDBManager implements Settings {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#clearSetting(java.lang.String)
-	 */
+	@Override
 	public void clearSetting(String name) {
 
 		try {
-			long[] keys = adapter.getSettingsKeys(dataTypeID);
+			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				Record rec = adapter.getSettingsRecord(keys[i]);
+				Record rec = adapter.getSettingsRecord(keys[i].getLongValue());
 				String settingsName = rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
 				if (settingsName.equals(name)) {
-					adapter.removeSettingsRecord(keys[i]);
+					adapter.removeSettingsRecord(keys[i].getLongValue());
 					settingsChanged();
 					return;
 				}
@@ -213,14 +193,12 @@ class SettingsDBManager implements Settings {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#clearAllSettings()
-	 */
+	@Override
 	public void clearAllSettings() {
 		try {
-			long[] keys = adapter.getSettingsKeys(dataTypeID);
+			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				adapter.removeSettingsRecord(keys[i]);
+				adapter.removeSettingsRecord(keys[i].getLongValue());
 			}
 			settingsChanged();
 		}
@@ -229,15 +207,13 @@ class SettingsDBManager implements Settings {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getNames()
-	 */
+	@Override
 	public String[] getNames() {
 		List<String> list = new ArrayList<String>();
 		try {
-			long[] keys = adapter.getSettingsKeys(dataTypeID);
+			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				Record rec = adapter.getSettingsRecord(keys[i]);
+				Record rec = adapter.getSettingsRecord(keys[i].getLongValue());
 				String name = rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
 				if (!list.contains(name)) {
 					list.add(name);
@@ -252,9 +228,7 @@ class SettingsDBManager implements Settings {
 		return new String[0];
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#isEmpty()
-	 */
+	@Override
 	public boolean isEmpty() {
 		try {
 			return adapter.getSettingsKeys(dataTypeID).length == 0;
@@ -274,7 +248,15 @@ class SettingsDBManager implements Settings {
 	}
 
 	/**
-	 * Compare values and return true if old and new values are different.
+	 * Following settings value change compare old and new values and return 
+	 * true if old and new values are different.
+	 * @param oldStrValue old settings string value
+	 * @param newStrValue new settings string value
+	 * @param oldByteValue old settings byte array value
+	 * @param newByteValue new settings byte array value
+	 * @param oldLongValue old settings long value
+	 * @param newLongValue new settings long value
+	 * @return true true if value change detected else false
 	 */
 	static boolean valuesChanged(String oldStrValue, String newStrValue, byte[] oldByteValue,
 			byte[] newByteValue, long oldLongValue, long newLongValue) {
@@ -295,9 +277,9 @@ class SettingsDBManager implements Settings {
 
 	private Record getRecord(String name) {
 		try {
-			long[] keys = adapter.getSettingsKeys(dataTypeID);
+			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				Record rec = adapter.getSettingsRecord(keys[i]);
+				Record rec = adapter.getSettingsRecord(keys[i].getLongValue());
 				if (rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL).equals(name)) {
 					return rec;
 				}
@@ -333,9 +315,8 @@ class SettingsDBManager implements Settings {
 			byte[] recByteValue = record.getBinaryData(SettingsDBAdapter.SETTINGS_BYTE_VALUE_COL);
 			long recLongValue = record.getLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL);
 
-			wasChanged =
-				valuesChanged(recStrValue, strValue, recByteValue, byteValue, recLongValue,
-					longValue);
+			wasChanged = valuesChanged(recStrValue, strValue, recByteValue, byteValue, recLongValue,
+				longValue);
 			if (wasChanged) {
 				record.setString(SettingsDBAdapter.SETTINGS_STRING_VALUE_COL, strValue);
 				record.setLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL, longValue);
@@ -346,9 +327,7 @@ class SettingsDBManager implements Settings {
 		return wasChanged;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getDefaultSettings()
-	 */
+	@Override
 	public Settings getDefaultSettings() {
 		// This settings object already represents the default settings
 		return null;

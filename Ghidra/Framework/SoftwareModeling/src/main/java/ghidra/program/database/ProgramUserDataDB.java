@@ -50,6 +50,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
 	 * database schema associated with any of the managers.
+	 * 
+	 * NOTE: 19-Jun-2020 Corrections to DB index tables should have no impact on user data 
+	 *                   PropertyMaps which are not indexed.                   
 	 */
 	static final int DB_VERSION = 1;
 
@@ -62,10 +65,10 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
 	private static final String TABLE_NAME = "ProgramUserData";
-	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
+	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
 	private final static String[] COL_NAMES = new String[] { "Value" };
 	private final static Schema SCHEMA =
-		new Schema(0, StringField.class, "Key", COL_CLASS, COL_NAMES);
+		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_NAMES);
 	private static final int VALUE_COL = 0;
 
 	private static final String STORED_DB_VERSION = "DB Version";
@@ -73,12 +76,12 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	private static final String LANGUAGE_ID = "Language ID";
 
 	private static final String REGISTRY_TABLE_NAME = "PropertyRegistry";
-	private final static Class<?>[] REGISTRY_COL_CLASS =
-		new Class[] { StringField.class, StringField.class, IntField.class, StringField.class };
+	private final static Field[] REGISTRY_COL_FIELDS = new Field[] { StringField.INSTANCE,
+		StringField.INSTANCE, IntField.INSTANCE, StringField.INSTANCE };
 	private final static String[] REGISTRY_COL_NAMES =
 		new String[] { "Owner", "PropertyName", "PropertyType", "SaveableClass" };
 	private final static Schema REGISTRY_SCHEMA =
-		new Schema(0, "ID", REGISTRY_COL_CLASS, REGISTRY_COL_NAMES);
+		new Schema(0, "ID", REGISTRY_COL_FIELDS, REGISTRY_COL_NAMES);
 	private static final int PROPERTY_OWNER_COL = 0;
 	private static final int PROPERTY_NAME_COL = 1;
 	private static final int PROPERTY_TYPE_COL = 2;
@@ -467,7 +470,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			Class<?> saveableClass, boolean create) throws PropertyTypeMismatchException {
 
 		try {
-			for (long key : registryTable.findRecords(new StringField(owner), PROPERTY_OWNER_COL)) {
+			for (Field key : registryTable.findRecords(new StringField(owner),
+				PROPERTY_OWNER_COL)) {
 				Record rec = registryTable.getRecord(key);
 				if (propertyName.equals(rec.getString(PROPERTY_NAME_COL))) {
 					int type = rec.getIntValue(PROPERTY_TYPE_COL);
@@ -573,7 +577,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	public synchronized List<PropertyMap> getProperties(String owner) {
 		List<PropertyMap> list = new ArrayList<PropertyMap>();
 		try {
-			for (long key : registryTable.findRecords(new StringField(owner), PROPERTY_OWNER_COL)) {
+			for (Field key : registryTable.findRecords(new StringField(owner),
+				PROPERTY_OWNER_COL)) {
 				Record rec = registryTable.getRecord(key);
 				list.add(getPropertyMap(rec));
 			}

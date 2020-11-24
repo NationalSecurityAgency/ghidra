@@ -19,7 +19,6 @@ import java.math.BigInteger;
 
 import org.apache.commons.lang3.StringUtils;
 
-import generic.util.UnsignedDataUtils;
 import ghidra.util.MathUtilities;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.AssertException;
@@ -151,14 +150,6 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 	@Override
 	public long getAddressableWordOffset(long byteOffset) {
-
-//		if (!isValidOffset(byteOffset)) {
-//			String max = Long.toHexString(maxOffset);
-//			String min = Long.toHexString(minOffset);
-//			throw new AddressOutOfBoundsException("Invalid byte offset 0x" +
-//				Long.toHexString(byteOffset) + ", must be between 0x" + min + " and 0x" + max);
-//		}
-
 		boolean isNegative = false;
 		if (signed && byteOffset < 0) {
 			byteOffset = -byteOffset;
@@ -603,8 +594,10 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 	@Override
 	public long makeValidOffset(long offset) throws AddressOutOfBoundsException {
-		// TODO: Verify that this handle all cases - seems like it would not
-		if ((offset >= minOffset && offset <= maxOffset) || spaceSize == 0) {
+		if (size == 64 || spaceSize == 0) {
+			return offset;
+		}
+		if ((offset >= minOffset && offset <= maxOffset)) {
 			return offset;
 		}
 		if (signed) {
@@ -613,22 +606,16 @@ abstract class AbstractAddressSpace implements AddressSpace {
 				return offset - spaceSize;
 			}
 		}
-		else if (offset < 0 && offset >= -maxOffset - 1) {
-			// recover from accidental sign extension
-			return offset + spaceSize;
+		else {
+			if (offset < 0 && offset >= -maxOffset - 1) {
+				// recover from accidental sign extension
+				return offset + spaceSize;
+			}
 		}
 		String max = Long.toHexString(maxOffset);
 		String min = Long.toHexString(minOffset);
 		throw new AddressOutOfBoundsException("Offset must be between 0x" + min + " and 0x" + max +
 			", got 0x" + Long.toHexString(offset) + " instead!");
-	}
-
-	private boolean isValidOffset(long offset) {
-		if (signed) {
-			return (offset >= minOffset) && (offset <= maxOffset);
-		}
-		return UnsignedDataUtils.unsignedGreaterThanOrEqual(offset, minOffset) &&
-			UnsignedDataUtils.unsignedLessThanOrEqual(offset, maxOffset);
 	}
 
 	@Override

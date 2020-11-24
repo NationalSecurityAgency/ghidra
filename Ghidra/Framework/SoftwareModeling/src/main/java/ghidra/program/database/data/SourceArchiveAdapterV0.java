@@ -36,8 +36,8 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	static final int V0_ARCHIVE_ID_DIRTY_FLAG_COL = 4;
 
 	static final Schema V0_SCHEMA = new Schema(VERSION, "Archive ID",
-		new Class[] { StringField.class, StringField.class, ByteField.class, LongField.class,
-			BooleanField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, ByteField.INSTANCE,
+			LongField.INSTANCE, BooleanField.INSTANCE },
 		new String[] { "Domain File ID", "Name", "Type", "Last Sync Time", "Dirty Flag" });
 
 	private Table table;

@@ -32,8 +32,8 @@ abstract class CommentHistoryAdapter {
 	static final String COMMENT_HISTORY_TABLE_NAME = "Comment History";
 
 	static final Schema COMMENT_HISTORY_SCHEMA = new Schema(0, "Key",
-		new Class[] { LongField.class, ByteField.class, IntField.class, IntField.class,
-			StringField.class, StringField.class, LongField.class },
+		new Field[] { LongField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
+			StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE },
 		new String[] { "Address", "Comment Type", "Pos1", "Pos2", "String Data", "User", "Date" });
 
 	static final int HISTORY_ADDRESS_COL = 0;

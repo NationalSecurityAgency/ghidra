@@ -16,13 +16,6 @@
 package ghidra.feature.vt.api.db;
 
 import static ghidra.feature.vt.api.db.VTMatchSetTableDBAdapter.ColumnDescription.*;
-import ghidra.feature.vt.api.main.VTProgramCorrelator;
-import ghidra.framework.options.ToolOptions;
-import ghidra.program.database.map.AddressMap;
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
-import ghidra.util.exception.VersionException;
-import ghidra.util.xml.GenericXMLOutputter;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -31,13 +24,20 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
 import db.*;
+import ghidra.feature.vt.api.main.VTProgramCorrelator;
+import ghidra.framework.options.ToolOptions;
+import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
+import ghidra.util.exception.VersionException;
+import ghidra.util.xml.GenericXMLOutputter;
 
 public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 
 	private Table table;
 
-	private static final Schema STORED_ADDRESS_RANGE_SCHEMA = new Schema(0, "Key", new Class[] {
-		LongField.class, LongField.class }, new String[] { "addr1", "addr2" });
+	private static final Schema STORED_ADDRESS_RANGE_SCHEMA = new Schema(0, "Key",
+		new Field[] { LongField.INSTANCE, LongField.INSTANCE }, new String[] { "addr1", "addr2" });
 
 	private final DBHandle dbHandle;
 
@@ -46,7 +46,8 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 		table = dbHandle.createTable(TABLE_NAME, TABLE_SCHEMA);
 	}
 
-	public VTMatchSetTableDBAdapterV0(DBHandle dbHandle, OpenMode openMode) throws VersionException {
+	public VTMatchSetTableDBAdapterV0(DBHandle dbHandle, OpenMode openMode)
+			throws VersionException {
 		this.dbHandle = dbHandle;
 		table = dbHandle.getTable(TABLE_NAME);
 		if (table == null) {
@@ -59,7 +60,8 @@ public class VTMatchSetTableDBAdapterV0 extends VTMatchSetTableDBAdapter {
 	}
 
 	@Override
-	public Record createMatchSetRecord(long key, VTProgramCorrelator correlator) throws IOException {
+	public Record createMatchSetRecord(long key, VTProgramCorrelator correlator)
+			throws IOException {
 		Record record = TABLE_SCHEMA.createRecord(key);
 
 		record.setString(CORRELATOR_CLASS_COL.column(), correlator.getClass().getName());

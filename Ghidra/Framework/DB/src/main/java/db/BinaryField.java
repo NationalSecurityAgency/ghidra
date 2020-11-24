@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +18,21 @@ package db;
 import java.io.IOException;
 import java.util.Arrays;
 
+import db.buffers.DataBuffer;
+
 /**
  * <code>BinaryField</code> provides a wrapper for variable length binary data which is read or
  * written to a Record. 
  */
 public class BinaryField extends Field {
 
+	/**
+	 * Instance intended for defining a {@link Table} {@link Schema}
+	 */
+	public static final BinaryField INSTANCE = new BinaryField(null, true);
+
 	protected byte[] data;
+	private Integer hashcode;
 
 	/**
 	 * Construct a binary data field with an initial value of null.
@@ -38,36 +45,52 @@ public class BinaryField extends Field {
 	 * @param data initial value
 	 */
 	public BinaryField(byte[] data) {
+		this(data, false);
+	}
+
+	/**
+	 * Construct a binary data field with an initial value of data.
+	 * @param data initial value
+	 * @param immutable true if field value is immutable
+	 */
+	BinaryField(byte[] data, boolean immutable) {
+		super(immutable);
 		this.data = data;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getBinaryData()
-	 */
+	@Override
+	boolean isNull() {
+		return data == null;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		data = null;
+	}
+
+	@Override
+	void checkImmutable() {
+		super.checkImmutable();
+		hashcode = null;
+	}
+
 	@Override
 	public byte[] getBinaryData() {
 		return data;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#setBinaryData(byte[])
-	 */
 	@Override
 	public void setBinaryData(byte[] data) {
+		checkImmutable();
 		this.data = data;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#length()
-	 */
 	@Override
 	int length() {
 		return (data == null) ? 4 : (data.length + 4);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#write(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int write(Buffer buf, int offset) throws IOException {
 		if (data == null) {
@@ -77,11 +100,9 @@ public class BinaryField extends Field {
 		return buf.put(offset, data);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#read(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int read(Buffer buf, int offset) throws IOException {
+		checkImmutable();
 		int len = buf.getInt(offset);
 		offset += 4;
 		if (len < 0) {
@@ -94,97 +115,25 @@ public class BinaryField extends Field {
 		return offset;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#readLength(ghidra.framework.store.Buffer, int)
-	 */
 	@Override
 	int readLength(Buffer buf, int offset) throws IOException {
 		int len = buf.getInt(offset);
 		return (len < 0 ? 0 : len) + 4;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#isVariableLength()
-	 */
 	@Override
 	public boolean isVariableLength() {
 		return true;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#getFieldType()
-	 */
 	@Override
-	protected byte getFieldType() {
+	byte getFieldType() {
 		return BINARY_OBJ_TYPE;
 	}
 
-	/*
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		if (data == null) {
-			return "BinaryField: null";
-		}
-		return "BinaryField[" + data.length + "] = " + getValueAsString();
-	}
-
-	@Override
-	public String getValueAsString() {
-		StringBuffer buf = new StringBuffer();
-		int i = 0;
-		for (; i < 24 && i < data.length; i++) {
-			String b = Integer.toHexString(data[i] & 0xff);
-			if (b.length() == 1) {
-				buf.append('0');
-			}
-			buf.append(b);
-			buf.append(' ');
-		}
-		if (i < data.length) {
-			buf.append("...");
-		}
-		return buf.toString();
-	}
-
-	/*
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof BinaryField))
-			return false;
-		BinaryField f = (BinaryField) obj;
-		return Arrays.equals(f.data, data);
-	}
-
-//	/**
-//	 * Get first 8 bytes of data as long value.
-//	 * First data byte corresponds to most significant byte
-//	 * of long value so that proper sign is preserved.
-//	 * If data is null, Long.MIN_VALUE is returned.
-//	 * @see ghidra.framework.store.db.Field#getLongValue()
-//	 */
-//	public long getLongValue() {
-//		long value = 0;
-//		if (data == null) {
-//			return Long.MIN_VALUE;
-//		}
-//		for (int i = 0; i < 8 && i < data.length; i++) {
-//			value = (value << 8) | ((long)data[i] & 0x000000ff);
-//		}
-//		if (data.length < 8) {
-//			value = value << (8 * (8 - data.length));
-//		}
-//		return value;
-//	}
-
-	/*
-	 * @see ghidra.framework.store.db.Field#truncate(int)
-	 */
 	@Override
 	void truncate(int length) {
+		checkImmutable();
 		int maxLen = length - 4;
 		if (data != null && data.length > maxLen) {
 			byte[] newData = new byte[maxLen];
@@ -193,9 +142,6 @@ public class BinaryField extends Field {
 		}
 	}
 
-	/*
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Field o) {
 		BinaryField f = (BinaryField) o;
@@ -224,28 +170,106 @@ public class BinaryField extends Field {
 		return len1 - len2;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField(ghidra.framework.store.db.Field)
-	 */
 	@Override
-	public Field newField(Field fieldValue) {
-		return new BinaryField(fieldValue.getBinaryData());
+	int compareTo(DataBuffer buffer, int offset) {
+		int len = buffer.getInt(offset);
+		if (data == null) {
+			if (len < 0) {
+				return 0;
+			}
+			return -1;
+		}
+		else if (len < 0) {
+			return 1;
+		}
+
+		return -buffer.unsignedCompareTo(data, offset + 4, len);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.Field#newField()
-	 */
 	@Override
-	public Field newField() {
+	public BinaryField copyField() {
+		return new BinaryField(getBinaryData().clone());
+	}
+
+	@Override
+	public BinaryField newField() {
 		return new BinaryField();
 	}
 
-	/*
-	 * @see java.lang.Object#hashCode()
-	 */
+	@Override
+	BinaryField getMinValue() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	BinaryField getMaxValue() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || obj.getClass() != getClass()) {
+			return false;
+		}
+		BinaryField f = (BinaryField) obj;
+		return Arrays.equals(f.data, data);
+	}
+
 	@Override
 	public int hashCode() {
-		return data.hashCode();
+		if (hashcode == null) {
+			int h = 0;
+			if (data != null) {
+				for (byte b : data) {
+					h = 31 * h + (b & 0xff);
+				}
+			}
+			hashcode = h;
+		}
+		return hashcode;
+	}
+
+	/// Methods below should not use data field directly
+
+	@Override
+	public String toString() {
+		String classname = getClass().getSimpleName();
+		byte[] d = getBinaryData();
+		if (d == null) {
+			return classname + ": null";
+		}
+		return classname = "[" + d.length + "] = 0x" + getValueAsString(d);
+	}
+
+	@Override
+	public String getValueAsString() {
+		byte[] d = getBinaryData();
+		if (d == null) {
+			return "null";
+		}
+		return "{" + getValueAsString(d) + "}";
+	}
+
+	/**
+	 * Get format value string for byte array
+	 * @param data byte array
+	 * @return formatted value string
+	 */
+	public static String getValueAsString(byte[] data) {
+		StringBuffer buf = new StringBuffer();
+		int i = 0;
+		for (; i < 24 && i < data.length; i++) {
+			String b = Integer.toHexString(data[i] & 0xff);
+			if (b.length() == 1) {
+				buf.append('0');
+			}
+			buf.append(b);
+			buf.append(' ');
+		}
+		if (i < data.length) {
+			buf.append("...");
+		}
+		return buf.toString();
 	}
 
 }

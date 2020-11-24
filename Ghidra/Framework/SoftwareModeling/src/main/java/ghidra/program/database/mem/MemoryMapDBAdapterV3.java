@@ -58,14 +58,14 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	public static final byte V3_SUB_TYPE_FILE_BYTES = 4;
 
 	static Schema V3_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
-		new Class[] { StringField.class, StringField.class, StringField.class, ByteField.class,
-			LongField.class, LongField.class, IntField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE,
+			ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE },
 		new String[] { "Name", "Comments", "Source Name", "Permissions", "Start Address", "Length",
 			"Segment" });
 
 	static Schema V3_SUB_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
-		new Class[] { LongField.class, ByteField.class, LongField.class, LongField.class,
-			IntField.class, LongField.class },
+		new Field[] { LongField.INSTANCE, ByteField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE },
 		new String[] { "Parent ID", "Type", "Length", "Starting Offset", "Source ID",
 			"Source Address/Offset" });
 

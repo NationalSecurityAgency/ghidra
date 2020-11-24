@@ -65,8 +65,8 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
 	 */
-	static FunctionDefinitionDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
+	static FunctionDefinitionDBAdapter getAdapter(DBHandle handle, int openMode,
+			TaskMonitor monitor) throws VersionException, IOException {
 		if (openMode == DBConstants.CREATE) {
 			return new FunctionDefinitionDBAdapterV1(handle, true);
 		}
@@ -91,7 +91,8 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return the read only Function Definition data type table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
 	 */
-	static FunctionDefinitionDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
+	static FunctionDefinitionDBAdapter findReadOnlyAdapter(DBHandle handle)
+			throws VersionException {
 		try {
 			return new FunctionDefinitionDBAdapterV0(handle);
 		}
@@ -205,7 +206,7 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return an array of IDs for the function definition data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Gets an array with the IDs of all data types in the function definition table that were derived
@@ -214,8 +215,15 @@ abstract class FunctionDefinitionDBAdapter {
 	 * @return the array data type IDs.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
+	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
+	/**
+	 * Get function definition record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * @param sourceID universal source archive ID
+	 * @param datatypeID universal datatype ID
+	 * @return function definition record found or null
+	 * @throws IOException if IO error occurs
+	 */
 	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 

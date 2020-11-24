@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.program.database.code;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -24,10 +26,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-
-import db.*;
-
 /**
  * Adapter that accesses the instruction table.
  */
@@ -35,8 +33,9 @@ abstract class InstDBAdapter {
 
 	static final String INSTRUCTION_TABLE_NAME = "Instructions";
 
-	static final Schema INSTRUCTION_SCHEMA = new Schema(1, "Address", new Class[] { IntField.class,
-		ByteField.class }, new String[] { "Proto ID", "Flags" });
+	static final Schema INSTRUCTION_SCHEMA =
+		new Schema(1, "Address", new Field[] { IntField.INSTANCE, ByteField.INSTANCE },
+			new String[] { "Proto ID", "Flags" });
 
 	static final int PROTO_ID_COL = 0;
 	static final int FLAGS_COL = 1;
@@ -79,8 +78,8 @@ abstract class InstDBAdapter {
 	}
 
 	private static InstDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			InstDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException, IOException,
-			CancelledException {
+			InstDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 

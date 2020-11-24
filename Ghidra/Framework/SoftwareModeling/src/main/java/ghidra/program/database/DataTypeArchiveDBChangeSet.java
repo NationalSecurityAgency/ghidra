@@ -30,7 +30,7 @@ import ghidra.program.model.listing.DataTypeArchiveChangeSet;
 class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObjectDBChangeSet {
 
 	private static final Schema STORED_ID_SCHEMA =
-		new Schema(0, "Key", new Class[] { LongField.class }, new String[] { "value" });
+		new Schema(0, "Key", new Field[] { LongField.INSTANCE }, new String[] { "value" });
 
 	private static final String DATATYPE_ADDITIONS = "DataType Additions";
 	private static final String DATATYPE_CHANGES = "DataType Changes";

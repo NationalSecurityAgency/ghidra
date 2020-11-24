@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.reloc;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 abstract class RelocationDBAdapter {
 
@@ -35,13 +33,10 @@ abstract class RelocationDBAdapter {
 
 	final static String TABLE_NAME = "Relocations";
 
-	//@formatter:off
-	final static Schema SCHEMA = new Schema(RelocationDBAdapterV4.VERSION, "Address", 
-		new Class[] {
-					IntField.class, BinaryField.class, BinaryField.class, StringField.class }, 
-		new String[] {
-					"Type", 			"Values", 		  "Bytes", 			 "Symbol Name" });
-	//@formatter:on
+	final static Schema SCHEMA = new Schema(
+		RelocationDBAdapterV4.VERSION, "Address", new Field[] { IntField.INSTANCE,
+			BinaryField.INSTANCE, BinaryField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Type", "Values", "Bytes", "Symbol Name" });
 
 	static RelocationDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, IOException {
@@ -93,8 +88,8 @@ abstract class RelocationDBAdapter {
 	}
 
 	private static RelocationDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			RelocationDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException,
-			IOException {
+			RelocationDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
