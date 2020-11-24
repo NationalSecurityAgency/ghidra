@@ -205,6 +205,16 @@ abstract class OperandFieldHelper extends FieldFactory {
 	public ProgramLocation getProgramLocation(int row, int col, ListingField lf) {
 		Object obj = lf.getProxy().getObject();
 
+		if (lf instanceof ImageFactoryField) {
+			Data data = (Data) obj;
+			if (data.getValue() instanceof DataImage) {
+				return new ResourceFieldLocation(data.getProgram(), data.getMinAddress(),
+					data.getComponentPath(), codeUnitFormat.getDataValueRepresentationString(data),
+					0, col, data);
+			}
+			// else might be a Playable
+		}
+
 		if (!(lf instanceof ListingTextField)) {
 			return null;
 		}

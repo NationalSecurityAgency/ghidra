@@ -236,6 +236,7 @@
                 <tocdef id="Structure Editor" sortgroup="d" text="Structure Editor"  target="help/topics/DataTypeEditors/StructureEditor.htm" />
                 <tocdef id="Enum Editor" sortgroup="e" text="Enum Editor"  target="help/topics/DataTypeEditors/EnumEditor.htm" />
                 <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm" />
+                <tocdef id="Save Image" sortgroup="e" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>
         
             <tocdef id="Labels" sortgroup="d" text="Labels"  target="help/topics/LabelMgrPlugin/Labels.htm" >
