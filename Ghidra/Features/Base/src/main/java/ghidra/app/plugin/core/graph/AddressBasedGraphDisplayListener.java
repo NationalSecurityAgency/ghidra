@@ -222,7 +222,8 @@ public abstract class AddressBasedGraphDisplayListener
 		graphDisplay.updateVertexName(vertex, displayName);
 	}
 
-	private void dispose() {
+	@Override
+	public void dispose() {
 		Swing.runLater(() -> tool.removeListenerForAllPluginEvents(this));
 		program.removeListener(this);
 	}
