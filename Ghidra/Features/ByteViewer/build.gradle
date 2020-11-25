@@ -10,5 +10,7 @@ dependencies {
 
 	compile project(':Base')
 	
+	testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
+	
 	helpPath project(path: ':Base', configuration: 'helpPath')  // this module's help has links to Base help files
 }
