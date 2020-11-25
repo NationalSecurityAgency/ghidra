@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,22 +18,35 @@ package ghidra.app.util.bin.format.pe.cli.tables;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.NTHeader;
+import ghidra.app.util.bin.format.pe.cli.blobs.CliBlobCustomAttrib;
+import ghidra.app.util.bin.format.pe.cli.streams.CliAbstractStream;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.indexes.CliIndexCustomAttributeType;
 import ghidra.app.util.bin.format.pe.cli.tables.indexes.CliIndexHasCustomAttribute;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.listing.BookmarkType;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Describes the CustomAttribute table. 
+ * Describes the CustomAttribute table.
  */
 public class CliTableCustomAttribute extends CliAbstractTable {
 	public class CliCustomAttributeRow extends CliAbstractTableRow {
 		public int parentIndex;
 		public int typeIndex;
 		public int valueIndex;
-		
+
+		private final byte CLITABLECUSTOMATTRIBUTE_TYPE_METHODDEF = 0x02;
+		private final byte CLITABLECUSTOMATTRIBUTE_TYPE_METHODREF = 0x03;
+
 		public CliCustomAttributeRow(int parentIndex, int typeIndex, int valueIndex) {
 			super();
 			this.parentIndex = parentIndex;
@@ -45,13 +58,17 @@ public class CliTableCustomAttribute extends CliAbstractTable {
 		public String getRepresentation() {
 			String parentRep, typeRep;
 			try {
-				parentRep = getRowRepresentationSafe(CliIndexHasCustomAttribute.getTableName(parentIndex), CliIndexHasCustomAttribute.getRowIndex(parentIndex));
+				parentRep =
+					getRowRepresentationSafe(CliIndexHasCustomAttribute.getTableName(parentIndex),
+						CliIndexHasCustomAttribute.getRowIndex(parentIndex));
 			}
 			catch (InvalidInputException e) {
 				parentRep = Integer.toHexString(parentIndex);
 			}
 			try {
-				typeRep = getRowRepresentationSafe(CliIndexCustomAttributeType.getTableName(parentIndex), CliIndexCustomAttributeType.getRowIndex(parentIndex));
+				typeRep =
+					getRowRepresentationSafe(CliIndexCustomAttributeType.getTableName(parentIndex),
+						CliIndexCustomAttributeType.getRowIndex(parentIndex));
 			}
 			catch (InvalidInputException e) {
 				typeRep = Integer.toHexString(typeIndex);
@@ -59,23 +76,55 @@ public class CliTableCustomAttribute extends CliAbstractTable {
 			return String.format("Parent %s Type %s Value %x", parentRep, typeRep, valueIndex);
 		}
 	}
-	public CliTableCustomAttribute(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableCustomAttribute(BinaryReader reader, CliStreamMetadata stream,
+			CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliCustomAttributeRow row = new CliCustomAttributeRow(CliIndexHasCustomAttribute.readCodedIndex(reader, stream), 
+			CliCustomAttributeRow row = new CliCustomAttributeRow(
+				CliIndexHasCustomAttribute.readCodedIndex(reader, stream),
 				CliIndexCustomAttributeType.readCodedIndex(reader, stream), readBlobIndex(reader));
 			rows.add(row);
 			blobs.add(row.valueIndex);
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
-		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "CustomAttribute Row", 0);
+		StructureDataType rowDt =
+			new StructureDataType(new CategoryPath(PATH), "CustomAttribute Row", 0);
 		rowDt.add(CliIndexHasCustomAttribute.toDataType(metadataStream), "Parent", null);
 		rowDt.add(CliIndexCustomAttributeType.toDataType(metadataStream), "Type", null);
 		rowDt.add(metadataStream.getBlobIndexDataType(), "Value", null);
 		return rowDt;
+	}
+
+	@Override
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException {
+		for (CliAbstractTableRow row : rows) {
+			CliCustomAttributeRow customRow = (CliCustomAttributeRow) row;
+			Address addr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
+				ntHeader, metadataStream.getBlobStream(), customRow.valueIndex);
+
+			// Create CustomAttrib Blob object and bookmark it
+			CliBlobCustomAttrib blob = new CliBlobCustomAttrib(
+				metadataStream.getBlobStream().getBlob(customRow.valueIndex),
+				(CliCustomAttributeRow) row, metadataStream);
+			metadataStream.getBlobStream().updateBlob(blob, addr, program);
+
+			if (tableType != null) {
+				program.getBookmarkManager()
+						.setBookmark(addr, BookmarkType.INFO, "CLI Blob",
+							"CustomAttrib (" + tableType.name() + ")");
+			}
+			else {
+				program.getBookmarkManager()
+						.setBookmark(addr, BookmarkType.INFO, "CLI Blob",
+							"CustomAttrib (undefined)");
+			}
+		}
 	}
 }

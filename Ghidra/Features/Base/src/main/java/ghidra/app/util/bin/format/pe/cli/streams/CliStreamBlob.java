@@ -16,11 +16,12 @@
 package ghidra.app.util.bin.format.pe.cli.streams;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.PeUtils;
 import ghidra.app.util.bin.format.pe.cli.CliStreamHeader;
+import ghidra.app.util.bin.format.pe.cli.blobs.CliAbstractSig.CliCustomAttrib;
 import ghidra.app.util.bin.format.pe.cli.blobs.CliBlob;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -123,15 +124,15 @@ public class CliStreamBlob extends CliAbstractStream {
 		DataType oldBlobDataType = oldBlobDataComponent.getDataType();
 		DataType newBlobDataType = updatedBlob.toDataType();
 		if (oldBlobDataType.getLength() != newBlobDataType.getLength()) {
-			Msg.error(this, "Cannot replace existing blob at address " + addr + " with " +
-				updatedBlob.getName() + " because they have different sizes.");
+			Msg.error(this, "Cannot replace existing " + updatedBlob.getName() + " at address " + addr + " with " +
+				updatedBlob.getName() + " because they have different sizes (old: " + oldBlobDataType.getLength() + ", new: " + newBlobDataType.getLength() + ").");
 			return false;
 		}
 
 		// Update the blob
 		containingStructure.replaceAtOffset(structureOffset, newBlobDataType, updatedBlob.getSize(),
 			updatedBlob.getName(), updatedBlob.getContentsComment());
-
+		
 		return true;
 	}
 

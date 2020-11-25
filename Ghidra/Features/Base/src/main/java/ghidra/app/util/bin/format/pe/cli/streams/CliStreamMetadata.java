@@ -435,7 +435,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 				table.markup(program, isBinary, monitor, log, ntHeader);
 			}
 			catch (Exception e) {
-				Msg.error(this, "Failed to markup " + table);
+				Msg.error(this, "Failed to markup " + table + ": " + e.toString());
 			}
 		}
 	}
