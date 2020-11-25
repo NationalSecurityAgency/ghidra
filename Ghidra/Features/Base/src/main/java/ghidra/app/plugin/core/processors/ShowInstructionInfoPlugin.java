@@ -39,9 +39,11 @@ import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
@@ -76,6 +78,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	private JPanel functionPanel;
 	private JLabel addressLabel;
 	private JPanel addressPanel;
+	private JPanel offsetPanel;
+	private JLabel offsetLabel;
 	private GoToService goToService;
 
 	private ArrayList<File> manualWrapperFiles = new ArrayList<>();
@@ -128,6 +132,14 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		addressPanel.add(addressLabel);
 		addressPanel.setName("Current Address");
 		tool.addStatusComponent(addressPanel, true, false);
+		
+		offsetPanel = new JPanel(new BorderLayout());
+		offsetLabel = new GDLabel("          ");
+		offsetPanel.setPreferredSize(new Dimension(95, offsetLabel.getPreferredSize().height));
+		offsetLabel.setToolTipText("Current File Offset");
+		offsetPanel.add(offsetLabel);
+		offsetPanel.setName("Current File Offset");
+		tool.addStatusComponent(offsetPanel, true, false);
 	}
 
 	private void createActions() {
@@ -302,6 +314,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		disconnectedProviders.clear();
 		tool.removeStatusComponent(instructionPanel);
 		tool.removeStatusComponent(addressPanel);
+		tool.removeStatusComponent(offsetPanel);
 		tool.removeStatusComponent(functionPanel);
 		super.dispose();
 	}
@@ -341,6 +354,19 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			return;
 		}
 		addressLabel.setText(loc.getAddress().toString(false));
+
+		Memory mem = loc.getProgram().getMemory();
+		AddressSourceInfo info = mem.getAddressSourceInfo(loc.getAddress());
+		if (info != null) {
+			long offset = info.getFileOffset();
+			if (offset != -1) {
+				offsetLabel.setText(NumericUtilities.toHexString(offset));
+			} else {
+				offsetLabel.setText("");
+			}
+		} else {
+			offsetLabel.setText("");
+		}
 
 		Function currentFunction =
 			currentProgram.getListing().getFunctionContaining(currentLocation.getAddress());
