@@ -41,20 +41,20 @@ public class CliBlobCustomAttrib extends CliBlob {
 	private short numNamed;
 
 	// Fixed constants for validating the structure
-	private final short CLIBLOBCUSTOMATTRIB_PROLOG = 0x0001;
-	private final byte CLIBLOBCUSTOMATTRIB_TYPE_FIELD = 0x53;
-	private final byte CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY = 0x54;
+	private static final short CLIBLOBCUSTOMATTRIB_PROLOG = 0x0001;
+	private static final byte CLIBLOBCUSTOMATTRIB_TYPE_FIELD = 0x53;
+	private static final byte CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY = 0x54;
 
 	// SerString processing constants to validate and convert the
 	// length of the string
-	private final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_64 = 0x40;
-	private final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128 = 0x80;
-	private final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_192 = 0xC0;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_64 = 0x40;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128 = 0x80;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_192 = 0xC0;
 
 	// UTF-8 boundaries that help detect the end of a string where
 	// lengths aren't specified in FixedArg
-	private final int CLIBLOBCUSTOMATTRIB_UTF8_LOW = 0x1F;
-	private final int CLIBLOBCUSTOMATTRIB_UTF8_HIGH = 0x7F;
+	private static final int CLIBLOBCUSTOMATTRIB_UTF8_LOW = 0x1F;
+	private static final int CLIBLOBCUSTOMATTRIB_UTF8_HIGH = 0x7F;
 
 	private class CliFixedArg {
 		private CliElementType elem;
