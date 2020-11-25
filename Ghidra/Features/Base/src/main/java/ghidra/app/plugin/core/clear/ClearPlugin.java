@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.clear;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import docking.ActionContext;
@@ -24,6 +25,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.script.AskDialog;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -32,6 +34,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
+import ghidra.util.NumericUtilities;
 
 /**
  * Plugin that manages the 'clear' and 'clear with options' operations on a program.
@@ -48,10 +51,12 @@ import ghidra.program.util.*;
 public class ClearPlugin extends Plugin {
 	private static final String CLEAR_CODE_BYTES_NAME = "Clear Code Bytes";
 	private static final String CLEAR_FLOW_AND_REPAIR = "Clear Flow and Repair";
+	private static final String CLEAR_BYTE_RANGE = "Clear Code Byte Range";
 
 	private DockingAction clearAllAction;
 	private DockingAction clearAction;
 	private DockingAction clearAndRepairAction;
+	private DockingAction clearRangeAction;
 	private ClearDialog clearDialog;
 	private ClearFlowDialog clearFlowDialog;
 
@@ -221,22 +226,7 @@ public class ClearPlugin extends Plugin {
 
 			@Override
 			public void actionPerformed(ListingActionContext context) {
-				ClearOptions opts = new ClearOptions();
-
-				opts.setClearCode(true);
-				opts.setClearSymbols(false);
-				opts.setClearComments(false);
-				opts.setClearProperties(false);
-				opts.setClearFunctions(false);
-				opts.setClearRegisters(false);
-				opts.setClearEquates(false);
-				opts.setClearUserReferences(true);
-				opts.setClearAnalysisReferences(true);
-				opts.setClearImportReferences(true);
-				opts.setClearDefaultReferences(false);
-				opts.setClearBookmarks(false);
-
-				if (clearWithContext(context, opts)) {
+				if (clearWithContext(context, getDefaultClearOptions())) {
 					return;
 				}
 			}
@@ -269,12 +259,12 @@ public class ClearPlugin extends Plugin {
 		int menuOrdinal = 1;
 		MenuData menuData =
 			new MenuData(new String[] { ToolConstants.MENU_EDIT, CLEAR_CODE_BYTES_NAME }, null,
-				"Clear Code Bytes");
+				CLEAR_CODE_BYTES_NAME);
 
 		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
 		clearAction.setMenuBarData(menuData);
 		MenuData popupMenuData =
-			new MenuData(new String[] { CLEAR_CODE_BYTES_NAME }, null, "Clear Code Bytes");
+			new MenuData(new String[] { CLEAR_CODE_BYTES_NAME }, null, CLEAR_CODE_BYTES_NAME);
 		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
 		clearAction.setPopupMenuData(popupMenuData);
 		clearAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, 0));
@@ -295,11 +285,11 @@ public class ClearPlugin extends Plugin {
 		menuOrdinal++;
 		menuData =
 			new MenuData(new String[] { ToolConstants.MENU_EDIT, clearWithOptionsName + "..." },
-				null, "Clear Code Bytes");
+				null, CLEAR_CODE_BYTES_NAME);
 		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
 		clearAllAction.setMenuBarData(menuData);
 		popupMenuData =
-			new MenuData(new String[] { clearWithOptionsName + "..." }, null, "Clear Code Bytes");
+			new MenuData(new String[] { clearWithOptionsName + "..." }, null, CLEAR_CODE_BYTES_NAME);
 		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
 		clearAllAction.setPopupMenuData(popupMenuData);
 
@@ -317,19 +307,91 @@ public class ClearPlugin extends Plugin {
 
 		menuOrdinal++;
 		menuData = new MenuData(new String[] { ToolConstants.MENU_EDIT, CLEAR_FLOW_AND_REPAIR },
-			null, "Clear Code Bytes");
+			null, CLEAR_CODE_BYTES_NAME);
 		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
 		clearAndRepairAction.setMenuBarData(menuData);
 		popupMenuData =
-			new MenuData(new String[] { CLEAR_FLOW_AND_REPAIR + "..." }, null, "Clear Code Bytes");
+			new MenuData(new String[] { CLEAR_FLOW_AND_REPAIR + "..." }, null, CLEAR_CODE_BYTES_NAME);
 		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
 		clearAndRepairAction.setPopupMenuData(popupMenuData);
+
+		// new context aware version
+		clearRangeAction = new ListingContextAction(CLEAR_BYTE_RANGE, getName()) {
+
+			@Override
+			public void actionPerformed(ListingActionContext context) {
+				AskDialog<Long> dialog = new AskDialog<>(CLEAR_BYTE_RANGE, "Number of bytes to clear", AskDialog.LONG, null);
+				if (!dialog.isCanceled()) {
+					long numBytes;
+					try {
+						numBytes = NumericUtilities.parseLong(dialog.getValueAsString());
+					} catch (NumberFormatException e) {
+						return;
+					}
+					Address start = context.getAddress();
+					AddressSet set = new AddressSet(start, start.add(numBytes - 1));
+					ClearCmd cmd = new ClearCmd(set, getDefaultClearOptions());
+					tool.executeBackgroundCommand(cmd, context.getProgram());
+				}
+			}
+
+			@Override
+			public boolean isAddToPopup(ListingActionContext context) {
+				return true;
+			}
+
+			@Override
+			public boolean isEnabledForContext(ListingActionContext context) {
+				ProgramLocation loc = context.getLocation();
+				ProgramSelection currentSelection = context.getSelection();
+				if (currentSelection != null && !currentSelection.isEmpty()) {
+					return false;
+				}
+				else if ((loc != null) && (loc.getAddress() != null) &&
+					(loc instanceof CodeUnitLocation)) {
+					return true;
+				}
+				return false;
+			}
+		};
+
+		menuOrdinal++;
+		menuData =
+			new MenuData(new String[] { ToolConstants.MENU_EDIT, CLEAR_BYTE_RANGE + "..." },
+				null, CLEAR_CODE_BYTES_NAME);
+		menuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearRangeAction.setMenuBarData(menuData);
+		popupMenuData =
+			new MenuData(new String[] { CLEAR_BYTE_RANGE + "..." }, null, CLEAR_CODE_BYTES_NAME);
+		popupMenuData.setMenuSubGroup(Integer.toString(menuOrdinal));
+		clearRangeAction.setPopupMenuData(popupMenuData);
+		clearRangeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK));
 
 		//clearAndRepairAction.setAcceleratorKey(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0));
 
 		tool.addAction(clearAction);
 		tool.addAction(clearAllAction);
 		tool.addAction(clearAndRepairAction);
+		tool.addAction(clearRangeAction);
+	}
+
+	private static ClearOptions getDefaultClearOptions() {
+		ClearOptions opts = new ClearOptions();
+
+		opts.setClearCode(true);
+		opts.setClearSymbols(false);
+		opts.setClearComments(false);
+		opts.setClearProperties(false);
+		opts.setClearFunctions(false);
+		opts.setClearRegisters(false);
+		opts.setClearEquates(false);
+		opts.setClearUserReferences(true);
+		opts.setClearAnalysisReferences(true);
+		opts.setClearImportReferences(true);
+		opts.setClearDefaultReferences(false);
+		opts.setClearBookmarks(false);
+
+		return opts;
 	}
 
 	/**
