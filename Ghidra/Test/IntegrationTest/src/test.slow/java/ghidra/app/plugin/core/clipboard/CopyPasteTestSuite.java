@@ -19,13 +19,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-import ghidra.app.plugin.core.byteviewer.ByteViewerClipboardProviderTest;
-
 //@formatter:off
 @RunWith(Suite.class)
 @SuiteClasses({
 	ClipboardPluginTest.class,
-	ByteViewerClipboardProviderTest.class,
+	
+	// Uncomment this to run in IDE.  This can also be uncommented if the integration test module
+	// is updated to have a dependency on every module's test classes as well as source code.
+	//ByteViewerClipboardProviderTest.class,
 	CodeBrowserClipboardProviderTest.class,
 	CopyPasteCommentsTest.class, 
 	CopyPasteFunctionInfoTest.class
