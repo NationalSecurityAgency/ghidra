@@ -72,8 +72,10 @@ protected:
   static OpToken boolean_not;		///< The \e boolean \e not operator
   static OpToken unary_minus;		///< The \e unary \e minus operator
   static OpToken unary_plus;		///< The \e unary \e plus operator
-  static OpToken pre_increment;		///< The \e increment \e operator
-  static OpToken pre_decrement;		///< The \e decrement \e operator
+  static OpToken pre_increment;		///< The \e pre increment \e operator
+  static OpToken pre_decrement;		///< The \e pre decrement \e operator
+  static OpToken post_increment;	///< The \e post increment \e operator
+  static OpToken post_decrement;	///< The \e post decrement \e operator
   static OpToken addressof;		///< The \e address \e of operator
   static OpToken dereference;		///< The \e pointer \e dereference operator
   static OpToken typecast;		///< The \e type \e cast operator

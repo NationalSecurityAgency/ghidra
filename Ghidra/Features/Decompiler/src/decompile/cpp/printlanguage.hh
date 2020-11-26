@@ -87,7 +87,8 @@ public:
     postsurround,		///< Function or array operator form
     presurround,		///< Modifier form (like a cast operation)
     space,			///< No explicitly printed token
-    hiddenfunction		///< Operation that isn't explicitly printed
+    hiddenfunction,		///< Operation that isn't explicitly printed
+    unary_postfix		///< Unary operator form (printed after its input)
   };
   const char *print;		///< Printing characters for the token
   int4 stage;			///< Additional elements consumed from the RPN stack when emitting this token

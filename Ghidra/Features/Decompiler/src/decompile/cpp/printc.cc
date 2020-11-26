@@ -30,6 +30,8 @@ OpToken PrintC::unary_minus = { "-", 1, 62, false, OpToken::unary_prefix, 0, 0, 
 OpToken PrintC::unary_plus = { "+", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::pre_increment = { "++", 1, 66, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::pre_decrement = { "--", 1, 66, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::post_increment = { "++", 1, 66, false, OpToken::unary_postfix, 0, 0, (OpToken *)0 };
+OpToken PrintC::post_decrement = { "--", 1, 66, false, OpToken::unary_postfix, 0, 0, (OpToken *)0 };
 OpToken PrintC::addressof = { "&", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::dereference = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
 OpToken PrintC::typecast = { "()", 2, 62, false, OpToken::presurround, 0, 0, (OpToken *)0 };
@@ -2135,9 +2137,9 @@ bool PrintC::emitIncDecOp(const PcodeOp *op)
     num = -num;
 
   if (num == 1) {
-    token = &pre_increment;
+    token = &post_increment;
   } else if (num == -1) {
-    token = &pre_decrement;
+    token = &post_decrement;
   } else {
     return false;
   }
