@@ -16,6 +16,7 @@
 package utility.application;
 
 import java.io.*;
+import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -163,6 +164,25 @@ public class ApplicationUtilities {
 				return new File(localAppDataDir, applicationProperties.getApplicationName());
 			}
 		}
+		
+        // We will use the XDG base specification on POSIX based platforms
+        boolean isPosix =
+                FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+        
+        if (isPosix) {
+            String xdgCache = System.getenv("XDG_CACHE_HOME");
+            if (xdgCache == null) {
+                // $HOME/.cache by default
+                String homedir = System.getProperty("user.home");
+                if (homedir == null || homedir.isEmpty()) {
+                    throw new FileNotFoundException("System property \"user.home\" is not set!");
+                }
+                return new File(homedir, "/.cache/" + applicationProperties.getApplicationName());
+            }
+            else {
+                return new File(xdgCache, applicationProperties.getApplicationName());
+            }
+        }
 
 		// Use user temp directory if platform specific scheme does not exist above or it failed
 		return getDefaultUserTempDir(applicationProperties);
@@ -187,10 +207,28 @@ public class ApplicationUtilities {
 		ApplicationIdentifier applicationIdentifier =
 			new ApplicationIdentifier(applicationProperties);
 
+		// We will use the XDG base specification on POSIX based platforms
+		boolean isPosix =
+		        FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+		
+		// When we default to XDG we don't need to use a home dotfile anymore
+		String dot = ".";
+		
+		if (isPosix) {
+		    dot = "";
+		    String xdgConfig = System.getenv("XDG_CONFIG_HOME");
+		    if (xdgConfig == null) {
+		        homedir += "/.config/";
+		    }
+		    else {
+		        homedir = xdgConfig;
+		    }
+		}
+		
 		File userSettingsParentDir =
-			new File(homedir, "." + applicationIdentifier.getApplicationName());
+			new File(homedir, dot + applicationIdentifier.getApplicationName());
 
-		String userSettingsDirName = "." + applicationIdentifier;
+		String userSettingsDirName = dot + applicationIdentifier;
 
 		if (SystemUtilities.isInDevelopmentMode()) {
 			// Add the application's installation directory name to this variable, so that each 
