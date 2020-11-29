@@ -324,6 +324,33 @@ const FlowBlock *FlowBlock::getFrontLeaf(void) const
   return bl;
 }
 
+FlowBlock *FlowBlock::getBackBasicLeaf(void)
+
+{
+  FlowBlock *bl = this;
+
+  if (getType() == FlowBlock::t_basic) return bl; // already at leaf
+  if (getType() == FlowBlock::t_plain) return bl; // has no sub blocks
+
+  // bl must be a BlockGraph or one of its subclasses
+  while (bl->getType() != FlowBlock::t_copy) {
+    BlockGraph * bg = (BlockGraph*)bl;
+
+    if (bg->getSize() == 0) break;
+
+    FlowBlock * newbl = bl->subBlock(bg->getSize()-1);
+
+    // Only descend through list blocks (consider other structures irreducible)
+    if (newbl->getType() != FlowBlock::t_ls && newbl->getType() != FlowBlock::t_copy)
+      return (FlowBlock*)0;
+
+    bl = newbl;
+  }
+
+  return bl;
+}
+
+
 /// Keep descending tree hierarchy, taking the front block,
 /// until we get to the bottom copy block
 /// \return the first leaf FlowBlock to execute
@@ -648,6 +675,8 @@ string FlowBlock::typeToName(FlowBlock::block_type bt)
     return "properif";
   case t_whiledo:
     return "whiledo";
+  case t_for:
+    return "for";
   case t_dowhile:
     return "dowhile";
   case t_switch:
@@ -1141,6 +1170,33 @@ void BlockGraph::forceFalseEdge(const FlowBlock *out0)
   if (outofthis[0].point != out0)
     throw LowlevelError("Unable to preserve condition");
 }
+
+/// The indicated block is pulled out of the component list and edges are removed.
+/// \param bl is the indicated block
+/// \param newparent is the new parent graph
+void BlockGraph::reparent(FlowBlock *bl,BlockGraph *newparent)
+
+{
+#ifdef BLOCKCONSISTENT_DEBUG
+  if ((bl->parent != this)||(bl->parent == newparent))
+    throw LowlevelError("Bad reparent");
+#endif
+
+  vector<FlowBlock *>::iterator iter;
+  while(bl->sizeIn()>0)		// Rip the block out of the graph
+    removeEdge(bl->getIn(0),bl);
+  while(bl->sizeOut()>0)
+    removeEdge(bl,bl->getOut(0));
+
+  for(iter=list.begin();iter!=list.end();++iter)
+    if (*iter == bl) {
+      list.erase(iter);
+      break;
+    }
+
+  newparent->addBlock(bl);
+}
+
 
 /// \param i is the position of the first FlowBlock to swap
 /// \param j is the position of the second
@@ -1756,6 +1812,28 @@ BlockWhileDo *BlockGraph::newBlockWhileDo(FlowBlock *cond,FlowBlock *cl)
   BlockWhileDo *ret = new BlockWhileDo();
   nodes.push_back(cond);
   nodes.push_back(cl);
+  identifyInternal(ret,nodes);
+  addBlock(ret);
+  ret->forceOutputNum(1);
+  return ret;
+}
+
+/// Add the new BlockFor to \b this, collapsing the condition, clause, and an optional initializer list
+/// \param cond is the condition FlowBlock
+/// \param cl is the clause FlowBlock
+/// \param init is the optional initializer FlowBlock
+/// \return the new BlockFor
+BlockFor *BlockGraph::newBlockFor(FlowBlock *cond,FlowBlock *cl,FlowBlock *init)
+
+{
+  vector<FlowBlock *> nodes;
+  BlockFor *ret = new BlockFor();
+  nodes.push_back(cond);
+  nodes.push_back(cl);
+
+  if (init)
+    nodes.push_back(init);
+
   identifyInternal(ret,nodes);
   addBlock(ret);
   ret->forceOutputNum(1);
@@ -2942,6 +3020,43 @@ void BlockWhileDo::printHeader(ostream &s) const
 }
 
 FlowBlock *BlockWhileDo::nextFlowAfter(const FlowBlock *bl) const
+
+{
+  if (getBlock(0) == bl)
+    return (FlowBlock *)0;	// Don't know what will execute next
+
+  FlowBlock *nextbl = getBlock(0); // Will execute first block of while
+  if (nextbl != (FlowBlock *)0)
+    nextbl = nextbl->getFrontLeaf();
+  return nextbl;
+}
+
+void BlockFor::markLabelBumpUp(bool bump)
+
+{
+  BlockGraph::markLabelBumpUp(true); // whiledos steal lower blocks labels
+  if (!bump)
+    clearFlag(f_label_bumpup);
+}
+
+void BlockFor::scopeBreak(int4 curexit,int4 curloopexit)
+
+{
+  // A new loop scope (current loop exit becomes curexit)
+  getBlock(0)->scopeBreak(-1,curexit); // Top block has multiple exits
+  getBlock(1)->scopeBreak(getBlock(0)->getIndex(),curexit); // Exits into topblock
+}
+
+void BlockFor::printHeader(ostream &s) const
+
+{
+  s << "For block ";
+  if (hasOverflowSyntax())
+    s << "(overflow) ";
+  FlowBlock::printHeader(s);
+}
+
+FlowBlock *BlockFor::nextFlowAfter(const FlowBlock *bl) const
 
 {
   if (getBlock(0) == bl)

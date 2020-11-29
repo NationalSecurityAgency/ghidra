@@ -2693,6 +2693,149 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
   popMod();
 }
 
+void PrintC::emitBlockFor(const BlockFor *bl)
+
+{
+  const PcodeOp *op;
+  int4 indent;
+
+  list<PcodeOp *> printList;
+
+  if (bl->getSize() >= 3) {
+    FlowBlock *blinit = bl->getBlock(2);
+    BlockBasic *bb = (BlockBasic*)blinit->subBlock(0);
+    list<PcodeOp *>::reverse_iterator iter;
+    Funcdata * data = bb->getFuncdata();
+
+    for (iter=bb->rbeginOp();iter!=bb->rendOp();++iter) {
+      PcodeOp *inst = *iter;
+
+      // TODO: include calls that assign to varnode of interest
+      if (inst->isCallOrBranch()) break;
+      if (inst->notPrinted()) continue;
+
+      const Varnode *vn = inst->getOut();
+
+      // we are only interested in assignments
+      if (vn == 0) continue;
+      if ((vn!=(const Varnode *)0)&&(vn->isImplied())) continue;
+
+      printList.push_back(inst);
+      data->opMarkNonPrinting(inst);
+    }
+
+    // emit the initializers not included in the for loop
+    bl->getBlock(2)->emit(this);
+  }
+
+  pushMod();
+  // for block NEVER prints final branch
+  unsetMod(no_branch|only_branch);
+  emitAnyLabelStatement(bl);
+  emit->tagLine();
+  op = bl->getBlock(0)->lastOp();
+
+  emit->tagOp("for",EmitXml::keyword_color,op);
+  emit->spaces(1);
+  int4 id1 = emit->openParen('(');
+
+  if (bl->getSize() >= 3) {
+    FlowBlock *blinit = bl->getBlock(2);
+    BlockBasic *bb = (BlockBasic*)blinit->subBlock(0);
+    list<PcodeOp *>::reverse_iterator iter;
+    Funcdata * data = bb->getFuncdata();
+    bool separator = false;
+
+    pushMod();
+    setMod(comma_separate);
+    // iterate in reverse order to maintain execution order
+    for (iter=printList.rbegin();iter!=printList.rend(); iter++) {
+      if (separator) {
+        emit->print(",");
+        emit->spaces(1);
+      }
+
+      data->opClearNonPrinting(*iter);
+      emitExpression(*iter);
+      separator = true;
+    }
+    popMod();
+
+    printList.clear();
+  }
+
+  emit->print(";");
+  emit->spaces(1);
+
+  pushMod();
+  setMod(comma_separate);
+  bl->getBlock(0)->emit(this);
+  popMod();
+  emit->print(";");
+  emit->spaces(1);
+
+  FlowBlock *lastBl = bl->getBlock(1);
+
+  // hoist last basic block within flowblock
+  while (lastBl->getType() != FlowBlock::t_copy) {
+    BlockGraph * bg = (BlockGraph*)lastBl;
+    lastBl = lastBl->subBlock(bg->getSize()-1);
+  }
+
+  BlockBasic * bb = (BlockBasic*)lastBl->subBlock(0);
+
+  list<PcodeOp *>::reverse_iterator iter;
+  Funcdata * data = bb->getFuncdata();
+
+  for(iter=++bb->rbeginOp();iter!=bb->rendOp();++iter) {
+    PcodeOp *inst = *iter;
+    const Varnode *vn = inst->getOut();
+
+    if (inst->isCallOrBranch()) break;
+    if (inst->notPrinted()) continue;
+    if ((vn!=(const Varnode *)0)&&(vn->isImplied()))
+      continue;
+    if (vn == 0) continue;
+
+    printList.push_back(inst);
+    data->opMarkNonPrinting(inst);
+  }
+
+  bool separator = false;
+
+  pushMod();
+  setMod(comma_separate);
+  // iterate in reverse order to maintain execution order
+  for (iter=printList.rbegin();iter!=printList.rend(); iter++) {
+    if (separator) {
+      emit->print(",");
+      emit->spaces(1);
+    }
+
+    //data->opClearNonPrinting(*iter);
+    emitExpression(*iter);
+    separator = true;
+  }
+  popMod();
+
+  emit->closeParen(')',id1);
+  emit->spaces(1);
+  indent = emit->startIndent();
+
+  emit->print("{");
+  setMod(no_branch); // Dont print goto at bottom of clause
+  int4 id2 = emit->beginBlock(bl->getBlock(1));
+  bl->getBlock(1)->emit(this);
+  emit->endBlock(id2);
+  emit->stopIndent(indent);
+  emit->tagLine();
+  emit->print("}");
+  popMod();
+
+  for (iter=printList.rbegin();iter!=printList.rend();iter++)
+    data->opClearNonPrinting(*iter);
+}
+
 void PrintC::emitBlockDoWhile(const BlockDoWhile *bl)
 
 {

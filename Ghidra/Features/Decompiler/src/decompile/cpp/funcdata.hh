@@ -439,6 +439,7 @@ public:
   void opMarkStartBasic(PcodeOp *op) { op->setFlag(PcodeOp::startbasic); }	///< Mark PcodeOp as starting a basic block
   void opMarkStartInstruction(PcodeOp *op) { op->setFlag(PcodeOp::startmark); }	///< Mark PcodeOp as starting its instruction
   void opMarkNonPrinting(PcodeOp *op) { op->setFlag(PcodeOp::nonprinting); }	///< Mark PcodeOp as not being printed
+  void opClearNonPrinting(PcodeOp *op) { op->clearFlag(PcodeOp::nonprinting); }	///< Unmark PcodeOp as being non printingptr
   void opMarkSpecialPrint(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::special_print); }	///< Mark PcodeOp as needing special printing
   void opMarkNoCollapse(PcodeOp *op) { op->setFlag(PcodeOp::nocollapse); }	///< Mark PcodeOp as not collapsible
   void opMarkCpoolTransformed(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited

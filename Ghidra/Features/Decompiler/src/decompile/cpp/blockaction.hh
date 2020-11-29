@@ -211,6 +211,7 @@ class CollapseStructure {
   bool ruleBlockIfElse(FlowBlock *bl);		///< Attempt to apply a 3 component form of BlockIf
   bool ruleBlockIfNoExit(FlowBlock *bl);	///< Attempt to apply BlockIf where the body does not exit
   bool ruleBlockWhileDo(FlowBlock *bl);		///< Attempt to apply the BlockWhileDo structure
+  bool ruleBlockFor(FlowBlock *bl);		///< TODO
   bool ruleBlockDoWhile(FlowBlock *bl);		///< Attempt to apply the BlockDoWhile structure
   bool ruleBlockInfLoop(FlowBlock *bl);		///< Attempt to apply the BlockInfLoop structure
   bool ruleBlockSwitch(FlowBlock *bl);		///< Attempt to apply the BlockSwitch structure
