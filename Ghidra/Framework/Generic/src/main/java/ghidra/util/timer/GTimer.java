@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.util.timer;
 
-import ghidra.util.Msg;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ghidra.util.Msg;
+
 public class GTimer {
 	private static Timer timer;
-	private static GTimerMonitor DO_NOTHING_MONITOR = new DoNothingMonitor();
+	private static GTimerMonitor DO_NOTHING_MONITOR = GTimerMonitor.DUMMY;
 
 	/**
 	 * Schedules a runnable for execution after the specified delay.
@@ -48,7 +47,8 @@ public class GTimer {
 	 * @param callback the runnable to be executed.
 	 * @return a GTimerMonitor which allows the caller to cancel the timer and check its status.
 	 */
-	public static GTimerMonitor scheduleRepeatingRunnable(long delay, long period, Runnable callback) {
+	public static GTimerMonitor scheduleRepeatingRunnable(long delay, long period,
+			Runnable callback) {
 		GTimerTask gTimerTask = new GTimerTask(callback);
 		getTimer().schedule(gTimerTask, delay, period);
 		return gTimerTask;
@@ -59,24 +59,6 @@ public class GTimer {
 			timer = new Timer("GTimer", true);
 		}
 		return timer;
-	}
-
-	static class DoNothingMonitor implements GTimerMonitor {
-		@Override
-		public boolean cancel() {
-			return false;
-		}
-
-		@Override
-		public boolean didRun() {
-			return false;
-		}
-
-		@Override
-		public boolean wasCancelled() {
-			return false;
-		}
-
 	}
 
 	static class GTimerTask extends TimerTask implements GTimerMonitor {
