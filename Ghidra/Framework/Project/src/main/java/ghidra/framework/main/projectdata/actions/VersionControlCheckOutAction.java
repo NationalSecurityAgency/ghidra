@@ -223,13 +223,13 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			if (failedFiles.size() == 1) {
 				DomainFile df = failedFiles.get(0);
 				String s = "Exclusive checkout failed for: " + df.getName() +
-					"\nOne or more users have file checked out!";
+					" (One or more users have file checked out!)";
 				Msg.showError(this, tool.getToolFrame(), "Checkout Failed", s);
 				return;
 			}
 
 			String userMessage = "Multiple exclusive checkouts failed." +
-				"\nOne or more users have file checked out!";
+				" (One or more users have file checked out!)";
 			StringBuilder buffy = new StringBuilder(userMessage + '\n');
 			String message = "Exclusive checkout failed for: %s";
 			for (DomainFile df : failedFiles) {
@@ -238,7 +238,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			}
 
 			Msg.showError(this, tool.getToolFrame(), "Checkout Failed",
-				userMessage + "\n(see log for list of failed files)");
+				userMessage + " (see log for list of failed files)");
 		}
 
 	}
