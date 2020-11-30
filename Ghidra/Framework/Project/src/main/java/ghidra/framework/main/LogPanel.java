@@ -94,7 +94,7 @@ public class LogPanel extends JPanel implements LogListener {
 			if (isError) {
 				label.setForeground(Color.RED);
 			}
-			label.setText(message);
+			label.setText(message.replace("\n", " "));
 			label.setToolTipText(message);
 		});
 	}
