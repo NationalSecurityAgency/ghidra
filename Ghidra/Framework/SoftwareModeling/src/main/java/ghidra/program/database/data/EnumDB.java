@@ -179,7 +179,10 @@ class EnumDB extends DataTypeDB implements Enum {
 		try {
 			checkIsValid();
 			initializeIfNeeded();
-			return nameMap.keySet().toArray(new String[nameMap.size()]);
+			return nameMap.entrySet().stream()
+					.sorted(Map.Entry.comparingByValue())
+					.map(Map.Entry::getKey)
+					.toArray(String[]::new);
 		}
 		finally {
 			lock.release();
