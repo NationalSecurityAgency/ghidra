@@ -39,4 +39,9 @@ public class DummyGraphDisplayListener implements GraphDisplayListener {
 		// I'm a dummy
 	}
 
+	@Override
+	public void dispose() {
+		// I'm a dummy
+	}
+
 }

@@ -39,6 +39,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 
 	private final PluginTool pluginTool;
 	private String title;
+	private AttributedGraph graph;
 
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
@@ -55,7 +56,8 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 
 	@Override
 	public void setGraphDisplayListener(GraphDisplayListener listener) {
-		// This display is not interactive, so N/A
+		// This display is not interactive, so just dispose the listener
+		listener.dispose();
 	}
 
 
@@ -86,10 +88,11 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setGraph(AttributedGraph graphData, String title, boolean append,
+	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor) {
 		this.title = title;
-		doSetGraphData(graphData);
+		this.graph = graph;
+		doSetGraphData(graph);
 	}
 
 	/**
@@ -132,7 +135,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 
 	@Override
 	public AttributedGraph getGraph() {
-		return null;
+		return graph;
 	}
 
 	@Override

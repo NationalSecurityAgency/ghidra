@@ -151,9 +151,6 @@ public class VisualGraphPickingGraphMousePlugin<V extends VisualVertex, E extend
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		if (!checkModifiers(e)) {
-			return;
-		}
 
 		// We overrode this method here to clear the picked state of edges and vertices if we 
 		// ever get a released event when the user is clicking somewhere that is not an edge or

@@ -49,4 +49,9 @@ public interface GraphDisplayListener {
 	 */
 	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay);
 
+	/**
+	 * Tells the listener that it is no longer needed and it can release any listeners/resources
+	 */
+	public void dispose();
+
 }
