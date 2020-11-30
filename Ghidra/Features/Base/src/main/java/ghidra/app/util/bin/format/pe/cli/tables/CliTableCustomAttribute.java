@@ -108,7 +108,7 @@ public class CliTableCustomAttribute extends CliAbstractTable {
 			Address addr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
 				ntHeader, metadataStream.getBlobStream(), customRow.valueIndex);
 
-			// Create CustomAttrib Blob object and bookmark it
+			// Create CustomAttrib Blob object
 			CliBlobCustomAttrib blob = new CliBlobCustomAttrib(
 				metadataStream.getBlobStream().getBlob(customRow.valueIndex),
 				(CliCustomAttributeRow) row, metadataStream);
