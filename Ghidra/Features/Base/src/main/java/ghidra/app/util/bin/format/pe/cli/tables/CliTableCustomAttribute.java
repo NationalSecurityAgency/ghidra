@@ -28,7 +28,6 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
@@ -114,17 +113,6 @@ public class CliTableCustomAttribute extends CliAbstractTable {
 				metadataStream.getBlobStream().getBlob(customRow.valueIndex),
 				(CliCustomAttributeRow) row, metadataStream);
 			metadataStream.getBlobStream().updateBlob(blob, addr, program);
-
-			if (tableType != null) {
-				program.getBookmarkManager()
-						.setBookmark(addr, BookmarkType.INFO, "CLI Blob",
-							"CustomAttrib (" + tableType.name() + ")");
-			}
-			else {
-				program.getBookmarkManager()
-						.setBookmark(addr, BookmarkType.INFO, "CLI Blob",
-							"CustomAttrib (undefined)");
-			}
 		}
 	}
 }
