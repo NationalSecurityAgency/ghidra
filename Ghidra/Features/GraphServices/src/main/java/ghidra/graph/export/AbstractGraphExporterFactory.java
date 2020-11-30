@@ -125,8 +125,15 @@ public abstract class AbstractGraphExporterFactory<V, E> {
 		return exporter;
 	}
 
+	String getQuotedId(V vertex) {
+		String id = vertexIdProvider.apply(vertex);
+		return "\"" + id + "\"";
+	}
+
 	private GraphExporter<V, E> createDotExporter() {
-		DOTExporter<V, E> exporter = new DOTExporter<>(vertexIdProvider);
+		// DOT format is picky about its identifiers, so pass in a vertex id supplier
+		// that wraps the vertex ids in quotes
+		DOTExporter<V, E> exporter = new DOTExporter<>(this::getQuotedId);
 		setupExporter(exporter);
 		return exporter;
 	}
