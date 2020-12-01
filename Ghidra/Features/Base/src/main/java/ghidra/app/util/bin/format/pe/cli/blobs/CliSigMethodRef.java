@@ -23,27 +23,26 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.InvalidInputException;
 
 public class CliSigMethodRef extends CliAbstractSig {
-	
+
 	private CliRetType retType;
 	private CliParam params[];
 	private int sizeOfCount;
-	private int genericParamCount;
-	private int sizeOfGenericCount;
+	private byte flags;
 	private int sentinelIndex; // SENTINEL is before the parameter index in this field
-		
+
+	private final int METHODREFSIG_FLAGS_DEFAULT = 0x00;
+	private final int METHODREFSIG_FLAGS_VARARG = 0x05;
+	private final int METHODREFSIG_FLAGS_HASTHIS = 0x20;
+	private final int METHODREFSIG_FLAGS_EXPLICITTHIS = 0x40;
+
 	public CliSigMethodRef(CliBlob blob) throws IOException {
 		super(blob);
 		sentinelIndex = -1;
 
-		// Now read our special stuff. Looks like a MethodDef unless vararg is used.
+		// Flags is similar to a MethodDef unless vararg is used.
 		BinaryReader reader = getContentsReader();
-		byte firstByte = reader.readNextByte();
-		// firstByte is HASTHIS | EXPLICITTHIS | DEFAULT | VARARG | GENERIC
-		if ((firstByte & 0x10) == 0x10) { // GENERIC
-			long origIndex = reader.getPointerIndex();
-			genericParamCount = decodeCompressedUnsignedInt(reader);
-			sizeOfGenericCount = (int) (reader.getPointerIndex() - origIndex);
-		}
+		flags = reader.readNextByte();
+
 		long origIndex = reader.getPointerIndex();
 		int paramCount = decodeCompressedUnsignedInt(reader);
 		this.sizeOfCount = (int) (reader.getPointerIndex() - origIndex);
@@ -55,7 +54,7 @@ public class CliSigMethodRef extends CliAbstractSig {
 		}
 		params = new CliParam[paramCount];
 		for (int i = 0; i < paramCount; i++) {
-			if (reader.peekNextByte() == CliElementType.ELEMENT_TYPE_SENTINAL.id()) {
+			if (reader.peekNextByte() == CliElementType.ELEMENT_TYPE_SENTINEL.id()) {
 				reader.readNextByte();
 				sentinelIndex = i;
 			}
@@ -72,7 +71,7 @@ public class CliSigMethodRef extends CliAbstractSig {
 	public String getContentsName() {
 		return "MethodRefSig";
 	}
-	
+
 	@Override
 	public String getContentsComment() {
 		return "Type info for imported method return and params";
@@ -81,15 +80,12 @@ public class CliSigMethodRef extends CliAbstractSig {
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(BYTE, "FirstByte", "ORed VARARG and HASTHIS/EXPLICITTHIS");
-		if (genericParamCount > 0) {
-			struct.add(getDataTypeForBytes(sizeOfGenericCount), "GenParamCount",
-					"Number of generic paramameters for the method");
-		}
-		struct.add(getDataTypeForBytes(sizeOfCount), "ParamCount", "Number of param types to follow RetType");
+		struct.add(BYTE, "flags", "ORed VARARG and HASTHIS/EXPLICITTHIS");
+		struct.add(getDataTypeForBytes(sizeOfCount), "ParamCount",
+			"Number of param types to follow RetType");
 		struct.add(retType.getDefinitionDataType(), "RetType", null);
 		for (int i = 0; i < params.length; i++) {
-			struct.add(params[i].getDefinitionDataType(), "Type"+i, null);
+			struct.add(params[i].getDefinitionDataType(), "Type" + i, null);
 		}
 		return struct;
 	}
@@ -97,26 +93,41 @@ public class CliSigMethodRef extends CliAbstractSig {
 	public CliRetType getReturnType() {
 		return retType;
 	}
-	
+
 	public CliParam[] getParams() {
 		return params.clone();
 	}
-	
+
+	public boolean hasThis() {
+		return (flags & METHODREFSIG_FLAGS_HASTHIS) == METHODREFSIG_FLAGS_HASTHIS;
+	}
+
+	public boolean hasExplicitThis() {
+		return (flags & METHODREFSIG_FLAGS_EXPLICITTHIS) == METHODREFSIG_FLAGS_EXPLICITTHIS;
+	}
+
+	public boolean hasVarArgs() {
+		return (flags & METHODREFSIG_FLAGS_VARARG) == METHODREFSIG_FLAGS_VARARG;
+	}
+
 	@Override
 	protected String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
 		String rep = getRepresentationOf(retType, stream, isShort);
 		rep += " fn(";
-		// TODO: Display SENTINEL as "..."
+
 		for (CliParam param : params) {
-			if (param == null)
+			if (param == null) {
 				rep += "unidentified_param_type, ";
-			else
+			}
+			else {
 				rep += getRepresentationOf(param, stream, isShort) + ", ";
+			}
 		}
-		if (params.length > 0)
-			rep = rep.substring(0, rep.length()-2); // Take off last comma+space
+		if (params.length > 0) {
+			rep = rep.substring(0, rep.length() - 2); // Take off last comma+space
+		}
 		rep += ")";
 		return rep;
 	}
-	
+
 }

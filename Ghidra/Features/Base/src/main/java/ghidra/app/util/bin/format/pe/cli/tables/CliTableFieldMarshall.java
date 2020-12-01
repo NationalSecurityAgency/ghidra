@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class CliTableFieldMarshall extends CliAbstractTable {
 	public class CliFieldMarshallRow extends CliAbstractTableRow {
 		public int parentIndex;
 		public int nativeTypeIndex;
-		
+
 		public CliFieldMarshallRow(int parentIndex, int nativeTypeIndex) {
 			super();
 			this.parentIndex = parentIndex;
@@ -51,7 +51,9 @@ public class CliTableFieldMarshall extends CliAbstractTable {
 		public String getRepresentation() {
 			String parentRep;
 			try {
-				parentRep = getRowRepresentationSafe(CliIndexHasFieldMarshall.getTableName(parentIndex), CliIndexHasFieldMarshall.getRowIndex(parentIndex));
+				parentRep =
+					getRowRepresentationSafe(CliIndexHasFieldMarshall.getTableName(parentIndex),
+						CliIndexHasFieldMarshall.getRowIndex(parentIndex));
 			}
 			catch (InvalidInputException e) {
 				parentRep = Integer.toHexString(parentIndex);
@@ -60,36 +62,40 @@ public class CliTableFieldMarshall extends CliAbstractTable {
 			return String.format("Parent %s Native Type %s", parentRep, nativeTypeRep);
 		}
 	}
-	
-	public CliTableFieldMarshall(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableFieldMarshall(BinaryReader reader, CliStreamMetadata stream,
+			CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliFieldMarshallRow row = new CliFieldMarshallRow(CliIndexHasFieldMarshall.readCodedIndex(reader, stream), readBlobIndex(reader));
+			CliFieldMarshallRow row = new CliFieldMarshallRow(
+				CliIndexHasFieldMarshall.readCodedIndex(reader, stream), readBlobIndex(reader));
 			rows.add(row);
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
-		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "FieldMarshall Row", 0);
+		StructureDataType rowDt =
+			new StructureDataType(new CategoryPath(PATH), "FieldMarshall Row", 0);
 		rowDt.add(CliIndexHasFieldMarshall.toDataType(metadataStream), "Parent", null);
 		rowDt.add(metadataStream.getBlobIndexDataType(), "NativeType", null);
 		return rowDt;
 	}
-	
+
 	@Override
-	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log, NTHeader ntHeader) 
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			Integer nativeTypeIndex = ((CliFieldMarshallRow) row).nativeTypeIndex;
 			Address addr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
 				ntHeader, metadataStream.getBlobStream(), nativeTypeIndex);
-			// Create MarshalSpec Blob object and mark it up
+
+			// Create MarshalSpec Blob object
 			CliBlobMarshalSpec blob =
 				new CliBlobMarshalSpec(metadataStream.getBlobStream().getBlob(nativeTypeIndex));
 			metadataStream.getBlobStream().updateBlob(blob, addr, program);
-//			program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "Signature!", "MarshalSpec/NativeType (Offset "+nativeTypeIndex+")");
 		}
 	}
 }
