@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -201,8 +201,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 		ELEMENT_TYPE_MODIFIER(0x40), // TODO: this value is ORed with the following 4, Could be changed when Enums support ORing.
 		ELEMENT_TYPE_SENTINAL(0x41),
-		ELEMENT_TYPE_PINNED(0x45)
-		;
+		ELEMENT_TYPE_PINNED(0x45);
 
 		private final int id;
 
@@ -217,8 +216,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		public static CliElementType fromInt(int id) {
 			CliElementType[] values = CliElementType.values();
 			for (CliElementType value : values) {
-				if (value.id == id)
+				if (value.id == id) {
 					return value;
+				}
 			}
 			return null;
 		}
@@ -275,12 +275,53 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 	}
 
 	public class CliTypeArray extends CliSigType {
-		private CliElementType arrayType;
+		private CliSigType arrayType;
 		private CliArrayShape arrayShape;
 
-		public CliTypeArray(BinaryReader reader, CliElementType typeCode) throws IOException {
+		public CliTypeArray(BinaryReader reader, CliElementType typeCode)
+				throws IOException, InvalidInputException {
 			super(typeCode);
-			arrayType = CliElementType.fromInt(reader.readNextByte());
+			CliElementType valueCode = CliElementType.fromInt(reader.readNextByte());
+
+			switch (valueCode) {
+				case ELEMENT_TYPE_VALUETYPE:
+					arrayType = new CliTypeValueType(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_CLASS:
+					arrayType = new CliTypeClass(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_FNPTR:
+					arrayType = new CliTypeFnPtr(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_GENERICINST:
+					arrayType = new CliTypeGenericInst(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_MVAR:
+				case ELEMENT_TYPE_VAR:
+					arrayType = new CliTypeVarOrMvar(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_PTR:
+					arrayType = new CliTypePtr(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_SZARRAY: // Single dimensional, zero-based array, e.g. a vector
+					arrayType = new CliTypeSzArray(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_ARRAY:
+					arrayType = new CliTypeArray(reader, typeCode);
+					break;
+
+				default:
+					arrayType = new CliTypePrimitive(valueCode);
+					break;
+			}
+
 			arrayShape = new CliArrayShape(reader);
 		}
 
@@ -295,7 +336,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			StructureDataType struct = new StructureDataType(new CategoryPath(PATH), "Array", 0);
 			struct.add(CliTypeCodeDataType.dataType, "Array",
 				String.format("Fixed value: 0x%x", CliElementType.ELEMENT_TYPE_ARRAY.id()));
-			struct.add(CliTypeCodeDataType.dataType, "Type", "Type of array");
+			if (arrayType instanceof CliTypePrimitive) {
+				struct.add(CliTypeCodeDataType.dataType, "Type", "Type of array");
+			}
+			else {
+				struct.add(arrayType.getDefinitionDataType(), "ValueType", "Class token");
+			}
 			struct.add(arrayShape.getDefinitionDataType(), "ArrayShape", null);
 			return struct;
 		}
@@ -322,13 +368,17 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				if (stream != null) {
 					CliAbstractTable table =
 						stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType));
-					if (table == null)
+					if (table == null) {
 						return "[ErrorRetrievingTable]";
-					CliAbstractTableRow row = table.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
-					if (row == null)
+					}
+					CliAbstractTableRow row =
+						table.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
+					if (row == null) {
 						return "[ErrorRetrievingRow]";
-					if (shortRep)
+					}
+					if (shortRep) {
 						return row.getShortRepresentation();
+					}
 					return row.getRepresentation();
 				}
 				return "[ErrorRepresentingClassReference]";
@@ -396,8 +446,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int countSizeBytes;
 		private List<CliSigType> argTypes = new ArrayList<>();
 
-		public CliTypeGenericInst(BinaryReader reader, CliElementType typeCode)
-				throws IOException {
+		public CliTypeGenericInst(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
 			firstType = CliElementType.fromInt(reader.readNextByte()); // Should be Class or ValueType
 			long origIndex = reader.getPointerIndex();
@@ -421,20 +470,23 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			String argTypesRep = "";
 			for (int i = 0; i < genArgCount; i++) {
 				argTypesRep += argTypes.get(i).getRepresentation();
-				if (i != genArgCount - 1)
+				if (i != genArgCount - 1) {
 					argTypesRep += ", ";
+				}
 			}
 
 			String typeRep = Integer.toHexString(encodedType);
 			if (stream != null) {
 				try {
 					CliAbstractTableRow row =
-						stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType)).getRow(
-							CliIndexTypeDefOrRef.getRowIndex(encodedType));
-					if (shortRep)
+						stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType))
+								.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
+					if (shortRep) {
 						typeRep = row.getShortRepresentation();
-					else
+					}
+					else {
 						typeRep = row.getRepresentation();
+					}
 				}
 				catch (InvalidInputException e) {
 					e.printStackTrace();
@@ -481,8 +533,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int number;
 		private int numberBytes;
 
-		public CliTypeVarOrMvar(BinaryReader reader, CliElementType typeCode)
-				throws IOException {
+		public CliTypeVarOrMvar(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
 			long origIndex = reader.getPointerIndex();
 			number = decodeCompressedUnsignedInt(reader);
@@ -555,17 +606,20 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		@Override
 		public String getRepresentation(CliStreamMetadata stream) {
 			String typeRep;
-			if (stream == null)
+			if (stream == null) {
 				typeRep = type.getRepresentation();
-			else
+			}
+			else {
 				typeRep = type.getRepresentation(stream);
+			}
 
 			String modsRep = "";
 			for (CliCustomMod mod : customMods) {
 				modsRep += mod.toString() + ", ";
 			}
-			if (customMods.size() > 0)
+			if (customMods.size() > 0) {
 				modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
+			}
 			return String.format("SzArray %s %s", modsRep, typeRep);
 		}
 
@@ -590,8 +644,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int encodedType;
 		private int typeBytes;
 
-		public CliTypeValueType(BinaryReader reader, CliElementType typeCode)
-				throws IOException {
+		public CliTypeValueType(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
 			long origIndex = reader.getPointerIndex();
 			encodedType = decodeCompressedUnsignedInt(reader);
@@ -607,8 +660,8 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		public String getRepresentation(CliStreamMetadata stream, boolean shortRep) {
 			try {
 				CliAbstractTableRow row =
-					stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType)).getRow(
-						CliIndexTypeDefOrRef.getRowIndex(encodedType));
+					stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType))
+							.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
 				return "ValueType " +
 					(shortRep ? row.getShortRepresentation() : row.getRepresentation());
 			}
@@ -638,13 +691,13 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		}
 	}
 
-	public CliSigType readCliType(BinaryReader reader)
-			throws IOException, InvalidInputException {
+	public CliSigType readCliType(BinaryReader reader) throws IOException, InvalidInputException {
 		byte typeByte = reader.readNextByte();
 		CliElementType typeCode = CliElementType.fromInt(typeByte);
-		if (typeCode == null)
+		if (typeCode == null) {
 			throw new InvalidInputException("TypeCode not found at reader index " +
 				reader.getPointerIndex() + ". Are you in the right place? (" + typeByte + ")");
+		}
 		switch (typeCode) {
 			case ELEMENT_TYPE_ARRAY:
 				return new CliTypeArray(reader, typeCode);
@@ -756,8 +809,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		}
 
 		public String getRepresentation() {
-			if (constraint == CliElementType.ELEMENT_TYPE_PINNED)
+			if (constraint == CliElementType.ELEMENT_TYPE_PINNED) {
 				return constraint.toString();
+			}
 			return String.format("Invalid Constraint (%s - %x)", constraint.toString(),
 				constraint.id());
 		}
@@ -801,10 +855,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			for (CliCustomMod mod : customMods) {
 				rep += mod.getRepresentation() + "; ";
 			}
-			if (customMods.size() > 0)
+			if (customMods.size() > 0) {
 				rep = rep.substring(0, rep.length() - 2) + " ";
-			if (byRef)
+			}
+			if (byRef) {
 				rep += "byref ";
+			}
 			rep += getRepresentationOf(type, stream, shortRep);
 			return rep;
 		}
@@ -834,8 +890,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			for (CliCustomMod mod : customMods) {
 				struct.add(mod.getDefinitionDataType(), "CustomMod", null);
 			}
-			if (byRef)
+			if (byRef) {
 				struct.add(BYTE, "BYREF", "By reference");
+			}
 			struct.add(type.getDefinitionDataType(), "Type", null);
 			return struct;
 		}
@@ -905,13 +962,15 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				new StructureDataType(new CategoryPath(PATH), "ArrayShape", 0);
 			struct.add(getDataTypeForBytes(rankBytes), "Rank", "Number of dimensions in array");
 			struct.add(getDataTypeForBytes(numSizesBytes), "NumSizes", "Number of sizes to follow");
-			for (int i = 0; i < sizeBytes.length; i++)
+			for (int i = 0; i < sizeBytes.length; i++) {
 				struct.add(getDataTypeForBytes(sizeBytes[i]), "Size" + i, "Coded integer size");
+			}
 			struct.add(getDataTypeForBytes(numLoBoundsBytes), "NumLoBounds",
 				"Number of lower bounds in array");
-			for (int i = 0; i < loBoundBytes.length; i++)
+			for (int i = 0; i < loBoundBytes.length; i++) {
 				struct.add(getDataTypeForBytes(loBoundBytes[i]), "LoBound" + i,
 					"Coded integer lower bound");
+			}
 			return struct;
 		}
 
@@ -929,7 +988,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 	}
 
 	public class CliElem {
-		// TODO: Implement	
+		// TODO: Implement
 	}
 
 	public class CliNamedArg {
