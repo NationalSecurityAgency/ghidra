@@ -97,7 +97,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		pressSaveButton();
 
-		String scriptOutput = runScript(script.getName());
+		String scriptOutput = runSelectedScript(script.getName());
 
 		assertTrue("Script output not generated",
 			scriptOutput.contains("> new scripts are neato!"));
@@ -132,7 +132,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		pressSaveButton();
 		setTimestampToTheFuture(script);
 
-		String updatedScriptOutput = runScript(script.getName());
+		String updatedScriptOutput = runSelectedScript(script.getName());
 
 		assertTrue("Script output not updated with new script contents - did recompile work?",
 			StringUtilities.containsAll(updatedScriptOutput, "> new scripts are neato!",
@@ -530,7 +530,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 	@Test
 	public void testCancel() throws Exception {
-		TestChangeProgramScript script = startCancellableScript();
+		TestChangeProgramScript script = startCancellableScriptTask();
 
 		cancel();
 
@@ -539,7 +539,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 	@Test
 	public void testCancel_DoNotCancel() throws Exception {
-		TestChangeProgramScript script = startCancellableScript();
+		TestChangeProgramScript script = startCancellableScriptTask();
 
 		cancel();
 
