@@ -27,7 +27,7 @@ import ghidra.util.Msg;
  */
 public class GTimer {
 	private static Timer timer;
-	private static GTimerMonitor DO_NOTHING_MONITOR = new DoNothingMonitor();
+	private static GTimerMonitor DO_NOTHING_MONITOR = GTimerMonitor.DUMMY;
 
 	/**
 	 * Schedules a runnable for execution after the specified delay.   A delay value less than 0
@@ -75,24 +75,6 @@ public class GTimer {
 			timer = new Timer("GTimer", true);
 		}
 		return timer;
-	}
-
-	static class DoNothingMonitor implements GTimerMonitor {
-		@Override
-		public boolean cancel() {
-			return false;
-		}
-
-		@Override
-		public boolean didRun() {
-			return false;
-		}
-
-		@Override
-		public boolean wasCancelled() {
-			return false;
-		}
-
 	}
 
 	static class GTimerTask extends TimerTask implements GTimerMonitor {

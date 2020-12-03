@@ -19,6 +19,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JPanel;
@@ -64,7 +65,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		}
 	};
 
-	private GTimerMonitor showTimer;
+	private GTimerMonitor showTimer = GTimerMonitor.DUMMY;
 	private CountDownLatch finished = new CountDownLatch(1);
 	private boolean supportsProgress;
 
@@ -78,17 +79,20 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	private SwingUpdateManager messageUpdater =
 		new SwingUpdateManager(100, 250, () -> setStatusText(newMessage.getAndSet(null)));
 
+	private AtomicBoolean shown = new AtomicBoolean();
+
 	/**
 	 * Constructor
 	 *
-	 * @param centerOnComp component to be centered over when shown,
-	 * otherwise center over parent.  If both centerOnComp and parent
-	 * are null, dialog will be centered on screen.
+	 * @param centerOnComp component to be centered over when shown, otherwise center over parent.
+	 * If both centerOnComp and parent are null, dialog will be centered on screen.
 	 * @param task the Task that this dialog will be associated with
+	 * @param finished overrides the latch used by this dialog to know when the task is finished
 	 */
-	public TaskDialog(Component centerOnComp, Task task) {
+	TaskDialog(Component centerOnComp, Task task, CountDownLatch finished) {
 		this(centerOnComp, task.getTaskTitle(), task.isModal(), task.canCancel(),
 			task.hasProgress());
+		this.finished = finished;
 	}
 
 	/**
@@ -209,14 +213,18 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	/**
 	 * Called after the task has been executed
 	 */
-	public synchronized void taskProcessed() {
+	public void taskProcessed() {
 		finished.countDown();
 		monitorComponent.notifyChangeListeners();
 		Swing.runLater(closeDialog);
 	}
 
-	public synchronized boolean isCompleted() {
-		return finished.getCount() == 0;
+	/**
+	 * Returns true if this dialog's task has completed normally or been cancelled
+	 * @return true if this dialog's task has completed normally or been cancelled
+	 */
+	public boolean isCompleted() {
+		return finished.getCount() == 0 || isCancelled();
 	}
 
 	/**
@@ -237,6 +245,14 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		else {
 			doShowNonModal(delay);
 		}
+	}
+
+	/**
+	 * Returns true if this dialog was ever made visible
+	 * @return true if shown
+	 */
+	public boolean wasShown() {
+		return shown.get();
 	}
 
 	private void doShowModal(int delay) {
@@ -272,6 +288,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 		Swing.runIfSwingOrRunLater(() -> {
 			if (!isCompleted()) {
+				shown.set(true);
 				DockingWindowManager.showDialog(centerOnComponent, TaskDialog.this);
 			}
 		});
@@ -289,17 +306,9 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	public void dispose() {
-
+		cancel();
+		showTimer.cancel();
 		messageUpdater.dispose();
-
-		Runnable disposeTask = () -> {
-			if (showTimer != null) {
-				showTimer.cancel();
-				showTimer = null;
-			}
-		};
-
-		Swing.runNow(disposeTask);
 	}
 
 //==================================================================================================

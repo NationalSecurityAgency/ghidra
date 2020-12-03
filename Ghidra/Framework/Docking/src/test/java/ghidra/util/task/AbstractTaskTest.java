@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.util.Deque;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import docking.test.AbstractDockingTest;
 import ghidra.util.Swing;
@@ -37,8 +36,7 @@ public class AbstractTaskTest extends AbstractDockingTest {
 	protected Deque<TDEvent> eventQueue = new LinkedBlockingDeque<>();
 
 	protected volatile TaskLauncherSpy taskLauncherSpy;
-	protected volatile TaskDialogSpy dialogSpy;
-	protected AtomicBoolean didRunInBackground = new AtomicBoolean();
+	protected volatile TaskDialog taskDialog;
 
 	protected void assertDidNotRunInSwing() {
 		for (TDEvent e : eventQueue) {
@@ -46,11 +44,9 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		}
 	}
 
-	protected void assertRanInSwingThread() {
-		assertFalse("Task was not run in the Swing thread", didRunInBackground.get());
-	}
-
 	protected void assertSwingThreadBlockedForTask() {
+		// if the last event is the swing thread, then we know the task blocked that thread, since
+		// the task delay would have made it run last had it not blocked
 		waitForSwing();
 		TDEvent lastEvent = eventQueue.peekLast();
 		boolean swingIsLast = lastEvent.getThreadName().contains("AWT");
@@ -70,24 +66,33 @@ public class AbstractTaskTest extends AbstractDockingTest {
 	}
 
 	protected void assertNoDialogShown() {
-		if (dialogSpy == null) {
+		if (taskDialog == null) {
 			return; // not shown
 		}
 
 		assertFalse("Dialog should not have been shown.\nEvents: " + eventQueue,
-			dialogSpy.wasShown());
+			taskDialog.wasShown());
 	}
 
 	protected void assertDialogShown() {
-		assertTrue("Dialog should have been shown.\nEvents: " + eventQueue, dialogSpy.wasShown());
+		assertTrue("Dialog should have been shown.\nEvents: " + eventQueue, taskDialog.wasShown());
 	}
 
 	protected void waitForTask() throws Exception {
 		threadsFinished.await(2, TimeUnit.SECONDS);
 	}
 
+	/**
+	 * Launches the task and waits until the dialog is shown
+	 * @param task the task to launch
+	 */
 	protected void launchTask(Task task) {
 		launchTaskFromSwing(task);
+	}
+
+	protected void launchTaskWithoutBlocking(Task task) {
+		runSwing(() -> launchTaskFromSwing(task), false);
+		waitFor(() -> taskDialog != null);
 	}
 
 	protected void launchTaskFromSwing(Task task) {
@@ -99,14 +104,30 @@ public class AbstractTaskTest extends AbstractDockingTest {
 		});
 	}
 
+	protected void launchTaskFromSwing(FastModalTask task, int dialogDelay) {
+		runSwing(() -> {
+			taskLauncherSpy = new TaskLauncherSpy(task, dialogDelay);
+			postEvent("After task launcher");
+			threadsFinished.countDown();
+		});
+	}
+
 	protected void postEvent(String message) {
 		eventQueue.add(new TDEvent(message));
 	}
 
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
 	protected class TaskLauncherSpy extends TaskLauncher {
 
 		public TaskLauncherSpy(Task task) {
-			super(task, null, DELAY_LAUNCHER);
+			this(task, DELAY_LAUNCHER);
+		}
+
+		public TaskLauncherSpy(Task task, int dialogDelay) {
+			super(task, null, dialogDelay);
 		}
 
 		@Override
@@ -115,30 +136,11 @@ public class AbstractTaskTest extends AbstractDockingTest {
 
 			return new TaskRunner(task, parent, delay, dialogWidth) {
 				@Override
-				protected TaskDialog buildTaskDialog(Component comp, TaskMonitor monitor) {
-					dialogSpy = new TaskDialogSpy(task) {
-						@Override
-						public synchronized boolean isCompleted() {
-							return super.isCompleted() || isFinished();
-						}
-					};
-					return dialogSpy;
+				protected TaskDialog buildTaskDialog() {
+					taskDialog = super.buildTaskDialog();
+					return taskDialog;
 				}
 			};
-		}
-
-		@Override
-		protected void runInThisBackgroundThread(Task task) {
-			didRunInBackground.set(true);
-			super.runInThisBackgroundThread(task);
-		}
-
-		TaskDialogSpy getDialogSpy() {
-			return dialogSpy;
-		}
-
-		boolean didRunInBackground() {
-			return didRunInBackground.get();
 		}
 	}
 
@@ -198,6 +200,25 @@ public class AbstractTaskTest extends AbstractDockingTest {
 			postEvent(getName() + " started...");
 			sleep(DELAY_NONMODAL_SLOW);
 			Swing.runNow(() -> null);
+			threadsFinished.countDown();
+			postEvent(getName() + " finished.");
+		}
+	}
+
+	protected class LatchedModalTask extends Task {
+
+		private CountDownLatch latch;
+
+		public LatchedModalTask(CountDownLatch latch) {
+			super("Latched Modal Task", true, true, true);
+			this.latch = latch;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) {
+			postEvent(getName() + " started...");
+			waitFor(latch);
+			sleep(DELAY_SLOW);
 			threadsFinished.countDown();
 			postEvent(getName() + " finished.");
 		}

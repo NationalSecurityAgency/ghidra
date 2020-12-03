@@ -1380,6 +1380,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			focusedPlaceholder.setSelected(false);
 		}
 
+		// Activating placeholders is done to help users find widgets hiding in plain sight. 
+		// Assume that the user is no longer seeking a provider if they are clicking around.
+		activatedInfo.clear();
+
 		focusedPlaceholder = placeholder;
 
 		// put the last focused placeholder at the front of the list for restoring focus work later
@@ -2293,6 +2297,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				this.lastActivatedPlaceholder = placeholder;
 			}
 			lastCalledTimestamp = System.currentTimeMillis();
+		}
+
+		void clear() {
+			lastActivatedPlaceholder = null;
+			lastCalledTimestamp = 0;
 		}
 	}
 }
