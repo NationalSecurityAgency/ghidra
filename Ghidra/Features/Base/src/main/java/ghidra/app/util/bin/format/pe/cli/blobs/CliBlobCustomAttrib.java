@@ -157,133 +157,10 @@ public class CliBlobCustomAttrib extends CliBlob {
 		}
 
 		// Process zero to multiple FixedArgs
-		if (params != null) {
-			ArrayList<CliFixedArg> processFixedArgs = new ArrayList<>();
-			for (CliParam param : params) {
-				byte elemByte = reader.peekNextByte();
-				if (elemByte == CliElementType.ELEMENT_TYPE_I.id()) {
-					reader.readNextByte();
-
-					// IntPtr followed by a string of the name of the element, the
-					// length of which is not specified and must be read until a
-					// non-printable UTF-8 character is encountered to signal the
-					// end of the name
-
-					StringBuilder sb = new StringBuilder();
-					while ((reader.peekNextByte() > CLIBLOBCUSTOMATTRIB_UTF8_LOW) &&
-						(reader.peekNextByte() < CLIBLOBCUSTOMATTRIB_UTF8_HIGH)) {
-						sb.append((char) reader.readNextByte());
-					}
-
-					processFixedArgs
-							.add(new CliFixedArg(CliElementType.ELEMENT_TYPE_I, sb.toString()));
-				}
-				else {
-					// Process Elem types
-					CliElementType baseTypeCode = param.getType().baseTypeCode;
-					switch (baseTypeCode) {
-						case ELEMENT_TYPE_BOOLEAN:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
-							break;
-
-						case ELEMENT_TYPE_CHAR:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextShort());
-							break;
-
-						case ELEMENT_TYPE_I1:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
-							break;
-
-						case ELEMENT_TYPE_U1:
-							addFixedArg(processFixedArgs, baseTypeCode,
-								reader.readNextUnsignedByte());
-							break;
-
-						case ELEMENT_TYPE_I2:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextShort());
-							break;
-
-						case ELEMENT_TYPE_U2:
-							addFixedArg(processFixedArgs, baseTypeCode,
-								reader.readNextUnsignedShort());
-							break;
-
-						case ELEMENT_TYPE_I4:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextInt());
-							break;
-
-						case ELEMENT_TYPE_U4:
-							addFixedArg(processFixedArgs, baseTypeCode,
-								reader.readNextUnsignedInt());
-							break;
-
-						case ELEMENT_TYPE_I8:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextLong()));
-							break;
-
-						case ELEMENT_TYPE_U8:
-							addFixedArg(processFixedArgs, baseTypeCode,
-								reader.readNextByteArray(LongLongDataType.dataType.getLength()));
-							break;
-
-						case ELEMENT_TYPE_R4:
-							addFixedArg(processFixedArgs, baseTypeCode,
-								reader.readNextByteArray(Float4DataType.dataType.getLength()));
-							break;
-
-						case ELEMENT_TYPE_R8:
-							addFixedArg(processFixedArgs, baseTypeCode,
-								reader.readNextByteArray(Float8DataType.dataType.getLength()));
-							break;
-
-						case ELEMENT_TYPE_STRING:
-							int length = readSerStringLength(reader);
-							addFixedArg(processFixedArgs, baseTypeCode, new String(
-								reader.readNextByteArray(length), StandardCharsets.UTF_8));
-							break;
-
-						case ELEMENT_TYPE_VALUETYPE:
-							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextInt());
-							break;
-
-						default:
-							Msg.info(this,
-								"A CustomAttrib with an unprocessed element type was deteceted: " +
-									param.getRepresentation());
-					}
-				}
-			}
-
-			fixedArgs = processFixedArgs.toArray(CliFixedArg[]::new);
-		}
-
-		// NumNamed
-		numNamed = reader.readNextShort();
+		fixedArgs = processFixedArgs(reader, params).toArray(CliFixedArg[]::new);
 
 		// Process zero to multiple NamedArgs here
-		ArrayList<CliNamedArg> processNamedArgs = new ArrayList<>();
-		for (int i = 0; i < numNamed; i++) {
-			byte fieldOrProp = reader.readNextByte();
-			if ((fieldOrProp != CLIBLOBCUSTOMATTRIB_TYPE_FIELD) &&
-				fieldOrProp != CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY) {
-				Msg.warn(this, "Invalid FieldOrProp value in NamedArg #" + (i + 1) + ": 0x" +
-					Integer.toHexString(fieldOrProp));
-				continue;
-			}
-
-			CliElementType fieldOrPropType = CliElementType.fromInt(reader.readNextByte());
-
-			// Account for the null terminator
-			int nameLen = readSerStringLength(reader) + 1;
-			String fieldOrPropName =
-				new String(reader.readNextByteArray(nameLen), StandardCharsets.UTF_8);
-
-			processNamedArgs.add(new CliNamedArg(fieldOrProp, fieldOrPropType, fieldOrPropName));
-		}
-
-		namedArgs = processNamedArgs.toArray(CliNamedArg[]::new);
+		namedArgs = processNamedArgs(reader).toArray(CliNamedArg[]::new);
 	}
 
 	@Override
@@ -295,6 +172,7 @@ public class CliBlobCustomAttrib extends CliBlob {
 		if (fixedArgs != null) {
 			for (int i = 0; i < fixedArgs.length; i++) {
 				CliElementType elem = fixedArgs[i].elem;
+
 				switch (elem) {
 					case ELEMENT_TYPE_CHAR:
 						struct.add(UTF16, "FixedArg_" + i, "Elem (" + fixedArgs[i].getElem() + ")");
@@ -465,8 +343,140 @@ public class CliBlobCustomAttrib extends CliBlob {
 		}
 	}
 
+	private ArrayList<CliFixedArg> processFixedArgs(BinaryReader reader, CliParam[] params)
+			throws IOException {
+		ArrayList<CliFixedArg> processFixedArgs = new ArrayList<>();
+		if (params == null) {
+			return processFixedArgs;
+		}
+
+		for (CliParam param : params) {
+			byte elemByte = reader.peekNextByte();
+			if (elemByte == CliElementType.ELEMENT_TYPE_I.id()) {
+				reader.readNextByte();
+
+				// IntPtr followed by a string of the name of the element, the
+				// length of which is not specified and must be read until a
+				// non-printable UTF-8 character is encountered to signal the
+				// end of the name
+
+				StringBuilder sb = new StringBuilder();
+				while ((reader.peekNextByte() > CLIBLOBCUSTOMATTRIB_UTF8_LOW) &&
+					(reader.peekNextByte() < CLIBLOBCUSTOMATTRIB_UTF8_HIGH)) {
+					sb.append((char) reader.readNextByte());
+				}
+
+				processFixedArgs.add(new CliFixedArg(CliElementType.ELEMENT_TYPE_I, sb.toString()));
+			}
+			else {
+				// Process Elem types
+				CliElementType baseTypeCode = param.getType().baseTypeCode;
+				switch (baseTypeCode) {
+					case ELEMENT_TYPE_BOOLEAN:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
+						break;
+
+					case ELEMENT_TYPE_CHAR:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextShort());
+						break;
+
+					case ELEMENT_TYPE_I1:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
+						break;
+
+					case ELEMENT_TYPE_U1:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextUnsignedByte());
+						break;
+
+					case ELEMENT_TYPE_I2:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextShort());
+						break;
+
+					case ELEMENT_TYPE_U2:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextUnsignedShort());
+						break;
+
+					case ELEMENT_TYPE_I4:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextInt());
+						break;
+
+					case ELEMENT_TYPE_U4:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextUnsignedInt());
+						break;
+
+					case ELEMENT_TYPE_I8:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
+						processFixedArgs.add(
+							new CliFixedArg(param.getType().baseTypeCode, reader.readNextLong()));
+						break;
+
+					case ELEMENT_TYPE_U8:
+						addFixedArg(processFixedArgs, baseTypeCode,
+							reader.readNextByteArray(LongLongDataType.dataType.getLength()));
+						break;
+
+					case ELEMENT_TYPE_R4:
+						addFixedArg(processFixedArgs, baseTypeCode,
+							reader.readNextByteArray(Float4DataType.dataType.getLength()));
+						break;
+
+					case ELEMENT_TYPE_R8:
+						addFixedArg(processFixedArgs, baseTypeCode,
+							reader.readNextByteArray(Float8DataType.dataType.getLength()));
+						break;
+
+					case ELEMENT_TYPE_STRING:
+						int length = readSerStringLength(reader);
+						if (length > 0) {
+							addFixedArg(processFixedArgs, baseTypeCode, new String(
+								reader.readNextByteArray(length), StandardCharsets.UTF_8));
+						}
+						break;
+
+					case ELEMENT_TYPE_VALUETYPE:
+						addFixedArg(processFixedArgs, baseTypeCode, reader.readNextInt());
+						break;
+
+					default:
+						Msg.info(this,
+							"A CustomAttrib with an unprocessed element type was deteceted: " +
+								param.getRepresentation());
+				}
+			}
+		}
+
+		return processFixedArgs;
+	}
+
 	private void addFixedArg(ArrayList<CliFixedArg> fixedArgs, CliElementType baseTypeCode,
 			Object value) {
 		fixedArgs.add(new CliFixedArg(baseTypeCode, value));
+	}
+
+	private ArrayList<CliNamedArg> processNamedArgs(BinaryReader reader) throws IOException {
+		numNamed = reader.readNextShort();
+
+		// Process zero to multiple NamedArgs here
+		ArrayList<CliNamedArg> processNamedArgs = new ArrayList<>();
+		for (int i = 0; i < numNamed; i++) {
+			byte fieldOrProp = reader.readNextByte();
+			if ((fieldOrProp != CLIBLOBCUSTOMATTRIB_TYPE_FIELD) &&
+				fieldOrProp != CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY) {
+				Msg.warn(this, "Invalid FieldOrProp value in NamedArg #" + (i + 1) + ": 0x" +
+					Integer.toHexString(fieldOrProp));
+				continue;
+			}
+
+			CliElementType fieldOrPropType = CliElementType.fromInt(reader.readNextByte());
+
+			// +1 to account for the null terminator
+			int nameLen = readSerStringLength(reader) + 1;
+			String fieldOrPropName =
+				new String(reader.readNextByteArray(nameLen), StandardCharsets.UTF_8);
+
+			processNamedArgs.add(new CliNamedArg(fieldOrProp, fieldOrPropType, fieldOrPropName));
+		}
+
+		return processNamedArgs;
 	}
 }
