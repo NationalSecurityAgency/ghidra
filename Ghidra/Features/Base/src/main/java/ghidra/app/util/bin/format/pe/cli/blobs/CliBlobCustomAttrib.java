@@ -25,6 +25,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.cli.blobs.CliAbstractSig.CliElementType;
 import ghidra.app.util.bin.format.pe.cli.blobs.CliAbstractSig.CliParam;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
+import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableCustomAttribute.CliCustomAttributeRow;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMemberRef.CliMemberRefRow;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRow;
@@ -132,19 +133,18 @@ public class CliBlobCustomAttrib extends CliBlob {
 			// Get the table type and row for the attribute and depending on the type
 			// get the parameters
 			CliTypeTable tableType = CliIndexCustomAttributeType.getTableName(typeIndex);
-			int tableRow = CliIndexCustomAttributeType.getRowIndex(typeIndex);
+			int tableRowIndex = CliIndexCustomAttributeType.getRowIndex(typeIndex);
+			CliAbstractTableRow tableRow = metadataStream.getTable(tableType).getRow(tableRowIndex);
 
 			if (tableType == CliTypeTable.MemberRef) {
-				CliMemberRefRow memberRefRow =
-					(CliMemberRefRow) metadataStream.getTable(tableType).getRow(tableRow);
+				CliMemberRefRow memberRefRow = (CliMemberRefRow) tableRow;
 				CliBlob memberRefBlob =
 					metadataStream.getBlobStream().getBlob(memberRefRow.signatureIndex);
 				CliSigMethodRef methodRefSig = new CliSigMethodRef(memberRefBlob);
 				params = methodRefSig.getParams();
 			}
 			else if (tableType == CliTypeTable.MethodDef) {
-				CliMethodDefRow methodDefRow =
-					(CliMethodDefRow) metadataStream.getTable(tableType).getRow(tableRow);
+				CliMethodDefRow methodDefRow = (CliMethodDefRow) tableRow;
 				CliBlob methodDefBlob =
 					metadataStream.getBlobStream().getBlob(methodDefRow.sigIndex);
 				CliSigMethodDef methodDefSig = new CliSigMethodDef(methodDefBlob);
@@ -180,91 +180,83 @@ public class CliBlobCustomAttrib extends CliBlob {
 				}
 				else {
 					// Process Elem types
-					switch (param.getType().baseTypeCode) {
+					CliElementType baseTypeCode = param.getType().baseTypeCode;
+					switch (baseTypeCode) {
 						case ELEMENT_TYPE_BOOLEAN:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextByte()));
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
 							break;
 
 						case ELEMENT_TYPE_CHAR:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextShort()));
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextShort());
 							break;
 
 						case ELEMENT_TYPE_I1:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextByte()));
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
 							break;
 
 						case ELEMENT_TYPE_U1:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextUnsignedByte()));
+							addFixedArg(processFixedArgs, baseTypeCode,
+								reader.readNextUnsignedByte());
 							break;
 
 						case ELEMENT_TYPE_I2:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextShort()));
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextShort());
 							break;
 
 						case ELEMENT_TYPE_U2:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextUnsignedShort()));
+							addFixedArg(processFixedArgs, baseTypeCode,
+								reader.readNextUnsignedShort());
 							break;
 
 						case ELEMENT_TYPE_I4:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextInt()));
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextInt());
 							break;
 
 						case ELEMENT_TYPE_U4:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextUnsignedInt()));
+							addFixedArg(processFixedArgs, baseTypeCode,
+								reader.readNextUnsignedInt());
 							break;
 
 						case ELEMENT_TYPE_I8:
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextByte());
 							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
 								reader.readNextLong()));
 							break;
 
 						case ELEMENT_TYPE_U8:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextByteArray(LongLongDataType.dataType.getLength())));
+							addFixedArg(processFixedArgs, baseTypeCode,
+								reader.readNextByteArray(LongLongDataType.dataType.getLength()));
 							break;
 
 						case ELEMENT_TYPE_R4:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextByteArray(Float4DataType.dataType.getLength())));
+							addFixedArg(processFixedArgs, baseTypeCode,
+								reader.readNextByteArray(Float4DataType.dataType.getLength()));
 							break;
 
 						case ELEMENT_TYPE_R8:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextByteArray(Float8DataType.dataType.getLength())));
+							addFixedArg(processFixedArgs, baseTypeCode,
+								reader.readNextByteArray(Float8DataType.dataType.getLength()));
 							break;
 
 						case ELEMENT_TYPE_STRING:
 							int length = readSerStringLength(reader);
-							processFixedArgs
-									.add(new CliFixedArg(param.getType().baseTypeCode, new String(
-										reader.readNextByteArray(length), StandardCharsets.UTF_8)));
+							addFixedArg(processFixedArgs, baseTypeCode, new String(
+								reader.readNextByteArray(length), StandardCharsets.UTF_8));
 							break;
 
 						case ELEMENT_TYPE_VALUETYPE:
-							processFixedArgs.add(new CliFixedArg(param.getType().baseTypeCode,
-								reader.readNextInt()));
+							addFixedArg(processFixedArgs, baseTypeCode, reader.readNextInt());
 							break;
 
 						default:
 							Msg.info(this,
-								"Found a CustomAttrib with an unprocessed element type: " +
+								"A CustomAttrib with an unprocessed element type was deteceted: " +
 									param.getRepresentation());
 					}
 				}
 			}
 
-			fixedArgs = new CliFixedArg[processFixedArgs.size()];
-			for (int i = 0; i < fixedArgs.length; i++) {
-				fixedArgs[i] = processFixedArgs.get(i);
-			}
+			fixedArgs = processFixedArgs.toArray(CliFixedArg[]::new);
 		}
 
 		// NumNamed
@@ -291,12 +283,7 @@ public class CliBlobCustomAttrib extends CliBlob {
 			processNamedArgs.add(new CliNamedArg(fieldOrProp, fieldOrPropType, fieldOrPropName));
 		}
 
-		if (processNamedArgs.size() > 0) {
-			namedArgs = new CliNamedArg[processNamedArgs.size()];
-			for (int i = 0; i < namedArgs.length; i++) {
-				namedArgs[i] = processNamedArgs.get(i);
-			}
-		}
+		namedArgs = processNamedArgs.toArray(CliNamedArg[]::new);
 	}
 
 	@Override
@@ -307,7 +294,8 @@ public class CliBlobCustomAttrib extends CliBlob {
 		// Display the FixedArgs
 		if (fixedArgs != null) {
 			for (int i = 0; i < fixedArgs.length; i++) {
-				switch (fixedArgs[i].elem) {
+				CliElementType elem = fixedArgs[i].elem;
+				switch (elem) {
 					case ELEMENT_TYPE_CHAR:
 						struct.add(UTF16, "FixedArg_" + i, "Elem (" + fixedArgs[i].getElem() + ")");
 						break;
@@ -370,20 +358,21 @@ public class CliBlobCustomAttrib extends CliBlob {
 
 		// Display the NamedArgs
 		if (namedArgs != null) {
-			for (int i = 0; i < numNamed; i++) {
-				if (namedArgs[i].getFieldOrProp() == CLIBLOBCUSTOMATTRIB_TYPE_FIELD) {
+			for (CliNamedArg cliNamedArg : namedArgs) {
+				int fieldOrProp = cliNamedArg.getFieldOrProp();
+				if (fieldOrProp == CLIBLOBCUSTOMATTRIB_TYPE_FIELD) {
 					struct.add(BYTE, "FieldOrProp", "FIELD");
 				}
-				else if (namedArgs[i].getFieldOrProp() == CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY) {
+				else if (fieldOrProp == CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY) {
 					struct.add(BYTE, "FieldOrProp", "PROPERTY");
 				}
 				else {
 					struct.add(BYTE, "FieldOrProp", "Unknown value");
 				}
 
-				struct.add(BYTE, "FieldOrPropType", namedArgs[i].getFieldOrPropType().name());
+				struct.add(BYTE, "FieldOrPropType", cliNamedArg.getFieldOrPropType().name());
 
-				int nameLen = namedArgs[i].getFieldOrPropName().length();
+				int nameLen = cliNamedArg.getFieldOrPropName().length();
 				if (nameLen < CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128) {
 					struct.add(BYTE, "PackedLen", "");
 				}
@@ -474,5 +463,10 @@ public class CliBlobCustomAttrib extends CliBlob {
 			buf.order(ByteOrder.BIG_ENDIAN);
 			return buf.getInt();
 		}
+	}
+
+	private void addFixedArg(ArrayList<CliFixedArg> fixedArgs, CliElementType baseTypeCode,
+			Object value) {
+		fixedArgs.add(new CliFixedArg(baseTypeCode, value));
 	}
 }

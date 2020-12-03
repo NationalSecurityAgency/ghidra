@@ -20,8 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.NTHeader;
 import ghidra.app.util.bin.format.pe.cli.blobs.CliBlobCustomAttrib;
-import ghidra.app.util.bin.format.pe.cli.streams.CliAbstractStream;
-import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
+import ghidra.app.util.bin.format.pe.cli.streams.*;
 import ghidra.app.util.bin.format.pe.cli.tables.indexes.CliIndexCustomAttributeType;
 import ghidra.app.util.bin.format.pe.cli.tables.indexes.CliIndexHasCustomAttribute;
 import ghidra.app.util.importer.MessageLog;
@@ -103,16 +102,19 @@ public class CliTableCustomAttribute extends CliAbstractTable {
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
+		CliStreamBlob blobStream = metadataStream.getBlobStream();
+
 		for (CliAbstractTableRow row : rows) {
 			CliCustomAttributeRow customRow = (CliCustomAttributeRow) row;
+			int valueIndex = customRow.valueIndex;
+
 			Address addr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
-				ntHeader, metadataStream.getBlobStream(), customRow.valueIndex);
+				ntHeader, blobStream, valueIndex);
 
 			// Create CustomAttrib Blob object
-			CliBlobCustomAttrib blob = new CliBlobCustomAttrib(
-				metadataStream.getBlobStream().getBlob(customRow.valueIndex),
-				(CliCustomAttributeRow) row, metadataStream);
-			metadataStream.getBlobStream().updateBlob(blob, addr, program);
+			CliBlobCustomAttrib blob =
+				new CliBlobCustomAttrib(blobStream.getBlob(valueIndex), customRow, metadataStream);
+			blobStream.updateBlob(blob, addr, program);
 		}
 	}
 }
