@@ -552,8 +552,7 @@ public class PdbApplicator {
 		int num = pdb.getDebugInfo().getNumModules();
 		for (int index = 1; index <= num; index++) {
 			monitor.checkCanceled();
-			String moduleName =
-				pdb.getDebugInfo().getModuleInformation(index).getModuleName();
+			String moduleName = pdb.getDebugInfo().getModuleInformation(index).getModuleName();
 			categoryNames.add(moduleName);
 		}
 
@@ -1266,7 +1265,9 @@ public class PdbApplicator {
 				NamespaceUtils.getNonFunctionNamespace(program, path.getParent());
 			if (parentNamespace == null) {
 				String type = isClass ? "class" : "namespace";
-				log.appendMsg("Error: failed to define " + type + ": " + path);
+				log.appendMsg(
+					"PDB Warning: Because parent namespace does not exist, failed to define " +
+						type + ": " + path);
 				continue;
 			}
 			defineNamespace(parentNamespace, path.getName(), isClass);
@@ -1294,8 +1295,9 @@ public class PdbApplicator {
 				else if (namespace.getSymbol().getSymbolType() == SymbolType.NAMESPACE) {
 					return;
 				}
-				log.appendMsg("Unable to create class namespace due to conflicting symbol: " +
-					namespace.getName(true));
+				log.appendMsg(
+					"PDB Warning: Unable to create class namespace due to conflicting symbol: " +
+						namespace.getName(true));
 			}
 			else if (isClass) {
 				symbolTable.createClass(parentNamespace, name, SourceType.IMPORTED);
@@ -1305,8 +1307,9 @@ public class PdbApplicator {
 			}
 		}
 		catch (InvalidInputException | DuplicateNameException e) {
-			log.appendMsg("Unable to create class namespace: " + parentNamespace.getName(true) +
-				Namespace.DELIMITER + name + " due to exception: " + e.toString());
+			log.appendMsg(
+				"PDB Warning: Unable to create class namespace due to exception: " + e.toString() +
+					"; Namespace: " + parentNamespace.getName(true) + Namespace.DELIMITER + name);
 		}
 	}
 
@@ -1407,7 +1410,7 @@ public class PdbApplicator {
 			return true;
 		}
 		catch (InvalidInputException e) {
-			log.appendMsg("Unable to create symbol: " + e.getMessage());
+			log.appendMsg("PDB Warning: Unable to create symbol: " + e.getMessage());
 		}
 		return false;
 	}
@@ -1532,7 +1535,8 @@ public class PdbApplicator {
 				namespace, name, SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
-			appendLogMsg("Unable to create symbol " + symbolPathString + " at " + address);
+			log.appendMsg("PDB Warning: Unable to create symbol at " + address +
+				" due to exception: " + e.toString() + "; symbolPathName: " + symbolPathString);
 		}
 		return symbol;
 	}

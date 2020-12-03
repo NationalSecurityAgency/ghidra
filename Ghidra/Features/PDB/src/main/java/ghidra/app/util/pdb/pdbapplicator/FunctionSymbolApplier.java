@@ -309,7 +309,8 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 				new ApplyFunctionSignatureCmd(address, def, SourceType.IMPORTED);
 			if (!sigCmd.applyTo(applicator.getProgram(), monitor)) {
 				applicator.appendLogMsg(
-					"failed to apply signature to function at address " + address.toString());
+					"PDB Warning: Failed to apply signature to function at address " + address +
+						" due to " + sigCmd.getStatusMsg() + "; dataType: " + def.getName());
 				return false;
 			}
 		}
