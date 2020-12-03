@@ -102,16 +102,16 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertOutput(lines,
 			"digraph Ghidra {",
-			"  A [ Type=\"X\" Inverted=\"true\" Name=\"A\" ];",
-			"  B [ Type=\"Y\" Name=\"B\" ];",
-			"  C [ Type=\"Y\" Name=\"C\" ];",
-			"  D [ Type=\"Y\" Name=\"D\" ];",
-			"  E [ Type=\"Z\" Name=\"E\" ];",
-			"  A -> B [ EType=\"Fall\" ];",
-			"  B -> C [ EType=\"JMP\" ];",
-			"  B -> D [ EType=\"Fall\" ];",
-			"  C -> E [ EType=\"Fall\" ];",
-			"  D -> E [ EType=\"Call\" ];",
+			"  \"A\" [ Type=\"X\" Inverted=\"true\" Name=\"A\" ];",
+			"  \"B\" [ Type=\"Y\" Name=\"B\" ];",
+			"  \"C\" [ Type=\"Y\" Name=\"C\" ];",
+			"  \"D\" [ Type=\"Y\" Name=\"D\" ];",
+			"  \"E\" [ Type=\"Z\" Name=\"E\" ];",
+			"  \"A\" -> \"B\" [ EType=\"Fall\" ];",
+			"  \"B\" -> \"C\" [ EType=\"JMP\" ];",
+			"  \"B\" -> \"D\" [ EType=\"Fall\" ];",
+			"  \"C\" -> \"E\" [ EType=\"Fall\" ];",
+			"  \"D\" -> \"E\" [ EType=\"Call\" ];",
 			"}");
 	}
 
