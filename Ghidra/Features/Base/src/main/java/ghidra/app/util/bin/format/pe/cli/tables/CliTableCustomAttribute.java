@@ -42,9 +42,6 @@ public class CliTableCustomAttribute extends CliAbstractTable {
 		public int typeIndex;
 		public int valueIndex;
 
-		private static final byte CLITABLECUSTOMATTRIBUTE_TYPE_METHODDEF = 0x02;
-		private static final byte CLITABLECUSTOMATTRIBUTE_TYPE_METHODREF = 0x03;
-
 		public CliCustomAttributeRow(int parentIndex, int typeIndex, int valueIndex) {
 			super();
 			this.parentIndex = parentIndex;
