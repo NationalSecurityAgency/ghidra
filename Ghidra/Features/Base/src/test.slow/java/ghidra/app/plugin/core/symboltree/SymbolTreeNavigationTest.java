@@ -110,10 +110,11 @@ public class SymbolTreeNavigationTest extends AbstractProgramBasedTest {
 
 		Address addr = addr("0x01004896");
 		String nameLowInOrgNodes = labelsPrefix + "3700";
-		createGlobalLabel(addr, nameLowInOrgNodes);
+		Symbol firstSymbol = createGlobalLabel(addr, nameLowInOrgNodes);
 
 		util.collapseTree();
 		goTo(addr);
+		assertSelectedNode(firstSymbol);
 
 		// create a name next to the one above so it gets 'insert'ed into the same parent node
 		nameLowInOrgNodes = labelsPrefix + "37000";
