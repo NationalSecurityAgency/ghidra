@@ -16,7 +16,7 @@
  */
 %{
 #include "slgh_compile.hh"
-#include "slghparse.tab.hh"
+#include "slghparse.hh"
 #define yywrap() 1
 #define YY_SKIP_YYWRAP
 
