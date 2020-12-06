@@ -243,7 +243,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testWildcardInBlock() throws Exception {
 
 		loadProgram("x86");
-		MemoryBlock block = createOverlay("Test Overlay", "1002000", 100);
+		MemoryBlock block = createOverlay("TestOverlay", "1002000", 100);
 		String name = block.getName();
 
 		AddLabelCmd cmd = new AddLabelCmd(addr(name + "::1002000"), "Bob", SourceType.USER_DEFINED);
@@ -252,7 +252,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// try a wildcard for an address in the new block (this gets us an extra code path tested)
 		setText(name + "::*ob");
 		performOkCallback();
-		assertEquals(addr("Test Overlay::1002000"), cbPlugin.getCurrentAddress());
+		assertEquals(addr("TestOverlay::1002000"), cbPlugin.getCurrentAddress());
 	}
 
 	@Test
@@ -272,7 +272,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// queries an address has multiple matches.
 		//
 		loadProgram("x86");
-		createOverlay("Test Overlay", "1002000", 100);
+		createOverlay("TestOverlay", "1002000", 100);
 		assumeCurrentAddressSpace(false);
 		showDialog();
 		setText("1002000");
@@ -289,7 +289,7 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// addresses is off *and* the current address space has a matching address.
 		//
 		loadProgram("x86");
-		createOverlay("Test Overlay", "1002000", 100);
+		createOverlay("TestOverlay", "1002000", 100);
 
 		//
 		// Turn off the option to show all addresses when there is a match in our current
@@ -311,8 +311,8 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// option to always show all addresses is off.
 		//
 		loadProgram("x86");
-		createOverlay("Test Overlay 1", "1002000", 100);
-		MemoryBlock overlay2Block = createOverlay("Test Overlay 2", "1003000", 100);
+		createOverlay("TestOverlay1", "1002000", 100);
+		MemoryBlock overlay2Block = createOverlay("TestOverlay2", "1003000", 100);
 
 		//
 		// Put us in an address space that does not have a match for the query address

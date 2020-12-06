@@ -125,8 +125,8 @@ public class TaskLauncher {
 	 * A convenience method to directly run a {@link Runnable} in a separate
 	 * thread as a {@link Task}, displaying a non-modal progress dialog.
 	 *
-	 * <p>This modal will be launched immediately, without delay.  Typically this launcher will
-	 * delay showing the modal dialog in order to prevent the dialog from being show, just
+	 * <p>This modal will be launched immediately, without delay.  Typically the launcher will
+	 * delay showing the modal dialog in order to prevent the dialog from being shown, just
 	 * to have it immediately go away.  If you desire this default behavior, then do not use
 	 * this convenience method.
 	 *

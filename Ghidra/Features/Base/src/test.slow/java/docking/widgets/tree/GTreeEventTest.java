@@ -36,7 +36,7 @@ public class GTreeEventTest extends AbstractDockingTest {
 
 	private DockingWindowManager winMgr;
 
-	private List<TreeEvent> events = new ArrayList<TreeEvent>();
+	private List<TreeEvent> events = new ArrayList<>();
 	private GTreeNode root;
 
 	@Before
@@ -55,7 +55,7 @@ public class GTreeEventTest extends AbstractDockingTest {
 
 	@Test
 	public void testNodeAdded() {
-		root.addNode(new LeafNode("ABC"));
+		root.addNode(new LeafNode("NEW ABC"));
 		assertEquals(1, events.size());
 		TreeEvent treeEvent = events.get(0);
 		assertEquals(EventType.INSERTED, treeEvent.eventType);

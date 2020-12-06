@@ -23,8 +23,7 @@ import java.util.List;
 import org.junit.Test;
 
 import docking.widgets.dialogs.ObjectChooserDialog;
-import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.framework.preferences.Preferences;
+import ghidra.app.util.pdb.PdbLocator;
 import ghidra.util.Msg;
 import pdb.URLChoice;
 
@@ -60,8 +59,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 	public void testSymbolServerURLDialog() throws Exception {
 
 		// Set up for local directory
-		String tempDirPath = System.getProperty("java.io.tmpdir");
-		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY, tempDirPath);
+		PdbLocator.setDefaultPdbSymbolsDir(getTestDataDirectory());
 
 		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
 

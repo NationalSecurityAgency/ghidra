@@ -237,6 +237,20 @@ public class ActionBuilderTest {
 		assertTrue(action.isEnabledForContext(new FooActionContext()));
 	}
 
+	@Test
+	public void testManualEnablement() {
+		DockingAction action = new ActionBuilder("Test", "Test")
+				.onAction(e -> actionCount++)
+				.enabled(false)
+				.build();
+
+		assertFalse(action.isEnabledForContext(new ActionContext()));
+		action.setEnabled(true);
+		assertTrue(action.isEnabledForContext(new ActionContext()));
+		action.setEnabled(true);
+		assertTrue(action.isEnabledForContext(new ActionContext()));
+	}
+
 	static class FooActionContext extends ActionContext {
 		public boolean foo() {
 			return true;

@@ -106,6 +106,9 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 		}
 
 		Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(monitor);
+		if (markupItems == null) {
+			return; // some sort of exception happened when loading the markup items
+		}
 
 		monitor.setMessage("Processing markup items");
 		monitor.initialize(markupItems.size());

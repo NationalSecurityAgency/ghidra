@@ -18,8 +18,6 @@ package ghidra.program.database.mem;
 import java.io.IOException;
 
 import db.Record;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.mem.*;
 
 /**
@@ -183,11 +181,13 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	}
 
 	/**
-	 * Get the {@link MemoryBlockType} for this block: TYPE_DEFAULT, TYPE_OVERLAY, TYPE_BIT_MAPPED, or TYPE_BYTE_MAPPED
+	 * Get the {@link MemoryBlockType} for this block: DEFAULT, BIT_MAPPED, or BYTE_MAPPED
 	 * 
-	 * @return the type for this block: TYPE_DEFAULT, TYPE_OVERLAY, TYPE_BIT_MAPPED, or TYPE_BYTE_MAPPED
+	 * @return the type for this block: DEFAULT, BIT_MAPPED, or BYTE_MAPPED
 	 */
-	protected abstract MemoryBlockType getType();
+	protected MemoryBlockType getType() {
+		return MemoryBlockType.DEFAULT;
+	}
 
 	/**
 	 * Returns the {@link MemoryBlockSourceInfo} object for this SubMemoryBlock
@@ -237,18 +237,6 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	protected boolean uses(FileBytes fileBytes) {
 		return false;
 	}
-
-	/**
-	 * Gets the list of BytesSourceRanges from this sub block for the given memBlockOffset and associates
-	 * it with the given {@link AddressRange}
-	 * @param block the {@link MemoryBlock} that generated the BytesSourceSet.
-	 * @param start the program address for which to get a ByteSourceSet
-	 * @param memBlockOffset the offset from the beginning of the containing MemoryBlock.
-	 * @param size the size of region to get byte sources
-	 * @return the set of ByteSourceRanges which maps program addresses to byte source locations.
-	 */
-	protected abstract ByteSourceRangeList getByteSourceRangeList(MemoryBlock block, Address start,
-			long memBlockOffset, long size);
 
 	@Override
 	public int compareTo(SubMemoryBlock o) {

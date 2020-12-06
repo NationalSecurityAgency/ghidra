@@ -23,13 +23,12 @@ import javax.swing.*;
 import org.junit.Test;
 
 import docking.ComponentProvider;
-import docking.DockingWindowManager;
-import docking.widgets.pathmanager.PathManager;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
+import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
 import ghidra.app.plugin.core.script.*;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.services.ConsoleService;
@@ -51,10 +50,10 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 		performAction("New", "GhidraScriptMgrPlugin", false);
 
-		JDialog d = waitForJDialog(null, "New Script: Type", 5000);
+		JDialog d = waitForJDialog("New Script: Type");
 		pressButtonByText(d, "OK");
 
-		d = waitForJDialog(null, "New Script", 5000);
+		d = waitForJDialog("New Script");
 		pressButtonByText(d, "OK");
 
 		captureIsolatedProvider(GhidraScriptEditorComponentProvider.class, 597, 600);
@@ -112,19 +111,18 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testScript_Dirs() throws Exception {
-		List<Path> paths = new ArrayList<>();
-		paths.add(new Path("$USER_HOME/ghidra_scripts"));
-		paths.add(new Path("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
-		paths.add(new Path("/User/defined/invalid/directory"));
+		List<ResourceFile> bundleFiles = new ArrayList<>();
+		bundleFiles.add(Path.fromPathString("$USER_HOME/ghidra_scripts"));
+		bundleFiles.add(Path.fromPathString("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
+		bundleFiles.add(Path.fromPathString("/User/defined/invalid/directory"));
 
-		ComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
-		PathManager pathManager = (PathManager) getInstanceField("pathManager", provider);
-		pathManager.setPaths(paths);
-		final PickPathsDialog pathsDialog = new PickPathsDialog(null, pathManager);
-		runSwing(() -> DockingWindowManager.showDialog(null, pathsDialog), false);
+		BundleStatusComponentProvider bundleStatusComponentProvider =
+			showProvider(BundleStatusComponentProvider.class);
 
-		PickPathsDialog dialog = waitForDialogComponent(PickPathsDialog.class);
-		captureDialog(dialog);
+		bundleStatusComponentProvider.setBundleFilesForTesting(bundleFiles);
+
+		waitForComponentProvider(BundleStatusComponentProvider.class);
+		captureComponent(bundleStatusComponentProvider.getComponent());
 	}
 
 	@Test

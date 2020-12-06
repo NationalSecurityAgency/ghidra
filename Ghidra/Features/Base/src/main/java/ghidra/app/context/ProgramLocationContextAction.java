@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,29 +21,29 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 
 public abstract class ProgramLocationContextAction extends DockingAction {
-	
+
 	public ProgramLocationContextAction(String name, String owner) {
 		super(name, owner);
 	}
-	
+
 	@Override
-    public boolean isEnabledForContext(ActionContext context) {
-    	Object contextObject = context.getContextObject();
+	public boolean isEnabledForContext(ActionContext context) {
+		Object contextObject = context.getContextObject();
 		if (!(contextObject instanceof ProgramLocationActionContext)) {
 			return false;
 		}
-		return isEnabledForContext((ProgramLocationActionContext)contextObject);
+		return isEnabledForContext((ProgramLocationActionContext) contextObject);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext actionContext) {
-		actionPerformed((ProgramLocationActionContext)actionContext.getContextObject());
+		actionPerformed((ProgramLocationActionContext) actionContext.getContextObject());
 	}
-	
+
 	@Override
 	public boolean isValidContext(ActionContext context) {
 		if (context instanceof ProgramLocationActionContext) {
-			return isValidContext((ProgramLocationActionContext)context);
+			return isValidContext((ProgramLocationActionContext) context);
 		}
 		return false;
 	}
@@ -52,7 +51,7 @@ public abstract class ProgramLocationContextAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		if (context instanceof ProgramLocationActionContext) {
-			return isAddToPopup((ProgramLocationActionContext)context);
+			return isAddToPopup((ProgramLocationActionContext) context);
 		}
 		return false;
 	}
@@ -66,13 +65,13 @@ public abstract class ProgramLocationContextAction extends DockingAction {
 	}
 
 	protected boolean isEnabledForContext(ProgramLocationActionContext context) {
-		return true;
+		// assume that all ProgramLocation context actions require a valid program location
+		return context.getLocation() != null;
 	}
 
-	protected void actionPerformed(ProgramLocationActionContext context) {
-		
-	}
-	
+	// a version of actionPerformed() that takes a more specific context than our parent
+	protected abstract void actionPerformed(ProgramLocationActionContext context);
+
 	@Override
 	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
 		for (Class<?> class1 : contextTypes) {

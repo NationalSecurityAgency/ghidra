@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr.editor;
 
-import static ghidra.app.plugin.core.datamgr.editor.EnumTableModel.NAME_COL;
-import static ghidra.app.plugin.core.datamgr.editor.EnumTableModel.VALUE_COL;
+import static ghidra.app.plugin.core.datamgr.editor.EnumTableModel.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -42,7 +41,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.EquateTable;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for editing an Enumerated data type.
@@ -53,10 +52,6 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	private PluginTool tool;
 	private TestEnv env;
 	private DataTypeManagerPlugin plugin;
-
-	public EnumEditor1Test() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -80,8 +75,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testEnumFields() throws Exception {
-		Category c = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category c = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(c, "TestEnum", 1);
 		edit(enumm);
 
@@ -133,8 +130,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testEnumSize1() throws Exception {
-		Category category = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category category = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "TestEnum", 1);
 		edit(enumm);
 
@@ -183,8 +182,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEnumSize1BadInput() throws Exception {
 		// test entering too large a value
-		Category category = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category category = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "TestEnum", 1);
 		edit(enumm);
 
@@ -225,8 +226,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testEnumSize4BadInput() throws Exception {
-		Category category = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category category = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "MyTestEnum", 4);
 		edit(enumm);
 
@@ -275,8 +278,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testBadInputForValue() throws Exception {
-		Category cat = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category cat = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(cat, "TestEnum", 1);
 		edit(enumm);
 
@@ -303,8 +308,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEditExistingEnum1() throws Exception {
 
-		Category cat = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category cat = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
@@ -366,8 +373,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testValueForNewEntry() throws Exception {
-		Category cat = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category cat = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0x10);
 		enumm.add("Green", 0x20);
@@ -521,10 +530,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		removeCategory(enummDt);
 
-		OptionDialog dialog =
-			waitForDialogComponent(null, OptionDialog.class, DEFAULT_WINDOW_TIMEOUT);
-		assertNotNull(dialog);
-		pressButtonByText(dialog.getComponent(), "OK");
+		close(waitForInfoDialog());
 	}
 
 	@Test
@@ -564,10 +570,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		replaceDataType(enummDt, newEnummDt);
 
-		OptionDialog dialog =
-			waitForDialogComponent(null, OptionDialog.class, DEFAULT_WINDOW_TIMEOUT);
-		assertNotNull(dialog);
-		pressButtonByText(dialog.getComponent(), "OK");
+		close(waitForInfoDialog());
 	}
 
 	@Test
@@ -612,15 +615,12 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		DataTypeManager dtm = program.getDataTypeManager();
 		int transactionID = program.startTransaction("Test");
-		dtm.remove(enummDt, TaskMonitorAdapter.DUMMY_MONITOR);
+		dtm.remove(enummDt, TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForSwing();
 
-		OptionDialog optionDialog =
-			waitForDialogComponent(null, OptionDialog.class, DEFAULT_WINDOW_TIMEOUT);
-		assertNotNull("Did not get informed of deleted enum", optionDialog);
-		pressButtonByText(optionDialog.getComponent(), "OK");
+		close(waitForInfoDialog());
 	}
 
 	@Test
@@ -762,8 +762,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testChangeEnumSizeAndInStructure() throws Exception {
 
-		Category category = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category category = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
 		int transactionID = program.startTransaction("Test");
@@ -803,7 +805,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(intValue, 2);
 
 		runSwing(() -> {
-			sizeComboBox.setSelectedItem(new Integer(4));
+			sizeComboBox.setSelectedItem(4);
 		});
 		apply();
 
@@ -831,8 +833,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testChangeEnumDescriptionEtcAndInStructure() throws Exception {
 
-		Category category = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category category = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
 		int transactionID = program.startTransaction("Test");
@@ -887,7 +891,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> {
 			nameField.setText("EnumY");
 			descField.setText("XYZ");
-			sizeComboBox.setSelectedItem(new Integer(4));
+			sizeComboBox.setSelectedItem(4);
 
 			table.editCellAt(1, NAME_COL);
 
@@ -1026,7 +1030,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			Category newCategory = dtm.createCategory(new CategoryPath("/Test/Category"));
 			category = dtm.getCategory(enummDt.getCategoryPath());
-			newCategory.moveCategory(category, TaskMonitorAdapter.DUMMY_MONITOR);
+			newCategory.moveCategory(category, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(txID, true);
@@ -1046,7 +1050,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			Category category = dtm.getCategory(enummDt.getCategoryPath());
 			Category parentCategory = category.getParent();
 			assertTrue("Did not remove category", parentCategory.removeCategory(category.getName(),
-				TaskMonitorAdapter.DUMMY_MONITOR));
+				TaskMonitor.DUMMY));
 		}
 		finally {
 			program.endTransaction(txID, true);
@@ -1138,8 +1142,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Enum createRedGreenBlueEnum() {
-		Category cat = program.getListing().getDataTypeManager().getCategory(
-			new CategoryPath(CategoryPath.ROOT, "Category1"));
+		Category cat = program.getListing()
+				.getDataTypeManager()
+				.getCategory(
+					new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
@@ -1274,7 +1280,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		editValueInTable(0, "2");
 
 		// This IS the warning dialog
-		OptionDialog dialog = env.waitForDialogComponent(OptionDialog.class, 1000);
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(dialog, alsoRemove ? "Save and remove" : "Save");
 		waitForTasks();
 

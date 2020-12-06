@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -32,6 +32,7 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.TestDummyNavigatable;
 import ghidra.app.services.*;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.TestDummyServiceProvider;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.program.database.ProgramBuilder;
@@ -247,7 +248,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyNavigatable.navigatedTo(programName));
@@ -257,7 +258,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testProgramAnnotation_ProgramNameAndAddress() {
 
 		String programName = OTHER_PROGRAM_NAME;
-		String address = "01001014"; // some non-start addresss
+		String address = "01001014"; // some non-start address
 		String annotationText = "{@program " + programName + "@" + address + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
@@ -274,7 +275,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyNavigatable.navigatedTo(programName, address));
@@ -284,7 +285,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testProgramAnnotation_ProgramNameAndAddress_InvalidAddress() {
 
 		String programName = OTHER_PROGRAM_NAME;
-		String address = "01FFFFFF"; // some non-start addresss
+		String address = "01FFFFFF"; // some non-start address
 		String annotationText = "{@program " + programName + "@" + address + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
@@ -301,14 +302,13 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
+
+		assertErrorDialog("No Symbol");
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyServiceProvider.programClosed(programName));
 		assertFalse(spyNavigatable.navigatedTo(programName, address));
-
-		Window window = waitForWindowByTitleContaining("No Symbol");
-		window.setVisible(false);
 	}
 
 	@Test
@@ -332,7 +332,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyNavigatable.navigatedTo(programName, symbol));
@@ -359,14 +359,13 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
+
+		assertErrorDialog("No Symbol");
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyServiceProvider.programClosed(programName));
 		assertFalse(spyNavigatable.navigatedTo(programName, symbol));
-
-		Window window = waitForWindowByTitleContaining("No Symbol");
-		window.setVisible(false);
 	}
 
 	@Test
@@ -390,7 +389,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyNavigatable.navigatedTo(programName, symbol));
@@ -416,12 +415,11 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
+
+		assertErrorDialog("No Program");
 
 		assertFalse(spyServiceProvider.programOpened(programName));
-
-		Window window = waitForWindowByTitleContaining("No Program");
-		window.setVisible(false);
 	}
 
 	@Test
@@ -430,8 +428,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 
-		String addressString = "1001000";
-		Address address = program.getAddressFactory().getAddress(addressString);
+		String addresstring = "1001000";
 
 		// path in comment
 		String otherProgramPath = "folder1/folder2/program_f1_f2.exe";
@@ -440,25 +437,24 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		String realPath = "folder1/program_f1_f2.exe";
 		addFakeProgramByPath(spyServiceProvider, realPath);
 
-		String annotationText = "{@program " + otherProgramPath + "@" + addressString + "}";
+		String annotationText = "{@program " + otherProgramPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
 		FieldElement element =
 			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
 
 		String displayString = element.getText();
-		assertEquals("My comment - " + otherProgramPath + "@" + addressString, displayString);
+		assertEquals("My comment - " + otherProgramPath + "@" + addresstring, displayString);
 
 		//
 		// When clicking an element with bad path program should not open
 		//
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
+
+		assertErrorDialog("No Folder");
 
 		assertFalse(spyServiceProvider.programOpened(otherProgramPath));
-		Window window = waitForWindowByTitleContaining("No Folder");
-		window.setVisible(false);
-
 	}
 
 	@Test
@@ -484,7 +480,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		// should be opened
 		//
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(otherProgramPath));
 		assertTrue(spyNavigatable.navigatedTo(otherProgramPath));
@@ -496,27 +492,27 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 
-		String addressString = "1001000";
-		Address address = program.getAddressFactory().getAddress(addressString);
+		String addresstring = "1001000";
+		Address address = program.getAddressFactory().getAddress(addresstring);
 
 		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
 		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
 
-		String annotationText = "{@program " + otherProgramPath + "@" + addressString + "}";
+		String annotationText = "{@program " + otherProgramPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
 		FieldElement element =
 			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
 
 		String displayString = element.getText();
-		assertEquals("My comment - " + otherProgramPath + "@" + addressString, displayString);
+		assertEquals("My comment - " + otherProgramPath + "@" + addresstring, displayString);
 
 		//
 		// When clicking an element with only a program name, the result is that the program
 		// should be opened
 		//
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(otherProgramPath));
 		assertTrue(spyNavigatable.navigatedTo(otherProgramPath, address));
@@ -529,28 +525,28 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 
-		String addressString = "1001000";
-		Address address = program.getAddressFactory().getAddress(addressString);
+		String addresstring = "1001000";
+		Address address = program.getAddressFactory().getAddress(addresstring);
 
 		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
 		String annotationPath = "\\folder1\\folder2\\program_f1_f2.exe";
 		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
 
-		String annotationText = "{@program " + annotationPath + "@" + addressString + "}";
+		String annotationText = "{@program " + annotationPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
 		FieldElement element =
 			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
 
 		String displayString = element.getText();
-		assertEquals("My comment - " + annotationPath + "@" + addressString, displayString);
+		assertEquals("My comment - " + annotationPath + "@" + addresstring, displayString);
 
 		//
 		// When clicking an element with only a program name, the result is that the program
 		// should be opened
 		//
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(otherProgramPath));
 		assertTrue(spyNavigatable.navigatedTo(otherProgramPath, address));
@@ -562,28 +558,28 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 
-		String addressString = "1001000";
-		Address address = program.getAddressFactory().getAddress(addressString);
+		String addresstring = "1001000";
+		Address address = program.getAddressFactory().getAddress(addresstring);
 
 		String otherProgramPath = "folder1/folder2/program_f1_f2.exe";
 		String annotationPath = "folder1\\folder2\\program_f1_f2.exe";
 		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
 
-		String annotationText = "{@program " + annotationPath + "@" + addressString + "}";
+		String annotationText = "{@program " + annotationPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
 		FieldElement element =
 			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
 
 		String displayString = element.getText();
-		assertEquals("My comment - " + annotationPath + "@" + addressString, displayString);
+		assertEquals("My comment - " + annotationPath + "@" + addresstring, displayString);
 
 		//
 		// When clicking an element with only a program name, the result is that the program
 		// should be opened
 		//
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(otherProgramPath));
 		assertTrue(spyNavigatable.navigatedTo(otherProgramPath, address));
@@ -596,31 +592,30 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyNavigatable spyNavigatable = new SpyNavigatable();
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 
-		String addressString = "1001000";
-		Address address = program.getAddressFactory().getAddress(addressString);
+		String addresstring = "1001000";
+		Address address = program.getAddressFactory().getAddress(addresstring);
 
 		String otherProgramPath = "folder1/folder2/program_f1_f2.exe";
 		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
 
-		String annotationText = "{@program " + otherProgramPath + "@" + addressString + "}";
+		String annotationText = "{@program " + otherProgramPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
 		AttributedString prototype = prototype();
 		FieldElement element =
 			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
 
 		String displayString = element.getText();
-		assertEquals("My comment - " + otherProgramPath + "@" + addressString, displayString);
+		assertEquals("My comment - " + otherProgramPath + "@" + addresstring, displayString);
 
 		//
 		// When clicking an element with only a program name, the result is that the program
 		// should be opened
 		//
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
-		annotatedElement.handleMouseClicked(spyNavigatable, spyServiceProvider);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
 		assertTrue(spyServiceProvider.programOpened(otherProgramPath));
 		assertTrue(spyNavigatable.navigatedTo(otherProgramPath, address));
-
 	}
 
 	@Test
@@ -728,6 +723,14 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 // Private Methods
 //==================================================================================================	
 
+	private void click(Navigatable navigatable, ServiceProvider sp,
+			AnnotatedTextFieldElement annotatedElement) {
+
+		// this may show an error dialog; invoke later
+		runSwingLater(() -> annotatedElement.handleMouseClicked(navigatable, sp));
+		waitForSwing();
+	}
+
 	private AnnotatedTextFieldElement getAnnotatedTextFieldElement(FieldElement element) {
 
 		assertThat(element, instanceOf(CompositeFieldElement.class));
@@ -795,6 +798,12 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
+	private void assertErrorDialog(String title) {
+		Window window = waitForWindowByTitleContaining(title);
+		runSwing(() -> window.setVisible(false));
+		waitForSwing(); // let post-dialog processing happen		
+	}
+
 //==================================================================================================
 // Fake/Spy Classes
 //==================================================================================================	
@@ -858,15 +867,11 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 		private List<TestDummyDomainFolder> folders = CollectionUtils.asList(this);
 
-		private List<TestDummyDomainFile> files =
+		private List<TestDummyDomainFile> folderFiles =
 			CollectionUtils.asList(new TestDummyDomainFile(this, OTHER_PROGRAM_NAME));
 
 		public FakeRootFolder() {
 			super(null, "Fake Root Folder");
-		}
-
-		void addFile(TestDummyDomainFile f) {
-			files.add(f);
 		}
 
 		void addFolder(TestDummyDomainFolder f) {
@@ -875,7 +880,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public synchronized DomainFile[] getFiles() {
-			return files.toArray(new TestDummyDomainFile[files.size()]);
+			return folderFiles.toArray(new TestDummyDomainFile[folderFiles.size()]);
 		}
 
 		@Override

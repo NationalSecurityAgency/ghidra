@@ -34,12 +34,13 @@ class LockingTaskMonitor implements TaskMonitor {
 	private MyTaskDialog taskDialog;
 
 	/**
-	 * Constructs a locking task handler for a locked dobj.  The setCompleted() method must be
-	 * invoked to dispose this object and release the lock.  This should
-	 * be done in a try/finally block to avoid accidentally locking the
+	 * Constructs a locking task handler for a locked domain object.  The
+	 * {@link #releaseLock()} method must be invoked to dispose this object and release the
+	 * lock.  This should be done in a try/finally block to avoid accidentally locking the
 	 * domain object indefinitely.
+	 *
 	 * @param dobj domain object
-	 * @param hasProgress true if this monitorhas progress
+	 * @param hasProgress true if this monitor has progress
 	 * @param title task title
 	 */
 	LockingTaskMonitor(DomainObjectAdapterDB dobj, boolean hasProgress, String title) {
@@ -84,9 +85,6 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#isCancelled()
-	 */
 	@Override
 	public synchronized boolean isCancelled() {
 		return taskDialog != null ? taskDialog.isCancelled() : isCanceled;
@@ -108,9 +106,6 @@ class LockingTaskMonitor implements TaskMonitor {
 		notifyAll();
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#setMessage(java.lang.String)
-	 */
 	@Override
 	public synchronized void setMessage(String msg) {
 		this.msg = msg;
@@ -124,9 +119,6 @@ class LockingTaskMonitor implements TaskMonitor {
 		return msg;
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#setProgress(int)
-	 */
 	@Override
 	public synchronized void setProgress(long value) {
 		this.curProgress = value;
@@ -175,9 +167,6 @@ class LockingTaskMonitor implements TaskMonitor {
 		return indeterminate;
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#setCancelEnabled(boolean)
-	 */
 	@Override
 	public synchronized void setCancelEnabled(boolean enable) {
 		this.cancelEnabled = enable;
@@ -186,17 +175,11 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
-	/**
-	 * @see ghidra.util.task.TaskMonitor#isCancelEnabled()
-	 */
 	@Override
 	public synchronized boolean isCancelEnabled() {
 		return taskDialog != null ? taskDialog.isCancelEnabled() : cancelEnabled;
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#cancel()
-	 */
 	@Override
 	public synchronized void cancel() {
 		this.isCanceled = true;
@@ -205,9 +188,6 @@ class LockingTaskMonitor implements TaskMonitor {
 		}
 	}
 
-	/*
-	 * @see ghidra.util.task.TaskMonitor#clearCanceled()
-	 */
 	@Override
 	public void clearCanceled() {
 		this.isCanceled = false;

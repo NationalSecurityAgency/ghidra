@@ -287,7 +287,7 @@ class RepositoryChooser extends DialogComponentProvider {
 
 		init(initURL);
 
-		tool.showDialog(this, tool.getToolFrame());
+		tool.showDialog(this);
 
 		if (!okPressed) {
 			return null;

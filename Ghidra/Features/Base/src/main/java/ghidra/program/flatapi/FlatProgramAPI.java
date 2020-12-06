@@ -25,6 +25,7 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
+import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.clear.ClearOptions;
@@ -394,7 +395,7 @@ public class FlatProgramAPI {
 	 * @param address the address to create the symbol
 	 * @param name the name of the symbol
 	 * @param makePrimary true if the symbol should be made primary
-	 * @return the newly created symbol
+	 * @return the newly created code or function symbol
 	 */
 	public final Symbol createLabel(Address address, String name, boolean makePrimary)
 			throws Exception {
@@ -420,15 +421,35 @@ public class FlatProgramAPI {
 	 * @param name the name of the symbol
 	 * @param makePrimary true if the symbol should be made primary
 	 * @param sourceType the source type.
-	 * @return the newly created symbol
+	 * @return the newly created code or function symbol
 	 */
 	public final Symbol createLabel(Address address, String name, boolean makePrimary,
 			SourceType sourceType) throws Exception {
+		return createLabel(address, name, null, makePrimary, sourceType);
+	}
+
+	/**
+	 * Creates a label at the specified address in the specified namespace.
+	 * If makePrimary==true, then the new label is made primary if permitted.
+	 * If makeUnique==true, then if the name is a duplicate, the address
+	 * will be concatenated to name to make it unique.
+	 * @param address the address to create the symbol
+	 * @param name the name of the symbol
+	 * @param namespace label's parent namespace
+	 * @param makePrimary true if the symbol should be made primary
+	 * @param sourceType the source type.
+	 * @return the newly created code or function symbol
+	 */
+	public final Symbol createLabel(Address address, String name, Namespace namespace,
+			boolean makePrimary, SourceType sourceType) throws Exception {
 		Symbol symbol;
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
-		symbol = symbolTable.createLabel(address, name, null, sourceType);
-		if (makePrimary) {
-			symbol.setPrimary();
+		symbol = symbolTable.createLabel(address, name, namespace, sourceType);
+		if (makePrimary && !symbol.isPrimary()) {
+			SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(address, name, namespace);
+			if (cmd.applyTo(currentProgram)) {
+				symbol = cmd.getSymbol();
+			}
 		}
 		return symbol;
 	}

@@ -17,9 +17,11 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.lang.DynamicVariableStorage;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -39,6 +41,8 @@ public class HighSymbol {
 	protected int categoryIndex;		// Numbering within the sub-class
 	private boolean namelock;		// Is this variable's name locked
 	private boolean typelock;		// Is this variable's datatype locked
+	private boolean isThis;			// True if we are "this" symbol for function method call
+	private boolean isHidden;		// True if we are hidden symbol containing pointer to where return value is stored
 	private long id;				// Unique id of this symbol
 	protected SymbolEntry[] entryList;	// List of mappings for this symbol
 	
@@ -52,6 +56,8 @@ public class HighSymbol {
 	protected HighSymbol(HighFunction func) {
 		function = func;
 		dtmanage = function.getDataTypeManager();
+		isThis = false;
+		isHidden = false;
 	}
 
 	/**
@@ -68,6 +74,8 @@ public class HighSymbol {
 		type = tp;
 		namelock = false;
 		typelock = false;
+		isThis = false;
+		isHidden = false;
 		id = uniqueId;
 		category = -1;
 		categoryIndex = -1;
@@ -91,6 +99,8 @@ public class HighSymbol {
 		type = tp;
 		namelock = nlock;
 		typelock = tlock;
+		isThis = false;
+		isHidden = false;
 		id = uniqueId;
 		category = -1;
 		categoryIndex = -1;
@@ -100,6 +110,15 @@ public class HighSymbol {
 		if (entryList == null) {
 			entryList = new SymbolEntry[1];
 			entryList[0] = entry;
+			if (entry.getStorage().isAutoStorage()) {
+				AutoParameterType autoType = entry.getStorage().getAutoParameterType();
+				if (autoType == AutoParameterType.THIS) {
+					isThis = true;
+				}
+				else if (autoType == AutoParameterType.RETURN_STORAGE_PTR) {
+					isHidden = true;
+				}
+			}
 		}
 		else {
 			SymbolEntry[] newList = new SymbolEntry[entryList.length + 1];
@@ -126,6 +145,18 @@ public class HighSymbol {
 	public Symbol getSymbol() {
 		if (id != 0) {
 			return function.getFunction().getProgram().getSymbolTable().getSymbol(id);
+		}
+		return null;
+	}
+
+	/**
+	 * Fetch the namespace owning this symbol, if it exists.
+	 * @return the Namespace object or null
+	 */
+	public Namespace getNamespace() {
+		Symbol sym = getSymbol();
+		if (sym != null) {
+			return sym.getParentNamespace();
 		}
 		return null;
 	}
@@ -304,6 +335,20 @@ public class HighSymbol {
 	}
 
 	/**
+	 * @return true if symbol is a "this" pointer for a class method
+	 */
+	public boolean isThisPointer() {
+		return isThis;
+	}
+
+	/**
+	 * @return true is symbol holds a pointer to where a function's return value should be stored
+	 */
+	public boolean isHiddenReturn() {
+		return isHidden;
+	}
+
+	/**
 	 * @return the first mapping object attached to this symbol
 	 */
 	public SymbolEntry getFirstWholeMap() {
@@ -335,6 +380,12 @@ public class HighSymbol {
 		}
 		if (isIsolated()) {
 			SpecXmlUtils.encodeBooleanAttribute(buf, "merge", false);
+		}
+		if (isThis) {
+			SpecXmlUtils.encodeBooleanAttribute(buf, "thisptr", true);
+		}
+		if (isHidden) {
+			SpecXmlUtils.encodeBooleanAttribute(buf, "hiddenretparm", true);
 		}
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "cat", category);
 		if (categoryIndex >= 0) {
@@ -368,6 +419,16 @@ public class HighSymbol {
 		String namelockstr = symel.getAttribute("namelock");
 		if ((namelockstr != null) && (SpecXmlUtils.decodeBoolean(namelockstr))) {
 			namelock = true;
+		}
+		isThis = false;
+		String thisstring = symel.getAttribute("thisptr");
+		if ((thisstring != null) && (SpecXmlUtils.decodeBoolean(thisstring))) {
+			isThis = true;
+		}
+		isHidden = false;
+		String hiddenstring = symel.getAttribute("hiddenretparm");
+		if ((hiddenstring != null) && (SpecXmlUtils.decodeBoolean(hiddenstring))) {
+			isHidden = true;
 		}
 //		isolate = false;
 //		String isolatestr = symel.getAttribute("merge");
@@ -417,6 +478,20 @@ public class HighSymbol {
 			}
 			entry.restoreXML(parser);
 			addMapEntry(entry);
+		}
+		if ((isThis || isHidden) && entryList != null) {
+			SymbolEntry entry = entryList[0];
+			VariableStorage storage = entry.getStorage();
+			AutoParameterType autoType =
+				isThis ? AutoParameterType.THIS : AutoParameterType.RETURN_STORAGE_PTR;
+			try {
+				VariableStorage newStorage = new DynamicVariableStorage(storage.getProgram(),
+					autoType, storage.getFirstVarnode());
+				entryList[0] = new MappedEntry(this, newStorage, entry.getPCAdress());
+			}
+			catch (InvalidInputException e) {
+				throw new PcodeXMLException("Unable to parse auto-parameter");
+			}
 		}
 	}
 

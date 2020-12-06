@@ -20,7 +20,6 @@ import java.util.List;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * MemoryBlockStub can be extended for use by tests. It throws an UnsupportedOperationException
@@ -28,6 +27,17 @@ import ghidra.util.exception.DuplicateNameException;
  * be overridden so it can provide its own test implementation and return value.
  */
 public class MemoryBlockStub implements MemoryBlock {
+	Address start;
+	Address end;
+
+	public MemoryBlockStub() {
+		this(Address.NO_ADDRESS, Address.NO_ADDRESS);
+	}
+
+	public MemoryBlockStub(Address start, Address end) {
+		this.start = start;
+		this.end = end;
+	}
 
 	@Override
 	public int compareTo(MemoryBlock o) {
@@ -51,12 +61,12 @@ public class MemoryBlockStub implements MemoryBlock {
 
 	@Override
 	public Address getStart() {
-		throw new UnsupportedOperationException();
+		return start;
 	}
 
 	@Override
 	public Address getEnd() {
-		throw new UnsupportedOperationException();
+		return end;
 	}
 
 	@Override
@@ -70,7 +80,7 @@ public class MemoryBlockStub implements MemoryBlock {
 	}
 
 	@Override
-	public void setName(String name) throws DuplicateNameException, LockException {
+	public void setName(String name) throws LockException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -130,6 +140,11 @@ public class MemoryBlockStub implements MemoryBlock {
 	}
 
 	@Override
+	public boolean isOverlay() {
+		return false;
+	}
+
+	@Override
 	public String getSourceName() {
 		throw new UnsupportedOperationException();
 	}
@@ -171,7 +186,7 @@ public class MemoryBlockStub implements MemoryBlock {
 
 	@Override
 	public MemoryBlockType getType() {
-		throw new UnsupportedOperationException();
+		return MemoryBlockType.DEFAULT;
 	}
 
 	@Override

@@ -44,6 +44,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	public AbstractDemanglerAnalyzer(String name, String description) {
 		super(name, description, AnalyzerType.BYTE_ANALYZER);
 		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before().before());
+		setSupportsOneTimeAnalysis();
 	}
 
 	@Override
@@ -58,7 +59,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		DemanglerOptions options = getOptions();
 		if (!validateOptions(options, log)) {
-			log.error(getName(), "Invalid demangler options--cannot demangle");
+			log.appendMsg(getName(), "Invalid demangler options--cannot demangle");
 			return false;
 		}
 
@@ -76,7 +77,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 			Address address = symbol.getAddress();
 			String mangled = cleanSymbol(address, symbol.getName());
-			DemangledObject demangled = demangle(mangled, options, log);
+			DemangledObject demangled = demangle(mangled, address, options, log);
 			if (demangled != null) {
 				apply(program, address, demangled, options, log, monitor);
 			}
@@ -141,7 +142,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		// Someone has already added arguments or return to the function signature
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function function = (Function) symbol.getObject();
-			if (function.getSignatureSource() != SourceType.DEFAULT) {
+			if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
 				return true;
 			}
 		}
@@ -171,11 +172,12 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	 * handled.
 	 *  
 	 * @param mangled the mangled string
+	 * @param address the symbol address
 	 * @param options the demangler options
 	 * @param log the error log
 	 * @return the demangled object; null if unsuccessful
 	 */
-	protected DemangledObject demangle(String mangled, DemanglerOptions options,
+	protected DemangledObject demangle(String mangled, Address address, DemanglerOptions options,
 			MessageLog log) {
 
 		DemangledObject demangled = null;
@@ -192,7 +194,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			}
 
 			log.appendMsg(getName(),
-				"Unable to demangle symbol: " + mangled + ".  Message: " + e.getMessage());
+				"Unable to demangle symbol: " + mangled + " at " + address + ".  Message: " +
+					e.getMessage());
 			return null;
 		}
 
@@ -231,9 +234,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			failMessage += errorMessage;
 		}
 
-		log.appendMsg(getName(),
-			"Failed to apply mangled symbol at " + address + "; name:  " +
-				demangled.getMangledString() + failMessage);
+		log.appendMsg(getName(), "Failed to apply mangled symbol at " + address + "; name:  " +
+			demangled.getMangledString() + failMessage);
 	}
 
 	protected String cleanSymbol(Address address, String name) {

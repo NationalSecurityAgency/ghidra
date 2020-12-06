@@ -1,0 +1,59 @@
+# RV32 Crypto Extension
+# NOTE  0.6.2
+
+# bs 00001 rs2 rs1 010 rd 0101011 saes32.encs
+:saes32.encs   rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x2 & op2529=0x1  unimpl
+
+# bs 00000 rs2 rs1 010 rd 0101011 saes32.encsm
+:saes32.encsm  rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x2 & op2529=0x0  unimpl
+
+# bs 00011 rs2 rs1 010 rd 0101011 saes32.decs
+:saes32.decs   rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x2 & op2529=0x3  unimpl
+
+# bs 00010 rs2 rs1 010 rd 0101011 saes32.decsm
+:saes32.decsm  rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x2 & op2529=0x2  unimpl
+
+# 0000111 00000 rs1 111 rd 0101011 ssha256.sig0
+:ssha256.sig0  rd, rs1  is rd & rs1 & op0006=0x2b & op1214=0x7 & op2024=0x00 & op2531=0x07  unimpl
+
+# 0000111 00001 rs1 111 rd 0101011 ssha256.sig1
+:ssha256.sig1  rd, rs1  is rd & rs1 & op0006=0x2b & op1214=0x7 & op2024=0x01 & op2531=0x07  unimpl
+
+# 0000111 00010 rs1 111 rd 0101011 ssha256.sum0
+:ssha256.sum0  rd, rs1  is rd & rs1 & op0006=0x2b & op1214=0x7 & op2024=0x02 & op2531=0x07  unimpl
+
+# 0000111 00011 rs1 111 rd 0101011 ssha256.sum1
+:ssha256.sum1  rd, rs1  is rd & rs1 & op0006=0x2b & op1214=0x7 & op2024=0x03 & op2531=0x07  unimpl
+
+# 0001100 rs2 rs1 111 rd 0101011 ssha512.sum0r
+:ssha512.sum0r rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x2b & op1214=0x7 & op2531=0x0c  unimpl
+
+# 0001101 rs2 rs1 111 rd 0101011 ssha512.sum1r
+:ssha512.sum1r rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x2b & op1214=0x7 & op2531=0x0d  unimpl
+
+# 0001000 rs2 rs1 111 rd 0101011 ssha512.sig0l
+:ssha512.sig0l rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x2b & op1214=0x7 & op2531=0x08  unimpl
+
+# 0001001 rs2 rs1 111 rd 0101011 ssha512.sig0h
+:ssha512.sig0h rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x2b & op1214=0x7 & op2531=0x09  unimpl
+
+# 0001010 rs2 rs1 111 rd 0101011 ssha512.sig1l
+:ssha512.sig1l rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x2b & op1214=0x7 & op2531=0x0a  unimpl
+
+# 0001011 rs2 rs1 111 rd 0101011 ssha512.sig1h
+:ssha512.sig1h rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x2b & op1214=0x7 & op2531=0x0b  unimpl
+
+# 0000111 01000 rs1 111 rd 0101011 ssm3.p0
+:ssm3.p0       rd, rs1  is rd & rs1 & op0006=0x2b & op1214=0x7 & op2024=0x08 & op2531=0x07  unimpl
+
+# 0000111 01001 rs1 111 rd 0101011 ssm3.p1
+:ssm3.p1       rd, rs1  is rd & rs1 & op0006=0x2b & op1214=0x7 & op2024=0x09 & op2531=0x07  unimpl
+
+# bs 00100 rs2 rs1 011 rd 0101011 ssm4.ed
+:ssm4.ed       rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x3 & op2529=0x4  unimpl
+
+# bs 00101 rs2 rs1 011 rd 0101011 ssm4.ks
+:ssm4.ks       rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x3 & op2529=0x5  unimpl
+
+# 0000111 shamtw 01010 111 rd 0101011 pollentropy
+:pollentropy   rd, shamtw  is rd & shamtw & op0006=0x2b & op1214=0x7 & op1519=0x0a & op2531=0x07  unimpl

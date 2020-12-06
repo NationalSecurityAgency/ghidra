@@ -24,7 +24,7 @@ import generic.util.WindowUtilities;
 import ghidra.util.*;
 
 /**
- * Helper class to launch the given task in a background thread, showing a task dialog if 
+ * Helper class to launch the given task in a background thread, showing a task dialog if
  * this task takes to long. See {@link TaskLauncher}.
  */
 class TaskRunner {
@@ -49,8 +49,7 @@ class TaskRunner {
 		BasicTaskMonitor internalMonitor = new BasicTaskMonitor();
 		WrappingTaskMonitor monitor = new WrappingTaskMonitor(internalMonitor);
 		startTaskThread(monitor);
-
-		Swing.runIfSwingOrRunLater(() -> showTaskDialog(monitor));
+		showTaskDialog(monitor);
 		waitForModalTask();
 	}
 
@@ -112,7 +111,7 @@ class TaskRunner {
 
 		return new TaskDialog(centerOverComponent, task) {
 
-			// note: we override this method here to help with the race condition where the 
+			// note: we override this method here to help with the race condition where the
 			//       TaskRunner does not yet know about the task dialog, but the background
 			//       thread has actually finished the work.
 			@Override
@@ -124,11 +123,11 @@ class TaskRunner {
 
 	private void showTaskDialog(WrappingTaskMonitor monitor) {
 
-		Swing.assertSwingThread("Must be on the Swing thread build the Task Dialog");
-
-		taskDialog = buildTaskDialog(parent, monitor);
-		monitor.setDelegate(taskDialog); // initialize the dialog to the current state of the monitor
-		taskDialog.show(Math.max(delayMs, 0));
+		Swing.runIfSwingOrRunLater(() -> {
+			taskDialog = buildTaskDialog(parent, monitor);
+			monitor.setDelegate(taskDialog); // initialize the dialog to the current monitor state 
+			taskDialog.show(Math.max(delayMs, 0));
+		});
 	}
 
 	/*testing*/ boolean isFinished() {
@@ -138,7 +137,7 @@ class TaskRunner {
 	private void taskFinished() {
 		finished.countDown();
 
-		// Do this later on the Swing thread to handle the race condition where the dialog 
+		// Do this later on the Swing thread to handle the race condition where the dialog
 		// did not exist at the time of this call, but was in the process of being created
 		Swing.runLater(() -> {
 			if (taskDialog != null) {

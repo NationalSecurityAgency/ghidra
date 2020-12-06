@@ -39,7 +39,10 @@ import utility.application.ApplicationLayout;
 
 /**
  * Wrapper for Ghidra code to find images (and maybe other artifacts later) in a program
- *
+ * 
+ * NOTE: This is intended for end-user use and has no direct references within Ghidra.  
+ * Typical use of the class entails generating a ghidra.jar (see BuildGhidraJarScript.java)
+ * and referencing this class from end-user code.
  */
 public class ProgramExaminer {
 
@@ -77,18 +80,16 @@ public class ProgramExaminer {
 		initializeGhidra();
 		messageLog = new MessageLog();
 		try {
-			program =
-				AutoImporter.importByUsingBestGuess(provider, null, this, messageLog,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+			program = AutoImporter.importByUsingBestGuess(provider, null, this, messageLog,
+				TaskMonitorAdapter.DUMMY_MONITOR);
 
 			if (program == null) {
-				program =
-					AutoImporter.importAsBinary(provider, null, defaultLanguage, null, this,
-						messageLog, TaskMonitorAdapter.DUMMY_MONITOR);
+				program = AutoImporter.importAsBinary(provider, null, defaultLanguage, null, this,
+					messageLog, TaskMonitorAdapter.DUMMY_MONITOR);
 			}
 			if (program == null) {
-				throw new GhidraException("Can't create program from input: " +
-					messageLog.toString());
+				throw new GhidraException(
+					"Can't create program from input: " + messageLog.toString());
 			}
 		}
 		catch (Exception e) {
@@ -123,8 +124,8 @@ public class ProgramExaminer {
 		if (defaultLanguage == null) {
 			LanguageService languageService = DefaultLanguageService.getLanguageService();
 			try {
-				defaultLanguage = languageService.getDefaultLanguage(
-					Processor.findOrPossiblyCreateProcessor("DATA"));
+				defaultLanguage = languageService
+						.getDefaultLanguage(Processor.findOrPossiblyCreateProcessor("DATA"));
 			}
 			catch (LanguageNotFoundException e) {
 				throw new GhidraException("Can't load default language: DATA");

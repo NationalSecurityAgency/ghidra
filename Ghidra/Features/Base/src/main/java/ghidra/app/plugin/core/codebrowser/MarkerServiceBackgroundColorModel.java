@@ -24,19 +24,27 @@ import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 
 /**
  * {@link BackgroundColorModel} for coloring the Listing based on the {@link MarkerService}
  */
 public class MarkerServiceBackgroundColorModel implements ListingBackgroundColorModel {
 	private MarkerService markerService;
+	private Program program;
 	private AddressIndexMap indexMap;
 	private Color defaultBackgroundColor = Color.WHITE;
 
-	public MarkerServiceBackgroundColorModel(MarkerService markerService,
+	public MarkerServiceBackgroundColorModel(MarkerService markerService, Program program,
 			AddressIndexMap indexMap) {
 		this.markerService = markerService;
+		this.program = program;
 		this.indexMap = indexMap;
+	}
+
+	public MarkerServiceBackgroundColorModel(MarkerService markerService,
+			AddressIndexMap indexMap) {
+		this(markerService, null, indexMap);
 	}
 
 	@Override
@@ -44,7 +52,12 @@ public class MarkerServiceBackgroundColorModel implements ListingBackgroundColor
 		Address addr = indexMap.getAddress(index);
 		Color color = null;
 		if (addr != null) {
-			color = markerService.getBackgroundColor(addr);
+			if (program == null) {
+				color = markerService.getBackgroundColor(addr);
+			}
+			else {
+				color = markerService.getBackgroundColor(program, addr);
+			}
 		}
 		if (color == null) {
 			color = defaultBackgroundColor;
@@ -64,7 +77,7 @@ public class MarkerServiceBackgroundColorModel implements ListingBackgroundColor
 
 	@Override
 	public void modelDataChanged(ListingPanel listingPanel) {
+		this.program = listingPanel.getProgram();
 		this.indexMap = listingPanel.getAddressIndexMap();
 	}
-
 }

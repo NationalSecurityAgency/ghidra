@@ -158,7 +158,15 @@ public class GTreeModel implements TreeModel {
 		SystemUtilities.assertThisIsTheSwingThread(
 			"GTreeModel.fireNodeDataChanged() must be " + "called from the AWT thread");
 
-		TreeModelEvent event = new TreeModelEvent(this, (TreePath) null);
+		GTreeNode viewNode = convertToViewNode(changedNode);
+		if (viewNode == null) {
+			return;
+		}
+		// Note - we are passing in the treepath of the node that changed.  The javadocs in 
+		// TreemodelListener seems to imply that you need to pass in the treepath of the parent
+		// of the node that changed and then the indexes of the children that changed. But this 
+		// works and is cheaper then computing the index of the node that changed.
+		TreeModelEvent event = new TreeModelEvent(this, viewNode.getTreePath());
 
 		for (TreeModelListener listener : listeners) {
 			listener.treeNodesChanged(event);

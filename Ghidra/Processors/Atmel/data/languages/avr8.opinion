@@ -1,9 +1,10 @@
 <opinions>
     <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">
         <constraint primary="83" processor="AVR8" endian="little" />
-        <!--  Elf e_flags are used for the secondary attribute  -->
+        <!--  Elf e_flags are used for the secondary attribute TODO: need to mask with 0x7f -->
         <constraint primary="83" secondary= "31" processor="AVR8" size="16" variant="default"/>
         <constraint primary="83" secondary= "51" processor="AVR8" size="16" variant="extended"/>
         <constraint primary="83" secondary= "6" processor="AVR8" size="24" variant="atmega256"/>
+        <constraint primary="83" secondary= "107" processor="AVR8" size="24" variant="Xmega"/>
     </constraint>
 </opinions>

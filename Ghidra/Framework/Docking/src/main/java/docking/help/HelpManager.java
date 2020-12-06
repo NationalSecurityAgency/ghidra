@@ -74,7 +74,7 @@ public class HelpManager implements HelpService {
 	private boolean isValidHelp;
 	private boolean hasBeenDisplayed;
 
-	private Set<Object> excludedFromHelp = new HashSet<>();
+	private Set<Object> excludedFromHelp = Collections.newSetFromMap(new WeakHashMap<>());
 
 	/**
 	 * Constructor.

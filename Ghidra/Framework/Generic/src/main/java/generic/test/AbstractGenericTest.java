@@ -55,6 +55,7 @@ import sun.awt.AppContext;
 import utilities.util.FileUtilities;
 import utilities.util.reflection.ReflectionUtilities;
 import utility.application.ApplicationLayout;
+import utility.function.ExceptionalCallback;
 
 public abstract class AbstractGenericTest extends AbstractGTest {
 
@@ -1094,31 +1095,66 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return ref.get();
 	}
 
-	public static void runSwing(Runnable runnable) {
-		runSwing(runnable, true);
+	/**
+	 * Run the given code snippet on the Swing thread and wait for it to finish
+	 * @param r the runnable code snippet
+	 */
+	public static void runSwing(Runnable r) {
+		runSwing(r, true);
 	}
 
 	/**
-	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable to throw
-	 * an exception 
-	 * @param runnable the runnable
-	 * @param wait true signals to wait for the Swing operation to finish
-	 * @throws Throwable any excption that is thrown on the Swing thread
+	 * Run the given code snippet on the Swing thread later, not blocking the current thread.  Use
+	 * this if the code snippet causes a blocking operation.
+	 * 
+	 * <P>This is a shortcut for <code>runSwing(r, false);</code>.
+	 * 
+	 * @param r the runnable code snippet
 	 */
-	public static void runSwingWithExceptions(Runnable runnable, boolean wait) throws Throwable {
+	public void runSwingLater(Runnable r) {
+		runSwing(r, false);
+	}
+
+	/**
+	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable <b>may</b> 
+	 * throw exceptions
+	 * 
+	 * @param callback the runnable code snippet to call
+	 * @throws Exception any exception that is thrown on the Swing thread
+	 */
+	public static <E extends Exception> void runSwingWithException(ExceptionalCallback<E> callback)
+			throws Exception {
 
 		if (Swing.isSwingThread()) {
 			throw new AssertException("Unexpectedly called from the Swing thread");
 		}
 
-		ExceptionHandlingRunner exceptionHandlingRunner = new ExceptionHandlingRunner(runnable);
+		ExceptionHandlingRunner exceptionHandlingRunner = new ExceptionHandlingRunner(callback);
 		Throwable throwable = exceptionHandlingRunner.getException();
-		if (throwable != null) {
-			throw throwable;
+		if (throwable == null) {
+			return;
 		}
+
+		if (throwable instanceof Exception) {
+			// this is what the client expected
+			throw (Exception) throwable;
+		}
+
+		// a runtime exception; re-throw
+		throw new AssertException(throwable);
 	}
 
 	public static void runSwing(Runnable runnable, boolean wait) {
+
+		// 
+		// Special Case: this check handled re-entrant test code.  That is, an calls to runSwing()
+		//               that are made from within a runSwing() call.  Most clients do not do
+		//               this, but it can happen when a client makes a test API call (which itself
+		//               calls runSwing()) from within a runSwing() call. 
+		//               
+		//               Calling the run method directly here ensures that the order of client 
+		//               requests is preserved.
+		//
 		if (SwingUtilities.isEventDispatchThread()) {
 			runnable.run();
 			return;
@@ -1144,11 +1180,18 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	protected static class ExceptionHandlingRunner {
-		private final Runnable delegateRunnable;
+		private final ExceptionalCallback<? extends Exception> delegateCallback;
 		private Throwable exception;
 
 		ExceptionHandlingRunner(Runnable delegateRunnable) {
-			this.delegateRunnable = delegateRunnable;
+			this.delegateCallback = () -> {
+				delegateRunnable.run();
+			};
+			run();
+		}
+
+		ExceptionHandlingRunner(ExceptionalCallback<? extends Exception> delegateCallback) {
+			this.delegateCallback = delegateCallback;
 			run();
 		}
 
@@ -1187,7 +1230,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 			Runnable swingExceptionCatcher = () -> {
 				try {
-					delegateRunnable.run();
+					delegateCallback.call();
 				}
 				catch (Throwable t) {
 					exception = t;
@@ -1683,7 +1726,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 			Msg.error(AbstractGenericTest.class,
-				"Incorrectly called yeildToSwing() from the Swing thread");
+				"Incorrectly called yieldToSwing() from the Swing thread");
 			return; // shouldn't happen
 		}
 

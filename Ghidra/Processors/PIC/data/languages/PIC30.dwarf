@@ -1,0 +1,21 @@
+<dwarf>
+	<register_mappings>
+	
+		<register_mapping dwarf="0" ghidra="W0" auto_count="15"/> <!-- W0..W14 -->
+		
+		<register_mapping dwarf="15" ghidra="W15" stackpointer="true"/>
+		<register_mapping dwarf="16" ghidra="RCOUNT"/>
+		<register_mapping dwarf="17" ghidra="ACCA"/>
+		<register_mapping dwarf="18" ghidra="ACCB"/>
+		<register_mapping dwarf="19" ghidra="PSVPAG"/>
+		<!-- <register_mapping dwarf="20" ghidra="PMADDR"/> **not implemented** -->
+		<!-- <register_mapping dwarf="21" ghidra="PMMODE"/> **not implemented** -->
+		<!-- <register_mapping dwarf="22" ghidra="PMDIN1"/> **not implemented** -->
+		<!-- <register_mapping dwarf="23" ghidra="PMDIN2"/> **not implemented** -->
+		<!-- <register_mapping dwarf="24" ghidra="DSWPAG"/> **not implemented** -->
+		
+		<!-- <register_mapping dwarf="25" ghidra="SINK0" auto_count="8"/> **not implemented** -->
+
+	</register_mappings>
+	<call_frame_cfa value="4"/>
+</dwarf>

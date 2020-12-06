@@ -72,7 +72,7 @@ public class AddressIndexMapConverter extends AddressIndexMap {
 	private Address getMapAddress(Address addr) {
 		AddressSpace locAddressSpace = addr.getAddressSpace();
 		AddressSpace programAddressSpace =
-			mapProgram.getAddressFactory().getAddressSpace(locAddressSpace.getUniqueSpaceID());
+			mapProgram.getAddressFactory().getAddressSpace(locAddressSpace.getSpaceID());
 		Address mapAddress = (programAddressSpace == locAddressSpace) ? addr
 				: SimpleDiffUtility.getCompatibleAddress(otherProgram, addr, mapProgram);
 		return mapAddress;

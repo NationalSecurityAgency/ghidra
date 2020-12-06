@@ -51,7 +51,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		// Important - make sure this happens before the setBackground() call, otherwise we will
 		//             paint the previously dragged-over node as the drop target.
 		paintDropTarget = (value == dropTarget);
-		
+
 		setOpaque(true);
 		setBackground(selected1 ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
 
@@ -61,7 +61,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		}
 
 		GTreeNode node = (GTreeNode) value;
-		String text = node.getName();
+		String text = node.getDisplayText();
 		setText(text);
 		setToolTipText(node.getToolTip());
 

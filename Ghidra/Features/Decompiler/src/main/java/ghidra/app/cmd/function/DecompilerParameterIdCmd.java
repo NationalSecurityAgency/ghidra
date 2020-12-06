@@ -31,6 +31,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AcyclicCallGraphBuilder;
@@ -116,7 +117,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 	 */
 	private boolean funcIsExternalGlue(Function func) {
 		String blockName = program.getMemory().getBlock(func.getEntryPoint()).getName();
-		return (blockName.equals("EXTERNAL") || blockName.equals(".plt") ||
+		return (blockName.equals(MemoryBlock.EXTERNAL_BLOCK_NAME) || blockName.equals(".plt") ||
 			blockName.equals("__stub_helper"));
 	}
 

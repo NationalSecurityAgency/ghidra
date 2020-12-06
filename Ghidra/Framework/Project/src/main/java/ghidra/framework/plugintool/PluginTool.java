@@ -36,7 +36,6 @@ import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
-import docking.framework.SplashScreen;
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.tool.ToolConstants;
@@ -405,7 +404,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 			"You cannot persist generic tools: " + getClass().getName());
 	}
 
-	public void restoreWindowingDataFromXml(Element windowData) {
+	public void restoreWindowingDataFromXml(Element element) {
 		throw new UnsupportedOperationException(
 			"You cannot persist generic tools: " + getClass().getName());
 	}
@@ -552,9 +551,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 		else {
 			fullName = toolName + "(" + instanceName + ")";
 		}
-		SplashScreen.updateSplashScreenStatus("Loading " + fullName + " ...");
 
 		restoreOptionsFromXml(root);
+		winMgr.restorePreferencesFromXML(root);
 		setDefaultOptionValues();
 		boolean hasErrors = false;
 		try {
@@ -565,7 +564,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 			Msg.showError(this, getToolFrame(), "Error Restoring Plugins", e.getMessage());
 		}
 
-		winMgr.restoreFromXML(root);
+		winMgr.restoreWindowDataFromXml(root);
 		winMgr.setToolName(fullName);
 		return hasErrors;
 	}
@@ -1340,7 +1339,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr.addEventProducer(eventClass);
 	}
 
-	void addEventListener(Class<? extends PluginEvent> eventClass, PluginEventListener listener) {
+	public void addEventListener(Class<? extends PluginEvent> eventClass,
+			PluginEventListener listener) {
 		eventMgr.addEventListener(eventClass, listener);
 	}
 
@@ -1356,7 +1356,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr.removeAllEventListener(listener);
 	}
 
-	void removeEventListener(Class<? extends PluginEvent> eventClass,
+	public void removeEventListener(Class<? extends PluginEvent> eventClass,
 			PluginEventListener listener) {
 		eventMgr.removeEventListener(eventClass, listener);
 	}
@@ -1417,9 +1417,12 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * time the dialog is shown.
 	 *
 	 * @param dialogComponent the DialogComponentProvider object to be shown in a dialog.
+	 * 
+	 * @deprecated dialogs are now always shown over the active window when possible
 	 */
+	@Deprecated
 	public void showDialogOnActiveWindow(DialogComponentProvider dialogComponent) {
-		DockingWindowManager.showDialogOnActiveWindow(dialogComponent);
+		DockingWindowManager.showDialog(dialogComponent);
 	}
 
 	/**

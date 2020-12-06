@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Looks for defined image data in the program 
-//and writes out any images to the directory 
-//where the executable is stored
+//Looks for already defined graphic image data in the program 
+//and writes all selected images to a directory. 
 //@category Images
 
 import java.awt.image.BufferedImage;
@@ -25,56 +24,45 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+import org.apache.commons.io.FilenameUtils;
+
 import generic.util.image.ImageUtils;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.data.DataImage;
+import ghidra.program.model.data.Resource;
+import ghidra.program.model.listing.Data;
+import ghidra.program.util.DefinedDataIterator;
+import ghidra.util.exception.CancelledException;
 
 public class ExportImagesScript extends GhidraScript {
 
 	@Override
-	public void run() throws Exception {
-		Listing listing = currentProgram.getListing();
-		DataIterator dataIt = listing.getDefinedData(true);
-		while (dataIt.hasNext() && !monitor.isCancelled()) {
-			Data data = dataIt.next();
-			String execPath = currentProgram.getExecutablePath();
-			String imagePath = execPath.substring(0, execPath.lastIndexOf(File.separator) + 1);
-			String execName = execPath.substring(execPath.lastIndexOf(File.separator) + 1);
-			String filename = imagePath + execName;
+	public void run() throws IOException, CancelledException {
+		String programName = currentProgram.getName();
+		File outDir = askDirectory("Select Image Save Directory", "Select");
+		if (outDir == null || !outDir.isDirectory()) {
+			return;
+		}
 
-			checkDataForImage(data, filename);
+		for (Data data : DefinedDataIterator.byDataType(currentProgram, currentSelection,
+			dt -> dt instanceof Resource)) {
+			Object val = data.getValue();
+			if (val instanceof DataImage) {
+				DataImage dataImg = (DataImage) val;
+				String imageType = dataImg.getImageFileType();
+
+				String outputName = programName + "_" + data.getLabel() + "_" +
+					data.getAddress().toString() + "." + imageType;
+				File outputFile = new File(outDir, outputName);
+
+				println("Found " + imageType + " in program " + programName + " at address " +
+					data.getAddressString(false, true));
+				writeImageToFile(data, imageType, outputFile);
+			}
 		}
 	}
 
-	private void checkDataForImage(Data data, String filename) throws IOException {
-		DataType dataType = data.getDataType();
-		String imageType = null;
-
-		if (data.getMnemonicString().equals("PNG")) {
-			println("Found PNG in program " + currentProgram.getExecutablePath() + " at address " +
-				data.getAddressString(false, true));
-			filename += "_" + data.getLabel() + "_" + data.getAddress().toString() + ".png";
-			imageType = "PNG";
-		}
-		else if (data.getMnemonicString().equals("GIF")) {
-			println("Found GIF in program " + currentProgram.getExecutablePath() + " at address " +
-				data.getAddressString(false, true));
-			filename += "_" + data.getLabel() + "_" + data.getAddress().toString() + ".gif";
-			imageType = "GIF";
-		}
-		else if (dataType instanceof BitmapResourceDataType) {
-			println("Found BMP in program " + currentProgram.getExecutablePath() + " at address " +
-				data.getAddressString(false, true));
-			filename += "_" + data.getLabel() + "_" + data.getAddress().toString() + ".bmp";
-			imageType = "BMP";
-		}
-		if (imageType != null) {
-			writeImageToFile(data, imageType, filename);
-		}
-	}
-
-	private void writeImageToFile(Data data, String imageType, String filename) throws IOException {
+	private void writeImageToFile(Data data, String imageType, File outputFile) throws IOException {
 		DataImage image = (DataImage) data.getValue();
 		if (image == null) {
 			println("Found an image at " + data.getAddressString(false, true) +
@@ -83,13 +71,15 @@ public class ExportImagesScript extends GhidraScript {
 		}
 		ImageIcon icon = image.getImageIcon();
 		BufferedImage buffy = ImageUtils.getBufferedImage(icon.getImage());
-		File imageFile = new File(filename);
-		boolean didWrite = ImageIO.write(buffy, imageType, imageFile);
+		boolean didWrite = ImageIO.write(buffy, imageType, outputFile);
 		if (!didWrite) {
-			didWrite = ImageIO.write(buffy, "PNG", imageFile);
+			// ie. because bmp doesn't support transparency
+			outputFile = new File(outputFile.getParent(),
+				FilenameUtils.removeExtension(outputFile.getName()) + ".png");
+			didWrite = ImageIO.write(buffy, "PNG", outputFile);
 		}
 		if (!didWrite) {
-			imageFile.delete();
+			outputFile.delete();
 		}
 	}
 }

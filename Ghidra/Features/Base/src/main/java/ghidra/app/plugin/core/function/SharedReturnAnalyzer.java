@@ -41,7 +41,7 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 			"analyzer was disabled or not present.";
 
 	private final static String OPTION_NAME_ASSUME_CONTIGUOUS_FUNCTIONS =
-		"Assume Contiguous Functions oOnly";
+		"Assume Contiguous Functions Only";
 
 	private final static String OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS =
 		"Allow Conditional Jumps";

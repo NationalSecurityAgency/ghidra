@@ -18,26 +18,24 @@ package ghidra.app.cmd.function;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.function.FunctionManagerDB;
-import ghidra.program.model.listing.FunctionTag;
-import ghidra.program.model.listing.FunctionTagManager;
+import ghidra.program.model.listing.*;
 
 /**
- * Updates the name or comment field for a given function tag. 
+ * Updates the name or comment field for a given function tag
  */
 public class ChangeFunctionTagCmd implements Command {
 
 	private final int field;
 	private final String tagName;
 	private final String newVal;
-	
+
 	private String errorMsg = "";
 
 	public static final int TAG_NAME_CHANGED = 0;
 	public static final int TAG_COMMENT_CHANGED = 1;
 
 	/**
-	 * Constructor.
+	 * Constructor
 	 * 
 	 * @param tagName the name of the tag to change
 	 * @param newVal the new value to set
@@ -52,16 +50,12 @@ public class ChangeFunctionTagCmd implements Command {
 		this.field = field;
 	}
 
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
-
 	@Override
 	public boolean applyTo(DomainObject obj) {
 		ProgramDB program = (ProgramDB) obj;
-		FunctionManagerDB functionManagerDB = (FunctionManagerDB) program.getFunctionManager();
-		FunctionTagManager functionTagManager = functionManagerDB.getFunctionTagManager();
-		FunctionTag tag = functionTagManager.getFunctionTag(tagName);
+		FunctionManager functionManager = program.getFunctionManager();
+		FunctionTagManager tagManager = functionManager.getFunctionTagManager();
+		FunctionTag tag = tagManager.getFunctionTag(tagName);
 
 		if (tag == null) {
 			errorMsg = "Function Tag not found: " + tagName;

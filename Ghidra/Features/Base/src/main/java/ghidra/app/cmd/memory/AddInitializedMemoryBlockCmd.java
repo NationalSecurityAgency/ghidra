@@ -20,7 +20,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for adding a new memory block initialized with a specific byte.
@@ -28,7 +27,6 @@ import ghidra.util.exception.DuplicateNameException;
 public class AddInitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 
 	private final byte initialValue;
-	private final boolean isOverlay;
 
 	/**
 	 * Create a new AddFileBytesMemoryBlockCmd
@@ -47,16 +45,15 @@ public class AddInitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	public AddInitializedMemoryBlockCmd(String name, String comment, String source, Address start,
 			long length, boolean read, boolean write, boolean execute, boolean isVolatile,
 			byte initialValue, boolean isOverlay) {
-		super(name, comment, source, start, length, read, write, execute, isVolatile);
+		super(name, comment, source, start, length, read, write, execute, isVolatile, isOverlay);
 
 		this.initialValue = initialValue;
-		this.isOverlay = isOverlay;
 	}
 
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			DuplicateNameException, CancelledException {
+			CancelledException {
 		return memory.createInitializedBlock(name, start, length, initialValue, null, isOverlay);
 	}
 

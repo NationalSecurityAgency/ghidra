@@ -22,7 +22,7 @@ import ghidra.program.model.mem.MemBuffer;
 class RichTableRecordDataType extends StructureDataType {
 
 	private final RichHeaderRecord record;
-			
+
 	public RichTableRecordDataType(RichHeaderRecord record) {
 		this(null, record);
 	}
@@ -40,7 +40,7 @@ class RichTableRecordDataType extends StructureDataType {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public RichTableRecordDataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}
@@ -64,7 +64,7 @@ class RichTableRecordDataType extends StructureDataType {
 
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
-		return record;				
+		return record;
 	}
 
 	@Override
@@ -81,5 +81,5 @@ class RichTableRecordDataType extends StructureDataType {
 		add(new MSRichProductInfoDataType(record.getCompId()), 4, "productInfo", null);
 		add(new RichObjectCountDataType(record.getObjectCount()), 4, "objectCount", null);
 	}
-	
+
 }

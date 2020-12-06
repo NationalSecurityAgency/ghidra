@@ -105,7 +105,7 @@ public class GoToServiceImpl implements GoToService {
 			programLocation = override.goTo(goToAddress);
 		}
 		if (programLocation == null) {
-			programLocation = helper.getProgramLocationForAddress(goToAddress, program);
+			programLocation = GoToHelper.getProgramLocationForAddress(goToAddress, program);
 		}
 		else {
 			program = programLocation.getProgram();
@@ -116,7 +116,7 @@ public class GoToServiceImpl implements GoToService {
 
 	@Override
 	public boolean goTo(Address goToAddress, Program program) {
-		ProgramLocation location = helper.getProgramLocationForAddress(goToAddress, program);
+		ProgramLocation location = GoToHelper.getProgramLocationForAddress(goToAddress, program);
 		return helper.goTo(defaultNavigatable, location, program);
 	}
 

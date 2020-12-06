@@ -329,14 +329,17 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		DataType myParent = getParent();
 		boolean aligned =
 			(myParent instanceof Composite) ? ((Composite) myParent).isInternallyAligned() : false;
-		// Components don't need to have matching offset when they are aligned, only matching ordinal.
+		// Components don't need to have matching offset when they are aligned
+		// NOTE: use getOffset() method since returned values will differ from
+		// stored values for flexible array component
 		if ((!aligned && (getOffset() != dtc.getOffset())) ||
-			// Components don't need to have matching length when they are aligned. Is this correct?
-			// NOTE: use getOffset() and getOrdinal() methods since returned values will differ from
-			// stored values for flexible array component
-			(!aligned && (getLength() != dtc.getLength())) || getOrdinal() != dtc.getOrdinal() ||
 			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
 			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
+			return false;
+		}
+
+		// Component lengths need only be checked for dynamic types
+		if (getLength() != dtc.getLength() && (myDt instanceof Dynamic)) {
 			return false;
 		}
 

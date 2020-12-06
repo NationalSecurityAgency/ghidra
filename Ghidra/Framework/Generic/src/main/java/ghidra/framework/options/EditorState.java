@@ -20,6 +20,7 @@ import java.beans.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import ghidra.framework.Application;
 import ghidra.util.SystemUtilities;
 
 public class EditorState implements PropertyChangeListener {
@@ -119,10 +120,16 @@ public class EditorState implements PropertyChangeListener {
 	 * directly, as opposed to using the generic framework.
 	 */
 	public boolean supportsCustomOptionsEditor() {
-		return (editor instanceof CustomOptionsEditor);
+		return editor == null || (editor instanceof CustomOptionsEditor);
 	}
 
 	public Component getEditorComponent() {
+		if (editor == null) {
+			// can occur if support has been dropped for custom state/option
+			editor = new ErrorPropertyEditor(
+				"Ghidra does not know how to render state: " + name, null);
+			return editor.getCustomEditor();
+		}
 		if (editor.supportsCustomEditor()) {
 			return editor.getCustomEditor();
 		}
@@ -146,7 +153,9 @@ public class EditorState implements PropertyChangeListener {
 
 		editor.removePropertyChangeListener(this);
 		editor = new ErrorPropertyEditor(
-			"Ghidra does not know how to use PropertyEditor: " + editor.getClass().getName(), null);
+			Application.getName() + " does not know how to use PropertyEditor: " +
+				editor.getClass().getName(),
+			null);
 		return editor.getCustomEditor();
 	}
 

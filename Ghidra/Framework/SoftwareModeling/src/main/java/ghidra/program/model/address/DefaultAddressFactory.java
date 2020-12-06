@@ -71,7 +71,7 @@ public class DefaultAddressFactory implements AddressFactory {
 				this.defaultSpace = space;
 			}
 			spaceNameTable.put(space.getName(), space);
-			spaceLookup.put(space.getUniqueSpaceID(), space);
+			spaceLookup.put(space.getSpaceID(), space);
 			if (space.getType() == AddressSpace.TYPE_CONSTANT) {
 				constantSpace = space;
 			}
@@ -270,7 +270,7 @@ public class DefaultAddressFactory implements AddressFactory {
 	@Override
 	public long getIndex(Address addr) {
 		AddressSpace space = addr.getAddressSpace();
-		int id = space.getUniqueSpaceID();
+		int id = space.getSpaceID();
 		if (spaceLookup.get(id) == null) {
 			spaceLookup.put(id, space);
 		}
@@ -385,24 +385,35 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 		spaces.add(space);
 		spaceNameTable.put(space.getName(), space);
-		spaceLookup.put(space.getUniqueSpaceID(), space);
+		spaceLookup.put(space.getSpaceID(), space);
 
 		if (space.isMemorySpace()) {
 			memoryAddressSet.addRange(space.getMinAddress(), space.getMaxAddress());
 		}
 	}
 
-	protected void renameOverlaySpace(String oldName, String newName)
+	/**
+	 * Rename overlay with newName.
+	 * @param oldOverlaySpaceName the existing overlay address space name
+	 * @param newName the new name of the overlay address space.  
+	 * @return new name applied to existing overlay space
+	 * @throws DuplicateNameException if space with newName already exists
+	 * @throws IllegalArgumentException if specified oldOverlaySpaceName was not found as
+	 * an existing overlay space
+	 */
+	protected String renameOverlaySpace(String oldOverlaySpaceName, String newName)
 			throws DuplicateNameException {
 		if (getAddressSpace(newName) != null) {
 			throw new DuplicateNameException("AddressSpace named " + newName + " already exists!");
 		}
-		AddressSpace space = getAddressSpace(oldName);
+		AddressSpace space = getAddressSpace(oldOverlaySpaceName);
 		if (space != null && space.isOverlaySpace()) {
 			((OverlayAddressSpace) space).setName(newName);
-			spaceNameTable.remove(oldName);
+			spaceNameTable.remove(oldOverlaySpaceName);
 			spaceNameTable.put(space.getName(), space);
+			return newName;
 		}
+		throw new IllegalArgumentException("No such overlay space: " + oldOverlaySpaceName);
 	}
 
 	/**
@@ -415,7 +426,7 @@ public class DefaultAddressFactory implements AddressFactory {
 		if (deletedSpace != null) {
 			spaces.remove(deletedSpace);
 			spaceNameTable.remove(deletedSpace.getName());
-			spaceLookup.remove(deletedSpace.getUniqueSpaceID());
+			spaceLookup.remove(deletedSpace.getSpaceID());
 			if (deletedSpace.getType() == AddressSpace.TYPE_RAM ||
 				deletedSpace.getType() == AddressSpace.TYPE_CODE) {
 				memoryAddressSet.deleteRange(deletedSpace.getMinAddress(),

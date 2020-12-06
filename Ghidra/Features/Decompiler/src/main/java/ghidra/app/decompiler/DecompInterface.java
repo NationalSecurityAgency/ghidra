@@ -31,7 +31,6 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 import ghidra.xml.XmlPullParser;
@@ -131,7 +130,7 @@ public class DecompInterface {
 	}
 
 	/**
-	 * Returns true if debug has been enabled for the current/next decompilation.
+	 * @return true if debug has been enabled for the current/next decompilation.
 	 */
 	public boolean debugEnabled() {
 		return debug != null;
@@ -199,8 +198,8 @@ public class DecompInterface {
 	/**
 	 * This is the main routine for making sure that a decompiler
 	 * process is active and that it is initialized properly
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for errors initializing decompiler options etc.
 	 */
 	protected void initializeProcess() throws IOException, DecompileException {
 		if (decompCallback == null) {
@@ -233,7 +232,6 @@ public class DecompInterface {
 		}
 		if (xmlOptions != null) {
 			decompProcess.setMaxResultSize(xmlOptions.getMaxPayloadMBytes());
-			decompProcess.setShowNamespace(xmlOptions.isDisplayNamespaces());
 			if (!decompProcess.sendCommand1Param("setOptions",
 				xmlOptions.getXML(this)).toString().equals("t")) {
 				throw new IOException("Did not accept decompiler options");
@@ -590,7 +588,6 @@ public class DecompInterface {
 		try {
 			verifyProcess();
 			decompProcess.setMaxResultSize(xmlOptions.getMaxPayloadMBytes());
-			decompProcess.setShowNamespace(xmlOptions.isDisplayNamespaces());
 			return decompProcess.sendCommand1Param("setOptions",
 				xmloptions.getXML(this)).toString().equals("t");
 		}
@@ -701,8 +698,7 @@ public class DecompInterface {
 
 		if (program == null) {
 			return new DecompileResults(func, pcodelanguage, null, dtmanage, decompileMessage, null,
-				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL,
-				false /* cancelled--doesn't matter */);
+				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		try {
@@ -747,7 +743,7 @@ public class DecompInterface {
 			stream = res.getInputStream();
 		}
 		return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage, decompileMessage,
-			stream, processState, isDisplayNamespace());
+			stream, processState);
 	}
 
 	/**
@@ -796,12 +792,4 @@ public class DecompInterface {
 	public CompilerSpec getCompilerSpec() {
 		return compilerSpec;
 	}
-
-	private boolean isDisplayNamespace() {
-		if (xmlOptions == null) {
-			return false; // not sure if this can happen
-		}
-		return xmlOptions.isDisplayNamespaces();
-	}
-
 }

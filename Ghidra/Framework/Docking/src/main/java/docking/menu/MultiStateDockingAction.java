@@ -53,6 +53,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private int currentStateIndex = 0;
 	private MultiActionDockingActionIf multiActionGenerator;
 	private MultipleActionDockingToolbarButton multipleButton;
+	private boolean fireFirstEvent = true;
 
 	private boolean performActionOnPrimaryButtonClick = true;
 
@@ -137,6 +138,21 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	/**
+	 * @return {@code true} if the first action automatically fire its event
+	 */
+	public boolean isFireFirstEvent() {
+		return fireFirstEvent;
+	}
+
+	/**
+	 * set the flag to fire an event on the first action
+	 * @param fireFirstEvent whether to fire the event
+	 */
+	public void setFireFirstEvent(boolean fireFirstEvent) {
+		this.fireFirstEvent = fireFirstEvent;
+	}
+
+	/**
 	 * This is the callback to be overridden when the child wishes to respond to user button
 	 * presses that are on the button and not the drop-down.  This will only be called if
 	 * {@link #performActionOnPrimaryButtonClick} is true.
@@ -176,9 +192,14 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		tbd.setToolBarSubGroup(subGroup);
 	}
 
+	/**
+	 * add the supplied {@code ActionState}
+	 * if {@code fireFirstEvent} is {@code true} the first one will fire its event
+	 * @param actionState the {@code ActionState} to add
+	 */
 	public void addActionState(ActionState<T> actionState) {
 		actionStates.add(actionState);
-		if (actionStates.size() == 1) {
+		if (actionStates.size() == 1 && fireFirstEvent) {
 			setCurrentActionState(actionState);
 		}
 	}
@@ -188,7 +209,9 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 			throw new IllegalArgumentException("You must provide at least one ActionState");
 		}
 		actionStates = new ArrayList<>(newStates);
-		setCurrentActionState(actionStates.get(0));
+		if (fireFirstEvent) {
+			setCurrentActionState(actionStates.get(0));
+		}
 	}
 
 	public T getCurrentUserData() {

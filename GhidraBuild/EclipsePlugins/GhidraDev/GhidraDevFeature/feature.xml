@@ -2,7 +2,7 @@
 <feature
       id="ghidra.ghidradev"
       label="GhidraDev"
-      version="2.1.0.qualifier"
+      version="2.1.1.qualifier"
       provider-name="Ghidra">
 
    <description>

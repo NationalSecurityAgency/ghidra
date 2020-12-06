@@ -24,15 +24,17 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.AddEditDialog;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
 public class RenameFunctionAction extends AbstractDecompilerAction {
 
 	public RenameFunctionAction() {
 		super("Rename Function");
-
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRenameFunction"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 		setPopupMenuData(new MenuData(new String[] { "Rename Function" }, "Decompile"));
 	}

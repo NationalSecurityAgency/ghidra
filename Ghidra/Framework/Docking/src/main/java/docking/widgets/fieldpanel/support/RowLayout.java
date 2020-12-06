@@ -141,6 +141,7 @@ public class RowLayout implements Layout {
 		}
 
 		g.translate(0, heightAbove);
+		rect.y -= heightAbove;
 		// Draw each actual field
 		for (int i = 0; i < fields.length; i++) {
 			paintGapSelection(g, colorManager, rect, i);
@@ -151,10 +152,11 @@ public class RowLayout implements Layout {
 			FieldBackgroundColorManager fieldColorManager =
 				colorManager.getFieldBackgroundColorManager(i);
 			paintFieldBackground(g, i, fieldColorManager);
-			fields[i].paint(c, g, context, fieldColorManager, cursorLoc, getHeight());
+			fields[i].paint(c, g, context, rect, fieldColorManager, cursorLoc, getHeight());
 		}
 		paintGapSelection(g, colorManager, rect, -1);
 		g.translate(0, -heightAbove);
+		rect.y += heightAbove;
 	}
 
 	private void paintFieldBackground(Graphics g, int fieldNum,

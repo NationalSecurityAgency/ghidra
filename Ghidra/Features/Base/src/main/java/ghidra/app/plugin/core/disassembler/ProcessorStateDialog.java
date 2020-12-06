@@ -47,9 +47,9 @@ public class ProcessorStateDialog extends DialogComponentProvider {
 	public ProcessorStateDialog(ProgramContext programContext) {
 		super(TITLE, true, false, true, false);
 		this.programContext = programContext;
-		Register[] contextRegisters = programContext.getProcessorStateRegisters();
+
 		registerList = new ArrayList<>();
-		for (Register register : contextRegisters) {
+		for (Register register : programContext.getContextRegisters()) {
 			if (!register.isBaseRegister()) {
 				registerList.add(register);
 			}

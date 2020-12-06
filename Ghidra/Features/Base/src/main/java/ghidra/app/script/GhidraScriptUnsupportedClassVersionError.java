@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,7 @@ import generic.jar.ResourceFile;
 
 class GhidraScriptUnsupportedClassVersionError extends RuntimeException {
 
-	private ResourceFile classFile;
+	private final ResourceFile classFile;
 
 	GhidraScriptUnsupportedClassVersionError(UnsupportedClassVersionError cause,
 			ResourceFile classFile) {

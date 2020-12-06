@@ -15,7 +15,7 @@
  */
 package help;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -36,31 +36,31 @@ import help.validator.model.*;
 public class OverlayHelpTreeTest {
 
 	@Test
-    public void testSourceTOCFileThatDependsUponPreBuiltHelp() {
+	public void testSourceTOCFileThatDependsUponPreBuiltHelp() {
 		//
-		// We want to make sure the overlay tree will properly resolve help TOC items being 
+		// We want to make sure the overlay tree will properly resolve help TOC items being
 		// built from TOC_Source.xml files when that file uses <TOCREF> items that are defined
 		// in a help <TOCITEM> that lives inside of a pre-built jar file.
 		//
 		/*
-		 
+
 		 	Example makeup we will create:
-		 
+
 			  	PreBuild_TOC.xml
-			  	
+
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake" />
 			  		</tocitem>
-			 
-			 
-			 	TOC_Source.xml 
-			 	
+
+
+			 	TOC_Source.xml
+
 			 		<tocref id="root">
 			 			<tocref="child_1">
 			 				<tocdef id="child_2" target="fake" />
 			 			</tocref>
 			 		</tocref>
-		  
+
 		 */
 
 		TOCItemExternal root = externalItem("root");
@@ -68,12 +68,12 @@ public class OverlayHelpTreeTest {
 
 		Path tocSourceFile = Paths.get("/fake/path_2/TOC_Source.xml");
 		String root_ID = root.getIDAttribute();
-		TOCItemReference root_ref = referenceItem(root_ID, tocSourceFile);
+		TOCItemReference root_ref = tocref(root_ID, tocSourceFile);
 
 		String child_1_ID = child_1.getIDAttribute();
-		TOCItemReference child_1_ref = referenceItem(root_ref, child_1_ID, tocSourceFile);
+		TOCItemReference child_1_ref = tocref(root_ref, child_1_ID, tocSourceFile);
 
-		TOCItemDefinition child_2 = definitionItem(child_1_ref, "child_2", tocSourceFile);
+		TOCItemDefinition child_2 = tocdef(child_1_ref, "child_2", tocSourceFile);
 
 		TOCItemProviderTestStub tocProvider = new TOCItemProviderTestStub();
 		tocProvider.addExternal(root);
@@ -89,41 +89,92 @@ public class OverlayHelpTreeTest {
 	}
 
 	@Test
-    public void testSourceTOCFileThatDependsUponPreBuiltHelp_MultiplePreBuiltInputs() {
+	public void testSourceTOCFileThatDependsAnotherTOCSourceFile() {
+
+		/*
+
+		 The first source file defines attributes that the second file references.
+
+		 Example makeup we will create:
+
+		  	TOC_Source.xml
+
+		  		<tocdef id="root" target="fake">
+		  			<tocdef id="child_1" target="fake" />
+		  		</tocdef>
+
+
+		 	Another TOC_Source.xml
+
+		 		<tocref id="root">
+		 			<tocref="child_1">
+		 				<tocdef id="child_2" target="fake" />
+		 			</tocref>
+		 		</tocref>
+
+		*/
+
+		Path toc_1 = Paths.get("/fake/path_1/TOC_Source.xml");
+		TOCItemDefinition root = tocdef("root", toc_1);
+		TOCItemDefinition child_1 = tocdef(root, "child_1", toc_1);
+
+		Path toc_2 = Paths.get("/fake/path_2/TOC_Source.xml");
+		String root_ID = root.getIDAttribute();
+		String child_1_ID = child_1.getIDAttribute();
+
+		TOCItemReference root_ref = tocref(root_ID, toc_2);
+		TOCItemReference child_1_ref = tocref(root_ref, child_1_ID, toc_2);
+		TOCItemDefinition child_2 = tocdef(child_1_ref, "child_2", toc_2);
+
+		TOCItemProviderTestStub tocProvider = new TOCItemProviderTestStub();
+		tocProvider.addDefinition(root);
+		tocProvider.addDefinition(child_1);
+		tocProvider.addDefinition(child_2);// in the second TOC file
+
+		TOCSpyWriter spy = printOverlayTree(tocProvider, toc_2);
+
+		assertNodeCount(spy, 3);
+		assertOrder(spy, 1, root);
+		assertOrder(spy, 2, child_1);
+		assertOrder(spy, 3, child_2);
+	}
+
+	@Test
+	public void testSourceTOCFileThatDependsUponPreBuiltHelp_MultiplePreBuiltInputs() {
 		//
-		// We want to make sure the overlay tree will properly resolve help TOC items being 
+		// We want to make sure the overlay tree will properly resolve help TOC items being
 		// built from TOC_Source.xml files when that file uses <TOCREF> items that are defined
 		// in a help <TOCITEM> that lives inside of multiple pre-built jar files.
 		//
 		/*
-		 
+
 		 	Example makeup we will create:
-		 
+
 			  	PreBuild_TOC.xml
-			  	
+
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake">
 			  				<tocitem="prebuilt_a_child" target="fake" />
 			  			</tocitem>
 			  		</tocitem>
-			 
+
 				Another PreBuild_TOC.xml
-			  	
+
 			  		<tocitem id="root" target="fake">
 			  			<tocitem id="child_1" target="fake">
 			  				<tocitem="prebuilt_b_child" target="fake" />
 			  			</tocitem>
 			  		</tocitem>
-			 
-			 
-			 	TOC_Source.xml 
-			 	
+
+
+			 	TOC_Source.xml
+
 			 		<tocref id="root">
 			 			<tocref="child_1">
 			 				<tocdef id="child_2" target="fake" />
 			 			</tocref>
 			 		</tocref>
-		  
+
 		 */
 
 		TOCItemExternal root_a = externalItem("root");
@@ -131,18 +182,17 @@ public class OverlayHelpTreeTest {
 		TOCItemExternal prebuilt_a_child = externalItem(child_1_a, "prebuilt_a_child");
 
 		// note: same ID values, since they represent the same nodes, but from different TOC files
-		TOCItemExternal root_b = externalItemAlt(null, "root");
-		TOCItemExternal child_1_b = externalItemAlt(root_b, "child_1");
-		TOCItemExternal prebuilt_b_child = externalItemAlt(child_1_b, "prebuilt_b_child");
+		TOCItemExternal root_b = externalItem(null, "root");
+		TOCItemExternal child_1_b = externalItem(root_b, "child_1");
+		TOCItemExternal prebuilt_b_child = externalItem(child_1_b, "prebuilt_b_child");
 
 		Path tocSourceFile = Paths.get("/fake/path_2/TOC_Source.xml");
 		String root_ID = root_a.getIDAttribute();
-		TOCItemReference root_ref = referenceItem(root_ID, tocSourceFile);
+		TOCItemReference root_ref = tocref(root_ID, tocSourceFile);
 
 		String child_1_ID = child_1_a.getIDAttribute();
-		TOCItemReference child_1_ref = referenceItem(root_ref, child_1_ID, tocSourceFile);
-
-		TOCItemDefinition child_2 = definitionItem(child_1_ref, "child_2", tocSourceFile);
+		TOCItemReference child_1_ref = tocref(root_ref, child_1_ID, tocSourceFile);
+		TOCItemDefinition child_2 = tocdef(child_1_ref, "child_2", tocSourceFile);
 
 		TOCItemProviderTestStub tocProvider = new TOCItemProviderTestStub();
 		tocProvider.addExternal(root_a);
@@ -160,60 +210,85 @@ public class OverlayHelpTreeTest {
 		assertOrder(spy, 2, child_1_a);// could also be child_1_b, same ID
 		assertOrder(spy, 3, child_2);
 
-		// note: prebuilt_a_child and prebuilt_b_child don't get output, since they do not have 
+		// note: prebuilt_a_child and prebuilt_b_child don't get output, since they do not have
 		//       the same TOC file ID as the help file being processed (in other words, they don't
 		//       live in the TOC_Source.xml being processes, so they are not part of the output).
 	}
 
 	@Test
-    public void testSourceTOCFileThatDependsAnotherTOCSourceFile() {
+	public void testSourceTOCFileThatHasNodeWithSameTextAttributeAsOneOfItsExternalModluleDependencies() {
 
 		/*
-		 
-		 The first source file defines attributes that the second file references.
-		 
+
+		 The first source file defines attributes that the second file references.   Both files
+		 will have multiple nodes that coincidentally share 'text' attribute values.
+
+		 Note: the 'id' attributes have to be unique; the 'text' attributes do not have to be unique
+
 		 Example makeup we will create:
-		
-		  	TOC_Source.xml
-		  	
-		  		<tocdef id="root" target="fake">
-		  			<tocdef id="child_1" target="fake" />
-		  		</tocdef>
-		 
-		 
-		 	Another TOC_Source.xml 
-		 	
+
+		  	PreBuild_TOC.xml
+
+		  		<tocitem id="root" target="fake">
+		  			<tocitem id="child_1_1" text="Child 1" target="fake" />
+		  		</tocitem>
+
+			Another PreBuild_TOC.xml
+
+		  		<tocitem id="root" target="fake">
+		  			<tocitem id="child_2_1" text=Child 1" target="fake" />
+		  			<tocitem id="child_2_2" text=Child 2" target="fake" />
+		  		</tocitem>
+
+
+		 	Another TOC_Source.xml
+
 		 		<tocref id="root">
-		 			<tocref="child_1">
-		 				<tocdef id="child_2" target="fake" />
+		 			<tocref="child_1_1">
+		 				<tocdef id="child_2_1a" text="Child 1a" target="fake" />
 		 			</tocref>
+		 			<tocdef id="child_3_2" text="Child 2" target="fake" />
 		 		</tocref>
-		
+
 		*/
 
-		Path toc_1 = Paths.get("/fake/path_1/TOC_Source.xml");
-		TOCItemDefinition root = definitionItem("root", toc_1);
-		TOCItemDefinition child_1 = definitionItem(root, "child_1", toc_1);
+		TOCItemExternal root_a = externalItem("root");
+		TOCItemExternal child_1_1 = externalItem(root_a, "child_1_1", "Child 1");
 
-		Path toc_2 = Paths.get("/fake/path_2/TOC_Source.xml");
-		String root_ID = root.getIDAttribute();
-		String child_1_ID = child_1.getIDAttribute();
+		// note: same ID values, since they represent the same nodes, but from different TOC files
+		TOCItemExternal root_b = externalItem(null, "root");
+		TOCItemExternal child_2_1 = externalItem(root_b, "child_2_1", "Child 1");
+		TOCItemExternal child_2_2 = externalItem(root_b, "child_2_2", "Child 2");
 
-		TOCItemReference root_ref = referenceItem(root_ID, toc_2);
-		TOCItemReference child_1_ref = referenceItem(root_ref, child_1_ID, toc_2);
-		TOCItemDefinition child_2 = definitionItem(child_1_ref, "child_2", toc_2);
+		Path toc = Paths.get("/fake/path_2/TOC_Source.xml");
+		String root_ID = root_a.getIDAttribute();
+		String child_1_ID = child_1_1.getIDAttribute();
+
+		TOCItemReference root_ref = tocref(root_ID, toc);
+		TOCItemReference child_1_ref = tocref(root_ref, child_1_ID, toc);
+		TOCItemDefinition child_2_1a = tocdef(child_1_ref, "child_2_1a", "Child 1a", toc);
+		TOCItemDefinition child_3_2 = tocdef(root_ref, "child_3_2", "Child 2", toc);
 
 		TOCItemProviderTestStub tocProvider = new TOCItemProviderTestStub();
-		tocProvider.addDefinition(root);
-		tocProvider.addDefinition(child_1);
-		tocProvider.addDefinition(child_2);// in the second TOC file
+		tocProvider.addExternal(root_a);
+		tocProvider.addExternal(child_1_1);
+		tocProvider.addExternal(root_b);
+		tocProvider.addExternal(child_2_1);
+		tocProvider.addExternal(child_2_2);
+		tocProvider.addDefinition(child_2_1a); // in the first external TOC file
+		tocProvider.addDefinition(child_3_2);
 
-		TOCSpyWriter spy = printOverlayTree(tocProvider, toc_2);
+		TOCSpyWriter spy = printOverlayTree(tocProvider, toc);
 
-		assertNodeCount(spy, 3);
-		assertOrder(spy, 1, root);
-		assertOrder(spy, 2, child_1);
-		assertOrder(spy, 3, child_2);
+		assertNodeCount(spy, 4);
+		assertOrder(spy, 1, root_a);
+		assertOrder(spy, 2, child_1_1);
+		assertOrder(spy, 3, child_2_1a);
+		assertOrder(spy, 4, child_3_2);
+
+		// note: prebuilt_a_child and prebuilt_b_child don't get output, since they do not have
+		//       the same TOC file ID as the help file being processed (in other words, they don't
+		//       live in the TOC_Source.xml being processes, so they are not part of the output).
 	}
 
 //==================================================================================================
@@ -225,7 +300,7 @@ public class OverlayHelpTreeTest {
 		//
 		// Create a test version of the LinkDatabase for the overlay tree, with test versions of
 		// it's required TOC input file and HelpModuleLocation
-		// 
+		//
 		GhidraTOCFileDummy toc = new GhidraTOCFileDummy(tocFile);
 		OverlayHelpModuleLocationTestStub location = new OverlayHelpModuleLocationTestStub(toc);
 		LinkDatabaseTestStub db = new LinkDatabaseTestStub(location);
@@ -242,22 +317,26 @@ public class OverlayHelpTreeTest {
 		return spy;
 	}
 
-	private TOCItemDefinition definitionItem(String ID, Path tocSourceFile) {
-		return definitionItem(null, ID, tocSourceFile);
+	private TOCItemDefinition tocdef(String ID, Path tocSourceFile) {
+		return tocdef(null, ID, tocSourceFile);
 	}
 
-	private TOCItemDefinition definitionItem(TOCItem parent, String ID, Path tocSourceFile) {
+	private TOCItemDefinition tocdef(TOCItem parent, String ID, Path tocSourceFile) {
+		return tocdef(parent, ID, ID, tocSourceFile);
+	}
+
+	private TOCItemDefinition tocdef(TOCItem parent, String ID, String text, Path tocSourceFile) {
 		String target = "fake";
 		String sort = "";
 		int line = 1;
-		return new TOCItemDefinition(parent, tocSourceFile, ID, ID, target, sort, line);
+		return new TOCItemDefinition(parent, tocSourceFile, ID, text, target, sort, line);
 	}
 
-	private TOCItemReference referenceItem(String referenceID, Path tocSourceFile) {
-		return referenceItem(null, referenceID, tocSourceFile);
+	private TOCItemReference tocref(String referenceID, Path tocSourceFile) {
+		return tocref(null, referenceID, tocSourceFile);
 	}
 
-	private TOCItemReference referenceItem(TOCItem parent, String referenceID, Path tocSourceFile) {
+	private TOCItemReference tocref(TOCItem parent, String referenceID, Path tocSourceFile) {
 		return new TOCItemReference(parent, tocSourceFile, referenceID, 1);
 	}
 
@@ -266,24 +345,20 @@ public class OverlayHelpTreeTest {
 	}
 
 	private TOCItemExternal externalItem(TOCItem parent, String ID) {
-		Path tocFile = Paths.get("/fake/path_1/PreBuild_TOC.xml");
-		String target = "fake";
-		String sort = "";
-		int line = 1;
-		return new TOCItemExternal(parent, tocFile, ID, ID, target, sort, line);
+		return externalItem(parent, ID, ID);
 	}
 
-	private TOCItemExternal externalItemAlt(TOCItem parent, String ID) {
+	private TOCItemExternal externalItem(TOCItem parent, String ID, String text) {
 		Path tocFile = Paths.get("/fake/path_1/PreBuild_TOC.xml");
 		String target = "fake";
 		String sort = "";
 		int line = 1;
-		return new TOCItemExternal(parent, tocFile, ID, ID, target, sort, line);
+		return new TOCItemExternal(parent, tocFile, ID, text, target, sort, line);
 	}
 
 	private void assertOrder(TOCSpyWriter spy, int ordinal, TOCItem item) {
 		String ID = spy.getItem(ordinal - 1 /* make an index */);
-		assertEquals("Did not find TOC item at expected index: " + ordinal, item.getIDAttribute(),
+		assertEquals("Did not find TOC item at expected ordinal: " + ordinal, item.getIDAttribute(),
 			ID);
 	}
 
@@ -324,7 +399,7 @@ public class OverlayHelpTreeTest {
 
 		private void storeDisplayAttribute(String s) {
 			// create a pattern to pull out the display string
-			Pattern p = Pattern.compile(".*display=\"(.*)\" toc_id.*");
+			Pattern p = Pattern.compile(".*toc_id=\"(.*)\".*");
 			Matcher matcher = p.matcher(s.trim());
 
 			if (!matcher.matches()) {
@@ -347,8 +422,8 @@ public class OverlayHelpTreeTest {
 		Map<String, TOCItemDefinition> definitions = new HashMap<>();
 
 		void addExternal(TOCItemExternal item) {
-			String displayText = item.getIDAttribute();
-			externals.put(displayText, item);
+			String ID = item.getIDAttribute();
+			externals.put(ID, item);
 		}
 
 		void addDefinition(TOCItemDefinition item) {
@@ -357,12 +432,12 @@ public class OverlayHelpTreeTest {
 		}
 
 		@Override
-		public Map<String, TOCItemExternal> getTOCItemExternalsByDisplayMapping() {
+		public Map<String, TOCItemExternal> getExternalTocItemsById() {
 			return externals;
 		}
 
 		@Override
-		public Map<String, TOCItemDefinition> getTOCItemDefinitionsByIDMapping() {
+		public Map<String, TOCItemDefinition> getTocDefinitionsByID() {
 			return definitions;
 		}
 

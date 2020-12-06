@@ -4,6 +4,9 @@ define endian=little;
 @define XLEN2 16
 @define FLEN 8
 
+@define MXLEN_1 63
+@define MXLEN_2 62
+
 @define ADDRSIZE "64"
 @define FPSIZE "64"
 

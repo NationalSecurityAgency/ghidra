@@ -20,14 +20,15 @@ import java.net.URI;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
+import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 
 import generic.jar.ResourceFile;
 
 /**
  * A {@link JavaFileObject} that works with Ghidra's {@link ResourceFileJavaFileManager}.
- * <p>
- * This class is used to dynamically compile Ghidra scripts.
+ * 
+ * <p>This class is used to dynamically compile Ghidra scripts.
  */
 public class ResourceFileJavaFileObject implements JavaFileObject {
 
@@ -35,12 +36,26 @@ public class ResourceFileJavaFileObject implements JavaFileObject {
 	private String pathName;
 	private Kind kind;
 
+	/**
+	 * Represents a {@link ResourceFile} for a {@link JavaCompiler} via a {@link ResourceFileJavaFileManager}
+	 * 
+	 * @param sourceRoot the root source directory
+	 * @param file the file
+	 * @param kind the kind
+	 */
 	public ResourceFileJavaFileObject(ResourceFile sourceRoot, ResourceFile file, Kind kind) {
 		this.file = file;
 		this.kind = kind;
 		String sourceRootPath = sourceRoot.getAbsolutePath();
 		// find relative path, add 1 to get past path separator
 		pathName = file.getAbsolutePath().substring(sourceRootPath.length() + 1);
+	}
+
+	/**
+	 * @return the {@link ResourceFile} this object represents
+	 */
+	public ResourceFile getFile() {
+		return file;
 	}
 
 	@Override

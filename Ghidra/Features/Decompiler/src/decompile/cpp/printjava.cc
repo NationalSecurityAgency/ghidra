@@ -37,13 +37,33 @@ PrintLanguage *PrintJavaCapability::buildLanguage(Architecture *glb)
 PrintJava::PrintJava(Architecture *glb,const string &nm) : PrintC(glb,nm)
 
 {
-  option_NULL = true;			// Automatically use 'null' token
+  resetDefaultsPrintJava();
   nullToken = "null";			// Java standard lower-case 'null'
-  mods |= hide_thisparam;		// turn on hiding of 'this' parameter
   if (castStrategy != (CastStrategy *)0)
     delete castStrategy;
 
   castStrategy = new CastStrategyJava();
+}
+
+void PrintJava::resetDefaults(void)
+
+{
+  PrintC::resetDefaults();
+  resetDefaultsPrintJava();
+}
+
+void PrintJava::docFunction(const Funcdata *fd)
+
+{
+  bool singletonFunction = false;
+  if (curscope == (const Scope *)0) {
+    singletonFunction = true;
+    // Always assume we are in the scope of the parent class
+    pushScope(fd->getScopeLocal()->getParent());
+  }
+  PrintC::docFunction(fd);
+  if (singletonFunction)
+    popScope();
 }
 
 /// Print a data-type up to the identifier, store off array sizes
@@ -99,6 +119,8 @@ void PrintJava::pushTypeEnd(const Datatype *ct)
 void PrintJava::adjustTypeOperators(void)
 
 {
+  scope.print = ".";
+  shift_right.print = ">>>";
   TypeOp::selectJavaOperators(glb->inst,true);
 }
 
@@ -130,6 +152,14 @@ bool PrintJava::isArrayType(const Datatype *ct)
     break;
   }
   return false;
+}
+
+void PrintJava::resetDefaultsPrintJava(void)
+
+{
+  option_NULL = true;			// Automatically use 'null' token
+  option_convention = false;		// Automatically hide convention name
+  mods |= hide_thisparam;		// turn on hiding of 'this' parameter
 }
 
 /// Assuming the given Varnode is a dereferenced pointer, determine whether
@@ -190,7 +220,7 @@ void PrintJava::printUnicode(ostream &s,int4 onechar) const
       s << "\\ux" << setfill('0') << setw(8) << hex << onechar;
     return;
   }
-  writeUtf8(s, onechar);		// Emit normally
+  StringManager::writeUtf8(s, onechar);		// Emit normally
 }
 
 void PrintJava::opLoad(const PcodeOp *op)
@@ -228,18 +258,29 @@ void PrintJava::opCallind(const PcodeOp *op)
 
 {
   pushOp(&function_call,op);
-  // implied vn's pushed on in reverse order for efficiency
-  // see PrintLanguage::pushVnImplied
-  int4 startparam = isSet(hide_thisparam) && op->hasThisPointer() ? 2 : 1;
-  if (op->numInput()>startparam + 1) {	// Multiple parameters
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  FuncCallSpecs *fc = fd->getCallSpecs(op);
+  if (fc == (FuncCallSpecs *)0)
+    throw LowlevelError("Missing indirect function callspec");
+  int4 skip = getHiddenThisSlot(op, fc);
+  int4 count = op->numInput() - 1;
+  count -= (skip < 0) ? 0 : 1;
+  if (count > 1) {	// Multiple parameters
     pushVnImplied(op->getIn(0),op,mods);
-    for(int4 i=startparam;i<op->numInput()-1;++i)
+    for(int4 i=0;i<count-1;++i)
       pushOp(&comma,op);
-    for(int4 i=op->numInput()-1;i>=startparam;--i)
+    // implied vn's pushed on in reverse order for efficiency
+    // see PrintLanguage::pushVnImplied
+    for(int4 i=op->numInput()-1;i>=1;--i) {
+      if (i == skip) continue;
       pushVnImplied(op->getIn(i),op,mods);
+    }
   }
-  else if (op->numInput()==startparam + 1) {	// One parameter
-    pushVnImplied(op->getIn(startparam),op,mods);
+  else if (count == 1) {	// One parameter
+    if (skip == 1)
+      pushVnImplied(op->getIn(2),op,mods);
+    else
+      pushVnImplied(op->getIn(1),op,mods);
     pushVnImplied(op->getIn(0),op,mods);
   }
   else {			// A void function

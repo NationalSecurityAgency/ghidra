@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.tree.TreePath;
 
+import org.apache.commons.collections4.map.LazyMap;
+
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.program.model.address.*;
@@ -44,7 +46,13 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		this.filterDepth = filterDepth;
 	}
 
-	public abstract Function getContainingFunction();
+	/**
+	 * Returns this node's remote function, where remote is the source function for 
+	 * an incoming call or a destination function for an outgoing call.   May return 
+	 * null for nodes that do not have functions.
+	 * @return the function or null
+	 */
+	public abstract Function getRemoteFunction();
 
 	/**
 	 * Returns a location that represents the caller of the callee.
@@ -68,7 +76,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 
 	protected Set<Reference> getReferencesFrom(Program program, AddressSetView addresses,
 			TaskMonitor monitor) throws CancelledException {
-		Set<Reference> set = new HashSet<Reference>();
+		Set<Reference> set = new HashSet<>();
 		ReferenceManager referenceManager = program.getReferenceManager();
 		AddressIterator addressIterator = addresses.getAddresses(true);
 		while (addressIterator.hasNext()) {
@@ -93,15 +101,24 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		this.allowDuplicates = allowDuplicates;
 	}
 
-	protected void addNode(List<GTreeNode> nodes, GTreeNode node) {
+	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction,
+			CallNode node) {
+
+		Function function = node.getRemoteFunction();
+		List<GTreeNode> nodes = nodesByFunction.get(function);
+		if (nodes.contains(node)) {
+			return; // never add equal() nodes
+		}
+
 		if (allowDuplicates) {
-			nodes.add(node);
+			nodes.add(node); // ok to add multiple nodes for this function with different addresses
+		}
+
+		if (nodes.isEmpty()) {
+			nodes.add(node); // no duplicates allow; only add if this is the only node
 			return;
 		}
 
-		if (!nodes.contains(node)) {
-			nodes.add(node);
-		}
 	}
 
 	protected class CallNodeComparator implements Comparator<GTreeNode> {
@@ -133,12 +150,43 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		Object[] pathComponents = path.getPath();
 		for (Object pathComponent : pathComponents) {
 			CallNode node = (CallNode) pathComponent;
-			Function nodeFunction = node.getContainingFunction();
-			Function myFunction = getContainingFunction();
+			Function nodeFunction = node.getRemoteFunction();
+			Function myFunction = getRemoteFunction();
 			if (node != this && nodeFunction.equals(myFunction)) {
 				return true;
 			}
 		}
 		return false;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		CallNode other = (CallNode) obj;
+		if (!Objects.equals(getSourceAddress(), other.getSourceAddress())) {
+			return false;
+		}
+		return Objects.equals(getRemoteFunction(), other.getRemoteFunction());
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		Function function = getRemoteFunction();
+		result = prime * result + ((function == null) ? 0 : function.hashCode());
+		Address sourceAddress = getSourceAddress();
+		result = prime * result + ((sourceAddress == null) ? 0 : sourceAddress.hashCode());
+		return result;
+	}
+
 }

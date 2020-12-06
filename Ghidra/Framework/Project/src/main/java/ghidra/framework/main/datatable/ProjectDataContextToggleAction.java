@@ -26,23 +26,12 @@ public abstract class ProjectDataContextToggleAction extends ToggleDockingAction
 
 	@Override
 	public final boolean isEnabledForContext(ActionContext actionContext) {
-		if (!(actionContext instanceof ProjectDataActionContext)) {
+		if (!(actionContext instanceof ProjectDataContext)) {
 			return false;
 		}
 
-		ProjectDataActionContext context = (ProjectDataActionContext) actionContext;
-		if (ignoreTransientProject(context)) {
-			return false;
-		}
-
+		ProjectDataContext context = (ProjectDataContext) actionContext;
 		return isEnabledForContext(context);
-	}
-
-	protected boolean ignoreTransientProject(ProjectDataActionContext context) {
-		if (supportsTransientProjectData()) {
-			return false;
-		}
-		return context.isTransient();
 	}
 
 	/**
@@ -55,38 +44,38 @@ public abstract class ProjectDataContextToggleAction extends ToggleDockingAction
 		return false;
 	}
 
-	protected boolean isEnabledForContext(ProjectDataActionContext context) {
+	protected boolean isEnabledForContext(ProjectDataContext context) {
 		return context.hasOneOrMoreFilesAndFolders();
 	}
 
 	@Override
 	public final void actionPerformed(ActionContext context) {
-		actionPerformed((ProjectDataActionContext) context);
+		actionPerformed((ProjectDataContext) context);
 	}
 
-	protected abstract void actionPerformed(ProjectDataActionContext context);
+	protected abstract void actionPerformed(ProjectDataContext context);
 
 	@Override
 	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof ProjectDataActionContext)) {
+		if (!(context instanceof ProjectDataContext)) {
 			return false;
 		}
-		return isValidContext((ProjectDataActionContext) context);
+		return isValidContext((ProjectDataContext) context);
 	}
 
-	protected boolean isValidContext(ProjectDataActionContext context) {
+	protected boolean isValidContext(ProjectDataContext context) {
 		return true;
 	}
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		if (!(context instanceof ProjectDataActionContext)) {
+		if (!(context instanceof ProjectDataContext)) {
 			return false;
 		}
-		return isAddToPopup((ProjectDataActionContext) context);
+		return isAddToPopup((ProjectDataContext) context);
 	}
 
-	protected boolean isAddToPopup(ProjectDataActionContext context) {
+	protected boolean isAddToPopup(ProjectDataContext context) {
 		return isEnabledForContext(context);
 	}
 

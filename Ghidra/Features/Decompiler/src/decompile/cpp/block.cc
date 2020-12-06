@@ -1254,12 +1254,13 @@ FlowBlock *BlockGraph::nextFlowAfter(const FlowBlock *bl) const
   return nextbl;
 }
 
-void BlockGraph::orderSwitchCases(void) const
+void BlockGraph::finalizePrinting(const Funcdata &data) const
 
 {
+  // Recurse into all the substructures
   vector<FlowBlock *>::const_iterator iter;
   for(iter=list.begin();iter!=list.end();++iter)
-    (*iter)->orderSwitchCases();
+    (*iter)->finalizePrinting(data);
 }
 
 void BlockGraph::saveXmlBody(ostream &s) const
@@ -3082,9 +3083,12 @@ void BlockSwitch::grabCaseBasic(FlowBlock *switchbl,const vector<FlowBlock *> &c
   }
 }
 
-void BlockSwitch::orderSwitchCases(void) const
+void BlockSwitch::finalizePrinting(const Funcdata &data) const
 
 {
+  BlockGraph::finalizePrinting(data);	// Make sure to still recurse
+  // We need to order the cases based on the label
+  // First populate the label and depth fields of the CaseOrder objects
   for(int4 i=0;i<caseblocks.size();++i) { // Construct the depth parameter, to sort fall-thru cases
     CaseOrder &curcase( caseblocks[i] );
     int4 j = curcase.chain;
@@ -3113,7 +3117,7 @@ void BlockSwitch::orderSwitchCases(void) const
     else
       curcase.label = 0;	// Should never happen
   }
-  // Order case statements based on case labels
+  // Do actual sort of the cases based on label
   stable_sort(caseblocks.begin(),caseblocks.end(),CaseOrder::compare);
 }
 

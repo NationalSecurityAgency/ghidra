@@ -117,7 +117,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * The mnemonic for the menu action (optional)
 	 */
 	private int menuMnemonic = MenuData.NO_MNEMONIC;
-
 	/**
 	 * The icon for the  menu item (optional)
 	 */
@@ -161,7 +160,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Predicate for determining if an action is enabled for a given context
 	 */
-	private Predicate<C> enabledPredicate = ALWAYS_TRUE;
+	private Predicate<C> enabledPredicate = null;
 
 	/**
 	 * Predicate for determining if an action should be included on the pop-up menu
@@ -517,7 +516,8 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * 
 	 * <p>If this predicate is not set, the action's enable state must be controlled 
 	 * directly using the {@link DockingAction#setEnabled(boolean)} method.  We do not recommend
-	 * controlling enablement directly.
+	 * controlling enablement directly. And, of course, if you do set this predicate, you should 
+	 * not later call {@link DockingAction#setEnabled(boolean)} to manually manage enablement.
 	 *  
 	 * @param predicate the predicate that will be used to dynamically determine an action's 
 	 *        enabled state
@@ -557,6 +557,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * 
 	 * <p>Note: most actions will not use this method, but rely instead on 
 	 * {@link #enabledWhen(Predicate)}. 
+	 * 
+	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
 	 *  
 	 * @param predicate the predicate that will be used to dynamically determine an action's 
 	 * validity for a given {@link ActionContext}
@@ -564,6 +567,13 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 */
 	public B validContextWhen(Predicate<C> predicate) {
 		validContextPredicate = Objects.requireNonNull(predicate);
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
+		}
+
 		return self();
 	}
 
@@ -615,6 +625,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * {@literal builder.enabledWhen(context -> return context.isAwesome() }}
 	 * </pre>
 	 *
+	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
+	 *  
+	
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.
@@ -628,6 +642,12 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 		if (actionContextClass != ActionContext.class) {
 			throw new IllegalStateException("Can't set the ActionContext type more than once");
+		}
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
 		}
 
 		// To make this work, we need to return a builder whose ActionContext is AC2 and not AC
@@ -665,7 +685,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			action.setHelpLocation(helpLocation);
 		}
 
-		action.enabledWhen(adaptPredicate(enabledPredicate));
+		if (enabledPredicate != null) {
+			action.enabledWhen(adaptPredicate(enabledPredicate));
+		}
+
 		action.validContextWhen(adaptPredicate(validContextPredicate));
 		action.popupWhen(adaptPredicate(popupPredicate));
 	}

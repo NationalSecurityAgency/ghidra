@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,13 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import docking.action.*;
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.OptionsService;
-import docking.*;
+import ghidra.util.HelpLocation;
 
 public class EditPropertiesAction extends DockingAction {
 	private final static String OPTIONS_TITLE = "Decompiler";
@@ -29,6 +31,7 @@ public class EditPropertiesAction extends DockingAction {
 	public EditPropertiesAction(String owner, PluginTool tool) {
 		super("DecompilerProperties", owner);
 		this.tool = tool;
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DisplayOptions"));
 		setPopupMenuData( new MenuData( new String[]{ "Properties"}, "ZED" ) );
 	}
 	

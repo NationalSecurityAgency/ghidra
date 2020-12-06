@@ -80,6 +80,8 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionJumpLoad());
   registerOption(new OptionToggleRule());
   registerOption(new OptionAliasBlock());
+  registerOption(new OptionMaxInstruction());
+  registerOption(new OptionNamespaceStrategy());
 }
 
 OptionDatabase::~OptionDatabase(void)
@@ -815,4 +817,40 @@ string OptionAliasBlock::apply(Architecture *glb,const string &p1,const string &
   if (oldVal == glb->alias_block_level)
     return "Alias block level unchanged";
   return "Alias block level set to " + p1;
+}
+
+string OptionMaxInstruction::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  if (p1.size() == 0)
+    throw ParseError("Must specify number of instructions");
+
+  int4 newMax = -1;
+  istringstream s1(p1);
+  s1.unsetf(ios::dec | ios::hex | ios::oct); // Let user specify base
+  s1 >> newMax;
+  if (newMax < 0)
+    throw ParseError("Bad maxinstruction parameter");
+  glb->max_instructions = newMax;
+  return "Maximum instructions per function set";
+}
+
+/// \class OptionNamespaceStrategy
+/// \brief How should namespace tokens be displayed
+///
+/// The first parameter gives the strategy identifier, mapping to PrintLanguage::namespace_strategy.
+string OptionNamespaceStrategy::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  PrintLanguage::namespace_strategy strategy;
+  if (p1 == "minimal")
+    strategy = PrintLanguage::MINIMAL_NAMESPACES;
+  else if (p1 == "all")
+    strategy = PrintLanguage::ALL_NAMESPACES;
+  else if (p1 == "none")
+    strategy = PrintLanguage::NO_NAMESPACES;
+  else
+    throw ParseError("Must specify a valid strategy");
+  glb->print->setNamespaceStrategy(strategy);
+  return "Namespace strategy set";
 }

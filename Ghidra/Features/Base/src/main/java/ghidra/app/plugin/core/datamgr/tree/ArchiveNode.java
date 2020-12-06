@@ -22,7 +22,6 @@ import javax.swing.Icon;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.model.data.*;
 import ghidra.util.task.SwingUpdateManager;
 

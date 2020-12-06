@@ -245,7 +245,16 @@ public class InputDialog extends DialogComponentProvider {
 	 * @param text the text
 	 */
 	public void setValue(String text) {
-		textFields[0].setText(text);
+		setValue(text, 0);
+	}
+
+	/**
+	 * Sets the text of the text field at the given index
+	 * @param text the text
+	 * @param index the index of the text field
+	 */
+	public void setValue(String text, int index) {
+		textFields[index].setText(text);
 	}
 
 	/**

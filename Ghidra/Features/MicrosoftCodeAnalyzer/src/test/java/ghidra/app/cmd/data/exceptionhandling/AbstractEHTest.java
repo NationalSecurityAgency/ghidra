@@ -16,7 +16,7 @@
 package ghidra.app.cmd.data.exceptionhandling;
 
 import ghidra.app.cmd.data.AbstractCreateDataTypeModelTest;
-import ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin.RttiAnalyzer;
+import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -46,7 +46,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 			getHexAddress32AsByteString(tryAddress, bigEndian));
 		builder.setBytes(ipCountCompAddr.toString(), getIntAsByteString(ipCount, bigEndian));
 		builder.setBytes(ipCompAddr.toString(), getHexAddress32AsByteString(ipAddress, bigEndian));
-		builder.setBytes("0x01005008", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
 	}
 
 	protected void setupV2FuncInfo32(ProgramBuilder builder, long address, int magicNum,
@@ -98,7 +98,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 			getHexAddressAsIbo32ByteString(builder, ipAddress, bigEndian));
 		builder.setBytes(unwindHelpCompAddr.toString(),
 			getIntAsByteString(unwindHelpDisplacement, bigEndian));
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
 	}
 
 	protected void setupV2FuncInfo64(ProgramBuilder builder, long address, int magicNum,
@@ -301,7 +301,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 		// FuncInfo
 		setupV1FuncInfo32(builder, 0x01003340, EHFunctionInfoModel.EH_MAGIC_NUMBER_V1, 3,
 			"0x01003368", 2, "0x01003380", 4, "0x010033d0"); // 28 bytes
-		builder.setBytes("0x01005008", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
 		setupCompleteFlow32NoESTypeList(builder);
 	}
 
@@ -309,7 +309,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 		// FuncInfo
 		setupV2FuncInfo32(builder, 0x01003340, EHFunctionInfoModel.EH_MAGIC_NUMBER_V2, 3,
 			"0x01003368", 2, "0x01003380", 4, "0x010033d0", "0x010033f0"); // 32 bytes
-		builder.setBytes("0x01005008", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
 		setupCompleteFlow32(builder);
 	}
 
@@ -317,7 +317,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 		// FuncInfo
 		setupV3FuncInfo32(builder, 0x01003340, EHFunctionInfoModel.EH_MAGIC_NUMBER_V3, 3,
 			"0x01003368", 2, "0x01003380", 4, "0x010033d0", "0x010033f0", 0x1); // 36 bytes
-		builder.setBytes("0x01005008", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
 		setupCompleteFlow32(builder);
 	}
 
@@ -421,7 +421,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 		// FuncInfo
 		setupV1FuncInfo64(builder, 0x101003340L, EHFunctionInfoModel.EH_MAGIC_NUMBER_V1, 3,
 			"0x101003368", 2, "0x101003380", 4, "0x1010033d0", 0x00000200);
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
 		setupCompleteFlow64NoESTypeList(builder);
 	}
 
@@ -429,7 +429,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 		// FuncInfo
 		setupV2FuncInfo64(builder, 0x101003340L, EHFunctionInfoModel.EH_MAGIC_NUMBER_V2, 3,
 			"0x101003368", 2, "0x101003380", 4, "0x1010033d0", 0x00000200, "0x1010033f0");
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
 		setupCompleteFlow64(builder);
 	}
 
@@ -437,7 +437,7 @@ public class AbstractEHTest extends AbstractCreateDataTypeModelTest {
 		// FuncInfo
 		setupV3FuncInfo64(builder, 0x101003340L, EHFunctionInfoModel.EH_MAGIC_NUMBER_V3, 3,
 			"0x101003368", 2, "0x101003380", 4, "0x1010033d0", 0x00000200, "0x1010033f0", 0x1);
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
 		setupCompleteFlow64(builder);
 	}
 

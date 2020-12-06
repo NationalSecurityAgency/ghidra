@@ -19,14 +19,11 @@ import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for adding uninitialized memory blocks
  */
 public class AddUninitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
-
-	private final boolean isOverlay;
 
 	/**
 	 * Create a new AddUninitializedMemoryBlockCmd
@@ -44,14 +41,12 @@ public class AddUninitializedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	public AddUninitializedMemoryBlockCmd(String name, String comment, String source, Address start,
 			long length, boolean read, boolean write, boolean execute, boolean isVolatile,
 			boolean isOverlay) {
-		super(name, comment, source, start, length, read, write, execute, isVolatile);
-
-		this.isOverlay = isOverlay;
+		super(name, comment, source, start, length, read, write, execute, isVolatile, isOverlay);
 	}
 
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory) throws LockException,
-			MemoryConflictException, AddressOverflowException, DuplicateNameException {
+			MemoryConflictException, AddressOverflowException {
 		return memory.createUninitializedBlock(name, start, length, isOverlay);
 	}
 

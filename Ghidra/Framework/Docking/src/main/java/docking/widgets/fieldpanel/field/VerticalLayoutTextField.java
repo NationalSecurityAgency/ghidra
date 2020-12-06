@@ -208,7 +208,8 @@ public class VerticalLayoutTextField implements TextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc,
+			int rowHeight) {
 		if (context.isPrinting()) {
 			print(g, context);
 			return;
@@ -224,29 +225,62 @@ public class VerticalLayoutTextField implements TextField {
 		Highlight[] highlights = hlFactory.getHighlights(this, getText(), cursorTextOffset);
 		int columns = 0;
 		int n = subFields.size();
+
+		// the graphics have been translated such that the first line of text's base line is
+		// at y=0  (So if we are not clipped, we will drawing from negative the fonts height above
+		// the baseline (-heightAbove) to rowHeight -heightAbove
+		int myStartY = -heightAbove;
+		int myEndY = myStartY + rowHeight;
+		int clipStartY = clip.y;
+		int clipEndY = clip.y + clip.height;
+
 		Color fieldBackgroundColor = colorManager.getBackgroundColor();
 		if (fieldBackgroundColor != null) {
 			g.setColor(fieldBackgroundColor);
-			g.fillRect(startX, -heightAbove, width, rowHeight);
+
+			// restrict background rectangle to clipping rectangle
+			int startY = Math.max(myStartY, clipStartY);
+			int endY = Math.min(myEndY, clipEndY);
+			int clippedHeight = endY - startY;
+			g.fillRect(startX, startY, width, clippedHeight);
 		}
+
+		int startY = myStartY;
+		int translatedY = 0;
+
 		for (int i = 0; i < n; i++) {
-			ClippingTextField clippingField = (ClippingTextField) subFields.get(i);
+			ClippingTextField subField = (ClippingTextField) subFields.get(i);
+			int subFieldHeight = subField.getHeight();
+			int endY = startY + subFieldHeight;
 
-			// translate the highlights
-			for (Highlight highlight : highlights) {
-				highlight.setOffset(-columns);
-			}
-			clippingField.paintSelection(g, colorManager, i, rowHeight);
-			clippingField.paintHighlights(g, highlights);
-			clippingField.paintText(c, g, context);
-			if (cursorRow == i) {
-				clippingField.paintCursor(g, context.getCursorColor(), cursorLoc);
+			// if past clipping region we are done
+			if (startY > clipEndY) {
+				break;
 			}
 
-			g.translate(0, clippingField.getHeight());
-			columns += clippingField.getText().length() + lineDelimiter.length();
+			// if any part of the line is in the clip region, draw it
+			if (endY >= clipStartY) {
+				// translate the highlights
+				for (Highlight highlight : highlights) {
+					highlight.setOffset(-columns);
+				}
+				subField.paintSelection(g, colorManager, i, rowHeight);
+				subField.paintHighlights(g, highlights);
+				subField.paintText(c, g, context);
+				if (cursorRow == i) {
+					subField.paintCursor(g, context.getCursorColor(), cursorLoc);
+				}
+			}
+
+			// translate for next row of text
+			startY += subFieldHeight;
+			g.translate(0, subFieldHeight);
+			translatedY += subFieldHeight;
+			columns += subField.getText().length() + lineDelimiter.length();
 		}
-		g.translate(0, -height);
+
+		// restore the graphics to where it was when we started.
+		g.translate(0, -translatedY);
 	}
 
 	private void print(Graphics g, PaintContext context) {

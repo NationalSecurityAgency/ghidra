@@ -72,8 +72,9 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		transactionID = program.startTransaction("Test");
-		program.getMemory().createInitializedBlock("test", addr(100), 500, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+		program.getMemory()
+				.createInitializedBlock("test", addr(100), 500, (byte) 0,
+					TaskMonitorAdapter.DUMMY_MONITOR, false);
 		functionManager = program.getFunctionManager();
 	}
 
@@ -879,7 +880,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("Stack[0x0]:8", parameters[2].getVariableStorage().toString());
 		assertParameter(p4, parameters[3], false);
 		assertEquals(3, parameters[3].getOrdinal());
-		assertEquals("r10:1", parameters[3].getVariableStorage().toString());
+		assertEquals("r10l:1", parameters[3].getVariableStorage().toString());
 
 	}
 
@@ -933,7 +934,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("Stack[0x0]:8", parameters[2].getVariableStorage().toString());
 		assertParameter(p4, parameters[3], false);
 		assertEquals(3, parameters[3].getOrdinal());
-		assertEquals("r10:1", parameters[3].getVariableStorage().toString());
+		assertEquals("r10l:1", parameters[3].getVariableStorage().toString());
 
 	}
 
@@ -982,7 +983,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertParameter(p2, parameters[2], false);
 		assertEquals("Stack[0x0]:8", parameters[2].getVariableStorage().toString());
 		assertParameter(p3, parameters[3], false);
-		assertEquals("r10:1", parameters[3].getVariableStorage().toString());
+		assertEquals("r10l:1", parameters[3].getVariableStorage().toString());
 
 		// try again with DB params
 
@@ -1011,7 +1012,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("Stack[0x0]:8", parameters[2].getVariableStorage().toString());
 		assertParameter(p3, parameters[3], false);
 		assertEquals(3, parameters[3].getOrdinal());
-		assertEquals("r10:1", parameters[3].getVariableStorage().toString());
+		assertEquals("r10l:1", parameters[3].getVariableStorage().toString());
 
 		// try again with DB params and custom storage
 
@@ -1039,7 +1040,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("Stack[0x0]:8", parameters[2].getVariableStorage().toString());
 		assertParameter(p3, parameters[3], false);
 		assertEquals(3, parameters[3].getOrdinal());
-		assertEquals("r10:1", parameters[3].getVariableStorage().toString());
+		assertEquals("r10l:1", parameters[3].getVariableStorage().toString());
 
 	}
 
@@ -1216,7 +1217,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testDataTypeOnRegisterVariable() throws Exception {
 
-		Register reg = program.getProgramContext().getRegister("r7");
+		Register reg = program.getProgramContext().getRegister("r7l");
 		assertNotNull(reg);
 
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
@@ -1230,11 +1231,13 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 
 		int localTransactionID = program.startTransaction("test");
 		try {
-			bdt = (ByteDataType) program.getDataTypeManager().addDataType(bdt,
-				DataTypeConflictHandler.DEFAULT_HANDLER);
+			bdt = (ByteDataType) program.getDataTypeManager()
+					.addDataType(bdt,
+						DataTypeConflictHandler.DEFAULT_HANDLER);
 			td = new TypedefDataType("byteTD", bdt);
-			td = (TypeDef) program.getDataTypeManager().addDataType(td,
-				DataTypeConflictHandler.DEFAULT_HANDLER);
+			td = (TypeDef) program.getDataTypeManager()
+					.addDataType(td,
+						DataTypeConflictHandler.DEFAULT_HANDLER);
 			AddRegisterParameterCommand cmd = new AddRegisterParameterCommand(f, reg, "reg_param_0",
 				td, 0, SourceType.USER_DEFINED);
 			cmd.applyTo(program);
@@ -1440,7 +1443,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		stackVar.setComment("My Comment0");
 		f.addLocalVariable(stackVar, SourceType.USER_DEFINED);
 
-		dt = (Structure) dt.clone(program.getDataTypeManager());
+		dt = dt.clone(program.getDataTypeManager());
 		dt.add(WordDataType.dataType);
 
 		f = functionManager.getFunctionAt(addr(100));
@@ -1504,12 +1507,12 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.setCustomVariableStorage(true);
 
 		DataType[] dt =
-			new DataType[] { new ByteDataType(), new WordDataType(), new Pointer16DataType() };
+			new DataType[] { new LongDataType(), new WordDataType(), new Pointer16DataType() };
 
 		Register[] regs =
 			new Register[] { functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r2"),
-				functionManager.getProgram().getProgramContext().getRegister("r3") };
+				functionManager.getProgram().getProgramContext().getRegister("r2l"),
+				functionManager.getProgram().getProgramContext().getRegister("r3l") };
 
 		LocalVariableImpl regVar = new LocalVariableImpl("TestReg0", 0, dt[0], regs[0], program);
 		regVar.setComment("My Comment0");
@@ -1543,12 +1546,12 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.setCustomVariableStorage(true);
 
 		DataType[] dt =
-			new DataType[] { new ByteDataType(), new WordDataType(), new Pointer16DataType() };
+			new DataType[] { new LongDataType(), new WordDataType(), new Pointer16DataType() };
 
 		Register[] regs =
 			new Register[] { functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r2"),
-				functionManager.getProgram().getProgramContext().getRegister("r1")
+				functionManager.getProgram().getProgramContext().getRegister("r2l"),
+				functionManager.getProgram().getProgramContext().getRegister("r1l")
 			// same address as regs[0]
 			};
 
@@ -1584,12 +1587,12 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 
 		DataType[] dt =
-			new DataType[] { new ByteDataType(), new WordDataType(), new Pointer16DataType() };
+			new DataType[] { new LongDataType(), new WordDataType(), new Pointer16DataType() };
 
 		Register[] regs =
 			new Register[] { functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r3") };
+				functionManager.getProgram().getProgramContext().getRegister("r1l"),
+				functionManager.getProgram().getProgramContext().getRegister("r3l") };
 
 		LocalVariableImpl regVar = new LocalVariableImpl("TestReg0", 0, dt[0], regs[0], program);
 		regVar.setComment("My Comment0");
@@ -1626,9 +1629,9 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 			new DataType[] { new ByteDataType(), new WordDataType(), new Pointer16DataType() };
 
 		Register[] regs =
-			new Register[] { functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r3") };
+			new Register[] { functionManager.getProgram().getProgramContext().getRegister("r1l"),
+				functionManager.getProgram().getProgramContext().getRegister("r1l"),
+				functionManager.getProgram().getProgramContext().getRegister("r3l") };
 
 		LocalVariableImpl regVar = new LocalVariableImpl("TestReg0", 4, dt[0], regs[0], program);
 		regVar.setComment("My Comment0");
@@ -1734,12 +1737,12 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.setCustomVariableStorage(true);
 
 		DataType[] dt =
-			new DataType[] { new ByteDataType(), new WordDataType(), new Pointer16DataType() };
+			new DataType[] { new LongDataType(), new WordDataType(), new Pointer16DataType() };
 
 		Register[] regs =
 			new Register[] { functionManager.getProgram().getProgramContext().getRegister("r1"),
-				functionManager.getProgram().getProgramContext().getRegister("r2"),
-				functionManager.getProgram().getProgramContext().getRegister("r3") };
+				functionManager.getProgram().getProgramContext().getRegister("r2l"),
+				functionManager.getProgram().getProgramContext().getRegister("r3l") };
 
 		LocalVariableImpl regVar = new LocalVariableImpl("TestReg0", 0, dt[0], regs[0], program);
 		regVar.setComment("My Comment0");
@@ -2077,8 +2080,10 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertNotNull(symbolTable.getGlobalSymbol("LAB_TestA", addr(220)));
 		assertNotNull(symbolTable.getGlobalSymbol("LAB_Test", addr(224)));
 
-		assertTrue(program.getSymbolTable().getPrimarySymbol(
-			addr(201)).getSymbolType() != SymbolType.FUNCTION);
+		assertTrue(program.getSymbolTable()
+				.getPrimarySymbol(
+					addr(201))
+				.getSymbolType() != SymbolType.FUNCTION);
 	}
 
 }

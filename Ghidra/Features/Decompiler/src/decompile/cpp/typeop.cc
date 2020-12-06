@@ -537,7 +537,7 @@ void TypeOpBranchind::printRaw(ostream &s,const PcodeOp *op)
 TypeOpCall::TypeOpCall(TypeFactory *t) : TypeOp(t,CPUI_CALL,"call")
 
 {
-  opflags = (PcodeOp::special|PcodeOp::call|PcodeOp::coderef|PcodeOp::nocollapse);
+  opflags = (PcodeOp::special|PcodeOp::call|PcodeOp::has_callspec|PcodeOp::coderef|PcodeOp::nocollapse);
   behave = new OpBehavior(CPUI_CALL,false,true); // Dummy behavior
 }
 
@@ -577,12 +577,17 @@ Datatype *TypeOpCall::getInputLocal(const PcodeOp *op,int4 slot) const
   // Its false to assume that the parameter symbol corresponds
   // to the varnode in the same slot, but this is easiest until
   // we get giant sized parameters working properly
-  if ((fc->numParams() == op->numInput()-1)||(fc->isDotdotdot())) {
-    ProtoParameter *param = fc->getParam(slot-1);
-    if ((param != (ProtoParameter *)0)&&(param->isTypeLocked())) {
+  ProtoParameter *param = fc->getParam(slot - 1);
+  if (param != (ProtoParameter*) 0) {
+    if (param->isTypeLocked()) {
       ct = param->getType();
-      if ((ct->getMetatype() != TYPE_VOID)&&
-	  (ct->getSize() <= op->getIn(slot)->getSize())) // parameter may not match varnode
+      if ((ct->getMetatype() != TYPE_VOID) && (ct->getSize() <= op->getIn(slot)->getSize())) // parameter may not match varnode
+	return ct;
+    }
+    else if (param->isThisPointer()) {
+      // Known "this" pointer is effectively typelocked even if the prototype as a whole isn't
+      ct = param->getType();
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer*) ct)->getPtrTo()->getMetatype() == TYPE_STRUCT)
 	return ct;
     }
   }
@@ -610,7 +615,7 @@ Datatype *TypeOpCall::getOutputLocal(const PcodeOp *op) const
 TypeOpCallind::TypeOpCallind(TypeFactory *t) : TypeOp(t,CPUI_CALLIND,"callind")
 
 {
-  opflags = PcodeOp::special|PcodeOp::call|PcodeOp::nocollapse;
+  opflags = PcodeOp::special|PcodeOp::call|PcodeOp::has_callspec|PcodeOp::nocollapse;
   behave = new OpBehavior(CPUI_CALLIND,false,true); // Dummy behavior
 }
 
@@ -630,10 +635,17 @@ Datatype *TypeOpCallind::getInputLocal(const PcodeOp *op,int4 slot) const
   if (fc == (const FuncCallSpecs *)0)
     return TypeOp::getInputLocal(op,slot);
   ProtoParameter *param = fc->getParam(slot-1);
-  if ((param != (ProtoParameter *)0)&&(param->isTypeLocked())) {
-    ct = param->getType();
-    if (ct->getMetatype() != TYPE_VOID)
-      return ct;
+  if (param != (ProtoParameter *)0) {
+    if (param->isTypeLocked()) {
+      ct = param->getType();
+      if (ct->getMetatype() != TYPE_VOID)
+	return ct;
+    }
+    else if (param->isThisPointer()) {
+      ct = param->getType();
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo()->getMetatype() == TYPE_STRUCT)
+	return ct;
+    }
   }
   return TypeOp::getInputLocal(op,slot);
 }
@@ -1356,126 +1368,126 @@ TypeOpBoolOr::TypeOpBoolOr(TypeFactory *t)
 TypeOpFloatEqual::TypeOpFloatEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_EQUAL,"==",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
   behave = new OpBehaviorFloatEqual(trans);
 }
 
 TypeOpFloatNotEqual::TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_NOTEQUAL,"!=",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
   behave = new OpBehaviorFloatNotEqual(trans);
 }
 
 TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESS,"<",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput;
   behave = new OpBehaviorFloatLess(trans);
 }
 
 TypeOpFloatLessEqual::TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESSEQUAL,"<=",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput;
   behave = new OpBehaviorFloatLessEqual(trans);
 }
 
 TypeOpFloatNan::TypeOpFloatNan(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_NAN,"NAN",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::booloutput | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary | PcodeOp::booloutput;
   behave = new OpBehaviorFloatNan(trans);
 }
 
 TypeOpFloatAdd::TypeOpFloatAdd(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_ADD,"+",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::commutative;
   behave = new OpBehaviorFloatAdd(trans);
 }
 
 TypeOpFloatDiv::TypeOpFloatDiv(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_DIV,"/",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary;
   behave = new OpBehaviorFloatDiv(trans);
 }
 
 TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_MULT,"*",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::commutative;
   behave = new OpBehaviorFloatMult(trans);
 }
 
 TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_SUB,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary;
   behave = new OpBehaviorFloatSub(trans);
 }
 
 TypeOpFloatNeg::TypeOpFloatNeg(TypeFactory *t,const Translate *trans)
   : TypeOpUnary(t,CPUI_FLOAT_NEG,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatNeg(trans);
 }
 
 TypeOpFloatAbs::TypeOpFloatAbs(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ABS,"ABS",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatAbs(trans);
 }
 
 TypeOpFloatSqrt::TypeOpFloatSqrt(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_SQRT,"SQRT",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatSqrt(trans);
 }
 
 TypeOpFloatInt2Float::TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_INT2FLOAT,"INT2FLOAT",TYPE_FLOAT,TYPE_INT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatInt2Float(trans);
 }
 
 TypeOpFloatFloat2Float::TypeOpFloatFloat2Float(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOAT2FLOAT,"FLOAT2FLOAT",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatFloat2Float(trans);
 }
 
 TypeOpFloatTrunc::TypeOpFloatTrunc(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_TRUNC,"TRUNC",TYPE_INT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatTrunc(trans);
 }
 
 TypeOpFloatCeil::TypeOpFloatCeil(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_CEIL,"CEIL",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatCeil(trans);
 }
 
 TypeOpFloatFloor::TypeOpFloatFloor(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOOR,"FLOOR",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatFloor(trans);
 }
 
 TypeOpFloatRound::TypeOpFloatRound(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ROUND,"ROUND",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatRound(trans);
 }
 
@@ -1610,8 +1622,8 @@ void TypeOpCast::printRaw(ostream &s,const PcodeOp *op)
 TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 
 {
-  opflags = PcodeOp::special | PcodeOp::nocollapse;
-  behave = new OpBehavior(CPUI_PTRADD,false,true); // Dummy behavior
+  opflags = PcodeOp::ternary | PcodeOp::nocollapse;
+  behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
 }
 
 Datatype *TypeOpPtradd::getInputLocal(const PcodeOp *op,int4 slot) const
@@ -1664,8 +1676,8 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// So it should be commutative
 				// But the typing information doesn't really
 				// allow this to be commutative.
-  opflags = PcodeOp::special|PcodeOp::nocollapse;
-  behave = new OpBehavior(CPUI_PTRSUB,false,true); // Dummy behavior
+  opflags = PcodeOp::binary|PcodeOp::nocollapse;
+  behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
 }
 
 Datatype *TypeOpPtrsub::getOutputLocal(const PcodeOp *op) const
@@ -1834,8 +1846,8 @@ void TypeOpNew::printRaw(ostream &s,const PcodeOp *op)
 TypeOpInsert::TypeOpInsert(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INSERT,"INSERT",TYPE_UNKNOWN,TYPE_INT)
 {
-  opflags = PcodeOp::special;
-  behave = new OpBehavior(CPUI_INSERT,false,true);	// Dummy behavior
+  opflags = PcodeOp::ternary;
+  behave = new OpBehavior(CPUI_INSERT,false);	// Dummy behavior
 }
 
 Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
@@ -1849,8 +1861,8 @@ Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
 TypeOpExtract::TypeOpExtract(TypeFactory *t)
   : TypeOpFunc(t,CPUI_EXTRACT,"EXTRACT",TYPE_INT,TYPE_INT)
 {
-  opflags = PcodeOp::special;
-  behave = new OpBehavior(CPUI_EXTRACT,false,true);	// Dummy behavior
+  opflags = PcodeOp::ternary;
+  behave = new OpBehavior(CPUI_EXTRACT,false);	// Dummy behavior
 }
 
 Datatype *TypeOpExtract::getInputLocal(const PcodeOp *op,int4 slot) const

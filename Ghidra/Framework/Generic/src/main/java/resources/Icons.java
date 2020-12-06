@@ -33,72 +33,58 @@ import resources.icons.TranslateIcon;
  */
 public class Icons {
 
-	public static final ImageIcon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
+	public static final ImageIcon EMPTY_ICON = get("images/EmptyIcon16.gif");
 
-	public static final ImageIcon HELP_ICON =
-		ResourceManager.loadImage("images/help-browser.png");
+	public static final ImageIcon HELP_ICON = get("images/help-browser.png");
 
-	public static final ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus2.png");
+	public static final ImageIcon ADD_ICON = get("images/Plus2.png");
 
-	public static final ImageIcon COLLAPSE_ALL_ICON =
-		ResourceManager.loadImage("images/collapse_all.png");
-	public static final ImageIcon EXPAND_ALL_ICON =
-		ResourceManager.loadImage("images/expand_all.png");
+	public static final ImageIcon COLLAPSE_ALL_ICON = get("images/collapse_all.png");
+	public static final ImageIcon EXPAND_ALL_ICON = get("images/expand_all.png");
 
-	public static final ImageIcon CONFIGURE_FILTER_ICON =
-		ResourceManager.loadImage("images/exec.png");
-	public static final ImageIcon DELETE_ICON = ResourceManager.loadImage("images/error.png");
-	public static final ImageIcon ERROR_ICON =
-		ResourceManager.loadImage("images/emblem-important.png");
+	public static final ImageIcon CONFIGURE_FILTER_ICON = get("images/exec.png");
+	public static final ImageIcon DELETE_ICON = get("images/error.png");
+	public static final ImageIcon ERROR_ICON = get("images/emblem-important.png");
 
-	public static final ImageIcon NAVIGATE_ON_INCOMING_EVENT_ICON =
-		ResourceManager.loadImage("images/locationIn.gif");
-	public static final ImageIcon NAVIGATE_ON_OUTGOING_EVENT_ICON =
-		ResourceManager.loadImage("images/locationOut.gif");
+	public static final ImageIcon NAVIGATE_ON_INCOMING_EVENT_ICON = get("images/locationIn.gif");
+	public static final ImageIcon NAVIGATE_ON_OUTGOING_EVENT_ICON = get("images/locationOut.gif");
 
-	public static final ImageIcon NOT_ALLOWED_ICON = ResourceManager.loadImage("images/no.png");
-	public static final ImageIcon OPEN_FOLDER_ICON =
-		ResourceManager.loadImage("images/openSmallFolder.png");
-	public static final ImageIcon REFRESH_ICON = ResourceManager.loadImage("images/reload3.png");
+	public static final ImageIcon NOT_ALLOWED_ICON = get("images/no.png");
+	public static final ImageIcon OPEN_FOLDER_ICON = get("images/openSmallFolder.png");
+	public static final ImageIcon REFRESH_ICON = get("images/reload3.png");
 
-	public static final ImageIcon SORT_ASCENDING_ICON =
-		ResourceManager.loadImage("images/sortascending.png");
-	public static final ImageIcon SORT_DESCENDING_ICON =
-		ResourceManager.loadImage("images/sortdescending.png");
+	public static final ImageIcon SORT_ASCENDING_ICON = get("images/sortascending.png");
+	public static final ImageIcon SORT_DESCENDING_ICON = get("images/sortdescending.png");
 
-	public static final ImageIcon STOP_ICON = ResourceManager.loadImage("images/process-stop.png");
-	public static final ImageIcon STRONG_WARNING_ICON =
-		ResourceManager.loadImage("images/software-update-urgent.png");
+	public static final ImageIcon STOP_ICON = get("images/process-stop.png");
+	public static final ImageIcon STRONG_WARNING_ICON = get("images/software-update-urgent.png");
 
-	public static final ImageIcon LEFT_ICON = ResourceManager.loadImage("images/left.png");
-	public static final ImageIcon RIGHT_ICON = ResourceManager.loadImage("images/right.png");
+	public static final ImageIcon LEFT_ICON = get("images/left.png");
+	public static final ImageIcon RIGHT_ICON = get("images/right.png");
 
 	/** An version of the LEFT_ICON with a different color */
-	public static final ImageIcon LEFT_ALTERNATE_ICON =
-		ResourceManager.loadImage("images/left.alternate.png");
+	public static final ImageIcon LEFT_ALTERNATE_ICON = get("images/left.alternate.png");
 
 	/** An version of the RIGHT_ICON with a different color */
-	public static final ImageIcon RIGHT_ALTERNATE_ICON =
-		ResourceManager.loadImage("images/right.alternate.png");
+	public static final ImageIcon RIGHT_ALTERNATE_ICON = get("images/right.alternate.png");
 
-	public static final ImageIcon SAVE_AS = ResourceManager.getImageIcon(
-		new DotDotDotIcon(ResourceManager.loadImage("images/Disk.png")));
+	public static final ImageIcon SAVE_AS =
+		ResourceManager.getImageIcon(new DotDotDotIcon(get("images/Disk.png")));
 
-	public static final ImageIcon MAKE_SELECTION_ICON =
-		ResourceManager.loadImage("images/text_align_justify.png");
+	public static final ImageIcon MAKE_SELECTION_ICON = get("images/text_align_justify.png");
 
 	// Not necessarily re-usable, but this is needed for the help system; these should 
 	// probably be moved to the client that uses them, while updating the
 	// help system to use them there.
-	public static final ImageIcon ARROW_DOWN_RIGHT_ICON = ResourceManager.getImageIcon(
-		new RotateIcon(ResourceManager.loadImage("images/viewmagfit.png"), 90));
-	public static final ImageIcon ARROW_UP_LEFT_ICON = ResourceManager.getImageIcon(
-		new RotateIcon(ResourceManager.loadImage("images/viewmagfit.png"), 275));
-	public static final ImageIcon FILTER_NOT_ACCEPTED_ICON = ResourceManager.getImageIcon(
-		new MultiIcon(ResourceManager.loadImage("images/flag.png"), new TranslateIcon(
+	public static final ImageIcon ARROW_DOWN_RIGHT_ICON =
+		ResourceManager.getImageIcon(new RotateIcon(get("images/viewmagfit.png"), 90));
+	public static final ImageIcon ARROW_UP_LEFT_ICON =
+		ResourceManager.getImageIcon(new RotateIcon(get("images/viewmagfit.png"), 275));
+	public static final ImageIcon FILTER_NOT_ACCEPTED_ICON =
+		ResourceManager.getImageIcon(new MultiIcon(get("images/flag.png"), new TranslateIcon(
 			ResourceManager.loadImage("images/dialog-cancel.png", 10, 10), 6, 6)));
-	public static final ImageIcon APPLY_BLOCKED_MATCH_ICON = ResourceManager.getImageIcon(
-		new MultiIcon(ResourceManager.loadImage("images/kgpg.png"), new TranslateIcon(
+	public static final ImageIcon APPLY_BLOCKED_MATCH_ICON =
+		ResourceManager.getImageIcon(new MultiIcon(get("images/kgpg.png"), new TranslateIcon(
 			ResourceManager.loadImage("images/checkmark_green.gif", 12, 12), 4, 0)));
 
 	/**
@@ -132,6 +118,39 @@ public class Icons {
 
 		URL url = getUrlFromIcon(icon);
 		return new IconProvider(icon, url);
+	}
+
+	/**
+	 * Gets the icon for the given icon path. The given path should be relative to the classpath.
+	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
+	 * <P>
+	 * For example, an icon named foo.png would typically be stored in the module at 
+	 * "{modulePath}/src/main/resources/image/foo.png".  To reference that icon, use the path
+	 * "images/foo.png", since "{modulePath}/src/main/resources" is in the classpath.
+	 * 
+	 * @param iconPath the icon path (relative to the classpath)
+	 * @return The icon referenced by that path. 
+	 */
+	public static ImageIcon get(String iconPath) {
+		return ResourceManager.loadImage(iconPath);
+	}
+
+	/**
+	 * Gets the icon for the given icon path and scale it to the specifed width and height.
+	 * The given path should be relative to the classpath.
+	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
+	 * <P>
+	 * For example, an icon named foo.png would typically be stored in the module at 
+	 * "{modulePath}/src/main/resources/image/foo.png".  To reference that icon, use the path
+	 * "images/foo.png", since "{modulePath}/src/main/resources" is in the classpath.
+	 * 
+	 * @param iconPath the icon path (relative to the classpath)
+	 * @param width the desired width after scaling
+	 * @param height the desired height after scaling
+	 * @return The icon referenced by that path. 
+	 */
+	public static ImageIcon get(String iconPath, int width, int height) {
+		return ResourceManager.loadImage(iconPath, width, height);
 	}
 
 	private static String getIconName(String snippet) {

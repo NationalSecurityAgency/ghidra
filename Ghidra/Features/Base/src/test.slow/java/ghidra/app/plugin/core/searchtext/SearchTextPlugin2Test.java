@@ -631,6 +631,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSearchTasks(tempDialog);
 		waitForSwing();
 		assertFalse(tempDialog.isVisible());
+
 		assertFalse(isEnabled(searchAction));
 	}
 

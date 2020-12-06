@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 //Creates a template help file by reading all of the actions from a selected plugin.
-//@category HELP
 
 import java.io.*;
 import java.util.*;
@@ -102,7 +101,8 @@ public class CreateHelpTemplateScript extends GhidraScript {
 	}
 
 	private List<DockingActionIf> getActions(PluginTool tool, Plugin plugin) {
-		Set<DockingActionIf> actions = KeyBindingUtils.getKeyBindingActionsForOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions =
+			KeyBindingUtils.getKeyBindingActionsForOwner(tool, plugin.getName());
 		List<DockingActionIf> list = new ArrayList<>(actions);
 		Comparator<DockingActionIf> comparator = (action1, action2) -> {
 			try {

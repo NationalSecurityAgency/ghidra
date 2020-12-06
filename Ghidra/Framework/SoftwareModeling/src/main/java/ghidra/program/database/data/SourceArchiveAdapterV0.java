@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.SourceArchive;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
 

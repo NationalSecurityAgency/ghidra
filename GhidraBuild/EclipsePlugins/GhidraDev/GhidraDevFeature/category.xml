@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/ghidra.ghidradev_2.1.0.qualifier.jar" id="ghidra.ghidradev" version="2.1.0.qualifier">
+   <feature url="features/ghidra.ghidradev_2.1.1.qualifier.jar" id="ghidra.ghidradev" version="2.1.1.qualifier">
       <category name="ghidra.ghidradev"/>
    </feature>
    <category-def name="ghidra.ghidradev" label="Ghidra"/>

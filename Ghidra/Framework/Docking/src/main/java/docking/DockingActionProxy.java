@@ -123,9 +123,8 @@ public class DockingActionProxy
 	}
 
 	@Override
-	public boolean setEnabled(boolean newValue) {
-		boolean oldValue = dockingAction.setEnabled(newValue);
-		return oldValue;
+	public void setEnabled(boolean newValue) {
+		dockingAction.setEnabled(newValue);
 	}
 
 	@Override

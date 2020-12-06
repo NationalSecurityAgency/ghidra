@@ -27,6 +27,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.plugin.core.memory.AddBlockModel.InitializedType;
 import ghidra.app.plugin.core.misc.RegisterField;
 import ghidra.app.util.*;
@@ -63,11 +64,14 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private JCheckBox writeCB;
 	private JCheckBox executeCB;
 	private JCheckBox volatileCB;
+	private JCheckBox overlayCB;
 	private RegisterField initialValueField;
 	private JLabel initialValueLabel;
 	private AddressFactory addrFactory;
-	private AddressInput baseAddrField; // used for BitMemoryBlocks
-	private Address baseAddress;
+	private AddressInput baseAddrField; // used for Bit and Byte mapped blocks
+	private IntegerTextField schemeDestByteCountField; // used for Byte mapped blocks
+	private IntegerTextField schemeSrcByteCountField; // used for Byte mapped blocks
+	
 	private AddBlockModel model;
 	private GhidraComboBox<MemoryBlockType> comboBox;
 	private boolean updatingInitializedRB;
@@ -103,6 +107,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		writeCB.setSelected(model.isWrite());
 		executeCB.setSelected(model.isExecute());
 		volatileCB.setSelected(model.isVolatile());
+		overlayCB.setSelected(model.isOverlay());
 	}
 
 	/**
@@ -163,12 +168,18 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		volatileCB.setSelected(model.isVolatile());
 		volatileCB.addActionListener(e -> model.setVolatile(volatileCB.isSelected()));
 
+		overlayCB = new GCheckBox("Overlay");
+		overlayCB.setName("Overlay");
+		overlayCB.setSelected(model.isOverlay());
+		overlayCB.addActionListener(e -> model.setOverlay(overlayCB.isSelected()));
+
 		JPanel panel = new JPanel(new HorizontalLayout(10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 30, 20, 30));
 		panel.add(readCB);
 		panel.add(writeCB);
 		panel.add(executeCB);
 		panel.add(volatileCB);
+		panel.add(overlayCB);
 
 		return panel;
 	}
@@ -178,7 +189,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		panel.setBorder(BorderFactory.createTitledBorder("Block Types"));
 
 		MemoryBlockType[] items = new MemoryBlockType[] { MemoryBlockType.DEFAULT,
-			MemoryBlockType.OVERLAY, MemoryBlockType.BIT_MAPPED, MemoryBlockType.BYTE_MAPPED };
+			MemoryBlockType.BIT_MAPPED, MemoryBlockType.BYTE_MAPPED };
 
 		comboBox = new GhidraComboBox<>(items);
 		comboBox.addItemListener(e -> blockTypeSelected());
@@ -308,6 +319,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		writeCB.setSelected(model.isWrite());
 		executeCB.setSelected(model.isExecute());
 		volatileCB.setSelected(model.isVolatile());
+		overlayCB.setSelected(model.isOverlay());
 
 		setOkEnabled(false);
 		tool.showDialog(this, tool.getComponentProvider(PluginConstants.MEMORY_MAP));
@@ -406,19 +418,39 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private void baseAddressChanged() {
-		baseAddress = baseAddrField.getAddress();
+		Address baseAddress = baseAddrField.getAddress();
 		model.setBaseAddress(baseAddress);
+	}
+	
+	private void schemeSrcByteCountChanged() {
+		int value = schemeSrcByteCountField.getIntValue();
+		model.setSchemeSrcByteCount(value);
+	}
+
+	private void schemeDestByteCountChanged() {
+		int value = schemeDestByteCountField.getIntValue();
+		model.setSchemeDestByteCount(value);
 	}
 
 	private void blockTypeSelected() {
 		MemoryBlockType blockType = (MemoryBlockType) comboBox.getSelectedItem();
 		model.setBlockType(blockType);
-		if (blockType == MemoryBlockType.DEFAULT || blockType == MemoryBlockType.OVERLAY) {
+		if (blockType == MemoryBlockType.DEFAULT) {
 			typeCardLayout.show(viewPanel, UNMAPPED);
 		}
 		else {
+			enableByteMappingSchemeControls(blockType == MemoryBlockType.BYTE_MAPPED);
+			schemeDestByteCountField.setValue(model.getSchemeDestByteCount());
+			schemeSrcByteCountField.setValue(model.getSchemeSrcByteCount());
 			typeCardLayout.show(viewPanel, MAPPED);
 		}
+	}
+
+	private void enableByteMappingSchemeControls(boolean b) {
+		schemeDestByteCountField.setValue(1);
+		schemeDestByteCountField.setEnabled(b);
+		schemeSrcByteCountField.setValue(1);
+		schemeSrcByteCountField.setEnabled(b);
 	}
 
 	private JPanel buildMappedPanel() {
@@ -427,8 +459,25 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		baseAddrField = new AddressInput();
 		baseAddrField.setAddressFactory(addrFactory);
 		baseAddrField.setName("Source Addr");
-
 		baseAddrField.addChangeListener(ev -> baseAddressChanged());
+		
+		JPanel schemePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		
+		schemeDestByteCountField = new IntegerTextField(4, 1);
+		schemeDestByteCountField.setAllowNegativeValues(false);
+		schemeDestByteCountField.setAllowsHexPrefix(false);
+		schemeDestByteCountField.setDecimalMode();
+		schemeDestByteCountField.addChangeListener(ev -> schemeDestByteCountChanged());
+		
+		schemeSrcByteCountField = new IntegerTextField(4, 1);
+		schemeSrcByteCountField.setAllowNegativeValues(false);
+		schemeSrcByteCountField.setAllowsHexPrefix(false);
+		schemeSrcByteCountField.setDecimalMode();
+		schemeSrcByteCountField.addChangeListener(ev -> schemeSrcByteCountChanged());
+		
+		schemePanel.add(schemeDestByteCountField.getComponent());
+		schemePanel.add(new GLabel(" : "));
+		schemePanel.add(schemeSrcByteCountField.getComponent());
 
 		Program program = model.getProgram();
 		Address minAddr = program.getMinAddress();
@@ -437,8 +486,12 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		}
 		baseAddrField.setAddress(minAddr);
 		model.setBaseAddress(minAddr);
-		panel.add(new GLabel("Source Addr:"));
+		panel.add(new GLabel("Source Address:"));
 		panel.add(baseAddrField);
+		
+		panel.add(new GLabel("Mapping Ratio:"));
+		panel.add(schemePanel);
+		
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		return panel;
 	}

@@ -25,7 +25,7 @@ public class VisualGraphSatelliteNavigationGraphMousePlugin<V extends VisualVert
 		extends VisualGraphSatelliteAbstractGraphMousePlugin<V, E> {
 
 	public VisualGraphSatelliteNavigationGraphMousePlugin() {
-		super(InputEvent.BUTTON1_MASK);
+		super(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
 	@Override

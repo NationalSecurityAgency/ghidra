@@ -252,9 +252,11 @@
         <H3><A name="c_cpp"/><A name="Options_C_C__""/>C/C++</H3>
 
         <BLOCKQUOTE>
-          <P>Create a C/C++ file containing all datatypes from the program's <A href=
-          "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">data type
-          manager</A> and all of the functions in the program.&nbsp;</P>
+          <P>Create a C/C++ file containing functions decompiled from the program and, optionally,
+          containing definitions of all datatypes from the program's
+          <A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">
+          data type manager</A>. The datatype definitions and a prototype declaration for each function
+          can be placed in a separate header file.&nbsp;</P>
 
           <H4>C/C++ Options</H4>
 
@@ -266,6 +268,14 @@
             <LI><B>Create C File (.c)</B> - Select to create a .c file.</LI>
 
             <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
+            
+            <LI><B>Emit data-type definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
+            
+            <LI><B>Function tags to filter</B> - Optionally list function tags to filter which functions are exported.
+            Multiple tags should be comma separated.</LI>
+            
+            <LI><B>Function tags excluded</B> - Select to exclude all tagged functions from being exported. Deselect to
+            export only tagged functions.</LI>
           </UL>
         </BLOCKQUOTE>
 

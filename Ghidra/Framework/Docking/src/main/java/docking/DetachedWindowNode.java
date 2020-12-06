@@ -361,6 +361,17 @@ class DetachedWindowNode extends WindowNode {
 			}
 		});
 
+		adjustBounds();
+
+		window.setBounds(bounds);
+		window.setVisible(true);
+	}
+
+	/**
+	 * Ensures the bounds of this window have a valid location and size 
+	 */
+	private void adjustBounds() {
+
 		if (bounds.height == 0 || bounds.width == 0) {
 			window.pack();
 			Dimension d = window.getSize();
@@ -368,9 +379,14 @@ class DetachedWindowNode extends WindowNode {
 			bounds.width = d.width;
 		}
 
-		WindowUtilities.ensureOnScreen(winMgr.getRootFrame(), bounds);
-		window.setBounds(bounds);
-		window.setVisible(true);
+		Window activeWindow = winMgr.getActiveWindow();
+		Point p = bounds.getLocation();
+		if (p.x == 0 && p.y == 0) {
+			p = WindowUtilities.centerOnScreen(activeWindow, bounds.getSize());
+			bounds.setLocation(p);
+		}
+
+		WindowUtilities.ensureOnScreen(activeWindow, bounds);
 	}
 
 	private JFrame createFrame() {
@@ -455,10 +471,6 @@ class DetachedWindowNode extends WindowNode {
 		((RootNode) parent).notifyWindowChanged(this);
 	}
 
-	/**
-	 * Releases all resources and makes this node unusable.
-	 *
-	 */
 	@Override
 	void dispose() {
 		if (dropTargetHandler != null) {
@@ -516,10 +528,8 @@ class DetachedWindowNode extends WindowNode {
 		if (window != null) {
 			bounds = window.getBounds();
 		}
+
 		Element root = new Element("WINDOW_NODE");
-//		if (title != null) {
-//			root.setAttribute("TITLE", title);
-//		}
 		root.setAttribute("X_POS", "" + bounds.x);
 		root.setAttribute("Y_POS", "" + bounds.y);
 		root.setAttribute("WIDTH", "" + bounds.width);
@@ -539,7 +549,7 @@ class DetachedWindowNode extends WindowNode {
 
 	/**
 	 * Set the status text
-	 * @param text
+	 * @param text the text
 	 */
 	public void setStatusText(String text) {
 		if (statusBar != null) {

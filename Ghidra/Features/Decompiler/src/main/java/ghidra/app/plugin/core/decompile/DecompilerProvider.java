@@ -34,6 +34,7 @@ import ghidra.app.decompiler.component.*;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
+import ghidra.app.util.HelpTopics;
 import ghidra.app.util.HighlightProvider;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -54,7 +55,8 @@ import resources.ResourceManager;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
-		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler {
+		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler,
+		DecompilerHighlightService {
 	final static String OPTIONS_TITLE = "Decompiler";
 
 	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
@@ -125,14 +127,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		@Override
 		public void serviceRemoved(Class<?> interfaceClass, Object service) {
-			if (interfaceClass.equals(GraphService.class)) {
+			if (interfaceClass.equals(GraphDisplayBroker.class)) {
 				graphServiceRemoved();
 			}
 		}
 
 		@Override
 		public void serviceAdded(Class<?> interfaceClass, Object service) {
-			if (interfaceClass.equals(GraphService.class)) {
+			if (interfaceClass.equals(GraphDisplayBroker.class)) {
 				graphServiceAdded();
 			}
 		}
@@ -171,7 +173,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		setWindowMenuGroup("Decompile");
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 		createActions(isConnected);
-		setHelpLocation(new HelpLocation(plugin.getName(), "Decompiler"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DecompilerIntro"));
 		addToTool();
 
 		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh());
@@ -223,6 +225,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		if (function == null) {
 			return null;
 		}
+		if (!controller.hasDecompileResults()) {
+			return null;
+		}
+
 		Address entryPoint = function.getEntryPoint();
 		boolean isDecompiling = controller.isDecompiling();
 		return new DecompilerActionContext(this, entryPoint, isDecompiling);
@@ -627,10 +633,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			navigatable = newProvider;
 		}
 
-		Symbol symbol = function.getSymbol();
-		ExternalManager externalManager = program.getExternalManager();
-		ExternalLocation externalLocation = externalManager.getExternalLocation(symbol);
-		if (externalLocation != null) {
+		if (function.isExternal()) {
+			Symbol symbol = function.getSymbol();
+			ExternalManager externalManager = program.getExternalManager();
+			ExternalLocation externalLocation = externalManager.getExternalLocation(symbol);
 			service.goToExternalLocation(navigatable, externalLocation, true);
 		}
 		else {
@@ -708,10 +714,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private void initializeDecompilerOptions() {
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-		HelpLocation helpLocation = new HelpLocation(plugin.getName(), "DecompileOptions");
-		decompilerOptions.registerOptions(plugin, opt, program, helpLocation);
-
+		HelpLocation helpLocation = new HelpLocation(HelpTopics.DECOMPILER, "GeneralOptions");
 		opt.setOptionsHelpLocation(helpLocation);
+		opt.getOptions("Analysis")
+				.setOptionsHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "AnalysisOptions"));
+		opt.getOptions("Display")
+				.setOptionsHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DisplayOptions"));
+		decompilerOptions.registerOptions(plugin, opt, program);
+
 		opt.addOptionsChangeListener(this);
 
 		ToolOptions codeBrowserOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
@@ -740,7 +750,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		};
 		refreshAction.setToolBarData(new ToolBarData(REFRESH_ICON, "A" /* first on toolbar */));
 		refreshAction.setDescription("Push at any time to trigger a re-decompile");
-		refreshAction.setHelpLocation(new HelpLocation(plugin.getName(), "Decompiler")); // just use the default
+		refreshAction
+				.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarRedecompile")); // just use the default
 
 		//
 		// Below are actions along with their groups and subgroup information.  The comments
@@ -967,7 +978,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void graphServiceRemoved() {
-		if (graphASTControlFlowAction != null && tool.getService(GraphService.class) == null) {
+		if (graphASTControlFlowAction == null) {
+			return;
+		}
+		if (tool.getService(GraphDisplayBroker.class) == null) {
 			tool.removeAction(graphASTControlFlowAction);
 			graphASTControlFlowAction.dispose();
 			graphASTControlFlowAction = null;
@@ -975,7 +989,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void graphServiceAdded() {
-		if (graphASTControlFlowAction == null && tool.getService(GraphService.class) != null) {
+		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
+		if (service != null && service.getDefaultGraphDisplayProvider() != null) {
 			graphASTControlFlowAction = new GraphASTControlFlowAction();
 			addLocalAction(graphASTControlFlowAction);
 		}
@@ -1015,18 +1030,29 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program2) {
+	public void removeHighlightProvider(HighlightProvider highlightProvider, Program p) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program2) {
+	public void setHighlightProvider(HighlightProvider highlightProvider, Program p) {
 		// currently unsupported
-
 	}
 
 	public void programClosed(Program closedProgram) {
 		controller.programClosed(closedProgram);
+	}
+
+	@Deprecated // to be removed post 9.2; replace with an API to manipulate primary highlights
+	@Override
+	public ClangLayoutController getLayoutModel() {
+		return (ClangLayoutController) getDecompilerPanel().getLayoutModel();
+	}
+
+	@Deprecated // to be removed post 9.2; replace with an API to manipulate primary highlights
+	@Override
+	public void clearHighlights() {
+		getDecompilerPanel().clearPrimaryHighlights();
 	}
 
 }

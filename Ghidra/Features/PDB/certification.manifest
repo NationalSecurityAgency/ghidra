@@ -21,7 +21,6 @@ src/main/help/help/topics/Pdb/images/PdbOrXmlDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/PeSpecifiedPathDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/SuccessDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Pdb/images/SymbolServerURLDialog.png||GHIDRA||||END|
-src/pdb/.editorconfig||GHIDRA||||END|
 src/pdb/README.txt||GHIDRA||||END|
 src/pdb/pdb.sln||GHIDRA||||END|
 src/pdb/pdb.vcxproj||GHIDRA||||END|

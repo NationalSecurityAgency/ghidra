@@ -108,7 +108,7 @@ public class LinkDatabase {
 	}
 
 	private void collectTOCItemDefinitions(TOCItemProvider tocProvider) {
-		Map<String, TOCItemDefinition> map = tocProvider.getTOCItemDefinitionsByIDMapping();
+		Map<String, TOCItemDefinition> map = tocProvider.getTocDefinitionsByID();
 		Set<Entry<String, TOCItemDefinition>> entrySet = map.entrySet();
 		for (Entry<String, TOCItemDefinition> entry : entrySet) {
 			String key = entry.getKey();
@@ -124,7 +124,7 @@ public class LinkDatabase {
 	}
 
 	private void collectTOCItemExternals(TOCItemProvider tocProvider) {
-		Map<String, TOCItemExternal> map = tocProvider.getTOCItemExternalsByDisplayMapping();
+		Map<String, TOCItemExternal> map = tocProvider.getExternalTocItemsById();
 		for (TOCItemExternal tocItem : map.values()) {
 			mapOfIDsToTOCExternals.put(tocItem.getIDAttribute(), tocItem);
 		}

@@ -83,29 +83,27 @@ public:
     namelock = 0x200,	///< The Name of the Varnode is locked
     nolocalalias = 0x400,	///< There are no aliases pointing to this varnode
     volatil = 0x800,	///< This varnode's value is volatile
-    spacebase_placeholder = 0x1000, ///< This varnode is inserted artificially to track a register
-                                    ///< value at a specific point in the code
     
-    externref = 0x2000,	///< Varnode address is specially mapped by the loader
-    readonly = 0x4000,	///< Varnode is stored at a readonly location
-    persist = 0x8000,	///< Persists after (and before) function
-    addrtied = 0x10000,	///< High-level variable is tied to address
-    unaffected = 0x20000,	///< Input which is unaffected by the function
-    spacebase = 0x40000,	///< This is a base register for an address space
-    indirectonly = 0x80000, ///< If all uses of illegalinput varnode are inputs to INDIRECT
-    directwrite = 0x100000, ///< (could be) Directly affected by a valid input
-    addrforce = 0x200000, ///< Varnode is used to force variable into an address
+    externref = 0x1000,	///< Varnode address is specially mapped by the loader
+    readonly = 0x2000,	///< Varnode is stored at a readonly location
+    persist = 0x4000,	///< Persists after (and before) function
+    addrtied = 0x8000,	///< High-level variable is tied to address
+    unaffected = 0x10000,	///< Input which is unaffected by the function
+    spacebase = 0x20000,	///< This is a base register for an address space
+    indirectonly = 0x40000, ///< If all uses of illegalinput varnode are inputs to INDIRECT
+    directwrite = 0x80000, ///< (could be) Directly affected by a valid input
+    addrforce = 0x100000, ///< Varnode is used to force variable into an address
     
-    mapped = 0x400000, ///< Varnode has a database entry associated with it
-    indirect_creation = 0x800000, ///< The value in this Varnode is created indirectly
-    return_address = 0x1000000, ///< Is the varnode storage for a return address
-    coverdirty = 0x2000000, ///< Cover is not upto date
-    precislo = 0x4000000,	///< Is this Varnode the low part of a double precision value
-    precishi = 0x8000000,	///< Is this Varnode the high part of a double precision value
-    indirectstorage = 0x10000000, ///< Is this Varnode storing a pointer to the actual symbol
-    hiddenretparm = 0x20000000,	 ///< Does this varnode point to the return value storage location
-    incidental_copy = 0x40000000, ///< Do copies of this varnode happen as a side-effect
-    auto_live = 0x80000000	///< Is this varnode automatically considered live, never removed as dead-code
+    mapped = 0x200000, ///< Varnode has a database entry associated with it
+    indirect_creation = 0x400000, ///< The value in this Varnode is created indirectly
+    return_address = 0x800000, ///< Is the varnode storage for a return address
+    coverdirty = 0x1000000, ///< Cover is not upto date
+    precislo = 0x2000000,	///< Is this Varnode the low part of a double precision value
+    precishi = 0x4000000,	///< Is this Varnode the high part of a double precision value
+    indirectstorage = 0x8000000, ///< Is this Varnode storing a pointer to the actual symbol
+    hiddenretparm = 0x10000000,	 ///< Does this varnode point to the return value storage location
+    incidental_copy = 0x20000000, ///< Do copies of this varnode happen as a side-effect
+    autolive_hold = 0x40000000	///< Temporarily block dead-code removal of \b this
   };
   /// Additional boolean properties on a Varnode
   enum addl_flags {
@@ -117,7 +115,9 @@ public:
     ptrflow = 0x20,             ///< If this varnode flows to or from a pointer
     unsignedprint = 0x40,	///< Constant that must be explicitly printed as unsigned
     stack_store = 0x80,		///< Created by an explicit STORE
-    locked_input = 0x100	///< Input that exists even if its unused
+    locked_input = 0x100,	///< Input that exists even if its unused
+    spacebase_placeholder = 0x200 ///< This varnode is inserted artificially to track a register
+				///< value at a specific point in the code
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -229,14 +229,15 @@ public:
   /// Are all Varnodes at this storage location components of the same high-level variable?
   bool isAddrTied(void) const { return ((flags&(Varnode::addrtied|Varnode::insert))==(Varnode::addrtied|Varnode::insert)); }
   bool isAddrForce(void) const { return ((flags&Varnode::addrforce)!=0); } ///< Is \b this value forced into a particular storage location?
-  bool isAutoLive(void) const { return ((flags&Varnode::auto_live)!=0); } ///< Is \b this varnode exempt from dead-code removal?
+  bool isAutoLive(void) const { return ((flags&(Varnode::addrforce|Varnode::autolive_hold))!=0); } ///< Is \b this varnode exempt from dead-code removal?
+  bool isAutoLiveHold(void) const { return ((flags&Varnode::autolive_hold)!=0); }	///< Is there a temporary hold on dead-code removal?
   bool isMapped(void) const { return ((flags&Varnode::mapped)!=0); } ///< Is there or should be formal symbol information associated with \b this?
   bool isUnaffected(void) const { return ((flags&Varnode::unaffected)!=0); } ///< Is \b this a value that is supposed to be preserved across the function?
   bool isSpacebase(void) const { return ((flags&Varnode::spacebase)!=0); } ///< Is this location used to store the base point for a virtual address space?
   bool isReturnAddress(void) const { return ((flags&Varnode::return_address)!=0); } ///< Is this storage for a calls return address?
   bool isPtrCheck(void) const { return ((addlflags&Varnode::ptrcheck)!=0); } ///< Has \b this been checked as a constant pointer to a mapped symbol?
   bool isPtrFlow(void) const { return ((addlflags&Varnode::ptrflow)!=0); } ///< Does this varnode flow to or from a known pointer
-  bool isSpacebasePlaceholder(void) const { return ((flags&Varnode::spacebase_placeholder)!=0); } ///< Is \b this used specifically to track stackpointer values?
+  bool isSpacebasePlaceholder(void) const { return ((addlflags&Varnode::spacebase_placeholder)!=0); } ///< Is \b this used specifically to track stackpointer values?
   bool hasNoLocalAlias(void) const { return ((flags&Varnode::nolocalalias)!=0); } ///< Are there (not) any local pointers that might affect \b this?
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); } ///< Has \b this been visited by the current algorithm?
   bool isActiveHeritage(void) const { return ((addlflags&Varnode::activeheritage)!=0); } ///< Is \b this currently being traced by the Heritage algorithm?
@@ -277,10 +278,8 @@ public:
   void clearMark(void) const { flags &= ~Varnode::mark; } ///< Clear the mark on this Varnode
   void setDirectWrite(void) { flags |= Varnode::directwrite; } ///< Mark \b this as directly affected by a legal input
   void clearDirectWrite(void) { flags &= ~Varnode::directwrite; } ///< Mark \b this as not directly affected by a legal input
-  void setAddrForce(void) { setFlags(Varnode::addrforce | Varnode::auto_live); } ///< Mark as forcing a value into \b this particular storage location
-  void clearAddrForce(void) { clearFlags(Varnode::addrforce | Varnode::auto_live); }	///< Clear the forcing attribute
-  void setAutoLive(void) { flags |= Varnode::auto_live; } ///< Mark varnode as exempt from dead-code removal
-  void clearAutoLive(void) { flags &= ~Varnode::auto_live; } ///< Clear exemption for dead-code removal
+  void setAddrForce(void) { setFlags(Varnode::addrforce); } ///< Mark as forcing a value into \b this particular storage location
+  void clearAddrForce(void) { clearFlags(Varnode::addrforce); }	///< Clear the forcing attribute
   void setImplied(void) { setFlags(Varnode::implied); }	///< Mark \b this as an \e implied variable in the final C source
   void clearImplied(void) { clearFlags(Varnode::implied); } ///< Clear the \e implied mark on this Varnode
   void setExplicit(void) { setFlags(Varnode::explict); } ///< Mark \b this as an \e explicit variable in the final C source
@@ -291,14 +290,16 @@ public:
   void clearPtrCheck(void) { addlflags &= ~Varnode::ptrcheck; } ///< Clear the pointer check mark on this Varnode
   void setPtrFlow(void) { addlflags |= Varnode::ptrflow; } ///< Set \b this as flowing to or from pointer
   void clearPtrFlow(void) { addlflags &= ~Varnode::ptrflow; } ///< Indicate that this varnode is not flowing to or from pointer
-  void setSpacebasePlaceholder(void) { setFlags(Varnode::spacebase_placeholder); } ///< Mark \b this as a special Varnode for tracking stackpointer values
-  void clearSpacebasePlaceholder(void) { clearFlags(Varnode::spacebase_placeholder); } ///< Clear the stackpointer tracking mark
+  void setSpacebasePlaceholder(void) { addlflags |= Varnode::spacebase_placeholder; } ///< Mark \b this as a special Varnode for tracking stackpointer values
+  void clearSpacebasePlaceholder(void) { addlflags &= ~Varnode::spacebase_placeholder; } ///< Clear the stackpointer tracking mark
   void setPrecisLo(void) { setFlags(Varnode::precislo); } ///< Mark \b this as the low portion of a double precision value
   void clearPrecisLo(void) { clearFlags(Varnode::precislo); } ///< Clear the mark indicating a double precision portion
   void setPrecisHi(void) { setFlags(Varnode::precishi); } ///< Mark \b this as the high portion of a double precision value
   void clearPrecisHi(void) { clearFlags(Varnode::precishi); } ///< Clear the mark indicating a double precision portion
   void setWriteMask(void) { addlflags |= Varnode::writemask; } ///< Mark \b this as not a true \e write when computing SSA form
   void clearWriteMask(void) { addlflags &= ~Varnode::writemask; } ///< Clear the mark indicating \b this is not a true write
+  void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
+  void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
   bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE

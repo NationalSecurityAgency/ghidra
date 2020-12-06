@@ -62,16 +62,15 @@ public abstract class NavigatableContextAction extends DockingAction {
 	}
 
 	protected boolean isEnabledForContext(NavigatableActionContext context) {
-		return true;
+		// assume that all Navigatable context actions require a valid program location
+		return context.getLocation() != null;
 	}
 
 	protected boolean isAddToPopup(NavigatableActionContext context) {
 		return isEnabledForContext(context);
 	}
 
-	protected void actionPerformed(NavigatableActionContext context) {
-		// optional for subclasses
-	}
+	protected abstract void actionPerformed(NavigatableActionContext context);
 
 	@Override
 	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {

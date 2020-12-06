@@ -196,9 +196,6 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		// TODO
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#startTransaction(java.lang.String)
-	 */
 	@Override
 	public int startTransaction(String description) {
 		return dataTypeArchive.startTransaction(description);
@@ -209,26 +206,11 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		dataTypeArchive.flushEvents();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#endTransaction(int, boolean)
-	 */
 	@Override
 	public void endTransaction(int transactionID, boolean commit) {
 		dataTypeArchive.endTransaction(transactionID, commit);
-
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#close()
-	 */
-	@Override
-	public void close() {
-		// do nothing
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DomainFileBasedDataTypeManager#getDomainFile()
-	 */
 	@Override
 	public DomainFile getDomainFile() {
 		return dataTypeArchive.getDomainFile();
@@ -255,6 +237,12 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		if (openMode == DBConstants.UPGRADE) {
 			doSourceArchiveUpdates(null, monitor);
 		}
+	}
+
+	@Override
+	public void close() {
+		// do nothing - cannot close a project data type manager
+		// dispose should be invoked by the owner of the instance
 	}
 
 }

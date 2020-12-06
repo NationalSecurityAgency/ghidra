@@ -124,15 +124,15 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 		switch (type) {
 			case MemoryMapDBAdapterV2.BIT_MAPPED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BIT_MAPPED);
-				record.setLongValue(MemoryMapDBAdapter.SUB_SOURCE_OFFSET_COL, overlayAddr);
+				record.setLongValue(MemoryMapDBAdapter.SUB_LONG_DATA2_COL, overlayAddr);
 				return new BitMappedSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.BYTE_MAPPED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BYTE_MAPPED);
-				record.setLongValue(MemoryMapDBAdapter.SUB_SOURCE_OFFSET_COL, overlayAddr);
+				record.setLongValue(MemoryMapDBAdapter.SUB_LONG_DATA2_COL, overlayAddr);
 				return new ByteMappedSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.INITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BUFFER);
-				record.setIntValue(SUB_SOURCE_ID_COL, bufID);
+				record.setIntValue(SUB_INT_DATA1_COL, bufID);
 				return new BufferSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.UNINITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNITIALIZED);
@@ -161,7 +161,8 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address mappedAddress, boolean initializeBytes, int permissions)
+			long length, Address mappedAddress, boolean initializeBytes, int permissions,
+			int mappingScheme)
 			throws AddressOverflowException, IOException {
 		throw new UnsupportedOperationException();
 	}
@@ -216,7 +217,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 
 	@Override
 	Record createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
-			int sourceID, long sourceOffset) throws IOException {
+			int data1, long data2) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

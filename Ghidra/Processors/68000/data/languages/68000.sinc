@@ -1084,8 +1084,8 @@ macro shiftCXFlags(cntreg) {
 :move eaw,"CCR"			is (opbig=0x44 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ unpackflags(eaw); }
 :move SR,eaw			is SR; (opbig=0x40 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ packflags(SR); eaw = SR; }
 :move eaw,SR			is SR; (opbig=0x46 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ SR = eaw; unpackflags(SR); }
-:move SP,regan			is SP; opbig=0x4e & op37=13 & regan				{ regan = SP; }
-:move regan,SP			is SP; opbig=0x4e & op37=12 & regan				{ SP = regan; }
+:move USP,regan			is opbig=0x4e & op37=13 & regan & USP			{ regan = USP; }
+:move regan,USP			is opbig=0x4e & op37=12 & regan & USP			{ USP = regan; }
  
 :movea.w eaw,reg9an		is (op=3 & reg9an & mode2=1)... & eaw				{ reg9an = sext(eaw); }
 :movea.l eal,reg9an		is (op=2 & reg9an & mode2=1)... & eal				{ reg9an = eal; }

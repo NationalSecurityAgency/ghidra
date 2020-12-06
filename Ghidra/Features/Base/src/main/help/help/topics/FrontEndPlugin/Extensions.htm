@@ -29,11 +29,17 @@ option on the project file menu.</p>
 <h2>Dialog Components</h2>
 <h3>Extensions List</h3>
 <blockquote>
-The list of extensions is populated when the dialog is launched. To build the list, Ghidra looks in two locations:
+The list of extensions is populated when the dialog is launched. To build the list, Ghidra looks in several locations:
 <ul>
-<li>Extensions Installation Directory: Contains any extensions that have been installed. This is located at <i>[installation dir]/Ghidra/Extensions/</i></li>
+<li>Extension Installation Directories: Contains any extensions that have been installed. The directories are located at:</li>
+  <ul>
+  <li><i>[user dir]/.ghidra/.ghidra-[version]/Extensions</i> - Installed/uninstalled from this dialog</li>
+  <li><i>[installation dir]/Ghidra/Extensions/</i> - Installed/uninstalled from filesystem manually</li>
+  </ul>
 <li>Extensions Archive Directory: This is where all archive files (zips) are stored. It is located at <i>[installation dir]/Extensions/Ghidra/</i></li>
 </ul>
+<p><b>Note: </b> Extensions that have been installed directly into the Ghidra installation directory cannot be uninstalled
+from this dialog.  They must be manually removed from the filesystem.</p>
 </blockquote>
 
 <h3>Description Panel</h3>

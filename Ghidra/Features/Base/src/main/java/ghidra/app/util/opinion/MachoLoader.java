@@ -94,6 +94,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 			}
 		}
+		catch (IOException e) {
+			throw e;
+		}
 		catch (Exception e) {
 			throw new IOException(e.getMessage());
 		}

@@ -31,8 +31,6 @@ public abstract class Task implements MonitoredRunnable {
 	private boolean canCancel;
 	private boolean hasProgress;
 	private boolean isModal;
-	private boolean isInterruptible;
-	private boolean isForgettable;
 	protected boolean waitForTaskCompleted = false;
 	private Set<TaskListener> listeners = new HashSet<>();
 	protected TaskMonitor taskMonitor = TaskMonitor.DUMMY;
@@ -164,10 +162,10 @@ public abstract class Task implements MonitoredRunnable {
 		};
 
 		if (waitForTaskCompleted) {
-			SystemUtilities.runSwingNow(r);
+			Swing.runNow(r);
 		}
 		else {
-			SystemUtilities.runSwingLater(r);
+			Swing.runLater(r);
 		}
 	}
 
@@ -176,8 +174,8 @@ public abstract class Task implements MonitoredRunnable {
 	 * 
 	 * <P>Note: The run(TaskMonitor) method should not make any calls directly
 	 * on Swing components, as these calls are not thread safe. Place Swing
-	 * calls in a Runnable, then call {@link SystemUtilities#runSwingLater(Runnable)} or
-	 * {@link SystemUtilities#runSwingNow(Runnable)}to schedule the Runnable inside of
+	 * calls in a Runnable, then call {@link Swing#runLater(Runnable)} or
+	 * {@link Swing#runNow(Runnable)}to schedule the Runnable inside of
 	 * the AWT Event Thread.
 	 * 
 	 * @param monitor The TaskMonitor that will monitor the executing Task

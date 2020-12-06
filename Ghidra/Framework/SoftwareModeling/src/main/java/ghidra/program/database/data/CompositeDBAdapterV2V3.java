@@ -128,6 +128,9 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 		if (readOnly) {
 			throw new ReadOnlyException();
 		}
+		if (internalAlignment == UNALIGNED) {
+			length = 0; // aligned structures always start empty
+		}
 		long tableKey = compositeTable.getKey();
 //		if (tableKey <= DataManager.VOID_DATATYPE_ID) {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;

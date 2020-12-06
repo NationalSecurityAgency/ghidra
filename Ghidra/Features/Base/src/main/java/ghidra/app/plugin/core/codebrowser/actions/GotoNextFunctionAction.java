@@ -39,7 +39,7 @@ public class GotoNextFunctionAction extends NavigatableContextAction {
 	private PluginTool tool;
 
 	public GotoNextFunctionAction(PluginTool tool, String owner) {
-		super("Go to next function", owner);
+		super("Go To Next Function", owner);
 		this.tool = tool;
 
 		MenuData menuData =

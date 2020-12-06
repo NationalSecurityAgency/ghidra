@@ -45,7 +45,7 @@ public class StructureEditorUnlockedActions3Test
 		DataType dt7 = getDataType(7);// SimpleUnion
 
 		invoke(duplicateMultipleAction);
-		dialog = env.waitForDialogComponent(NumberInputDialog.class, 1000);
+		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
 		dialog = null;
@@ -102,7 +102,7 @@ public class StructureEditorUnlockedActions3Test
 	public void testEditFieldOnBlankLine() throws Exception {
 		init(emptyStructure, pgmTestCat);
 
-		assertTrue(!model.isEditingField());
+		assertFalse(model.isEditingField());
 		triggerActionKey(getTable(), editFieldAction);
 		assertTrue(model.isEditingField());
 		assertEquals(0, model.getRow());
@@ -116,7 +116,7 @@ public class StructureEditorUnlockedActions3Test
 		init(complexStructure, pgmTestCat);
 
 		setSelection(new int[] { 3 });
-		assertTrue(!model.isEditingField());
+		assertFalse(model.isEditingField());
 		invoke(editFieldAction);
 		JTable table = getTable();
 		Container component = (Container) table.getEditorComponent();
@@ -140,10 +140,10 @@ public class StructureEditorUnlockedActions3Test
 
 		DataTypeComponent dtc = model.getComponent(3);
 		assertNotNull(dtc);
-		assertTrue(!dtc.isBitFieldComponent());
+		assertFalse(dtc.isBitFieldComponent());
 
 		setSelection(new int[] { 3 });
-		assertTrue(!model.isEditingField());
+		assertFalse(model.isEditingField());
 		invoke(editFieldAction);
 		JTable table = getTable();
 		Container component = (Container) table.getEditorComponent();
@@ -156,7 +156,7 @@ public class StructureEditorUnlockedActions3Test
 
 		waitForSwing();
 
-		assertTrue(!model.isEditingField());
+		assertFalse(model.isEditingField());
 		assertEquals(3, model.getRow());
 		assertNotEditingField();
 
@@ -192,7 +192,7 @@ public class StructureEditorUnlockedActions3Test
 
 		int num = model.getNumComponents();
 		setSelection(new int[] { 3 });
-		assertTrue(!getDataType(3).isEquivalent(dt));
+		assertFalse(getDataType(3).isEquivalent(dt));
 		invoke(fav);// replacing dword with byte followed by 3 undefineds
 		assertEquals(num + 3, model.getNumComponents());
 		assertTrue(getDataType(3).isEquivalent(dt));

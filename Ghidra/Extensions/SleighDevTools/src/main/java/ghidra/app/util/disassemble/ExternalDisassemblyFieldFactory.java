@@ -150,7 +150,10 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 		if (disassembly == null) {
 			return null;
 		}
-
+		String prefix = disassembler.getDisassemblyDisplayPrefix(cu);
+		if (prefix != null) {
+			disassembly = prefix + " " + disassembly;
+		}
 		return disassembly;
 	}
 

@@ -27,6 +27,14 @@ import ghidra.program.model.listing.Function;
  * Allows users to create comparisons between functions which will be displayed
  * side-by-side in a {@link FunctionComparisonProvider}. Each side in the 
  * display will allow the user to select one or more functions 
+ * 
+ * <p>Concurrent usage: All work performed by this service will be done on the Swing thread.  
+ * Further, all calls that do not return a value will be run immediately if the caller is on 
+ * the Swing thread; otherwise, the work will be done on the Swing thread at a later time.  
+ * Contrastingly, any method on this interface that returns a value will be run immediately,
+ * regardless of whether the call is on the Swing thread.  Thus, the methods that return a value
+ * will always be blocking calls; methods that do not return a value may or may not block, 
+ * depending on the client's thread.
  */
 @ServiceInfo(defaultProvider = FunctionComparisonPlugin.class)
 public interface FunctionComparisonService {
@@ -45,7 +53,7 @@ public interface FunctionComparisonService {
 	 * variant that takes a provider.
 	 * 
 	 * @param functions the functions to compare
-	 * @return the new comparison provider
+	 * @return the new comparison provider 
 	 */
 	public FunctionComparisonProvider compareFunctions(Set<Function> functions);
 
@@ -61,10 +69,9 @@ public interface FunctionComparisonService {
 	 * 
 	 * @param source a function in the comparison
 	 * @param target a function in the comparison
-	 * @return the comparison provider
+	 * @return the new comparison provider
 	 */
-	public FunctionComparisonProvider compareFunctions(Function source,
-			Function target);
+	public FunctionComparisonProvider compareFunctions(Function source, Function target);
 
 	/**
 	 * Creates a comparison between a set of functions, adding them to the 

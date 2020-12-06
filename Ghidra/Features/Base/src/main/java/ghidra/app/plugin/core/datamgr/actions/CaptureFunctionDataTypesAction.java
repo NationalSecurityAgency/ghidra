@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,13 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import javax.swing.tree.TreePath;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.cmd.function.CaptureFunctionDataTypesCmd;
 import ghidra.app.cmd.function.CaptureFunctionDataTypesListener;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -26,14 +32,6 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-
-import javax.swing.tree.TreePath;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeNode;
 
 public class CaptureFunctionDataTypesAction extends DockingAction {
 
@@ -51,6 +49,11 @@ public class CaptureFunctionDataTypesAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
+
+		if (plugin.getProgram() == null) {
+			return false;
+		}
+
 		if (!(context instanceof DataTypesActionContext)) {
 			return false;
 		}

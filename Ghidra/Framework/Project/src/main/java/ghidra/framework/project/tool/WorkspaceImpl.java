@@ -166,8 +166,8 @@ class WorkspaceImpl implements Workspace {
 
 		Iterator<?> iter = root.getChildren("RUNNING_TOOL").iterator();
 		while (iter.hasNext()) {
-			Element elememnt = (Element) iter.next();
-			String toolName = elememnt.getAttributeValue(ToolTemplate.TOOL_NAME_XML_NAME);
+			Element element = (Element) iter.next();
+			String toolName = element.getAttributeValue(ToolTemplate.TOOL_NAME_XML_NAME);
 			if (toolName == null) {
 				continue;
 			}
@@ -182,12 +182,9 @@ class WorkspaceImpl implements Workspace {
 				}
 
 				boolean hadChanges = tool.hasConfigChanged();
-				Element windowData = elememnt.getChild("ROOT_NODE");
-				if (windowData != null) {  // backward compatibility
-					tool.restoreWindowingDataFromXml(windowData);
-				}
+				tool.restoreWindowingDataFromXml(element);
 
-				Element toolDataElem = elememnt.getChild("DATA_STATE");
+				Element toolDataElem = element.getChild("DATA_STATE");
 				tool.restoreDataStateFromXml(toolDataElem);
 				if (hadChanges) {
 					// restore the dirty state, which is cleared by the restoreDataState call

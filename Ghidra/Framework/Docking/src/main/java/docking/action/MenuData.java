@@ -218,10 +218,7 @@ public class MenuData {
 		}
 		MenuData oldData = cloneData();
 		menuPath = processMenuPath(newPath);
-		int newMnemonic = getMnemonic(newPath);
-		if (newMnemonic != NO_MNEMONIC) {
-			mnemonic = newMnemonic;
-		}
+		mnemonic = getMnemonic(newPath);
 		firePropertyChanged(oldData);
 	}
 
@@ -239,10 +236,7 @@ public class MenuData {
 		MenuData oldData = cloneData();
 		menuPath = menuPath.clone();
 		menuPath[menuPath.length - 1] = processedMenuItemName;
-		int newMnemonic = getMnemonic(newMenuItemName);
-		if (newMnemonic != NO_MNEMONIC) {
-			mnemonic = newMnemonic;
-		}
+		mnemonic = getMnemonic(newMenuItemName);
 		firePropertyChanged(oldData);
 	}
 

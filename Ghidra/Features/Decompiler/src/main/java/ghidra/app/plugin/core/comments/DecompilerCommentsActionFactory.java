@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,19 @@
  */
 package ghidra.app.plugin.core.comments;
 
-import ghidra.app.context.ListingActionContext;
-import ghidra.app.context.ProgramLocationActionContext;
-import ghidra.app.decompiler.DecompilerLocation;
-import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-
 import java.awt.event.KeyEvent;
 
 import docking.ActionContext;
 import docking.action.*;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.decompiler.DecompilerLocation;
+import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.util.*;
+import ghidra.util.HelpLocation;
 
 public class DecompilerCommentsActionFactory extends CommentsActionFactory {
 
@@ -64,7 +63,7 @@ public class DecompilerCommentsActionFactory extends CommentsActionFactory {
             this.commentType = commentType;
             setPopupMenuData(new MenuData(new String[] { "Comments",
                     actionName + "..." }, "comments"));
-            setHelpLocation(new HelpLocation("CommentsPlugin", "Edit_Comments"));
+			setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionComments"));
         }
 
         protected int getEditCommentType(ActionContext context) {

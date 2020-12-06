@@ -243,13 +243,9 @@ public abstract class DemangledObject implements Demangled {
 		return getSignature(false);
 	}
 
-	/**
-	 * Returns a signature that contains only the name (and parameter list for functions)
-	 * @return the signature
-	 */
 	@Override
 	public String getNamespaceName() {
-		return getSignature(false);
+		return getName();
 	}
 
 	/**
@@ -310,6 +306,15 @@ public abstract class DemangledObject implements Demangled {
 
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
+		return applyPlateCommentOnly(program, address);
+	}
+
+	/**
+	 * @param program The program for which to apply the comment 
+	 * @param address The address for the comment
+	 * @return {@code true} if a comment was applied
+	 */
+	public boolean applyPlateCommentOnly(Program program, Address address) {
 		if (mangled.equals(name)) {
 			return false;
 		}
@@ -447,11 +452,8 @@ public abstract class DemangledObject implements Demangled {
 
 			List<Symbol> symbols = symbolTable.getSymbols(namespaceName, namespace);
 			Symbol namespaceSymbol =
-				symbols.stream()
-						.filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
-							s.getSymbolType() == SymbolType.CLASS))
-						.findFirst()
-						.orElse(null);
+				symbols.stream().filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
+					s.getSymbolType() == SymbolType.CLASS)).findFirst().orElse(null);
 			if (namespaceSymbol == null) {
 				try {
 					namespace =

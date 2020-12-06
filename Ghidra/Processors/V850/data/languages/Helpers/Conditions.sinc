@@ -1,0 +1,38 @@
+#####################################################
+#####		     Conditions			#####
+#####################################################
+
+
+c0003: "v"	is op0003=0x0	{ tmp:1 = ($(OV)) == 1; 		export tmp; }
+c0003: "nv"	is op0003=0x8	{ tmp:1 = ($(OV)) == 0; 		export tmp; }
+c0003: "c"	is op0003=0x1	{ tmp:1 = ($(CY)) == 1; 		export tmp; }
+c0003: "nc"	is op0003=0x9	{ tmp:1 = ($(CY)) == 0; 		export tmp; }
+c0003: "e"	is op0003=0x2	{ tmp:1 = ($(Z)) == 1; 			export tmp; }
+c0003: "ne"	is op0003=0xA	{ tmp:1 = ($(Z)) == 0; 			export tmp; }
+c0003: "nh"	is op0003=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 	export tmp; }
+c0003: "h"	is op0003=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 	export tmp; }
+c0003: "n"	is op0003=0x4	{ tmp:1 = ($(S)) == 1; 			export tmp; }
+c0003: "p"	is op0003=0xC	{ tmp:1 = ($(S)) == 0; 			export tmp; }
+c0003: "t"	is op0003=0x5	{ tmp:1 = 1; 				export tmp; }
+c0003: "sa"	is op0003=0xD	{ tmp:1 = ($(SAT)) == 1; 		export tmp; }
+c0003: "lt"	is op0003=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 	export tmp; }
+c0003: "ge"	is op0003=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 	export tmp; }
+c0003: "le"	is op0003=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
+c0003: "gt"	is op0003=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }
+
+c1720: "v"	is op1720=0x0	{ tmp:1 = ($(OV)) == 1; 		export tmp; }
+c1720: "nv"	is op1720=0x8	{ tmp:1 = ($(OV)) == 0; 		export tmp; }
+c1720: "c"	is op1720=0x1	{ tmp:1 = ($(CY)) == 1; 		export tmp; }
+c1720: "nc"	is op1720=0x9	{ tmp:1 = ($(CY)) == 0; 		export tmp; }
+c1720: "e"	is op1720=0x2	{ tmp:1 = ($(Z)) == 1; 			export tmp; }
+c1720: "ne"	is op1720=0xA	{ tmp:1 = ($(Z)) == 0; 			export tmp; }
+c1720: "nh"	is op1720=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 	export tmp; }
+c1720: "h"	is op1720=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 	export tmp; }
+c1720: "n"	is op1720=0x4	{ tmp:1 = ($(S)) == 1; 			export tmp; }
+c1720: "p"	is op1720=0xC	{ tmp:1 = ($(S)) == 0; 			export tmp; }
+c1720: "t"	is op1720=0x5	{ tmp:1 = 1; 				export tmp; }
+c1720: "sa"	is op1720=0xD	{ tmp:1 = ($(SAT)) == 1; 		export tmp; }
+c1720: "lt"	is op1720=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 	export tmp; }
+c1720: "ge"	is op1720=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 	export tmp; }
+c1720: "le"	is op1720=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
+c1720: "gt"	is op1720=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }

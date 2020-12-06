@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,32 @@
 #include <cstdio>
 
 using namespace std;
+
+#ifdef __REMOTE_SOCKET__
+
+/// \brief A wrapper around a UNIX domain socket
+///
+/// The open() command attempts to connect to given socket name,
+/// which must have been previously established by an external process.
+/// The socket is bound to a C++ istream and ostream.
+class RemoteSocket {
+  int fileDescriptor;		///< Descriptor for the socket
+  basic_filebuf<char> *inbuf;	///< Input buffer associated with the socket
+  basic_filebuf<char> *outbuf;	///< Output buffer for the socket
+  istream *inStream;		///< The C++ input stream
+  ostream *outStream;		///< The C++ output stream
+  bool isOpen;			///< Has the socket been opened
+public:
+  RemoteSocket(void);				///< Constructor
+  ~RemoteSocket(void) { close(); }		///< Destructor
+  bool open(const string &filename);		///< Connect to the given socket
+  bool isSocketOpen(void);			///< Return \b true if the socket is ready to transfer data
+  istream *getInputStream(void) { return inStream; }	///< Get the input stream
+  ostream *getOutputStream(void) { return outStream; }	///< Get the output stream
+  void close(void);				///< Close the streams and socket
+};
+
+#endif
 
 struct IfaceError {
   string explain;		// Explanatory string
@@ -136,6 +162,7 @@ public:
   void setErrorIsDone(bool val) { errorisdone = val; }
   void pushScript(const string &filename,const string &newprompt);
   void popScript(void);
+  void reset(void);
   int4 getNumInputStreamSize(void) const { return inputstack.size(); }
   void writePrompt(void) { *optr << prompt; }
   void registerCom(IfaceCommand *fptr, const char *nm1,

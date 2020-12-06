@@ -179,14 +179,12 @@
     <H3>Unaligned Structures</H3>
 
     <BLOCKQUOTE>
-      <P>When a structure is unaligned, with the exception of bitfields, each component immediately 
-      follows the one before it. In
-      other words no automatic alignment or padding occurs. Unaligned structures can contain 
-      Unaligned structures should be used to position components with known data
-      types at specific offsets within the structure. Therefore the structure editor tries to
-      prevent defined components (those other than Undefined bytes) from accidentally being moved
-      to a different offset when performing operations like drag and drop, although undefined bytes
-      may be consumed. <BR>
+      <P>When a structure is unaligned, with the exception of bitfields, each component shown within 
+      the editor immediately follows the one before it. In other words, no automatic alignment or padding occurs. 
+      Unaligned structures may be used to position components with known data
+      types at specific offsets within a structure. Therefore, when editing an unaligned structure,
+      the structure editor attempts to prevent defined components from moving
+      to a different offset when performing operations like drag and drop which may consume undefined bytes. <BR>
       </P>
 
       <DIV style="text-align: center; margin-top: 10px;">

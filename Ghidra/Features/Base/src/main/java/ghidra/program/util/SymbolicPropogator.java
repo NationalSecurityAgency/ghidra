@@ -81,9 +81,9 @@ public class SymbolicPropogator {
 	public SymbolicPropogator(Program program) {
 		this.program = program;
 
-		Register regs[] = program.getLanguage().getRegisters();
-		programContext = new ProgramContextImpl(regs);
-		spaceContext = new ProgramContextImpl(regs);
+		Language language = program.getLanguage();
+		programContext = new ProgramContextImpl(language);
+		spaceContext = new ProgramContextImpl(language);
 
 		setPointerMask(program);
 		setExternalRange(program);
@@ -208,11 +208,12 @@ public class SymbolicPropogator {
 	 * @return
 	 */
 	protected VarnodeContext saveOffCurrentContext(Address startAddr) {
-		ProgramContext newValueContext = new ProgramContextImpl(programContext.getRegisters());
-		ProgramContext newSpaceContext = new ProgramContextImpl(programContext.getRegisters());
+		Language language = program.getLanguage();
+		ProgramContext newValueContext = new ProgramContextImpl(language);
+		ProgramContext newSpaceContext = new ProgramContextImpl(language);
 		VarnodeContext newContext = new VarnodeContext(program, newValueContext, newSpaceContext);
 		newContext.setDebug(debug);
-		int constantSpaceID = program.getAddressFactory().getConstantSpace().getBaseSpaceID();
+		int constantSpaceID = program.getAddressFactory().getConstantSpace().getSpaceID();
 		// copy any current registers with values into the context
 		Register[] regWithVals = programContext.getRegistersWithValues();
 		for (Register regWithVal : regWithVals) {
@@ -834,7 +835,7 @@ public class SymbolicPropogator {
 							val1 = vContext.getValue(in[0], evaluator);
 							lval1 = vContext.getConstant(val1, evaluator);
 							vt = vContext.getVarnode(
-								minInstrAddress.getAddressSpace().getBaseSpaceID(), lval1, 0);
+								minInstrAddress.getAddressSpace().getSpaceID(), lval1, 0);
 							makeReference(vContext, instruction, ptype, -1, vt,
 								instruction.getFlowType(), monitor);
 						}
@@ -889,7 +890,7 @@ public class SymbolicPropogator {
 										!refs[0].getToAddress().equals(target)) {
 										makeReference(vContext, instruction, Reference.MNEMONIC,
 											//  Use target in case location has shifted (external...)
-											target.getAddressSpace().getBaseSpaceID(),
+											target.getAddressSpace().getSpaceID(),
 											target.getAddressableWordOffset(), val1.getSize(),
 											instruction.getFlowType(), ptype, true, monitor);
 									}
@@ -1848,7 +1849,7 @@ public class SymbolicPropogator {
 							pcodeType, constant, 0, reftype);
 						if (newTarget != null) {
 							makeReference(vContext, instruction, Reference.MNEMONIC,
-								newTarget.getAddressSpace().getBaseSpaceID(), newTarget.getOffset(),
+								newTarget.getAddressSpace().getSpaceID(), newTarget.getOffset(),
 								0, reftype, pcodeType, false, monitor);
 							return;
 						}
@@ -2050,7 +2051,7 @@ public class SymbolicPropogator {
 
 		// if only one memory space, no overlays, just return default space
 		if (memorySpaces.size() == 1) {
-			return defaultSpace.getUniqueSpaceID();
+			return defaultSpace.getSpaceID();
 		}
 
 		int realMemSpaceCnt = 0; // count of real memory spaces that could contain the target
@@ -2069,7 +2070,7 @@ public class SymbolicPropogator {
 
 		// if this instruction is in an overlay space overlaying the default space, change the default space
 		if (instrSpace.isOverlaySpace() &&
-			instrSpace.getBaseSpaceID() == defaultSpace.getUniqueSpaceID()) {
+			((OverlayAddressSpace) instrSpace).getBaseSpaceID() == defaultSpace.getSpaceID()) {
 			defaultSpace = instrSpace;
 		}
 
@@ -2109,17 +2110,17 @@ public class SymbolicPropogator {
 
 		// if only one memory space held a valid value, use it
 		if (containingMemSpaceCnt == 1 && containingAddr != null) {
-			return containingAddr.getAddressSpace().getUniqueSpaceID();
+			return containingAddr.getAddressSpace().getSpaceID();
 		}
 		if (symbolTargetCnt == 1 && symbolTarget != null) {
-			return symbolTarget.getAddressSpace().getUniqueSpaceID();
+			return symbolTarget.getAddressSpace().getSpaceID();
 		}
 
 		// nothing to lead to one space or the other, and code/data spaces are not the same
 		if (realMemSpaceCnt != 1 && !defaultSpacesAreTheSame) {
 			return -1;
 		}
-		return defaultSpace.getUniqueSpaceID();
+		return defaultSpace.getSpaceID();
 	}
 
 	/**

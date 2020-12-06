@@ -243,12 +243,17 @@ public class GTree extends JPanel implements BusyListener {
 	public void dispose() {
 		filterUpdateManager.dispose();
 		worker.dispose();
-		GTreeNode root = model.getModelRoot();
-		if (root != null) {
-			root.dispose();
+
+		if (realModelRootNode != null) {
+			realModelRootNode.dispose();
 		}
-		realModelRootNode.dispose();
-		realViewRootNode.dispose();
+		// if there is a filter applied, clean up the filtered nodes. Note that filtered nodes
+		// are expected to be shallow clones of the model nodes, so we don't want to call full
+		// dispose on the filtered nodes because internal clean-up should happen when the
+		// model nodes are disposed. The disposeClones just breaks the child-parent ties.
+		if (realViewRootNode != null && realViewRootNode != realModelRootNode) {
+			realViewRootNode.disposeClones();
+		}
 		model.dispose();
 	}
 

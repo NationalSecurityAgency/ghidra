@@ -32,7 +32,6 @@ import ghidra.app.cmd.function.AddRegisterParameterCommand;
 import ghidra.app.merge.*;
 import ghidra.app.merge.listing.*;
 import ghidra.app.merge.tool.ListingMergePanel;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.TitledPanel;
 import ghidra.framework.main.FrontEndTool;
@@ -115,9 +114,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					blocks[1].setName("LatestText");
 					commit = true;
 				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
-				}
 				catch (LockException e) {
 					Assert.fail();
 				}
@@ -133,9 +129,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				int transactionID = program.startTransaction("Modify My Program");
 				try {
 					blocks[1].setName("MY_Text");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();

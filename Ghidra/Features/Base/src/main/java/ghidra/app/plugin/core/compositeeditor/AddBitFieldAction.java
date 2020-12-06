@@ -16,9 +16,6 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.Component;
-import java.awt.Window;
-
-import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
@@ -59,9 +56,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 			new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
 				-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
 		Component c = provider.getComponent();
-		Window w = SwingUtilities.windowForComponent(c);
-		DockingWindowManager.showDialog(w, dlg, c);
-
+		DockingWindowManager.showDialog(c, dlg);
 		requestTableFocus();
 	}
 

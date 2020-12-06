@@ -29,8 +29,8 @@ import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.FrontEndable;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
-import ghidra.framework.main.datatable.ProjectDataContextAction;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -52,7 +52,7 @@ import ghidra.util.HelpLocation;
 //@formatter:on
 public class AboutProgramPlugin extends Plugin implements FrontEndable {
 	public final static String PLUGIN_NAME = "AboutProgramPlugin";
-	public final static String ACTION_NAME = "About program";
+	public final static String ACTION_NAME = "About Program";
 
 	private DockingAction aboutAction;
 
@@ -74,20 +74,21 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 
 	private void setupActions() {
 		if (tool instanceof FrontEndTool) {
-			aboutAction = new ProjectDataContextAction(ACTION_NAME, PLUGIN_NAME) {
+			aboutAction = new FrontendProjectTreeAction(ACTION_NAME, PLUGIN_NAME) {
 
 				@Override
-				protected void actionPerformed(ProjectDataActionContext context) {
+				protected void actionPerformed(ProjectDataContext context) {
 					DomainFile domainFile = context.getSelectedFiles().get(0);
 					showAbout(domainFile, domainFile.getMetadata());
 				}
 
 				@Override
-				protected boolean isAddToPopup(ProjectDataActionContext context) {
+				protected boolean isAddToPopup(ProjectDataContext context) {
 					return context.getFileCount() == 1 && context.getFolderCount() == 0;
 				}
 			};
-			aboutAction.setPopupMenuData(new MenuData(new String[] { "About..." }, null, "AAA"));
+			aboutAction.setPopupMenuData(
+				new MenuData(new String[] { ACTION_NAME }, null, "AAA"));
 
 			aboutAction.setEnabled(true);
 		}
@@ -100,25 +101,24 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 				}
 
 				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					if (!super.isEnabledForContext(context)) {
-						getMenuBarData().setMenuItemName(ACTION_NAME);
-						return false;
+				public boolean isValidContext(ActionContext context) {
+					if (super.isValidContext(context)) {
+						ProgramActionContext pac = (ProgramActionContext) context;
+						Program program = pac.getProgram();
+						if (program != null) {
+							String menuName = "About " + program.getDomainFile().getName() + "...";
+							getMenuBarData().setMenuItemName(menuName);
+							return true;
+						}
 					}
-					return true;
-				}
-
-				@Override
-				public boolean isEnabledForContext(ProgramActionContext context) {
-					Program program = context.getProgram();
-					String menuName = "About " + program.getDomainFile().getName();
-					getMenuBarData().setMenuItemName(menuName);
-					return true;
+					getMenuBarData().setMenuItemName(ACTION_NAME);
+					return false;
 				}
 			};
+			aboutAction.setSupportsDefaultToolContext(true);
 
-			aboutAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_HELP,
-				ACTION_NAME }, null, "ZZZ"));
+			aboutAction.setMenuBarData(
+				new MenuData(new String[] { ToolConstants.MENU_HELP, ACTION_NAME }, null, "ZZZ"));
 
 			aboutAction.setEnabled(false);
 		}

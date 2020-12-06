@@ -121,7 +121,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 
 			proplist.setString(PdbParserConstants.PDB_VERSION, Conv.toString(magic));
 			proplist.setString(PdbParserConstants.PDB_SIGNATURE, Conv.toHexString(sig));
-			proplist.setString(PdbParserConstants.PDB_AGE, Conv.toHexString(age));
+			proplist.setString(PdbParserConstants.PDB_AGE, Integer.toHexString(age));
 			proplist.setString(PdbParserConstants.PDB_FILE, name);
 /*
 			DebugDirectory dd = dcv.getDebugDirectory();
@@ -147,7 +147,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 
 			proplist.setString(PdbParserConstants.PDB_VERSION, Conv.toString(magic));
 			proplist.setString(PdbParserConstants.PDB_GUID, guid.toString());
-			proplist.setString(PdbParserConstants.PDB_AGE, Conv.toHexString(age));
+			proplist.setString(PdbParserConstants.PDB_AGE, Integer.toHexString(age));
 			proplist.setString(PdbParserConstants.PDB_FILE, name);
 /*
 			DebugDirectory dd = dcv.getDebugDirectory();

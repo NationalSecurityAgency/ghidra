@@ -20,17 +20,18 @@ import java.util.*;
 /**
  * A directed graph
  * 
- * Unlike {@link GImplicitDirectedGraph}, this graph is constructed explicitly in memory. Edges and
- * vertices are added and removed like any other collection, and these elements represent the
- * entirety of the graph at any given time.
+ * Unlike {@link GImplicitDirectedGraph}, this graph is constructed explicitly
+ * in memory. Edges and vertices are added and removed like any other
+ * collection, and these elements represent the entirety of the graph at any
+ * given time.
  * 
  * @param <V> the type of vertices
  * @param <E> the type of edges
  */
-public interface GDirectedGraph<V, E extends GEdge<V>> {
-
+public interface GDirectedGraph<V, E extends GEdge<V>> extends GImplicitDirectedGraph<V, E> {
 	/**
 	 * Add a vertex
+	 * 
 	 * @param v the vertex
 	 * @return true if the add was successful, false otherwise
 	 */
@@ -38,6 +39,7 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 
 	/**
 	 * Remove a vertex
+	 * 
 	 * @param v the vertex
 	 * @return true
 	 */
@@ -52,12 +54,14 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 
 	/**
 	 * Add an edge
+	 * 
 	 * @param e the edge
 	 */
 	public void addEdge(E e);
 
 	/**
 	 * Removes an edge
+	 * 
 	 * @param e the edge
 	 * @return true if the graph contained the given edge
 	 */
@@ -81,18 +85,21 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 
 	/**
 	 * Retrieve all the vertices
+	 * 
 	 * @return the vertices
 	 */
 	public Collection<V> getVertices();
 
 	/**
 	 * Retrieve all the edges
+	 * 
 	 * @return the edges
 	 */
 	public Collection<E> getEdges();
 
 	/**
 	 * Test if the graph contains a given vertex
+	 * 
 	 * @param v the vertex
 	 * @return true if the vertex is in the graph, or false
 	 */
@@ -100,6 +107,7 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 
 	/**
 	 * Test if the graph contains a given edge
+	 * 
 	 * @param e the ege
 	 * @return true if the edge is in the graph, or false
 	 */
@@ -107,6 +115,7 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 
 	/**
 	 * Test if the graph contains an edge from one given vertex to another
+	 * 
 	 * @param from the source vertex
 	 * @param to the destination vertex
 	 * @return true if such an edge exists, or false
@@ -115,18 +124,21 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 
 	/**
 	 * Test if the graph is empty, i.e., contains no vertices or edges
+	 * 
 	 * @return true if the graph is empty, or false
 	 */
 	public boolean isEmpty();
 
 	/**
 	 * Count the number of vertices in the graph
+	 * 
 	 * @return the count
 	 */
 	public int getVertexCount();
 
 	/**
 	 * Count the number of edges in the graph
+	 * 
 	 * @return the count
 	 */
 	public int getEdgeCount();
@@ -137,6 +149,7 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 	 * @param v the destination vertex
 	 * @return the in-edges to the given vertex
 	 */
+	@Override
 	public Collection<E> getInEdges(V v);
 
 	/**
@@ -145,6 +158,7 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 	 * @param v the source vertex
 	 * @return the out-edges from the given vertex
 	 */
+	@Override
 	public Collection<E> getOutEdges(V v);
 
 	/**
@@ -163,11 +177,13 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 	/**
 	 * Compute a vertex's predecessors
 	 * 
-	 * <P>The default implementation computes this from the in-edges
+	 * <P>
+	 * The default implementation computes this from the in-edges
 	 * 
 	 * @param v the destination vertex
 	 * @return the predecessors
 	 */
+	@Override
 	public default Collection<V> getPredecessors(V v) {
 		Set<V> result = new LinkedHashSet<>();
 		for (E edge : getInEdges(v)) {
@@ -179,11 +195,13 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 	/**
 	 * Compute a vertex's successors
 	 * 
-	 * <P>The default implementation compute this from the out-edges
+	 * <P>
+	 * The default implementation compute this from the out-edges
 	 * 
 	 * @param v the source vertex
 	 * @return the successors
 	 */
+	@Override
 	public default Collection<V> getSuccessors(V v) {
 		Set<V> result = new LinkedHashSet<>();
 		for (E edge : getOutEdges(v)) {
@@ -195,16 +213,19 @@ public interface GDirectedGraph<V, E extends GEdge<V>> {
 	/**
 	 * Copy this graph.
 	 * 
-	 * <P>Note: the vertices and edges in the copy may be the same instances in the new graph
-	 * and not themselves copies.
+	 * <P>
+	 * Note: the vertices and edges in the copy may be the same instances in the
+	 * new graph and not themselves copies.
 	 * 
 	 * @return the new copy
 	 */
+	@Override
 	public GDirectedGraph<V, E> copy();
 
 	/**
-	 * Creates a new instance of this graph with no vertices or edges.  This is useful when 
-	 * you wish to build a new graph using the same type as this graph.
+	 * Creates a new instance of this graph with no vertices or edges. This is
+	 * useful when you wish to build a new graph using the same type as this
+	 * graph.
 	 * 
 	 * @return the new copy
 	 */

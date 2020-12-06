@@ -46,6 +46,7 @@ public class RedoAction extends ProgramContextAction {
 		setToolBarData(new ToolBarData(icon, group));
 		setKeyBindingData(new KeyBindingData("ctrl shift Z"));
 		setDescription("Redo");
+		setSupportsDefaultToolContext(true);
 	}
 
 	@Override

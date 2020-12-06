@@ -20,6 +20,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.util.ArrayList;
 
+import javax.swing.table.TableModel;
+
 import docking.dnd.*;
 import generic.jar.ResourceFile;
 import ghidra.util.table.GhidraTable;
@@ -31,11 +33,12 @@ public class DraggableScriptTable extends GhidraTable implements Draggable {
 	private final GhidraScriptComponentProvider provider;
 
 	/**
-	 * Constructs a new DraggableGhidraTable using the specified table model.
-	 * @param scriptModel the table model
+	 * Constructs a new DraggableGhidraTable.
+	 * @param provider the provider, from which getTableModel and getScriptAt are used
+	 * @param model provider's table model
 	 */
-	public DraggableScriptTable(GhidraScriptComponentProvider provider) {
-		super(provider.getTableModel());
+	public DraggableScriptTable(GhidraScriptComponentProvider provider, TableModel model) {
+		super(model);
 		this.provider = provider;
 
 		initDragNDrop();
@@ -96,6 +99,7 @@ public class DraggableScriptTable extends GhidraTable implements Draggable {
 	 */
 	@Override
 	public void move() {
+		//
 	}
 
 	/**
@@ -104,6 +108,7 @@ public class DraggableScriptTable extends GhidraTable implements Draggable {
 	 */
 	@Override
 	public void dragCanceled(DragSourceDropEvent event) {
+		//
 	}
 
 }

@@ -29,6 +29,9 @@
    
 */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "libiberty.h"
 #include "demangle.h"
 #include "getopt.h"

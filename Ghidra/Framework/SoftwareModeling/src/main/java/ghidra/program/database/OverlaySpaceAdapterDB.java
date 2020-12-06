@@ -16,14 +16,14 @@
 package ghidra.program.database;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import db.*;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.util.LanguageTranslator;
-import ghidra.util.datastruct.LongObjectHashtable;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
 class OverlaySpaceAdapterDB {
@@ -61,12 +61,12 @@ class OverlaySpaceAdapterDB {
 				AddressSpace space = factory.getAddressSpace(templateSpaceName);
 				try {
 					OverlayAddressSpace sp =
-						factory.addOverlayAddressSpace(spaceName, space, minOffset, maxOffset);
+						factory.addOverlayAddressSpace(spaceName, true, space, minOffset, maxOffset);
 					sp.setDatabaseKey(rec.getKey());
 				}
-				catch (DuplicateNameException e) {
-					throw new AssertException(
-						"Should not have duplicateNameException when recreating factory");
+				catch (IllegalArgumentException e) {
+					throw new RuntimeException(
+						"Unexpected error initializing overlay address spaces", e);
 				}
 			}
 		}
@@ -115,7 +115,7 @@ class OverlaySpaceAdapterDB {
 	}
 
 	void updateOverlaySpaces(ProgramAddressFactory factory) throws IOException {
-		LongObjectHashtable<OverlayAddressSpace> map = new LongObjectHashtable<>();
+		Map<Long, OverlayAddressSpace> map = new HashMap<>();
 		for (AddressSpace space : factory.getAllAddressSpaces()) {
 			if (space instanceof OverlayAddressSpace) {
 				OverlayAddressSpace os = (OverlayAddressSpace) space;
@@ -139,7 +139,7 @@ class OverlaySpaceAdapterDB {
 						}
 						catch (DuplicateNameException e) {
 							throw new RuntimeException(
-								"Unexpected error1 updating overlay address spaces");
+								"Unexpected error updating overlay address spaces", e);
 						}
 					}
 				}
@@ -150,23 +150,20 @@ class OverlaySpaceAdapterDB {
 					AddressSpace origSpace =
 						factory.getAddressSpace(rec.getString(OV_SPACE_BASE_COL));
 					try {
-						space = factory.addOverlayAddressSpace(spaceName, origSpace, minOffset,
+						space = factory.addOverlayAddressSpace(spaceName, true, origSpace,
+							minOffset,
 							maxOffset);
 						space.setDatabaseKey(rec.getKey());
 					}
-					catch (DuplicateNameException e) {
+					catch (IllegalArgumentException e) {
 						throw new RuntimeException(
-							"Unexpected error2 updating overlay address spaces");
+							"Unexpected error updating overlay address spaces", e);
 					}
 				}
 			}
 		}
-		if (map.size() != 0) {
-			long[] keys = map.getKeys();
-			for (int i = 0; i < keys.length; i++) {
-				OverlayAddressSpace space = map.remove(keys[i]);
-				factory.removeOverlaySpace(space.getName());
-			}
+		for (OverlayAddressSpace space : map.values()) {
+			factory.removeOverlaySpace(space.getName());
 		}
 	}
 

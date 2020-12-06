@@ -31,6 +31,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -877,8 +878,11 @@ public class BasicCompilerSpec implements CompilerSpec {
 		// for upgrading/moving old property values.
 
 		Options decompilerPropertyList = program.getOptions(DECOMPILER_PROPERTY_LIST_NAME);
+		decompilerPropertyList
+				.setOptionsHelpLocation(new HelpLocation("DecompilePlugin", "ProgramOptions"));
 		decompilerPropertyList.registerOption(EVALUATION_MODEL_PROPERTY_NAME,
-			OptionType.STRING_TYPE, evaluationModelChoices[0], null,
+			OptionType.STRING_TYPE, evaluationModelChoices[0],
+			new HelpLocation("DecompilePlugin", "OptionProtoEval"),
 			"Select the default function prototype/evaluation model to be used during Decompiler analysis",
 			new StringWithChoicesEditor(evaluationModelChoices));
 

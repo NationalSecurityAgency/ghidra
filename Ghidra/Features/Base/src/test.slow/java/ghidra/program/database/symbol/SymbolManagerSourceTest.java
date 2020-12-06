@@ -226,19 +226,12 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		Symbol s = createSymbol(addr(0x0100), "UserSymbol", globalScope, SourceType.USER_DEFINED);
 		assertEquals("UserSymbol", s.getName());
 		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
-
-		try {
-			s.setName("LAB_0100", SourceType.DEFAULT);
-			Assert.fail("Shouldn't be able to change from non-default to default.");
-		}
-		catch (InvalidInputException e) {
-		}
-
 		try {
 			s.setSource(SourceType.DEFAULT);
 			Assert.fail("Shouldn't be able to set source to default.");
 		}
 		catch (IllegalArgumentException e) {
+			// Success
 		}
 
 		Symbol[] symbols = st.getSymbols(addr(0x0100));

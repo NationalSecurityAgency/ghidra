@@ -253,6 +253,7 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 	@Override
 	public void close() {
 		// do nothing - cannot close the program's data type manager
+		// dispose should be invoked by the owner of the instance
 	}
 
 	@Override
