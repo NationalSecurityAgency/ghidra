@@ -30,7 +30,7 @@ import ghidra.util.GhidraDataConverter;
  * the overhead of various error checks.  This implementation will not wrap
  * if the end of the memory space is encountered.
  * 
- * The {@link #getByte(int), #getBytes(byte[], int)} methods can cause the bytes in the
+ * The {@link #getByte(int)}, {@link #getBytes(byte[], int)} methods can cause the bytes in the
  * buffer cache if the request is outside of the current cached bytes.
  * 
  * WARNING: The underlying MemBuffer should not change its base address. Using a

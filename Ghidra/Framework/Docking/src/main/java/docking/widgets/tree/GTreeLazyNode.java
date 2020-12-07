@@ -24,7 +24,7 @@ import java.util.List;
  * in the current tree view (collapsed).  Of course, that decision would need to be balanced
  * against the extra time to reload the nodes in the event that a filter is applied. Also, if
  * some external event occurs that changes the set of children for a GTreeLazyNode, you can call
- * {@link #reload()} to refresh the node's children.
+ * {@link #unloadChildren()} to clear any previously loaded children.
  */
 public abstract class GTreeLazyNode extends GTreeNode {
 
