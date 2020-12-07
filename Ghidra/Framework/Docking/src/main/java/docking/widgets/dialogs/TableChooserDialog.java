@@ -93,12 +93,14 @@ public class TableChooserDialog<T> extends DialogComponentProvider {
 	protected void okCallback() {
 		selectedItems = gFilterTable.getSelectedRowObjects();
 		close();
+		gFilterTable.dispose();
 	}
 
 	@Override
 	protected void cancelCallback() {
 		selectedItems = null;
 		close();
+		gFilterTable.dispose();
 	}
 
 	@Override

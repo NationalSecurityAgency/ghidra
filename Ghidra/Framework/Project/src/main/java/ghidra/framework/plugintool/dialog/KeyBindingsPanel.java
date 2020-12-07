@@ -99,8 +99,6 @@ public class KeyBindingsPanel extends JPanel {
 
 	public void dispose() {
 		tableFilterPanel.dispose();
-		tableModel.dispose();
-		actionTable.dispose();
 		propertyChangeListener = null;
 	}
 

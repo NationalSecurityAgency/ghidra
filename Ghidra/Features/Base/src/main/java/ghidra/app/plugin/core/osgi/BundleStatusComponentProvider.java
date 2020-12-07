@@ -343,7 +343,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	 * cleanup this component
 	 */
 	public void dispose() {
-		bundleStatusTable.dispose();
+		filterPanel.dispose();
 	}
 
 	void selectModelRow(int modelRowIndex) {
