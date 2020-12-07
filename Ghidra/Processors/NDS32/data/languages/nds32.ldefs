@@ -12,6 +12,7 @@
             id="NDS32:BE:32:default">
     <description>NDS32 default processor 32-bit big-endian</description>
     <compiler name="default" spec="nds32.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="nds32.dwarf"/>
   </language>
   <language processor="NDS32"
             endian="little"
@@ -24,6 +25,7 @@
             id="NDS32:LE:32:default">
     <description>NDS32 default processor 32-bit little-endian</description>
     <compiler name="default" spec="nds32.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="nds32.dwarf"/>
   </language>
 </language_definitions>
 
