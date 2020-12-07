@@ -27,16 +27,16 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.util.SystemUtilities;
 
-public class SwingUpdateManagerTest extends AbstractGenericTest {
+public class BufferedSwingRunnerTest extends AbstractGenericTest {
+
 	private static final int MIN_DELAY = 500;
 	private static final int MAX_DELAY = 1000;
 	private volatile int runnableCalled;
-	private SwingUpdateManager manager;
+	private BufferedSwingRunner runner = new BufferedSwingRunner(MIN_DELAY, MAX_DELAY);
+	private ClientRunnable runnable = new ClientRunnable();
 
 	@Before
 	public void setUp() throws Exception {
-		manager = createUpdateManager(MIN_DELAY, MAX_DELAY);
-
 		// must turn this on to get the expected results, as in headless mode the update manager
 		// will run it's Swing work immediately on the test thread, which is not true to the
 		// default behavior
@@ -44,34 +44,27 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOneCallForOneUpdate() {
-		manager.update();
-		waitForManager();
+	public void testOneCallForOneRun() {
+		runner.run(runnable);
+		waitForRunner();
 		assertEquals("Expected only 1 callback", 1, runnableCalled);
 	}
 
 	@Test
-	public void testOneCallFromUpdateNow() {
-		manager.updateNow();
-		waitForManager();
-		assertEquals("Expected only 1 callback", 1, runnableCalled);
-	}
-
-	@Test
-	public void testOneCallForUpdateLater() {
-		manager.updateLater();
-		waitForManager();
-		assertEquals("Expected only 1 callback", 1, runnableCalled);
-	}
-
-	@Test
-	public void testTwoCallForMultipleFastUpdateCalls() {
+	public void testTwoCallForMultipleFastRunCalls() {
 		for (int i = 0; i < 10; i++) {
-			manager.update();
+			runner.run(runnable);
 			sleep(10);
 		}
-		waitForManager();
+		waitForRunner();
 		assertEquals("Expected 2 callbacks", 2, runnableCalled);
+	}
+
+	@Test
+	public void testOneCallForRunLater() {
+		runner.runLater(runnable);
+		waitForRunner();
+		assertEquals("Expected only 1 callback", 1, runnableCalled);
 	}
 
 	@Test
@@ -92,76 +85,76 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 
 		int sleepyTime = 5;
 		int maxDelay = 600;
-		manager = createUpdateManager(200, maxDelay);
+		runner = new BufferedSwingRunner(200, maxDelay);
 
 		for (int i = 0; i < 4; i++) {
-			manager.update();
+			runner.run(runnable);
 			sleep(sleepyTime);
 		}
 
 		assertEquals("Expected 1 max delay callback", 1, runnableCalled);
 
-		waitForManager();
+		waitForRunner();
 		assertEquals("Expected one immediate callback and one max delay callback (2 total)", 2,
 			runnableCalled);
 	}
 
 	@Test
 	public void testFlush() {
-		manager.flush();
+		runner.flush();
 		waitForSwing();
-		assertFalse(manager.isBusy());
+		assertFalse(runner.isBusy());
 		assertEquals("Did not expect the callback after stop()", 0, runnableCalled);
 
-		manager.updateLater();
-		manager.flush();
-		waitForManager();
+		runner.runLater(runnable);
+		runner.flush();
+		waitForRunner();
 		assertEquals("Expected only 1 callback", 1, runnableCalled);
 	}
 
 	@Test
 	public void testStop() {
-		manager.updateLater();
-		manager.stop();
+		runner.runLater(runnable);
+		runner.stop();
 		waitForSwing();
-		assertTrue(!manager.isBusy());
+		assertFalse(runner.isBusy());
 		assertEquals("Did not expect the callback after stop()", 0, runnableCalled);
 
 		//
 		// Make sure we can use again
 		//
 		runnableCalled = 0;
-		manager.update();
-		waitForManager();
+		runner.run(runnable);
+		waitForRunner();
 		assertEquals("Expected only 1 callback", 1, runnableCalled);
 	}
 
 	@Test
 	public void testHasPendingUpdates() {
-		manager.updateLater();
+		runner.runLater(runnable);
 		assertTrue("Should have pending updates after calling update, but before the work" +
-			"has been done", manager.hasPendingUpdates());
-		waitForManager();
+			"has been done", runner.hasPendingUpdates());
+		waitForRunner();
 		assertEquals("Expected only 1 callback", 1, runnableCalled);
 		assertFalse("Still have pending updates after performing work",
-			manager.hasPendingUpdates());
+			runner.hasPendingUpdates());
 	}
 
 	@Test
 	public void testDispose() {
 		for (int i = 0; i < 10; i++) {
-			manager.update();
+			runner.run(runnable);
 			sleep(1);
 		}
-		assertTrue(manager.hasPendingUpdates());
-		manager.dispose();
-		assertFalse(manager.hasPendingUpdates());
+		assertTrue(runner.hasPendingUpdates());
+		runner.dispose();
+		assertFalse(runner.hasPendingUpdates());
 		int called = runnableCalled;
 		//
 		// Cannot use again
 		//
-		manager.update();
-		waitForManager();
+		runner.run(runnable);
+		waitForRunner();
 		// make sure the callback did not occur.
 		assertEquals(called, runnableCalled);
 	}
@@ -197,13 +190,13 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		// This will cause the swing thread to block until we countdown the end latch
 		startLatch.await(10, TimeUnit.SECONDS);
 
-		manager.update();
-		assertTrue("Manager not busy after requesting an update", manager.isBusy());
+		runner.run(runnable);
+		assertTrue("Manager not busy after requesting an update", runner.isBusy());
 
 		endLatch.countDown();
 
-		waitForManager();
-		assertTrue("Manager still busy after waiting for update", !manager.isBusy());
+		waitForRunner();
+		assertFalse("Manager still busy after waiting for update", runner.isBusy());
 
 		assertFalse("Interrupted waiting for CountDowLatch", exception.get());
 	}
@@ -233,18 +226,17 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		};
 
 		// start the update manager and have it wait for us
-		manager = new SwingUpdateManager(MIN_DELAY, MAX_DELAY, r);
-		manager.update();
+		runner.run(r);
 
 		// have the swing thread block until we countdown the end latch
 		startLatch.await(10, TimeUnit.SECONDS);
 
 		// post the second update request now that the manager is actively processing
-		manager.update();
+		runner.run(runnable);
 
 		// let the update manager finish; verify 2 work items total
 		endLatch.countDown();
-		waitForManager();
+		waitForRunner();
 		assertEquals("Expected exactly 2 callbacks", 2, runnableCalled);
 	}
 
@@ -252,28 +244,28 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 	public void testNotFiringTooOften() throws InterruptedException {
 		Thread t = new Thread(() -> {
 			for (int i = 0; i < 50; i++) {
-				manager.update();
-				manager.update();
-				manager.update();
-				manager.update();
+				runner.run(runnable);
+				runner.run(runnable);
+				runner.run(runnable);
+				runner.run(runnable);
 				sleep(10);
 			}
 		});
 		t.start();
 		t.join();
-		waitForManager();
+		waitForRunner();
 		assertEquals(2, runnableCalled);
 	}
 
 //==================================================================================================
 // Private Methods
 //==================================================================================================
-	private void waitForManager() {
+	private void waitForRunner() {
 
 		// let all swing updates finish, which may trigger the update manager
 		waitForSwing();
 
-		while (manager.isBusy()) {
+		while (runner.isBusy()) {
 			sleep(DEFAULT_WAIT_DELAY);
 		}
 
@@ -281,13 +273,10 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		waitForSwing();
 	}
 
-	private SwingUpdateManager createUpdateManager(int min, int max) {
-		return new SwingUpdateManager(min, max, new Runnable() {
-
-			@Override
-			public void run() {
-				runnableCalled++;
-			}
-		});
+	private class ClientRunnable implements Runnable {
+		@Override
+		public void run() {
+			runnableCalled++;
+		}
 	}
 }
