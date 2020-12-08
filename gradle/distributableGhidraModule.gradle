@@ -173,7 +173,7 @@ plugins.withType(JavaPlugin) {
 		
 			// External Libraries
 		gradle.taskGraph.whenReady { taskGraph ->
-			List<String> externalPaths = getExternalDependencies(p)
+			List<String> externalPaths = getExternalRuntimeDependencies(p)
 			externalPaths.each { path ->
 				from (path) {
 					into {zipPath + "/lib" }
