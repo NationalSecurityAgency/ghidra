@@ -113,6 +113,7 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 		List<String> lines = processDialog(new DotGraphExporter());
 
 		assertOutput(lines,
+
 			"digraph Ghidra {",
 			"  \"A\" [ Type=\"X\" Inverted=\"true\" Name=\"A\" ];",
 			"  \"B\" [ Type=\"Y\" Name=\"B\" ];",
@@ -228,6 +229,7 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 				"{\"id\":\"5\",\"source\":\"D\",\"target\":\"E\",\"EType\":\"Call\"}]}");
 
 	}
+
 
 	@Test
 	public void testMATRIX() throws Exception {
