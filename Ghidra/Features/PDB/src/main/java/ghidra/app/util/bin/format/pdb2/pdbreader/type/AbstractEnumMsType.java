@@ -72,8 +72,10 @@ public abstract class AbstractEnumMsType extends AbstractComplexMsType {
 		myBuilder.append(" ");
 		myBuilder.append(name);
 		myBuilder.append("<");
-		myBuilder.append(count);
-		myBuilder.append(",");
+		if (count != -1) {
+			myBuilder.append(count);
+			myBuilder.append(",");
+		}
 		myBuilder.append(pdb.getTypeRecord(underlyingRecordNumber));
 		myBuilder.append(",");
 		myBuilder.append(property);

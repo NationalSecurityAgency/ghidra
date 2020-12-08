@@ -26,8 +26,9 @@ import mdemangler.MDMang;
  * Enums.
  */
 public abstract class AbstractComplexMsType extends AbstractMsType {
-
-	protected int count;
+	// -1 is a flag to prevent the count from being emitted, which is what is desired if there
+	// is not a count field for the child type.  0 and up are valid values.
+	protected int count = -1;
 	protected RecordNumber fieldDescriptorListRecordNumber;
 	protected MsProperty property;
 	protected String name;
