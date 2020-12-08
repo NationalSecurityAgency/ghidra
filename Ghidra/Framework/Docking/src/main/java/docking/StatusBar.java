@@ -369,7 +369,7 @@ public class StatusBar extends JPanel {
 		}
 	}
 
-	class StatusPanel extends JPanel {
+	static class StatusPanel extends JPanel {
 		Dimension prefSize;
 
 		StatusPanel(Component c, boolean addBorder) {

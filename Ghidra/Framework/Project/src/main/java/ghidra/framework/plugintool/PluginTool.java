@@ -449,7 +449,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		winMgr.setVisible(false);
-		eventMgr.clearLastEvents();
+		eventMgr.clear();
 		pluginMgr.dispose();
 
 		toolActions.removeActions(ToolConstants.TOOL_OWNER);
