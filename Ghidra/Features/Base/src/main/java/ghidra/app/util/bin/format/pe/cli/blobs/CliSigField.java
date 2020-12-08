@@ -20,21 +20,26 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.program.model.data.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 
 public class CliSigField extends CliAbstractSig {
-	public static final byte identifier = 0x06; 
-	
-	public CliParam type;
-	
+	private CliParam type;
+
+	private static final byte CLISIGFIELD_PROLOG = 0x06;
+
 	public CliSigField(CliBlob blob) throws IOException {
 		super(blob);
 
-		// Now read our special data from the blob!
 		BinaryReader reader = getContentsReader();
-		byte firstByte = reader.readNextByte();
-		if (firstByte != identifier)
-			return; // Do something worse than just return?
+
+		byte prolog = reader.readNextByte();
+		if (prolog != CLISIGFIELD_PROLOG) {
+			Msg.warn(this,
+				"CliSigField had unexpected prolog (0x" + Integer.toHexString(prolog) + ").");
+			return;
+		}
+
 		try {
 			type = new CliParam(reader);
 		}
@@ -51,14 +56,17 @@ public class CliSigField extends CliAbstractSig {
 	 * @throws IOException
 	 */
 	public static boolean isFieldSig(CliBlob blob) throws IOException {
-		return blob.getContentsReader().readNextByte() == identifier;
+		return blob.getContentsReader().readNextByte() == CLISIGFIELD_PROLOG;
+	}
+
+	public CliParam getType() {
+		return type;
 	}
 
 	@Override
 	public DataType getContentsDataType() {
-		StructureDataType struct =
-			new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(BYTE, "FIELD", "0x06");
+		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
+		struct.add(BYTE, "FIELD", "Magic (0x06)");
 		struct.add(type.getDefinitionDataType(), "Type", null);
 		return struct;
 	}
@@ -77,5 +85,5 @@ public class CliSigField extends CliAbstractSig {
 	public String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
 		return getRepresentationOf(type, stream, isShort);
 	}
-	
+
 }

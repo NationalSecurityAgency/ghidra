@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 public class CliTableTypeSpec extends CliAbstractTable {
 	public class CliTypeSpecRow extends CliAbstractTableRow {
 		public int signatureIndex;
-		
+
 		public CliTypeSpecRow(int signatureIndex) {
 			super();
 			this.signatureIndex = signatureIndex;
@@ -52,10 +52,11 @@ public class CliTableTypeSpec extends CliAbstractTable {
 				CliSigTypeSpec sig = new CliSigTypeSpec(blob);
 				sigRep = sig.getRepresentation();
 			}
-			catch (Exception e) {}
+			catch (Exception e) {
+			}
 			return String.format("%s", sigRep);
 		}
-		
+
 		@Override
 		public String getRepresentation(CliStreamMetadata stream) {
 			String sigRep = Integer.toHexString(signatureIndex);
@@ -64,12 +65,14 @@ public class CliTableTypeSpec extends CliAbstractTable {
 				CliSigTypeSpec sig = new CliSigTypeSpec(blob);
 				sigRep = sig.getRepresentation(stream);
 			}
-			catch (Exception e) {}
+			catch (Exception e) {
+			}
 			return String.format("%s", sigRep);
 		}
 	}
-	
-	public CliTableTypeSpec(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableTypeSpec(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId)
+			throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
 			CliTypeSpecRow row = new CliTypeSpecRow(readBlobIndex(reader));
@@ -79,21 +82,22 @@ public class CliTableTypeSpec extends CliAbstractTable {
 	}
 
 	@Override
-	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log, NTHeader ntHeader) 
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			CliTypeSpecRow typeRow = (CliTypeSpecRow) row;
 			CliBlob blob = metadataStream.getBlobStream().getBlob(typeRow.signatureIndex);
-			// Handle the signature
-			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
-				ntHeader, metadataStream.getBlobStream(), typeRow.signatureIndex);
-			// Create PropertySig object
+
+			// Get the address of the signature, create the TypeSpec object
+			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor,
+				log, ntHeader, metadataStream.getBlobStream(), typeRow.signatureIndex);
+
 			CliSigTypeSpec typeSig = new CliSigTypeSpec(blob);
 			metadataStream.getBlobStream().updateBlob(typeSig, sigAddr, program);
-//			program.getBookmarkManager().setBookmark(sigAddr, BookmarkType.INFO, "Signature!", "TypeSpecSig (Offset "+typeRow.signatureIndex+")");
 		}
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "TypeSpec Row", 0);

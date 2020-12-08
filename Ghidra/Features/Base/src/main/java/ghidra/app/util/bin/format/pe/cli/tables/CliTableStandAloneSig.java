@@ -37,11 +37,11 @@ import ghidra.util.task.TaskMonitor;
 public class CliTableStandAloneSig extends CliAbstractTable {
 	public class CliStandAloneSigRow extends CliAbstractTableRow {
 		public int signatureIndex;
-		
+
 		public CliStandAloneSigRow(int signatureIndex) {
 			this.signatureIndex = signatureIndex;
 		}
-		
+
 		@Override
 		public String getRepresentation() {
 			String sigRep = Integer.toHexString(signatureIndex);
@@ -52,8 +52,8 @@ public class CliTableStandAloneSig extends CliAbstractTable {
 					sig = new CliSigLocalVar(sigBlob);
 				}
 				else if (CliSigField.isFieldSig(sigBlob)) {
-					// UNDOCUMENTED FEATURE ALERT! Microsoft compilers will sometimes put FieldSig references in this table, too,
-					// despite that not fitting the ISO standard they wrote themselves. 
+					// UNDOCUMENTED FEATURE ALERT! Contrary to ISO standards Microsoft compilers
+					// will sometimes put FieldSig references in this table.
 					sig = new CliSigField(sigBlob);
 				}
 				else {
@@ -61,52 +61,54 @@ public class CliTableStandAloneSig extends CliAbstractTable {
 				}
 				sigRep = sig.getRepresentation();
 			}
-			catch (Exception e) {}
+			catch (Exception e) {
+			}
 			return String.format("%s", sigRep);
 		}
 	}
-	
-	public CliTableStandAloneSig(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableStandAloneSig(BinaryReader reader, CliStreamMetadata stream,
+			CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
 			rows.add(new CliStandAloneSigRow(readBlobIndex(reader)));
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
-		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "StandAloneSig Row", 0);
+		StructureDataType rowDt =
+			new StructureDataType(new CategoryPath(PATH), "StandAloneSig Row", 0);
 		rowDt.add(metadataStream.getBlobIndexDataType(), "Signature", null);
 		return rowDt;
 	}
-	
+
 	@Override
-	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log, NTHeader ntHeader) 
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			Integer sigIndex = ((CliStandAloneSigRow) row).signatureIndex;
 			CliBlob blob =
 				metadataStream.getBlobStream().getBlob(((CliStandAloneSigRow) row).signatureIndex);
-			Address addr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
-				ntHeader, metadataStream.getBlobStream(), sigIndex);
-			// Create Signature object and mark it up
+			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor,
+				log, ntHeader, metadataStream.getBlobStream(), sigIndex);
+
+			// Create one of several *Sig objects
 			if (CliSigLocalVar.isLocalVarSig(blob)) {
 				CliSigLocalVar localSig = new CliSigLocalVar(blob);
-				metadataStream.getBlobStream().updateBlob(localSig, addr, program);
-//				program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "Signature!", "LocalVarSig (Offset "+sigIndex+")");
+				metadataStream.getBlobStream().updateBlob(localSig, sigAddr, program);
 			}
 			else if (CliSigField.isFieldSig(blob)) {
-				// UNDOCUMENTED FEATURE ALERT! Microsoft compilers will sometimes put FieldSig references in this table, too,
-				// despite that not fitting the ISO standard they wrote themselves. 
+				// UNDOCUMENTED FEATURE ALERT! Contrary to ISO standards Microsoft compilers
+				// will sometimes put FieldSig references in this table.
 				CliSigField fieldSig = new CliSigField(blob);
-				metadataStream.getBlobStream().updateBlob(fieldSig, addr, program);
-//				program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "Signature!", "FieldSig (Offset "+sigIndex+")");
+				metadataStream.getBlobStream().updateBlob(fieldSig, sigAddr, program);
 			}
 			else {
 				CliSigStandAloneMethod standAloneSig = new CliSigStandAloneMethod(blob);
-				metadataStream.getBlobStream().updateBlob(standAloneSig, addr, program);
-//				program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "Signature!", "StandAloneSig (Offset "+sigIndex+")");
+				metadataStream.getBlobStream().updateBlob(standAloneSig, sigAddr, program);
 			}
 		}
 	}

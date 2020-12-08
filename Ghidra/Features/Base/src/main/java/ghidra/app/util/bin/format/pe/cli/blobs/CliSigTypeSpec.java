@@ -24,9 +24,10 @@ import ghidra.util.exception.InvalidInputException;
 public class CliSigTypeSpec extends CliAbstractSig {
 
 	public CliSigType type;
-	
+
 	public CliSigTypeSpec(CliBlob blob) throws IOException {
 		super(blob);
+
 		try {
 			type = readCliType(blob.getContentsReader());
 		}
@@ -34,17 +35,17 @@ public class CliSigTypeSpec extends CliAbstractSig {
 			type = null;
 		}
 	}
-	
+
 	@Override
 	public String getContentsName() {
 		return "TypeSpec";
 	}
-	
+
 	@Override
 	public String getContentsComment() {
 		return "Describes a type.";
 	}
-	
+
 	@Override
 	public DataType getContentsDataType() {
 		return type.getDefinitionDataType();
@@ -52,6 +53,6 @@ public class CliSigTypeSpec extends CliAbstractSig {
 
 	@Override
 	public String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
-		return "TypeSpec: "+getRepresentationOf(type, stream, isShort);
+		return "TypeSpec: " + getRepresentationOf(type, stream, isShort);
 	}
 }

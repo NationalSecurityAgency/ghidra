@@ -23,34 +23,51 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.InvalidInputException;
 
 public class CliSigStandAloneMethod extends CliAbstractSig {
-	
+
 	private CliRetType retType;
 	private CliParam params[];
+	private byte flags;
 	private int sizeOfCount;
 	private int sentinelIndex; // SENTINEL is before the parameter index in this field
-	
-	// TODO: Note: The only difference between this and the MethodRefSig is the number of args that can be included in the first byte
-	
+
+	// Note: The only difference between this and the MethodRefSig is the number of
+	// values that can be included in the first byte
+
+	private final int STANDALONEMETHODSIG_FLAGS_DEFAULT = 0x0;
+	private final int STANDALONEMETHODSIG_FLAGS_HASTHIS = 0x20;
+	private final int STANDALONEMETHODSIG_FLAGS_EXPLICITTHIS = 0x40;
+	private final int STANDALONEMETHODSIG_FLAGS_VARARG = 0x5;
+	private final int STANDALONEMETHODSIG_FLAGS_C = 0x01;
+	private final int STANDALONEMETHODSIG_FLAGS_STDCALL = 0x02;
+	private final int STANDALONEMETHODSIG_FLAGS_THISCALL = 0x03;
+	private final int STANDALONEMETHODSIG_FLAGS_FASTCALL = 0x04;
+
+	public enum CallingConvention {
+		MANAGED, C, STDCALL, THISCALL, FASTCALL
+	}
+
 	public CliSigStandAloneMethod(CliBlob blob) throws IOException {
 		super(blob);
 		sentinelIndex = -1;
 
-		// Now read our special stuff.
+		// Read the flags
 		BinaryReader reader = getContentsReader();
-		byte firstByte = reader.readNextByte();
-		// firstByte is HASTHIS | EXPLICITTHIS | (VARARG | VARARG | C | STDCALL | THISCALL | FASTCALL) 
+		flags = reader.readNextByte();
+
 		long origIndex = reader.getPointerIndex();
 		int paramCount = decodeCompressedUnsignedInt(reader);
 		this.sizeOfCount = (int) (reader.getPointerIndex() - origIndex);
+
 		try {
 			retType = new CliRetType(reader);
 		}
 		catch (InvalidInputException e) {
 			retType = null;
 		}
+
 		params = new CliParam[paramCount];
 		for (int i = 0; i < paramCount; i++) {
-			if (reader.peekNextByte() == CliElementType.ELEMENT_TYPE_SENTINAL.id()) {
+			if (reader.peekNextByte() == CliElementType.ELEMENT_TYPE_SENTINEL.id()) {
 				reader.readNextByte();
 				sentinelIndex = i;
 			}
@@ -59,7 +76,7 @@ public class CliSigStandAloneMethod extends CliAbstractSig {
 			}
 			catch (InvalidInputException e) {
 				params[i] = null;
-			}			
+			}
 		}
 	}
 
@@ -67,7 +84,7 @@ public class CliSigStandAloneMethod extends CliAbstractSig {
 	public String getContentsName() {
 		return "StandAloneMethodSig";
 	}
-	
+
 	@Override
 	public String getContentsComment() {
 		return "Typically for calli instruction; Type info for method return and params";
@@ -76,34 +93,77 @@ public class CliSigStandAloneMethod extends CliAbstractSig {
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(BYTE, "FirstByte", "ORed VARARG/DEFAULT/C/STDCALL/THISCALL/FASTCALL and HASTHIS/EXPLICITTHIS");
-		struct.add(getDataTypeForBytes(sizeOfCount), "Count", "Number of param types to follow RetType");
+		struct.add(BYTE, "flags",
+			"ORed VARARG/DEFAULT/C/STDCALL/THISCALL/FASTCALL and HASTHIS/EXPLICITTHIS");
+		struct.add(getDataTypeForBytes(sizeOfCount), "Count",
+			"Number of param types to follow RetType");
 		struct.add(retType.getDefinitionDataType(), "RetType", null);
-		for (CliParam param : params)
+		for (CliParam param : params) {
 			struct.add(param.getDefinitionDataType(), null, null);
+		}
 		return struct;
 	}
 
 	public CliRetType getReturnType() {
 		return retType;
 	}
-	
+
 	public CliParam[] getParams() {
 		return params.clone();
 	}
-	
+
+	public boolean hasThis() {
+		return (flags & STANDALONEMETHODSIG_FLAGS_HASTHIS) == STANDALONEMETHODSIG_FLAGS_HASTHIS;
+	}
+
+	public boolean hasExplicitThis() {
+		return (flags &
+			STANDALONEMETHODSIG_FLAGS_EXPLICITTHIS) == STANDALONEMETHODSIG_FLAGS_EXPLICITTHIS;
+	}
+
+	public boolean hasVarArgs() {
+		return (flags & STANDALONEMETHODSIG_FLAGS_VARARG) == STANDALONEMETHODSIG_FLAGS_VARARG;
+	}
+
+	public CallingConvention getCallingConvention() {
+		if ((flags & STANDALONEMETHODSIG_FLAGS_C) == STANDALONEMETHODSIG_FLAGS_C) {
+			// cdecl
+			return CallingConvention.C;
+		}
+		else if ((flags & STANDALONEMETHODSIG_FLAGS_STDCALL) == STANDALONEMETHODSIG_FLAGS_STDCALL) {
+			// stdcall
+			return CallingConvention.STDCALL;
+		}
+		else if ((flags &
+			STANDALONEMETHODSIG_FLAGS_THISCALL) == STANDALONEMETHODSIG_FLAGS_THISCALL) {
+			// ecx/rcx is this pointer
+			return CallingConvention.THISCALL;
+		}
+		else if ((flags &
+			STANDALONEMETHODSIG_FLAGS_FASTCALL) == STANDALONEMETHODSIG_FLAGS_FASTCALL) {
+			// ecx/rcx and edx/rdx are the first two parameters, standard x64 convention
+			return CallingConvention.FASTCALL;
+		}
+
+		// Managed code call
+		return CallingConvention.MANAGED;
+	}
+
 	@Override
 	public String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
 		String rep = getRepresentationOf(retType, stream, isShort) + " fn(";
-		// TODO: Display SENTINEL as "..."
+
 		for (CliParam param : params) {
-			if (param == null) 
+			if (param == null) {
 				rep += "unidentified_param_type, ";
-			else
+			}
+			else {
 				rep += getRepresentationOf(param, stream, isShort) + ", ";
+			}
 		}
-		if (params.length > 0)
-			rep = rep.substring(0, rep.length()-2); // Take off last comma+space
+		if (params.length > 0) {
+			rep = rep.substring(0, rep.length() - 2); // Take off last comma+space
+		}
 		rep += ")";
 		return rep;
 	}
