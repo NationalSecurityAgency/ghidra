@@ -136,23 +136,31 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public String getDisplayName() {
-		// NOTE: Pointer display name only specifies length if null base type
-		validate(lock);
 		String localDisplayName = displayName;
-		if (localDisplayName == null) {
-			DataType dt = getDataType();
-			if (dt == null) {
-				localDisplayName = PointerDataType.POINTER_NAME;
-				if (!isDynamicallySized()) {
-					localDisplayName += Integer.toString(getLength() * 8);
+		if (localDisplayName != null && !isInvalid()) {
+			return localDisplayName;
+		}
+		lock.acquire();
+		try {
+			checkIsValid();
+			if ( displayName == null ) {
+				// NOTE: Pointer display name only specifies length if null base type
+				DataType dt = getDataType();
+				if (dt == null) {
+					displayName = PointerDataType.POINTER_NAME;
+					if (!isDynamicallySized()) {
+						displayName += Integer.toString(getLength() * 8);
+					}
+				}
+				else {
+					displayName = dt.getDisplayName() + " *";
 				}
 			}
-			else {
-				localDisplayName = dt.getDisplayName() + " *";
-			}
-			displayName = localDisplayName;
+			return displayName;
 		}
-		return localDisplayName;
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
