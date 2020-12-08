@@ -579,8 +579,8 @@ SetendBE: "b" is Toggle=1 { setend(1:1); }
 
 :maddr32 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b110011 { Rt = Rt + (Ra * Rb); }
 :msubr32 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b110101 { Rt = Rt - (Ra * Rb); }
-:divr    Rt, Rs, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rs & Sub5=0b10111 { Rt = Ra / Rb; Rs = Ra % Rb; }
-:divsr   Rt, Rs, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rs & Sub5=0b10110 { Rt = Ra s/ Rb; Rs = Ra s% Rb; }
+:divr    Rt, Rs, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rs & Sub5=0b10111 { local div = Ra / Rb; local mod = Ra % Rb; Rs = mod; Rt = div; }
+:divsr   Rt, Rs, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rs & Sub5=0b10110 { local div = Ra s/ Rb; local mod = Ra s% Rb; Rs = mod; Rt = div; }
 
 
 ### Load/Store Instructions ###
