@@ -9,5 +9,7 @@ eclipse.project.name = 'Processors NDS32'
 
 dependencies {
 	compile project(':Base')
+	// Temporary dependency so that pcodeTests can use the Decompiler switch recovery
+	compile project(':Decompiler')
 }
 
