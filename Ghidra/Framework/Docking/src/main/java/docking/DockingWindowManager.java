@@ -654,6 +654,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param provider the provider to be removed.
 	 */
 	public void removeComponent(ComponentProvider provider) {
+		if (provider == defaultProvider) {
+			defaultProvider = null;
+		}
 		placeholderManager.removeComponent(provider);
 	}
 
@@ -822,6 +825,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		setNextFocusPlaceholder(null);
 		removeInstance(this);
 		root = null;
+		lastActiveWindow = null;
 	}
 
 	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
