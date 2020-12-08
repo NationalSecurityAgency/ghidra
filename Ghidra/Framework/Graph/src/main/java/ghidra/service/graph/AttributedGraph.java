@@ -222,21 +222,27 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 		return Integer.toString(weight);
 	}
 
+	/**
+	 * Default VertexSupplier that uses a simple one up number for default vertex ids
+	 */
 	private static class VertexSupplier implements Supplier<AttributedVertex> {
-		long id = 0;
+		long nextId = 1;
 
 		@Override
 		public AttributedVertex get() {
-			return new AttributedVertex(Long.toString(id++));
+			return new AttributedVertex(Long.toString(nextId++));
 		}
 	}
 
+	/**
+	 * Default EdgeSupplier that uses a simple one up number for default edge ids
+	 */
 	private static class EdgeSupplier implements Supplier<AttributedEdge> {
-		long id = 0;
+		long nextId = 1;
 
 		@Override
 		public AttributedEdge get() {
-			return new AttributedEdge(Long.toString(id++));
+			return new AttributedEdge(Long.toString(nextId++));
 		}
 	}
 }

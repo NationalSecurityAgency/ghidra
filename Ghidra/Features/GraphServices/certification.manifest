@@ -8,6 +8,7 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||||END|
 src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
