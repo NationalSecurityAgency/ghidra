@@ -88,13 +88,21 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public String getDisplayName() {
-		validate(lock);
 		String localDisplayName = displayName;
-		if (localDisplayName == null) {
-			localDisplayName = DataTypeUtilities.getDisplayName(this, false);
-			displayName = localDisplayName;
+		if (localDisplayName != null && !isInvalid()) {
+			return localDisplayName;
 		}
-		return localDisplayName;
+		lock.acquire();
+		try {
+			checkIsValid();
+			if ( displayName == null ) {
+				displayName = DataTypeUtilities.getDisplayName(this, false);
+			}
+			return displayName;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override

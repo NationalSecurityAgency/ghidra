@@ -164,13 +164,22 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	 */
 	@Override
 	public Settings getDefaultSettings() {
-		validate(lock);
 		Settings localDefaultSettings = defaultSettings;
-		if (localDefaultSettings == null) {
-			localDefaultSettings = new SettingsDBManager(dataMgr, this, key);
-			defaultSettings = localDefaultSettings;
+		if (localDefaultSettings != null && !isInvalid()) {
+			return localDefaultSettings;
 		}
-		return localDefaultSettings;
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (defaultSettings == null) {
+				defaultSettings = new SettingsDBManager(dataMgr, this, key);
+			}
+			return defaultSettings;
+		}
+		finally {
+			lock.release();
+		}
+
 	}
 
 	/**
@@ -286,15 +295,24 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 
 	@Override
 	public CategoryPath getCategoryPath() {
-		validate(lock);
-		if (category == null) {
-			category = dataMgr.getCategory(doGetCategoryID());
+		Category cat = category;
+		if (cat != null && !isInvalid()) {
+			return cat.getCategoryPath();
 		}
-		if (category == null) {
-			category = dataMgr.getRootCategory();
-			return CategoryPath.ROOT;
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (category == null) {
+				category = dataMgr.getCategory(doGetCategoryID());
+			}
+			if (category == null) {
+				category = dataMgr.getRootCategory();
+			}
+			return category.getCategoryPath();
 		}
-		return category.getCategoryPath();
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
