@@ -13,7 +13,6 @@ dependencies {
 
 	compile "com.github.tomnelson:jungrapht-visualization:1.0"
 	compile "com.github.tomnelson:jungrapht-layout:1.0"
-	compile "org.jgrapht:jgrapht-core:1.5.0"
 	
 	// not using jgrapht-io code that depends on antlr, so exclude antlr
 	compile ("org.jgrapht:jgrapht-io:1.5.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
