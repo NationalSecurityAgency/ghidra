@@ -1321,12 +1321,18 @@ void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addr
   if (loadpoints != (vector<LoadTable> *)0)
     emul.setLoadCollect(true);
 
+  uintb mask = ~((uintb)0);
+  int4 bit = fd->getArch()->funcptr_align;
+  if (bit != 0) {
+    mask = (mask >> bit) << bit;
+  }
   AddrSpace *spc = indop->getAddr().getSpace();
   bool notdone = jrange->initializeForReading();
   while(notdone) {
     val = jrange->getValue();
     addr = emul.emulatePath(val,pathMeld,jrange->getStartOp(),jrange->getStartVarnode());
     addr = AddrSpace::addressToByte(addr,spc->getWordSize());
+    addr &= mask;
     addresstable.push_back(Address(spc,addr));
     notdone = jrange->next();
   }
@@ -2008,9 +2014,15 @@ void JumpAssisted::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &a
   for(int4 i=0;i<numInputs;++i)
     inputs.push_back(assistOp->getIn(i+1)->getOffset());
 
+  uintb mask = ~((uintb)0);
+  int4 bit = fd->getArch()->funcptr_align;
+  if (bit != 0) {
+    mask = (mask >> bit) << bit;
+  }
   for(int4 index=0;index<sizeIndices;++index) {
     inputs[0] = index;
     uintb output = pcodeScript->evaluate(inputs);
+    output &= mask;
     addresstable.push_back(Address(spc,output));
   }
   ExecutablePcode *defaultScript = (ExecutablePcode *)fd->getArch()->pcodeinjectlib->getPayload(userop->getDefaultAddr());
