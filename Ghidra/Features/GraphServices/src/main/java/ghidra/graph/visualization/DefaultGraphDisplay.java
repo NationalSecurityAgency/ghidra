@@ -192,6 +192,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				Dimension sd = satelliteViewer.getSize();
 				java.awt.Point p = new java.awt.Point(vvd.width - sd.width, vvd.height - sd.height);
 				satelliteViewer.getComponent().setBounds(p.x, p.y, sd.width, sd.height);
+				satelliteViewer.scaleToLayout();
 			}
 		});
 
@@ -303,7 +304,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		new ActionBuilder("Reset View", ACTION_OWNER)
 				.description("Fit Graph to Window")
 				.toolBarIcon(DefaultDisplayGraphIcons.FIT_TO_WINDOW)
-				.onAction(context -> viewer.scaleToLayout())
+				.onAction(context -> centerAndScale())
 				.buildAndInstallLocal(componentProvider);
 
 		// create a button to show the view magnify lens
@@ -593,6 +594,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		graphDisplayProvider.setDefaultSatelliteState(selected);
 		if (selected) {
 			viewer.getComponent().add(satelliteViewer.getComponent());
+			satelliteViewer.scaleToLayout();
 		}
 		else {
 			viewer.getComponent().remove(satelliteViewer.getComponent());
@@ -774,6 +776,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			configureFilters();
 			LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
 				layoutTransitionManager.getInitialLayoutAlgorithm();
+			initialLayoutAlgorithm.setAfter(() -> centerAndScale());
 			viewer.getVisualizationModel().setLayoutAlgorithm(initialLayoutAlgorithm);
 		});
 		componentProvider.setVisible(true);
@@ -924,6 +927,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 */
 	public void centerAndScale() {
 		viewer.scaleToLayout();
+		satelliteViewer.scaleToLayout();
 	}
 
 	/**
@@ -1026,7 +1030,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			public void ancestorAdded(AncestorEvent ancestorEvent) {
 				vv.getComponent().removeAncestorListener(this);
 				Swing.runLater(() -> {
-					vv.scaleToLayout();
+					centerAndScale();
 				});
 			}
 
