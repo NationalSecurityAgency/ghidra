@@ -51,27 +51,27 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public boolean contains(AddressSetView rangeSet);
 
 	/**
-	 * Returns true if this set is empty.
+	 * @return true if this set is empty.
 	 */
 	public boolean isEmpty();
 
 	/**
-	 * Return the minimum address for this set. Returns null if the set is empty.
+	 * @return the minimum address for this set. Returns null if the set is empty.
 	 */
 	public Address getMinAddress();
 
 	/**
-	 * Return the maximum address for this set. Returns null if the set is empty.
+	 * @return the maximum address for this set. Returns null if the set is empty.
 	 */
 	public Address getMaxAddress();
 
 	/**
-	 * Return the number of address ranges in this set.
+	 * @return the number of address ranges in this set.
 	 */
 	public int getNumAddressRanges();
 
 	/**
-	 * Returns an iterator over the address ranges in this address set.
+	 * @return an iterator over the address ranges in this address set.
 	 */
 	public AddressRangeIterator getAddressRanges();
 
@@ -120,7 +120,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public Iterator<AddressRange> iterator(Address start, boolean forward);
 
 	/**
-	 * Returns the number of addresses in this set.
+	 * @return the number of addresses in this set.
 	 */
 	public long getNumAddresses();
 
@@ -128,6 +128,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * Returns an iterator over all addresses in this set.
 	 * @param forward if true the address are return in increasing order, otherwise in
 	 * decreasing order.
+	 * @return an iterator over all addresses in this set.
 	 */
 	public AddressIterator getAddresses(boolean forward);
 
@@ -136,6 +137,8 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * starting at the start address
 	 * @param start address to start iterating at in the address set
 	 * @param forward if true address are return from lowest to highest, else from highest to lowest
+	 * @return an iterator over the addresses in this address set
+	 * starting at the start address
 	 */
 	public AddressIterator getAddresses(Address start, boolean forward);
 
@@ -143,6 +146,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * Determine if this address set intersects with the specified address set.
 	 *
 	 * @param addrSet address set to check intersection with.
+	 * @return true if this set intersects the specified addrSet else false
 	 */
 	public boolean intersects(AddressSetView addrSet);
 
@@ -196,7 +200,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	/**
 	 * Computes the exclusive-or of this address set with the given set. This
 	 * method does not modify this address set.
-	 * @param addrSet
+	 * @param addrSet address set to exclusive-or with.
 	 * @return AddressSet a new address set containing all addresses that are in
 	 * either this set or the given set, but not in both sets
 	 */
