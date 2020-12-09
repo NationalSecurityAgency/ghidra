@@ -13,9 +13,7 @@ dependencies {
 
 	compile "com.github.tomnelson:jungrapht-visualization:1.0"
 	compile "com.github.tomnelson:jungrapht-layout:1.0"
-	
-	// not using jgrapht-io code that depends on antlr, so exclude antlr
-	compile ("org.jgrapht:jgrapht-io:1.5.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
+
 	runtime "org.slf4j:slf4j-api:1.7.25"
 	// use this if you want no slf4j log messages
 	runtime "org.slf4j:slf4j-nop:1.7.25"
