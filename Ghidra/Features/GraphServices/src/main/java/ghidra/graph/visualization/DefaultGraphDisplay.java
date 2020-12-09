@@ -594,6 +594,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		graphDisplayProvider.setDefaultSatelliteState(selected);
 		if (selected) {
 			viewer.getComponent().add(satelliteViewer.getComponent());
+			satelliteViewer.scaleToLayout();
 		}
 		else {
 			viewer.getComponent().remove(satelliteViewer.getComponent());
