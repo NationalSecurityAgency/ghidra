@@ -6,6 +6,7 @@ apply from: "gradle/support/settingsUtil.gradle"
  *******************************************************************************************/
 
 includeProjects('Ghidra/Dev')
+includeProjects('Ghidra/Debug')
 includeProjects('Ghidra/Extensions')
 includeProjects('Ghidra/Framework')
 includeProjects('Ghidra/Features')

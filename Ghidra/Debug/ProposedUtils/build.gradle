@@ -1,0 +1,24 @@
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug ProposedUtils'
+
+// val autoServiceVersion = "1.0-rc5"
+
+dependencies {
+	compile project(':DB')
+	compile project(':Project')
+	compile project(':SoftwareModeling')
+	compile project(':Utility')
+
+	compile project(':Base') // Boo!: (Where to put DefaultEnumeratedColumnProgramTableModel?)
+	
+	// TODO: Evaluate these dependencies
+	// compile("com.google.auto.service:auto-service-annotations:$autoServiceVersion")
+	// annotationProcessor("com.google.auto.service:auto-service:$autoServiceVersion")
+
+	testCompile project(':Base')
+}

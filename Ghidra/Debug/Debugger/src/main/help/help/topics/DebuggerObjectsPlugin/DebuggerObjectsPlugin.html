@@ -1,0 +1,351 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Commands and Objects</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Commands and Objects</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center"><IMG alt="" border="1" src="images/DebuggerObjectsPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The Debugger's Objects window permits the user to interact directly with a connected
+    debugger and its targets. Along with the command-line, it is the primary mechanism for issuing
+    commands, e.g., <B>step</B>, to a target. Commands are accessible from the tool bar, the
+    pull-down, and pop-up menus. Commands are enabled in two ways: (1) the object selected has a
+    property that marks it as a logical target for that command, or (2) the object has an ancestor
+    for which the command makes sense. The <A href=
+    "DebuggerObjectsPlugin.html#act_on_selection_only">Act on Selection Only</A> function
+    determines whether both options are in play. For example, threads and inferiors/processes are
+    both <B>resumable</B>, so the <A href="DebuggerObjectsPlugin.html#resume">Resume</A> action
+    works on both. For many of our targets, processes are <B>interruptible</B> while threads are
+    not. Nevertheless, if <B>Act On Selection Only</B> is off, you can interrupt a thread because
+    it descends from an inferior or process. In almost every case, the selection directly or
+    indirectly determines the set of valid or enabled actions.</P>
+
+    <P>The application of these special properties to each object to determine its behavior and
+    relevant actions allows all objects to be treated generically. This feature has several
+    powerful implications. All objects may be represented in many ways, and one representation may
+    easily be converted into another. The default representation is a tree, and the Debugger's
+    Objects plugin starts with a tree to represent a debugger session's state. Any portion of the
+    tree may be reproduced as its own subtree or as a table or as a graph using the <A href=
+    "DebuggerObjectsPlugin.html#display_as">Display as...</A> actions. Any portion of display may
+    equally be exported or imported from the plugin. The generic aspect of all objects also allows
+    the user to process them in scripts or plugins in common ways. For example, you could write a
+    script to walk the entire tree and find objects with "File" in the name or with the value
+    0xDEADBEEF.</P>
+
+    <P>The hierarchy reflected in the initial display has either been derived from the target, as
+    in the case of WinDbg v.2's dbgmodel engine, or imposed by the designers of the current
+    "model". The model is the schema chosen by the authors for a particular debugger target. It
+    usually mirrors to some extent the underlying relationships in the native debugger, but need
+    not, and is usually fixed for that target. (In the future, we intend to expose this schema and
+    allow it to be transformed by the user.) Commands executed within this plugin are passed from
+    the GUI through the model to the target manager and on to the agent which makes the required
+    native calls. In general, this plugin does not operate on any object in a trace or controlled
+    by a recorder, except for actions which initiate a recording or add objects to a recording.</P>
+
+    <H3><A name="console"></A><IMG alt="" src="images/console.png"> Console</H3>
+
+    <P>Shows the console for the selected context, usually the debugger's command-line interpreter.
+    Some models may also present a target's standard I/O via a console.</P>
+
+    <H2>Target Management</H2>
+
+    <P>The following actions manage targets, e.g., processes, within a connected debugger.</P>
+
+    <H3><A name="quick_launch"></A><IMG alt="" src="images/debugger.png"> Quick Launch</H3>
+
+    <P>Launch a new target using the current program.</P>
+
+    <P>This action is the fastest and probably most common way of starting a debugger target. The
+    action attempts to launch the program in the currently selected tab of the static listing
+    window. The success of the action depends on the program being associated with an existing
+    executable file on the local system. The value associated with the program may, of course, be
+    checked using the <A href="help/topics/About/About_Program_File.htm">About Program File</A>
+    function.</P>
+
+    <H3><A name="launch"></A><IMG alt="" src="images/launch.png"> Launch</H3>
+
+    <P>Launch a new target. Sometimes you may wish to launch a program which has not been imported,
+    to launch a program with various configuration options, or to pass arguments to the program.
+    The launch dialog allows you to do this. Typically, the dialog will present a single empty box
+    into which you can enter the command with arguments as you would on a command line. For some
+    targets, the dialog will present pre-configured options corresponding to common launch modes
+    for the platform.</P>
+
+    <P>For example, the CommandLineLaunch version of the dialog for JDI targets displays a check
+    box for whether the target shuld be suspended on launch, the default quote character used by
+    the command line, the program used to start the virtual machine (java), the path to where it's
+    installed, and fields for the name of the class and any user options you might supply:</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center"><IMG alt="" border="1" src=
+          "images/DebuggerMethodInvocationDialog_ForLaunch.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The options displayed by the Launch command are, for some targets, connected to the
+    currently selected item under Connectors. For example, the Windows tree offers four possible
+    connectors: one for command-line launch, one for attach, open for kernel-mode debugging, and
+    one for opening previously-generated dump or trace files.</P>
+
+    <H3><A name="attach"></A><IMG alt="" src="images/attach.png"> Attach</H3>
+
+    <P>Attach to a running target</P>
+
+    <P>If the debugger has available a list of running targets for the local system, the attach
+    action provides a convenient way to select and attach to an existing process. If the
+    highlighted object in the provider is considered "attachable", the attach action attempts to
+    connect that element. The list of "attachable" targets is typically displayed in the tree under
+    <B>Session/Available</B>. Bare in mind it often takes time to populate the <B>Available</B>
+    list, which may need to be manually refreshed.</P>
+
+    <H3><A name="detach"></A><IMG alt="" src="images/detach.png"> Detach</H3>
+
+    <P>Detach from the selected target, usually allowing it to resume execution. (This action
+    terminates the current trace for the target, if applicable, but does not close it.)</P>
+
+    <H3><A name="re-attach"></A><IMG alt="" src="images/attach.png"> Re-attach</H3>
+
+    <P>Re-attaches to the selected target. (Some targets require a separate action for re-attaching
+    vs. attaching for the first time. If so, this action provides that capability.)</P>
+
+    <H3><A name="kill"></A><IMG alt="" src="images/kill.png"> Kill</H3>
+
+    <P>Kill this current target. (As with <B>detach</B>, this terminates a current trace, if
+    applicable, but does not close it.)</P>
+
+    <H2>Execution Management</H2>
+
+    <P>The following actions manage execution state of a target.</P>
+
+    <H3><A name="interrupt"></A><IMG alt="" src="images/stop.png"> Interrupt (Pause, Suspend,
+    Break)</H3>
+
+    <P>Interrupt the current target's execution.</P>
+
+    <H3><A name="resume"></A><IMG alt="" src="images/continue.png"> Resume (Continue, Go)</H3>
+
+    <P>Allow the current target to resume execution.</P>
+
+    <H3><A name="step_into"></A><IMG alt="" src="images/stepinto.png"> Step Into</H3>
+
+    <P>Step the current target to the next instruction.</P>
+
+    <H3><A name="step_over"></A><IMG alt="" src="images/stepover.png"> Step Over</H3>
+
+    <P>Step the current target to the next instruction in the current subroutine.</P>
+
+    <H3><A name="step_finish"></A><IMG alt="" src="images/stepout.png"> Step Finish</H3>
+
+    <P>Allow the current target to finish the current subroutine, pausing after.</P>
+
+    <H3><A name="set_breakpoint"></A><IMG alt="" src="images/breakpoint-set.png"> Set
+    Breakpoint</H3>
+
+    <P>Set a breakpoint, which will trap target execution under certain conditions.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center"><IMG alt="" border="1" src="images/DebuggerBreakpointDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The given expression can follow any form accepted by the connected debugger, although most
+    often this will be an address. The listing can only set breakpoints on specific addresses, not
+    symbols or expressions. The listing is also not available until the target is being recorded.
+    For a recorded target, breakpoints can also be managed in the <A href=
+    "help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html">Breakpoints</A> window
+    or using the <A href=
+    "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Breakpoint
+    Marker</A> actions from the disassembly listings.</P>
+
+    <H2>Trace Management</H2>
+
+    <P>The following actions manage target tracing. Note that many other windows are not usable
+    until a target is recorded into a trace.</P>
+
+    <H3><A name="record"></A><IMG alt="" src="images/record.png"> Record</H3>
+
+    <P>Record the current target, if its platform is recognized, and open its trace. If Ghidra
+    cannot uniquely identify the platform, it may prompt the user to select from a list of
+    possibilities.</P>
+
+    <H3><A name="record_automatically"></A><IMG alt="" src="images/record.png"> Record
+    Automatically</H3>
+
+    <P>Automatically record and open recognized targets. If Ghidra cannot uniquely identify the
+    platform, it will select one by priority without prompting the user.</P>
+
+    <H2><A name="display_as"></A>Display Management</H2>
+
+    <P>The following actions can create additional displays of portions of the debugger model.</P>
+
+    <H3><A name="display_as_tree"></A><IMG alt="" src="images/display_as_tree.png"> Display As
+    Tree</H3>
+
+    <P>Constructs a new tree using the selection as the new root, synchronized with the current
+    provider.</P>
+
+    <H3><A name="display_as_table"></A><IMG alt="" src="images/display_as_table.png"> Display As
+    Table</H3>
+
+    <P>Constructs a table from the current object, synchronized with the current provider. If the
+    object is a container, its elements will be rows in the new table and their attributes will be
+    columns. If not, the attributes will be rows and their name, kind, value, and type will be
+    columns.</P>
+
+    <H3><A name="display_as_graph"></A><IMG alt="" src="images/display_as_graph.png"> Display As
+    Graph</H3>
+
+    <P>Constructs and displays a graph from the selection and its visible descendants. (The graph
+    does not currently maintain synchronization.)</P>
+
+    <H3><A name="display_as_xml"></A><IMG alt="" src="images/display_as_xml.png"> Display As
+    XML</H3>
+
+    <P>Encodes the selected object and its visible descendants in XML and prints the result to the
+    console. (Note: various characters not allowed in XML may be converted, typically to
+    underscores, in the result.)</P>
+
+    <H3><A name="display_filtered_tree"></A><IMG alt="" src="images/display_filtered_tree.png">
+    Display Filtered Tree</H3>
+
+    <P>Constructs a static snapshot of the selection and its visible descendants as a tree,
+    applying a filter to the selection.</P>
+
+    <H3><A name="display_filtered_table"></A><IMG alt="" src="images/display_filtered_table.png">
+    Display Filtered Table</H3>
+
+    <P>Constructs a static snapshot of the selection and its visible descendants as a table,
+    applying a filter to the selection.</P>
+
+    <H3><A name="display_filtered_graph"></A><IMG alt="" src="images/display_filtered_graph.png">
+    Display Filtered Graph</H3>
+
+    <P>Constructs a static snapshot of the selection and its visible descendants as a graph,
+    applying a filter to the selection.</P>
+
+    <H3><A name="display_filtered_xml"></A><IMG alt="" src="images/display_filtered_xml.png">
+    Display Filtered XML</H3>
+
+    <P>Constructs a static snapshot of the selection and its visible descendants as XML, applying a
+    filter to the selection.</P>
+
+    <H3><A name="display_methods"></A><IMG alt="" src="images/blank.png"> Display Methods</H3>
+
+    <P>Displays a list of the methods available for the selection, which may be applied and
+    combined in a filter.</P>
+
+    <H2>Data Management</H2>
+
+    <P>The following actions can export and import model information.</P>
+
+    <H3><A name="export_as_xml"></A><IMG alt="" src="images/export_as_xml.png"> Export as XML</H3>
+
+    <P>Convert the selection and its visible descendants to XML and export the result to a file of
+    the user's choosing.</P>
+
+    <H3><A name="import_from_xml"></A><IMG alt="" src="images/import_from_xml.png"> Import from
+    XML</H3>
+
+    <P>Import "facts" from a file of the user's choosing and render it as a tree.</P>
+
+    <H3><A name="export_as_facts"></A><IMG alt="" src="images/export_as_facts.png"> Export as
+    Facts</H3>
+
+    <P>Convert the selection and its visible descendants to "fact" files and export the result to a
+    directory of the user's choosing. (Currently, "fact" files itemize the path, name, value, type,
+    and children for each object.)</P>
+
+    <H3><A name="import_from_facts"></A><IMG alt="" src="images/import_from_facts.png"> Import from
+    Facts</H3>
+
+    <P>Import XML from a directory of the user's choosing and render them as a tree.</P>
+
+    <H3><A name="open_trace"></A><IMG alt="" src="images/text-xml.png"> Import from trace</H3>
+
+    <P>Import from trace is roughly equivalent to using the open dump/trace connector.</P>
+
+    <H2>Miscellaneous</H2>
+
+    <P>The following actions are for maintenance or experiments</P>
+
+    <H3><A name="refresh"></A><IMG alt="" src="images/reload.png"> Refresh Node</H3>
+
+    <P>Queries the model for the current object's children and rebuilds that portion of the
+    display.</P>
+
+    <H3><A name="toggle_subscription">Subscribe / Unsubscribe to Selection</A></H3>
+
+    <P>Asks the recorder to include or exclude the current object from the trace.</P>
+
+    <H3><A name="act_on_selection_only"></A>Act on Selection Only</H3>
+
+    <P>Toggles the scope of the other action menus. If "selection only" is chosen, the current
+    object must have the property used to enable the particular action. For instance, the
+    <B>step</B> action will only be enabled for objects marked <B>steppable</B>. If "selection
+    only" is off, the debugger will walk the path up from the current object looking for an
+    ancestor for which the action is enabled. For example, if threads are <B>steppable</B> and
+    contain registers as children, <B>step</B> will still be enabled for that thread if the current
+    selection is one of its registers.</P>
+
+    <H3><A name="hide_intrinsic_attributes"></A>Hide Intrinsic Attributes</H3>
+
+    <P>Toggle which objects are visible (mostly for diagnostic purposes). Attributes for each
+    object may be split into those that convey information intended for the user and those that
+    convey information for the debugger. The latter are not normally visible, because they just
+    clutter the display. However, under certain circumstances, the user may want to see them. For
+    example, the <B>_update_mode</B> attribute determines when node is refreshed, and the
+    <B>_state</B> attribute indicates whether a thread is running or stopped. In the latter case,
+    this information is reflected for the user in the display, but the invisible attribute actually
+    determines the behavior.</P>
+
+    <H3><A name="toggle_ignore_state">Ignore State</A></H3>
+
+    <P>Many actions are normally allowed only if the target is stopped or in some other defined
+    state. Sometimes you may wish to ignore the current state and force the action, as, for
+    example, when the debugger has lost track of the true state.</P>
+
+    <H2><A name="color"></A>Color Options</H2>
+
+    <P>The debugger represents different types of objects with different colors. Bare in mind these
+    colors are not blended, i.e. one color may override another. Examples include:</P>
+
+    <UL>
+      <LI>Default: normal objects</LI>
+
+      <LI>Modified: objects recently changed</LI>
+
+      <LI>Links: objects from a different portion of the display</LI>
+
+      <LI>Intrinsics: objects with a value, such as strings or numbers</LI>
+
+      <LI>Invisible: objects used internally by the provider</LI>
+
+      <LI>Accessors: objects which may used to supply other objects (before they've been
+      populated)</LI>
+
+      <LI>Targets: native objects with special properties</LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

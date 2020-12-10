@@ -1,0 +1,6 @@
+##VERSION: 2.0
+.classpath||NONE||reviewed||END|
+.project||NONE||reviewed||END|
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+src/main/resources/META-INF/services/javax.annotation.processing.Processor||GHIDRA||||END|

@@ -1,0 +1,21 @@
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Debugger-sctl'
+
+dependencies {
+	compile project(':Framework-AsyncComm')
+	compile project(':Framework-Debugging')
+	compile project(':ProposedUtils')
+
+	testCompile project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+}
+
+test {
+	if ("linux64".equals(getCurrentPlatformName())) {
+		dependsOn(":Framework-Debugging:testSpecimenLinux64")
+	}
+}

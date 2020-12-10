@@ -120,8 +120,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		performAction(editExternalLocationAction, util.getProvider(), false);
 		waitForSwing();
 
-		EditExternalLocationDialog createDialog = AbstractDockingTest.waitForDialogComponent(
-			EditExternalLocationDialog.class);
+		EditExternalLocationDialog createDialog =
+			AbstractDockingTest.waitForDialogComponent(EditExternalLocationDialog.class);
 		waitForBusyTool(tool);
 		return createDialog;
 	}
@@ -149,16 +149,15 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		}
 	}
 
-	protected void changeToFunction(EditExternalLocationDialog createDialog,
-			boolean isFunction) {
+	protected void changeToFunction(EditExternalLocationDialog createDialog, boolean isFunction) {
 		EditExternalLocationPanel extLocPanel = findComponent(
 			createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
 		JCheckBox functionCheckBox = (JCheckBox) getInstanceField("functionCheckBox", extLocPanel);
 		functionCheckBox.setSelected(isFunction);
 	}
 
-	protected ExternalLocation setupExternalLocation(String library, String label,
-			Address address, SourceType sourceType, boolean isFunction)
+	protected ExternalLocation setupExternalLocation(String library, String label, Address address,
+			SourceType sourceType, boolean isFunction)
 			throws InvalidInputException, DuplicateNameException {
 		boolean success = false;
 		int transactionID =
@@ -181,15 +180,13 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		}
 	}
 
-	protected ExternalLocation setupExternalLocation(String library, String label,
-			Address address, SourceType sourceType)
-			throws InvalidInputException, DuplicateNameException {
+	protected ExternalLocation setupExternalLocation(String library, String label, Address address,
+			SourceType sourceType) throws InvalidInputException, DuplicateNameException {
 		return setupExternalLocation(library, label, address, sourceType, false);
 	}
 
-	protected ExternalLocation setupExternalFunction(String library, String label,
-			Address address, SourceType sourceType)
-			throws InvalidInputException, DuplicateNameException {
+	protected ExternalLocation setupExternalFunction(String library, String label, Address address,
+			SourceType sourceType) throws InvalidInputException, DuplicateNameException {
 		return setupExternalLocation(library, label, address, sourceType, true);
 	}
 
@@ -211,8 +208,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		}
 	}
 
-	protected Namespace getLibraryScope(String libaryName) {
-		Symbol s = program.getSymbolTable().getLibrarySymbol(libaryName);
+	protected Namespace getLibraryScope(String libraryName) {
+		Symbol s = program.getSymbolTable().getLibrarySymbol(libraryName);
 		if (s instanceof LibrarySymbol) {
 			return (Namespace) s.getObject();
 		}
@@ -248,8 +245,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		return advapiNode;
 	}
 
-	protected GTreeNode selectExternalLocation(String libraryName,
-			String externalLocation) throws Exception {
+	protected GTreeNode selectExternalLocation(String libraryName, String externalLocation)
+			throws Exception {
 		flushAndWaitForTree();
 
 		GTreeNode importsNode = rootNode.getChild("Imports");
@@ -343,8 +340,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 
 	protected void chooseProgram(Project project, String programName) {
 
-		DataTreeDialog chooseDialog = AbstractDockingTest.waitForDialogComponent(
-			DataTreeDialog.class);
+		DataTreeDialog chooseDialog =
+			AbstractDockingTest.waitForDialogComponent(DataTreeDialog.class);
 
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getFolder("/");
@@ -364,8 +361,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 
 	protected void chooseProgramButCancel(Project project, String programName) {
 
-		DataTreeDialog chooseDialog = AbstractDockingTest.waitForDialogComponent(
-			DataTreeDialog.class);
+		DataTreeDialog chooseDialog =
+			AbstractDockingTest.waitForDialogComponent(DataTreeDialog.class);
 
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getFolder("/");
@@ -404,8 +401,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		assertEquals(label, text);
 	}
 
-	protected void setExternalLocationLabel(EditExternalLocationDialog createDialog,
-			String label) {
+	protected void setExternalLocationLabel(EditExternalLocationDialog createDialog, String label) {
 		runSwing(() -> {
 			EditExternalLocationPanel extLocPanel = findComponent(
 				createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -457,8 +453,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		int transactionID = program.startTransaction("Add Overlay Block to test");
 		Address address = program.getAddressFactory().getAddress(startAddress);
 		Memory memory = program.getMemory();
-		memory.createInitializedBlock(name, address, length, (byte) 0,
-			TaskMonitor.DUMMY, true);
+		memory.createInitializedBlock(name, address, length, (byte) 0, TaskMonitor.DUMMY, true);
 		program.endTransaction(transactionID, true);
 	}
 

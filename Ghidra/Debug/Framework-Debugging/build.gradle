@@ -1,0 +1,108 @@
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/nativeProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Framework-Debugging'
+
+dependencies {
+	compile project(':Framework-AsyncComm')
+	compile project(':Generic')
+	compile project(':SoftwareModeling')
+	compile project(':ProposedUtils')
+
+	testCompile project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+}
+
+task testSpecimenWin64 {
+	dependsOn 'expCreateProcessWin64Executable'
+	dependsOn 'expCreateThreadExitWin64Executable'
+	dependsOn 'expCreateThreadSpinWin64Executable'
+	dependsOn 'expPrintWin64Executable'
+	dependsOn 'expSpinWin64Executable'
+}
+
+task testSpecimenLinux64 {
+	dependsOn 'expCloneExecExecutable'//Linux64Executable'
+	dependsOn 'expCloneExitExecutable'//Linux64Executable'
+	dependsOn 'expCloneSpinExecutable'//Linux64Executable'
+	dependsOn 'expForkExecutable'//Linux64Executable'
+	dependsOn 'expPrintLinux64Executable'
+	dependsOn 'expTypesExecutable'//Linux64Executable'
+}
+
+model {
+	platforms {
+		/*linux32 {
+			architecture "x86"
+			operatingSystem "linux"
+		}*/
+	}
+
+	components {
+		expCreateProcess(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expCreateThreadExit(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expCreateThreadSpin(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expCloneExec(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expCloneExit(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expCloneSpin(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expFork(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+		expPrint(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expSpin(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expTypes(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+		}
+	}
+
+	binaries {
+		withType(NativeExecutableBinarySpec) {
+			if (toolChain in Gcc) {
+				cCompiler.args("-gdwarf-2", "-std=c99")
+				linker.args("-lpthread")
+				linker.args("-lutil")
+			}
+			if (toolChain in VisualCpp) {
+				cppCompiler.define("VS_PROJECT")
+				linker.args("/SUBSYSTEM:CONSOLE", "/DYNAMICBASE", "/NXCOMPAT")
+			}
+			if (targetPlatform.name.startsWith("win")) {
+				cppCompiler.define("WIN32")
+				cppCompiler.define("_WINDOWS")
+				cppCompiler.define("UNICODE")
+				cppCompiler.define("_UNICODE")
+			}
+		}
+	}
+}

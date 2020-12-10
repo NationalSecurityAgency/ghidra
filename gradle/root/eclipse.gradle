@@ -94,6 +94,14 @@ eclipse {
        type = 'EXCLUDE_ALL'
        matcher {
          id = 'org.eclipse.ui.ide.multiFilter'
+         arguments = '1.0-name-matches-false-false-Debug'
+       }
+     }     
+     resourceFilter {
+       appliesTo = 'FOLDERS'
+       type = 'EXCLUDE_ALL'
+       matcher {
+         id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Dev'
        }
      }     

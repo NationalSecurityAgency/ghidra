@@ -1,0 +1,13 @@
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Debugger-agent-dbgmodel-traceloader'
+
+dependencies {
+	compile project(":Debugger")
+	compile project(":Debugger-agent-dbgeng")
+	compile project(':Debugger-agent-dbgmodel') 
+}

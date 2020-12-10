@@ -1,0 +1,69 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Memory Regions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Memory Regions</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerRegionsPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>Regions refer to ranges of allocated or reserved memory reported by the target. The precise
+    meaning of these regions may vary depending on the nature of the target. For user-mode
+    applications, this is generally pages of memory allocated for image sections, the stack, the
+    heap, etc. The regions manager allows the user to rename pages and modify the recorded
+    permissions. Note that such modifications <EM>do not</EM> affect the target; but only the
+    recording.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The table has the following columns:</P>
+
+    <UL>
+      <LI>Name - the name given to the region by the target. This field is user modifiable.</LI>
+
+      <LI>Lifespan - the creation and destruction time of the region.</LI>
+
+      <LI>Start - the minimum address of the region. Double-clicking this field navigates to the
+      address.</LI>
+
+      <LI>End - the maximum address of the region. Double-clicking this field navigates to the
+      address.</LI>
+
+      <LI>Length - the length of the region in bytes.</LI>
+
+      <LI>Read,Write,Execute,Volatile - various flags of the region. These flags only affect local
+      analysis. Toggling these <EM>do not</EM> affect the target.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>Other than modifications enabled by the table, the Regions window provides the following
+    actions:</P>
+
+    <H3><A name="select_addresses"></A>Select Addresses</H3>
+
+    <P>This action is available when at least one region is selected. It selects all addresses in
+    the dynamic listing contained by the selected regions.</P>
+
+    <H3><A name="select_rows"></A>Select Rows</H3>
+
+    <P>This action is available when the dynamic listing's cursor is at a valid location. It
+    selects the region containing that cursor. If the dynamic listing has a selection, it selects
+    all regions intersecting that selection.</P>
+  </BODY>
+</HTML>

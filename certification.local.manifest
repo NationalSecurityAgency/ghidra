@@ -4,6 +4,7 @@
 .gitlab-ci.yml||GHIDRA||||END|
 CONTRIBUTING.md||GHIDRA||||END|
 DISCLAIMER.md||GHIDRA||||END|
+DebuggerDevGuide.md||GHIDRA||||END|
 DevGuide.md||GHIDRA||||END|
 LICENSE||GHIDRA||||END|
 NOTICE||GHIDRA||||END|

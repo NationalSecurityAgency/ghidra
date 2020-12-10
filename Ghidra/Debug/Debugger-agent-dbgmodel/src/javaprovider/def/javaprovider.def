@@ -1,0 +1,13 @@
+EXPORTS
+
+; For ExtCpp
+	DebugExtensionInitialize
+	DebugExtensionUninitialize
+	DebugExtensionNotify
+	help
+
+; My Commands
+	java_add_cp
+	java_set
+	java_get
+	java_run

@@ -166,7 +166,8 @@ def isSourceFile(File file) {
 		   filename.endsWith(".l") ||
 		   filename.endsWith(".hh") ||
 		   filename.endsWith(".css") ||
-		   filename.endsWith(".jj");
+		   filename.endsWith(".jj") ||
+		   filename.endsWith(".proto");
 }
 
 

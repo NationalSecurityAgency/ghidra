@@ -1,0 +1,183 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.app.services;
+
+import java.util.Collection;
+
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.TriConsumer;
+
+@ServiceInfo(defaultProvider = DebuggerTraceManagerServicePlugin.class)
+public interface DebuggerTraceManagerService {
+	public interface BooleanChangeAdapter extends TriConsumer<Boolean, Boolean, Void> {
+		@Override
+		default void accept(Boolean oldVal, Boolean newVal, Void cause) {
+			changed(newVal);
+		}
+
+		void changed(Boolean value);
+	}
+
+	Collection<Trace> getOpenTraces();
+
+	DebuggerCoordinates getCurrent();
+
+	Trace getCurrentTrace();
+
+	TraceProgramView getCurrentView();
+
+	TraceThread getCurrentThread();
+
+	TraceThread getCurrentThreadFor(Trace trace);
+
+	long getCurrentSnap();
+
+	int getCurrentFrame();
+
+	/**
+	 * Open a trace
+	 * 
+	 * <p>
+	 * This does not activate the trace. Use {@link #activateTrace(Trace)} or
+	 * {@link #activateThread(TraceThread)} if necessary.
+	 * 
+	 * @param trace the trace to open
+	 */
+	void openTrace(Trace trace);
+
+	/**
+	 * Open a trace from a domain file
+	 * 
+	 * @param file the domain file to open
+	 * @param version the version (read-only if non-default)
+	 * @return the trace
+	 * @throws ClassCastException if the domain object contains a non-trace object
+	 */
+	Trace openTrace(DomainFile file, int version);
+
+	/**
+	 * Open traces from a collection of domain files
+	 * 
+	 * <p>
+	 * Iterating the returned trace collection orders each trace by position of its file in the
+	 * input file collection.
+	 * 
+	 * @param files the domain files
+	 * @return the traces opened
+	 */
+	Collection<Trace> openTraces(Collection<DomainFile> files);
+
+	/**
+	 * Save the trace to the root folder of the project
+	 * 
+	 * <p>
+	 * If a different domain file of the trace's name already exists, an incrementing integer is
+	 * appended.
+	 * 
+	 * <p>
+	 * TODO: Support save-as, prompting to overwrite, etc?
+	 * 
+	 * @param trace the trace to save
+	 */
+	void saveTrace(Trace trace);
+
+	void closeTrace(Trace trace);
+
+	void activate(DebuggerCoordinates coordinates);
+
+	void activateTrace(Trace trace);
+
+	void activateThread(TraceThread thread);
+
+	void activateSnap(long snap);
+
+	void activateFrame(int frameLevel);
+
+	void setAutoActivatePresent(boolean enabled);
+
+	boolean isAutoActivatePresent();
+
+	void addAutoActivatePresentChangeListener(BooleanChangeAdapter listener);
+
+	void removeAutoActivatePresentChangeListener(BooleanChangeAdapter listener);
+
+	/**
+	 * Control whether trace activation is synchronized with debugger focus/select
+	 * 
+	 * @param enabled true to synchronize, false otherwise
+	 */
+	void setSynchronizeFocus(boolean enabled);
+
+	/**
+	 * Check whether trace activation is synchronized with debugger focus/select
+	 * 
+	 * @return true if synchronized, false otherwise
+	 */
+	boolean isSynchronizeFocus();
+
+	void addSynchronizeFocusChangeListener(BooleanChangeAdapter listener);
+
+	void removeSynchronizeFocusChangeListener(BooleanChangeAdapter listener);
+
+	/**
+	 * Control whether traces should be saved by default
+	 * 
+	 * @param enabled true to save by default, false otherwise
+	 */
+	void setSaveTracesByDefault(boolean enabled);
+
+	/**
+	 * Check whether traces should by saved by default
+	 * 
+	 * @return true if save by default, false otherwise
+	 */
+	boolean isSaveTracesByDefault();
+
+	void addSaveTracesByDefaultChangeListener(BooleanChangeAdapter listener);
+
+	void removeSaveTracesByDefaultChangeListener(BooleanChangeAdapter listener);
+
+	/**
+	 * Swap out the trace view of a {@link ProgramLocation} if it is not the debugger's view
+	 * 
+	 * <p>
+	 * If the program location is not associated with a trace, the same location is returned.
+	 * Otherwise, this ensures that the given view is the one found in the debugger plugin for the
+	 * same trace. If matchSnap is true, the view is only replaced when the replacement shares the
+	 * same snap.
+	 * 
+	 * @param location a location possibly in a trace view
+	 * @param matchSnap true to only replace is snap matches, false to always replace
+	 * @return the adjusted location
+	 */
+	ProgramLocation fixLocation(ProgramLocation location, boolean matchSnap);
+
+	/**
+	 * Fill in an incomplete coordinate specification, using the manager's "best judgement"
+	 * 
+	 * @param coords the possibly-incomplete coordinates
+	 * @return the complete resolved coordinates
+	 */
+	DebuggerCoordinates resolveCoordinates(DebuggerCoordinates coords);
+
+}

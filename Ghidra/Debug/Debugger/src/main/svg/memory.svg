@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="SVGRoot"
+   version="1.1"
+   viewBox="0 0 16 16"
+   height="16px"
+   width="16px">
+  <defs
+     id="defs5287" />
+  <metadata
+     id="metadata5290">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1">
+    <path
+       id="path4859"
+       d="M 4 1 A 3 3 0 0 0 1 4 A 3 3 0 0 0 4 7 A 3 3 0 0 0 6.8261719 5 L 9 5 L 9 7 L 11 7 L 11 9.1835938 C 9.8371953 9.5967176 9 10.69549 9 12 C 9 13.656854 10.343146 15 12 15 C 13.656854 15 15 13.656854 15 12 C 15 10.69549 14.162805 9.5967176 13 9.1835938 L 13 7 L 15 7 L 15 1 L 9 1 L 9 3 L 6.8242188 3 A 3 3 0 0 0 4 1 z M 4 3 A 1 1 0 0 1 5 4 A 1 1 0 0 1 4 5 A 1 1 0 0 1 3 4 A 1 1 0 0 1 4 3 z M 1 9 L 1 15 L 7 15 L 7 9 L 1 9 z M 3 11 L 5 11 L 5 13 L 3 13 L 3 11 z "
+       style="opacity:1;fill:#666666;fill-opacity:1;stroke:none;stroke-width:0.85714287;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+</svg>

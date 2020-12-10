@@ -1,0 +1,19 @@
+import pkgutil
+
+
+relpath = __package__.replace('.', '/')
+
+paths = []
+for p in __path__:
+    if p.endswith(relpath):
+        prefix = p[:-len(relpath)]
+        paths.append(prefix + 'classes/' + relpath)
+
+for importer, modname, ispkg in pkgutil.iter_modules(paths):
+    if modname.startswith('_class_'):
+        name = "%s.%s" % (__package__, modname)
+        mod = __import__("classes." + name)
+        for i in name.split('.'):
+            mod = getattr(mod, i)
+        clsname = modname[7:]
+        globals()[clsname] = getattr(mod, clsname)

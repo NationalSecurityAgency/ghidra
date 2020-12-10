@@ -21,6 +21,7 @@
 - [Building Supporting Data](#building-supporting-data)
   * [Building Data Type Archives](#building-data-type-archives)
   * [Building FID Databases](#building-fid-databases)
+- [Hacking on the Debugger](#hacking-on-the-debugger)
 
 ## Catalog of Dependencies
 
@@ -375,4 +376,11 @@ Fill out the options appropriately and click OK.
 
 If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.
 
+### Hacking on the Debugger
+
+The Debugger consists of multiple modules comprising its own collection of utilities, frameworks, and features.
+There is plenty of new ground to be broken.
+Before getting too deep into it, please see our dedicated [Debugger Developer's Guide][DbgGuide].
+
 [ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data
+[DbgGuide]: DebuggerDevGuide.md

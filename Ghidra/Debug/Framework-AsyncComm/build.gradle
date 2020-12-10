@@ -1,0 +1,41 @@
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Debug Framework-AsyncComm'
+
+dependencies {
+	compile project(':Generic')
+	compile project(':Graph')
+	compile project(':ProposedUtils')
+}
+
+task genTestPy(type: JavaExec) {
+	ext.outDir = "build/testpy"
+	outputs.dir(outDir)
+	classpath(sourceSets["main"].runtimeClasspath)
+	classpath(sourceSets["test"].runtimeClasspath)
+	main = "ghidra.comm.util.pyexport.GeneratePython"
+	args("ghidra.comm.tests.packet", outDir)
+	doLast {
+		println("NOTE: It is normal to see some export errors, since some classes are intentionally broken to test error detection")
+	}
+}
+
+task combineTestPySources(type: Copy) {
+	from(genTestPy)
+	from("src/main/py")
+	from("src/test/py")
+	into("build/fulltestpy")
+}
+
+// NOTE: This is defunct, and I don't care
+task pyTest(type: Exec) {
+	inputs.files(combineTestPySources)
+
+	commandLine("python")
+	workingDir(inputs.files.singleFile)
+	args("-m", "ghidra.comm.test_packet")
+}

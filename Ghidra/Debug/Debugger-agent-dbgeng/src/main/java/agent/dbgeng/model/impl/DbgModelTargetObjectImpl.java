@@ -1,0 +1,188 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package agent.dbgeng.model.impl;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import agent.dbgeng.manager.*;
+import agent.dbgeng.model.AbstractDbgModel;
+import agent.dbgeng.model.iface1.DbgModelTargetAccessConditioned;
+import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
+import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
+import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+
+public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, TargetObject>
+		implements DbgModelTargetObject {
+
+	protected TargetAccessibility accessibility = TargetAccessibility.ACCESSIBLE;
+	protected final DbgStateListener accessListener = this::checkExited;
+	private boolean modified;
+
+	public DbgModelTargetObjectImpl(AbstractDbgModel impl, TargetObject parent, String name,
+			String typeHint) {
+		super(impl, parent, name, typeHint);
+		getManager().addStateListener(accessListener);
+	}
+
+	public void setAttribute(String key, String value) {
+		changeAttributes(List.of(), List.of(), Map.of( //
+			key, value), "Initialized");
+	}
+
+	public void setAccessibility(TargetAccessibility accessibility) {
+		synchronized (attributes) {
+			if (this.accessibility == accessibility) {
+				return;
+			}
+			this.accessibility = accessibility;
+		}
+		if (this instanceof DbgModelTargetAccessConditioned<?>) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME,
+				accessibility == TargetAccessibility.ACCESSIBLE //
+			), "Accessibility changed");
+			DbgModelTargetAccessConditioned<?> accessConditioned =
+				(DbgModelTargetAccessConditioned<?>) this;
+			listeners.fire(TargetAccessibilityListener.class)
+					.accessibilityChanged(accessConditioned, accessibility);
+		}
+	}
+
+	@Override
+	public AbstractDbgModel getModel() {
+		return (AbstractDbgModel) model;
+	}
+
+	public void onRunning() {
+		setAccessibility(TargetAccessibility.INACCESSIBLE);
+	}
+
+	public void onStopped() {
+		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		update();
+	}
+
+	public void onExit() {
+		setAccessibility(TargetAccessibility.ACCESSIBLE);
+	}
+
+	protected void update() {
+		Map<String, ?> existingAttributes = getCachedAttributes();
+		Boolean autoupdate = (Boolean) existingAttributes.get("autoupdate");
+		if (autoupdate != null && autoupdate) {
+			requestAttributes(true);
+			requestElements(true);
+		}
+	}
+
+	protected void checkExited(DbgState state, DbgCause cause) {
+		TargetExecutionState exec = TargetExecutionState.INACTIVE;
+		switch (state) {
+			case NOT_STARTED: {
+				exec = TargetExecutionState.INACTIVE;
+				break;
+			}
+			case STARTING: {
+				exec = TargetExecutionState.ALIVE;
+				break;
+			}
+			case RUNNING: {
+				exec = TargetExecutionState.RUNNING;
+				resetModified();
+				onRunning();
+				break;
+			}
+			case STOPPED: {
+				exec = TargetExecutionState.STOPPED;
+				onStopped();
+				break;
+			}
+			case EXIT: {
+				exec = TargetExecutionState.TERMINATED;
+				onExit();
+				break;
+			}
+		}
+		if (this instanceof DbgModelTargetExecutionStateful) {
+			DbgModelTargetExecutionStateful<?> stateful = (DbgModelTargetExecutionStateful<?>) this;
+			stateful.setExecutionState(exec, "Refreshed");
+		}
+	}
+
+	@Override
+	public CompletableFuture<? extends Map<String, ?>> requestNativeAttributes() {
+		throw new AssertionError();  // shouldn't ever be here
+	}
+
+	@Override
+	public DbgModelTargetSession getParentSession() {
+		DbgModelTargetObject test = (DbgModelTargetObject) parent;
+		while (test != null && !(test instanceof DbgModelTargetSession)) {
+			test = (DbgModelTargetObject) test.getImplParent();
+		}
+		return test == null ? null : (DbgModelTargetSession) test;
+	}
+
+	@Override
+	public DbgModelTargetProcess getParentProcess() {
+		DbgModelTargetObject test = (DbgModelTargetObject) parent;
+		while (test != null && !(test instanceof TargetProcess)) {
+			test = (DbgModelTargetObject) test.getImplParent();
+		}
+		return test == null ? null : (DbgModelTargetProcess) test;
+	}
+
+	@Override
+	public DbgModelTargetThread getParentThread() {
+		DbgModelTargetObject test = (DbgModelTargetObject) parent;
+		while (test != null && !(test instanceof TargetThread)) {
+			test = (DbgModelTargetObject) test.getImplParent();
+		}
+		return test == null ? null : (DbgModelTargetThread) test;
+	}
+
+	@Override
+	public void setModified(Map<String, Object> map, boolean b) {
+		if (modified) {
+			map.put(MODIFIED_ATTRIBUTE_NAME, modified);
+			listeners.fire.displayChanged(this, getDisplay());
+		}
+	}
+
+	@Override
+	public void setModified(boolean modified) {
+		if (modified) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				MODIFIED_ATTRIBUTE_NAME, modified //
+			), "Refreshed");
+			listeners.fire.displayChanged(this, getDisplay());
+		}
+	}
+
+	@Override
+	public void resetModified() {
+		changeAttributes(List.of(), List.of(), Map.of( //
+			MODIFIED_ATTRIBUTE_NAME, false //
+		), "Refreshed");
+	}
+
+}
