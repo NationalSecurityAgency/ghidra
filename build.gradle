@@ -304,15 +304,33 @@ List<String> getExternalRuntimeDependencies(Project project) {
 List<String> getExternalDependencies(Configuration configuration) {
 	List<String> list = new ArrayList<>();
 	configuration.dependencies.each { dep ->
-		
+
 		// if the dependency is an external jar
 		if (dep instanceof ExternalDependency) { 	
+			String name = dep.getName()
+			Set<String> classifiers = dep.artifacts.classifier
+			String group = dep.getGroup()
+			String version = dep.getVersion()	
+			String searchString = name
+
+			if (version != null) {
+				searchString = name+"-"+version;
+			}
+
+			if (!classifiers.empty) {
+				String cls = classifiers.first()
+				if (cls != null) {
+					searchString+= "-$cls"
+				}
+			}
 
 			// loop back through all the dependency files, looking for one that contains the dependency name.
 			String depPath = configuration.find {
-				it.name.contains(dep.name)
+				it.name.contains(searchString)
 			}
-			
+			if (depPath == null) {
+				println("****************DID NOT FIND DEPENDENCY: name = "+name+" version = "+version)
+			}
 			// if we found the path, then add it to the list
 			if (depPath) {
 				list.add(depPath)
