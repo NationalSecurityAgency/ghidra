@@ -39,7 +39,7 @@ public class AddressOfPcodeExecutorState
 	@Override
 	public void setVar(AddressSpace space, byte[] offset, int size,
 			boolean truncateAddressableUnit, Address val) {
-		if (space != unique) {
+		if (!space.isUniqueSpace()) {
 			return;
 		}
 		long off = Utils.bytesToLong(offset, offset.length, isBigEndian);
@@ -50,7 +50,7 @@ public class AddressOfPcodeExecutorState
 	public Address getVar(AddressSpace space, byte[] offset, int size,
 			boolean truncateAddressableUnit) {
 		long off = Utils.bytesToLong(offset, offset.length, isBigEndian);
-		if (space != unique) {
+		if (!space.isUniqueSpace()) {
 			return space.getAddress(off);
 		}
 		return unique.get(off);

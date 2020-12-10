@@ -356,4 +356,8 @@ public class DebuggerCoordinates {
 	public boolean isPresent() {
 		return recorder.getSnap() == snap;
 	}
+
+	public boolean isAliveAndPresent() {
+		return isAlive() && isPresent();
+	}
 }

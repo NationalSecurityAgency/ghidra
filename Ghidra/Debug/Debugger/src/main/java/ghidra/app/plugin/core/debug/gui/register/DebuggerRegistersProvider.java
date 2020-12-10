@@ -301,7 +301,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	class RegisterValueCellRenderer extends HexBigIntegerTableCellRenderer {
-
 		@Override
 		public final Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);

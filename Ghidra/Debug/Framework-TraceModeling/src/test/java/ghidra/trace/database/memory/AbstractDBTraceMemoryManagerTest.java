@@ -831,8 +831,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		// NOTE: 0 is returned because the space is no longer active....
-		assertEquals(0, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 	}
 
@@ -860,8 +859,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		// NOTE: 0 is returned because the space is no longer active....
-		assertEquals(0, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 	}
 
@@ -889,8 +887,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		assertEquals(expected, collectAsMap(memory.getStates(3, range(0x3000, 0x5000))));
 
 		ByteBuffer read = ByteBuffer.allocate(4);
-		// NOTE: 0 is returned because the space is no longer active....
-		assertEquals(0, memory.getBytes(3, addr(0x4000), read));
+		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
 		assertArrayEquals(arr(0, 0, 0, 0), read.array());
 
 		trace.redo();

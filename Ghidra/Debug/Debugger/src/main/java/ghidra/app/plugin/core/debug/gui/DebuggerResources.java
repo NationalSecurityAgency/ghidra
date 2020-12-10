@@ -121,7 +121,7 @@ public interface DebuggerResources {
 	// TODO: Draw an icon
 	ImageIcon ICON_SELECT_ADDRESSES = ResourceManager.loadImage("images/NextSelectionBlock16.gif");
 	// TODO: Draw an icon?
-	ImageIcon ICON_CAPTURE_TYPES = ResourceManager.loadImage("images/dataTypes.png");
+	ImageIcon ICON_DATA_TYPES = ResourceManager.loadImage("images/dataTypes.png");
 	// TODO: Draw an icon?
 	ImageIcon ICON_CAPTURE_SYMBOLS = ResourceManager.loadImage("images/closedFolderLabels.png");
 
@@ -221,6 +221,15 @@ public interface DebuggerResources {
 	Color DEFAULT_COLOR_REGISTER_CHANGED = Color.RED;
 	String OPTION_NAME_COLORS_REGISTER_CHANGED_SEL = "Colors.Changed Registers (selected)";
 	Color DEFAULT_COLOR_REGISTER_CHANGED_SEL = ColorUtils.blend(Color.RED, Color.WHITE, 0.5f);
+
+	String OPTION_NAME_COLORS_WATCH_STALE = "Colors.Stale Watches";
+	Color DEFAULT_COLOR_WATCH_STALE = Color.GRAY;
+	String OPTION_NAME_COLORS_WATCH_STALE_SEL = "Colors.Stale Watches (selected)";
+	Color DEFAULT_COLOR_WATCH_STALE_SEL = Color.LIGHT_GRAY;
+	String OPTION_NAME_COLORS_WATCH_CHANGED = "Colors.Changed Watches";
+	Color DEFAULT_COLOR_WATCH_CHANGED = Color.RED;
+	String OPTION_NAME_COLORS_WATCH_CHANGED_SEL = "Colors.Changed Watches (selected)";
+	Color DEFAULT_COLOR_WATCH_CHANGED_SEL = ColorUtils.blend(Color.RED, Color.WHITE, 0.5f);
 
 	String MARKER_NAME_BREAKPOINT_ENABLED = "Enabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_DISABLED = "Disabled Breakpoint";
@@ -1090,7 +1099,7 @@ public interface DebuggerResources {
 
 	abstract class AbstractCaptureTypesAction extends DockingAction {
 		public static final String NAME = "Capture Data Types";
-		public static final Icon ICON = ICON_CAPTURE_TYPES;
+		public static final Icon ICON = ICON_DATA_TYPES;
 		public static final String HELP_ANCHOR = "capture_types";
 
 		public AbstractCaptureTypesAction(Plugin owner) {
@@ -1305,6 +1314,58 @@ public interface DebuggerResources {
 					.menuGroup(GROUP)
 					.menuIcon(ICON)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ApplyDataTypeAction {
+		String NAME = "Apply Data to Listing ";
+		String DESCRIPTION =
+			"Apply the selected data type at the address of this value in the listing";
+		String GROUP = GROUP_GENERAL;
+		Icon ICON = ICON_DATA_TYPES;
+		String HELP_ANCHOR = "apply_data_type";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface SelectWatchRangeAction {
+		String NAME = "Select Range";
+		String DESCRIPTION = "For memory watches, select the range comprising the value";
+		String GROUP = GROUP_GENERAL;
+		Icon ICON = ICON_SELECT_ADDRESSES;
+		String HELP_ANCHOR = "select_addresses";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface SelectWatchReadsAction {
+		String NAME = "Select Reads";
+		String DESCRIPTION = "Select every memory range read evaluating this watch";
+		String GROUP = GROUP_GENERAL;
+		Icon ICON = ICON_REGIONS; // TODO: Meh. Better icon.
+		String HELP_ANCHOR = "select_reads";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

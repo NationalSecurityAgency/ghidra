@@ -18,6 +18,7 @@ package ghidra.pcode.exec;
 import java.util.List;
 import java.util.Map;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.SleighUseropLibrary.SleighUseropDefinition;
 import ghidra.pcode.opbehavior.*;
@@ -43,6 +44,12 @@ public class PcodeExecutor<T> {
 
 		this.pc = language.getProgramCounter();
 		this.pointerSize = language.getDefaultSpace().getPointerSize();
+	}
+
+	public void executeLine(String line) {
+		SleighProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
+			"line", List.of(line + ";"), SleighUseropLibrary.NIL);
+		execute(program, SleighUseropLibrary.nil());
 	}
 
 	public void execute(SleighProgram program, SleighUseropLibrary<T> library) {

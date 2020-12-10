@@ -105,6 +105,17 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
+	default int delegateReadI(AddressSpace space, ToIntFunction<M> func, IntSupplier ifNull) {
+		checkIsInMemory(space);
+		try (LockHold hold = LockHold.lock(readLock())) {
+			M m = getForSpace(space, false);
+			if (m == null) {
+				return ifNull.getAsInt();
+			}
+			return func.applyAsInt(m);
+		}
+	}
+
 	default boolean delegateReadB(AddressSpace space, Predicate<M> func, boolean ifNull) {
 		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {

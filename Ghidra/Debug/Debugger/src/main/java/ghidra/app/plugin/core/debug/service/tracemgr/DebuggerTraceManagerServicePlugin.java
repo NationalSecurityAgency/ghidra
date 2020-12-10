@@ -890,13 +890,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected static TargetObjectRef translateToFocus(DebuggerCoordinates prev,
 			DebuggerCoordinates resolved) {
+		if (!resolved.isAliveAndPresent()) {
+			return null;
+		}
 		TraceRecorder recorder = resolved.getRecorder();
-		if (recorder == null) {
-			return null;
-		}
-		if (!resolved.isPresent()) {
-			return null;
-		}
 		if (!Objects.equals(prev.getFrame(), resolved.getFrame())) {
 			TargetStackFrame<?> frame =
 				recorder.getTargetStackFrame(resolved.getThread(), resolved.getFrame());

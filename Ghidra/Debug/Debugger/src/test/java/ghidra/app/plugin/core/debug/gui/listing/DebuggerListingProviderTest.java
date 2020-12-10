@@ -991,7 +991,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// First check nothing captured yet
 		buf.clear();
-		trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf);
+		assertEquals(data.length,
+			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
 		// Verify that the action performs the expected task
@@ -1001,7 +1002,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		waitForPass(() -> {
 			buf.clear();
-			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf);
+			assertEquals(data.length, trace.getMemoryManager()
+					.getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 			// NOTE: The region is only 256 bytes long
 			// TODO: This fails unpredictably, and I'm not sure why.
 			assertArrayEquals(Arrays.copyOf(data, 256), Arrays.copyOf(buf.array(), 256));

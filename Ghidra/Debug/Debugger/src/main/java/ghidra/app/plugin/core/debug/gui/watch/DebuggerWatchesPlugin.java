@@ -20,6 +20,7 @@ import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.services.*;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
@@ -28,7 +29,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		description = "GUI to watch values of expressions", //
 		category = PluginCategoryNames.DEBUGGER, //
 		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.UNSTABLE, //
+		status = PluginStatus.RELEASED, //
 		eventsConsumed = {
 			TraceActivatedPluginEvent.class, //
 		}, //
@@ -39,7 +40,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		} //
 )
 public class DebuggerWatchesPlugin extends AbstractDebuggerPlugin {
-	private static final String KEY_EXPRESSION_LIST = "expressionList";
 
 	private DebuggerWatchesProvider provider;
 
@@ -65,5 +65,15 @@ public class DebuggerWatchesPlugin extends AbstractDebuggerPlugin {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
 			provider.coordinatesActivated(ev.getActiveCoordinates());
 		}
+	}
+
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		provider.writeConfigState(saveState);
+	}
+
+	@Override
+	public void readConfigState(SaveState saveState) {
+		provider.readConfigState(saveState);
 	}
 }

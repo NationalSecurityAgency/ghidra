@@ -41,6 +41,7 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.MathUtilities;
 import ghidra.util.UnionAddressSetView;
 import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.DuplicateNameException;
@@ -258,7 +259,12 @@ public class DBTraceMemoryManager
 
 	@Override
 	public int getBytes(long snap, Address start, ByteBuffer buf) {
-		return delegateReadI(start.getAddressSpace(), m -> m.getBytes(snap, start, buf), 0);
+		return delegateReadI(start.getAddressSpace(), m -> m.getBytes(snap, start, buf), () -> {
+			Address max = start.getAddressSpace().getMaxAddress();
+			int len = MathUtilities.unsignedMin(buf.remaining(), max.subtract(start));
+			buf.position(buf.position() + len);
+			return len;
+		});
 	}
 
 	@Override

@@ -104,10 +104,10 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		@Override
 		public CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates,
 				AddressSetView visible) {
-			TraceRecorder recorder = coordinates.getRecorder();
-			if (recorder == null || !coordinates.isPresent()) {
+			if (!coordinates.isAliveAndPresent()) {
 				return AsyncUtils.NIL;
 			}
+			TraceRecorder recorder = coordinates.getRecorder();
 			AddressSet visibleAccessible =
 				recorder.getAccessibleProcessMemory().intersect(visible);
 			TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
@@ -135,10 +135,10 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		@Override
 		public CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates,
 				AddressSetView visible) {
-			TraceRecorder recorder = coordinates.getRecorder();
-			if (recorder == null || !coordinates.isPresent()) {
+			if (!coordinates.isAliveAndPresent()) {
 				return AsyncUtils.NIL;
 			}
+			TraceRecorder recorder = coordinates.getRecorder();
 			AddressSet visibleAccessible =
 				recorder.getAccessibleProcessMemory().intersect(visible);
 			TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();

@@ -1,157 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <TOOL_CONFIG CONFIG_NAME="NO_LONGER_USED">
-    <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.program.model.listing.DataTypeArchive" />
-    <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.trace.model.Trace" />
     <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.program.model.listing.Program" />
+    <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.trace.model.Trace" />
+    <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.program.model.listing.DataTypeArchive" />
     <ICON LOCATION="debugger32.png" />
     <TOOL TOOL_NAME="Debugger" INSTANCE_NAME="">
         <OPTIONS />
+        <PACKAGE NAME="Debugger">
+        </PACKAGE>
         <PACKAGE NAME="Ghidra Core">
             <INCLUDE CLASS="ghidra.app.plugin.core.editor.TextEditorManagerPlugin" />
             <INCLUDE CLASS="ghidra.app.plugin.core.interpreter.InterpreterPanelPlugin" />
         </PACKAGE>
-        <PACKAGE NAME="Debugger">
-            <INCLUDE CLASS="ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin" />
-            <INCLUDE CLASS="ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin" />
-        </PACKAGE>
-        <ROOT_NODE X_POS="0" Y_POS="32" WIDTH="1920" HEIGHT="1017" EX_STATE="0" FOCUSED_OWNER="DebuggerTargetsPlugin" FOCUSED_NAME="Debugger Targets" FOCUSED_TITLE="Debugger Targets">
+        <ROOT_NODE X_POS="60" Y_POS="466" WIDTH="1920" HEIGHT="1017" EX_STATE="0" FOCUSED_OWNER="DebuggerTargetsPlugin" FOCUSED_NAME="Debugger Targets" FOCUSED_TITLE="Debugger Targets">
             <SPLIT_NODE WIDTH="1918" HEIGHT="910" DIVIDER_LOCATION="767" ORIENTATION="VERTICAL">
                 <SPLIT_NODE WIDTH="100" HEIGHT="100" DIVIDER_LOCATION="0" ORIENTATION="VERTICAL">
                     <SPLIT_NODE WIDTH="1918" HEIGHT="695" DIVIDER_LOCATION="156" ORIENTATION="HORIZONTAL">
                         <SPLIT_NODE WIDTH="299" HEIGHT="695" DIVIDER_LOCATION="692" ORIENTATION="VERTICAL">
                             <SPLIT_NODE WIDTH="299" HEIGHT="478" DIVIDER_LOCATION="427" ORIENTATION="VERTICAL">
                                 <COMPONENT_NODE TOP_INFO="0">
-                                    <COMPONENT_INFO NAME="Debugger Targets" OWNER="DebuggerTargetsPlugin" TITLE="Debugger Targets" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614922873274" />
+                                    <COMPONENT_INFO NAME="Debugger Targets" OWNER="DebuggerTargetsPlugin" TITLE="Debugger Targets" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434796977987111" />
                                 </COMPONENT_NODE>
                                 <COMPONENT_NODE TOP_INFO="0">
-                                    <COMPONENT_INFO NAME="Objects" OWNER="DebuggerObjectsPlugin" TITLE="Objects" ACTIVE="true" GROUP="Debugger.Core.Objects" INSTANCE_ID="3367261614922873273" />
+                                    <COMPONENT_INFO NAME="Objects" OWNER="DebuggerObjectsPlugin" TITLE="Objects" ACTIVE="true" GROUP="Debugger.Core.Objects" INSTANCE_ID="3373434796977987110" />
                                 </COMPONENT_NODE>
                             </SPLIT_NODE>
                             <COMPONENT_NODE TOP_INFO="0">
-                                <COMPONENT_INFO NAME="DataTypes Provider" OWNER="DataTypeManagerPlugin" TITLE="Data Type Manager" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614541191594" />
-                                <COMPONENT_INFO NAME="Program Tree" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261611017976230" />
-                                <COMPONENT_INFO NAME="Symbol Tree" OWNER="SymbolTreePlugin" TITLE="Symbol Tree" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261611017976234" />
+                                <COMPONENT_INFO NAME="DataTypes Provider" OWNER="DataTypeManagerPlugin" TITLE="Data Type Manager" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434792393612850" />
+                                <COMPONENT_INFO NAME="Program Tree" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434785093426726" />
+                                <COMPONENT_INFO NAME="Symbol Tree" OWNER="SymbolTreePlugin" TITLE="Symbol Tree" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434785093426730" />
                             </COMPONENT_NODE>
                         </SPLIT_NODE>
                         <SPLIT_NODE WIDTH="1293" HEIGHT="590" DIVIDER_LOCATION="785" ORIENTATION="VERTICAL">
                             <SPLIT_NODE WIDTH="1386" HEIGHT="638" DIVIDER_LOCATION="705" ORIENTATION="VERTICAL">
                                 <SPLIT_NODE WIDTH="1615" HEIGHT="695" DIVIDER_LOCATION="679" ORIENTATION="HORIZONTAL">
                                     <SPLIT_NODE WIDTH="1094" HEIGHT="695" DIVIDER_LOCATION="506" ORIENTATION="VERTICAL">
-                                        <COMPONENT_NODE TOP_INFO="1">
-                                            <COMPONENT_INFO NAME="Listing" OWNER="DebuggerListingPlugin" TITLE="Dynamic" ACTIVE="true" GROUP="Core" INSTANCE_ID="3367261602111371697" />
-                                            <COMPONENT_INFO NAME="Listing" OWNER="DebuggerListingPlugin" TITLE="[Dynamic]" ACTIVE="true" GROUP="Core" INSTANCE_ID="3367261618683066788" />
+                                        <COMPONENT_NODE TOP_INFO="0">
+                                            <COMPONENT_INFO NAME="Listing" OWNER="DebuggerListingPlugin" TITLE="Dynamic" ACTIVE="true" GROUP="Core" INSTANCE_ID="3373434785093426731" />
                                         </COMPONENT_NODE>
                                         <COMPONENT_NODE TOP_INFO="0">
-                                            <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3367261602111371709" />
+                                            <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3367240603901382758" />
                                         </COMPONENT_NODE>
                                     </SPLIT_NODE>
-                                    <COMPONENT_NODE TOP_INFO="10">
-                                        <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompile" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261611017976224" />
-                                        <COMPONENT_INFO NAME="Bytes" OWNER="ByteViewerPlugin" TITLE="Bytes: No Program" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261602111371706" />
-                                        <COMPONENT_INFO NAME="Data Window" OWNER="DataWindowPlugin" TITLE="Defined Data" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261618683066785" />
-                                        <COMPONENT_INFO NAME="Defined Strings" OWNER="ViewStringsPlugin" TITLE="Defined Strings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873276" />
-                                        <COMPONENT_INFO NAME="Equates Table" OWNER="EquateTablePlugin" TITLE="Equates Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261611017976226" />
-                                        <COMPONENT_INFO NAME="External Programs" OWNER="ReferencesPlugin" TITLE="External Programs" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261611017976231" />
-                                        <COMPONENT_INFO NAME="Functions Window" OWNER="FunctionWindowPlugin" TITLE="Functions" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873256" />
-                                        <COMPONENT_INFO NAME="Relocation Table" OWNER="RelocationTablePlugin" TITLE="Relocation Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873275" />
-                                        <COMPONENT_INFO NAME="Modules" OWNER="DebuggerModulesPlugin" TITLE="Modules" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614922873271" />
-                                        <COMPONENT_INFO NAME="Registers" OWNER="DebuggerRegistersPlugin" TITLE="Registers" ACTIVE="true" GROUP="Debugger.Core" INSTANCE_ID="3367261618683066787" />
-                                        <COMPONENT_INFO NAME="Breakpoints" OWNER="DebuggerBreakpointsPlugin" TITLE="Breakpoints" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614922873279" />
+                                    <COMPONENT_NODE TOP_INFO="9">
+                                        <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompiler" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367240603901382761" />
+                                        <COMPONENT_INFO NAME="Bytes" OWNER="ByteViewerPlugin" TITLE="Bytes: No Program" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367240603901382755" />
+                                        <COMPONENT_INFO NAME="Data Window" OWNER="DataWindowPlugin" TITLE="Defined Data" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434796977987114" />
+                                        <COMPONENT_INFO NAME="Defined Strings" OWNER="ViewStringsPlugin" TITLE="Defined Strings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434796977987104" />
+                                        <COMPONENT_INFO NAME="Equates Table" OWNER="EquateTablePlugin" TITLE="Equates Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434785093426722" />
+                                        <COMPONENT_INFO NAME="External Programs" OWNER="ReferencesPlugin" TITLE="External Programs" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434785093426727" />
+                                        <COMPONENT_INFO NAME="Functions Window" OWNER="FunctionWindowPlugin" TITLE="Functions" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434793108741680" />
+                                        <COMPONENT_INFO NAME="Relocation Table" OWNER="RelocationTablePlugin" TITLE="Relocation Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434793108741695" />
+                                        <COMPONENT_INFO NAME="Modules" OWNER="DebuggerModulesPlugin" TITLE="Modules" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434796977987108" />
+                                        <COMPONENT_INFO NAME="Registers" OWNER="DebuggerRegistersPlugin" TITLE="Registers" ACTIVE="true" GROUP="Debugger.Core" INSTANCE_ID="3373434796977987117" />
+                                        <COMPONENT_INFO NAME="Breakpoints" OWNER="DebuggerBreakpointsPlugin" TITLE="Breakpoints" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434796977987116" />
                                     </COMPONENT_NODE>
                                 </SPLIT_NODE>
                                 <SPLIT_NODE WIDTH="1386" HEIGHT="189" DIVIDER_LOCATION="495" ORIENTATION="HORIZONTAL">
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="Data Type Preview" OWNER="DataTypePreviewPlugin" TITLE="Data Type Preview" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873255" />
+                                        <COMPONENT_INFO NAME="Data Type Preview" OWNER="DataTypePreviewPlugin" TITLE="Data Type Preview" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434793108741679" />
                                     </COMPONENT_NODE>
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="Virtual Disassembler - Current Instruction" OWNER="DisassembledViewPlugin" TITLE="Disassembled View" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261611017976225" />
+                                        <COMPONENT_INFO NAME="Virtual Disassembler - Current Instruction" OWNER="DisassembledViewPlugin" TITLE="Disassembled View" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434785093426721" />
                                     </COMPONENT_NODE>
                                 </SPLIT_NODE>
                             </SPLIT_NODE>
                             <COMPONENT_NODE TOP_INFO="0">
-                                <COMPONENT_INFO NAME="Bookmarks" OWNER="BookmarkPlugin" TITLE="Bookmarks" ACTIVE="false" GROUP="Core.Bookmarks" INSTANCE_ID="3367261602111371705" />
+                                <COMPONENT_INFO NAME="Bookmarks" OWNER="BookmarkPlugin" TITLE="Bookmarks" ACTIVE="false" GROUP="Core.Bookmarks" INSTANCE_ID="3373434773550702137" />
                             </COMPONENT_NODE>
                         </SPLIT_NODE>
                     </SPLIT_NODE>
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Function Call Trees" OWNER="CallTreePlugin" TITLE="Function Call Trees" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261602111371707" />
+                        <COMPONENT_INFO NAME="Function Call Trees" OWNER="CallTreePlugin" TITLE="Function Call Trees" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434773550702139" />
                     </COMPONENT_NODE>
                 </SPLIT_NODE>
                 <SPLIT_NODE WIDTH="1918" HEIGHT="211" DIVIDER_LOCATION="348" ORIENTATION="HORIZONTAL">
                     <COMPONENT_NODE TOP_INFO="1">
-                        <COMPONENT_INFO NAME="Regions" OWNER="DebuggerRegionsPlugin" TITLE="Regions" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614922873270" />
-                        <COMPONENT_INFO NAME="Stack" OWNER="DebuggerStackPlugin" TITLE="Stack" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261611017976235" />
-                        <COMPONENT_INFO NAME="Console" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261602111371710" />
+                        <COMPONENT_INFO NAME="Regions" OWNER="DebuggerRegionsPlugin" TITLE="Regions" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434796977987107" />
+                        <COMPONENT_INFO NAME="Stack" OWNER="DebuggerStackPlugin" TITLE="Stack" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434793108741683" />
+                        <COMPONENT_INFO NAME="Console" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434773550702142" />
+                        <COMPONENT_INFO NAME="Interpreter" OWNER="InterpreterPanelPlugin" TITLE="Interpreter" ACTIVE="false" GROUP="Default" INSTANCE_ID="3372862709093332258" />
+                        <COMPONENT_INFO NAME="Watches" OWNER="DebuggerWatchesPlugin" TITLE="Watches" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434796977987112" />
                     </COMPONENT_NODE>
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Threads" OWNER="DebuggerThreadsPlugin" TITLE="Threads" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614922873259" />
-                        <COMPONENT_INFO NAME="Time" OWNER="DebuggerTimePlugin" TITLE="Time" ACTIVE="true" GROUP="Default" INSTANCE_ID="3367261614922873260" />
+                        <COMPONENT_INFO NAME="Threads" OWNER="DebuggerThreadsPlugin" TITLE="Threads" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434793108741693" />
+                        <COMPONENT_INFO NAME="Time" OWNER="DebuggerTimePlugin" TITLE="Time" ACTIVE="true" GROUP="Default" INSTANCE_ID="3373434793108741694" />
                     </COMPONENT_NODE>
                 </SPLIT_NODE>
             </SPLIT_NODE>
             <WINDOW_NODE X_POS="426" Y_POS="178" WIDTH="1033" HEIGHT="689">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Script Manager" OWNER="GhidraScriptMgrPlugin" TITLE="Script Manager" ACTIVE="false" GROUP="Script Group" INSTANCE_ID="3367261611017976232" />
+                    <COMPONENT_INFO NAME="Script Manager" OWNER="GhidraScriptMgrPlugin" TITLE="Script Manager" ACTIVE="false" GROUP="Script Group" INSTANCE_ID="3373434785093426728" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="423" Y_POS="144" WIDTH="927" HEIGHT="370">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Memory Map" OWNER="MemoryMapPlugin" TITLE="Memory Map" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261611017976229" />
+                    <COMPONENT_INFO NAME="Memory Map" OWNER="MemoryMapPlugin" TITLE="Memory Map" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434785093426725" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="383" Y_POS="7" WIDTH="1020" HEIGHT="1038">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Function Graph" OWNER="FunctionGraphPlugin" TITLE="Function Graph" ACTIVE="false" GROUP="Function Graph" INSTANCE_ID="3367261618683066786" />
+                    <COMPONENT_INFO NAME="Function Graph" OWNER="FunctionGraphPlugin" TITLE="Function Graph" ACTIVE="false" GROUP="Function Graph" INSTANCE_ID="3373434796977987115" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="550" Y_POS="206" WIDTH="655" HEIGHT="509">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Register Manager" OWNER="RegisterPlugin" TITLE="Register Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873257" />
+                    <COMPONENT_INFO NAME="Register Manager" OWNER="RegisterPlugin" TITLE="Register Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434793108741681" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="287" Y_POS="186" WIDTH="1424" HEIGHT="666">
                 <SPLIT_NODE WIDTH="1408" HEIGHT="559" DIVIDER_LOCATION="573" ORIENTATION="HORIZONTAL">
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Symbol Table" OWNER="SymbolTablePlugin" TITLE="Symbol Table" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3367261614922873277" />
+                        <COMPONENT_INFO NAME="Symbol Table" OWNER="SymbolTablePlugin" TITLE="Symbol Table" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3373434796977987105" />
                     </COMPONENT_NODE>
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Symbol References" OWNER="SymbolTablePlugin" TITLE="Symbol References" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3367261614922873278" />
+                        <COMPONENT_INFO NAME="Symbol References" OWNER="SymbolTablePlugin" TITLE="Symbol References" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3373434796977987106" />
                     </COMPONENT_NODE>
                 </SPLIT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Checksum Generator" OWNER="ComputeChecksumsPlugin" TITLE="Checksum Generator" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261602111371708" />
+                    <COMPONENT_INFO NAME="Checksum Generator" OWNER="ComputeChecksumsPlugin" TITLE="Checksum Generator" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434773550702140" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Function Tags" OWNER="FunctionTagPlugin" TITLE="Function Tags" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261611017976228" />
+                    <COMPONENT_INFO NAME="Function Tags" OWNER="FunctionTagPlugin" TITLE="Function Tags" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434785093426724" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Comment Window" OWNER="CommentWindowPlugin" TITLE="Comments" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261618683066784" />
+                    <COMPONENT_INFO NAME="Comment Window" OWNER="CommentWindowPlugin" TITLE="Comments" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434796977987113" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Python" OWNER="InterpreterPanelPlugin" TITLE="Python" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873258" />
+                    <COMPONENT_INFO NAME="Python" OWNER="InterpreterPanelPlugin" TITLE="Python" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434793108741682" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Function Call Graph" OWNER="FunctionCallGraphPlugin" TITLE="Function Call Graph" ACTIVE="false" GROUP="Function Call Graph" INSTANCE_ID="3367261611017976236" />
-                </COMPONENT_NODE>
-            </WINDOW_NODE>
-            <WINDOW_NODE X_POS="658" Y_POS="1489" WIDTH="470" HEIGHT="540">
-                <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Static Mappings" OWNER="DebuggerStaticMappingPlugin" TITLE="Static Mappings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261614922873272" />
+                    <COMPONENT_INFO NAME="Function Call Graph" OWNER="FunctionCallGraphPlugin" TITLE="Function Call Graph" ACTIVE="false" GROUP="Function Call Graph" INSTANCE_ID="3373434785093426732" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="BundleManager" OWNER="GhidraScriptMgrPlugin" TITLE="Bundle Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367261611017976233" />
+                    <COMPONENT_INFO NAME="BundleManager" OWNER="GhidraScriptMgrPlugin" TITLE="Bundle Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434785093426729" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="2105" Y_POS="966" WIDTH="1122" HEIGHT="546">
@@ -159,9 +153,9 @@
                     <COMPONENT_INFO NAME="Objects" OWNER="DebuggerTimelinePlugin" TITLE="Objects" ACTIVE="false" GROUP="Default" INSTANCE_ID="3366353018521038486" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
-            <WINDOW_NODE X_POS="592" Y_POS="198" WIDTH="739" HEIGHT="585">
+            <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Interpreter: GNU gdb (GDB) Red Hat Enterprise Linux 8.0.1-30.amzn2.0.3" OWNER="InterpreterPanelPlugin" TITLE="Interpreter: GNU gdb (GDB) Red Hat Enterprise Linux 8.0.1-30.amzn2.0.3" ACTIVE="false" GROUP="Default" INSTANCE_ID="3367240649541701752" />
+                    <COMPONENT_INFO NAME="Static Mappings" OWNER="DebuggerStaticMappingPlugin" TITLE="Static Mappings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3373434796977987109" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
         </ROOT_NODE>
@@ -193,6 +187,20 @@
                         <COLUMN NAME="PC" WIDTH="165" VISIBLE="true" />
                         <COLUMN NAME="Function" WIDTH="165" VISIBLE="true" />
                         <COLUMN NAME="Comment" WIDTH="164" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel:Base Address:Max Address:Module Name:Lifespan:Length:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="Base Address" WIDTH="102" VISIBLE="true" />
+                        <COLUMN NAME="Max Address" WIDTH="102" VISIBLE="true" />
+                        <COLUMN NAME="Module Name" WIDTH="102" VISIBLE="true" />
+                        <COLUMN NAME="Lifespan" WIDTH="102" VISIBLE="true" />
+                        <COLUMN NAME="Length" WIDTH="101" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                         </TABLE_SORT_STATE>
@@ -306,10 +314,10 @@
             <PREFERENCE_STATE NAME="docking.ErrLogDialog$ErrEntryTableModel:#:Message:Details:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
-                        <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$IdColumn.#" WIDTH="362" VISIBLE="true" />
-                        <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$MessageColumn.Message" WIDTH="363" VISIBLE="true" />
+                        <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$IdColumn.#" WIDTH="15" VISIBLE="true" />
+                        <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$MessageColumn.Message" WIDTH="15" VISIBLE="true" />
                         <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$DetailsColumn.Details" WIDTH="500" VISIBLE="false" />
-                        <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$TimestampColumn.Time" WIDTH="362" VISIBLE="true" />
+                        <COLUMN NAME="docking.ErrLogDialog$ErrEntryTableModel$TimestampColumn.Time" WIDTH="15" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                         </TABLE_SORT_STATE>
@@ -373,6 +381,24 @@
                     </Table_State>
                 </XML>
             </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel:Remove:Module:Section:Dynamic Base:Program:Block:Static Base:Size:Choose:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="Remove" WIDTH="32" VISIBLE="true" />
+                        <COLUMN NAME="Module" WIDTH="75" VISIBLE="true" />
+                        <COLUMN NAME="Section" WIDTH="75" VISIBLE="true" />
+                        <COLUMN NAME="Dynamic Base" WIDTH="75" VISIBLE="true" />
+                        <COLUMN NAME="Program" WIDTH="75" VISIBLE="true" />
+                        <COLUMN NAME="Block" WIDTH="75" VISIBLE="true" />
+                        <COLUMN NAME="Static Base" WIDTH="75" VISIBLE="true" />
+                        <COLUMN NAME="Size" WIDTH="74" VISIBLE="true" />
+                        <COLUMN NAME="Choose" WIDTH="32" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
             <PREFERENCE_STATE NAME="ghidra.app.plugin.core.bookmark.BookmarkTableModel:Type:Category:Description:Location:Label:Preview:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
@@ -413,6 +439,19 @@
                     </Table_State>
                 </XML>
             </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.listing.DebuggerModuleImportDialog$FileTableModel:Remove:Ignore:Path:Import:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="Remove" WIDTH="32" VISIBLE="true" />
+                        <COLUMN NAME="Ignore" WIDTH="26" VISIBLE="true" />
+                        <COLUMN NAME="Path" WIDTH="368" VISIBLE="true" />
+                        <COLUMN NAME="Import" WIDTH="32" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
             <PREFERENCE_STATE NAME="ghidra.app.plugin.core.register.RegisterValuesPanel$RegisterValuesTableModel:Start Address:End Address:Value:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
@@ -428,13 +467,13 @@
             <PREFERENCE_STATE NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel:Name:Lifespan:Start:End:Length:Read:Write:Execute:Volatile:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
-                        <COLUMN NAME="Name" WIDTH="127" VISIBLE="true" />
+                        <COLUMN NAME="Name" WIDTH="126" VISIBLE="true" />
                         <COLUMN NAME="Lifespan" WIDTH="67" VISIBLE="true" />
-                        <COLUMN NAME="Start" WIDTH="69" VISIBLE="true" />
-                        <COLUMN NAME="End" WIDTH="92" VISIBLE="true" />
+                        <COLUMN NAME="Start" WIDTH="70" VISIBLE="true" />
+                        <COLUMN NAME="End" WIDTH="91" VISIBLE="true" />
                         <COLUMN NAME="Length" WIDTH="65" VISIBLE="true" />
                         <COLUMN NAME="Read" WIDTH="60" VISIBLE="true" />
-                        <COLUMN NAME="Write" WIDTH="65" VISIBLE="true" />
+                        <COLUMN NAME="Write" WIDTH="66" VISIBLE="true" />
                         <COLUMN NAME="Execute" WIDTH="58" VISIBLE="true" />
                         <COLUMN NAME="Volatile" WIDTH="57" VISIBLE="true" />
                         <TABLE_SORT_STATE>
@@ -451,6 +490,21 @@
                         <COLUMN NAME="Static Program" WIDTH="114" VISIBLE="true" />
                         <COLUMN NAME="Static Address" WIDTH="115" VISIBLE="true" />
                         <COLUMN NAME="Length" WIDTH="114" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider$WatchTableModel:Expression:Address:Value:Type:Repr:Error:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="Expression" WIDTH="110" VISIBLE="true" />
+                        <COLUMN NAME="Address" WIDTH="110" VISIBLE="true" />
+                        <COLUMN NAME="Value" WIDTH="110" VISIBLE="true" />
+                        <COLUMN NAME="Type" WIDTH="110" VISIBLE="true" />
+                        <COLUMN NAME="Repr" WIDTH="110" VISIBLE="true" />
+                        <COLUMN NAME="Error" WIDTH="110" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                         </TABLE_SORT_STATE>
@@ -525,6 +579,22 @@
                     </Table_State>
                 </XML>
             </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel:Remove:Module:Dynamic Base:Program:Static Base:Size:Choose:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="Remove" WIDTH="32" VISIBLE="true" />
+                        <COLUMN NAME="Module" WIDTH="105" VISIBLE="true" />
+                        <COLUMN NAME="Dynamic Base" WIDTH="105" VISIBLE="true" />
+                        <COLUMN NAME="Program" WIDTH="105" VISIBLE="true" />
+                        <COLUMN NAME="Static Base" WIDTH="105" VISIBLE="true" />
+                        <COLUMN NAME="Size" WIDTH="104" VISIBLE="true" />
+                        <COLUMN NAME="Choose" WIDTH="32" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
             <PREFERENCE_STATE NAME="KNOWN_EXTENSIONS">
                 <ARRAY NAME="KNOWN_EXTENSIONS" TYPE="string" />
             </PREFERENCE_STATE>
@@ -552,6 +622,22 @@
                         <COLUMN NAME="Comment" WIDTH="101" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider$RegistersTableModel:Fav:#:Name:Value:Type:Repr:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="Fav" WIDTH="47" VISIBLE="true" />
+                        <COLUMN NAME="#" WIDTH="46" VISIBLE="true" />
+                        <COLUMN NAME="Name" WIDTH="73" VISIBLE="true" />
+                        <COLUMN NAME="Value" WIDTH="131" VISIBLE="true" />
+                        <COLUMN NAME="Type" WIDTH="83" VISIBLE="true" />
+                        <COLUMN NAME="Repr" WIDTH="131" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="descending" SORT_ORDER="1" />
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="2" />
                         </TABLE_SORT_STATE>
                     </Table_State>
                 </XML>

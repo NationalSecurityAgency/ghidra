@@ -15,14 +15,20 @@
  */
 package ghidra.app.plugin.core.debug.gui.watch;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
+import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
@@ -37,12 +43,14 @@ import ghidra.util.Swing;
 
 public class WatchRow {
 	private final DebuggerWatchesProvider provider;
+	private Trace trace;
 	private SleighLanguage language;
 	private PcodeExecutor<Pair<byte[], TraceMemoryState>> executorWithState;
 	private ReadDepsPcodeExecutor executorWithAddress;
 	private AsyncPcodeExecutor<byte[]> asyncExecutor;
 
 	private String expression;
+	private String typePath;
 	private DataType dataType;
 
 	private SleighExpression compiled;
@@ -50,8 +58,9 @@ public class WatchRow {
 	private Address address;
 	private AddressSet reads;
 	private byte[] value;
+	private byte[] prevValue; // Value at previous coordinates
 	private String valueString;
-	private String error = "";
+	private Throwable error = null;
 
 	public WatchRow(DebuggerWatchesProvider provider, String expression) {
 		this.provider = provider;
@@ -59,8 +68,6 @@ public class WatchRow {
 	}
 
 	protected void blank() {
-		error = null;
-		compiled = null;
 		state = null;
 		address = null;
 		reads = null;
@@ -69,20 +76,27 @@ public class WatchRow {
 	}
 
 	protected void recompile() {
-		this.error = null;
+		compiled = null;
+		error = null;
+		if (expression == null || expression.length() == 0) {
+			return;
+		}
+		if (language == null) {
+			return;
+		}
 		try {
-			this.compiled = SleighProgramCompiler.compileExpression(language, expression);
+			compiled = SleighProgramCompiler.compileExpression(language, expression);
 		}
 		catch (Exception e) {
-			this.error = e.getMessage();
+			error = e;
 			return;
 		}
 	}
 
 	protected void doTargetReads() {
-		if (asyncExecutor != null) {
+		if (compiled != null && asyncExecutor != null) {
 			compiled.evaluate(asyncExecutor).exceptionally(ex -> {
-				error = ex.getMessage();
+				error = ex;
 				Swing.runIfSwingOrRunLater(() -> {
 					provider.watchTableModel.notifyUpdated(this);
 				});
@@ -94,11 +108,15 @@ public class WatchRow {
 
 	protected void reevaluate() {
 		blank();
+		if (trace == null || compiled == null) {
+			return;
+		}
 		try {
 			Pair<byte[], TraceMemoryState> valueWithState = compiled.evaluate(executorWithState);
 			Pair<byte[], Address> valueWithAddress = compiled.evaluate(executorWithAddress);
 
 			value = valueWithState.getLeft();
+			error = null;
 			state = valueWithState.getRight();
 			address = valueWithAddress.getRight();
 			reads = executorWithAddress.getReads();
@@ -106,12 +124,12 @@ public class WatchRow {
 			valueString = parseAsDataType();
 		}
 		catch (Exception e) {
-			error = e.getMessage();
+			error = e;
 		}
 	}
 
 	protected String parseAsDataType() {
-		if (dataType == null) {
+		if (dataType == null || value == null) {
 			return "";
 		}
 		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
@@ -128,14 +146,19 @@ public class WatchRow {
 		}
 
 		@Override
-		protected byte[] getFromSpace(TraceMemorySpace space, long offset, int size) {
-			byte[] data = super.getFromSpace(space, offset, size);
-			try {
-				reads.add(
-					new AddressRangeImpl(space.getAddressSpace().getAddress(offset), data.length));
+		public byte[] getVar(AddressSpace space, long offset, int size,
+				boolean truncateAddressableUnit) {
+			byte[] data = super.getVar(space, offset, size, truncateAddressableUnit);
+			if (space.isMemorySpace()) {
+				offset = truncateOffset(space, offset);
 			}
-			catch (AddressOverflowException | AddressOutOfBoundsException e) {
-				throw new AssertionError(e);
+			if (space.isMemorySpace() || space.isRegisterSpace()) {
+				try {
+					reads.add(new AddressRangeImpl(space.getAddress(offset), data.length));
+				}
+				catch (AddressOverflowException | AddressOutOfBoundsException e) {
+					throw new AssertionError(e);
+				}
 			}
 			return data;
 		}
@@ -191,46 +214,85 @@ public class WatchRow {
 		return new ReadDepsPcodeExecutor(state, language, arithmetic, paired);
 	}
 
-	public void setContext(DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
+	public void setCoordinates(DebuggerCoordinates coordinates) {
+		// NB. Caller has already verified coordinates actually changed
+		prevValue = value;
+		trace = coordinates.getTrace();
+		updateType();
 		if (trace == null) {
 			blank();
-			error = "No trace nor thread active";
 			return;
 		}
 		Language newLanguage = trace.getBaseLanguage();
-		if (this.language != newLanguage) {
+		if (language != newLanguage) {
 			if (!(newLanguage instanceof SleighLanguage)) {
-				error = "No a sleigh-based langauge";
+				error = new RuntimeException("Not a sleigh-based langauge");
 				return;
 			}
-			this.language = (SleighLanguage) newLanguage;
+			language = (SleighLanguage) newLanguage;
 			recompile();
 		}
-		boolean live = coordinates.isAlive() && coordinates.isPresent();
-		if (live) {
-			this.asyncExecutor = TracePcodeUtils.executorForCoordinates(coordinates);
+		if (coordinates.isAliveAndPresent()) {
+			asyncExecutor = TracePcodeUtils.executorForCoordinates(coordinates);
 		}
-		this.executorWithState = TraceSleighUtils.buildByteWithStateExecutor(trace,
+		executorWithState = TraceSleighUtils.buildByteWithStateExecutor(trace,
 			coordinates.getSnap(), coordinates.getThread(), coordinates.getFrame());
-		this.executorWithAddress = buildAddressDepsExecutor(coordinates);
-		if (live) {
-			doTargetReads();
-		}
-		reevaluate(); // NB. Target reads may not cause database changes
+		executorWithAddress = buildAddressDepsExecutor(coordinates);
 	}
 
 	public void setExpression(String expression) {
+		if (!Objects.equals(this.expression, expression)) {
+			prevValue = null;
+			// NB. Allow fall-through so user can re-evaluate via nop edit.
+		}
 		this.expression = expression;
+		blank();
 		recompile();
+		if (error != null) {
+			provider.contextChanged();
+			return;
+		}
+		if (asyncExecutor != null) {
+			doTargetReads();
+		}
+		reevaluate();
+		provider.contextChanged();
 	}
 
 	public String getExpression() {
 		return expression;
 	}
 
+	protected void updateType() {
+		dataType = null;
+		if (trace == null || typePath == null) {
+			return;
+		}
+		dataType = trace.getDataTypeManager().getDataType(typePath);
+		if (dataType != null) {
+			return;
+		}
+		DataTypeManagerService dtms = provider.getTool().getService(DataTypeManagerService.class);
+		if (dtms == null) {
+			return;
+		}
+		dataType = dtms.getBuiltInDataTypesManager().getDataType(typePath);
+	}
+
+	public void setTypePath(String typePath) {
+		this.typePath = typePath;
+		updateType();
+	}
+
+	public String getTypePath() {
+		return typePath;
+	}
+
 	public void setDataType(DataType dataType) {
+		this.typePath = dataType == null ? null : dataType.getPathName();
 		this.dataType = dataType;
+		valueString = parseAsDataType();
+		provider.contextChanged();
 	}
 
 	public DataType getDataType() {
@@ -241,11 +303,34 @@ public class WatchRow {
 		return address;
 	}
 
-	public String getRawValueString() {
-		if (value.length > 20) {
-			return NumericUtilities.convertBytesToString(value, 0, 20, " ") + "...";
+	public AddressRange getRange() {
+		if (address == null || value == null) {
+			return null;
 		}
-		return NumericUtilities.convertBytesToString(value, " ");
+		if (address.isConstantAddress()) {
+			return new AddressRangeImpl(address, address);
+		}
+		try {
+			return new AddressRangeImpl(address, value.length);
+		}
+		catch (AddressOverflowException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	public String getRawValueString() {
+		if (value == null) {
+			return "??";
+		}
+		if (address == null || !address.getAddressSpace().isMemorySpace()) {
+			BigInteger asBigInt =
+				Utils.bytesToBigInteger(value, value.length, language.isBigEndian(), false);
+			return "0x" + asBigInt.toString(16);
+		}
+		if (value.length > 20) {
+			return "{ " + NumericUtilities.convertBytesToString(value, 0, 20, " ") + " ... }";
+		}
+		return "{ " + NumericUtilities.convertBytesToString(value, " ") + " }";
 	}
 
 	public AddressSet getReads() {
@@ -260,7 +345,33 @@ public class WatchRow {
 		return valueString;
 	}
 
-	public String getError() {
+	public int getValueLength() {
+		return value == null ? 0 : value.length;
+	}
+
+	public String getErrorMessage() {
+		if (error == null) {
+			return "";
+		}
+		String message = error.getMessage();
+		if (message != null && message.trim().length() != 0) {
+			return message;
+		}
+		return error.getClass().getSimpleName();
+	}
+
+	public Throwable getError() {
 		return error;
+	}
+
+	public boolean isKnown() {
+		return state == TraceMemoryState.KNOWN;
+	}
+
+	public boolean isChanged() {
+		if (prevValue == null) {
+			return false;
+		}
+		return !Arrays.equals(value, prevValue);
 	}
 }
