@@ -12,8 +12,22 @@ task prepDev {
 		
 	// the GhidraLauncher depends on this file to build the classpath in dev mode
 	dependsOn { generateLibraryDependencyMapping }
+
+	// generate list of all library files used to build and run ghidra. (not strictly necessary here, but nice to have)
+	dependsOn { generateAllExternalLibsFile }
+
 }
 
+/******************************************************************************************
+ * TASK generateAllExternalLibsFile
+ *
+ * Summary: Creates a file that lists all libraries used to build and run Ghidra
+ ******************************************************************************************/
+task generateAllExternalLibsFile {
+	doFirst{
+		generateAllExternalLibsFile()
+	}
+}
 	
 /******************************************************************************************
  * TASK generateLibraryDependencyMapping
@@ -25,3 +39,4 @@ task generateLibraryDependencyMapping {
 		generateLibraryDependencyMapping()
 	}
 }
+

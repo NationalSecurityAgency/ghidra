@@ -82,7 +82,7 @@ def Map<String, String> getModuleManifestIp(Project project) {
  *********************************************************************************/
 def checkExternalLibsInMap(Map<String, String> map, Project project) {
 	if (project.plugins.withType(JavaPlugin)) {
-		List<String> libs = getExternalDependencies(project)
+		List<String> libs = getExternalRuntimeDependencies(project)
 		libs.each { lib ->
 			String libName = new File(lib).getName()  // get just the filename without the path
 			String relativePath = "lib/"+libName;
