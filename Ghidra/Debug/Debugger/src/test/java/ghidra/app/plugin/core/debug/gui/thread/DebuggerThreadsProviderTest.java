@@ -233,7 +233,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		waitForPass(() -> {
-			assertEquals(Set.of(), Set.copyOf(traceManager.getOpenTraces()));
+			assertEquals(Set.of(), traceManager.getOpenTraces());
 		});
 	}
 

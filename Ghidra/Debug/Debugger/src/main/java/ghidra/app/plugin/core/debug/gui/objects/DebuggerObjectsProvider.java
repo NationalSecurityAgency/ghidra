@@ -221,7 +221,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	ExportAsFactsAction exportAsFactsAction;
 	ImportFromXMLAction importFromXMLAction;
 	ImportFromFactsAction importFromFactsAction;
-	OpenTraceAction openTraceAction;
+	OpenWinDbgTraceAction openTraceAction;
 
 	private ToggleDockingAction actionToggleSubscribe;
 	private ToggleDockingAction actionToggleAutoRecord;
@@ -1166,7 +1166,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		exportAsFactsAction = new ExportAsFactsAction(tool, plugin.getName(), this);
 		importFromXMLAction = new ImportFromXMLAction(tool, plugin.getName(), this);
 		importFromFactsAction = new ImportFromFactsAction(tool, plugin.getName(), this);
-		openTraceAction = new OpenTraceAction(tool, plugin.getName(), this);
+		openTraceAction = new OpenWinDbgTraceAction(tool, plugin.getName(), this);
 	}
 
 	//@formatter:on

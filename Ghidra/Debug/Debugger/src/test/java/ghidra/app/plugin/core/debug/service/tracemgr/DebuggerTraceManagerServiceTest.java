@@ -46,17 +46,17 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testGetOpenTraces() throws Exception {
-		assertEquals(Set.of(), Set.copyOf(traceManager.getOpenTraces()));
+		assertEquals(Set.of(), traceManager.getOpenTraces());
 
 		createAndOpenTrace();
 		waitForDomainObject(tb.trace);
 
-		assertEquals(Set.of(tb.trace), Set.copyOf(traceManager.getOpenTraces()));
+		assertEquals(Set.of(tb.trace), traceManager.getOpenTraces());
 
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(Set.of(), Set.copyOf(traceManager.getOpenTraces()));
+		assertEquals(Set.of(), traceManager.getOpenTraces());
 	}
 
 	@Test
@@ -204,8 +204,8 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createTrace();
 		waitForDomainObject(tb.trace);
 
-		assertEquals(Set.of(), Set.copyOf(traceManager.getOpenTraces()));
-		assertEquals(Set.of(tb), Set.copyOf(tb.trace.getConsumerList()));
+		assertEquals(Set.of(), traceManager.getOpenTraces());
+		assertEquals(Set.of(tb), tb.trace.getConsumerList());
 
 		traceManager.openTrace(tb.trace);
 		waitForSwing();
@@ -213,12 +213,14 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(Set.of(tb, traceManager), Set.copyOf(tb.trace.getConsumerList()));
 	}
 
+	// TODO: Test the other close methods: all, others, dead
+
 	@Test
 	public void testOpenTraceDomainFile() throws Exception {
 		createTrace();
 		waitForDomainObject(tb.trace);
 
-		assertEquals(Set.of(), Set.copyOf(traceManager.getOpenTraces()));
+		assertEquals(Set.of(), traceManager.getOpenTraces());
 		assertEquals(Set.of(tb), Set.copyOf(tb.trace.getConsumerList()));
 
 		traceManager.openTrace(tb.trace.getDomainFile(), DomainFile.DEFAULT_VERSION);
@@ -232,7 +234,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createProgram();
 		waitForDomainObject(program);
 
-		assertEquals(Set.of(), Set.copyOf(traceManager.getOpenTraces()));
+		assertEquals(Set.of(), traceManager.getOpenTraces());
 		assertEquals(Set.of(this), Set.copyOf(program.getConsumerList()));
 
 		try {

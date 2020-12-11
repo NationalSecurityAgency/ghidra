@@ -1174,9 +1174,96 @@ public interface DebuggerResources {
 
 		static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName).description(DESCRIPTION)
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface OpenTraceAction {
+		String NAME = "Open Trace";
+		String DESCRIPTION = "Open a trace from the project";
+		String GROUP = GROUP_TRACE;
+		Icon ICON = ICON_TRACE;
+		String HELP_ANCHOR = "open_trace";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+
+		}
+	}
+
+	interface CloseTraceAction {
+		String NAME_PREFIX = "Close ";
+		String DESCRIPTION = "Close the current trace";
+		String GROUP = GROUP_TRACE;
+		Icon ICON = ICON_CLOSE;
+		String HELP_ANCHOR = "close_trace";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.menuPath(DebuggerPluginPackage.NAME, NAME_PREFIX + "...")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+
+		}
+	}
+
+	interface CloseAllTracesAction extends CloseTraceAction {
+		String NAME = NAME_PREFIX + " All Traces";
+		String DESCRIPTION = "Close all traces";
+		String HELP_ANCHOR = "close_all_traces";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface CloseOtherTracesAction extends CloseTraceAction {
+		String NAME = NAME_PREFIX + " Other Traces";
+		String DESCRIPTION = "Close all traces except the current one";
+		String HELP_ANCHOR = "close_other_traces";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface CloseDeadTracesAction extends CloseTraceAction {
+		String NAME = NAME_PREFIX + " Dead Traces";
+		String DESCRIPTION = "Close all traces not being recorded";
+		String HELP_ANCHOR = "close_dead_traces";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

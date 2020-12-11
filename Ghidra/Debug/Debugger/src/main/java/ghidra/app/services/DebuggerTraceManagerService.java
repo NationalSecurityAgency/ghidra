@@ -88,7 +88,7 @@ public interface DebuggerTraceManagerService {
 	Collection<Trace> openTraces(Collection<DomainFile> files);
 
 	/**
-	 * Save the trace to the root folder of the project
+	 * Save the trace to the "New Traces" folder of the project
 	 * 
 	 * <p>
 	 * If a different domain file of the trace's name already exists, an incrementing integer is
@@ -102,6 +102,19 @@ public interface DebuggerTraceManagerService {
 	void saveTrace(Trace trace);
 
 	void closeTrace(Trace trace);
+
+	void closeAllTraces();
+
+	void closeOtherTraces(Trace keep);
+
+	/**
+	 * Close all traces which are not the destination of a live recording
+	 * 
+	 * <p>
+	 * Operation of this method depends on the model service. If that service is not present, this
+	 * method performs no operation at all.
+	 */
+	void closeDeadTraces();
 
 	void activate(DebuggerCoordinates coordinates);
 
@@ -179,5 +192,4 @@ public interface DebuggerTraceManagerService {
 	 * @return the complete resolved coordinates
 	 */
 	DebuggerCoordinates resolveCoordinates(DebuggerCoordinates coords);
-
 }

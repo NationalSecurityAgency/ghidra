@@ -21,10 +21,13 @@ import java.net.ConnectException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import docking.ActionContext;
+import docking.action.DockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
@@ -34,6 +37,7 @@ import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.TargetThread;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
+import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -151,10 +155,131 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
+	private DataTreeDialog traceChooserDialog;
+
+	DockingAction actionCloseTrace;
+	DockingAction actionCloseAllTraces;
+	DockingAction actionCloseOtherTraces;
+	DockingAction actionCloseDeadTraces;
+	DockingAction actionOpenTrace;
+
 	public DebuggerTraceManagerServicePlugin(PluginTool plugintool) {
 		super(plugintool);
 		// NOTE: Plugin should be recognized as its own service provider
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
+	}
+
+	@Override
+	protected void init() {
+		super.init();
+		createActions();
+	}
+
+	protected void createActions() {
+		actionOpenTrace = OpenTraceAction.builder(this)
+				.enabledWhen(ctx -> true)
+				.onAction(this::activatedOpenTrace)
+				.buildAndInstall(tool);
+		actionCloseTrace = CloseTraceAction.builder(this)
+				.enabledWhen(ctx -> current.getTrace() != null)
+				.onAction(this::activatedCloseTrace)
+				.buildAndInstall(tool);
+		actionCloseAllTraces = CloseAllTracesAction.builder(this)
+				.enabledWhen(ctx -> !tracesView.isEmpty())
+				.onAction(this::activatedCloseAllTraces)
+				.buildAndInstall(tool);
+		actionCloseOtherTraces = CloseOtherTracesAction.builder(this)
+				.enabledWhen(ctx -> tracesView.size() > 1 && current.getTrace() != null)
+				.onAction(this::activatedCloseOtherTraces)
+				.buildAndInstall(tool);
+		actionCloseDeadTraces = CloseDeadTracesAction.builder(this)
+				.enabledWhen(ctx -> !tracesView.isEmpty() && modelService != null)
+				.onAction(this::activatedCloseDeadTraces)
+				.buildAndInstall(tool);
+	}
+
+	private void activatedOpenTrace(ActionContext ctx) {
+		DomainFile df = askTrace(current.getTrace());
+		if (df != null) {
+			Trace trace = openTrace(df, DomainFile.DEFAULT_VERSION); // TODO: Permit opening a previous revision?
+			activateTrace(trace);
+		}
+	}
+
+	private void activatedCloseTrace(ActionContext ctx) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return;
+		}
+		closeTrace(trace);
+	}
+
+	private void activatedCloseAllTraces(ActionContext ctx) {
+		closeAllTraces();
+	}
+
+	private void activatedCloseOtherTraces(ActionContext ctx) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return;
+		}
+		closeOtherTraces(trace);
+	}
+
+	private void activatedCloseDeadTraces(ActionContext ctx) {
+		closeDeadTraces();
+	}
+
+	protected DataTreeDialog getTraceChooserDialog() {
+		if (traceChooserDialog != null) {
+			return traceChooserDialog;
+		}
+		DomainFileFilter filter = df -> Trace.class.isAssignableFrom(df.getDomainObjectClass());
+		return traceChooserDialog =
+			new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
+				{ // TODO/HACK: Why the NPE if I don't do this?
+					dialogShown();
+				}
+			};
+	}
+
+	public DomainFile askTrace(Trace trace) {
+		getTraceChooserDialog();
+		if (trace != null) {
+			traceChooserDialog.selectDomainFile(trace.getDomainFile());
+		}
+		tool.showDialog(traceChooserDialog);
+		return traceChooserDialog.getDomainFile();
+	}
+
+	@Override
+	public void closeAllTraces() {
+		for (Trace trace : getOpenTraces()) {
+			closeTrace(trace);
+		}
+	}
+
+	@Override
+	public void closeOtherTraces(Trace keep) {
+		for (Trace trace : getOpenTraces()) {
+			if (trace != keep) {
+				closeTrace(trace);
+			}
+		}
+
+	}
+
+	@Override
+	public void closeDeadTraces() {
+		if (modelService == null) {
+			return;
+		}
+		for (Trace trace : getOpenTraces()) {
+			TraceRecorder recorder = modelService.getRecorder(trace);
+			if (recorder == null) {
+				closeTrace(trace);
+			}
+		}
 	}
 
 	@AutoServiceConsumed
@@ -308,11 +433,19 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return null;
 			}
 			current = resolved;
+			contextChanged();
 			if (current.getTrace() != null && current.getThread() != null) {
 				threadFocusByTrace.put(current.getTrace(), current.getThread());
 			}
 			return resolved;
 		}
+	}
+
+	protected void contextChanged() {
+		Trace trace = current.getTrace();
+		String name = trace == null ? "..." : trace.getName();
+		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + name);
+		tool.contextChanged(null);
 	}
 
 	protected boolean doModelObjectFocused(TargetObjectRef ref, boolean requirePresent) {
@@ -410,8 +543,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
-	public Collection<Trace> getOpenTraces() {
-		return tracesView;
+	public synchronized Collection<Trace> getOpenTraces() {
+		return Set.copyOf(tracesView);
 	}
 
 	@Override
@@ -471,6 +604,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			listenersByTrace.put(trace, listener);
 			trace.addListener(listener);
 		}
+		contextChanged();
 		firePluginEvent(new TraceOpenedPluginEvent(getName(), trace));
 	}
 
@@ -647,6 +781,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		if (current.getTrace() == trace) {
 			activate(DebuggerCoordinates.NOWHERE);
+		}
+		else {
+			contextChanged();
 		}
 	}
 

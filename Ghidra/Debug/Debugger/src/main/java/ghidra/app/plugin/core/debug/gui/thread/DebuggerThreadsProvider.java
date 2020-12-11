@@ -561,23 +561,12 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		JMenuItem closeOthers =
 			new JMenuItem("Close Others", DebuggerResources.ICON_CLOSE);
 		closeOthers.addActionListener(evt -> {
-			for (Trace t : List.copyOf(traceManager.getOpenTraces())) {
-				if (trace == t) {
-					continue;
-				}
-				traceManager.closeTrace(t);
-			}
+			traceManager.closeOtherTraces(trace);
 		});
 		JMenuItem closeDead =
 			new JMenuItem("Close Dead", DebuggerResources.ICON_CLOSE);
 		closeDead.addActionListener(evt -> {
-			for (Trace t : List.copyOf(traceManager.getOpenTraces())) {
-				TraceRecorder recorder = modelService.getRecorder(t);
-				if (recorder != null) {
-					continue;
-				}
-				traceManager.closeTrace(t);
-			}
+			traceManager.closeDeadTraces();
 		});
 		JMenuItem closeAll =
 			new JMenuItem("Close All", DebuggerResources.ICON_CLOSE);

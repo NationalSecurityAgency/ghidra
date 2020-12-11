@@ -40,12 +40,12 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
-public class OpenTraceAction extends ImportExportAsAction {
+public class OpenWinDbgTraceAction extends ImportExportAsAction {
 
 	protected ImageIcon ICON_TRACE = ResourceManager.loadImage("images/text-xml.png");
 	private ActionContext context;
 
-	public OpenTraceAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
+	public OpenWinDbgTraceAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
 		super("OpenTrace", tool, owner, provider);
 		fileExt = ".run";
 		fileMode = GhidraFileChooserMode.FILES_AND_DIRECTORIES;
