@@ -53,6 +53,8 @@ define token instr32(32)
     Imm20u      = (0, 19)
     Imm20s      = (0, 19) signed
     Imm24s      = (0, 23) signed
+    Imm11s		= (8, 18) signed
+    Imm8s		= (0, 7) signed
     sv          = (8, 9)
     SrIdx       = (10, 19)
     Swid        = (5, 19)
@@ -85,6 +87,10 @@ define token instr32(32)
     GpSub1      = (19, 19)
     GpSub2      = (18, 19)
     GpSub3      = (17, 19)
+
+    sh          = (5, 9)
+    
+    Bxxc		= (19, 19)
 
     LsmwRa = (15, 19)
     LsmwRb = (20, 24)
@@ -135,6 +141,7 @@ attach variables [Dthigh] [
 @define GPR     "(Alu2Mod=0b0001)"
 @define BR1     "(Opc=0b100110)"
 @define BR2     "(Opc=0b100111)"
+@define BR3     "(Opc=0b101101)"
 @define LSMW    "(Opc=0b011101)"
 @define JI      "(Opc=0b100100)"
 @define MEM     "(Opc=0b011100)"
@@ -620,6 +627,47 @@ GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; exp
 @endif
 
 
+
+### 32-bit Baseline V3 instructions ###
+
+@if defined(BASELINE_V3)
+
+### ALU Instructions with Shift Operation (v3) ###
+
+:add_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00000 { Rt = Ra + (Rb << sh); }
+:and_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00010 { Rt = Ra & (Rb << sh); }
+:or_slli  Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00100 { Rt = Ra | (Rb << sh); }
+:sub_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00001 { Rt = Ra - (Rb << sh); }
+:xor_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00011 { Rt = Ra ^ (Rb << sh); }
+
+:add_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11100 { Rt = Ra + (Rb << sh); }
+:and_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11110 { Rt = Ra & (Rb << sh); }
+:or_srli  Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b10101 { Rt = Ra | (Rb << sh); }
+:sub_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11101 { Rt = Ra - (Rb << sh); }
+:xor_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11111 { Rt = Ra ^ (Rb << sh); }
+
+### Conditional Branch and Jump Instructions (V3) ###
+
+Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
+:beqc  Rt, Imm11s, Rel8 is $(I32) & $(BR3) & Rt & Bxxc=0 & Imm11s & Rel8 { if(Rt == Imm11s) goto Rel8; }
+:bnec  Rt, Imm11s, Rel8 is $(I32) & $(BR3) & Rt & Bxxc=1 & Imm11s & Rel8 { if(Rt != Imm11s) goto Rel8; }
+
+:jralnez Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00011 { if(Rb == 0) goto <end>; Rt = inst_next; call [Rb]; <end> }
+:jrnez   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00010 { if(Rb == 0) goto <end>; goto [Rb]; <end> }
+
+### Bit Manipulation Instructions (V3) ###
+
+:bitc  Rt, Ra, Rb     is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b10010 { Rt = Ra & (~Rb); }
+:bitci Rt, Ra, Imm15u is $(I32) & Opc=0b110011 & Rt & Ra & Imm15u { Rt = Ra & (~Imm15u); }
+
+### Cache Control Instruction (V3) ###
+
+# TODO: Add CCTL L1D_WBALL, level
+
+@endif
+
+
+
 ### 32-bit ISA extension ###
 
 ### ALU Instruction (Performance) ###
@@ -771,27 +819,36 @@ define token instr16(16)
     opc5        = (10, 14)
     opc6        = (9, 14)
     opc7        = (8, 14)
+    opc8        = (7, 14)
     opc10       = (5, 14)
+    re2         = (5, 6)
     rt5         = (5, 9)
     ra4         = (5, 8)
     rt4         = (5, 8)
     ra5         = (0, 4)
     rb5         = (0, 4)
+    rt5b        = (0, 4)
     rt3         = (6, 8)
     rt3b        = (8, 10)
     ra3         = (3, 5)
     rb3         = (0, 2)
     imm3u       = (0, 2)
+    imm3ub      = (3, 5)
     imm5u       = (0, 4)
     imm5s       = (0, 4) signed
+    imm6u       = (0, 5)
     imm7u       = (0, 6)
     imm8s       = (0, 7) signed
     imm10s      = (0, 9) signed
     xwi37_ls    = (7, 7)
     swid9       = (0, 8)
+    rt5e1       = (4, 7)
+    rt5e2       = (4, 7)
+    ra5e1       = (0, 3)
+    ra5e2       = (0, 3)
 ;
 
-attach variables [rt5 ra5 rb5] [
+attach variables [rt5 ra5 rb5 rt5b] [
     a0 a1 a2 a3 a4 a5 s0 s1 s2 s3 s4 s5 s6 s7 s8 ta t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 p0 p1 fp gp lp sp
 ];
 
@@ -803,10 +860,23 @@ attach variables [rt3 ra3 rt3b rb3] [
     a0 a1 a2 a3 a4 a5 s0 s1
 ];
 
+attach variables [ra5e1 rt5e1] [
+    a0 a2 a4 s0 s2 s4 s6 s8 t0 t2 t4 t6 t8 p0 fp lp
+];
+attach variables [ra5e2 rt5e2] [
+    a1 a3 a5 s1 s3 s5 s7 ta t1 t3 t5 t7 t9 p1 gp sp
+];
+
+attach variables [re2] [
+    s0 s2 s4 s8
+];
+
+
 @define I16     "(opsz=1)"
 @define BFMI333 "(opc6=0b001011)"
 @define XWI37   "(opc4=0b0111)"
 @define XWI37SP "(opc4=0b1110)"
+@define MISC33  "(opc6=0b111111)"
 
 
 ### Move Instruction ###
@@ -927,4 +997,85 @@ sp_rel7w: [+ rel7w] is rel7w { addr:4 = sp + rel7w; export addr; }
 :swi37.sp rt3b, sp_rel7w is $(I16) & rt3b & $(XWI37SP) & xwi37_ls=1 & sp_rel7w { *sp_rel7w = rt3b; }
 
 @endif
+
+
+
+### 16-bit Baseline V3 instructions ###
+
+@if defined(BASELINE_V3)
+
+### ALU Instructions (V3 16-bit) ###
+
+imm6u_: imm8 is imm6u [ imm8 = imm6u << 2; ] { export *[const]:4 imm8; }
+:addri36.sp rt3, imm6u_ is $(I16) & opc6=0b011000 & rt3 & imm6u_ { rt3 = sp + imm6u_; }
+:add5.pc rt5b is $(I16) & opc10=0b1011101101 & rt5b { rt5b = pc + rt5b; }
+:and33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b110 { rt3 = rt3 & ra3; }
+:neg33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b010 { rt3 = -ra3; }
+:not33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b011 { rt3 = ~ra3; }
+:or33  rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b111 { rt3 = rt3 | ra3; }
+:xor33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b101 { rt3 = rt3 ^ ra3; }
+
+### Bit Manipulation Instructions (V3 16-bit) ###
+
+:bmski33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b110 { rt3 = (rt3 >> imm3ub) & 1; }
+:fexti33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b111 { rt3 = rt3 & ((1 << (imm3ub + 1)) - 1); }
+
+### Misc. Instructions (V3 16-bit) ###
+
+imm7n: off is imm5u [ off = -((32 - imm5u) << 2); ] { export *[const]:4 off; }
+:lwi45.fe rt4, [imm7n] is $(I16) & opc6=0b011001 & rt4 & imm7n { addr:4 = s2 + imm7n; rt4 = *addr; }
+
+:movd44 rt5e1, ra5e1 is $(I16) & opc7=0b1111101 & rt5e1 & rt5e2 & ra5e1 & ra5e2 { rt5e1 = ra5e1; rt5e2 = ra5e2; }
+
+imm5u_: imm6 is imm5u [ imm6 = imm5u + 16; ] { export *[const]:4 imm6; }
+:movpi45 rt4, imm5u_ is $(I16) & opc6=0b111101 & rt4 & imm5u_ { rt4 = imm5u_; }
+
+:mul33  rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b100 { rt3 = rt3 * ra3; }
+
+# Note: POP25 and PUSH25 are highly untested ! And they just look messy :/
+imm5u__: imm8 is imm5u [ imm8 = imm5u << 3; ] { export *[const]:4 imm8; }
+
+macro push25_special() { Smwad(lp); Smwad(gp); Smwad(fp); }
+macro push25_s0() { Smwad(s0); }
+macro push25_s2() { Smwad(s2); Smwad(s1); push25_s0(); }
+macro push25_s4() { Smwad(s4); Smwad(s3); push25_s2(); }
+macro push25_s8() { Smwad(s8); Smwad(s7); Smwad(s6); Smwad(s5); push25_s4(); }
+
+push25_re: re2 is re2 & re2=0 { push25_s0(); }
+push25_re: re2 is re2 & re2=1 { push25_s2(); }
+push25_re: re2 is re2 & re2=2 { push25_s4(); }
+push25_re: re2 is re2 & re2=3 { push25_s8(); }
+
+:push25 push25_re, imm5u__ is $(I16) & opc8=0b11111000 & re2 & push25_re & imm5u__ {
+	mult_addr = sp;
+	push25_special();
+	build push25_re;
+	sp = mult_addr - imm5u__;
+	if(re2 < 1) goto <end>;
+		s2 = pc & 0xfffffffc;
+	<end>
+}
+
+macro pop25_special() { Lmwbi(fp); Lmwbi(gp); Lmwbi(lp);   }
+macro pop25_s0() { Lmwbi(s0); }
+macro pop25_s2() { pop25_s0(); Lmwbi(s1); Lmwbi(s2); }
+macro pop25_s4() { pop25_s2(); Lmwbi(s3); Lmwbi(s4); }
+macro pop25_s8() { pop25_s4(); Lmwbi(s5); Lmwbi(s6); Lmwbi(s7); Lmwbi(s8); }
+
+pop25_re: re2 is re2 & re2=0 { pop25_s0(); }
+pop25_re: re2 is re2 & re2=1 { pop25_s2(); }
+pop25_re: re2 is re2 & re2=2 { pop25_s4(); }
+pop25_re: re2 is re2 & re2=3 { pop25_s8(); }
+
+:pop25 pop25_re, imm5u__ is $(I16) & opc8=0b11111001 & re2 & pop25_re & imm5u__ {
+	mult_addr = sp;
+	build pop25_re;
+	pop25_special();
+	sp = mult_addr + imm5u__;
+	return [lp];
+}
+
+
+@endif
+
 
