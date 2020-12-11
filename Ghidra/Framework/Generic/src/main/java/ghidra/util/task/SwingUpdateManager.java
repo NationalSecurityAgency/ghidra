@@ -15,8 +15,6 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.Swing;
-
 /**
  * A class to allow clients to buffer events.  UI components may receive numbers events to make
  * changes to their underlying data model.  Further, for many of these clients, it is sufficient
@@ -116,12 +114,7 @@ public class SwingUpdateManager extends AbstractSwingUpdateManager {
 	 */
 	@Override
 	public synchronized void update() {
-		if (disposed) {
-			return;
-		}
-
-		requestTime = System.currentTimeMillis();
-		Swing.runLater(this::checkForWork);
+		super.update();
 	}
 
 	/**
@@ -130,13 +123,7 @@ public class SwingUpdateManager extends AbstractSwingUpdateManager {
 	 */
 	@Override
 	public synchronized void updateLater() {
-		if (disposed) {
-			return;
-		}
-
-		requestTime = System.currentTimeMillis();
-		bufferingStartTime = bufferingStartTime == NONE ? requestTime : bufferingStartTime;
-		scheduleCheckForWork();
+		super.updateLater();
 	}
 
 	/**
@@ -145,15 +132,7 @@ public class SwingUpdateManager extends AbstractSwingUpdateManager {
 	 */
 	@Override
 	public void updateNow() {
-		synchronized (this) {
-			if (disposed) {
-				return;
-			}
-
-			requestTime = System.currentTimeMillis();
-			bufferingStartTime = NONE;	// set so that the max delay check will trigger work
-		}
-		Swing.runLater(this::checkForWork);
+		super.updateNow();
 	}
 
 }

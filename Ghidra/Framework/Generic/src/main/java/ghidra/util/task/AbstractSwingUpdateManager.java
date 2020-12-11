@@ -18,7 +18,7 @@ package ghidra.util.task;
 import javax.swing.Timer;
 
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import utilities.util.reflection.ReflectionUtilities;
@@ -67,9 +67,9 @@ public abstract class AbstractSwingUpdateManager {
 	private final String name;
 	private String inceptionInformation;
 
-	protected long requestTime = NONE;
-	protected long bufferingStartTime;
-	protected boolean disposed = false;
+	private long requestTime = NONE;
+	private long bufferingStartTime;
+	private boolean disposed = false;
 
 	// This is true when work has begun and is not finished.  This is only mutated on the 
 	// Swing thread, but is read by other threads.
@@ -148,7 +148,7 @@ public abstract class AbstractSwingUpdateManager {
 		}
 
 		requestTime = System.currentTimeMillis();
-		SystemUtilities.runSwingLater(this::checkForWork);
+		Swing.runLater(this::checkForWork);
 	}
 
 	/**
@@ -175,19 +175,33 @@ public abstract class AbstractSwingUpdateManager {
 				return;
 			}
 
+			// force an update by disabling buffering with a new request
 			requestTime = System.currentTimeMillis();
 			bufferingStartTime = NONE;	// set so that the max delay check will trigger work
 		}
-		SystemUtilities.runSwingNow(this::checkForWork);
+
+		Swing.runNow(this::checkForWork);
 	}
 
 	/**
 	 * Causes this run manager to run if it has a pending update
 	 */
 	public void flush() {
-		if (hasPendingUpdates()) {
-			SystemUtilities.runSwingNow(this::checkForWork);
+		synchronized (this) {
+			if (disposed) {
+				return;
+			}
+
+			if (!hasPendingUpdates()) {
+				return;
+			}
+
+			// force an update by disabling buffering with a new request
+			requestTime = System.currentTimeMillis();
+			bufferingStartTime = NONE;	// set so that the max delay check will trigger work
 		}
+
+		Swing.runNow(this::checkForWork);
 	}
 
 	/**
