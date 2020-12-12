@@ -431,7 +431,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.popupMenuGroup("z", "5")
 				.keyBinding("escape")
 				.enabledWhen(c -> hasSelection())
-				.onAction(c -> clearSelection())
+				.onAction(c -> clearSelection(true))
 				.buildAndInstallLocal(componentProvider);
 
 		new ActionBuilder("Create Subgraph", ACTION_OWNER)
@@ -499,9 +499,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 	}
 
-	private void clearSelection() {
-		viewer.getSelectedVertexState().clear();
-		viewer.getSelectedEdgeState().clear();
+	private void clearSelection(boolean fireEvents) {
+		viewer.getSelectedVertexState().clear(fireEvents);
+		viewer.getSelectedEdgeState().clear(fireEvents);
 	}
 
 	private boolean hasSelection() {
@@ -816,6 +816,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * @param attributedGraph the {@link AttributedGraph} to visualize
 	 */
 	private void doSetGraphData(AttributedGraph attributedGraph) {
+		clearSelection(false);
+		focusedVertex = null;
 		graph = attributedGraph;
 
 		layoutTransitionManager.setEdgeComparator(new EdgeComparator(graph, "EdgeType",
