@@ -100,14 +100,14 @@ public enum OptionType {
 	static class IntStringAdapter extends StringAdapter {
 		@Override
 		Object stringToObject(String string) {
-			return new Integer(string);
+			return Integer.valueOf(string);
 		}
 	}
 
 	static class LongStringAdapter extends StringAdapter {
 		@Override
 		Object stringToObject(String string) {
-			return new Long(string);
+			return Long.valueOf(string);
 		}
 	}
 
@@ -121,7 +121,7 @@ public enum OptionType {
 	static class DoubleStringAdapter extends StringAdapter {
 		@Override
 		Object stringToObject(String string) {
-			return new Double(string);
+			return Double.valueOf(string);
 		}
 	}
 
@@ -155,7 +155,7 @@ public enum OptionType {
 	static class FloatStringAdapter extends StringAdapter {
 		@Override
 		Object stringToObject(String string) {
-			return new Float(string);
+			return Float.valueOf(string);
 		}
 	}
 
@@ -216,10 +216,11 @@ public enum OptionType {
 		@Override
 		Object stringToObject(String string) {
 			SaveState saveState = getSaveStateFromXmlString(string);
-			String customOptionClassName = saveState.getString("CUSTOM_OPTION_CLASS", null);
+			String customOptionClassName =
+				saveState.getString(CustomOption.CUSTOM_OPTION_CLASS_NAME_KEY, null);
 			try {
 				Class<?> c = Class.forName(customOptionClassName);
-				CustomOption option = (CustomOption) c.newInstance();
+				CustomOption option = (CustomOption) c.getConstructor().newInstance();
 				option.readState(saveState);
 				return option;
 			}
@@ -239,7 +240,8 @@ public enum OptionType {
 		String objectToString(Object object) {
 			CustomOption customOption = (CustomOption) object;
 			SaveState saveState = new SaveState();
-			saveState.putString("CUSTOM_OPTION_CLASS", object.getClass().getName());
+			saveState.putString(CustomOption.CUSTOM_OPTION_CLASS_NAME_KEY,
+				object.getClass().getName());
 			customOption.writeState(saveState);
 			return saveToXmlString(saveState);
 		}

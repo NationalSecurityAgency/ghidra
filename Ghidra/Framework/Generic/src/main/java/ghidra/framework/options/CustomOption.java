@@ -18,6 +18,15 @@ package ghidra.framework.options;
 public interface CustomOption {
 
 	/**
+	 * <code>SaveState</code> key which corresponds to custom option
+	 * implementation class.  The use of this key/value within the stored
+	 * state information is reserved for use by the option storage 
+	 * implementation and should be ignored by {@link #readState(SaveState)}
+	 * implementation
+	 */
+	public final String CUSTOM_OPTION_CLASS_NAME_KEY = "CUSTOM_OPTION_CLASS";
+
+	/**
 	 * Concrete subclass of WrappedOption should read all of its
 	 * state from the given saveState object.
 	 * @param saveState container of state information

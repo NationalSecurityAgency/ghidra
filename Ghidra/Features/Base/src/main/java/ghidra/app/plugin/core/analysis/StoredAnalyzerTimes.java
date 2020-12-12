@@ -39,6 +39,9 @@ public class StoredAnalyzerTimes implements CustomOption {
 	public void readState(SaveState saveState) {
 		taskTimes.clear();
 		for (String taskName : saveState.getNames()) {
+			if (CustomOption.CUSTOM_OPTION_CLASS_NAME_KEY.equals(taskName)) {
+				continue; // skip this reserved key 
+			}
 			taskTimes.put(taskName, saveState.getLong(taskName, 0));
 		}
 		names = null;
