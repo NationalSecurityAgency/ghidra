@@ -44,6 +44,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	private Program lastProgram;
 	private DataType lastDataType;
 	private int lastElementCount = -1;
+	private int elementCount = 0;
 
 	/**
 	 * Creates the model for the vf table data.
@@ -54,8 +55,18 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	 */
 	public VfTableModel(Program program, Address vfTableAddress,
 			DataValidationOptions validationOptions) {
-		super(program, RttiUtil.getVfTableCount(program, vfTableAddress), vfTableAddress,
+		// use one for the data type element count, because there is only one array of some element size
+		super(program, 1, vfTableAddress,
 			validationOptions);
+		elementCount= RttiUtil.getVfTableCount(program, vfTableAddress);
+	}
+	
+	/**
+	 * Get the number of vftable elements in this vftable
+	 * @return number of elements
+	 */
+	public int getElementCount() {
+		return elementCount;
 	}
 
 	@Override
@@ -79,7 +90,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 		long entrySize = individualEntryDataType.getLength();
 
 		// Each entry is a pointer to where a function can possibly be created.
-		long numEntries = getCount();
+		long numEntries = elementCount;
 		if (numEntries == 0) {
 			throw new InvalidDataTypeException(
 				getName() + " data type at " + getAddress() + " doesn't have a valid vf table.");
@@ -120,9 +131,8 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 
 			lastProgram = program;
 			lastDataType = null;
-			lastElementCount = -1;
-
-			lastElementCount = getCount();
+			lastElementCount = elementCount;
+			
 			if (lastElementCount > 0) {
 				DataTypeManager dataTypeManager = program.getDataTypeManager();
 				PointerDataType pointerDt = new PointerDataType(dataTypeManager);

@@ -19,18 +19,14 @@ import java.util.*;
 
 import ghidra.app.cmd.data.CreateTypeDescriptorBackgroundCmd;
 import ghidra.app.cmd.data.TypeDescriptorModel;
-import ghidra.app.cmd.data.rtti.CreateRtti4BackgroundCmd;
-import ghidra.app.cmd.data.rtti.Rtti4Model;
-import ghidra.app.cmd.data.rtti.RttiUtil;
+import ghidra.app.cmd.data.rtti.*;
 import ghidra.app.services.*;
 import ghidra.app.util.datatype.microsoft.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.lang.UndefinedValueException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.bytesearch.*;
 import ghidra.util.exception.*;
@@ -77,48 +73,47 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		Address typeInfoRtti0Address = RttiUtil.getTypeInfoTypeDescriptorAddress(program);
-		if (typeInfoRtti0Address == null) {
-			log.appendMsg(this.getName(), "Couldn't find RTTI type info structure.");
+		Address commonVfTableAddress = RttiUtil.findTypeInfoVftableAddress(program, monitor);
+
+		if (commonVfTableAddress == null) {
 			return true;
 		}
 		
-		// ensure the label is present
-		try {
-			program.getSymbolTable().createLabel(
-				typeInfoRtti0Address, RttiUtil.TYPE_INFO_LABEL, SourceType.ANALYSIS);
-		} catch (InvalidInputException e) {
-			// not invalid
-			throw new AssertException(e);
-		}
-
-		// Get the address of the vf table data in common for all RTTI 0.
-		TypeDescriptorModel typeDescriptorModel =
-			new TypeDescriptorModel(program, typeInfoRtti0Address, validationOptions);
-		try {
-			Address commonVfTableAddress = typeDescriptorModel.getVFTableAddress();
-			if (commonVfTableAddress == null) {
-				log.appendMsg(this.getName(),
-					"Couldn't get vf table address for RTTI 0 @ " + typeInfoRtti0Address + ". ");
-				return false;
-			}
-
-			int alignment = program.getDefaultPointerSize();
-			List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(
-				program, program.getMemory(), ".data", TaskMonitor.DUMMY);
-			Set<Address> possibleTypeAddresses = ProgramMemoryUtil.findDirectReferences(program,
-				dataBlocks, alignment, commonVfTableAddress, monitor);
-
-			// We now have a list of potential rtti0 addresses.
-			processRtti0(possibleTypeAddresses, program, monitor);
-
+		RttiUtil.createTypeInfoVftableSymbol(program,commonVfTableAddress);
+		
+		Set<Address> possibleTypeAddresses = locatePotentialRTTI0Entries(program, set, monitor);
+		if (possibleTypeAddresses == null) {
 			return true;
 		}
-		catch (InvalidDataTypeException | UndefinedValueException e) {
-			log.appendMsg(this.getName(), "Couldn't get vf table address for RTTI 0 @ " +
-				typeInfoRtti0Address + ". " + e.getMessage());
-			return false;
+
+		// We now have a list of potential rtti0 addresses.
+		processRtti0(possibleTypeAddresses, program, monitor);
+
+		return true;
+	}
+
+	/**
+	 * locate any potential RTTI0 based on pointers to the type_info vftable
+	 * @param program proram to locate within
+	 * @param set restricted set to locate within
+	 * @param monitor monitor for canceling
+	 * @return set of potential RTTI0 entries
+	 * @throws CancelledException
+	 */
+	private Set<Address> locatePotentialRTTI0Entries(Program program, AddressSetView set,
+			TaskMonitor monitor) throws CancelledException {
+		Address commonVfTableAddress = RttiUtil.findTypeInfoVftableAddress(program, monitor);
+		if (commonVfTableAddress == null) {
+			return null;
 		}
+
+		// use the type_info vftable address to find a list of potential RTTI0 addresses
+		int alignment = program.getDefaultPointerSize();
+		List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(
+				program, program.getMemory(), ".data", TaskMonitor.DUMMY);
+		Set<Address> possibleTypeAddresses = ProgramMemoryUtil.findDirectReferences(program,
+				dataBlocks, alignment, commonVfTableAddress, monitor);
+		return possibleTypeAddresses;
 	}
 
 	private void processRtti0(Collection<Address> possibleRtti0Addresses, Program program,
@@ -167,6 +162,9 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 		dataBlocks.addAll(ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
 			program.getMemory(), ".data", monitor));
+
+		dataBlocks.addAll(ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
+			program.getMemory(), ".text", monitor));
 
 		List<Address> rtti4Addresses =
 			getRtti4Addresses(program, dataBlocks, rtti0Locations, validationOptions, monitor);
