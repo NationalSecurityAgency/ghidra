@@ -187,7 +187,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 
 		// Create functions that are referred to by the vf table.
 		if (applyOptions.shouldCreateFunction()) {
-			int elementCount = model.getCount();
+			int elementCount = model.getElementCount();
 			for (int tableElementIndex = 0; tableElementIndex < elementCount; tableElementIndex++) {
 				monitor.checkCanceled();
 				Address vfPointer = model.getVirtualFunctionPointer(tableElementIndex);
