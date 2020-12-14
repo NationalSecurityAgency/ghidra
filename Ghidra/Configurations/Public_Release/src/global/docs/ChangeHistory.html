@@ -6,6 +6,36 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.2.1 Change History (December 2020)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Analysis</I>. Updated RTTI analyzer to find <code>type_info</code> vftable when it cannot be found with its mangled name. This will enable many more Windows programs to have their RTTI structures created that were unable to be parsed in previous Ghidra versions. (GP-141)</li>
+    <li><I>API</I>. Relaxed memory block naming restrictions and restored ability to have spaces in memory block names.  However, if a memory block is flagged as an overlay, the associated overlay space name may be modified to ensure validity and uniqueness.  The DuplicateNameException has been removed from all memory block API methods since this was entirely an overlay space concern.  Memory block GUI has also been changed eliminate the duplicate block name restriction. (GP-420, Issue #2465)</li>
+    <li><I>Build</I>. Eliminated the need for installation of <B>bison</B> and <B>flex</B> when performing source-based <B>gradle</B> build of Ghidra or the Decompiler module.  The generated files are now included with source files and maintained in source control.  A separate <code><B>gradle Decompiler:generateParsers</B></code> task, which still requires <B>bison</B> and <B>flex</B>, must be used, explicitly, when changes are made to lex/yacc source files. (GP-467)</li>
+    <li><I>Graphing</I>. Improved graphing where it did not navigate when clicking on external function nodes. Now it will navigate to the <B>fake</B> function location in the program, which is the location of the pointer to the external function. (GP-493)</li>
+    <li><I>Listing:Symbols</I>. Removed restriction for naming labels that resemble default label names. (GT-3185, Issue #1057)</li>
+    <li><I>PDB</I>. Crafted PDB type ID records <code>0x1608</code> and <code>0x1609</code> with presumed <B>class</B> and <B>struct</B> types and follow-on application of these types. Also fixed up some fall-back data type logic and improved some warning messages to reflect the <B>cause</B> of the conditions. (GP-474, Issue #2523)</li>
+    <li><I>Scripting</I>. Removed unnecessary 1-second delay when launching a script. (GP-443)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed the processing of CIL metadata that express arrays of non-primitive types. (GP-331)</li>
+    <li><I>API</I>. WrappedMemBuffer methods <code>getInt</code>, <code>getShort</code>, <code>getLong</code>, and <code>getBigInteger</code> have been fixed when allocated at a non-zero offset, wrapping another MemBuffer such as DumbMemBufferImpl. (GP-486)</li>
+    <li><I>Decompiler</I>. Fixed issue with the Auto Create/Fill Structure command that caused it to silently miss some pointer accesses. (GP-344)</li>
+    <li><I>Decompiler</I>. Jump table recovery now takes into account encoded bits, like ARM/THUMB mode transition, that may be present in address tables. (GP-387, Issue #2420)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler <B>renaming</B> action when applied to function references. (GP-477, Issue #2415)</li>
+    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting longlong and double return values.  Endianess ordering of r0/r1 was incorrect. (GP-512, Issue #2547)</li>
+    <li><I>Graphing</I>. Fixed the Function Graph's <B>drag-to-select-nodes</B> feature. (GP-430)</li>
+    <li><I>Graphing</I>. Fixed issue where the graph in the satellite view is sometimes truncated. (GP-469)</li>
+    <li><I>Graphing</I>. Fixed a stack trace issue caused by reusing a graph display window to show a graph that is larger than is allowed. (GP-492)</li>
+    <li><I>Graphing</I>. Fixed issue where graph satellite view did not reflect main graph when graph vertices are hidden using hide actions or filters. (GP-514)</li>
+    <li><I>GUI</I>. Fixed stack overflow in TableChooserDialogs. (GP-460, Issue #2536)</li>
+    <li><I>PDB</I>. Corrected PDB parser selection bug affecting PDB load/download on Windows. (GP-390)</li>
+    <li><I>Processors</I>. Fixed handling of certain ARM/THUMB switch calculation functions. (GP-389)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.2 Change History (November 2020)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
