@@ -618,6 +618,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		satellite.getRenderContext().setVertexFillPaintFunction(Colors::getColor);
 		satellite.scaleToLayout();
 		satellite.getRenderContext().setVertexLabelFunction(n -> null);
+		// always get the current predicate from the main view and test with it,
+		satellite.getRenderContext()
+				.setVertexIncludePredicate(v -> viewer.getRenderContext().getVertexIncludePredicate().test(v));
 		satellite.getComponent().setBorder(BorderFactory.createEtchedBorder());
 		parentViewer.getComponent().addComponentListener(new ComponentAdapter() {
 			@Override
@@ -820,7 +823,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			viewer.getRenderContext()
 					.setVertexIncludePredicate(
 						v -> v.getAttributeMap().values().stream().noneMatch(selected::contains));
-			viewer.repaint();
+
 		});
 
 		edgeFilters = AttributeFilters.builder()
