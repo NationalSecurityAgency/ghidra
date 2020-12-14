@@ -302,7 +302,9 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
 		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
 
-		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName + DataType.CONFLICT_SUFFIX);
+		CategoryNode parent = miscNode;
+		DataTypeNode node =
+			waitFor(() -> (DataTypeNode) parent.getChild(structName + DataType.CONFLICT_SUFFIX));
 		assertNotNull(node);
 		assertEquals(category3Node, structureNode.getParent());
 	}
