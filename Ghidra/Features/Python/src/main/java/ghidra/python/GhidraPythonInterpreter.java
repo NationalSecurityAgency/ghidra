@@ -245,8 +245,14 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	 * @param str The string to print.
 	 */
 	void printErr(String str) {
-		getSystemState().stderr.invoke("write", new PyString(str + "\n"));
-		getSystemState().stderr.invoke("flush");
+		try {
+			getSystemState().stderr.invoke("write", new PyString(str + "\n"));
+			getSystemState().stderr.invoke("flush");
+		}
+		catch (PyException e) {
+			// if the python interp state's stdin/stdout/stderr is messed up, it can throw an error 
+			Msg.error(this, "Failed to write to stderr", e);
+		}
 	}
 
 	/**
