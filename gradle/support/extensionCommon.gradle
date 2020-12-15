@@ -61,7 +61,7 @@ task zipExtensions (type: Zip) {
 	/////////////////
 	gradle.taskGraph.whenReady { taskGraph ->
 		if (project.plugins.withType(JavaPlugin)) {
-			List<String> externalPaths = getExternalDependencies(p)
+			List<String> externalPaths = getExternalRuntimeDependencies(p)
 			externalPaths.each { path ->
 				from (path) {
 					into { getBaseProjectName(p) + "/lib" }

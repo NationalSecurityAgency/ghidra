@@ -80,7 +80,8 @@ public class DemanglerCmd extends BackgroundCommand {
 				return true; // no real error
 			}
 
-			setStatusMsg("Unable to demangle symbol: " + mangled + ".  Message: " + e.getMessage());
+			setStatusMsg("Unable to demangle symbol: " + mangled + " at " + addr + ".  Message: " +
+				e.getMessage());
 			return false; // error
 
 			// This produces too many messages for non-demangled symbols.  If we could
@@ -91,7 +92,8 @@ public class DemanglerCmd extends BackgroundCommand {
 		}
 		catch (Exception e) {
 			// Demangler IndexOutOfBoundsException that we're not sure how to fix 
-			setStatusMsg("Unable to demangle symbol: " + mangled + ". Message: " + e.getMessage());
+			setStatusMsg("Unable to demangle symbol: " + mangled + " at " + addr + ". Message: " +
+				e.getMessage());
 			return false;
 		}
 
@@ -111,7 +113,7 @@ public class DemanglerCmd extends BackgroundCommand {
 		}
 
 		setStatusMsg(
-			"Failed to apply mangled symbol at " + addr.toString() + "; name:  " + mangled + " (" +
+			"Failed to apply mangled symbol at " + addr + "; name:  " + mangled + " (" +
 				demangler.getClass().getName() + "/" + demangledObject.getClass().getName() + ")");
 		return false; // error
 	}

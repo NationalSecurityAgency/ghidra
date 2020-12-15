@@ -195,7 +195,7 @@ public class GhidraState {
 	}
 
 	/**
-	 * Set the current selection and fire a {@link kProgramSelectionPluginEvent}.
+	 * Set the current selection and fire a {@link ProgramSelectionPluginEvent}.
 	 * 
 	 * @param selection the selection
 	 */

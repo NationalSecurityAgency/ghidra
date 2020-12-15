@@ -276,14 +276,14 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		GraphExportFormat exporterFormat = getSelectedExporter();
 		File outputFile = getSelectedOutputFile();
 
-		try {
-			if (outputFile.exists() &&
+		if (outputFile.exists() &&
 				OptionDialog.showOptionDialog(getComponent(), "Overwrite Existing File?",
 					"The file " + outputFile + " already exists.\nDo you want to overwrite it?",
 					"Overwrite", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 				return false;
-			}
-			Writer writer = new FileWriter(outputFile);
+		}
+
+		try (Writer writer = new FileWriter(outputFile)) {
 
 			GraphExporter<AttributedVertex, AttributedEdge> exporter =
 				AttributedGraphExporterFactory.getExporter(exporterFormat);

@@ -43,6 +43,9 @@ public abstract class ToggleDockingAction extends DockingAction implements Toggl
 
 	@Override
 	public void setSelected(boolean newValue) {
+		if (isSelected == newValue) {
+			return;
+		}
 		isSelected = newValue;
 		firePropertyChanged(SELECTED_STATE_PROPERTY, !isSelected, isSelected);
 	}

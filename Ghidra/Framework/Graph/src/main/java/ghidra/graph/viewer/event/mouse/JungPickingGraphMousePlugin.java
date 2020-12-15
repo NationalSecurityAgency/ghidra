@@ -257,16 +257,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	@SuppressWarnings("unchecked")
 	public void mouseReleased(MouseEvent e) {
 		VisualizationViewer<V, E> vv = (VisualizationViewer<V, E>) e.getSource();
-		if (e.getModifiersEx() == modifiers) {
-			if (down != null) {
-				Point2D out = e.getPoint();
-
-				if (vertex == null && heyThatsTooClose(down, out, 5) == false) {
-					pickContainedVertices(vv, down, out, true);
-				}
-			}
-		}
-		else if (e.getModifiersEx() == this.addToSelectionModifiers) {
+		if (e.getModifiersEx() == this.addToSelectionModifiers) {
 			if (down != null) {
 				Point2D out = e.getPoint();
 
@@ -275,6 +266,19 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 				}
 			}
 		}
+		else {
+
+			// Mouse released without the 'add to selection' modifiers. See if we have been dragging
+			if (down != null) {
+				// check to see if we were dragging (no vertex picked and a large enough rectangle)
+				Point2D out = e.getPoint();
+				if (vertex == null && heyThatsTooClose(down, out, 5) == false) {
+					pickContainedVertices(vv, down, out, true);
+				}
+			}
+
+		}
+
 		down = null;
 		vertex = null;
 		edge = null;

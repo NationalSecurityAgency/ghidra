@@ -20,7 +20,6 @@ import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for adding byte-mapped memory blocks
@@ -83,7 +82,7 @@ public class AddByteMappedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	@Override
 	protected MemoryBlock createMemoryBlock(Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
-			IllegalArgumentException, DuplicateNameException {
+			IllegalArgumentException {
 		return memory.createByteMappedBlock(name, start, mappedAddress, length,
 			byteMappingScheme,
 			isOverlay);

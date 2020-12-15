@@ -27,7 +27,6 @@ import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.DuplicateNameException;
 
 public class MemoryBlockDB implements MemoryBlock {
 
@@ -155,7 +154,7 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	@Override
-	public void setName(String name) throws DuplicateNameException, LockException {
+	public void setName(String name) throws LockException {
 		String oldName = getName();
 		memMap.lock.acquire();
 		try {
@@ -163,10 +162,10 @@ public class MemoryBlockDB implements MemoryBlock {
 			if (oldName.equals(name)) {
 				return;
 			}
-			memMap.checkBlockName(name, isOverlay());
+			memMap.checkBlockName(name);
 			try {
 				if (isOverlay()) {
-					memMap.overlayBlockRenamed(oldName, name);
+					memMap.overlayBlockRenamed(startAddress.getAddressSpace().getName(), name);
 				}
 				record.setString(MemoryMapDBAdapter.NAME_COL, name);
 				adapter.updateBlockRecord(record);

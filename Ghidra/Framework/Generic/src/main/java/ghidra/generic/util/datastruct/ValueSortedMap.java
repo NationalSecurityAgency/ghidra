@@ -24,8 +24,8 @@ import java.util.*;
  * This is an extension of {@link Map} where entries are sorted by value, rather than by key. Such a
  * map may be useful as a priority queue where the cost of an entry may change over time. As such,
  * the collections returned by {@link #entrySet()}, {@link #keySet()}, and {@link #values()} all
- * extend {@link Deque}. The order of the entries will be updated on any call to {@link #put(Object,
- * Object))}, or a call to {@link Collection#add(Object)} on the entry set. Additionally, if the
+ * extend {@link Deque}. The order of the entries will be updated on any call to {@link Map#put(Object, Object)}, 
+ * or a call to {@link Collection#add(Object)} on the entry set. Additionally, if the
  * values are mutable objects, whose order may change, there is an {@link #update(Object)} method,
  * which notifies the map that the given key may need to be repositioned. The associated collections
  * also extend the {@link List} interface, providing fairly efficient implementations of

@@ -303,6 +303,11 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 			return new TestGraphDisplayListener("clone");
 		}
 
+		@Override
+		public void dispose() {
+			// do nothing
+		}
+
 	}
 
 	private AttributedGraph createGraph() {

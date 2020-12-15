@@ -17,7 +17,10 @@ dependencies {
 	compile "net.sf.jung:jung-graph-impl:2.1.1"
 	compile "net.sf.jung:jung-visualization:2.1.1"
 	
-	compile "org.jgrapht:jgrapht-core:1.4.0"
+	compile "org.jgrapht:jgrapht-core:1.5.0"
+	
+	// not using jgrapht-io code that depends on antlr, so exclude antlr
+	compile ("org.jgrapht:jgrapht-io:1.5.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
 	
 	// These have abstract test classes and stubs needed by this module	
 	testCompile project(path: ':Docking', configuration: 'testArtifacts')

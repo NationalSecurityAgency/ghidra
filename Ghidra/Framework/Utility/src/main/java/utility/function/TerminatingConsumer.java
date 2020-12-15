@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.task;
+package utility.function;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
-public class TaskDialogSpy extends TaskDialog {
-	private AtomicBoolean shown = new AtomicBoolean();
+/**
+ * TerminatingConsumer is a Consumer {@link Consumer} that can request termination
+ * of the supplier once some condition is reached, for example some number of consumed results
+ * accepted.  If termination is required override the terminationRequested()
+ * method to return true when termination state is reached.
+ *
+ * @param <T> the type of the input to the operation
+ */
+public interface TerminatingConsumer<T> extends Consumer<T> {
 
-	public TaskDialogSpy(Task task) {
-		super(task);
-	}
-
-	@Override
-	protected void doShow() {
-		shown.set(true);
-		super.doShow();
-	}
-
-	boolean wasShown() {
-		return shown.get();
-	}
+    default boolean terminationRequested() {
+        return false;
+    }
 }

@@ -444,8 +444,7 @@ public abstract class DockingAction implements DockingActionIf {
 		// menu path
 		if (menuBarData != null) {
 			buffer.append("        MENU PATH:           ")
-					.append(
-						menuBarData.getMenuPathAsString());
+					.append(menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
@@ -468,8 +467,7 @@ public abstract class DockingAction implements DockingActionIf {
 		// popup menu path
 		if (popupMenuData != null) {
 			buffer.append("        POPUP PATH:         ")
-					.append(
-						popupMenuData.getMenuPathAsString());
+					.append(popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -535,6 +533,9 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	public void firePropertyChanged(String propertyName, Object oldValue, Object newValue) {
+		if (Objects.equals(oldValue, newValue)) {
+			return;
+		}
 		PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
 		for (PropertyChangeListener listener : propertyListeners) {
 			listener.propertyChange(event);

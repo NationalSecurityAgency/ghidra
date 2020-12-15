@@ -52,7 +52,7 @@ public abstract class AbstractDemangledFunctionDefinitionDataType extends Demang
 	}
 
 	/**
-	 * Returns the string for this type of reference (e.g., * or &)
+	 * Returns the string for this type of reference (e.g., * or &amp;)
 	 * @return the string
 	 */
 	abstract protected String getTypeString();

@@ -718,7 +718,7 @@ define pcodeop coproc_moveto_Security_world_control;
 define pcodeop coproc_moveto_Translation_table;
 define pcodeop coproc_moveto_Instruction_cache;
 define pcodeop coproc_moveto_Data_cache_operations;
-define pcodeop coproc_moveto_Idetification_registers;
+define pcodeop coproc_moveto_Identification_registers;
 define pcodeop coproc_moveto_Peripheral_System;
 
 define pcodeop coproc_movefrom_Main_ID;
@@ -768,7 +768,7 @@ define pcodeop coproc_movefrom_Security_world_control;
 define pcodeop coproc_movefrom_Translation_table;
 define pcodeop coproc_movefrom_Instruction_cache;
 define pcodeop coproc_movefrom_Data_cache_operations;
-define pcodeop coproc_movefrom_Idetification_registers;
+define pcodeop coproc_movefrom_Identification_registers;
 define pcodeop coproc_movefrom_Peripheral_System;
 
 mcrOperands: cpn,opc1,Rd,CRn,CRm,opc2 is CRm & opc2 & cpn & CRn & opc1 & Rd { }
@@ -3323,7 +3323,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 {
   build COND;
   t_opc2:4 = opc2; t_crm:4 = CRm;
-  coproc_moveto_Idetification_registers(Rd,t_opc2,t_crm);
+  coproc_moveto_Identification_registers(Rd,t_opc2,t_crm);
 }
 
 
@@ -4013,7 +4013,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 {
   build COND;
   t_opc2:4 = opc2; t_crm:4 = CRm;
-  Rd = coproc_movefrom_Idetification_registers(t_opc2,t_crm);
+  Rd = coproc_movefrom_Identification_registers(t_opc2,t_crm);
 }
 
 

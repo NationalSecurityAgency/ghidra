@@ -26,10 +26,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import generic.json.Json;
-import ghidra.app.util.SymbolPath;
+import ghidra.app.util.SymbolPathParser;
 import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 
 public class GnuDemanglerParser {
@@ -42,11 +43,16 @@ public class GnuDemanglerParser {
 	private static final String TYPEINFO_FOR = "typeinfo for ";
 	private static final String COVARIANT_RETURN_THUNK = "covariant return thunk";
 
-	private static final Set<String> ADDRESS_TABLE_PREFIXES =
-		Set.of(CONSTRUCTION_VTABLE_FOR, VTT_FOR, VTABLE_FOR, TYPEINFO_FN_FOR, TYPEINFO_FOR);
+	private static final Set<String> ADDRESS_TABLE_PREFIXES = Set.of(
+		CONSTRUCTION_VTABLE_FOR,
+		VTT_FOR,
+		VTABLE_FOR,
+		TYPEINFO_FN_FOR,
+		TYPEINFO_FOR);
 
 	private static final String OPERATOR = "operator";
 	private static final String LAMBDA = "lambda";
+	private static final String LAMBDA_START = "{lambda";
 	private static final String VAR_ARGS = "...";
 	private static final String THUNK = "thunk";
 	private static final String CONST = " const";
@@ -59,8 +65,8 @@ public class GnuDemanglerParser {
 	 * Pattern: name(([const] [params]))
 	 *
 	 * Parts: -optional spaces 
-	 * 			-optional (const)  (non-capture group)
-	 *          -followed by '()' with optinal parameter text (capture group 1)
+	 * 		  -optional (const)  (non-capture group)
+	 *        -followed by '()' with optional parameter text (capture group 1)
 	 *          
 	 * Note:    this pattern is used for matching the arguments string, in the above examples it
 	 *          would be: 
@@ -71,6 +77,22 @@ public class GnuDemanglerParser {
 	 */
 	private static final Pattern UNNECESSARY_PARENS_PATTERN =
 		Pattern.compile("\\s*(?:const){0,1}\\((.*)\\)\\s*");
+
+	/**
+	 * Captures the contents of a varargs parameter that is inside of parentheses.
+	 * 
+	 * Sample:  (NS1::type&&)...
+	 *
+	 * Pattern: (namespace::name[modifiers])...
+	 *
+	 * Parts: -open paren
+	 * 		  -contents (capture group 1)
+	 *        -close paren
+	 *        -varargs
+	 *          
+	 */
+	private static final Pattern VARARGS_IN_PARENS =
+		Pattern.compile("\\((.*)\\)" + Pattern.quote("..."));
 
 	/*
 	 * Sample: 	bob(short (&)[7])
@@ -191,16 +213,19 @@ public class GnuDemanglerParser {
 	 * Pattern for newer C++ lambda syntax:
 	 * 
 	 * Sample:  {lambda(void const*, unsigned int)#1}
+	 * 			{lambda(NS1::Class1 const&, int, int)#1} const&
+	 *          {lambda(auto:1&&)#1}<NS1::NS2>&&
 	 * 
-	 * Pattern: [optional text] brace lambda([parameters])#digits brace
+	 * Pattern: [optional text] brace lambda([parameters])#digits brace [trailing text]
 	 * 
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 *  		-parameters of the lambda function (capture group 2)
 	 *  		-trailing id (capture group 3)
+	 *  		-trailing modifiers (e.g., const, &, templates) (capture group 4)
 	 */
 	private static final Pattern LAMBDA_PATTERN =
-		Pattern.compile(".*(\\{" + LAMBDA + "\\((.*)\\)(#\\d+)\\})");
+		Pattern.compile(".*(\\{" + LAMBDA + "\\((.*)\\)(#\\d+)\\})(.*)");
 
 	/*
 	 * Sample:  {unnamed type#1}
@@ -279,6 +304,7 @@ public class GnuDemanglerParser {
 		String extra = userDefinedLiteral;
 		alternated += '|' + extra;
 
+		// note: this capture group seems to fail with excessive templating
 		String operatorTemplates = "(<.+>){0,1}";
 		String operatorPrefix =
 			".*(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ".*)\\s*";
@@ -392,11 +418,17 @@ public class GnuDemanglerParser {
 		DemangledFunction function = new DemangledFunction(mangledSource, demangled, null);
 
 		String simpleName = signatureParts.getName();
-		LambdaName lambdaName = getLambdaName(demangled);
-		if (lambdaName != null) {
+
+		if (simpleName.endsWith(LAMBDA_START)) {
+			//
+			// For lambdas, the signature parser will set the name to '{lambda', with the parameters
+			// following that text in the original string.  We want the name to be the full lambda
+			// text, without spaces.
+			//
+			LambdaName lambdaName = getLambdaName(demangled);
 			String uniqueName = lambdaName.getFullText();
 			String escapedLambda = removeBadSpaces(uniqueName);
-			simpleName = simpleName.replace("{lambda", escapedLambda);
+			simpleName = simpleName.replace(LAMBDA_START, escapedLambda);
 			function = new DemangledLambda(mangledSource, demangled, null);
 			function.setSignature(lambdaName.getFullText());
 		}
@@ -436,10 +468,11 @@ public class GnuDemanglerParser {
 			return;
 		}
 
-		function.setReturnType(parseDataType(returnType));
+		function.setReturnType(parseReturnType(returnType));
 	}
 
 	private LambdaName getLambdaName(String name) {
+
 		Matcher matcher = LAMBDA_PATTERN.matcher(name);
 		if (!matcher.matches()) {
 			return null;
@@ -448,7 +481,8 @@ public class GnuDemanglerParser {
 		String fullText = matcher.group(1);
 		String params = matcher.group(2);
 		String trailing = matcher.group(3);
-		return new LambdaName(fullText, params, trailing);
+		String modifiers = matcher.group(4);
+		return new LambdaName(fullText, params, trailing, modifiers);
 	}
 
 	private String stripOffTemplates(String string) {
@@ -587,7 +621,18 @@ public class GnuDemanglerParser {
 					}
 				}
 
-				i = getFunctionPointerCloseParen(parameterString, i);
+				//
+				// we wish to move past two sets of parens for function pointers; however, sometimes
+				// we have code with only one set of parens; for example:
+				//   unsigned long (*)(long const &)
+				// or
+				//   iterator<boost::function<void ()>
+				//
+				int end = findBalancedEnd(parameterString, i, '(', ')');
+				if (end == -1) {
+					end = parameterString.length();
+				}
+				i = end;
 			}
 		}
 		if (startIndex < parameterString.length()) {
@@ -595,40 +640,6 @@ public class GnuDemanglerParser {
 			parameters.add(ps.trim());
 		}
 		return parameters;
-	}
-
-	private int getFunctionPointerCloseParen(String parameterString, int currentIndex) {
-		int firstCloseParen = parameterString.indexOf(')', currentIndex);
-		if (firstCloseParen == -1) {
-			throw new DemanglerParseException(
-				"Unable to find closing paren for parameter string: " + parameterString);
-		}
-
-		//
-		// we wish to move past two sets of parens for function pointers; however, sometimes
-		// we have code with only one set of parens; for example:
-		//   unsigned long (*)(long const &)
-		// or
-		//   iterator<boost::function<void ()>
-		//
-		boolean foundNextStart = false;
-		int length = parameterString.length();
-		for (int i = currentIndex; i < length; i++) {
-			char ch = parameterString.charAt(i);
-			if (ch == ')') {
-				return i;
-			}
-			else if (ch == '(') {
-				foundNextStart = true;
-			}
-			else if (ch == ',') {
-				if (!foundNextStart) {
-					return firstCloseParen;// no new set of parens found
-				}
-			}
-		}
-
-		return firstCloseParen;
 	}
 
 	/**
@@ -639,25 +650,47 @@ public class GnuDemanglerParser {
 		List<DemangledDataType> parameters = new ArrayList<>();
 
 		for (String parameter : parameterStrings) {
-			DemangledDataType ddt = parseDataType(parameter);
-			parameters.add(ddt);
+			DemangledDataType dt = parseParameter(parameter);
+			parameters.add(dt);
 		}
 
 		return parameters;
 	}
 
-	private DemangledDataType parseDataType(String fullDatatype) {
+	private DemangledDataType parseParameter(String parameter) {
 
-		Matcher castMatcher = CAST_PATTERN.matcher(fullDatatype);
+		Matcher castMatcher = CAST_PATTERN.matcher(parameter);
 		if (castMatcher.matches()) {
 			// special case: template parameter with a cast (just make the datatype
 			// be the name of the template parameter, since it will just be a display
 			// attribute for the templated type)
-			return new DemangledDataType(mangledSource, demangledSource, fullDatatype);
+			return new DemangledDataType(mangledSource, demangledSource, parameter);
 		}
 
-		DemangledDataType ddt = createTypeInNamespace(fullDatatype);
-		String datatype = ddt.getDemangledName();
+		Matcher matcher = VARARGS_IN_PARENS.matcher(parameter);
+		if (matcher.matches()) {
+			String inside = matcher.group(1);
+			DemangledDataType dt = parseDataType(inside);
+			dt.setVarArgs();
+			return dt;
+
+		}
+		return parseDataType(parameter);
+	}
+
+	private DemangledDataType parseReturnType(String returnType) {
+		return parseDataType(returnType);
+	}
+
+	private DemangledDataType parseDataType(String fullDatatype) {
+
+		DemangledDataType dt = createTypeInNamespace(fullDatatype);
+		String datatype = dt.getDemangledName();
+
+		if ("*".equals(datatype)) {
+			return createMemberPointer(fullDatatype);
+		}
+
 		boolean finishedName = false;
 		for (int i = 0; i < datatype.length(); ++i) {
 			char ch = datatype.charAt(i);
@@ -670,11 +703,11 @@ public class GnuDemanglerParser {
 				finishedName = true;
 
 				if (VAR_ARGS.equals(datatype)) {
-					ddt.setVarArgs();
+					dt.setVarArgs();
 				}
 				else {
 					String name = datatype.substring(0, i).trim();
-					ddt.setName(name);
+					dt.setName(name);
 				}
 			}
 
@@ -690,7 +723,7 @@ public class GnuDemanglerParser {
 
 				String templateContent = datatype.substring(contentStart, templateEnd);
 				DemangledTemplate template = parseTemplate(templateContent);
-				ddt.setTemplate(template);
+				dt.setTemplate(template);
 				i = templateEnd;
 			}
 			else if (ch == '(') {// start of function pointer or array ref/pointer
@@ -699,23 +732,35 @@ public class GnuDemanglerParser {
 				// 		e.g., unsigned long (*)(long const &)
 				// array pointer/refs
 				//  	e.g., short (&)[7]
-				//
+				// lambda function
+				//      e.g., {lambda(NS1::Class1 const&, int, int)#1} const&
+				//            {lambda(auto:1&&)#1}<NS1::NS2>>&&
+				// 
+
+				LambdaName lambdaName = getLambdaName(datatype);
 
 				// check for array case
 				Matcher arrayMatcher = ARRAY_POINTER_REFERENCE_PATTERN.matcher(datatype);
 				if (arrayMatcher.matches()) {
-					Demangled namespace = ddt.getNamespace();
+					Demangled namespace = dt.getNamespace();
 					String name = arrayMatcher.group(1);// group 0 is the entire string
-					ddt = parseArrayPointerOrReference(datatype, name, arrayMatcher);
-					ddt.setNamespace(namespace);
+					dt = parseArrayPointerOrReference(datatype, name, arrayMatcher);
+					dt.setNamespace(namespace);
 					i = arrayMatcher.end();
 				}
+				else if (lambdaName != null) {
+					String fullText = lambdaName.getFullText();
+					dt.setName(fullText);
+					int offset = fullText.indexOf('(');
+					int remaining = fullText.length() - offset;
+					i = i + remaining; // end of lambda's closing '}'
+					i = i - 1; // back up one space to catch optional templates on next loop pass
+				}
 				else {
-					int startParenCount =
-						StringUtilities.countOccurrences(datatype.substring(i), '(');
-					boolean hasPointerParens = startParenCount == 2;
+					// e.g., unsigned long (*)(long const &)
+					boolean hasPointerParens = hasConsecutiveSetsOfParens(datatype.substring(i));
 					if (hasPointerParens) {
-						Demangled namespace = ddt.getNamespace();
+						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
 						int firstParenEnd = datatype.indexOf(')', i + 1);
 						int secondParenEnd = datatype.indexOf(')', firstParenEnd + 1);
@@ -725,13 +770,13 @@ public class GnuDemanglerParser {
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
-						ddt = dfp;
+						dt = dfp;
 						i = secondParenEnd + 1; // two sets of parens (normal case)
 					}
 					else {
 
 						// parse as a function pointer, but display as a function
-						Demangled namespace = ddt.getNamespace();
+						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunction(datatype, i);
 						int firstParenEnd = datatype.indexOf(')', i + 1);
 						if (firstParenEnd == -1) {
@@ -740,26 +785,26 @@ public class GnuDemanglerParser {
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
-						ddt = dfp;
+						dt = dfp;
 						i = firstParenEnd + 1;// two sets of parens (normal case)
 					}
 				}
 			}
 			else if (ch == '*') {
-				ddt.incrementPointerLevels();
+				dt.incrementPointerLevels();
 				continue;
 			}
 			else if (ch == '&') {
-				if (!ddt.isReference()) {
-					ddt.setReference();
+				if (!dt.isReference()) {
+					dt.setReference();
 				}
 				else {
-					ddt.incrementPointerLevels();
+					dt.setRValueReference();
 				}
 				continue;
 			}
 			else if (ch == '[') {
-				ddt.setArray(ddt.getArrayDimensions() + 1);
+				dt.setArray(dt.getArrayDimensions() + 1);
 				i = datatype.indexOf(']', i + 1);
 				continue;
 			}
@@ -767,53 +812,87 @@ public class GnuDemanglerParser {
 			String substr = datatype.substring(i);
 
 			if (substr.startsWith("const")) {
-				ddt.setConst();
+				dt.setConst();
 				i += 4;
 			}
 			else if (substr.startsWith("struct")) {
-				ddt.setStruct();
+				dt.setStruct();
 				i += 5;
 			}
 			else if (substr.startsWith("class")) {
-				ddt.setClass();
+				dt.setClass();
 				i += 4;
 			}
 			else if (substr.startsWith("enum")) {
-				ddt.setEnum();
+				dt.setEnum();
 				i += 3;
 			}
-			else if (ddt.getName().equals("long")) {
+			else if (dt.getName().equals("long")) {
 				if (substr.startsWith("long")) {
-					ddt.setName(DemangledDataType.LONG_LONG);
+					dt.setName(DemangledDataType.LONG_LONG);
 					i += 3;
 				}
 				else if (substr.startsWith("double")) {
-					ddt.setName(DemangledDataType.LONG_DOUBLE);
+					dt.setName(DemangledDataType.LONG_DOUBLE);
 					i += 5;
 				}
 			}
 			// unsigned can also mean unsigned long, int
-			else if (ddt.getName().equals("unsigned")) {
-				ddt.setUnsigned();
+			else if (dt.getName().equals("unsigned")) {
+				dt.setUnsigned();
 				if (substr.startsWith("long")) {
-					ddt.setName(DemangledDataType.LONG);
+					dt.setName(DemangledDataType.LONG);
 					i += 3;
 				}
 				else if (substr.startsWith("int")) {
-					ddt.setName(DemangledDataType.INT);
+					dt.setName(DemangledDataType.INT);
 					i += 2;
 				}
 				else if (substr.startsWith("short")) {
-					ddt.setName(DemangledDataType.SHORT);
+					dt.setName(DemangledDataType.SHORT);
 					i += 4;
 				}
 				else if (substr.startsWith("char")) {
-					ddt.setName(DemangledDataType.CHAR);
+					dt.setName(DemangledDataType.CHAR);
 					i += 3;
 				}
 			}
 		}
-		return ddt;
+		return dt;
+	}
+
+	private boolean hasConsecutiveSetsOfParens(String text) {
+		int end = findBalancedEnd(text, 0, '(', ')');
+		if (end < -1) {
+			return false;
+		}
+
+		String remaining = text.substring(end + 1).trim();
+		return remaining.startsWith("(");
+	}
+
+	private DemangledDataType createMemberPointer(String datatype) {
+		// this is temp code we expect to update as more samples arrive
+
+		// example: NS1::Type1 NS1::ParenType::*
+		int trimLength = 3; // '::*'
+		String typeWithoutPointer = datatype.substring(0, datatype.length() - trimLength);
+		int space = typeWithoutPointer.indexOf(' ');
+		DemangledDataType dt;
+		if (space != -1) {
+			String type = typeWithoutPointer.substring(0, space);
+			dt = createTypeInNamespace(type);
+
+			String parentType = typeWithoutPointer.substring(space + 1);
+			DemangledDataType parentDt = createTypeInNamespace(parentType);
+			dt.setNamespace(parentDt);
+		}
+		else {
+			dt = createTypeInNamespace(typeWithoutPointer);
+		}
+
+		dt.incrementPointerLevels();
+		return dt;
 	}
 
 	private boolean isDataTypeNameCharacter(char ch) {
@@ -837,26 +916,31 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * Scans the given string from the given offset looking for a template and reporting the 
-	 * index of the closing template character '>' or -1 if no templates are found
+	 * Scans the given string from the given offset looking for a balanced {@code close} 
+	 * character.   This algorithm will not report a match for the end character until the 
+	 * {@code open} character has first been found.   This allows clients to scan from anywhere
+	 * in a string to find an open and start character combination, including at or before the
+	 * desired opening character.
 	 *  
 	 * @param string the input string
 	 * @param start the start position within the string
-	 * @return the template end index; -1 if no templates found
+	 * @param open the open character (e.g, '(' or '<')
+	 * @param close the close character (e.g, ')' or '>')
+	 * @return the end index; -1 if no templates found
 	 */
-	private int findTemplateEnd(String string, int start) {
+	private int findBalancedEnd(String string, int start, char open, char close) {
 
 		boolean found = false;
 		int depth = 0;
 		for (int i = start; i < string.length(); i++) {
-			switch (string.charAt(i)) {
-				case '<':
-					depth++;
-					found = true;
-					break;
-				case '>':
-					depth--;
-					break;
+
+			char c = string.charAt(i);
+			if (c == open) {
+				depth++;
+				found = true;
+			}
+			else if (c == close) {
+				depth--;
 			}
 
 			if (found && depth == 0) {
@@ -867,23 +951,119 @@ public class GnuDemanglerParser {
 		return -1;
 	}
 
-	// assumption: the given index is in a template
-	// Walk backwards to find the template start
-	private int findMatchingTemplateStart(String string, int templateEnd) {
+	/**
+	 * Scans the given string from the given offset looking for a balanced {@code open} 
+	 * character.   This algorithm will not report a match for the open character until the 
+	 * {@code end} character has first been found.   This allows clients to scan from anywhere
+	 * in a string to find an open and start character combination, including at or before the
+	 * desired opening character.
+	 *  
+	 * @param string the input string
+	 * @param start the start position within the string
+	 * @param open the open character (e.g, '(' or '<')
+	 * @param close the close character (e.g, ')' or '>')
+	 * @return the end index; -1 if no templates found
+	 */
+	private int findBalancedStart(String string, int start, char open, char close) {
 
-		int depth = 1;
-		for (int i = templateEnd - 1; i >= 0; i--) {
-			switch (string.charAt(i)) {
-				case '<':
-					depth--;
-					break;
-				case '>':
-					depth++;
-					break;
+		boolean found = false;
+		int depth = 0;
+		for (int i = start; i >= 0; i--) {
+
+			char c = string.charAt(i);
+			if (c == open) {
+				depth--;
+			}
+			else if (c == close) {
+				depth++;
+				found = true;
 			}
 
-			if (depth == 0) {
-				return i;// found our opening tag
+			if (found && depth == 0) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private int findTemplateEnd(String string, int start) {
+		return findBalancedEnd(string, start, '<', '>');
+	}
+
+	private int findTemplateStart(String string, int templateEnd) {
+		return findBalancedStart(string, templateEnd, '<', '>');
+	}
+
+	/**
+	 * Walks backward from the given start position to find the next namespace separator.  This
+	 * allows clients to determine if a given position is inside of a namespace.
+	 * 
+	 * @param text the text to search
+	 * @param start the start position
+	 * @param stop the stop position
+	 * @return the start index of the namespace entry containing the current {@code start} 
+	 *         index; -1 if no namespace start is found
+	 */
+	private int findNamespaceStart(String text, int start, int stop) {
+
+		if (!text.contains(Namespace.DELIMITER)) {
+			return -1;
+		}
+
+		int colonCount = 0;
+		int parenDepth = 0;
+		int templateDepth = 0;
+		int braceDepth = 0;
+		boolean isNested = false;
+
+		for (int i = start; i >= stop; i--) {
+
+			char c = text.charAt(i);
+			switch (c) {
+				case ':': {
+					colonCount++;
+					if (colonCount == 2) {
+						if (!isNested) {
+							return i + 2;
+						}
+						colonCount = 0;
+					}
+					break;
+				}
+				case ' ': {
+					if (!isNested) {
+						return -1; // a space implies a return type when not nested
+					}
+					break;
+				}
+				case '(': {
+					isNested = --parenDepth > 0 || templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case ')': {
+					isNested = ++parenDepth > 0 || templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case '<': {
+					isNested = parenDepth > 0 || --templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case '>': {
+					isNested = parenDepth > 0 || ++templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case '{': {
+					isNested = parenDepth > 0 || templateDepth > 0 || --braceDepth > 0;
+					break;
+				}
+				case '}': {
+					isNested = parenDepth > 0 || templateDepth > 0 || ++braceDepth > 0;
+					break;
+				}
+
+				default:
+					continue;
 			}
 		}
 
@@ -891,25 +1071,21 @@ public class GnuDemanglerParser {
 	}
 
 	private DemangledDataType createTypeInNamespace(String name) {
-		SymbolPath path = new SymbolPath(name);
-		List<String> names = path.asList();
-
+		List<String> names = SymbolPathParser.parse(name, false);
 		DemangledType namespace = null;
 		if (names.size() > 1) {
 			namespace = convertToNamespaces(names.subList(0, names.size() - 1));
 		}
 
 		String datatypeName = names.get(names.size() - 1);
-		DemangledDataType ddt = new DemangledDataType(mangledSource, demangledSource, datatypeName);
-		ddt.setName(datatypeName);
-		ddt.setNamespace(namespace);
-		return ddt;
+		DemangledDataType dt = new DemangledDataType(mangledSource, demangledSource, datatypeName);
+		dt.setName(datatypeName);
+		dt.setNamespace(namespace);
+		return dt;
 	}
 
 	private void setNameAndNamespace(DemangledObject object, String name) {
-		SymbolPath path = new SymbolPath(name);
-		List<String> names = path.asList();
-
+		List<String> names = SymbolPathParser.parse(name, false);
 		DemangledType namespace = null;
 		if (names.size() > 1) {
 			namespace = convertToNamespaces(names.subList(0, names.size() - 1));
@@ -923,8 +1099,7 @@ public class GnuDemanglerParser {
 
 	private void setNamespace(DemangledObject object, String name) {
 
-		SymbolPath path = new SymbolPath(name);
-		List<String> names = path.asList();
+		List<String> names = SymbolPathParser.parse(name, false);
 		object.setNamespace(convertToNamespaces(names));
 	}
 
@@ -948,13 +1123,13 @@ public class GnuDemanglerParser {
 		// int (*)[8]
 		// char (&)[7]
 
-		DemangledDataType ddt = new DemangledDataType(mangledSource, demangledSource, name);
+		DemangledDataType dt = new DemangledDataType(mangledSource, demangledSource, name);
 		String type = matcher.group(2);
 		if (type.equals("*")) {
-			ddt.incrementPointerLevels();
+			dt.incrementPointerLevels();
 		}
 		else if (type.equals("&")) {
-			ddt.setReference();
+			dt.setReference();
 		}
 		else {
 			throw new DemanglerParseException("Unexpected charater inside of parens: " + type);
@@ -962,9 +1137,9 @@ public class GnuDemanglerParser {
 
 		String arraySubscripts = matcher.group(3);
 		int n = StringUtilities.countOccurrences(arraySubscripts, '[');
-		ddt.setArray(n);
+		dt.setArray(n);
 
-		return ddt;
+		return dt;
 	}
 
 	private DemangledFunctionPointer parseFunctionPointer(String functionString) {
@@ -985,7 +1160,8 @@ public class GnuDemanglerParser {
 		//unsigned long (long const &)
 
 		int parenStart = functionString.indexOf('(', offset);
-		int parenEnd = functionString.indexOf(')', parenStart + 1);
+		int parenEnd = findBalancedEnd(functionString, parenStart, '(', ')');
+		//int parenEnd = functionString.indexOf(')', parenStart + 1);
 
 		String returnType = functionString.substring(0, parenStart).trim();
 
@@ -1003,7 +1179,8 @@ public class GnuDemanglerParser {
 		List<DemangledDataType> parameters = parseParameters(paramerterString);
 
 		DemangledFunctionPointer dfp = new DemangledFunctionPointer(mangledSource, demangledSource);
-		dfp.setReturnType(parseDataType(returnType));
+		DemangledDataType returnDataType = parseReturnType(returnType);
+		dfp.setReturnType(returnDataType);
 		for (DemangledDataType parameter : parameters) {
 			dfp.addParameter(parameter);
 		}
@@ -1231,7 +1408,17 @@ public class GnuDemanglerParser {
 		@Override
 		boolean matches(String text) {
 			matcher = OVERLOAD_OPERATOR_NAME_PATTERN.matcher(text);
-			return matcher.matches();
+			if (!matcher.matches()) {
+				return false;
+			}
+
+			int operatorStart = matcher.start(2);
+			int leafStart = findNamespaceStart(demangled, text.length() - 1, operatorStart);
+			if (leafStart > operatorStart) {
+				return false; // operator is inside of a non-leaf namespace entry
+			}
+
+			return true;
 		}
 
 		@Override
@@ -1248,14 +1435,8 @@ public class GnuDemanglerParser {
 			// NS1::operator<(NS1::Coordinate const &,NS1::Coordinate const &)
 			//
 			String operatorChars = matcher.group(2);
-			String templates = matcher.group(3);
 			int start = matcher.start(2); // operator chars start
-			int end = matcher.end(3); // templates end
-
-			if (templates == null) {
-				templates = "";
-				end = matcher.end(2); // no templates; end of the operator chars
-			}
+			int end = matcher.end(2); // operator chars start
 
 			//
 			// The 'operator' functions have symbols that confuse our default function parsing.  
@@ -1263,11 +1444,16 @@ public class GnuDemanglerParser {
 			// template parsing to fail.  To defeat the failure, we will install a temporary 
 			// function name here and then restore it after parsing is finished.
 			//
-			String rawPrefix = OPERATOR + demangled.substring(start, end);
-			String placeholder = "TEMPNAMEPLACEHOLDERVALUE";
-			String tempName = demangled.replace(rawPrefix, placeholder);
 
-			DemangledFunction function = (DemangledFunction) parseFunctionOrVariable(tempName);
+			String templates = getTemplates(end);
+			end = end + templates.length();
+
+			// a string to replace operator chars; this value will be overwritten the name is set
+			String placeholder = "TEMPNAMEPLACEHOLDERVALUE";
+			String baseOperator = OPERATOR + demangled.substring(start, end);
+			String fixedFunction = demangled.replace(baseOperator, placeholder);
+
+			DemangledFunction function = (DemangledFunction) parseFunctionOrVariable(fixedFunction);
 			function.setOverloadedOperator(true);
 
 			String simpleName = OPERATOR + operatorChars;
@@ -1283,6 +1469,30 @@ public class GnuDemanglerParser {
 
 			return function;
 		}
+
+		private String getTemplates(int start) {
+			String templates = "";
+			boolean hasTemplates = nextCharIs(demangled, start, '<');
+			if (hasTemplates) {
+				int templateStart = start;
+				int templateEnd = findTemplateEnd(demangled, templateStart);
+				if (templateEnd == -1) {
+					// should not happen
+					Msg.debug(this, "Unable to find template end for operator: " + demangled);
+					return templates;
+				}
+				templates = demangled.substring(templateStart, templateEnd + 1);
+			}
+			return templates;
+		}
+	}
+
+	private boolean nextCharIs(String text, int index, char c) {
+		char next = text.charAt(index);
+		while (next == ' ') {
+			next = text.charAt(++index);
+		}
+		return next == c;
 	}
 
 	private class ConversionOperatorHandler extends OperatorHandler {
@@ -1315,7 +1525,7 @@ public class GnuDemanglerParser {
 
 			DemangledFunction method =
 				new DemangledFunction(mangledSource, demangledSource, (String) null);
-			DemangledDataType returnType = parseDataType(fullReturnType);
+			DemangledDataType returnType = parseReturnType(fullReturnType);
 			if (isConst) {
 				returnType.setConst();
 			}
@@ -1331,8 +1541,8 @@ public class GnuDemanglerParser {
 
 			// shortReturnType: string
 			String templatelessReturnType = stripOffTemplates(fullReturnType);
-			SymbolPath path = new SymbolPath(templatelessReturnType);
-			String shortReturnTypeName = path.getName();
+			List<String> path = SymbolPathParser.parse(templatelessReturnType, false);
+			String shortReturnTypeName = path.get(path.size() - 1);
 
 			//
 			// The preferred name: 'operator basic_string()'
@@ -1427,7 +1637,7 @@ public class GnuDemanglerParser {
 			int templateEnd = findTemplateEnd(text, 0);
 			int templateStart = -1;
 			if (templateEnd != -1) {
-				templateStart = findMatchingTemplateStart(text, templateEnd);
+				templateStart = findTemplateStart(text, templateEnd);
 			}
 			if (paramStart > templateStart && paramStart < templateEnd) {
 				// ignore parentheses inside of templates (they are cast operators)
@@ -1481,16 +1691,19 @@ public class GnuDemanglerParser {
 		}
 	}
 
+	// {lambda(void const*, unsigned int)#1}
 	private class LambdaName {
 
 		private String fullText;
 		private String params;
+		private String id;
 		private String trailing;
 
-		LambdaName(String fullText, String params, String trailing) {
+		LambdaName(String fullText, String params, String id, String trailing) {
 			this.fullText = fullText;
 			this.params = params;
-			this.trailing = trailing;
+			this.id = id;
+			this.trailing = trailing == null ? "" : trailing;
 		}
 
 		String getFullText() {
@@ -1502,6 +1715,7 @@ public class GnuDemanglerParser {
 			ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE);
 			return builder.append("fullText", fullText)
 					.append("params", params)
+					.append("id", id)
 					.append("trailing", trailing)
 					.toString();
 		}

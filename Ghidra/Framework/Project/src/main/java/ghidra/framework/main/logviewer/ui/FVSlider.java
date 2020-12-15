@@ -71,7 +71,6 @@ public class FVSlider extends JSlider
 	 * @param scrollPane
 	 * @param table
 	 * @param viewportUtility
-	 * @param eventListener
 	 * @param model
 	 * @param reader
 	 * @param eventListener
