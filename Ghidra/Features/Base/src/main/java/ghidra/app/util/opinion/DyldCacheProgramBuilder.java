@@ -241,8 +241,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		// locate slide Info
 		DyldCacheSlideInfoCommon slideInfo = dyldCacheHeader.getSlideInfo();
 		if (slideInfo == null || !(slideInfo instanceof DyldCacheSlideInfo2)) {
-			log.appendMsg(
-				"Can't handle version " + slideInfo.getVersion() + " slide info, only version 2");
+			log.appendMsg("No compatible slide info version");
 			return;
 		}
 		DyldCacheSlideInfo2 slideInfo2 = (DyldCacheSlideInfo2) slideInfo;
@@ -448,7 +447,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				String path) throws Exception {
 			this.headerAddr = headerAddr;
 			this.header = MachHeader.createMachHeader(MessageLogContinuesFactory.create(log),
-				provider, offset);
+				provider, offset, false);
 			this.header.parse();
 			this.path = path;
 			this.name = new File(path).getName();
