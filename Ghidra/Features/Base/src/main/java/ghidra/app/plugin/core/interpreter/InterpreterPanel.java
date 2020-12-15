@@ -18,7 +18,10 @@ package ghidra.app.plugin.core.interpreter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -54,12 +57,12 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	private JScrollPane outputScrollPane;
 	private JTextPane outputTextPane;
 	private JTextPane promptTextPane;
-	private JTextPane inputTextPane;
+	/* junit */ JTextPane inputTextPane;
 
 	private CodeCompletionWindow codeCompletionWindow;
 	private HistoryManager history;
 
-	private IPStdin stdin;
+	/* junit */ IPStdin stdin;
 	private OutputStream stdout;
 	private OutputStream stderr;
 	private PrintWriter outWriter;
@@ -511,11 +514,10 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private void repositionScrollpane() {
 		// NOTE:  CRAZY CODE!  subtract one to position short of final newline
-		outputTextPane.setCaretPosition(outputTextPane.getDocument().getLength() - 1);
+		outputTextPane.setCaretPosition(Math.max(0, outputTextPane.getDocument().getLength() - 1));
 	}
 
 	void addText(String text, TextType type) {
-		StyledDocument document = outputTextPane.getStyledDocument();
 		SimpleAttributeSet attributes;
 		switch (type) {
 			case STDERR:
@@ -530,6 +532,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 				break;
 		}
 		try {
+			StyledDocument document = outputTextPane.getStyledDocument();
 			document.insertString(document.getLength(), text, attributes);
 			repositionScrollpane();
 		}
@@ -562,6 +565,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	public void clear() {
 		outputTextPane.setText("");
+		stdin.resetStream();
 	}
 
 	public String getOutputText() {
@@ -628,24 +632,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	public void dispose() {
 
-		try {
-			stdin.close();
-		}
-		catch (IOException e) {
-			Msg.debug(this, "could not close stdin", e);
-		}
-//		try {
-//			stdout.close();
-//		}
-//		catch (IOException e) {
-//			Msg.warn(this, "could not close stdout", e);
-//		}
-//		try {
-//			stderr.close();
-//		}
-//		catch (IOException e) {
-//			Msg.warn(this, "could not close stderr", e);
-//		}
+		stdin.close();
 		setVisible(false);
 	}
 
@@ -674,107 +661,105 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 // Inner Classes
 //==================================================================================================
 
-	private class IPStdin extends InputStream {
-		private byte[] bytes;
+
+	/**
+	 * An {@link InputStream} that has as its source text strings being pushed into
+	 * it by a thread, and being read by another thread.
+	 * <p>
+	 * Not thread-safe for multiple readers, but is thread-safe for writers.
+	 * <p>
+	 * {@link #close() Closing} this stream (from any thread) will awaken the
+	 * blocked reader thread and give an EOF result to the read operation it was blocking on.
+	 */
+	/* junit vis */ static class IPStdin extends InputStream {
+		private static final byte[] EMPTY_BYTES = new byte[0];
+
+		// reader-thread only fields.  write operations may not access/modify these
+		// fields.
+		private byte[] bytes = EMPTY_BYTES;
 		private int position = 0;
-		private volatile boolean disposed;
+		// end reader-thread only fields
+
+		// shared reader / writer fields.  Any thread may access these as they
+		// are threadsafe on their own
+		private LinkedBlockingQueue<byte[]> queuedBytes = new LinkedBlockingQueue<>();
+		private AtomicBoolean isClosed = new AtomicBoolean(false);
+		// end shared fields
+
+		private boolean fetchBytesFromQueue(boolean blocking) {
+
+			try {
+				// if the current byte buffer is exhausted, loop until we get
+				// a new non-empty byte buffer.
+				while (!isClosed.get() && position >= bytes.length) {
+					byte[] newBytes = blocking ? queuedBytes.take() : queuedBytes.poll();
+					if (newBytes == null) {
+						// this only happens when blocking == false, ie. a poll() operation
+						break;
+					}
+					bytes = newBytes;
+					position = 0;
+				}
+			}
+			catch (InterruptedException e) {
+				// fall thru to return which will return false
+			}
+
+			return position < bytes.length;
+		}
 
 		@Override
 		public int read(byte[] b, int off, int len) throws IOException {
-			while (bytes == null) {
-				try {
-					synchronized (this) {
-						this.wait();
-					}
-				}
-				catch (InterruptedException e) {
-					// handled below
-				}
-
-				if (disposed) {
-					return -1;
-				}
+			if (!fetchBytesFromQueue(true)) {
+				return -1;
 			}
 
-			if (bytes != null) {
-				int length = Math.min(bytes.length - position, len);
-				System.arraycopy(bytes, position, b, off, length);
-				if (position + length == bytes.length) {
-					position = 0;
-					bytes = null;
-				}
-				else {
-					position += length;
-				}
-				return length;
-			}
-			return -1;
+			int length = Math.min(bytes.length - position, len);
+			System.arraycopy(bytes, position, b, off, length);
+			position += length;
+			return length;
 		}
 
 		@Override
 		public int read() throws IOException {
-			while (bytes == null) {
-				try {
-					synchronized (this) {
-						this.wait();
-					}
-				}
-				catch (InterruptedException e) {
-					// handled below
-				}
-
-				if (disposed) {
-					return -1;
-				}
-
+			byte[] buffer = new byte[1];
+			if (read(buffer, 0, 1) != 1) {
+				return -1;
 			}
-
-			if (bytes != null) {
-				int c = bytes[position] & 0xff;
-				position++;
-				if (position >= bytes.length) {
-					position = 0;
-					bytes = null;
-				}
-				return c;
-			}
-			return -1;
+			return buffer[0] & 0xff;
 		}
 
 		@Override
 		public int available() {
-			if (bytes == null) {
-				return 0;
+			fetchBytesFromQueue(false);
+			return bytes.length - position;
+		}
+
+		@Override
+		public void close() {
+			// this will wake up a blocked read-thread waiting on a read() operation
+			// and cause it to return a EOF result.
+			// All reads() after this close will return EOF value
+			isClosed.set(true);
+			queuedBytes.clear();
+			queuedBytes.offer(EMPTY_BYTES);
+		}
+
+		void addText(String text) {
+			if (!isClosed.get()) {
+				queuedBytes.offer(text.getBytes(StandardCharsets.UTF_8));
 			}
-			return bytes.length;
 		}
 
 		/**
-		 * Overridden to stop this stream from blocking.
-		 * 
-		 * @throws IOException not
+		 * Resets this stream from a closed/always-eof state to an open state.
+		 * <p>
+		 * Also clears any queued bytes.  Safe to call even when open.
 		 */
-		@Override
-		public void close() throws IOException {
-			disposed = true;
-
-			synchronized (this) {
-				notify(); // in case we are blocking
-			}
-		}
-
-		synchronized void addText(String text) {
-			if (bytes == null) {
-				bytes = text.getBytes();
-				position = 0;
-			}
-			else {
-				byte[] temp = text.getBytes();
-				byte[] newBytes = new byte[bytes.length + temp.length];
-				System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
-				System.arraycopy(temp, 0, newBytes, bytes.length, temp.length);
-			}
-			this.notify();
+		void resetStream() {
+			isClosed.set(false);
+			queuedBytes.clear();
+			queuedBytes.offer(EMPTY_BYTES);
 		}
 	}
 }

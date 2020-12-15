@@ -59,6 +59,8 @@ import resources.ResourceManager;
 public class PythonPlugin extends ProgramPlugin
 		implements InterpreterConnection, OptionsChangeListener {
 
+	private final static int INPUT_THREAD_SHUTDOWN_TIMEOUT_MS = 1000;
+
 	private InterpreterConsole console;
 	private GhidraPythonInterpreter interpreter;
 	private PythonScript interactiveScript;
@@ -202,7 +204,8 @@ public class PythonPlugin extends ProgramPlugin
 			PythonCodeCompletionFactory.setupOptions(this, options);
 		}
 		else {
-			inputThread.dispose();
+			inputThread.shutdown();
+			inputThread = null;
 			interpreter.cleanup();
 			interpreter = GhidraPythonInterpreter.get();
 		}
@@ -278,7 +281,7 @@ public class PythonPlugin extends ProgramPlugin
 
 		// Terminate the input thread
 		if (inputThread != null) {
-			inputThread.dispose();
+			inputThread.shutdown();
 			inputThread = null;
 		}
 
