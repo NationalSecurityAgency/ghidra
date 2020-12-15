@@ -349,9 +349,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		ListSelectionTableDialog<String> dialog =
 			new ListSelectionTableDialog<>("Application Files", names);
-		dialog.setMultiSelectionMode(true);
 		dialog.hideOkButton();
-		dialog.show(table);
+		dialog.showSelectMultiple(table);
 	}
 
 	private void setOpenAfterImporting(boolean b) {
