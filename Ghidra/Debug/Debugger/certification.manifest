@@ -42,6 +42,13 @@ src/main/help/help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html||GHID
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerGoToDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerListingPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerModuleImportDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/filter_off.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/sync_enabled.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/view-refresh.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/zoom_in.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/zoom_out.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModuleMapProposalDialog.png||GHIDRA||||END|
