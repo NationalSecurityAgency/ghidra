@@ -97,8 +97,10 @@ class ConsistencyChecker {
   int4 unnecessarypcode;
   int4 readnowrite;
   int4 writenoread;
+  int4 largetemp;
   bool printextwarning;
   bool printdeadwarning;
+  bool printlargetempwarning;
   SubtableSymbol *root_symbol;
   vector<SubtableSymbol *> postorder;
   map<SubtableSymbol *,int4> sizemap; // Sizes associated with tables
@@ -109,6 +111,8 @@ class ConsistencyChecker {
   bool checkOpMisuse(OpTpl *op,Constructor *ct);
   bool sizeRestriction(OpTpl *op,Constructor *ct);
   bool checkConstructorSection(Constructor *ct,ConstructTpl *cttpl);
+  bool hasLargeTemporary(OpTpl *op);
+  bool isTemporaryAndTooBig(VarnodeTpl *vn);
   bool checkVarnodeTruncation(Constructor *ct,int4 slot,OpTpl *op,VarnodeTpl *vn,bool isbigendian);
   bool checkSectionTruncations(Constructor *ct,ConstructTpl *cttpl,bool isbigendian);
   bool checkSubtable(SubtableSymbol *sym);
@@ -125,15 +129,17 @@ class ConsistencyChecker {
   OptimizeRecord *findValidRule(Constructor *ct,map<uintb,OptimizeRecord> &recs) const;
   void applyOptimization(Constructor *ct,const OptimizeRecord &rec);
   void checkUnusedTemps(Constructor *ct,const map<uintb,OptimizeRecord> &recs);
+  void checkLargeTemporaries(Constructor *ct);
   void optimize(Constructor *ct);
 public:
-  ConsistencyChecker(SleighCompile *sleigh, SubtableSymbol *rt,bool unnecessary,bool warndead);
+  ConsistencyChecker(SleighCompile *sleigh, SubtableSymbol *rt,bool unnecessary,bool warndead, bool warnlargetemp);
   bool test(void);
   bool testTruncations(bool isbigendian);
   void optimizeAll(void);
   int4 getNumUnnecessaryPcode(void) const { return unnecessarypcode; }
   int4 getNumReadNoWrite(void) const { return readnowrite; }
   int4 getNumWriteNoRead(void) const { return writenoread; }
+  int4 getNumLargeTemporaries(void) const {return largetemp;}
 };
 
 struct FieldContext {
@@ -200,6 +206,7 @@ private:
   bool warnunnecessarypcode;	// True if we warn of unnecessary ZEXT or SEXT
   bool warndeadtemps;		// True if we warn of temporaries that are written but not read
   bool lenientconflicterrors;	// True if we ignore most pattern conflict errors
+  bool largetemporarywarning;   // True if we warn about temporaries larger than SleighBase::MAX_UNIQUE_SIZE
   bool warnalllocalcollisions;	// True if local export collisions generate individual warnings
   bool warnallnops;		// True if pcode NOPs generate individual warnings
   vector<string> noplist;	// List of individual NOP warnings
@@ -244,6 +251,7 @@ public:
   void setUnnecessaryPcodeWarning(bool val) { warnunnecessarypcode = val; }
   void setDeadTempWarning(bool val) { warndeadtemps = val; }
   void setEnforceLocalKeyWord(bool val) { pcode.setEnforceLocalKey(val); }
+  void setLargeTemporaryWarning (bool val) {largetemporarywarning = val;}
   void setLenientConflict(bool val) { lenientconflicterrors = val; }
   void setLocalCollisionWarning(bool val) { warnalllocalcollisions = val; }
   void setAllNopWarning(bool val) { warnallnops = val; }

@@ -35,6 +35,8 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 
 	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this produces
 													// This value should always match SleighLanguage.SLA_FORMAT_VERSION
+	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.  
+	                                                //Should match value in sleighbase.cc
 	private VectorSTL<String> userop = new VectorSTL<>();
 	private address_set varnode_xref = new address_set(); // Cross-reference registers by address
 	protected SubtableSymbol root;

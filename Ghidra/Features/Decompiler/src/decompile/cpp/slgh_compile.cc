@@ -183,7 +183,7 @@ SubtableSymbol *WithBlock::getCurrentSubtable(const list<WithBlock> &stack)
   return (SubtableSymbol *)0;
 }
 
-ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead)
+ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,bool un,bool warndead, bool warnlargetemp)
 
 {
   compiler = sleigh;
@@ -191,8 +191,10 @@ ConsistencyChecker::ConsistencyChecker(SleighCompile *sleigh,SubtableSymbol *rt,
   unnecessarypcode = 0;
   readnowrite = 0;
   writenoread = 0;
+  largetemp = 0;        ///<Number of constructors using at least one temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
   printextwarning = un;
   printdeadwarning = warndead;
+  printlargetempwarning = warnlargetemp; ///< If true, prints a warning about each constructor using a temporary varnode larger than SleighBase::MAX_UNIQUE_SIZE
 }
 
 int4 ConsistencyChecker::recoverSize(const ConstTpl &sizeconst,Constructor *ct)
@@ -814,6 +816,33 @@ bool ConsistencyChecker::checkConstructorSection(Constructor *ct,ConstructTpl *c
   return testresult;
 }
 
+///
+/// Returns true if the output or one of the inputs of
+/// op is in the unique space and larger than SleighBase::MAX_UNIQUE_SIZE
+///
+bool ConsistencyChecker::hasLargeTemporary(OpTpl *op){
+	VarnodeTpl *out = op->getOut();
+	if ((out != (VarnodeTpl *) 0x0) && isTemporaryAndTooBig(out)) {
+		return true;
+	}
+	for (int4 i = 0; i < op->numInput(); ++i) {
+	    VarnodeTpl *in = op->getIn(i);
+		if (isTemporaryAndTooBig(in)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+///
+/// Returns true precisely when vn is in the unique space and
+/// has size larger than SleighBase::MAX_UNIQUE_SIZE
+///
+bool ConsistencyChecker::isTemporaryAndTooBig(VarnodeTpl *vn){
+	return vn->getSpace().isUniqueSpace() &&
+	    (vn->getSize().getReal() > SleighBase::MAX_UNIQUE_SIZE);
+	}
+
 bool ConsistencyChecker::checkVarnodeTruncation(Constructor *ct,int4 slot,
 						OpTpl *op,VarnodeTpl *vn,bool isbigendian)
 {
@@ -1238,6 +1267,24 @@ void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,Optimi
   }
 }
 
+///
+/// Checks the ops in ct to see whether a varnode larger than
+/// SleighBase::MAX_UNIQUE_SIZE is used.  Note that this method
+/// returns after the first large varnode is found.
+///
+void ConsistencyChecker::checkLargeTemporaries(Constructor *ct){
+    vector<OpTpl *> ops = ct->getTempl()->getOpvec();
+    for (vector<OpTpl *>::iterator iter = ops.begin(); iter != ops.end(); ++iter){
+    	if (hasLargeTemporary(*iter)){
+    		if (printlargetempwarning){
+    			compiler->reportWarning(compiler->getLocation(ct), "Constructor uses temporary varnode larger than " + to_string(SleighBase::MAX_UNIQUE_SIZE) + " bytes.");
+    		}
+    		largetemp++;
+    		return;
+    	}
+    }
+}
+
 void ConsistencyChecker::optimize(Constructor *ct)
 
 {
@@ -1255,6 +1302,7 @@ void ConsistencyChecker::optimize(Constructor *ct)
       applyOptimization(ct,*currec);
   } while(currec != (OptimizeRecord *)0);
   checkUnusedTemps(ct,recs);
+  checkLargeTemporaries(ct);
 }
 
 bool ConsistencyChecker::test(void)
@@ -1640,7 +1688,7 @@ void SleighCompile::buildPatterns(void)
 void SleighCompile::checkConsistency(void)
 
 {
-  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps);
+  ConsistencyChecker checker(this, root,warnunnecessarypcode,warndeadtemps,largetemporarywarning);
 
   if (!checker.test()) {
     errors += 1;
@@ -1668,6 +1716,14 @@ void SleighCompile::checkConsistency(void)
     msg << " operations wrote to temporaries that were not read" << endl;
     msg << "Use -t switch to list each individually";
     reportInfo(msg.str());
+  }
+  if ((!largetemporarywarning) && (checker.getNumLargeTemporaries() > 0)) {
+	ostringstream msg;
+	msg << dec << checker.getNumLargeTemporaries();
+	msg << " constructors contain temporaries larger than ";
+	msg << SleighBase::MAX_UNIQUE_SIZE << " bytes" << endl;
+	msg << "Use -o switch to list each individually.";
+	reportInfo(msg.str());
   }
 }
 
@@ -1857,7 +1913,7 @@ uintb SleighCompile::getUniqueAddr(void)
 
 {
   uintb base = getUniqueBase();
-  setUniqueBase(base + 16);	// Should be maximum size of a unique
+  setUniqueBase(base + SleighBase::MAX_UNIQUE_SIZE);
   return base;
 }
 
@@ -2874,7 +2930,7 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 
 static void initCompiler(SleighCompile &compiler, map<string,string> &defines, bool enableUnnecessaryPcodeWarning,
 			 bool disableLenientConflict, bool enableAllCollisionWarning,
-			 bool enableAllNopWarning,bool enableDeadTempWarning,bool enforceLocalKeyWord)
+			 bool enableAllNopWarning,bool enableDeadTempWarning,bool enforceLocalKeyWord, bool largeTemporaryWarning)
 
 {
   map<string,string>::iterator iter = defines.begin();
@@ -2893,6 +2949,8 @@ static void initCompiler(SleighCompile &compiler, map<string,string> &defines, b
     compiler.setDeadTempWarning(true);
   if (enforceLocalKeyWord)
     compiler.setEnforceLocalKeyWord(true);
+  if (largeTemporaryWarning)
+	  compiler.setLargeTemporaryWarning(true);
 }
 
 static void segvHandler(int sig) {
@@ -2920,6 +2978,7 @@ int main(int argc,char **argv)
     cerr << "   -t              print warnings for dead temporaries" << endl;
     cerr << "   -e              enforce use of 'local' keyword for temporaries" << endl;
     cerr << "   -c              print warnings for all constructors with colliding operands" << endl;
+    cerr << "   -o              print warnings for temporaries which are too large" << endl;
     cerr << "   -DNAME=VALUE    defines a preprocessor macro NAME with value VALUE" << endl;
     exit(2);
   }
@@ -2933,6 +2992,7 @@ int main(int argc,char **argv)
   bool enableAllNopWarning = false;
   bool enableDeadTempWarning = false;
   bool enforceLocalKeyWord = false;
+  bool largeTemporaryWarning = false;
   
   bool compileAll = false;
   
@@ -2964,6 +3024,8 @@ int main(int argc,char **argv)
       enableDeadTempWarning = true;
     else if (argv[i][1] == 'e')
       enforceLocalKeyWord = true;
+    else if (argv[i][1] == 'o')
+    	largeTemporaryWarning = true;
 #ifdef YYDEBUG
     else if (argv[i][1] == 'x')
       yydebug = 1;		// Debug option
@@ -2996,7 +3058,7 @@ int main(int argc,char **argv)
       SleighCompile compiler;
       initCompiler(compiler, defines, enableUnnecessaryPcodeWarning, 
 		   disableLenientConflict, enableAllCollisionWarning, enableAllNopWarning,
-		   enableDeadTempWarning, enforceLocalKeyWord);
+		   enableDeadTempWarning, enforceLocalKeyWord,largeTemporaryWarning);
       retval = run_compilation(slaspec.c_str(),sla.c_str(),compiler);
       if (retval != 0) {
 	return retval; // stop on first error
@@ -3033,7 +3095,7 @@ int main(int argc,char **argv)
     SleighCompile compiler;
     initCompiler(compiler, defines, enableUnnecessaryPcodeWarning, 
 		 disableLenientConflict, enableAllCollisionWarning, enableAllNopWarning,
-		 enableDeadTempWarning, enforceLocalKeyWord);
+		 enableDeadTempWarning, enforceLocalKeyWord,largeTemporaryWarning);
     
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);
