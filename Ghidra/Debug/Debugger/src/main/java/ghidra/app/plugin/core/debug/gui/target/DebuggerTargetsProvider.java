@@ -199,7 +199,7 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 	private void createActions() {
 		actionConnect = new ConnectAction();
 		actionDisconnect = new DisconnectAction();
-		actionDisconnectAll = DisconnectAllAction.builder(plugin)
+		actionDisconnectAll = DisconnectAllAction.builder(plugin, plugin)
 				.menuPath(DisconnectAllAction.NAME)
 				.onAction(this::activatedDisconnectAll)
 				.buildAndInstallLocal(this);

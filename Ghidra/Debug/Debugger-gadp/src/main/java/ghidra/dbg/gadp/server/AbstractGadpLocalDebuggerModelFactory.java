@@ -18,6 +18,7 @@ package ghidra.dbg.gadp.server;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.channels.AsynchronousByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -84,10 +85,17 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements LocalDebu
 		this.jdwpPort = jdwpPort;
 	}
 
-	@Override
-	public CompletableFuture<GadpClient> build() {
-		CompletableFuture<Integer> findPort = new CompletableFuture<>();
-		new Thread(() -> {
+	class AgentThread extends Thread {
+		int port;
+		Process process;
+		CompletableFuture<Void> ready = new CompletableFuture<>();
+
+		public AgentThread() {
+			super(getThreadName());
+		}
+
+		@Override
+		public void run() {
 			try {
 				ProcessBuilder builder = new ProcessBuilder();
 				List<String> cmd = new ArrayList<>();
@@ -101,9 +109,9 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements LocalDebu
 				builder.command(cmd);
 				builder.redirectError(Redirect.INHERIT);
 
-				Process agent = builder.start();
+				process = builder.start();
 				BufferedReader reader =
-					new BufferedReader(new InputStreamReader(agent.getInputStream()));
+					new BufferedReader(new InputStreamReader(process.getInputStream()));
 				String line;
 				while (null != (line = reader.readLine())) {
 					if (LOG_AGENT_STDOUT) {
@@ -111,22 +119,61 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements LocalDebu
 					}
 					if (line.startsWith(AbstractGadpServer.LISTENING_ON)) {
 						String[] parts = line.split(":"); // Separates address from port
-						findPort.complete(Integer.parseInt(parts[parts.length - 1]));
+						port = Integer.parseInt(parts[parts.length - 1]);
+						ready.complete(null);
 					}
 				}
-				if (!findPort.isDone()) {
-					findPort.completeExceptionally(
+				if (!ready.isDone()) {
+					ready.completeExceptionally(
 						new RuntimeException("Agent terminated unexpectedly"));
 				}
 			}
 			catch (Throwable e) {
-				findPort.completeExceptionally(e);
+				ready.completeExceptionally(e);
 			}
-		}, getThreadName()).start();
-		return findPort.thenCompose(selectedPort -> {
-			GadpTcpDebuggerModelFactory factory = new GadpTcpDebuggerModelFactory();
+		}
+	}
+
+	static class AgentOwningGadpClient extends GadpClient {
+		private final AgentThread agentThread;
+
+		public AgentOwningGadpClient(String description, AsynchronousByteChannel channel,
+				AgentThread agentThread) {
+			super(description, channel);
+			this.agentThread = agentThread;
+		}
+
+		@Override
+		public CompletableFuture<Void> close() {
+			return super.close().thenRun(() -> {
+				agentThread.process.destroy();
+				agentThread.interrupt();
+			});
+		}
+	}
+
+	static class AgentOwningGadpTcpDebuggerModelFactory extends GadpTcpDebuggerModelFactory {
+		private final AgentThread agentThread;
+
+		public AgentOwningGadpTcpDebuggerModelFactory(AgentThread agentThread) {
+			this.agentThread = agentThread;
+		}
+
+		@Override
+		protected GadpClient createClient(String description, AsynchronousByteChannel channel) {
+			return new AgentOwningGadpClient(description, channel, agentThread);
+		}
+	}
+
+	@Override
+	public CompletableFuture<GadpClient> build() {
+		AgentThread thread = new AgentThread();
+		thread.start();
+		return thread.ready.thenCompose(__ -> {
+			GadpTcpDebuggerModelFactory factory =
+				new AgentOwningGadpTcpDebuggerModelFactory(thread);
 			// selectedPort may differ from port option, particularly if port == 0
-			factory.setAgentPort(selectedPort);
+			factory.setAgentPort(thread.port);
 			return factory.build();
 		});
 	}

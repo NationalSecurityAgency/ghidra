@@ -137,22 +137,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected static class ToToggleSelectionListener implements BooleanChangeAdapter {
-		private final ToggleDockingAction action;
-
-		public ToToggleSelectionListener(ToggleDockingAction action) {
-			this.action = action;
-		}
-
-		@Override
-		public void changed(Boolean value) {
-			if (action.isSelected() == value) {
-				return;
-			}
-			action.setSelected(value);
-		}
-	}
-
 	protected class SeekTracePresentAction extends AbstractSeekTracePresentAction
 			implements BooleanChangeAdapter {
 		public static final String GROUP = DebuggerResources.GROUP_GENERAL;
@@ -289,7 +273,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	StepTraceForwardAction actionStepTraceForward;
 	SeekTracePresentAction actionSeekTracePresent;
 	ToggleDockingAction actionSyncFocus;
-	ToggleDockingAction actionSaveByDefault;
 	Set<Object> strongRefs = new HashSet<>(); // Eww
 
 	public DebuggerThreadsProvider(final DebuggerThreadsPlugin plugin) {
@@ -584,39 +567,17 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
-		// TODO: Make other actions like this one
-		actionSaveTrace = DebuggerResources.SaveTraceAction.builder(plugin)
-				.enabledWhen(c -> current.getTrace() != null && traceManager != null)
-				.onAction(c -> saveTrace())
-				.buildAndInstallLocal(this);
+		// TODO: Make other actions use builder?
 		actionStepTraceBackward = new StepTraceBackwardAction();
 		actionStepTraceForward = new StepTraceForwardAction();
 		actionSeekTracePresent = new SeekTracePresentAction();
-		actionSyncFocus = DebuggerResources.SynchronizeFocusAction.builder(plugin)
+		actionSyncFocus = SynchronizeFocusAction.builder(plugin)
 				.selected(traceManager != null && traceManager.isSynchronizeFocus())
 				.enabledWhen(c -> traceManager != null)
 				.onAction(c -> toggleSyncFocus(actionSyncFocus.isSelected()))
 				.buildAndInstallLocal(this);
 		traceManager.addSynchronizeFocusChangeListener(
 			strongRef(new ToToggleSelectionListener(actionSyncFocus)));
-		actionSaveByDefault = DebuggerResources.SaveByDefaultAction.builder(plugin)
-				.selected(traceManager != null && traceManager.isSaveTracesByDefault())
-				.enabledWhen(c -> traceManager != null)
-				.onAction(c -> toggleSaveByDefault(actionSaveByDefault.isSelected()))
-				.buildAndInstallLocal(this);
-		traceManager.addSaveTracesByDefaultChangeListener(
-			strongRef(new ToToggleSelectionListener(actionSaveByDefault)));
-	}
-
-	private void saveTrace() {
-		Trace curTrace = current.getTrace();
-		if (curTrace == null) {
-			return;
-		}
-		if (traceManager == null) {
-			return;
-		}
-		traceManager.saveTrace(curTrace);
 	}
 
 	private void toggleSyncFocus(boolean enabled) {
@@ -624,13 +585,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		traceManager.setSynchronizeFocus(enabled);
-	}
-
-	private void toggleSaveByDefault(boolean enabled) {
-		if (traceManager == null) {
-			return;
-		}
-		traceManager.setSaveTracesByDefault(enabled);
 	}
 
 	private void traceTabSelected(ListSelectionEvent e) {

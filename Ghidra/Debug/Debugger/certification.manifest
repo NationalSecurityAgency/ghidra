@@ -99,6 +99,7 @@ src/main/help/help/topics/DebuggerThreadsPlugin/images/stepback.png||GHIDRA||||E
 src/main/help/help/topics/DebuggerThreadsPlugin/images/stepinto.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/images/DebuggerTimePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
 src/main/resources/define_info_proc_mappings||GHIDRA||||END|
 src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

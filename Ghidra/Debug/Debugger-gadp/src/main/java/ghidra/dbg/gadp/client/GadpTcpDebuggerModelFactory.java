@@ -17,8 +17,7 @@ package ghidra.dbg.gadp.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -53,13 +52,17 @@ public class GadpTcpDebuggerModelFactory implements DebuggerModelFactory {
 			CompletableFuture<Void> connect = AsyncUtils.completable(TypeSpec.VOID,
 				channel::connect, new InetSocketAddress(host, port));
 			return connect.thenCompose(__ -> {
-				GadpClient client = new GadpClient(host + ":" + port, channel);
+				GadpClient client = createClient(host + ":" + port, channel);
 				return client.connect().thenApply(___ -> client);
 			});
 		}
 		catch (IOException e) {
 			return CompletableFuture.failedFuture(e);
 		}
+	}
+
+	protected GadpClient createClient(String description, AsynchronousByteChannel channel) {
+		return new GadpClient(description, channel);
 	}
 
 	public String getAgentAddress() {

@@ -101,6 +101,8 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		TraceRecorder recDummy2 =
 			modelService.recordTarget(dummy2, new TestDebuggerTargetTraceMapper(dummy2));
 
+		traceManager.setAutoCloseOnTerminate(false);
+
 		traceManager.openTrace(recDummy1.getTrace());
 		traceManager.openTrace(recDummy2.getTrace());
 		recDummy1.stopRecording();

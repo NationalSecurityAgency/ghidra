@@ -217,7 +217,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	protected void createActions() {
-		actionDisconnectAll = DisconnectAllAction.builder(this)
+		actionDisconnectAll = DisconnectAllAction.builder(this, this)
 				.menuPath("Debugger", DisconnectAllAction.NAME)
 				.onAction(this::activatedDisconnectAll)
 				.buildAndInstall(tool);

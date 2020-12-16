@@ -41,6 +41,7 @@ import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
+import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.app.services.MarkerService;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
@@ -258,6 +259,8 @@ public interface DebuggerResources {
 	String GROUP_TARGET = "Dbg5. Target";
 	String GROUP_BREAKPOINTS = "Dbg6. Breakpoints";
 	String GROUP_TRACE = "Dbg7. Trace";
+	String GROUP_TRACE_TOGGLES = "Dbg7.a. Trace Toggles";
+	String GROUP_TRACE_CLOSE = "Dbg7.b. Trace Close";
 	String GROUP_MAINTENANCE = "Dbg8. Maintenance";
 	String GROUP_MAPPING = "Dbg9. Map Modules/Sections";
 
@@ -296,7 +299,7 @@ public interface DebuggerResources {
 	}
 
 	interface SaveTraceAction {
-		String NAME = "Save Trace";
+		String NAME_PREFIX = "Save ";
 		String DESCRIPTION = "Save the selected trace";
 		Icon ICON = ICON_SAVE;
 		String GROUP = GROUP_TRACE;
@@ -304,9 +307,10 @@ public interface DebuggerResources {
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME_PREFIX + "...")
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -376,6 +380,9 @@ public interface DebuggerResources {
 			return new ActionBuilder(NAME, owner.getName()).description(DESCRIPTION_PREFIX)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, DESCRIPTION_PREFIX)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
 					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -549,11 +556,10 @@ public interface DebuggerResources {
 		Icon ICON = ICON_DISCONNECT;
 		String HELP_ANCHOR = "disconnect_all";
 
-		public static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(ownerName, NAME).description(DESCRIPTION)
+		public static ActionBuilder builder(Plugin owner, Plugin helpOwner) {
+			return new ActionBuilder(owner.getName(), NAME).description(DESCRIPTION)
 					.menuIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
 		}
 	}
 
@@ -1166,9 +1172,9 @@ public interface DebuggerResources {
 	}
 
 	interface SaveByDefaultAction {
-		String NAME = "Save Trace By Default";
+		String NAME = "Save Traces By Default";
 		String DESCRIPTION = "Automatically save traces to the project";
-		String GROUP = GROUP_TRACE;
+		String GROUP = GROUP_TRACE_TOGGLES;
 		Icon ICON = ICON_SAVE;
 		String HELP_ANCHOR = "save_by_default";
 
@@ -1176,8 +1182,27 @@ public interface DebuggerResources {
 			String ownerName = owner.getName();
 			return new ToggleActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface CloseOnTerminateAction {
+		String NAME = "Close Traces Upon Termination";
+		String DESCRIPTION = "Close any live trace whose recording terminates";
+		String GROUP = GROUP_TRACE_TOGGLES;
+		Icon ICON = ICON_CLOSE;
+		String HELP_ANCHOR = "auto_close_terminated";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1204,7 +1229,7 @@ public interface DebuggerResources {
 	interface CloseTraceAction {
 		String NAME_PREFIX = "Close ";
 		String DESCRIPTION = "Close the current trace";
-		String GROUP = GROUP_TRACE;
+		String GROUP = GROUP_TRACE_CLOSE;
 		Icon ICON = ICON_CLOSE;
 		String HELP_ANCHOR = "close_trace";
 
@@ -1328,5 +1353,21 @@ public interface DebuggerResources {
 			}
 		}
 		table.scrollToSelectedRow();
+	}
+
+	public static class ToToggleSelectionListener implements BooleanChangeAdapter {
+		private final ToggleDockingAction action;
+
+		public ToToggleSelectionListener(ToggleDockingAction action) {
+			this.action = action;
+		}
+
+		@Override
+		public void changed(Boolean value) {
+			if (action.isSelected() == value) {
+				return;
+			}
+			action.setSelected(value);
+		}
 	}
 }

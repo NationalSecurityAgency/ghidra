@@ -26,8 +26,8 @@ import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
@@ -164,6 +164,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		new ProxiedRecorderChangeListener();
 
 	DockingAction actionDebugProgram;
+	DockingAction actionDisconnectAll;
 
 	protected final ListenerSet<CollectionChangeListener<DebuggerModelFactory>> factoryListeners =
 		new ListenerSet<>(CollectionChangeListener.of(DebuggerModelFactory.class));
@@ -190,10 +191,15 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	protected void createActions() {
 		// Note, I have to give an enabledWhen, otherwise any context change re-enables it
-		actionDebugProgram = DebuggerResources.DebugProgramAction.builder(this, delegate)
+		actionDebugProgram = DebugProgramAction.builder(this, delegate)
 				.enabledWhen(ctx -> currentProgramPath != null)
 				.onAction(this::debugProgramActivated)
 				.buildAndInstall(tool);
+		actionDisconnectAll = DisconnectAllAction.builder(this, delegate)
+				.menuPath("Debugger", DisconnectAllAction.NAME)
+				.onAction(this::activatedDisconnectAll)
+				.buildAndInstall(tool);
+
 		updateActionDebugProgram();
 	}
 
@@ -207,6 +213,10 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		 */
 		BackgroundUtils.async(tool, currentProgram, actionDebugProgram.getDescription(), true, true,
 			true, this::debugProgram);
+	}
+
+	private void activatedDisconnectAll(ActionContext context) {
+		closeAllModels();
 	}
 
 	private CompletableFuture<Void> debugProgram(Program __, TaskMonitor monitor) {
@@ -244,6 +254,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		String desc = currentProgramPath == null ? DebugProgramAction.DESCRIPTION_PREFIX.trim()
 				: DebugProgramAction.DESCRIPTION_PREFIX + currentProgramPath;
 		actionDebugProgram.setDescription(desc);
+		actionDebugProgram.getMenuBarData().setMenuItemName(desc);
 	}
 
 	@Override

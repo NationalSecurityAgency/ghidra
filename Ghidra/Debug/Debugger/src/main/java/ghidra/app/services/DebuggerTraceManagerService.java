@@ -162,13 +162,31 @@ public interface DebuggerTraceManagerService {
 	/**
 	 * Check whether traces should by saved by default
 	 * 
-	 * @return true if save by default, false otherwise
+	 * @return true if saved by default, false otherwise
 	 */
 	boolean isSaveTracesByDefault();
 
 	void addSaveTracesByDefaultChangeListener(BooleanChangeAdapter listener);
 
 	void removeSaveTracesByDefaultChangeListener(BooleanChangeAdapter listener);
+
+	/**
+	 * Control whether live traces are automatically closed upon target termination
+	 * 
+	 * @param enabled true to automatically close, false to leave open
+	 */
+	void setAutoCloseOnTerminate(boolean enabled);
+
+	/**
+	 * Check whether live traces are automatically closed upon target termination
+	 * 
+	 * @return true if automatically closed, false if left open
+	 */
+	boolean isAutoCloseOnTerminate();
+
+	void addAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener);
+
+	void removeAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener);
 
 	/**
 	 * Swap out the trace view of a {@link ProgramLocation} if it is not the debugger's view

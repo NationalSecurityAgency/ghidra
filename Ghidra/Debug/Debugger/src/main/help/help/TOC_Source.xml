@@ -82,20 +82,24 @@
 	        		sortgroup="e" 
 	                target="help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html" />
 
+			<tocdef id="DebuggerTraceManagerServicePlugin" text="Trace Management"
+					sortgroup="f"
+					target="help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html" />
+
 	        <tocdef id="DebuggerRegistersPlugin" text="Registers" 
-	        		sortgroup="f" 
+	        		sortgroup="g" 
 	                target="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html" />
 
 	        <tocdef id="DebuggerListingPlugin" text="Dynamic Listing" 
-	        		sortgroup="g" 
+	        		sortgroup="h" 
 	                target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html" />
 
 	        <tocdef id="DebuggerStackPlugin" text="Stack" 
-	        		sortgroup="h" 
+	        		sortgroup="i" 
 	                target="help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html" />
 
 	        <tocdef id="DebuggerBreakpointsPlugin" text="Breakpoints" 
-	        		sortgroup="i" 
+	        		sortgroup="j" 
 	                target="help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html" >
 	                
 	                <tocdef id="DebuggerBreakpointMarkerPlugin" text="In the Listings"
@@ -104,15 +108,15 @@
 	        </tocdef>
 
 	        <tocdef id="DebuggerRegionsPlugin" text="Memory Regions" 
-	        		sortgroup="j" 
+	        		sortgroup="k" 
 	                target="help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html" />
 
 	        <tocdef id="DebuggerTimePlugin" text="Time" 
-	        		sortgroup="k" 
+	        		sortgroup="l" 
 	                target="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html" />
 
 	        <tocdef id="DebuggerModulesPlugin" text="Modules and Sections" 
-	        		sortgroup="l" 
+	        		sortgroup="m" 
 	                target="help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html" >
 
 		        <tocdef id="DebuggerStaticMappingPlugin" text="Static Mappings" 
@@ -121,7 +125,7 @@
 			</tocdef>
 			
 	        <tocdef id="DebuggerBots" text="Bots: Workflow Automation" 
-	        		sortgroup="m" 
+	        		sortgroup="n" 
 	                target="help/topics/DebuggerBots/DebuggerBots.html" />
 	    </tocdef>
 	</tocref>

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.action.ToggleDockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -125,12 +126,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	// TODO: This is a bit out of this manager's bounds, but acceptable for now.
 	class ForRecordersListener implements CollectionChangeListener<TraceRecorder> {
 		@Override
-		public void elementAdded(TraceRecorder element) {
+		public void elementAdded(TraceRecorder recorder) {
 			updateCurrentRecorder();
 		}
 
 		@Override
-		public void elementRemoved(TraceRecorder element) {
+		public void elementRemoved(TraceRecorder recorder) {
+			if (isAutoCloseOnTerminate()) {
+				Trace trace = recorder.getTrace();
+				if (getOpenTraces().contains(trace)) {
+					if (isSaveTracesByDefault()) {
+						saveTrace(trace);
+					}
+					closeTrace(trace);
+				}
+			}
 			updateCurrentRecorder();
 		}
 	}
@@ -149,6 +159,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected final AsyncReference<Boolean, Void> saveTracesByDefault = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> synchronizeFocus = new AsyncReference<>(true);
+	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
+	protected final AsyncReference<Boolean, Void> autoCloseOnTerminate = new AsyncReference<>(true);
 
 	// @AutoServiceConsumed via method
 	private DebuggerModelService modelService;
@@ -161,12 +173,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	DockingAction actionCloseAllTraces;
 	DockingAction actionCloseOtherTraces;
 	DockingAction actionCloseDeadTraces;
+	DockingAction actionSaveTrace;
 	DockingAction actionOpenTrace;
+	ToggleDockingAction actionSaveByDefault;
+	ToggleDockingAction actionCloseOnTerminate;
+	Set<Object> strongRefs = new HashSet<>(); // Eww
 
 	public DebuggerTraceManagerServicePlugin(PluginTool plugintool) {
 		super(plugintool);
 		// NOTE: Plugin should be recognized as its own service provider
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
+	}
+
+	private <T> T strongRef(T t) {
+		strongRefs.add(t);
+		return t;
 	}
 
 	@Override
@@ -176,6 +197,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	protected void createActions() {
+		actionSaveTrace = SaveTraceAction.builder(this)
+				.enabledWhen(c -> current.getTrace() != null)
+				.onAction(this::activatedSaveTrace)
+				.buildAndInstall(tool);
 		actionOpenTrace = OpenTraceAction.builder(this)
 				.enabledWhen(ctx -> true)
 				.onAction(this::activatedOpenTrace)
@@ -196,6 +221,28 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				.enabledWhen(ctx -> !tracesView.isEmpty() && modelService != null)
 				.onAction(this::activatedCloseDeadTraces)
 				.buildAndInstall(tool);
+
+		actionSaveByDefault = SaveByDefaultAction.builder(this)
+				.selected(isSaveTracesByDefault())
+				.onAction(c -> setSaveTracesByDefault(actionSaveByDefault.isSelected()))
+				.buildAndInstall(tool);
+		addSaveTracesByDefaultChangeListener(
+			strongRef(new ToToggleSelectionListener(actionSaveByDefault)));
+
+		actionCloseOnTerminate = CloseOnTerminateAction.builder(this)
+				.selected(isAutoCloseOnTerminate())
+				.onAction(c -> setAutoCloseOnTerminate(actionCloseOnTerminate.isSelected()))
+				.buildAndInstall(tool);
+		addAutoCloseOnTerminateChangeListener(
+			strongRef(new ToToggleSelectionListener(actionCloseOnTerminate)));
+	}
+
+	private void activatedSaveTrace(ActionContext ctx) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return;
+		}
+		saveTrace(trace);
 	}
 
 	private void activatedOpenTrace(ActionContext ctx) {
@@ -445,6 +492,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		Trace trace = current.getTrace();
 		String name = trace == null ? "..." : trace.getName();
 		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + name);
+		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + name);
 		tool.contextChanged(null);
 	}
 
@@ -741,6 +789,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				public void run(TaskMonitor monitor) throws CancelledException {
 					try {
 						traces.createFile(finalFilename, trace, monitor);
+						trace.save("Initial save", monitor);
 					}
 					catch (CancelledException e) {
 						// Done
@@ -762,7 +811,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 							"Save New Trace Error", e.getMessage(), e);
 					}
 				}
-
 			});
 		}
 	}
@@ -971,6 +1019,26 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void removeSaveTracesByDefaultChangeListener(BooleanChangeAdapter listener) {
 		saveTracesByDefault.removeChangeListener(listener);
+	}
+
+	@Override
+	public void setAutoCloseOnTerminate(boolean enabled) {
+		autoCloseOnTerminate.set(enabled, null);
+	}
+
+	@Override
+	public boolean isAutoCloseOnTerminate() {
+		return autoCloseOnTerminate.get();
+	}
+
+	@Override
+	public void addAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener) {
+		autoCloseOnTerminate.addChangeListener(listener);
+	}
+
+	@Override
+	public void removeAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener) {
+		autoCloseOnTerminate.removeChangeListener(listener);
 	}
 
 	@Override
