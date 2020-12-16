@@ -87,6 +87,7 @@
         <register name="R14"/>
         <register name="R15"/>
         <register name="DF"/>
+        <register name="GS_OFFSET"/>
       </unaffected>
       <killedbycall>
         <register name="RAX"/>
@@ -148,6 +149,7 @@
         <register name="R14"/>
         <register name="R15"/>
         <register name="DF"/>
+        <register name="GS_OFFSET"/>
     </unaffected>
     <killedbycall>
       <register name="RAX"/>
