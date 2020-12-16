@@ -823,6 +823,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			viewer.getRenderContext()
 					.setVertexIncludePredicate(
 						v -> v.getAttributeMap().values().stream().noneMatch(selected::contains));
+			viewer.repaint();
 
 		});
 
