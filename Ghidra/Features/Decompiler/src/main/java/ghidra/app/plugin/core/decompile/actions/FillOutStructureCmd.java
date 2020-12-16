@@ -171,6 +171,35 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	}
 
 	/**
+	 * Method to create a structure data type for a variable in the given function.
+	 * Unlike the applyTo() action, this method will not modify the function, its variables,
+	 * or any existing data-types. A new structure is always created.
+	 * @param var a parameter, local variable, or global variable used in the given function
+	 * @param function the function to process
+	 * @return a filled-in structure or null if one could not be created
+	 */
+	public Structure processStructure(HighVariable var, Function function) {
+
+		if (var == null || var.getSymbol() == null || var.getOffset() >= 0) {
+			return null;
+		}
+
+		Structure structDT;
+
+		try {
+			fillOutStructureDef(var);
+			pushIntoCalls();
+			structDT = createStructure(null, var, function, false);
+			populateStructure(structDT);
+		}
+		catch (Exception e) {
+			return null;
+		}
+
+		return structDT;
+	}
+
+	/**
 	 * Retrieve the component map that was generated when structure was created using decomiler info
 	 * @return componentMap
 	 */
