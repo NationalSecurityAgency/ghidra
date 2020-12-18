@@ -596,6 +596,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			if (regs.isEmpty()) {
 				newRegs.getDescriptions().fetch().thenCompose(descs -> {
 					return initRegMapper(descs);
+				}).thenAccept(__ -> {
+					listeners.fire.registerBankMapped(DefaultTraceRecorder.this);
 				}).exceptionally(ex -> {
 					Msg.error(this, "Could not intialize register mapper", ex);
 					return null;

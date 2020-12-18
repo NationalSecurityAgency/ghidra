@@ -284,6 +284,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	class RegAccessListener implements TraceRecorderListener {
 		@Override
+		public void registerBankMapped(TraceRecorder recorder) {
+			if (readTheseCoords) {
+				return;
+			}
+			Swing.runIfSwingOrRunLater(() -> loadValues());
+		}
+
+		@Override
 		public void registerAccessibilityChanged(TraceRecorder recorder) {
 			if (readTheseCoords) {
 				return;

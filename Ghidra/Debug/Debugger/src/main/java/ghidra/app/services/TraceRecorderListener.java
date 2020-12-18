@@ -18,12 +18,21 @@ package ghidra.app.services;
 /**
  * A listener for state changes in a recorded target, or in the recorder itself
  * 
+ * <P>
  * NOTE: This contains events that would not otherwise be detectable by listening to the destination
  * trace. Some of these can be detected by listening to the model; however, since the recorder is
  * already keeping track of most objects of interest, it makes sense for it to implement some
  * conveniences for accessing and listening to those objects.
  */
 public interface TraceRecorderListener {
+
+	/**
+	 * A new bank of registers has appeared, and its mapper instantiated
+	 * 
+	 * @param recorder the recorder
+	 */
+	default void registerBankMapped(TraceRecorder recorder) {
+	}
 
 	/**
 	 * Some bank of registers tracked by the given recorder has changed in accessibility
