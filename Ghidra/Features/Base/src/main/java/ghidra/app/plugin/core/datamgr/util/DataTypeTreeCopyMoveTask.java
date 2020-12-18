@@ -28,7 +28,6 @@ import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.ProgramArchive;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.Task;
@@ -90,34 +89,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		return null;
 	}
 
-	private boolean enableEvents(Program program, boolean enable) {
-		if (program == null) {
-			return false;
-		}
-
-		boolean wasEnabled = program.isSendingEvents();
-		program.setEventsEnabled(enable);
-		return wasEnabled;
-	}
-
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
-
-		//
-		// Note: we disable the program's events to avoid UI painting deadlock as the copy/move
-		//       is generating changes to the program.
-		//
-		Program program = gTree.getProgram();
-		boolean wasEnabled = enableEvents(program, false);
-		try {
-			doRun(monitor);
-		}
-		finally {
-			enableEvents(program, wasEnabled);
-		}
-	}
-
-	private void doRun(TaskMonitor monitor) {
 
 		int nodeCount = droppedNodes.size();
 		filterRedundantNodes();
@@ -272,8 +245,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 			if (node instanceof DataTypeNode) {
 				DataType dt = ((DataTypeNode) node).getDataType();
-				if (!isLocal(dt)) {
-					return true;
+				if (isLocal(dt)) {
+					return true; // local means it is not associated
 				}
 			}
 			else if (node instanceof CategoryNode) {
@@ -294,8 +267,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataType[] types = cat.getDataTypes();
 		for (DataType dt : types) {
 			monitor.checkCanceled();
-			if (!isLocal(dt)) {
-				return true;
+			if (isLocal(dt)) {
+				return true; // local means it is not associated
 			}
 		}
 
@@ -313,7 +286,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	private void associateDataType(DataType dt, DataTypeManager dtm, SourceArchive source) {
 
 		if (!isLocal(dt)) {
-			return;
+			return; // not local means it is already associated
 		}
 
 		dtm.associateDataTypeWithArchive(dt, source);
@@ -635,8 +608,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	// filters out nodes with categories in their path 
 	private void filterRedundantNodes() {
 
-		Set<GTreeNode> nodeSet = new HashSet<GTreeNode>(droppedNodes);
-		List<GTreeNode> filteredList = new ArrayList<GTreeNode>();
+		Set<GTreeNode> nodeSet = new HashSet<>(droppedNodes);
+		List<GTreeNode> filteredList = new ArrayList<>();
 
 		for (GTreeNode node : nodeSet) {
 			if (!containsAncestor(nodeSet, node)) {

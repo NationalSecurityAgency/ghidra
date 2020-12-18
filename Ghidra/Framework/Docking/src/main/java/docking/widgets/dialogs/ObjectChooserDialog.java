@@ -93,5 +93,6 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 	@Override
 	public void close() {
 		table.dispose();
+		super.close();
 	}
 }

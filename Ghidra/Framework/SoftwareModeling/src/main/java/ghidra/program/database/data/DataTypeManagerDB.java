@@ -1257,6 +1257,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				replacementDt = resolve(replacementDt, null);
 			}
 
+			if (existingDt == replacementDt) {
+				// replacement was exact match
+				return existingDt;
+			}
+
 			replace(existingDt, replacementDt);
 			if (fixupName) {
 				try {
