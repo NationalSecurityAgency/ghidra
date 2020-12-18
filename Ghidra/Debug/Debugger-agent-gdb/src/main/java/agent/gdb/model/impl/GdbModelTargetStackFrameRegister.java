@@ -58,7 +58,7 @@ public class GdbModelTargetStackFrameRegister
 		changeAttributes(List.of(), Map.of( //
 			CONTAINER_ATTRIBUTE_NAME, registers, //
 			LENGTH_ATTRIBUTE_NAME, bitLength, //
-			DISPLAY_ATTRIBUTE_NAME, register.getName(), //
+			DISPLAY_ATTRIBUTE_NAME, getName(), //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");
 	}

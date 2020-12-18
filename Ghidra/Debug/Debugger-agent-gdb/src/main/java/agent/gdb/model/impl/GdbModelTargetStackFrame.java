@@ -19,7 +19,8 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import agent.gdb.manager.*;
+import agent.gdb.manager.GdbRegister;
+import agent.gdb.manager.GdbStackFrame;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.*;
@@ -52,8 +53,6 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 	protected final GdbModelImpl impl;
 	protected final GdbModelTargetThread thread;
 	protected final GdbModelTargetInferior inferior;
-
-	private Set<GdbRegister> lastRead;
 
 	protected GdbStackFrame frame;
 	protected Address pc;
@@ -98,7 +97,6 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 				}
 				toRead.add(reg.register);
 			}
-			this.lastRead = toRead;
 			return frame.readRegisters(toRead);
 		}).thenApply(vals -> {
 			Map<String, byte[]> result = new LinkedHashMap<>();
@@ -168,8 +166,4 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		return frame.select();
 	}
 
-	public CompletableFuture<GdbRegisterSet> listRegisters() {
-		GdbRegisterSet set = new GdbRegisterSet(lastRead);
-		return CompletableFuture.completedFuture(set);
-	}
 }
