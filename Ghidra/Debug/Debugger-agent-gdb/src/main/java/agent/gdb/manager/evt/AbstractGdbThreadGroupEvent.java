@@ -27,6 +27,7 @@ public abstract class AbstractGdbThreadGroupEvent extends AbstractGdbEventWithFi
 	/**
 	 * Construct a new event by parsing the tail for information
 	 * 
+	 * <p>
 	 * The thread group ID must be specified by GDB in the "id" field.
 	 * 
 	 * @param tail the text following the event type in the GDB/MI event record

@@ -89,6 +89,13 @@ public interface GdbEventsListenerAdapter extends GdbEventsListener {
 	default void breakpointDeleted(GdbBreakpointInfo info, GdbCause cause) {
 	}
 
+	/**
+	 * The target memory was changed by the user.
+	 * 
+	 * <p>
+	 * This occurs when the user executes a {@code set} command. It does not (necessarily) occur
+	 * from the target's execution.
+	 */
 	@Override
 	default void memoryChanged(GdbInferior inferior, long addr, int len, GdbCause cause) {
 	}

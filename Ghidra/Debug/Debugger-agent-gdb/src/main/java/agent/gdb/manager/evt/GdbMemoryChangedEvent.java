@@ -29,6 +29,7 @@ public class GdbMemoryChangedEvent extends AbstractGdbEventWithFields {
 	/**
 	 * Construct a new event by parsing the tail for information
 	 * 
+	 * <p>
 	 * The thread group, start address, and length must be specified by GDB.
 	 * 
 	 * @param tail the text following the event type in the GDB/MI event record
@@ -38,7 +39,7 @@ public class GdbMemoryChangedEvent extends AbstractGdbEventWithFields {
 		super(tail);
 		this.iid = GdbParsingUtils.parseInferiorId(getInfo().getString("thread-group"));
 		this.addr = GdbParsingUtils.parsePrefixedHex(getInfo().getString("addr"));
-		this.len = Integer.parseInt(getInfo().getString("len"));
+		this.len = (int) GdbParsingUtils.parsePrefixedHex(getInfo().getString("len"));
 	}
 
 	/**

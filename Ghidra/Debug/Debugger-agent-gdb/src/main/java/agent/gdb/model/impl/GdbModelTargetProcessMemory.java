@@ -81,10 +81,8 @@ public class GdbModelTargetProcessMemory
 		return region;
 	}
 
-	@Override
-	public CompletableFuture<byte[]> readMemory(Address address, int length) {
+	protected CompletableFuture<byte[]> doReadMemory(Address address, long offset, int length) {
 		ByteBuffer buf = ByteBuffer.allocate(length);
-		long offset = address.getOffset();
 		AddressRange range;
 		try {
 			range = new AddressRangeImpl(address, length);
@@ -119,6 +117,11 @@ public class GdbModelTargetProcessMemory
 	}
 
 	@Override
+	public CompletableFuture<byte[]> readMemory(Address address, int length) {
+		return doReadMemory(address, address.getOffset(), length);
+	}
+
+	@Override
 	public CompletableFuture<Void> writeMemory(Address address, byte[] data) {
 		return inferior.writeMemory(address.getOffset(), ByteBuffer.wrap(data)).thenAccept(__ -> {
 			listeners.fire(TargetMemoryListener.class).memoryUpdated(this, address, data);
@@ -135,6 +138,14 @@ public class GdbModelTargetProcessMemory
 		}
 		return fetchElements(true).exceptionally(e -> {
 			Msg.error(this, "Could not update memory regions " + this + " on STOPPED");
+			return null;
+		});
+	}
+
+	public void memoryChanged(long offset, int len) {
+		Address address = impl.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+		doReadMemory(address, offset, len).exceptionally(ex -> {
+			Msg.error(this, "Failed to update memory contents on memory-changed event", ex);
 			return null;
 		});
 	}

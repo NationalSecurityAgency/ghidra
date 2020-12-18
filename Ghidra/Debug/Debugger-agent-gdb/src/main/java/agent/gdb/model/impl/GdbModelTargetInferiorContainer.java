@@ -211,6 +211,12 @@ public class GdbModelTargetInferiorContainer
 		inferior.modules.libraryUnloaded(name);
 	}
 
+	@Override
+	public void memoryChanged(GdbInferior inf, long addr, int len, GdbCause cause) {
+		GdbModelTargetInferior inferior = getTargetInferior(inf);
+		inferior.memory.memoryChanged(addr, len);
+	}
+
 	private void updateUsingInferiors(Map<Integer, GdbInferior> byIID) {
 		List<GdbModelTargetInferior> inferiors;
 		synchronized (this) {

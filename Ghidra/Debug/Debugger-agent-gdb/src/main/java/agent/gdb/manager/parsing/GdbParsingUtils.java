@@ -111,6 +111,7 @@ public enum GdbParsingUtils {
 	/**
 	 * Parse a hex string to a long
 	 * 
+	 * <P>
 	 * The string must have the {@code 0x} prefix
 	 * 
 	 * @param hex the string
@@ -126,6 +127,7 @@ public enum GdbParsingUtils {
 	/**
 	 * Parse a hex string to a big integer
 	 * 
+	 * <P>
 	 * The string must have the {@code 0x} prefix
 	 * 
 	 * @param hex the string
@@ -141,6 +143,7 @@ public enum GdbParsingUtils {
 	/**
 	 * Parse an octal string to a long
 	 * 
+	 * <P>
 	 * The string must have the {@code 0} prefix
 	 * 
 	 * @param oct the string
@@ -156,6 +159,7 @@ public enum GdbParsingUtils {
 	/**
 	 * Parse an inferior id
 	 * 
+	 * <P>
 	 * The id must have the {@code i} prefix
 	 * 
 	 * @param id the string
