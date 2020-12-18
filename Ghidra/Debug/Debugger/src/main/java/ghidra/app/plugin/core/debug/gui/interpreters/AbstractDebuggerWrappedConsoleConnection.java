@@ -23,9 +23,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.ImageIcon;
 
+import docking.ActionContext;
+import docking.action.ToggleDockingAction;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.interpreter.InterpreterConnection;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.PinInterpreterAction;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetConsole.TargetConsoleListener;
@@ -35,7 +37,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.util.Msg;
 
 public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetObject>
-		implements InterpreterConnection {
+		implements DebuggerInterpreterConnection {
 
 	/**
 	 * We inherit console text output from interpreter listener, even though we may be listening to
@@ -75,8 +77,13 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		@Override
 		public void invalidated(TargetObject object, String reason) {
 			if (object == targetConsole) { // Redundant
-				running.set(false);
-				plugin.disableConsole(targetConsole, guiConsole);
+				if (pinned) {
+					running.set(false);
+					plugin.disableConsole(targetConsole, guiConsole);
+				}
+				else {
+					plugin.destroyConsole(targetConsole, guiConsole);
+				}
 			}
 		}
 	}
@@ -92,6 +99,12 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	protected PrintWriter outWriter;
 	protected PrintWriter errWriter;
 
+	protected ToggleDockingAction actionPin;
+	protected boolean pinned = false;
+
+	// TODO: Fix InterpreterPanelService to take plugin name instead of just using title
+	protected boolean firstTimeAskedTitle = true;
+
 	public AbstractDebuggerWrappedConsoleConnection(DebuggerInterpreterPlugin plugin,
 			T targetConsole) {
 		this.plugin = plugin;
@@ -103,7 +116,11 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 
 	@Override
 	public String getTitle() {
-		return "Interpreter: " + targetConsole.getDisplay();
+		if (firstTimeAskedTitle) {
+			firstTimeAskedTitle = false;
+			return plugin.getName();
+		}
+		return targetConsole.getDisplay();
 	}
 
 	@Override
@@ -114,14 +131,26 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	@Override
 	public List<CodeCompletion> getCompletions(String cmd) {
 		// TODO: If GDB or WinDBG ever provides an API for completion....
+		// TODO: Of course, that's another method on TargetInterpeter, too.
 		return Collections.emptyList();
 	}
 
 	public void setConsole(InterpreterConsole guiConsole) {
+		assert this.guiConsole == null;
 		this.guiConsole = guiConsole;
 		setErrWriter(guiConsole.getErrWriter());
 		setOutWriter(guiConsole.getOutWriter());
 		setStdIn(guiConsole.getStdin());
+
+		createActions();
+	}
+
+	protected void createActions() {
+		actionPin = PinInterpreterAction.builder(plugin)
+				.onAction(this::activatedPin)
+				.selected(pinned)
+				.build();
+		guiConsole.addAction(actionPin);
 	}
 
 	public void setOutWriter(PrintWriter outWriter) {
@@ -140,6 +169,10 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		running.set(true);
 		thread = new Thread(this::run);
 		thread.start();
+	}
+
+	private void activatedPin(ActionContext ignore) {
+		pinned = actionPin.isSelected();
 	}
 
 	protected void run() {
@@ -163,5 +196,26 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		catch (IOException e) {
 			Msg.debug(this, "Lost console?");
 		}
+	}
+
+	@Override
+	public InterpreterConsole getInterpreterConsole() {
+		return guiConsole;
+	}
+
+	@Override
+	public TargetObject getTargetConsole() {
+		return targetConsole;
+	}
+
+	@Override
+	public boolean isPinned() {
+		return pinned;
+	}
+
+	@Override
+	public void setPinned(boolean pinned) {
+		this.pinned = pinned;
+		actionPin.setSelected(pinned);
 	}
 }

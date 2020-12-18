@@ -51,66 +51,77 @@ public class DebuggerInterpreterPlugin extends AbstractDebuggerPlugin
 	@AutoServiceConsumed
 	protected InterpreterPanelService consoleService;
 
-	protected final Map<TargetObject, InterpreterConsole> consoles = new HashMap<>();
+	protected final Map<TargetObject, DebuggerInterpreterConnection> connections = new HashMap<>();
 
 	public DebuggerInterpreterPlugin(PluginTool tool) {
 		super(tool);
 	}
 
 	@Override
-	public void showConsole(TargetConsole<?> targetConsole) {
-		InterpreterConsole console;
-		synchronized (consoles) {
-			console = consoles.computeIfAbsent(targetConsole, c -> createConsole(targetConsole));
+	public DebuggerInterpreterConnection showConsole(TargetConsole<?> targetConsole) {
+		DebuggerInterpreterConnection conn;
+		synchronized (connections) {
+			conn = connections.computeIfAbsent(targetConsole, c -> createConnection(targetConsole));
 		}
-		console.show();
+		conn.getInterpreterConsole().show();
+		return conn;
 	}
 
 	@Override
-	public void showConsole(TargetInterpreter<?> targetInterpreter) {
-		InterpreterConsole console;
-		synchronized (consoles) {
-			console =
-				consoles.computeIfAbsent(targetInterpreter, c -> createConsole(targetInterpreter));
+	public DebuggerInterpreterConnection showConsole(TargetInterpreter<?> targetInterpreter) {
+		DebuggerInterpreterConnection conn;
+		synchronized (connections) {
+			conn = connections.computeIfAbsent(targetInterpreter,
+				c -> createConnection(targetInterpreter));
 		}
-		console.show();
+		conn.getInterpreterConsole().show();
+		return conn;
 	}
 
 	protected void disableConsole(TargetObject targetConsole, InterpreterConsole guiConsole) {
-		InterpreterConsole old = consoles.get(targetConsole);
-		assert old == guiConsole;
+		DebuggerInterpreterConnection old;
+		synchronized (connections) {
+			old = connections.remove(targetConsole);
+		}
+		assert old.getInterpreterConsole() == guiConsole;
 		SwingUtilities.invokeLater(() -> {
 			if (guiConsole.isInputPermitted()) {
 				guiConsole.setInputPermitted(false);
 				guiConsole.setTransient();
 				guiConsole.setPrompt(">>INVALID<<");
-				/**
-				 * TODO: Should invisible ones just be removed?
-				 * 
-				 * TODO: Would like setTransient to work like other providers, but
-				 * InterpreterComponentProvider overrides it.... For now, I leave invisible disabled
-				 * ones in the tool. User must show and click custom "remove interpreter" action.
-				 */
-				/*if (!console.isVisible()) {
-					console.dispose();
-				}*/
 			}
 		});
 	}
 
-	protected InterpreterConsole createConsole(
-			AbstractDebuggerWrappedConsoleConnection<?> connection) {
+	protected void createConsole(AbstractDebuggerWrappedConsoleConnection<?> connection) {
 		InterpreterConsole console = consoleService.createInterpreterPanel(connection, true);
 		connection.setConsole(console);
 		connection.runInBackground();
-		return console;
 	}
 
-	protected InterpreterConsole createConsole(TargetConsole<?> targetConsole) {
-		return createConsole(new DebuggerWrappedConsoleConnection(this, targetConsole));
+	protected DebuggerInterpreterConnection createConnection(TargetConsole<?> targetConsole) {
+		DebuggerWrappedConsoleConnection conn =
+			new DebuggerWrappedConsoleConnection(this, targetConsole);
+		createConsole(conn);
+		return conn;
 	}
 
-	protected InterpreterConsole createConsole(TargetInterpreter<?> targetInterpreter) {
-		return createConsole(new DebuggerWrappedInterpreterConnection(this, targetInterpreter));
+	protected DebuggerInterpreterConnection createConnection(
+			TargetInterpreter<?> targetInterpreter) {
+		DebuggerWrappedInterpreterConnection conn =
+			new DebuggerWrappedInterpreterConnection(this, targetInterpreter);
+		createConsole(conn);
+		return conn;
+	}
+
+	public void destroyConsole(TargetObject targetConsole, InterpreterConsole guiConsole) {
+		DebuggerInterpreterConnection old;
+		synchronized (connections) {
+			old = connections.remove(targetConsole);
+		}
+		assert old.getInterpreterConsole() == guiConsole;
+		SwingUtilities.invokeLater(() -> {
+			guiConsole.dispose();
+		});
 	}
 }

@@ -301,32 +301,37 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeAllTraces() {
-		for (Trace trace : getOpenTraces()) {
-			closeTrace(trace);
-		}
+		Swing.runIfSwingOrRunLater(() -> {
+			for (Trace trace : getOpenTraces()) {
+				closeTrace(trace);
+			}
+		});
 	}
 
 	@Override
 	public void closeOtherTraces(Trace keep) {
-		for (Trace trace : getOpenTraces()) {
-			if (trace != keep) {
-				closeTrace(trace);
+		Swing.runIfSwingOrRunLater(() -> {
+			for (Trace trace : getOpenTraces()) {
+				if (trace != keep) {
+					closeTrace(trace);
+				}
 			}
-		}
-
+		});
 	}
 
 	@Override
 	public void closeDeadTraces() {
-		if (modelService == null) {
-			return;
-		}
-		for (Trace trace : getOpenTraces()) {
-			TraceRecorder recorder = modelService.getRecorder(trace);
-			if (recorder == null) {
-				closeTrace(trace);
+		Swing.runIfSwingOrRunLater(() -> {
+			if (modelService == null) {
+				return;
 			}
-		}
+			for (Trace trace : getOpenTraces()) {
+				TraceRecorder recorder = modelService.getRecorder(trace);
+				if (recorder == null) {
+					closeTrace(trace);
+				}
+			}
+		});
 	}
 
 	@AutoServiceConsumed
@@ -837,10 +842,16 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeTrace(Trace trace) {
-		if (trace.getConsumerList().contains(this)) {
-			firePluginEvent(new TraceClosedPluginEvent(getName(), trace));
-			doTraceClosed(trace);
-		}
+		/**
+		 * A provider may be reading the trace, likely via the Swing thread, so schedule this on the
+		 * same thread to avoid a ClosedException.
+		 */
+		Swing.runIfSwingOrRunLater(() -> {
+			if (trace.getConsumerList().contains(this)) {
+				firePluginEvent(new TraceClosedPluginEvent(getName(), trace));
+				doTraceClosed(trace);
+			}
+		});
 	}
 
 	@Override

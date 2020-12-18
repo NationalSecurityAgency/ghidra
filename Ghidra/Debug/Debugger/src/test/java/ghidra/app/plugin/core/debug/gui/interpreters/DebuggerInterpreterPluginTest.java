@@ -22,7 +22,8 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
@@ -112,11 +113,29 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testInvalidateInterpreterDisablesConsole() throws Exception {
+	public void testInvalidateInterpreterDestroysConsole() throws Exception {
 		createTestModel();
 		interpreterPlugin.showConsole(mb.testModel.session.interpreter);
 		InterpreterComponentProvider interpreter =
 			waitForComponentProvider(InterpreterComponentProvider.class);
+
+		mb.testModel.session.changeAttributes(List.of(
+			"Interpreter" //
+		), Map.of(), "Invalidate interpreter");
+		waitForSwing();
+
+		assertFalse(interpreter.isVisible());
+		assertFalse(interpreter.isInTool());
+	}
+
+	@Test
+	public void testInvalidatePinnedInterpreterDisablesConsole() throws Exception {
+		createTestModel();
+		DebuggerInterpreterConnection conn =
+			interpreterPlugin.showConsole(mb.testModel.session.interpreter);
+		InterpreterComponentProvider interpreter =
+			waitForComponentProvider(InterpreterComponentProvider.class);
+		conn.setPinned(true);
 
 		mb.testModel.session.changeAttributes(List.of(
 			"Interpreter" //
@@ -124,43 +143,5 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 
 		assertFalse(interpreter.isInputPermitted());
-	}
-
-	@Test
-	@Ignore("Haven't decided on proper behavior")
-	public void testInvalidateClosedDestroysConsole() throws Exception {
-		createTestModel();
-		interpreterPlugin.showConsole(mb.testModel.session.interpreter);
-		InterpreterComponentProvider interpreter =
-			waitForComponentProvider(InterpreterComponentProvider.class);
-
-		interpreter.setVisible(false);
-		waitForSwing();
-
-		mb.testModel.session.changeAttributes(List.of(
-			"Interpreter" //
-		), Map.of(), "Invalidate interpreter");
-		waitForSwing();
-
-		assertFalse(interpreter.isInTool());
-	}
-
-	@Test
-	@Ignore("Haven't decided on proper behavior")
-	public void testCloseInvalidatedDestroysConsole() throws Exception {
-		createTestModel();
-		interpreterPlugin.showConsole(mb.testModel.session.interpreter);
-		InterpreterComponentProvider interpreter =
-			waitForComponentProvider(InterpreterComponentProvider.class);
-
-		mb.testModel.session.changeAttributes(List.of(
-			"Interpreter" //
-		), Map.of(), "Invalidate interpreter");
-		waitForSwing();
-
-		interpreter.setVisible(false);
-		waitForSwing();
-
-		assertFalse(interpreter.isInTool());
 	}
 }

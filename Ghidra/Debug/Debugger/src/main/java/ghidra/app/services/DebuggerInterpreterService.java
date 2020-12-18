@@ -15,6 +15,7 @@
  */
 package ghidra.app.services;
 
+import ghidra.app.plugin.core.debug.gui.interpreters.DebuggerInterpreterConnection;
 import ghidra.app.plugin.core.debug.gui.interpreters.DebuggerInterpreterPlugin;
 import ghidra.dbg.target.TargetConsole;
 import ghidra.dbg.target.TargetInterpreter;
@@ -25,7 +26,7 @@ import ghidra.framework.plugintool.ServiceInfo;
 		description = "Service for managing debugger interpreter panels" //
 )
 public interface DebuggerInterpreterService {
-	void showConsole(TargetConsole<?> console);
+	DebuggerInterpreterConnection showConsole(TargetConsole<?> console);
 
-	void showConsole(TargetInterpreter<?> interpreter);
+	DebuggerInterpreterConnection showConsole(TargetInterpreter<?> interpreter);
 }

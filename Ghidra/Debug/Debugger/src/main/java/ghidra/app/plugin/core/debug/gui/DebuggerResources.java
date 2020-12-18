@@ -128,12 +128,12 @@ public interface DebuggerResources {
 	ImageIcon ICON_SYNC = ResourceManager.loadImage("images/sync_enabled.png");
 	ImageIcon ICON_VISIBILITY = ResourceManager.loadImage("images/format-text-bold.png");
 
+	ImageIcon ICON_PIN = ResourceManager.loadImage("images/pin.png");
 	// TODO: Find better icon?
 	ImageIcon ICON_IMPORT = ResourceManager.loadImage("images/imported_bookmark.gif");
-
 	ImageIcon ICON_BLANK = ResourceManager.loadImage("images/blank.png");
-
 	ImageIcon ICON_PACKAGE = ResourceManager.loadImage("images/debugger32.png");
+
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
 	String HELP_ANCHOR_PLUGIN = "plugin";
@@ -557,9 +557,25 @@ public interface DebuggerResources {
 		String HELP_ANCHOR = "disconnect_all";
 
 		public static ActionBuilder builder(Plugin owner, Plugin helpOwner) {
-			return new ActionBuilder(owner.getName(), NAME).description(DESCRIPTION)
+			return new ActionBuilder(owner.getName(), NAME)
+					.description(DESCRIPTION)
 					.menuIcon(ICON)
 					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	interface PinInterpreterAction {
+		String NAME = "Pin Interpreter";
+		String DESCRIPTION = "Prevent this Interpreter from closing automatically";
+		Icon ICON = ICON_PIN;
+		String HELP_ANCHOR = "pin";
+
+		public static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(ownerName, NAME)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
