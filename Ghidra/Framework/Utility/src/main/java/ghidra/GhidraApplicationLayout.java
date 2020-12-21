@@ -168,6 +168,11 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 								extensionModuleDir))) {
 						continue;
 					}
+					// Skip extensions slated for cleanup
+					if (new File(extensionModuleDir, ModuleUtilities.MANIFEST_FILE_NAME_UNINSTALLED)
+							.exists()) {
+						continue;
+					}
 
 					moduleRootDirectories.add(new ResourceFile(extensionModuleDir));
 				}

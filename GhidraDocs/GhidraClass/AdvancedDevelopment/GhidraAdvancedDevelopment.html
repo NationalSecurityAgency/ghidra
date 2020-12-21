@@ -910,7 +910,7 @@
 
     <annot>@Override</annot>
     <kw>public</kw> <kw>void</kw> run() <kw>throws</kw> Exception {
-        <kw>for</kw> (<if>Instruction</if> <loc>instruction</loc> = getFirstInstruction(); <loc>instruction</loc> != <kw>null</kw>; <loc>instruction</loc> = getNextInstruction()) {
+        <kw>for</kw> (<if>Instruction</if> <loc>instruction</loc> = getFirstInstruction(); <loc>instruction</loc> != <kw>null</kw>; <loc>instruction</loc> = getInstructionAfter(<loc>instruction</loc>)) {
             <kw>if</kw> ( <fld>monitor</fld>.isCancelled() ) {
                 <kw>break</kw>;
             }
