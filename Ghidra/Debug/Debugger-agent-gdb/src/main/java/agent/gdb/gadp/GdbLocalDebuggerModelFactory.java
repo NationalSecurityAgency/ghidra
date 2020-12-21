@@ -22,6 +22,7 @@ import java.util.List;
 import agent.gdb.manager.GdbManager;
 import ghidra.dbg.gadp.server.AbstractGadpLocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
+import ghidra.dbg.util.ShellUtils;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 @FactoryDescription( //
@@ -31,8 +32,12 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 @ExtensionPointProperties(priority = 100)
 public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
 	public static boolean checkGdbPresent(String gdbCmd) {
+		List<String> args = ShellUtils.parseArgs(gdbCmd);
+		if (args.isEmpty()) {
+			return false;
+		}
 		try {
-			ProcessBuilder builder = new ProcessBuilder(gdbCmd, "--version");
+			ProcessBuilder builder = new ProcessBuilder(args.get(0), "--version");
 			builder.redirectError(Redirect.INHERIT);
 			builder.redirectOutput(Redirect.INHERIT);
 			@SuppressWarnings("unused")
@@ -92,13 +97,17 @@ public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModel
 
 	@Override
 	protected void completeCommandLine(List<String> cmd) {
+		List<String> gdbCmdLine = ShellUtils.parseArgs(gdbCmd);
 		cmd.add(GdbGadpServer.class.getCanonicalName());
-		// TODO: Option for additional GDB command-line parameters
+		if (!existing && gdbCmdLine.size() >= 2) {
+			cmd.addAll(gdbCmdLine.subList(1, gdbCmdLine.size()));
+		}
 		cmd.add("--gadp-args");
 		cmd.addAll(List.of("-H", host));
 		cmd.addAll(List.of("-p", Integer.toString(port))); // Available ephemeral port
-		if (!existing) {
-			cmd.addAll(List.of("-g", gdbCmd));
+		if (!existing && gdbCmdLine.size() >= 1) {
+			cmd.add("-g");
+			cmd.add(gdbCmdLine.get(0));
 		}
 		else {
 			cmd.add("-x");

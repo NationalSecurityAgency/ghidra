@@ -19,7 +19,7 @@ package ghidra.dbg;
  * A reason given for a closed connection
  */
 public interface DebuggerModelClosedReason {
-	DebuggerModelClosedReason NORMAL = DebuggerNormalModelClosedReason.INSTANCE;
+	DebuggerModelClosedReason NORMAL = DebuggerNormalModelClosedReason.NORMAL;
 
 	static DebuggerModelClosedReason normal() {
 		return NORMAL;

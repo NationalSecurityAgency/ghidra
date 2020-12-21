@@ -20,14 +20,15 @@ import java.net.SocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
 
 import ghidra.comm.service.AbstractAsyncServer;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.*;
 import ghidra.dbg.gadp.error.GadpErrorException;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.ErrorCode;
 import ghidra.program.model.address.*;
 
 public abstract class AbstractGadpServer
-		extends AbstractAsyncServer<AbstractGadpServer, GadpClientHandler> {
+		extends AbstractAsyncServer<AbstractGadpServer, GadpClientHandler>
+		implements DebuggerModelListener {
 	public static final String LISTENING_ON = "GADP Server listening on ";
 
 	protected final DebuggerObjectModel model;
@@ -36,6 +37,8 @@ public abstract class AbstractGadpServer
 		super(addr);
 		this.model = model;
 		System.out.println(LISTENING_ON + getLocalAddress());
+
+		model.addModelListener(this);
 	}
 
 	public DebuggerObjectModel getModel() {
@@ -62,5 +65,11 @@ public abstract class AbstractGadpServer
 		// TODO: Should extend be a long?
 		// Note, +1 accounted for in how Ghidra AddressRanges work (inclusive of end)
 		return new AddressRangeImpl(min, min.add(Integer.toUnsignedLong(range.getExtend())));
+	}
+
+	@Override
+	public void modelClosed(DebuggerModelClosedReason reason) {
+		System.err.println("Model closed: " + reason);
+		System.exit(0);
 	}
 }

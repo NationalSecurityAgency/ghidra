@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg;
+package agent.gdb.manager.impl;
 
-enum DebuggerNormalModelClosedReason implements DebuggerModelClosedReason {
-	NORMAL;
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
+import agent.gdb.manager.GdbManager;
+
+public class SpawnedCliGdbManagerTest extends AbstractGdbManagerTest {
 	@Override
-	public boolean hasException() {
-		return false;
-	}
-
-	@Override
-	public boolean isClientInitiated() {
-		return true;
-	}
-
-	@Override
-	public Throwable getException() {
-		return null;
+	protected CompletableFuture<Void> startManager(GdbManager manager) {
+		try {
+			manager.start();
+			return manager.runRC();
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 }

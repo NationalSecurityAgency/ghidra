@@ -23,6 +23,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbCommandError;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
@@ -74,6 +75,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	// TODO: Place make this a model method?
+	@Override
 	public AddressFactory getAddressFactory() {
 		return addressFactory;
 	}
@@ -122,6 +124,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	public void terminate() throws IOException {
+		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
 		session.invalidateSubtree("GDB is terminating");
 		gdb.terminate();
 	}

@@ -20,11 +20,11 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbManager;
 
-public class SpawnedGdbManagerTest extends AbstractGdbManagerTest {
+public class SpawnedMi2Gdb7Dot6Dot1ManagerTest extends AbstractGdbManagerTest {
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {
 		try {
-			manager.start();
+			manager.start("/opt/gdb-7.6.1/bin/gdb", "-i", "mi2");
 			return manager.runRC();
 		}
 		catch (IOException e) {

@@ -72,6 +72,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Just a vanilla demo of the manager
 	 * 
+	 * <p>
 	 * This presents the usual GDB CLI, using GDB/MI on the back end. The manager is keeps track of
 	 * events; however, in this vanilla front end, nothing consumes them. This also provides a quick
 	 * test to ensure the console loop operates correctly, or at least closely enough to actual GDB.
@@ -100,8 +101,6 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * @return the manager
 	 */
 	public static GdbManager newInstance() {
-		// TODO: Add parameter and test both?
-		// TODO: Eventually the 'true' variant will be deprecated
 		return new GdbManagerImpl();
 	}
 
@@ -143,6 +142,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Execute a console loop in this thread
 	 * 
+	 * <p>
 	 * Note this does not follow the asynchronous pattern.
 	 * 
 	 * @throws IOException if an I/O error occurs
@@ -157,6 +157,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Check if GDB is alive
 	 * 
+	 * <p>
 	 * Note this is not about the state of inferiors in GDB. If the GDB controlling process is
 	 * alive, GDB is alive.
 	 * 
@@ -197,6 +198,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Add a listener for target output
 	 * 
+	 * <p>
 	 * Note: depending on the target, its output may not be communicated via this listener. Local
 	 * targets, e.g., tend to just print output to GDB's controlling TTY. See
 	 * {@link GdbInferior#setTty(String)} for a means to more reliably interact with a target's
@@ -231,6 +233,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get a thread by its GDB-assigned ID
 	 * 
+	 * <p>
 	 * GDB numbers its threads using a global counter. These IDs are unrelated to the OS-assigned
 	 * TID. This method can retrieve a thread by its ID no matter which inferior it belongs to.
 	 * 
@@ -242,6 +245,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get an inferior by its GDB-assigned ID
 	 * 
+	 * <p>
 	 * GDB numbers inferiors incrementally. All inferiors and created and destroyed by the user. See
 	 * {@link #addInferior()}.
 	 * 
@@ -261,6 +265,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get all inferiors known to the manager
 	 * 
+	 * <p>
 	 * This does not ask GDB to list its inferiors. Rather it returns a read-only view of the
 	 * manager's understanding of the current inferiors based on its tracking of GDB events.
 	 * 
@@ -271,6 +276,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get all threads known to the manager
 	 * 
+	 * <p>
 	 * This does not ask GDB to lists its known threads. Rather it returns a read-only view of the
 	 * manager's understanding of the current threads based on its tracking of GDB events.
 	 * 
@@ -281,6 +287,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get all breakpoints known to the manager
 	 * 
+	 * <p>
 	 * This does not ask GDB to list its breakpoints. Rather it returns a read-only view of the
 	 * manager's understanding of the current breakpoints based on its tracking of GDB events.
 	 * 
@@ -291,6 +298,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Send an interrupt to GDB regardless of other queued commands
 	 * 
+	 * <p>
 	 * This may be useful if the manager's command queue is stalled because an inferior is running.
 	 * 
 	 * @throws IOException if an I/O error occurs
@@ -301,6 +309,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get the state of the GDB session
 	 * 
+	 * <p>
 	 * In all-stop mode, if any thread is running, GDB is said to be in the running state and is
 	 * unable to process commands. Otherwise, if all threads are stopped, then GDB is said to be in
 	 * the stopped state and can accept and process commands. This manager has not been tested in
@@ -321,6 +330,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Wait for GDB to present a prompt
 	 * 
+	 * <p>
 	 * This waits for a prompt from GDB unless the last line printed is already a prompt. This is
 	 * generally not necessary following normal commands, but may be necessary after interrupting a
 	 * running inferior, or after waiting for an inferior to reach a stopped state.
@@ -332,6 +342,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * A dummy command which claims as cause a stopped event and waits for the next prompt
 	 * 
+	 * <p>
 	 * This is used to squelch normal processing of a stopped event until the next prompt
 	 * 
 	 * @return a future which completes when the "command" has finished execution
@@ -341,6 +352,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Add an inferior
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code add-inferior}.
 	 * 
 	 * @return a future which completes with the handle to the new inferior
@@ -350,8 +362,10 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Remove an inferior
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code remove-inferior}.
 	 * 
+	 * <p>
 	 * Note that unlike the CLI, it is possible to remove the current inferior, in which case, the
 	 * lowest-id inferior is selected. Like the CLI, it is not possible to remove an active inferior
 	 * or the last inferior.
@@ -364,6 +378,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Execute an arbitrary CLI command, printing output to the CLI console
 	 * 
+	 * <p>
 	 * Note: to ensure a certain thread or inferior has focus for a console command, see
 	 * {@link GdbThread#console(String)} and {@link GdbInferior#console(String)}.
 	 * 
@@ -375,6 +390,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Execute an arbitrary CLI command, capturing its console output
 	 * 
+	 * <p>
 	 * The output will not be printed to the CLI console. To ensure a certain thread or inferior has
 	 * focus for a console command, see {@link GdbThread#consoleCapture(String)} and
 	 * {@link GdbInferior#consoleCapture(String)}.
@@ -387,10 +403,12 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Interrupt the GDB session
 	 * 
+	 * <p>
 	 * This is equivalent to typing Ctrl-C in the CLI. This typically results in the target being
 	 * interrupted, either because GDB and the target have the same controlling TTY, or because GDB
 	 * will "forward" the interrupt to the target.
 	 * 
+	 * <p>
 	 * For whatever reason, interrupting the session does not always reliably interrupt the target.
 	 * The manager will send Ctrl-C to the pseudo-terminal up to three times, waiting about 10ms
 	 * between each, until GDB issues a stopped event and presents a new prompt.
@@ -402,6 +420,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * List GDB's inferiors
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code inferiors}.
 	 * 
 	 * @return a future that completes with a map of inferior IDs to inferior handles
@@ -411,6 +430,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * List information for all breakpoints
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code info break}.
 	 * 
 	 * @return a future that completes with a list of information for all breakpoints
@@ -420,6 +440,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Disable the given breakpoints
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code disable breakpoint [NUMBER]}.
 	 * 
 	 * @param numbers the GDB-assigned breakpoint numbers
@@ -430,6 +451,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Enable the given breakpoints
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code enable breakpoint [NUMBER]}.
 	 * 
 	 * @param numbers the GDB-assigned breakpoint numbers
@@ -440,6 +462,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Delete a breakpoint
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code delete breakpoint [NUMBER]}.
 	 * 
 	 * @param numbers the GDB-assigned breakpoint numbers
@@ -457,6 +480,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Gather information about the host OS
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code info os [TYPE]}.
 	 * 
 	 * @param type the type of OS information to gather
