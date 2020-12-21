@@ -74,11 +74,15 @@ public class GdbModelTargetEnvironment
 			String[] tokens = out.split("\\s+");
 			@SuppressWarnings("hiding")
 			String arch = tokens[tokens.length - 1].trim();
-			if (arch.endsWith(")")) {
+			while (arch.endsWith(".") || arch.endsWith(")") || arch.endsWith("\"")) {
 				arch = arch.substring(0, arch.length() - 1);
+			}
+			while (arch.startsWith("\"")) {
+				arch = arch.substring(1);
 			}
 			// e.g., The target architecture is set automatically (currently i386)
 			// e.g., The target architecture is assumed to be i386
+			// e.g., The target architecture is set to "auto" (currently "i386").
 			// TODO: I don't have a way to detect if this parsing strategy fails.
 			// TODO: I could search using a list of support architectures
 			//       Use "set architecture" to get "Valid arguments"

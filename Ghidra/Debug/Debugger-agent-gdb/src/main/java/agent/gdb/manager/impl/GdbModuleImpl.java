@@ -30,13 +30,26 @@ import ghidra.util.Msg;
 public class GdbModuleImpl implements GdbModule {
 	protected static final Pattern OBJECT_FILE_LINE_PATTERN =
 		Pattern.compile("\\s*Object file: (?<name>.*)");
-	protected static final Pattern OBJECT_SECTION_LINE_PATTERN = Pattern.compile(
+
+	// Pattern observed in GDB 8 (probably applies to previous, too)
+	protected static final Pattern OBJECT_SECTION_LINE_PATTERN_V8 = Pattern.compile(
 		"\\s*" + //
 			"0x(?<vmaS>[0-9A-Fa-f]+)\\s*->\\s*" + //
 			"0x(?<vmaE>[0-9A-Fa-f]+)\\s+at\\s+" + //
 			"0x(?<offset>[0-9A-Fa-f]+)\\s*:\\s*" + //
 			"(?<name>\\S+)\\s+" + //
 			"(?<attrs>.*)");
+
+	// Pattern observed in GDB 10 (may apply in 9, too)
+	protected static final Pattern OBJECT_SECTION_LINE_PATTERN_V10 = Pattern.compile(
+		"\\s*" + //
+			"\\[\\s*(?<idx>\\d+)\\]\\s+" + //
+			"0x(?<vmaS>[0-9A-Fa-f]+)\\s*->\\s*" + //
+			"0x(?<vmaE>[0-9A-Fa-f]+)\\s+at\\s+" + //
+			"0x(?<offset>[0-9A-Fa-f]+)\\s*:\\s*" + //
+			"(?<name>\\S+)\\s+" + //
+			"(?<attrs>.*)");
+
 	protected static final Pattern MSYMBOL_LINE_PATTERN = Pattern.compile(
 		"\\s*" + //
 			"\\[\\s*(?<idx>\\d+)\\]\\s+" + //
@@ -49,6 +62,8 @@ public class GdbModuleImpl implements GdbModule {
 	protected final String name;
 	protected Long base = null;
 	protected Long max = null;
+
+	protected Pattern sectionLinePattern = OBJECT_SECTION_LINE_PATTERN_V10;
 
 	protected final Map<String, GdbModuleSectionImpl> sections = new LinkedHashMap<>();
 	protected final Map<String, GdbModuleSection> unmodifiableSections =
@@ -143,8 +158,32 @@ public class GdbModuleImpl implements GdbModule {
 		return minimalSymbols.request();
 	}
 
+	protected Matcher matchSectionLine(Pattern pattern, String line) {
+		Matcher matcher = pattern.matcher(line);
+		if (matcher.matches()) {
+			sectionLinePattern = pattern;
+		}
+		return matcher;
+	}
+
+	protected Matcher matchSectionLine(String line) {
+		Matcher matcher = sectionLinePattern.matcher(line);
+		if (matcher.matches()) {
+			return matcher;
+		}
+		matcher = matchSectionLine(OBJECT_SECTION_LINE_PATTERN_V10, line);
+		if (matcher.matches()) {
+			return matcher;
+		}
+		matcher = matchSectionLine(OBJECT_SECTION_LINE_PATTERN_V8, line);
+		if (matcher.matches()) {
+			return matcher;
+		}
+		return matcher;
+	}
+
 	protected void processSectionLine(String line) {
-		Matcher matcher = OBJECT_SECTION_LINE_PATTERN.matcher(line);
+		Matcher matcher = matchSectionLine(line);
 		if (matcher.matches()) {
 			try {
 				long vmaStart = Long.parseLong(matcher.group("vmaS"), 16);
