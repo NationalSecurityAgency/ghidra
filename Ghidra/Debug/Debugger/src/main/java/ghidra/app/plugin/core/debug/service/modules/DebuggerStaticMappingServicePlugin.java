@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.service.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -1292,6 +1292,12 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		for (Program program : programs) {
 			PluginModuleMapProposal map = proposeModuleMap(module, program);
 			double score = map.computeScore();
+			if (score == bestScore && programManager != null) {
+				// Prefer the current program in ties
+				if (programManager.getCurrentProgram() == program) {
+					bestMap = map;
+				}
+			}
 			if (score > bestScore) {
 				bestScore = score;
 				bestMap = map;
@@ -1305,7 +1311,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
 		Map<TraceModule, ModuleMapProposal> result = new LinkedHashMap<>();
 		for (TraceModule module : modules) {
-			String moduleName = Paths.get(module.getName()).getFileName().toString();
+			String moduleName = getLastLower(module.getName());
 			Set<Program> probable = programs.stream()
 					.filter(p -> namesContain(p, moduleName))
 					.collect(Collectors.toSet());
@@ -1345,24 +1351,39 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		return bestMap;
 	}
 
+	protected static String getLastLower(String path) {
+		return new File(path).getName().toLowerCase();
+	}
+
 	/**
-	 * Check if either the program's name or its domain file name contains the given module name
+	 * Check if either the program's name, its executable path, or its domain file name contains the
+	 * given module name
 	 * 
 	 * @param program the program whose names to check
-	 * @param moduleName the module name to check for
+	 * @param moduleLowerName the module name to check for in lower case
 	 * @return true if matched, false if not
 	 */
-	protected boolean namesContain(Program program, String moduleName) {
+	protected boolean namesContain(Program program, String moduleLowerName) {
 		DomainFile df = program.getDomainFile();
 		if (df == null || df.getProjectLocator() == null) {
 			return false;
 		}
-		String programName = Paths.get(program.getName()).getFileName().toString().toLowerCase();
-		String fileName = df.getName().toLowerCase();
-		if (!programName.contains(moduleName) && !fileName.contains(moduleName)) {
-			return false;
+		String programName = getLastLower(program.getName());
+		if (programName.contains(moduleLowerName)) {
+			return true;
 		}
-		return true;
+		String exePath = program.getExecutablePath();
+		if (exePath != null) {
+			String execName = getLastLower(exePath);
+			if (execName.contains(moduleLowerName)) {
+				return true;
+			}
+		}
+		String fileName = df.getName().toLowerCase();
+		if (fileName.contains(moduleLowerName)) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -1370,7 +1391,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
 		Map<TraceModule, SectionMapProposal> result = new LinkedHashMap<>();
 		for (TraceModule module : modules) {
-			String moduleName = Paths.get(module.getName()).getFileName().toString();
+			String moduleName = getLastLower(module.getName());
 			Set<Program> probable = programs.stream()
 					.filter(p -> namesContain(p, moduleName))
 					.collect(Collectors.toSet());

@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.LogicalBreakpoint;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -74,7 +75,11 @@ public class LogicalBreakpointRow {
 		if (program == null) {
 			return "";
 		}
-		return program.getName();
+		DomainFile df = program.getDomainFile();
+		if (df == null) {
+			return program.getName();
+		}
+		return df.getName();
 	}
 
 	public Address getAddress() {
