@@ -65,16 +65,17 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 		private final String header;
 		private final Function<StackFrameRow, ?> getter;
-		private final BiConsumer<StackFrameRow, ?> setter;
+		private final BiConsumer<StackFrameRow, Object> setter;
 		private final Predicate<StackFrameRow> editable;
 		private final Class<?> cls;
 
+		@SuppressWarnings("unchecked")
 		<T> StackTableColumns(String header, Class<T> cls, Function<StackFrameRow, T> getter,
 				BiConsumer<StackFrameRow, T> setter, Predicate<StackFrameRow> editable) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
-			this.setter = setter;
+			this.setter = (BiConsumer<StackFrameRow, Object>) setter;
 			this.editable = editable;
 		}
 
@@ -90,6 +91,11 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		@Override
 		public Object getValueOf(StackFrameRow row) {
 			return getter.apply(row);
+		}
+
+		@Override
+		public void setValueOf(StackFrameRow row, Object value) {
+			setter.accept(row, value);
 		}
 
 		@Override

@@ -24,6 +24,7 @@ import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.database.UndoableTransaction;
 
 public class StackFrameRow {
 	private final DebuggerStackProvider provider;
@@ -59,7 +60,10 @@ public class StackFrameRow {
 	}
 
 	public void setComment(String comment) {
-		frame.setComment(comment);
+		try (UndoableTransaction tid = UndoableTransaction
+				.start(frame.getStack().getThread().getTrace(), "Frame comment", true)) {
+			frame.setComment(comment);
+		}
 	}
 
 	public boolean isCommentable() {
