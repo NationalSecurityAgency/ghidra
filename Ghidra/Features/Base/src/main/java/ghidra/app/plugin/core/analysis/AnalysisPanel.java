@@ -22,7 +22,8 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.table.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.TableColumn;
 
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -31,12 +32,11 @@ import docking.help.HelpService;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GLabel;
-import docking.widgets.table.*;
+import docking.widgets.table.GTable;
 import ghidra.GhidraOptions;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.ColorUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
@@ -44,23 +44,18 @@ import ghidra.util.layout.VerticalLayout;
 class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	public static final String PROTOTYPE = " (Prototype)";
-
-	private final static int COLUMN_ANALYZER_IS_ENABLED = 0;
-	private final static int COLUMN_ANALYZER_NAME = 1;
+	public final static int COLUMN_ANALYZER_IS_ENABLED = 0;
 
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
 	private Options analysisOptions;
 
 	private JTable table;
-	private AbstractTableModel model;
+	private AnalysisEnablementTableModel model;
 	private JTextArea descriptionComponent;
 	private JPanel analyzerOptionsPanel;
 
 	private List<EditorState> editorList = new ArrayList<>();
-	private List<String> analyzerNames = new ArrayList<>();
-	private List<Boolean> analyzerEnablement = new ArrayList<>();
-	private Set<String> prototypeAnalyzers = new HashSet<>();
 	private Map<String, Component> analyzerToOptionsPanelMap = new HashMap<>();
 	private Map<String, List<Component>> analyzerManagedComponentsMap = new HashMap<>();
 	private EditorStateFactory editorStateFactory;
@@ -107,9 +102,6 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	private void load() {
 		editorList.clear();
-		analyzerNames.clear();
-		analyzerEnablement.clear();
-		prototypeAnalyzers.clear();
 		analyzerToOptionsPanelMap.clear();
 		analyzerManagedComponentsMap.clear();
 
@@ -118,16 +110,15 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		loadAnalyzers();
 		loadAnalyzerOptionsPanels();
 
-		model.fireTableDataChanged();
-
 		if (selectedAnalyzerRow >= 0) {
 			table.setRowSelectionInterval(selectedAnalyzerRow, selectedAnalyzerRow);
 		}
 	}
 
 	private void loadAnalyzers() {
-
-		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(programs.get(0));
+		List<AnalyzerEnablementState> states = new ArrayList<>();
+		Program program = programs.get(0);
+		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 
 		List<String> propertyNames = analysisOptions.getOptionNames();
 		Collections.sort(propertyNames, (o1, o2) -> o1.compareToIgnoreCase(o2));
@@ -140,20 +131,19 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 				Analyzer analyzer = manager.getAnalyzer(analyzerName);
 				if (analyzer != null) {
-					analyzerNames.add(analyzerName);
-					if (analyzer.isPrototype()) {
-						prototypeAnalyzers.add(analyzerName);
-					}
-					analyzerEnablement.add(analysisOptions.getBoolean(analyzerName, false));
+					boolean enabled = analysisOptions.getBoolean(analyzerName, false);
+					boolean defaultEnabled = analyzer.getDefaultEnablement(program);
+					states.add(new AnalyzerEnablementState(analyzer, enabled, defaultEnabled));
 				}
 			}
 		}
+		model = new AnalysisEnablementTableModel(this, states);
+		table.setModel(model);
+
 	}
 
 	private void build() {
-		buildTableModel();
 		buildTable();
-		configureTableColumns();
 		buildAnalyzerOptionsPanel();
 
 		JSplitPane splitpane =
@@ -250,173 +240,44 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 	}
 
-	private void buildTableModel() {
-		model = new AbstractTableModel() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				switch (columnIndex) {
-					case COLUMN_ANALYZER_IS_ENABLED: {
-						return analyzerEnablement.get(rowIndex);
-					}
-					case COLUMN_ANALYZER_NAME: {
-						String analyzerName = analyzerNames.get(rowIndex);
-						if (prototypeAnalyzers.contains(analyzerName)) {
-							return analyzerName + PROTOTYPE;
-						}
-						return analyzerName;
-					}
-				}
-				return null;
-			}
-
-			@Override
-			public int getRowCount() {
-				return analyzerEnablement.size();
-			}
-
-			@Override
-			public int getColumnCount() {
-				return 2;
-			}
-
-			@Override
-			public String getColumnName(int columnIndex) {
-				switch (columnIndex) {
-					case COLUMN_ANALYZER_IS_ENABLED:
-						return "Enabled";
-					case COLUMN_ANALYZER_NAME:
-						return "Analyzer Name";
-				}
-				return super.getColumnName(columnIndex);
-			}
-
-			@Override
-			public Class<?> getColumnClass(int columnIndex) {
-				switch (columnIndex) {
-					case COLUMN_ANALYZER_IS_ENABLED:
-						return Boolean.class;
-					case COLUMN_ANALYZER_NAME:
-						return String.class;
-				}
-				return super.getColumnClass(columnIndex);
-			}
-
-			@Override
-			public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return columnIndex == COLUMN_ANALYZER_IS_ENABLED;
-			}
-
-			@Override
-			public void setValueAt(Object value, int rowIndex, int columnIndex) {
-				if (columnIndex == COLUMN_ANALYZER_IS_ENABLED) {
-					Boolean enabled = (Boolean) value;
-					analyzerEnablement.set(rowIndex, enabled);
-					String analyzerName = analyzerNames.get(rowIndex);
-					setAnalyzerEnabled(analyzerName, enabled);
-					fireTableRowsUpdated(rowIndex, rowIndex);
-				}
-			}
-		};
-	}
-
-	private void buildTable() {
-		table = new GTable(model);
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.getSelectionModel().addListSelectionListener(e -> {
-			if (e.getValueIsAdjusting()) {
-				return;
-			}
-
-			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-			int selectedRow = lsm.getMinSelectionIndex();
-			if (selectedRow == -1) {
-				analyzerOptionsPanel.removeAll();
-				analyzerOptionsPanel.validate();
-				analyzerOptionsPanel.repaint();
-				descriptionComponent.setText("");
-				return;
-			}
-
-			String analyzerName = analyzerNames.get(selectedRow);
-			setAnalyzerSelected(analyzerName);
-		});
-	}
-
-	private void setAnalyzerSelected(String analyzerName) {
-		Component component = analyzerToOptionsPanelMap.get(analyzerName);
-		if (component == null) {
-			component = noOptionsPanel;
-		}
-
-		analyzerOptionsPanel.removeAll();
-		analyzerOptionsPanel.add(component, BorderLayout.CENTER);
-		analyzerOptionsPanel.validate();
-		analyzerOptionsPanel.repaint();
-
-		analyzerOptionsPanel.getParent().validate();
-
-		String description = analysisOptions.getDescription(analyzerName);
-		descriptionComponent.setText(description);
-		descriptionComponent.setCaretPosition(0);
-	}
-
-	private void configureTableColumns() {
-		TableColumnModel columnModel = table.getColumnModel();
-		for (int i = 0; i < columnModel.getColumnCount(); ++i) {
-			TableColumn column = columnModel.getColumn(i);
-			int modelIndex = column.getModelIndex();
-			switch (modelIndex) {
-				case COLUMN_ANALYZER_IS_ENABLED: {
-					configureTableColumn_IsEnabled(column, 75);
-					break;
-				}
-				case COLUMN_ANALYZER_NAME: {
-					configureTableColumn_Name(column);
-					break;
-				}
-			}
-		}
-	}
-
-	private static class AnalyzerNameTableCellRenderer extends GTableCellRenderer {
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
-			Component component = super.getTableCellRendererComponent(data);
-
-			Object value = data.getValue();
-
-			// Null check is necessary here; Java doesn't guarantee that the cell contents
-			// passed to this method are valid.
-			if (value == null) {
-				return component;
-			}
-
-			String analyzerName = (String) value;
-
-			if (analyzerName.endsWith(PROTOTYPE)) {
-				component.setForeground(
-					ColorUtils.deriveForeground(component.getBackground(), ColorUtils.HUE_RED));
-			}
-
-			return component;
-		}
-	}
-
-	private void configureTableColumn_Name(TableColumn column) {
-		column.setCellRenderer(new AnalyzerNameTableCellRenderer());
-	}
-
-	private void configureTableColumn_IsEnabled(TableColumn column, int width) {
-		column.setPreferredWidth(width);
+	private void configureEnabledColumnWidth(int width) {
+		TableColumn column = table.getColumnModel().getColumn(COLUMN_ANALYZER_IS_ENABLED);
+		column.setWidth(width);
 		column.setMinWidth(width);
 		column.setMaxWidth(width);
 		column.setResizable(false);
-		column.setCellRenderer(new GBooleanCellRenderer());
+	}
+
+	private void buildTable() {
+		model = new AnalysisEnablementTableModel(this, Collections.emptyList());
+		table = new GTable(model);
+		configureEnabledColumnWidth(60);
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.getSelectionModel().addListSelectionListener(this::selectedAnalyzerChanged);
+	}
+
+	private void selectedAnalyzerChanged(ListSelectionEvent event) {
+		if (event.getValueIsAdjusting()) {
+			return;
+		}
+		analyzerOptionsPanel.removeAll();
+		descriptionComponent.setText("");
+
+		int selectedRow = table.getSelectedRow();
+		if (selectedRow >= 0) {
+			String analyzerName = model.getModelData().get(selectedRow).getName();
+			Component component = analyzerToOptionsPanelMap.get(analyzerName);
+			if (component == null) {
+				component = noOptionsPanel;
+			}
+			analyzerOptionsPanel.add(component, BorderLayout.CENTER);
+			descriptionComponent.setText(analysisOptions.getDescription(analyzerName));
+		}
+
+		analyzerOptionsPanel.validate();
+		analyzerOptionsPanel.repaint();
+		analyzerOptionsPanel.getParent().validate();
+		descriptionComponent.setCaretPosition(0);
 	}
 
 	/**
@@ -431,7 +292,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		component.setBorder(compoundBorder);
 	}
 
-	private void setAnalyzerEnabled(String analyzerName, boolean enabled) {
+	void setAnalyzerEnabled(String analyzerName, boolean enabled) {
 		List<Component> list = analyzerManagedComponentsMap.get(analyzerName);
 		if (list != null) {
 			Iterator<Component> iterator = list.iterator();
@@ -452,10 +313,11 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private boolean checkForDifferences() {
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
 		boolean changes = false;
-		for (int i = 0; i < analyzerNames.size(); ++i) {
-			String analyzerName = analyzerNames.get(i);
-			boolean currEnabled = analyzerEnablement.get(i);
+		for (int i = 0; i < analyzerStates.size(); ++i) {
+			String analyzerName = analyzerStates.get(i).getName();
+			boolean currEnabled = analyzerStates.get(i).isEnabled();
 			boolean origEnabled = analysisOptions.getBoolean(analyzerName, false);
 			if (currEnabled != origEnabled) {
 				changes = true;
@@ -482,10 +344,10 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * analyzed.
 	 */
 	void applyChanges() {
-
-		for (int i = 0; i < analyzerNames.size(); ++i) {
-			String analyzerName = analyzerNames.get(i);
-			boolean enabled = analyzerEnablement.get(i);
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			boolean enabled = analyzerState.isEnabled();
 
 			int id = programs.get(0).startTransaction("setting analysis options");
 			boolean commit = false;
@@ -617,4 +479,5 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			}
 		}
 	}
+
 }
