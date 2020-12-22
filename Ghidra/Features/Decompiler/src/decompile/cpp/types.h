@@ -166,7 +166,7 @@ typedef char int1;
 typedef uint4 uintp;
 #endif
 
-#if defined (__APPLE_CC__) && defined (__x86_64__)
+#if defined (__APPLE_CC__) && (defined (__x86_64__) || defined (__arm64__))
 #define HOST_ENDIAN 0
 typedef unsigned int uintm;
 typedef int intm;
