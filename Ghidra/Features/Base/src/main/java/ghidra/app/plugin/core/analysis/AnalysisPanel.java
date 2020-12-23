@@ -137,9 +137,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 				}
 			}
 		}
-		model = new AnalysisEnablementTableModel(this, states);
-		table.setModel(model);
-
+		model.setData(states);
 	}
 
 	private void build() {

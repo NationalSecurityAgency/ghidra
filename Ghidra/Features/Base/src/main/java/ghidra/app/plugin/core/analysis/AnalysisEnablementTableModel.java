@@ -49,6 +49,11 @@ public class AnalysisEnablementTableModel
 		setDefaultTableSortState(TableSortState.createUnsortedSortState());
 	}
 
+	public void setData(List<AnalyzerEnablementState> analyzerStates) {
+		this.analyzerStates = analyzerStates;
+		fireTableDataChanged();
+	}
+
 	@Override
 	public String getName() {
 		return "Analysis Enablement";
