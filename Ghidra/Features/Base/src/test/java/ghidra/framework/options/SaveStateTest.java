@@ -126,7 +126,7 @@ public class SaveStateTest extends AbstractGenericTest {
 
 	@Test
 	public void testFont() throws Exception {
-		Font font = new Font("Times New Roman", Font.BOLD, 12);
+		Font font = Font.decode("Dialog-BOLD-12");
 		ss.putFont("TEST", font);
 		Font f = ss.getFont("TEST", null);
 		assertEquals(font, f);
@@ -455,7 +455,7 @@ public class SaveStateTest extends AbstractGenericTest {
 
 	@Test
 	public void testJsonFontRoundTrip() {
-		Font font = new Font("Times New Roman", Font.BOLD, 12);
+		Font font = Font.decode("Dialog-BOLD-12");
 		ss.putFont("foo", font);
 		SaveState restored = jsonRoundTrip(ss);
 		assertEquals(font, restored.getFont("foo", null));
