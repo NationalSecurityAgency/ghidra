@@ -297,6 +297,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 		AnalysisPanel panel =
 			findComponent(optionsDialog.getComponent(), AnalysisPanel.class, false);
 		invokeInstanceMethod("deselectAll", panel);
+		panel.applyChanges();
 		waitForSwing();
 
 		close(optionsDialog);

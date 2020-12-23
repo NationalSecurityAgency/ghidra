@@ -90,7 +90,7 @@ public class AnalysisEnablementTableModel
 			Boolean enabled = (Boolean) value;
 			analyzerStates.get(rowIndex).setEnabled(enabled);
 			String analyzerName = analyzerStates.get(rowIndex).getName();
-			panel.setAnalyzerEnabled(analyzerName, enabled);
+			panel.setAnalyzerEnabled(analyzerName, enabled, true);
 			fireTableRowsUpdated(rowIndex, rowIndex);
 		}
 	}

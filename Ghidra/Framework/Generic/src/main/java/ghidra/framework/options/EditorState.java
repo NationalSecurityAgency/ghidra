@@ -17,11 +17,9 @@ package ghidra.framework.options;
 
 import java.awt.Component;
 import java.beans.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.framework.Application;
-import ghidra.util.SystemUtilities;
 
 public class EditorState implements PropertyChangeListener {
 
@@ -90,11 +88,32 @@ public class EditorState implements PropertyChangeListener {
 	}
 
 	public boolean isValueChanged() {
-		return !SystemUtilities.isEqual(currentValue, originalValue);
+		return !Objects.equals(currentValue, originalValue);
+	}
+
+	public void applyNonDefaults(Options save) {
+		if (!Objects.equals(currentValue, options.getDefaultValue(name))) {
+			Options sub = save.getOptions(options.getName());
+			sub.putObject(name, currentValue);
+		}
+	}
+
+	public void loadFrom(Options loadFrom) {
+		Options sub = loadFrom.getOptions(options.getName());
+		Object newValue = sub.getObject(name, options.getDefaultValue(name));
+		if (editor != null && !Objects.equals(currentValue, newValue)) {
+			editor.setValue(newValue);
+		}
+	}
+
+	public boolean hasSameValue(Options compareTo) {
+		Options sub = compareTo.getOptions(options.getName());
+		Object newValue = sub.getObject(name, options.getDefaultValue(name));
+		return Objects.equals(newValue, currentValue);
 	}
 
 	public void applyValue() {
-		if (SystemUtilities.isEqual(currentValue, originalValue)) {
+		if (Objects.equals(currentValue, originalValue)) {
 			return;
 		}
 		boolean success = false;
@@ -166,4 +185,5 @@ public class EditorState implements PropertyChangeListener {
 	public String getDescription() {
 		return options.getDescription(name);
 	}
+
 }
