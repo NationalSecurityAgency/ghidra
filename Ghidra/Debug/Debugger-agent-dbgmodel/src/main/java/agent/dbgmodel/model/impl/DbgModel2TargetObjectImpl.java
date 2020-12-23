@@ -243,8 +243,13 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					targetThread.getThread().getExecutingProcessorType().description;
 				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
 			}
+			if (proxy instanceof TargetRegister) {
+				DbgModelTargetObject bank = (DbgModelTargetObject) getImplParent();
+				TargetObject container = bank.getImplParent();
+				attrs.put(TargetRegister.CONTAINER_ATTRIBUTE_NAME, container);
+			}
 			if (proxy instanceof TargetRegisterBank) {
-				attrs.put(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this);
+				attrs.put(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, getImplParent());
 			}
 			if (proxy instanceof TargetStackFrame) {
 				DbgModelTargetStackFrame frame = (DbgModelTargetStackFrame) proxy;

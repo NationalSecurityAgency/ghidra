@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.Color;
 import java.io.File;
@@ -88,8 +87,7 @@ import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerListingProvider extends CodeViewerProvider
-		implements ListingDisplayListener {
+public class DebuggerListingProvider extends CodeViewerProvider implements ListingDisplayListener {
 	private static final LocationTrackingSpec DEFAULT_TRACKING_SPEC = LocationTrackingSpec.TRACK_PC;
 	private static final AutoReadMemorySpec DEFAULT_READ_MEMORY_SPEC =
 		AutoReadMemorySpec.READ_VIS_RO_ONCE;
@@ -407,6 +405,7 @@ public class DebuggerListingProvider extends CodeViewerProvider
 
 		syncToStaticListing = isConnected;
 		autoImportCurrentModule = isConnected;
+		setVisible(true);
 		createActions();
 
 		doTrackSpec();
@@ -494,9 +493,8 @@ public class DebuggerListingProvider extends CodeViewerProvider
 	protected void updateMarkerServiceColorModel() {
 		colorModel.removeModel(markerServiceColorModel);
 		if (markerService != null) {
-			colorModel.addModel(markerServiceColorModel =
-				new MarkerServiceBackgroundColorModel(markerService, current.getView(),
-					getListingPanel().getAddressIndexMap()));
+			colorModel.addModel(markerServiceColorModel = new MarkerServiceBackgroundColorModel(
+				markerService, current.getView(), getListingPanel().getAddressIndexMap()));
 		}
 	}
 
@@ -682,8 +680,7 @@ public class DebuggerListingProvider extends CodeViewerProvider
 		Address address = location.getAddress();
 		TraceSection section = getSmallestSectionAt(address);
 		if (section != null) {
-			return view.getDomainFile().getName() + " (" +
-				section.getModule().getName() + ":" +
+			return view.getDomainFile().getName() + " (" + section.getModule().getName() + ":" +
 				section.getName() + ")";
 		}
 		MemoryBlock block = view.getMemory().getBlock(address);

@@ -90,8 +90,10 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public void threadExited(DebugThreadId threadId, DbgProcess proc, DbgCause cause) {
-		DbgModelTargetProcess process = getTargetProcess(proc);
-		process.getThreads().threadExited(threadId);
+		DbgModelTargetProcess targetProcess = processesById.get(proc.getId());
+		if (targetProcess != null) {
+			targetProcess.getThreads().threadExited(threadId);
+		}
 	}
 
 	@Override

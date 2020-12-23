@@ -23,7 +23,6 @@ import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgProcessImpl;
 import ghidra.util.Msg;
 
 /**
@@ -49,7 +48,7 @@ public class DbgListProcessesCommand extends AbstractDbgCommand<Map<DebugProcess
 			DebugSystemObjects so = manager.getSystemObjects();
 			so.setCurrentProcessId(id);
 			int pid = so.getCurrentProcessSystemId();
-			manager.addProcess(new DbgProcessImpl(manager, id, pid), Causes.UNCLAIMED);
+			manager.getProcessComputeIfAbsent(id, pid);
 		}
 		for (DebugProcessId id : new ArrayList<>(cur)) {
 			if (updatedProcessIds.contains(id)) {

@@ -45,32 +45,32 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	protected Register considerRegister(TargetRegister<?> tReg) {
+	protected synchronized Register considerRegister(TargetRegister<?> tReg) {
 		Register lReg = super.considerRegister(tReg);
 		if (lReg == null) {
 			return null;
 		}
-		synchronized (present) {
-			present.computeIfAbsent(lReg.getBaseRegister(),
-				r -> new TreeSet<>(LENGTH_COMPARATOR)).add(lReg);
-		}
+		//synchronized (present) {
+		present.computeIfAbsent(lReg.getBaseRegister(), r -> new TreeSet<>(LENGTH_COMPARATOR))
+				.add(lReg);
+		//}
 		return lReg;
 	}
 
 	@Override
-	protected Register removeRegister(TargetRegister<?> tReg) {
+	protected synchronized Register removeRegister(TargetRegister<?> tReg) {
 		Register lReg = super.removeRegister(tReg);
-		synchronized (present) {
-			if (lReg == null) {
-				return null;
-			}
-			Register lbReg = lReg.getBaseRegister();
-			TreeSet<Register> set = present.get(lbReg);
-			set.remove(lReg);
-			if (set.isEmpty()) {
-				present.remove(lbReg);
-			}
+		//synchronized (present) {
+		if (lReg == null) {
+			return null;
 		}
+		Register lbReg = lReg.getBaseRegister();
+		TreeSet<Register> set = present.get(lbReg);
+		set.remove(lReg);
+		if (set.isEmpty()) {
+			present.remove(lbReg);
+		}
+		//}
 		return lReg;
 	}
 
@@ -84,7 +84,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	public Map.Entry<String, byte[]> traceToTarget(RegisterValue registerValue) {
+	public synchronized Map.Entry<String, byte[]> traceToTarget(RegisterValue registerValue) {
 		Register lbReg = registerValue.getRegister();
 		if (!lbReg.isBaseRegister()) {
 			throw new IllegalArgumentException();
@@ -114,7 +114,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	public RegisterValue targetToTrace(String tRegName, byte[] value) {
+	public synchronized RegisterValue targetToTrace(String tRegName, byte[] value) {
 		if (value == null) {
 			return null;
 		}

@@ -16,10 +16,12 @@
 package agent.dbgeng.model.iface2;
 
 import agent.dbgeng.manager.impl.DbgRegister;
+import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetRegisterContainer;
 
-public interface DbgModelTargetRegisterContainer
-		extends DbgModelTargetObject, TargetRegisterContainer<DbgModelTargetRegisterContainer> {
+public interface DbgModelTargetRegisterContainerAndBank extends DbgModelTargetObject, //
+		TargetRegisterContainer<DbgModelTargetRegisterContainerAndBank>, //
+		TargetRegisterBank<DbgModelTargetRegisterContainerAndBank> {
 
 	public DbgModelTargetRegister getTargetRegister(DbgRegister register);
 

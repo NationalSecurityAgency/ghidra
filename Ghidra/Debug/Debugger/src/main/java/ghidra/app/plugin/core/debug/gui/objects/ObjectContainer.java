@@ -250,8 +250,13 @@ public class ObjectContainer implements Comparable {
 				Object val = attributesAdded.get(key);
 				ObjectContainer child =
 					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, true);
-				attributeMap.put(key, val);
-				result.add(child);
+				if (child == null) {
+					Msg.error(this, "Null container for " + key);
+				}
+				else {
+					attributeMap.put(key, val);
+					result.add(child);
+				}
 			}
 		}
 		currentChildren = result;

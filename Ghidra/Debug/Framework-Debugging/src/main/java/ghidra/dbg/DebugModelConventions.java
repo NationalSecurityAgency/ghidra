@@ -528,6 +528,7 @@ public enum DebugModelConventions {
 		}
 
 		private void doInvalidated(TargetObject object, String reason) {
+			List<TargetObject> removed = new ArrayList<>();
 			synchronized (objects) {
 				if (disposed) {
 					return;
@@ -537,7 +538,6 @@ public enum DebugModelConventions {
 				 * ConcurrentModificationException, even if removal is via the iterator...
 				 */
 				List<String> path = object.getPath();
-				List<TargetObject> removed = new ArrayList<>();
 				while (true) {
 					Entry<List<String>, TargetObject> ent = objects.ceilingEntry(path);
 					if (ent == null || !PathUtils.isAncestor(path, ent.getKey())) {
@@ -548,9 +548,9 @@ public enum DebugModelConventions {
 					succ.removeListener(this);
 					removed.add(succ);
 				}
-				for (TargetObject r : removed) {
-					objectRemovedSafe(r);
-				}
+			}
+			for (TargetObject r : removed) {
+				objectRemovedSafe(r);
 			}
 		}
 
@@ -576,7 +576,12 @@ public enum DebugModelConventions {
 			if (!checkDescend(ref)) {
 				return;
 			}
-			ref.fetch().thenAcceptAsync(this::addListenerAndConsiderSuccessors);
+			ref.fetch()
+					.thenAcceptAsync(this::addListenerAndConsiderSuccessors)
+					.exceptionally(ex -> {
+						Msg.error(this, "Could not fetch a ref: " + ref, ex);
+						return null;
+					});
 		}
 
 		private void considerElements(TargetObject parent,
@@ -650,8 +655,18 @@ public enum DebugModelConventions {
 		public boolean addListenerAndConsiderSuccessors(TargetObject obj) {
 			boolean result = addListener(obj);
 			if (result && checkDescend(obj)) {
-				obj.fetchElements().thenAcceptAsync(elems -> considerElements(obj, elems));
-				obj.fetchAttributes().thenAcceptAsync(attrs -> considerAttributes(obj, attrs));
+				obj.fetchElements()
+						.thenAcceptAsync(elems -> considerElements(obj, elems))
+						.exceptionally(ex -> {
+							Msg.error(this, "Could not fetch elements of obj: " + obj, ex);
+							return null;
+						});
+				obj.fetchAttributes()
+						.thenAcceptAsync(attrs -> considerAttributes(obj, attrs))
+						.exceptionally(ex -> {
+							Msg.error(this, "Could not fetch attributes of obj: " + obj, ex);
+							return null;
+						});
 			}
 			return result;
 		}

@@ -48,6 +48,12 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 			key, value), "Initialized");
 	}
 
+	@Override
+	protected void doInvalidate(String reason) {
+		super.doInvalidate(reason);
+		getManager().removeStateListener(accessListener);
+	}
+
 	public void setAccessibility(TargetAccessibility accessibility) {
 		synchronized (attributes) {
 			if (this.accessibility == accessibility) {
@@ -118,6 +124,9 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 			}
 			case EXIT: {
 				exec = TargetExecutionState.TERMINATED;
+				if (getParentProcess() != null || this instanceof TargetProcess) {
+					getManager().removeStateListener(accessListener);
+				}
 				onExit();
 				break;
 			}

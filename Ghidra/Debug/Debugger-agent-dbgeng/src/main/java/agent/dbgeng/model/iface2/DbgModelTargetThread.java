@@ -45,14 +45,9 @@ public interface DbgModelTargetThread extends //
 			if (id == null) {
 				id = so.getCurrentThreadId();
 			}
-			DbgThreadImpl thread = manager.getThread(id);
-			if (thread == null) {
-				DbgModelTargetProcess parentProcess = getParentProcess();
-				DbgProcessImpl process = (DbgProcessImpl) parentProcess.getProcess();
-				thread = new DbgThreadImpl(manager, process, id, tid);
-				manager.addThread(thread);
-
-			}
+			DbgModelTargetProcess parentProcess = getParentProcess();
+			DbgProcessImpl process = (DbgProcessImpl) parentProcess.getProcess();
+			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid);
 			return thread;
 		}
 		catch (IllegalArgumentException e) {
@@ -68,8 +63,6 @@ public interface DbgModelTargetThread extends //
 		DbgThread thread = getThread();
 		return manager.execute(new DbgThreadSelectCommand(manager, thread, null));
 	}
-
-	public DbgModelTargetRegisterContainer getRegisters();
 
 	public DbgModelTargetStackImpl getStack();
 

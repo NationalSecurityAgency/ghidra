@@ -19,12 +19,10 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugClient.DebugOutputFlags;
 import agent.dbgeng.dbgeng.DebugSessionId;
-import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.manager.cmd.DbgSessionSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgSessionImpl;
 import agent.dbgeng.model.iface1.*;
 import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetConsole;
@@ -52,12 +50,7 @@ public interface DbgModelTargetSession extends //
 			String index = PathUtils.parseIndex(getName());
 			Integer sid = Integer.decode(index);
 			DebugSessionId id = new DebugSessionId(sid);
-			DbgSessionImpl session = (DbgSessionImpl) manager.getSession(id);
-			if (session == null) {
-				session = new DbgSessionImpl(manager, id);
-				manager.addSession(session, Causes.UNCLAIMED);
-			}
-			return session;
+			return manager.getSessionComputeIfAbsent(id);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentSession();

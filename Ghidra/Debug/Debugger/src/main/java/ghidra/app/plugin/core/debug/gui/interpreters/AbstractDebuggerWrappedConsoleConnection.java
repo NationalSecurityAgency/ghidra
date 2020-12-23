@@ -46,6 +46,11 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	protected class ForInterpreterListener implements TargetInterpreterListener {
 		@Override
 		public void consoleOutput(TargetObject console, Channel channel, String out) {
+			// NB: yes, this is lame... The InterpreterPanel's repositionScrollPane
+			//  method substracts 1 from the text length to compute the new position
+			//  causing it to scroll to the last character printed.  We want it to scroll
+			//  to the next line, so...
+			out += " ";
 			switch (channel) {
 				case STDOUT:
 					if (outWriter == null) {

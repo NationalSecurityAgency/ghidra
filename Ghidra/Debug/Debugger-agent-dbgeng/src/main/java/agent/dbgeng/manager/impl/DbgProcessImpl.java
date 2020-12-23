@@ -63,6 +63,8 @@ public class DbgProcessImpl implements DbgProcess {
 		this.manager = manager;
 		this.id = id;
 		this.pid = pid;
+		manager.processes.put(id, this);
+		manager.getEventListeners().fire.processAdded(this, DbgCause.Causes.UNCLAIMED);
 	}
 
 	public DbgProcessImpl(DbgManagerImpl manager) {
@@ -108,7 +110,7 @@ public class DbgProcessImpl implements DbgProcess {
 	 * @param cause the cause of the new inferior
 	 */
 	public void add(DbgCause cause) {
-		manager.addProcess(this, cause);
+		//manager.addProcess(this, cause);
 	}
 
 	/**

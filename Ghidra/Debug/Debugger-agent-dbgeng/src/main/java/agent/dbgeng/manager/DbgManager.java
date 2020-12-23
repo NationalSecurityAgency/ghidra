@@ -24,7 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInsertions;
-import agent.dbgeng.manager.impl.*;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 
@@ -217,8 +217,6 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 	 */
 	CompletableFuture<DbgProcess> addProcess();
 
-	public void addProcess(DbgProcessImpl process, DbgCause cause);
-
 	/**
 	 * Remove a process
 	 * 
@@ -233,8 +231,6 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 	 * @return a future which completes with the handle to the new process
 	 */
 	CompletableFuture<DbgSession> addSession();
-
-	public void addSession(DbgSessionImpl session, DbgCause cause);
 
 	/**
 	 * Remove a session

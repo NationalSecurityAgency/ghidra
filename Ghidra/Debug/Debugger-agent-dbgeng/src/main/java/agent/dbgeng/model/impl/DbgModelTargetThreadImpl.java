@@ -54,7 +54,7 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 
 	protected final DbgThread thread;
 
-	protected final DbgModelTargetRegisterContainer registers;
+	protected final DbgModelTargetRegisterContainerImpl registers;
 	protected final DbgModelTargetStackImpl stack;
 
 	private DbgModelTargetProcess process;
@@ -152,8 +152,7 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		return manager.execute(new DbgThreadSelectCommand(manager, thread, null));
 	}
 
-	@Override
-	public DbgModelTargetRegisterContainer getRegisters() {
+	public DbgModelTargetRegisterContainerAndBank getRegisters() {
 		return registers;
 	}
 

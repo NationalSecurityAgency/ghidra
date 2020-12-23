@@ -56,7 +56,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		return lReg.isBaseRegister();
 	}
 
-	protected void collectFilteredLanguageRegs() {
+	protected synchronized void collectFilteredLanguageRegs() {
 		for (Register lReg : language.getRegisters()) {
 			if (!testTraceRegister(lReg)) {
 				continue;
@@ -65,7 +65,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		}
 	}
 
-	protected Register considerRegister(TargetRegister<?> tReg) {
+	protected synchronized Register considerRegister(TargetRegister<?> tReg) {
 		String name = normalizeName(tReg.getIndex());
 		Register lReg = filtLanguageRegs.get(name);
 		if (lReg == null) {
@@ -76,7 +76,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		return lReg;
 	}
 
-	protected Register removeRegister(TargetRegister<?> tReg) {
+	protected synchronized Register removeRegister(TargetRegister<?> tReg) {
 		String name = normalizeName(tReg.getIndex());
 		Register lReg = filtLanguageRegs.get(name);
 		if (lReg == null) {

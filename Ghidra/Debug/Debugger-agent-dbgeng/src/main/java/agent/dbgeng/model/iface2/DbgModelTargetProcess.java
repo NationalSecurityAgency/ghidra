@@ -19,12 +19,10 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugSystemObjects;
-import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.cmd.DbgProcessSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface1.*;
 import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetProcess;
@@ -65,12 +63,7 @@ public interface DbgModelTargetProcess extends //
 			if (id == null) {
 				id = so.getCurrentProcessId();
 			}
-			DbgProcessImpl process = manager.getProcess(id);
-			if (process == null) {
-				process = new DbgProcessImpl(manager, id, pid);
-				manager.addProcess(process, Causes.UNCLAIMED);
-			}
-			return process;
+			return manager.getProcessComputeIfAbsent(id, pid);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentProcess();

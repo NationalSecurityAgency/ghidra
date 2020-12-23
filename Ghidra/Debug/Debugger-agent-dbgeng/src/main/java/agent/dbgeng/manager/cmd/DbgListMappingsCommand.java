@@ -46,7 +46,8 @@ public class DbgListMappingsCommand extends AbstractDbgCommand<Map<Long, DbgSect
 			Msg.warn(this, "Resync: Was missing thread: " + id);
 			so.setCurrentThreadId(id);
 			int tid = so.getCurrentThreadSystemId();
-			new DbgThreadImpl(manager, process, id, tid).add();
+			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid);
+			thread.add();
 		}
 		for (DebugThreadId id : new ArrayList<>(cur)) {
 			if (updatedThreadIds.contains(id)) {

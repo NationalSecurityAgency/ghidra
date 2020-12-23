@@ -196,7 +196,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	protected Map<Long, Trace> traces = new HashMap<>();
 	protected Trace currentTrace;
 	protected DebuggerObjectModel currentModel;
-	private TraceRecorder recorder;
+	// NB: We're getting rid of this because the ObjectsProvider is beating the trace
+	//  to the punch and causing the pattern-matcher to fail
+	// private TraceRecorder recorder;  
 	protected Runnable repeatLastSet = () -> {
 	};
 
@@ -1327,7 +1329,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			if (rec == null) {
 				return; // Cancelled
 			}
-			this.recorder = rec;
+			//this.recorder = rec;
 			Trace trace = rec.getTrace();
 			traceManager.openTrace(trace);
 			traceManager.activateTrace(trace);
@@ -1335,9 +1337,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	public void addListener(TargetObject targetObject) {
+		/*
 		if (recorder != null) {
 			recorder.getListenerForRecord().addListener(targetObject);
 		}
+		*/
 	}
 
 	public void stopRecording(TargetObject targetObject) {

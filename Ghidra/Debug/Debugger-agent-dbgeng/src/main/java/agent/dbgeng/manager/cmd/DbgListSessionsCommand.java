@@ -23,7 +23,6 @@ import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgSessionImpl;
 import ghidra.util.Msg;
 
 /**
@@ -46,7 +45,7 @@ public class DbgListSessionsCommand extends AbstractDbgCommand<Map<DebugSessionI
 			}
 			// Need to create the inferior as if we received =thread-group-created
 			Msg.warn(this, "Resync: Was missing group: i" + id);
-			manager.addSession(new DbgSessionImpl(manager, id), Causes.UNCLAIMED);
+			manager.getSessionComputeIfAbsent(id);
 		}
 		for (DebugSessionId id : new ArrayList<>(cur)) {
 			if (updatedSessionIds.contains(id)) {

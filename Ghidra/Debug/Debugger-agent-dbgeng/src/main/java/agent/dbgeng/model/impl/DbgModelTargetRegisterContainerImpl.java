@@ -34,7 +34,7 @@ import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.util.ConversionUtils;
 
 public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImpl
-		implements DbgModelTargetRegisterContainer {
+		implements DbgModelTargetRegisterContainerAndBank {
 
 	protected final DbgThread thread;
 

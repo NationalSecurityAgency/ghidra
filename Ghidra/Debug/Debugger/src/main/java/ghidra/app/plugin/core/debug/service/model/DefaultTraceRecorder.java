@@ -104,7 +104,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			addPattern(PathUtils.parse("Sessions[].Attributes"));
 			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Stack.Frames[]"));
 			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].TTD.Position"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Registers.User[]"));
+			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Registers.User."));
 
 			// Paths for JDI
 			addPattern(PathUtils.parse("VirtualMachines[]"));
@@ -457,7 +457,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		protected TargetRegister<?> pcReg;
 		protected TargetRegister<?> spReg;
 		protected Map<Integer, TargetRegisterBank<?>> regs = new HashMap<>();
-		protected NavigableMap<Integer, TargetStackFrame<?>> stack = new TreeMap<>();
+		protected NavigableMap<Integer, TargetStackFrame<?>> stack =
+			Collections.synchronizedNavigableMap(new TreeMap<>());
 		protected final ComposedMemory threadMemory = new ComposedMemory(processMemory);
 		protected TargetBreakpointContainer<?> threadBreakpointContainer;
 		protected TargetExecutionState state = TargetExecutionState.ALIVE;
@@ -492,9 +493,9 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			 * thread? This seems counter to the model's flexibility. Traces allow polyglot
 			 * disassembly, but not polyglot register spaces.
 			 */
-			if (regMapper != null) {
+			/*if (regMapper != null) {
 				return AsyncUtils.NIL;
-			}
+			}*/
 			return regMappers.get(registers).thenAccept(rm -> {
 				synchronized (this) {
 					regMapper = rm;
@@ -533,12 +534,16 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				if (regMapper != rm) {
 					return;
 				}
-				if (pcReg == null) {
-					pcReg = regMapper.traceToTarget(trace.getBaseLanguage().getProgramCounter());
+				TargetRegister<?> newPcReg =
+					regMapper.traceToTarget(trace.getBaseLanguage().getProgramCounter());
+				if (pcReg != newPcReg) {
+					pcReg = newPcReg;
 					doUpdateRegs |= pcReg != null;
 				}
-				if (spReg == null) {
-					spReg = regMapper.traceToTarget(trace.getBaseCompilerSpec().getStackPointer());
+				TargetRegister<?> newSpReg =
+					regMapper.traceToTarget(trace.getBaseCompilerSpec().getStackPointer());
+				if (spReg != newSpReg) {
+					spReg = newSpReg;
 					doUpdateRegs |= spReg != null;
 				}
 				if (mapper.getExtraRegNames().contains(name)) {
@@ -592,18 +597,34 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return 0;
 		}
 
-		protected void offerRegisters(TargetRegisterBank<?> newRegs) {
-			if (regs.isEmpty()) {
-				newRegs.getDescriptions().fetch().thenCompose(descs -> {
-					return initRegMapper(descs);
-				}).thenAccept(__ -> {
-					listeners.fire.registerBankMapped(DefaultTraceRecorder.this);
-				}).exceptionally(ex -> {
-					Msg.error(this, "Could not intialize register mapper", ex);
-					return null;
-				});
+		CompletableFuture<Void> doFetchAndInitRegMapper(TargetRegisterBank<?> bank) {
+			int frameLevel = getSuccessorFrameLevel(bank);
+			TypedTargetObjectRef<? extends TargetRegisterContainer<?>> descsRef =
+				bank.getDescriptions();
+			if (descsRef == null) {
+				Msg.error(this, "Cannot create mapper, yet: Descriptions is null.");
+				return AsyncUtils.NIL;
 			}
+			return descsRef.fetch().thenCompose(descs -> {
+				return initRegMapper(descs);
+			}).thenAccept(__ -> {
+				if (frameLevel == 0) {
+					recordRegisterValues(bank, bank.getCachedRegisters());
+					updateRegsMem(null);
+				}
+				listeners.fire.registerBankMapped(DefaultTraceRecorder.this);
+			}).exceptionally(ex -> {
+				Msg.error(this, "Could not intialize register mapper", ex);
+				return null;
+			});
+		}
+
+		protected void offerRegisters(TargetRegisterBank<?> newRegs) {
 			int frameLevel = getSuccessorFrameLevel(newRegs);
+			if (regs.isEmpty()) {
+				// TODO: Technically, each frame may need its own mapper....
+				doFetchAndInitRegMapper(newRegs);
+			}
 
 			TargetRegisterBank<?> oldRegs = regs.put(frameLevel, newRegs);
 			if (oldRegs == newRegs) {
@@ -619,11 +640,6 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					Msg.error(this, "Could not track register accessibility: " + e.getMessage());
 					return null;
 				});
-			}
-
-			if (frameLevel == 0) {
-				recordRegisterValues(newRegs, newRegs.getCachedRegisters());
-				updateRegsMem(null);
 			}
 		}
 
@@ -1341,6 +1357,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			if (parent instanceof TargetStackFrame<?>) {
 				if (added.containsKey(TargetStackFrame.PC_ATTRIBUTE_NAME)) {
 					framePcUpdated((TargetStackFrame<?>) parent);
+				}
+			}
+			if (parent instanceof TargetRegisterBank<?>) {
+				if (added.containsKey(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME)) {
+					ThreadRecorder rec = threadMap.getForSuccessor(parent);
+					if (rec != null) {
+						rec.doFetchAndInitRegMapper((TargetRegisterBank<?>) parent);
+					}
 				}
 			}
 			// This should be fixed at construction.
