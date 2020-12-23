@@ -66,7 +66,7 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	private WeakHashMap<DockingActionIf, KeyStroke> clientActions = new WeakHashMap<>();
 
 	private ToolOptions keyBindingOptions;
-	private Bag<String> actionOwners = new HashBag<String>();
+	private Bag<String> actionOwners = new HashBag<>();
 
 	/**
 	 * Creates a new dummy action by the given name and default keystroke value
@@ -220,7 +220,7 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 
-		if (!optionName.startsWith(getName())) {
+		if (!optionName.equals(getFullName())) {
 			return; // not my binding
 		}
 

@@ -217,6 +217,10 @@ public class GTable extends JTable {
 	@Override
 	// overridden to install our SelectionManager
 	public void setModel(TableModel dataModel) {
+		// we are going to create a new selection model, save off the old selectionMode and
+		// restore it at the end.
+		int selectionMode = selectionModel.getSelectionMode();
+
 		if (selectionManager != null) {
 			selectionManager.dispose();
 		}
@@ -226,6 +230,7 @@ public class GTable extends JTable {
 		initializeRowHeight();
 
 		selectionManager = createSelectionManager();
+		selectionModel.setSelectionMode(selectionMode);
 	}
 
 	protected <T> SelectionManager createSelectionManager() {
