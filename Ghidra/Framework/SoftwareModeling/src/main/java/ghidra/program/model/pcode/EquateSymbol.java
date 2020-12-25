@@ -59,6 +59,10 @@ public class EquateSymbol extends HighSymbol {
 
 	public long getValue() { return value; }
 
+	public int getConvert() {
+		return convert;
+	}
+
 	@Override
 	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement symel = parser.start("equatesymbol");

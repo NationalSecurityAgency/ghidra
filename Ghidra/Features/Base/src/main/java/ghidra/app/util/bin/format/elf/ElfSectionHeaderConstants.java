@@ -108,6 +108,8 @@ public class ElfSectionHeaderConstants {
 	public static final int SHT_GROUP = 17;
 	/**Extended section indeces*/
 	public static final int SHT_SYMTAB_SHNDX = 18;
+	/**Experimental support - see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg */
+	public static final int SHT_RELR = 19;
 
 	// OS Specific Section Types
 
@@ -115,6 +117,9 @@ public class ElfSectionHeaderConstants {
 	public static final int SHT_ANDROID_REL = 0x60000001;
 	/**Android relocation entries with explicit addends*/
 	public static final int SHT_ANDROID_RELA = 0x60000002;
+
+	/**Android's experimental support for SHT_RELR sections (see above) */
+	public static final int SHT_ANDROID_RELR = 0x6fffff00;
 
 	/**Object attributes */
 	public static final int SHT_GNU_ATTRIBUTES = 0x6ffffff5;

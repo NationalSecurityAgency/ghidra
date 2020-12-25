@@ -21,12 +21,14 @@ import java.util.*;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
+import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
+import ghidra.framework.options.Options;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
 import ghidra.graph.jung.JungDirectedGraph;
@@ -180,6 +182,10 @@ public class PdbApplicator {
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
 			TaskMonitor monitorParam, MessageLog logParam) throws PdbException, CancelledException {
 
+		// FIXME: should not support use of DataTypeManager-only since it will not have the correct data
+		// organization if it corresponds to a data type archive.  Need to evaulate archive use case
+		// and determine if a program must always be used.
+
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
@@ -196,6 +202,11 @@ public class PdbApplicator {
 				break;
 			default:
 				throw new PdbException("Invalid Restriction");
+		}
+
+		if (program == null) {
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 		}
 
 		pdbAddressManager.logReport();
@@ -516,23 +527,23 @@ public class PdbApplicator {
 		return categoryUtils.getAnonymousTypesCategory();
 	}
 
-	/**
-	 * Returns the name of what should be the next Anonymous Function (based on the count of
-	 * the number of anonymous functions) so that there is a unique name for the function.
-	 * @return the name for the next anonymous function.
-	 */
-	String getNextAnonymousFunctionName() {
-		return categoryUtils.getNextAnonymousFunctionName();
-	}
+//	/**
+//	 * Returns the name of what should be the next Anonymous Function (based on the count of
+//	 * the number of anonymous functions) so that there is a unique name for the function.
+//	 * @return the name for the next anonymous function.
+//	 */
+//	String getNextAnonymousFunctionName() {
+//		return categoryUtils.getNextAnonymousFunctionName();
+//	}
 
-	/**
-	 * Updates the count of the anonymous functions.  This is a separate call from
-	 * {@link #getNextAnonymousFunctionName()} because the count should only be updated after
-	 * the previous anonymous function has been successfully created/stored.
-	 */
-	void incrementNextAnonymousFunctionName() {
-		categoryUtils.incrementNextAnonymousFunctionName();
-	}
+//	/**
+//	 * Updates the count of the anonymous functions.  This is a separate call from
+//	 * {@link #getNextAnonymousFunctionName()} because the count should only be updated after
+//	 * the previous anonymous function has been successfully created/stored.
+//	 */
+//	void incrementNextAnonymousFunctionName() {
+//		categoryUtils.incrementNextAnonymousFunctionName();
+//	}
 
 	private PdbCategories setPdbCatogoryUtils(String pdbFilename)
 			throws CancelledException, PdbException {
@@ -541,8 +552,7 @@ public class PdbApplicator {
 		int num = pdb.getDebugInfo().getNumModules();
 		for (int index = 1; index <= num; index++) {
 			monitor.checkCanceled();
-			String moduleName =
-				pdb.getDebugInfo().getModuleInformation(index).getModuleName();
+			String moduleName = pdb.getDebugInfo().getModuleInformation(index).getModuleName();
 			categoryNames.add(moduleName);
 		}
 
@@ -1255,7 +1265,9 @@ public class PdbApplicator {
 				NamespaceUtils.getNonFunctionNamespace(program, path.getParent());
 			if (parentNamespace == null) {
 				String type = isClass ? "class" : "namespace";
-				log.appendMsg("Error: failed to define " + type + ": " + path);
+				log.appendMsg(
+					"PDB Warning: Because parent namespace does not exist, failed to define " +
+						type + ": " + path);
 				continue;
 			}
 			defineNamespace(parentNamespace, path.getName(), isClass);
@@ -1283,8 +1295,9 @@ public class PdbApplicator {
 				else if (namespace.getSymbol().getSymbolType() == SymbolType.NAMESPACE) {
 					return;
 				}
-				log.appendMsg("Unable to create class namespace due to conflicting symbol: " +
-					namespace.getName(true));
+				log.appendMsg(
+					"PDB Warning: Unable to create class namespace due to conflicting symbol: " +
+						namespace.getName(true));
 			}
 			else if (isClass) {
 				symbolTable.createClass(parentNamespace, name, SourceType.IMPORTED);
@@ -1294,8 +1307,9 @@ public class PdbApplicator {
 			}
 		}
 		catch (InvalidInputException | DuplicateNameException e) {
-			log.appendMsg("Unable to create class namespace: " + parentNamespace.getName(true) +
-				Namespace.DELIMITER + name + " due to exception: " + e.toString());
+			log.appendMsg(
+				"PDB Warning: Unable to create class namespace due to exception: " + e.toString() +
+					"; Namespace: " + parentNamespace.getName(true) + Namespace.DELIMITER + name);
 		}
 	}
 
@@ -1396,7 +1410,7 @@ public class PdbApplicator {
 			return true;
 		}
 		catch (InvalidInputException e) {
-			log.appendMsg("Unable to create symbol: " + e.getMessage());
+			log.appendMsg("PDB Warning: Unable to create symbol: " + e.getMessage());
 		}
 		return false;
 	}
@@ -1521,7 +1535,8 @@ public class PdbApplicator {
 				namespace, name, SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
-			appendLogMsg("Unable to create symbol " + symbolPathString + " at " + address);
+			log.appendMsg("PDB Warning: Unable to create symbol at " + address +
+				" due to exception: " + e.toString() + "; symbolPathName: " + symbolPathString);
 		}
 		return symbol;
 	}

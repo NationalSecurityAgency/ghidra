@@ -15,15 +15,14 @@
  */
 package ghidra.program.database.util;
 
-import ghidra.util.datastruct.IndexRange;
-import ghidra.util.datastruct.IndexRangeIterator;
-import ghidra.util.exception.NotYetImplementedException;
-
 import java.io.IOException;
 import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.util.datastruct.IndexRange;
+import ghidra.util.datastruct.IndexRangeIterator;
+import ghidra.util.exception.NotYetImplementedException;
 
 /**
  * <code>SharedRangeMapDB</code> provides a long value range map backed by a database table.
@@ -56,12 +55,12 @@ public class SharedRangeMapDB {
 	private static final int[] MAP_INDEXED_COLS = new int[] { MAP_VALUE_COL, MAP_RANGE_KEY_COL };
 
 	private static Schema createRangesSchema() {
-		return new Schema(0, "From", new Class[] { LongField.class }, new String[] { "To" });
+		return new Schema(0, "From", new Field[] { LongField.INSTANCE }, new String[] { "To" });
 	}
 
 	private static Schema createMapSchema() {
-		return new Schema(0, "Key", new Class[] { LongField.class, LongField.class }, new String[] {
-			"Value", "Range Key" });
+		return new Schema(0, "Key", new Field[] { LongField.INSTANCE, LongField.INSTANCE },
+			new String[] { "Value", "Range Key" });
 	}
 
 	/**
@@ -72,7 +71,8 @@ public class SharedRangeMapDB {
 	 * @param errHandler database error handler.
 	 * @param create if true the underlying database tables will be created.
 	 */
-	public SharedRangeMapDB(DBHandle dbHandle, String name, ErrorHandler errHandler, boolean create) {
+	public SharedRangeMapDB(DBHandle dbHandle, String name, ErrorHandler errHandler,
+			boolean create) {
 		this.dbHandle = dbHandle;
 		this.errHandler = errHandler;
 		String rangeTableName = RANGES_TABLE_NAME_PREFIX + name;
@@ -128,11 +128,11 @@ public class SharedRangeMapDB {
 			//++modCount;
 			try {
 				// Consoldate existing ranges for this value which overlap
-				long[] mapKeys = mapTable.findRecords(new LongField(value), MAP_VALUE_COL);
+				Field[] mapKeys = mapTable.findRecords(new LongField(value), MAP_VALUE_COL);
 				for (int i = 0; i < mapKeys.length; i++) {
 
 					// Get next range
-					long mapKey = mapKeys[i];
+					Field mapKey = mapKeys[i];
 					Record mapRec = mapTable.getRecord(mapKey);
 					long rangeKey = mapRec.getLongValue(MAP_RANGE_KEY_COL);
 					Record rangeRec = rangeTable.getRecord(rangeKey);
@@ -257,7 +257,7 @@ public class SharedRangeMapDB {
 		rangeTable.putRecord(newRange);
 
 		// Split related map records
-		long[] mapKeys = mapTable.findRecords(rangeRecord.getKeyField(), MAP_RANGE_KEY_COL);
+		Field[] mapKeys = mapTable.findRecords(rangeRecord.getKeyField(), MAP_RANGE_KEY_COL);
 		for (int i = 0; i < mapKeys.length; i++) {
 			Record mapRec = mapTable.getRecord(mapKeys[i]);
 			mapRec.setKey(mapTable.getMaxKey() + 1);
@@ -274,12 +274,12 @@ public class SharedRangeMapDB {
 	 * @return long[]
 	 * @throws IOException
 	 */
-	private long[] getMapValues(long[] mapKeys) throws IOException {
+	private Field[] getMapValues(Field[] mapKeys) throws IOException {
 
-		long[] values = new long[mapKeys.length];
+		Field[] values = new Field[mapKeys.length];
 		for (int i = 0; i < mapKeys.length; i++) {
 			Record rec = mapTable.getRecord(mapKeys[i]);
-			values[i] = rec.getLongValue(MAP_VALUE_COL);
+			values[i] = rec.getFieldValue(MAP_VALUE_COL);
 		}
 		Arrays.sort(values);
 		return values;
@@ -294,8 +294,8 @@ public class SharedRangeMapDB {
 	private void consolidateRange(long rangeKey, long end) throws IOException {
 
 		// Find map entries which occupy range
-		long[] mapKeys = mapTable.findRecords(new LongField(rangeKey), MAP_RANGE_KEY_COL);
-		long[] values = getMapValues(mapKeys);
+		Field[] mapKeys = mapTable.findRecords(new LongField(rangeKey), MAP_RANGE_KEY_COL);
+		Field[] values = getMapValues(mapKeys);
 
 		// Delete range if not occupied
 		if (mapKeys.length == 0) {
@@ -306,7 +306,7 @@ public class SharedRangeMapDB {
 		// Consolidate previous range if possible
 		Record rangeRec = rangeTable.getRecordBefore(rangeKey);
 		if (rangeRec != null && rangeRec.getLongValue(RANGE_TO_COL) == (rangeKey - 1)) {
-			long[] keys = mapTable.findRecords(rangeRec.getKeyField(), MAP_RANGE_KEY_COL);
+			Field[] keys = mapTable.findRecords(rangeRec.getKeyField(), MAP_RANGE_KEY_COL);
 			// Can consolidate if range occupied by the same set of values
 			if (Arrays.equals(getMapValues(keys), values)) {
 
@@ -327,7 +327,7 @@ public class SharedRangeMapDB {
 		// Consolidate next range if possible
 		rangeRec = rangeTable.getRecordAfter(end);
 		if (rangeRec != null && rangeRec.getKey() == (end + 1)) {
-			long[] keys = mapTable.findRecords(rangeRec.getKeyField(), MAP_RANGE_KEY_COL);
+			Field[] keys = mapTable.findRecords(rangeRec.getKeyField(), MAP_RANGE_KEY_COL);
 			// Can consolidate if range occupied by the same set of values
 			if (Arrays.equals(getMapValues(keys), values)) {
 
@@ -353,11 +353,11 @@ public class SharedRangeMapDB {
 		synchronized (dbHandle) {
 			//++modCount;
 			try {
-				long[] mapKeys = mapTable.findRecords(new LongField(value), MAP_VALUE_COL);
+				Field[] mapKeys = mapTable.findRecords(new LongField(value), MAP_VALUE_COL);
 				for (int i = 0; i < mapKeys.length; i++) {
 
 					// Remove Map entry
-					long mapKey = mapKeys[i];
+					Field mapKey = mapKeys[i];
 					Record mapRec = mapTable.getRecord(mapKey);
 					mapTable.deleteRecord(mapKey);
 
@@ -426,9 +426,8 @@ public class SharedRangeMapDB {
 					start = rec.getKey();
 				}
 
-				mapRecIter =
-					mapTable.indexIterator(MAP_RANGE_KEY_COL, new LongField(start), new LongField(
-						end), true);
+				mapRecIter = mapTable.indexIterator(MAP_RANGE_KEY_COL, new LongField(start),
+					new LongField(end), true);
 
 			}
 			catch (IOException e) {
@@ -439,6 +438,7 @@ public class SharedRangeMapDB {
 		/**
 		 * @see java.util.Iterator#remove()
 		 */
+		@Override
 		public void remove() {
 			throw new NotYetImplementedException();
 		}
@@ -446,6 +446,7 @@ public class SharedRangeMapDB {
 		/**
 		 * @see java.util.Iterator#hasNext()
 		 */
+		@Override
 		public boolean hasNext() {
 			synchronized (dbHandle) {
 				try {
@@ -469,6 +470,7 @@ public class SharedRangeMapDB {
 		/**
 		 * @see java.util.Iterator#next()
 		 */
+		@Override
 		public Field next() {
 			synchronized (dbHandle) {
 				if (nextValue != null || hasNext()) {
@@ -502,6 +504,7 @@ public class SharedRangeMapDB {
 		/**
 		 * @see ghidra.util.datastruct.IndexRangeIterator#hasNext()
 		 */
+		@Override
 		public boolean hasNext() {
 			synchronized (dbHandle) {
 				try {
@@ -517,6 +520,7 @@ public class SharedRangeMapDB {
 		/**
 		 * @see ghidra.util.datastruct.IndexRangeIterator#next()
 		 */
+		@Override
 		public IndexRange next() {
 			synchronized (dbHandle) {
 				try {

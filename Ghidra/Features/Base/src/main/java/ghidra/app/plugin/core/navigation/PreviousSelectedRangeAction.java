@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
@@ -45,7 +46,8 @@ public class PreviousSelectedRangeAction extends PreviousRangeAction {
 		setToolBarData(new ToolBarData(icon, ToolConstants.TOOLBAR_GROUP_THREE,
 			NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_BRACELEFT, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+			new KeyBindingData(KeyEvent.VK_CLOSE_BRACKET, DockingUtils.CONTROL_KEY_MODIFIER_MASK |
+				InputEvent.SHIFT_DOWN_MASK));
 
 		setDescription("Go to previous selected range");
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));

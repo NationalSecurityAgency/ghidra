@@ -25,6 +25,9 @@ import ghidra.graph.viewer.options.VisualGraphOptions;
 /**
  * Overridden implementation that allows us to change scaling behavior through options.  This 
  * class works on the opposite modifier setup as FunctionGraphScrollWheelPanningPlugin.
+ * 
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class VisualGraphScalingGraphMousePlugin<V extends VisualVertex, E extends VisualEdge<V>>
 		extends ScalingGraphMousePlugin implements VisualGraphMousePlugin<V, E> {
@@ -51,8 +54,8 @@ public class VisualGraphScalingGraphMousePlugin<V extends VisualVertex, E extend
 		// TODO for deprecated usage note, see the VisualGraphMousePlugin interface
 		VisualGraphOptions options = viewer.getOptions();
 		boolean scrollWheelPans = options.getScrollWheelPans();
-		int scrollWheelModifierToggle = DockingUtils.CONTROL_KEY_MODIFIER_MASK_DEPRECATED;
-		int eventModifiers = e.getModifiers();
+		int scrollWheelModifierToggle = DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+		int eventModifiers = e.getModifiersEx();
 		if (scrollWheelPans) {
 			// scrolling will zoom if modified (unmodified in this case means to pan)
 			return (scrollWheelModifierToggle & eventModifiers) == scrollWheelModifierToggle;

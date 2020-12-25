@@ -17,17 +17,13 @@ package ghidra.graph.export;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.io.*;
-import java.util.Arrays;
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import org.jgrapht.Graph;
-import org.jgrapht.nio.GraphExporter;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
@@ -37,8 +33,8 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GLabel;
 import ghidra.framework.preferences.Preferences;
-import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedVertex;
+import ghidra.service.graph.AttributedGraph;
+import ghidra.service.graph.AttributedGraphExporter;
 import ghidra.util.*;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -54,27 +50,31 @@ import ghidra.util.task.TaskMonitor;
 
 public class GraphExporterDialog extends DialogComponentProvider {
 
-	private static GraphExportFormat lastUsedExporterFormat = GraphExportFormat.GRAPHML;  // default to GZF first time
+	private static String lastUsedExporterName = "JSON";  // default to JSON first time
 
 	private JTextField filePathTextField;
 	private JButton fileChooserButton;
-	private GhidraComboBox<GraphExportFormat> comboBox;
-	private final Graph<AttributedVertex, AttributedEdge> graph;
+	private GhidraComboBox<AttributedGraphExporter> comboBox;
+	private final AttributedGraph graph;
+
+	private List<AttributedGraphExporter> exporters;
 
 	/**
 	 * Construct a new ExporterDialog for exporting a program, optionally only exported a
 	 * selected region.
 	 *
 	 * @param graph the graph to save
+	 * @param exporters the list of known exporters
 	 */
-	public GraphExporterDialog(Graph<AttributedVertex, AttributedEdge> graph) {
+	public GraphExporterDialog(AttributedGraph graph, List<AttributedGraphExporter> exporters) {
 		super("Export Graph");
 		this.graph = graph;
+		this.exporters = exporters;
 
 		addWorkPanel(buildWorkPanel());
 		addOKButton();
 		addCancelButton();
-		setHelpLocation(new HelpLocation("ExporterPlugin", "Exporter_Dialog"));
+		setHelpLocation(new HelpLocation("GraphServices", "Graph_Exporter"));
 		validate();
 	}
 
@@ -152,10 +152,10 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 
 		chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
-		GraphExportFormat exporter = getSelectedExporter();
+		AttributedGraphExporter exporter = getSelectedExporter();
 		if (exporter != null) {
 			chooser.setFileFilter(
-				new ExtensionFileFilter(exporter.getDefaultFileExtension(), exporter.toString()));
+				new ExtensionFileFilter(exporter.getFileExtension(), exporter.toString()));
 		}
 		String filePath = filePathTextField.getText().trim();
 		File currentFile = filePath.isEmpty() ? null : new File(filePath);
@@ -182,30 +182,26 @@ public class GraphExporterDialog extends DialogComponentProvider {
 
 	private Component buildFormatChooser() {
 
-		List<GraphExportFormat> exporters = getApplicableExporters();
-		comboBox = new GhidraComboBox<>(exporters.toArray(new GraphExportFormat[0]));
+		comboBox =
+			new GhidraComboBox<>(exporters.toArray(new AttributedGraphExporter[exporters.size()]));
 
-		GraphExportFormat defaultExporter = getDefaultExporter(exporters);
+		AttributedGraphExporter defaultExporter = getDefaultExporter();
 		if (defaultExporter != null) {
 			comboBox.setSelectedItem(defaultExporter);
 		}
 		return comboBox;
 	}
 
-	private List<GraphExportFormat> getApplicableExporters() {
-		return Arrays.asList(GraphExportFormat.values());
-	}
-
-	private GraphExportFormat getDefaultExporter(List<GraphExportFormat> list) {
+	private AttributedGraphExporter getDefaultExporter() {
 
 		// first try the last one used
-		for (GraphExportFormat exporter : list) {
-			if (lastUsedExporterFormat.equals(exporter)) {
+		for (AttributedGraphExporter exporter : exporters) {
+			if (lastUsedExporterName.equals(exporter.getName())) {
 				return exporter;
 			}
 		}
 
-		return list.isEmpty() ? null : list.get(0);
+		return exporters.isEmpty() ? null : exporters.get(0);
 	}
 
 	private void validate() {
@@ -232,8 +228,8 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		setOkEnabled(true);
 	}
 
-	private GraphExportFormat getSelectedExporter() {
-		return (GraphExportFormat) comboBox.getSelectedItem();
+	private AttributedGraphExporter getSelectedExporter() {
+		return (AttributedGraphExporter) comboBox.getSelectedItem();
 	}
 
 	private File getSelectedOutputFile() {
@@ -247,8 +243,8 @@ public class GraphExporterDialog extends DialogComponentProvider {
 	}
 
 	private String appendExporterFileExtension(String filename) {
-		GraphExportFormat exporterFormat = getSelectedExporter();
-		String extension = "." + exporterFormat.getDefaultFileExtension();
+		AttributedGraphExporter exporter = getSelectedExporter();
+		String extension = "." + exporter.getFileExtension();
 		if (!filename.toLowerCase().endsWith(extension.toLowerCase())) {
 			return filename + extension;
 		}
@@ -257,7 +253,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		lastUsedExporterFormat = getSelectedExporter();
+		AttributedGraphExporter exporter = getSelectedExporter();
 		setLastExportDirectory(getSelectedOutputFile());
 		if (doExport()) {
 			close();
@@ -273,24 +269,18 @@ public class GraphExporterDialog extends DialogComponentProvider {
 	}
 
 	private boolean tryExport(TaskMonitor monitor) {
-		GraphExportFormat exporterFormat = getSelectedExporter();
+		AttributedGraphExporter exporter = getSelectedExporter();
 		File outputFile = getSelectedOutputFile();
 
-		try {
-			if (outputFile.exists() &&
+		if (outputFile.exists() &&
 				OptionDialog.showOptionDialog(getComponent(), "Overwrite Existing File?",
 					"The file " + outputFile + " already exists.\nDo you want to overwrite it?",
 					"Overwrite", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 				return false;
-			}
-			Writer writer = new FileWriter(outputFile);
+		}
 
-			GraphExporter<AttributedVertex, AttributedEdge> exporter =
-				AttributedGraphExporterFactory.getExporter(exporterFormat);
-
-			exporter.exportGraph(graph, writer);
-
-			displaySummaryResults(exporterFormat);
+		try {
+			exporter.exportGraph(graph, outputFile);
 			return true;
 		}
 		catch (Exception e) {
@@ -301,33 +291,14 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		return false;
 	}
 
-	/**
-	 * TODO: this does nothing useful
-	 * @param exporter the export format
-	 */
-	private void displaySummaryResults(GraphExportFormat exporter) {
-		File outputFile = getSelectedOutputFile();
-		String results =
-			"Destination file:       " +
-				"Destination file Size:  " +
-				outputFile.length() + "\n" +
-				"Format:                 " +
-				exporter.toString() + "\n\n";
-
-		String log = exporter.toString();
-		if (log != null) {
-			results += log;
-		}
-	}
-
 	// for testing
 	public void setOutputFile(String outputFilePath) {
 		filePathTextField.setText(outputFilePath);
 	}
 
 	// for testing
-	public void setExportFormat(GraphExportFormat format) {
-		comboBox.setSelectedItem(format);
+	public void setExporter(AttributedGraphExporter exporter) {
+		comboBox.setSelectedItem(exporter);
 	}
 
 }

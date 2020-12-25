@@ -50,7 +50,7 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Construct a new ToolTaskManager.
-	 * 
+	 *
 	 * @param tool tool associated with this ToolTaskManager
 	 */
 	public ToolTaskManager(PluginTool tool) {
@@ -64,7 +64,7 @@ public class ToolTaskManager implements Runnable {
 	/**
 	 * Returns the thread group associated with all background tasks run by this
 	 * manager and their instantiated threads.
-	 * 
+	 *
 	 * @return task thread group
 	 */
 	public ThreadGroup getTaskThreadGroup() {
@@ -73,7 +73,7 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Get the monitor component that shows progress and has a cancel button.
-	 * 
+	 *
 	 * @return the monitor component
 	 */
 	public JComponent getMonitorComponent() {
@@ -82,7 +82,7 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Return true if a task is executing
-	 * 
+	 *
 	 * @return true if a task is executing
 	 */
 	public synchronized boolean isBusy() {
@@ -91,11 +91,11 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Execute the given command in the foreground
-	 * 
+	 *
 	 * @param cmd command to execute
 	 * @param obj domain object to which the command will be applied
 	 * @return the completion status of the command
-	 * 
+	 *
 	 * @see Command#applyTo(DomainObject)
 	 */
 	public boolean execute(Command cmd, DomainObject obj) {
@@ -141,7 +141,7 @@ public class ToolTaskManager implements Runnable {
 			try {
 				success = cmd.applyTo(domainObject);
 
-				// TODO Ok, this seems bad--why track the success of the given command, but 
+				// TODO Ok, this seems bad--why track the success of the given command, but
 				// not any of the queued commands?  (Are they considered unrelated follow-up
 				// commands?)
 				executeQueueCommands(domainObject, cmdName);
@@ -174,7 +174,7 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Execute the given command in the background
-	 * 
+	 *
 	 * @param cmd background command
 	 * @param obj domain object that supports undo/redo
 	 */
@@ -207,7 +207,7 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Schedule the given background command when the current command completes.
-	 * 
+	 *
 	 * @param cmd background command to be scheduled
 	 * @param obj domain object that supports undo/redo
 	 */
@@ -239,7 +239,7 @@ public class ToolTaskManager implements Runnable {
 			// any queued task will process queued follow-on commands
 			return true;
 		}
-		// NOTE: while current task may not have completed (not null) it may be 
+		// NOTE: while current task may not have completed (not null) it may be
 		// done processing queued commands
 		return currentTask != null && !currentTask.isDoneQueueProcessing();
 	}
@@ -265,7 +265,7 @@ public class ToolTaskManager implements Runnable {
 	/**
 	 * Cancel the currently running task and clear all commands that are
 	 * scheduled to run. Block until the currently running task ends.
-	 * 
+	 *
 	 * @param wait if true wait for current task to cancel cleanly
 	 */
 	public void stop(boolean wait) {
@@ -346,7 +346,7 @@ public class ToolTaskManager implements Runnable {
 	/**
 	 * Notification from the BackgroundCommandTask that it has completed; queued
 	 * or scheduled commands are executed.
-	 * 
+	 *
 	 * @param obj domain object that supports undo/redo
 	 * @param task background command task that has completed
 	 * @param monitor task monitor
@@ -424,7 +424,7 @@ public class ToolTaskManager implements Runnable {
 
 	/**
 	 * Clear all tasks associated with specified domain object.
-	 * 
+	 *
 	 * @param obj domain object
 	 */
 	public synchronized void clearTasks(UndoableDomainObject obj) {
@@ -440,7 +440,7 @@ public class ToolTaskManager implements Runnable {
 	/**
 	 * Notification from the BackgroundCommandTask that the given command
 	 * failed. Any scheduled commands are cleared from the queue.
-	 * 
+	 *
 	 * @param obj domain object that supports undo/redo
 	 * @param taskCmd background command that failed
 	 * @param monitor task monitor for the background task
@@ -509,7 +509,6 @@ public class ToolTaskManager implements Runnable {
 
 		toolTaskMonitor.dispose();
 		if (modalTaskDialog != null) {
-			modalTaskDialog.cancel();
 			modalTaskDialog.dispose();
 		}
 
@@ -627,8 +626,8 @@ class ToolTaskMonitor extends TaskMonitorComponent implements TaskListener {
 	public Dimension getPreferredSize() {
 		Dimension preferredSize = super.getPreferredSize();
 
-		// Somewhat arbitrary value, but the default is too small to read most messages. So, 
-		// give some extra width, but not so much as to too badly push off the status area of 
+		// Somewhat arbitrary value, but the default is too small to read most messages. So,
+		// give some extra width, but not so much as to too badly push off the status area of
 		// the tool window.  This value is based upon some of the longer messages that we use.
 		preferredSize.width += 200;
 		return preferredSize;

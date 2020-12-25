@@ -654,6 +654,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param provider the provider to be removed.
 	 */
 	public void removeComponent(ComponentProvider provider) {
+		if (provider == defaultProvider) {
+			defaultProvider = null;
+		}
 		placeholderManager.removeComponent(provider);
 	}
 
@@ -822,6 +825,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		setNextFocusPlaceholder(null);
 		removeInstance(this);
 		root = null;
+		lastActiveWindow = null;
 	}
 
 	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
@@ -931,17 +935,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param rootXMLElement JDOM element from which to extract the state information.
 	 */
 	public void restoreFromXML(Element rootXMLElement) {
-		Element rootNodeElement = rootXMLElement.getChild(RootNode.ROOT_NODE_ELEMENT_NAME);
-		restoreWindowDataFromXml(rootNodeElement);
-		// load the tool preferences
+		restoreWindowDataFromXml(rootXMLElement);
 		restorePreferencesFromXML(rootXMLElement);
 	}
 
 	/**
 	 * Restore to the docking window manager the layout and positioning information from XML.
-	 * @param windowData The XML element containing the above information.
+	 * @param rootXMLElement JDOM element from which to extract the state information.
 	 */
-	public void restoreWindowDataFromXml(Element windowData) {
+	public void restoreWindowDataFromXml(Element rootXMLElement) {
+		Element windowData = rootXMLElement.getChild(RootNode.ROOT_NODE_ELEMENT_NAME);
+		if (windowData == null) {
+			return;
+		}
 		//
 		// Clear our focus history, as we are changing placeholders' providers, so the old focus
 		// is no longer relevant.
@@ -1378,6 +1384,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			focusedPlaceholder.setSelected(false);
 		}
 
+		// Activating placeholders is done to help users find widgets hiding in plain sight. 
+		// Assume that the user is no longer seeking a provider if they are clicking around.
+		activatedInfo.clear();
+
 		focusedPlaceholder = placeholder;
 
 		// put the last focused placeholder at the front of the list for restoring focus work later
@@ -1576,7 +1586,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return toolPreferencesElement;
 	}
 
-	private void restorePreferencesFromXML(Element rootElement) {
+	public void restorePreferencesFromXML(Element rootElement) {
 		Element toolPreferencesElement = rootElement.getChild(TOOL_PREFERENCES_XML_NAME);
 		if (toolPreferencesElement == null) {
 			return;
@@ -2291,6 +2301,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				this.lastActivatedPlaceholder = placeholder;
 			}
 			lastCalledTimestamp = System.currentTimeMillis();
+		}
+
+		void clear() {
+			lastActivatedPlaceholder = null;
+			lastCalledTimestamp = 0;
 		}
 	}
 }

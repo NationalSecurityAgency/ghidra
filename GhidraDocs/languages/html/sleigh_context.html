@@ -85,7 +85,7 @@ whose encodings are otherwise the same.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016192630992"></a>8.1. Basic Use of Context Variables</h3></div></div></div>
+<a name="idm140526920261472"></a>8.1. Basic Use of Context Variables</h3></div></div></div>
 <p>
 Suppose a processor supports the use of two different sets of
 registers in its main addressing mode, based on the setting of a
@@ -317,7 +317,7 @@ blr        is opcode=35 &amp; reg=15 &amp; LRset=1 { return [lr]; }
 An alternative to the <span class="bold"><strong>noflow</strong></span> attribute is to simply issue
 multiple directives within a single constructor, so an explicit end to a context change
 can be given. The value of the variable exported to the global state
-is the one in affect at the point where the directive is issued. Thus,
+is the one in effect at the point where the directive is issued. Thus,
 after one <span class="bold"><strong>globalset</strong></span>, the same context
 variable can be assigned a different value, followed by
 another <span class="bold"><strong>globalset</strong></span> for a different
@@ -328,7 +328,7 @@ Because context in SLEIGH is controlled by a disassembly process,
 there are some basic caveats to the use of
 the <span class="bold"><strong>globalset</strong></span> directive. With
 <span class="emphasis"><em>flowing</em></span> context changes,
-there is no guarantee of what global state will be in affect at a
+there is no guarantee of what global state will be in effect at a
 particular address. During disassembly, at any given
 point, the process may not have uncovered all the relevant directives,
 and the known directives may not necessarily be consistent. In

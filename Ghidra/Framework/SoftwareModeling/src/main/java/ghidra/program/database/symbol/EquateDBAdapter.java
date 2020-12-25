@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.symbol;
 
-import ghidra.util.exception.NotFoundException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -34,8 +32,9 @@ abstract class EquateDBAdapter {
 
 	final static String EQUATES_TABLE_NAME = "Equates";
 
-	static final Schema EQUATES_SCHEMA = new Schema(0, "Key", new Class[] { StringField.class,
-		LongField.class }, new String[] { "Equate Name", "Equate Value" });
+	static final Schema EQUATES_SCHEMA =
+		new Schema(0, "Key", new Field[] { StringField.INSTANCE, LongField.INSTANCE },
+			new String[] { "Equate Name", "Equate Value" });
 
 	final static int NAME_COL = 0;
 	final static int VALUE_COL = 1;

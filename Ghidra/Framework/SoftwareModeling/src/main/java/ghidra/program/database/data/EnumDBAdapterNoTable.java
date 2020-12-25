@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.UniversalID;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
@@ -67,13 +65,13 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
-		return new long[0];
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 	@Override

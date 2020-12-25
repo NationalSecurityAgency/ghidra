@@ -170,17 +170,23 @@ public class UndefinedFunction implements Function {
 			while (iterator.hasNext() && !monitor.isCancelled()) {
 				CodeBlockReference blockReference = iterator.next();
 				FlowType flowType = blockReference.getFlowType();
-				if (flowType.isCall())
-					continue;			// Don't follow call edges for within-function analysis
-				count += 1;			// Count the existence of source that is NOT a call
+				if (flowType.isCall()) {
+					continue; // Don't follow call edges for within-function analysis
+				}
+				if (flowType.isIndirect()) {
+					continue; // Don't follow improper use of Indirect reference
+				}
+				count += 1;	  // Count the existence of source that is NOT a call
 				Address sourceAddr = blockReference.getSourceAddress();
-				if (visitedAddresses.contains(sourceAddr))
-					continue;			// Already visited this block
+				if (visitedAddresses.contains(sourceAddr)) {
+					continue; // Already visited this block
+				}
 				visitedAddresses.addRange(sourceAddr, sourceAddr);
 				worklist.add(blockReference.getSourceBlock());
 			}
-			if (count == 0)				// We found a block with no incoming edges, a likely function start
+			if (count == 0) {
 				return curblock;
+			}
 		}
 		return null;
 	}
@@ -469,8 +475,9 @@ public class UndefinedFunction implements Function {
 
 	@Override
 	public void setReturnType(DataType type, SourceType source) {
-		if (type == DataType.DEFAULT)
+		if (type == DataType.DEFAULT) {
 			return;
+		}
 		throw new UnsupportedOperationException();
 	}
 

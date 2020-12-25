@@ -140,7 +140,7 @@ SLEIGH_OPT_OBJS=$(SLEIGH_NAMES:%=sla_opt/%.o)
 LIBSLA_DBG_OBJS=$(LIBSLA_NAMES:%=com_dbg/%.o)
 LIBSLA_OPT_OBJS=$(LIBSLA_NAMES:%=com_opt/%.o)
 LIBSLA_SOURCE=$(LIBSLA_NAMES:%=%.cc) $(LIBSLA_NAMES:%=%.hh) \
-	$(SLACOMP:%=%.cc) slgh_compile.hh slghparse.tab.hh types.h \
+	$(SLACOMP:%=%.cc) slgh_compile.hh slghparse.hh types.h \
 	partmap.hh error.hh slghparse.y pcodeparse.y xml.y slghscan.l loadimage_bfd.hh loadimage_bfd.cc
 LIBDECOMP_DBG_OBJS=$(LIBDECOMP_NAMES:%=com_dbg/%.o)
 LIBDECOMP_OPT_OBJS=$(LIBDECOMP_NAMES:%=com_opt/%.o)
@@ -223,16 +223,14 @@ pcodeparse.cc:	pcodeparse.y
 	$(YACC) -p pcode -o $@ $<
 slghparse.cc:	slghparse.y
 	$(YACC) -d -o $@ $<
-	mv slghparse.hh slghparse.tab.hh
 slghscan.cc:	slghscan.l
 	$(LEX) -o$@ $<
 ruleparse.cc:	ruleparse.y
 	$(YACC) -p ruleparse -d -o $@ $<
-	mv ruleparse.hh ruleparse.tab.hh
 
-slghparse.tab.hh:	slghparse.y slghparse.cc
-slghscan.cc:	slghparse.tab.hh
-ruleparse.tab.hh:	ruleparse.y ruleparse.cc
+slghparse.hh:	slghparse.y slghparse.cc
+slghscan.cc:	slghparse.hh slgh_compile.hh
+ruleparse.hh:	ruleparse.y ruleparse.cc
 
 decomp_dbg:	$(COMMANDLINE_DBG_OBJS)
 	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o decomp_dbg $(COMMANDLINE_DBG_OBJS) $(BFDLIB) $(LNK)
@@ -382,7 +380,6 @@ resetgcov:
 
 reallyclean:	clean	
 	rm -rf coreext_*.cc coreext_*.hh ghidraext_*.cc ghidraext_*.hh consoleext_*.cc consoleext_*.hh
-	rm -rf grammar.cc xml.cc pcodeparse.cc slghparse.cc slghparse.tab.hh slghscan.cc ruleparse.cc ruleparse.tab.hh
 	rm -rf com_dbg com_opt ghi_dbg ghi_opt sla_dbg sla_opt
 	rm -f $(EXECS) TAGS *~
 

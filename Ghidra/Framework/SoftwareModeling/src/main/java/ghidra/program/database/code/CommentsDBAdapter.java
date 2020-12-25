@@ -57,8 +57,8 @@ abstract class CommentsDBAdapter {
 		NAMES[REPEATABLE_COMMENT_COL] = "Repeatable";
 
 		COMMENTS_SCHEMA =
-			new Schema(1, "Address", new Class[] { StringField.class, StringField.class,
-				StringField.class, StringField.class, StringField.class }, NAMES);
+			new Schema(1, "Address", new Field[] { StringField.INSTANCE, StringField.INSTANCE,
+				StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE }, NAMES);
 	}
 
 //	/** comment type for end of line */
@@ -110,8 +110,8 @@ abstract class CommentsDBAdapter {
 	}
 
 	private static CommentsDBAdapter upgrade(DBHandle dbHandle, AddressMap addrMap,
-			CommentsDBAdapter oldAdapter, TaskMonitor monitor) throws VersionException,
-			IOException, CancelledException {
+			CommentsDBAdapter oldAdapter, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 

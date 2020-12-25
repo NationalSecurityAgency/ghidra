@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.module;
 
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.VersionException;
 
 /**
  *
@@ -51,9 +49,7 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.module.TreeDBAdapter#createRecord(long, java.lang.String, int)
-	 */
+	@Override
 	public Record createRecord(String name) throws IOException {
 		Record record = TreeManager.TREE_SCHEMA.createRecord(treeTable.getKey());
 		record.setString(TreeManager.TREE_NAME_COL, name);
@@ -62,9 +58,7 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 		return record;
 	}
 
-	/**
-	 * @see ghidra.program.database.module.TreeDBAdapter#deleteRecord(long)
-	 */
+	@Override
 	public boolean deleteRecord(long treeID) throws IOException {
 
 		if (treeTable.deleteRecord(treeID)) {
@@ -76,18 +70,14 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.database.module.TreeDBAdapter#getRecord(long)
-	 */
+	@Override
 	public Record getRecord(long treeID) throws IOException {
 		return treeTable.getRecord(treeID);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.TreeDBAdapter#getRecord(java.lang.String)
-	 */
+	@Override
 	public Record getRecord(String name) throws IOException {
-		long[] keys = treeTable.findRecords(new StringField(name), TreeManager.TREE_NAME_COL);
+		Field[] keys = treeTable.findRecords(new StringField(name), TreeManager.TREE_NAME_COL);
 		if (keys.length == 0) {
 			return null;
 		}
@@ -97,17 +87,12 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 		return treeTable.getRecord(keys[0]);
 	}
 
-	/**
-	 * @see ghidra.program.database.module.TreeDBAdapter#getRecords()
-	 */
+	@Override
 	public RecordIterator getRecords() throws IOException {
 		return treeTable.iterator();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.database.module.TreeDBAdapter#updateRecord(ghidra.framework.store.db.Record)
-	 */
+	@Override
 	public void updateRecord(Record record) throws IOException {
 		treeTable.putRecord(record);
 	}

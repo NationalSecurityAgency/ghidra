@@ -41,17 +41,10 @@ public class DataTypeSyncDialog extends DialogComponentProvider implements DataT
 	private DataTypeSyncPanel syncPanel;
 	private DataTypeComparePanel comparePanel;
 	private final String operationName;
-	private boolean cancelled;
 
-	/**
-	 * Creates a data type synchronization dialog
-	 * @param plugin the data type manager plug-in
-	 * @param synchronizer the data type synchronizer for synchronizing a program and archive.
-	 * @param list the list of data types to be displayed to the user.
-	 * @param commit true means data types from the program data types are to be committed 
-	 * back to the associated data types in the archive. false means update the program data 
-	 * types with changes that were made in the archive.
-	 */
+	private boolean cancelled;
+	private List<DataTypeSyncInfo> selectedInfos = Collections.emptyList();
+
 	public DataTypeSyncDialog(DataTypeManagerPlugin plugin, String clientName, String sourceName,
 			List<DataTypeSyncInfo> list, Set<DataTypeSyncInfo> preselectedInfos,
 			String operationName, String title) {
@@ -119,6 +112,7 @@ public class DataTypeSyncDialog extends DialogComponentProvider implements DataT
 
 	@Override
 	protected void okCallback() {
+		selectedInfos = syncPanel.getSelectedInfos();
 		close();
 	}
 
@@ -129,9 +123,6 @@ public class DataTypeSyncDialog extends DialogComponentProvider implements DataT
 	}
 
 	public List<DataTypeSyncInfo> getSelectedInfos() {
-		if (cancelled) {
-			return new ArrayList<>();
-		}
-		return syncPanel.getSelectedInfos();
+		return selectedInfos;
 	}
 }

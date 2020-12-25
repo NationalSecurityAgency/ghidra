@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.Date;
 
 import db.*;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Enumeration database table. 
@@ -40,11 +38,12 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	static final int V1_ENUM_SOURCE_SYNC_TIME_COL = 6;
 	static final int V1_ENUM_LAST_CHANGE_TIME_COL = 7;
 
-	static final Schema V1_ENUM_SCHEMA = new Schema(VERSION, "Enum ID", new Class[] {
-		StringField.class, StringField.class, LongField.class, ByteField.class, LongField.class,
-		LongField.class, LongField.class, LongField.class }, new String[] { "Name", "Comment",
-		"Category ID", "Size", "Source Archive ID", "Source Data Type ID", "Source Sync Time",
-		"Last Change Time" });
+	static final Schema V1_ENUM_SCHEMA = new Schema(VERSION, "Enum ID",
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE },
+		new String[] { "Name", "Comment", "Category ID", "Size", "Source Archive ID",
+			"Source Data Type ID", "Source Sync Time", "Last Change Time" });
 
 	private Table enumTable;
 
@@ -58,9 +57,8 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	public EnumDBAdapterV1(DBHandle handle, boolean create) throws VersionException, IOException {
 
 		if (create) {
-			enumTable =
-				handle.createTable(ENUM_TABLE_NAME, V1_ENUM_SCHEMA, new int[] { V1_ENUM_CAT_COL,
-					V1_ENUM_UNIVERSAL_DT_ID_COL });
+			enumTable = handle.createTable(ENUM_TABLE_NAME, V1_ENUM_SCHEMA,
+				new int[] { V1_ENUM_CAT_COL, V1_ENUM_UNIVERSAL_DT_ID_COL });
 		}
 		else {
 			enumTable = handle.getTable(ENUM_TABLE_NAME);
@@ -69,9 +67,8 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 			}
 			int version = enumTable.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg =
-					"Expected version " + VERSION + " for table " + ENUM_TABLE_NAME + " but got " +
-						enumTable.getSchema().getVersion();
+				String msg = "Expected version " + VERSION + " for table " + ENUM_TABLE_NAME +
+					" but got " + enumTable.getSchema().getVersion();
 				if (version < VERSION) {
 					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 				}
@@ -128,19 +125,19 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return enumTable.findRecords(new LongField(categoryID), V1_ENUM_CAT_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
 		return enumTable.findRecords(new LongField(archiveID), V1_ENUM_SOURCE_ARCHIVE_ID_COL);
 	}
 
 	@Override
 	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
-		long[] keys =
-			enumTable.findRecords(new LongField(datatypeID.getValue()), V1_ENUM_UNIVERSAL_DT_ID_COL);
+		Field[] keys = enumTable.findRecords(new LongField(datatypeID.getValue()),
+			V1_ENUM_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
 			Record record = enumTable.getRecord(keys[i]);
@@ -151,16 +148,4 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 		return null;
 	}
 
-//	private void testVersion(Table table, int expectedVersion, String name)
-//			throws DatabaseVersionException {
-//				
-//		if (table == null) {
-//			throw new DatabaseVersionException(name+ " not found");
-//		}
-//		int versionNumber = table.getSchema().getVersion();
-//		if (versionNumber != expectedVersion) {
-//			throw new DatabaseVersionException(
-//				name+": Expected Version "+expectedVersion+ ", got " + versionNumber);
-//		}
-//	}
 }

@@ -15,9 +15,9 @@
  */
 package ghidra.program.model.address;
 
-import ghidra.util.UniversalIdGenerator;
-
 import java.util.*;
+
+import ghidra.util.UniversalIdGenerator;
 
 /**
  * <code>AddressMapImpl</code> provides a stand-alone AddressMap.
@@ -79,7 +79,8 @@ public class AddressMapImpl {
 			max = max < 0 ? MAX_OFFSET : Math.min(max, MAX_OFFSET);
 			// Avoid use of add which fails for overlay addresses which have restricted min/max offsets
 			long off = sortedBaseStartAddrs[i].getOffset() | max;
-			sortedBaseEndAddrs[i] = sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
+			sortedBaseEndAddrs[i] =
+				sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
 		}
 		addrToIndexMap.clear();
 		for (int i = 0; i < baseAddrs.length; i++) {
@@ -94,6 +95,7 @@ public class AddressMapImpl {
 	 * start of a key range.
 	 */
 	private Comparator<Object> addressInsertionKeyRangeComparator = new Comparator<Object>() {
+		@Override
 		public int compare(Object keyRangeObj, Object addrObj) {
 			KeyRange range = (KeyRange) keyRangeObj;
 			Address addr = (Address) addrObj;
@@ -213,7 +215,8 @@ public class AddressMapImpl {
 	 * @see ghidra.program.database.map.AddressMap#getKeyRanges(Address, Address, boolean)
 	 */
 	public List<KeyRange> getKeyRanges(Address start, Address end) {
-		if (start.getAddressSpace() != end.getAddressSpace() || start.getOffset() > end.getOffset()) {
+		if (start.getAddressSpace() != end.getAddressSpace() ||
+			start.getOffset() > end.getOffset()) {
 			throw new IllegalArgumentException();
 		}
 		ArrayList<KeyRange> keyRangeList = new ArrayList<KeyRange>();
@@ -229,8 +232,8 @@ public class AddressMapImpl {
 		ArrayList<KeyRange> keyRangeList = new ArrayList<KeyRange>();
 		if (set == null) {
 			for (int i = 0; i < sortedBaseStartAddrs.length; i++) {
-				keyRangeList.add(new KeyRange(getKey(sortedBaseStartAddrs[i]),
-					getKey(sortedBaseEndAddrs[i])));
+				keyRangeList.add(
+					new KeyRange(getKey(sortedBaseStartAddrs[i]), getKey(sortedBaseEndAddrs[i])));
 			}
 		}
 		else {

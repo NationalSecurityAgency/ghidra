@@ -27,10 +27,12 @@ final class DefaultDisplayGraphIcons {
 	private DefaultDisplayGraphIcons() {
 	}
 
-	public static final Icon SATELLITE_VIEW_ICON = Icons.get("images/sat2.png");
+	public static final Icon SATELLITE_VIEW_ICON = Icons.get("images/project-open.png");
 	public static final Icon VIEW_MAGNIFIER_ICON = Icons.get("images/magnifier.png");
 	public static final Icon PROGRAM_GRAPH_ICON = Icons.get("images/redspheregraph.png");
 	public static final Icon LAYOUT_ALGORITHM_ICON = Icons.get("images/katomic.png");
 	public static final Icon LASSO_ICON = Icons.get("images/Lasso.png");
-	public static final Icon FILTER_ICON = Icons.get("images/filter_on.png");
+	public static final Icon FILTER_ICON = Icons.CONFIGURE_FILTER_ICON;
+	public static final Icon FIT_TO_WINDOW = Icons.get("images/view-fullscreen.png");
+
 }

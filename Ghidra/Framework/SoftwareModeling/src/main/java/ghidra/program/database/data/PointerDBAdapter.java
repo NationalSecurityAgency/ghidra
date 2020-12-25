@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the Pointer database table for Pointer data types.
@@ -31,9 +29,9 @@ import db.*;
 abstract class PointerDBAdapter {
 	static final String POINTER_TABLE_NAME = "Pointers";
 
-	static final Schema SCHEMA = new Schema(PointerDBAdapterV2.VERSION, "Pointer ID", new Class[] {
-		LongField.class, LongField.class, ByteField.class }, new String[] { "Data Type ID",
-		"Category ID", "Length" });
+	static final Schema SCHEMA = new Schema(PointerDBAdapterV2.VERSION, "Pointer ID",
+		new Field[] { LongField.INSTANCE, LongField.INSTANCE, ByteField.INSTANCE },
+		new String[] { "Data Type ID", "Category ID", "Length" });
 
 	static final int PTR_DT_ID_COL = 0;
 	static final int PTR_CATEGORY_COL = 1;
@@ -114,6 +112,7 @@ abstract class PointerDBAdapter {
 	/**
 	 * Get the record with the given pointerID.
 	 * @param pointerID database key
+	 * @return requested pointer record or null if not found
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract Record getRecord(long pointerID) throws IOException;
@@ -130,11 +129,19 @@ abstract class PointerDBAdapter {
 
 	/**
 	 * Update the record in the table.
+	 * @param record pointer record to be updated
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract void updateRecord(Record record) throws IOException;
 
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	/**
+	 * Gets all the pointer data types that are contained in the category that 
+	 * have the indicated ID.
+	 * @param categoryID the category whose pointer data types are wanted.
+	 * @return an array of IDs for the pointer data types in the category.
+	 * @throws IOException if the database can't be accessed.
+	 */
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	Record translateRecord(Record rec) {
 		return rec;
@@ -147,23 +154,28 @@ abstract class PointerDBAdapter {
 			this.it = it;
 		}
 
+		@Override
 		public boolean delete() throws IOException {
 			throw new UnsupportedOperationException();
 		}
 
+		@Override
 		public boolean hasNext() throws IOException {
 			return it.hasNext();
 		}
 
+		@Override
 		public boolean hasPrevious() throws IOException {
 			return it.hasPrevious();
 		}
 
+		@Override
 		public Record next() throws IOException {
 			Record rec = it.next();
 			return translateRecord(rec);
 		}
 
+		@Override
 		public Record previous() throws IOException {
 			Record rec = it.previous();
 			return translateRecord(rec);

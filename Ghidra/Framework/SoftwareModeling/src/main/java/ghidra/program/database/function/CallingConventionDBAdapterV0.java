@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.function;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for the calling conventions tables adapter.
@@ -34,8 +32,8 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 	// Key field is the Calling convention ID, which is a Byte field.
 	static final int V0_CALLING_CONVENTION_NAME_COL = 0;
 
-	static final Schema V0_CALLING_CONVENTION_SCHEMA = new Schema(0, ByteField.class, "ID",
-		new Class[] { StringField.class }, new String[] { "Name" });
+	static final Schema V0_CALLING_CONVENTION_SCHEMA = new Schema(0, ByteField.INSTANCE, "ID",
+		new Field[] { StringField.INSTANCE }, new String[] { "Name" });
 
 	private Table callingConventionTable;
 
@@ -43,14 +41,13 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 	 * Constructor
 	 * 
 	 */
-	public CallingConventionDBAdapterV0(DBHandle handle, boolean create) throws VersionException,
-			IOException {
+	public CallingConventionDBAdapterV0(DBHandle handle, boolean create)
+			throws VersionException, IOException {
 
 		if (create) {
 			// No additional indexed fields.
-			callingConventionTable =
-				handle.createTable(CALLING_CONVENTION_TABLE_NAME, V0_CALLING_CONVENTION_SCHEMA,
-					new int[] {});
+			callingConventionTable = handle.createTable(CALLING_CONVENTION_TABLE_NAME,
+				V0_CALLING_CONVENTION_SCHEMA, new int[] {});
 		}
 		else {
 			callingConventionTable = handle.getTable(CALLING_CONVENTION_TABLE_NAME);
@@ -63,9 +60,6 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.function.CallingConventionDBAdapter#createCallingConventionRecord(java.lang.String)
-	 */
 	@Override
 	public Record createCallingConventionRecord(String name) throws IOException {
 		byte key = getFirstAvailableKey();
@@ -94,9 +88,6 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 		return key;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.function.CallingConventionDBAdapter#getCallingConventionRecord(byte)
-	 */
 	@Override
 	public Record getCallingConventionRecord(byte callingConventionID) throws IOException {
 		return callingConventionTable.getRecord(new ByteField(callingConventionID));

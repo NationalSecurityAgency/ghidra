@@ -77,9 +77,11 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			}
 			return obj.getShortRepresentation();
 		}
+
 		if (stream != null) {
 			return obj.getRepresentation(stream);
 		}
+
 		return obj.getRepresentation();
 	}
 
@@ -92,7 +94,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 		public CliTypeCodeDataType() {
 			super(new CategoryPath(PATH), "TypeCode", 1);
-			// TODO: specify CategoryPath, etc.
+
 			for (CliElementType c : CliElementType.values()) {
 				add(c.toString(), c.id());
 			}
@@ -100,6 +102,19 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 	}
 
 	public static DataType convertTypeCodeToDataType(CliElementType typeCode) {
+		/*
+		TODO:
+		ELEMENT_TYPE_VALUETYPE(0x11),
+		ELEMENT_TYPE_VAR(0x13), // "Class type variable VAR"
+		(0x16),
+
+		ELEMENT_TYPE_MVAR(0x1e), // Method type variable MVAR
+
+		ELEMENT_TYPE_INTERNAL(0x21), // Internal (generated internally, "will not be persisted in any way")
+		ELEMENT_TYPE_MAX(0x22),
+
+		*/
+
 		switch (typeCode) {
 			case ELEMENT_TYPE_VOID:
 				return VoidDataType.dataType;
@@ -107,55 +122,58 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			case ELEMENT_TYPE_BOOLEAN:
 				return BooleanDataType.dataType;
 			case ELEMENT_TYPE_CHAR:
-				return ASCII; // TODO: correct?
+				return StringUTF8DataType.dataType;
 			case ELEMENT_TYPE_I1:
-//				return SignedByteDataType.dataType;
+				return SignedByteDataType.dataType;
 			case ELEMENT_TYPE_U1:
-				return BYTE; // TODO: True?
+				return ByteDataType.dataType;
 
 			case ELEMENT_TYPE_I2:
-//				return ShortDataType.dataType;
+				return ShortDataType.dataType;
 			case ELEMENT_TYPE_U2:
-//				return UnsignedShortDataType.dataType;
-				return WORD;
+				return UnsignedShortDataType.dataType;
 
 			case ELEMENT_TYPE_I4:
-//				return IntegerDataType.dataType;
+				return IntegerDataType.dataType;
 			case ELEMENT_TYPE_U4:
-				return DWORD;
-//				return UnsignedIntegerDataType.dataType;
+				return UnsignedIntegerDataType.dataType;
 
 			case ELEMENT_TYPE_R4:
-				return FloatDataType.dataType;
-
-			case ELEMENT_TYPE_R8: // TODO: This is really a 64-bit float
-				return QWORD;
+				return Float4DataType.dataType;
+			case ELEMENT_TYPE_R8:
+				return Float8DataType.dataType;
 
 			case ELEMENT_TYPE_I8:
-//				return LongDataType.dataType; // TODO: Long or Long Long?
+				return LongLongDataType.dataType;
 			case ELEMENT_TYPE_U8:
-//				return UnsignedLongDataType.dataType;
-				return QWORD;
+				return UnsignedLongLongDataType.dataType;
 
+			// TODO: Does this change for native architectures other than 32-bit?
 			case ELEMENT_TYPE_I:
-//				return IntegerDataType.dataType; // TODO: This must change for native architectures other than 32-bit
+				return IntegerDataType.dataType;
 			case ELEMENT_TYPE_U:
-//				return UnsignedIntegerDataType.dataType;
-				return DWORD;
+				return UnsignedIntegerDataType.dataType;
 
 			case ELEMENT_TYPE_PTR:
 				return PointerDataType.dataType;
-
-//			case String:
-//				return StringDataType.dataType;
-
 			case ELEMENT_TYPE_FNPTR:
-				return PointerDataType.dataType; // TODO verify
+				return PointerDataType.dataType;
 
-			// TODO: Finish the rest of the options. Don't know why some of these are .dataType and some have that commented out
+			case ELEMENT_TYPE_SZARRAY:
+			case ELEMENT_TYPE_STRING:
+				return new PointerDataType(new CharDataType());
+			case ELEMENT_TYPE_ARRAY:
+				return new PointerDataType(new ByteDataType());
+
+			case ELEMENT_TYPE_OBJECT: // System.Object
+			case ELEMENT_TYPE_CLASS:
+				return PointerDataType.dataType;
+
+			case ELEMENT_TYPE_SENTINEL:
+				return Undefined1DataType.dataType;
 
 			default:
-				return null;
+				return VoidDataType.dataType;
 		}
 	}
 
@@ -164,7 +182,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		ELEMENT_TYPE_VOID(0x1),
 		ELEMENT_TYPE_BOOLEAN(0x2),
 		ELEMENT_TYPE_CHAR(0x3),
-		ELEMENT_TYPE_I1(0x4), // CLI names these by number of bytes (e.g. I4, U2, I1), but literally no one else does does, so we're naming by bits,
+		ELEMENT_TYPE_I1(0x4), // CLI names these by number of bytes (e.g. I4, U2, I1)
 		ELEMENT_TYPE_U1(0x5),
 		ELEMENT_TYPE_I2(0x6),
 		ELEMENT_TYPE_U2(0x7),
@@ -177,14 +195,14 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		ELEMENT_TYPE_STRING(0xe),
 
 		ELEMENT_TYPE_PTR(0xf),
-		ELEMENT_TYPE_BYREF(0x10),
+		ELEMENT_TYPE_BYREF(0x10), // ByRef flag in paramters
 
 		ELEMENT_TYPE_VALUETYPE(0x11),
 		ELEMENT_TYPE_CLASS(0x12),
 		ELEMENT_TYPE_VAR(0x13), // "Class type variable VAR"
 		ELEMENT_TYPE_ARRAY(0x14),
-		ELEMENT_TYPE_GENERICINST(0x15),
-		ELEMENT_TYPE_TYPEDBYREF(0x16),
+		ELEMENT_TYPE_GENERICINST(0x15), // Signifies a variable uses a Generic
+		ELEMENT_TYPE_TYPEDBYREF(0x16), // A fully specified ByRef type
 
 		ELEMENT_TYPE_I(0x18), // native integer size
 		ELEMENT_TYPE_U(0x19), // native unsigned integer size
@@ -199,10 +217,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		ELEMENT_TYPE_INTERNAL(0x21), // Internal (generated internally, "will not be persisted in any way")
 		ELEMENT_TYPE_MAX(0x22),
 
-		ELEMENT_TYPE_MODIFIER(0x40), // TODO: this value is ORed with the following 4, Could be changed when Enums support ORing.
-		ELEMENT_TYPE_SENTINAL(0x41),
-		ELEMENT_TYPE_PINNED(0x45)
-		;
+		ELEMENT_TYPE_MODIFIER(0x40),
+		ELEMENT_TYPE_SENTINEL(0x41), // Sentinel in MethodRefs
+		ELEMENT_TYPE_PINNED(0x45); // Constrained variable
 
 		private final int id;
 
@@ -217,8 +234,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		public static CliElementType fromInt(int id) {
 			CliElementType[] values = CliElementType.values();
 			for (CliElementType value : values) {
-				if (value.id == id)
+				if (value.id == id) {
 					return value;
+				}
 			}
 			return null;
 		}
@@ -322,13 +340,17 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				if (stream != null) {
 					CliAbstractTable table =
 						stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType));
-					if (table == null)
+					if (table == null) {
 						return "[ErrorRetrievingTable]";
-					CliAbstractTableRow row = table.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
-					if (row == null)
+					}
+					CliAbstractTableRow row =
+						table.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
+					if (row == null) {
 						return "[ErrorRetrievingRow]";
-					if (shortRep)
+					}
+					if (shortRep) {
 						return row.getShortRepresentation();
+					}
 					return row.getRepresentation();
 				}
 				return "[ErrorRepresentingClassReference]";
@@ -362,7 +384,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private CliAbstractSig sig;
 		private boolean isDefSig; // true => MethodDef, false => MethodRef
 
-		public CliTypeFnPtr(BinaryReader reader, CliElementType typeCode) {
+		public CliTypeFnPtr(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
 			// TODO: MethodDef and MethodRef sig need to have static isX(reader) methods so I can tell the difference
 			//sig = new CliSigMethodRef(blob); // MethodRef is just Def plus possible sentinel and minus potential XORed args in the first byte
@@ -396,8 +418,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int countSizeBytes;
 		private List<CliSigType> argTypes = new ArrayList<>();
 
-		public CliTypeGenericInst(BinaryReader reader, CliElementType typeCode)
-				throws IOException {
+		public CliTypeGenericInst(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
 			firstType = CliElementType.fromInt(reader.readNextByte()); // Should be Class or ValueType
 			long origIndex = reader.getPointerIndex();
@@ -421,20 +442,23 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			String argTypesRep = "";
 			for (int i = 0; i < genArgCount; i++) {
 				argTypesRep += argTypes.get(i).getRepresentation();
-				if (i != genArgCount - 1)
+				if (i != genArgCount - 1) {
 					argTypesRep += ", ";
+				}
 			}
 
 			String typeRep = Integer.toHexString(encodedType);
 			if (stream != null) {
 				try {
 					CliAbstractTableRow row =
-						stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType)).getRow(
-							CliIndexTypeDefOrRef.getRowIndex(encodedType));
-					if (shortRep)
+						stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType))
+								.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
+					if (shortRep) {
 						typeRep = row.getShortRepresentation();
-					else
+					}
+					else {
 						typeRep = row.getRepresentation();
+					}
 				}
 				catch (InvalidInputException e) {
 					e.printStackTrace();
@@ -481,11 +505,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int number;
 		private int numberBytes;
 
-		public CliTypeVarOrMvar(BinaryReader reader, CliElementType typeCode)
-				throws IOException {
+		public CliTypeVarOrMvar(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
+
 			long origIndex = reader.getPointerIndex();
 			number = decodeCompressedUnsignedInt(reader);
+
 			long endIndex = reader.getPointerIndex();
 			numberBytes = (int) (endIndex - origIndex);
 		}
@@ -511,9 +536,11 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 		public CliTypePtr(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
+
 			while (CliCustomMod.isCustomMod(reader)) {
 				customMods.add(new CliCustomMod(reader));
 			}
+
 			typeCode = CliElementType.fromInt(reader.readNextByte());
 		}
 
@@ -546,26 +573,31 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		public CliTypeSzArray(BinaryReader reader, CliElementType typeCode)
 				throws IOException, InvalidInputException {
 			super(typeCode);
+
 			while (CliCustomMod.isCustomMod(reader)) {
 				customMods.add(new CliCustomMod(reader));
 			}
+
 			type = readCliType(reader);
 		}
 
 		@Override
 		public String getRepresentation(CliStreamMetadata stream) {
 			String typeRep;
-			if (stream == null)
+			if (stream == null) {
 				typeRep = type.getRepresentation();
-			else
+			}
+			else {
 				typeRep = type.getRepresentation(stream);
+			}
 
 			String modsRep = "";
 			for (CliCustomMod mod : customMods) {
 				modsRep += mod.toString() + ", ";
 			}
-			if (customMods.size() > 0)
+			if (customMods.size() > 0) {
 				modsRep.substring(0, modsRep.length() - 2); // Remove last comma+space
+			}
 			return String.format("SzArray %s %s", modsRep, typeRep);
 		}
 
@@ -590,11 +622,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int encodedType;
 		private int typeBytes;
 
-		public CliTypeValueType(BinaryReader reader, CliElementType typeCode)
-				throws IOException {
+		public CliTypeValueType(BinaryReader reader, CliElementType typeCode) throws IOException {
 			super(typeCode);
+
 			long origIndex = reader.getPointerIndex();
 			encodedType = decodeCompressedUnsignedInt(reader);
+
 			long endIndex = reader.getPointerIndex();
 			typeBytes = (int) (endIndex - origIndex);
 		}
@@ -607,8 +640,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		public String getRepresentation(CliStreamMetadata stream, boolean shortRep) {
 			try {
 				CliAbstractTableRow row =
-					stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType)).getRow(
-						CliIndexTypeDefOrRef.getRowIndex(encodedType));
+					stream.getTable(CliIndexTypeDefOrRef.getTableName(encodedType))
+							.getRow(CliIndexTypeDefOrRef.getRowIndex(encodedType));
+
 				return "ValueType " +
 					(shortRep ? row.getShortRepresentation() : row.getRepresentation());
 			}
@@ -638,13 +672,13 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		}
 	}
 
-	public CliSigType readCliType(BinaryReader reader)
-			throws IOException, InvalidInputException {
+	public CliSigType readCliType(BinaryReader reader) throws IOException, InvalidInputException {
 		byte typeByte = reader.readNextByte();
 		CliElementType typeCode = CliElementType.fromInt(typeByte);
-		if (typeCode == null)
+		if (typeCode == null) {
 			throw new InvalidInputException("TypeCode not found at reader index " +
 				reader.getPointerIndex() + ". Are you in the right place? (" + typeByte + ")");
+		}
 		switch (typeCode) {
 			case ELEMENT_TYPE_ARRAY:
 				return new CliTypeArray(reader, typeCode);
@@ -690,8 +724,10 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 		public CliCustomMod(BinaryReader reader) throws IOException {
 			cmod = CliElementType.fromInt(reader.readNextByte());
+
 			long origIndex = reader.getPointerIndex();
 			typeEncoded = decodeCompressedUnsignedInt(reader);
+
 			long endIndex = reader.getPointerIndex();
 			sizeOfCount = (int) (endIndex - origIndex);
 		}
@@ -756,8 +792,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		}
 
 		public String getRepresentation() {
-			if (constraint == CliElementType.ELEMENT_TYPE_PINNED)
+			if (constraint == CliElementType.ELEMENT_TYPE_PINNED) {
 				return constraint.toString();
+			}
 			return String.format("Invalid Constraint (%s - %x)", constraint.toString(),
 				constraint.id());
 		}
@@ -765,6 +802,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 	public class CliTypeBase implements CliRepresentable {
 		private List<CliCustomMod> customMods = new ArrayList<>();
+		private boolean constraint = false;
 		private boolean byRef = false;
 		private CliSigType type;
 
@@ -773,14 +811,25 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		public CliTypeBase(BinaryReader reader, boolean isRetType)
 				throws IOException, InvalidInputException {
 			this.isVoidAllowed = isRetType;
+
+			// Get any custom modifiers
 			while (CliCustomMod.isCustomMod(reader)) {
 				customMods.add(new CliCustomMod(reader));
 			}
-			byte nextByte = reader.peekNextByte();
-			if (nextByte == CliElementType.ELEMENT_TYPE_BYREF.id()) {
+
+			// Check to see if it's a constrained variable
+			if (CliConstraint.isConstraint(reader)) {
+				constraint = true;
+				reader.readNextByte();
+			}
+
+			// Check to see if it's a ByRef
+			byte byRefCheck = reader.peekNextByte();
+			if (byRefCheck == CliElementType.ELEMENT_TYPE_BYREF.id()) {
 				byRef = true;
 				reader.readNextByte();
 			}
+
 			type = readCliType(reader);
 		}
 
@@ -796,16 +845,39 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			return byRef;
 		}
 
+		public boolean isConstrained() {
+			return constraint;
+		}
+
 		private String getRepresentationCommon(CliStreamMetadata stream, boolean shortRep) {
 			String rep = "";
+
 			for (CliCustomMod mod : customMods) {
 				rep += mod.getRepresentation() + "; ";
 			}
-			if (customMods.size() > 0)
+
+			if (customMods.size() > 0) {
 				rep = rep.substring(0, rep.length() - 2) + " ";
-			if (byRef)
+			}
+
+			if (constraint) {
+				rep += "constrained ";
+			}
+
+			if (byRef) {
 				rep += "byref ";
-			rep += getRepresentationOf(type, stream, shortRep);
+			}
+
+			// The one special case value we have is the SENTINEL, which
+			// we represent as "..." to denote that VarArgs might be passed
+			// after the declared parameters
+			if (type.baseTypeCode == CliElementType.ELEMENT_TYPE_SENTINEL) {
+				rep = "...";
+			}
+			else {
+				rep += getRepresentationOf(type, stream, shortRep);
+			}
+
 			return rep;
 		}
 
@@ -831,11 +903,18 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 		public DataType getDefinitionDataType() {
 			StructureDataType struct = new StructureDataType(new CategoryPath(PATH), "Type", 0);
+
 			for (CliCustomMod mod : customMods) {
 				struct.add(mod.getDefinitionDataType(), "CustomMod", null);
 			}
-			if (byRef)
+
+			if (constraint) {
+				struct.add(BYTE, "CONSTRAINT", "Constrained");
+			}
+
+			if (byRef) {
 				struct.add(BYTE, "BYREF", "By reference");
+			}
 			struct.add(type.getDefinitionDataType(), "Type", null);
 			return struct;
 		}
@@ -905,13 +984,15 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				new StructureDataType(new CategoryPath(PATH), "ArrayShape", 0);
 			struct.add(getDataTypeForBytes(rankBytes), "Rank", "Number of dimensions in array");
 			struct.add(getDataTypeForBytes(numSizesBytes), "NumSizes", "Number of sizes to follow");
-			for (int i = 0; i < sizeBytes.length; i++)
+			for (int i = 0; i < sizeBytes.length; i++) {
 				struct.add(getDataTypeForBytes(sizeBytes[i]), "Size" + i, "Coded integer size");
+			}
 			struct.add(getDataTypeForBytes(numLoBoundsBytes), "NumLoBounds",
 				"Number of lower bounds in array");
-			for (int i = 0; i < loBoundBytes.length; i++)
+			for (int i = 0; i < loBoundBytes.length; i++) {
 				struct.add(getDataTypeForBytes(loBoundBytes[i]), "LoBound" + i,
 					"Coded integer lower bound");
+			}
 			return struct;
 		}
 
@@ -919,21 +1000,4 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			return "ArrayShapeNotYetRepresented"; // TODO: Give back  a pretty representation of ArrayShape
 		}
 	}
-
-	public class CliCustomAttrib {
-		// TODO: Implement
-	}
-
-	public class CliFixedArg {
-		// TODO: Implement
-	}
-
-	public class CliElem {
-		// TODO: Implement	
-	}
-
-	public class CliNamedArg {
-		// TODO: Implement
-	}
-
 }

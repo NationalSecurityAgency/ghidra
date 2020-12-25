@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +22,20 @@ import java.io.IOException;
  * providing various data access methods.
  */
 public interface Buffer {
-	
+
 	/**
 	 * Get the buffer ID for this buffer.
 	 * @return int
 	 */
 	public int getId();
-	
+
 	/**
 	 * Get the length of the buffer in bytes.  The length reflects the number of
 	 * bytes which have been allocated to the buffer.
 	 * @return length of allocated buffer.
 	 */
 	public int length();
-	
+
 	/**
 	 * Get the byte data located at the specified offset and store into the
 	 * bytes array provided. 
@@ -62,10 +61,11 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public void get(int offset, byte[] data, int dataOffset, int length) throws IOException;
-	
+
 	/**
 	 * Get the byte data located at the specified offset.
 	 * @param offset byte offset from start of buffer.
+	 * @param length number of bytes to be read and returned
 	 * @return the byte array.
 	 * @throws ArrayIndexOutOfBoundsException is thrown if an invalid offset is
 	 * specified or the end of the buffer was encountered while reading the
@@ -74,7 +74,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public byte[] get(int offset, int length) throws IOException;
-	
+
 	/**
 	 * Get the 8-bit byte value located at the specified offset.
 	 * @param offset byte offset from start of buffer.
@@ -85,7 +85,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public byte getByte(int offset) throws IOException;
-	
+
 	/**
 	 * Get the 32-bit integer value located at the specified offset.
 	 * @param offset byte offset from start of buffer.
@@ -97,7 +97,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public int getInt(int offset) throws IOException;
-	
+
 	/**
 	 * Get the 16-bit short value located at the specified offset.
 	 * @param offset byte offset from start of buffer.
@@ -109,7 +109,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public short getShort(int offset) throws IOException;
-	
+
 	/**
 	 * Get the 64-bit long value located at the specified offset.
 	 * @param offset byte offset from start of buffer.
@@ -121,7 +121,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public long getLong(int offset) throws IOException;
-		
+
 	/**
 	 * Put a specified number of bytes from the array provided into the buffer
 	 * at the specified offset.  The number of bytes stored is specified by the
@@ -153,7 +153,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public int put(int offset, byte[] bytes) throws IOException;
-	
+
 	/**
 	 * Put the 8-bit byte value into the buffer at the specified offset. 
 	 * @param offset byte offset from start of buffer.
@@ -165,7 +165,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public int putByte(int offset, byte b) throws IOException;
-	
+
 	/**
 	 * Put the 32-bit integer value into the buffer at the specified offset. 
 	 * @param offset byte offset from start of buffer.
@@ -178,7 +178,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public int putInt(int offset, int v) throws IOException;
-	
+
 	/**
 	 * Put the 16-bit short value into the buffer at the specified offset. 
 	 * @param offset byte offset from start of buffer.
@@ -191,7 +191,7 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public int putShort(int offset, short v) throws IOException;
-	
+
 	/**
 	 * Put the 64-bit long value into the buffer at the specified offset. 
 	 * @param offset byte offset from start of buffer.
@@ -204,5 +204,5 @@ public interface Buffer {
 	 * underlying storage.
 	 */
 	public int putLong(int offset, long v) throws IOException;
-	
+
 }

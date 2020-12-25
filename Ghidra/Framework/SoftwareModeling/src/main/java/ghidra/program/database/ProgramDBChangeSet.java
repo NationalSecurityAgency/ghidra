@@ -34,10 +34,10 @@ import ghidra.program.model.listing.ProgramChangeSet;
 class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 
 	private static final Schema STORED_ID_SCHEMA =
-		new Schema(0, "Key", new Class[] { LongField.class }, new String[] { "value" });
+		new Schema(0, "Key", new Field[] { LongField.INSTANCE }, new String[] { "value" });
 
 	private static final Schema STORED_ADDRESS_RANGE_SCHEMA = new Schema(0, "Key",
-		new Class[] { LongField.class, LongField.class }, new String[] { "addr1", "addr2" });
+		new Field[] { LongField.INSTANCE, LongField.INSTANCE }, new String[] { "addr1", "addr2" });
 
 	private static final String DATATYPE_ADDITIONS = "DataType Additions";
 	private static final String DATATYPE_CHANGES = "DataType Changes";

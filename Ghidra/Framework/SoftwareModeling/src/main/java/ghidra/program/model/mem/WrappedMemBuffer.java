@@ -30,7 +30,7 @@ import ghidra.util.GhidraDataConverter;
  * the overhead of various error checks.  This implementation will not wrap
  * if the end of the memory space is encountered.
  * 
- * The {@link #getByte(int), #getBytes(byte[], int)} methods can cause the bytes in the
+ * The {@link #getByte(int)}, {@link #getBytes(byte[], int)} methods can cause the bytes in the
  * buffer cache if the request is outside of the current cached bytes.
  * 
  * WARNING: The underlying MemBuffer should not change its base address. Using a
@@ -67,7 +67,7 @@ public class WrappedMemBuffer implements MemBuffer {
 	/**
 	 * Construct a wrapped MemBuffer with an adjustable base offset
 	 * @param buf memory buffer
-	 * @buffersize size of cache buffer - specify 0 for no buffering
+	 * @param bufferSize size of cache buffer - specify 0 for no buffering
 	 * @param baseOffset offset relative to the underlying buffer's start address
 	 *               (addr + baseOffset) will be the 0 index into this buffer
 	 * @throws AddressOutOfBoundsException
@@ -78,7 +78,7 @@ public class WrappedMemBuffer implements MemBuffer {
 		this.converter = GhidraDataConverter.getInstance(buf.isBigEndian());
 
 		buffer = new byte[bufferSize];
-		
+
 		setBaseOffset(baseOffset);
 	}
 
@@ -113,10 +113,12 @@ public class WrappedMemBuffer implements MemBuffer {
 	private int computeOffset(int offset) throws MemoryAccessException {
 		int bufOffset = baseOffset + offset;
 		if (offset > 0 && bufOffset < baseOffset) {
-			throw new MemoryAccessException("Invalid WrappedMemBuffer, offset would wrap underlying memory buffer");
+			throw new MemoryAccessException(
+				"Invalid WrappedMemBuffer, offset would wrap underlying memory buffer");
 		}
 		if (offset < 0 && bufOffset > baseOffset) {
-			throw new MemoryAccessException("Invalid WrappedMemBuffer offset, offset would wrap underlying memory buffer");
+			throw new MemoryAccessException(
+				"Invalid WrappedMemBuffer offset, offset would wrap underlying memory buffer");
 		}
 		return bufOffset;
 	}
@@ -156,8 +158,9 @@ public class WrappedMemBuffer implements MemBuffer {
 
 			// grab from wrapped buffer, too many bytes, or no buffer
 			return memBuffer.getBytes(b, computeOffset(offset));
-			
-		} catch (MemoryAccessException e) {
+
+		}
+		catch (MemoryAccessException e) {
 			return 0;
 		}
 	}
@@ -165,11 +168,11 @@ public class WrappedMemBuffer implements MemBuffer {
 	private void fillBuffer(int offset) throws MemoryAccessException {
 		// fill the buffer
 		int nRead = memBuffer.getBytes(buffer, computeOffset(offset));
-		
+
 		if (nRead == 0) {
 			throw new MemoryAccessException("No bytes available in memory to cache");
 		}
-		
+
 		minOffset = offset;
 		maxOffset = offset + nRead - 1;
 	}
@@ -186,22 +189,22 @@ public class WrappedMemBuffer implements MemBuffer {
 
 	@Override
 	public short getShort(int offset) throws MemoryAccessException {
-		return converter.getShort(this, computeOffset(offset));
+		return converter.getShort(this, offset);
 	}
 
 	@Override
 	public int getInt(int offset) throws MemoryAccessException {
-		return converter.getInt(this, computeOffset(offset));
+		return converter.getInt(this, offset);
 	}
 
 	@Override
 	public long getLong(int offset) throws MemoryAccessException {
-		return converter.getLong(this, computeOffset(offset));
+		return converter.getLong(this, offset);
 	}
 
 	@Override
 	public BigInteger getBigInteger(int offset, int size, boolean signed)
 			throws MemoryAccessException {
-		return converter.getBigInteger(this, computeOffset(offset), size, signed);
+		return converter.getBigInteger(this, offset, size, signed);
 	}
 }

@@ -112,9 +112,9 @@ public class TypeApplierFactory {
 					applier =
 						new MemberFunctionTypeApplier(applicator, (MemberFunction16MsType) type);
 					break;
-				case VtShapeMsType.PDB_ID:
-					applier = new VtShapeTypeApplier(applicator, (VtShapeMsType) type);
-					break;
+//				case VtShapeMsType.PDB_ID:
+//					applier = new VtShapeTypeApplier(applicator, (VtShapeMsType) type);
+//					break;
 //				case Cobol016MsType.PDB_ID:
 //					// Not evaluated/implemented yet.
 //					break;
@@ -494,6 +494,29 @@ public class TypeApplierFactory {
 				case UserDefinedTypeModuleSourceAndLineMsType.PDB_ID:
 					applier = new UdtSourceLineTypeApplier(applicator, type);
 					break;
+				case Class19MsType.PDB_ID:
+					applier = new CompositeTypeApplier(applicator, (Class19MsType) type);
+					break;
+				case Structure19MsType.PDB_ID:
+					applier = new CompositeTypeApplier(applicator, (Structure19MsType) type);
+					break;
+				// TODO: the following three types are only hypothetical and might be in the wrong
+				// order with the wrong PDB_IDs and the wrong internal elements and parsing.
+				// These are here as partial implementations until they are seen and can be
+				// cleaned up and put into service.
+//				case Union19MsType.PDB_ID:
+//					applier = new CompositeTypeApplier(applicator, (Union19MsType) type);
+//					break;
+//				case Enum19MsType.PDB_ID:
+//					applier = new EnumTypeApplier(applicator, (Enum19MsType) type);
+//					break;
+//				case Interface19MsType.PDB_ID:
+//					// TODO InterfaceTypeApplier does not exist, and the two types we would
+//					// want to send it would need to either be abstracted to one abstract type
+//					// or a generic AbstractMsType would have to be sent and then verified
+//					// internal to the applier.
+//					applier = new InterfaceTypeApplier(applicator, (Interface19MsType) type);
+//					break;
 
 				// If all of the above are enabled, this should never happen (unless we missed
 				// something or MSFT has added new in a version we do not handle.

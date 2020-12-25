@@ -24,6 +24,7 @@ import docking.widgets.table.*;
 import docking.widgets.table.sort.DefaultColumnComparator;
 import generic.concurrent.ConcurrentListenerSet;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
@@ -123,7 +124,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			TaskMonitor monitor, boolean loadIncrementally) {
 		super(serviceProvider);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			throw new AssertException(
 				"You must create the ThreadedTableModel in the AWT Event Dispatch Thread");
 		}
@@ -143,7 +144,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		// We are expecting to be in the swing thread.  We want the reload to happen after our
 		// constructor is fully completed since the reload will cause our initialize method to
 		// be called in another thread, thereby creating a possible race condition.
-		SwingUtilities.invokeLater(() -> updateManager.reload());
+		Swing.runLater(() -> updateManager.reload());
 	}
 
 	public boolean isLoadIncrementally() {
@@ -617,12 +618,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	@Override
 	public void fireTableChanged(TableModelEvent e) {
-		if (SwingUtilities.isEventDispatchThread()) {
+		if (Swing.isSwingThread()) {
 			super.fireTableChanged(e);
 			return;
 		}
-		final TableModelEvent e1 = e;
-		SwingUtilities.invokeLater(() -> ThreadedTableModel.super.fireTableChanged(e1));
+		Swing.runLater(() -> ThreadedTableModel.super.fireTableChanged(e));
 	}
 
 	/**
@@ -636,6 +636,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			worker.dispose();
 		}
 		doClearData();
+		disposeDynamicColumnData();
 	}
 
 	/**

@@ -135,7 +135,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	@Override
 	void resolve() {
-		if (!isForwardReference()) {
+
+		// NOTE: Until we know better we do not want to explicitly
+		// apply nested composite datatypes and allow them to be 
+		// created as-needed (e.g., function definition).  This is
+		// done to minimize duplication of anonymous/unnamed nested
+		// composites since the parent composite reconsruction performed
+		// by DefaultCompositeMember will generate such nested composites.
+
+		if (!isForwardReference() && !isNested()) {
 			super.resolve();
 		}
 	}

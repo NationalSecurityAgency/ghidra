@@ -46,12 +46,12 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	public static synchronized BuiltInDataTypeManager getDataTypeManager() {
 		if (manager == null) {
 			manager = new BuiltInDataTypeManager();
-			Runnable cleanupTask = new Thread((Runnable) () -> {
+			Runnable cleanupTask = () -> {
 				if (manager != null) {
-					manager.dispose();
+					manager.closeStaticInstance();
 					manager = null;
 				}
-			}, "Builtin DataType Manager Cleanup Thread");
+			};
 			ShutdownHookRegistry.addShutdownHook(cleanupTask,
 				ShutdownPriority.DISPOSE_DATABASES.before());
 		}
@@ -92,17 +92,9 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		return super.createCategory(path);
 	}
 
-	private synchronized void dispose() {
+	private synchronized void closeStaticInstance() {
 		ClassSearcher.removeChangeListener(classSearcherListener);
 		super.close();
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataTypeManager#close()
-	 */
-	@Override
-	public void close() {
-		// static shared instance can't be closed
 	}
 
 	/**
@@ -201,5 +193,11 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
 			boolean updateCategoryPath) throws DataTypeDependencyException {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void close() {
+		// do nothing - cannot close a built-in data type manager
+		// close performed automatically during shutdown
 	}
 }

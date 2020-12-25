@@ -18,6 +18,7 @@ package ghidra.program.database.module;
 import java.io.IOException;
 import java.util.*;
 
+import db.Field;
 import db.Record;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
@@ -65,7 +66,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 				record = rec;
 				childCount = 0;
 				try {
-					long[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
+					Field[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
 					childCount = keys.length;
 				}
 				catch (IOException e) {
@@ -80,9 +81,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#add(ghidra.program.model.listing.ProgramFragment)
-	 */
+	@Override
 	public void add(ProgramFragment fragment) throws DuplicateGroupException {
 		lock.acquire();
 		try {
@@ -92,8 +91,8 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			// add a row to the parent/child table
 			Record parentChildRecord = adapter.getParentChildRecord(key, -fragID);
 			if (parentChildRecord != null) {
-				throw new DuplicateGroupException(frag.getName() + " already exists a child of " +
-					getName());
+				throw new DuplicateGroupException(
+					frag.getName() + " already exists a child of " + getName());
 			}
 
 			Record pcRec = adapter.addParentChildRecord(key, -fragID);
@@ -109,10 +108,9 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#add(ghidra.program.model.listing.ProgramModule)
-	 */
-	public void add(ProgramModule module) throws CircularDependencyException, DuplicateGroupException {
+	@Override
+	public void add(ProgramModule module)
+			throws CircularDependencyException, DuplicateGroupException {
 
 		lock.acquire();
 		try {
@@ -122,12 +120,12 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 			Record parentChildRecord = adapter.getParentChildRecord(key, moduleID);
 			if (parentChildRecord != null) {
-				throw new DuplicateGroupException(module.getName() + " already exists a child of " +
-					getName());
+				throw new DuplicateGroupException(
+					module.getName() + " already exists a child of " + getName());
 			}
 			if (moduleMgr.isDescendant(key, moduleID)) {
-				throw new CircularDependencyException(getName() + " is already a descendant of " +
-					module.getName());
+				throw new CircularDependencyException(
+					getName() + " is already a descendant of " + module.getName());
 			}
 
 			Record pcRec = adapter.addParentChildRecord(key, moduleID);
@@ -143,9 +141,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#contains(ghidra.program.model.listing.ProgramFragment)
-	 */
+	@Override
 	public boolean contains(ProgramFragment fragment) {
 		if (!(fragment instanceof FragmentDB)) {
 			return false;
@@ -157,9 +153,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return contains(-frag.getKey());
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#contains(ghidra.program.model.listing.ProgramModule)
-	 */
+	@Override
 	public boolean contains(ProgramModule module) {
 		if (!(module instanceof ModuleDB)) {
 			return false;
@@ -171,9 +165,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return contains(moduleDB.getKey());
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#createFragment(java.lang.String)
-	 */
+	@Override
 	public ProgramFragment createFragment(String fragmentName) throws DuplicateNameException {
 
 		lock.acquire();
@@ -196,9 +188,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#createModule(java.lang.String)
-	 */
+	@Override
 	public ProgramModule createModule(String moduleName) throws DuplicateNameException {
 
 		lock.acquire();
@@ -221,9 +211,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getChildren()
-	 */
+	@Override
 	public Group[] getChildren() {
 		lock.acquire();
 		try {
@@ -252,9 +240,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return new Group[0];
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getComment()
-	 */
+	@Override
 	public String getComment() {
 		lock.acquire();
 		try {
@@ -266,9 +252,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getFirstAddress()
-	 */
+	@Override
 	public Address getFirstAddress() {
 		lock.acquire();
 		try {
@@ -280,9 +264,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getIndex(java.lang.String)
-	 */
+	@Override
 	public int getIndex(String name) {
 		lock.acquire();
 		try {
@@ -312,9 +294,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return -1;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getLastAddress()
-	 */
+	@Override
 	public Address getLastAddress() {
 		lock.acquire();
 		try {
@@ -326,9 +306,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getMaxAddress()
-	 */
+	@Override
 	public Address getMaxAddress() {
 		lock.acquire();
 		try {
@@ -340,9 +318,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getMinAddress()
-	 */
+	@Override
 	public Address getMinAddress() {
 		lock.acquire();
 		try {
@@ -354,9 +330,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getAddressSet()
-	 */
+	@Override
 	public AddressSetView getAddressSet() {
 		AddressSet set = new AddressSet();
 		Group[] children = getChildren();
@@ -372,9 +346,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return set;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getNumChildren()
-	 */
+	@Override
 	public int getNumChildren() {
 		lock.acquire();
 		try {
@@ -386,9 +358,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#isDescendant(ghidra.program.model.listing.ProgramFragment)
-	 */
+	@Override
 	public boolean isDescendant(ProgramFragment fragment) {
 		if (!(fragment instanceof FragmentDB)) {
 			return false;
@@ -403,9 +373,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#isDescendant(ghidra.program.model.listing.ProgramModule)
-	 */
+	@Override
 	public boolean isDescendant(ProgramModule module) {
 		if (!(module instanceof ModuleDB)) {
 			return false;
@@ -420,9 +388,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#moveChild(java.lang.String, int)
-	 */
+	@Override
 	public void moveChild(String name, int index) throws NotFoundException {
 		lock.acquire();
 		try {
@@ -473,9 +439,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#removeChild(java.lang.String)
-	 */
+	@Override
 	public boolean removeChild(String name) throws NotEmptyException {
 
 		lock.acquire();
@@ -492,7 +456,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 					// check for module record
 					return removeModuleRecord(name);
 				}
-				long[] keys = adapter.getParentChildKeys(-childID, TreeManager.CHILD_ID_COL);
+				Field[] keys = adapter.getParentChildKeys(-childID, TreeManager.CHILD_ID_COL);
 				if (keys.length == 1) {
 					FragmentDB frag = moduleMgr.getFragmentDB(childID);
 					if (!frag.isEmpty()) {
@@ -525,8 +489,8 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		if (pcRec == null) {
 			return false;
 		}
-		long[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
 
+		Field[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
 		if (keys.length == 1) {
 			ProgramModule module = moduleMgr.getModuleDB(childID);
 			if (module.getNumChildren() > 0) {
@@ -538,9 +502,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return removeChild(childID, pcRec, false, deleteChild);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#reparent(java.lang.String, ghidra.program.model.listing.ProgramModule)
-	 */
+	@Override
 	public void reparent(String name, ProgramModule oldParent) throws NotFoundException {
 
 		Group group = null;
@@ -582,9 +544,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#contains(ghidra.program.model.listing.CodeUnit)
-	 */
+	@Override
 	public boolean contains(CodeUnit codeUnit) {
 		FragmentDB frag = moduleMgr.getFragment(codeUnit);
 		if (frag != null) {
@@ -593,9 +553,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getName()
-	 */
+	@Override
 	public String getName() {
 		lock.acquire();
 		try {
@@ -607,14 +565,12 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getNumParents()
-	 */
+	@Override
 	public int getNumParents() {
 		lock.acquire();
 		try {
 			checkIsValid();
-			long[] keys = adapter.getParentChildKeys(key, TreeManager.CHILD_ID_COL);
+			Field[] keys = adapter.getParentChildKeys(key, TreeManager.CHILD_ID_COL);
 			return keys.length;
 		}
 		catch (IOException e) {
@@ -626,30 +582,22 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getParentNames()
-	 */
+	@Override
 	public String[] getParentNames() {
 		return moduleMgr.getParentNames(key);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getParents()
-	 */
+	@Override
 	public ProgramModule[] getParents() {
 		return moduleMgr.getParents(key);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#getTreeName()
-	 */
+	@Override
 	public String getTreeName() {
 		return moduleMgr.getTreeName();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#setComment(java.lang.String)
-	 */
+	@Override
 	public void setComment(String comment) {
 		lock.acquire();
 		try {
@@ -671,9 +619,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Group#setName(java.lang.String)
-	 */
+	@Override
 	public void setName(String name) throws DuplicateNameException {
 		lock.acquire();
 		try {
@@ -754,11 +700,11 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 	 * Get sorted list based on child order column.
 	 */
 	private List<Record> getParentChildRecords() throws IOException {
-		long[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
+		Field[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
 		List<Record> list = new ArrayList<Record>();
 		Comparator<Record> c = new ParentChildRecordComparator();
 		for (int i = 0; i < keys.length; i++) {
-			Record rec = adapter.getParentChildRecord(keys[i]);
+			Record rec = adapter.getParentChildRecord(keys[i].getLongValue());
 			int index = Collections.binarySearch(list, rec, c);
 			if (index < 0) {
 				index = -index - 1;
@@ -921,7 +867,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		checkIsValid();
 		childCount = 0;
 		try {
-			long[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
+			Field[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
 			childCount = keys.length;
 		}
 		catch (IOException e) {
@@ -931,6 +877,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	private class ParentChildRecordComparator implements Comparator<Record> {
 
+		@Override
 		public int compare(Record r1, Record r2) {
 			int index1 = r1.getIntValue(TreeManager.ORDER_COL);
 			int index2 = r2.getIntValue(TreeManager.ORDER_COL);
@@ -945,23 +892,17 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.ProgramModule#getVersionTag()
-	 */
+	@Override
 	public Object getVersionTag() {
 		return moduleMgr.getVersionTag();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.Module#getModificationNumber()
-	 */
+	@Override
 	public long getModificationNumber() {
 		return moduleMgr.getModificationNumber();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.Module#getTreeID()
-	 */
+	@Override
 	public long getTreeID() {
 		return moduleMgr.getTreeID();
 	}

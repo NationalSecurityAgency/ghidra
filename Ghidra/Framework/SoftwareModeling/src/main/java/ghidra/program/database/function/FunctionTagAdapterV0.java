@@ -30,18 +30,17 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	static final int V0_TAG_NAME_COL = 0;
 	static final int V0_COMMENT_COL = 1;
 
-	final static Schema V0_SCHEMA =
-		new Schema(CURRENT_VERSION, "ID", new Class[] { StringField.class, StringField.class },
-			new String[] { "Tag", "Comment" });
+	final static Schema V0_SCHEMA = new Schema(CURRENT_VERSION, "ID",
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Tag", "Comment" });
 
 	private Table table; // lazy creation, null if empty
 	private final DBHandle dbHandle;
 
-	FunctionTagAdapterV0(DBHandle dbHandle, boolean create)
-			throws VersionException {
+	FunctionTagAdapterV0(DBHandle dbHandle, boolean create) throws VersionException {
 
 		this.dbHandle = dbHandle;
-		
+
 		// This deserves an explanation:
 		//
 		// Both function tag tables are transient, meaning they're created only when necessary,
@@ -62,9 +61,7 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 			}
 		}
 
-
 	}
-
 
 	@Override
 	Record getRecord(String tag) throws IOException {
@@ -84,8 +81,7 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	}
 
 	@Override
-	Record createTagRecord(String tag, String comment)
-			throws IOException {
+	Record createTagRecord(String tag, String comment) throws IOException {
 
 		// See if there is already a record for this tag name. If so,
 		// just return that one.
@@ -136,10 +132,10 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	void updateRecord(Record record) throws IOException {
 		getTable().putRecord(record);
 	}
-	
+
 	private Table getTable() throws IOException {
 		if (table == null) {
-			table =	dbHandle.createTable(TABLE_NAME, V0_SCHEMA);
+			table = dbHandle.createTable(TABLE_NAME, V0_SCHEMA);
 		}
 		return table;
 	}

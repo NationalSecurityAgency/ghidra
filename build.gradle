@@ -292,28 +292,67 @@ String getCurrentPlatformName() {
  *         given project  
  *
  *********************************************************************************/
-List<String> getExternalDependencies(Project project) {
+List<String> getExternalRuntimeDependencies(Project project) {
 	List<String> list = new ArrayList<String>()
 
-	// for each dependency in the compile configuration
-	Configuration runtimeConfig = project.configurations.runtime
-	runtimeConfig.allDependencies.each { dep ->
-		
+	list.addAll(getExternalDependencies(project.configurations.compile));
+	list.addAll(getExternalDependencies(project.configurations.runtime));
+
+	return list
+}
+
+List<String> getExternalDependencies(Configuration configuration) {
+	List<String> list = new ArrayList<>();
+	configuration.dependencies.each { dep ->
+
 		// if the dependency is an external jar
-		if (dep.class.toString().contains("DefaultExternalModuleDependency")) {
-	
-			// loop back through all the dependency files, looking for one that contains the dependency name.
-			String depPath = runtimeConfig.find {
-				it.name.contains(dep.name)
+		if (dep instanceof ExternalDependency) { 	
+			String name = dep.getName()
+			Set<String> classifiers = dep.artifacts.classifier
+			String group = dep.getGroup()
+			String version = dep.getVersion()	
+			String searchString = name
+
+			if (version != null) {
+				searchString = name+"-"+version;
 			}
-			
+
+			if (!classifiers.empty) {
+				String cls = classifiers.first()
+				if (cls != null) {
+					searchString+= "-$cls"
+				}
+			}
+
+			// loop back through all the dependency files, looking for one that contains the dependency name.
+			String depPath = configuration.find {
+				it.name.contains(searchString)
+			}
+			if (depPath == null) {
+				println("****************DID NOT FIND DEPENDENCY: name = "+name+" version = "+version)
+			}
 			// if we found the path, then add it to the list
-			if (depPath && !depPath.contains("libsForBuild")) {
+			if (depPath) {
 				list.add(depPath)
 			}
 		}	
 	}
-	return list
+	return list;
+}
+
+/*********************************************************************************
+ * Returns a list of all the external library paths declared as dependencies for the 
+ *         given project  
+ *
+ *********************************************************************************/
+Set<String> getAllExternalDependencies(Project project) {
+	Set<String> set = new HashSet<String>()
+	
+	project.getConfigurations().each { config ->
+		set.addAll(getExternalDependencies(config))
+	}
+	
+	return set
 }
 
 /******************************************************************************************
@@ -334,7 +373,7 @@ String generateLibraryDependencyMapping() {
 	libsFile.withWriter { out ->
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {
-				List<String> libs = getExternalDependencies(p);
+				List<String> libs = getExternalRuntimeDependencies(p);
 				if (libs != null) {
 					out.println "Module: $p.name"
 					libs.each { path ->
@@ -346,6 +385,37 @@ String generateLibraryDependencyMapping() {
 	}
 	return libsFile.absolutePath
 }
+/******************************************************************************************
+ * 
+ * Creates a file that lists all external jars used to build and run Ghidra
+ *
+ ******************************************************************************************/
+String generateAllExternalLibsFile() {
+	File libsFile = file("$buildDir/AllExternalLibs.txt")
+	
+	// Check to make sure the build folder exists - if it doesn't, the 'libsFile.withWriter'
+	// call (below) will fail miserably.
+	def buildFolder = file ("$buildDir")
+	if (!buildFolder.exists()) {
+		buildFolder.mkdirs()
+	}
+	Set<String> allLibs = new HashSet<>();
+	subprojects { p ->
+		p.plugins.withType(JavaPlugin) {
+			Set<String> libs = getAllExternalDependencies(p);
+			if (libs != null) {
+				allLibs.addAll(libs);
+			}
+		}
+	}
+	libsFile.withWriter { out ->
+		allLibs.each { path ->
+			out.println "$path"
+		}
+	}
+	return libsFile.absolutePath
+}
+
 
 task allSleighCompile {
 }

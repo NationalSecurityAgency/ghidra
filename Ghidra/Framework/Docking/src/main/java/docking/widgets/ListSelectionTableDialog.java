@@ -70,6 +70,11 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 		}
 	}
 
+	@Override
+	public void close() {
+		filterPanel.dispose();
+	}
+
 	private JComponent build() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -127,7 +132,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 	public void setMultiSelectionMode(boolean enable) {
 		if (enable) {
 			gTable.getSelectionModel()
-				.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+					.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		}
 		else {
 			gTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

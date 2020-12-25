@@ -484,7 +484,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 
 		table = panel.getTable();
 
-		buildFrame();
+		buildFrame(panel);
 
 		waitForTableModel(model);
 

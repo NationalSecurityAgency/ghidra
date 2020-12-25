@@ -36,12 +36,11 @@ public class DbSmallTableModel extends AbstractSortedTableModel<Record> {
 
 		records = new ArrayList<>(table.getRecordCount());
 
-		columns.add(getColumn(schema.getKeyFieldClass()));
+		columns.add(getColumn(schema.getKeyFieldType()));
 
-		Class<?>[] classes = schema.getFieldClasses();
-		int fieldCount = schema.getFieldCount();
-		for (int i = 0; i < fieldCount; i++) {
-			columns.add(getColumn(classes[i]));
+		Field[] fields = schema.getFields();
+		for (Field field : fields) {
+			columns.add(getColumn(field));
 		}
 
 		try {
@@ -55,29 +54,30 @@ public class DbSmallTableModel extends AbstractSortedTableModel<Record> {
 		}
 	}
 
-	private AbstractColumnAdapter getColumn(Class<?> c) {
-		if (c == ByteField.class) {
+	private AbstractColumnAdapter getColumn(Field field) {
+		if (field instanceof ByteField) {
 			return new ByteColumnAdapter();
 		}
-		else if (c == BooleanField.class) {
+		else if (field instanceof BooleanField) {
 			return new BooleanColumnAdapter();
 		}
-		else if (c == ShortField.class) {
+		else if (field instanceof ShortField) {
 			return new ShortColumnAdapter();
 		}
-		else if (c == IntField.class) {
+		else if (field instanceof IntField) {
 			return new IntegerColumnAdapter();
 		}
-		else if (c == LongField.class) {
+		else if (field instanceof LongField) {
 			return new LongColumnAdapter();
 		}
-		else if (c == StringField.class) {
+		else if (field instanceof StringField) {
 			return new StringColumnAdapter();
 		}
-		else if (c == BinaryField.class) {
+		else if (field instanceof BinaryField) {
 			return new BinaryColumnAdapter();
 		}
-		throw new AssertException("New, unexpected DB column class type: " + c);
+		throw new AssertException(
+			"New, unexpected DB column type: " + field.getClass().getSimpleName());
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import db.Field;
 import db.Record;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
@@ -42,6 +43,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	private LazyLoadingCachingMap<String, CategoryDB> subcategoryMap;
 	private LazyLoadingCachingMap<String, DataType> dataTypeMap;
 	private ConflictMap conflictMap;
+	private CategoryPath categoryPath;
 
 	/**
 	 * Category Constructor
@@ -82,16 +84,26 @@ class CategoryDB extends DatabaseObject implements Category {
 		this(dtMgr, cache, DataTypeManagerDB.ROOT_CATEGORY_ID, null, "/");
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Category#getCategoryPath()
-	 */
 	@Override
 	public CategoryPath getCategoryPath() {
-		validate(mgr.lock);
-		if (isRoot() || isDeleted()) {
-			return CategoryPath.ROOT;
+		CategoryPath localCategoryPath = categoryPath;
+		if (localCategoryPath != null && !isInvalid()) {
+			return localCategoryPath;
 		}
-		return new CategoryPath(parent.getCategoryPath(), name);
+		mgr.lock.acquire();
+		try {
+			checkIsValid();
+			if (isRoot() || isDeleted()) {
+				categoryPath = CategoryPath.ROOT;
+			}
+			if (categoryPath == null) {
+				categoryPath = new CategoryPath(parent.getCategoryPath(), name);
+			}
+			return categoryPath;
+		}
+		finally {
+			mgr.lock.release();
+		}
 	}
 
 	@Override
@@ -104,6 +116,7 @@ class CategoryDB extends DatabaseObject implements Category {
 		subcategoryMap.clear();
 		dataTypeMap.clear();
 		conflictMap.clear();
+		categoryPath = null;
 
 		if (isRoot()) {
 			return true;
@@ -130,17 +143,11 @@ class CategoryDB extends DatabaseObject implements Category {
 	 */
 	@Override
 	public String getName() {
-		mgr.lock.acquire();
-		try {
-			checkIsValid();
-			if (isRoot()) {
-				return mgr.getName();
-			}
-			return name;
+		validate(mgr.lock);
+		if (isRoot()) {
+			return mgr.getName();
 		}
-		finally {
-			mgr.lock.release();
-		}
+		return name;
 	}
 
 	/**
@@ -181,10 +188,10 @@ class CategoryDB extends DatabaseObject implements Category {
 
 	private CategoryDB[] getCategories(long parentId) {
 		try {
-			long[] ids = mgr.getCategoryDBAdapter().getRecordIdsWithParent(parentId);
+			Field[] ids = mgr.getCategoryDBAdapter().getRecordIdsWithParent(parentId);
 			CategoryDB[] cats = new CategoryDB[ids.length];
 			for (int i = 0; i < cats.length; i++) {
-				cats[i] = mgr.getCategoryDB(ids[i]);
+				cats[i] = mgr.getCategoryDB(ids[i].getLongValue());
 			}
 			return cats;
 		}
@@ -394,6 +401,9 @@ class CategoryDB extends DatabaseObject implements Category {
 		if (mgr != category.getDataTypeManager()) {
 			throw new IllegalArgumentException("Category does not belong to my DataTypeManager");
 		}
+		if (!(category instanceof CategoryDB)) {
+			throw new IllegalArgumentException("Category is not a CategoryDB");
+		}
 		CategoryDB categoryDB = (CategoryDB) category;
 		mgr.lock.acquire();
 		try {
@@ -402,13 +412,12 @@ class CategoryDB extends DatabaseObject implements Category {
 				throw new DuplicateNameException(
 					"Category named " + categoryDB.getName() + " already exists");
 			}
-			CategoryPath categoryPath = getCategoryPath();
-			if (categoryPath.isAncestorOrSelf(categoryDB.getCategoryPath())) {
+			CategoryPath destCategoryPath = getCategoryPath();
+			CategoryPath movedCategoryOriginalPath = categoryDB.getCategoryPath();
+			if (destCategoryPath.isAncestorOrSelf(movedCategoryOriginalPath)) {
 				throw new IllegalArgumentException(
 					"Moved category is an ancestor of destination category!");
 			}
-			CategoryPath oldPath = categoryDB.getCategoryPath();
-
 			try {
 				categoryDB.setParent(this);
 			}
@@ -416,7 +425,7 @@ class CategoryDB extends DatabaseObject implements Category {
 				mgr.dbError(e);
 			}
 			subcategoryMap.put(categoryDB.getName(), categoryDB);
-			mgr.categoryMoved(oldPath, categoryDB);
+			mgr.categoryMoved(movedCategoryOriginalPath, categoryDB);
 		}
 		finally {
 			mgr.lock.release();

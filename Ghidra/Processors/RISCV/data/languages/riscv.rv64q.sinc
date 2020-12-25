@@ -1,62 +1,28 @@
 # RV64Q  Standard Extension (in addition to RV32Q)
 
-#TODO  fix q
-#FIXME fix q
-@if FPSIZE == "128"
-
-# fcvt.l.q d,S c6207053 fff0707f SIMPLE (64, 0) 
-:fcvt.l.q rd,frs1 is RV64 & RVQ & frs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x7 & funct7=0x63 & op2024=0x2
-{
-	rd = trunc(frs1);
-}
-
-
 # fcvt.l.q d,S,m c6200053 fff0007f SIMPLE (64, 0) 
-:fcvt.l.q rd,frs1,FRM is RV64 & RVQ & frs1 & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x2
-{
-	rd = trunc(frs1);
-}
-
-
-# fcvt.lu.q d,S c6307053 fff0707f SIMPLE (64, 0) 
-:fcvt.lu.q rd,frs1 is RV64 & RVQ & frs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x7 & funct7=0x63 & op2024=0x3
+:fcvt.l.q rd,frs1,FRM is frs1 & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x2
 {
 	rd = trunc(frs1);
 }
 
 
 # fcvt.lu.q d,S,m c6300053 fff0007f SIMPLE (64, 0) 
-:fcvt.lu.q rd,frs1,FRM is RV64 & RVQ & frs1 & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x3
+:fcvt.lu.q rd,frs1,FRM is frs1 & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x3
 {
 	rd = trunc(frs1);
 }
 
 
-# fcvt.q.l D,s d6207053 fff0707f SIMPLE (64, 0) 
-:fcvt.q.l frd,rs1 is RV64 & RVQ & frd & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x7 & funct7=0x6b & op2024=0x2
-{
-	frd = int2float(rs1);
-}
-
-
 # fcvt.q.l D,s,m d6200053 fff0007f SIMPLE (64, 0) 
-:fcvt.q.l frd,rs1,FRM is RV64 & RVQ & frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x2
-{
-	frd = int2float(rs1);
-}
-
-
-# fcvt.q.lu D,s d6307053 fff0707f SIMPLE (64, 0) 
-:fcvt.q.lu frd,rs1 is RV64 & RVQ & frd & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x7 & funct7=0x6b & op2024=0x3
+:fcvt.q.l frd,rs1,FRM is frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x2
 {
 	frd = int2float(rs1);
 }
 
 
 # fcvt.q.lu D,s,m d6300053 fff0007f SIMPLE (64, 0) 
-:fcvt.q.lu frd,rs1,FRM is RV64 & RVQ & frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x3
+:fcvt.q.lu frd,rs1,FRM is frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x3
 {
 	frd = int2float(rs1);
 }
-
-@endif

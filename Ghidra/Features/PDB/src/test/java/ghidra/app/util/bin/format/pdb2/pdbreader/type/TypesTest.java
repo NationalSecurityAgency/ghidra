@@ -401,6 +401,29 @@ public class TypesTest extends AbstractGenericTest {
 		assertEquals("class ClassName<2,packed ctor>DummyMsType", result);
 	}
 
+	//TODO: Might need adjusting fields of record are understood.
+	@Test
+	public void testClass19MsType() throws Exception {
+		PdbByteWriter writer = new PdbByteWriter();
+		writer.putUnsignedShort(Class19MsType.PDB_ID);
+		byte[] propertyBuffer = createMsPropertyBuffer();
+		writer.putBytes(propertyBuffer);
+		writer.putUnsignedShort(0); // unknown field
+		writer.putUnsignedInt(4096); // Type index of field descriptor list.
+		writer.putUnsignedInt(4096); // If not zero, is type index of derived-from list
+		writer.putUnsignedInt(vtShapeMsType1); // Type index of the VtShapeMsType (vshape table).
+		writer.putNumeric(new BigInteger("0", 16), 0x8002); // unk field. Not sure if Numeric
+		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of class.
+		writer.putNullTerminatedString("ClassName");
+		writer.putNullTerminatedString("OtherName");
+		writer.putAlign(2);
+		PdbByteReader reader = new PdbByteReader(writer.get());
+		AbstractMsType type = typeParser.parse(reader);
+		assertEquals(type instanceof Class19MsType, true);
+		String result = type.toString().trim();
+		assertEquals("class ClassName<packed ctor>DummyMsType", result);
+	}
+
 	@Test
 	public void testStructure16MsType() throws Exception {
 		PdbByteWriter writer = new PdbByteWriter();
@@ -463,6 +486,29 @@ public class TypesTest extends AbstractGenericTest {
 		assertEquals("struct StructureName<2,packed ctor>DummyMsType", result);
 	}
 
+	//TODO: Might need adjusting fields of record are understood.
+	@Test
+	public void testStructure19MsType() throws Exception {
+		PdbByteWriter writer = new PdbByteWriter();
+		writer.putUnsignedShort(Structure19MsType.PDB_ID);
+		byte[] propertyBuffer = createMsPropertyBuffer();
+		writer.putBytes(propertyBuffer);
+		writer.putUnsignedShort(0); // unknown field
+		writer.putUnsignedInt(4096); // Type index of field descriptor list.
+		writer.putUnsignedInt(4096); // If not zero, is type index of derived-from list
+		writer.putUnsignedInt(vtShapeMsType1); // Type index of the VtShapeMsType (vshape table).
+		writer.putNumeric(new BigInteger("0", 16), 0x8002); // unk field. Not sure if Numeric
+		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of structure.
+		writer.putNullTerminatedString("StructureName");
+		writer.putNullTerminatedString("OtherName");
+		writer.putAlign(2);
+		PdbByteReader reader = new PdbByteReader(writer.get());
+		AbstractMsType type = typeParser.parse(reader);
+		assertEquals(type instanceof Structure19MsType, true);
+		String result = type.toString().trim();
+		assertEquals("struct StructureName<packed ctor>DummyMsType", result);
+	}
+
 	@Test
 	public void testInterfaceMsType() throws Exception {
 		PdbByteWriter writer = new PdbByteWriter();
@@ -484,15 +530,38 @@ public class TypesTest extends AbstractGenericTest {
 		assertEquals("interface InterfaceName<2,packed ctor>DummyMsType", result);
 	}
 
+	//TODO: Hypothetical type... will need adjusting as record type is adjusted.
+//	@Test
+//	public void testInterface19MsType() throws Exception {
+//		PdbByteWriter writer = new PdbByteWriter();
+//		writer.putUnsignedShort(Interface19MsType.PDB_ID);
+//		byte[] propertyBuffer = createMsPropertyBuffer();
+//		writer.putBytes(propertyBuffer);
+//		writer.putUnsignedShort(0); // unknown field
+//		writer.putUnsignedInt(4096); // Type index of field descriptor list.
+//		writer.putUnsignedInt(4096); // If not zero, is type index of derived-from list
+//		writer.putUnsignedInt(vtShapeMsType1); // Type index of the VtShapeMsType (vshape table).
+//		writer.putNumeric(new BigInteger("0", 16), 0x8002); // unk field. Not sure if Numeric
+//		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of interface.
+//		writer.putNullTerminatedString("InterfaceName");
+//		writer.putNullTerminatedString("OtherName");
+//		writer.putAlign(2);
+//		PdbByteReader reader = new PdbByteReader(writer.get());
+//		AbstractMsType type = typeParser.parse(reader);
+//		assertEquals(type instanceof Interface19MsType, true);
+//		String result = type.toString().trim();
+//		assertEquals("interface InterfaceName<packed ctor>DummyMsType", result);
+//	}
+
 	@Test
 	public void testUnion16MsType() throws Exception {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(Union16MsType.PDB_ID);
-		writer.putUnsignedShort(2); // Count of number of elements in the class.
+		writer.putUnsignedShort(2); // Count of number of elements in the union.
 		writer.putUnsignedShort(4096); // Type index of field descriptor list.
 		byte[] propertyBuffer = createMsPropertyBuffer();
 		writer.putBytes(propertyBuffer);
-		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of class.
+		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of union.
 		writer.putByteLengthPrefixedString("UnionName16");
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
@@ -506,11 +575,11 @@ public class TypesTest extends AbstractGenericTest {
 	public void testUnionStMsType() throws Exception {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnionStMsType.PDB_ID);
-		writer.putUnsignedShort(2); // Count of number of elements in the class.
+		writer.putUnsignedShort(2); // Count of number of elements in the union.
 		byte[] propertyBuffer = createMsPropertyBuffer();
 		writer.putBytes(propertyBuffer);
 		writer.putUnsignedInt(4096); // Type index of field descriptor list.
-		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of class.
+		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of union.
 		writer.putByteLengthPrefixedString("UnionNameSt");
 		writer.putByteLengthPrefixedString("OtherNameSt");
 		writer.putAlign(2);
@@ -525,11 +594,11 @@ public class TypesTest extends AbstractGenericTest {
 	public void testUnionMsType() throws Exception {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(UnionMsType.PDB_ID);
-		writer.putUnsignedShort(2); // Count of number of elements in the class.
+		writer.putUnsignedShort(2); // Count of number of elements in the union.
 		byte[] propertyBuffer = createMsPropertyBuffer();
 		writer.putBytes(propertyBuffer);
 		writer.putUnsignedInt(4096); // Type index of field descriptor list.
-		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of class.
+		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of union.
 		writer.putNullTerminatedString("UnionName");
 		writer.putNullTerminatedString("OtherName");
 		writer.putAlign(2);
@@ -539,6 +608,27 @@ public class TypesTest extends AbstractGenericTest {
 		String result = type.toString().trim();
 		assertEquals("union UnionName<2,packed ctor>DummyMsType", result);
 	}
+
+	//TODO: Hypothetical type... will need adjusting as record type is adjusted.
+//	@Test
+//	public void testUnion19MsType() throws Exception {
+//		PdbByteWriter writer = new PdbByteWriter();
+//		writer.putUnsignedShort(Union19MsType.PDB_ID);
+//		byte[] propertyBuffer = createMsPropertyBuffer();
+//		writer.putBytes(propertyBuffer);
+//		writer.putUnsignedShort(0); // unknown field
+//		writer.putUnsignedInt(4096); // Type index of field descriptor list.
+//		writer.putNumeric(new BigInteger("0", 16), 0x8002); // unk field. Not sure if Numeric
+//		writer.putNumeric(new BigInteger("10", 16), 0x8002); // size of union.
+//		writer.putNullTerminatedString("UnionName");
+//		writer.putNullTerminatedString("OtherName");
+//		writer.putAlign(2);
+//		PdbByteReader reader = new PdbByteReader(writer.get());
+//		AbstractMsType type = typeParser.parse(reader);
+//		assertEquals(type instanceof Union19MsType, true);
+//		String result = type.toString().trim();
+//		assertEquals("union UnionName<packed ctor>DummyMsType", result);
+//	}
 
 	@Test
 	public void testEnum16MsType() throws Exception {
@@ -595,6 +685,26 @@ public class TypesTest extends AbstractGenericTest {
 		String result = type.toString().trim();
 		assertEquals("enum EnumName<2,DummyMsType,packed ctor>DummyMsType", result);
 	}
+
+	//TODO: Hypothetical type... will need adjusting as record type is adjusted.
+//	@Test
+//	public void testEnum19MsType() throws Exception {
+//		PdbByteWriter writer = new PdbByteWriter();
+//		writer.putUnsignedShort(Enum19MsType.PDB_ID);
+//		byte[] propertyBuffer = createMsPropertyBuffer();
+//		writer.putBytes(propertyBuffer);
+//		writer.putUnsignedShort(0); // unknown field
+//		writer.putUnsignedInt(4096); // Underlying type index.
+//		writer.putUnsignedInt(4096); // Type index of field descriptor list.
+//		writer.putNullTerminatedString("EnumName");
+//		writer.putNullTerminatedString("OtherName");
+//		writer.putAlign(2);
+//		PdbByteReader reader = new PdbByteReader(writer.get());
+//		AbstractMsType type = typeParser.parse(reader);
+//		assertEquals(type instanceof Enum19MsType, true);
+//		String result = type.toString().trim();
+//		assertEquals("enum EnumName<DummyMsType,packed ctor>DummyMsType", result);
+//	}
 
 	@Test
 	public void testProcedure16MsType() throws Exception {

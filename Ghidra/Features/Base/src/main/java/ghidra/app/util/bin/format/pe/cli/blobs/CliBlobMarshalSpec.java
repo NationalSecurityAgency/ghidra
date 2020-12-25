@@ -22,6 +22,14 @@ import ghidra.app.util.bin.format.pe.cli.blobs.CliAbstractSig.CliElementType;
 import ghidra.program.model.data.*;
 
 public class CliBlobMarshalSpec extends CliBlob {
+	private static final int INIT_VALUE = -1;
+
+	private CliNativeType nativeIntrinsic;
+	private CliNativeType arrayElemType;
+	private int paramNum = INIT_VALUE;
+	private int paramNumBytes;
+	private int numElem = INIT_VALUE;
+	private int numElemBytes;
 
 	public enum CliNativeType {
 		NATIVE_TYPE_END(0x00),
@@ -74,16 +82,18 @@ public class CliBlobMarshalSpec extends CliBlob {
 		NATIVE_TYPE_IINSPECTABLE(0x2e),
 		NATIVE_TYPE_HSTRING(0x2f),
 
-		NATIVE_TYPE_MAX(0x50)
-		;
-		
+		NATIVE_TYPE_MAX(0x50);
+
 		private final int id;
+
 		CliNativeType(int id) {
 			this.id = id;
 		}
+
 		public int id() {
 			return id;
 		}
+
 		public static CliNativeType fromInt(int id) {
 			CliNativeType[] values = CliNativeType.values();
 			for (CliNativeType value : values) {
@@ -94,29 +104,20 @@ public class CliBlobMarshalSpec extends CliBlob {
 			return null;
 		}
 	}
-	
+
 	public static class CliNativeTypeDataType extends EnumDataType {
-	
-	    public final static CliNativeTypeDataType dataType = new CliNativeTypeDataType();
-		
+
+		public final static CliNativeTypeDataType dataType = new CliNativeTypeDataType();
+
 		public CliNativeTypeDataType() {
 			super(new CategoryPath(PATH), "NativeType", 1);
-			// TODO: specify CategoryPath, etc.
+
 			for (CliElementType c : CliElementType.values()) {
 				add(c.toString(), c.id());
 			}
 		}
 	}
-	
-	private static final int INIT_VALUE = -1;
-	
-	private CliNativeType nativeIntrinsic;
-	private CliNativeType arrayElemType;
-	private int paramNum = INIT_VALUE;
-	private int paramNumBytes;
-	private int numElem = INIT_VALUE;
-	private int numElemBytes;
-	
+
 	public CliBlobMarshalSpec(CliBlob blob) throws IOException {
 		super(blob);
 
@@ -125,6 +126,7 @@ public class CliBlobMarshalSpec extends CliBlob {
 		if (nativeIntrinsic == CliNativeType.NATIVE_TYPE_ARRAY ||
 			nativeIntrinsic == CliNativeType.NATIVE_TYPE_FIXEDARRAY) {
 			arrayElemType = CliNativeType.fromInt(reader.readNextByte());
+
 			// There is no sentinel other than blob size that indicates whether 0, 1, or 2 compressed unsigned ints follow
 			if (contentsSize > 2) {
 				long origIndex = reader.getPointerIndex();
@@ -138,7 +140,7 @@ public class CliBlobMarshalSpec extends CliBlob {
 			}
 		}
 	}
-	
+
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
@@ -146,27 +148,29 @@ public class CliBlobMarshalSpec extends CliBlob {
 		if (arrayElemType != null) {
 			struct.add(CliNativeTypeDataType.dataType, "ArrayElemTyp", null);
 			if (paramNum != INIT_VALUE) {
-				struct.add(getDataTypeForBytes(paramNumBytes), "ParamNum", "which parameter provides number of elems for this array");
+				struct.add(getDataTypeForBytes(paramNumBytes), "ParamNum",
+					"which parameter provides number of elems for this array");
 				if (numElem != INIT_VALUE) {
-					struct.add(getDataTypeForBytes(numElemBytes), "NumElem", "number of elements or additional elements");
+					struct.add(getDataTypeForBytes(numElemBytes), "NumElem",
+						"number of elements or additional elements");
 				}
 			}
 		}
 		return struct;
 	}
-	
+
 	@Override
 	public String getContentsName() {
 		return "MarshalSpec";
 	}
-	
+
 	@Override
 	public String getContentsComment() {
 		return "Defines a native type for marshalling between managed/unmanaged code";
 	}
-	
+
 	@Override
-	public String getRepresentation () {
+	public String getRepresentation() {
 		return "Blob (" + getContentsDataType().getDisplayName() + ")";
 	}
 

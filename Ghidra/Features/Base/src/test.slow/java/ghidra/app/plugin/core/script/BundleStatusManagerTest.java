@@ -104,11 +104,11 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		assertTrue(status.isEnabled());
 		assertScriptInTable(scriptFile);
 
-		runScript(SCRIPT_NAME);
+		selectAndRunScript(SCRIPT_NAME);
 
 		cleanViaGUI(viewRow);
 
-		runScript(SCRIPT_NAME);
+		runSelectedScript(SCRIPT_NAME);
 	}
 
 	@Test
@@ -181,7 +181,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 
 			addBundlesViaGUI(dir1, dir2);
 
-			String output = runScript(TEST_SCRIPT_NAME + ".java");
+			String output = selectAndRunScript(TEST_SCRIPT_NAME + ".java");
 			assertEquals(EXPECTED_OUTPUT, output);
 
 			int row1 = getBundleRow(dir1);
@@ -392,11 +392,10 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		testBundleHostListener.awaitActivation();
 	}
 
-	@Override
-	public String runScript(String scriptName) throws Exception {
+	public String selectAndRunScript(String scriptName) throws Exception {
 		env.getTool().showComponentProvider(provider, true);
 		selectScript(scriptName);
-		String output = super.runScript(scriptName);
+		String output = runSelectedScript(scriptName);
 		env.getTool().showComponentProvider(bundleStatusProvider, true);
 		return output;
 	}

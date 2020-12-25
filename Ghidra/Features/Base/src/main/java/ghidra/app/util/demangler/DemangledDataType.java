@@ -90,6 +90,7 @@ public class DemangledDataType extends DemangledType {
 	private boolean isEnum;
 	private boolean isPointer64;
 	private boolean isReference;
+	private boolean isRValueReference;
 	private boolean isSigned;
 	private boolean isStruct;
 	private boolean isTemplate;
@@ -445,6 +446,13 @@ public class DemangledDataType extends DemangledType {
 		isReference = true;
 	}
 
+	/**
+	 * rvalue reference; C++11
+	 */
+	public void setRValueReference() {
+		isRValueReference = true;
+	}
+
 	public void setSigned() {
 		isSigned = true;
 	}
@@ -671,6 +679,9 @@ public class DemangledDataType extends DemangledType {
 
 		if (isReference) {
 			buffer.append(SPACE + REF_NOTATION);
+			if (isRValueReference) {
+				buffer.append(REF_NOTATION); // &&
+			}
 		}
 
 		// the order of __ptr64 and __restrict can vary--with fuzzing... 
@@ -703,5 +714,4 @@ public class DemangledDataType extends DemangledType {
 	public String toString() {
 		return getSignature();
 	}
-
 }

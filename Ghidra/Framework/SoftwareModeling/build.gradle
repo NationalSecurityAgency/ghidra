@@ -30,6 +30,9 @@ dependencies {
 	// Must specify the specific antlr implementation to use or it will default to trying to find
 	// version 2.7.7 (which we don't have)
 	antlr "org.antlr:antlr:3.5.2"
+	// need to add in the antlr dependencies for when we build from flat jar dirs
+	antlr "org.antlr:antlr-runtime:3.5.2"
+	antlr "org.antlr:ST4:4.0.8"
 }	
 
 def genSrcDir = 'generated-src/antlr/main'
@@ -52,10 +55,24 @@ generateGrammarSource {
 	include "ghidra/sleigh/grammar/SleighCompiler.g"
 
 	// README: See src/main/antlr/ghidra/sleigh/grammar/README.txt for an explanation of this.
+	
+	doFirst {
+		// Ensure that SleighLexar.tokens is rebuilt by removing it if any of the
+		// contributing grammar files have changed.  Antlr plugin does not know
+		// about the SleighLexar.tokens dependency on changes to BaseLexer.g, 
+		// DisplayLexer.g or SemanticLexer.g
+		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/SleighLexer.tokens")
+	}
+
 	doLast {
+		// SleighLexar.g is only needed to produce SleighLexar.tokens.
+		// Remove its generated java artifacts which may conflict
 		delete fileTree("$buildDir/${genSrcDir}/ghidra/sleigh/grammar") {
 			include "SleighLexer*.java"
 		}
+		// antlr src directories cause generated java files to output
+		// into the correct package directories, however we need to add
+		// the appropriate java package statement which is missing.
 		fileTree("$buildDir/${genSrcDir}/ghidra/sleigh/grammar") {
 			include "*.java"
 		}.each { File src ->

@@ -49,6 +49,7 @@ IsDefined:
 DefineTest:
 	( '(' test=DefineTest ')'
 	| symref=DefineSym OP_EQUAL value=(STRING|intvalue|ID)
+	| symref=DefineSym OP_NOTEQUAL value=(STRING|intvalue|ID)
 	| isdefined=IsDefined )  ( (OP_BOOL_AND andtest=DefineTest) | (OP_BOOL_OR ortest=DefineTest) )?
 ;
 

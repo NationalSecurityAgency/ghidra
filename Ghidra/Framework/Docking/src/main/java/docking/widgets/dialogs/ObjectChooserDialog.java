@@ -89,4 +89,10 @@ public class ObjectChooserDialog<T> extends DialogComponentProvider {
 	public void setFilterText(String text) {
 		table.setFilterText(text);
 	}
+
+	@Override
+	public void close() {
+		table.dispose();
+		super.close();
+	}
 }

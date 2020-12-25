@@ -108,7 +108,6 @@ public class LocationReferencesPanel extends JPanel {
 	}
 
 	void dispose() {
-		tablePanel.dispose();
 		table.dispose();
 	}
 }

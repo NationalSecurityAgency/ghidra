@@ -789,4 +789,13 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 		return " pack(" + packingValue + ")";
 	}
+
+	/**
+	 * Perform any neccessary component adjustments based on
+	 * sizes and alignment of components differing from their 
+	 * specification which may be influenced by the data organization.
+	 * If this composite changes parents will not be
+	 * notified - handling this is the caller's responsibility.
+	 */
+	protected abstract void fixupComponents();
 }

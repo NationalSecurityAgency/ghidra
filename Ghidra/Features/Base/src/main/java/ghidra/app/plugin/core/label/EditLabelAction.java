@@ -23,10 +23,10 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.LabelFieldLocation;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.OperandFieldLocation;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * <CODE>AddLabelAction</CODE> allows the user to add a label.
@@ -59,30 +59,31 @@ class EditLabelAction extends ListingContextAction {
 
 	@Override
 	protected boolean isEnabledForContext(ListingActionContext context) {
-		Symbol symbol = plugin.getSymbol(context);
-		if (symbol != null) {
-			if (symbol.isExternal()) {
-				return false;
-			}
-			getPopupMenuData().setMenuItemName(EDIT_LABEL);
-			return true;
-		}
 		if (LabelMgrPlugin.getComponent(context) != null) {
 			getPopupMenuData().setMenuItemName(EDIT_FIELDNAME);
 			return true;
 		}
-		return false;
-	}
 
-	boolean isOnSymbol(ListingActionContext context) {
-		if (context.getLocation() instanceof LabelFieldLocation) {
-			return plugin.isOnSymbol(context);
+		Symbol symbol = plugin.getSymbol(context);
+		if (symbol == null) {
+			return false;
 		}
-		else if (context.getLocation() instanceof OperandFieldLocation) {
-			Symbol s = plugin.getSymbol(context);
-			return (s instanceof CodeSymbol);
+
+		if (symbol.isExternal()) {
+			return false;
 		}
-		return false;
+
+		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
+			ProgramLocation location = context.getLocation();
+			if (location instanceof OperandFieldLocation) {
+				// Functions in operand fields are handled by the EditNameAction.  Return false
+				// here to prevent 2 popup actions from appearing in the menu.
+				return false;
+			}
+		}
+
+		getPopupMenuData().setMenuItemName(EDIT_LABEL);
+		return true;
 	}
 
 	@Override

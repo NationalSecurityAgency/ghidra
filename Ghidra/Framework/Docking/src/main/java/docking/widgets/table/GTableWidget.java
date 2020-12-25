@@ -223,4 +223,8 @@ public class GTableWidget<T> extends JPanel {
 	public void setFilterText(String text) {
 		gFilterTable.setFiterText(text);
 	}
+
+	public void dispose() {
+		gFilterTable.dispose();
+	}
 }

@@ -530,6 +530,25 @@ public class TypeParser {
 				type = new UserDefinedTypeModuleSourceAndLineMsType(pdb, reader);
 				//TODO: more work
 				break;
+			case Class19MsType.PDB_ID:
+				type = new Class19MsType(pdb, reader);
+				break;
+			case Structure19MsType.PDB_ID:
+				type = new Structure19MsType(pdb, reader);
+				break;
+			// TODO: the following three types are only hypothetical and might be in the wrong
+			// order with the wrong PDB_IDs and the wrong internal elements and parsing.
+			// These are here as partial implementations until they are seen and can be
+			// cleaned up and put into service.
+//			case Union19MsType.PDB_ID:
+//				type = new Union19MsType(pdb, reader);
+//				break;
+//			case Enum19MsType.PDB_ID:
+//				type = new Enum19MsType(pdb, reader);
+//				break;
+//			case Interface19MsType.PDB_ID:
+//				type = new Interface19MsType(pdb, reader);
+//				break;
 			default:
 				// This should never happen (unless we missed something
 				// or MSFT has added new in a version we do not handle.

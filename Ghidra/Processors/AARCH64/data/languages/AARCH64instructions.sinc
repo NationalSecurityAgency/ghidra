@@ -32,7 +32,11 @@
 # and the destination is not the upper half of the register (ie, bit 30 q=0)
 # then the unused remaining upper bits must be set to 0.
 
+@if DATA_ENDIAN == "little"
 define endian=little;
+@else
+define endian=big;
+@endif
 define alignment=4;
 
 # Unlike the above, these are preprocessor macros.  Use them with e.g. $(TAG_GRANULE) in SLEIGH statements.
@@ -1008,7 +1012,7 @@ define context contextreg
 	ShowMemTag = (24,24) noflow
 ;
 
-define token instrAARCH64 (32)
+define token instrAARCH64 (32) endian = little
 
 	Rm = (16,20)
 	Rn = (5,9)
@@ -2644,27 +2648,86 @@ vIndexHLM: val is b_2223=0 & b_2121 & b_1111 & b_2020 [ val = b_1111 << 2 | b_21
 vIndexHL: val is b_2223=0b01 & b_21 & b_11 [ val = b_11 << 1 | b_21; ] { export *[const]:8 val; }
 vIndexHL: b_11 is b_2223=0b10 & b_11 { export *[const]:8 b_11; }
 
-Re_VPR128.B.vIndex: Re_VPR128.B^"["^vIndex^"]" is Re_VPR128.B & vIndex { }
-Re_VPR128.S.vIndex: Re_VPR128.S^"["^vIndex^"]" is Re_VPR128.S & vIndex { }
-Re_VPR128.D.vIndex: Re_VPR128.D^"["^vIndex^"]" is Re_VPR128.D & vIndex { }
+@if DATA_ENDIAN == "little"
+Re_VPR128.B.sel: Re_VPR128, val is Re_VPR128 & b_2222=0 & b_2121 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + b_1111 * 2 + b_2121; ] { export *[register]:1 val; }
+Re_VPR128.B.sel: Re_VPR128, val is Re_VPR128 & b_2222=1 & b_2121=0 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + b_1111; ] { export *[register]:1 val; }
+Re_VPR128.S.sel: Re_VPR128, val is Re_VPR128 & b_2222=0 & b_2121 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + (b_1111 * 2 + b_2121) * 4; ] { export *[register]:4 val; }
+Re_VPR128.S.sel: Re_VPR128, val is Re_VPR128 & b_2222=1 & b_2121=0 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + b_1111 * 4; ] { export *[register]:4 val; }
+Re_VPR128.D.sel: Re_VPR128, val is Re_VPR128 & b_2222=0 & b_2121 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + (b_1111 * 2 + b_2121) * 8; ] { export *[register]:8 val; }
+Re_VPR128.D.sel: Re_VPR128, val is Re_VPR128 & b_2222=1 & b_2121=0 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + b_1111 * 8; ] { export *[register]:8 val; }
+@else
+Re_VPR128.B.sel: Re_VPR128, val is Re_VPR128 & b_2222=0 & b_2121 & b_1111 [ val = 0x501f + 32*Re_VPR128 - b_1111 * 2 - b_2121; ] { export *[register]:1 val; }
+Re_VPR128.B.sel: Re_VPR128, val is Re_VPR128 & b_2222=1 & b_2121=0 & b_1111 [ val = 0x501f + 32*Re_VPR128 - b_1111; ] { export *[register]:1 val; }
+Re_VPR128.S.sel: Re_VPR128, val is Re_VPR128 & b_2222=0 & b_2121 & b_1111 [ val = 0x501c + 32*Re_VPR128 - (b_1111 * 2 + b_2121) * 4; ] { export *[register]:4 val; }
+Re_VPR128.S.sel: Re_VPR128, val is Re_VPR128 & b_2222=1 & b_2121=0 & b_1111 [ val = 0x501c + 32*Re_VPR128 - b_1111 * 4; ] { export *[register]:4 val; }
+Re_VPR128.D.sel: Re_VPR128, val is Re_VPR128 & b_2222=0 & b_2121 & b_1111 [ val = 0x5018 + 32*Re_VPR128 - (b_1111 * 2 + b_2121) * 8; ] { export *[register]:8 val; }
+Re_VPR128.D.sel: Re_VPR128, val is Re_VPR128 & b_2222=1 & b_2121=0 & b_1111 [ val = 0x5018 + 32*Re_VPR128 - b_1111 * 8; ] { export *[register]:8 val; }
+@endif
 
-Rd_VPR128.B.imm_neon_uimm4: Rd_VPR128.B^"["^imm_neon_uimm4^"]" is Rd_VPR128.B & imm_neon_uimm4 { export Rd_VPR128.B; }
-Rd_VPR128.H.imm_neon_uimm3: Rd_VPR128.H^"["^imm_neon_uimm3^"]" is Rd_VPR128.H & imm_neon_uimm3 { export Rd_VPR128.H; }
-Rd_VPR128.S.imm_neon_uimm2: Rd_VPR128.S^"["^imm_neon_uimm2^"]" is Rd_VPR128.S & imm_neon_uimm2 { export Rd_VPR128.S; }
-Rd_VPR128.D.imm_neon_uimm1: Rd_VPR128.D^"["^imm_neon_uimm1^"]" is Rd_VPR128.D & imm_neon_uimm1 { export Rd_VPR128.D; }
+Re_VPR128.B.vIndex: Re_VPR128.B^"["^vIndex^"]" is Re_VPR128.B & vIndex & Re_VPR128.B.sel { export Re_VPR128.B.sel; }
+Re_VPR128.S.vIndex: Re_VPR128.S^"["^vIndex^"]" is Re_VPR128.S & vIndex & Re_VPR128.S.sel { export Re_VPR128.S.sel; }
+Re_VPR128.D.vIndex: Re_VPR128.D^"["^vIndex^"]" is Re_VPR128.D & vIndex & Re_VPR128.D.sel { export Re_VPR128.D.sel; }
 
-Rn_VPR128.B.immN_neon_uimm4: Rn_VPR128.B^"["^immN_neon_uimm4^"]" is Rn_VPR128.B & immN_neon_uimm4 { export Rn_VPR128.B; }
-Rn_VPR128.H.immN_neon_uimm3: Rn_VPR128.H^"["^immN_neon_uimm3^"]" is Rn_VPR128.H & immN_neon_uimm3 { export Rn_VPR128.H; }
-Rn_VPR128.S.immN_neon_uimm2: Rn_VPR128.S^"["^immN_neon_uimm2^"]" is Rn_VPR128.S & immN_neon_uimm2 { export Rn_VPR128.S; }
-Rn_VPR128.D.immN_neon_uimm1: Rn_VPR128.D^"["^immN_neon_uimm1^"]" is Rn_VPR128.D & immN_neon_uimm1 { export Rn_VPR128.D; }
+@if DATA_ENDIAN == "little"
+Rd_VPR128.B.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm4 [ val = 0x5000 + 32*Rd_VPR128 + imm_neon_uimm4; ] { export *[register]:1 val; }
+Rd_VPR128.H.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm3 [ val = 0x5000 + 32*Rd_VPR128 + 2*imm_neon_uimm3; ] { export *[register]:2 val; }
+Rd_VPR128.S.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm2 [ val = 0x5000 + 32*Rd_VPR128 + 4*imm_neon_uimm2; ] { export *[register]:4 val; }
+Rd_VPR128.D.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm1 [ val = 0x5000 + 32*Rd_VPR128 + 8*imm_neon_uimm1; ] { export *[register]:8 val; }
+@else
+Rd_VPR128.B.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm4 [ val = 0x501f + 32*Rd_VPR128 - imm_neon_uimm4; ] { export *[register]:1 val; }
+Rd_VPR128.H.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm3 [ val = 0x501e + 32*Rd_VPR128 - 2*imm_neon_uimm3; ] { export *[register]:2 val; }
+Rd_VPR128.S.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm2 [ val = 0x501c + 32*Rd_VPR128 - 4*imm_neon_uimm2; ] { export *[register]:4 val; }
+Rd_VPR128.D.sel: Rd_VPR128, val is Rd_VPR128 & imm_neon_uimm1 [ val = 0x5018 + 32*Rd_VPR128 - 8*imm_neon_uimm1; ] { export *[register]:8 val; }
+@endif
+Rd_VPR128.B.imm_neon_uimm4: Rd_VPR128.B^"["^imm_neon_uimm4^"]" is Rd_VPR128.B & imm_neon_uimm4 & Rd_VPR128.B.sel { export Rd_VPR128.B.sel; }
+Rd_VPR128.H.imm_neon_uimm3: Rd_VPR128.H^"["^imm_neon_uimm3^"]" is Rd_VPR128.H & imm_neon_uimm3 & Rd_VPR128.H.sel { export Rd_VPR128.H.sel; }
+Rd_VPR128.S.imm_neon_uimm2: Rd_VPR128.S^"["^imm_neon_uimm2^"]" is Rd_VPR128.S & imm_neon_uimm2 & Rd_VPR128.S.sel { export Rd_VPR128.S.sel; }
+Rd_VPR128.D.imm_neon_uimm1: Rd_VPR128.D^"["^imm_neon_uimm1^"]" is Rd_VPR128.D & imm_neon_uimm1 & Rd_VPR128.D.sel { export Rd_VPR128.D.sel; }
 
-Rn_VPR128.B.imm_neon_uimm4: Rn_VPR128.B^"["^imm_neon_uimm4^"]" is Rn_VPR128.B & imm_neon_uimm4 { export Rn_VPR128.B; }
-Rn_VPR128.H.imm_neon_uimm3: Rn_VPR128.H^"["^imm_neon_uimm3^"]" is Rn_VPR128.H & imm_neon_uimm3 { export Rn_VPR128.H; }
-Rn_VPR128.S.imm_neon_uimm2: Rn_VPR128.S^"["^imm_neon_uimm2^"]" is Rn_VPR128.S & imm_neon_uimm2 { export Rn_VPR128.S; }
-Rn_VPR128.D.imm_neon_uimm1: Rn_VPR128.D^"["^imm_neon_uimm1^"]" is Rn_VPR128.D & imm_neon_uimm1 { export Rn_VPR128.D; }
+@if DATA_ENDIAN == "little"
+Rn_VPR128.B.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm4 [ val = 0x5000 + 32*Rn_VPR128 + immN_neon_uimm4; ] { export *[register]:1 val; }
+Rn_VPR128.H.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm3 [ val = 0x5000 + 32*Rn_VPR128 + 2*immN_neon_uimm3; ] { export *[register]:2 val; }
+Rn_VPR128.S.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm2 [ val = 0x5000 + 32*Rn_VPR128 + 4*immN_neon_uimm2; ] { export *[register]:4 val; }
+Rn_VPR128.D.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm1 [ val = 0x5000 + 32*Rn_VPR128 + 8*immN_neon_uimm1; ] { export *[register]:8 val; }
+@else
+Rn_VPR128.B.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm4 [ val = 0x501f + 32*Rn_VPR128 - immN_neon_uimm4; ] { export *[register]:1 val; }
+Rn_VPR128.H.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm3 [ val = 0x501e + 32*Rn_VPR128 - 2*immN_neon_uimm3; ] { export *[register]:2 val; }
+Rn_VPR128.S.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm2 [ val = 0x501c + 32*Rn_VPR128 - 4*immN_neon_uimm2; ] { export *[register]:4 val; }
+Rn_VPR128.D.selN: Rn_VPR128, val is Rn_VPR128 & immN_neon_uimm1 [ val = 0x5018 + 32*Rn_VPR128 - 8*immN_neon_uimm1; ] { export *[register]:8 val; }
+@endif
+Rn_VPR128.B.immN_neon_uimm4: Rn_VPR128.B^"["^immN_neon_uimm4^"]" is Rn_VPR128.B & immN_neon_uimm4 & Rn_VPR128.B.selN { export Rn_VPR128.B.selN; }
+Rn_VPR128.H.immN_neon_uimm3: Rn_VPR128.H^"["^immN_neon_uimm3^"]" is Rn_VPR128.H & immN_neon_uimm3 & Rn_VPR128.H.selN { export Rn_VPR128.H.selN; }
+Rn_VPR128.S.immN_neon_uimm2: Rn_VPR128.S^"["^immN_neon_uimm2^"]" is Rn_VPR128.S & immN_neon_uimm2 & Rn_VPR128.S.selN { export Rn_VPR128.S.selN; }
+Rn_VPR128.D.immN_neon_uimm1: Rn_VPR128.D^"["^immN_neon_uimm1^"]" is Rn_VPR128.D & immN_neon_uimm1 & Rn_VPR128.D.selN { export Rn_VPR128.D.selN; }
+
+@if DATA_ENDIAN == "little"
+Rn_VPR128.B.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm4 [ val = 0x5000 + 32*Rn_VPR128 + imm_neon_uimm4; ] { export *[register]:1 val; }
+Rn_VPR128.H.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm3 [ val = 0x5000 + 32*Rn_VPR128 + 2*imm_neon_uimm3; ] { export *[register]:2 val; }
+Rn_VPR128.S.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm2 [ val = 0x5000 + 32*Rn_VPR128 + 4*imm_neon_uimm2; ] { export *[register]:4 val; }
+Rn_VPR128.D.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm1 [ val = 0x5000 + 32*Rn_VPR128 + 8*imm_neon_uimm1; ] { export *[register]:8 val; }
+@else
+Rn_VPR128.B.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm4 [ val = 0x501f + 32*Rn_VPR128 - imm_neon_uimm4; ] { export *[register]:1 val; }
+Rn_VPR128.H.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm3 [ val = 0x501e + 32*Rn_VPR128 - 2*imm_neon_uimm3; ] { export *[register]:2 val; }
+Rn_VPR128.S.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm2 [ val = 0x501c + 32*Rn_VPR128 - 4*imm_neon_uimm2; ] { export *[register]:4 val; }
+Rn_VPR128.D.sel: Rn_VPR128, val is Rn_VPR128 & imm_neon_uimm1 [ val = 0x5018 + 32*Rn_VPR128 - 8*imm_neon_uimm1; ] { export *[register]:8 val; }
+@endif
+Rn_VPR128.B.imm_neon_uimm4: Rn_VPR128.B^"["^imm_neon_uimm4^"]" is Rn_VPR128.B & imm_neon_uimm4 & Rn_VPR128.B.sel { export Rn_VPR128.B.sel; }
+Rn_VPR128.H.imm_neon_uimm3: Rn_VPR128.H^"["^imm_neon_uimm3^"]" is Rn_VPR128.H & imm_neon_uimm3 & Rn_VPR128.H.sel { export Rn_VPR128.H.sel; }
+Rn_VPR128.S.imm_neon_uimm2: Rn_VPR128.S^"["^imm_neon_uimm2^"]" is Rn_VPR128.S & imm_neon_uimm2 & Rn_VPR128.S.sel { export Rn_VPR128.S.sel; }
+Rn_VPR128.D.imm_neon_uimm1: Rn_VPR128.D^"["^imm_neon_uimm1^"]" is Rn_VPR128.D & imm_neon_uimm1 & Rn_VPR128.D.sel { export Rn_VPR128.D.sel; }
 
 Re_VPR128.H.vIndexHL: Re_VPR128.H^"["^vIndexHL^"]" is Re_VPR128.H & vIndexHL { }
-Re_VPR128Lo.H.vIndexHLM: Re_VPR128Lo.H^"["^vIndexHLM^"]" is Re_VPR128Lo.H & vIndexHLM { }
+
+@if DATA_ENDIAN == "little"
+Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=2 & b_2121 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + (b_1111 * 2 + b_2121)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=1 & b_2121 & b_1111 & b_2020 [ val = 0x5000 + 32*Re_VPR128 + (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x5000 + 32*Re_VPR128 + (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+@else
+Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=2 & b_2121 & b_1111 [ val = 0x501e + 32*Re_VPR128 - (b_1111 * 2 + b_2121)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=1 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128 - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128 - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+@endif
+Re_VPR128Lo.H.vIndexHLM: Re_VPR128Lo.H^"["^vIndexHLM^"]" is Re_VPR128Lo.H & vIndexHLM & Re_VPR128Lo.H.sel { export Re_VPR128Lo.H.sel; }
 
 FBitsOp: "#"^fbits is Scale [ fbits = 64 - Scale; ] { export *[const]:2 fbits; }
 
@@ -3193,55 +3256,17 @@ PACIXSP_BTITARGETS: is ShowBTI=0 { }
 
 # These pseudo ops are used in neon
 
-define pcodeop SIMD_COPY;
-define pcodeop SIMD_FLOAT;
-define pcodeop SIMD_FLOAT2FLOAT;
-define pcodeop SIMD_FLOAT_ABS;
-define pcodeop SIMD_FLOAT_ADD;
-define pcodeop SIMD_FLOAT_DIV;
-define pcodeop SIMD_FLOAT_MULT;
-define pcodeop SIMD_FLOAT_NEG;
-define pcodeop SIMD_FLOAT_SUB;
-define pcodeop SIMD_INT;
-define pcodeop SIMD_INT_2COMP;
-define pcodeop SIMD_INT_ABS;
-define pcodeop SIMD_INT_ADD;
-define pcodeop SIMD_INT_AND;
-define pcodeop SIMD_INT_LEFT;
-define pcodeop SIMD_INT_LESS;
-define pcodeop SIMD_INT_MULT;
-define pcodeop SIMD_INT_NEGATE;
-define pcodeop SIMD_INT_OR;
-define pcodeop SIMD_INT_RIGHT;
-define pcodeop SIMD_INT_SEXT;
-define pcodeop SIMD_INT_SLESS;
-define pcodeop SIMD_INT_SRIGHT;
-define pcodeop SIMD_INT_SUB;
-define pcodeop SIMD_INT_XOR;
-define pcodeop SIMD_INT_ZEXT;
 define pcodeop SIMD_PIECE;
-define pcodeop SIMD_TRUNC;
 
-define pcodeop NEON_abs;
-define pcodeop NEON_add;
-define pcodeop NEON_addhn;
-define pcodeop NEON_addhn2;
-define pcodeop NEON_addp;
 define pcodeop NEON_addv;
 define pcodeop NEON_aesd;
 define pcodeop NEON_aese;
 define pcodeop NEON_aesimc;
 define pcodeop NEON_aesmc;
-define pcodeop NEON_and;
-define pcodeop NEON_bcax;
-define pcodeop NEON_bfcvt;
-define pcodeop NEON_bfcvtn;
-define pcodeop NEON_bfcvtn2;
 define pcodeop NEON_bfdot;
 define pcodeop NEON_bfmlalb;
 define pcodeop NEON_bfmlalt;
 define pcodeop NEON_bfmmla;
-define pcodeop NEON_bic;
 define pcodeop NEON_bif;
 define pcodeop NEON_bit;
 define pcodeop NEON_bsl;
@@ -3256,40 +3281,18 @@ define pcodeop NEON_cmle;
 define pcodeop NEON_cmlt;
 define pcodeop NEON_cmtst;
 define pcodeop NEON_cnt;
-define pcodeop NEON_dup;
-define pcodeop NEON_eor;
-define pcodeop NEON_eor3;
 define pcodeop NEON_ext;
-define pcodeop NEON_fabd;
-define pcodeop NEON_fabs;
 define pcodeop NEON_facge;
 define pcodeop NEON_facgt;
-define pcodeop NEON_fadd;
-define pcodeop NEON_faddp;
 define pcodeop NEON_fcadd;
-define pcodeop NEON_fccmp;
-define pcodeop NEON_fccmpe;
 define pcodeop NEON_fcmeq;
 define pcodeop NEON_fcmge;
 define pcodeop NEON_fcmgt;
 define pcodeop NEON_fcmla;
 define pcodeop NEON_fcmle;
 define pcodeop NEON_fcmlt;
-define pcodeop NEON_fcmp;
-define pcodeop NEON_fcmpe;
-define pcodeop NEON_fcsel;
-define pcodeop NEON_fcvt;
-define pcodeop NEON_fcvt_amnpz_su;
-define pcodeop NEON_fcvtl;
-define pcodeop NEON_fcvtl2;
-define pcodeop NEON_fcvtn;
-define pcodeop NEON_fcvtn2;
-define pcodeop NEON_fcvtxn;
-define pcodeop NEON_fcvtxn2;
 define pcodeop NEON_fcvtzs;
 define pcodeop NEON_fcvtzu;
-define pcodeop NEON_fdiv;
-define pcodeop NEON_fjcvtzs;
 define pcodeop NEON_fmadd;
 define pcodeop NEON_fmax;
 define pcodeop NEON_fmaxnm;
@@ -3303,50 +3306,22 @@ define pcodeop NEON_fminnmp;
 define pcodeop NEON_fminnmv;
 define pcodeop NEON_fminp;
 define pcodeop NEON_fminv;
-define pcodeop NEON_fmla;
-define pcodeop NEON_fmlal;
-define pcodeop NEON_fmlal2;
-define pcodeop NEON_fmls;
-define pcodeop NEON_fmlsl;
-define pcodeop NEON_fmlsl2;
 define pcodeop NEON_fmov;
 define pcodeop NEON_fmsub;
-define pcodeop NEON_fmul;
 define pcodeop NEON_fmulx;
-define pcodeop NEON_fneg;
 define pcodeop NEON_fnmadd;
 define pcodeop NEON_fnmsub;
-define pcodeop NEON_fnmul;
 define pcodeop NEON_frecpe;
 define pcodeop NEON_frecps;
 define pcodeop NEON_frecpx;
-define pcodeop NEON_frint_aimnpxz;
 define pcodeop NEON_frsqrte;
 define pcodeop NEON_frsqrts;
 define pcodeop NEON_fsqrt;
-define pcodeop NEON_fsub;
-define pcodeop NEON_ldnp1;
-define pcodeop NEON_ldnp2;
-define pcodeop NEON_ldp1;
-define pcodeop NEON_ldp2;
-define pcodeop NEON_ldr;
-define pcodeop NEON_ldur;
-define pcodeop NEON_mla;
-define pcodeop NEON_mls;
-define pcodeop NEON_mov;
-define pcodeop NEON_movi;
-define pcodeop NEON_mul;
-define pcodeop NEON_mvn;
-define pcodeop NEON_mvni;
 define pcodeop NEON_neg;
-define pcodeop NEON_orn;
-define pcodeop NEON_orr;
 define pcodeop NEON_pmul;
 define pcodeop NEON_pmull;
 define pcodeop NEON_pmull2;
 define pcodeop NEON_raddhn;
-define pcodeop NEON_raddhn2;
-define pcodeop NEON_rax1;
 define pcodeop NEON_rbit;
 define pcodeop NEON_rev16;
 define pcodeop NEON_rev32;
@@ -3356,22 +3331,11 @@ define pcodeop NEON_rshrn2;
 define pcodeop NEON_rsubhn;
 define pcodeop NEON_rsubhn2;
 define pcodeop NEON_saba;
-define pcodeop NEON_sabal;
-define pcodeop NEON_sabal2;
 define pcodeop NEON_sabd;
-define pcodeop NEON_sabdl;
-define pcodeop NEON_sabdl2;
-define pcodeop NEON_sadalp;
-define pcodeop NEON_saddl;
-define pcodeop NEON_saddl2;
-define pcodeop NEON_saddlp;
 define pcodeop NEON_saddlv;
-define pcodeop NEON_saddw;
-define pcodeop NEON_saddw2;
 define pcodeop NEON_scvtf;
 define pcodeop NEON_sdot;
 define pcodeop NEON_sha1c;
-define pcodeop NEON_sha1h;
 define pcodeop NEON_sha1m;
 define pcodeop NEON_sha1p;
 define pcodeop NEON_sha1su0;
@@ -3386,10 +3350,6 @@ define pcodeop NEON_sha512su0;
 define pcodeop NEON_sha512su1;
 define pcodeop NEON_shadd;
 define pcodeop NEON_shl;
-define pcodeop NEON_shll;
-define pcodeop NEON_shll2;
-define pcodeop NEON_shrn;
-define pcodeop NEON_shrn2;
 define pcodeop NEON_shsub;
 define pcodeop NEON_sli;
 define pcodeop NEON_sm3partw1;
@@ -3407,24 +3367,10 @@ define pcodeop NEON_smaxv;
 define pcodeop NEON_smin;
 define pcodeop NEON_sminp;
 define pcodeop NEON_sminv;
-define pcodeop NEON_smlal;
-define pcodeop NEON_smlal2;
-define pcodeop NEON_smlsl;
-define pcodeop NEON_smlsl2;
-define pcodeop NEON_smov;
 define pcodeop NEON_smmla;
-define pcodeop NEON_smull;
-define pcodeop NEON_smull2;
-define pcodeop NEON_sqabs;
 define pcodeop NEON_sqadd;
-define pcodeop NEON_sqdmlal;
-define pcodeop NEON_sqdmlal2;
-define pcodeop NEON_sqdmlsl;
-define pcodeop NEON_sqdmlsl2;
 define pcodeop NEON_sqdmulh;
 define pcodeop NEON_sqdmull;
-define pcodeop NEON_sqdmull2;
-define pcodeop NEON_sqneg;
 define pcodeop NEON_sqrdml_as_h;
 define pcodeop NEON_sqrdmulh;
 define pcodeop NEON_sqrshl;
@@ -3447,45 +3393,12 @@ define pcodeop NEON_srhadd;
 define pcodeop NEON_sri;
 define pcodeop NEON_srshl;
 define pcodeop NEON_srshr;
-define pcodeop NEON_srsra;
 define pcodeop NEON_sshl;
-define pcodeop NEON_sshll;
-define pcodeop NEON_sshll2;
 define pcodeop NEON_sshr;
-define pcodeop NEON_ssra;
-define pcodeop NEON_ssubl;
-define pcodeop NEON_ssubl2;
-define pcodeop NEON_ssubw;
-define pcodeop NEON_ssubw2;
-define pcodeop NEON_stnp1;
-define pcodeop NEON_stnp2;
-define pcodeop NEON_stp1;
-define pcodeop NEON_stp2;
-define pcodeop NEON_str;
-define pcodeop NEON_stur;
-define pcodeop NEON_sub;
-define pcodeop NEON_subhn;
-define pcodeop NEON_subhn2;
 define pcodeop NEON_sudot;
-define pcodeop NEON_suqadd;
-define pcodeop NEON_sxtl;
-define pcodeop NEON_sxtl2;
-define pcodeop NEON_tblx;
-define pcodeop NEON_trn1;
-define pcodeop NEON_trn2;
 define pcodeop NEON_uaba;
-define pcodeop NEON_uabal;
-define pcodeop NEON_uabal2;
 define pcodeop NEON_uabd;
-define pcodeop NEON_uabdl;
-define pcodeop NEON_uabdl2;
-define pcodeop NEON_uadalp;
-define pcodeop NEON_uaddl;
-define pcodeop NEON_uaddl2;
-define pcodeop NEON_uaddlp;
 define pcodeop NEON_uaddlv;
-define pcodeop NEON_uaddw;
-define pcodeop NEON_uaddw2;
 define pcodeop NEON_ucvtf;
 define pcodeop NEON_udot;
 define pcodeop NEON_uhadd;
@@ -3496,14 +3409,8 @@ define pcodeop NEON_umaxv;
 define pcodeop NEON_umin;
 define pcodeop NEON_uminp;
 define pcodeop NEON_uminv;
-define pcodeop NEON_umlal;
-define pcodeop NEON_umlal2;
-define pcodeop NEON_umlsl;
-define pcodeop NEON_umlsl2;
 define pcodeop NEON_ummla;
-define pcodeop NEON_umov;
 define pcodeop NEON_umull;
-define pcodeop NEON_umull2;
 define pcodeop NEON_uqadd;
 define pcodeop NEON_uqrshl;
 define pcodeop NEON_uqrshrn;
@@ -3519,28 +3426,10 @@ define pcodeop NEON_urhadd;
 define pcodeop NEON_urshl;
 define pcodeop NEON_urshr;
 define pcodeop NEON_ursqrte;
-define pcodeop NEON_ursra;
 define pcodeop NEON_usdot;
 define pcodeop NEON_ushl;
-define pcodeop NEON_ushll;
-define pcodeop NEON_ushll2;
-define pcodeop NEON_ushr;
 define pcodeop NEON_usmmla;
 define pcodeop NEON_usqadd;
-define pcodeop NEON_usra;
-define pcodeop NEON_usubl;
-define pcodeop NEON_usubl2;
-define pcodeop NEON_usubw;
-define pcodeop NEON_usubw2;
-define pcodeop NEON_uxtl;
-define pcodeop NEON_uxtl2;
-define pcodeop NEON_uzp1;
-define pcodeop NEON_uzp2;
-define pcodeop NEON_xar;
-define pcodeop NEON_xtn;
-define pcodeop NEON_xtn2;
-define pcodeop NEON_zip1;
-define pcodeop NEON_zip2;
 
 # These pseudo ops are automatically generated
 
@@ -4013,112 +3902,59 @@ macro set_NZCV(value, condMask)
 
 # Macro to access simd lanes
 
-macro simd_address_at(dest, reg, elem, esize, vsize)
-{
-@if DATA_ENDIAN == "little"
-        dest = &reg + elem * esize;
-@else
-        dest = &reg + vsize - esize - elem * esize;
-@endif
-}
-
 # Macros to zero the high bits of the Z or Q registers
 # These are friendlier to the decompiler
 
 macro zext_zb(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[192,56] = 0;
-	reg[128,64] = 0;
-	reg[64,64] = 0;
-	reg[0,64] = 0;
-@endif
 }
 
 macro zext_zh(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[192,48] = 0;
-	reg[128,64] = 0;
-	reg[64,64] = 0;
-	reg[0,64] = 0;
-@endif
 }
 
 macro zext_zs(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[192,32] = 0;
-	reg[128,64] = 0;
-	reg[64,64] = 0;
-	reg[0,64] = 0;
-@endif
 }
 
 macro zext_zd(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[0,64] = 0;
-	reg[64,64] = 0;
-	reg[128,64] = 0;
-@endif
 }
 
 macro zext_zq(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[0,64] = 0;
-	reg[64,64] = 0;
-@endif
 }
 
 macro zext_rb(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
-@else
-	reg[0,56] = 0;
-@endif
 }
 
 macro zext_rh(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
-@else
-	reg[0,48] = 0;
-@endif
 }
 
 macro zext_rs(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
-@else
-	reg[0,32] = 0;
-@endif
 }
 
 # SECTION instructions

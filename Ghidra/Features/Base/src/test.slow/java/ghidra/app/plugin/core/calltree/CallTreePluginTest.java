@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
+import org.apache.commons.collections4.map.LazyMap;
 import org.junit.*;
 
 import docking.ActionContext;
@@ -140,7 +141,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		function(0x4000, 0x5000);
 		function(0x5000, 0x6000);
 		function(0x5000, 0x6100);
-		duplicateReference(0x5000, 0x6000);
+
+		// second reference inside of function 0x5000 to 0x6000
+		createReference(0x5020, 0x6000);
+
 		function(0x6000, 0x7000);
 		function(0x6100, 0x7100);
 		function(0x7000, 0x8000);
@@ -148,14 +152,6 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		function(0x9000, 0x10000);
 
 		return builder.getProgram();
-	}
-
-	private void duplicateReference(int from, int to) {
-		// a bit of space so the function call is not at the entry point
-		int offset = from + 10;
-		while (!createReference(offset, to)) {
-			offset++;
-		}
 	}
 
 	private Function function(int addr) throws Exception {
@@ -598,7 +594,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testFilterOutgoingDuplicates() {
+	public void testFilterOutgoingDuplicates_DifferentSource_SameDestination() {
 		//
 		// Test that the filter action will remove duplicate entries from the child nodes of 
 		// the outgoing tree
@@ -609,20 +605,78 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ToggleDockingAction filterDuplicatesAction =
 			(ToggleDockingAction) getAction("Filter Duplicates");
+		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
+		waitForTree(outgoingTree);
+
+		GTreeNode rootNode = getRootNode(outgoingTree);
+		boolean shouldHaveDuplicates = false;
+		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
+		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
+
+		performAction(filterDuplicatesAction, true);// deselect
+
+		waitForTree(outgoingTree);
+
+		rootNode = getRootNode(outgoingTree);
+		nameCountMap = createNameCountMap(rootNode);
+		shouldHaveDuplicates = true;
+		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
+	}
+
+	@Test
+	public void testFilterOutgoingDuplicates_SameSource_SameDestination() {
+		//
+		// Test that 2 references from the same source address to the same function will not get
+		// added to the tree, regardless of the duplicate filter state
+		// 
+
+		// add a second reference (this is already defined in setup)
+		builder.createMemoryCallReference("0x5020", "0x6000");
+
+		setProviderFunction("0x5000");
+
+		ToggleDockingAction filterDuplicatesAction =
+			(ToggleDockingAction) getAction("Filter Duplicates");
 
 		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
 
 		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
-		List<GTreeNode> children = rootNode.getChildren();
-		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
-			children.size() > 0);
+		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
 
-		// copy the names of the children into a map so that we can verify that there are 
-		// no duplicates
+		// 1, not 2 entries (the exact duplicate and the duplicate destination are ignored)		
+		assertEquals(1, nameCountMap.get("Function_6000").size());
+
+		performAction(filterDuplicatesAction, true);// deselect
+		waitForTree(outgoingTree);
+
+		rootNode = getRootNode(outgoingTree);
+		nameCountMap = createNameCountMap(rootNode);
+
+		// 2, not 3 entries (the exact duplicate is ignored)
+		assertEquals(2, nameCountMap.get("Function_6000").size());
+	}
+
+	@Test
+	public void testFilterOutgoingDuplicates_SameSource_DifferentDestination() {
+		//
+		// Test that 2 references from the same source address to the same function will not get
+		// added to the tree, regardless of the duplicate filter state
+		// 
+
+		// add a second reference from 0x5020 to a function already called (see setup)
+		builder.createMemoryCallReference("0x5020", "0x6000");
+
+		setProviderFunction("0x5000");
+
+		ToggleDockingAction filterDuplicatesAction =
+			(ToggleDockingAction) getAction("Filter Duplicates");
+		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
+		waitForTree(outgoingTree);
+
+		GTreeNode rootNode = getRootNode(outgoingTree);
 		boolean shouldHaveDuplicates = false;
-		Map<GTreeNode, Integer> nameCountMap = createNameCountMap(rootNode);
+		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
 		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
 
 		performAction(filterDuplicatesAction, true);// deselect
@@ -663,16 +717,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
 		waitForTree(incomingTree);
 
+		// copy the names of the children into a map so that we can verify no duplicates
 		GTreeNode rootNode = getRootNode(incomingTree);
-		List<GTreeNode> children = rootNode.getChildren();
-		assertTrue(
-			"Outgoing tree does not have callers as expected for function: " + getListingFunction(),
-			children.size() > 0);
-
-		// copy the names of the children into a map so that we can verify that there are 
-		// no duplicates
-		boolean shouldHaveDuplicates = false;
-		Map<GTreeNode, Integer> nameCountMap = createNameCountMap(rootNode);
+		boolean shouldHaveDuplicates = true;
+		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
 		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
 	}
 
@@ -1135,34 +1183,32 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return codeBrowserPlugin.getCurrentAddress();
 	}
 
-	private Map<GTreeNode, Integer> createNameCountMap(GTreeNode node) {
-		Map<GTreeNode, Integer> map = new HashMap<>();
+	private Map<String, List<GTreeNode>> createNameCountMap(GTreeNode node) {
+		Map<String, List<GTreeNode>> map = LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		List<GTreeNode> children = node.getChildren();
 		for (GTreeNode child : children) {
-			Integer integer = map.get(child);
-			if (integer == null) {
-				integer = 0;
-			}
-			int asInt = integer;
-			asInt++;
-			map.put(child, asInt);
+			map.get(child.getName()).add(child);
 		}
 		return map;
 	}
 
-	private void assertDuplicateChildStatus(Map<GTreeNode, Integer> childCountMap,
+	private void assertDuplicateChildStatus(Map<String, List<GTreeNode>> childCountMap,
 			boolean shouldHaveDuplicates) {
 		boolean foundDuplicates = false;
-		Set<Entry<GTreeNode, Integer>> entrySet = childCountMap.entrySet();
-		for (Entry<GTreeNode, Integer> entry : entrySet) {
-			int value = entry.getValue();
-			if (value != 1) {
+		Set<Entry<String, List<GTreeNode>>> entrySet = childCountMap.entrySet();
+		String duplicateName = null;
+		for (Entry<String, List<GTreeNode>> entry : entrySet) {
+			List<GTreeNode> list = entry.getValue();
+			if (list.size() != 1) {
+				duplicateName = entry.getKey();
 				foundDuplicates = true;
+				break;
 			}
 		}
 
 		String errorMessage =
-			(shouldHaveDuplicates ? "Did not find " : "Found") + " duplicate child entries";
+			(shouldHaveDuplicates ? "Did not find " : "Found") + " duplicate child entries for '" +
+				duplicateName + "'";
 		assertEquals(errorMessage, shouldHaveDuplicates, foundDuplicates);
 	}
 

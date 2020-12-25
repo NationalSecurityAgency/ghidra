@@ -29,9 +29,9 @@ import ghidra.util.Saveable;
  */
 public class GenericSaveable implements Saveable {
 
-	Record record;
-	Schema schema;
-	Class<?>[] fieldClasses = new Class<?>[0];
+	final Record record;
+	final Schema schema;
+	final Class<?>[] fieldClasses = new Class<?>[0];
 
 	/**
 	 * Creates a generic saveable that can be used by the property map manager

@@ -15,16 +15,15 @@
  */
 package ghidra.graph.export;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 import org.jgrapht.Graph;
 
 import docking.action.DockingAction;
 import docking.widgets.EventTrigger;
+import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
-import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -37,15 +36,16 @@ import ghidra.util.task.TaskMonitor;
  */
 class ExportAttributedGraphDisplay implements GraphDisplay {
 
-	private final PluginTool pluginTool;
+	private final PluginTool tool;
 	private String title;
+	private AttributedGraph graph;
 
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
 	 * @param programGraphDisplayProvider provides a {@link PluginTool} for Docking features
 	 */
 	ExportAttributedGraphDisplay(ExportAttributedGraphDisplayProvider programGraphDisplayProvider) {
-		this.pluginTool = programGraphDisplayProvider.getPluginTool();
+		this.tool = programGraphDisplayProvider.getPluginTool();
 	}
 
 	@Override
@@ -55,7 +55,8 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 
 	@Override
 	public void setGraphDisplayListener(GraphDisplayListener listener) {
-		// This display is not interactive, so N/A
+		// This display is not interactive, so just dispose the listener
+		listener.dispose();
 	}
 
 
@@ -65,8 +66,17 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	 * @param attributedGraph the {@link AttributedGraph} to visualize
 	 */
 	private void doSetGraphData(AttributedGraph attributedGraph) {
-		GraphExporterDialog dialog = new GraphExporterDialog(attributedGraph);
-		Swing.runLater(() -> pluginTool.showDialog(dialog));
+		List<AttributedGraphExporter> exporters = findGraphExporters();
+		GraphExporterDialog dialog = new GraphExporterDialog(attributedGraph, exporters);
+		tool.showDialog(dialog);
+	}
+
+	private List<AttributedGraphExporter> findGraphExporters() {
+		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
+		if (service != null) {
+			return service.getGraphExporters();
+		}
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -86,10 +96,11 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setGraph(AttributedGraph graphData, String title, boolean append,
+	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor) {
 		this.title = title;
-		doSetGraphData(graphData);
+		this.graph = graph;
+		doSetGraphData(graph);
 	}
 
 	/**
@@ -132,7 +143,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 
 	@Override
 	public AttributedGraph getGraph() {
-		return null;
+		return graph;
 	}
 
 	@Override

@@ -187,12 +187,12 @@ public class Pattern extends DittedBitSequence {
 	/**
 	 * Read just the post patterns from the <patternpair> tags
 	 * @param file is the file to read from
-	 * @param patternlist collects the resulting Pattern objects
+	 * @param patternList collects the resulting Pattern objects
 	 * @param pfactory is the factory for constructing postrules and matchactions
 	 * @throws IOException 
 	 * @throws SAXException 
 	 */
-	public static void readPostPatterns(File file, ArrayList<Pattern> patlist,
+	public static void readPostPatterns(File file, ArrayList<Pattern> patternList,
 			PatternFactory pfactory) throws SAXException, IOException {
 		ErrorHandler handler = new ErrorHandler() {
 			@Override
@@ -217,7 +217,7 @@ public class Pattern extends DittedBitSequence {
 			if (el.getName().equals("patternpairs")) {
 				PatternPairSet pairset = new PatternPairSet();
 				pairset.restoreXml(parser, pfactory);
-				pairset.extractPostPatterns(patlist);
+				pairset.extractPostPatterns(patternList);
 			}
 			else {
 				parser.next();

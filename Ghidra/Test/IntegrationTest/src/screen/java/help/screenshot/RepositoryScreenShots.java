@@ -114,9 +114,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					blocks[1].setName("LatestText");
 					commit = true;
 				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
-				}
 				catch (LockException e) {
 					Assert.fail();
 				}
@@ -132,9 +129,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				int transactionID = program.startTransaction("Modify My Program");
 				try {
 					blocks[1].setName("MY_Text");
-				}
-				catch (DuplicateNameException e) {
-					Assert.fail();
 				}
 				catch (LockException e) {
 					Assert.fail();

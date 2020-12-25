@@ -150,7 +150,9 @@
         
         <tocdef id="FileSystem Browser"	text="FileSystem Browser" target="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html" />
                    
-        <tocdef id="Graphing" text="Graphing" />
+        <tocdef id="Graphing" text="Graphing" target="help/topics/Graph/GraphIntro.html">
+        	<tocdef id="Graph Services" text="Graph Services" target="help/topics/Graph/GraphServicesIntro.html"/> 
+        </tocdef>
                     
         <tocdef id="Program Tree" text="Program Tree"  target="help/topics/ProgramTreePlugin/program_tree.htm" >
             <tocdef id="Folders and Fragments" sortgroup="a" text="Folders and Fragments" target="help/topics/ProgramTreePlugin/program_tree.htm#FoldersAndFragments" />
@@ -234,6 +236,7 @@
                 <tocdef id="Structure Editor" sortgroup="d" text="Structure Editor"  target="help/topics/DataTypeEditors/StructureEditor.htm" />
                 <tocdef id="Enum Editor" sortgroup="e" text="Enum Editor"  target="help/topics/DataTypeEditors/EnumEditor.htm" />
                 <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm" />
+                <tocdef id="Save Image" sortgroup="e" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>
         
             <tocdef id="Labels" sortgroup="d" text="Labels"  target="help/topics/LabelMgrPlugin/Labels.htm" >

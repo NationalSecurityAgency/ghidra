@@ -83,7 +83,7 @@ public class RepositoryFileSystemTest extends AbstractGhidraHeadedIntegrationTes
 		DBHandle dbh = new DBHandle();
 		long id = dbh.startTransaction();
 		Schema schema =
-			new Schema(0, "key", new Class[] { IntField.class }, new String[] { "dummy" });
+			new Schema(0, "key", new Field[] { IntField.INSTANCE }, new String[] { "dummy" });
 		dbh.createTable("test", schema);
 		dbh.endTransaction(id, true);
 		ManagedBufferFile bf = folder.createDatabase(itemName, FileIDFactory.createFileID(),

@@ -20,6 +20,7 @@ import java.util.*;
 import org.jdom.Element;
 
 import ghidra.app.CorePluginPackage;
+import ghidra.app.decompiler.component.DecompilerHighlightService;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -47,7 +48,8 @@ import ghidra.util.task.SwingUpdateManager;
 	servicesRequired = { 
 		GoToService.class, NavigationHistoryService.class, ClipboardService.class, 
 		DataTypeManagerService.class /*, ProgramManager.class */
-	},
+	},	
+	servicesProvided = { DecompilerHighlightService.class },
 	eventsConsumed = { 
 		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class, 
 		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class, 
@@ -81,6 +83,12 @@ public class DecompilePlugin extends Plugin {
 
 		disconnectedProviders = new ArrayList<>();
 		connectedProvider = new PrimaryDecompilerProvider(this);
+
+		registerServices();
+	}
+
+	private void registerServices() {
+		registerServiceProvided(DecompilerHighlightService.class, connectedProvider);
 	}
 
 	@Override

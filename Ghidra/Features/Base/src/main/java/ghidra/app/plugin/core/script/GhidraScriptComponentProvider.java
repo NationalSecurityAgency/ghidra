@@ -20,7 +20,9 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -50,7 +52,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import resources.ResourceManager;
@@ -238,7 +239,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Restore state for bundles, user actions, and filter.
-	 * 
+	 *
 	 * @param saveState the state object
 	 */
 	public void readConfigState(SaveState saveState) {
@@ -267,7 +268,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Save state for bundles, user actions, and filter.
-	 * 
+	 *
 	 * @param saveState the state object
 	 */
 
@@ -374,7 +375,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Copy a script, renaming references to the class name.
-	 * 
+	 *
 	 * @param sourceScript source script
 	 * @param destinationScript destination script
 	 * @throws IOException if we fail to create temp, write contents, copy, or delete temp
@@ -605,28 +606,34 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(ResourceFile scriptFile, TaskListener listener) {
-		if (SystemUtilities.isEventDispatchThread()) {
-			new TaskLauncher(new Task("compiling script directory", true, false, true, true) {
-				@Override
-				public void run(TaskMonitor monitor) throws CancelledException {
-					doRunScript(scriptFile, listener);
-				}
-			}, plugin.getTool().getToolFrame(), 1000);
-		}
-		else {
-			doRunScript(scriptFile, listener);
-		}
+		lastRunScript = scriptFile;
+		GhidraScript script = doGetScriptInstance(scriptFile);
+		doRunScript(script, listener);
 	}
 
-	private void doRunScript(ResourceFile scriptFile, TaskListener listener) {
-		lastRunScript = scriptFile;
+	private GhidraScript doGetScriptInstance(ResourceFile scriptFile) {
 
-		ConsoleService console = plugin.getConsoleService();
-		GhidraScript script = getScriptInstance(scriptFile, console);
-		if (script == null) {
-			return;
+		Supplier<GhidraScript> scriptSupplier = () -> {
+			ConsoleService console = plugin.getConsoleService();
+			return getScriptInstance(scriptFile, console);
+		};
+
+		if (!Swing.isSwingThread()) {
+			return scriptSupplier.get();
 		}
 
+		AtomicReference<GhidraScript> ref = new AtomicReference<>();
+		TaskBuilder.withRunnable(monitor -> ref.set(scriptSupplier.get()))
+				.setTitle("Compiling Script Directory")
+				.setLaunchDelay(1000)
+				.launchModal();
+
+		return ref.get();
+	}
+
+	private void doRunScript(GhidraScript script, TaskListener listener) {
+
+		ConsoleService console = plugin.getConsoleService();
 		RunScriptTask task = new RunScriptTask(script, plugin.getCurrentState(), console);
 		runningScriptTaskSet.add(task);
 		task.addTaskListener(listener);
@@ -715,7 +722,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * refresh the list of scripts by listing files in each script directory.
-	 * 
+	 *
 	 * Note: this method can be used off the swing event thread.
 	 */
 	void refresh() {
@@ -724,7 +731,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * refresh the list of scripts by listing files in each script directory.
-	 * 
+	 *
 	 * Note: this method MUST NOT BE USED off the swing event thread.
 	 */
 	private void doRefresh() {
@@ -810,14 +817,14 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		/*
 		 			Unusual Algorithm
-		 			
-		 	The tree nodes represent categories, but do not contain nodes for individual 
+		
+			The tree nodes represent categories, but do not contain nodes for individual
 		 	scripts.  We wish to remove any of the tree nodes that no longer represent script
 		 	categories.  (This can happen when a script is deleted or its category is changed.)
 		 	This algorithm will assume that all nodes need to be deleted.  Then, each script is
 		 	examined, using its category to mark a given node as 'safe'; that node's parents are
-		 	also marked as safe.   Any nodes remaining unmarked have no reference script and 
-		 	will be deleted. 
+			also marked as safe.   Any nodes remaining unmarked have no reference script and
+			will be deleted.
 		 */
 
 		// note: turn String[] to List<String> to use hashing
@@ -899,8 +906,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	/**
-	 * reassign an existing editor component 
-	 * 
+	 * reassign an existing editor component
+	 *
 	 * @param oldScript who the editor is currently assigned to
 	 * @param newScript the new script to assign it to
 	 */
@@ -1169,7 +1176,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
-			// on enable, build can happen before the refresh populates the info manager with 
+			// on enable, build can happen before the refresh populates the info manager with
 			// this bundle's scripts, so allow for the possibility and create the info here.
 			if (bundle instanceof GhidraSourceBundle) {
 				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;

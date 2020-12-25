@@ -27,6 +27,7 @@ import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -78,6 +79,8 @@ public class PdbLocator {
 		onWindows ? new File("C:\\Symbols") : new File(USER_HOME, "Symbols");
 	public final static File WINDOWS_SYMBOLS_DIR =
 		onWindows ? new File("C:/WINDOWS/Symbols") : null;
+
+	public final static String PDB_SYMBOLS_DIR_PREFERENCE = "PDB Storage Directory";
 
 	private File symbolsRepositoryDir;
 	/**
@@ -369,19 +372,19 @@ public class PdbLocator {
 		return builder.toString();
 	}
 
-	private StringBuilder formatPdbIdentifiers(PdbProgramAttributes attributes) {
+	public static StringBuilder formatPdbIdentifiers(PdbProgramAttributes attributes) {
 		Integer signature = (attributes.getPdbSignature() == null) ? null
 				: Integer.valueOf(attributes.getPdbSignature());
 		return formatPdbIdentifiers(attributes.getPdbFile(), signature,
 			Integer.valueOf(attributes.getPdbAge(), 16), attributes.getPdbGuid());
 	}
 
-	private StringBuilder formatPdbIdentifiers(String file, PdbIdentifiers identifiers) {
+	public static StringBuilder formatPdbIdentifiers(String file, PdbIdentifiers identifiers) {
 		return formatPdbIdentifiers(file, identifiers.getSignature(), identifiers.getAge(),
 			identifiers.getGuid().toString());
 	}
 
-	private StringBuilder formatPdbIdentifiers(String file, Integer signature, int age,
+	private static StringBuilder formatPdbIdentifiers(String file, Integer signature, int age,
 			String guidString) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("  Location: ").append(file);
@@ -645,7 +648,7 @@ public class PdbLocator {
 	}
 
 	//==============================================================================================
-	private boolean verifyPdbSignature(PdbProgramAttributes programAttributes,
+	public static boolean verifyPdbSignature(PdbProgramAttributes programAttributes,
 			PdbIdentifiers identifiers) throws PdbException {
 
 		String attributesGuidString = programAttributes.getPdbGuid();
@@ -675,6 +678,23 @@ public class PdbLocator {
 		}
 
 		return true;
+	}
+
+	public static File getDefaultPdbSymbolsDir() {
+		String pdbStorageLocation = Preferences.getProperty(PDB_SYMBOLS_DIR_PREFERENCE, null, true);
+		File defaultSymbolsDir = DEFAULT_SYMBOLS_DIR;
+		if (pdbStorageLocation != null) {
+			File pdbDirectory = new File(pdbStorageLocation);
+			if (pdbDirectory.isDirectory()) {
+				defaultSymbolsDir = pdbDirectory;
+			}
+		}
+		return defaultSymbolsDir;
+	}
+
+	public static void setDefaultPdbSymbolsDir(File symbolsDir) {
+		Preferences.setProperty(PDB_SYMBOLS_DIR_PREFERENCE, symbolsDir.getAbsolutePath());
+		Preferences.store();
 	}
 
 }

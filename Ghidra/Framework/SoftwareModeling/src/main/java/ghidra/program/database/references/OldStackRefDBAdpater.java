@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.references;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter for the stack references table in the database. 
@@ -31,9 +29,10 @@ class OldStackRefDBAdpater {
 
 	static final String STACK_REF_TABLE_NAME = "Stack References";
 
-	static final Schema STACK_REF_SCHEMA = new Schema(0, "Key", new Class[] { LongField.class,
-		ShortField.class, BooleanField.class, ShortField.class }, new String[] { "From Address",
-		"Op Index", "User Defined", "Stack Offset" });
+	static final Schema STACK_REF_SCHEMA = new Schema(0, "Key",
+		new Field[] { LongField.INSTANCE, ShortField.INSTANCE, BooleanField.INSTANCE,
+			ShortField.INSTANCE },
+		new String[] { "From Address", "Op Index", "User Defined", "Stack Offset" });
 
 	static final int FROM_ADDR_COL = 0;
 	static final int OP_INDEX_COL = 1;
@@ -72,8 +71,8 @@ class OldStackRefDBAdpater {
 		return refTable.getRecordCount();
 	}
 
-	private void moveTable(DBHandle handle, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	private void moveTable(DBHandle handle, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		DBHandle tmpHandle = handle.getScratchPad();
 		Table newRefTable = tmpHandle.createTable(STACK_REF_TABLE_NAME, STACK_REF_SCHEMA);

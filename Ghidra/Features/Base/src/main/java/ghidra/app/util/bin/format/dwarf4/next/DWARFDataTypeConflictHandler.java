@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import static ghidra.program.model.data.DataTypeConflictHandler.ConflictResult.*;
+
 import java.util.*;
 
 import ghidra.program.model.data.*;
-import static ghidra.program.model.data.DataTypeConflictHandler.ConflictResult.*;
 
 /**
  * This {@link DataTypeConflictHandler conflict handler} attempts to match
@@ -185,22 +186,24 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	}
 
 	private DataTypeComponent getBitfieldByOffsets(Structure full, DataTypeComponent partDTC) {
-		DataTypeComponent fullDTC = full.getComponentAt(partDTC.getOffset());
-		if (fullDTC == null || fullDTC.getOffset() != partDTC.getOffset()) {
-			return null;
-		}
 		BitFieldDataType partBF = (BitFieldDataType) partDTC.getDataType();
 
+		DataTypeComponent fullDTC = full.getComponentAt(partDTC.getOffset());
+		if (fullDTC == null) {
+			return null;
+		}
 		
 		int fullNumComp = full.getNumComponents();
 		for(int fullOrdinal = fullDTC.getOrdinal(); fullOrdinal < fullNumComp; fullOrdinal++) {
 			fullDTC = full.getComponent(fullOrdinal);
-			if (fullDTC.getOffset() != partDTC.getOffset()
-					|| !(fullDTC.getDataType() instanceof BitFieldDataType)) {
-				return null;
+			if (!(fullDTC.getDataType() instanceof BitFieldDataType) ||
+				fullDTC.getOffset() > partDTC.getOffset()) {
+				break;
 			}
 			BitFieldDataType fullBF = (BitFieldDataType) fullDTC.getDataType();
-			if ( fullBF.getBitOffset() == partBF.getBitOffset() ) {
+			if (fullDTC.getOffset() == partDTC.getOffset() &&
+				fullBF.getBitOffset() == partBF.getBitOffset() &&
+				fullBF.getBitSize() == partBF.getBitSize()) {
 				return fullDTC;
 			}
 		}
@@ -339,7 +342,7 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 
 	private long getDTPairKey(DataType dataType1, DataType dataType2) {
 		return ((long) System.identityHashCode(dataType1) << 32)
-				+ ((long) System.identityHashCode(dataType2) & 0xffffffffL);
+				+ (System.identityHashCode(dataType2) & 0xffffffffL);
 	}
 
 	private boolean addVisited(DataType dataType1, DataType dataType2, Set<Long> visitedDataTypes) {

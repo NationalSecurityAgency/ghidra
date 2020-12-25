@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.util.EmptyRecordIterator;
+import ghidra.util.exception.VersionException;
 
 /**
  * Adapter needed for a read-only version of data type manager that is not going
@@ -36,6 +34,7 @@ class FunctionParameterAdapterNoTable extends FunctionParameterAdapter {
 	 * for this adapter.
 	 */
 	public FunctionParameterAdapterNoTable(DBHandle handle) {
+		// no table required
 	}
 
 	@Override
@@ -66,11 +65,12 @@ class FunctionParameterAdapterNoTable extends FunctionParameterAdapter {
 
 	@Override
 	protected void deleteTable(DBHandle handle) throws IOException {
+		// do nothing
 	}
 
 	@Override
-	public long[] getParameterIdsInFunctionDef(long functionDefID) throws IOException {
-		return new long[0];
+	public Field[] getParameterIdsInFunctionDef(long functionDefID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
 }

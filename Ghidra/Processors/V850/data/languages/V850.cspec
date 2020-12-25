@@ -56,6 +56,10 @@
         <register name="r29"/>
         <register name="ep"/>
         <register name="lp"/>
+        <register name="sp"/>
+        <register name="gp"/>
+        <register name="tp"/>
+        <register name="ctbp"/>
       </unaffected>
     
     </prototype>

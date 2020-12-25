@@ -405,11 +405,6 @@ public class FidStatistics extends GhidraScript {
 			}
 			String funcName = chooseFunctionName(result);
 			NameVersions nameVersions = NameVersions.generate(funcName, program);
-			String strippedTemplateName = null;
-			if (nameVersions.demangledBaseName != null) {
-				strippedTemplateName =
-					MatchNameAnalysis.removeTemplateParams(nameVersions.demangledBaseName);
-			}
 			boolean exactNameMatch = false;
 			Iterator<String> iter = matchAnalysis.getRawNameIterator();
 			while(iter.hasNext()) {
@@ -450,14 +445,12 @@ public class FidStatistics extends GhidraScript {
 					exactNameMatch = true;
 					break;
 				}
-				if (matchNames.demangledBaseName != null && strippedTemplateName != null) {
-					String strippedName =
-						MatchNameAnalysis.removeTemplateParams(matchNames.demangledBaseName);
-					if (strippedName != null) {
-						if (checkNames(strippedName, strippedTemplateName)) {
-							exactNameMatch = true;
-							break;
-						}
+				if (nameVersions.demangledNoTemplate != null &&
+					matchNames.demangledNoTemplate != null) {
+					if (checkNames(nameVersions.demangledNoTemplate,
+						matchNames.demangledNoTemplate)) {
+						exactNameMatch = true;
+						break;
 					}
 				}
 			}

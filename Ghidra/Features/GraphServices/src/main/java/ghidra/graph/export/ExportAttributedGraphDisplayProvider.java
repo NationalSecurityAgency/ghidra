@@ -73,6 +73,6 @@ public class ExportAttributedGraphDisplayProvider implements GraphDisplayProvide
 
 	@Override
 	public HelpLocation getHelpLocation() {
-		return new HelpLocation("GraphServices", "Default_Graph_Exporter");
+		return new HelpLocation("GraphServices", "Graph_Exporter");
 	}
 }

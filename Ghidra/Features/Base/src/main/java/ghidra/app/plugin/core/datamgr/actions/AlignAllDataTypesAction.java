@@ -89,6 +89,7 @@ public class AlignAllDataTypesAction extends DockingAction {
 						"Are you sure you want to align all of the data types in " +
 							dataTypeManager.getName() +
 							"?\nBoth structures and unions that are currently unaligned will become aligned.\n" +
+							"This could cause component offsets to change and datatype sizes to change.\n" +
 							"Do you want to continue?", "Continue", OptionDialog.WARNING_MESSAGE);
 				if (result == OptionDialog.CANCEL_OPTION) {
 					return;
@@ -125,7 +126,7 @@ public class AlignAllDataTypesAction extends DockingAction {
 
 	private void alignEachStructure(DataTypeManager dataTypeManager,
 			DataOrganization dataOrganization) {
-		Iterator<Composite> allComposites = dataTypeManager.getAllComposites();
+		Iterator<? extends Composite> allComposites = dataTypeManager.getAllComposites();
 		while (allComposites.hasNext()) {
 			Composite composite = allComposites.next();
 			composite.setInternallyAligned(true);

@@ -88,13 +88,10 @@ public class ClipboardPanel extends JPanel {
 		buttonPanel = new JPanel(new FlowLayout());
 
 		JButton deletedButton = new JButton("Remove Selected Patterns");
-		deletedButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				List<PatternInfoRowObject> selected = filterTable.getSelectedRowObjects();
-				plugin.removePatterns(selected);
-				updateClipboard();
-			}
+		deletedButton.addActionListener(e -> {
+			List<PatternInfoRowObject> selected = filterTable.getSelectedRowObjects();
+			plugin.removePatterns(selected);
+			updateClipboard();
 		});
 		buttonPanel.add(deletedButton);
 
@@ -415,6 +412,7 @@ public class ClipboardPanel extends JPanel {
 	 */
 	public void updateClipboard() {
 		remove(filterTable);
+		filterTable.dispose();
 		patternInfoTable = new PatternInfoTableModel(plugin);
 		filterTable = new GFilterTable<>(patternInfoTable);
 		add(filterTable, 0);
@@ -495,4 +493,7 @@ public class ClipboardPanel extends JPanel {
 		return patternInfoTable.getLastSelectedObjects();
 	}
 
+	public void dispose() {
+		filterTable.dispose();
+	}
 }

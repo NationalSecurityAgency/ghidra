@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  * @see CliTypeTable
  */
 public class CliStreamMetadata extends CliAbstractStream {
-	
+
 	private byte majorVersion;
 	private byte minorVersion;
 	private byte heapSizes;
@@ -47,7 +47,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	private long sorted;
 	private HashMap<CliTypeTable, Integer> rows;
 	private ArrayList<CliAbstractTable> tables = new ArrayList<>();
-	
+
 	private CliStreamGuid guidStream;
 	private CliStreamUserStrings userStringsStream;
 	private CliStreamStrings stringsStream;
@@ -89,7 +89,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 		this.stringsStream = stringsStream;
 		this.blobStream = blobStream;
 	}
-	
+
 	@Override
 	public boolean parse() throws IOException {
 		reader.setPointerIndex(offset);
@@ -130,7 +130,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 		return true;
 	}
-	
+
 	/**
 	 * Gets the GUID stream.
 	 * 
@@ -179,34 +179,34 @@ public class CliStreamMetadata extends CliAbstractStream {
 		switch (tableType) {
 			case Module:
 				return new CliTableModule(reader, this, tableType);
-				
+
 			case TypeRef:
 				return new CliTableTypeRef(reader, this, tableType);
-				
+
 			case TypeDef:
 				return new CliTableTypeDef(reader, this, tableType);
-				
+
 			case Field:
 				return new CliTableField(reader, this, tableType);
-				
+
 			case MethodDef:
 				return new CliTableMethodDef(reader, this, tableType);
-				
+
 			case Param:
 				return new CliTableParam(reader, this, tableType);
-				
+
 			case InterfaceImpl:
 				return new CliTableInterfaceImpl(reader, this, tableType);
-				
+
 			case MemberRef:
 				return new CliTableMemberRef(reader, this, tableType);
-				
+
 			case Constant:
 				return new CliTableConstant(reader, this, tableType);
-				
+
 			case CustomAttribute:
 				return new CliTableCustomAttribute(reader, this, tableType);
-				
+
 			case FieldMarshal:
 				return new CliTableFieldMarshall(reader, this, tableType);
 
@@ -284,7 +284,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 			case GenericParam:
 				return new CliTableGenericParam(reader, this, tableType);
-				
+
 			case MethodSpec:
 				return new CliTableMethodSpec(reader, this, tableType);
 
@@ -297,7 +297,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 				return null;
 		}
 	}
-	
+
 	/**
 	 * Gets the major version.
 	 * 
@@ -357,7 +357,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 		return null;
 	}
-	
+
 	/**
 	 * Gets the table with the provided table type id from the metadata stream.
 	 * 
@@ -367,7 +367,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	public CliAbstractTable getTable(int tableId) {
 		return getTable(CliTypeTable.fromId(tableId));
 	}
-	
+
 	/**
 	 * Gets the number of rows in the table with the given table type.
 	 * 
@@ -377,9 +377,9 @@ public class CliStreamMetadata extends CliAbstractStream {
 	 */
 	public int getNumberRowsForTable(CliTypeTable tableType) {
 		Integer ret = rows.get(tableType);
-		return (ret != null) ? ret : 0; 
+		return (ret != null) ? ret : 0;
 	}
-	
+
 	/**
 	 * Gets the data type of the index into the string stream.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
@@ -389,7 +389,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	public DataType getStringIndexDataType() {
 		return ((heapSizes & 0x01) != 0) ? DWordDataType.dataType : WordDataType.dataType;
 	}
-	
+
 	/**
 	 * Gets the data type of the index into the GUID stream.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
@@ -399,7 +399,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	public DataType getGuidIndexDataType() {
 		return ((heapSizes & 0x02) != 0) ? DWordDataType.dataType : WordDataType.dataType;
 	}
-	
+
 	/**
 	 * Gets the data type of the index into the Blob stream.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
@@ -409,7 +409,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	public DataType getBlobIndexDataType() {
 		return ((heapSizes & 0x04) != 0) ? DWordDataType.dataType : WordDataType.dataType;
 	}
-	
+
 	/**
 	 * Gets the data type of the index into a metadata table.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
@@ -427,11 +427,12 @@ public class CliStreamMetadata extends CliAbstractStream {
 		super.markup(program, isBinary, monitor, log, ntHeader);
 		for (CliAbstractTable table : tables) {
 			try {
-				table.markup(program, isBinary, monitor, log, ntHeader);
 				Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader,
 					rva + getTableOffset(table.getTableType()));
-				program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "CLI Table",
-					table.toString());
+				program.getBookmarkManager()
+						.setBookmark(addr, BookmarkType.INFO, "CLI Table", table.toString());
+
+				table.markup(program, isBinary, monitor, log, ntHeader);
 			}
 			catch (Exception e) {
 				Msg.error(this, "Failed to markup " + table);

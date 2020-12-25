@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package db;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.buffers.DataBuffer;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>BTreeNode</code> defines a common interface for all types
@@ -30,17 +28,22 @@ import db.buffers.DataBuffer;
 interface BTreeNode {
 
 	/**
-	 * Return the data buffer ID associated with this node.
+	 * @return the parent node or null if this is the root
+	 */
+	public InteriorNode getParent();
+
+	/**
+	 * @return the data buffer ID associated with this node.
 	 */
 	public int getBufferId();
 
 	/**
-	 * Return the data buffer associated with this node.
+	 * @return the data buffer associated with this node.
 	 */
 	public DataBuffer getBuffer();
 
 	/**
-	 * Return the number of keys contained within this node.
+	 * @return the number of keys contained within this node.
 	 */
 	public int getKeyCount();
 
@@ -49,6 +52,26 @@ interface BTreeNode {
 	 * @param cnt key count
 	 */
 	public void setKeyCount(int cnt);
+
+	/**
+	 * Get the key value at a specific index.
+	 * @param index key index
+	 * @return key value
+	 * @throws IOException thrown if an IO error occurs
+	 */
+	public Field getKeyField(int index) throws IOException;
+
+	/**
+	 * Perform a binary search to locate the specified key and derive an index
+	 * into the Buffer ID storage.  This method is intended to find the insertion 
+	 * index or exact match for a child key.  A negative value will be returned
+	 * when an exact match is not found and may be transformed into an 
+	 * insertion index (insetIndex = -returnedIndex-1).
+	 * @param key key to search for
+	 * @return int buffer ID index.
+	 * @throws IOException thrown if an IO error occurs
+	 */
+	public int getKeyIndex(Field key) throws IOException;
 
 	/**
 	 * Delete this node and all child nodes.
@@ -67,11 +90,12 @@ interface BTreeNode {
 	 * Check the consistency of this node and all of its children.
 	 * @return true if consistency check passed, else false
 	 * @param tableName name of table containing this node
-	 * @param monitor
-	 * @throws IOException 
+	 * @param monitor task monitor
+	 * @throws IOException if IO error occured
+	 * @throws CancelledException if task cancelled
 	 * @{@link ThrowsTag} CancelledException
 	 */
-	public boolean isConsistent(String tableName, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	public boolean isConsistent(String tableName, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 }

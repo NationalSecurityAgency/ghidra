@@ -23,7 +23,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
@@ -328,8 +327,6 @@ public class MemoryDiff {
 				    && blockDiff.isNameDifferent()) {
 			try {
 				block1.setName(block2.getName());
-			} catch (DuplicateNameException e) {
-			    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			} catch (LockException e) {
 			    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}

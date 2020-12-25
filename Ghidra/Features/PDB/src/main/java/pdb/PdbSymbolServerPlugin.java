@@ -35,6 +35,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
+import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorRestrictions;
 import ghidra.framework.Application;
@@ -399,16 +400,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 			testDirectory = localDir;
 		}
 		else {
-			String userHome = System.getProperty("user.home");
-
-			String storedLocalDir =
-				Preferences.getProperty(PdbParser.PDB_STORAGE_PROPERTY, userHome, true);
-
-			testDirectory = new File(storedLocalDir);
-
-			if (!testDirectory.exists()) {
-				testDirectory = new File(userHome);
-			}
+			testDirectory = PdbLocator.getDefaultPdbSymbolsDir();
 		}
 
 		final File storedDirectory = testDirectory;
@@ -444,7 +436,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 			throw new CancelledException();
 		}
 
-		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY, chosenDir[0].getAbsolutePath());
+		PdbLocator.setDefaultPdbSymbolsDir(chosenDir[0]);
 
 		return chosenDir[0];
 	}

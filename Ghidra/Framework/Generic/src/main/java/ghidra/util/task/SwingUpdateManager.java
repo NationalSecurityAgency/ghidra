@@ -15,14 +15,6 @@
  */
 package ghidra.util.task;
 
-import javax.swing.Timer;
-
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
-import utilities.util.reflection.ReflectionUtilities;
-
 /**
  * A class to allow clients to buffer events.  UI components may receive numbers events to make
  * changes to their underlying data model.  Further, for many of these clients, it is sufficient
@@ -50,30 +42,9 @@ import utilities.util.reflection.ReflectionUtilities;
  * via synchronization on this object.   The Swing thread is used to perform updates, which
  * guarantees that only one update will happen at a time.  
  */
-public class SwingUpdateManager {
-	private static final long NONE = 0;
-	public static final int DEFAULT_MAX_DELAY = 30000;
-	private static final int MIN_DELAY_FLOOR = 10;
-	private static final int DEFAULT_MIN_DELAY = 250;
-	private static final String DEFAULT_NAME = SwingUpdateManager.class.getSimpleName();
-	private static final WeakSet<SwingUpdateManager> instances =
-		WeakDataStructureFactory.createCopyOnReadWeakSet();
+public class SwingUpdateManager extends AbstractSwingUpdateManager {
 
-	private final Timer timer;
-	private final int minDelay;
-	private final int maxDelay;
 	private final Runnable clientRunnable;
-
-	private final String name;
-	private String inceptionInformation;
-
-	private long requestTime = NONE;
-	private long bufferingStartTime;
-	private boolean disposed = false;
-
-	// This is true when work has begun and is not finished.  This is only mutated on the 
-	// Swing thread, but is read by other threads.
-	private boolean isWorking;
 
 	/**
 	 * Constructs a new SwingUpdateManager with default values for min and max delay.  See
@@ -88,8 +59,8 @@ public class SwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
-	 * the given value.
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, 
+	 * regardless of the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops
 	 *                 coming in before actually updating the screen.
@@ -102,8 +73,8 @@ public class SwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
-	 * the given value.
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, 
+	 * regardless of the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops
 	 *                 coming in before actually updating the screen.
@@ -111,7 +82,8 @@ public class SwingUpdateManager {
 	 * @param r the runnable that performs the client work.
 	 */
 	public SwingUpdateManager(int minDelay, int maxDelay, Runnable r) {
-		this(minDelay, maxDelay, DEFAULT_NAME, r);
+		super(minDelay, maxDelay, DEFAULT_NAME);
+		this.clientRunnable = r;
 	}
 
 	/**
@@ -127,232 +99,40 @@ public class SwingUpdateManager {
 	 * @param r the runnable that performs the client work.
 	 */
 	public SwingUpdateManager(int minDelay, int maxDelay, String name, Runnable r) {
-
-		if (r == null) {
-			throw new IllegalArgumentException("Runnable callback cannot be null");
-		}
-
+		super(minDelay, maxDelay, name);
 		this.clientRunnable = r;
-		this.maxDelay = maxDelay;
-		this.name = name;
-
-		recordInception();
-		this.minDelay = Math.max(MIN_DELAY_FLOOR, minDelay);
-		timer = new Timer(minDelay, e -> timerCallback());
-		timer.setRepeats(false);
-		instances.add(this);
-	}
-
-	/**
-	 * Signals to perform an update.  See the class header for the usage of the various
-	 * update methods.
-	 */
-	public synchronized void update() {
-		if (disposed) {
-			return;
-		}
-
-		requestTime = System.currentTimeMillis();
-		SystemUtilities.runSwingLater(this::checkForWork);
-	}
-
-	/**
-	 * Signals to perform an update.  See the class header for the usage of the various
-	 * update methods.
-	 */
-	public synchronized void updateLater() {
-		if (disposed) {
-			return;
-		}
-
-		requestTime = System.currentTimeMillis();
-		bufferingStartTime = bufferingStartTime == NONE ? requestTime : bufferingStartTime;
-		scheduleCheckForWork();
-	}
-
-	/**
-	 * Signals to perform an update.  See the class header for the usage of the various
-	 * update methods.
-	 */
-	public void updateNow() {
-		synchronized (this) {
-			if (disposed) {
-				return;
-			}
-
-			requestTime = System.currentTimeMillis();
-			bufferingStartTime = NONE;	// set so that the max delay check will trigger work
-		}
-		SystemUtilities.runSwingNow(this::checkForWork);
-	}
-
-	/**
-	 * Signals to stop any buffered work.   This will not stop any in-progress work.
-	 */
-	public synchronized void stop() {
-		if (disposed) {
-			return;
-		}
-
-		timer.stop();
-		requestTime = NONE;
-		bufferingStartTime = NONE;
-	}
-
-	/**
-	 * Returns true if there is a pending request that hasn't started yet.  Any currently
-	 * executing requests will not affect this call.
-	 *
-	 * @return true if there is a pending request that hasn't started yet.
-	 */
-	public synchronized boolean hasPendingUpdates() {
-		if (disposed) {
-			return false;
-		}
-
-		return requestTime != NONE;
-	}
-
-	/**
-	 * Returns true if any work is being performed or if there is buffered work
-	 * @return true if any work is being performed or if there is buffered work
-	 */
-	public synchronized boolean isBusy() {
-		if (disposed) {
-			return false;
-		}
-
-		return requestTime != NONE || isWorking;
-	}
-
-	public synchronized void dispose() {
-		timer.stop();
-		instances.remove(this);
-		requestTime = NONE;
-		bufferingStartTime = NONE;
-		disposed = true;
-	}
-
-	public synchronized boolean isDisposed() {
-		return disposed;
 	}
 
 	@Override
-	public String toString() {
-		return name + " @ " + inceptionInformation;
+	protected void swingDoWork() {
+		clientRunnable.run();
 	}
 
-	public String toStringDebug() {
-		//@formatter:off
-		return "{\n" +
-			"\tname: " + name + "\n" +
-			"\tcreator: " + inceptionInformation + " ("+System.identityHashCode(this)+")\n" +
-			"\trequest time: "+requestTime + "\n" +
-			"\twork count: " + isWorking + "\n" +
-		"}";
-		//@formatter:on
+	/**
+	 * Signals to perform an update.  See the class header for the usage of the various
+	 * update methods.
+	 */
+	@Override
+	public synchronized void update() {
+		super.update();
 	}
 
-	// note: this is called on the Swing thread
-	private void checkForWork() {
-
-		if (shouldDoWork()) {
-			doWork();
-		}
+	/**
+	 * Signals to perform an update.  See the class header for the usage of the various
+	 * update methods.
+	 */
+	@Override
+	public synchronized void updateLater() {
+		super.updateLater();
 	}
 
-	// This is similar to checkForWork except that it resets the task buffering when
-	// the time expires and there is no work to do.
-	private void timerCallback() {
-
-		if (shouldDoWork()) {
-			doWork();
-		}
-		else if (requestTime == NONE) {
-			bufferingStartTime = NONE; // The timer has fired and there is no pending work
-		}
-	}
-
-	// note: this is called on the Swing thread
-	private synchronized boolean shouldDoWork() {
-
-		// If no pending request, exit without restarting timer
-		if (requestTime == NONE) {
-			return false;
-		}
-
-		long now = System.currentTimeMillis();
-		if (isTimeToWork(now)) {
-			bufferingStartTime = now;
-			requestTime = NONE;
-			isWorking = true;
-			return true;
-		}
-
-		scheduleCheckForWork();
-		return false;
-	}
-
-	private void scheduleCheckForWork() {
-		timer.start();
-	}
-
-	private boolean isTimeToWork(long now) {
-
-		// if past maximum delay, always do work
-		long timeSinceBufferingStart = now - bufferingStartTime;
-		if (timeSinceBufferingStart > maxDelay) {
-			return true;
-		}
-
-		// if no new requests have come in since the last time we checked, do work
-		long timeSinceLastRequest = now - requestTime;
-		if (timeSinceLastRequest > minDelay) {
-			return true;
-		}
-
-		return false;
-	}
-
-	// note: this is called on the Swing thread
-	private void doWork() {
-		try {
-			clientRunnable.run();
-		}
-		catch (Throwable t) {
-			// catch exceptions so we don't kill the timer
-			Msg.showError(this, null, "Unexpected Exception",
-				"Unexpected exception in Swing Update Manager", t);
-		}
-
-		isWorking = false;
-
-		// we need to clear the buffering flag after the minDelay has passed, so start the timer
-		scheduleCheckForWork();
-	}
-
-//==================================================================================================
-// Inception Info
-//==================================================================================================
-
-	private void recordInception() {
-		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
-	}
-
-	private String getInceptionFromTheFirstClassThatIsNotUs() {
-		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
-
-		StackTraceElement[] trace = t.getStackTrace();
-		String classInfo = trace[0].toString();
-
-		/*
-		// debug source of creation
-		Throwable filtered = ReflectionUtilities.filterJavaThrowable(t);
-		String string = ReflectionUtilities.stackTraceToString(filtered);
-		classInfo = classInfo + "\n\tfrom:\n\n" + string;
-		*/
-
-		return classInfo;
+	/**
+	 * Signals to perform an update.  See the class header for the usage of the various
+	 * update methods.
+	 */
+	@Override
+	public void updateNow() {
+		super.updateNow();
 	}
 
 }

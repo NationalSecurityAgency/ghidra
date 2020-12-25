@@ -41,18 +41,20 @@ public class CliTableMemberRef extends CliAbstractTable {
 		public int classIndex;
 		public int nameIndex;
 		public int signatureIndex;
-		
+
 		public CliMemberRefRow(int classIndex, int nameIndex, int signatureIndex) {
 			this.classIndex = classIndex;
 			this.nameIndex = nameIndex;
 			this.signatureIndex = signatureIndex;
 		}
-		
+
 		@Override
 		public String getRepresentation() {
 			String classRep;
 			try {
-				classRep = getRowRepresentationSafe(CliIndexMemberRefParent.getTableName(classIndex), CliIndexMemberRefParent.getRowIndex(classIndex));
+				classRep =
+					getRowRepresentationSafe(CliIndexMemberRefParent.getTableName(classIndex),
+						CliIndexMemberRefParent.getRowIndex(classIndex));
 			}
 			catch (InvalidInputException e) {
 				classRep = Integer.toHexString(classIndex);
@@ -69,16 +71,18 @@ public class CliTableMemberRef extends CliAbstractTable {
 					sigRep = methodSig.getRepresentation();
 				}
 			}
-			catch (IOException e) {}
+			catch (IOException e) {
+			}
 			return String.format("Class(%s) Member(%s) Signature %s", classRep,
 				metadataStream.getStringsStream().getString(nameIndex), sigRep);
 		}
-		
+
 		@Override
 		public String getRepresentation(CliStreamMetadata stream) {
 			String classRep;
 			try {
-				classRep = getRowShortRepSafe(CliIndexMemberRefParent.getTableName(classIndex), CliIndexMemberRefParent.getRowIndex(classIndex));
+				classRep = getRowShortRepSafe(CliIndexMemberRefParent.getTableName(classIndex),
+					CliIndexMemberRefParent.getRowIndex(classIndex));
 			}
 			catch (InvalidInputException e) {
 				classRep = Integer.toHexString(classIndex);
@@ -95,50 +99,55 @@ public class CliTableMemberRef extends CliAbstractTable {
 					sigRep = methodSig.getRepresentation();
 				}
 			}
-			catch (IOException e) {}
+			catch (IOException e) {
+			}
 			return String.format("%s.%s %s", classRep,
 				stream.getStringsStream().getString(nameIndex), sigRep);
 		}
 	}
-		
-	public CliTableMemberRef(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableMemberRef(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId)
+			throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliMemberRefRow row = new CliMemberRefRow(CliIndexMemberRefParent.readCodedIndex(reader, stream), readStringIndex(reader), readBlobIndex(reader));
+			CliMemberRefRow row =
+				new CliMemberRefRow(CliIndexMemberRefParent.readCodedIndex(reader, stream),
+					readStringIndex(reader), readBlobIndex(reader));
 			rows.add(row);
-			strings.add(row.nameIndex);			
+			strings.add(row.nameIndex);
 		}
 		reader.setPointerIndex(this.readerOffset);
 
 	}
-	
+
 	@Override
-	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log, NTHeader ntHeader) 
+	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
+			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			CliMemberRefRow memberRow = (CliMemberRefRow) row;
-			// Handle the signature
-			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor, log,
-				ntHeader, metadataStream.getBlobStream(), memberRow.signatureIndex);
-			// Create object for correct kind of sig
+
+			// Get the address and create one of several kinds of *Sig objects
+			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor,
+				log, ntHeader, metadataStream.getBlobStream(), memberRow.signatureIndex);
+
 			CliBlob sigBlob = metadataStream.getBlobStream().getBlob(memberRow.signatureIndex);
 			if (CliSigField.isFieldSig(sigBlob)) {
 				CliSigField fieldSig = new CliSigField(sigBlob);
 				metadataStream.getBlobStream().updateBlob(fieldSig, sigAddr, program);
-//				program.getBookmarkManager().setBookmark(sigAddr, BookmarkType.INFO, "Signature!", "FieldSig (Offset "+memberRow.signatureIndex+")");
 			}
 			else {
 				CliSigMethodRef methodSig = new CliSigMethodRef(sigBlob);
 				metadataStream.getBlobStream().updateBlob(methodSig, sigAddr, program);
-//				program.getBookmarkManager().setBookmark(sigAddr, BookmarkType.INFO, "Signature!", "MethodRefSig (Offset "+memberRow.signatureIndex+")");
 			}
 		}
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "MemberRef Row", 0);
-		rowDt.add(CliIndexMemberRefParent.toDataType(metadataStream), "Class", "index-MemberRefParent coded");
+		rowDt.add(CliIndexMemberRefParent.toDataType(metadataStream), "Class",
+			"index-MemberRefParent coded");
 		rowDt.add(metadataStream.getStringIndexDataType(), "Name", "index into String heap");
 		rowDt.add(metadataStream.getBlobIndexDataType(), "Signature", "index into Blob heap");
 		return rowDt;

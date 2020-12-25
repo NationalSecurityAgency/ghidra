@@ -67,8 +67,10 @@ import utilities.util.FileUtilities;
 
 public abstract class AbstractGhidraScriptMgrPluginTest
 		extends AbstractGhidraHeadedIntegrationTest {
-	protected static final int MAX_TIME = 4000;
-	protected static final int SCRIPT_TIMEOUT_SECS = 5;
+	// timeout for scripts run by invoking RunScriptTask directly
+	protected static final int TASK_RUN_SCRIPT_TIMEOUT_SECS = 5;
+	// timeout for scripts run indirectly through the GUI
+	protected static final int GUI_RUN_SCRIPT_TIMEOUT_MSECS = 6 * DEFAULT_WAIT_TIMEOUT;
 	protected TestEnv env;
 	protected CodeBrowserPlugin browser;
 	protected GhidraScriptMgrPlugin plugin;
@@ -594,12 +596,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 	}
 
-	protected void performGlobalRunLastScriptAction() {
-		// note: this action used to be different from the 'run last script'; currently they are
-		// 		 the same
-		pressRunLastScriptButton();
-	}
-
 	protected KeyBindingInputDialog pressKeyBindingAction() {
 		DockingActionIf keyBindingAction = getAction(plugin, "Key Binding");
 		performAction(keyBindingAction, false);
@@ -625,10 +621,17 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 	}
 
-	protected String runScript(String scriptName) throws Exception {
+	/**
+	 * Run the currently selected script by pressing the run button and return its output.
+	 * 
+	 * @param taskName name for the task listener
+	 * @return script output written to the console
+	 * @throws Exception on failure, e.g. timeout
+	 */
+	protected String runSelectedScript(String taskName) throws Exception {
 		clearConsole();
 
-		TaskListenerFlag taskFlag = new TaskListenerFlag(scriptName);
+		TaskListenerFlag taskFlag = new TaskListenerFlag(taskName);
 		TaskUtilities.addTrackedTaskListener(taskFlag);
 
 		pressRunButton();
@@ -639,23 +642,18 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		return output;
 	}
 
-	protected String runLastScript(String scriptName) throws Exception {
-		TaskListenerFlag taskFlag = new TaskListenerFlag(scriptName);
+	/**
+	 * Run the last script by pressing the last script button and return output.
+	 * 
+	 * @param taskName name for the task listener
+	 * @return script output written to the console
+	 * @throws Exception on failure, e.g. timeout
+	 */
+	protected String runLastScript(String taskName) throws Exception {
+		TaskListenerFlag taskFlag = new TaskListenerFlag(taskName);
 		TaskUtilities.addTrackedTaskListener(taskFlag);
 
 		pressRunLastScriptButton();
-		waitForTaskEnd(taskFlag);
-
-		String output = getConsoleText();
-		clearConsole();
-		return output;
-	}
-
-	protected String runGlobalLastScriptAction(String scriptName) throws Exception {
-		TaskListenerFlag taskFlag = new TaskListenerFlag(scriptName);
-		TaskUtilities.addTrackedTaskListener(taskFlag);
-
-		performGlobalRunLastScriptAction();
 		waitForTaskEnd(taskFlag);
 
 		String output = getConsoleText();
@@ -1031,15 +1029,9 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected void waitForTaskEnd(TaskListenerFlag flag) {
 		waitForSwing();
 
-		int waitCount = 0;
-		while (!flag.ended && waitCount < 401) {
-			try {
-				Thread.sleep(DEFAULT_WAIT_DELAY);
-			}
-			catch (InterruptedException e) {
-				// don't care; try again
-			}
-			waitCount++;
+		int totalTime = 0;
+		while (!flag.ended && totalTime <= GUI_RUN_SCRIPT_TIMEOUT_MSECS) {
+			totalTime += sleep(DEFAULT_WAIT_DELAY);
 		}
 
 		TaskUtilities.removeTrackedTaskListener(flag);
@@ -1047,6 +1039,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		if (!flag.ended) {
 			Assert.fail("Task took too long to complete: " + flag);
 		}
+		Msg.debug(this, flag.taskName + " task ended in " + totalTime + " ms");
 	}
 
 	protected int getSelectedRow() {
@@ -1165,11 +1158,11 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		pressButtonByText(window, "Cancel");
 	}
 
-	protected TestChangeProgramScript startCancellableScript() throws Exception {
+	protected TestChangeProgramScript startCancellableScriptTask() throws Exception {
 		TestChangeProgramScript script = new TestChangeProgramScript();
 		ResourceFile fakeFile = new ResourceFile(createTempFile(CANCELLABLE_SCRIPT_NAME, "java"));
 		script.setSourceFile(fakeFile);
-		runScript(script);
+		startRunScriptTask(script);
 
 		boolean success = script.waitForStart();
 		assertTrue("Test script did not get started!", success);
@@ -1202,7 +1195,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		assertTrue("Timed-out waiting for cancelled script to complete", success);
 	}
 
-	protected void runScript(GhidraScript script) throws Exception {
+	protected void startRunScriptTask(GhidraScript script) throws Exception {
 		Task task = new RunScriptTask(script, plugin.getCurrentState(), console);
 		task.addTaskListener(provider.getTaskListener());
 		new TaskLauncher(task, plugin.getTool().getToolFrame());
@@ -1213,10 +1206,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		GhidraScript script =
 			scriptProvider.getScriptInstance(scriptFile, new PrintWriter(System.err));
 
-		return runScriptAndGetOutput(script);
+		return runScriptTaskAndGetOutput(script);
 	}
 
-	protected String runScriptAndGetOutput(GhidraScript script) throws Exception {
+	protected String runScriptTaskAndGetOutput(GhidraScript script) throws Exception {
 		SpyConsole spyConsole = installSpyConsole();
 
 		Task task = new RunScriptTask(script, plugin.getCurrentState(), spyConsole);
@@ -1238,7 +1231,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		TaskLauncher.launch(task);
 
-		latch.await(SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
+		latch.await(TASK_RUN_SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
 
 		String output = spyConsole.getApiOutput();
 		spyConsole.clear();
@@ -1604,11 +1597,11 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		}
 
 		boolean waitForStart() throws Exception {
-			return startedLatch.await(SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
+			return startedLatch.await(TASK_RUN_SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
 		}
 
 		boolean waitForFinish() throws Exception {
-			return doneLatch.await(SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
+			return doneLatch.await(TASK_RUN_SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
 		}
 	}
 

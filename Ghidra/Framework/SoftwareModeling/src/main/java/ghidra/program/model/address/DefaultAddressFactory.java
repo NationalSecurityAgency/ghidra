@@ -392,17 +392,28 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 	}
 
-	protected void renameOverlaySpace(String oldName, String newName)
+	/**
+	 * Rename overlay with newName.
+	 * @param oldOverlaySpaceName the existing overlay address space name
+	 * @param newName the new name of the overlay address space.  
+	 * @return new name applied to existing overlay space
+	 * @throws DuplicateNameException if space with newName already exists
+	 * @throws IllegalArgumentException if specified oldOverlaySpaceName was not found as
+	 * an existing overlay space
+	 */
+	protected String renameOverlaySpace(String oldOverlaySpaceName, String newName)
 			throws DuplicateNameException {
 		if (getAddressSpace(newName) != null) {
 			throw new DuplicateNameException("AddressSpace named " + newName + " already exists!");
 		}
-		AddressSpace space = getAddressSpace(oldName);
+		AddressSpace space = getAddressSpace(oldOverlaySpaceName);
 		if (space != null && space.isOverlaySpace()) {
 			((OverlayAddressSpace) space).setName(newName);
-			spaceNameTable.remove(oldName);
+			spaceNameTable.remove(oldOverlaySpaceName);
 			spaceNameTable.put(space.getName(), space);
+			return newName;
 		}
+		throw new IllegalArgumentException("No such overlay space: " + oldOverlaySpaceName);
 	}
 
 	/**

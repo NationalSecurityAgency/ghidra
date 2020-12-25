@@ -45,6 +45,20 @@ public class DefinedDataIterator implements DataIterator {
 	}
 
 	/**
+	 * Creates a new iterator that traverses a portion of the Program's address space, returning
+	 * data instances that successfully match the predicate.
+	 *
+	 * @param program Program to search
+	 * @param addresses addresses to limit the iteration to
+	 * @param dataTypePredicate {@link Predicate} that tests each data instance's {@link DataType}
+	 * @return new iterator
+	 */
+	public static DefinedDataIterator byDataType(Program program, AddressSetView addresses,
+			Predicate<DataType> dataTypePredicate) {
+		return new DefinedDataIterator(program, addresses, dataTypePredicate, null);
+	}
+
+	/**
 	 * Creates a new iterator that traverses the entire Program's address space, returning
 	 * data instances that successfully match the predicate.
 	 *
@@ -113,8 +127,10 @@ public class DefinedDataIterator implements DataIterator {
 		this.dataTypePredicate = dataTypePredicate;
 		this.dataInstancePredicate = dataInstancePredicate;
 
-		itStack.addLast(program.getListing().getDefinedData(
-			(addrs == null) ? program.getMemory().getAllInitializedAddressSet() : addrs, true));
+		itStack.addLast(program.getListing()
+				.getDefinedData(
+					(addrs == null) ? program.getMemory().getAllInitializedAddressSet() : addrs,
+					true));
 	}
 
 	private DefinedDataIterator(Data singleDataInstance, Predicate<DataType> dataTypePredicate,

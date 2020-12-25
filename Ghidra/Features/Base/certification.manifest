@@ -19,7 +19,6 @@ data/ExtensionPoint.manifest||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
 data/file_extension_icons.xml||GHIDRA||||END|
-data/formats/clamp.properties||GHIDRA||||END|
 data/functionTags.xml||GHIDRA||||END|
 data/ms_pe_rich_products.xml||GHIDRA||||END|
 data/noReturnFunctionConstraints.xml||GHIDRA||||END|
@@ -443,6 +442,8 @@ src/main/help/help/topics/GhidraServer/GhidraServer.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/glossary.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/images/BigEndian.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Glossary/images/LittleEndian.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Graph/GraphIntro.html||GHIDRA||||END|
+src/main/help/help/topics/Graph/GraphServicesIntro.html||GHIDRA||||END|
 src/main/help/help/topics/HeadlessAnalyzer/HeadlessAnalyzer.htm||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/About_pdb.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/ImporterPlugin/images/BatchImportDialog.png||GHIDRA||||END|
@@ -656,6 +657,7 @@ src/main/help/help/topics/Repository/images/label.png||GHIDRA||||END|
 src/main/help/help/topics/Repository/images/lock.gif||GHIDRA||||END|
 src/main/help/help/topics/Repository/images/right.png||GHIDRA||||END|
 src/main/help/help/topics/Repository/images/unlock.gif||GHIDRA||||END|
+src/main/help/help/topics/ResourceActionsPlugin/ResourceActions.html||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/The_Scalar_Table.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|

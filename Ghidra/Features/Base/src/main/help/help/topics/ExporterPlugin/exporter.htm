@@ -269,13 +269,19 @@
 
             <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
             
-            <LI><B>Emit data-type definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
+            <LI><B>Emit Data-type Definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
             
-            <LI><B>Function tags to filter</B> - Optionally list function tags to filter which functions are exported.
-            Multiple tags should be comma separated.</LI>
+            <LI><B>Function Tags to Filter</B> - Optional list of function tags to filter which 
+            functions are exported. Multiple tags must be comma separated.   Any tags listed will
+            be considered a match for purposes of filtering.  The result of filtering, to include
+            or exclude, depends on the <B>Function Tags Excluded/Included</B> setting.
+            <U>If this list is empty, than all functions will be exported</U>.
+            </LI>
             
-            <LI><B>Function tags excluded</B> - Select to exclude all tagged functions from being exported. Deselect to
-            export only tagged functions.</LI>
+            <LI><B>Function Tags Excluded/Included</B> - Select to exclude from export all 
+            functions with a tag that matches any in the <B>Function Tags to Filter</B> list.   
+            Deselect to include in export only functions with a tag that matches any in the list.
+            </LI>
           </UL>
         </BLOCKQUOTE>
 

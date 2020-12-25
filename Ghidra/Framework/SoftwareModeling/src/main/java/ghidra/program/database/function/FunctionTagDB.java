@@ -53,9 +53,10 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 				comment = "";
 			}
 
-			if (!comment.equals(record.getString(FunctionTagAdapter.COMMENT_COL))) {
+			String oldValue = record.getString(FunctionTagAdapter.COMMENT_COL);
+			if (!comment.equals(oldValue)) {
 				record.setString(FunctionTagAdapter.COMMENT_COL, comment);
-				mgr.updateFunctionTag(this);
+				mgr.updateFunctionTag(this, oldValue, comment);
 			}
 
 		}
@@ -77,9 +78,10 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 				name = "";
 			}
 
-			if (!name.equals(record.getString(FunctionTagAdapter.NAME_COL))) {
+			String oldValue = record.getString(FunctionTagAdapter.NAME_COL);
+			if (!name.equals(oldValue)) {
 				record.setString(FunctionTagAdapter.NAME_COL, name);
-				mgr.updateFunctionTag(this);
+				mgr.updateFunctionTag(this, oldValue, name);
 			}
 		}
 		catch (IOException e) {
@@ -137,7 +139,7 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 		// is null, use whatever is in the database.
 		if (rec == null) {
 			try {
-				rec = mgr.getFunctionTagAdapter().getRecord(key);
+				rec = mgr.getTagRecord(key);
 			}
 			catch (IOException e) {
 				mgr.dbError(e);

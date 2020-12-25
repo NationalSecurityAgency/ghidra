@@ -22,7 +22,6 @@ import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.services.*;
-import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
@@ -84,7 +83,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_NAME_SYMBOLPATH = "Symbol Repository Path";
 	private static final String OPTION_DESCRIPTION_SYMBOLPATH =
 		"Directory path to root of Microsoft Symbol Repository Directory";
-	private File DEFAULT_SYMBOLS_DIR = PdbLocator.DEFAULT_SYMBOLS_DIR;
 	private File symbolsRepositoryDir;
 
 	// Include the PE-Header-Specified PDB path for searching for appropriate PDB file.
@@ -310,9 +308,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
 
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
-
 		}
 		catch (PdbException | IOException e) {
 			log.appendMsg(getName(),
@@ -356,14 +351,18 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
+
+		symbolsRepositoryDir = PdbLocator.getDefaultPdbSymbolsDir();
+
 		// PDB file location information
-		options.registerOption(OPTION_NAME_DO_FORCELOAD, Boolean.FALSE, null,
-			OPTION_DESCRIPTION_DO_FORCELOAD);
-		options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
-			DEFAULT_FORCE_LOAD_FILE,
-			null, OPTION_DESCRIPTION_FORCELOAD_FILE);
-		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE, DEFAULT_SYMBOLS_DIR,
-			null, OPTION_DESCRIPTION_SYMBOLPATH);
+		if (developerMode) {
+			options.registerOption(OPTION_NAME_DO_FORCELOAD, Boolean.FALSE, null,
+				OPTION_DESCRIPTION_DO_FORCELOAD);
+			options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
+				DEFAULT_FORCE_LOAD_FILE, null, OPTION_DESCRIPTION_FORCELOAD_FILE);
+		}
+		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE,
+			symbolsRepositoryDir, null, OPTION_DESCRIPTION_SYMBOLPATH);
 		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
 			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
 
@@ -380,9 +379,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 		// PdbApplicatorOptions
 		getPdbApplicatorOptions();
-		options.registerOption(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions, null,
-			OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS);
 		if (developerMode) {
+			options.registerOption(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions, null,
+				OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS);
 			options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
 				applyCodeScopeBlockComments, null,
 				OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS);
@@ -414,11 +413,16 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void optionsChanged(Options options, Program program) {
 
-		doForceLoad = options.getBoolean(OPTION_NAME_DO_FORCELOAD, doForceLoad);
+		if (developerMode) {
+			doForceLoad = options.getBoolean(OPTION_NAME_DO_FORCELOAD, doForceLoad);
+			forceLoadFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
+		}
 
-		forceLoadFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
-
-		symbolsRepositoryDir = options.getFile(OPTION_NAME_SYMBOLPATH, DEFAULT_SYMBOLS_DIR);
+		File symbolsDir = options.getFile(OPTION_NAME_SYMBOLPATH, symbolsRepositoryDir);
+		if (!symbolsDir.equals(symbolsRepositoryDir)) {
+			symbolsRepositoryDir = symbolsDir;
+			PdbLocator.setDefaultPdbSymbolsDir(symbolsDir);
+		}
 
 		includePeSpecifiedPdbPath =
 			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
@@ -434,8 +438,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		setPdbReaderOptions();
 
 		// PdbApplicatorOptions
-		restrictions = options.getEnum(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions);
 		if (developerMode) {
+			restrictions = options.getEnum(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions);
 			applyCodeScopeBlockComments = options.getBoolean(
 				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
 			// Mechanism to apply instruction labels is not yet implemented-> does nothing

@@ -30,6 +30,7 @@ import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
+import utility.function.TerminatingConsumer; 
 
 /**
  * <CODE>ProgramMemoryUtil</CODE> contains some static methods for 
@@ -725,7 +726,7 @@ public class ProgramMemoryUtil {
 			}
 		}
 	}
-
+    
 	/**
 	 * Finds the string in memory indicated by the searchString limited to the indicated 
 	 * memory blocks and address set.
@@ -740,9 +741,36 @@ public class ProgramMemoryUtil {
 	public static List<Address> findString(String searchString, Program program,
 			List<MemoryBlock> blocks, AddressSetView set, TaskMonitor monitor)
 			throws CancelledException {
+	    
+	    List<Address> addresses = new ArrayList<>();
+	    
+	    // just add each found location to the list, no termination of search
+        TerminatingConsumer<Address> collector = (i) -> addresses.add(i);
+		
+		locateString(searchString, collector, program, blocks, set, monitor);
+		
+		return addresses;
+	}
+
+	/**
+	 * Finds the string in memory indicated by the searchString limited to the indicated 
+	 * memory blocks and address set.  Each found location calls the foundLocationConsumer.consume(addr)
+	 * method.  If the search should terminate, (ie. enough results found), then terminateRequested() should
+	 * return true.  Requesting termination is different than a cancellation from the task monitor.
+	 * 
+	 * @param searchString the string to find
+	 * @param foundLocationConsumer location consumer with consumer.accept(Address addr) routine defined
+	 * @param program the program to search
+	 * @param blocks the only blocks to search
+	 * @param set a set of the addresses to limit the results
+	 * @param monitor a task monitor to allow 
+	 * @throws CancelledException if the user cancels
+	 */
+	public static void locateString(String searchString, TerminatingConsumer<Address> foundLocationConsumer, Program program,
+			List<MemoryBlock> blocks, AddressSetView set, TaskMonitor monitor)
+			throws CancelledException {
 
 		monitor.setMessage("Finding \"" + searchString + "\".");
-		List<Address> addresses = new ArrayList<>();
 		int length = searchString.length();
 		byte[] bytes = searchString.getBytes();
 		Memory memory = program.getMemory();
@@ -759,7 +787,10 @@ public class ProgramMemoryUtil {
 					break; // no more found in block.
 				}
 				if (set.contains(foundAddress)) {
-					addresses.add(foundAddress);
+					foundLocationConsumer.accept(foundAddress);
+					if (foundLocationConsumer.terminationRequested()) {
+						return; // termination of search requested
+					}
 				}
 				try {
 					startAddress = foundAddress.add(length);
@@ -770,7 +801,6 @@ public class ProgramMemoryUtil {
 			}
 			while (startAddress.compareTo(endAddress) <= 0);
 		}
-		return addresses;
 	}
 
 	/**

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the Function Signature Definition Parameters database table.
@@ -134,31 +132,31 @@ abstract class FunctionParameterAdapter {
 	abstract protected RecordIterator getRecords() throws IOException;
 
 	/**
-	 * 
-	 * @param handle
-	 * @throws IOException
+	 * Delete underlying database table
+	 * @param handle database handle
+	 * @throws IOException if IO error occurs
 	 */
 	abstract protected void deleteTable(DBHandle handle) throws IOException;
 
 	/**
-	 * 
-	 * @param dataTypeID
-	 * @param parentID
-	 * @param ordinal
-	 * @param name
-	 * @param comment
-	 * @param dtLength
-	 * @return
-	 * @throws IOException
+	 * Create new parameter definition record
+	 * @param dataTypeID parameter datatype ID
+	 * @param parentID parent function definition ID
+	 * @param ordinal parameter ordinal
+	 * @param name parameter name
+	 * @param comment parameter comment
+	 * @param dtLength datatype length if required, else -1
+	 * @return new record
+	 * @throws IOException if IO error occurs
 	 */
 	abstract Record createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException;
 
 	/**
-	 * 
-	 * @param parameterID
-	 * @return
-	 * @throws IOException
+	 * Get parameter definition record
+	 * @param parameterID parameter record ID
+	 * @return parameter definition record or null
+	 * @throws IOException if IO error occurs
 	 */
 	abstract Record getRecord(long parameterID) throws IOException;
 
@@ -178,11 +176,11 @@ abstract class FunctionParameterAdapter {
 	abstract boolean removeRecord(long parameterID) throws IOException;
 
 	/**
-	 * 
-	 * @param functionDefID
-	 * @return
-	 * @throws IOException
+	 * Get parameter definition IDs for specified function definition
+	 * @param functionDefID function definition ID
+	 * @return parameter definition IDs as LongField values within Field array
+	 * @throws IOException if IO error occurs
 	 */
-	abstract long[] getParameterIdsInFunctionDef(long functionDefID) throws IOException;
+	abstract Field[] getParameterIdsInFunctionDef(long functionDefID) throws IOException;
 
 }

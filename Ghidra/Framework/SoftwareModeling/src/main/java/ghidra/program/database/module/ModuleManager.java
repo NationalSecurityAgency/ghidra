@@ -72,7 +72,7 @@ class ModuleManager {
 		nameSet = new HashSet<>();
 		errHandler = treeMgr.getErrorHandler();
 		fragMap = new AddressRangeMapDB(handle, addrMap, lock,
-			TreeManager.getFragAddressTableName(treeID), errHandler, LongField.class, true);
+			TreeManager.getFragAddressTableName(treeID), errHandler, LongField.INSTANCE, true);
 		if (createTables) {
 			createDBTables(handle);
 		}
@@ -97,7 +97,7 @@ class ModuleManager {
 		String mapName = TreeManager.getFragAddressTableName(treeID);
 
 		AddressRangeMapDB map = new AddressRangeMapDB(handle, addrMap.getOldAddressMap(),
-			treeMgr.getLock(), mapName, errHandler, LongField.class, true);
+			treeMgr.getLock(), mapName, errHandler, LongField.INSTANCE, true);
 		if (map.isEmpty()) {
 			return;
 		}
@@ -113,7 +113,7 @@ class ModuleManager {
 			int count = 0;
 
 			AddressRangeMapDB tmpMap = new AddressRangeMapDB(tmpDb, addrMap,
-				new Lock("Tmp Upgrade"), mapName, errHandler, LongField.class, false);
+				new Lock("Tmp Upgrade"), mapName, errHandler, LongField.INSTANCE, false);
 
 			AddressRangeIterator iter = map.getAddressRanges();
 			while (iter.hasNext()) {
@@ -135,7 +135,7 @@ class ModuleManager {
 
 			// Copy ranges into new map
 			map = new AddressRangeMapDB(handle, addrMap, treeMgr.getLock(), mapName, errHandler,
-				LongField.class, true);
+				LongField.INSTANCE, true);
 			iter = tmpMap.getAddressRanges();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
@@ -457,22 +457,22 @@ class ModuleManager {
 	}
 
 	/**
-	 * Return true if ID is a descendant of moduleID.
+	 * Return true if specified id is a descendant of moduleID.
 	 */
-	boolean isDescendant(long ID, long moduleID) throws IOException {
+	boolean isDescendant(long id, long moduleID) throws IOException {
 
-		long[] keys = adapter.getParentChildKeys(moduleID, TreeManager.PARENT_ID_COL);
+		Field[] keys = adapter.getParentChildKeys(moduleID, TreeManager.PARENT_ID_COL);
 		if (keys.length == 0) {
 			return false;
 		}
-		for (long key : keys) {
-			Record parentChildRecord = adapter.getParentChildRecord(key);
+		for (Field key : keys) {
+			Record parentChildRecord = adapter.getParentChildRecord(key.getLongValue());
 			long childID = parentChildRecord.getLongValue(TreeManager.CHILD_ID_COL);
 
-			if (childID == ID) {
+			if (childID == id) {
 				return true;
 			}
-			if (isDescendant(ID, childID)) {
+			if (isDescendant(id, childID)) {
 				return true;
 			}
 		}
@@ -645,10 +645,10 @@ class ModuleManager {
 	String[] getParentNames(long childID) {
 		lock.acquire();
 		try {
-			long[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
+			Field[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
 			String[] names = new String[keys.length];
 			for (int i = 0; i < keys.length; i++) {
-				Record parentChildRecord = adapter.getParentChildRecord(keys[i]);
+				Record parentChildRecord = adapter.getParentChildRecord(keys[i].getLongValue());
 				Record mrec = adapter.getModuleRecord(
 					parentChildRecord.getLongValue(TreeManager.PARENT_ID_COL));
 				names[i] = mrec.getString(TreeManager.MODULE_NAME_COL);
@@ -668,10 +668,10 @@ class ModuleManager {
 	ProgramModule[] getParents(long childID) {
 		lock.acquire();
 		try {
-			long[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
+			Field[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
 			ProgramModule[] modules = new ProgramModule[keys.length];
 			for (int i = 0; i < keys.length; i++) {
-				Record parentChildRecord = adapter.getParentChildRecord(keys[i]);
+				Record parentChildRecord = adapter.getParentChildRecord(keys[i].getLongValue());
 				Record mrec = adapter.getModuleRecord(
 					parentChildRecord.getLongValue(TreeManager.PARENT_ID_COL));
 				modules[i] = getModuleDB(mrec);

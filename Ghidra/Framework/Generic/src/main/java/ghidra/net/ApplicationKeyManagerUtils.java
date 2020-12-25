@@ -39,7 +39,7 @@ import sun.security.x509.*;
  * suffice.
  * <p>
  * <b>NOTE:</b> This class makes direct use of classes within the
- * {@link sun.security.x509} package thus breaking portability. While this is
+ * <code>sun.security.x509</code> package thus breaking portability. While this is
  * not preferred, the ability to generate X.509 certificates and keystores
  * appears to be absent from the standard java/javax packages.
  */

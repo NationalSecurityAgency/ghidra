@@ -65,7 +65,7 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 				combo.setSelectedIndex(0);
 				restrictionsCombo.setEnabled(!useMsDiaParser);
 				combo.addActionListener(e -> {
-					useMsDiaParser = (combo.getSelectedIndex() == 0);
+					useMsDiaParser = (combo.getSelectedIndex() == 1);
 					restrictionsCombo.setEnabled(!useMsDiaParser);
 					if (useMsDiaParser) {
 						restrictionsCombo.setSelectedItem(PdbApplicatorRestrictions.NONE);

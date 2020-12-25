@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +140,7 @@ abstract class InstanceSettingsDBAdapter {
 	 * Get keys for the instance settings applied at the given address. 
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract long[] getInstanceKeys(long addr) throws IOException;
+	abstract Field[] getInstanceKeys(long addr) throws IOException;
 
 	/**
 	 * Remove the instance record. 

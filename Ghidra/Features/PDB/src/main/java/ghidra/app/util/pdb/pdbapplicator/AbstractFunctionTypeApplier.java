@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
@@ -42,12 +43,12 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	 */
 	public AbstractFunctionTypeApplier(PdbApplicator applicator, AbstractMsType msType) {
 		super(applicator, msType);
-		String funcName = applicator.getNextAnonymousFunctionName();
+//		String funcName = applicator.getNextAnonymousFunctionName();
 		functionDefinition = new FunctionDefinitionDataType(
-			applicator.getAnonymousFunctionsCategory(), funcName, applicator.getDataTypeManager());
+			applicator.getAnonymousFunctionsCategory(), "_func", applicator.getDataTypeManager());
 		// Updating before trying to apply... if applyFunction fails, then this name will go
 		// unused for the most part, but we also will not get a conflict on the name.
-		applicator.incrementNextAnonymousFunctionName();
+//		applicator.incrementNextAnonymousFunctionName();
 		dataType = functionDefinition;
 	}
 
@@ -191,7 +192,13 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 			argsListApplier.applyTo(this);
 		}
 		setCallingConvention(applicator, callingConvention, hasThisPointer);
+		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition, "_func");
 		setApplied();
+
+//		resolvedDataType = applicator.resolveHighUse(dataType);
+//		if (resolvedDataType != null) {
+//			resolved = true;
+//		}
 	}
 
 	private boolean setReturnType() {

@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.cmd.equate.SetEquateCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.RenameLabelCmd;
@@ -132,6 +133,13 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 			isolate.commit();
 		});
 		waitForDecompiler();
+	}
+
+	private void applyEquate(String equateName, Address addr, long equateValue) {
+		modifyProgram(p -> {
+			SetEquateCmd cmd = new SetEquateCmd(equateName, addr, 0, equateValue);
+			cmd.applyTo(program);
+		});
 	}
 
 	private void renameExisting(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
@@ -400,5 +408,63 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertEquals(highSymbol.getName(), name);
 		assertTrue(highSymbol.isNameLocked());
 		assertTrue(highSymbol.isTypeLocked());
+	}
+
+	@Test
+	public void testHighSymbol_convert() {
+		Address subAddr = addr(0x10015ac);
+		String equateName = "00000000000000000000000001010011b";
+		int equateValue = 0x53;
+		applyEquate(equateName, subAddr, equateValue);
+		decompile("10015ac");
+		ClangTextField line = getLineContaining("if (param");
+		FieldLocation loc = loc(line.getLineNumber(), 20);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token.getText().equals("0b01010011"));
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighConstant);
+		HighSymbol highSymbol = variable.getSymbol();
+		assertTrue(highSymbol instanceof EquateSymbol);
+		EquateSymbol eqSymbol = (EquateSymbol) highSymbol;
+		assertEquals(eqSymbol.getConvert(), EquateSymbol.FORMAT_BIN);
+		assertEquals(eqSymbol.getValue(), equateValue);
+	}
+
+	@Test
+	public void testHighSymbol_dualequates() {
+		// Two equates on the same value at different locations
+		// One a convert, and one a label
+		Address convAddr = addr(0x100165a);
+		String convName = "141";
+		int convValue = 0x8d;
+		applyEquate(convName, convAddr, convValue);
+		Address eqAddr = addr(0x10015f1);
+		String eqName = "BIGEQUATE";
+		int eqValue = 0x8d;
+		applyEquate(eqName, eqAddr, eqValue);
+		decompile("10015ac");
+		ClangTextField line = getLineContaining(",DAT_010056a8");
+		FieldLocation loc = loc(line.getLineNumber(), 23);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token.getText().equals("141"));
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighConstant);
+		HighSymbol highSymbol = variable.getSymbol();
+		assertTrue(highSymbol instanceof EquateSymbol);
+		EquateSymbol eqSymbol = (EquateSymbol) highSymbol;
+		assertEquals(eqSymbol.getConvert(), EquateSymbol.FORMAT_DEC);
+		assertEquals(eqSymbol.getValue(), convValue);
+
+		line = getLineContaining("DAT_010056a8 = ");
+		loc = loc(line.getLineNumber(), 39);
+		token = line.getToken(loc);
+		assertTrue(token.getText().equals(eqName));
+		variable = token.getHighVariable();
+		assertTrue(variable instanceof HighConstant);
+		highSymbol = variable.getSymbol();
+		assertTrue(highSymbol instanceof EquateSymbol);
+		eqSymbol = (EquateSymbol) highSymbol;
+		assertEquals(eqSymbol.getConvert(), 0);
+		assertEquals(eqSymbol.getValue(), eqValue);
 	}
 }

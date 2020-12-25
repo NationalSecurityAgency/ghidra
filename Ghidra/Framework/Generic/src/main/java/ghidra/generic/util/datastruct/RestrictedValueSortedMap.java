@@ -46,7 +46,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		/**
 		 * Construct an iterator starting at a given index of the <em>sub</em> list.
 		 * 
-		 * @param start
+		 * @param start initial iterator position
 		 */
 		public RestrictedEntryListIterator(int start) {
 			this.wit = wrapped.entrySet().listIterator(getLowestIndex() + start);
@@ -125,7 +125,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		/**
 		 * Construct an iterator starting at a given index of the <em>sub</em> list.
 		 * 
-		 * @param start
+		 * @param start initial iterator position
 		 */
 		public RestrictedKeyListIterator(int start) {
 			this.wit = new RestrictedEntryListIterator(start);
@@ -186,8 +186,6 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 
 		/**
 		 * Construct an iterator
-		 * 
-		 * @param start
 		 */
 		public RestrictedValueListIterator() {
 			this(0);
@@ -196,7 +194,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		/**
 		 * Construct an iterator starting at a given index of the <em>sub</em> list.
 		 * 
-		 * @param start
+		 * @param start initial iterator position
 		 */
 		public RestrictedValueListIterator(int start) {
 			this.wit = new RestrictedEntryListIterator(start);

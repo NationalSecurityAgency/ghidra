@@ -54,8 +54,6 @@ public class PdbParser {
 	private static final String README_FILENAME =
 		Application.getInstallationDirectory() + "\\docs\\README_PDB.html";
 
-	public final static String PDB_STORAGE_PROPERTY = "PDB Storage Directory";
-
 	static final String STRUCTURE_KIND = "Structure";
 	static final String UNION_KIND = "Union";
 

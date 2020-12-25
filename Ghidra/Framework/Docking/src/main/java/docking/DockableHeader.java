@@ -167,6 +167,10 @@ public class DockableHeader extends GenericHeader
 
 	private Animator emphasizeDockableComponent() {
 
+		if (!AnimationUtils.isAnimationEnabled()) {
+			return null;
+		}
+
 		ComponentPlaceholder placeholder = dockComp.getComponentWindowingPlaceholder();
 		ComponentNode node = placeholder.getNode();
 		WindowNode windowNode = node.getTopLevelNode();

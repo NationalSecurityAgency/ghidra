@@ -135,16 +135,36 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 
 			DataType argDataType = argApplier.getDataType();
 			if (argDataType == null) {
-				String message =
+				applicator.appendLogMsg(
 					"PDB Warning: No type conversion for " + argApplier.getMsType().toString() +
-						" for parameter " + parameterCount + " of " + functionDefinition.getName();
-				applicator.appendLogMsg(message);
+						" for parameter " + parameterCount + " of " + functionDefinition.getName());
 			}
 			else {
-				ParameterDefinition parameterDefinition =
-					new ParameterDefinitionImpl(null, argDataType, "");
-				parameterDefinitionList.add(parameterDefinition);
-				parameterCount++;
+				try {
+					ParameterDefinition parameterDefinition =
+						new ParameterDefinitionImpl(null, argDataType, "");
+					parameterDefinitionList.add(parameterDefinition);
+					parameterCount++;
+				}
+				catch (IllegalArgumentException e) {
+					try {
+						DataType substitute =
+							Undefined.getUndefinedDataType(argDataType.getLength());
+						ParameterDefinition parameterDefinition =
+							new ParameterDefinitionImpl(null, substitute, "");
+						parameterDefinitionList.add(parameterDefinition);
+						parameterCount++;
+						applicator.appendLogMsg("PDB Warning: Could not apply type " + argDataType +
+							" for parameter " + parameterCount + " of " +
+							functionDefinition.getName() + ". Using undefined type instead.");
+					}
+					catch (IllegalArgumentException e1) {
+						applicator.appendLogMsg("PDB Warning: Could not apply type " + argDataType +
+							" for parameter " + parameterCount + " of " +
+							functionDefinition.getName() + ". Undefined failed: " + e1);
+
+					}
+				}
 			}
 		}
 		functionDefinition.setArguments(parameterDefinitionList.toArray(

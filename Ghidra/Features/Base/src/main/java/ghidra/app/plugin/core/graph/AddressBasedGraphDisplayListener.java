@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import docking.widgets.EventTrigger;
 import ghidra.app.events.*;
+import ghidra.app.nav.NavigationUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
@@ -120,6 +121,10 @@ public abstract class AddressBasedGraphDisplayListener
 			return null;
 		}
 		String id = getVertexId(address);
+		if (id == null) {
+			return null;
+		}
+
 		return graphDisplay.getGraph().getVertex(id);
 	}
 
@@ -154,9 +159,22 @@ public abstract class AddressBasedGraphDisplayListener
 		if (symbols.isEmpty()) {
 			return null;
 		}
-		// there should only be one external symbol with the same name, so just assume the first one is good
-		return symbols.get(0).getAddress();
 
+		// There should only be one external symbol with the same name.
+		// Since externals are not shown in the listing, we are going to do a hack and try
+		// and navigate to a "fake" function if one exists. A "fake" function in Ghidra is just
+		// an indirect pointer to the external function. If such a pointer exists, Ghidra marks
+		// up the location with the function signature.
+		Address symbolAddress = symbols.get(0).getAddress();
+		if (symbolAddress.isExternalAddress()) {
+			Address[] externalLinkageAddresses =
+				NavigationUtils.getExternalLinkageAddresses(program, symbolAddress);
+			// If this is a "fake" function situation, then there should only be one address
+			if (externalLinkageAddresses.length == 1) {
+				symbolAddress = externalLinkageAddresses[0];
+			}
+		}
+		return symbolAddress;
 	}
 
 	protected Address getAddress(AttributedVertex vertex) {
@@ -202,6 +220,9 @@ public abstract class AddressBasedGraphDisplayListener
 
 	private void handleSymbolAddedOrRenamed(Address address, Symbol symbol) {
 		AttributedVertex vertex = getVertex(address);
+		if (vertex == null) {
+			return;
+		}
 		graphDisplay.updateVertexName(vertex, symbol.getName());
 	}
 
@@ -215,7 +236,8 @@ public abstract class AddressBasedGraphDisplayListener
 		graphDisplay.updateVertexName(vertex, displayName);
 	}
 
-	private void dispose() {
+	@Override
+	public void dispose() {
 		Swing.runLater(() -> tool.removeListenerForAllPluginEvents(this));
 		program.removeListener(this);
 	}

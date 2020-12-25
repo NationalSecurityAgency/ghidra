@@ -69,8 +69,8 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 
 		Schema schema = new Schema(0, "Enum ID",
-			new Class[] { StringField.class, StringField.class, LongField.class, ByteField.class,
-				ShortField.class, IntField.class },
+			new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+				ByteField.INSTANCE, ShortField.INSTANCE, IntField.INSTANCE },
 			new String[] { "str1", "str2", "long", "byte", "short", "int" });
 
 		Table table = dbh.createTable("TABLE1", schema);
@@ -108,8 +108,8 @@ public class DBLongKeyChainedBufferUseTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 
 		Schema schema = new Schema(0, "Enum ID",
-			new Class[] { StringField.class, StringField.class, LongField.class, ByteField.class,
-				ShortField.class, IntField.class },
+			new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+				ByteField.INSTANCE, ShortField.INSTANCE, IntField.INSTANCE },
 			new String[] { "str1", "str2", "long", "byte", "short", "int" });
 
 		Table table = dbh.createTable("TABLE1", schema);
