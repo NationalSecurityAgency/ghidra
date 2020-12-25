@@ -78,8 +78,7 @@ task generateGhidraServerClasspath {
 		outfile.parentFile.mkdirs()
 		outfile.withPrintWriter { out ->
 			int idx = 0
-			configurations.runGhidraServer.each { jarFile ->	
-				def JAR_PATH = rootProject.relativePath(jarFile.absolutePath)
+			configurations.runGhidraServer.each { jarFile ->
 				File distPath = file("/")
 				String resPath
 				for (Configuration conf : project.getConfigurations()) {
