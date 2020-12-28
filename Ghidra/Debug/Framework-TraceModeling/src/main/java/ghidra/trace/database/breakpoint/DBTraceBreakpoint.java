@@ -20,7 +20,7 @@ import java.util.*;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
@@ -88,7 +88,7 @@ public class DBTraceBreakpoint
 
 	public DBTraceBreakpoint(DBTraceBreakpointSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceBreakpoint, ?> tree,
-			DBCachedObjectStore<?> store, Record record) {
+			DBCachedObjectStore<?> store, DBRecord record) {
 		super(tree, store, record);
 		this.space = space;
 	}

@@ -20,7 +20,7 @@ import java.util.*;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
@@ -99,7 +99,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 
 		public DBTraceAddressSnapRangePropertyMapNode(
 				DBTraceAddressSnapRangePropertyMapTree<?, ?> tree, DBCachedObjectStore<?> store,
-				Record record) {
+				DBRecord record) {
 			super(store, record);
 			this.tree = tree;
 		}
@@ -242,7 +242,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 
 		public AbstractDBTraceAddressSnapRangePropertyMapData(
 				DBTraceAddressSnapRangePropertyMapTree<T, ?> tree, DBCachedObjectStore<?> store,
-				Record record) {
+				DBRecord record) {
 			super(store, record);
 			this.tree = tree;
 		}
@@ -561,13 +561,13 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 	}
 
 	@Override
-	protected DR createDataEntry(DBCachedObjectStore<DR> store, Record record) {
+	protected DR createDataEntry(DBCachedObjectStore<DR> store, DBRecord record) {
 		return dataFactory.create(this, store, record);
 	}
 
 	@Override
 	protected DBTraceAddressSnapRangePropertyMapNode createNodeEntry(
-			DBCachedObjectStore<DBTraceAddressSnapRangePropertyMapNode> store, Record record) {
+			DBCachedObjectStore<DBTraceAddressSnapRangePropertyMapNode> store, DBRecord record) {
 		return new DBTraceAddressSnapRangePropertyMapNode(this, store, record);
 	}
 

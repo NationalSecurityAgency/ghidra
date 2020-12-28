@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.trace.model.symbol.TraceGlobalVariableSymbol;
@@ -28,7 +28,7 @@ public class DBTraceGlobalVariableSymbol extends AbstractDBTraceVariableSymbol
 	static final String TABLE_NAME = "GlobalVars";
 
 	public DBTraceGlobalVariableSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 	}
 

@@ -126,7 +126,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		int value;
 
 		public DBTraceIntPropertyMapEntry(DBTraceAddressSnapRangePropertyMapTree<Integer, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 
@@ -171,7 +171,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		long value;
 
 		public DBTraceLongPropertyMapEntry(DBTraceAddressSnapRangePropertyMapTree<Long, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 
@@ -229,7 +229,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		protected Class<T> valueClass;
 
 		public DBTraceSaveablePropertyMapEntry(DBTraceAddressSnapRangePropertyMapTree<T, ?> tree,
-				DBCachedObjectStore<?> store, Record record, Class<T> valueClass) {
+				DBCachedObjectStore<?> store, DBRecord record, Class<T> valueClass) {
 			super(tree, store, record);
 			this.valueClass = valueClass;
 		}
@@ -277,13 +277,13 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		}
 
 		@Override
-		protected void doStore(DBTraceSaveablePropertyMapEntry<?> obj, Record record)
+		protected void doStore(DBTraceSaveablePropertyMapEntry<?> obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setBinaryData(column, encode(getValue(obj)));
 		}
 
 		@Override
-		protected void doLoad(DBTraceSaveablePropertyMapEntry<?> obj, Record record)
+		protected void doLoad(DBTraceSaveablePropertyMapEntry<?> obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			byte[] enc = record.getBinaryData(column);
 			if (enc == null) {
@@ -340,7 +340,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		String value;
 
 		public DBTraceStringPropertyMapEntry(DBTraceAddressSnapRangePropertyMapTree<String, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 
@@ -378,7 +378,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			extends AbstractDBTraceAddressSnapRangePropertyMapData<Void> {
 
 		public DBTraceVoidPropertyMapEntry(DBTraceAddressSnapRangePropertyMapTree<Void, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 

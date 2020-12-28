@@ -26,7 +26,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -56,7 +56,7 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 
 	public static interface DBTraceAddressSnapRangePropertyMapDataFactory<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>> {
 		DR create(DBTraceAddressSnapRangePropertyMapTree<T, DR> tree, DBCachedObjectStore<DR> store,
-				Record record);
+				DBRecord record);
 	}
 
 	protected final Class<DR> dataType;

@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import org.junit.*;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -71,7 +71,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		String value;
 
 		public MyEntry(DBTraceAddressSnapRangePropertyMapTree<String, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 

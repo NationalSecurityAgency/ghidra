@@ -107,7 +107,7 @@ public class DBCachedObjectStoreTest {
 		@DBAnnotatedColumn(COL2_NAME)
 		private static DBObjectColumn COL2;
 
-		public MyObject(DBCachedObjectStore<MyObject> store, Record record) {
+		public MyObject(DBCachedObjectStore<MyObject> store, DBRecord record) {
 			super(store, record);
 		}
 
@@ -208,7 +208,7 @@ public class DBCachedObjectStoreTest {
 			assertEquals(0, obj.getKey());
 			assertTrue(store.isCached(0));
 			Table table = handle.getTable(OBJECTS_TABLE_NAME);
-			Record record = table.getRecord(obj.getKey());
+			DBRecord record = table.getRecord(obj.getKey());
 			assertNotNull(record);
 		}
 	}
@@ -221,7 +221,7 @@ public class DBCachedObjectStoreTest {
 			assertEquals(0x80, obj.getKey());
 			assertTrue(store.isCached(0x80));
 			Table table = handle.getTable(OBJECTS_TABLE_NAME);
-			Record record = table.getRecord(obj.getKey());
+			DBRecord record = table.getRecord(obj.getKey());
 			assertNotNull(record);
 		}
 	}
@@ -272,7 +272,7 @@ public class DBCachedObjectStoreTest {
 			obj.setF2(0x802);
 			obj.updated();
 			Table table = handle.getTable(OBJECTS_TABLE_NAME);
-			Record record = table.getRecord(obj.getKey());
+			DBRecord record = table.getRecord(obj.getKey());
 			assertEquals(0x801, record.getLongValue(0));
 			assertEquals(0x802, record.getIntValue(1));
 		}
@@ -284,7 +284,7 @@ public class DBCachedObjectStoreTest {
 			Table table = myDomainObject.storeFactory.getOrCreateTable(OBJECTS_TABLE_NAME,
 				MyObject.class, false);
 			assertEquals(0, table.getRecordCount());
-			Record record = table.getSchema().createRecord(0x1234);
+			DBRecord record = table.getSchema().createRecord(0x1234);
 			record.setLongValue(0, 0x811);
 			record.setIntValue(1, 0x812);
 			table.putRecord(record);
@@ -301,7 +301,7 @@ public class DBCachedObjectStoreTest {
 			Table table = myDomainObject.storeFactory.getOrCreateTable(OBJECTS_TABLE_NAME,
 				MyObject.class, false);
 			assertEquals(0, table.getRecordCount());
-			Record record = table.getSchema().createRecord(0x1234);
+			DBRecord record = table.getSchema().createRecord(0x1234);
 			record.setLongValue(0, 0x811);
 			record.setIntValue(1, 0x812);
 			table.putRecord(record);

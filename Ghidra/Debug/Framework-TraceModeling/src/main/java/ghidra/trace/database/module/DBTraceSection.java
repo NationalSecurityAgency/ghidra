@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
@@ -68,7 +68,7 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 
 	public DBTraceSection(DBTraceModuleSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceSection, ?> tree,
-			DBCachedObjectStore<?> store, Record record) {
+			DBCachedObjectStore<?> store, DBRecord record) {
 		super(tree, store, record);
 		this.space = space;
 	}

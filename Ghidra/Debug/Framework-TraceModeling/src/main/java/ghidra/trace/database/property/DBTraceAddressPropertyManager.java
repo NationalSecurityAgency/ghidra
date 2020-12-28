@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.util.TypeMismatchException;
@@ -66,7 +66,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 
 		AbstractDBTracePropertyMap<?, ?> map;
 
-		public DBTraceAddressPropertyEntry(DBCachedObjectStore<?> store, Record record) {
+		public DBTraceAddressPropertyEntry(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 

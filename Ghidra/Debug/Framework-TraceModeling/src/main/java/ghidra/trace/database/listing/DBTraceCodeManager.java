@@ -28,7 +28,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.*;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
@@ -101,7 +101,7 @@ public class DBTraceCodeManager
 		private DBTraceCodeManager manager;
 
 		public DBTraceCodePrototypeEntry(DBTraceCodeManager manager, DBCachedObjectStore<?> store,
-				Record record) {
+				DBRecord record) {
 			super(store, record);
 			this.manager = manager;
 		}

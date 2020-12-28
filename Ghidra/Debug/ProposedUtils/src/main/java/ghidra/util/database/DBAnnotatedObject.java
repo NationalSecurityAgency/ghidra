@@ -18,7 +18,7 @@ package ghidra.util.database;
 import java.io.IOException;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import db.util.ErrorHandler;
 import ghidra.program.database.DatabaseObject;
 import ghidra.util.LockHold;
@@ -29,10 +29,10 @@ public class DBAnnotatedObject extends DatabaseObject {
 	private final ErrorHandler adapter;
 	private final List<DBFieldCodec<?, ?, ?>> codecs;
 
-	Record record;
+	DBRecord record;
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public DBAnnotatedObject(DBCachedObjectStore<?> store, Record record) {
+	public DBAnnotatedObject(DBCachedObjectStore<?> store, DBRecord record) {
 		super(store == null ? null : store.cache, record == null ? -1 : record.getKey());
 		this.store = store;
 		this.record = record;
@@ -130,7 +130,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 		// Extension point
 	}
 
-	private Record getFreshRecord(Record rec) throws IOException {
+	private DBRecord getFreshRecord(DBRecord rec) throws IOException {
 		if (rec != null) {
 			return rec;
 		}
@@ -155,7 +155,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		try (LockHold hold = LockHold.lock(store.readLock())) {
 			return doRefresh(rec);
 		}
@@ -166,7 +166,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected boolean doRefresh(Record rec) throws IOException {
+	protected boolean doRefresh(DBRecord rec) throws IOException {
 		rec = getFreshRecord(rec);
 		if (rec == null) {
 			return false;

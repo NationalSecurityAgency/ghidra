@@ -17,7 +17,7 @@ package ghidra.trace.database.listing;
 
 import java.nio.ByteBuffer;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
@@ -37,7 +37,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 
 	public AbstractDBTraceCodeUnit(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<T, ?> tree, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(tree, store, record);
 		this.space = space;
 	}

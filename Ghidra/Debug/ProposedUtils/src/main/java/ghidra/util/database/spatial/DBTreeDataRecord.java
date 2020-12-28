@@ -18,7 +18,7 @@ package ghidra.util.database.spatial;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.util.database.DBCachedObjectStore;
 
 public abstract class DBTreeDataRecord<DS extends BoundedShape<NS>, NS extends BoundingShape<NS>, T>
@@ -88,7 +88,7 @@ public abstract class DBTreeDataRecord<DS extends BoundedShape<NS>, NS extends B
 		}
 	};
 
-	public DBTreeDataRecord(DBCachedObjectStore<?> store, Record record) {
+	public DBTreeDataRecord(DBCachedObjectStore<?> store, DBRecord record) {
 		super(store, record);
 	}
 

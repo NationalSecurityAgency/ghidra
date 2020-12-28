@@ -66,7 +66,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	}
 
 	protected abstract class BoundedStuff<U, V> {
-		abstract U fromRecord(Record record) throws IOException;
+		abstract U fromRecord(DBRecord record) throws IOException;
 
 		abstract U fromObject(T value);
 
@@ -487,7 +487,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	protected final BoundedStuff<Long, Long> keys = new BoundedStuff<>() {
 		@Override
-		Long fromRecord(Record record) {
+		Long fromRecord(DBRecord record) {
 			if (record == null) {
 				return null;
 			}
@@ -557,9 +557,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	};
 
-	protected final BoundedStuff<T, Record> objects = new BoundedStuff<>() {
+	protected final BoundedStuff<T, DBRecord> objects = new BoundedStuff<>() {
 		@Override
-		T fromRecord(Record record) throws IOException {
+		T fromRecord(DBRecord record) throws IOException {
 			if (record == null) {
 				return null;
 			}
@@ -609,20 +609,20 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		@Override
-		DirectedIterator<Record> rawIterator(Direction direction, Range<Long> keyRange)
+		DirectedIterator<DBRecord> rawIterator(Direction direction, Range<Long> keyRange)
 				throws IOException {
 			return DirectedRecordIterator.getIterator(table, keyRange, direction);
 		}
 
 		@Override
-		T fromRaw(Record raw) throws IOException {
+		T fromRaw(DBRecord raw) throws IOException {
 			return fromRecord(raw);
 		}
 	};
 
-	protected final BoundedStuff<Entry<Long, T>, Record> entries = new BoundedStuff<>() {
+	protected final BoundedStuff<Entry<Long, T>, DBRecord> entries = new BoundedStuff<>() {
 		@Override
-		Entry<Long, T> fromRecord(Record record) throws IOException {
+		Entry<Long, T> fromRecord(DBRecord record) throws IOException {
 			if (record == null) {
 				return null;
 			}
@@ -674,13 +674,13 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		@Override
-		DirectedIterator<Record> rawIterator(Direction direction, Range<Long> keyRange)
+		DirectedIterator<DBRecord> rawIterator(Direction direction, Range<Long> keyRange)
 				throws IOException {
 			return DirectedRecordIterator.getIterator(table, keyRange, direction);
 		}
 
 		@Override
-		Entry<Long, T> fromRaw(Record raw) throws IOException {
+		Entry<Long, T> fromRaw(DBRecord raw) throws IOException {
 			return fromRecord(raw);
 		}
 	};
@@ -799,7 +799,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			if (!keyRange.hasLowerBound() && !keyRange.hasUpperBound()) {
 				throw new AssertionError(); // keyRange should never be "all"
 			}
-			final Record rec;
+			final DBRecord rec;
 			if (!keyRange.hasLowerBound()) {
 				rec = table.getRecordAtOrAfter(Long.MIN_VALUE);
 			}
@@ -841,7 +841,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	}
 
 	protected T doCreate(long key) throws IOException {
-		Record rec = schema.createRecord(key);
+		DBRecord rec = schema.createRecord(key);
 		table.putRecord(rec);
 		T created = factory.create(this, rec);
 		created.fresh(true);

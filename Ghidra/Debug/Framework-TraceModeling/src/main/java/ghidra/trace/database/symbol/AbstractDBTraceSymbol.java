@@ -25,7 +25,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import generic.CatenatedCollection;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CircularDependencyException;
@@ -85,7 +85,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	protected final DBTraceSymbolManager manager;
 
 	public AbstractDBTraceSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

@@ -21,7 +21,7 @@ import java.util.*;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -115,7 +115,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 	public DBTraceInstruction(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceInstruction, ?> tree,
-			DBCachedObjectStore<?> store, Record record) {
+			DBCachedObjectStore<?> store, DBRecord record) {
 		super(space, tree, store, record);
 	}
 

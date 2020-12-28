@@ -100,13 +100,13 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setString(column, encode(getValue(obj)));
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			try {
 				String data = record.getString(column);
@@ -148,13 +148,13 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setBinaryData(column, encode(getValue(obj)));
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			byte[] data = record.getBinaryData(column);
 			if (data == null) {
@@ -182,7 +182,7 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			LanguageID id = getValue(obj);
 			if (id == null) {
@@ -194,7 +194,7 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			String id = record.getString(column);
 			if (id == null) {
@@ -214,7 +214,7 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			OffsetSnap value = getValue(obj);
 			if (value == null) {
@@ -236,7 +236,7 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			byte[] data = record.getBinaryData(column);
 			if (data == null) {
@@ -304,13 +304,13 @@ public enum DBTraceUtils {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setByteValue(column, encode(getValue(obj)));
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			setValue(obj, decode(record.getByteValue(column)));
 		}

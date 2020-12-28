@@ -24,7 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -136,7 +136,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	protected boolean foundBadVariables = false;
 
 	public DBTraceFunctionSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 		this.frame = new DBTraceFunctionStackFrame(this);
 	}

@@ -18,7 +18,7 @@ package ghidra.trace.database.stack;
 import java.io.IOException;
 import java.util.Objects;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
 import ghidra.trace.database.DBTraceUtils.AddressDBFieldCodec;
@@ -63,7 +63,7 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 	private DBTraceStack stack;
 
 	public DBTraceStackFrame(DBTraceStackManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

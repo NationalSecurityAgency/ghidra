@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolType;
@@ -74,7 +74,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	protected Range<Long> lifespan;
 
 	public DBTraceLabelSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 	}
 

@@ -17,7 +17,7 @@ package ghidra.trace.database.language;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.language.TraceGuestLanguageMappedRange;
@@ -71,7 +71,7 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 	private AddressRangeImpl guestRange;
 
 	public DBTraceGuestLanguageMappedRange(DBTraceLanguageManager manager, DBCachedObjectStore<?> s,
-			Record r) {
+			DBRecord r) {
 		super(s, r);
 		this.manager = manager;
 	}

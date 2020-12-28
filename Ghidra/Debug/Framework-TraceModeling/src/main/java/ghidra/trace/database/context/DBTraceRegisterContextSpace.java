@@ -26,7 +26,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.database.DBTrace;
@@ -66,7 +66,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 		private DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> map;
 
-		public DBTraceRegisterEntry(DBCachedObjectStore<?> store, Record record) {
+		public DBTraceRegisterEntry(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 

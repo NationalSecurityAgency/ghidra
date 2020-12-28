@@ -24,7 +24,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Collections2;
 
-import db.Record;
+import db.DBRecord;
 import generic.NestedIterator;
 import generic.util.PeekableIterator;
 import ghidra.util.LockHold;
@@ -77,9 +77,9 @@ public abstract class AbstractConstraintsTree< //
 		// Nothing
 	}
 
-	protected abstract DR createDataEntry(DBCachedObjectStore<DR> store, Record record);
+	protected abstract DR createDataEntry(DBCachedObjectStore<DR> store, DBRecord record);
 
-	protected abstract NR createNodeEntry(DBCachedObjectStore<NR> store, Record record);
+	protected abstract NR createNodeEntry(DBCachedObjectStore<NR> store, DBRecord record);
 
 	protected void init() {
 		assert root == null;

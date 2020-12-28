@@ -29,7 +29,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
@@ -133,7 +133,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		String name;
 
 		public MyEntry(DBTraceAddressSnapRangePropertyMapTree<MyEntry, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 
@@ -168,7 +168,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		String value;
 
 		public AltEntry(DBTraceAddressSnapRangePropertyMapTree<String, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 

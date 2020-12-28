@@ -40,7 +40,7 @@ import org.junit.*;
 import com.google.common.collect.Iterators;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -151,7 +151,7 @@ public class RStarTreeMapTest {
 		@DBAnnotatedField(column = VAL_COLUMN_NAME)
 		String value;
 
-		public DBIntRectStringDataRecord(DBCachedObjectStore<?> store, Record record) {
+		public DBIntRectStringDataRecord(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 
@@ -295,7 +295,7 @@ public class RStarTreeMapTest {
 		@DBAnnotatedField(column = DATA_COUNT_COLUMN_NAME)
 		int dataCount;
 
-		public DBIntRectNodeRecord(DBCachedObjectStore<?> store, Record record) {
+		public DBIntRectNodeRecord(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 
@@ -484,13 +484,13 @@ public class RStarTreeMapTest {
 
 		@Override
 		protected DBIntRectStringDataRecord createDataEntry(
-				DBCachedObjectStore<DBIntRectStringDataRecord> store, Record record) {
+				DBCachedObjectStore<DBIntRectStringDataRecord> store, DBRecord record) {
 			return new DBIntRectStringDataRecord(store, record);
 		}
 
 		@Override
 		protected DBIntRectNodeRecord createNodeEntry(
-				DBCachedObjectStore<DBIntRectNodeRecord> store, Record record) {
+				DBCachedObjectStore<DBIntRectNodeRecord> store, DBRecord record) {
 			return new DBIntRectNodeRecord(store, record);
 		}
 

@@ -22,7 +22,7 @@ import com.google.common.collect.Range;
 
 import db.*;
 
-public interface DirectedRecordIterator extends DirectedIterator<Record> {
+public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 
 	public static AbstractDirectedRecordIterator getIterator(Table table, Range<Long> keyRange,
 			Direction direction) throws IOException {
@@ -37,10 +37,10 @@ public interface DirectedRecordIterator extends DirectedIterator<Record> {
 	private static DirectedRecordIterator applyBegFilter(DirectedRecordIterator it, int columnIndex,
 			Field exclude) throws IOException {
 		return new DirectedRecordIterator() {
-			Record next = findFirst();
+			DBRecord next = findFirst();
 
-			private Record findFirst() throws IOException {
-				Record r = null;
+			private DBRecord findFirst() throws IOException {
+				DBRecord r = null;
 				while (it.hasNext()) {
 					r = it.next();
 					if (r.getFieldValue(columnIndex).equals(exclude)) {
@@ -52,8 +52,8 @@ public interface DirectedRecordIterator extends DirectedIterator<Record> {
 			}
 
 			@Override
-			public Record next() throws IOException {
-				Record ret = next;
+			public DBRecord next() throws IOException {
+				DBRecord ret = next;
 				next = it.next();
 				return ret;
 			}
@@ -74,11 +74,11 @@ public interface DirectedRecordIterator extends DirectedIterator<Record> {
 	private static DirectedRecordIterator applyEndFilter(DirectedRecordIterator it, int columnIndex,
 			Field exclude) throws IOException {
 		return new DirectedRecordIterator() {
-			Record next = it.next();
+			DBRecord next = it.next();
 
 			@Override
-			public Record next() throws IOException {
-				Record ret = next;
+			public DBRecord next() throws IOException {
+				DBRecord ret = next;
 				next = it.next();
 				return ret;
 			}

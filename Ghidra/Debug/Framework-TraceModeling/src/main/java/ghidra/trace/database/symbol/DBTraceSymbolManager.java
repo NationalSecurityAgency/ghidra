@@ -81,7 +81,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		long symbolID;
 
 		public DBTraceSymbolIDEntry(DBTraceAddressSnapRangePropertyMapTree<Long, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 
@@ -110,7 +110,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		@DBAnnotatedField(column = NAME_COLUMN_NAME)
 		String name;
 
-		public DBTraceCallingConventionEntry(DBCachedObjectStore<?> store, Record record) {
+		public DBTraceCallingConventionEntry(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 
@@ -145,7 +145,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		protected final DBTraceSymbolManager manager;
 
 		public DBTraceFunctionTag(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-				Record record) {
+				DBRecord record) {
 			super(store, record);
 			this.manager = manager;
 		}
@@ -263,7 +263,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		@DBAnnotatedField(column = TAG_COLUMN_NAME, indexed = true)
 		private long tagKey;
 
-		public DBTraceFunctionTagMapping(DBCachedObjectStore<?> store, Record record) {
+		public DBTraceFunctionTagMapping(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 
@@ -296,14 +296,14 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		}
 
 		@Override
-		protected void doStore(DBTraceVariableStorageEntry obj, Record record)
+		protected void doStore(DBTraceVariableStorageEntry obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			VariableStorage value = getValue(obj);
 			record.setString(column, value == null ? null : value.getSerializationString());
 		}
 
 		@Override
-		protected void doLoad(DBTraceVariableStorageEntry obj, Record record)
+		protected void doLoad(DBTraceVariableStorageEntry obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			String serial = record.getString(column);
 			try {
@@ -332,7 +332,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		protected final DBTraceSymbolManager manager;
 
 		public DBTraceVariableStorageEntry(DBTraceSymbolManager manager,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 			this.manager = manager;
 		}

@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import db.BinaryField;
-import db.Record;
+import db.DBRecord;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStack;
@@ -87,13 +87,13 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 		}
 
 		@Override
-		protected void doStore(DBAnnotatedObject obj, Record record)
+		protected void doStore(DBAnnotatedObject obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setBinaryData(column, encode(getValue(obj)));
 		}
 
 		@Override
-		protected void doLoad(DBAnnotatedObject obj, Record record)
+		protected void doLoad(DBAnnotatedObject obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			setValue(obj, decode(record.getBinaryData(column)));
 		}
@@ -109,7 +109,7 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 	private DBTraceThread thread;
 	private final List<DBTraceStackFrame> frames = new ArrayList<>();
 
-	public DBTraceStack(DBTraceStackManager manager, DBCachedObjectStore<?> store, Record record) {
+	public DBTraceStack(DBTraceStackManager manager, DBCachedObjectStore<?> store, DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

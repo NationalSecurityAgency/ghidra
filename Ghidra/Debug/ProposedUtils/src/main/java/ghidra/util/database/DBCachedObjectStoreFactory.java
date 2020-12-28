@@ -31,11 +31,11 @@ import ghidra.util.exception.VersionException;
 public class DBCachedObjectStoreFactory {
 
 	public interface DBFieldCodec<VT, OT extends DBAnnotatedObject, FT extends db.Field> {
-		void store(OT obj, Record record);
+		void store(OT obj, DBRecord record);
 
 		void store(VT value, FT f);
 
-		void load(OT obj, Record record);
+		void load(OT obj, DBRecord record);
 
 		Class<VT> getValueType();
 
@@ -84,7 +84,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void store(OT obj, Record record) {
+		public void store(OT obj, DBRecord record) {
 			try {
 				doStore(obj, record);
 			}
@@ -94,7 +94,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void load(OT obj, Record record) {
+		public void load(OT obj, DBRecord record) {
 			try {
 				doLoad(obj, record);
 			}
@@ -133,10 +133,10 @@ public class DBCachedObjectStoreFactory {
 			field.set(obj, value);
 		}
 
-		protected abstract void doStore(OT obj, Record record)
+		protected abstract void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException;
 
-		protected abstract void doLoad(OT obj, Record record)
+		protected abstract void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException;
 	}
 
@@ -147,7 +147,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setBooleanValue(column, field.getBoolean(obj));
 		}
@@ -158,7 +158,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			field.setBoolean(obj, record.getBooleanValue(column));
 		}
@@ -171,7 +171,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setByteValue(column, field.getByte(obj));
 		}
@@ -182,7 +182,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			field.setByte(obj, record.getByteValue(column));
 		}
@@ -195,7 +195,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setShortValue(column, field.getShort(obj));
 		}
@@ -206,7 +206,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			field.setShort(obj, record.getShortValue(column));
 		}
@@ -219,7 +219,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setIntValue(column, field.getInt(obj));
 		}
@@ -230,7 +230,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			field.setInt(obj, record.getIntValue(column));
 		}
@@ -243,7 +243,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setLongValue(column, field.getLong(obj));
 		}
@@ -254,7 +254,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			field.setLong(obj, record.getLongValue(column));
 		}
@@ -267,7 +267,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setString(column, getValue(obj));
 		}
@@ -278,7 +278,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			setValue(obj, record.getString(column));
 		}
@@ -291,7 +291,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doStore(OT obj, Record record)
+		public void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setBinaryData(column, getValue(obj));
 		}
@@ -302,7 +302,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		public void doLoad(OT obj, Record record)
+		public void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			setValue(obj, record.getBinaryData(column));
 		}
@@ -339,7 +339,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			record.setBinaryData(column, encode(getValue(obj)));
 		}
@@ -350,7 +350,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			setValue(obj, decode(record.getBinaryData(column)));
 		}
@@ -371,7 +371,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		protected void doStore(OT obj, Record record)
+		protected void doStore(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			E value = getValue(obj);
 			if (value == null) {
@@ -393,7 +393,7 @@ public class DBCachedObjectStoreFactory {
 		}
 
 		@Override
-		protected void doLoad(OT obj, Record record)
+		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			byte b = record.getByteValue(column);
 			if (b == -1) {

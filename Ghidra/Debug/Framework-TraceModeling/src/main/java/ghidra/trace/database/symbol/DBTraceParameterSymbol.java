@@ -18,7 +18,7 @@ package ghidra.trace.database.symbol;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -49,7 +49,7 @@ public class DBTraceParameterSymbol extends AbstractDBTraceVariableSymbol
 	protected VariableStorage dynamicStorage = VariableStorage.UNASSIGNED_STORAGE;
 
 	public DBTraceParameterSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 	}
 

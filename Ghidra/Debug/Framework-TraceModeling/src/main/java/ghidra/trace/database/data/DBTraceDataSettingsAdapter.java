@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -71,7 +71,7 @@ public class DBTraceDataSettingsAdapter
 
 		public DBTraceSettingsEntry(
 				DBTraceAddressSnapRangePropertyMapTree<DBTraceSettingsEntry, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 

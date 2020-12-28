@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.trace.model.symbol.TraceClassSymbol;
 import ghidra.util.database.DBCachedObjectStore;
@@ -29,7 +29,7 @@ public class DBTraceClassSymbol extends DBTraceNamespaceSymbol implements TraceC
 	// TODO: Emit lifespan change events
 
 	public DBTraceClassSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 	}
 

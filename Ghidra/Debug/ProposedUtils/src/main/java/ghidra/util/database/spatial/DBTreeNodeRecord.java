@@ -15,7 +15,7 @@
  */
 package ghidra.util.database.spatial;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.util.database.DBCachedObjectStore;
 
 public abstract class DBTreeNodeRecord<NS extends BoundingShape<NS>> extends DBTreeRecord<NS, NS> {
@@ -62,7 +62,7 @@ public abstract class DBTreeNodeRecord<NS extends BoundingShape<NS>> extends DBT
 		public abstract NodeType getParentType();
 	}
 
-	public DBTreeNodeRecord(DBCachedObjectStore<?> store, Record record) {
+	public DBTreeNodeRecord(DBCachedObjectStore<?> store, DBRecord record) {
 		super(store, record);
 	}
 

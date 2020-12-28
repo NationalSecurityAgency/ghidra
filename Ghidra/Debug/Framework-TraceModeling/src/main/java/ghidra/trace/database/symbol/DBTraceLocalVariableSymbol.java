@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.symbol.SourceType;
@@ -42,7 +42,7 @@ public class DBTraceLocalVariableSymbol extends AbstractDBTraceVariableSymbol
 	int firstUseOffset;
 
 	public DBTraceLocalVariableSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 	}
 

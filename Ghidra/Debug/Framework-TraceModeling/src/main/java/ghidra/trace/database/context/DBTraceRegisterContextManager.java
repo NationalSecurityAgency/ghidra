@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramContext;
@@ -64,7 +64,7 @@ public class DBTraceRegisterContextManager extends
 		private byte[] value;
 
 		public DBTraceRegisterContextEntry(DBTraceAddressSnapRangePropertyMapTree<byte[], ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 		}
 

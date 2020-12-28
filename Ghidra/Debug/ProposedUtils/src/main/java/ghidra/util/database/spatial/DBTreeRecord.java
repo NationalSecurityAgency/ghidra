@@ -15,13 +15,13 @@
  */
 package ghidra.util.database.spatial;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStore;
 
 public abstract class DBTreeRecord<RS extends BoundedShape<NS>, NS extends BoundingShape<NS>>
 		extends DBAnnotatedObject {
-	public DBTreeRecord(DBCachedObjectStore<?> store, Record record) {
+	public DBTreeRecord(DBCachedObjectStore<?> store, DBRecord record) {
 		super(store, record);
 	}
 

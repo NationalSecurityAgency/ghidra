@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -71,7 +71,7 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 	protected final AddressSet guestAddressSet = new AddressSet();
 
 	public DBTraceGuestLanguage(DBTraceLanguageManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

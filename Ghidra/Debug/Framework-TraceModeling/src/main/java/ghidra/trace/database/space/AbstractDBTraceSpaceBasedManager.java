@@ -23,7 +23,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import generic.CatenatedCollection;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
@@ -63,7 +63,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 
 		DBTraceSpaceBased space;
 
-		public DBTraceSpaceEntry(DBCachedObjectStore<?> store, Record record) {
+		public DBTraceSpaceEntry(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 

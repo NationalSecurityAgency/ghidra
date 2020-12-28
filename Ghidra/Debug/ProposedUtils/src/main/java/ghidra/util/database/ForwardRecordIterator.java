@@ -17,7 +17,7 @@ package ghidra.util.database;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 public class ForwardRecordIterator extends AbstractDirectedRecordIterator {
@@ -31,7 +31,7 @@ public class ForwardRecordIterator extends AbstractDirectedRecordIterator {
 	}
 
 	@Override
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		return it.next();
 	}
 }

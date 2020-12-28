@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
@@ -67,7 +67,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 	private Range<Long> lifespan;
 
 	protected DBTraceThread(DBTraceThreadManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

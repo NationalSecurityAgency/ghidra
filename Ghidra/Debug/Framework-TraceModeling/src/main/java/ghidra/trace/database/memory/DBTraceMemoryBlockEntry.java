@@ -18,7 +18,7 @@ package ghidra.trace.database.memory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.DBTraceUtils.OffsetSnap;
@@ -55,7 +55,7 @@ class DBTraceMemoryBlockEntry extends DBAnnotatedObject {
 	private final DBTraceMemorySpace space;
 
 	public DBTraceMemoryBlockEntry(DBTraceMemorySpace space, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.space = space;
 	}

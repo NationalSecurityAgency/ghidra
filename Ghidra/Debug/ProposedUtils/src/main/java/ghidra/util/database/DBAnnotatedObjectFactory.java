@@ -15,8 +15,8 @@
  */
 package ghidra.util.database;
 
-import db.Record;
+import db.DBRecord;
 
 public interface DBAnnotatedObjectFactory<T extends DBAnnotatedObject> {
-	T create(DBCachedObjectStore<T> store, Record record);
+	T create(DBCachedObjectStore<T> store, DBRecord record);
 }

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -72,7 +72,7 @@ public abstract class AbstractDBTraceVariableSymbol extends AbstractDBTraceSymbo
 	protected Address address;
 
 	public AbstractDBTraceVariableSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 	}
 

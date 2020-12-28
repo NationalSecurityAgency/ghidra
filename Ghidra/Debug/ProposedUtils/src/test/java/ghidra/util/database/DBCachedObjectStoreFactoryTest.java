@@ -23,7 +23,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -68,7 +68,7 @@ public class DBCachedObjectStoreFactoryTest {
 		@DBAnnotatedField(column = "C")
 		int c;
 
-		public MyObject(DBCachedObjectStore<? extends MyObject> store, Record record) {
+		public MyObject(DBCachedObjectStore<? extends MyObject> store, DBRecord record) {
 			super(store, record);
 		}
 	}
@@ -92,7 +92,7 @@ public class DBCachedObjectStoreFactoryTest {
 		@DBAnnotatedField(column = "B")
 		int b;
 
-		public MyExtObject(DBCachedObjectStore<? extends MyExtObject> store, Record record) {
+		public MyExtObject(DBCachedObjectStore<? extends MyExtObject> store, DBRecord record) {
 			super(store, record);
 		}
 	}
@@ -661,7 +661,7 @@ public class DBCachedObjectStoreFactoryTest {
 		@DBAnnotatedField(column = BINARY_COLUMN_NAME)
 		byte[] binaryField;
 
-		public MyKitchenSink(DBCachedObjectStore<?> store, Record record) {
+		public MyKitchenSink(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 	}
@@ -695,7 +695,7 @@ public class DBCachedObjectStoreFactoryTest {
 		@DBAnnotatedColumn(FIELD_COLUMN_NAME)
 		static DBObjectColumn FIELD_COLUMN;
 
-		public AbstractObject(DBCachedObjectStore<?> store, Record record) {
+		public AbstractObject(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 	}
@@ -705,7 +705,7 @@ public class DBCachedObjectStoreFactoryTest {
 		@DBAnnotatedField(column = FIELD_COLUMN_NAME)
 		int myField;
 
-		public MyFromAbstract(DBCachedObjectStore<?> store, Record record) {
+		public MyFromAbstract(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 	}
@@ -769,7 +769,7 @@ public class DBCachedObjectStoreFactoryTest {
 		@DBAnnotatedField(column = ENUM_COLUMN_NAME)
 		MyEnumTooBig enumField;
 
-		public MyUsesMyEnumTooBig(DBCachedObjectStore<?> store, Record record) {
+		public MyUsesMyEnumTooBig(DBCachedObjectStore<?> store, DBRecord record) {
 			super(store, record);
 		}
 	}

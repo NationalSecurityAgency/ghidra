@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
@@ -65,7 +65,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 
 	public DBTraceData(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceData, ?> tree,
-			DBCachedObjectStore<?> store, Record record) {
+			DBCachedObjectStore<?> store, DBRecord record) {
 		super(space, tree, store, record);
 	}
 

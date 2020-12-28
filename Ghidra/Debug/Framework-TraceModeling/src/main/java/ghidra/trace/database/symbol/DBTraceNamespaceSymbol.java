@@ -20,7 +20,7 @@ import java.util.Collection;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.CircularDependencyException;
@@ -39,7 +39,7 @@ public class DBTraceNamespaceSymbol extends AbstractDBTraceSymbol implements Tra
 	protected final AddressSet allAddresses;
 
 	public DBTraceNamespaceSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(manager, store, record);
 		allAddresses = manager.trace.getBaseAddressFactory().getAddressSet();
 	}

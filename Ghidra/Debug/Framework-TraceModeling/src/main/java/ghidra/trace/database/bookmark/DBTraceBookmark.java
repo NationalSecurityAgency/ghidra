@@ -17,7 +17,7 @@ package ghidra.trace.database.bookmark;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Bookmark;
@@ -66,7 +66,7 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 
 	public DBTraceBookmark(DBTraceBookmarkSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceBookmark, ?> tree,
-			DBCachedObjectStore<?> store, Record record) {
+			DBCachedObjectStore<?> store, DBRecord record) {
 		super(tree, store, record);
 		this.space = space;
 	}

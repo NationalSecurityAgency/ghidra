@@ -23,7 +23,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -78,7 +78,7 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 
 		public DBTraceEquateReference(DBTraceEquateSpace space,
 				DBTraceAddressSnapRangePropertyMapTree<DBTraceEquateReference, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 			this.space = space;
 		}

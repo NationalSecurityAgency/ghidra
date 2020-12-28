@@ -21,7 +21,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.DBTraceUtils.*;
@@ -93,7 +93,7 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 	private Range<Long> lifespan;
 
 	public DBTraceStaticMapping(DBTraceStaticMappingManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

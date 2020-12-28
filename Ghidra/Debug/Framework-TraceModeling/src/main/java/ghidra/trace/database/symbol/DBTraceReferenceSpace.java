@@ -23,7 +23,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -140,7 +140,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 		public DBTraceReferenceEntry(DBTraceReferenceSpace space,
 				DBTraceAddressSnapRangePropertyMapTree<DBTraceReferenceEntry, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 			this.space = space;
 		}
@@ -280,7 +280,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 		public DBTraceXRefEntry(DBTraceReferenceSpace space,
 				DBTraceAddressSnapRangePropertyMapTree<DBTraceXRefEntry, ?> tree,
-				DBCachedObjectStore<?> store, Record record) {
+				DBCachedObjectStore<?> store, DBRecord record) {
 			super(tree, store, record);
 			this.space = space;
 		}

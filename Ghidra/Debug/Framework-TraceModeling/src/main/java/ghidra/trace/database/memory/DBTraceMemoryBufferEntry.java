@@ -56,7 +56,7 @@ public class DBTraceMemoryBufferEntry extends DBAnnotatedObject {
 
 	private DBBuffer buffer;
 
-	public DBTraceMemoryBufferEntry(DBHandle dbh, DBCachedObjectStore<?> store, Record record) {
+	public DBTraceMemoryBufferEntry(DBHandle dbh, DBCachedObjectStore<?> store, DBRecord record) {
 		super(store, record);
 		this.dbh = dbh;
 	}

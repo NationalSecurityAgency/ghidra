@@ -19,7 +19,7 @@ import java.util.Collection;
 
 import com.google.common.collect.Range;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.pcode.Varnode;
@@ -49,7 +49,7 @@ public class DBTraceEquate extends DBAnnotatedObject implements TraceEquate {
 	protected final DBTraceEquateManager manager;
 
 	public DBTraceEquate(DBTraceEquateManager manager, DBCachedObjectStore<DBTraceEquate> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}

@@ -17,7 +17,7 @@ package ghidra.trace.database.time;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -60,7 +60,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	private DBTraceThread eventThread;
 
 	public DBTraceSnapshot(DBTraceTimeManager manager, DBCachedObjectStore<?> store,
-			Record record) {
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}
