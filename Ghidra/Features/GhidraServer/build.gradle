@@ -79,7 +79,6 @@ task generateGhidraServerClasspath {
 		outfile.withPrintWriter { out ->
 			int idx = 0
 			configurations.runGhidraServer.each { jarFile ->	
-				def JAR_PATH = rootProject.relativePath(jarFile.absolutePath)
 				File distPath = file("/")
 				String resPath
 				for (Configuration conf : project.getConfigurations()) {
