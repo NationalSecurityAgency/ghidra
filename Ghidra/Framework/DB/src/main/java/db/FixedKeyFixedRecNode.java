@@ -122,7 +122,7 @@ class FixedKeyFixedRecNode extends FixedKeyRecordNode {
 	}
 
 	@Override
-	boolean insertRecord(int index, Record record) throws IOException {
+	boolean insertRecord(int index, DBRecord record) throws IOException {
 
 		// Check for use of indirect chained record node(s)
 //		int len = record.length();
@@ -143,26 +143,26 @@ class FixedKeyFixedRecNode extends FixedKeyRecordNode {
 	}
 
 	@Override
-	FixedKeyNode updateRecord(int index, Record record) throws IOException {
+	FixedKeyNode updateRecord(int index, DBRecord record) throws IOException {
 		int offset = getRecordOffset(index) + keySize;
 		record.write(buffer, offset);
 		return getRoot();
 	}
 
 	@Override
-	public Record getRecord(Field key, Schema schema) throws IOException {
+	public DBRecord getRecord(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0)
 			return null;
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		record.read(buffer, getRecordOffset(index) + keySize);
 		return record;
 	}
 
 	@Override
-	public Record getRecord(Schema schema, int index) throws IOException {
+	public DBRecord getRecord(Schema schema, int index) throws IOException {
 		Field key = getKeyField(index);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		record.read(buffer, getRecordOffset(index) + keySize);
 		return record;
 	}

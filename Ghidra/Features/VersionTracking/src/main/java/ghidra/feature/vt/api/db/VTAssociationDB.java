@@ -19,7 +19,7 @@ import static ghidra.feature.vt.api.db.VTAssociationTableDBAdapter.AssociationTa
 
 import java.util.Collection;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.feature.vt.api.impl.MarkupItemManagerImpl;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.main.*;
@@ -32,12 +32,12 @@ import ghidra.util.task.TaskMonitor;
 
 public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 
-	public Record record;
+	public DBRecord record;
 	private MarkupItemManagerImpl markupManager;
 	public final AssociationDatabaseManager associationDBM;
 
 	public VTAssociationDB(AssociationDatabaseManager associationManager,
-			DBObjectCache<VTAssociationDB> cache, Record record) {
+			DBObjectCache<VTAssociationDB> cache, DBRecord record) {
 		super(cache, record.getKey());
 		this.associationDBM = associationManager;
 		this.record = record;
@@ -80,7 +80,7 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 	}
 
 	@Override
-	protected boolean refresh(Record associationRecord) {
+	protected boolean refresh(DBRecord associationRecord) {
 		if (associationRecord == null) {
 			associationRecord = associationDBM.getAssociationRecord(key);
 		}
@@ -158,7 +158,7 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 		}
 	}
 
-	Record getRecord() {
+	DBRecord getRecord() {
 		associationDBM.lock.acquire();
 		try {
 			checkIsValid();

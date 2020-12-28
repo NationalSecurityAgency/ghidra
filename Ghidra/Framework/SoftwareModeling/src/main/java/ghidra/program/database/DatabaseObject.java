@@ -17,7 +17,7 @@ package ghidra.program.database;
 
 import java.util.ConcurrentModificationException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.util.Lock;
 
 /**
@@ -140,7 +140,7 @@ abstract public class DatabaseObject {
 	 * @param record optional record which may be used to refresh invalid object
 	 * @return true if the object is valid.
 	 */
-	public boolean checkIsValid(Record record) {
+	public boolean checkIsValid(DBRecord record) {
 		if (deleted) {
 			return false;
 		}
@@ -199,7 +199,7 @@ abstract public class DatabaseObject {
 	 *         object was deleted. Objects that extend this class must implement a refresh method.
 	 *         If an object can never refresh itself, then it should always return false.
 	 */
-	protected boolean refresh(Record record) {
+	protected boolean refresh(DBRecord record) {
 		return refresh();
 	}
 }

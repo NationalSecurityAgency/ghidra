@@ -69,7 +69,7 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, long returnDtID,
+	public DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
 			boolean hasVarArgs, GenericCallingConvention genericCallingConvention,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
@@ -77,7 +77,7 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter
 	}
 
 	@Override
-	public Record getRecord(long functionDefID) throws IOException {
+	public DBRecord getRecord(long functionDefID) throws IOException {
 		return translateRecord(table.getRecord(functionDefID));
 	}
 
@@ -87,7 +87,7 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -112,11 +112,11 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter
 	}
 
 	@Override
-	public Record translateRecord(Record oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = FunctionDefinitionDBAdapter.FUN_DEF_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = FunctionDefinitionDBAdapter.FUN_DEF_SCHEMA.createRecord(oldRec.getKey());
 		rec.setString(FUNCTION_DEF_NAME_COL, oldRec.getString(V0_FUNCTION_DEF_NAME_COL));
 		rec.setString(FUNCTION_DEF_COMMENT_COL, oldRec.getString(V0_FUNCTION_DEF_COMMENT_COL));
 		rec.setLongValue(FUNCTION_DEF_CAT_ID_COL, oldRec.getLongValue(V0_FUNCTION_DEF_CAT_ID_COL));
@@ -131,7 +131,7 @@ class FunctionDefinitionDBAdapterV0 extends FunctionDefinitionDBAdapter
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

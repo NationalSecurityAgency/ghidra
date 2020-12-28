@@ -56,7 +56,7 @@ class CategoryDBAdapterV0 extends CategoryDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long categoryID) throws IOException {
+	public DBRecord getRecord(long categoryID) throws IOException {
 		return table.getRecord(categoryID);
 	}
 
@@ -67,24 +67,24 @@ class CategoryDBAdapterV0 extends CategoryDBAdapter {
 
 	@Override
 	void updateRecord(long categoryID, long parentID, String name) throws IOException {
-		Record rec = table.getSchema().createRecord(categoryID);
+		DBRecord rec = table.getSchema().createRecord(categoryID);
 		rec.setString(V0_CATEGORY_NAME_COL, name);
 		rec.setLongValue(V0_CATEGORY_PARENT_COL, parentID);
 		table.putRecord(rec);
 	}
 
 	@Override
-	void putRecord(Record record) throws IOException {
+	void putRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 
 	@Override
-	public Record createCategory(String name, long parentID) throws IOException {
+	public DBRecord createCategory(String name, long parentID) throws IOException {
 		long key = table.getKey();
 		if (key == 0) {
 			key = 1;
 		}
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		rec.setString(V0_CATEGORY_NAME_COL, name);
 		rec.setLongValue(V0_CATEGORY_PARENT_COL, parentID);
 		table.putRecord(rec);
@@ -98,7 +98,7 @@ class CategoryDBAdapterV0 extends CategoryDBAdapter {
 	}
 
 	@Override
-	public Record getRootRecord() throws IOException {
+	public DBRecord getRootRecord() throws IOException {
 		Field[] keys = table.findRecords(new LongField(-1), V0_CATEGORY_PARENT_COL);
 		if (keys.length != 1) {
 			throw new IOException("Found " + keys.length + " entries for root category");

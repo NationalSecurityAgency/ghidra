@@ -66,7 +66,7 @@ class ProtoDBAdapterV1 implements ProtoDBAdapter {
 	public void createRecord(int protoID, long addr, byte[] b, boolean inDelaySlot)
 			throws IOException {
 
-		Record record = PrototypeManager.PROTO_SCHEMA.createRecord(protoID);
+		DBRecord record = PrototypeManager.PROTO_SCHEMA.createRecord(protoID);
 		record.setBinaryData(PrototypeManager.BYTES_COL, b);
 		record.setLongValue(PrototypeManager.ADDR_COL, addr);
 		record.setBooleanValue(2, inDelaySlot);
@@ -83,7 +83,7 @@ class ProtoDBAdapterV1 implements ProtoDBAdapter {
 	/**
 	 * @see ghidra.program.database.code.ProtoDBAdapter#getRecord(int)
 	 */
-	public Record getRecord(int protoId) throws IOException {
+	public DBRecord getRecord(int protoId) throws IOException {
 		return table.getRecord(protoId);
 	}
 

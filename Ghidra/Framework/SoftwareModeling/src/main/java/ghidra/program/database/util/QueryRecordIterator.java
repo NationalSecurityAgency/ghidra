@@ -24,7 +24,7 @@ import ghidra.util.exception.ClosedException;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -34,7 +34,7 @@ public class QueryRecordIterator implements RecordIterator {
 
 	private RecordIterator iter;
 	private Query query;
-	private Record record;
+	private DBRecord record;
 	private boolean forward;
 
 	/**
@@ -77,9 +77,9 @@ public class QueryRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#next()
 	 */
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		if (hasNext()) {
-			Record rec = record;
+			DBRecord rec = record;
 			record = null;
 			return rec;
 		}
@@ -99,9 +99,9 @@ public class QueryRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#previous()
 	 */
-	public Record previous() throws IOException {
+	public DBRecord previous() throws IOException {
 		if (hasPrevious()) {
-			Record rec = record;
+			DBRecord rec = record;
 			record = null;
 			return rec;
 		}
@@ -118,7 +118,7 @@ public class QueryRecordIterator implements RecordIterator {
 	private void findNext() {
 		try {
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				if (query.matches(rec)) {
 					record = rec;
 					return;
@@ -136,7 +136,7 @@ public class QueryRecordIterator implements RecordIterator {
 	private void findPrevious() {
 		try {
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				if (query.matches(rec)) {
 					record = rec;
 					return;

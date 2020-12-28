@@ -464,7 +464,7 @@ public class DBTest extends AbstractGenericTest {
 		}
 
 		Schema s = tables[1].getSchema();
-		Record rec = s.createRecord(1);
+		DBRecord rec = s.createRecord(1);
 
 		txId = dbh.startTransaction();
 		try {

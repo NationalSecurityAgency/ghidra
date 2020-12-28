@@ -59,9 +59,9 @@ public class VTMatchMarkupItemTableDBAdapterV0 extends VTMatchMarkupItemTableDBA
 	}
 
 	@Override
-	public Record createMarkupItemRecord(MarkupItemStorage markupItem) throws IOException {
+	public DBRecord createMarkupItemRecord(MarkupItemStorage markupItem) throws IOException {
 
-		Record record = TABLE_SCHEMA.createRecord(table.getKey());
+		DBRecord record = TABLE_SCHEMA.createRecord(table.getKey());
 
 		VTAssociationDB association = (VTAssociationDB) markupItem.getAssociation();
 		VTSession manager = association.getSession();
@@ -113,12 +113,12 @@ public class VTMatchMarkupItemTableDBAdapterV0 extends VTMatchMarkupItemTableDBA
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

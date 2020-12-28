@@ -384,7 +384,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	private void createDatabase() throws IOException {
 		table = dbh.createTable(TABLE_NAME, SCHEMA);
 
-		Record record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
+		DBRecord record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
 		record.setString(0, Integer.toString(DB_VERSION));
 		table.putRecord(record);
 	}
@@ -430,13 +430,13 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	private void upgradeDatabase() throws IOException {
 		table = dbh.getTable(TABLE_NAME);
-		Record record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
+		DBRecord record = SCHEMA.createRecord(new StringField(ARCHIVE_DB_VERSION));
 		record.setString(0, Integer.toString(DB_VERSION));
 		table.putRecord(record);
 	}
 
 	private int getStoredVersion() throws IOException {
-		Record record = table.getRecord(new StringField(ARCHIVE_DB_VERSION));
+		DBRecord record = table.getRecord(new StringField(ARCHIVE_DB_VERSION));
 
 		// DB Version
 		// if record does not exist return 1;

@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -47,7 +47,7 @@ class EnumDB extends DataTypeDB implements Enum {
 	private List<BitGroup> bitGroups;
 
 	EnumDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache, EnumDBAdapter adapter,
-			EnumValueDBAdapter valueAdapter, Record record) {
+			EnumValueDBAdapter valueAdapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
 		this.valueAdapter = valueAdapter;
@@ -88,7 +88,7 @@ class EnumDB extends DataTypeDB implements Enum {
 		Field[] ids = valueAdapter.getValueIdsInEnum(key);
 
 		for (Field id : ids) {
-			Record rec = valueAdapter.getRecord(id.getLongValue());
+			DBRecord rec = valueAdapter.getRecord(id.getLongValue());
 			String valueName = rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL);
 			long value = rec.getLongValue(EnumValueDBAdapter.ENUMVAL_VALUE_COL);
 			addToCache(valueName, value);
@@ -256,7 +256,7 @@ class EnumDB extends DataTypeDB implements Enum {
 			Field[] ids = valueAdapter.getValueIdsInEnum(key);
 
 			for (Field id : ids) {
-				Record rec = valueAdapter.getRecord(id.getLongValue());
+				DBRecord rec = valueAdapter.getRecord(id.getLongValue());
 				if (valueName.equals(rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL))) {
 					valueAdapter.removeRecord(id.getLongValue());
 					break;
@@ -554,7 +554,7 @@ class EnumDB extends DataTypeDB implements Enum {
 			nameMap = null;
 			valueMap = null;
 			bitGroups = null;
-			Record rec = adapter.getRecord(key);
+			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 				return super.refresh();

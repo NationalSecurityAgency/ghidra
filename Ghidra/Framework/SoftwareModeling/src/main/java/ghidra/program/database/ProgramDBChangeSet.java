@@ -542,7 +542,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 			}
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				ids.add(rec.getLongValue(0));
 			}
 		}
@@ -557,7 +557,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 			}
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				Address addr1 = addrMap.decodeAddress(rec.getLongValue(0));
 				Address addr2 = addrMap.decodeAddress(rec.getLongValue(1));
 				// Memory addresses or external addresses are the only ones that should be in here.
@@ -611,7 +611,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 	private void writeIdRecords(DBHandle dbh, String tableName, Set<Long> ids) throws IOException {
 		if (ids.size() > 0) {
 			Table table = dbh.createTable(tableName, STORED_ID_SCHEMA);
-			Record rec = STORED_ID_SCHEMA.createRecord(0);
+			DBRecord rec = STORED_ID_SCHEMA.createRecord(0);
 			int key = 1;
 			for (long id : ids) {
 				rec.setKey(key++);
@@ -625,7 +625,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 			throws IOException {
 		if (!set.isEmpty()) {
 			Table table = dbh.createTable(tableName, STORED_ADDRESS_RANGE_SCHEMA);
-			Record rec = STORED_ADDRESS_RANGE_SCHEMA.createRecord(0);
+			DBRecord rec = STORED_ADDRESS_RANGE_SCHEMA.createRecord(0);
 			int key = 1;
 			for (KeyRange range : addrMap.getKeyRanges(set, false, false)) {
 				rec.setKey(key++);

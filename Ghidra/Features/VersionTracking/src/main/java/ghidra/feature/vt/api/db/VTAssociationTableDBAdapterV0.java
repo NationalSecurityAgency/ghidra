@@ -49,9 +49,9 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	Record insertRecord(long sourceAddressID, long destinationAddressID, VTAssociationType type,
+	DBRecord insertRecord(long sourceAddressID, long destinationAddressID, VTAssociationType type,
 			VTAssociationStatus lockedStatus, int voteCount) throws IOException {
-		Record record = TABLE_SCHEMA.createRecord(table.getKey());
+		DBRecord record = TABLE_SCHEMA.createRecord(table.getKey());
 		record.setLongValue(SOURCE_ADDRESS_COL.column(), sourceAddressID);
 		record.setLongValue(DESTINATION_ADDRESS_COL.column(), destinationAddressID);
 		record.setByteValue(TYPE_COL.column(), (byte) type.ordinal());
@@ -67,7 +67,7 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
@@ -94,9 +94,9 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	Set<Record> getRelatedAssociationRecordsBySourceAndDestinationAddress(long sourceAddressID,
+	Set<DBRecord> getRelatedAssociationRecordsBySourceAndDestinationAddress(long sourceAddressID,
 			long destinationAddressID) throws IOException {
-		Set<Record> recordSet = new HashSet<Record>();
+		Set<DBRecord> recordSet = new HashSet<DBRecord>();
 
 		RecordIterator iterator = getRecordsForSourceAddress(sourceAddressID);
 		while (iterator.hasNext()) {
@@ -112,9 +112,9 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	Set<Record> getRelatedAssociationRecordsBySourceAddress(long sourceAddressID)
+	Set<DBRecord> getRelatedAssociationRecordsBySourceAddress(long sourceAddressID)
 			throws IOException {
-		Set<Record> recordSet = new HashSet<Record>();
+		Set<DBRecord> recordSet = new HashSet<DBRecord>();
 
 		RecordIterator iterator = getRecordsForSourceAddress(sourceAddressID);
 		while (iterator.hasNext()) {
@@ -125,9 +125,9 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	Set<Record> getRelatedAssociationRecordsByDestinationAddress(long destinationAddressID)
+	Set<DBRecord> getRelatedAssociationRecordsByDestinationAddress(long destinationAddressID)
 			throws IOException {
-		Set<Record> recordSet = new HashSet<Record>();
+		Set<DBRecord> recordSet = new HashSet<DBRecord>();
 
 		RecordIterator iterator = getRecordsForDestinationAddress(destinationAddressID);
 		while (iterator.hasNext()) {
@@ -138,7 +138,7 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

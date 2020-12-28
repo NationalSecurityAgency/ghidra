@@ -37,7 +37,7 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, long returnDtID,
+	public DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
 			boolean hasVarArgs, GenericCallingConvention genericCallingConvention,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException(
@@ -45,7 +45,7 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long functionDefID) throws IOException {
+	public DBRecord getRecord(long functionDefID) throws IOException {
 		return null;
 	}
 
@@ -55,7 +55,7 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -80,7 +80,7 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

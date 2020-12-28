@@ -253,7 +253,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		RecordIterator iter = oldStackRefAdapter.getRecords();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 
 			Address fromAddr =
 				oldAddrMap.decodeAddress(rec.getLongValue(OldStackRefDBAdpater.FROM_ADDR_COL));
@@ -1469,7 +1469,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	public byte getReferenceLevel(Address toAddr) {
 
 		try {
-			Record rec = toAdapter.getRecord(addrMap.getKey(toAddr, false));
+			DBRecord rec = toAdapter.getRecord(addrMap.getKey(toAddr, false));
 			if (rec != null) {
 				return rec.getByteValue(ToAdapter.REF_LEVEL_COL);
 			}

@@ -64,7 +64,7 @@ class OldStackVariableDBAdapterV1 extends OldStackVariableDBAdapter {
 	}
 
 	@Override
-	public Record getStackVariableRecord(long key) throws IOException {
+	public DBRecord getStackVariableRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 

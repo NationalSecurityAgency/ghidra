@@ -90,7 +90,7 @@ abstract class DataDBAdapter {
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getKey());
 				rec.setKey(addrMap.getKey(addr, true));
 				tmpAdapter.putRecord(rec);
@@ -103,7 +103,7 @@ abstract class DataDBAdapter {
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.putRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -118,31 +118,31 @@ abstract class DataDBAdapter {
 	 * Get the record at or after the given start address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecordAtOrAfter(Address start) throws IOException;
+	abstract DBRecord getRecordAtOrAfter(Address start) throws IOException;
 
 	/**
 	 * Get the Record afer the given start address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecordAfter(Address start) throws IOException;
+	abstract DBRecord getRecordAfter(Address start) throws IOException;
 
 	/**
 	 * Get the record at the given start address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(Address start) throws IOException;
+	abstract DBRecord getRecord(Address start) throws IOException;
 
 	/**
 	 * Get the record at the give key;
 	 * @param key the key of the record to retrieve.
 	 */
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Get the record before the given address address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecordBefore(Address addr) throws IOException;
+	abstract DBRecord getRecordBefore(Address addr) throws IOException;
 
 	/**
 	 * Get a record iterator starting at the given address address.
@@ -169,7 +169,7 @@ abstract class DataDBAdapter {
 	 * @param dataTypeID ID of data type
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createData(Address addr, long dataTypeID) throws IOException;
+	abstract DBRecord createData(Address addr, long dataTypeID) throws IOException;
 
 	/**
 	 * Get the number of records in the data table.
@@ -183,7 +183,7 @@ abstract class DataDBAdapter {
 	 * @throws IOException if there was a problem accessing the database
 	 * @return
 	 */
-	abstract Record getRecordAtOrBefore(Address addr) throws IOException;
+	abstract DBRecord getRecordAtOrBefore(Address addr) throws IOException;
 
 	/**
 	 * Get a iterator over the keys in the data table.
@@ -216,7 +216,7 @@ abstract class DataDBAdapter {
 	 * @param record the record to add or update.
 	 * @throws IOException if a database io error occurs.
 	 */
-	abstract void putRecord(Record record) throws IOException;
+	abstract void putRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Returns an iterator over the keys that fall within the address set provided.

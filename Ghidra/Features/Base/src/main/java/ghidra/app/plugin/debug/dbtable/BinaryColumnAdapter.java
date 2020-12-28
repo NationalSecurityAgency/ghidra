@@ -17,7 +17,7 @@
 package ghidra.app.plugin.debug.dbtable;
 
 import db.BinaryField;
-import db.Record;
+import db.DBRecord;
 
 public class BinaryColumnAdapter extends AbstractColumnAdapter {
 
@@ -27,7 +27,7 @@ public class BinaryColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getKeyValue(Record rec) {
+	Object getKeyValue(DBRecord rec) {
 		byte[] bytes = ((BinaryField) rec.getKeyField()).getBinaryData();
 		StringBuffer buf = new StringBuffer("  byte[" + bytes.length + "] = ");
 		if (bytes.length > 0) {
@@ -45,7 +45,7 @@ public class BinaryColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getValue(Record rec, int col) {
+	Object getValue(DBRecord rec, int col) {
 		byte[] bytes = rec.getBinaryData(col);
 		if (bytes == null) {
 			return "null";

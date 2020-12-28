@@ -172,7 +172,7 @@ public class AddressRangeMapDB implements DBListener {
 				}
 				try {
 					long index = addrMap.getKey(addr, false);
-					Record rec = rangeMapTable.getRecordAtOrBefore(index);
+					DBRecord rec = rangeMapTable.getRecordAtOrBefore(index);
 					if (rec != null) {
 						Address startAddr = addrMap.decodeAddress(rec.getKey());
 						Address endAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
@@ -300,7 +300,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			// fix up the start of the range, unless the range starts at a key-range MIN
 			if (!addrMap.isKeyRangeMin(start)) {
-				Record rec = rangeMapTable.getRecordBefore(start);
+				DBRecord rec = rangeMapTable.getRecordBefore(start);
 				if (rec != null) {
 					long to = rec.getLongValue(TO_COL);
 					if (addrMap.hasSameKeyBase(start, to)) {
@@ -331,7 +331,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			// fix up the end of the range, unless the end goes to key-range MAX
 			if (!addrMap.isKeyRangeMax(end)) {
-				Record rec = rangeMapTable.getRecord(end + 1);
+				DBRecord rec = rangeMapTable.getRecord(end + 1);
 				if (rec != null && rec.fieldEquals(VALUE_COL, value)) {
 					end = rec.getLongValue(TO_COL);
 					rangeMapTable.deleteRecord(rec.getKey());
@@ -341,7 +341,7 @@ public class AddressRangeMapDB implements DBListener {
 			// fix records which overlap paint range
 			RecordIterator iter = rangeMapTable.iterator(start, end, start);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				iter.delete();
 				long to = rec.getLongValue(TO_COL);
 				if (to > end) {
@@ -357,7 +357,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			// insert new range entry if value was specified
 			if (value != null) {
-				Record rec = rangeMapSchema.createRecord(start);
+				DBRecord rec = rangeMapSchema.createRecord(start);
 				rec.setLongValue(TO_COL, end);
 				rec.setField(VALUE_COL, value);
 				rangeMapTable.putRecord(rec);
@@ -413,7 +413,7 @@ public class AddressRangeMapDB implements DBListener {
 				try {
 					RecordIterator iterator = rangeMapTable.iterator();
 					while (iterator.hasNext()) {
-						Record rec = iterator.next();
+						DBRecord rec = iterator.next();
 						Address startAddr = addrMap.decodeAddress(rec.getKey());
 						Address endAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						set.addRange(startAddr, endAddr);
@@ -444,7 +444,7 @@ public class AddressRangeMapDB implements DBListener {
 					RecordIterator iterator =
 						rangeMapTable.indexIterator(VALUE_COL, value, value, true);
 					while (iterator.hasNext()) {
-						Record rec = iterator.next();
+						DBRecord rec = iterator.next();
 						Address startAddr = addrMap.decodeAddress(rec.getKey());
 						Address endAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						set.addRange(startAddr, endAddr);
@@ -522,7 +522,7 @@ public class AddressRangeMapDB implements DBListener {
 					AddressKeyRecordIterator addressKeyRecordIterator =
 						new AddressKeyRecordIterator(rangeMapTable, addrMap, min, addr, addr, true);
 					if (addressKeyRecordIterator.hasPrevious()) {
-						Record rec = addressKeyRecordIterator.previous();
+						DBRecord rec = addressKeyRecordIterator.previous();
 						Address fromAddr = addrMap.decodeAddress(rec.getKey());
 						Address toAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						if (toAddr.compareTo(addr) >= 0) {
@@ -534,7 +534,7 @@ public class AddressRangeMapDB implements DBListener {
 					addressKeyRecordIterator =
 						new AddressKeyRecordIterator(rangeMapTable, addrMap, addr, max, addr, true);
 					if (addressKeyRecordIterator.hasNext()) {
-						Record rec = addressKeyRecordIterator.next();
+						DBRecord rec = addressKeyRecordIterator.next();
 						Address fromAddr = addrMap.decodeAddress(rec.getKey());
 						Address toAddr = addrMap.decodeAddress(rec.getLongValue(TO_COL));
 						if (fromAddr.compareTo(addr) == 0) {
@@ -562,7 +562,7 @@ public class AddressRangeMapDB implements DBListener {
 	private class RangeIterator implements AddressRangeIterator {
 
 		private RecordIterator recIter;
-		private Record nextRec;
+		private DBRecord nextRec;
 
 		private boolean checkStart;
 		private long startIndex;
@@ -603,7 +603,7 @@ public class AddressRangeMapDB implements DBListener {
 				try {
 					startIndex = addrMap.getKey(startAddr, false);
 					if (startIndex != AddressMap.INVALID_ADDRESS_KEY) {
-						Record rec = rangeMapTable.getRecordBefore(startIndex);
+						DBRecord rec = rangeMapTable.getRecordBefore(startIndex);
 						if (rec != null) {
 							long to = rec.getLongValue(TO_COL);
 							if (addrMap.hasSameKeyBase(startIndex, to) && to >= startIndex) {
@@ -641,7 +641,7 @@ public class AddressRangeMapDB implements DBListener {
 				try {
 					startIndex = addrMap.getKey(startAddr, false);
 					if (startIndex != AddressMap.INVALID_ADDRESS_KEY) {
-						Record rec = rangeMapTable.getRecordBefore(startIndex);
+						DBRecord rec = rangeMapTable.getRecordBefore(startIndex);
 						if (rec != null) {
 							long to = rec.getLongValue(TO_COL);
 							if (addrMap.hasSameKeyBase(startIndex, to) && to >= startIndex) {
@@ -714,7 +714,7 @@ public class AddressRangeMapDB implements DBListener {
 				AddressRange range = null;
 				if (recIter != null) {
 					try {
-						Record rec;
+						DBRecord rec;
 						if (nextRec != null) {
 							rec = nextRec;
 							nextRec = null;
@@ -788,7 +788,7 @@ public class AddressRangeMapDB implements DBListener {
 	private class ValueRangeIterator implements AddressRangeIterator {
 
 		RecordIterator recIter;
-		Record nextRec;
+		DBRecord nextRec;
 
 		private int expectedModCount;
 
@@ -859,7 +859,7 @@ public class AddressRangeMapDB implements DBListener {
 				AddressRange range = null;
 				if (recIter != null) {
 					try {
-						Record rec;
+						DBRecord rec;
 						if (nextRec != null) {
 							rec = nextRec;
 							nextRec = null;

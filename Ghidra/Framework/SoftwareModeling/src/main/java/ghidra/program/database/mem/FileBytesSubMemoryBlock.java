@@ -17,7 +17,7 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.mem.MemoryAccessException;
 
 /**
@@ -27,7 +27,7 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 	private final FileBytes fileBytes;
 	private final long fileBytesOffset;
 
-	FileBytesSubMemoryBlock(MemoryMapDBAdapter adapter, Record record) throws IOException {
+	FileBytesSubMemoryBlock(MemoryMapDBAdapter adapter, DBRecord record) throws IOException {
 		super(adapter, record);
 		long fileBytesID = record.getLongValue(MemoryMapDBAdapter.SUB_INT_DATA1_COL);
 		fileBytesOffset = record.getLongValue(MemoryMapDBAdapter.SUB_LONG_DATA2_COL);
@@ -104,7 +104,7 @@ class FileBytesSubMemoryBlock extends SubMemoryBlock {
 		adapter.updateSubBlockRecord(record);
 
 		int fileBytesID = record.getIntValue(MemoryMapDBAdapter.SUB_INT_DATA1_COL);
-		Record newSubRecord = adapter.createSubBlockRecord(0, 0, newLength,
+		DBRecord newSubRecord = adapter.createSubBlockRecord(0, 0, newLength,
 			MemoryMapDBAdapter.SUB_TYPE_FILE_BYTES, fileBytesID, fileBytesOffset + offset);
 
 		return new FileBytesSubMemoryBlock(adapter, newSubRecord);

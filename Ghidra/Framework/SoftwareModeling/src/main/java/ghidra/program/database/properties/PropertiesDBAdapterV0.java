@@ -45,7 +45,7 @@ class PropertiesDBAdapterV0 implements PropertiesDBAdapter {
 	 * @see ghidra.program.database.properties.PropertiesDBAdapter#createRecord(java.lang.String, byte, java.lang.String)
 	 */
 	public void putRecord(String propertyName, byte type, String objClassName) throws IOException {
-		Record rec =
+		DBRecord rec =
 			DBPropertyMapManager.PROPERTIES_SCHEMA.createRecord(new StringField(propertyName));
 		rec.setByteValue(DBPropertyMapManager.PROPERTY_TYPE_COL, type);
 		if (type == DBPropertyMapManager.OBJECT_PROPERTY_TYPE) {

@@ -44,7 +44,7 @@ public class ObjectStorageAdapterDB implements ObjectStorage {
 	 * existing record.
 	 * @param rec data record
 	 */
-	public ObjectStorageAdapterDB(Record rec) {
+	public ObjectStorageAdapterDB(DBRecord rec) {
 		readOnly = true;
 		Field[] fields = rec.getFields();
 		for (int i = 0; i < fields.length; i++) {
@@ -335,7 +335,7 @@ public class ObjectStorageAdapterDB implements ObjectStorage {
 	 * Save data into a Record.
 	 * @param rec database record.
 	 */
-	public void save(Record rec) {
+	public void save(DBRecord rec) {
 		int cnt = fieldList.size();
 		for (int i = 0; i < cnt; i++) {
 			rec.setField(i, fieldList.get(i));

@@ -19,7 +19,7 @@
  */
 package ghidra.program.database.util;
 
-import db.Record;
+import db.DBRecord;
 
 /**
  * Query interface used to test a record for some condition.  
@@ -29,5 +29,5 @@ public interface Query {
 	 * Returns true if the given record matches the querys condition.
 	 * @param record the record to test for compliance.
 	 */
-	boolean matches(Record record);
+	boolean matches(DBRecord record);
 }

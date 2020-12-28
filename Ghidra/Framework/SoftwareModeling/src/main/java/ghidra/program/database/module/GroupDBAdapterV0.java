@@ -44,18 +44,18 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record createModule(long parentModuleID, String name)
+	public DBRecord createModule(long parentModuleID, String name)
 			throws IOException, DuplicateNameException {
 
 		if (getModuleRecord(name) != null || getFragmentRecord(name) != null) {
 			throw new DuplicateNameException(name + " already exists");
 		}
-		Record record = TreeManager.MODULE_SCHEMA.createRecord(moduleTable.getKey());
+		DBRecord record = TreeManager.MODULE_SCHEMA.createRecord(moduleTable.getKey());
 		record.setString(TreeManager.MODULE_NAME_COL, name);
 		moduleTable.putRecord(record);
 
 		// insert record for parent/child table
-		Record pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
+		DBRecord pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
 		pcRec.setLongValue(TreeManager.PARENT_ID_COL, parentModuleID);
 		pcRec.setLongValue(TreeManager.CHILD_ID_COL, record.getKey());
 		parentChildTable.putRecord(pcRec);
@@ -64,7 +64,7 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record createFragment(long parentModuleID, String name)
+	public DBRecord createFragment(long parentModuleID, String name)
 			throws IOException, DuplicateNameException {
 
 		if (getFragmentRecord(name) != null || getModuleRecord(name) != null) {
@@ -74,11 +74,11 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 		if (key == 0) {
 			key = 1;
 		}
-		Record record = TreeManager.FRAGMENT_SCHEMA.createRecord(key);
+		DBRecord record = TreeManager.FRAGMENT_SCHEMA.createRecord(key);
 		record.setString(TreeManager.FRAGMENT_NAME_COL, name);
 		fragmentTable.putRecord(record);
 
-		Record pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
+		DBRecord pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
 		pcRec.setLongValue(TreeManager.PARENT_ID_COL, parentModuleID);
 		// negative value to indicate fragment
 		pcRec.setLongValue(TreeManager.CHILD_ID_COL, -key);
@@ -89,12 +89,12 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record getFragmentRecord(long key) throws IOException {
+	public DBRecord getFragmentRecord(long key) throws IOException {
 		return fragmentTable.getRecord(key);
 	}
 
 	@Override
-	public Record getModuleRecord(long key) throws IOException {
+	public DBRecord getModuleRecord(long key) throws IOException {
 		return moduleTable.getRecord(key);
 	}
 
@@ -103,11 +103,11 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	 * @param childID negative value if child is a fragment
 	 */
 	@Override
-	public Record getParentChildRecord(long parentID, long childID) throws IOException {
+	public DBRecord getParentChildRecord(long parentID, long childID) throws IOException {
 		Field[] keys =
 			parentChildTable.findRecords(new LongField(parentID), TreeManager.PARENT_ID_COL);
 		for (int i = 0; i < keys.length; i++) {
-			Record pcRec = parentChildTable.getRecord(keys[i]);
+			DBRecord pcRec = parentChildTable.getRecord(keys[i]);
 			if (pcRec.getLongValue(TreeManager.CHILD_ID_COL) == childID) {
 				return pcRec;
 			}
@@ -116,9 +116,9 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record addParentChildRecord(long moduleID, long childID) throws IOException {
+	public DBRecord addParentChildRecord(long moduleID, long childID) throws IOException {
 
-		Record pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
+		DBRecord pcRec = TreeManager.PARENT_CHILD_SCHEMA.createRecord(parentChildTable.getKey());
 		pcRec.setLongValue(TreeManager.PARENT_ID_COL, moduleID);
 		pcRec.setLongValue(TreeManager.CHILD_ID_COL, childID);
 		parentChildTable.putRecord(pcRec);
@@ -136,7 +136,7 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record getFragmentRecord(String name) throws IOException {
+	public DBRecord getFragmentRecord(String name) throws IOException {
 		Field[] keys =
 			fragmentTable.findRecords(new StringField(name), TreeManager.FRAGMENT_NAME_COL);
 		if (keys.length == 0) {
@@ -149,7 +149,7 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record getModuleRecord(String name) throws IOException {
+	public DBRecord getModuleRecord(String name) throws IOException {
 		Field[] keys = moduleTable.findRecords(new StringField(name), TreeManager.MODULE_NAME_COL);
 		if (keys.length == 0) {
 			return null;
@@ -161,28 +161,28 @@ class GroupDBAdapterV0 implements GroupDBAdapter {
 	}
 
 	@Override
-	public Record getParentChildRecord(long key) throws IOException {
+	public DBRecord getParentChildRecord(long key) throws IOException {
 		return parentChildTable.getRecord(key);
 	}
 
 	@Override
-	public void updateModuleRecord(Record record) throws IOException {
+	public void updateModuleRecord(DBRecord record) throws IOException {
 		moduleTable.putRecord(record);
 	}
 
 	@Override
-	public void updateFragmentRecord(Record record) throws IOException {
+	public void updateFragmentRecord(DBRecord record) throws IOException {
 		fragmentTable.putRecord(record);
 	}
 
 	@Override
-	public void updateParentChildRecord(Record record) throws IOException {
+	public void updateParentChildRecord(DBRecord record) throws IOException {
 		parentChildTable.putRecord(record);
 	}
 
 	@Override
-	public Record createRootModule(String name) throws IOException {
-		Record record = TreeManager.MODULE_SCHEMA.createRecord(0);
+	public DBRecord createRootModule(String name) throws IOException {
+		DBRecord record = TreeManager.MODULE_SCHEMA.createRecord(0);
 		record.setString(TreeManager.MODULE_NAME_COL, name);
 		moduleTable.putRecord(record);
 		return record;

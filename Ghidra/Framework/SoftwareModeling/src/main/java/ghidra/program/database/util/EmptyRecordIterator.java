@@ -21,7 +21,7 @@ package ghidra.program.database.util;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -46,14 +46,14 @@ public class EmptyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#next()
 	 */
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		return null;
 	}
 
 	/**
 	 * @see db.RecordIterator#previous()
 	 */
-	public Record previous() throws IOException {
+	public DBRecord previous() throws IOException {
 		return null;
 	}
 

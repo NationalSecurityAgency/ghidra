@@ -96,15 +96,15 @@ class FunctionAdapterV3 extends FunctionAdapter {
 	 * @see ghidra.program.database.function.FunctionAdapter#getFunctionRecord(long)
 	 */
 	@Override
-	Record getFunctionRecord(long functionKey) throws IOException {
+	DBRecord getFunctionRecord(long functionKey) throws IOException {
 		return table.getRecord(functionKey);
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionAdapter#updateFunctionRecord(db.Record)
+	 * @see ghidra.program.database.function.FunctionAdapter#updateFunctionRecord(db.DBRecord)
 	 */
 	@Override
-	void updateFunctionRecord(Record functionRecord) throws IOException {
+	void updateFunctionRecord(DBRecord functionRecord) throws IOException {
 		table.putRecord(functionRecord);
 	}
 
@@ -112,8 +112,8 @@ class FunctionAdapterV3 extends FunctionAdapter {
 	 * @see ghidra.program.database.function.FunctionAdapter#createFunctionRecord(ghidra.program.model.symbol.Scope, long)
 	 */
 	@Override
-	Record createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException {
-		Record rec = FUNCTION_SCHEMA.createRecord(symbolID);
+	DBRecord createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException {
+		DBRecord rec = FUNCTION_SCHEMA.createRecord(symbolID);
 		rec.setByteValue(FUNCTION_FLAGS_COL, getSignatureSourceFlagBits(SourceType.DEFAULT));
 		rec.setLongValue(RETURN_DATA_TYPE_ID_COL, returnDataTypeId);
 		rec.setByteValue(CALLING_CONVENTION_ID_COL,
@@ -132,10 +132,10 @@ class FunctionAdapterV3 extends FunctionAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionAdapter#translateRecord(db.Record)
+	 * @see ghidra.program.database.function.FunctionAdapter#translateRecord(db.DBRecord)
 	 */
 	@Override
-	Record translateRecord(Record record) {
+	DBRecord translateRecord(DBRecord record) {
 		throw new UnsupportedOperationException();
 	}
 

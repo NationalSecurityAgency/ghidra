@@ -78,7 +78,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, String name, long categoryID, long sourceArchiveID,
+	public DBRecord createRecord(long dataTypeID, String name, long categoryID, long sourceArchiveID,
 			long sourceDataTypeID, long lastChangeTime) throws IOException {
 
 		long tableKey = table.getKey();
@@ -87,7 +87,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.TYPEDEF, tableKey);
 
-		Record record = V1_SCHEMA.createRecord(key);
+		DBRecord record = V1_SCHEMA.createRecord(key);
 		record.setLongValue(V1_TYPEDEF_DT_ID_COL, dataTypeID);
 		record.setString(V1_TYPEDEF_NAME_COL, name);
 		record.setLongValue(V1_TYPEDEF_CAT_COL, categoryID);
@@ -100,7 +100,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long typedefID) throws IOException {
+	public DBRecord getRecord(long typedefID) throws IOException {
 		return table.getRecord(typedefID);
 	}
 
@@ -110,7 +110,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		if (setLastChangeTime) {
 			record.setLongValue(TypedefDBAdapter.TYPEDEF_LAST_CHANGE_TIME_COL,
 				(new Date()).getTime());
@@ -134,12 +134,12 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys =
 			table.findRecords(new LongField(datatypeID.getValue()), V1_TYPEDEF_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
-			Record record = table.getRecord(keys[i]);
+			DBRecord record = table.getRecord(keys[i]);
 			if (record.getLongValue(V1_TYPEDEF_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}

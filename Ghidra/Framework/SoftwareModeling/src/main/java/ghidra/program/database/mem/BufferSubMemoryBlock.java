@@ -18,7 +18,7 @@ package ghidra.program.database.mem;
 import java.io.IOException;
 
 import db.DBBuffer;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.mem.Memory;
 
 /**
@@ -28,7 +28,7 @@ import ghidra.program.model.mem.Memory;
 class BufferSubMemoryBlock extends SubMemoryBlock {
 	final DBBuffer buf;
 
-	BufferSubMemoryBlock(MemoryMapDBAdapter adapter, Record record) throws IOException {
+	BufferSubMemoryBlock(MemoryMapDBAdapter adapter, DBRecord record) throws IOException {
 		super(adapter, record);
 		int bufferID = record.getIntValue(MemoryMapDBAdapter.SUB_INT_DATA1_COL);
 		buf = adapter.getBuffer(bufferID);
@@ -105,7 +105,7 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 
 		DBBuffer split = buf.split(offset);
 
-		Record newSubRecord = adapter.createSubBlockRecord(0, 0, newLength,
+		DBRecord newSubRecord = adapter.createSubBlockRecord(0, 0, newLength,
 			MemoryMapDBAdapter.SUB_TYPE_BUFFER, split.getId(), 0);
 
 		return new BufferSubMemoryBlock(adapter, newSubRecord);

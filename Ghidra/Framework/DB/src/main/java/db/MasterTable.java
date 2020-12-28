@@ -167,7 +167,7 @@ class MasterTable {
 		int oldTableCnt = tableRecords.length;
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			long tablenum = rec.getKey();
 
 			while (ix < tableRecords.length && tablenum > tableRecords[ix].getTableNum()) {
@@ -199,7 +199,7 @@ class MasterTable {
 	 */
 	void flush() throws IOException {
 		for (int i = 0; i < tableRecords.length; i++) {
-			Record rec = tableRecords[i].getRecord();
+			DBRecord rec = tableRecords[i].getRecord();
 			if (rec.isDirty()) {
 				table.putRecord(rec);
 			}

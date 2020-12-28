@@ -27,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
 import java.io.IOException;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import db.util.ErrorHandler;
 
 /**
@@ -71,7 +71,7 @@ public class VoidPropertyMapDB extends PropertyMapDB implements VoidPropertyMap 
 			if (propertyTable == null) {
 				createTable(null);
 			}
-			Record rec = schema.createRecord(key);
+			DBRecord rec = schema.createRecord(key);
 			propertyTable.putRecord(rec);
 			cache.put(key, VOID_OBJECT);
 			changeMgr.setPropertyChanged(name, addr, oldValue, new Boolean(true));

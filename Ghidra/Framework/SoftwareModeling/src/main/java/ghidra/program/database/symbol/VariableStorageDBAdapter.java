@@ -75,9 +75,9 @@ abstract class VariableStorageDBAdapter {
 		throw new AssertException("Variable storage table is from newer version");
 	}
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Locate the record key which corresponds to the specified hash value.

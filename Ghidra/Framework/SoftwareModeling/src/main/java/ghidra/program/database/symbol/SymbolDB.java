@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -43,7 +43,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  */
 public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
-	private Record record;
+	private DBRecord record;
 	private boolean isDeleting = false;
 	protected Address address;
 	protected SymbolManager symbolMgr;
@@ -67,7 +67,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.symbolMgr = symbolMgr;
 		this.address = address;
@@ -93,7 +93,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		if (record != null) {
 			if (rec == null) {
 				rec = symbolMgr.getSymbolRecord(key);
@@ -631,7 +631,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	private void updateSymbolSource(Record symbolRecord, SourceType source) {
+	private void updateSymbolSource(DBRecord symbolRecord, SourceType source) {
 		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
 		flags &= ~SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
 		flags |= (byte) source.ordinal();
@@ -914,7 +914,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	 * Change the record and key associated with this symbol
 	 * @param record the record
 	 */
-	void setRecord(Record record) {
+	void setRecord(DBRecord record) {
 		this.record = record;
 		keyChanged(record.getKey());
 	}

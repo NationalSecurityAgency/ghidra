@@ -72,7 +72,7 @@ abstract class OldFunctionDBAdapter {
 	 * @param functionKey
 	 * @return Record
 	 */
-	abstract Record getFunctionRecord(long functionKey) throws IOException;
+	abstract DBRecord getFunctionRecord(long functionKey) throws IOException;
 
 	/**
 	 * Iterate over all function records.

@@ -55,7 +55,7 @@ class BookmarkDBAdapterV0 extends BookmarkDBAdapter {
 		catch (VersionException e) {
 			throw new AssertException();
 		}
-		Record[] oldTypes = oldMgr.getTypeRecords();
+		DBRecord[] oldTypes = oldMgr.getTypeRecords();
 		if (oldTypes.length == 0) {
 			return;
 		}
@@ -88,7 +88,7 @@ class BookmarkDBAdapterV0 extends BookmarkDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long id) throws IOException {
+	DBRecord getRecord(long id) throws IOException {
 		return conversionAdapter.getRecord(id);
 	}
 

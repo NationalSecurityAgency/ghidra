@@ -83,7 +83,7 @@ class LabelHistoryAdapterV0 extends LabelHistoryAdapter {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(HISTORY_ADDR_COL));
 				rec.setLongValue(HISTORY_ADDR_COL, addrMap.getKey(addr, true));
 				tmpAdapter.table.putRecord(rec);
@@ -98,7 +98,7 @@ class LabelHistoryAdapterV0 extends LabelHistoryAdapter {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.table.putRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -115,7 +115,7 @@ class LabelHistoryAdapterV0 extends LabelHistoryAdapter {
 	@Override
 	public void createRecord(long addr, byte actionID, String labelStr) throws IOException {
 
-		Record rec = table.getSchema().createRecord(table.getKey());
+		DBRecord rec = table.getSchema().createRecord(table.getKey());
 
 		rec.setLongValue(HISTORY_ADDR_COL, addr);
 		rec.setByteValue(HISTORY_ACTION_COL, actionID);
@@ -158,7 +158,7 @@ class LabelHistoryAdapterV0 extends LabelHistoryAdapter {
 	void moveAddress(long oldAddr, long newAddr) throws IOException {
 		Field[] keys = table.findRecords(new LongField(oldAddr), HISTORY_ADDR_COL);
 		for (Field key : keys) {
-			Record rec = table.getRecord(key);
+			DBRecord rec = table.getRecord(key);
 			rec.setLongValue(HISTORY_ADDR_COL, newAddr);
 			table.putRecord(rec);
 		}
@@ -183,7 +183,7 @@ class LabelHistoryAdapterV0 extends LabelHistoryAdapter {
 			final Set<Address> set, TaskMonitor monitor) throws CancelledException, IOException {
 		RecordFilter filter = new RecordFilter() {
 			@Override
-			public boolean matches(Record record) {
+			public boolean matches(DBRecord record) {
 				Address addr = addrMap.decodeAddress(record.getLongValue(HISTORY_ADDR_COL));
 				return set == null || !set.contains(addr);
 			}

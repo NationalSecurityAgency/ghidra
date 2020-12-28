@@ -328,7 +328,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	abstract FixedKeyRecordNode createNewLeaf(int prevNodeId, int nextNodeId) throws IOException;
 
 	@Override
-	public FixedKeyNode putRecord(Record record, Table table) throws IOException {
+	public FixedKeyNode putRecord(DBRecord record, Table table) throws IOException {
 
 		Field key = record.getKeyField();
 		int index = getKeyIndex(key);
@@ -374,7 +374,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	FixedKeyNode appendNewLeaf(Record record) throws IOException {
+	FixedKeyNode appendNewLeaf(DBRecord record) throws IOException {
 		FixedKeyRecordNode newLeaf = createNewLeaf(-1, -1);
 		newLeaf.insertRecord(0, record);
 		return appendLeaf(newLeaf);
@@ -418,7 +418,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	 * @return true if the record was successfully inserted.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract boolean insertRecord(int index, Record record) throws IOException;
+	abstract boolean insertRecord(int index, DBRecord record) throws IOException;
 
 	/**
 	 * Updates the record at the given index. 
@@ -427,10 +427,10 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract FixedKeyNode updateRecord(int index, Record record) throws IOException;
+	abstract FixedKeyNode updateRecord(int index, DBRecord record) throws IOException;
 
 	@Override
-	public db.Record getRecordBefore(Field key, Schema schema) throws IOException {
+	public db.DBRecord getRecordBefore(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -index - 2;
@@ -446,7 +446,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	}
 
 	@Override
-	public db.Record getRecordAfter(Field key, Schema schema) throws IOException {
+	public db.DBRecord getRecordAfter(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -(index + 1);
@@ -462,7 +462,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	}
 
 	@Override
-	public Record getRecordAtOrBefore(Field key, Schema schema) throws IOException {
+	public DBRecord getRecordAtOrBefore(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -index - 2;
@@ -475,7 +475,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	}
 
 	@Override
-	public Record getRecordAtOrAfter(Field key, Schema schema) throws IOException {
+	public DBRecord getRecordAtOrAfter(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -(index + 1);

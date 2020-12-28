@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import generic.stl.Pair;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -87,8 +87,8 @@ public class AddressCorrelatorDB {
 	public List<Pair<Address, Address>> getAddressCorrelations(Address sourceEntryPoint) throws IOException {
 		long sourceEntryLong = getLongFromSourceAddress(sourceEntryPoint);
 		List<Pair<Address, Address>> addressList = new ArrayList<Pair<Address,Address>>();
-		List<Record> addressRecords = adapter.getAddressRecords(sourceEntryLong);
-		for (Record record : addressRecords) {
+		List<DBRecord> addressRecords = adapter.getAddressRecords(sourceEntryLong);
+		for (DBRecord record : addressRecords) {
 			long sourceLong = record.getLongValue(SOURCE_ADDRESS_COL.column());
 			long destinationLong = record.getLongValue(DESTINATION_ADDRESS_COL.column());
 			Address sourceAddress = getSourceAddressFromLong(sourceLong);

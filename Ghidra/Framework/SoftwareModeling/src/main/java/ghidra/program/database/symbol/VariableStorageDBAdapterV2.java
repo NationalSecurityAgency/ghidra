@@ -70,12 +70,12 @@ public class VariableStorageDBAdapterV2 extends VariableStorageDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return variableStorageTable.getRecord(key);
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		variableStorageTable.putRecord(record);
 	}
 

@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.data;
 
-import db.Record;
+import db.DBRecord;
 
 /**
  * DatabaseObject for a Default settings record.
@@ -23,14 +23,14 @@ import db.Record;
  * 
  */
 class SettingsDB {
-	private Record record;
+	private DBRecord record;
 
 	/**
 	 * Constructor
 	 * @param cache
 	 * @param record
 	 */
-	SettingsDB(Record record) {
+	SettingsDB(DBRecord record) {
 		this.record = record;
 	}
 

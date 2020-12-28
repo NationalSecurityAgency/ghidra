@@ -68,7 +68,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, boolean isUnion, long categoryID,
+	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
 			int internalAlignment, int externalAlignment) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
@@ -76,7 +76,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public Record getRecord(long dataTypeID) throws IOException {
+	public DBRecord getRecord(long dataTypeID) throws IOException {
 		return translateRecord(compositeTable.getRecord(dataTypeID));
 	}
 
@@ -86,7 +86,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -112,11 +112,11 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public Record translateRecord(Record oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
 		rec.setString(COMPOSITE_NAME_COL, oldRec.getString(V0_COMPOSITE_NAME_COL));
 		rec.setString(COMPOSITE_COMMENT_COL, oldRec.getString(V0_COMPOSITE_COMMENT_COL));
 		rec.setBooleanValue(COMPOSITE_IS_UNION_COL,
@@ -135,7 +135,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

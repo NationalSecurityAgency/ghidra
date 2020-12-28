@@ -93,7 +93,7 @@ public class FixLangId extends GhidraScript {
 			Msg.showError(getClass(), null, "Script Error", "Bad program database!!");
 			return false;
 		}
-		Record record = table.getRecord(new StringField(LANGUAGE_ID));
+		DBRecord record = table.getRecord(new StringField(LANGUAGE_ID));
 		if (record == null) {  // must be in old style combined language/compiler spec format
 			Msg.showError(getClass(), null, "Script Error",
 				"Old program file!  Language fix is not appropriate.");

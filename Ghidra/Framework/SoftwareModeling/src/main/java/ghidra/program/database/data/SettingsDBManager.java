@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
@@ -179,7 +179,7 @@ class SettingsDBManager implements Settings {
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				Record rec = adapter.getSettingsRecord(keys[i].getLongValue());
+				DBRecord rec = adapter.getSettingsRecord(keys[i].getLongValue());
 				String settingsName = rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
 				if (settingsName.equals(name)) {
 					adapter.removeSettingsRecord(keys[i].getLongValue());
@@ -213,7 +213,7 @@ class SettingsDBManager implements Settings {
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				Record rec = adapter.getSettingsRecord(keys[i].getLongValue());
+				DBRecord rec = adapter.getSettingsRecord(keys[i].getLongValue());
 				String name = rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
 				if (!list.contains(name)) {
 					list.add(name);
@@ -275,11 +275,11 @@ class SettingsDBManager implements Settings {
 		return oldLongValue != newLongValue;
 	}
 
-	private Record getRecord(String name) {
+	private DBRecord getRecord(String name) {
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
 			for (int i = 0; i < keys.length; i++) {
-				Record rec = adapter.getSettingsRecord(keys[i].getLongValue());
+				DBRecord rec = adapter.getSettingsRecord(keys[i].getLongValue());
 				if (rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL).equals(name)) {
 					return rec;
 				}
@@ -294,7 +294,7 @@ class SettingsDBManager implements Settings {
 
 	private SettingsDB getSettingsDB(String name) {
 
-		Record record = getRecord(name);
+		DBRecord record = getRecord(name);
 		if (record != null) {
 			return new SettingsDB(record);
 		}
@@ -305,7 +305,7 @@ class SettingsDBManager implements Settings {
 			byte[] byteValue) throws IOException {
 
 		boolean wasChanged = false;
-		Record record = getRecord(name);
+		DBRecord record = getRecord(name);
 		if (record == null) {
 			wasChanged = true;
 			record = adapter.createSettingsRecord(dataTypeID, name, strValue, longValue, byteValue);

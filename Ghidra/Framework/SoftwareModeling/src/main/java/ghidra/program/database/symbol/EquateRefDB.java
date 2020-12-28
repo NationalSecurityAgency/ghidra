@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.map.AddressMap;
@@ -29,7 +29,7 @@ import ghidra.program.model.symbol.EquateReference;
  */
 class EquateRefDB extends DatabaseObject implements EquateReference {
 
-	private Record record;
+	private DBRecord record;
 	private EquateManager equateMgr;
 	private AddressMap addrMap;
 
@@ -39,7 +39,7 @@ class EquateRefDB extends DatabaseObject implements EquateReference {
 	 * @param cache
 	 * @param record
 	 */
-	EquateRefDB(EquateManager equateMgr, DBObjectCache<EquateRefDB> cache, Record record) {
+	EquateRefDB(EquateManager equateMgr, DBObjectCache<EquateRefDB> cache, DBRecord record) {
 		super(cache, record.getKey());
 		addrMap = equateMgr.getAddressMap();
 		this.equateMgr = equateMgr;
@@ -48,7 +48,7 @@ class EquateRefDB extends DatabaseObject implements EquateReference {
 
 	@Override
 	protected boolean refresh() {
-		Record rec = equateMgr.getEquateRefRecord(key);
+		DBRecord rec = equateMgr.getEquateRefRecord(key);
 		if (rec == null) {
 			return false;
 		}
@@ -76,7 +76,7 @@ class EquateRefDB extends DatabaseObject implements EquateReference {
 		return record.getLongValue(EquateRefDBAdapter.HASH_COL);
 	}
 
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 }

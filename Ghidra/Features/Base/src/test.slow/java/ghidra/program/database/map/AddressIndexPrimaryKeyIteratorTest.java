@@ -84,7 +84,7 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 			Address maxAddr = r.getMaxAddress();
 			while (a.compareTo(maxAddr) <= 0) {
 				long addrKey = addrMap.getKey(a, true);
-				Record rec = schema.createRecord(myTable.getKey());
+				DBRecord rec = schema.createRecord(myTable.getKey());
 				rec.setLongValue(0, addrKey);
 				myTable.putRecord(rec);
 				a = a.add(1);

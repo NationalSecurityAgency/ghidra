@@ -64,7 +64,7 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	}
 
 	@Override
-	Record getRecord(String tag) throws IOException {
+	DBRecord getRecord(String tag) throws IOException {
 		if (table == null) {
 			return null;
 		}
@@ -72,7 +72,7 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 		// using an indexed column.
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if (rec.getString(V0_TAG_NAME_COL).equals(tag)) {
 				return rec;
 			}
@@ -81,11 +81,11 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	}
 
 	@Override
-	Record createTagRecord(String tag, String comment) throws IOException {
+	DBRecord createTagRecord(String tag, String comment) throws IOException {
 
 		// See if there is already a record for this tag name. If so,
 		// just return that one.
-		Record rec = getRecord(tag);
+		DBRecord rec = getRecord(tag);
 
 		if (rec == null) {
 			rec = V0_SCHEMA.createRecord(getTable().getKey());
@@ -121,7 +121,7 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	}
 
 	@Override
-	Record getRecord(long id) throws IOException {
+	DBRecord getRecord(long id) throws IOException {
 		if (table == null) {
 			return null;
 		}
@@ -129,7 +129,7 @@ class FunctionTagAdapterV0 extends FunctionTagAdapter implements DBListener {
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		getTable().putRecord(record);
 	}
 

@@ -65,10 +65,10 @@ class InstanceSettingsDBAdapterV0 extends InstanceSettingsDBAdapter {
 	}
 
 	@Override
-	public Record createInstanceRecord(long addr, String name, String strValue, long longValue,
+	public DBRecord createInstanceRecord(long addr, String name, String strValue, long longValue,
 			byte[] byteValue) throws IOException {
 
-		Record record = V0_INSTANCE_SCHEMA.createRecord(instanceTable.getKey());
+		DBRecord record = V0_INSTANCE_SCHEMA.createRecord(instanceTable.getKey());
 		record.setLongValue(V0_INST_ADDR_COL, addr);
 		record.setString(V0_INST_NAME_COL, name);
 		record.setString(V0_INST_STRING_VALUE_COL, strValue);
@@ -89,12 +89,12 @@ class InstanceSettingsDBAdapterV0 extends InstanceSettingsDBAdapter {
 	}
 
 	@Override
-	public Record getInstanceRecord(long settingsID) throws IOException {
+	public DBRecord getInstanceRecord(long settingsID) throws IOException {
 		return instanceTable.getRecord(settingsID);
 	}
 
 	@Override
-	public void updateInstanceRecord(Record record) throws IOException {
+	public void updateInstanceRecord(DBRecord record) throws IOException {
 		instanceTable.putRecord(record);
 	}
 

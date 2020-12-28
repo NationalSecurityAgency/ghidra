@@ -39,7 +39,7 @@ abstract class CategoryDBAdapter {
 	 * @return the record for the given ID or null if no record with that id exists.
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecord(long categoryID) throws IOException;
+	abstract DBRecord getRecord(long categoryID) throws IOException;
 
 	/**
 	 * Updates the record in the database
@@ -67,7 +67,7 @@ abstract class CategoryDBAdapter {
 	 * @return a new record for the new category.
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record createCategory(String name, long parentID) throws IOException;
+	abstract DBRecord createCategory(String name, long parentID) throws IOException;
 
 	/**
 	 * Removes the category with the given ID.
@@ -82,9 +82,9 @@ abstract class CategoryDBAdapter {
 	 * @return root category record
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRootRecord() throws IOException;
+	abstract DBRecord getRootRecord() throws IOException;
 
-	abstract void putRecord(Record record) throws IOException;
+	abstract void putRecord(DBRecord record) throws IOException;
 
 	abstract int getRecordCount();
 }

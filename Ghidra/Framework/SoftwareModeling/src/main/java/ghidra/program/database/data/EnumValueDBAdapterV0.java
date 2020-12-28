@@ -72,7 +72,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 
 	@Override
 	public void createRecord(long enumID, String name, long value) throws IOException {
-		Record record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
+		DBRecord record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
 		record.setLongValue(V0_ENUMVAL_ID_COL, enumID);
 		record.setString(V0_ENUMVAL_NAME_COL, name);
 		record.setLongValue(V0_ENUMVAL_VALUE_COL, value);
@@ -80,7 +80,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long valueID) throws IOException {
+	public DBRecord getRecord(long valueID) throws IOException {
 		return valueTable.getRecord(valueID);
 	}
 
@@ -90,7 +90,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		valueTable.putRecord(record);
 	}
 

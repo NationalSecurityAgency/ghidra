@@ -21,7 +21,7 @@ import ghidra.program.model.listing.DataIterator;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -78,7 +78,7 @@ public class DataRecordIterator implements DataIterator {
 	private void findNext() {
 		try {
 			while (nextData == null && (forward ? it.hasNext() : it.hasPrevious())) {
-				Record record = forward ? it.next() : it.previous();
+				DBRecord record = forward ? it.next() : it.previous();
 				nextData = codeMgr.getDataDB(record);
 			}
 		}

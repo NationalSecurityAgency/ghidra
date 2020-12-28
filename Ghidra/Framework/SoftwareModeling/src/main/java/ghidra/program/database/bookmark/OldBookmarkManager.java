@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 import java.util.*;
 
-import db.Record;
+import db.DBRecord;
 
 /**
  * Interface to manage bookmarks on a program.
@@ -41,7 +41,7 @@ class OldBookmarkManager {
 	private Program program;
 	private PropertyMapManager propertyMgr;
 
-	private HashMap<String, Record> bookmarkTypes = new HashMap<String, Record>();  // maps type to record
+	private HashMap<String, DBRecord> bookmarkTypes = new HashMap<String, DBRecord>();  // maps type to record
 
 //	private ArrayList bookmarks = new ArrayList();
 //	private LongIntHashedList bookmarkAddrIndex = new LongIntHashedList();
@@ -56,7 +56,7 @@ class OldBookmarkManager {
 		// Create type records
 		String[] types = getTypes();
 		for (int i = 0; i < types.length; i++) {
-			Record rec = BookmarkTypeDBAdapter.SCHEMA.createRecord(i);
+			DBRecord rec = BookmarkTypeDBAdapter.SCHEMA.createRecord(i);
 			rec.setString(BookmarkTypeDBAdapter.TYPE_NAME_COL, types[i]);
 			bookmarkTypes.put(types[i], rec);
 		}
@@ -189,9 +189,9 @@ class OldBookmarkManager {
 	/**
 	 * Returns array of bookmark type records
 	 */
-	public Record[] getTypeRecords() {
-		Collection<Record> c = bookmarkTypes.values();
-		Record[] recs = new Record[c.size()];
+	public DBRecord[] getTypeRecords() {
+		Collection<DBRecord> c = bookmarkTypes.values();
+		DBRecord[] recs = new DBRecord[c.size()];
 		c.toArray(recs);
 		return recs;
 	}

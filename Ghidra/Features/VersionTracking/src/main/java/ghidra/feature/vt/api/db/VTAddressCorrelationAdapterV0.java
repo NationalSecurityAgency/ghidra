@@ -49,7 +49,7 @@ public class VTAddressCorrelationAdapterV0 extends VTAddressCorrelatorAdapter {
 
 	@Override
 	void createAddressRecord(long sourceEntryLong, long sourceLong,long destinationLong) throws IOException {
-		Record record = TABLE_SCHEMA.createRecord(table.getKey());
+		DBRecord record = TABLE_SCHEMA.createRecord(table.getKey());
 		
 		record.setLongValue(SOURCE_ENTRY_COL.column(), sourceLong);
 		record.setLongValue(SOURCE_ADDRESS_COL.column(), sourceLong);
@@ -59,10 +59,10 @@ public class VTAddressCorrelationAdapterV0 extends VTAddressCorrelatorAdapter {
 	}
 
 	@Override
-	List<Record> getAddressRecords(long sourceEntryLong) throws IOException {
+	List<DBRecord> getAddressRecords(long sourceEntryLong) throws IOException {
 		LongField value = new LongField(sourceEntryLong);
 		RecordIterator indexIterator = table.indexIterator(0, value, value, true);
-		List<Record>records = new ArrayList<Record>();
+		List<DBRecord>records = new ArrayList<DBRecord>();
 		while(indexIterator.hasNext()) {
 			records.add(indexIterator.next());
 		}

@@ -30,7 +30,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return Record
 	 * @throws IOException thrown if IO error occurs
 	 */
-	Record getRecord(Schema schema, int index) throws IOException;
+	DBRecord getRecord(Schema schema, int index) throws IOException;
 
 	/**
 	 * Insert or Update a record.
@@ -39,7 +39,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	FieldKeyNode putRecord(Record record, Table table) throws IOException;
+	FieldKeyNode putRecord(DBRecord record, Table table) throws IOException;
 
 	/**
 	 * Remove the record identified by index.
@@ -101,7 +101,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return Record requested or null if record not found.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	Record getRecordAtOrAfter(Field key, Schema schema) throws IOException;
+	DBRecord getRecordAtOrAfter(Field key, Schema schema) throws IOException;
 
 	/**
 	 * Get the record with the maximum key value which is less than or equal 
@@ -111,7 +111,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return Record requested or null if record not found.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	Record getRecordAtOrBefore(Field key, Schema schema) throws IOException;
+	DBRecord getRecordAtOrBefore(Field key, Schema schema) throws IOException;
 
 	/**
 	 * Get the record with the minimum key value which is greater than 
@@ -121,7 +121,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return Record requested or null if record not found.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	Record getRecordAfter(Field key, Schema schema) throws IOException;
+	DBRecord getRecordAfter(Field key, Schema schema) throws IOException;
 
 	/**
 	 * Get the record with the maximum key value which is less than  
@@ -131,7 +131,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return Record requested or null if record not found.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	Record getRecordBefore(Field key, Schema schema) throws IOException;
+	DBRecord getRecordBefore(Field key, Schema schema) throws IOException;
 
 	/**
 	 * Get the record identified by the specified key.
@@ -140,6 +140,6 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	 * @return Record requested or null if record not found.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	Record getRecord(Field key, Schema schema) throws IOException;
+	DBRecord getRecord(Field key, Schema schema) throws IOException;
 
 }

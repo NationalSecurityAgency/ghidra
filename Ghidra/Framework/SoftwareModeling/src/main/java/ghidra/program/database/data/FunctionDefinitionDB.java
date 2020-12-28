@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
@@ -38,7 +38,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	FunctionDefinitionDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			FunctionDefinitionDBAdapter adapter, FunctionParameterAdapter paramAdapter,
-			Record record) {
+			DBRecord record) {
 		super(dataMgr, cache, record);
 		this.funDefAdapter = adapter;
 		this.paramAdapter = paramAdapter;
@@ -60,7 +60,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		try {
 			Field[] ids = paramAdapter.getParameterIdsInFunctionDef(key);
 			for (Field id : ids) {
-				Record rec = paramAdapter.getRecord(id.getLongValue());
+				DBRecord rec = paramAdapter.getRecord(id.getLongValue());
 				parameters.add(new ParameterDefinitionDB(dataMgr, paramAdapter, this, rec));
 			}
 			Collections.sort(parameters);
@@ -73,7 +73,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = funDefAdapter.getRecord(key);
+			DBRecord rec = funDefAdapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 				loadParameters();

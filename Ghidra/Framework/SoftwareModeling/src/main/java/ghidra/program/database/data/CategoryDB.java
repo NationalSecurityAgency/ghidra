@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
@@ -112,7 +112,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		subcategoryMap.clear();
 		dataTypeMap.clear();
 		conflictMap.clear();

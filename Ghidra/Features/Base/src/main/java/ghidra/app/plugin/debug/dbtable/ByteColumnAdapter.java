@@ -17,7 +17,7 @@
 package ghidra.app.plugin.debug.dbtable;
 
 import db.ByteField;
-import db.Record;
+import db.DBRecord;
 
 public class ByteColumnAdapter extends AbstractColumnAdapter {
 
@@ -27,12 +27,12 @@ public class ByteColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getKeyValue(Record rec) {
+	Object getKeyValue(DBRecord rec) {
 		return new Byte(((ByteField) rec.getKeyField()).getByteValue());
 	}
 
 	@Override
-	Object getValue(Record rec, int col) {
+	Object getValue(DBRecord rec, int col) {
 		return new Byte(rec.getByteValue(col));
 	}
 

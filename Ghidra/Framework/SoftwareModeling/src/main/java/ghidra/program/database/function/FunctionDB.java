@@ -18,7 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 import java.util.*;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -48,7 +48,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	private ProgramDB program;
 	private Address entryPoint;
 	private Symbol functionSymbol;
-	private Record rec;
+	private DBRecord rec;
 
 	private FunctionStackFrame frame;
 
@@ -86,7 +86,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	private boolean updateRefreshRequired = false;
 
 	FunctionDB(FunctionManagerDB manager, DBObjectCache<FunctionDB> cache, AddressMap addrMap,
-			Record rec) {
+			DBRecord rec) {
 		super(cache, rec.getKey());
 		this.manager = manager;
 		program = manager.getProgram();
@@ -1755,7 +1755,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	}
 
 	@Override
-	protected boolean refresh(Record refreshRec) {
+	protected boolean refresh(DBRecord refreshRec) {
 		if (updateInProgressCount != 0) {
 			// update may have caused variable/data-type changes which may trigger a
 			// refresh of this function - must defer until update completed

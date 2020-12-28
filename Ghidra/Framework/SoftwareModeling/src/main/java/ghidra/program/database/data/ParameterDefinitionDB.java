@@ -20,7 +20,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.Variable;
@@ -32,19 +32,19 @@ import ghidra.program.model.symbol.SymbolUtilities;
 final class ParameterDefinitionDB implements ParameterDefinition {
 
 	private DataTypeManagerDB dataMgr;
-	private Record record;
+	private DBRecord record;
 	private FunctionDefinitionDB parent;
 	private FunctionParameterAdapter adapter;
 
 	ParameterDefinitionDB(DataTypeManagerDB dataMgr, FunctionParameterAdapter adapter,
-			FunctionDefinitionDB parent, Record record) {
+			FunctionDefinitionDB parent, DBRecord record) {
 		this.dataMgr = dataMgr;
 		this.parent = parent;
 		this.adapter = adapter;
 		this.record = record;
 	}
 
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 

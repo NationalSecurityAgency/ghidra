@@ -22,7 +22,7 @@ import java.util.List;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -40,7 +40,7 @@ import ghidra.util.exception.NotYetImplementedException;
  */
 abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeListener {
 
-	protected Record record;
+	protected DBRecord record;
 	protected final DataTypeManagerDB dataMgr;
 	private volatile Settings defaultSettings;
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
@@ -51,7 +51,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	private volatile Category category;
 
 	protected DataTypeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.dataMgr = dataMgr;
 		this.record = record;

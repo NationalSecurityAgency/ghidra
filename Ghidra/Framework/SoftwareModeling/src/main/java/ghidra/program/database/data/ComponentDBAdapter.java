@@ -65,7 +65,7 @@ abstract class ComponentDBAdapter {
 	 * @return the component data type record.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract Record createRecord(long dataTypeID, long parentID, int length, int ordinal,
+	abstract DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal,
 			int offset, String name, String comment) throws IOException;
 
 	/**
@@ -74,7 +74,7 @@ abstract class ComponentDBAdapter {
 	 * @return the component record
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract Record getRecord(long componentID) throws IOException;
+	abstract DBRecord getRecord(long componentID) throws IOException;
 
 	/**
 	 * Removes the component data type record with the specified ID.
@@ -89,7 +89,7 @@ abstract class ComponentDBAdapter {
 	 * @param record the new record
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Gets an array with all of the IDs of the defined components within the composite data type indicated.

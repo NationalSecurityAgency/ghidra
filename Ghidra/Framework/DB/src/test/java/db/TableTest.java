@@ -227,10 +227,10 @@ public class TableTest extends AbstractGenericTest {
 //    		
 //    	}
 //    }
-	private Record generateRandomStringRecord(Schema schema, List<Long> keyList) {
+	private DBRecord generateRandomStringRecord(Schema schema, List<Long> keyList) {
 		long key = (long) (Math.random() * 1000000000F);
 		keyList.add(key);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		record.setString(0, getRandomSizeString(200));// this size string causes 10 records per buffer
 		return record;
 	}
@@ -270,7 +270,7 @@ public class TableTest extends AbstractGenericTest {
 
 		int n = bufferCount * RECORD_KEY_SPACING;
 		for (int i = 0; i < n; i++) {
-			Record rec = schema.createRecord(i * RECORD_KEY_SPACING);
+			DBRecord rec = schema.createRecord(i * RECORD_KEY_SPACING);
 			if (fixedSize) {
 				rec.setLongValue(0, i);
 				rec.setIntValue(1, i);

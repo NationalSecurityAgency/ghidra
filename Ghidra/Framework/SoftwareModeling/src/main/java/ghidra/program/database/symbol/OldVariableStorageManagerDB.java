@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -71,8 +71,8 @@ public class OldVariableStorageManagerDB {
 		variableAddrLookupCache.clear();
 		storageAddrLookupCache.clear();
 		lastNamespaceCacheID = namespaceID;
-		Record[] records = adapter.getRecordsForNamespace(namespaceID);
-		for (Record rec : records) {
+		DBRecord[] records = adapter.getRecordsForNamespace(namespaceID);
+		for (DBRecord rec : records) {
 			OldVariableStorage varStore = new OldVariableStorage(rec);
 			variableAddrLookupCache.put(varStore.variableAddr, varStore);
 			storageAddrLookupCache.put(varStore.storageAddr, varStore);
@@ -89,7 +89,7 @@ public class OldVariableStorageManagerDB {
 				return varStore;
 			}
 		}
-		Record rec = adapter.getRecord(variableAddr.getOffset());
+		DBRecord rec = adapter.getRecord(variableAddr.getOffset());
 		if (rec == null) {
 			return null;
 		}
@@ -106,7 +106,7 @@ public class OldVariableStorageManagerDB {
 		private final Address variableAddr;
 		private final Address storageAddr;
 
-		private OldVariableStorage(Record record) {
+		private OldVariableStorage(DBRecord record) {
 			this.variableAddr = AddressSpace.VARIABLE_SPACE.getAddress(record.getKey());
 			this.storageAddr = addrMap.decodeAddress(
 				record.getLongValue(OldVariableStorageDBAdapterV0V1.STORAGE_ADDR_COL));

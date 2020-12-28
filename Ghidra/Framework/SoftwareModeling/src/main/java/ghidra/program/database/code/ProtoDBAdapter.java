@@ -18,7 +18,7 @@ package ghidra.program.database.code;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -31,7 +31,7 @@ interface ProtoDBAdapter {
 	 * @param protoId
 	 * @return
 	 */
-	Record getRecord(int protoId) throws IOException;
+	DBRecord getRecord(int protoId) throws IOException;
 
 	/**
 	 * Returns a record iterator over all records.

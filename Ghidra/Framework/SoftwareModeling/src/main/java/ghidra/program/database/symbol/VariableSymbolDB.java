@@ -17,7 +17,7 @@ package ghidra.program.database.symbol;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.model.address.Address;
@@ -55,7 +55,7 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @param record the record for the symbol
 	 */
 	public VariableSymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, SymbolType type,
-			VariableStorageManagerDB variableMgr, Address address, Record record) {
+			VariableStorageManagerDB variableMgr, Address address, DBRecord record) {
 		super(symbolMgr, cache, address, record);
 		this.type = type;
 		this.variableMgr = variableMgr;
@@ -110,7 +110,7 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 		boolean isValid = super.refresh(rec);
 		variableStorage = null;
 		return isValid;

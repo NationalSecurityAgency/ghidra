@@ -73,7 +73,7 @@ class ToAdapterV1 extends ToAdapter {
 	@Override
 	public RefList getRefList(ProgramDB program, DBObjectCache<RefList> cache, Address to,
 			long toAddr) throws IOException {
-		Record rec = table.getRecord(toAddr);
+		DBRecord rec = table.getRecord(toAddr);
 		if (rec != null) {
 			if (rec.getBinaryData(REF_DATA_COL) == null) {
 				return new BigRefListV0(rec, this, addrMap, program, cache, false);
@@ -90,9 +90,9 @@ class ToAdapterV1 extends ToAdapter {
 	}
 
 	@Override
-	public Record createRecord(long key, int numRefs, byte refLevel, byte[] refData)
+	public DBRecord createRecord(long key, int numRefs, byte refLevel, byte[] refData)
 			throws IOException {
-		Record rec = TO_REFS_SCHEMA.createRecord(key);
+		DBRecord rec = TO_REFS_SCHEMA.createRecord(key);
 		rec.setIntValue(REF_COUNT_COL, numRefs);
 		rec.setBinaryData(REF_DATA_COL, refData);
 		rec.setByteValue(REF_LEVEL_COL, refLevel);
@@ -101,12 +101,12 @@ class ToAdapterV1 extends ToAdapter {
 	}
 
 	@Override
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 
 	@Override
-	public void putRecord(Record record) throws IOException {
+	public void putRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

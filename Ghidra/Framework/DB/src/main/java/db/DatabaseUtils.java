@@ -56,7 +56,7 @@ public class DatabaseUtils {
 		long keyDiff = newStart - oldStart;
 		RecordIterator it = table.iterator(oldStart, oldStart+size-1, oldStart);
 		while(it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			rec.setKey(rec.getKey()+keyDiff);
 			tmpTable.putRecord(rec);
 		}
@@ -66,7 +66,7 @@ public class DatabaseUtils {
 	
 		it = tmpTable.iterator(newStart, newStart+size-1, newStart);
 		while(it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			table.putRecord(rec);
 		}
 

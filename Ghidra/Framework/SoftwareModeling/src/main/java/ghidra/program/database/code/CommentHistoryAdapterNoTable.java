@@ -17,7 +17,7 @@ package ghidra.program.database.code;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.Address;
@@ -45,7 +45,7 @@ class CommentHistoryAdapterNoTable extends CommentHistoryAdapter {
 	}
 
 	@Override
-	void updateRecord(Record rec) throws IOException {
+	void updateRecord(DBRecord rec) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

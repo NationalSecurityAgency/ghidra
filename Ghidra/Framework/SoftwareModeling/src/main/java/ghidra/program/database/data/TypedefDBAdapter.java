@@ -98,14 +98,14 @@ abstract class TypedefDBAdapter {
 			tmpAdapter = new TypedefDBAdapterV1(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
 			TypedefDBAdapter newAdapter = new TypedefDBAdapterV1(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
 			return newAdapter;
@@ -127,7 +127,7 @@ abstract class TypedefDBAdapter {
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record createRecord(long dataTypeID, String name, long categoryID,
+	abstract DBRecord createRecord(long dataTypeID, String name, long categoryID,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException;
 
 	/**
@@ -136,7 +136,7 @@ abstract class TypedefDBAdapter {
 	 * @return the record for the type definition data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record getRecord(long typedefID) throws IOException;
+	abstract DBRecord getRecord(long typedefID) throws IOException;
 
 	/**
 	 * Gets an iterator over all type definition data type records.
@@ -160,7 +160,7 @@ abstract class TypedefDBAdapter {
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record, boolean setLastChangeTime) throws IOException;
+	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
 	 * Deletes the type definition data type table from the database with the specified database handle.
@@ -193,7 +193,7 @@ abstract class TypedefDBAdapter {
 	 * @return typedef record found or null
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
+	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 
 }

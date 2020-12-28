@@ -53,7 +53,7 @@ abstract class OldRegisterVariableDBAdapter {
 	 * @param key
 	 * @return Record
 	 */
-	abstract Record getRegisterVariableRecord(long key) throws IOException;
+	abstract DBRecord getRegisterVariableRecord(long key) throws IOException;
 
 	/**
 	 * Get all register variable keys which correspond to a function.

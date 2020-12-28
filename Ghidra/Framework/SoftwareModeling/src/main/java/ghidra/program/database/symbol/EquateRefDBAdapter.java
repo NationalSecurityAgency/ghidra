@@ -98,7 +98,7 @@ abstract class EquateRefDBAdapter {
 			EquateRefDBAdapter tmpAdapter = new EquateRefDBAdapterV1(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(ADDR_COL));
 				rec.setLongValue(ADDR_COL, addrMap.getKey(addr, true));
 				rec.setLongValue(HASH_COL, 0);
@@ -110,7 +110,7 @@ abstract class EquateRefDBAdapter {
 
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 			}
 			return newAdapter;
@@ -129,7 +129,7 @@ abstract class EquateRefDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createReference(long addr, short opIndex, long dynamicHash, long equateNameID)
+	abstract DBRecord createReference(long addr, short opIndex, long dynamicHash, long equateNameID)
 			throws IOException;
 
 	/**
@@ -137,7 +137,7 @@ abstract class EquateRefDBAdapter {
 	 * @param the key of the record to retrieve.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Get an iterator over all the equate reference records.
@@ -162,7 +162,7 @@ abstract class EquateRefDBAdapter {
 	 * @param record the record to update.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get the records that have the given equateID.

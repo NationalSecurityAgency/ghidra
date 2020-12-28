@@ -64,7 +64,7 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		// load existing file bytes
 		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
-			Record record = iterator.next();
+			DBRecord record = iterator.next();
 			fileBytesList.add(new FileBytes(this, record));
 		}
 
@@ -77,7 +77,7 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		DBBuffer[] layeredBuffers = createLayeredBuffers(buffers);
 		int[] bufIds = getIds(buffers);
 		int[] layeredBufIds = getIds(layeredBuffers);
-		Record record = SCHEMA.createRecord(table.getKey());
+		DBRecord record = SCHEMA.createRecord(table.getKey());
 		record.setString(V0_FILENAME_COL, filename);
 		record.setLongValue(V0_OFFSET_COL, offset);
 		record.setLongValue(V0_SIZE_COL, size);
@@ -105,7 +105,7 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 
 		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
-			Record record = iterator.next();
+			DBRecord record = iterator.next();
 			FileBytes fileBytes = map.remove(record.getKey());
 			if (fileBytes != null) {
 				if (!fileBytes.refresh(record)) {

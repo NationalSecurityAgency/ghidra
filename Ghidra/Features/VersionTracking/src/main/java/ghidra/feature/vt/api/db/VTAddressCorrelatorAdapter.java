@@ -61,7 +61,7 @@ public abstract class VTAddressCorrelatorAdapter {
 	abstract void createAddressRecord(long sourceEntryLong, long sourceLong, long destinationLong)
 			throws IOException;
 
-	abstract List<Record> getAddressRecords(long sourceEntryLong) throws IOException;
+	abstract List<DBRecord> getAddressRecords(long sourceEntryLong) throws IOException;
 
 	void close() {
 		dbHandle.close();

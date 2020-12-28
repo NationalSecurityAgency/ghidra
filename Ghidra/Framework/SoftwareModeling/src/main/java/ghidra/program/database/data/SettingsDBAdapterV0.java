@@ -58,10 +58,10 @@ class SettingsDBAdapterV0 extends SettingsDBAdapter {
 	}
 
 	@Override
-	public Record createSettingsRecord(long dataTypeID, String name, String strValue,
+	public DBRecord createSettingsRecord(long dataTypeID, String name, String strValue,
 			long longValue, byte[] byteValue) throws IOException {
 
-		Record record = V0_SETTINGS_SCHEMA.createRecord(settingsTable.getKey());
+		DBRecord record = V0_SETTINGS_SCHEMA.createRecord(settingsTable.getKey());
 		record.setLongValue(V0_SETTINGS_DT_ID_COL, dataTypeID);
 		record.setString(V0_SETTINGS_NAME_COL, name);
 		record.setString(V0_SETTINGS_STRING_VALUE_COL, strValue);
@@ -82,12 +82,12 @@ class SettingsDBAdapterV0 extends SettingsDBAdapter {
 	}
 
 	@Override
-	public Record getSettingsRecord(long settingsID) throws IOException {
+	public DBRecord getSettingsRecord(long settingsID) throws IOException {
 		return settingsTable.getRecord(settingsID);
 	}
 
 	@Override
-	public void updateSettingsRecord(Record record) throws IOException {
+	public void updateSettingsRecord(DBRecord record) throws IOException {
 		settingsTable.putRecord(record);
 	}
 

@@ -67,7 +67,7 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return refTable.getRecord(key);
 	}
 
@@ -75,9 +75,9 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#createReference(long, short, long, long)
 	 */
 	@Override
-	Record createReference(long addr, short opIndex, long dynamicHash, long equateID)
+	DBRecord createReference(long addr, short opIndex, long dynamicHash, long equateID)
 			throws IOException {
-		Record rec = refTable.getSchema().createRecord(refTable.getKey());
+		DBRecord rec = refTable.getSchema().createRecord(refTable.getKey());
 		rec.setLongValue(ADDR_COL, addr);
 		rec.setShortValue(OP_INDEX_COL, opIndex);
 		rec.setLongValue(HASH_COL, dynamicHash);
@@ -95,10 +95,10 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#updateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#updateRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		refTable.putRecord(record);
 	}
 

@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
@@ -47,7 +47,7 @@ public class LibrarySymbol extends SymbolDB {
 	 * @param record the record for this symbol
 	 */
 	public LibrarySymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(symbolMgr, cache, address, record);
 
 	}

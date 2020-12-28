@@ -50,8 +50,8 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name) throws IOException {
-		Record record = TreeManager.TREE_SCHEMA.createRecord(treeTable.getKey());
+	public DBRecord createRecord(String name) throws IOException {
+		DBRecord record = TreeManager.TREE_SCHEMA.createRecord(treeTable.getKey());
 		record.setString(TreeManager.TREE_NAME_COL, name);
 		record.setLongValue(TreeManager.MODIFICATION_NUM_COL, 0);
 		treeTable.putRecord(record);
@@ -71,12 +71,12 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long treeID) throws IOException {
+	public DBRecord getRecord(long treeID) throws IOException {
 		return treeTable.getRecord(treeID);
 	}
 
 	@Override
-	public Record getRecord(String name) throws IOException {
+	public DBRecord getRecord(String name) throws IOException {
 		Field[] keys = treeTable.findRecords(new StringField(name), TreeManager.TREE_NAME_COL);
 		if (keys.length == 0) {
 			return null;
@@ -93,7 +93,7 @@ class TreeDBAdapterV0 implements TreeDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		treeTable.putRecord(record);
 	}
 

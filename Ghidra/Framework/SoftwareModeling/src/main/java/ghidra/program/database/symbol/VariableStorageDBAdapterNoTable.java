@@ -17,7 +17,7 @@ package ghidra.program.database.symbol;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 import ghidra.program.database.util.EmptyRecordIterator;
 
@@ -42,12 +42,12 @@ public class VariableStorageDBAdapterNoTable extends VariableStorageDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return null;
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -50,7 +50,7 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record get(long addrKey) throws IOException {
+	DBRecord get(long addrKey) throws IOException {
 		return relocTable.getRecord(addrKey);
 	}
 
@@ -89,8 +89,8 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record adaptRecord(Record rec) {
-		Record newRec = SCHEMA.createRecord(rec.getKey());
+	DBRecord adaptRecord(DBRecord rec) {
+		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
 		newRec.setIntValue(TYPE_COL, rec.getIntValue(TYPE_COL));
 		long[] values = new long[] { rec.getLongValue(VALU_COL) };
 		newRec.setField(VALU_COL, new BinaryCodedField(values));

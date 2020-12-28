@@ -84,7 +84,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		lock.acquire();
 
 		try {
-			Record rec = functionTagAdapter.getRecord(name);
+			DBRecord rec = functionTagAdapter.getRecord(name);
 			if (rec != null) {
 				return getFunctionTagFromCache(rec);
 			}
@@ -110,7 +110,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 				return tag;
 			}
 
-			Record rec = functionTagAdapter.getRecord(id);
+			DBRecord rec = functionTagAdapter.getRecord(id);
 			if (rec != null) {
 				return new FunctionTagDB(this, cache, rec);
 			}
@@ -160,7 +160,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 				return tag;
 			}
 
-			Record record = functionTagAdapter.createTagRecord(name, comment);
+			DBRecord record = functionTagAdapter.createTagRecord(name, comment);
 			tag = getFunctionTagFromCache(record);
 			fireTagCreatedNotification(ChangeManager.DOCR_FUNCTION_TAG_CREATED, tag);
 
@@ -268,7 +268,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 			List<FunctionTag> tags = new ArrayList<>();
 			RecordIterator records = functionTagAdapter.getRecords();
 			while (records.hasNext()) {
-				Record record = records.next();
+				DBRecord record = records.next();
 				tags.add(getFunctionTagFromCache(record));
 			}
 
@@ -283,7 +283,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		return Collections.emptyList();
 	}
 
-	public Record getTagRecord(long id) throws IOException {
+	public DBRecord getTagRecord(long id) throws IOException {
 		return functionTagAdapter.getRecord(id);
 	}
 
@@ -331,7 +331,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @param tagRecord the tag record to retrieve
 	 * @return tag new cached tag object
 	 */
-	private FunctionTag getFunctionTagFromCache(Record tagRecord) {
+	private FunctionTag getFunctionTagFromCache(DBRecord tagRecord) {
 		FunctionTagDB tag = cache.get(tagRecord);
 		if (tag == null) {
 			tag = new FunctionTagDB(this, cache, tagRecord);
@@ -382,8 +382,8 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 			functionTagMappingAdapter.getRecordsByFunctionID(functionId);
 
 		while (functionRecords.hasNext()) {
-			Record mappingRecord = functionRecords.next();
-			Record tagRecord = functionTagAdapter.getRecord(
+			DBRecord mappingRecord = functionRecords.next();
+			DBRecord tagRecord = functionTagAdapter.getRecord(
 				mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
 			tags.add(getFunctionTagFromCache(tagRecord));
 		}
@@ -418,7 +418,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		Map<FunctionTag, Counter> map = LazyMap.lazyMap(new HashMap<>(), () -> new Counter());
 		RecordIterator records = functionTagMappingAdapter.getRecords();
 		while (records.hasNext()) {
-			Record mappingRecord = records.next();
+			DBRecord mappingRecord = records.next();
 			long tagId = mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL);
 			FunctionTag tag = getFunctionTag(tagId);
 			map.get(tag).count++;

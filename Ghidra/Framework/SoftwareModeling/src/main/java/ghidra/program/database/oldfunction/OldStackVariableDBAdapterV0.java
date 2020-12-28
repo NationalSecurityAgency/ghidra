@@ -58,7 +58,7 @@ class OldStackVariableDBAdapterV0 extends OldStackVariableDBAdapter {
 	}
 
 	@Override
-	public Record getStackVariableRecord(long key) throws IOException {
+	public DBRecord getStackVariableRecord(long key) throws IOException {
 		return translateRecord(table.getRecord(key));
 	}
 
@@ -67,11 +67,11 @@ class OldStackVariableDBAdapterV0 extends OldStackVariableDBAdapter {
 		return table.findRecords(new LongField(functionKey), V0_STACK_VAR_FUNCTION_KEY_COL);
 	}
 
-	private Record translateRecord(Record oldRec) {
+	private DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = OldStackVariableDBAdapter.STACK_VARS_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = OldStackVariableDBAdapter.STACK_VARS_SCHEMA.createRecord(oldRec.getKey());
 
 		rec.setLongValue(OldStackVariableDBAdapter.STACK_VAR_FUNCTION_KEY_COL,
 			oldRec.getLongValue(V0_STACK_VAR_FUNCTION_KEY_COL));

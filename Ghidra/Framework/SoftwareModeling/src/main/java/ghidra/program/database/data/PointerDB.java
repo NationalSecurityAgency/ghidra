@@ -17,7 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -55,7 +55,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 	 * @param record
 	 */
 	public PointerDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			PointerDBAdapter adapter, Record record) {
+			PointerDBAdapter adapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
 	}
@@ -108,7 +108,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getRecord(key);
+			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 				return super.refresh();

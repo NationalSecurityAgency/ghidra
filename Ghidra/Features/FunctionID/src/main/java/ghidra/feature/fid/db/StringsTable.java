@@ -71,7 +71,7 @@ public class StringsTable {
 		if (records == null || records.length == 0) {
 			// create
 			long key = UniversalIdGenerator.nextID().getValue();
-			Record record = SCHEMA.createRecord(key);
+			DBRecord record = SCHEMA.createRecord(key);
 			record.setString(STRING_VALUE_COL, value);
 			table.putRecord(record);
 			return key;
@@ -101,7 +101,7 @@ public class StringsTable {
 	StringRecord lookupString(long stringID) {
 		StringRecord stringRecord = stringCache.get(stringID);
 		if (stringRecord == null) {
-			Record record;
+			DBRecord record;
 			try {
 				record = table.getRecord(stringID);
 				if (record != null) {

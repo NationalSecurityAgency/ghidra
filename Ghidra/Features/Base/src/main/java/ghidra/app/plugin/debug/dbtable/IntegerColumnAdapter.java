@@ -17,7 +17,7 @@
 package ghidra.app.plugin.debug.dbtable;
 
 import db.IntField;
-import db.Record;
+import db.DBRecord;
 
 public class IntegerColumnAdapter extends AbstractColumnAdapter {
 
@@ -27,12 +27,12 @@ public class IntegerColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getKeyValue(Record rec) {
+	Object getKeyValue(DBRecord rec) {
 		return new Integer(((IntField) rec.getKeyField()).getIntValue());
 	}
 
 	@Override
-	Object getValue(Record rec, int col) {
+	Object getValue(DBRecord rec, int col) {
 		return new Integer(rec.getIntValue(col));
 	}
 

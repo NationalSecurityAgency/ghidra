@@ -71,10 +71,10 @@ abstract class CallingConventionDBAdapter {
 		return new CallingConventionDBAdapterV0(handle, true);
 	}
 
-	abstract Record createCallingConventionRecord(String name) throws IOException;
+	abstract DBRecord createCallingConventionRecord(String name) throws IOException;
 
-	abstract Record getCallingConventionRecord(byte callingConventionID) throws IOException;
+	abstract DBRecord getCallingConventionRecord(byte callingConventionID) throws IOException;
 
-	abstract Record getCallingConventionRecord(String name) throws IOException;
+	abstract DBRecord getCallingConventionRecord(String name) throws IOException;
 
 }

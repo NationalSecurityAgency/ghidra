@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.*;
@@ -35,7 +35,7 @@ import ghidra.util.exception.NotFoundException;
  */
 class FragmentDB extends DatabaseObject implements ProgramFragment {
 
-	private Record record;
+	private DBRecord record;
 	private ModuleManager moduleMgr;
 	private GroupDBAdapter adapter;
 	private AddressSetView addrSet;
@@ -48,7 +48,7 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 	 * @param record
 	 * @param addrSet
 	 */
-	FragmentDB(ModuleManager moduleMgr, DBObjectCache<FragmentDB> cache, Record record,
+	FragmentDB(ModuleManager moduleMgr, DBObjectCache<FragmentDB> cache, DBRecord record,
 			AddressSet addrSet) {
 		super(cache, record.getKey());
 		this.moduleMgr = moduleMgr;
@@ -61,7 +61,7 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getFragmentRecord(key);
+			DBRecord rec = adapter.getFragmentRecord(key);
 			if (rec != null) {
 				record = rec;
 				addrSet = moduleMgr.getFragmentAddressSet(key);
@@ -177,7 +177,7 @@ class FragmentDB extends DatabaseObject implements ProgramFragment {
 		lock.acquire();
 		try {
 			checkIsValid();
-			Record r = adapter.getFragmentRecord(name);
+			DBRecord r = adapter.getFragmentRecord(name);
 			if (r != null) {
 				if (key != r.getKey()) {
 					throw new DuplicateNameException(name + " already exists");

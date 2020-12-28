@@ -17,7 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
@@ -40,7 +40,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	 * @param key
 	 */
 	public TypedefDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
-			TypedefDBAdapter adapter, Record record) {
+			TypedefDBAdapter adapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
 	}
@@ -236,7 +236,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getRecord(key);
+			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 //				super.getDefaultSettings();  // not sure why it was doing this - no one else does.

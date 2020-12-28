@@ -63,7 +63,7 @@ abstract class EquateDBAdapter {
 	 * @param key the key to look up the record.
 	 * @throws IOException if there is no equate with the given
 	 */
-	abstract Record getRecord(long key) throws IOException;
+	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * Remove the record with the given key.
@@ -77,7 +77,7 @@ abstract class EquateDBAdapter {
 	 * @param record the record to update.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Create a new record for the equate.
@@ -86,7 +86,7 @@ abstract class EquateDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createEquate(String name, long value) throws IOException;
+	abstract DBRecord createEquate(String name, long value) throws IOException;
 
 	/**
 	 * Get an iterator over all the equate records.

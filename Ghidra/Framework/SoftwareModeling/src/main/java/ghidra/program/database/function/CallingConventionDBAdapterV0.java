@@ -61,9 +61,9 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 	}
 
 	@Override
-	public Record createCallingConventionRecord(String name) throws IOException {
+	public DBRecord createCallingConventionRecord(String name) throws IOException {
 		byte key = getFirstAvailableKey();
-		Record record = V0_CALLING_CONVENTION_SCHEMA.createRecord(new ByteField(key));
+		DBRecord record = V0_CALLING_CONVENTION_SCHEMA.createRecord(new ByteField(key));
 		record.setString(V0_CALLING_CONVENTION_NAME_COL, name);
 		callingConventionTable.putRecord(record);
 		return record;
@@ -77,7 +77,7 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 	private byte getFirstAvailableKey() throws IOException {
 		byte key = 2;
 		for (; key < 256; key++) {
-			Record record = getCallingConventionRecord(key);
+			DBRecord record = getCallingConventionRecord(key);
 			if (record == null) {
 				return key;
 			}
@@ -89,15 +89,15 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 	}
 
 	@Override
-	public Record getCallingConventionRecord(byte callingConventionID) throws IOException {
+	public DBRecord getCallingConventionRecord(byte callingConventionID) throws IOException {
 		return callingConventionTable.getRecord(new ByteField(callingConventionID));
 	}
 
 	@Override
-	public Record getCallingConventionRecord(String name) throws IOException {
+	public DBRecord getCallingConventionRecord(String name) throws IOException {
 		RecordIterator iterator = callingConventionTable.iterator();
 		while (iterator.hasNext()) {
-			Record record = iterator.next();
+			DBRecord record = iterator.next();
 			String callingConventionName = record.getString(V0_CALLING_CONVENTION_NAME_COL);
 			if (callingConventionName.equals(name)) {
 				return record;

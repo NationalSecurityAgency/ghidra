@@ -109,7 +109,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	@Override
 	public Relocation getRelocation(Address addr) {
 		try {
-			Record rec = adapter.get(addrMap.getKey(addr, false));
+			DBRecord rec = adapter.get(addrMap.getKey(addr, false));
 			if (rec != null) {
 				return getRelocation(rec);
 			}
@@ -120,7 +120,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		return null;
 	}
 
-	private Relocation getRelocation(Record rec) {
+	private Relocation getRelocation(DBRecord rec) {
 		BinaryCodedField valuesField =
 			new BinaryCodedField((BinaryField) rec.getFieldValue(RelocationDBAdapter.VALU_COL));
 		return new Relocation(addrMap.decodeAddress(rec.getKey()),
@@ -147,7 +147,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		try {
 			ri = adapter.iterator(addr);
 			if (ri.hasNext()) {
-				Record r = ri.next();
+				DBRecord r = ri.next();
 				Relocation relocation = getRelocation(r);
 				if (!relocation.getAddress().equals(addr)) {
 					return relocation;
@@ -202,7 +202,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 			if (ri == null)
 				return null;
 			try {
-				Record r = ri.next();
+				DBRecord r = ri.next();
 				return getRelocation(r);
 			}
 			catch (IOException e) {

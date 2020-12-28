@@ -271,7 +271,7 @@ public class DBTestUtils {
 	 * @param doInsert insert record into table if true
 	 * @return Record new record
 	 */
-	static Record createLongKeyRecord(Table table, boolean randomKey, int varDataSize,
+	static DBRecord createLongKeyRecord(Table table, boolean randomKey, int varDataSize,
 			boolean doInsert) throws IOException, DuplicateKeyException {
 		long key;
 		if (randomKey) {
@@ -281,7 +281,7 @@ public class DBTestUtils {
 			key = table.getMaxKey() + 1;
 		}
 		try {
-			Record rec = createRecord(table, key, varDataSize, doInsert);
+			DBRecord rec = createRecord(table, key, varDataSize, doInsert);
 			if (!randomKey) {
 				Assert.assertEquals(rec.getKey(), table.getMaxKey());
 			}
@@ -304,7 +304,7 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException
 	 */
-	static Record createFixedKeyRecord(Table table, int varDataSize, boolean doInsert)
+	static DBRecord createFixedKeyRecord(Table table, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		int keyLength = 10;
 		byte[] bytes = new byte[keyLength];
@@ -313,7 +313,7 @@ public class DBTestUtils {
 		key.setBinaryData(bytes);
 
 		try {
-			Record rec = createRecord(table, key, varDataSize, doInsert);
+			DBRecord rec = createRecord(table, key, varDataSize, doInsert);
 			Assert.assertEquals(key, rec.getKeyField());
 			return rec;
 		}
@@ -332,7 +332,7 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException
 	 */
-	static Record createBinaryKeyRecord(Table table, int maxKeyLength, int varDataSize,
+	static DBRecord createBinaryKeyRecord(Table table, int maxKeyLength, int varDataSize,
 			boolean doInsert) throws IOException, DuplicateKeyException {
 		int keyLength =
 			(maxKeyLength < 0) ? -maxKeyLength : DBTestUtils.getRandomKeyLength(maxKeyLength);
@@ -342,7 +342,7 @@ public class DBTestUtils {
 		key.setBinaryData(bytes);
 
 		try {
-			Record rec = createRecord(table, key, varDataSize, doInsert);
+			DBRecord rec = createRecord(table, key, varDataSize, doInsert);
 			Assert.assertEquals(key, rec.getKeyField());
 			return rec;
 		}
@@ -361,18 +361,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createRecord(Table table, long key, int varDataSize, boolean doInsert)
+	static DBRecord createRecord(Table table, long key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -395,18 +395,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createRecord(Table table, Field key, int varDataSize, boolean doInsert)
+	static DBRecord createRecord(Table table, Field key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -455,18 +455,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createMidRangeRecord(Table table, long key, int varDataSize, boolean doInsert)
+	static DBRecord createMidRangeRecord(Table table, long key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillMidRangeRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -490,18 +490,18 @@ public class DBTestUtils {
 	 * @throws IOException
 	 * @throws DuplicateKeyException record with assigned key already exists in table.
 	 */
-	static Record createMidRangeRecord(Table table, Field key, int varDataSize, boolean doInsert)
+	static DBRecord createMidRangeRecord(Table table, Field key, int varDataSize, boolean doInsert)
 			throws IOException, DuplicateKeyException {
 		// Check for duplicate key
 		if (doInsert) {
-			Record oldRec = table.getRecord(key);
+			DBRecord oldRec = table.getRecord(key);
 			if (oldRec != null) {
 				throw new DuplicateKeyException();
 			}
 		}
 
 		// Create record and fill with data
-		Record rec = table.getSchema().createRecord(key);
+		DBRecord rec = table.getSchema().createRecord(key);
 		fillMidRangeRecord(rec, varDataSize);
 
 		// Insert record if requested
@@ -521,7 +521,7 @@ public class DBTestUtils {
 	 * NOTE: The StringField does not strictly follow the varDataSize paramter.
 	 * A value less than 0 results in a null assignment to those fields.
 	 */
-	static void fillRecord(Record rec, int varDataSize) {
+	static void fillRecord(DBRecord rec, int varDataSize) {
 
 		Field[] fields = rec.getFields();
 		for (int i = 0; i < fields.length; i++) {
@@ -586,7 +586,7 @@ public class DBTestUtils {
 	 * @param varDataSize number of bytes to fill into all variable length fields.
 	 * A value less than 0 results in a null assignment to those fields.
 	 */
-	static void fillMidRangeRecord(Record rec, int varDataSize) {
+	static void fillMidRangeRecord(DBRecord rec, int varDataSize) {
 
 		Field[] fields = rec.getFields();
 		for (int i = 0; i < fields.length; i++) {

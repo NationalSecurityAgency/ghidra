@@ -18,7 +18,7 @@ package db;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class SparseRecord extends Record {
+public class SparseRecord extends DBRecord {
 
 	SparseRecord(Schema schema, Field key) {
 		super(schema, key);

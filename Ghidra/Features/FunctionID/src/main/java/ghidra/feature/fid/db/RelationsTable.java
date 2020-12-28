@@ -63,12 +63,12 @@ public class RelationsTable {
 			RelationType relationType) throws IOException {
 		long superiorKey =
 			FidDBUtils.generateSuperiorFullHashSmash(superiorFunction, inferiorFunction);
-		Record superiorRecord = SCHEMA.createRecord(superiorKey);
+		DBRecord superiorRecord = SCHEMA.createRecord(superiorKey);
 		superiorTable.putRecord(superiorRecord);
 		if (relationType != RelationType.INTER_LIBRARY_CALL) {
 			long inferiorKey =
 				FidDBUtils.generateInferiorFullHashSmash(superiorFunction, inferiorFunction);
-			Record inferiorRecord = SCHEMA.createRecord(inferiorKey);
+			DBRecord inferiorRecord = SCHEMA.createRecord(inferiorKey);
 			inferiorTable.putRecord(inferiorRecord);
 		}
 	}
@@ -84,7 +84,7 @@ public class RelationsTable {
 			FunctionRecord inferiorFunction) throws IOException {
 		long inferiorKey =
 			FidDBUtils.generateInferiorFullHashSmash(superiorFunction, inferiorFunction);
-		Record inferiorRecord = SCHEMA.createRecord(inferiorKey);
+		DBRecord inferiorRecord = SCHEMA.createRecord(inferiorKey);
 		inferiorTable.putRecord(inferiorRecord);
 	}
 
@@ -100,7 +100,7 @@ public class RelationsTable {
 			FidHashQuad inferiorFunction) throws IOException {
 		long superiorKey =
 			FidDBUtils.generateSuperiorFullHashSmash(superiorFunction, inferiorFunction);
-		Record record = superiorTable.getRecord(superiorKey);
+		DBRecord record = superiorTable.getRecord(superiorKey);
 		return (record != null);
 	}
 
@@ -116,7 +116,7 @@ public class RelationsTable {
 			FunctionRecord inferiorFunction) throws IOException {
 		long inferiorKey =
 			FidDBUtils.generateInferiorFullHashSmash(superiorFunction, inferiorFunction);
-		Record record = inferiorTable.getRecord(inferiorKey);
+		DBRecord record = inferiorTable.getRecord(inferiorKey);
 		return (record != null);
 	}
 }

@@ -1155,7 +1155,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			if (name.equals(newName)) {
 				return;
 			}
-			Record record = table.getRecord(new StringField(PROGRAM_NAME));
+			DBRecord record = table.getRecord(new StringField(PROGRAM_NAME));
 			record.setString(0, newName);
 			table.putRecord(record);
 			getTreeManager().setProgramName(name, newName);
@@ -1170,7 +1170,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	private void refreshName() throws IOException {
-		Record record = table.getRecord(new StringField(PROGRAM_NAME));
+		DBRecord record = table.getRecord(new StringField(PROGRAM_NAME));
 		name = record.getString(0);
 	}
 
@@ -1265,7 +1265,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	private long getStoredBaseImageOffset() throws IOException {
-		Record rec = table.getRecord(new StringField(IMAGE_OFFSET));
+		DBRecord rec = table.getRecord(new StringField(IMAGE_OFFSET));
 		if (rec != null) {
 			return (new BigInteger(rec.getString(0), 16)).longValue();
 		}
@@ -1325,7 +1325,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 			if (commit) {
 				try {
-					Record record = SCHEMA.createRecord(new StringField(IMAGE_OFFSET));
+					DBRecord record = SCHEMA.createRecord(new StringField(IMAGE_OFFSET));
 					record.setString(0, Long.toHexString(base.getOffset()));
 					table.putRecord(record);
 
@@ -1384,7 +1384,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	private void createDatabase() throws IOException {
 		table = dbh.createTable(TABLE_NAME, SCHEMA);
-		Record record = SCHEMA.createRecord(new StringField(PROGRAM_NAME));
+		DBRecord record = SCHEMA.createRecord(new StringField(PROGRAM_NAME));
 		record.setString(0, name);
 		table.putRecord(record);
 
@@ -1432,7 +1432,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		if (table == null) {
 			throw new IOException("Unsupported File Content");
 		}
-		Record record = table.getRecord(new StringField(PROGRAM_NAME));
+		DBRecord record = table.getRecord(new StringField(PROGRAM_NAME));
 		name = record.getString(0);
 
 		record = table.getRecord(new StringField(LANGUAGE_ID));
@@ -1501,7 +1501,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		table = dbh.getTable(TABLE_NAME);
 		Field key = new StringField(PROGRAM_DB_VERSION);
 		String versionStr = Integer.toString(DB_VERSION);
-		Record record = table.getRecord(key);
+		DBRecord record = table.getRecord(key);
 		if (record != null && versionStr.equals(record.getString(0))) {
 			return; // already has correct version
 		}
@@ -1534,7 +1534,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	public int getStoredVersion() throws IOException {
-		Record record = table.getRecord(new StringField(PROGRAM_DB_VERSION));
+		DBRecord record = table.getRecord(new StringField(PROGRAM_DB_VERSION));
 		if (record != null) {
 			String s = record.getString(0);
 			try {
@@ -1549,7 +1549,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	private void checkOldProperties(int openMode, TaskMonitor monitor)
 			throws IOException, VersionException {
-		Record record = table.getRecord(new StringField(EXECUTE_PATH));
+		DBRecord record = table.getRecord(new StringField(EXECUTE_PATH));
 		if (record != null) {
 			if (openMode == READ_ONLY) {
 				return; // not important, get on path or format will return "unknown"
@@ -2098,7 +2098,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					translator.fixupInstructions(this, translator.getOldLanguage(), monitor);
 				}
 
-				Record record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
+				DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
 				record.setString(0, languageID.getIdAsString());
 				table.putRecord(record);
 				record = SCHEMA.createRecord(new StringField(COMPILER_SPEC_ID));

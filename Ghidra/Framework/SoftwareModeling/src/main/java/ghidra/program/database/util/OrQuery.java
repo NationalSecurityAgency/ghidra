@@ -19,7 +19,7 @@
  */
 package ghidra.program.database.util;
 
-import db.Record;
+import db.DBRecord;
 
 /**
  * Combines two queries such that this query is the logical "OR" of the two queries.  If the
@@ -40,9 +40,9 @@ public class OrQuery implements Query {
 	}
 
 	/**
-	 * @see ghidra.program.database.util.Query#matches(db.Record)
+	 * @see ghidra.program.database.util.Query#matches(db.DBRecord)
 	 */
-	public boolean matches(Record record) {
+	public boolean matches(DBRecord record) {
 		return q1.matches(record) || q2.matches(record);
 	}
 

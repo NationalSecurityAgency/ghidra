@@ -110,10 +110,10 @@ public class LibrariesTable {
 	 * @return the new library record
 	 * @throws IOException if the database create fails
 	 */
-	public Record createLibrary(String libraryFamilyName, String libraryVersion,
+	public DBRecord createLibrary(String libraryFamilyName, String libraryVersion,
 			String libraryVariant, String ghidraVersion, LanguageID languageID, int languageVersion,
 			int languageMinorVersion, CompilerSpecID compilerSpecID) throws IOException {
-		Record record = SCHEMA.createRecord(UniversalIdGenerator.nextID().getValue());
+		DBRecord record = SCHEMA.createRecord(UniversalIdGenerator.nextID().getValue());
 		record.setString(LIBRARY_FAMILY_NAME_COL, libraryFamilyName);
 		record.setString(LIBRARY_VERSION_COL, libraryVersion);
 		record.setString(LIBRARY_VARIANT_COL, libraryVariant);
@@ -164,7 +164,7 @@ public class LibrariesTable {
 		List<LibraryRecord> list = new ArrayList<LibraryRecord>();
 		while (iterator.hasNext()) {
 			Field key = iterator.next();
-			Record record = table.getRecord(key);
+			DBRecord record = table.getRecord(key);
 			LibraryRecord libraryRecord = new LibraryRecord(record);
 			if (version != null) {
 				if (!libraryRecord.getLibraryVersion().equals(version)) {
@@ -187,8 +187,8 @@ public class LibrariesTable {
 	 * @return the library or null if not found
 	 * @throws IOException if database seek encounters an error
 	 */
-	public Record getLibraryByID(long id) throws IOException {
-		Record record = table.getRecord(id);
+	public DBRecord getLibraryByID(long id) throws IOException {
+		DBRecord record = table.getRecord(id);
 		return record;
 	}
 }

@@ -130,7 +130,7 @@ class FixedRecNode extends LongKeyRecordNode {
 	}
 
 	@Override
-	boolean insertRecord(int index, Record record) throws IOException {
+	boolean insertRecord(int index, DBRecord record) throws IOException {
 
 		if (keyCount == ((buffer.length() - HEADER_SIZE) / entrySize)) {
 			return false;  // insufficient space for record storage
@@ -149,26 +149,26 @@ class FixedRecNode extends LongKeyRecordNode {
 	}
 
 	@Override
-	LongKeyNode updateRecord(int index, Record record) throws IOException {
+	LongKeyNode updateRecord(int index, DBRecord record) throws IOException {
 		int offset = getRecordOffset(index) + KEY_SIZE;
 		record.write(buffer, offset);
 		return getRoot();
 	}
 
 	@Override
-	Record getRecord(long key, Schema schema) throws IOException {
+	DBRecord getRecord(long key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0)
 			return null;
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		record.read(buffer, getRecordOffset(index) + KEY_SIZE);
 		return record;
 	}
 
 	@Override
-	public Record getRecord(Schema schema, int index) throws IOException {
+	public DBRecord getRecord(Schema schema, int index) throws IOException {
 		long key = getKey(index);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		record.read(buffer, getRecordOffset(index) + KEY_SIZE);
 		return record;
 	}

@@ -74,7 +74,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, long parentID, int ordinal, String name,
+	public DBRecord createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException {
 
 		long tableKey = table.getKey();
@@ -82,7 +82,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.PARAMETER, tableKey);
-		Record record = V1_PARAMETER_SCHEMA.createRecord(key);
+		DBRecord record = V1_PARAMETER_SCHEMA.createRecord(key);
 		record.setLongValue(V1_PARAMETER_PARENT_ID_COL, parentID);
 		record.setLongValue(V1_PARAMETER_DT_ID_COL, dataTypeID);
 		record.setString(V1_PARAMETER_NAME_COL, name);
@@ -94,7 +94,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public Record getRecord(long parameterID) throws IOException {
+	public DBRecord getRecord(long parameterID) throws IOException {
 		return table.getRecord(parameterID);
 	}
 
@@ -104,7 +104,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

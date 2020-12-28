@@ -86,13 +86,13 @@ class CommentsDBAdapterV1 extends CommentsDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long addr) throws IOException {
+	DBRecord getRecord(long addr) throws IOException {
 		return commentTable.getRecord(addr);
 	}
 
 	@Override
-	Record createRecord(long addr, int commentCol, String comment) throws IOException {
-		Record record = COMMENTS_SCHEMA.createRecord(addr);
+	DBRecord createRecord(long addr, int commentCol, String comment) throws IOException {
+		DBRecord record = COMMENTS_SCHEMA.createRecord(addr);
 		record.setString(commentCol, comment);
 		commentTable.putRecord(record);
 		return record;
@@ -109,7 +109,7 @@ class CommentsDBAdapterV1 extends CommentsDBAdapter {
 	}
 
 	@Override
-	void updateRecord(Record commentRec) throws IOException {
+	void updateRecord(DBRecord commentRec) throws IOException {
 		commentTable.putRecord(commentRec);
 	}
 
@@ -148,7 +148,7 @@ class CommentsDBAdapterV1 extends CommentsDBAdapter {
 	}
 
 	@Override
-	void putRecord(Record record) throws IOException {
+	void putRecord(DBRecord record) throws IOException {
 		commentTable.putRecord(record);
 	}
 

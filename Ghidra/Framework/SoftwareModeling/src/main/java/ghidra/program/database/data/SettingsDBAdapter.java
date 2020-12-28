@@ -60,7 +60,7 @@ abstract class SettingsDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createSettingsRecord(long dataTypeID, String name, String strValue,
+	abstract DBRecord createSettingsRecord(long dataTypeID, String name, String strValue,
 			long longValue, byte[] byteValue) throws IOException;
 
 	/**
@@ -86,13 +86,13 @@ abstract class SettingsDBAdapter {
 	 * @return record corresponding to settingsID or null
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getSettingsRecord(long settingsID) throws IOException;
+	abstract DBRecord getSettingsRecord(long settingsID) throws IOException;
 
 	/**
 	 * Update the default settings record in the table.
 	 * @param record the new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateSettingsRecord(Record record) throws IOException;
+	abstract void updateSettingsRecord(DBRecord record) throws IOException;
 
 }

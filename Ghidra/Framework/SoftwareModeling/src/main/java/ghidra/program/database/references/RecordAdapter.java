@@ -18,20 +18,20 @@ package ghidra.program.database.references;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 
 interface RecordAdapter {
 
-	public Record createRecord(long key, int numRefs, byte refLevel, byte[] refData)
+	public DBRecord createRecord(long key, int numRefs, byte refLevel, byte[] refData)
 			throws IOException;
 
-	public Record getRecord(long key) throws IOException;
+	public DBRecord getRecord(long key) throws IOException;
 
 	/**
 	 * @param key
 	 * @param refData
 	 */
-	public void putRecord(Record record) throws IOException;
+	public void putRecord(DBRecord record) throws IOException;
 
 	/**
 	 * @param key

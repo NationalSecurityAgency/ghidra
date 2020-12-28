@@ -22,7 +22,7 @@ import ghidra.program.model.listing.InstructionIterator;
 import java.io.IOException;
 import java.util.Iterator;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -74,7 +74,7 @@ public class InstructionRecordIterator implements InstructionIterator {
 	private void findNext() {
 		try {
 			while (nextInstruction == null && (forward ? it.hasNext() : it.hasPrevious())) {
-				Record record = forward ? it.next() : it.previous();
+				DBRecord record = forward ? it.next() : it.previous();
 				nextInstruction = codeMgr.getInstructionDB(record);
 			}
 		}

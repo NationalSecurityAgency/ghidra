@@ -50,7 +50,7 @@ class ModuleManager {
 	private HashSet<String> nameSet;
 	private AddressRangeMapDB fragMap;
 	private ErrorHandler errHandler;
-	private Record record;
+	private DBRecord record;
 	private Object versionTag; // gets updated everytime this module manager's cache is invalidated,
 	// or a new memory block is added
 
@@ -58,7 +58,7 @@ class ModuleManager {
 
 	static long ROOT_MODULE_ID = 0;
 
-	ModuleManager(TreeManager treeMgr, Record rec, ProgramDB program, boolean createTables)
+	ModuleManager(TreeManager treeMgr, DBRecord rec, ProgramDB program, boolean createTables)
 			throws IOException {
 
 		this.treeMgr = treeMgr;
@@ -180,7 +180,7 @@ class ModuleManager {
 	 *
 	 */
 	private void createRootModule() throws IOException {
-		Record rootRecord = adapter.createRootModule(program.getName());
+		DBRecord rootRecord = adapter.createRootModule(program.getName());
 		ModuleDB root = new ModuleDB(this, moduleCache, rootRecord);
 		nameSet.add(root.getName());
 	}
@@ -197,7 +197,7 @@ class ModuleManager {
 		lock.acquire();
 		try {
 			ModuleDB root = getModuleDB(ROOT_MODULE_ID);
-			Record rec = root.getRecord();
+			DBRecord rec = root.getRecord();
 			rec.setString(TreeManager.MODULE_NAME_COL, newName);
 			adapter.updateModuleRecord(rec);
 			treeMgr.updateTreeRecord(record);
@@ -217,12 +217,12 @@ class ModuleManager {
 	}
 
 	ProgramModule getModule(String name) throws IOException {
-		Record moduleRecord = adapter.getModuleRecord(name);
+		DBRecord moduleRecord = adapter.getModuleRecord(name);
 		return getModuleDB(moduleRecord);
 	}
 
 	ProgramFragment getFragment(String name) throws IOException {
-		Record fragmentRecord = adapter.getFragmentRecord(name);
+		DBRecord fragmentRecord = adapter.getFragmentRecord(name);
 		return getFragmentDB(fragmentRecord);
 	}
 
@@ -466,7 +466,7 @@ class ModuleManager {
 			return false;
 		}
 		for (Field key : keys) {
-			Record parentChildRecord = adapter.getParentChildRecord(key.getLongValue());
+			DBRecord parentChildRecord = adapter.getParentChildRecord(key.getLongValue());
 			long childID = parentChildRecord.getLongValue(TreeManager.CHILD_ID_COL);
 
 			if (childID == id) {
@@ -479,7 +479,7 @@ class ModuleManager {
 		return false;
 	}
 
-	FragmentDB getFragmentDB(Record fragmentRecord) {
+	FragmentDB getFragmentDB(DBRecord fragmentRecord) {
 		lock.acquire();
 		try {
 			if (fragmentRecord == null) {
@@ -504,7 +504,7 @@ class ModuleManager {
 			if (frag != null) {
 				return frag;
 			}
-			Record fragmentRecord = adapter.getFragmentRecord(fragID);
+			DBRecord fragmentRecord = adapter.getFragmentRecord(fragID);
 			return createFragmentDB(fragmentRecord);
 
 		}
@@ -513,7 +513,7 @@ class ModuleManager {
 		}
 	}
 
-	ModuleDB getModuleDB(Record moduleRecord) {
+	ModuleDB getModuleDB(DBRecord moduleRecord) {
 		lock.acquire();
 		try {
 			if (moduleRecord == null) {
@@ -538,7 +538,7 @@ class ModuleManager {
 			if (moduleDB != null) {
 				return moduleDB;
 			}
-			Record moduleRecord = adapter.getModuleRecord(moduleID);
+			DBRecord moduleRecord = adapter.getModuleRecord(moduleID);
 			return createModuleDB(moduleRecord);
 
 		}
@@ -648,8 +648,8 @@ class ModuleManager {
 			Field[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
 			String[] names = new String[keys.length];
 			for (int i = 0; i < keys.length; i++) {
-				Record parentChildRecord = adapter.getParentChildRecord(keys[i].getLongValue());
-				Record mrec = adapter.getModuleRecord(
+				DBRecord parentChildRecord = adapter.getParentChildRecord(keys[i].getLongValue());
+				DBRecord mrec = adapter.getModuleRecord(
 					parentChildRecord.getLongValue(TreeManager.PARENT_ID_COL));
 				names[i] = mrec.getString(TreeManager.MODULE_NAME_COL);
 			}
@@ -671,8 +671,8 @@ class ModuleManager {
 			Field[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
 			ProgramModule[] modules = new ProgramModule[keys.length];
 			for (int i = 0; i < keys.length; i++) {
-				Record parentChildRecord = adapter.getParentChildRecord(keys[i].getLongValue());
-				Record mrec = adapter.getModuleRecord(
+				DBRecord parentChildRecord = adapter.getParentChildRecord(keys[i].getLongValue());
+				DBRecord mrec = adapter.getModuleRecord(
 					parentChildRecord.getLongValue(TreeManager.PARENT_ID_COL));
 				modules[i] = getModuleDB(mrec);
 			}
@@ -721,7 +721,7 @@ class ModuleManager {
 		return TreeManager.getParentChildTableName(treeID);
 	}
 
-	private ModuleDB createModuleDB(Record moduleRecord) {
+	private ModuleDB createModuleDB(DBRecord moduleRecord) {
 		if (moduleRecord != null) {
 			ModuleDB moduleDB;
 			moduleDB = new ModuleDB(this, moduleCache, moduleRecord);
@@ -731,7 +731,7 @@ class ModuleManager {
 		return null;
 	}
 
-	private FragmentDB createFragmentDB(Record fragmentRecord) {
+	private FragmentDB createFragmentDB(DBRecord fragmentRecord) {
 		if (fragmentRecord != null) {
 			FragmentDB f = new FragmentDB(this, fragCache, fragmentRecord,
 				getFragmentAddressSet(fragmentRecord.getKey()));

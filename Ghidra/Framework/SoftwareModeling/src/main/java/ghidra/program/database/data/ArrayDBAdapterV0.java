@@ -56,13 +56,13 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, int numberOfElements, int length, long catID)
+	public DBRecord createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException {
 		return null;
 	}
 
 	@Override
-	public Record getRecord(long arrayID) throws IOException {
+	public DBRecord getRecord(long arrayID) throws IOException {
 		return translateRecord(table.getRecord(arrayID));
 	}
 
@@ -77,14 +77,14 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 	}
 
-	private Record translateRecord(Record oldRec) {
+	private DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = ArrayDBAdapter.SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = ArrayDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(ArrayDBAdapter.ARRAY_DT_ID_COL, oldRec.getLongValue(V0_ARRAY_DT_ID_COL));
 		rec.setIntValue(ArrayDBAdapter.ARRAY_DIM_COL, oldRec.getIntValue(V0_ARRAY_DIM_COL));
 		rec.setIntValue(ArrayDBAdapter.ARRAY_LENGTH_COL, oldRec.getIntValue(V0_ARRAY_LENGTH_COL));
@@ -115,14 +115,14 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return translateRecord(rec);
 		}
 
 		@Override
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return translateRecord(rec);
 		}
 	}

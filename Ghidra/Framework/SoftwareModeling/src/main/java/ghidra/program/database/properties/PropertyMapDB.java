@@ -124,7 +124,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				if (tempTable == null) {
 					// Create table on first entry upgrade
 					tempTable = tmpDb.createTable(getTableName(), schema);
@@ -151,7 +151,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				propertyTable.putRecord(rec);
 				monitor.setProgress(++count);
 			}

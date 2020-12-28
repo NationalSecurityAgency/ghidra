@@ -102,7 +102,7 @@ abstract class CommentHistoryAdapter {
 			RecordIterator iter = oldAdapter.getAllRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(HISTORY_ADDRESS_COL));
 				rec.setLongValue(HISTORY_ADDRESS_COL, addrMap.getKey(addr, true));
 				tmpAdapter.updateRecord(rec);
@@ -115,7 +115,7 @@ abstract class CommentHistoryAdapter {
 			iter = tmpAdapter.getAllRecords();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -150,7 +150,7 @@ abstract class CommentHistoryAdapter {
 	 * @param rec the record to update
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record rec) throws IOException;
+	abstract void updateRecord(DBRecord rec) throws IOException;
 
 	/**
 	 * Delete the records in the given range.

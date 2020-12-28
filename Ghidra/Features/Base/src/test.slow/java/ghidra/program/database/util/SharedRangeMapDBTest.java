@@ -95,7 +95,7 @@ public class SharedRangeMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		int cnt = 0;
 		while (iter.hasNext()) {
 			++cnt;
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			IndexRange range =
 				new IndexRange(rec.getKey(), rec.getLongValue(SharedRangeMapDB.RANGE_TO_COL));
 			if (indexOf(ranges, range) < 0) {
@@ -108,7 +108,7 @@ public class SharedRangeMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		cnt = 0;
 		while (iter.hasNext()) {
 			++cnt;
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			IndexRange entry = new IndexRange(rec.getLongValue(SharedRangeMapDB.MAP_RANGE_KEY_COL),
 				rec.getLongValue(SharedRangeMapDB.MAP_VALUE_COL));
 			if (indexOf(mapRangeToValue, entry) < 0) {

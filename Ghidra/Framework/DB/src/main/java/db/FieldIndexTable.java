@@ -85,7 +85,7 @@ public class FieldIndexTable extends IndexTable {
 			}
 			if (indexField.usesTruncatedFieldValue()) {
 				// Must check actual record if index value was truncated
-				Record rec = primaryTable.getRecord(f.getPrimaryKey());
+				DBRecord rec = primaryTable.getRecord(f.getPrimaryKey());
 				Field val = rec.getField(indexColumn);
 				if (!indexValue.equals(val)) {
 					continue;
@@ -107,18 +107,18 @@ public class FieldIndexTable extends IndexTable {
 	}
 
 	@Override
-	void addEntry(Record record) throws IOException {
+	void addEntry(DBRecord record) throws IOException {
 		Field indexedField = record.getField(indexColumn);
 		if (isSparseIndex && indexedField.isNull()) {
 			return;
 		}
 		IndexField f = indexKeyType.newIndexField(indexedField, record.getKeyField());
-		Record rec = indexTable.getSchema().createRecord(f);
+		DBRecord rec = indexTable.getSchema().createRecord(f);
 		indexTable.putRecord(rec);
 	}
 
 	@Override
-	void deleteEntry(Record record) throws IOException {
+	void deleteEntry(DBRecord record) throws IOException {
 		Field indexedField = record.getField(indexColumn);
 		if (isSparseIndex && indexedField.isNull()) {
 			return;
@@ -364,7 +364,7 @@ public class FieldIndexTable extends IndexTable {
 			}
 			if (indexField.usesTruncatedFieldValue()) {
 				// Must check actual record if index value was truncated
-				Record rec = primaryTable.getRecord(f.getPrimaryKey());
+				DBRecord rec = primaryTable.getRecord(f.getPrimaryKey());
 				Field val = rec.getField(indexColumn);
 				if (!field.equals(val)) {
 					continue; // skip
@@ -510,7 +510,7 @@ public class FieldIndexTable extends IndexTable {
 		private boolean indexValueOutOfRange(IndexField f) throws IOException {
 			Field val = null;
 			if (min != null && min.usesTruncatedFieldValue() && min.hasSameIndexValue(f)) {
-				Record rec = primaryTable.getRecord(f.getPrimaryKey());
+				DBRecord rec = primaryTable.getRecord(f.getPrimaryKey());
 				val = rec.getField(indexColumn);
 				if (val.compareTo(min.getNonTruncatedIndexField()) < 0) {
 					return true;
@@ -518,7 +518,7 @@ public class FieldIndexTable extends IndexTable {
 			}
 			if (max != null && max.usesTruncatedFieldValue() && max.hasSameIndexValue(f)) {
 				if (val == null) {
-					Record rec = primaryTable.getRecord(f.getPrimaryKey());
+					DBRecord rec = primaryTable.getRecord(f.getPrimaryKey());
 					val = rec.getField(indexColumn);
 				}
 				if (val.compareTo(min.getNonTruncatedIndexField()) > 0) {

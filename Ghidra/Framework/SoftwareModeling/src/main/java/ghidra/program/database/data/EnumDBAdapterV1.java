@@ -78,11 +78,11 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, byte size,
+	public DBRecord createRecord(String name, String comments, long categoryID, byte size,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		long tableKey = enumTable.getKey();
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.ENUM, tableKey);
-		Record record = V1_ENUM_SCHEMA.createRecord(key);
+		DBRecord record = V1_ENUM_SCHEMA.createRecord(key);
 		record.setString(V1_ENUM_NAME_COL, name);
 		record.setString(V1_ENUM_COMMENT_COL, comments);
 		record.setLongValue(V1_ENUM_CAT_COL, categoryID);
@@ -96,7 +96,7 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long enumID) throws IOException {
+	public DBRecord getRecord(long enumID) throws IOException {
 		return enumTable.getRecord(enumID);
 	}
 
@@ -106,7 +106,7 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		if (setLastChangeTime) {
 			record.setLongValue(EnumDBAdapter.ENUM_LAST_CHANGE_TIME_COL, (new Date()).getTime());
 		}
@@ -135,12 +135,12 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys = enumTable.findRecords(new LongField(datatypeID.getValue()),
 			V1_ENUM_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
-			Record record = enumTable.getRecord(keys[i]);
+			DBRecord record = enumTable.getRecord(keys[i]);
 			if (record.getLongValue(V1_ENUM_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}

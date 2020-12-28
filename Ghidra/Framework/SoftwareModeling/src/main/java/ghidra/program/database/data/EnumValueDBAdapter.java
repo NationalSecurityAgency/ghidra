@@ -98,7 +98,7 @@ abstract class EnumValueDBAdapter {
 	 * @return value record or null
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecord(long valueID) throws IOException;
+	abstract DBRecord getRecord(long valueID) throws IOException;
 
 	/**
 	 * Remove the record for the given enum Value ID.
@@ -112,7 +112,7 @@ abstract class EnumValueDBAdapter {
 	 * @param record the new record
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get enum value record IDs which correspond to specified enum datatype ID

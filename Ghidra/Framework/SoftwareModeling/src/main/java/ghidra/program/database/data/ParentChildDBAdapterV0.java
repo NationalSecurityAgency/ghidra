@@ -53,7 +53,7 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 	@Override
 	public void createRecord(long parentID, long childID) throws IOException {
 		long key = table.getKey();
-		Record record = V0_SCHEMA.createRecord(key);
+		DBRecord record = V0_SCHEMA.createRecord(key);
 		record.setLongValue(PARENT_COL, parentID);
 		record.setLongValue(CHILD_COL, childID);
 		table.putRecord(record);
@@ -64,7 +64,7 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 
 		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
 		for (Field id : ids) {
-			Record rec = table.getRecord(id);
+			DBRecord rec = table.getRecord(id);
 			if (rec.getLongValue(PARENT_COL) == parentID) {
 				table.deleteRecord(id);
 				return;
@@ -77,7 +77,7 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
 		long[] parentIds = new long[ids.length];
 		for (int i = 0; i < ids.length; i++) {
-			Record rec = table.getRecord(ids[i]);
+			DBRecord rec = table.getRecord(ids[i]);
 			parentIds[i] = rec.getLongValue(PARENT_COL);
 		}
 		return parentIds;

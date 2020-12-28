@@ -131,7 +131,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
 	 * that doesn't allow it.
 	 */
-	abstract Record createSymbol(String name, Address address, long parentSymbolID,
+	abstract DBRecord createSymbol(String name, Address address, long parentSymbolID,
 			SymbolType symbolType, long data1, int data2, String data3, SourceType source)
 			throws IOException;
 
@@ -141,7 +141,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @return record with the given symbolID
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getSymbolRecord(long symbolID) throws IOException;
+	abstract DBRecord getSymbolRecord(long symbolID) throws IOException;
 
 	/**
 	 * Remove the record for the given symbol ID
@@ -192,7 +192,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @param record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateSymbolRecord(Record record) throws IOException;
+	abstract void updateSymbolRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Get all of the symbols.

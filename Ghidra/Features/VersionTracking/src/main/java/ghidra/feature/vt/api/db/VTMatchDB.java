@@ -19,7 +19,7 @@ import static ghidra.feature.vt.api.db.VTMatchTableDBAdapter.ColumnDescription.*
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
 import ghidra.feature.vt.api.main.*;
@@ -32,7 +32,7 @@ import ghidra.util.exception.AssertException;
 
 public class VTMatchDB extends DatabaseObject implements VTMatch {
 
-	private Record record;
+	private DBRecord record;
 	private final VTMatchSetDB matchSet;
 	private VTSessionDB session;
 	private VTAssociation association;
@@ -42,7 +42,7 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 	private boolean doCalculateHash = true;
 	private int hash;
 
-	public VTMatchDB(DBObjectCache<VTMatchDB> cache, Record record, VTMatchSetDB matchSet) {
+	public VTMatchDB(DBObjectCache<VTMatchDB> cache, DBRecord record, VTMatchSetDB matchSet) {
 		super(cache, record.getKey());
 		this.record = record;
 		this.matchSet = matchSet;
@@ -56,7 +56,7 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 	}
 
 	@Override
-	protected boolean refresh(Record matchRecord) {
+	protected boolean refresh(DBRecord matchRecord) {
 		association = null;
 		if (matchRecord == null) {
 			matchRecord = matchSet.getMatchRecord(key);

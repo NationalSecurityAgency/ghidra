@@ -94,7 +94,7 @@ public class VariableStorageManagerDB {
 		if (varStore != null) {
 			return varStore;
 		}
-		Record rec = adapter.getRecord(variableAddr.getOffset());
+		DBRecord rec = adapter.getRecord(variableAddr.getOffset());
 		if (rec == null) {
 			return null;
 		}
@@ -107,7 +107,7 @@ public class VariableStorageManagerDB {
 		if (!variableAddr.isVariableAddress()) {
 			throw new IllegalArgumentException();
 		}
-		Record rec = adapter.getRecord(variableAddr.getOffset());
+		DBRecord rec = adapter.getRecord(variableAddr.getOffset());
 		if (rec == null) {
 			return null;
 		}
@@ -152,7 +152,7 @@ public class VariableStorageManagerDB {
 
 			// create new storage record
 			key = adapter.getNextStorageID();
-			Record rec = VariableStorageDBAdapter.VARIABLE_STORAGE_SCHEMA.createRecord(key);
+			DBRecord rec = VariableStorageDBAdapter.VARIABLE_STORAGE_SCHEMA.createRecord(key);
 			rec.setLongValue(VariableStorageDBAdapter.HASH_COL, storage.getLongHash());
 			rec.setString(VariableStorageDBAdapter.STORAGE_COL, storage.getSerializationString());
 			adapter.updateRecord(rec);
@@ -209,9 +209,9 @@ public class VariableStorageManagerDB {
 	private class MyVariableStorage extends DatabaseObject {
 
 		private VariableStorage storage;
-		private Record record;
+		private DBRecord record;
 
-		private MyVariableStorage(DBObjectCache<MyVariableStorage> cache, Record record) {
+		private MyVariableStorage(DBObjectCache<MyVariableStorage> cache, DBRecord record) {
 			super(cache, record.getKey());
 			this.record = record;
 			try {
@@ -244,7 +244,7 @@ public class VariableStorageManagerDB {
 			try {
 				storage = VariableStorage.BAD_STORAGE;
 				if (record != null) {
-					Record rec = adapter.getRecord(key);
+					DBRecord rec = adapter.getRecord(key);
 					if (rec == null) {
 						return false;
 					}
@@ -289,7 +289,7 @@ public class VariableStorageManagerDB {
 			while (recIter.hasNext()) {
 				monitor.checkCanceled();
 
-				Record rec = recIter.next();
+				DBRecord rec = recIter.next();
 				// NOTE: addrMap has already been switched-over to new language and its address spaces
 				String serialization = rec.getString(VariableStorageDBAdapter.STORAGE_COL);
 

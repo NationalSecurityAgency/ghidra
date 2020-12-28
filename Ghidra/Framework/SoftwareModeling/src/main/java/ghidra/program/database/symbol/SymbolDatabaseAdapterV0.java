@@ -89,7 +89,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		RecordIterator iter = symbolTable.iterator();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if (rec.getBooleanValue(V0_SYMBOL_LOCAL_COL)) {
 				SymbolManager.saveLocalSymbol(handle, rec.getKey(),
 					rec.getLongValue(V0_SYMBOL_ADDR_COL), rec.getString(V0_SYMBOL_NAME_COL),
@@ -100,7 +100,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		return symbolTable.getKey();
 	}
 
-	private Record convertRecord(Record record) {
+	private DBRecord convertRecord(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
@@ -108,7 +108,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			record.getBooleanValue(V0_SYMBOL_LOCAL_COL)) {
 			throw new AssertException("Unexpected Symbol");
 		}
-		Record rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
+		DBRecord rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
 		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, record.getString(V0_SYMBOL_NAME_COL));
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL,
 			record.getLongValue(V0_SYMBOL_ADDR_COL));
@@ -123,7 +123,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
+	DBRecord createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
 			long data1, int data2, String data3, SourceType source) {
 		throw new UnsupportedOperationException();
 	}
@@ -144,7 +144,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record getSymbolRecord(long symbolID) throws IOException {
+	DBRecord getSymbolRecord(long symbolID) throws IOException {
 		return convertRecord(symbolTable.getRecord(symbolID));
 	}
 
@@ -167,7 +167,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	void updateSymbolRecord(Record record) throws IOException {
+	void updateSymbolRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -228,7 +228,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	private class V0ConvertedRecordIterator implements RecordIterator {
 
 		private RecordIterator symIter;
-		private Record rec;
+		private DBRecord rec;
 
 		/**
 		 * Construct a symbol filtered record iterator
@@ -259,9 +259,9 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			if (hasNext()) {
-				Record r = rec;
+				DBRecord r = rec;
 				rec = null;
 				return convertRecord(r);
 			}
@@ -269,7 +269,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		}
 
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			throw new UnsupportedOperationException();
 		}
 

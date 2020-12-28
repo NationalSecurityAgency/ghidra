@@ -34,14 +34,14 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, byte size,
+	public DBRecord createRecord(String name, String comments, long categoryID, byte size,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException(
 			"Not allowed to update version prior to existence of Enumeration Data Types table.");
 	}
 
 	@Override
-	public Record getRecord(long enumID) throws IOException {
+	public DBRecord getRecord(long enumID) throws IOException {
 		return null;
 	}
 
@@ -51,7 +51,7 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -75,7 +75,7 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

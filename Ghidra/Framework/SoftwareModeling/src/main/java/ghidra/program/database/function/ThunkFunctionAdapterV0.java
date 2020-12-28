@@ -74,7 +74,7 @@ public class ThunkFunctionAdapterV0 extends ThunkFunctionAdapter {
 	}
 
 	@Override
-	Record getThunkRecord(long functionKey) throws IOException {
+	DBRecord getThunkRecord(long functionKey) throws IOException {
 		return table.getRecord(functionKey);
 	}
 
@@ -84,13 +84,13 @@ public class ThunkFunctionAdapterV0 extends ThunkFunctionAdapter {
 	}
 
 	@Override
-	void updateThunkRecord(Record rec) throws IOException {
+	void updateThunkRecord(DBRecord rec) throws IOException {
 		table.putRecord(rec);
 	}
 
 	@Override
-	Record createThunkRecord(long thunkFunctionId, long referencedFunctionId) throws IOException {
-		Record rec = THUNK_FUNCTION_SCHEMA.createRecord(thunkFunctionId);
+	DBRecord createThunkRecord(long thunkFunctionId, long referencedFunctionId) throws IOException {
+		DBRecord rec = THUNK_FUNCTION_SCHEMA.createRecord(thunkFunctionId);
 		rec.setField(LINKED_FUNCTION_ID_COL, new LongField(referencedFunctionId));
 		table.putRecord(rec);
 		return rec;

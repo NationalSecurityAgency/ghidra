@@ -133,9 +133,9 @@ public class SharedRangeMapDB {
 
 					// Get next range
 					Field mapKey = mapKeys[i];
-					Record mapRec = mapTable.getRecord(mapKey);
+					DBRecord mapRec = mapTable.getRecord(mapKey);
 					long rangeKey = mapRec.getLongValue(MAP_RANGE_KEY_COL);
-					Record rangeRec = rangeTable.getRecord(rangeKey);
+					DBRecord rangeRec = rangeTable.getRecord(rangeKey);
 
 					// Consoldate range if it overlaps
 					long min = rangeKey;
@@ -160,7 +160,7 @@ public class SharedRangeMapDB {
 				}
 
 				// Handle existing range which overlaps start index.
-				Record rangeRec = rangeTable.getRecordBefore(start);
+				DBRecord rangeRec = rangeTable.getRecordBefore(start);
 				if (rangeRec != null) {
 					//long startRange = rangeRec.getKey();
 					long endRange = rangeRec.getLongValue(RANGE_TO_COL);
@@ -221,7 +221,7 @@ public class SharedRangeMapDB {
 	 * @param value
 	 */
 	private void insertMapEntry(long rangeKey, long value) throws IOException {
-		Record rec = MAP_SCHEMA.createRecord(mapTable.getMaxKey() + 1);
+		DBRecord rec = MAP_SCHEMA.createRecord(mapTable.getMaxKey() + 1);
 		rec.setLongValue(MAP_RANGE_KEY_COL, rangeKey);
 		rec.setLongValue(MAP_VALUE_COL, value);
 		mapTable.putRecord(rec);
@@ -233,7 +233,7 @@ public class SharedRangeMapDB {
 	 * @param end
 	 */
 	private void insertRangeEntry(long start, long end) throws IOException {
-		Record rec = RANGES_SCHEMA.createRecord(start);
+		DBRecord rec = RANGES_SCHEMA.createRecord(start);
 		rec.setLongValue(RANGE_TO_COL, end);
 		rangeTable.putRecord(rec);
 	}
@@ -247,10 +247,10 @@ public class SharedRangeMapDB {
 	 * @return Record
 	 * @throws IOException
 	 */
-	private Record splitRange(Record rangeRecord, long newEnd) throws IOException {
+	private DBRecord splitRange(DBRecord rangeRecord, long newEnd) throws IOException {
 
 		// Split range record
-		Record newRange = RANGES_SCHEMA.createRecord(newEnd + 1);
+		DBRecord newRange = RANGES_SCHEMA.createRecord(newEnd + 1);
 		newRange.setField(RANGE_TO_COL, rangeRecord.getFieldValue(RANGE_TO_COL));
 		rangeRecord.setLongValue(RANGE_TO_COL, newEnd);
 		rangeTable.putRecord(rangeRecord);
@@ -259,7 +259,7 @@ public class SharedRangeMapDB {
 		// Split related map records
 		Field[] mapKeys = mapTable.findRecords(rangeRecord.getKeyField(), MAP_RANGE_KEY_COL);
 		for (int i = 0; i < mapKeys.length; i++) {
-			Record mapRec = mapTable.getRecord(mapKeys[i]);
+			DBRecord mapRec = mapTable.getRecord(mapKeys[i]);
 			mapRec.setKey(mapTable.getMaxKey() + 1);
 			mapRec.setField(MAP_RANGE_KEY_COL, newRange.getKeyField());
 			mapTable.putRecord(mapRec);
@@ -278,7 +278,7 @@ public class SharedRangeMapDB {
 
 		Field[] values = new Field[mapKeys.length];
 		for (int i = 0; i < mapKeys.length; i++) {
-			Record rec = mapTable.getRecord(mapKeys[i]);
+			DBRecord rec = mapTable.getRecord(mapKeys[i]);
 			values[i] = rec.getFieldValue(MAP_VALUE_COL);
 		}
 		Arrays.sort(values);
@@ -304,7 +304,7 @@ public class SharedRangeMapDB {
 		}
 
 		// Consolidate previous range if possible
-		Record rangeRec = rangeTable.getRecordBefore(rangeKey);
+		DBRecord rangeRec = rangeTable.getRecordBefore(rangeKey);
 		if (rangeRec != null && rangeRec.getLongValue(RANGE_TO_COL) == (rangeKey - 1)) {
 			Field[] keys = mapTable.findRecords(rangeRec.getKeyField(), MAP_RANGE_KEY_COL);
 			// Can consolidate if range occupied by the same set of values
@@ -358,12 +358,12 @@ public class SharedRangeMapDB {
 
 					// Remove Map entry
 					Field mapKey = mapKeys[i];
-					Record mapRec = mapTable.getRecord(mapKey);
+					DBRecord mapRec = mapTable.getRecord(mapKey);
 					mapTable.deleteRecord(mapKey);
 
 					// Consolidate Range
 					long rangeKey = mapRec.getLongValue(MAP_RANGE_KEY_COL);
-					Record rangeRec = rangeTable.getRecord(rangeKey);
+					DBRecord rangeRec = rangeTable.getRecord(rangeKey);
 					consolidateRange(rangeKey, rangeRec.getLongValue(RANGE_TO_COL));
 				}
 			}
@@ -421,7 +421,7 @@ public class SharedRangeMapDB {
 			try {
 
 				// Adjust start index to pickup first range which contains start
-				Record rec = rangeTable.getRecordAtOrBefore(start);
+				DBRecord rec = rangeTable.getRecordAtOrBefore(start);
 				if (rec != null && rec.getLongValue(RANGE_TO_COL) >= start) {
 					start = rec.getKey();
 				}
@@ -451,7 +451,7 @@ public class SharedRangeMapDB {
 			synchronized (dbHandle) {
 				try {
 					while (nextValue == null) {
-						Record rec = mapRecIter.next();
+						DBRecord rec = mapRecIter.next();
 						if (rec == null)
 							break;
 						nextValue = rec.getFieldValue(MAP_VALUE_COL);
@@ -524,7 +524,7 @@ public class SharedRangeMapDB {
 		public IndexRange next() {
 			synchronized (dbHandle) {
 				try {
-					Record rec = recordIter.next();
+					DBRecord rec = recordIter.next();
 					if (rec != null) {
 						long rangeKey = rec.getLongValue(MAP_RANGE_KEY_COL);
 						rec = rangeTable.getRecord(rangeKey);

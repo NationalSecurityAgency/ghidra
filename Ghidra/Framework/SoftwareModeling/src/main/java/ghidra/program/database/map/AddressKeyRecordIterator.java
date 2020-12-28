@@ -220,7 +220,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#next()
 	 */
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		if (hasNext()) {
 			return it.next();
 		}
@@ -230,7 +230,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#previous()
 	 */
-	public Record previous() throws IOException {
+	public DBRecord previous() throws IOException {
 		if (hasPrevious()) {
 			return it.previous();
 		}
@@ -247,7 +247,7 @@ public class AddressKeyRecordIterator implements RecordIterator {
 		return false;
 	}
 
-	public Iterator<Record> iterator() {
+	public Iterator<DBRecord> iterator() {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -51,10 +51,10 @@ public class VTMatchTableDBAdapterV0 extends VTMatchTableDBAdapter {
 	}
 
 	@Override
-	public Record insertMatchRecord(VTMatchInfo info, VTMatchSetDB matchSet,
+	public DBRecord insertMatchRecord(VTMatchInfo info, VTMatchSetDB matchSet,
 			VTAssociationDB association, VTMatchTagDB tag) throws IOException {
 
-		Record record = TABLE_SCHEMA.createRecord(table.getKey());
+		DBRecord record = TABLE_SCHEMA.createRecord(table.getKey());
 
 		record.setLongValue(TAG_KEY_COL.column(), (tag == null) ? -1 : tag.getKey());
 		record.setString(SIMILARITY_SCORE_COL.column(), info.getSimilarityScore().toStorageString());
@@ -68,7 +68,7 @@ public class VTMatchTableDBAdapterV0 extends VTMatchTableDBAdapter {
 	}
 
 	@Override
-	Record getMatchRecord(long matchRecordKey) throws IOException {
+	DBRecord getMatchRecord(long matchRecordKey) throws IOException {
 		return table.getRecord(matchRecordKey);
 	}
 
@@ -83,7 +83,7 @@ public class VTMatchTableDBAdapterV0 extends VTMatchTableDBAdapter {
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

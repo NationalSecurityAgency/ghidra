@@ -66,14 +66,14 @@ public abstract class ConvertedRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#next()
 	 */
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		return convertRecord(originalIterator.next());
 	}
 
 	/**
 	 * @see db.RecordIterator#previous()
 	 */
-	public Record previous() throws IOException {
+	public DBRecord previous() throws IOException {
 		return convertRecord(originalIterator.previous());
 	}
 	
@@ -82,6 +82,6 @@ public abstract class ConvertedRecordIterator implements RecordIterator {
 	 * @param record
 	 * @return converted record
 	 */
-	protected abstract Record convertRecord(Record record);
+	protected abstract DBRecord convertRecord(DBRecord record);
 	
 }

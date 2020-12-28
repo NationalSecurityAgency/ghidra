@@ -144,7 +144,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			VersionException ve = null;
 			RecordIterator iter = propertiesDBAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				String name = rec.getKeyField().getString();
 				byte propertyType = rec.getByteValue(PROPERTY_TYPE_COL);
 				PropertyMap pm = null;

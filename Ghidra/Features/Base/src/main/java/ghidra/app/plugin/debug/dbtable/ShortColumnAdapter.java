@@ -16,7 +16,7 @@
  */
 package ghidra.app.plugin.debug.dbtable;
 
-import db.Record;
+import db.DBRecord;
 import db.ShortField;
 
 public class ShortColumnAdapter extends AbstractColumnAdapter {
@@ -27,12 +27,12 @@ public class ShortColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getKeyValue(Record rec) {
+	Object getKeyValue(DBRecord rec) {
 		return new Short(((ShortField) rec.getKeyField()).getShortValue());
 	}
 
 	@Override
-	Object getValue(Record rec, int col) {
+	Object getValue(DBRecord rec, int col) {
 		return new Short(rec.getShortValue(col));
 	}
 

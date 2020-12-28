@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
@@ -90,7 +90,7 @@ class OldStackFrameDB implements StackFrame {
 			variables = new ArrayList<Variable>();
 			Field[] keys = adapter.getStackVariableKeys(function.getKey());
 			for (int i = 0; i < keys.length; i++) {
-				Record varRec = adapter.getStackVariableRecord(keys[i].getLongValue());
+				DBRecord varRec = adapter.getStackVariableRecord(keys[i].getLongValue());
 				variables.add(getStackVariable(varRec));
 			}
 			Collections.sort(variables, StackVariableComparator.get());
@@ -100,7 +100,7 @@ class OldStackFrameDB implements StackFrame {
 		}
 	}
 
-	private Variable getStackVariable(Record record) {
+	private Variable getStackVariable(DBRecord record) {
 
 		int offset = record.getIntValue(OldStackVariableDBAdapter.STACK_VAR_OFFSET_COL);
 		long dataTypeId = record.getLongValue(OldStackVariableDBAdapter.STACK_VAR_DATA_TYPE_ID_COL);

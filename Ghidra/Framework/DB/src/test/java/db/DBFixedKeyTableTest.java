@@ -91,7 +91,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 		Table table =
 			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
-		Record rec = null;
+		DBRecord rec = null;
 		try {
 			rec = DBTestUtils.createFixedKeyRecord(table, varDataSize, true);
 		}
@@ -276,14 +276,14 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createRandomFixedKeyTableRecords(Table table, int recordCnt, int varDataSize)
+	private DBRecord[] createRandomFixedKeyTableRecords(Table table, int recordCnt, int varDataSize)
 			throws IOException {
 		long txId = dbh.startTransaction();
 		if (table == null) {
 			table = DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false,
 				false);
 		}
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] = DBTestUtils.createFixedKeyRecord(table, varDataSize, true);
@@ -302,13 +302,13 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createOrderedFixedKeyTableRecords(int recordCnt, long keyIncrement,
+	private DBRecord[] createOrderedFixedKeyTableRecords(int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
 		Table table =
 			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
 		FixedField10 key = new FixedField10(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] = DBTestUtils.createRecord(table, key, varDataSize, true);
@@ -332,7 +332,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	 */
 	private void iterateFixedKeyRecords(boolean testStoredDB, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomFixedKeyTableRecords(null, recordCnt, varDataSize);
 		}
@@ -567,7 +567,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	 */
 	private void iterateFixedKeys(boolean testStoredDB, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomFixedKeyTableRecords(null, recordCnt, varDataSize);
 		}
@@ -742,7 +742,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testForwardDeleteIterator() throws IOException {
 
-		Record[] recs = createOrderedFixedKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
+		DBRecord[] recs = createOrderedFixedKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(SMALL_ITER_REC_CNT, table.getRecordCount());
@@ -761,7 +761,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testReverseDeleteIterator() throws IOException {
 
-		Record[] recs = createOrderedFixedKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
+		DBRecord[] recs = createOrderedFixedKeyTableRecords(SMALL_ITER_REC_CNT, 2, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(SMALL_ITER_REC_CNT, table.getRecordCount());
@@ -779,22 +779,22 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetFixedKeyRecordAfter() throws IOException {
-		Record[] recs = createRandomFixedKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// After test
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAfter(recs[i].getKeyField());
+			DBRecord rec = table.getRecordAfter(recs[i].getKeyField());
 			assertEquals(rec.getKeyField(), recs[i + 1].getKeyField());
 		}
 
 		// End test
-		Record rec = table.getRecordAfter(recs[15999].getKeyField());
+		DBRecord rec = table.getRecordAfter(recs[15999].getKeyField());
 		assertNull(rec);
 	}
 
-	private int findHoleAfterFixedKey(Record[] recs, int startIx) {
+	private int findHoleAfterFixedKey(DBRecord[] recs, int startIx) {
 		for (int i = startIx; i < recs.length - 1; i++) {
 			FixedField f = DBTestUtils.addToFixedField(recs[i].getKeyField(), 1);
 			if (f.compareTo(recs[i + 1].getKeyField()) < 0) {
@@ -804,7 +804,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		return -1;
 	}
 
-	private int findHoleBeforeFixedKey(Record[] recs, int startIx) {
+	private int findHoleBeforeFixedKey(DBRecord[] recs, int startIx) {
 		for (int i = startIx; i < recs.length; i++) {
 			FixedField f = DBTestUtils.addToFixedField(recs[i - 1].getKeyField(), 1);
 			if (f.compareTo(recs[i].getKeyField()) < 0) {
@@ -816,13 +816,13 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetFixedKeyRecordAtOrAfter() throws IOException {
-		Record[] recs = createRandomFixedKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// At and After tests
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAtOrAfter(recs[i].getKeyField());
+			DBRecord rec = table.getRecordAtOrAfter(recs[i].getKeyField());
 			assertEquals(rec.getKeyField(), recs[i].getKeyField());
 			int ix = findHoleAfterFixedKey(recs, i + 500);
 			if (ix < 0) {
@@ -837,7 +837,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		if (lastKey == MAX_VALUE) {
 			Assert.fail("Bad test data");
 		}
-		Record rec = table.getRecordAtOrAfter(lastKey);
+		DBRecord rec = table.getRecordAtOrAfter(lastKey);
 		assertEquals(rec.getKeyField(), lastKey);
 		rec = table.getRecordAtOrAfter(DBTestUtils.addToFixedField(lastKey, 1));
 		assertNull(rec);
@@ -845,13 +845,13 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetFixedKeyRecordAtOrBefore() throws IOException {
-		Record[] recs = createRandomFixedKeyTableRecords(null, 16000, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, 16000, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
 		// At and Before tests
 		for (int i = 1000; i < 16000; i += 1000) {
-			Record rec = table.getRecordAtOrBefore(recs[i].getKeyField());
+			DBRecord rec = table.getRecordAtOrBefore(recs[i].getKeyField());
 			assertEquals(rec.getKeyField(), recs[i].getKeyField());
 			int ix = findHoleBeforeFixedKey(recs, i + 500);
 			if (ix < 0) {
@@ -867,7 +867,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		if (firstKey.equals(MIN_VALUE)) {
 			Assert.fail("Bad test data");
 		}
-		Record rec = table.getRecordAtOrBefore(firstKey);
+		DBRecord rec = table.getRecordAtOrBefore(firstKey);
 		assertEquals(rec.getKeyField(), firstKey);
 		rec = table.getRecordAtOrBefore(DBTestUtils.addToFixedField(firstKey, -1));
 		assertNull(rec);
@@ -876,7 +876,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testDeleteFixedKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -890,7 +890,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 1;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 			if ((recIx % 1000) == 0) {
 				++recIx;
@@ -902,7 +902,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testForwardDeleteFixedKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -918,7 +918,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testReverseDeleteFixedKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -934,7 +934,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	public void testDeleteAllFixedKeyRecords() throws IOException {
 
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 
 		long txId = dbh.startTransaction();
@@ -954,7 +954,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -962,7 +962,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 
 	private void deleteFixedKeyRangeRecords(int count, int startIx, int endIx) throws IOException {
 
-		Record[] recs = createRandomFixedKeyTableRecords(null, count, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, count, 1);
 		Arrays.sort(recs);
 
 		long txId = dbh.startTransaction();
@@ -973,7 +973,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = startIx != 0 ? 0 : (endIx + 1);
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 			if (recIx == startIx) {
 				recIx = endIx + 1;
@@ -1002,7 +1002,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testUpdateFixedKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -1016,7 +1016,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1025,7 +1025,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 	@Test
 	public void testUpdateBigFixedKeyRecord() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
 
@@ -1039,7 +1039,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1054,7 +1054,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1066,7 +1066,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 
 		assertTrue(!dbh.canUndo());
 		assertTrue(!dbh.canRedo());
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
@@ -1077,7 +1077,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		// Update records
 		long txId = dbh.startTransaction();
 		for (int i = 0; i < cnt; i += 100) {
-			Record rec = table.getSchema().createRecord(recs[i].getKeyField());
+			DBRecord rec = table.getSchema().createRecord(recs[i].getKeyField());
 			DBTestUtils.fillRecord(rec, (BUFFER_SIZE / 8) * BUFFER_SIZE);
 			table.putRecord(rec);
 		}
@@ -1093,7 +1093,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1115,7 +1115,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
@@ -1128,7 +1128,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		assertTrue(!dbh.canUndo());
 		assertTrue(!dbh.canRedo());
 
-		Record[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
+		DBRecord[] recs = createRandomFixedKeyTableRecords(null, cnt, 1);
 
 		assertTrue(dbh.canUndo());
 		assertTrue(!dbh.canRedo());
@@ -1163,13 +1163,13 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(cnt, recIx);
 
 		// Add records
-		Record[] newRecs = new Record[recs.length + 100];
+		DBRecord[] newRecs = new DBRecord[recs.length + 100];
 		System.arraycopy(recs, 0, newRecs, 0, recs.length);
 		txId = dbh.startTransaction();
 		for (int i = 0; i < 100; i++) {
@@ -1193,7 +1193,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 		iter = table.iterator();
 		recIx = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			assertEquals(recs[recIx++], rec);
 		}
 		assertEquals(recs.length, recIx);

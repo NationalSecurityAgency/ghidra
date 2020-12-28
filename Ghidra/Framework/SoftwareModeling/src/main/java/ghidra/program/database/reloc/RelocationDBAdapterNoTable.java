@@ -24,7 +24,7 @@ import java.io.IOException;
 
 import java.lang.UnsupportedOperationException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -39,7 +39,7 @@ class RelocationDBAdapterNoTable extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record get(long addrKey) {
+	DBRecord get(long addrKey) {
 		return null;
 	}
 
@@ -74,7 +74,7 @@ class RelocationDBAdapterNoTable extends RelocationDBAdapter {
 	}
 
 	@Override
-	Record adaptRecord(Record rec) {
+	DBRecord adaptRecord(DBRecord rec) {
 		throw new UnsupportedOperationException();
 	}
 }

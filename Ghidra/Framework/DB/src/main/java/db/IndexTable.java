@@ -193,14 +193,14 @@ abstract class IndexTable {
 	 * @param record new record
 	 * @throws IOException if IO error occurs
 	 */
-	abstract void addEntry(Record record) throws IOException;
+	abstract void addEntry(DBRecord record) throws IOException;
 
 	/**
 	 * Delete an entry from this index.
 	 * @param oldRecord deleted record
 	 * @throws IOException if IO error occurs
 	 */
-	abstract void deleteEntry(Record oldRecord) throws IOException;
+	abstract void deleteEntry(DBRecord oldRecord) throws IOException;
 
 	/**
 	 * Delete all records within this index table.

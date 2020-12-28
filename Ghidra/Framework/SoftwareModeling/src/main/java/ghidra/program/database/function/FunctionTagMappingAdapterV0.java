@@ -71,7 +71,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	 ******************************************************************************/
 
 	@Override
-	Record getRecord(long functionID, long tagID) throws IOException {
+	DBRecord getRecord(long functionID, long tagID) throws IOException {
 
 		if (table == null) {
 			return null;
@@ -82,7 +82,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		RecordIterator iter = table.indexIterator(V0_FUNCTION_ID_COL, value, value, true);
 
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if ((rec.getLongValue(V0_FUNCTION_ID_COL) == functionID) &&
 				(rec.getLongValue(V0_TAG_ID_COL) == tagID)) {
 				return rec;
@@ -93,10 +93,10 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	}
 
 	@Override
-	Record createFunctionTagRecord(long functionID, long tagID) throws IOException {
+	DBRecord createFunctionTagRecord(long functionID, long tagID) throws IOException {
 
 		Table t = getTable();
-		Record rec = SCHEMA.createRecord(t.getKey());
+		DBRecord rec = SCHEMA.createRecord(t.getKey());
 		rec.setLongValue(V0_FUNCTION_ID_COL, functionID);
 		rec.setLongValue(V0_TAG_ID_COL, tagID);
 		t.putRecord(rec);
@@ -107,7 +107,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 	@Override
 	boolean removeFunctionTagRecord(long functionID, long tagID) throws IOException {
 
-		Record record = getRecord(functionID, tagID);
+		DBRecord record = getRecord(functionID, tagID);
 		if (record != null) {
 			return table.deleteRecord(record.getKey());
 		}
@@ -127,7 +127,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		// so it won't be indexed.
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			Long tID = rec.getLongValue(V0_TAG_ID_COL);
 			if (tID == tagID) {
 				iter.delete();
@@ -160,7 +160,7 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		}
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			if ((rec.getLongValue(V0_TAG_ID_COL) == tagID)) {
 				return true;
 			}
