@@ -324,7 +324,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		registryTable =
 			dbh.createTable(REGISTRY_TABLE_NAME, REGISTRY_SCHEMA, new int[] { PROPERTY_OWNER_COL });
 
-		Record record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
+		DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
 		record.setString(VALUE_COL, languageID.getIdAsString());
 		table.putRecord(record);
 
@@ -347,7 +347,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			throw new IOException("Unsupported User Data File Content");
 		}
 
-		Record record = table.getRecord(new StringField(LANGUAGE_ID));
+		DBRecord record = table.getRecord(new StringField(LANGUAGE_ID));
 		languageID = new LanguageID(record.getString(VALUE_COL));
 
 		record = table.getRecord(new StringField(LANGUAGE_VERSION));
@@ -377,7 +377,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 	private void upgradeDatabase() throws IOException {
 		table = dbh.getTable(TABLE_NAME);
-		Record record = SCHEMA.createRecord(new StringField(STORED_DB_VERSION));
+		DBRecord record = SCHEMA.createRecord(new StringField(STORED_DB_VERSION));
 		record.setString(VALUE_COL, Integer.toString(DB_VERSION));
 		table.putRecord(record);
 	}
@@ -438,7 +438,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 				clearCache(true);
 
-				Record record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
+				DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
 				record.setString(VALUE_COL, languageID.getIdAsString());
 				table.putRecord(record);
 
@@ -472,7 +472,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		try {
 			for (Field key : registryTable.findRecords(new StringField(owner),
 				PROPERTY_OWNER_COL)) {
-				Record rec = registryTable.getRecord(key);
+				DBRecord rec = registryTable.getRecord(key);
 				if (propertyName.equals(rec.getString(PROPERTY_NAME_COL))) {
 					int type = rec.getIntValue(PROPERTY_TYPE_COL);
 					if (propertyType != type) {
@@ -495,7 +495,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			}
 
 			long key = registryTable.getKey();
-			Record rec = REGISTRY_SCHEMA.createRecord(key);
+			DBRecord rec = REGISTRY_SCHEMA.createRecord(key);
 			rec.setString(PROPERTY_OWNER_COL, owner);
 			rec.setString(PROPERTY_NAME_COL, propertyName);
 			rec.setIntValue(PROPERTY_TYPE_COL, propertyType);
@@ -526,7 +526,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		return null;
 	}
 
-	private PropertyMap getPropertyMap(Record rec) throws IOException {
+	private PropertyMap getPropertyMap(DBRecord rec) throws IOException {
 		try {
 			PropertyMap map;
 			int type = rec.getIntValue(PROPERTY_TYPE_COL);
@@ -579,7 +579,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		try {
 			for (Field key : registryTable.findRecords(new StringField(owner),
 				PROPERTY_OWNER_COL)) {
-				Record rec = registryTable.getRecord(key);
+				DBRecord rec = registryTable.getRecord(key);
 				list.add(getPropertyMap(rec));
 			}
 		}
@@ -596,7 +596,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 				propertyMapOwners = new HashSet<String>();
 				RecordIterator recIter = registryTable.iterator();
 				while (recIter.hasNext()) {
-					Record rec = recIter.next();
+					DBRecord rec = recIter.next();
 					propertyMapOwners.add(rec.getString(PROPERTY_OWNER_COL));
 				}
 			}

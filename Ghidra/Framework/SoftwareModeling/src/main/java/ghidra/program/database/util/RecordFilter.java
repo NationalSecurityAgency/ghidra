@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,8 @@
  */
 package ghidra.program.database.util;
 
-import db.Record;
+import db.DBRecord;
 
 public interface RecordFilter {
-	public boolean matches(Record record);
+	public boolean matches(DBRecord record);
 }

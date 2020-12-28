@@ -118,7 +118,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 				throw new DuplicateNameException(name + " already exists for an equate.");
 			}
 			validateName(name);
-			Record record = equateAdapter.createEquate(name, value);
+			DBRecord record = equateAdapter.createEquate(name, value);
 			EquateDB equate = new EquateDB(this, equateCache, record);
 			program.setChanged(ChangeManager.DOCR_EQUATE_ADDED,
 				new EquateInfo(name, value, null, 0, 0), null);
@@ -297,7 +297,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		try {
 			RecordIterator iter = equateAdapter.getRecords();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				EquateDB equateDB = getEquateDB(rec.getKey());
 				if (equateDB.getValue() == value) {
 					list.add(equateDB);
@@ -428,7 +428,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 					removeRef(equateDB, ref);
 				}
 			}
-			Record record =
+			DBRecord record =
 				refAdapter.createReference(addr, (short) opIndex, dynamicHash, equateID);
 			new EquateRefDB(this, refCache, record);
 
@@ -497,7 +497,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		program.setChanged(ChangeManager.DOCR_EQUATE_RENAMED, oldName, newName);
 	}
 
-	Record getEquateRecord(long equateID) {
+	DBRecord getEquateRecord(long equateID) {
 		try {
 			return equateAdapter.getRecord(equateID);
 		}
@@ -507,7 +507,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return null;
 	}
 
-	Record getEquateRefRecord(long refID) {
+	DBRecord getEquateRefRecord(long refID) {
 		try {
 			return refAdapter.getRecord(refID);
 		}
@@ -537,7 +537,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		try {
 			EquateDB equateDB = equateCache.get(equateID);
 			if (equateDB == null) {
-				Record record = equateAdapter.getRecord(equateID);
+				DBRecord record = equateAdapter.getRecord(equateID);
 				if (record != null) {
 					equateDB = new EquateDB(this, equateCache, record);
 				}
@@ -554,7 +554,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		try {
 			EquateRefDB ref = refCache.get(key);
 			if (ref == null) {
-				Record record = refAdapter.getRecord(key);
+				DBRecord record = refAdapter.getRecord(key);
 				ref = new EquateRefDB(this, refCache, record);
 			}
 			return ref;
@@ -688,7 +688,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		public Equate next() {
 			if (iter != null) {
 				try {
-					Record record = iter.next();
+					DBRecord record = iter.next();
 					if (record != null) {
 						return getEquateDB(record.getKey());
 					}

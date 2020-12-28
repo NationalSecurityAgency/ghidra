@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +39,13 @@ public interface RecordIterator {
 	 * Return the nexy Record or null if one is not available.
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	public Record next() throws IOException;
+	public DBRecord next() throws IOException;
 	
 	/**
 	 * Return the previous Record or null if one is not available.
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	public Record previous() throws IOException;
+	public DBRecord previous() throws IOException;
 	
 	/**
 	 * Delete the last Record read via the next or previous methods.

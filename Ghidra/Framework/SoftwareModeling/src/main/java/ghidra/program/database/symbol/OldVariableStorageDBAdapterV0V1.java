@@ -57,14 +57,14 @@ class OldVariableStorageDBAdapterV0V1 {
 		}
 	}
 
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return variableStorageTable.getRecord(key);
 	}
 
-	Record[] getRecordsForNamespace(long namespaceID) throws IOException {
+	DBRecord[] getRecordsForNamespace(long namespaceID) throws IOException {
 		Field[] keys =
 			variableStorageTable.findRecords(new LongField(namespaceID), NAMESPACE_ID_COL);
-		Record[] records = new Record[keys.length];
+		DBRecord[] records = new DBRecord[keys.length];
 		for (int i = 0; i < keys.length; i++) {
 			records[i] = variableStorageTable.getRecord(keys[i]);
 		}

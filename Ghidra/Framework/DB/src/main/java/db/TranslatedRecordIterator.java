@@ -37,12 +37,12 @@ public class TranslatedRecordIterator implements RecordIterator {
 	}
 
 	@Override
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		return translator.translateRecord(it.next());
 	}
 	
 	@Override
-	public Record previous() throws IOException {
+	public DBRecord previous() throws IOException {
 		return translator.translateRecord(it.previous());
 	}
 	

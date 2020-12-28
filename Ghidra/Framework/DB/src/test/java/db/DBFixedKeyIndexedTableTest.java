@@ -86,11 +86,11 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createRandomTableRecords(int schemaType, int recordCnt, int varDataSize)
+	private DBRecord[] createRandomTableRecords(int schemaType, int recordCnt, int varDataSize)
 			throws IOException {
 		long txId = dbh.startTransaction();
 		Table table = DBTestUtils.createFixedKeyTable(dbh, table1Name, schemaType, true, false);
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] = DBTestUtils.createFixedKeyRecord(table, varDataSize, true);
@@ -110,13 +110,13 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
 	 */
-	private Record[] createOrderedTableRecords(int schemaType, int recordCnt, long keyIncrement,
+	private DBRecord[] createOrderedTableRecords(int schemaType, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
 		Table table = DBTestUtils.createFixedKeyTable(dbh, table1Name, schemaType, true, false);
 		FixedField key = new FixedField10(new byte[] { 0x7f, (byte) 0xff, (byte) 0xff, (byte) 0xff,
 			(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff });
-		Record[] recs = new Record[recordCnt];
+		DBRecord[] recs = new DBRecord[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
 				recs[i] = DBTestUtils.createRecord(table, key, varDataSize, true);
@@ -130,19 +130,19 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		return recs;
 	}
 
-	private Field[] matchingKeys(Record[] recs, int columnIx, Record matchRec) {
-		ArrayList<Record> recList = new ArrayList<>();
+	private Field[] matchingKeys(DBRecord[] recs, int columnIx, DBRecord matchRec) {
+		ArrayList<DBRecord> recList = new ArrayList<>();
 		Field f = matchRec.getField(columnIx);
-		for (Record rec : recs) {
+		for (DBRecord rec : recs) {
 			if (f.equals(rec.getField(columnIx))) {
 				recList.add(rec);
 			}
 		}
 		Field[] keys = new FixedField[recList.size()];
-		Iterator<Record> iter = recList.iterator();
+		Iterator<DBRecord> iter = recList.iterator();
 		int i = 0;
 		while (iter.hasNext()) {
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			keys[i++] = rec.getKeyField();
 		}
 		Arrays.sort(keys);
@@ -151,7 +151,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	private void findRecords(boolean testStoredDB, int recordCnt, int findCnt, int varDataSize)
 			throws IOException {
-		Record[] recs = createRandomTableRecords(DBTestUtils.ALL_TYPES, recordCnt, varDataSize);// short var-len fields
+		DBRecord[] recs = createRandomTableRecords(DBTestUtils.ALL_TYPES, recordCnt, varDataSize);// short var-len fields
 		if (testStoredDB) {
 			saveAsAndReopen(dbName);
 		}
@@ -239,7 +239,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	private void updateRecordsIterator(boolean testStoredDB, int schemaType, int recordCnt,
 			long keyIncrement, int varDataSize) throws IOException {
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomTableRecords(schemaType, recordCnt, varDataSize);
 		}
@@ -305,7 +305,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			int recIx = 0;
 			RecordIterator iter = table.indexIterator(colIx);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -315,7 +315,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -325,7 +325,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -335,7 +335,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -344,7 +344,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findStart(recs, recordCnt / 2, colIx);
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -353,7 +353,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = recordCnt - 1;
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -362,7 +362,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findEnd(recs, recordCnt / 2, colIx);
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -375,7 +375,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 				startValue.setLongValue(recs[recIx].getField(colIx).getLongValue() - 1);
 				iter = table.indexIteratorAfter(colIx, startValue);
 				while (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					assertEquals(recs[recIx++], rec);
 				}
 				assertEquals(recordCnt, recIx);
@@ -385,7 +385,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 				startValue.setLongValue(recs[recIx].getField(colIx).getLongValue() + 1);
 				iter = table.indexIteratorBefore(colIx, startValue);
 				while (iter.hasPrevious()) {
-					Record rec = iter.previous();
+					DBRecord rec = iter.previous();
 					assertEquals(recs[recIx--], rec);
 				}
 				assertEquals(-1, recIx);
@@ -409,7 +409,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	private void iterateRecords(boolean testStoredDB, int schemaType, int recordCnt,
 			long keyIncrement, int varDataSize, boolean doUndoRedo) throws IOException {
 
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomTableRecords(schemaType, recordCnt, varDataSize);
 		}
@@ -443,7 +443,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = 0;
 			iter = table.indexIterator(colIx);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx], rec);
 				Field indexField = recs[recIx].getField(colIx);
 				if (lastIndex == null || !lastIndex.equals(indexField)) {
@@ -473,7 +473,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findEnd(recs, startIx, colIx);
 			iter = table.indexIteratorAfter(colIx, recs[startIx].getField(colIx));
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -485,7 +485,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorBefore(colIx, recs[startIx].getField(colIx),
 				recs[startIx].getKeyField());
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -501,7 +501,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = 0;
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -522,7 +522,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -536,7 +536,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = recordCnt - 1;
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -546,7 +546,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -556,7 +556,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -565,7 +565,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findStart(recs, recordCnt / 2, colIx);
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -574,7 +574,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findStart(recs, recordCnt / 2, colIx);
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[--recIx], rec);
 			}
 			assertEquals(0, recIx);
@@ -583,7 +583,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findEnd(recs, recordCnt / 2, colIx);
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[++recIx], rec);
 			}
 			assertEquals(recordCnt - 1, recIx);
@@ -592,7 +592,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findEnd(recs, recordCnt / 2, colIx);
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -604,7 +604,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIterator(colIx, recs[minIx].getField(colIx),
 				recs[maxIx].getField(colIx), true);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(maxIx + 1, recIx);
@@ -613,7 +613,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = 0;
 			iter = table.indexIterator(colIx, null, null, true);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -625,7 +625,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIterator(colIx, recs[minIx].getField(colIx),
 				recs[maxIx].getField(colIx), false);
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(minIx - 1, recIx);
@@ -634,7 +634,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = recordCnt - 1;
 			iter = table.indexIterator(colIx, null, null, false);
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -652,7 +652,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 				startValue.setLongValue(recs[recIx].getField(colIx).getLongValue() - 1);
 				iter = table.indexIteratorAfter(colIx, startValue);
 				while (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					assertEquals(recs[recIx++], rec);
 				}
 				assertEquals(recordCnt, recIx);
@@ -662,7 +662,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 				startValue.setLongValue(recs[recIx].getField(colIx).getLongValue() + 1);
 				iter = table.indexIteratorBefore(colIx, startValue);
 				while (iter.hasPrevious()) {
-					Record rec = iter.previous();
+					DBRecord rec = iter.previous();
 					assertEquals(recs[recIx--], rec);
 				}
 				assertEquals(-1, recIx);
@@ -675,26 +675,26 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
 			for (int i = 0; i < 2; i++) {
 				if (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					assertEquals(recs[recIx++], rec);
 				}
 			}
 			--recIx;
 			for (int i = 0; i < 2; i++) {
 				if (iter.hasPrevious()) {
-					Record rec = iter.previous();
+					DBRecord rec = iter.previous();
 					assertEquals(recs[recIx--], rec);
 				}
 			}
 			++recIx;
 			for (int i = 0; i < 2; i++) {
 				if (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					assertEquals(recs[recIx++], rec);
 				}
 			}
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -705,26 +705,26 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			--recIx;
 			for (int i = 0; i < 2; i++) {
 				if (iter.hasPrevious()) {
-					Record rec = iter.previous();
+					DBRecord rec = iter.previous();
 					assertEquals(recs[recIx--], rec);
 				}
 			}
 			++recIx;
 			for (int i = 0; i < 2; i++) {
 				if (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					assertEquals(recs[recIx++], rec);
 				}
 			}
 			--recIx;
 			for (int i = 0; i < 2; i++) {
 				if (iter.hasPrevious()) {
-					Record rec = iter.previous();
+					DBRecord rec = iter.previous();
 					assertEquals(recs[recIx--], rec);
 				}
 			}
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -734,13 +734,13 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
 			for (int i = 0; i < 3; i++) {
 				if (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					assertEquals(recs[recIx++], rec);
 				}
 			}
 			assertEquals(recordCnt - 1, recIx);
 			while (iter.hasPrevious()) {
-				Record rec = iter.previous();
+				DBRecord rec = iter.previous();
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
@@ -750,13 +750,13 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
 			for (int i = 0; i < 3; i++) {
 				if (iter.hasPrevious()) {
-					Record rec = iter.previous();
+					DBRecord rec = iter.previous();
 					assertEquals(recs[--recIx], rec);
 				}
 			}
 			assertEquals(0, recIx);
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				assertEquals(recs[recIx++], rec);
 			}
 			assertEquals(recordCnt, recIx);
@@ -862,7 +862,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	private void deleteIteratedRecords(int recordCnt, int testColIx, long keyIncrement,
 			int varDataSize) throws IOException {
 
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomTableRecords(DBTestUtils.ALL_TYPES, recordCnt, varDataSize);
 		}
@@ -930,7 +930,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	private void deleteIteratedIndexFields(int recordCnt, int testColIx, long keyIncrement,
 			int varDataSize) throws IOException {
 
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		if (keyIncrement == 0) {
 			recs = createRandomTableRecords(DBTestUtils.ALL_TYPES, recordCnt, varDataSize);
 		}
@@ -948,7 +948,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			int fieldCnt = 0;
 			Field lastField = null;
 			ArrayList<Field> fieldList = new ArrayList<>();
-			for (Record rec : recs) {
+			for (DBRecord rec : recs) {
 				Field f = rec.getField(testColIx);
 				if (lastField == null || !lastField.equals(f)) {
 					lastField = f;
@@ -997,7 +997,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			int fieldCnt = 0;
 			Field lastField = null;
 			ArrayList<Field> fieldList = new ArrayList<>();
-			for (Record rec : recs) {
+			for (DBRecord rec : recs) {
 				Field f = rec.getField(testColIx);
 				if (lastField == null || !lastField.equals(f)) {
 					lastField = f;
@@ -1025,7 +1025,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		}
 	}
 
-	private int findStart(Record[] recs, int startIx, int colIx) {
+	private int findStart(DBRecord[] recs, int startIx, int colIx) {
 		Field f = recs[startIx].getField(colIx);
 		--startIx;
 		while (startIx >= 0 && f.equals(recs[startIx].getField(colIx))) {
@@ -1037,7 +1037,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		return ++startIx;
 	}
 
-	private int findEnd(Record[] recs, int startIx, int colIx) {
+	private int findEnd(DBRecord[] recs, int startIx, int colIx) {
 		Field f = recs[startIx].getField(colIx);
 		++startIx;
 		while (startIx < recs.length && f.equals(recs[startIx].getField(colIx))) {
@@ -1049,7 +1049,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		return --startIx;
 	}
 
-	private class RecColumnComparator implements Comparator<Record> {
+	private class RecColumnComparator implements Comparator<DBRecord> {
 
 		int columnIx;
 
@@ -1058,7 +1058,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public int compare(Record rec1, Record rec2) {
+		public int compare(DBRecord rec1, DBRecord rec2) {
 			int r = rec1.getField(columnIx).compareTo(rec2.getField(columnIx));
 			if (r == 0) {
 				return rec1.getKeyField().compareTo(rec2.getKeyField());
@@ -1135,7 +1135,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	@Test
 	public void testRecordIteratorExtents() throws IOException {
 
-		Record[] recs = null;
+		DBRecord[] recs = null;
 		recs = createOrderedTableRecords(DBTestUtils.SINGLE_SHORT, 30, 2, 1);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(recs.length, table.getRecordCount());
@@ -1148,7 +1148,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		Field maxField = new ShortField(Short.MAX_VALUE);
 		RecordIterator iter = table.indexIterator(colIx, minField, maxField, false);
 		while (iter.hasPrevious()) {
-			Record rec = iter.previous();
+			DBRecord rec = iter.previous();
 			assertEquals(recs[recIx--], rec);
 		}
 		assertEquals(recIx, -1);

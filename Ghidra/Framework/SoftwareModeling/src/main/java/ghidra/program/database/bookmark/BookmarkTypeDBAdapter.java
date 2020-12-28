@@ -85,13 +85,13 @@ abstract class BookmarkTypeDBAdapter {
 	 * @return array of records
 	 * @throws IOException
 	 */
-	abstract Record[] getRecords() throws IOException;
+	abstract DBRecord[] getRecords() throws IOException;
 
 	public int[] getTypeIds() throws IOException {
-		Record[] typeRecords = getRecords();
+		DBRecord[] typeRecords = getRecords();
 		int[] ids = new int[typeRecords.length];
 		for (int i = 0; i < typeRecords.length; i++) {
-			Record rec = typeRecords[i];
+			DBRecord rec = typeRecords[i];
 			ids[i] = (int) rec.getKey();
 		}
 		return ids;

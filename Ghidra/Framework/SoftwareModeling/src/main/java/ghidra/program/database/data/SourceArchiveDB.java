@@ -17,7 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
@@ -26,13 +26,13 @@ import ghidra.util.UniversalID;
 
 public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	private UniversalID sourceID;
-	private Record record;
+	private DBRecord record;
 	private final SourceArchiveAdapter adapter;
 	private final DataTypeManagerDB dtMgr;
 	private Lock lock;
 
 	public SourceArchiveDB(DataTypeManagerDB dtMgr, DBObjectCache<SourceArchiveDB> cache,
-			SourceArchiveAdapter adapter, Record record) {
+			SourceArchiveAdapter adapter, DBRecord record) {
 		super(cache, record.getKey());
 		this.dtMgr = dtMgr;
 		this.adapter = adapter;
@@ -97,7 +97,7 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	@Override
 	protected boolean refresh() {
 		try {
-			Record rec = adapter.getRecord(key);
+			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
 				return true;

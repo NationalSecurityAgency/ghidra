@@ -95,16 +95,16 @@ class FunctionAdapterV2 extends FunctionAdapter {
 	 * @see ghidra.program.database.function.FunctionAdapter#getFunctionRecord(long)
 	 */
 	@Override
-	Record getFunctionRecord(long functionKey) throws IOException {
-		Record oldRecord = table.getRecord(functionKey);
+	DBRecord getFunctionRecord(long functionKey) throws IOException {
+		DBRecord oldRecord = table.getRecord(functionKey);
 		return translateRecord(oldRecord);
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionAdapter#updateFunctionRecord(db.Record)
+	 * @see ghidra.program.database.function.FunctionAdapter#updateFunctionRecord(db.DBRecord)
 	 */
 	@Override
-	void updateFunctionRecord(Record functionRecord) throws IOException {
+	void updateFunctionRecord(DBRecord functionRecord) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -112,7 +112,7 @@ class FunctionAdapterV2 extends FunctionAdapter {
 	 * @see ghidra.program.database.function.FunctionAdapter#createFunctionRecord(ghidra.program.model.symbol.Scope, long)
 	 */
 	@Override
-	Record createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException {
+	DBRecord createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException {
 //		Record rec = FUNCTION_SCHEMA.createRecord(symbolID);
 //		rec.setLongValue(RETURN_DATA_TYPE_ID_COL, returnDataTypeId);
 //		rec.setIntValue(STACK_PURGE_COL, Function.UNKNOWN_STACK_DEPTH_CHANGE);
@@ -130,15 +130,15 @@ class FunctionAdapterV2 extends FunctionAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionAdapter#translateRecord(db.Record)
+	 * @see ghidra.program.database.function.FunctionAdapter#translateRecord(db.DBRecord)
 	 */
 	@Override
-	Record translateRecord(Record record) {
+	DBRecord translateRecord(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
 		long entryPointKey = record.getKey();
-		Record newRecord = FunctionAdapter.FUNCTION_SCHEMA.createRecord(entryPointKey);
+		DBRecord newRecord = FunctionAdapter.FUNCTION_SCHEMA.createRecord(entryPointKey);
 		newRecord.setLongValue(FunctionAdapter.RETURN_DATA_TYPE_ID_COL,
 			record.getLongValue(V2_RETURN_DATA_TYPE_ID_COL));
 		newRecord.setIntValue(FunctionAdapter.STACK_PURGE_COL,

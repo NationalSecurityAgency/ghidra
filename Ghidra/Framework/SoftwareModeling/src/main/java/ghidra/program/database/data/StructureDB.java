@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
@@ -56,7 +56,7 @@ class StructureDB extends CompositeDB implements Structure {
 	 */
 	public StructureDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			CompositeDBAdapter compositeAdapter, ComponentDBAdapter componentAdapter,
-			Record record) {
+			DBRecord record) {
 		super(dataMgr, cache, compositeAdapter, componentAdapter, record);
 	}
 
@@ -68,7 +68,7 @@ class StructureDB extends CompositeDB implements Structure {
 		try {
 			Field[] ids = componentAdapter.getComponentIdsInComposite(key);
 			for (Field id : ids) {
-				Record rec = componentAdapter.getRecord(id.getLongValue());
+				DBRecord rec = componentAdapter.getRecord(id.getLongValue());
 				DataTypeComponentDB component =
 					new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 				if (component.isFlexibleArrayComponent()) {
@@ -129,7 +129,7 @@ class StructureDB extends CompositeDB implements Structure {
 				}
 				else {
 					int componentLength = getPreferredComponentLength(dataType, length);
-					Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
+					DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key,
 						componentLength, numComponents, structLength, name, comment);
 					dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 					dataType.addParent(this);
@@ -193,7 +193,7 @@ class StructureDB extends CompositeDB implements Structure {
 					flexibleArrayComponent = null;
 				}
 
-				Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key, 0,
+				DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key, 0,
 					-1, -1, name, comment);
 				dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 				dataType.addParent(this);
@@ -300,7 +300,7 @@ class StructureDB extends CompositeDB implements Structure {
 			length = getPreferredComponentLength(dataType, length);
 
 			int offset = getComponent(ordinal).getOffset();
-			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key, length,
+			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key, length,
 				ordinal, offset, name, comment);
 			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			dataType.addParent(this);
@@ -474,7 +474,7 @@ class StructureDB extends CompositeDB implements Structure {
 			BitFieldDataType bitfieldDt =
 				new BitFieldDBDataType(baseDataType, bitSize, storageBitOffset);
 
-			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(bitfieldDt), key,
+			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(bitfieldDt), key,
 				bitfieldDt.getStorageSize(), ordinal, revisedOffset, componentName, comment);
 			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 			bitfieldDt.addParent(this); // has no affect
@@ -1016,7 +1016,7 @@ class StructureDB extends CompositeDB implements Structure {
 
 			length = getPreferredComponentLength(dataType, length);
 
-			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key, length,
+			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dataType), key, length,
 				ordinal, offset, name, comment);
 			dataType.addParent(this);
 			DataTypeComponentDB dtc = new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
@@ -1301,7 +1301,7 @@ class StructureDB extends CompositeDB implements Structure {
 				length = Math.min(length, maxOffset - dtc.getOffset());
 			}
 
-			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, length,
+			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, length,
 				dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
 			dt.addParent(this);
 			DataTypeComponentDB newDtc =
@@ -1671,7 +1671,7 @@ class StructureDB extends CompositeDB implements Structure {
 					}
 				}
 			}
-			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(resolvedDataType), key,
+			DBRecord rec = componentAdapter.createRecord(dataMgr.getResolvedID(resolvedDataType), key,
 				length, ordinal, newOffset, name, comment);
 			resolvedDataType.addParent(this);
 			DataTypeComponentDB newDtc =

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +61,7 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#getRecordAtOrAfter(ghidra.program.model.address.Address)
 	 */
 	@Override
-	Record getRecordAtOrAfter(Address addr) throws IOException {
+	DBRecord getRecordAtOrAfter(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(dataTable, addrMap, addr, true);
 		return it.next();
 	}
@@ -71,7 +70,7 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#getRecordAtOrBefore(long)
 	 */
 	@Override
-	Record getRecordAtOrBefore(Address addr) throws IOException {
+	DBRecord getRecordAtOrBefore(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(dataTable, addrMap, addr, false);
 		return it.previous();
 	}
@@ -80,7 +79,7 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#getRecordAfter(long)
 	 */
 	@Override
-	Record getRecordAfter(Address addr) throws IOException {
+	DBRecord getRecordAfter(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(dataTable, addrMap, addr, false);
 		return it.next();
 	}
@@ -89,7 +88,7 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(Address addr) throws IOException {
+	DBRecord getRecord(Address addr) throws IOException {
 		return dataTable.getRecord(addrMap.getKey(addr, false));
 	}
 
@@ -97,7 +96,7 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return dataTable.getRecord(key);
 	}
 
@@ -105,7 +104,7 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#getRecordBefore(long)
 	 */
 	@Override
-	Record getRecordBefore(Address addr) throws IOException {
+	DBRecord getRecordBefore(Address addr) throws IOException {
 		AddressKeyRecordIterator it = new AddressKeyRecordIterator(dataTable, addrMap, addr, true);
 		return it.previous();
 	}
@@ -151,9 +150,9 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	 * @see ghidra.program.database.code.DataDBAdapter#createData(long, long)
 	 */
 	@Override
-	Record createData(Address newAddr, long dataTypeID) throws IOException {
+	DBRecord createData(Address newAddr, long dataTypeID) throws IOException {
 		long key = addrMap.getKey(newAddr, true);
-		Record record = DATA_SCHEMA.createRecord(key);
+		DBRecord record = DATA_SCHEMA.createRecord(key);
 		record.setLongValue(DATA_TYPE_ID_COL, dataTypeID);
 		dataTable.putRecord(record);
 		return record;
@@ -198,10 +197,10 @@ class DataDBAdapterV0 extends DataDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.code.MoveRangeAdapter#putRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.code.MoveRangeAdapter#putRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void putRecord(Record record) throws IOException {
+	void putRecord(DBRecord record) throws IOException {
 		dataTable.putRecord(record);
 	}
 

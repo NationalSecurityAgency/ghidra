@@ -123,7 +123,7 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, boolean isUnion, long categoryID,
+	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
 			int internalAlignment, int externalAlignment) throws IOException {
 		if (readOnly) {
@@ -137,7 +137,7 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.COMPOSITE, tableKey);
-		Record record = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(key);
+		DBRecord record = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(key);
 
 		record.setString(V2_COMPOSITE_NAME_COL, name);
 		record.setString(V2_COMPOSITE_COMMENT_COL, comments);
@@ -156,7 +156,7 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long dataTypeID) throws IOException {
+	public DBRecord getRecord(long dataTypeID) throws IOException {
 		return compositeTable.getRecord(dataTypeID);
 	}
 
@@ -166,7 +166,7 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		if (readOnly) {
 			throw new ReadOnlyException();
 		}
@@ -203,12 +203,12 @@ class CompositeDBAdapterV2V3 extends CompositeDBAdapter {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
 			V2_COMPOSITE_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
-			Record record = compositeTable.getRecord(keys[i]);
+			DBRecord record = compositeTable.getRecord(keys[i]);
 			if (record.getLongValue(V2_COMPOSITE_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}

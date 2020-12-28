@@ -79,7 +79,7 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 	 * @see ghidra.program.database.code.CommentsDBAdapter#getRecord(long)
 	 */
 	@Override
-	public Record getRecord(long addr) throws IOException {
+	public DBRecord getRecord(long addr) throws IOException {
 		return adaptRecord(commentTable.getRecord(addr));
 	}
 
@@ -87,7 +87,7 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 	 * @see ghidra.program.database.code.CommentsDBAdapter#createRecord(long, int, java.lang.String)
 	 */
 	@Override
-	public Record createRecord(long addr, int commentCol, String comment) throws IOException {
+	public DBRecord createRecord(long addr, int commentCol, String comment) throws IOException {
 		return null;
 	}
 
@@ -108,10 +108,10 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.code.CommentsDBAdapter#updateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.code.CommentsDBAdapter#updateRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	public void updateRecord(Record commentRec) throws IOException {
+	public void updateRecord(DBRecord commentRec) throws IOException {
 	}
 
 	/**
@@ -172,10 +172,10 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.code.CommentsDBAdapter#putRecord(db.Record)
+	 * @see ghidra.program.database.code.CommentsDBAdapter#putRecord(db.DBRecord)
 	 */
 	@Override
-	public void putRecord(Record record) throws IOException {
+	public void putRecord(DBRecord record) throws IOException {
 	}
 
 	/**
@@ -200,10 +200,10 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 	 * @param recV0 the record matching the version 0 schema.
 	 * @return a current comment record.
 	 */
-	private Record adaptRecord(Record recV0) {
+	private DBRecord adaptRecord(DBRecord recV0) {
 		if (recV0 == null)
 			return null;
-		Record record = COMMENTS_SCHEMA.createRecord(recV0.getKey());
+		DBRecord record = COMMENTS_SCHEMA.createRecord(recV0.getKey());
 
 		String comment = recV0.getString(EOL_COMMENT_COLUMN);
 		if (comment != null) {
@@ -259,16 +259,16 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 		/**
 		 * @see ghidra.framework.store.db.RecordIterator#next()
 		 */
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return adaptRecord(rec);
 		}
 
 		/**
 		 * @see ghidra.framework.store.db.RecordIterator#previous()
 		 */
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return adaptRecord(rec);
 		}
 

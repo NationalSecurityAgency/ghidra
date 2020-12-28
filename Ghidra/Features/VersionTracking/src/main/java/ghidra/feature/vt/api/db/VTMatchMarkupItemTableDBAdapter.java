@@ -61,13 +61,13 @@ public abstract class VTMatchMarkupItemTableDBAdapter {
 
 	public abstract void removeMatchMarkupItemRecord(long key) throws IOException;
 
-	public abstract Record getRecord(long key) throws IOException;
+	public abstract DBRecord getRecord(long key) throws IOException;
 
 	public abstract RecordIterator getRecords(long AssociationKey) throws IOException;
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	public abstract int getRecordCount();
 
-	public abstract Record createMarkupItemRecord(MarkupItemStorage markupItem) throws IOException;
+	public abstract DBRecord createMarkupItemRecord(MarkupItemStorage markupItem) throws IOException;
 }

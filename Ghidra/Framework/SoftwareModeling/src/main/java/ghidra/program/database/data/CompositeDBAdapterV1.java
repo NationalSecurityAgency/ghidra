@@ -71,7 +71,7 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, boolean isUnion, long categoryID,
+	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
 			int internalAlignment, int externalAlignment) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
@@ -79,7 +79,7 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public Record getRecord(long dataTypeID) throws IOException {
+	public DBRecord getRecord(long dataTypeID) throws IOException {
 		return translateRecord(compositeTable.getRecord(dataTypeID));
 	}
 
@@ -89,7 +89,7 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -119,11 +119,11 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	 * @see db.RecordTranslator#translateRecord(db.Record)
 	 */
 	@Override
-	public Record translateRecord(Record oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = CompositeDBAdapter.COMPOSITE_SCHEMA.createRecord(oldRec.getKey());
 		rec.setString(COMPOSITE_NAME_COL, oldRec.getString(V1_COMPOSITE_NAME_COL));
 		rec.setString(COMPOSITE_COMMENT_COL, oldRec.getString(V1_COMPOSITE_COMMENT_COL));
 		rec.setBooleanValue(COMPOSITE_IS_UNION_COL,
@@ -146,12 +146,12 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
 			V1_COMPOSITE_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
-			Record record = compositeTable.getRecord(keys[i]);
+			DBRecord record = compositeTable.getRecord(keys[i]);
 			if (record.getLongValue(V1_COMPOSITE_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return translateRecord(record);
 			}

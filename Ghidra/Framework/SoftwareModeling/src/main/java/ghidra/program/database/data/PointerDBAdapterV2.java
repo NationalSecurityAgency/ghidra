@@ -46,11 +46,11 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 	}
 
 	@Override
-	Record createRecord(long dataTypeID, long categoryID, int length) throws IOException {
+	DBRecord createRecord(long dataTypeID, long categoryID, int length) throws IOException {
 		long tableKey = table.getKey();
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.POINTER, tableKey);
 
-		Record record = SCHEMA.createRecord(key);
+		DBRecord record = SCHEMA.createRecord(key);
 		record.setLongValue(PTR_DT_ID_COL, dataTypeID);
 		record.setLongValue(PTR_CATEGORY_COL, categoryID);
 		record.setByteValue(PTR_LENGTH_COL, (byte) length);
@@ -59,7 +59,7 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 	}
 
 	@Override
-	Record getRecord(long pointerID) throws IOException {
+	DBRecord getRecord(long pointerID) throws IOException {
 		return table.getRecord(pointerID);
 	}
 
@@ -74,7 +74,7 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 

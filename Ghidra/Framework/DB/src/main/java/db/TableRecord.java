@@ -54,7 +54,7 @@ class TableRecord implements Comparable<TableRecord> {
 
 	private static Schema schema = new Schema(0, "TableNum", fields, tableRecordFieldNames);
 
-	private Record record;
+	private DBRecord record;
 	private Schema tableSchema;
 	private Table table;
 
@@ -86,7 +86,7 @@ class TableRecord implements Comparable<TableRecord> {
 	 * @throws UnsupportedFieldException stored schema contains unsupported field
 	 * @throws IOException if IO error occurs
 	 */
-	TableRecord(DBHandle dbh, Record record) throws IOException {
+	TableRecord(DBHandle dbh, DBRecord record) throws IOException {
 		this.tableSchema = parseSchema(dbh, record);
 		this.record = record;
 	}
@@ -95,7 +95,7 @@ class TableRecord implements Comparable<TableRecord> {
 	 * Get the underlying storage record for this instance.
 	 * @return master table storage record.
 	 */
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 
@@ -115,7 +115,7 @@ class TableRecord implements Comparable<TableRecord> {
 	 * @throws UnsupportedFieldException stored schema contains unsupported field
 	 * @throws IOException if IO error occurs
 	 */
-	void setRecord(DBHandle dbh, Record record) throws IOException {
+	void setRecord(DBHandle dbh, DBRecord record) throws IOException {
 		this.tableSchema = parseSchema(dbh, record);
 		this.record = record;
 		if (table != null) {
@@ -169,7 +169,7 @@ class TableRecord implements Comparable<TableRecord> {
 	 * @throws UnsupportedFieldException stored schema contains unsupported field
 	 * @throws IOException if IO error occurs
 	 */
-	private static Schema parseSchema(DBHandle dbh, Record record) throws IOException {
+	private static Schema parseSchema(DBHandle dbh, DBRecord record) throws IOException {
 		Schema tableSchema =
 			new Schema(record.getIntValue(VERSION_COLUMN), record.getByteValue(KEY_TYPE_COLUMN),
 				record.getBinaryData(FIELD_TYPES_COLUMN), record.getString(FIELD_NAMES_COLUMN));

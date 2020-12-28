@@ -25,7 +25,7 @@ import ghidra.util.exception.AssertException;
  * associated with a fixed schema.  
  * A record instance contains both a primary key and zero or more data fields.  
  */
-public class Record implements Comparable<Record> {
+public class DBRecord implements Comparable<DBRecord> {
 
 	final Schema schema;
 
@@ -41,7 +41,7 @@ public class Record implements Comparable<Record> {
 	 * @param schema record schema
 	 * @param key record key
 	 */
-	Record(Schema schema, Field key) {
+	DBRecord(Schema schema, Field key) {
 		this.schema = schema;
 		this.key = key;
 		if (!schema.getKeyFieldType().isSameType(key)) {
@@ -107,7 +107,7 @@ public class Record implements Comparable<Record> {
 	 * @param otherRec
 	 * @return true if records schemas are the same
 	 */
-	public boolean hasSameSchema(Record otherRec) {
+	public boolean hasSameSchema(DBRecord otherRec) {
 		Field[] otherFieldValues = otherRec.fieldValues;
 		if (fieldValues.length != otherFieldValues.length) {
 			return false;
@@ -219,8 +219,8 @@ public class Record implements Comparable<Record> {
 	 * Obtain a copy of this record object.
 	 * @return Record
 	 */
-	public Record copy() {
-		Record r = schema.createRecord(key.copyField());
+	public DBRecord copy() {
+		DBRecord r = schema.createRecord(key.copyField());
 		for (int i = 0; i < fieldValues.length; i++) {
 			r.setField(i, fieldValues[i].copyField());
 		}
@@ -448,10 +448,10 @@ public class Record implements Comparable<Record> {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Record)) {
+		if (!(obj instanceof DBRecord)) {
 			return false;
 		}
-		Record rec = (Record) obj;
+		DBRecord rec = (DBRecord) obj;
 		return key.equals(rec.key) && Arrays.equals(fieldValues, rec.fieldValues);
 	}
 
@@ -461,7 +461,7 @@ public class Record implements Comparable<Record> {
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
-	public int compareTo(Record otherRec) {
+	public int compareTo(DBRecord otherRec) {
 		return key.compareTo(otherRec.key);
 	}
 

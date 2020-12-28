@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.program.database.code;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -31,7 +30,7 @@ interface ProtoDBAdapter {
 	 * @param protoId
 	 * @return
 	 */
-	Record getRecord(int protoId) throws IOException;
+	DBRecord getRecord(int protoId) throws IOException;
 
 	/**
 	 * Returns a record iterator over all records.

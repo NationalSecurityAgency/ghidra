@@ -59,7 +59,7 @@ public class DatabaseBenchMarks {
 			Schema schema =
 				new Schema(1, "Key", new Field[] { IntField.INSTANCE }, new String[] { "Value" });
 			Table table = dbh.createTable("Test", schema);
-			Record record = schema.createRecord(0);
+			DBRecord record = schema.createRecord(0);
 			timer.start(
 				"Inserting " + numInsertions + " sorted records with long keys and integer values");
 			for (int i = 0; i < numInsertions; i++) {
@@ -83,7 +83,7 @@ public class DatabaseBenchMarks {
 			Schema schema = new Schema(1, "Key", new Field[] { StringField.INSTANCE },
 				new String[] { "Value" });
 			Table table = dbh.createTable("Test", schema);
-			Record record = schema.createRecord(0);
+			DBRecord record = schema.createRecord(0);
 			timer.start("Inserting " + numInsertions +
 				" sorted records with long keys and String (length = 8) values");
 			for (int i = 0; i < numInsertions; i++) {
@@ -108,7 +108,7 @@ public class DatabaseBenchMarks {
 			Schema schema =
 				new Schema(1, "Key", new Field[] { IntField.INSTANCE }, new String[] { "Value" });
 			Table table = dbh.createTable("Test", schema);
-			Record record = schema.createRecord(0);
+			DBRecord record = schema.createRecord(0);
 			timer.start(
 				"Inserting " + numInsertions + " random records with long keys and integer values");
 			for (int i = 0; i < numInsertions; i++) {
@@ -132,7 +132,7 @@ public class DatabaseBenchMarks {
 			Schema schema =
 				new Schema(1, "Key", new Field[] { IntField.INSTANCE }, new String[] { "Value" });
 			Table table = dbh.createTable("Test", schema);
-			Record record = schema.createRecord(0);
+			DBRecord record = schema.createRecord(0);
 			System.out.print("building database...");
 			for (int i = 0; i < 1000000; i++) {
 				record.setKey(i);
@@ -161,7 +161,7 @@ public class DatabaseBenchMarks {
 			Schema schema =
 				new Schema(1, "Key", new Field[] { IntField.INSTANCE }, new String[] { "Value" });
 			Table table = dbh.createTable("Test", schema);
-			Record record = schema.createRecord(0);
+			DBRecord record = schema.createRecord(0);
 			System.out.print("building database...");
 			for (int i = 0; i < 1000000; i++) {
 				record.setKey(i);

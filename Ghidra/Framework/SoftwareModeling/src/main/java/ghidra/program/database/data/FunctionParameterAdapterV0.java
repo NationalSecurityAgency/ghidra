@@ -64,7 +64,7 @@ class FunctionParameterAdapterV0 extends FunctionParameterAdapter implements Rec
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, long parentID, int ordinal, String name,
+	public DBRecord createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException {
 
 		long tableKey = parameterTable.getKey();
@@ -72,7 +72,7 @@ class FunctionParameterAdapterV0 extends FunctionParameterAdapter implements Rec
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.PARAMETER, tableKey);
-		Record record = V0_PARAMETER_SCHEMA.createRecord(key);
+		DBRecord record = V0_PARAMETER_SCHEMA.createRecord(key);
 		record.setLongValue(V0_PARAMETER_PARENT_ID_COL, parentID);
 		record.setLongValue(V0_PARAMETER_DT_ID_COL, dataTypeID);
 		record.setString(V0_PARAMETER_NAME_COL, name);
@@ -83,7 +83,7 @@ class FunctionParameterAdapterV0 extends FunctionParameterAdapter implements Rec
 	}
 
 	@Override
-	public Record getRecord(long parameterID) throws IOException {
+	public DBRecord getRecord(long parameterID) throws IOException {
 		return translateRecord(parameterTable.getRecord(parameterID));
 	}
 
@@ -93,7 +93,7 @@ class FunctionParameterAdapterV0 extends FunctionParameterAdapter implements Rec
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -116,11 +116,11 @@ class FunctionParameterAdapterV0 extends FunctionParameterAdapter implements Rec
 	 * @see db.RecordTranslator#translateRecord(db.Record)
 	 */
 	@Override
-	public Record translateRecord(Record oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = FunctionParameterAdapter.PARAMETER_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = FunctionParameterAdapter.PARAMETER_SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(FunctionParameterAdapter.PARAMETER_PARENT_ID_COL,
 			oldRec.getLongValue(V0_PARAMETER_PARENT_ID_COL));
 		rec.setLongValue(FunctionParameterAdapter.PARAMETER_DT_ID_COL,

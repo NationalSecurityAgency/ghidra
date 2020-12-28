@@ -31,7 +31,7 @@ public class DbLargeTableModel implements TableModel {
 	private Schema schema;
 	private List<AbstractColumnAdapter> columns = new ArrayList<AbstractColumnAdapter>();
 	private RecordIterator recIt;
-	private Record lastRecord;
+	private DBRecord lastRecord;
 	private int lastIndex;
 	private Field minKey;
 	private Field maxKey;
@@ -94,7 +94,7 @@ public class DbLargeTableModel implements TableModel {
 
 	private void findMinKey() throws IOException {
 		RecordIterator iter = table.iterator();
-		Record rec = iter.next();
+		DBRecord rec = iter.next();
 		minKey = rec.getKeyField();
 	}
 
@@ -109,7 +109,7 @@ public class DbLargeTableModel implements TableModel {
 			max.setBinaryData(maxBytes);
 		}
 		RecordIterator iter = table.iterator(max);
-		Record rec = iter.previous();
+		DBRecord rec = iter.previous();
 		maxKey = rec.getKeyField();
 	}
 
@@ -152,7 +152,7 @@ public class DbLargeTableModel implements TableModel {
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		Record rec = getRecord(rowIndex);
+		DBRecord rec = getRecord(rowIndex);
 		if (columnIndex == 0) { // key column
 			return columns.get(columnIndex).getKeyValue(rec);
 		}
@@ -177,7 +177,7 @@ public class DbLargeTableModel implements TableModel {
 		// no!
 	}
 
-	private Record getRecord(int index) {
+	private DBRecord getRecord(int index) {
 		try {
 			if (index == lastIndex + 1) {
 				if (recIt.hasNext()) {
@@ -196,7 +196,7 @@ public class DbLargeTableModel implements TableModel {
 							recIt.previous();
 						}
 					}
-					Record rec = recIt.next();
+					DBRecord rec = recIt.next();
 					if (rec != null) {
 						lastRecord = rec;
 						lastIndex = index;

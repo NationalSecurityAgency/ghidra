@@ -296,7 +296,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	@Override
-	public VarKeyNode putRecord(Record record, Table table) throws IOException {
+	public VarKeyNode putRecord(DBRecord record, Table table) throws IOException {
 
 		Field key = record.getKeyField();
 		int index = getKeyIndex(key);
@@ -342,7 +342,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	VarKeyNode appendNewLeaf(Record record) throws IOException {
+	VarKeyNode appendNewLeaf(DBRecord record) throws IOException {
 		VarKeyRecordNode newLeaf = createNewLeaf(-1, -1);
 		newLeaf.insertRecord(0, record);
 		return appendLeaf(newLeaf);
@@ -386,7 +386,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecordBefore(Field key, Schema schema) throws IOException {
+	public DBRecord getRecordBefore(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -index - 2;
@@ -402,7 +402,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecordAfter(Field key, Schema schema) throws IOException {
+	public DBRecord getRecordAfter(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -(index + 1);
@@ -418,7 +418,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecordAtOrBefore(Field key, Schema schema) throws IOException {
+	public DBRecord getRecordAtOrBefore(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -index - 2;
@@ -431,7 +431,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecordAtOrAfter(Field key, Schema schema) throws IOException {
+	public DBRecord getRecordAtOrAfter(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			index = -(index + 1);
@@ -574,9 +574,9 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	 * @return Record
 	 */
 	@Override
-	public Record getRecord(Schema schema, int index) throws IOException {
+	public DBRecord getRecord(Schema schema, int index) throws IOException {
 		Field key = getKeyField(index);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		if (hasIndirectStorage(index)) {
 			int bufId = buffer.getInt(getRecordDataOffset(index));
 			ChainedBuffer chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), bufId);
@@ -597,7 +597,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecord(Field key, Schema schema) throws IOException {
+	public DBRecord getRecord(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0)
 			return null;
@@ -669,7 +669,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	private VarKeyNode updateRecord(int index, Record record) throws IOException {
+	private VarKeyNode updateRecord(int index, DBRecord record) throws IOException {
 
 		Field key = record.getKeyField();
 		int keyLen = key.length();
@@ -733,7 +733,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	 * @return true if the record was successfully inserted.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	private boolean insertRecord(int index, Record record) throws IOException {
+	private boolean insertRecord(int index, DBRecord record) throws IOException {
 
 		Field key = record.getKeyField();
 		int keyLen = key.length();

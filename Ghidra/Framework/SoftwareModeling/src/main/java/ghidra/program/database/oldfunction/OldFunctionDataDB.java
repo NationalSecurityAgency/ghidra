@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -43,14 +43,14 @@ class OldFunctionDataDB {
 	private OldFunctionDBAdapter functionAdapter;
 	private OldRegisterVariableDBAdapter registerAdapter;
 
-	private Record functionRecord;
+	private DBRecord functionRecord;
 	private Address entryPoint;
 
 	private AddressSetView body;
 	private OldStackFrameDB frame;
 	private List<Parameter> regParams;
 
-	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap, Record functionRecord,
+	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap, DBRecord functionRecord,
 			AddressSetView body) {
 
 		this.functionManager = functionManager;
@@ -202,7 +202,7 @@ class OldFunctionDataDB {
 		try {
 			Field[] keys = registerAdapter.getRegisterVariableKeys(functionRecord.getKey());
 			for (int i = 0; i < keys.length; i++) {
-				Record varRec = registerAdapter.getRegisterVariableRecord(keys[i].getLongValue());
+				DBRecord varRec = registerAdapter.getRegisterVariableRecord(keys[i].getLongValue());
 				regParams.add(getRegisterParameter(varRec, i));
 			}
 // TODO Does register variable list need to be sorted?
@@ -212,7 +212,7 @@ class OldFunctionDataDB {
 		}
 	}
 
-	private Parameter getRegisterParameter(Record record, int ordinal) {
+	private Parameter getRegisterParameter(DBRecord record, int ordinal) {
 		String name = record.getString(OldRegisterVariableDBAdapter.REG_VAR_NAME_COL);
 		long dataTypeId =
 			record.getLongValue(OldRegisterVariableDBAdapter.REG_VAR_DATA_TYPE_ID_COL);

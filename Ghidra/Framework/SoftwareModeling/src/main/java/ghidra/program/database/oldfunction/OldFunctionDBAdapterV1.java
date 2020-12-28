@@ -64,7 +64,7 @@ class OldFunctionDBAdapterV1 extends OldFunctionDBAdapter {
 	 * @see ghidra.program.database.function.FunctionDBAdapter#getFunctionRecord(long)
 	 */
 	@Override
-	public Record getFunctionRecord(long functionKey) throws IOException {
+	public DBRecord getFunctionRecord(long functionKey) throws IOException {
 		return table.getRecord(functionKey);
 	}
 
@@ -77,9 +77,9 @@ class OldFunctionDBAdapterV1 extends OldFunctionDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.function.FunctionDBAdapter#translateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.function.FunctionDBAdapter#translateRecord(ghidra.framework.store.db.DBRecord)
 	 */
-	public Record translateRecord(Record oldRecord) {
+	public DBRecord translateRecord(DBRecord oldRecord) {
 		throw new UnsupportedOperationException();
 	}
 

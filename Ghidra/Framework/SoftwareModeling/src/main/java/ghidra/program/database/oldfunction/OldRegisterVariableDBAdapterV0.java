@@ -51,7 +51,7 @@ class OldRegisterVariableDBAdapterV0 extends OldRegisterVariableDBAdapter {
 	}
 
 	@Override
-	public Record getRegisterVariableRecord(long key) throws IOException {
+	public DBRecord getRegisterVariableRecord(long key) throws IOException {
 		return table.getRecord(key);
 	}
 

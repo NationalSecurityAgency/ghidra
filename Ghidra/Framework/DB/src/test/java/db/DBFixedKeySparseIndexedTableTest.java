@@ -139,7 +139,7 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 		int cnt = schema.getFieldCount();
 		for (int i = 0; i < cnt; i++) {
 			Field key = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, (byte) i });
-			Record r = schema.createRecord(key);
+			DBRecord r = schema.createRecord(key);
 
 			Field f = schema.getField(i);
 			if (f.isVariableLength()) {

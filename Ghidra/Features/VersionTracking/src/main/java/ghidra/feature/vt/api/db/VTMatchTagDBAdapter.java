@@ -77,15 +77,15 @@ public abstract class VTMatchTagDBAdapter {
 		return new VTMatchTagDBAdapterV0(dbHandle, openMode, monitor);
 	}
 
-	public abstract Record insertRecord(String tagName) throws IOException;
+	public abstract DBRecord insertRecord(String tagName) throws IOException;
 
 	public abstract RecordIterator getRecords() throws IOException;
 
-	abstract Record getRecord(long tagRecordKey) throws IOException;
+	abstract DBRecord getRecord(long tagRecordKey) throws IOException;
 
 	abstract int getRecordCount();
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	abstract boolean deleteRecord(long tagRecordKey) throws IOException;
 }

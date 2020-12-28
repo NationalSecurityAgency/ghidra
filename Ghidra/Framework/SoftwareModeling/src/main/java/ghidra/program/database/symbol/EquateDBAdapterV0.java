@@ -52,10 +52,10 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	}
 
 	/**
-	 * @see ghidra.program.database.symbol.EquateDBAdapter#updateRecord(ghidra.framework.store.db.Record)
+	 * @see ghidra.program.database.symbol.EquateDBAdapter#updateRecord(ghidra.framework.store.db.DBRecord)
 	 */
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		equateTable.putRecord(record);
 	}
 
@@ -93,8 +93,8 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateDBAdapter#createEquate(java.lang.String, long)
 	 */
 	@Override
-	Record createEquate(String name, long value) throws IOException {
-		Record rec = equateTable.getSchema().createRecord(equateTable.getKey());
+	DBRecord createEquate(String name, long value) throws IOException {
+		DBRecord rec = equateTable.getSchema().createRecord(equateTable.getKey());
 		rec.setString(NAME_COL, name);
 		rec.setLongValue(VALUE_COL, value);
 		equateTable.putRecord(rec);
@@ -105,7 +105,7 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateDBAdapter#getRecord(long)
 	 */
 	@Override
-	Record getRecord(long key) throws IOException {
+	DBRecord getRecord(long key) throws IOException {
 		return equateTable.getRecord(key);
 	}
 

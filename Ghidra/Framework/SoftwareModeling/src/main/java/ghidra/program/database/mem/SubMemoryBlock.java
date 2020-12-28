@@ -17,7 +17,7 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.model.mem.*;
 
 /**
@@ -27,11 +27,11 @@ import ghidra.program.model.mem.*;
 abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	protected final MemoryMapDBAdapter adapter;
-	protected final Record record;
+	protected final DBRecord record;
 	protected long subBlockLength;
 	protected long subBlockOffset;
 
-	protected SubMemoryBlock(MemoryMapDBAdapter adapter, Record record) {
+	protected SubMemoryBlock(MemoryMapDBAdapter adapter, DBRecord record) {
 		this.adapter = adapter;
 		this.record = record;
 		this.subBlockOffset = record.getLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL);

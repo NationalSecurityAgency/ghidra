@@ -20,7 +20,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.util.SystemUtilities;
@@ -35,7 +35,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	private final DataTypeManagerDB dataMgr;
 	private final ComponentDBAdapter adapter;
-	private final Record record; // null record -> undefined component
+	private final DBRecord record; // null record -> undefined component
 	private final Composite parent;
 
 	private DataType cachedDataType; // required for bit-fields during packing process
@@ -78,7 +78,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	 * @param record
 	 */
 	DataTypeComponentDB(DataTypeManagerDB dataMgr, ComponentDBAdapter adapter, Composite parent,
-			Record record) {
+			DBRecord record) {
 		this.dataMgr = dataMgr;
 		this.adapter = adapter;
 		this.record = record;
@@ -438,7 +438,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		}
 	}
 
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 

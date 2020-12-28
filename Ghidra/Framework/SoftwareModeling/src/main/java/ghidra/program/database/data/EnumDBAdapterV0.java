@@ -67,14 +67,14 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, byte size,
+	public DBRecord createRecord(String name, String comments, long categoryID, byte size,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
 			" of " + ENUM_TABLE_NAME + " table.");
 	}
 
 	@Override
-	public Record getRecord(long enumID) throws IOException {
+	public DBRecord getRecord(long enumID) throws IOException {
 		return translateRecord(enumTable.getRecord(enumID));
 	}
 
@@ -84,7 +84,7 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -110,11 +110,11 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public Record translateRecord(Record oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = EnumDBAdapter.ENUM_SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = EnumDBAdapter.ENUM_SCHEMA.createRecord(oldRec.getKey());
 		rec.setString(ENUM_NAME_COL, oldRec.getString(V0_ENUM_NAME_COL));
 		rec.setString(ENUM_COMMENT_COL, oldRec.getString(V0_ENUM_COMMENT_COL));
 		rec.setLongValue(ENUM_CAT_COL, oldRec.getLongValue(V0_ENUM_CAT_COL));
@@ -127,7 +127,7 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

@@ -24,7 +24,7 @@ package ghidra.program.database.references;
 import java.io.IOException;
 import java.util.Iterator;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -47,7 +47,7 @@ class RefListV0 extends RefList {
 	private int numRefs;
 	private byte refLevel = -1;
 	private byte[] refData;
-	private Record record;
+	private DBRecord record;
 
 	/**
 	 * Construct new temporary empty reference list
@@ -101,7 +101,7 @@ class RefListV0 extends RefList {
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
 	 */
-	RefListV0(Record rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
+	RefListV0(DBRecord rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
 			DBObjectCache<RefList> cache, boolean isFrom) {
 		super(rec.getKey(), addrMap.decodeAddress(rec.getKey()), adapter, addrMap, program, cache,
 			isFrom);

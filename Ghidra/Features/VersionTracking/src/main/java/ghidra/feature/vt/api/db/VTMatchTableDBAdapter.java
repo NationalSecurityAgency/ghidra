@@ -82,16 +82,16 @@ public abstract class VTMatchTableDBAdapter {
 		return new VTMatchTableDBAdapterV0(dbHandle, tableID, openMode, monitor);
 	}
 
-	public abstract Record insertMatchRecord(VTMatchInfo info, VTMatchSetDB matchSet,
+	public abstract DBRecord insertMatchRecord(VTMatchInfo info, VTMatchSetDB matchSet,
 			VTAssociationDB associationDB, VTMatchTagDB tag) throws IOException;
 
 	public abstract RecordIterator getRecords() throws IOException;
 
-	abstract Record getMatchRecord(long matchRecordKey) throws IOException;
+	abstract DBRecord getMatchRecord(long matchRecordKey) throws IOException;
 
 	abstract int getRecordCount();
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	abstract boolean deleteRecord(long matchRecordKey) throws IOException;
 

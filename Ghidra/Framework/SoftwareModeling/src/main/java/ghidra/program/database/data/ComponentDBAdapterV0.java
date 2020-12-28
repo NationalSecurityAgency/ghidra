@@ -74,7 +74,7 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
+	public DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
 			String name, String comment) throws IOException {
 
 		long tableKey = componentTable.getKey();
@@ -82,7 +82,7 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.COMPONENT, tableKey);
-		Record record = ComponentDBAdapter.COMPONENT_SCHEMA.createRecord(key);
+		DBRecord record = ComponentDBAdapter.COMPONENT_SCHEMA.createRecord(key);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_PARENT_ID_COL, parentID);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataTypeID);
@@ -95,12 +95,12 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long componentID) throws IOException {
+	public DBRecord getRecord(long componentID) throws IOException {
 		return componentTable.getRecord(componentID);
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		componentTable.putRecord(record);
 	}
 

@@ -134,7 +134,7 @@ abstract class FunctionAdapter {
 			RecordIterator it = oldAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -143,7 +143,7 @@ abstract class FunctionAdapter {
 			it = tmpAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);
 			}
@@ -180,17 +180,17 @@ abstract class FunctionAdapter {
 	 * @param functionKey
 	 * @return Record
 	 */
-	abstract Record getFunctionRecord(long functionKey) throws IOException;
+	abstract DBRecord getFunctionRecord(long functionKey) throws IOException;
 
 	/**
 	 * Update/Insert the specified function record.
 	 * @param functionRecord
 	 */
-	abstract void updateFunctionRecord(Record functionRecord) throws IOException;
+	abstract void updateFunctionRecord(DBRecord functionRecord) throws IOException;
 
-	abstract Record createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException;
+	abstract DBRecord createFunctionRecord(long symbolID, long returnDataTypeId) throws IOException;
 
-	abstract Record translateRecord(Record record);
+	abstract DBRecord translateRecord(DBRecord record);
 
 	class TranslatedRecordIterator implements RecordIterator {
 		private RecordIterator it;
@@ -210,12 +210,12 @@ abstract class FunctionAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			return translateRecord(it.next());
 		}
 
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			return translateRecord(it.previous());
 		}
 

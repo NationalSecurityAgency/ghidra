@@ -70,13 +70,13 @@ public class IntPropertyMapDB extends PropertyMapDB implements IntPropertyMap {
 			else {
 				oldValue = (Integer) cache.get(key);
 				if (oldValue == null) {
-					Record rec = propertyTable.getRecord(key);
+					DBRecord rec = propertyTable.getRecord(key);
 					if (rec != null) {
 						oldValue = new Integer(rec.getIntValue(PROPERTY_VALUE_COL));
 					}
 				}
 			}
-			Record rec = schema.createRecord(key);
+			DBRecord rec = schema.createRecord(key);
 
 			rec.setIntValue(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
@@ -112,7 +112,7 @@ public class IntPropertyMapDB extends PropertyMapDB implements IntPropertyMap {
 				return ((Integer) obj).intValue();
 			}
 
-			Record rec = propertyTable.getRecord(key);
+			DBRecord rec = propertyTable.getRecord(key);
 			if (rec == null) {
 				throw NO_VALUE_EXCEPTION;
 			}

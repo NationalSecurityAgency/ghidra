@@ -84,12 +84,12 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 			SymbolDatabaseAdapterV2 tmpAdapter =
 				new SymbolDatabaseAdapterV2(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getSymbols();
-			Record zeroRecord = null;
+			DBRecord zeroRecord = null;
 			while (iter.hasNext()) {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(SYMBOL_ADDR_COL));
 				rec.setLongValue(SYMBOL_ADDR_COL, addrMap.getKey(addr, true));
 				if (rec.getKey() == 0) {
@@ -123,7 +123,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 
 				// Make sure user symbols do not start with reserved prefix
 				String name = rec.getString(SYMBOL_NAME_COL);
@@ -153,7 +153,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	 * @param zeroRecord
 	 * @throws IOException
 	 */
-	private void createSymbol(long nextKey, Record zeroRecord) throws IOException {
+	private void createSymbol(long nextKey, DBRecord zeroRecord) throws IOException {
 		zeroRecord.setKey(nextKey);
 		symbolTable.putRecord(zeroRecord);
 	}
@@ -167,7 +167,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 			try {
 				RecordIterator iter = tmpAdapter.getSymbolsByName(newName);
 				while (iter.hasNext()) {
-					Record otherRec = iter.next();
+					DBRecord otherRec = iter.next();
 					if (namespaceId == otherRec.getLongValue(SYMBOL_PARENT_COL)) {
 						throw new DuplicateNameException();
 					}
@@ -181,7 +181,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
+	DBRecord createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
 			long data1, int data2, String data3, SourceType source) throws IOException {
 		long nextID = symbolTable.getKey();
 
@@ -193,11 +193,11 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 			(byte) source.ordinal());
 	}
 
-	private Record createSymbol(long id, String name, Address address, long namespaceID,
+	private DBRecord createSymbol(long id, String name, Address address, long namespaceID,
 			SymbolType symbolType, long data1, int data2, String data3, byte flags)
 			throws IOException {
 
-		Record rec = symbolTable.getSchema().createRecord(id);
+		DBRecord rec = symbolTable.getSchema().createRecord(id);
 		rec.setString(SYMBOL_NAME_COL, name);
 		rec.setLongValue(SYMBOL_ADDR_COL, addrMap.getKey(address, true));
 		rec.setLongValue(SYMBOL_PARENT_COL, namespaceID);
@@ -234,7 +234,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record getSymbolRecord(long symbolID) throws IOException {
+	DBRecord getSymbolRecord(long symbolID) throws IOException {
 		return symbolTable.getRecord(symbolID);
 	}
 
@@ -256,7 +256,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	void updateSymbolRecord(Record record) throws IOException {
+	void updateSymbolRecord(DBRecord record) throws IOException {
 		symbolTable.putRecord(record);
 	}
 
@@ -281,7 +281,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		long newKey = addrMap.getKey(newAddr, true);
 		Field[] keys = symbolTable.findRecords(oldKey, SYMBOL_ADDR_COL);
 		for (Field key : keys) {
-			Record rec = symbolTable.getRecord(key);
+			DBRecord rec = symbolTable.getRecord(key);
 			rec.setLongValue(SYMBOL_ADDR_COL, newKey);
 			symbolTable.putRecord(rec);
 		}
@@ -310,7 +310,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		private Set<Address> set = new HashSet<Address>();
 
 		@Override
-		public boolean matches(Record record) {
+		public boolean matches(DBRecord record) {
 			// only move symbols whose anchor flag is not on
 			Address addr = addrMap.decodeAddress(record.getLongValue(SYMBOL_ADDR_COL));
 			byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);

@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 import db.Schema;
 import db.Table;
@@ -50,7 +50,7 @@ public class RepackFid extends GhidraScript {
 		monitor.setProgress(0);
 		RecordIterator iterator = oldTable.iterator();
 		while(iterator.hasNext()) {								// Iterate through old records
-			Record record = iterator.next();
+			DBRecord record = iterator.next();
 			newTable.putRecord(record);							// Copy as is into new table
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);

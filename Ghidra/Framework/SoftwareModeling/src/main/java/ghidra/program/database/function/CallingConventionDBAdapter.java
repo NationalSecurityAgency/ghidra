@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,10 +70,10 @@ abstract class CallingConventionDBAdapter {
 		return new CallingConventionDBAdapterV0(handle, true);
 	}
 
-	abstract Record createCallingConventionRecord(String name) throws IOException;
+	abstract DBRecord createCallingConventionRecord(String name) throws IOException;
 
-	abstract Record getCallingConventionRecord(byte callingConventionID) throws IOException;
+	abstract DBRecord getCallingConventionRecord(byte callingConventionID) throws IOException;
 
-	abstract Record getCallingConventionRecord(String name) throws IOException;
+	abstract DBRecord getCallingConventionRecord(String name) throws IOException;
 
 }

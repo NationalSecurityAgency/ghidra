@@ -521,7 +521,7 @@ public class Schema {
 	 * @param key long key
 	 * @return new record
 	 */
-	public Record createRecord(long key) {
+	public DBRecord createRecord(long key) {
 		return createRecord(new LongField(key));
 	}
 
@@ -530,8 +530,8 @@ public class Schema {
 	 * @param key record key field
 	 * @return new record
 	 */
-	public Record createRecord(Field key) {
-		return hasSparseColumns() ? new SparseRecord(this, key) : new Record(this, key);
+	public DBRecord createRecord(Field key) {
+		return hasSparseColumns() ? new SparseRecord(this, key) : new DBRecord(this, key);
 	}
 
 	/**

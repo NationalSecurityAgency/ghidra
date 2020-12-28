@@ -38,13 +38,13 @@ class FunctionParameterAdapterNoTable extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, long parentID, int ordinal, String name,
+	public DBRecord createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException {
 		return null;
 	}
 
 	@Override
-	public Record getRecord(long parameterID) throws IOException {
+	public DBRecord getRecord(long parameterID) throws IOException {
 		return null;
 	}
 
@@ -54,7 +54,7 @@ class FunctionParameterAdapterNoTable extends FunctionParameterAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

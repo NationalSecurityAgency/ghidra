@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.program.database.module;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 import db.RecordIterator;
 
 /**
@@ -36,7 +35,7 @@ interface TreeDBAdapter {
 	 * @return record for the tree
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record createRecord(String name) throws IOException;
+	DBRecord createRecord(String name) throws IOException;
 
 	/**
 	 * Delete the record for the tree and all associated tables.
@@ -50,13 +49,13 @@ interface TreeDBAdapter {
 	 * Get the record for the given tree ID.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getRecord(long treeID) throws IOException;
+	DBRecord getRecord(long treeID) throws IOException;
 
 	/**
 	 * Get the record for the tree with the given name. 
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	Record getRecord(String name) throws IOException;
+	DBRecord getRecord(String name) throws IOException;
 
 	/**
 	 * Get an iterator over all tree records. 
@@ -68,5 +67,5 @@ interface TreeDBAdapter {
 	 * Update the tree table with the given record.  
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	void updateRecord(Record record) throws IOException;
+	void updateRecord(DBRecord record) throws IOException;
 }

@@ -123,7 +123,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 	}
 
 	private void updateVersion() throws IOException {
-		Record record = SCHEMA.createRecord(new StringField(DB_VERSION_PROPERTY_NAME));
+		DBRecord record = SCHEMA.createRecord(new StringField(DB_VERSION_PROPERTY_NAME));
 		record.setString(0, Integer.toString(DB_VERSION));
 		propertyTable.putRecord(record);
 	}
@@ -220,7 +220,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 		if (propertyTable == null) {
 			return 0;
 		}
-		Record record = propertyTable.getRecord(new StringField(DB_VERSION_PROPERTY_NAME));
+		DBRecord record = propertyTable.getRecord(new StringField(DB_VERSION_PROPERTY_NAME));
 
 		if (record != null) {
 			String s = record.getString(0);
@@ -365,7 +365,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 			throws IOException, VersionException {
 		RecordIterator recordIterator = matchSetTableAdapter.getRecords();
 		while (recordIterator.hasNext()) {
-			Record record = recordIterator.next();
+			DBRecord record = recordIterator.next();
 			matchSets.add(
 				VTMatchSetDB.getMatchSetDB(record, this, getDBHandle(), openMode, monitor, lock));
 		}
@@ -395,7 +395,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 
 	private VTMatchSet createMatchSet(VTProgramCorrelator correlator, long id) {
 		try {
-			Record record = matchSetTableAdapter.createMatchSetRecord(id, correlator);
+			DBRecord record = matchSetTableAdapter.createMatchSetRecord(id, correlator);
 			VTMatchSetDB matchSet =
 				VTMatchSetDB.createMatchSetDB(record, this, getDBHandle(), lock);
 			matchSets.add(matchSet);
@@ -411,7 +411,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 		return null;
 	}
 
-	Record getMatchSetRecord(long key) {
+	DBRecord getMatchSetRecord(long key) {
 		try {
 			return matchSetTableAdapter.getRecord(key);
 		}
@@ -462,11 +462,11 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 		return new ArrayList<>(matchSets);
 	}
 
-	AddressSet getSourceAddressSet(Record record) throws IOException {
+	AddressSet getSourceAddressSet(DBRecord record) throws IOException {
 		return matchSetTableAdapter.getSourceAddressSet(record, sourceProgram.getAddressMap());
 	}
 
-	AddressSet getDestinationAddressSet(Record record) throws IOException {
+	AddressSet getDestinationAddressSet(DBRecord record) throws IOException {
 		return matchSetTableAdapter.getDestinationAddressSet(record,
 			destinationProgram.getAddressMap());
 	}
@@ -596,7 +596,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 			if (matchTag != null) {
 				return matchTag;
 			}
-			Record record = matchTagAdapter.insertRecord(tagName);
+			DBRecord record = matchTagAdapter.insertRecord(tagName);
 			matchTag = new VTMatchTagDB(this, tagCache, record);
 		}
 		catch (IOException e) {
@@ -627,7 +627,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 			lock.acquire();
 			RecordIterator records = matchTagAdapter.getRecords();
 			while (records.hasNext()) {
-				Record record = records.next();
+				DBRecord record = records.next();
 				tags.add(getMatchTagNew(record));
 			}
 		}
@@ -640,7 +640,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 		return tags;
 	}
 
-	private VTMatchTagDB getMatchTagNew(Record record) {
+	private VTMatchTagDB getMatchTagNew(DBRecord record) {
 		if (record == null) {
 			throw new AssertException("How can we have a null record?!!!");
 		}
@@ -666,7 +666,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 			if (matchTagDB != null) {
 				return matchTagDB;
 			}
-			Record record = matchTagAdapter.getRecord(key);
+			DBRecord record = matchTagAdapter.getRecord(key);
 			if (record != null) {
 				return new VTMatchTagDB(this, tagCache, record);
 			}
@@ -680,7 +680,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 		return VTMatchTag.UNTAGGED;
 	}
 
-	Record getTagRecord(long key) throws IOException {
+	DBRecord getTagRecord(long key) throws IOException {
 		return matchTagAdapter.getRecord(key);
 	}
 

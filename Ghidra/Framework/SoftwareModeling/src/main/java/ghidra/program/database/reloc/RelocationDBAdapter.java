@@ -100,7 +100,7 @@ abstract class RelocationDBAdapter {
 			RelocationDBAdapter tmpAdapter = new RelocationDBAdapterV4(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.iterator();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getKey());
 				BinaryCodedField values =
 					new BinaryCodedField((BinaryField) rec.getFieldValue(VALU_COL));
@@ -113,7 +113,7 @@ abstract class RelocationDBAdapter {
 
 			iter = tmpAdapter.iterator();
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				BinaryCodedField values =
 					new BinaryCodedField((BinaryField) rec.getFieldValue(VALU_COL));
 				newAdapter.add(rec.getKey(), rec.getIntValue(TYPE_COL), values.getLongArray(),
@@ -135,7 +135,7 @@ abstract class RelocationDBAdapter {
 
 	abstract void remove(long addrKey) throws IOException;
 
-	abstract Record get(long addrKey) throws IOException;
+	abstract DBRecord get(long addrKey) throws IOException;
 
 	abstract RecordIterator iterator() throws IOException;
 
@@ -147,7 +147,7 @@ abstract class RelocationDBAdapter {
 
 	abstract int getRecordCount();
 
-	abstract Record adaptRecord(Record rec);
+	abstract DBRecord adaptRecord(DBRecord rec);
 
 //==================================================================================================
 // Inner Classes
@@ -176,14 +176,14 @@ abstract class RelocationDBAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return adaptRecord(rec);
 		}
 
 		@Override
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return adaptRecord(rec);
 		}
 

@@ -106,14 +106,14 @@ abstract class FunctionParameterAdapter {
 			tmpAdapter = new FunctionParameterAdapterV1(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
 			FunctionParameterAdapterV1 newAdapter = new FunctionParameterAdapterV1(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
 			return newAdapter;
@@ -149,7 +149,7 @@ abstract class FunctionParameterAdapter {
 	 * @return new record
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record createRecord(long dataTypeID, long parentID, int ordinal, String name,
+	abstract DBRecord createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException;
 
 	/**
@@ -158,14 +158,14 @@ abstract class FunctionParameterAdapter {
 	 * @return parameter definition record or null
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecord(long parameterID) throws IOException;
+	abstract DBRecord getRecord(long parameterID) throws IOException;
 
 	/**
 	 * Updates the function definition parameter data type table with the provided record.
 	 * @param record the new record
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Removes the function definition parameter data type record with the specified ID.

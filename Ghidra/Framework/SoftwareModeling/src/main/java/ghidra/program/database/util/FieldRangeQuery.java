@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,7 @@
 package ghidra.program.database.util;
 
 import db.Field;
-import db.Record;
+import db.DBRecord;
 
 /**
  * Query implementation used to test a field in a record to fall within a range of values.
@@ -44,9 +43,9 @@ public class FieldRangeQuery implements Query {
 	}
 
 	/**
-	 * @see ghidra.program.database.util.Query#matches(db.Record)
+	 * @see ghidra.program.database.util.Query#matches(db.DBRecord)
 	 */
-	public boolean matches(Record record) {
+	public boolean matches(DBRecord record) {
 		return (record.compareFieldTo(column, min) > 0) && (record.compareFieldTo(column, max) < 0);
 	}
 

@@ -18,7 +18,7 @@ package ghidra.program.database.code;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -71,7 +71,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	protected boolean refresh(Record record) {
+	protected boolean refresh(DBRecord record) {
 		parserContext = null;
 		return super.refresh(record);
 	}
@@ -83,7 +83,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
-	protected boolean hasBeenDeleted(Record rec) {
+	protected boolean hasBeenDeleted(DBRecord rec) {
 		if (rec == null) {
 			rec = codeMgr.getInstructionRecord(addr);
 			if (rec == null) {

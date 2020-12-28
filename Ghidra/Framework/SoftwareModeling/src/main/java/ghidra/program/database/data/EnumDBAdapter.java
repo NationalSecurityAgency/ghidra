@@ -108,14 +108,14 @@ abstract class EnumDBAdapter {
 			tmpAdapter = new EnumDBAdapterV1(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
 			EnumDBAdapterV1 newAdapter = new EnumDBAdapterV1(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
 			return newAdapter;
@@ -138,7 +138,7 @@ abstract class EnumDBAdapter {
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record createRecord(String name, String comments, long categoryID, byte size,
+	abstract DBRecord createRecord(String name, String comments, long categoryID, byte size,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException;
 
 	/**
@@ -147,7 +147,7 @@ abstract class EnumDBAdapter {
 	 * @return the record for the enumeration data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record getRecord(long enumID) throws IOException;
+	abstract DBRecord getRecord(long enumID) throws IOException;
 
 	/**
 	 * Gets an iterator over all enumeration data type records.
@@ -163,7 +163,7 @@ abstract class EnumDBAdapter {
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record, boolean setLastChangeTime) throws IOException;
+	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
 	 * Remove the record for the given enumeration ID, and remove all of its 
@@ -204,7 +204,7 @@ abstract class EnumDBAdapter {
 	 * @return enum record found or null
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
+	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 
 }

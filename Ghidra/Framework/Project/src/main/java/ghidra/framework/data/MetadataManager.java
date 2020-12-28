@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +34,7 @@ class MetadataManager {
 		if (table != null) {
 			RecordIterator iterator = table.iterator();
 			while(iterator.hasNext()) {
-				Record record = iterator.next();
+				DBRecord record = iterator.next();
 				String key = record.getString(0);
 				String value = record.getString(1);
 				metadata.put(key, value);
@@ -58,7 +57,7 @@ class MetadataManager {
 			while(keyIterator.hasNext()) {
 				String key = keyIterator.next();
 				String value = metadata.get(key);
-				Record record = SCHEMA.createRecord(id++);
+				DBRecord record = SCHEMA.createRecord(id++);
 				record.setString(0, key);
 				record.setString(1, value);
 				table.putRecord(record);

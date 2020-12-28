@@ -68,14 +68,14 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, String name, long categoryID, long sourceArchiveID,
+	public DBRecord createRecord(long dataTypeID, String name, long categoryID, long sourceArchiveID,
 			long sourceDataTypeID, long lastChangeTime) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
 			" of " + TYPEDEF_TABLE_NAME + " table.");
 	}
 
 	@Override
-	public Record getRecord(long typedefID) throws IOException {
+	public DBRecord getRecord(long typedefID) throws IOException {
 		return translateRecord(table.getRecord(typedefID));
 	}
 
@@ -85,7 +85,7 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -105,11 +105,11 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public Record translateRecord(Record oldRec) {
+	public DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = TypedefDBAdapter.SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = TypedefDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(TYPEDEF_DT_ID_COL, oldRec.getLongValue(V0_TYPEDEF_DT_ID_COL));
 		rec.setString(TYPEDEF_NAME_COL, oldRec.getString(V0_TYPEDEF_NAME_COL));
 		rec.setLongValue(TYPEDEF_CAT_COL, oldRec.getLongValue(V0_TYPEDEF_CAT_COL));
@@ -121,7 +121,7 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		return null;
 	}
 

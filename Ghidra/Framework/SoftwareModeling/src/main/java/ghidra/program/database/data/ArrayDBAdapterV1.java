@@ -64,7 +64,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(long dataTypeID, int numberOfElements, int length, long catID)
+	public DBRecord createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException {
 
 		long tableKey = table.getKey();
@@ -73,7 +73,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.ARRAY, tableKey);
 
-		Record record = V1_SCHEMA.createRecord(key);
+		DBRecord record = V1_SCHEMA.createRecord(key);
 		record.setLongValue(V1_ARRAY_DT_ID_COL, dataTypeID);
 		record.setIntValue(V1_ARRAY_DIM_COL, numberOfElements);
 		record.setIntValue(V1_ARRAY_LENGTH_COL, length);
@@ -83,7 +83,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long arrayID) throws IOException {
+	public DBRecord getRecord(long arrayID) throws IOException {
 		return table.getRecord(arrayID);
 	}
 
@@ -98,7 +98,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 
 	}

@@ -97,7 +97,7 @@ public class AddressKeyIteratorTest extends AbstractGhidraHeadedIntegrationTest 
 
 	private long addRecord(Address a) throws Exception {
 		long key = addrMap.getKey(a, true);
-		Record rec = SCHEMA.createRecord(key);
+		DBRecord rec = SCHEMA.createRecord(key);
 		rec.setString(0, a.toString());
 		myTable.putRecord(rec);
 		return key;

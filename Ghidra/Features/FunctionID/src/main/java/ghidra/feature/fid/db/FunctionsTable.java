@@ -112,7 +112,7 @@ public class FunctionsTable {
 		RecordIterator iterator = table.iterator();
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
-			Record record = iterator.next();
+			DBRecord record = iterator.next();
 			if (record.getLongValue(SPECIFIC_HASH_COL) != hash) {
 				continue;
 			}
@@ -143,7 +143,7 @@ public class FunctionsTable {
 			Field key = iterator.next();
 			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
-				Record record = table.getRecord(key);
+				DBRecord record = table.getRecord(key);
 				functionRecord = new FunctionRecord(fidDb, functionCache, record);
 			}
 			list.add(functionRecord);
@@ -164,7 +164,7 @@ public class FunctionsTable {
 	 */
 	public FunctionRecord createFunctionRecord(long libraryID, FidHashQuad hashQuad, String name,
 			long entryPoint, String domainPath, boolean hasTerminator) throws IOException {
-		Record record = SCHEMA.createRecord(UniversalIdGenerator.nextID().getValue());
+		DBRecord record = SCHEMA.createRecord(UniversalIdGenerator.nextID().getValue());
 		record.setShortValue(CODE_UNIT_SIZE_COL, hashQuad.getCodeUnitSize());
 		record.setLongValue(FULL_HASH_COL, hashQuad.getFullHash());
 		record.setByteValue(SPECIFIC_HASH_ADDITIONAL_SIZE_COL,
@@ -191,7 +191,7 @@ public class FunctionsTable {
 	 * @throws IOException
 	 */
 	void modifyFlags(long functionID, int flagMask, boolean value) throws IOException {
-		Record record = table.getRecord(functionID);
+		DBRecord record = table.getRecord(functionID);
 		if (record == null) {
 			throw new IOException("Function record does not exist");
 		}
@@ -227,7 +227,7 @@ public class FunctionsTable {
 			Field key = iterator.next();
 			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
-				Record record = table.getRecord(key);
+				DBRecord record = table.getRecord(key);
 				long nameID = record.getLongValue(NAME_ID_COL);
 				StringRecord nameRecord = stringsTable.lookupString(nameID);
 				String name = nameRecord.getValue();
@@ -266,7 +266,7 @@ public class FunctionsTable {
 			Field key = iterator.next();
 			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
-				Record record = table.getRecord(key);
+				DBRecord record = table.getRecord(key);
 				long nameID = record.getLongValue(NAME_ID_COL);
 				StringRecord nameRecord = stringsTable.lookupString(nameID);
 				String name = nameRecord.getValue();
@@ -297,7 +297,7 @@ public class FunctionsTable {
 	public FunctionRecord getFunctionByID(long functionID) throws IOException {
 		FunctionRecord functionRecord = functionCache.get(functionID);
 		if (functionRecord == null) {
-			Record record = table.getRecord(functionID);
+			DBRecord record = table.getRecord(functionID);
 			if (record != null) {
 				functionRecord = new FunctionRecord(fidDb, functionCache, record);
 			}
@@ -318,7 +318,7 @@ public class FunctionsTable {
 		RecordIterator iterator = table.iterator();
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
-			Record record = iterator.next();
+			DBRecord record = iterator.next();
 			long domainPathID = record.getLongValue(DOMAIN_PATH_ID_COL);
 			StringRecord domainPathRecord = stringsTable.lookupString(domainPathID);
 			String domainPath = domainPathRecord.getValue();
@@ -358,7 +358,7 @@ public class FunctionsTable {
 			Field key = iterator.next();
 			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
-				Record record = table.getRecord(key);
+				DBRecord record = table.getRecord(key);
 				if (record.getLongValue(LIBRARY_ID_COL) == libraryKey) {
 					functionRecord = new FunctionRecord(fidDb, functionCache, record);
 					list.add(functionRecord);

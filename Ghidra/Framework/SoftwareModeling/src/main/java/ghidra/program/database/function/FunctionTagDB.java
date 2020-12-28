@@ -18,7 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 import java.util.Objects;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.listing.FunctionTag;
@@ -29,10 +29,10 @@ import ghidra.program.model.listing.FunctionTag;
 public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 
 	private FunctionTagManagerDB mgr;
-	private Record record;
+	private DBRecord record;
 
 	public FunctionTagDB(FunctionTagManagerDB mgr, DBObjectCache<FunctionTagDB> cache,
-			Record record) {
+			DBRecord record) {
 		super(cache, record.getKey());
 		this.mgr = mgr;
 		this.record = record;
@@ -120,7 +120,7 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 	 * Get tag record
 	 * @return record
 	 */
-	Record getRecord() {
+	DBRecord getRecord() {
 		return record;
 	}
 
@@ -133,7 +133,7 @@ public class FunctionTagDB extends DatabaseObject implements FunctionTag {
 	}
 
 	@Override
-	protected boolean refresh(Record rec) {
+	protected boolean refresh(DBRecord rec) {
 
 		// As per the description of this function, if the record passed-in
 		// is null, use whatever is in the database.

@@ -191,9 +191,9 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecord(Schema schema, int index) throws IOException {
+	public DBRecord getRecord(Schema schema, int index) throws IOException {
 		Field key = getKeyField(index);
-		Record record = schema.createRecord(key);
+		DBRecord record = schema.createRecord(key);
 		if (hasIndirectStorage(index)) {
 			int bufId = buffer.getInt(getRecordDataOffset(index));
 			ChainedBuffer chainedBuffer = new ChainedBuffer(nodeMgr.getBufferMgr(), bufId);
@@ -214,7 +214,7 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	}
 
 	@Override
-	public Record getRecord(Field key, Schema schema) throws IOException {
+	public DBRecord getRecord(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
 		if (index < 0) {
 			return null;
@@ -279,7 +279,7 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	}
 
 	@Override
-	FixedKeyNode updateRecord(int index, Record record) throws IOException {
+	FixedKeyNode updateRecord(int index, DBRecord record) throws IOException {
 
 		int offset = getRecordDataOffset(index);
 		int oldLen = getRecordLength(index, offset);
@@ -341,7 +341,7 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	@Override
-	boolean insertRecord(int index, Record record) throws IOException {
+	boolean insertRecord(int index, DBRecord record) throws IOException {
 
 		// Check for use of indirect chained record node(s)
 		int len = record.length();

@@ -60,7 +60,7 @@ class AddressMapDBAdapterV0 extends AddressMapDBAdapter {
 		RecordIterator it = table.iterator();
 		int deletedID = 1;
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			int segment = rec.getIntValue(SEGMENT_COL);
 			AddressSpace space = factory.getAddressSpace(spaceName);
@@ -98,7 +98,7 @@ class AddressMapDBAdapterV0 extends AddressMapDBAdapter {
 		ArrayList<AddressMapEntry> list = new ArrayList<AddressMapEntry>();
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
-			Record rec = it.next();
+			DBRecord rec = it.next();
 			String spaceName = rec.getString(SPACE_NAME_COL);
 			boolean deleted = (factory.getAddressSpace(spaceName) == null);
 			list.add(new AddressMapEntry((int) rec.getKey(), spaceName,

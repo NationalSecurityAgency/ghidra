@@ -67,14 +67,14 @@ abstract class ArrayDBAdapter {
 			tmpAdapter = new ArrayDBAdapterV1(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
 			ArrayDBAdapterV1 newAdapter = new ArrayDBAdapterV1(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
 			return newAdapter;
@@ -85,16 +85,16 @@ abstract class ArrayDBAdapter {
 		}
 	}
 
-	abstract Record createRecord(long dataTypeID, int numberOfElements, int length, long catID)
+	abstract DBRecord createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException;
 
-	abstract Record getRecord(long arrayID) throws IOException;
+	abstract DBRecord getRecord(long arrayID) throws IOException;
 
 	abstract RecordIterator getRecords() throws IOException;
 
 	abstract boolean removeRecord(long dataID) throws IOException;
 
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	abstract void deleteTable(DBHandle handle) throws IOException;
 

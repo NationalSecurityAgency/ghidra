@@ -77,14 +77,14 @@ abstract class PointerDBAdapter {
 			tmpAdapter = new PointerDBAdapterV2(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
 			PointerDBAdapter newAdapter = new PointerDBAdapterV2(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
 			return newAdapter;
@@ -107,7 +107,7 @@ abstract class PointerDBAdapter {
 	 * @param length pointer size in bytes
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createRecord(long dataTypeID, long categoryID, int length) throws IOException;
+	abstract DBRecord createRecord(long dataTypeID, long categoryID, int length) throws IOException;
 
 	/**
 	 * Get the record with the given pointerID.
@@ -115,7 +115,7 @@ abstract class PointerDBAdapter {
 	 * @return requested pointer record or null if not found
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(long pointerID) throws IOException;
+	abstract DBRecord getRecord(long pointerID) throws IOException;
 
 	abstract RecordIterator getRecords() throws IOException;
 
@@ -132,7 +132,7 @@ abstract class PointerDBAdapter {
 	 * @param record pointer record to be updated
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Gets all the pointer data types that are contained in the category that 
@@ -143,7 +143,7 @@ abstract class PointerDBAdapter {
 	 */
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
-	Record translateRecord(Record rec) {
+	DBRecord translateRecord(DBRecord rec) {
 		return rec;
 	}
 
@@ -170,14 +170,14 @@ abstract class PointerDBAdapter {
 		}
 
 		@Override
-		public Record next() throws IOException {
-			Record rec = it.next();
+		public DBRecord next() throws IOException {
+			DBRecord rec = it.next();
 			return translateRecord(rec);
 		}
 
 		@Override
-		public Record previous() throws IOException {
-			Record rec = it.previous();
+		public DBRecord previous() throws IOException {
+			DBRecord rec = it.previous();
 			return translateRecord(rec);
 		}
 	}

@@ -61,7 +61,7 @@ public class DatabaseTableUtils {
 				throw new CancelledException();
 			}
 			Field key = startFromTop ? it.next() : it.previous();
-			Record rec = table.getRecord(key);
+			DBRecord rec = table.getRecord(key);
 			if (filter == null || filter.matches(rec)) {
 				Address addr = addrMap.decodeAddress(rec.getLongValue(addrCol));
 				addr = toAddr.add(addr.subtract(fromAddr));
@@ -139,7 +139,7 @@ public class DatabaseTableUtils {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				Address addr = addrMap.decodeAddress(rec.getKey());
 				long offset = addr.subtract(fromAddr);
 				addr = toAddr.add(offset);
@@ -154,7 +154,7 @@ public class DatabaseTableUtils {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();
 				}
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				table.putRecord(rec);
 			}
 		}

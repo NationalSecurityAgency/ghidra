@@ -73,7 +73,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
+	DBRecord createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
 			long data1, int data2, String data3, SourceType source) {
 		throw new UnsupportedOperationException();
 	}
@@ -102,7 +102,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	Record getSymbolRecord(long symbolID) throws IOException {
+	DBRecord getSymbolRecord(long symbolID) throws IOException {
 		return convertV1Record(symbolTable.getRecord(symbolID));
 	}
 
@@ -111,11 +111,11 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 	 * @param recV1 the record matching the version 1 schema.
 	 * @return a current symbol record.
 	 */
-	private Record convertV1Record(Record record) {
+	private DBRecord convertV1Record(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
-		Record rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
+		DBRecord rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(record.getKey());
 		String symbolName = record.getString(V1_SYMBOL_NAME_COL);
 		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, symbolName);
 		long symbolAddrKey = record.getLongValue(V1_SYMBOL_ADDR_COL);
@@ -161,7 +161,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	void updateSymbolRecord(Record record) throws IOException {
+	void updateSymbolRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -224,7 +224,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 		}
 
 		@Override
-		protected Record convertRecord(Record record) {
+		protected DBRecord convertRecord(DBRecord record) {
 			return convertV1Record(record);
 		}
 	}

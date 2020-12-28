@@ -202,7 +202,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			monitor.initialize(1);
 			RecordIterator recIter = adapter.getSymbolsByNamespace(libSym.getID());
 			while (recIter.hasNext()) {
-				Record rec = recIter.next();
+				DBRecord rec = recIter.next();
 				Address oldAddr =
 					addrMap.decodeAddress(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 				if (!(oldAddr instanceof OldGenericNamespaceAddress)) {
@@ -229,7 +229,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				AddressSpace.EXTERNAL_SPACE.getMaxAddress(), true);
 		while (symbolRecordIterator.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = symbolRecordIterator.next();
+			DBRecord rec = symbolRecordIterator.next();
 			rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.LABEL.getID());
 			adapter.updateSymbolRecord(rec);
 		}
@@ -256,7 +256,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		while (symbolRecordIterator.hasNext()) {
 			monitor.checkCanceled();
 			monitor.setProgress(++cnt);
-			Record rec = symbolRecordIterator.next();
+			DBRecord rec = symbolRecordIterator.next();
 			long addr = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL);
 			Address oldAddress = addrMap.decodeAddress(addr);
 			if (!(oldAddress instanceof OldGenericNamespaceAddress)) {
@@ -315,7 +315,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			long curDataTypeId = -1;
 			while (recIter.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = recIter.next();
+				DBRecord rec = recIter.next();
 				Address addr =
 					addrMap.decodeAddress(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 				if (!addr.isVariableAddress()) {
@@ -385,7 +385,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			Address addr = oldAddrMap.decodeAddress(rec.getKey());
 			refManager.addExternalEntryPointRef(addr);
 			monitor.setProgress(++cnt);
@@ -416,7 +416,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
 			monitor.checkCanceled();
-			Record rec = iter.next();
+			DBRecord rec = iter.next();
 			Address addr = oldAddrMap.decodeAddress(rec.getLongValue(OLD_SYMBOL_ADDR_COL));
 			Namespace namespace = namespaceMgr.getNamespaceContaining(addr);
 			if (namespace.getID() != Namespace.GLOBAL_NAMESPACE_ID) {
@@ -457,7 +457,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (table == null) {
 			table = tmpHandle.createTable(OLD_LOCAL_SYMBOLS_TABLE, OLD_LOCAL_SYMBOLS_SCHEMA);
 		}
-		Record rec = OLD_LOCAL_SYMBOLS_SCHEMA.createRecord(symbolID);
+		DBRecord rec = OLD_LOCAL_SYMBOLS_SCHEMA.createRecord(symbolID);
 		rec.setLongValue(OLD_SYMBOL_ADDR_COL, oldAddr);
 		rec.setString(OLD_SYMBOL_NAME_COL, name);
 		rec.setBooleanValue(OLD_SYMBOL_IS_PRIMARY_COL, isPrimary);
@@ -509,7 +509,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			Address address = symbol.getAddress();
 			symbolRemoved(symbol, address, symbol.getName(), oldKey, Namespace.GLOBAL_NAMESPACE_ID,
 				null);
-			Record record = adapter.createSymbol(newName, address, newParentID, SymbolType.LABEL, 0,
+			DBRecord record = adapter.createSymbol(newName, address, newParentID, SymbolType.LABEL, 0,
 				1, null, source);
 			symbol.setRecord(record);// symbol object was morphed
 			symbolAdded(symbol);
@@ -549,7 +549,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		checkDuplicateSymbolName(addr, name, namespace, type);
 
-		Record rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(symbolID);
+		DBRecord rec = SymbolDatabaseAdapter.SYMBOL_SCHEMA.createRecord(symbolID);
 		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, name);
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL, addrMap.getKey(addr, true));
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, namespace.getID());
@@ -560,7 +560,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		adapter.updateSymbolRecord(rec);
 	}
 
-	private SymbolDB makeSymbol(Address addr, Record record, SymbolType type) {
+	private SymbolDB makeSymbol(Address addr, DBRecord record, SymbolType type) {
 		if (addr == null) {
 			addr =
 				addrMap.decodeAddress(record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
@@ -748,7 +748,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				return s;
 			}
 			try {
-				Record record = adapter.getSymbolRecord(symbolID);
+				DBRecord record = adapter.getSymbolRecord(symbolID);
 				if (record != null) {
 					return createCachedSymbol(record);
 				}
@@ -1284,7 +1284,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		try {
 			RecordIterator iter = historyAdapter.getRecordsByAddress(addrMap.getKey(addr, false));
 			while (iter.hasNext()) {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				list.add(new LabelHistory(
 					addrMap.decodeAddress(rec.getLongValue(LabelHistoryAdapter.HISTORY_ADDR_COL)),
 					rec.getString(LabelHistoryAdapter.HISTORY_USER_COL),
@@ -1390,7 +1390,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				ArrayList<SymbolDB> symbols = new ArrayList<>();
 				RecordIterator iter = adapter.getSymbolsByNamespace(namespaceID);
 				while (iter.hasNext()) {
-					Record rec = iter.next();
+					DBRecord rec = iter.next();
 					symbols.add(getSymbol(rec));
 				}
 				Iterator<SymbolDB> it = symbols.iterator();
@@ -1448,7 +1448,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		return adapter;
 	}
 
-	Record getSymbolRecord(long symbolID) {
+	DBRecord getSymbolRecord(long symbolID) {
 		try {
 			return adapter.getSymbolRecord(symbolID);
 		}
@@ -1517,7 +1517,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 	}
 
-	private SymbolDB createCachedSymbol(Record record) {
+	private SymbolDB createCachedSymbol(DBRecord record) {
 		long addr = record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL);
 		byte typeID = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
 		SymbolType type = SymbolType.getSymbolType(typeID);
@@ -1525,7 +1525,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		return s;
 	}
 
-	SymbolDB getSymbol(Record record) {
+	SymbolDB getSymbol(DBRecord record) {
 		lock.acquire();
 		try {
 			SymbolDB s = cache.get(record);
@@ -1683,7 +1683,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				lock.acquire();
 				boolean hasNext = forward ? it.hasNext() : it.hasPrevious();
 				if (hasNext) {
-					Record rec = forward ? it.next() : it.previous();
+					DBRecord rec = forward ? it.next() : it.previous();
 					nextSymbol = getSymbol(rec);
 				}
 				return hasNext;
@@ -1888,7 +1888,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		@Override
 		public LabelHistory next() {
 			try {
-				Record rec = iter.next();
+				DBRecord rec = iter.next();
 				if (rec != null) {
 					return new LabelHistory(
 						addrMap.decodeAddress(
@@ -2059,7 +2059,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		try {
 			RecordIterator it = adapter.getSymbols();
 			while (it.hasNext()) {
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				byte typeID = rec.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
 
 				// Change datatype ID contained with symbol data1 for all
@@ -2489,7 +2489,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			long data1, int data2, String data3, SourceType source) {
 
 		try {
-			Record record = adapter.createSymbol(name, addr, namespace.getID(), type, data1, data2,
+			DBRecord record = adapter.createSymbol(name, addr, namespace.getID(), type, data1, data2,
 				data3, source);
 
 			SymbolDB newSymbol = makeSymbol(addr, record, type);

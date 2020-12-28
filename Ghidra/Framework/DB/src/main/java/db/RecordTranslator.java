@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,5 +22,5 @@ public interface RecordTranslator {
 	 * @param oldRecord the old database record.
 	 * @return the new data base record in the form required for the current database version.
 	 */
-	Record translateRecord(Record oldRecord);
+	DBRecord translateRecord(DBRecord oldRecord);
 }

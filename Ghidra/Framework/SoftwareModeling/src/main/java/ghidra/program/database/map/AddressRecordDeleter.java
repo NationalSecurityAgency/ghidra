@@ -79,7 +79,7 @@ public class AddressRecordDeleter {
 		while (iter.hasNext()) {
 			Field next = iter.next();
 			if (filter != null) {
-				Record record = table.getRecord(next);
+				DBRecord record = table.getRecord(next);
 				if (!filter.matches(record)) {
 					continue;
 				}

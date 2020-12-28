@@ -84,7 +84,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			RecordIterator records = markupItemTableAdapter.getRecords(associationDB.getKey());
 			while (records.hasNext()) {
 				monitor.checkCanceled();
-				Record record = records.next();
+				DBRecord record = records.next();
 				items.add(getMarkupItemForRecord(record));
 				monitor.incrementProgress(1);
 			}
@@ -100,7 +100,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		return items;
 	}
 
-	Record getMarkupItemRecord(long key) {
+	DBRecord getMarkupItemRecord(long key) {
 		try {
 			return markupItemTableAdapter.getRecord(key);
 		}
@@ -155,7 +155,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		}
 	}
 
-	private MarkupItemStorageDB getMarkupItemForRecord(Record markupItemRecord) {
+	private MarkupItemStorageDB getMarkupItemForRecord(DBRecord markupItemRecord) {
 		try {
 			lock.acquire();
 			MarkupItemStorageDB markupItem = markupItemCache.get(markupItemRecord);
@@ -181,7 +181,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		return session.getSourceAddressFromLong(longValue);
 	}
 
-	Record getAssociationRecord(long key) {
+	DBRecord getAssociationRecord(long key) {
 		try {
 			return associationTableAdapter.getRecord(key);
 		}
@@ -194,7 +194,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	private MarkupItemStorageDB createMarkupItemDB(MarkupItemStorage markupItem) {
 
 		try {
-			Record record = markupItemTableAdapter.createMarkupItemRecord(markupItem);
+			DBRecord record = markupItemTableAdapter.createMarkupItemRecord(markupItem);
 			MarkupItemStorageDB appliedMarkupItem = getMarkupItemForRecord(record);
 			return appliedMarkupItem;
 		}
@@ -222,7 +222,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		VTAssociationDB newAssociation = null;
 		try {
 			lock.acquire();
-			Record record = associationTableAdapter.insertRecord(sourceLong, destinationLong, type,
+			DBRecord record = associationTableAdapter.insertRecord(sourceLong, destinationLong, type,
 				isBlocked ? BLOCKED : AVAILABLE, 0);
 			newAssociation = new VTAssociationDB(this, associationCache, record);
 		}
@@ -260,10 +260,10 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		long sourceID = session.getLongFromSourceAddress(sourceAddress);
 		long destinationID = session.getLongFromDestinationAddress(destinationAddress);
 		try {
-			Set<Record> relatedRecords =
+			Set<DBRecord> relatedRecords =
 				associationTableAdapter.getRelatedAssociationRecordsBySourceAndDestinationAddress(
 					sourceID, destinationID);
-			for (Record record : relatedRecords) {
+			for (DBRecord record : relatedRecords) {
 				VTAssociationDB associationDB = getAssociationForRecord(record);
 				VTAssociationStatus status = associationDB.getStatus();
 				if (status == ACCEPTED) {
@@ -290,7 +290,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		try {
 			RecordIterator iterator = associationTableAdapter.getRecords();
 			for (; iterator.hasNext();) {
-				Record nextRecord = iterator.next();
+				DBRecord nextRecord = iterator.next();
 				list.add(getAssociationForRecord(nextRecord));
 			}
 		}
@@ -311,7 +311,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			RecordIterator iterator =
 				associationTableAdapter.getRecordsForSourceAddress(addressKey);
 			while (iterator.hasNext()) {
-				Record record = iterator.next();
+				DBRecord record = iterator.next();
 				VTAssociationDB associationDB = getAssociationForRecord(record);
 				if (associationDB.getDestinationAddress().equals(destinationAddress)) {
 					return associationDB;
@@ -334,7 +334,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			RecordIterator iterator =
 				associationTableAdapter.getRecordsForSourceAddress(addressKey);
 			while (iterator.hasNext()) {
-				Record record = iterator.next();
+				DBRecord record = iterator.next();
 				VTAssociationDB associationDB = getAssociationForRecord(record);
 				Address dbDestinatonAddress = associationDB.getDestinationAddress();
 				if (destinationAddress.equals(dbDestinatonAddress)) {
@@ -349,7 +349,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		return null;
 	}
 
-	private VTAssociationDB getAssociationForRecord(Record record) {
+	private VTAssociationDB getAssociationForRecord(DBRecord record) {
 		if (record == null) {
 			throw new AssertException("How can we have a null record?!!!");
 		}
@@ -373,7 +373,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			if (associationDB != null) {
 				return associationDB;
 			}
-			Record record = associationTableAdapter.getRecord(associationKey);
+			DBRecord record = associationTableAdapter.getRecord(associationKey);
 			if (record == null) {
 				return null;
 			}
@@ -397,10 +397,10 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		lock.acquire();
 		try {
 			long sourceID = session.getLongFromSourceAddress(sourceAddress);
-			Set<Record> relatedRecords =
+			Set<DBRecord> relatedRecords =
 				associationTableAdapter.getRelatedAssociationRecordsBySourceAddress(sourceID);
 			List<VTAssociation> associations = new ArrayList<>();
-			for (Record record : relatedRecords) {
+			for (DBRecord record : relatedRecords) {
 				associations.add(getAssociationForRecord(record));
 			}
 			return associations;
@@ -420,11 +420,11 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		lock.acquire();
 		try {
 			long destinationID = session.getLongFromDestinationAddress(destinationAddress);
-			Set<Record> relatedRecords =
+			Set<DBRecord> relatedRecords =
 				associationTableAdapter.getRelatedAssociationRecordsByDestinationAddress(
 					destinationID);
 			List<VTAssociation> associations = new ArrayList<>();
-			for (Record record : relatedRecords) {
+			for (DBRecord record : relatedRecords) {
 				associations.add(getAssociationForRecord(record));
 			}
 			return associations;
@@ -445,11 +445,11 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		try {
 			long sourceID = session.getLongFromSourceAddress(sourceAddress);
 			long destinationID = session.getLongFromDestinationAddress(destinationAddress);
-			Set<Record> relatedRecords =
+			Set<DBRecord> relatedRecords =
 				associationTableAdapter.getRelatedAssociationRecordsBySourceAndDestinationAddress(
 					sourceID, destinationID);
 			List<VTAssociation> associations = new ArrayList<>();
-			for (Record record : relatedRecords) {
+			for (DBRecord record : relatedRecords) {
 				associations.add(getAssociationForRecord(record));
 			}
 			return associations;
@@ -572,11 +572,11 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 
 		Set<VTAssociationDB> relatedAssociaitons = new HashSet<>();
 		try {
-			Set<Record> relatedRecords =
+			Set<DBRecord> relatedRecords =
 				associationTableAdapter.getRelatedAssociationRecordsBySourceAndDestinationAddress(
 					sourceID, destinationID);
 			relatedRecords.remove(association.getRecord()); // don't change the given association
-			for (Record record : relatedRecords) {
+			for (DBRecord record : relatedRecords) {
 				relatedAssociaitons.add(getAssociationForRecord(record));
 			}
 		}
@@ -586,7 +586,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		return relatedAssociaitons;
 	}
 
-	void updateAssociationRecord(Record record) {
+	void updateAssociationRecord(DBRecord record) {
 		try {
 			associationTableAdapter.updateRecord(record);
 		}
@@ -595,7 +595,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		}
 	}
 
-	void updateMarkupRecord(Record record) {
+	void updateMarkupRecord(DBRecord record) {
 		try {
 			markupItemTableAdapter.updateRecord(record);
 		}
@@ -617,7 +617,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		associationHooks.remove(hook);
 	}
 
-	void removeMarkupRecord(Record record) {
+	void removeMarkupRecord(DBRecord record) {
 		try {
 			markupItemTableAdapter.removeMatchMarkupItemRecord(record.getKey());
 		}

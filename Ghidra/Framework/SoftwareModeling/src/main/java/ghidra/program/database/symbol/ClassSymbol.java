@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
-import db.Record;
+import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
@@ -37,7 +37,7 @@ public class ClassSymbol extends SymbolDB {
 	 * @param record the record associated with the symbol.
 	 */
 	public ClassSymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			Record record) {
+			DBRecord record) {
 		super(symbolMgr, cache, address, record);
 
 	}

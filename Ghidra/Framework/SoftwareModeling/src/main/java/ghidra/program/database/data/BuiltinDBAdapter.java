@@ -53,7 +53,7 @@ public abstract class BuiltinDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record createRecord(String name, String className, long categoryID) throws IOException;
+	abstract DBRecord createRecord(String name, String className, long categoryID) throws IOException;
 
 	/**
 	 * Gets the Built-in data type record with the indicated ID.
@@ -61,7 +61,7 @@ public abstract class BuiltinDBAdapter {
 	 * @return the record for the Built-in data type.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract Record getRecord(long dataTypeID) throws IOException;
+	abstract DBRecord getRecord(long dataTypeID) throws IOException;
 
 	/** 
 	 * Returns an array containing the data type IDs for the given category ID
@@ -77,7 +77,7 @@ public abstract class BuiltinDBAdapter {
 	 * @param record the new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract void updateRecord(Record record) throws IOException;
+	abstract void updateRecord(DBRecord record) throws IOException;
 
 	/**
 	 * Remove the record with the given dataID.

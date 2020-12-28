@@ -86,7 +86,7 @@ abstract class FunctionTagMappingAdapter {
 	 * @return null if not found
 	 * @throws IOException if database error occurs
 	 */
-	abstract Record getRecord(long functionID, long tagID) throws IOException;
+	abstract DBRecord getRecord(long functionID, long tagID) throws IOException;
 
 	/**
 	 * Creates a new record with the given function and tag ID's.
@@ -96,7 +96,7 @@ abstract class FunctionTagMappingAdapter {
 	 * @return newly-created database record
 	 * @throws IOException if database error occurs
 	 */
-	abstract Record createFunctionTagRecord(long functionID, long tagID)
+	abstract DBRecord createFunctionTagRecord(long functionID, long tagID)
 			throws IOException;
 
 	/**

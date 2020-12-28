@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import db.DBHandle;
-import db.Record;
+import db.DBRecord;
 import ghidra.feature.fid.hash.FidHashQuad;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
@@ -384,7 +384,7 @@ public class FidDB implements Closeable {
 	public boolean getSuperiorFullRelation(FunctionRecord superiorFunction,
 			FidHashQuad inferiorFunction) {
 		try {
-			Record libraryByID = librariesTable.getLibraryByID(superiorFunction.getLibraryID());
+			DBRecord libraryByID = librariesTable.getLibraryByID(superiorFunction.getLibraryID());
 			if (libraryByID != null) {
 				return relationsTable.getSuperiorFullRelation(superiorFunction, inferiorFunction);
 			}
@@ -405,7 +405,7 @@ public class FidDB implements Closeable {
 	public boolean getInferiorFullRelation(FidHashQuad superiorFunction,
 			FunctionRecord inferiorFunction) {
 		try {
-			Record libraryByID = librariesTable.getLibraryByID(inferiorFunction.getLibraryID());
+			DBRecord libraryByID = librariesTable.getLibraryByID(inferiorFunction.getLibraryID());
 			if (libraryByID != null) {
 				return relationsTable.getInferiorFullRelation(superiorFunction, inferiorFunction);
 			}
@@ -439,7 +439,7 @@ public class FidDB implements Closeable {
 	 */
 	public LibraryRecord getLibraryForFunction(FunctionRecord functionRecord) {
 		try {
-			Record record = librariesTable.getLibraryByID(functionRecord.getLibraryID());
+			DBRecord record = librariesTable.getLibraryByID(functionRecord.getLibraryID());
 			if (record == null) {
 				return null;
 			}
@@ -473,7 +473,7 @@ public class FidDB implements Closeable {
 
 		try {
 			checkUpdateAllowed();
-			Record record = librariesTable.createLibrary(libraryFamilyName, libraryVersion,
+			DBRecord record = librariesTable.createLibrary(libraryFamilyName, libraryVersion,
 				libraryVariant, ghidraVersion, languageID, languageVersion, languageMinorVersion,
 				compilerSpecID);
 			return new LibraryRecord(record);

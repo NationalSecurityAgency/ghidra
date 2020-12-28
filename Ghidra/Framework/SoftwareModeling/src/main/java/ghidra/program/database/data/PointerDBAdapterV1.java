@@ -49,11 +49,11 @@ class PointerDBAdapterV1 extends PointerDBAdapter {
 	}
 
 	@Override
-	Record translateRecord(Record oldRec) {
+	DBRecord translateRecord(DBRecord oldRec) {
 		if (oldRec == null) {
 			return null;
 		}
-		Record rec = PointerDBAdapter.SCHEMA.createRecord(oldRec.getKey());
+		DBRecord rec = PointerDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(PTR_DT_ID_COL, oldRec.getLongValue(OLD_PTR_DT_ID_COL));
 		rec.setLongValue(PTR_CATEGORY_COL, oldRec.getLongValue(OLD_PTR_CATEGORY_COL));
 		rec.setByteValue(PTR_LENGTH_COL, (byte) -1);
@@ -61,12 +61,12 @@ class PointerDBAdapterV1 extends PointerDBAdapter {
 	}
 
 	@Override
-	Record createRecord(long dataTypeID, long categoryID, int length) throws IOException {
+	DBRecord createRecord(long dataTypeID, long categoryID, int length) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	Record getRecord(long pointerID) throws IOException {
+	DBRecord getRecord(long pointerID) throws IOException {
 		return translateRecord(table.getRecord(pointerID));
 	}
 
@@ -81,7 +81,7 @@ class PointerDBAdapterV1 extends PointerDBAdapter {
 	}
 
 	@Override
-	void updateRecord(Record record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

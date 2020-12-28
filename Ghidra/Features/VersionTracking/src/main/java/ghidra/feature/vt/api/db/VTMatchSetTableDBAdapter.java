@@ -80,18 +80,18 @@ public abstract class VTMatchSetTableDBAdapter {
 		return new VTMatchSetTableDBAdapterV0(dbHandle, openMode);
 	}
 
-	public abstract Record createMatchSetRecord(long key, VTProgramCorrelator correlator)
+	public abstract DBRecord createMatchSetRecord(long key, VTProgramCorrelator correlator)
 			throws IOException;
 
 	public abstract RecordIterator getRecords() throws IOException;
 
-	public abstract AddressSet getSourceAddressSet(Record record, AddressMap addressMap)
+	public abstract AddressSet getSourceAddressSet(DBRecord record, AddressMap addressMap)
 			throws IOException;
 
-	public abstract AddressSet getDestinationAddressSet(Record record, AddressMap addressMap)
+	public abstract AddressSet getDestinationAddressSet(DBRecord record, AddressMap addressMap)
 			throws IOException;
 
 	public abstract long getNextMatchSetID();
 
-	public abstract Record getRecord(long key) throws IOException;
+	public abstract DBRecord getRecord(long key) throws IOException;
 }

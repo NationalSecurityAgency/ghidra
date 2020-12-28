@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.program.database.function;
 
 import java.io.IOException;
 
-import db.Record;
+import db.DBRecord;
 
 /**
  * Adapter needed for a read-only version of Program that is not going
@@ -37,7 +36,7 @@ class CallingConventionDBAdapterNoTable extends CallingConventionDBAdapter {
 	 * @see ghidra.program.database.function.CallingConventionDBAdapter#createCallingConventionRecord(java.lang.String)
 	 */
 	@Override
-	public Record createCallingConventionRecord(String name) throws IOException {
+	public DBRecord createCallingConventionRecord(String name) throws IOException {
 		return null;
 	}
 
@@ -45,7 +44,7 @@ class CallingConventionDBAdapterNoTable extends CallingConventionDBAdapter {
 	 * @see ghidra.program.database.function.CallingConventionDBAdapter#getCallingConventionRecord(byte)
 	 */
 	@Override
-	public Record getCallingConventionRecord(byte callingConventionID) throws IOException {
+	public DBRecord getCallingConventionRecord(byte callingConventionID) throws IOException {
 		return null;
 	}
 
@@ -53,7 +52,7 @@ class CallingConventionDBAdapterNoTable extends CallingConventionDBAdapter {
 	 * @see ghidra.program.database.function.CallingConventionDBAdapter#getCallingConventionRecord(java.lang.String)
 	 */
 	@Override
-	public Record getCallingConventionRecord(String name) throws IOException {
+	public DBRecord getCallingConventionRecord(String name) throws IOException {
 		return null;
 	}
 

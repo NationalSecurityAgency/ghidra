@@ -24,11 +24,11 @@ import docking.widgets.table.AbstractSortedTableModel;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
-public class DbSmallTableModel extends AbstractSortedTableModel<Record> {
+public class DbSmallTableModel extends AbstractSortedTableModel<DBRecord> {
 	private Table table;
 	private Schema schema;
 	private List<AbstractColumnAdapter> columns = new ArrayList<>();
-	private List<Record> records;
+	private List<DBRecord> records;
 
 	public DbSmallTableModel(Table table) {
 		this.table = table;
@@ -124,7 +124,7 @@ public class DbSmallTableModel extends AbstractSortedTableModel<Record> {
 	}
 
 	@Override
-	public Object getColumnValueForRow(Record rec, int columnIndex) {
+	public Object getColumnValueForRow(DBRecord rec, int columnIndex) {
 		if (columnIndex == 0) { // key column
 			return columns.get(columnIndex).getKeyValue(rec);
 		}
@@ -134,7 +134,7 @@ public class DbSmallTableModel extends AbstractSortedTableModel<Record> {
 	}
 
 	@Override
-	public List<Record> getModelData() {
+	public List<DBRecord> getModelData() {
 		return records;
 	}
 

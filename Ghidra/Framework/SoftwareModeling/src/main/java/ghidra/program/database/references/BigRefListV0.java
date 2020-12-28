@@ -55,7 +55,7 @@ class BigRefListV0 extends RefList {
 
 	private byte refLevel = -1;
 	private Table table;
-	private Record record;
+	private DBRecord record;
 
 	/**
 	 * Construct new empty reference list
@@ -84,7 +84,7 @@ class BigRefListV0 extends RefList {
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
 	 */
-	BigRefListV0(Record rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
+	BigRefListV0(DBRecord rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
 			DBObjectCache<RefList> cache, boolean isFrom) throws IOException {
 		super(rec.getKey(), addrMap.decodeAddress(rec.getKey()), adapter, addrMap, program, cache,
 			isFrom);
@@ -182,7 +182,7 @@ class BigRefListV0 extends RefList {
 		if (id < 0) {
 			id = 0;
 		}
-		Record refRec = BIG_REFS_SCHEMA.createRecord(id);
+		DBRecord refRec = BIG_REFS_SCHEMA.createRecord(id);
 		refRec.setLongValue(ADDRESS_COL, addrMap.getKey(isFrom ? toAddr : fromAddr, true));
 		RefListFlagsV0 flags =
 			new RefListFlagsV0(isPrimary, isOffset, symbolID >= 0, isShifted, source);
@@ -194,7 +194,7 @@ class BigRefListV0 extends RefList {
 		table.putRecord(refRec);
 	}
 
-	private ReferenceDB getRef(Record rec) {
+	private ReferenceDB getRef(DBRecord rec) {
 		long symbolID = -1;
 		long addr = rec.getLongValue(ADDRESS_COL);
 
@@ -272,7 +272,7 @@ class BigRefListV0 extends RefList {
 		}
 		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
-			Record rec = iterator.next();
+			DBRecord rec = iterator.next();
 			if (rec.getByteValue(OPINDEX_COL) != opIndex) {
 				continue;
 			}
@@ -288,7 +288,7 @@ class BigRefListV0 extends RefList {
 	synchronized ReferenceDB getRef(Address refAddress, int opIndex) throws IOException {
 		LongField addrField = new LongField(addrMap.getKey(refAddress, false));
 		for (Field id : table.findRecords(addrField, ADDRESS_COL)) {
-			Record rec = table.getRecord(id);
+			DBRecord rec = table.getRecord(id);
 			if (rec.getByteValue(OPINDEX_COL) == (byte) opIndex) {
 				return getRef(rec);
 			}
@@ -325,7 +325,7 @@ class BigRefListV0 extends RefList {
 	synchronized boolean removeRef(Address deleteAddr, int opIndex) throws IOException {
 		LongField addrField = new LongField(addrMap.getKey(deleteAddr, false));
 		for (Field id : table.findRecords(addrField, ADDRESS_COL)) {
-			Record rec = table.getRecord(id);
+			DBRecord rec = table.getRecord(id);
 			if (rec.getByteValue(OPINDEX_COL) == (byte) opIndex) {
 				table.deleteRecord(id);
 				if (table.getRecordCount() == 0) {
@@ -369,7 +369,7 @@ class BigRefListV0 extends RefList {
 		Address changeAddr = isFrom ? ref.getToAddress() : ref.getFromAddress();
 		LongField addrField = new LongField(addrMap.getKey(changeAddr, false));
 		for (Field id : table.findRecords(addrField, ADDRESS_COL)) {
-			Record rec = table.getRecord(id);
+			DBRecord rec = table.getRecord(id);
 			if (rec.getByteValue(OPINDEX_COL) == (byte) opIndex) {
 				RefListFlagsV0 flags = new RefListFlagsV0(rec.getByteValue(FLAGS_COL));
 				if (flags.isPrimary() == isPrimary) {
@@ -391,7 +391,7 @@ class BigRefListV0 extends RefList {
 		Address changeAddr = isFrom ? ref.getToAddress() : ref.getFromAddress();
 		LongField addrField = new LongField(addrMap.getKey(changeAddr, false));
 		for (Field id : table.findRecords(addrField, ADDRESS_COL)) {
-			Record rec = table.getRecord(id);
+			DBRecord rec = table.getRecord(id);
 			if (rec.getByteValue(OPINDEX_COL) == (byte) opIndex) {
 				RefListFlagsV0 flags = new RefListFlagsV0(rec.getByteValue(FLAGS_COL));
 				if (flags.hasSymbolID() == hasSymbolID &&
@@ -417,7 +417,7 @@ class BigRefListV0 extends RefList {
 		}
 		LongField addrField = new LongField(addrMap.getKey(changeAddr, false));
 		for (Field id : table.findRecords(addrField, ADDRESS_COL)) {
-			Record rec = table.getRecord(id);
+			DBRecord rec = table.getRecord(id);
 			if (rec.getByteValue(OPINDEX_COL) == (byte) opIndex) {
 				if (refType.getValue() == rec.getByteValue(TYPE_COL)) {
 					return; // change not required

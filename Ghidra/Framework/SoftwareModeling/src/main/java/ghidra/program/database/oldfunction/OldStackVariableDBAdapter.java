@@ -66,7 +66,7 @@ abstract class OldStackVariableDBAdapter {
 	 * @return Record record or null
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getStackVariableRecord(long key) throws IOException;
+	abstract DBRecord getStackVariableRecord(long key) throws IOException;
 
 	/**
 	 * Get all stack variable keys which correspond to a function.

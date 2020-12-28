@@ -239,7 +239,7 @@ public class Table {
 	 * @param record new record which has been added
 	 * @throws IOException thrown if IO error occurs
 	 */
-	void insertedRecord(Record record) throws IOException {
+	void insertedRecord(DBRecord record) throws IOException {
 		// Add secondary index entries for new record
 		for (int indexedColumn : indexedColumns) {
 			IndexTable indexTable = secondaryIndexes.get(indexedColumn);
@@ -255,7 +255,7 @@ public class Table {
 	 * @param newRecord new record
 	 * @throws IOException thrown if IO error occurs
 	 */
-	void updatedRecord(Record oldRecord, Record newRecord) throws IOException {
+	void updatedRecord(DBRecord oldRecord, DBRecord newRecord) throws IOException {
 		// Update secondary indexes which have been affected
 		for (int colIx : indexedColumns) {
 			Field oldField = oldRecord.getField(colIx);
@@ -275,7 +275,7 @@ public class Table {
 	 * @param oldRecord record which has been deleted
 	 * @throws IOException thrown if IO error occurs
 	 */
-	void deletedRecord(Record oldRecord) throws IOException {
+	void deletedRecord(DBRecord oldRecord) throws IOException {
 		// Delete secondary index entries
 		for (int indexedColumn : indexedColumns) {
 			IndexTable indexTable = secondaryIndexes.get(indexedColumn);
@@ -334,7 +334,7 @@ public class Table {
 			try {
 				RecordIterator recIter = iterator();
 				while (recIter.hasNext()) {
-					Record rec = recIter.next();
+					DBRecord rec = recIter.next();
 					++actualCount;
 					Field keyField = rec.getKeyField();
 					if ((keyField instanceof LongField) &&
@@ -407,7 +407,7 @@ public class Table {
 			int actualCount = 0;
 			RecordIterator recIter = iterator();
 			while (recIter.hasNext()) {
-				Record rec = recIter.next();
+				DBRecord rec = recIter.next();
 				++actualCount;
 
 				// Check for bad index tables (missing or invalid entries)
@@ -687,7 +687,7 @@ public class Table {
 	 * found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecord(long key) throws IOException {
+	public DBRecord getRecord(long key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -709,7 +709,7 @@ public class Table {
 	 * found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecord(Field key) throws IOException {
+	public DBRecord getRecord(Field key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -740,7 +740,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordBefore(long key) throws IOException {
+	public DBRecord getRecordBefore(long key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -763,7 +763,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordBefore(Field key) throws IOException {
+	public DBRecord getRecordBefore(Field key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -789,7 +789,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordAfter(long key) throws IOException {
+	public DBRecord getRecordAfter(long key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -812,7 +812,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordAfter(Field key) throws IOException {
+	public DBRecord getRecordAfter(Field key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -838,7 +838,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordAtOrBefore(long key) throws IOException {
+	public DBRecord getRecordAtOrBefore(long key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -861,7 +861,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordAtOrBefore(Field key) throws IOException {
+	public DBRecord getRecordAtOrBefore(Field key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -887,7 +887,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordAtOrAfter(long key) throws IOException {
+	public DBRecord getRecordAtOrAfter(long key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -910,7 +910,7 @@ public class Table {
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public Record getRecordAtOrAfter(Field key) throws IOException {
+	public DBRecord getRecordAtOrAfter(Field key) throws IOException {
 		synchronized (db) {
 			if (rootBufferId < 0) {
 				return null;
@@ -933,7 +933,7 @@ public class Table {
 	 * @param record the record to be stored.
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	public void putRecord(Record record) throws IOException {
+	public void putRecord(DBRecord record) throws IOException {
 		synchronized (db) {
 			db.checkTransaction();
 			if (schema.useLongKeyNodes()) {
@@ -951,7 +951,7 @@ public class Table {
 	 * @param record recore to be inserted or updated
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	private void putLongKeyRecord(Record record) throws IOException {
+	private void putLongKeyRecord(DBRecord record) throws IOException {
 
 //		boolean inserted = false;
 		try {
@@ -1000,7 +1000,7 @@ public class Table {
 	 * @param record record to be inserted or updated
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	private void putFieldKeyRecord(Record record) throws IOException {
+	private void putFieldKeyRecord(DBRecord record) throws IOException {
 
 //		boolean inserted = false;
 		try {
@@ -2031,9 +2031,9 @@ public class Table {
 		private boolean isNext; // recover position is next record
 		private boolean isPrev; // recover position is previous record
 
-		private Record record; // current record
+		private DBRecord record; // current record
 		private long curKey; // copy of record key (record may get changed by consumer)
-		private Record lastRecord;
+		private DBRecord lastRecord;
 
 		private boolean hasPrev; // current record is previous
 		private boolean hasNext; // current record is next
@@ -2224,7 +2224,7 @@ public class Table {
 						}
 
 						// Load next record
-						Record nextRecord = leaf.getRecord(schema, nextIndex);
+						DBRecord nextRecord = leaf.getRecord(schema, nextIndex);
 						hasNext = nextRecord.getKey() <= maxKey;
 						if (hasNext) {
 							bufferId = nextBufferId;
@@ -2271,7 +2271,7 @@ public class Table {
 						}
 
 						// Load previous record
-						Record prevRecord = leaf.getRecord(schema, prevIndex);
+						DBRecord prevRecord = leaf.getRecord(schema, prevIndex);
 						hasPrev = prevRecord.getKey() >= minKey;
 						if (hasPrev) {
 							bufferId = prevBufferId;
@@ -2290,7 +2290,7 @@ public class Table {
 		}
 
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			if (hasNext || hasNext()) {
 				hasNext = false;
 				hasPrev = true;
@@ -2301,7 +2301,7 @@ public class Table {
 		}
 
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
 				hasNext = true;
 				hasPrev = false;
@@ -2333,9 +2333,9 @@ public class Table {
 		private boolean isNext; // recover position is next record
 		private boolean isPrev; // recover position is previous record
 
-		private Record record; // current record
+		private DBRecord record; // current record
 //		private Field curKey;			// copy of record key (record may get changed by consumer)
-		private Record lastRecord;
+		private DBRecord lastRecord;
 
 		private boolean hasPrev; // current record is previous
 		private boolean hasNext; // current record is next
@@ -2549,7 +2549,7 @@ public class Table {
 						}
 
 						// Load next record
-						Record nextRecord = leaf.getRecord(schema, nextIndex);
+						DBRecord nextRecord = leaf.getRecord(schema, nextIndex);
 						hasNext = maxKey == null ? true
 								: (nextRecord.getKeyField().compareTo(maxKey) <= 0);
 						if (hasNext) {
@@ -2597,7 +2597,7 @@ public class Table {
 						}
 
 						// Load previous record
-						Record prevRecord = leaf.getRecord(schema, prevIndex);
+						DBRecord prevRecord = leaf.getRecord(schema, prevIndex);
 						hasPrev = minKey == null ? true
 								: (prevRecord.getKeyField().compareTo(minKey) >= 0);
 						if (hasPrev) {
@@ -2617,7 +2617,7 @@ public class Table {
 		}
 
 		@Override
-		public Record next() throws IOException {
+		public DBRecord next() throws IOException {
 			if (hasNext || hasNext()) {
 				hasNext = false;
 				hasPrev = true;
@@ -2628,7 +2628,7 @@ public class Table {
 		}
 
 		@Override
-		public Record previous() throws IOException {
+		public DBRecord previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
 				hasNext = true;
 				hasPrev = false;

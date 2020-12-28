@@ -136,7 +136,7 @@ abstract class CompositeDBAdapter {
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
@@ -144,7 +144,7 @@ abstract class CompositeDBAdapter {
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCanceled();
-				Record rec = it.next();
+				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
 			return newAdapter;
@@ -172,7 +172,7 @@ abstract class CompositeDBAdapter {
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record createRecord(String name, String comments, boolean isUnion, long categoryID,
+	abstract DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
 			int internalAlignment, int externalAlignment) throws IOException;
 
@@ -182,7 +182,7 @@ abstract class CompositeDBAdapter {
 	 * @return the record for the composite (structure or union) data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract Record getRecord(long dataTypeID) throws IOException;
+	abstract DBRecord getRecord(long dataTypeID) throws IOException;
 
 	/**
 	 * Gets an iterator over all composite (structure and union) data type records.
@@ -198,7 +198,7 @@ abstract class CompositeDBAdapter {
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract void updateRecord(Record record, boolean setLastChangeTime) throws IOException;
+	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
 	 * Removes the composite data type record with the specified ID.
@@ -240,7 +240,7 @@ abstract class CompositeDBAdapter {
 	 * @return composite record found or null
 	 * @throws IOException if IO error occurs
 	 */
-	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
+	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 
 }

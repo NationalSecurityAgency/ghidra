@@ -79,7 +79,7 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public Record createRecord(String name, String comments, long categoryID, long returnDtID,
+	public DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
 			boolean hasVarArgs, GenericCallingConvention genericCallingConvention,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
 		byte flags = (byte) 0;
@@ -102,7 +102,7 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 //			tableKey = DataManager.VOID_DATATYPE_ID +1;
 //		}
 		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.FUNCTION_DEF, tableKey);
-		Record record = V1_FUN_DEF_SCHEMA.createRecord(key);
+		DBRecord record = V1_FUN_DEF_SCHEMA.createRecord(key);
 
 		record.setString(V1_FUNCTION_DEF_NAME_COL, name);
 		record.setString(V1_FUNCTION_DEF_COMMENT_COL, comments);
@@ -118,12 +118,12 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long functionDefID) throws IOException {
+	public DBRecord getRecord(long functionDefID) throws IOException {
 		return table.getRecord(functionDefID);
 	}
 
 	@Override
-	public void updateRecord(Record record, boolean setLastChangeTime) throws IOException {
+	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		if (setLastChangeTime) {
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_LAST_CHANGE_TIME_COL,
 				(new Date()).getTime());
@@ -157,12 +157,12 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
+	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys = table.findRecords(new LongField(datatypeID.getValue()),
 			V1_FUNCTION_DEF_UNIVERSAL_DT_ID_COL);
 
 		for (int i = 0; i < keys.length; i++) {
-			Record record = table.getRecord(keys[i]);
+			DBRecord record = table.getRecord(keys[i]);
 			if (record.getLongValue(V1_FUNCTION_DEF_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}

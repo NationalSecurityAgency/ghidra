@@ -61,7 +61,7 @@ public class KeyToRecordIterator implements RecordIterator {
 	 * @see db.RecordIterator#next()
 	 */
 	@Override
-	public Record next() throws IOException {
+	public DBRecord next() throws IOException {
 		synchronized (db) {
 			try {
 				return table.getRecord(keyIter.next());
@@ -76,7 +76,7 @@ public class KeyToRecordIterator implements RecordIterator {
 	 * @see db.RecordIterator#previous()
 	 */
 	@Override
-	public Record previous() throws IOException {
+	public DBRecord previous() throws IOException {
 		synchronized (db) {
 			try {
 				return table.getRecord(keyIter.previous());

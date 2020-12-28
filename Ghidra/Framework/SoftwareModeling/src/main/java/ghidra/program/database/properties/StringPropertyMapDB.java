@@ -70,13 +70,13 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 			else {
 				oldValue = (String) cache.get(key);
 				if (oldValue == null) {
-					Record rec = propertyTable.getRecord(key);
+					DBRecord rec = propertyTable.getRecord(key);
 					if (rec != null) {
 						oldValue = rec.getString(PROPERTY_VALUE_COL);
 					}
 				}
 			}
-			Record rec = schema.createRecord(key);
+			DBRecord rec = schema.createRecord(key);
 			rec.setString(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
 			cache.put(key, value);
@@ -113,7 +113,7 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 				return str;
 			}
 
-			Record rec = propertyTable.getRecord(key);
+			DBRecord rec = propertyTable.getRecord(key);
 			if (rec == null) {
 				return null;
 			}

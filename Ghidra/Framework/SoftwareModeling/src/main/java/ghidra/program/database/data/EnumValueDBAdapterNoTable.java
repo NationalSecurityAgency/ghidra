@@ -39,12 +39,12 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public Record getRecord(long valueID) throws IOException {
+	public DBRecord getRecord(long valueID) throws IOException {
 		return null;
 	}
 
 	@Override
-	public void updateRecord(Record record) throws IOException {
+	public void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

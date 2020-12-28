@@ -261,7 +261,7 @@ public class OldFunctionManager implements ErrorHandler {
 		return functionMap.getBody(functionKey);
 	}
 
-	synchronized OldFunctionDataDB getFunction(Record rec) {
+	synchronized OldFunctionDataDB getFunction(DBRecord rec) {
 		return new OldFunctionDataDB(this, addrMap, rec, null);
 	}
 
@@ -314,7 +314,7 @@ public class OldFunctionManager implements ErrorHandler {
 			}
 			synchronized (OldFunctionManager.this) {
 				try {
-					Record rec = recordIter.next();
+					DBRecord rec = recordIter.next();
 					if (rec != null) {
 						func = getFunction(rec);
 						hasNext = true;
