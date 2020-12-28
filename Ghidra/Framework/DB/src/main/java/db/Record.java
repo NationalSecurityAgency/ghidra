@@ -221,9 +221,8 @@ public class Record implements Comparable<Record> {
 	 */
 	public Record copy() {
 		Record r = schema.createRecord(key.copyField());
-		Field[] fields = r.getFields();
-		for (int i = 0; i < fields.length; i++) {
-			r.setField(i, fields[i].copyField());
+		for (int i = 0; i < fieldValues.length; i++) {
+			r.setField(i, fieldValues[i].copyField());
 		}
 		return r;
 	}
