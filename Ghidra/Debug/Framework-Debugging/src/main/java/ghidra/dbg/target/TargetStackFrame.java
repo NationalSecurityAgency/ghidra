@@ -16,10 +16,11 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.Address;
 
 /**
- * One frame of an execution stack
+ * One frame (call record) of an execution stack
  */
 @DebuggerTargetObjectIface("StackFrame")
 public interface TargetStackFrame<T extends TargetStackFrame<T>> extends TypedTargetObject<T> {
@@ -37,10 +38,12 @@ public interface TargetStackFrame<T extends TargetStackFrame<T>> extends TypedTa
 	/**
 	 * Get the program counter for the frame
 	 * 
+	 * <p>
 	 * Note for some platforms, this may differ from the value in the program counter register.
 	 * 
 	 * @return a future completing with the address of the executing (or next) instruction.
 	 */
+	@TargetAttributeType(name = PC_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default Address getProgramCounter() {
 		return getTypedAttributeNowByName(PC_ATTRIBUTE_NAME, Address.class, Address.NO_ADDRESS);
 	}

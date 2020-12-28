@@ -20,12 +20,17 @@ import java.util.*;
 
 import agent.gdb.manager.GdbRegister;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+// NB. The canonical container, but of no recognized interface
+@TargetObjectSchemaInfo(name = "RegisterValueContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetStackFrameRegisterContainer
-		extends DefaultTargetObject<GdbModelTargetStackFrameRegister, GdbModelTargetStackFrame>
-		implements TargetRegisterContainer<GdbModelTargetStackFrameRegisterContainer> {
+		extends DefaultTargetObject<GdbModelTargetStackFrameRegister, GdbModelTargetStackFrame> {
+	public static final String NAME = "Registers";
 
 	protected final GdbModelImpl impl;
 	protected final GdbModelTargetStackFrame frame;
@@ -35,7 +40,7 @@ public class GdbModelTargetStackFrameRegisterContainer
 		new WeakValueHashMap<>();
 
 	public GdbModelTargetStackFrameRegisterContainer(GdbModelTargetStackFrame frame) {
-		super(frame.impl, frame, "Registers", "StackFrameRegisterContainer");
+		super(frame.impl, frame, NAME, "StackFrameRegisterContainer");
 		this.impl = frame.impl;
 		this.frame = frame;
 		this.thread = frame.thread;
@@ -53,21 +58,9 @@ public class GdbModelTargetStackFrameRegisterContainer
 			GdbModelTargetStackFrameRegister reg = getTargetRegister(gdbreg);
 			registers.add(reg);
 		}
-		changeElements(List.of(), registers, "Refreshed");
 		for (GdbModelTargetStackFrameRegister reg : registers) {
-			String value = values.get(reg.register).toString(16);
-			String oldval = (String) reg.getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
-			reg.changeAttributes(List.of(), Map.of( //
-				VALUE_ATTRIBUTE_NAME, value //
-			), "Refreshed");
-			if (values.get(reg.register).longValue() != 0) {
-				String newval = reg.getName() + " : " + value;
-				reg.changeAttributes(List.of(), Map.of( //
-					DISPLAY_ATTRIBUTE_NAME, newval //
-				), "Refreshed");
-				reg.setModified(!value.equals(oldval));
-				listeners.fire.displayChanged(this, newval);
-			}
+			reg.updateValue(values.get(reg.register));
 		}
+		changeElements(List.of(), registers, "Refreshed");
 	}
 }

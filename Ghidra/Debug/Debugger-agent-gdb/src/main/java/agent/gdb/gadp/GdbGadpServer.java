@@ -202,4 +202,6 @@ public interface GdbGadpServer extends AutoCloseable {
 	default void close() throws IOException {
 		terminate();
 	}
+
+	void setExitOnClosed(boolean exitOnClosed);
 }

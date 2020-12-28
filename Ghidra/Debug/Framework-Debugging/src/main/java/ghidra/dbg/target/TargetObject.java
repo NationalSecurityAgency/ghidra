@@ -17,6 +17,7 @@ package ghidra.dbg.target;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
@@ -25,9 +26,12 @@ import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.dbg.util.ValueUtils;
+import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
 /**
@@ -157,15 +161,79 @@ import ghidra.util.Msg;
  */
 public interface TargetObject extends TargetObjectRef {
 
+	Set<Class<? extends TargetObject>> ALL_INTERFACES = Set.of(
+		TargetAccessConditioned.class,
+		TargetAggregate.class,
+		TargetAttachable.class,
+		TargetAttacher.class,
+		TargetBreakpointContainer.class,
+		TargetBreakpointSpec.class,
+		TargetDataTypeMember.class,
+		TargetDataTypeNamespace.class,
+		TargetDeletable.class,
+		TargetDetachable.class,
+		TargetBreakpointLocation.class,
+		TargetEnvironment.class,
+		TargetEventScope.class,
+		TargetExecutionStateful.class,
+		TargetFocusScope.class,
+		TargetInterpreter.class,
+		TargetInterruptible.class,
+		TargetKillable.class,
+		TargetLauncher.class,
+		TargetMethod.class,
+		TargetMemory.class,
+		TargetMemoryRegion.class,
+		TargetModule.class,
+		TargetModuleContainer.class,
+		TargetNamedDataType.class,
+		TargetProcess.class,
+		TargetRegister.class,
+		TargetRegisterBank.class,
+		TargetRegisterContainer.class,
+		TargetResumable.class,
+		TargetSection.class,
+		TargetStack.class,
+		TargetStackFrame.class,
+		TargetSteppable.class,
+		TargetSymbol.class,
+		TargetSymbolNamespace.class,
+		TargetThread.class);
+	Map<String, Class<? extends TargetObject>> INTERFACES_BY_NAME = initInterfacesByName();
+
+	/**
+	 * Initializer for {@link #INTERFACES_BY_NAME}
+	 * 
+	 * @return interfaces indexed by name
+	 */
+	@Internal
+	static Map<String, Class<? extends TargetObject>> initInterfacesByName() {
+		return ALL_INTERFACES.stream()
+				.collect(Collectors.toUnmodifiableMap(
+					DebuggerObjectModel::requireIfaceName, i -> i));
+	}
+
+	static List<Class<? extends TargetObject>> getInterfacesByName(
+			Collection<String> names) {
+		return names.stream()
+				.filter(INTERFACES_BY_NAME::containsKey)
+				.map(INTERFACES_BY_NAME::get)
+				.collect(Collectors.toList());
+	}
+
+	@Deprecated
 	String PREFIX_INVISIBLE = "_";
+
 	String DISPLAY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "display";
 	String SHORT_DISPLAY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "short_display";
 	String KIND_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "kind";
+	String UPDATE_MODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "update_mode";
+	String ORDER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "order";
+
+	// TODO: Should these belong to a new TargetValue interface?
 	String MODIFIED_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "modified";
 	String TYPE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "type";
-	String UPDATE_MODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "update_mode";
 	String VALUE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "value";
-	String ORDER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "order";
 
 	enum Protected {
 		;
@@ -271,6 +339,15 @@ public interface TargetObject extends TargetObjectRef {
 	public String getTypeHint();
 
 	/**
+	 * Get this object's schema.
+	 * 
+	 * @return the schema
+	 */
+	public default TargetObjectSchema getSchema() {
+		return EnumerableTargetObjectSchema.OBJECT;
+	}
+
+	/**
 	 * Get the interfaces this object actually supports, and that the client recognizes.
 	 * 
 	 * @implNote Proxy implementations should likely override this method.
@@ -349,6 +426,7 @@ public interface TargetObject extends TargetObjectRef {
 	 * 
 	 * @return the display description
 	 */
+	@TargetAttributeType(name = DISPLAY_ATTRIBUTE_NAME, hidden = true)
 	public default String getDisplay() {
 		return getTypedAttributeNowByName(DISPLAY_ATTRIBUTE_NAME, String.class, getName());
 	}
@@ -358,8 +436,24 @@ public interface TargetObject extends TargetObjectRef {
 	 * 
 	 * @return the display description
 	 */
+	@TargetAttributeType(name = SHORT_DISPLAY_ATTRIBUTE_NAME, hidden = true)
 	public default String getShortDisplay() {
 		return getTypedAttributeNowByName(SHORT_DISPLAY_ATTRIBUTE_NAME, String.class, getDisplay());
+	}
+
+	/**
+	 * Get a hint to the "kind" of object this represents.
+	 * 
+	 * <p>
+	 * This is useful when the native debugger presents a comparable tree-like model. If this object
+	 * is simply proxying an object from that model, and that model provides additional type
+	 * information that would not otherwise be encoded in this model.
+	 * 
+	 * @return the kind of the object
+	 */
+	@TargetAttributeType(name = KIND_ATTRIBUTE_NAME, fixed = true, hidden = true)
+	public default String getKind() {
+		return getTypedAttributeNowByName(KIND_ATTRIBUTE_NAME, String.class, getDisplay());
 	}
 
 	/**
@@ -382,9 +476,75 @@ public interface TargetObject extends TargetObjectRef {
 	 * 
 	 * @return the update mode
 	 */
+	@TargetAttributeType(name = UPDATE_MODE_ATTRIBUTE_NAME, hidden = true)
 	public default TargetUpdateMode getUpdateMode() {
 		return getTypedAttributeNowByName(UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.class,
 			TargetUpdateMode.UNSOLICITED);
+	}
+
+	/**
+	 * A custom ordinal for positioning this item on screen
+	 * 
+	 * <p>
+	 * Ordinarily, children are ordered by key, attributes followed by elements. The built-in
+	 * comparator does a decent job ordering them, so long as indices keep a consistent format among
+	 * siblings. In some cases, however, especially with query-style methods, the same objects (and
+	 * thus keys) need to be presented with an alternative ordering. This attribute can be used by
+	 * model implementations to recommend an alternative ordering, where siblings are instead sorted
+	 * according to this ordinal.
+	 * 
+	 * @return the recommended display position for this element
+	 */
+	@TargetAttributeType(name = ORDER_ATTRIBUTE_NAME, hidden = true)
+	public default Integer getOrder() {
+		return getTypedAttributeNowByName(ORDER_ATTRIBUTE_NAME, Integer.class, null);
+	}
+
+	/**
+	 * For values, check if it was "recently" modified
+	 * 
+	 * <p>
+	 * TODO: This should probably be moved to a new {@code TargetType} interface.
+	 * 
+	 * <p>
+	 * "Recently" generally means since (or as a result of ) the last event affecting a target in
+	 * the same scope. This is mostly used as a UI hint, to bring the user's attention to modified
+	 * values.
+	 * 
+	 * @return true if modified, false if not
+	 */
+	@TargetAttributeType(name = MODIFIED_ATTRIBUTE_NAME, hidden = true)
+	public default Boolean isModified() {
+		return getTypedAttributeNowByName(MODIFIED_ATTRIBUTE_NAME, Boolean.class, null);
+	}
+
+	/**
+	 * For values, get the type of the value
+	 * 
+	 * <p>
+	 * TODO: This should probably be moved to a new {@code TargetType} interface. How does this
+	 * differ from "kind" when both are present? Can this be a {@link TargetNamedDataType} instead?
+	 * Though, I suppose that would imply the object is a value in the target execution state, e.g.,
+	 * a register, variable, field, etc.
+	 * 
+	 * @return the name of the type
+	 */
+	@TargetAttributeType(name = TYPE_ATTRIBUTE_NAME, hidden = true)
+	public default String getType() {
+		return getTypedAttributeNowByName(TYPE_ATTRIBUTE_NAME, String.class, null);
+	}
+
+	/**
+	 * For values, get the actual value
+	 * 
+	 * <p>
+	 * TODO: This should probably be moved to a new {@code TargetType} interface.
+	 * 
+	 * @return the value
+	 */
+	@TargetAttributeType(name = VALUE_ATTRIBUTE_NAME, hidden = true)
+	public default Object getValue() {
+		return getCachedAttribute(VALUE_ATTRIBUTE_NAME);
 	}
 
 	@Override
@@ -452,8 +612,8 @@ public interface TargetObject extends TargetObjectRef {
 	 * Cast the named attribute to the given type, if possible
 	 * 
 	 * <p>
-	 * If the attribute value is {@code null} or cannot be cast to the given type, an error message
-	 * is printed, and the fallback value is returned.
+	 * If the attribute value is {@code null} or cannot be cast to the given type, the fallback
+	 * value is returned.
 	 * 
 	 * @param <T> the expected type of the attribute
 	 * @param name the name of the attribute
@@ -462,8 +622,9 @@ public interface TargetObject extends TargetObjectRef {
 	 * @return the value casted to the expected type, or the fallback value
 	 */
 	public default <T> T getTypedAttributeNowByName(String name, Class<T> cls, T fallback) {
+		AttributeSchema as = getSchema().getAttributeSchema(name);
 		Object obj = getCachedAttribute(name);
-		return ValueUtils.expectType(obj, cls, this, name, fallback);
+		return ValueUtils.expectType(obj, cls, this, name, fallback, as.isRequired());
 	}
 
 	/**

@@ -27,10 +27,16 @@ import agent.gdb.manager.reason.GdbBreakpointHitReason;
 import agent.gdb.manager.reason.GdbReason;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "Thread", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetThread
 		extends DefaultTargetObject<TargetObject, GdbModelTargetThreadContainer> implements
 		TargetThread<GdbModelTargetThread>, TargetExecutionStateful<GdbModelTargetThread>,
@@ -69,18 +75,26 @@ public class GdbModelTargetThread
 
 		this.stack = new GdbModelTargetStack(this, inferior);
 
-		changeAttributes(List.of(), Map.of( //
-			STATE_ATTRIBUTE_NAME, convertState(thread.getState()), //
-			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
-			stack.getName(), stack //
-		), "Initialized");
+		changeAttributes(List.of(),
+			List.of(
+				stack),
+			Map.of(
+				STATE_ATTRIBUTE_NAME, convertState(thread.getState()),
+				SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS,
+				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(),
+				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED,
+				stack.getName(), stack),
+			"Initialized");
 
 		updateInfo().exceptionally(ex -> {
 			Msg.error(this, "Could not initialize thread info");
 			return null;
 		});
+	}
+
+	@TargetAttributeType(name = GdbModelTargetStack.NAME, required = true, fixed = true)
+	public GdbModelTargetStack getStack() {
+		return stack;
 	}
 
 	private CompletableFuture<Void> updateInfo() {

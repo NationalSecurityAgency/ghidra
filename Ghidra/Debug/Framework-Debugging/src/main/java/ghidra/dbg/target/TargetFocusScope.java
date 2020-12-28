@@ -20,7 +20,16 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
+/**
+ * An object having a designated "focus"
+ * 
+ * <p>
+ * Focus is usually communicated via various UI hints, but also semantically implies that actions
+ * taken within this scope apply to the focused object. The least confusing option is to implement
+ * this at the root, but that need not always be the case.
+ */
 @DebuggerTargetObjectIface("FocusScope")
 public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTargetObject<T> {
 	enum Private {
@@ -37,9 +46,10 @@ public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTa
 	/**
 	 * Focus on the given object
 	 * 
-	 * -obj- must be successor of this scope. The debugger may reject or ignore the request for any
-	 * reason. If the debugger cannot focus the given object, it should attempt to do so for each
-	 * ancestor until it succeeds or reaches this focus scope.
+	 * <p>
+	 * {@code obj} must be successor of this scope. The debugger may reject or ignore the request
+	 * for any reason. If the debugger cannot focus the given object, it should attempt to do so for
+	 * each ancestor until it succeeds or reaches this focus scope.
 	 * 
 	 * @param obj the object to receive focus
 	 * @return a future which completes upon successfully changing focus.
@@ -51,6 +61,7 @@ public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTa
 	 * 
 	 * @return a reference to the focused object or {@code null} if no object is focused.
 	 */
+	@TargetAttributeType(name = FOCUS_ATTRIBUTE_NAME, required = true, hidden = true)
 	default TargetObjectRef getFocus() {
 		return getTypedAttributeNowByName(FOCUS_ATTRIBUTE_NAME, TargetObjectRef.class, null);
 	}

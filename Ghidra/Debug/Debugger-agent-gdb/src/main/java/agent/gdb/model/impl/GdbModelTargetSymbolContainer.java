@@ -23,18 +23,25 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.impl.GdbMinimalSymbol;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetSymbolNamespace;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "SymbolContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetSymbolContainer
 		extends DefaultTargetObject<GdbModelTargetSymbol, GdbModelTargetModule>
 		implements TargetSymbolNamespace<GdbModelTargetSymbolContainer> {
+	public static final String NAME = "Symbols";
+
 	protected final GdbModelImpl impl;
 	protected final GdbModelTargetModule module;
 
 	protected final Map<String, GdbModelTargetSymbol> symbolsByName = new WeakValueHashMap<>();
 
 	public GdbModelTargetSymbolContainer(GdbModelTargetModule module) {
-		super(module.impl, module, "Symbols", "SymbolContainer");
+		super(module.impl, module, NAME, "SymbolContainer");
 		this.impl = module.impl;
 		this.module = module;
 	}

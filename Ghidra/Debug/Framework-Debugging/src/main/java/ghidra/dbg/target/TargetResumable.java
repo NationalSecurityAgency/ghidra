@@ -36,6 +36,7 @@ public interface TargetResumable<T extends TargetResumable<T>> extends TypedTarg
 	/**
 	 * Resume execution of this object
 	 * 
+	 * <p>
 	 * Note, this would be called "continue" if it weren't a Java reserved word :( .
 	 * 
 	 * @return a future which completes upon successful resumption

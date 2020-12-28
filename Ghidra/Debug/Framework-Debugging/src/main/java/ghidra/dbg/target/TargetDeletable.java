@@ -19,6 +19,9 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 
+/**
+ * An object which can be removed by the user
+ */
 @DebuggerTargetObjectIface("Deletable")
 public interface TargetDeletable<T extends TargetDeletable<T>> extends TypedTargetObject<T> {
 	enum Private {
@@ -30,5 +33,10 @@ public interface TargetDeletable<T extends TargetDeletable<T>> extends TypedTarg
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	Class<Private.Cls> tclass = (Class) TargetDeletable.class;
 
+	/**
+	 * Remove the object
+	 * 
+	 * @return a future which completes when the request is processed
+	 */
 	public CompletableFuture<Void> delete();
 }

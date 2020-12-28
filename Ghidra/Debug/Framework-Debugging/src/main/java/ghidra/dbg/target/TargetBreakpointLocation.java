@@ -18,8 +18,16 @@ package ghidra.dbg.target;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetObjectRefList;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.Address;
 
+/**
+ * The location of a breakpoint
+ *
+ * <p>
+ * If the native debugger does not separate the concepts of specification and location, then
+ * breakpoint objects should implement both the specification and location interfaces.
+ */
 @DebuggerTargetObjectIface("BreakpointLocation")
 public interface TargetBreakpointLocation<T extends TargetBreakpointLocation<T>>
 		extends TypedTargetObject<T> {
@@ -39,26 +47,43 @@ public interface TargetBreakpointLocation<T extends TargetBreakpointLocation<T>>
 	String LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
 	String SPEC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "spec";
 
+	/**
+	 * The minimum address of this location
+	 * 
+	 * @return the address
+	 */
+	@TargetAttributeType(name = ADDRESS_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default Address getAddress() {
 		return getTypedAttributeNowByName(ADDRESS_ATTRIBUTE_NAME, Address.class, null);
 	}
 
+	/**
+	 * A list of object to which this breakpoint applies
+	 * 
+	 * <p>
+	 * This list may be empty, in which case, this location is conventionally assumed to apply
+	 * everywhere its container's location/scope suggests.
+	 * 
+	 * @return the list of affected objects' references
+	 */
+	@TargetAttributeType(name = AFFECTS_ATTRIBUTE_NAME, hidden = true)
 	public default TargetObjectRefList<?> getAffects() {
 		return getTypedAttributeNowByName(AFFECTS_ATTRIBUTE_NAME, TargetObjectRefList.class,
 			TargetObjectRefList.of());
 	}
 
 	/**
-	 * If available, get the length in bytes, of the range covered by the
-	 * breakpoint.
+	 * If available, get the length in bytes, of the range covered by the breakpoint.
 	 * 
-	 * In most cases, where the length is not available, a length of 1 should be
-	 * presumed.
+	 * <p>
+	 * In most cases, where the length is not available, a length of 1 should be presumed.
 	 * 
+	 * <p>
 	 * TODO: Should this be Long?
 	 * 
 	 * @return the length, or {@code null} if not known
 	 */
+	@TargetAttributeType(name = LENGTH_ATTRIBUTE_NAME, hidden = true)
 	public default Integer getLength() {
 		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, null);
 	}
@@ -70,14 +95,13 @@ public interface TargetBreakpointLocation<T extends TargetBreakpointLocation<T>>
 	/**
 	 * Get a reference to the specification which generated this breakpoint.
 	 * 
-	 * If the debugger does not separate specifications from actual breakpoints,
-	 * then the "specification" is this breakpoint. Otherwise, this
-	 * specification is the parent. The default implementation distinguishes the
-	 * cases by examining the implemented interfaces. Implementors may slightly
-	 * increase efficiency by overriding this method.
+	 * <p>
+	 * If the debugger does not separate specifications from actual breakpoints, then the
+	 * "specification" is this breakpoint. Otherwise, the specification is the parent.
 	 * 
 	 * @return the reference to the specification
 	 */
+	@TargetAttributeType(name = SPEC_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> getSpecification() {
 		return getTypedRefAttributeNowByName(SPEC_ATTRIBUTE_NAME, TargetBreakpointSpec.tclass,
 			null);

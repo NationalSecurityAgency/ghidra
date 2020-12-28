@@ -27,18 +27,25 @@ import ghidra.dbg.target.TargetEventScope.TargetEventScopeListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "InferiorContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetInferiorContainer
 		extends DefaultTargetObject<GdbModelTargetInferior, GdbModelTargetSession>
 		implements GdbEventsListenerAdapter {
+	public static final String NAME = "Inferiors";
+
 	protected final GdbModelImpl impl;
 
 	protected final Map<Integer, GdbModelTargetInferior> inferiorsById = new WeakValueHashMap<>();
 
 	public GdbModelTargetInferiorContainer(GdbModelTargetSession session) {
-		super(session.impl, session, "Inferiors", "InferiorContainer");
+		super(session.impl, session, NAME, "InferiorContainer");
 		this.impl = session.impl;
 
 		impl.gdb.addEventsListener(this);

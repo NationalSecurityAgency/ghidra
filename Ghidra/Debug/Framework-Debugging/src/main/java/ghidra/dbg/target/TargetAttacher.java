@@ -20,12 +20,13 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
-import ghidra.dbg.target.TargetSteppable.TargetStepKind;
-import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
-import ghidra.dbg.target.TargetSteppable.TargetStepKindSet.ImmutableTargetStepKindSet;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
 
+/**
+ * An object which is capable of attaching to a {@link TargetAttachable}
+ */
 @DebuggerTargetObjectIface("Attacher")
 public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTargetObject<T> {
 	enum Private {
@@ -62,18 +63,18 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 			return EMPTY;
 		}
 
-		public static TargetStepKindSet of(TargetStepKind... kinds) {
-			return new ImmutableTargetStepKindSet(kinds);
+		public static TargetAttachKindSet of(TargetAttachKind... kinds) {
+			return new ImmutableTargetAttachKindSet(kinds);
 		}
 
-		public static TargetStepKindSet copyOf(Set<TargetStepKind> set) {
-			return new ImmutableTargetStepKindSet(set);
+		public static TargetAttachKindSet copyOf(Set<TargetAttachKind> set) {
+			return new ImmutableTargetAttachKindSet(set);
 		}
 	}
 
 	enum TargetAttachKind {
 		/**
-		 * Use an "attachable" object
+		 * Use a {@link TargetAttachable} object
 		 */
 		BY_OBJECT_REF,
 		/**
@@ -87,11 +88,13 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 	/**
 	 * Get the kinds of multi-stepping implemented by the debugger
 	 * 
-	 * Different debuggers may provide similar, but slightly different vocabularies of stepping.
-	 * This method queries the connected debugger for its supported step kinds.
+	 * <p>
+	 * Different debuggers provide varying methods of attaching. This attribute describes which are
+	 * supported. NOTE: This should be replaced by generic method invocation.
 	 * 
-	 * @return the set of supported multi-step operations
+	 * @return the set of supported attach operations
 	 */
+	@TargetAttributeType(name = SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TargetAttachKindSet getSupportedAttachKinds() {
 		return getTypedAttributeNowByName(SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME,
 			TargetAttachKindSet.class, TargetAttachKindSet.of());
@@ -100,6 +103,7 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 	/**
 	 * Attach to the given {@link TargetAttachable} or reference
 	 * 
+	 * <p>
 	 * This is mostly applicable to user-space contexts, in which case, this usually means to attach
 	 * to a process.
 	 * 
@@ -111,6 +115,7 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 	/**
 	 * Attach to the given id
 	 * 
+	 * <p>
 	 * This is mostly applicable to user-space contexts, in which case, this usually means to attach
 	 * to a process using its pid.
 	 * 
@@ -118,5 +123,4 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 	 * @return a future which completes when the command is confirmed
 	 */
 	public CompletableFuture<Void> attach(long id);
-
 }

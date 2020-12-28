@@ -24,6 +24,7 @@ import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetNamedDataTypeRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 
 /**
@@ -37,8 +38,10 @@ import ghidra.dbg.util.TargetDataTypeConverter;
  * <li>{@code union}</li>
  * </ul>
  * 
+ * <p>
  * Other types, e.g., pointers, arrays, are modeled as attributes.
  * 
+ * <p>
  * See {@link TargetDataTypeConverter} to get a grasp of the conventions
  * 
  * @param <T> the type of this object
@@ -61,7 +64,7 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 		ENUM, FUNCTION, STRUCT, TYPEDEF, UNION;
 	}
 
-	String NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "kind";
+	String NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "type_kind";
 	String ENUM_BYTE_LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "byte_length";
 	String NAMESPACE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "namespace";
 
@@ -71,6 +74,7 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 	/**
 	 * Get the members of this data type in order.
 	 * 
+	 * <p>
 	 * While it is most common for members to be immediate children of the type, that is not
 	 * necessarily the case.
 	 * 
@@ -85,12 +89,14 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 	/**
 	 * Get the namespace for this data type.
 	 * 
+	 * <p>
 	 * While it is most common for a data type to be an immediate child of its namespace, that is
 	 * not necessarily the case. This method is a reliable and type-safe means of obtaining that
 	 * namespace.
 	 * 
 	 * @return a reference to the namespace
 	 */
+	@TargetAttributeType(name = NAMESPACE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default TypedTargetObjectRef<? extends TargetDataTypeNamespace<?>> getNamespace() {
 		return getTypedRefAttributeNowByName(NAMESPACE_ATTRIBUTE_NAME,
 			TargetDataTypeNamespace.tclass, null);
@@ -101,8 +107,14 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 	 * 
 	 * @return the kind
 	 */
-	default NamedDataTypeKind getKind() {
+	@TargetAttributeType(name = NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	default NamedDataTypeKind getTypeKind() {
 		return getTypedAttributeNowByName(NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME,
 			NamedDataTypeKind.class, null);
+	}
+
+	@TargetAttributeType(name = ENUM_BYTE_LENGTH_ATTRIBUTE_NAME, fixed = true, hidden = true)
+	default Integer getEnumByteLength() {
+		return getTypedAttributeNowByName(ENUM_BYTE_LENGTH_ATTRIBUTE_NAME, Integer.class, null);
 	}
 }

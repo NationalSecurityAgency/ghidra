@@ -22,10 +22,14 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
 import ghidra.lifecycle.Experimental;
 
+/**
+ * A target whose execution can be single stepped
+ */
 @DebuggerTargetObjectIface("Steppable")
 public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTargetObject<T> {
 	enum Private {
@@ -202,6 +206,7 @@ public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTarg
 	 * 
 	 * @return the set of supported multi-step operations
 	 */
+	@TargetAttributeType(name = SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	public default TargetStepKindSet getSupportedStepKinds() {
 		return getTypedAttributeNowByName(SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME,
 			TargetStepKindSet.class, TargetStepKindSet.of());

@@ -21,6 +21,8 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -49,13 +51,15 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 	protected final List<String> path;
 	protected final int hash;
 	protected final String typeHint;
+	protected final TargetObjectSchema schema;
 
 	protected boolean valid = true;
 
 	protected final ListenerSet<TargetObjectListener> listeners =
 		new ListenerSet<>(TargetObjectListener.class);
 
-	public AbstractTargetObject(DebuggerObjectModel model, P parent, String key, String typeHint) {
+	public AbstractTargetObject(DebuggerObjectModel model, P parent, String key, String typeHint,
+			TargetObjectSchema schema) {
 		this.model = model;
 		this.parent = parent;
 		this.completedParent = CompletableFuture.completedFuture(parent);
@@ -67,6 +71,45 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 		}
 		this.hash = computeHashCode();
 		this.typeHint = typeHint;
+
+		this.schema = schema;
+		schema.validateTypeAndInterfaces(getProxy(), null, enforcesStrictSchema());
+	}
+
+	/**
+	 * Get an alternative for {@code this} when invoking the listeners.
+	 * 
+	 * <p>
+	 * Some implementations may use on a proxy-delegate pattern to implement target objects with
+	 * various combinations of supported interfaces. When this pattern is employed, the delegate
+	 * will extend {@link DefaultTargetObject}, causing {@code this} to refer to the delegate rather
+	 * than the proxy. When invoking listeners, the proxy given by this method is used instead. By
+	 * default, it simply returns {@code this}, providing the expected behavior for typical
+	 * implementations. The proxy is also used for schema interface validation.
+	 * 
+	 * @return the proxy or this
+	 */
+	public TargetObject getProxy() {
+		return this;
+	}
+
+	/**
+	 * Check if this object strictly conforms to the schema
+	 * 
+	 * <p>
+	 * This method exists to support the transition to schemas. If this method returns false, schema
+	 * violations are logged, but whatever changes were requested that caused the violation are
+	 * still allowed to occur. If it returns true, then any schema violation will cause an
+	 * {@link AssertionError}. Because schema violations are presumed to be programming errors,
+	 * there is no guarantee of consistency after an exception is thrown. In general, models without
+	 * explicit schemas should not fail validation, since objects will likely be assigned
+	 * {@link EnumerableTargetObjectSchema#ANY}. When developing a schema for an existing model, it
+	 * may be useful to override this to return false in the interim.
+	 * 
+	 * @return true to throw exceptions on schema violations.
+	 */
+	protected boolean enforcesStrictSchema() {
+		return true;
 	}
 
 	@Override
@@ -81,13 +124,18 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 
 	@Override
 	public String toString() {
-		return "<Local " + getClass().getSimpleName() + ": " + path + " in " +
-			getModel() + ">";
+		return String.format("<%s: path=%s model=%s schema=%s>",
+			getClass().getSimpleName(), path, getModel(), schema.getName());
 	}
 
 	@Override
 	public String getTypeHint() {
 		return typeHint;
+	}
+
+	@Override
+	public TargetObjectSchema getSchema() {
+		return schema;
 	}
 
 	@Override

@@ -32,6 +32,7 @@ public abstract class AbstractGadpServer
 	public static final String LISTENING_ON = "GADP Server listening on ";
 
 	protected final DebuggerObjectModel model;
+	private boolean exitOnClosed = true;
 
 	public AbstractGadpServer(DebuggerObjectModel model, SocketAddress addr) throws IOException {
 		super(addr);
@@ -70,6 +71,20 @@ public abstract class AbstractGadpServer
 	@Override
 	public void modelClosed(DebuggerModelClosedReason reason) {
 		System.err.println("Model closed: " + reason);
-		System.exit(0);
+		if (exitOnClosed) {
+			System.exit(0);
+		}
+	}
+
+	/**
+	 * By default, the GADP server will terminate the VM when the model is closed
+	 * 
+	 * <p>
+	 * For testing purposes, it may be useful to disable this action.
+	 * 
+	 * @param exitOnClosed true to terminate the VM on close, false to remain running
+	 */
+	public void setExitOnClosed(boolean exitOnClosed) {
+		this.exitOnClosed = exitOnClosed;
 	}
 }

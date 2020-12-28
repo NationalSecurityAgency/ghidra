@@ -29,9 +29,15 @@ import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "Session", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetSession extends DefaultTargetModelRoot implements // 
 		TargetAccessConditioned<GdbModelTargetSession>,
 		TargetAttacher<GdbModelTargetSession>,
@@ -56,8 +62,8 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 
 	protected String debugger = "gdb"; // Used by GdbModelTargetEnvironment
 
-	public GdbModelTargetSession(GdbModelImpl impl) {
-		super(impl, "Session");
+	public GdbModelTargetSession(GdbModelImpl impl, TargetObjectSchema schema) {
+		super(impl, "Session", schema);
 		this.impl = impl;
 
 		this.inferiors = new GdbModelTargetInferiorContainer(this);
@@ -78,6 +84,21 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 		impl.gdb.addConsoleOutputListener(this);
 
 		getVersion();
+	}
+
+	@TargetAttributeType(name = GdbModelTargetInferiorContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetInferiorContainer getInferiors() {
+		return inferiors;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetAvailableContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetAvailableContainer getAvailable() {
+		return available;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetBreakpointContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetBreakpointContainer getBreakpoints() {
+		return breakpoints;
 	}
 
 	protected void getVersion() {

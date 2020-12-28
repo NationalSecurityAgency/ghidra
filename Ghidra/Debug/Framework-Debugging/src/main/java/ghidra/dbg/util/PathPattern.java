@@ -25,12 +25,15 @@ public class PathPattern implements PathPredicates {
 	 * TODO: This can get more sophisticated if needed, but for now, I don't think we even need
 	 * regular expressions. Either we care about a path element, or we don't.
 	 * 
+	 * <p>
 	 * This takes a list of path keys as a means of matching paths. The empty key serves as a
 	 * wildcard accepting all keys in that position, e.g., the following matches all elements within
 	 * {@code Processes}:
 	 * 
+	 * <p>
 	 * {@code List.of("Processes", "[]")}
 	 * 
+	 * <p>
 	 * This should still be compatible with {@link PathUtils#parse(String)} and
 	 * {@link PathUtils#toString(List)} allowing the last example to be expressed as
 	 * {@code PathUtils.parse("Processes[]")}.
@@ -55,7 +58,7 @@ public class PathPattern implements PathPredicates {
 		return pattern.hashCode();
 	}
 
-	protected boolean keyMatches(String pat, String key) {
+	public static boolean keyMatches(String pat, String key) {
 		if (key.equals(pat)) {
 			return true;
 		}

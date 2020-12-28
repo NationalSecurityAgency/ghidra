@@ -20,6 +20,9 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 
+/**
+ * A target that can be interrupted
+ */
 @DebuggerTargetObjectIface("Interruptible")
 public interface TargetInterruptible<T extends TargetInterruptible<T>>
 		extends TypedTargetObject<T> {
@@ -35,6 +38,7 @@ public interface TargetInterruptible<T extends TargetInterruptible<T>>
 	/**
 	 * Interrupt the target object
 	 * 
+	 * <p>
 	 * Typically, this breaks, i.e., stops, all target objects in scope of the receiver. Note the
 	 * command completes when the interrupt has been sent, whether or not it actually stopped
 	 * anything. Users wishing to confirm execution has stopped should wait for the target object to

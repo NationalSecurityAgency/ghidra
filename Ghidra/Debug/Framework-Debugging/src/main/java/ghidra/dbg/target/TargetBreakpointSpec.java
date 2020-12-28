@@ -24,6 +24,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * The specification of a breakpoint applied to a target object
@@ -68,6 +69,7 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 	 * 
 	 * @return a reference to the container
 	 */
+	@TargetAttributeType(name = CONTAINER_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TypedTargetObjectRef<? extends TargetBreakpointContainer<?>> getContainer() {
 		return getTypedRefAttributeNowByName(CONTAINER_ATTRIBUTE_NAME,
 			TargetBreakpointContainer.tclass, null);
@@ -82,6 +84,7 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 	 * 
 	 * @return the expression
 	 */
+	@TargetAttributeType(name = EXPRESSION_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default String getExpression() {
 		return getTypedAttributeNowByName(EXPRESSION_ATTRIBUTE_NAME, String.class, "");
 	}
@@ -91,6 +94,7 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 	 * 
 	 * @return the kinds
 	 */
+	@TargetAttributeType(name = KINDS_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TargetBreakpointKindSet getKinds() {
 		return getTypedAttributeNowByName(KINDS_ATTRIBUTE_NAME, TargetBreakpointKindSet.class,
 			TargetBreakpointKindSet.EMPTY);
@@ -101,6 +105,7 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 	 * 
 	 * @return true if enabled, false otherwise
 	 */
+	@TargetAttributeType(name = ENABLED_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default boolean isEnabled() {
 		return getTypedAttributeNowByName(ENABLED_ATTRIBUTE_NAME, Boolean.class, false);
 	}

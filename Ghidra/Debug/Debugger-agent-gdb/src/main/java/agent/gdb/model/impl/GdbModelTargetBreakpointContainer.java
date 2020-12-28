@@ -28,14 +28,20 @@ import ghidra.async.AsyncFence;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetBreakpointContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "BreakpointContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetBreakpointContainer
 		extends DefaultTargetObject<GdbModelTargetBreakpointSpec, GdbModelTargetSession>
 		implements TargetBreakpointContainer<GdbModelTargetBreakpointContainer>,
 		GdbEventsListenerAdapter {
+	public static final String NAME = "Breakpoints";
 
 	protected static final TargetBreakpointKindSet SUPPORTED_KINDS =
 		TargetBreakpointKindSet.of(TargetBreakpointKind.values());
@@ -46,7 +52,7 @@ public class GdbModelTargetBreakpointContainer
 		new WeakValueHashMap<>();
 
 	public GdbModelTargetBreakpointContainer(GdbModelTargetSession session) {
-		super(session.impl, session, "Breakpoints", "BreakpointContainer");
+		super(session.impl, session, NAME, "BreakpointContainer");
 		this.impl = session.impl;
 
 		impl.gdb.addEventsListener(this);
@@ -59,7 +65,10 @@ public class GdbModelTargetBreakpointContainer
 
 	@Override
 	public void breakpointCreated(GdbBreakpointInfo info, GdbCause cause) {
-		changeElements(List.of(), List.of(getTargetBreakpointSpec(info)), "Created");
+		GdbModelTargetBreakpointSpec spec = getTargetBreakpointSpec(info);
+		spec.init().thenRun(() -> {
+			changeElements(List.of(), List.of(spec), "Created");
+		});
 	}
 
 	@Override
@@ -143,7 +152,8 @@ public class GdbModelTargetBreakpointContainer
 		return specsByNumber.get(number);
 	}
 
-	protected void updateUsingBreakpoints(Map<Long, GdbBreakpointInfo> byNumber) {
+	protected CompletableFuture<Void> updateUsingBreakpoints(
+			Map<Long, GdbBreakpointInfo> byNumber) {
 		List<GdbModelTargetBreakpointSpec> specs;
 		synchronized (this) {
 			specs = byNumber.values()
@@ -151,14 +161,20 @@ public class GdbModelTargetBreakpointContainer
 					.map(this::getTargetBreakpointSpec)
 					.collect(Collectors.toList());
 		}
-		setElements(specs, "Refreshed");
+		return CompletableFuture
+				.allOf(specs.stream()
+						.map(s -> s.init())
+						.toArray(CompletableFuture[]::new))
+				.thenRun(() -> {
+					setElements(specs, "Refreshed");
+				});
 	}
 
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		if (!refresh) {
-			updateUsingBreakpoints(impl.gdb.getKnownBreakpoints());
+			return updateUsingBreakpoints(impl.gdb.getKnownBreakpoints());
 		}
-		return impl.gdb.listBreakpoints().thenAccept(this::updateUsingBreakpoints);
+		return impl.gdb.listBreakpoints().thenCompose(this::updateUsingBreakpoints);
 	}
 }

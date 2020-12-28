@@ -18,11 +18,13 @@ package ghidra.dbg.target;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.PathUtils;
 
 /**
  * This is a description of a register
  * 
+ * <p>
  * This describes a register abstractly. It does not represent the actual value of a register. For
  * values, see {@link TargetRegisterBank}. The description and values are separated, since the
  * descriptions typically apply to the entire platform, and so can be presented just once.
@@ -45,6 +47,7 @@ public interface TargetRegister<T extends TargetRegister<T>> extends TypedTarget
 	/**
 	 * Get the container of this register.
 	 * 
+	 * <p>
 	 * While it is most common for a register descriptor to be an immediate child of its container,
 	 * that is not necessarily the case. In fact, some models may present sub-registers as children
 	 * of another register. This method is a reliable and type-safe means of obtaining the
@@ -52,6 +55,7 @@ public interface TargetRegister<T extends TargetRegister<T>> extends TypedTarget
 	 * 
 	 * @return a reference to the container
 	 */
+	@TargetAttributeType(name = CONTAINER_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default TypedTargetObjectRef<? extends TargetRegisterContainer<?>> getContainer() {
 		return getTypedRefAttributeNowByName(CONTAINER_ATTRIBUTE_NAME,
 			TargetRegisterContainer.tclass, null);
@@ -62,6 +66,7 @@ public interface TargetRegister<T extends TargetRegister<T>> extends TypedTarget
 	 * 
 	 * @return the length of the register
 	 */
+	@TargetAttributeType(name = LENGTH_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default int getBitLength() {
 		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}
@@ -70,11 +75,10 @@ public interface TargetRegister<T extends TargetRegister<T>> extends TypedTarget
 	public default String getIndex() {
 		return PathUtils.isIndex(getPath()) ? PathUtils.getIndex(getPath())
 				: PathUtils.getKey(getPath());
-		//return PathUtils.getIndex(getPath());
 	}
 
 	// TODO: Any typical type assignment or structure definition?
 	// TODO: (Related) Should describe if typically a pointer?
 
-	// TODO: What if the register is memory-mapped?
+	// TODO: What if the register is memory-mapped? Probably map client-side.
 }

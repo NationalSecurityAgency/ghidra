@@ -45,7 +45,8 @@ public interface GadpClientTargetFocusScope
 	}
 
 	default TargetObjectRef refFromObj(Object obj) {
-		return ValueUtils.expectType(obj, TargetObjectRef.class, this, FOCUS_ATTRIBUTE_NAME, this);
+		return ValueUtils.expectType(obj, TargetObjectRef.class, this, FOCUS_ATTRIBUTE_NAME, this,
+			true);
 	}
 
 	@GadpAttributeChangeCallback(FOCUS_ATTRIBUTE_NAME)

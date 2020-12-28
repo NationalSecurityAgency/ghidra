@@ -59,4 +59,9 @@ public class GdbGadpServerImpl implements GdbGadpServer {
 		model.terminate();
 		server.terminate();
 	}
+
+	@Override
+	public void setExitOnClosed(boolean exitOnClosed) {
+		server.setExitOnClosed(exitOnClosed);
+	}
 }

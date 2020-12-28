@@ -54,6 +54,8 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.TargetObject.TargetObjectFetchingListener;
 import ghidra.dbg.target.TargetObject.TargetObjectListener;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.*;
 import ghidra.dbg.util.AttributesChangedListener.AttributesChangedInvocation;
 import ghidra.dbg.util.ElementsChangedListener.ElementsChangedInvocation;
@@ -239,6 +241,7 @@ public class GadpClientServerTest {
 		}
 	}
 
+	@TargetObjectSchemaInfo(name = "Session")
 	public class TestGadpTargetSession extends DefaultTargetModelRoot
 			implements TargetFocusScope<TestGadpTargetSession> {
 		protected final TestGadpTargetAvailableContainer available =
@@ -252,6 +255,16 @@ public class GadpClientServerTest {
 			super(model, "Session");
 
 			changeAttributes(List.of(), List.of(available, processes), Map.of(), "Initialized");
+		}
+
+		@TargetAttributeType(name = "Available", required = true, fixed = true)
+		public TestGadpTargetAvailableContainer getAvailable() {
+			return available;
+		}
+
+		@TargetAttributeType(name = "Processes", required = true, fixed = true)
+		public TestGadpTargetProcessContainer getProcesses() {
+			return processes;
 		}
 
 		public void addLinks() {

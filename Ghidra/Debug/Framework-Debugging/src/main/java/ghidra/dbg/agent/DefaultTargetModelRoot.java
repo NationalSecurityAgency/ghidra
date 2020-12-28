@@ -18,11 +18,18 @@ package ghidra.dbg.agent;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 
 public class DefaultTargetModelRoot extends DefaultTargetObject<TargetObject, TargetObject>
 		implements TargetAggregate {
 
 	public DefaultTargetModelRoot(DebuggerObjectModel model, String typeHint) {
-		super(model, null, null, typeHint);
+		this(model, typeHint, EnumerableTargetObjectSchema.OBJECT);
+	}
+
+	public DefaultTargetModelRoot(DebuggerObjectModel model, String typeHint,
+			TargetObjectSchema schema) {
+		super(model, null, null, typeHint, schema);
 	}
 }

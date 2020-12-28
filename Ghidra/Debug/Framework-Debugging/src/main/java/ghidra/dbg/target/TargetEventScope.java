@@ -19,9 +19,10 @@ import java.util.List;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
- * The object can emit events affecting itself and its successors
+ * An object that can emit events affecting itself and its successors
  * 
  * <p>
  * Most often, this interface is supported by the (root) session.
@@ -118,6 +119,36 @@ public interface TargetEventScope<T extends TargetEventScope<T>> extends TypedTa
 		 * it is a thread, it must be given as the event thread.
 		 */
 		SIGNAL,
+	}
+
+	/**
+	 * If applicable, get the process producing the last reported event
+	 * 
+	 * <p>
+	 * TODO: This is currently the hexadecimal PID. It should really be a ref to the process object.
+	 * 
+	 * <p>
+	 * TODO: Since the event thread will be a successor of the event process, this may not be
+	 * needed, but perhaps keep it for convenience.
+	 * 
+	 * @return the process or reference
+	 */
+	@TargetAttributeType(name = EVENT_PROCESS_ATTRIBUTE_NAME, hidden = true)
+	public default /*TODO: TypedTargetObjectRef<? extends TargetProcess<?>>*/ String getEventProcess() {
+		return getTypedAttributeNowByName(EVENT_PROCESS_ATTRIBUTE_NAME, String.class, null);
+	}
+
+	/**
+	 * If applicable, get the thread producing the last reported event
+	 * 
+	 * <p>
+	 * TODO: This is currently the hexadecimal TID. It should really be a ref to the thread object.
+	 * 
+	 * @return the thread or reference
+	 */
+	@TargetAttributeType(name = EVENT_THREAD_ATTRIBUTE_NAME, hidden = true)
+	public default /*TODO: TypedTargetObjectRef<? extends TargetThread<?>>*/ String getEventThread() {
+		return getTypedAttributeNowByName(EVENT_THREAD_ATTRIBUTE_NAME, String.class, null);
 	}
 
 	public interface TargetEventScopeListener extends TargetObjectListener {

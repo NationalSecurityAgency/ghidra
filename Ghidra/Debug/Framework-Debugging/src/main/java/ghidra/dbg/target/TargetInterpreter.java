@@ -20,9 +20,10 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetConsole.TargetTextConsoleListener;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
- * A command interpreter, usually that of an external debugger
+ * A command interpreter, usually that of a native debugger
  */
 @DebuggerTargetObjectIface("Interpreter")
 public interface TargetInterpreter<T extends TargetInterpreter<T>> extends TypedTargetObject<T> {
@@ -76,6 +77,7 @@ public interface TargetInterpreter<T extends TargetInterpreter<T>> extends Typed
 	 * 
 	 * @return the current prompt
 	 */
+	@TargetAttributeType(name = PROMPT_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default String getPrompt() {
 		return getTypedAttributeNowByName(PROMPT_ATTRIBUTE_NAME, String.class, ">");
 	}

@@ -36,6 +36,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressSpace;
@@ -177,7 +178,7 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 
 	protected static GadpClientTargetObject makeModelProxy(GadpClient client, List<String> path,
 			String typeHint, List<String> ifaceNames) {
-		List<Class<? extends TargetObject>> ifaces = GadpRegistry.getInterfacesByName(ifaceNames);
+		List<Class<? extends TargetObject>> ifaces = TargetObject.getInterfacesByName(ifaceNames);
 		List<Class<? extends TargetObject>> mixins = GadpRegistry.getMixins(ifaces);
 		return new DelegateGadpClientTargetObject(client, path, typeHint, ifaceNames, ifaces,
 			mixins).proxy;
@@ -188,6 +189,7 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	protected final Cleanable cleanable;
 
 	private final GadpClientTargetObject proxy;
+	private TargetObjectSchema schema; // lazily evaluated
 	private final String typeHint;
 	private final List<String> ifaceNames;
 	private final List<Class<? extends TargetObject>> ifaces;
@@ -256,6 +258,14 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	@Override
 	public List<String> getPath() {
 		return state.path;
+	}
+
+	@Override
+	public TargetObjectSchema getSchema() {
+		if (schema == null) {
+			schema = getModel().getRootSchema().getSuccessorSchema(getPath());
+		}
+		return schema;
 	}
 
 	@Override

@@ -20,11 +20,17 @@ import java.util.Map;
 
 import agent.gdb.manager.GdbModuleSection;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetSection;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
+@TargetObjectSchemaInfo(name = "Section", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetSection
 		extends DefaultTargetObject<TargetObject, GdbModelTargetSectionContainer>
 		implements TargetSection<GdbModelTargetSection> {
@@ -50,15 +56,17 @@ public class GdbModelTargetSection
 
 		this.module = module;
 		this.range = doGetRange();
-		this.changeAttributes(List.of(),
-			Map.of(MODULE_ATTRIBUTE_NAME, module, RANGE_ATTRIBUTE_NAME, range,
-				VISIBLE_RANGE_ATTRIBUTE_NAME, range, DISPLAY_ATTRIBUTE_NAME, section.getName(),
-				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
-			), "Initialized");
+		this.changeAttributes(List.of(), List.of(), Map.of(
+			MODULE_ATTRIBUTE_NAME, module,
+			RANGE_ATTRIBUTE_NAME, range,
+			VISIBLE_RANGE_ATTRIBUTE_NAME, range,
+			DISPLAY_ATTRIBUTE_NAME, section.getName(),
+			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED),
+			"Initialized");
 	}
 
 	@Override
-	public TypedTargetObjectRef<? extends TargetModule<?>> getModule() {
+	public GdbModelTargetModule getModule() {
 		return module;
 	}
 
@@ -74,6 +82,12 @@ public class GdbModelTargetSection
 
 	@Override
 	public AddressRange getRange() {
+		return range;
+	}
+
+	@Deprecated(forRemoval = true)
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME)
+	public AddressRange getInvisibleRange() {
 		return range;
 	}
 

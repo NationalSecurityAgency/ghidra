@@ -19,6 +19,13 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 
+/**
+ * A common interface for all {@link TargetObject} interfaces, as well as implementations of
+ * {@link TargetObject}, so that {@link #fetch()} simply returns this object.
+ * 
+ * @param <T> the type of this object. It should be a type variable extending this object's type if
+ *            the class is meant to be further extended.
+ */
 public interface TypedTargetObject<T extends TypedTargetObject<T>>
 		extends TargetObject, TypedTargetObjectRef<T> {
 	@Override

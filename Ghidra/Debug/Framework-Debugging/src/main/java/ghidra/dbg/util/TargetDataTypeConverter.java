@@ -329,7 +329,7 @@ public class TargetDataTypeConverter {
 		 */
 		String parts[] = type.getIndex().split("\\s+");
 		String name = parts[parts.length - 1];
-		switch (type.getKind()) {
+		switch (type.getTypeKind()) {
 			case ENUM:
 				return convertTargetEnumDataType(name, type);
 			case FUNCTION:

@@ -18,12 +18,14 @@ package ghidra.dbg.target;
 import org.apache.commons.lang3.reflect.TypeLiteral;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.ValueUtils;
 import ghidra.lifecycle.Internal;
 
 /**
  * A target object which may not be accessible
  * 
+ * <p>
  * Depending on the state of the debugger, it may not be able to process commands for certain target
  * objects. Objects which may not be accessible should support this interface. Note, that the
  * granularity of accessibility is the entire object, including its children (excluding links). If,
@@ -45,6 +47,9 @@ public interface TargetAccessConditioned<T extends TargetAccessConditioned<T>>
 	TypeLiteral<TargetAccessConditioned<?>> type = new TypeLiteral<>() {};
 	String ACCESSIBLE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "accessible";
 
+	/**
+	 * TODO: I'm seriously considering removing this
+	 */
 	public enum TargetAccessibility {
 		ACCESSIBLE, INACCESSIBLE;
 
@@ -59,7 +64,13 @@ public interface TargetAccessConditioned<T extends TargetAccessConditioned<T>>
 			return TargetAccessibility.ACCESSIBLE;
 		}
 		return TargetAccessibility
-				.fromBool(ValueUtils.expectBoolean(obj, this, ACCESSIBLE_ATTRIBUTE_NAME, true));
+				.fromBool(
+					ValueUtils.expectBoolean(obj, this, ACCESSIBLE_ATTRIBUTE_NAME, true, true));
+	}
+
+	@TargetAttributeType(name = ACCESSIBLE_ATTRIBUTE_NAME, required = true, hidden = true)
+	public default Boolean isAccessible() {
+		return getTypedAttributeNowByName(ACCESSIBLE_ATTRIBUTE_NAME, Boolean.class, true);
 	}
 
 	public default TargetAccessibility getAccessibility() {
@@ -69,7 +80,6 @@ public interface TargetAccessConditioned<T extends TargetAccessConditioned<T>>
 	public interface TargetAccessibilityListener extends TargetObjectListener {
 		default void accessibilityChanged(TargetAccessConditioned<?> object,
 				TargetAccessibility accessibility) {
-			System.err.println("default");
 		}
 	}
 }

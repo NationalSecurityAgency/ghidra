@@ -17,6 +17,7 @@ package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.AddressRange;
 
 @DebuggerTargetObjectIface("MemoryRegion")
@@ -36,17 +37,43 @@ public interface TargetMemoryRegion<T extends TargetMemoryRegion<T>> extends Typ
 	String EXECUTABLE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "executable";
 	String MEMORY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "memory";
 
+	/**
+	 * Get the address range representing this region
+	 * 
+	 * @return the range
+	 */
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default AddressRange getRange() {
 		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
 	}
 
+	/**
+	 * Check if this region is readable
+	 * 
+	 * @return true if read is permitted
+	 */
+	@TargetAttributeType(name = READABLE_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default boolean isReadable() {
 		return getTypedAttributeNowByName(READABLE_ATTRIBUTE_NAME, Boolean.class, false);
 	}
 
+	/**
+	 * Check if this region is writable
+	 * 
+	 * @return true if write is permitted
+	 */
+	@TargetAttributeType(name = WRITABLE_ATTRIBUTE_NAME, required = true, hidden = true)
+
 	public default boolean isWritable() {
 		return getTypedAttributeNowByName(WRITABLE_ATTRIBUTE_NAME, Boolean.class, false);
 	}
+
+	/**
+	 * Check if this region is executable
+	 * 
+	 * @return true if execute is permitted
+	 */
+	@TargetAttributeType(name = EXECUTABLE_ATTRIBUTE_NAME, required = true, hidden = true)
 
 	public default boolean isExecutable() {
 		return getTypedAttributeNowByName(EXECUTABLE_ATTRIBUTE_NAME, Boolean.class, false);
@@ -66,6 +93,7 @@ public interface TargetMemoryRegion<T extends TargetMemoryRegion<T>> extends Typ
 	 * 
 	 * @return a reference to the memory
 	 */
+	@TargetAttributeType(name = MEMORY_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	public default TypedTargetObjectRef<? extends TargetMemory<?>> getMemory() {
 		return getTypedRefAttributeNowByName(MEMORY_ATTRIBUTE_NAME, TargetMemory.tclass, null);
 	}

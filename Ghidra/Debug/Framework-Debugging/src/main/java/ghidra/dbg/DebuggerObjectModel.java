@@ -26,6 +26,8 @@ import ghidra.dbg.error.DebuggerModelNoSuchPathException;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
@@ -164,6 +166,21 @@ public interface DebuggerObjectModel {
 	 * @return true if alive
 	 */
 	public boolean isAlive();
+
+	/**
+	 * Get the schema of this model, i.e., the schema of its root object.
+	 * 
+	 * <p>
+	 * The schema may not be known until the model has been successfully opened. Some factories will
+	 * ensure success before providing the model, but this may not always be the case. Callers
+	 * should listen for {@link DebuggerModelListener#modelOpened()} or retrieve the root object
+	 * first.
+	 * 
+	 * @return the root schema
+	 */
+	public default TargetObjectSchema getRootSchema() {
+		return EnumerableTargetObjectSchema.OBJECT;
+	}
 
 	/**
 	 * Check if the debugger agent is alive (optional operation)

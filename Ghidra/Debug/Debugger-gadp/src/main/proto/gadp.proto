@@ -46,6 +46,8 @@ message ConnectRequest {
 
 message ConnectReply {
 	string version = 1;
+	string schema_context = 2;
+	string root_schema = 3;
 }
 
 message PingRequest {
@@ -104,6 +106,15 @@ message StepKindsSet {
 
 message StringList {
 	repeated string s = 1;
+}
+
+enum AttachKind {
+	BY_OBJECT_REF = 0;
+	BY_ID = 1;
+}
+
+message AttachKindSet {
+	repeated AttachKind k = 1;
 }
 
 enum ExecutionState {
@@ -181,6 +192,7 @@ enum ValueType {
 	VT_PATH = 17;
 	VT_PATH_LIST = 18;
 	VT_TYPE = 19;
+	VT_ATTACH_KIND_SET = 20;
 }
 
 message Parameter {
@@ -226,6 +238,7 @@ message Value {
 		ModelObjectStub object_stub = 20;
 		ParameterList parameters_value = 21;
 		ValueType type_value = 22;
+		AttachKindSet attach_kinds_value = 23;
 	}
 }
 

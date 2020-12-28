@@ -27,11 +27,17 @@ import generic.Unique;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.attributes.TargetObjectRefList;
 import ghidra.dbg.attributes.TargetObjectRefList.DefaultTargetObjectRefList;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetBreakpointLocation;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
+@TargetObjectSchemaInfo(name = "BreakpointLocation", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetBreakpointLocation
 		extends DefaultTargetObject<TargetObject, GdbModelTargetBreakpointSpec>
 		implements TargetBreakpointLocation<GdbModelTargetBreakpointLocation> {
@@ -53,7 +59,7 @@ public class GdbModelTargetBreakpointLocation
 
 	public GdbModelTargetBreakpointLocation(GdbModelTargetBreakpointSpec spec,
 			GdbBreakpointLocation loc) {
-		super(spec.impl, spec, keyLocation(loc), "EffectiveBreakpoint");
+		super(spec.impl, spec, keyLocation(loc), "BreakpointLocation");
 		this.impl = spec.impl;
 		this.loc = loc;
 
@@ -67,17 +73,20 @@ public class GdbModelTargetBreakpointLocation
 	}
 
 	protected void doChangeAttributes(String reason) {
-		this.changeAttributes(List.of(),
-			Map.of(SPEC_ATTRIBUTE_NAME, parent, AFFECTS_ATTRIBUTE_NAME, affects,
-				ADDRESS_ATTRIBUTE_NAME, address, LENGTH_ATTRIBUTE_NAME, length,
-				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(), UPDATE_MODE_ATTRIBUTE_NAME,
-				TargetUpdateMode.FIXED //
-			), reason);
+		this.changeAttributes(List.of(), Map.of(
+			SPEC_ATTRIBUTE_NAME, parent,
+			AFFECTS_ATTRIBUTE_NAME, affects,
+			ADDRESS_ATTRIBUTE_NAME, address,
+			LENGTH_ATTRIBUTE_NAME, length,
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(),
+			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+		), reason);
 	}
 
 	/**
 	 * Initialize watchpoint attributes via expression evaluation
 	 * 
+	 * <p>
 	 * This has to be async because it involves interacting with GDB. GDB does not give the address
 	 * or location information for location-specified watchpoints. Instead we take the expression
 	 * and ask GDB to evaluate its address and size.
@@ -132,12 +141,12 @@ public class GdbModelTargetBreakpointLocation
 	}
 
 	@Override
-	public TargetObjectRefList<?> getAffects() {
+	public TargetObjectRefList<GdbModelTargetInferior> getAffects() {
 		return affects;
 	}
 
 	@Override
-	public TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> getSpecification() {
+	public GdbModelTargetBreakpointSpec getSpecification() {
 		return parent;
 	}
 }

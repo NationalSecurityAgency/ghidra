@@ -17,17 +17,20 @@ package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
 /**
  * An allocated section of a binary module
  * 
+ * <p>
  * Note that the model should only present those sections which are allocated in memory. Otherwise
  * strange things may happen, such as zero-length ranges (which AddressRange hates), or overlapping
  * ranges (which Trace hates).
  * 
- * TODO: Present all sections, but include start, length, isAllocated instead?
+ * <p>
+ * TODO: Present all sections, but include isAllocated?
  */
 @DebuggerTargetObjectIface("Section")
 public interface TargetSection<T extends TargetSection<T>> extends TypedTargetObject<T> {
@@ -42,13 +45,14 @@ public interface TargetSection<T extends TargetSection<T>> extends TypedTargetOb
 
 	String MODULE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module";
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
-	String VISIBLE_RANGE_ATTRIBUTE_NAME =  "range";
+	String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 
 	/**
 	 * Get the module to which this section belongs
 	 * 
 	 * @return the owning module
 	 */
+	@TargetAttributeType(name = MODULE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	@SuppressWarnings("unchecked")
 	public default TypedTargetObjectRef<? extends TargetModule<?>> getModule() {
 		return getTypedRefAttributeNowByName(MODULE_ATTRIBUTE_NAME, TargetModule.class, null);
@@ -62,8 +66,9 @@ public interface TargetSection<T extends TargetSection<T>> extends TypedTargetOb
 	 * 
 	 * @return the range
 	 */
+	@TargetAttributeType(name = VISIBLE_RANGE_ATTRIBUTE_NAME, required = true, fixed = true)
 	public default AddressRange getRange() {
-		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
+		return getTypedAttributeNowByName(VISIBLE_RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
 	}
 
 	/**

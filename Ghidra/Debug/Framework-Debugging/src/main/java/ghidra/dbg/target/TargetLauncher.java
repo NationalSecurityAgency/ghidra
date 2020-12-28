@@ -22,9 +22,10 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
- * An interface which indicates this object is capable of launching targets.
+ * An interface which indicates this object is capable of launching targets
  * 
  * <p>
  * The targets this launcher creates ought to appear in its successors.
@@ -130,6 +131,7 @@ public interface TargetLauncher<T extends TargetLauncher<T>> extends TypedTarget
 		}
 	}
 
+	@TargetAttributeType(name = TargetMethod.PARAMETERS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default public TargetParameterMap getParameters() {
 		return TargetMethod.getParameters(this);
 	}

@@ -49,6 +49,8 @@ import ghidra.dbg.target.TargetInterpreter.TargetInterpreterListener;
 import ghidra.dbg.target.TargetMemory.TargetMemoryListener;
 import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.target.TargetRegisterBank.TargetRegisterBankListener;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
@@ -375,9 +377,13 @@ public class GadpClientHandler
 		if (!req.getVersionList().contains(ver)) {
 			throw new GadpErrorException(ErrorCode.NO_VERSION, "No listed version is supported");
 		}
+		TargetObjectSchema rootSchema = model.getRootSchema();
 		return channel.write(Gadp.RootMessage.newBuilder()
 				.setSequence(seqno)
-				.setConnectReply(Gadp.ConnectReply.newBuilder().setVersion(ver))
+				.setConnectReply(Gadp.ConnectReply.newBuilder()
+						.setVersion(ver)
+						.setSchemaContext(XmlSchemaContext.serialize(rootSchema.getContext()))
+						.setRootSchema(rootSchema.getName().toString()))
 				.build());
 	}
 

@@ -41,6 +41,7 @@ public interface TargetRegisterContainer<T extends TargetRegisterContainer<T>>
 	/**
 	 * Get the register descriptions in this container
 	 * 
+	 * <p>
 	 * While it is most common for registers to be immediate children of the container, that is not
 	 * necessarily the case. In fact, some models may present sub-registers as children of another
 	 * register. This method must return all registers (including sub-registers, if applicable) in

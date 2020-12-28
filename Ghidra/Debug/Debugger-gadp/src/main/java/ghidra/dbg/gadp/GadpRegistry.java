@@ -19,12 +19,10 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
-
 import com.google.protobuf.Message;
 
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.gadp.client.*;
 import ghidra.dbg.target.*;
 import utilities.util.reflection.ReflectionUtilities;
@@ -40,16 +38,12 @@ public enum GadpRegistry {
 		CompletableFuture<Message.Builder> invoke(TargetObject object, M msg);
 	}
 
-	public static final BidiMap<String, Class<? extends TargetObject>> INTERFACE_REGISTRY =
-		new DualHashBidiMap<>();
-
 	public static final Map<Class<? extends TargetObject>, Class<? extends TargetObject>> MIXIN_REGISTRY =
 		new HashMap<>();
 
 	public static <T extends TargetObject, U extends T> void registerInterface(Class<T> iface,
 			Class<? extends T> mixin) {
 		String name = DebuggerObjectModel.requireIfaceName(iface);
-		INTERFACE_REGISTRY.put(name, iface);
 		MIXIN_REGISTRY.put(iface, mixin);
 	}
 
@@ -94,22 +88,6 @@ public enum GadpRegistry {
 		registerInterface(TargetThread.class, GadpClientTargetThread.class);
 	}
 
-	public static List<Class<? extends TargetObject>> getInterfacesByName(
-			Collection<String> names) {
-		return names.stream()
-				.filter(INTERFACE_REGISTRY::containsKey)
-				.map(INTERFACE_REGISTRY::get)
-				.collect(Collectors.toList());
-	}
-
-	public static List<Class<? extends TargetObject>> getMixinsByName(List<String> names) {
-		return names.stream()
-				.filter(INTERFACE_REGISTRY::containsKey)
-				.map(INTERFACE_REGISTRY::get)
-				.map(MIXIN_REGISTRY::get)
-				.collect(Collectors.toList());
-	}
-
 	public static List<Class<? extends TargetObject>> getMixins(
 			List<Class<? extends TargetObject>> ifaces) {
 		return ifaces.stream().map(MIXIN_REGISTRY::get).collect(Collectors.toList());
@@ -118,15 +96,11 @@ public enum GadpRegistry {
 	public static List<String> getInterfaceNames(TargetObject obj) {
 		List<String> result = new ArrayList<>();
 		for (Class<?> parent : ReflectionUtilities.getAllParents(obj.getClass())) {
-			String name = getName(parent);
-			if (name != null) {
-				result.add(name);
+			DebuggerTargetObjectIface annot = parent.getAnnotation(DebuggerTargetObjectIface.class);
+			if (annot != null) {
+				result.add(annot.value());
 			}
 		}
 		return result;
-	}
-
-	public static <T> String getName(Class<T> cls) {
-		return INTERFACE_REGISTRY.getKey(cls);
 	}
 }

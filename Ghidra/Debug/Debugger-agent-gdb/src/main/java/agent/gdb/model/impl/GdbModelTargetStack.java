@@ -25,12 +25,19 @@ import agent.gdb.manager.GdbThread;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetStack;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "Stack", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetStack
 		extends DefaultTargetObject<GdbModelTargetStackFrame, GdbModelTargetThread>
 		implements TargetStack<GdbModelTargetStack> {
+	public static final String NAME = "Stack";
+
 	protected final GdbModelImpl impl;
 	protected final GdbModelTargetInferior inferior;
 	protected final GdbThread thread;
@@ -38,7 +45,7 @@ public class GdbModelTargetStack
 	protected final Map<Integer, GdbModelTargetStackFrame> framesByLevel = new WeakValueHashMap<>();
 
 	public GdbModelTargetStack(GdbModelTargetThread thread, GdbModelTargetInferior inferior) {
-		super(thread.impl, thread, "Stack", "Stack");
+		super(thread.impl, thread, NAME, "Stack");
 		this.impl = thread.impl;
 		this.inferior = inferior;
 		this.thread = thread.thread;

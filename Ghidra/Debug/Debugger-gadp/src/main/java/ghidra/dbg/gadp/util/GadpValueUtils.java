@@ -31,6 +31,8 @@ import ghidra.dbg.gadp.client.GadpClient;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.ModelObjectDelta;
 import ghidra.dbg.gadp.protocol.Gadp.ModelObjectInfo;
+import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
+import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
@@ -78,6 +80,12 @@ public enum GadpValueUtils {
 		}
 	}
 
+	public static Gadp.BreakKindsSet makeBreakKindSet(Set<TargetBreakpointKind> set) {
+		return Gadp.BreakKindsSet.newBuilder()
+				.addAllK(set.stream().map(k -> makeBreakKind(k)).collect(Collectors.toList()))
+				.build();
+	}
+
 	public static Gadp.BreakKind makeBreakKind(TargetBreakpointKind kind) {
 		switch (kind) {
 			case READ:
@@ -88,6 +96,39 @@ public enum GadpValueUtils {
 				return Gadp.BreakKind.EXECUTE;
 			case SOFTWARE:
 				return Gadp.BreakKind.SOFTWARE;
+			default:
+				throw new IllegalArgumentException();
+		}
+	}
+
+	public static TargetAttachKindSet getAttachKindSet(Gadp.AttachKindSet set) {
+		return TargetAttachKindSet.copyOf(
+			set.getKList().stream().map(k -> getAttachKind(k)).collect(Collectors.toSet()));
+	}
+
+	public static TargetAttachKind getAttachKind(Gadp.AttachKind kind) {
+		switch (kind) {
+			case BY_OBJECT_REF:
+				return TargetAttachKind.BY_OBJECT_REF;
+			case BY_ID:
+				return TargetAttachKind.BY_ID;
+			default:
+				throw new IllegalArgumentException();
+		}
+	}
+
+	public static Gadp.AttachKindSet makeAttachKindSet(Set<TargetAttachKind> set) {
+		return Gadp.AttachKindSet.newBuilder()
+				.addAllK(set.stream().map(k -> makeAttachKind(k)).collect(Collectors.toList()))
+				.build();
+	}
+
+	public static Gadp.AttachKind makeAttachKind(TargetAttachKind kind) {
+		switch (kind) {
+			case BY_OBJECT_REF:
+				return Gadp.AttachKind.BY_OBJECT_REF;
+			case BY_ID:
+				return Gadp.AttachKind.BY_ID;
 			default:
 				throw new IllegalArgumentException();
 		}
@@ -301,12 +342,6 @@ public enum GadpValueUtils {
 	public static Gadp.PathList makePathList(TargetObjectRefList<?> list) {
 		return Gadp.PathList.newBuilder()
 				.addAllPath(list.stream().map(p -> makePath(p)).collect(Collectors.toList()))
-				.build();
-	}
-
-	public static Gadp.BreakKindsSet makeBreakKindSet(Set<TargetBreakpointKind> set) {
-		return Gadp.BreakKindsSet.newBuilder()
-				.addAllK(set.stream().map(k -> makeBreakKind(k)).collect(Collectors.toList()))
 				.build();
 	}
 
@@ -569,6 +604,9 @@ public enum GadpValueUtils {
 		else if (value instanceof AddressRange) {
 			b.setRangeValue(makeRange((AddressRange) value));
 		}
+		else if (value instanceof TargetAttachKindSet) {
+			b.setAttachKindsValue(makeAttachKindSet((TargetAttachKindSet) value));
+		}
 		else if (value instanceof TargetBreakpointKindSet) {
 			b.setBreakKindsValue(makeBreakKindSet((TargetBreakpointKindSet) value));
 		}
@@ -653,6 +691,8 @@ public enum GadpValueUtils {
 				return getAddress(model, value.getAddressValue());
 			case RANGE_VALUE:
 				return getAddressRange(model, value.getRangeValue());
+			case ATTACH_KINDS_VALUE:
+				return getAttachKindSet(value.getAttachKindsValue());
 			case BREAK_KINDS_VALUE:
 				return getBreakKindSet(value.getBreakKindsValue());
 			case EXEC_STATE_VALUE:

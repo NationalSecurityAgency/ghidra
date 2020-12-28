@@ -22,17 +22,24 @@ import java.util.stream.Collectors;
 
 import agent.gdb.manager.GdbModuleSection;
 import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "SectionContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetSectionContainer
 		extends DefaultTargetObject<GdbModelTargetSection, GdbModelTargetModule> {
+	public static final String NAME = "Sections";
+
 	protected final GdbModelImpl impl;
 	protected final GdbModelTargetModule module;
 
 	protected final Map<String, GdbModelTargetSection> sectionsByName = new WeakValueHashMap<>();
 
 	public GdbModelTargetSectionContainer(GdbModelTargetModule module) {
-		super(module.impl, module, "Sections", "SectionContainer");
+		super(module.impl, module, NAME, "SectionContainer");
 		this.impl = module.impl;
 		this.module = module;
 	}

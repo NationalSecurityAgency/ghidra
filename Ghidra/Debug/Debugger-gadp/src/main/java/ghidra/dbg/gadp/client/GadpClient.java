@@ -27,6 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jdom.JDOMException;
 
 import com.google.common.cache.RemovalNotification;
 import com.google.protobuf.Message;
@@ -43,6 +44,8 @@ import ghidra.dbg.gadp.protocol.Gadp.*;
 import ghidra.dbg.gadp.util.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetObject.TargetUpdateMode;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
 import ghidra.lifecycle.Internal;
@@ -267,6 +270,8 @@ public class GadpClient implements DebuggerObjectModel {
 	protected AsyncReference<ChannelState, DebuggerModelClosedReason> channelState =
 		new AsyncReference<>(ChannelState.INACTIVE);
 	protected GadpVersion activeVersion = null;
+	protected XmlSchemaContext schemaContext;
+	protected TargetObjectSchema rootSchema;
 
 	protected final ListenerSet<DebuggerModelListener> listenersClient =
 		new ListenerSet<>(DebuggerModelListener.class);
@@ -461,6 +466,13 @@ public class GadpClient implements DebuggerObjectModel {
 			GadpVersion version = GadpVersion.getByName(rep.getVersion());
 			synchronized (this) {
 				activeVersion = version;
+				try {
+					schemaContext = XmlSchemaContext.deserialize(rep.getSchemaContext());
+				}
+				catch (JDOMException e) {
+					throw new GadpMessageException("Invalid schema context XML", e);
+				}
+				rootSchema = schemaContext.getSchema(schemaContext.name(rep.getRootSchema()));
 			}
 			channelState.set(ChannelState.ACTIVE, null);
 			// launches in background in parallel, with its own error reporting
@@ -498,6 +510,11 @@ public class GadpClient implements DebuggerObjectModel {
 	@Override
 	public boolean isAlive() {
 		return channelState.get() == ChannelState.ACTIVE;
+	}
+
+	@Override
+	public TargetObjectSchema getRootSchema() {
+		return rootSchema;
 	}
 
 	@Override

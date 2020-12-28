@@ -60,7 +60,7 @@ public interface GadpClientTargetBreakpointSpec
 	}
 
 	default boolean enabledFromObj(Object obj) {
-		return ValueUtils.expectBoolean(obj, this, ENABLED_ATTRIBUTE_NAME, false);
+		return ValueUtils.expectBoolean(obj, this, ENABLED_ATTRIBUTE_NAME, false, true);
 	}
 
 	@GadpAttributeChangeCallback(ENABLED_ATTRIBUTE_NAME)

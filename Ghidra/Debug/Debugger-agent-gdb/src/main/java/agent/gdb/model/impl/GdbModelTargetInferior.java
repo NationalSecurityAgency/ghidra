@@ -28,10 +28,16 @@ import ghidra.dbg.error.DebuggerModelNoSuchPathException;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "Inferior", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer> implements //
 		TargetProcess<GdbModelTargetInferior>,  //
@@ -46,8 +52,10 @@ public class GdbModelTargetInferior
 		TargetSteppable<GdbModelTargetInferior>, //
 		GdbModelSelectableObject {
 
-	public static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
+
+	protected static final TargetAttachKindSet SUPPORTED_KINDS = TargetAttachKindSet.of( //
+		TargetAttachKind.BY_OBJECT_REF, TargetAttachKind.BY_ID);
 
 	protected static String indexInferior(int inferiorId) {
 		return PathUtils.makeIndex(inferiorId);
@@ -71,6 +79,8 @@ public class GdbModelTargetInferior
 	protected final GdbModelTargetRegisterContainer registers;
 	protected final GdbModelTargetThreadContainer threads;
 
+	protected Long exitCode;
+
 	public GdbModelTargetInferior(GdbModelTargetInferiorContainer inferiors, GdbInferior inferior) {
 		super(inferiors.impl, inferiors, keyInferior(inferior), "Inferior");
 		this.impl = inferiors.impl;
@@ -82,17 +92,46 @@ public class GdbModelTargetInferior
 		this.registers = new GdbModelTargetRegisterContainer(this);
 		this.threads = new GdbModelTargetThreadContainer(this);
 
-		changeAttributes(List.of(), Map.of( //
-			STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE, //
-			DISPLAY_ATTRIBUTE_NAME, updateDisplay(), //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
-			environment.getName(), environment, //
-			memory.getName(), memory, //
-			modules.getName(), modules, //
-			registers.getName(), registers, //
-			threads.getName(), threads //
-		), "Initialized");
+		changeAttributes(List.of(),
+			List.of(
+				environment,
+				memory,
+				modules,
+				registers,
+				threads),
+			Map.of(
+				STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE,
+				DISPLAY_ATTRIBUTE_NAME, updateDisplay(),
+				TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS,
+				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED,
+				SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS,
+				SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, GdbModelTargetThread.SUPPORTED_KINDS),
+			"Initialized");
+	}
+
+	@TargetAttributeType(name = GdbModelTargetEnvironment.NAME, required = true, fixed = true)
+	public GdbModelTargetEnvironment getEnvironment() {
+		return environment;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetProcessMemory.NAME, required = true, fixed = true)
+	public GdbModelTargetProcessMemory getMemory() {
+		return memory;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetModuleContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetModuleContainer getModules() {
+		return modules;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetRegisterContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetRegisterContainer getRegisters() {
+		return registers;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetThreadContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetThreadContainer getThreads() {
+		return threads;
 	}
 
 	@Override
@@ -202,6 +241,7 @@ public class GdbModelTargetInferior
 	}
 
 	protected void inferiorExited(Long exitCode) {
+		this.exitCode = exitCode;
 		if (exitCode != null) {
 			changeAttributes(List.of(), Map.of( //
 				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
@@ -257,4 +297,8 @@ public class GdbModelTargetInferior
 		return inferior.select();
 	}
 
+	@TargetAttributeType(name = EXIT_CODE_ATTRIBUTE_NAME)
+	public Long getExitCode() {
+		return exitCode;
+	}
 }

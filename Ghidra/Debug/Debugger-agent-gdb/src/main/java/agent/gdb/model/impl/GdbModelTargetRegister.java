@@ -22,8 +22,14 @@ import agent.gdb.manager.GdbRegister;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegister;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
+@TargetObjectSchemaInfo(name = "RegisterDescriptor", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetRegister
 		extends DefaultTargetObject<TargetObject, GdbModelTargetRegisterContainer>
 		implements TargetRegister<GdbModelTargetRegister> {
@@ -68,5 +74,10 @@ public class GdbModelTargetRegister
 	@Override
 	public String getDisplay() {
 		return getName();
+	}
+
+	@Override
+	public GdbModelTargetRegisterContainer getContainer() {
+		return parent;
 	}
 }

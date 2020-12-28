@@ -19,6 +19,9 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 
+/**
+ * A target which can be killed (terminated)
+ */
 @DebuggerTargetObjectIface("Killable")
 public interface TargetKillable<T extends TargetKillable<T>> extends TypedTargetObject<T> {
 	enum Private {

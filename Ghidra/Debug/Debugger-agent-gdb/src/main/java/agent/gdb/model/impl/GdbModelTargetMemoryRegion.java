@@ -20,11 +20,17 @@ import java.util.Map;
 
 import agent.gdb.manager.impl.GdbMemoryMapping;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetMemoryRegion;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
+@TargetObjectSchemaInfo(name = "MemoryRegion", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetMemoryRegion
 		extends DefaultTargetObject<TargetObject, GdbModelTargetProcessMemory>
 		implements TargetMemoryRegion<GdbModelTargetMemoryRegion> {
@@ -49,6 +55,8 @@ public class GdbModelTargetMemoryRegion
 	}
 
 	protected AddressRangeImpl range;
+	protected final String objfile;
+	protected final long offset;
 	protected final String display;
 
 	public GdbModelTargetMemoryRegion(GdbModelTargetProcessMemory memory,
@@ -68,8 +76,8 @@ public class GdbModelTargetMemoryRegion
 			READABLE_ATTRIBUTE_NAME, isReadable(), //
 			WRITABLE_ATTRIBUTE_NAME, isWritable(), //
 			EXECUTABLE_ATTRIBUTE_NAME, isExecutable(), //
-			OBJFILE_ATTRIBUTE_NAME, mapping.getObjfile(), //
-			OFFSET_ATTRIBUTE_NAME, mapping.getOffset().longValue(), //
+			OBJFILE_ATTRIBUTE_NAME, objfile = mapping.getObjfile(), //
+			OFFSET_ATTRIBUTE_NAME, offset = mapping.getOffset().longValue(), //
 			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(mapping), //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");
@@ -92,7 +100,7 @@ public class GdbModelTargetMemoryRegion
 	}
 
 	@Override
-	public TypedTargetObjectRef<? extends TargetMemory<?>> getMemory() {
+	public GdbModelTargetProcessMemory getMemory() {
 		return parent;
 	}
 
@@ -111,5 +119,15 @@ public class GdbModelTargetMemoryRegion
 	@Override
 	public boolean isExecutable() {
 		return true; // TODO
+	}
+
+	@TargetAttributeType(name = OBJFILE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	public String getObjfile() {
+		return objfile;
+	}
+
+	@TargetAttributeType(name = OFFSET_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	public long getOffset() {
+		return offset;
 	}
 }

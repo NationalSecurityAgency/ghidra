@@ -17,13 +17,16 @@ package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * A marker interface which indicates a process, usually on a host operating system
  * 
+ * <p>
  * If this object does not support {@link TargetExecutionStateful}, then its mere existence in the
- * model implies that it is {@link TargetExecutionState#ALIVE}. TODO: Should allow association, but
- * that may have to wait until schemas are introduced.
+ * model implies that it is {@link TargetExecutionState#ALIVE}. TODO: Should allow association via
+ * convention to a different {@link TargetExecutionStateful}, but that may have to wait until
+ * schemas are introduced.
  */
 @DebuggerTargetObjectIface("Process")
 public interface TargetProcess<T extends TargetProcess<T>> extends TypedTargetObject<T> {
@@ -37,4 +40,9 @@ public interface TargetProcess<T extends TargetProcess<T>> extends TypedTargetOb
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	Class<Private.Cls> tclass = (Class) TargetProcess.class;
+
+	@TargetAttributeType(name = PID_ATTRIBUTE_NAME, hidden = true)
+	public default Long getPid() {
+		return getTypedAttributeNowByName(PID_ATTRIBUTE_NAME, Long.class, null);
+	}
 }

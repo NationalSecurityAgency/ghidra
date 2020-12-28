@@ -48,7 +48,7 @@ public interface GadpClientTargetInterpreter
 	}
 
 	default String promptFromObj(Object obj) {
-		return ValueUtils.expectType(obj, String.class, this, PROMPT_ATTRIBUTE_NAME, ">");
+		return ValueUtils.expectType(obj, String.class, this, PROMPT_ATTRIBUTE_NAME, ">", true);
 	}
 
 	@GadpAttributeChangeCallback(PROMPT_ATTRIBUTE_NAME)

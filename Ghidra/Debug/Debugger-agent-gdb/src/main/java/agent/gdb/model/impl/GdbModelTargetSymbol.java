@@ -22,9 +22,15 @@ import agent.gdb.manager.impl.GdbMinimalSymbol;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSymbol;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
+@TargetObjectSchemaInfo(name = "Symbol", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetSymbol
 		extends DefaultTargetObject<TargetObject, GdbModelTargetSymbolContainer>
 		implements TargetSymbol<GdbModelTargetSymbol> {
@@ -38,7 +44,7 @@ public class GdbModelTargetSymbol
 
 	protected final boolean constant;
 	protected final Address value;
-	protected final int size;
+	protected final long size;
 
 	public GdbModelTargetSymbol(GdbModelTargetSymbolContainer symbols, GdbMinimalSymbol symbol) {
 		super(symbols.impl, symbols, keySymbol(symbol), "Symbol");
@@ -47,10 +53,18 @@ public class GdbModelTargetSymbol
 		this.size = 0;
 
 		changeAttributes(List.of(), Map.of(
+			NAMESPACE_ATTRIBUTE_NAME, symbols,
 			// TODO: DATA_TYPE
-			VALUE_ATTRIBUTE_NAME, value, SIZE_ATTRIBUTE_NAME, size, DISPLAY_ATTRIBUTE_NAME,
-			symbol.getName(), UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
-		), "Initialized");
+			VALUE_ATTRIBUTE_NAME, value,
+			SIZE_ATTRIBUTE_NAME, size,
+			DISPLAY_ATTRIBUTE_NAME, symbol.getName(),
+			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED),
+			"Initialized");
+	}
+
+	@Override
+	public GdbModelTargetSymbolContainer getNamespace() {
+		return parent;
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 /**
  * A marker interface which indicates its attributes represent the object as a whole
  * 
+ * <p>
  * Often applied to processes and sessions, this causes ancestry traversals to include this object's
  * children when visited.
  */

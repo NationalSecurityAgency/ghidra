@@ -23,18 +23,24 @@ import agent.gdb.manager.*;
 import agent.gdb.manager.reason.GdbReason;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-// TODO: Should TargetThreadContainer be a thing?
+@TargetObjectSchemaInfo(name = "ThreadContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetThreadContainer
 		extends DefaultTargetObject<GdbModelTargetThread, GdbModelTargetInferior> {
+	public static final String NAME = "Threads";
+
 	protected final GdbModelImpl impl;
 	protected final GdbInferior inferior;
 
 	protected final Map<Integer, GdbModelTargetThread> threadsById = new WeakValueHashMap<>();
 
 	public GdbModelTargetThreadContainer(GdbModelTargetInferior inferior) {
-		super(inferior.impl, inferior, "Threads", "ThreadContainer");
+		super(inferior.impl, inferior, NAME, "ThreadContainer");
 		this.impl = inferior.impl;
 		this.inferior = inferior.inferior;
 	}

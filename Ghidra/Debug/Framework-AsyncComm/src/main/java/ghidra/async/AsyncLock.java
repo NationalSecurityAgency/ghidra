@@ -147,7 +147,7 @@ public class AsyncLock {
 	protected final Deque<CompletableFuture<Hold>> queue = new LinkedList<>();
 	protected WeakReference<Hold> curHold;
 	protected int reentries = 0;
-	protected String disposalReason;
+	protected Throwable disposalReason;
 	protected boolean dead = false;
 	protected final String debugName;
 
@@ -242,7 +242,7 @@ public class AsyncLock {
 		Hold strongHold = null;
 		synchronized (this) {
 			if (disposalReason != null) {
-				throw new RuntimeException(disposalReason);
+				return CompletableFuture.failedFuture(disposalReason);
 			}
 			if (dead) {
 				throw new IllegalStateException("This lock is dead! " +
@@ -318,7 +318,7 @@ public class AsyncLock {
 	/**
 	 * Destroy this lock, causing all pending actions to complete exceptionally
 	 */
-	public void dispose(String reason) {
+	public void dispose(Throwable reason) {
 		List<CompletableFuture<?>> copy;
 		synchronized (this) {
 			disposalReason = reason;
@@ -326,7 +326,7 @@ public class AsyncLock {
 			queue.clear();
 		}
 		for (CompletableFuture<?> future : copy) {
-			future.completeExceptionally(new RuntimeException(reason));
+			future.completeExceptionally(reason);
 		}
 	}
 }

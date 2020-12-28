@@ -63,7 +63,8 @@ public interface GadpClientTargetObject extends TargetObject {
 	}
 
 	default String displayFromObj(Object obj) {
-		return ValueUtils.expectType(obj, String.class, this, DISPLAY_ATTRIBUTE_NAME, getName());
+		return ValueUtils.expectType(obj, String.class, this, DISPLAY_ATTRIBUTE_NAME, getName(),
+			false);
 	}
 
 	@GadpAttributeChangeCallback(DISPLAY_ATTRIBUTE_NAME)

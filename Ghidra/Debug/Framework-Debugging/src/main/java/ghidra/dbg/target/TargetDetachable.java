@@ -19,6 +19,9 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 
+/**
+ * A target which can be detached from the debugger
+ */
 @DebuggerTargetObjectIface("Detachable")
 public interface TargetDetachable<T extends TargetDetachable<T>> extends TypedTargetObject<T> {
 	enum Private {
@@ -33,7 +36,7 @@ public interface TargetDetachable<T extends TargetDetachable<T>> extends TypedTa
 	/**
 	 * Detach from this target
 	 * 
-	 * @return a future which completes upon successfully detaching
+	 * @return a future which completes when the request is processed
 	 */
 	public CompletableFuture<Void> detach();
 }

@@ -19,7 +19,23 @@ import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.lifecycle.Experimental;
 
+/**
+ * A user-facing console
+ * 
+ * <p>
+ * This could be a CLI for the native debugger, or I/O for a target, or anything else the model
+ * might like to expose in terminal-like fashion.
+ * 
+ * <p>
+ * This is still an experimental concept and has not been implemented in any model. While it seems
+ * like an abstract case of {@link TargetInterpreter}, their specifications don't seem to line up.
+ * E.g., implementing the CLI as a {@link TargetConsole} requires the server to buffer and parse
+ * line input; whereas, implementing the CLI as a {@link TargetInterpreter} requires the client to
+ * parse line input.
+ */
+@Experimental
 @DebuggerTargetObjectIface("Console")
 public interface TargetConsole<T extends TargetConsole<T>> extends TypedTargetObject<T> {
 	Charset CHARSET = Charset.forName("utf-8");

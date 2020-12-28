@@ -49,6 +49,8 @@ public class GadpForGdbTest extends AbstractModelForGdbTest {
 			/*.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS)*/;
 			addr = server.getLocalAddress();
 
+			server.setExitOnClosed(false);
+
 			socket = AsynchronousSocketChannel.open();
 			client = new GadpClient("Test", socket);
 		}

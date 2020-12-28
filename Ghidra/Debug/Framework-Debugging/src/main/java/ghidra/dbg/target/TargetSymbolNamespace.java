@@ -24,7 +24,8 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 /**
  * A container of symbols
  * 
- * The debugger should present these in as granular of unit as possible. Consider a desktop
+ * <p>
+ * The debugger should present these in as granular of units as possible. Consider a desktop
  * application, for example. The debugger should present each module as a namespace rather than the
  * entire target (or worse, the entire session) as a single namespace.
  */
@@ -43,6 +44,7 @@ public interface TargetSymbolNamespace<T extends TargetSymbolNamespace<T>>
 	/**
 	 * Get the symbols in this namespace.
 	 * 
+	 * <p>
 	 * While it is most common for symbols to be immediate children of the namespace, that is not
 	 * necessarily the case.
 	 * 

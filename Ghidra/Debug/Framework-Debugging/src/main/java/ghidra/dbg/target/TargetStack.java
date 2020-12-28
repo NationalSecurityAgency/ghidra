@@ -24,6 +24,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 /**
  * Represents the execution stack, as unwound into frames by the debugger
  * 
+ * <p>
  * Conventionally, if the debugger can also unwind register values, then each frame should present a
  * register bank. Otherwise, the same object presenting this stack should present the register bank.
  */
@@ -41,6 +42,7 @@ public interface TargetStack<T extends TargetStack<T>> extends TypedTargetObject
 	/**
 	 * Get the frames in this stack
 	 * 
+	 * <p>
 	 * While it is most common for frames to be immediate children of the stack, that is not
 	 * necessarily the case.
 	 * 

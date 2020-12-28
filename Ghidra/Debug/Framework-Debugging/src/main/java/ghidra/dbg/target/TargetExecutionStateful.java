@@ -16,7 +16,11 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
+/**
+ * An object which has an execution life cycle
+ */
 @DebuggerTargetObjectIface("ExecutionStateful")
 public interface TargetExecutionStateful<T extends TargetExecutionStateful<T>>
 		extends TypedTargetObject<T> {
@@ -101,6 +105,7 @@ public interface TargetExecutionStateful<T extends TargetExecutionStateful<T>>
 		/**
 		 * The object is alive and executing
 		 * 
+		 * <p>
 		 * "Running" is loosely defined. For example, with respect to a thread, it may indicate the
 		 * thread is currently executing, waiting on an event, or scheduled for execution. It does
 		 * not necessarily mean it is executing on a CPU at this exact moment.
@@ -125,6 +130,7 @@ public interface TargetExecutionStateful<T extends TargetExecutionStateful<T>>
 		/**
 		 * The object is no longer alive
 		 * 
+		 * <p>
 		 * The object still exists but no longer represents something alive. This could be used for
 		 * stale handles to objects which may still be queried (e.g., for a process exit code), or
 		 * e.g., a GDB "Inferior" which could be re-used to launch or attach to another process.
@@ -146,19 +152,46 @@ public interface TargetExecutionStateful<T extends TargetExecutionStateful<T>>
 			}
 		};
 
+		/**
+		 * Check if this state implies the object is alive
+		 * 
+		 * @return true if alive
+		 */
 		public abstract boolean isAlive();
 
+		/**
+		 * Check if this state implies the object is running
+		 * 
+		 * @return true if running
+		 */
 		public abstract boolean isRunning();
 
+		/**
+		 * Check if this state implies the object is stopped
+		 * 
+		 * @return true if stopped
+		 */
 		public abstract boolean isStopped();
 	}
 
+	/**
+	 * Get the current execution state of this object
+	 * 
+	 * @return the state
+	 */
+	@TargetAttributeType(name = STATE_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TargetExecutionState getExecutionState() {
 		return getTypedAttributeNowByName(STATE_ATTRIBUTE_NAME, TargetExecutionState.class,
 			TargetExecutionState.STOPPED);
 	}
 
 	public interface TargetExecutionStateListener extends TargetObjectListener {
+		/**
+		 * The object has entered a different execution state
+		 * 
+		 * @param object the object
+		 * @param state the new state
+		 */
 		default void executionStateChanged(TargetExecutionStateful<?> object,
 				TargetExecutionState state) {
 		}

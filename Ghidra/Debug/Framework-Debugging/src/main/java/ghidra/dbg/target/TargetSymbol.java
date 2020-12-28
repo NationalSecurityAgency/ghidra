@@ -21,6 +21,7 @@ import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetDataType;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
@@ -52,6 +53,7 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	 * 
 	 * @return a future completing with the type
 	 */
+	@TargetAttributeType(name = DATA_TYPE_ATTRIBUTE_NAME, fixed = true, hidden = true)
 	public default TargetDataType getDataType() {
 		return getTypedAttributeNowByName(DATA_TYPE_ATTRIBUTE_NAME, TargetDataType.class,
 			TargetDataType.UNDEFINED1);
@@ -70,8 +72,9 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	/**
 	 * Get the type of this symbol converted to a Ghidra data type
 	 * 
-	 * Each call to this variant creates a new {@link TargetDataTypeConverter}, and so does not take
-	 * full advantage of its internal cache.
+	 * <p>
+	 * WARNING: Each call to this variant creates a new {@link TargetDataTypeConverter}, and so does
+	 * not take full advantage of its internal cache.
 	 * 
 	 * @see #getGhidraDataType(TargetDataTypeConverter)
 	 */
@@ -83,6 +86,7 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	 * Get the type of this symbol converted to a Ghidra data type, without using a
 	 * {@link DataTypeManager}
 	 *
+	 * <p>
 	 * It is better to use variants with a {@link DataTypeManager} directly, rather than using no
 	 * manager and cloning to one later. The former will select types suited to the data
 	 * organization of the destination manager. Using no manager and cloning later will use
@@ -97,6 +101,7 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	/**
 	 * Determine whether the symbol has a constant value
 	 * 
+	 * <p>
 	 * Constant symbols include but are not limited to C enumeration constants. Otherwise, the
 	 * symbol's value refers to an address, which stores a presumably non-constant value.
 	 * 
@@ -109,11 +114,14 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	/**
 	 * Get the value of the symbol
 	 * 
+	 * <p>
 	 * If the symbol is a constant, then the returned address will be in the constant space.
 	 * 
 	 * @return the address or constant value of the symbol, or {@link Address#NO_ADDRESS} if
 	 *         unspecified
 	 */
+	@Override
+	// NB. TargetObject defines this attribute
 	public default Address getValue() {
 		return getTypedAttributeNowByName(VALUE_ATTRIBUTE_NAME, Address.class, Address.NO_ADDRESS);
 	}
@@ -121,11 +129,13 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	/**
 	 * If known, get the size of the symbol in bytes
 	 * 
+	 * <p>
 	 * The size of a symbol is usually not required at runtime, so a user should be grateful if this
 	 * is known. If it is not known, or the symbol does not have a size, this method returns 0.
 	 * 
 	 * @return the size of the symbol, or 0 if unspecified
 	 */
+	@TargetAttributeType(name = SIZE_ATTRIBUTE_NAME, fixed = true, hidden = true)
 	public default long getSize() {
 		return getTypedAttributeNowByName(SIZE_ATTRIBUTE_NAME, Long.class, 0L);
 	}
@@ -133,12 +143,14 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	/**
 	 * Get the namespace for this symbol.
 	 * 
+	 * <p>
 	 * While it is most common for a symbol to be an immediate child of its namespace, that is not
 	 * necessarily the case. This method is a reliable and type-safe means of obtaining that
 	 * namespace.
 	 * 
 	 * @return a reference to the namespace
 	 */
+	@TargetAttributeType(name = NAMESPACE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	public default TypedTargetObjectRef<? extends TargetSymbolNamespace<?>> getNamespace() {
 		return getTypedRefAttributeNowByName(NAMESPACE_ATTRIBUTE_NAME, TargetSymbolNamespace.tclass,
 			null);

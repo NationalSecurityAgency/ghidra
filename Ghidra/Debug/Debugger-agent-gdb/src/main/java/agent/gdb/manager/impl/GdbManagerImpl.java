@@ -36,6 +36,7 @@ import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.parsing.GdbMiParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import ghidra.async.*;
+import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.dbg.util.PrefixMap;
 import ghidra.lifecycle.Internal;
@@ -627,29 +628,6 @@ public class GdbManagerImpl implements GdbManager {
 		}
 	}
 
-	private void readStream(InputStream in, Channel channel, Interpreter interpreter) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-		try {
-			String line;
-			while (isAlive() && null != (line = reader.readLine())) {
-				String l = line;
-				//Msg.debug(this, channel + ": " + line);
-				submit(() -> {
-					if (LOG_IO) {
-						DBG_LOG.println("<" + interpreter + ": " + l);
-						DBG_LOG.flush();
-					}
-					processLine(l, channel, interpreter);
-				});
-			}
-		}
-		catch (Throwable e) {
-			terminate();
-			Msg.debug(this, channel + "," + interpreter + " reader exiting because " + e);
-			//throw new AssertionError(e);
-		}
-	}
-
 	@Override
 	public synchronized void terminate() {
 		Msg.debug(this, "Terminating " + this);
@@ -675,15 +653,17 @@ public class GdbManagerImpl implements GdbManager {
 		if (gdb != null) {
 			gdb.destroyForcibly();
 		}
-		cmdLock.dispose("GDB is terminating");
-		state.dispose("GDB is terminating");
-		mi2Prompt.dispose("GDB is terminating");
+		DebuggerModelTerminatingException reason =
+			new DebuggerModelTerminatingException("GDB is terminating");
+		cmdLock.dispose(reason);
+		state.dispose(reason);
+		mi2Prompt.dispose(reason);
 		for (GdbThreadImpl thread : threads.values()) {
-			thread.dispose("GDB is terminating");
+			thread.dispose(reason);
 		}
 		GdbPendingCommand<?> cc = this.curCmd; // read volatile
 		if (cc != null && !cc.isDone()) {
-			cc.completeExceptionally(new IllegalStateException("GDB is terminating"));
+			cc.completeExceptionally(reason);
 		}
 	}
 

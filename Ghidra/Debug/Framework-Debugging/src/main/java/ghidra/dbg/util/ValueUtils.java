@@ -17,8 +17,6 @@ package ghidra.dbg.util;
 
 import java.util.Collection;
 
-import ghidra.dbg.attributes.TargetObjectRefList;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.util.Msg;
 
 public enum ValueUtils {
@@ -37,17 +35,19 @@ public enum ValueUtils {
 	}
 
 	public static <T> T expectType(Object val, Class<T> cls, Object logObj, String attributeName,
-			T fallback) {
+			T fallback, boolean required) {
 		if (val == null || !cls.isAssignableFrom(val.getClass())) {
-			reportErr(val, cls, logObj, attributeName);
+			if (val != null || required) {
+				reportErr(val, cls, logObj, attributeName);
+			}
 			return fallback;
 		}
 		return cls.cast(val);
 	}
 
 	public static boolean expectBoolean(Object val, Object logObj, String attributeName,
-			boolean fallback) {
-		Boolean exp = expectType(val, Boolean.class, logObj, attributeName, null);
+			boolean fallback, boolean required) {
+		Boolean exp = expectType(val, Boolean.class, logObj, attributeName, null, required);
 		if (exp == null) {
 			return fallback;
 		}
@@ -58,32 +58,5 @@ public enum ValueUtils {
 	public static <T extends Collection<E>, E> Class<T> colOf(Class<? super T> colType,
 			Class<E> elemType) {
 		return (Class<T>) colType;
-	}
-
-	public static <T extends Collection<E>, E> T expectCollectionOf(Object val, Class<T> colType,
-			Class<E> elemType, Object logObj,
-			String attributeName, T fallback) {
-		if (!colType.isAssignableFrom(val.getClass())) {
-			reportErr(val, colType, logObj, attributeName);
-			return fallback;
-		}
-		T col = colType.cast(val);
-		for (E e : col) {
-			if (!elemType.isAssignableFrom(e.getClass())) {
-				reportErr(e, elemType, logObj, "element of " + attributeName);
-				return fallback;
-			}
-		}
-		return col;
-	}
-
-	public static TargetBreakpointKindSet expectBreakKindSet(Object val, Object logObj,
-			String attributeName, TargetBreakpointKindSet fallback) {
-		return expectType(val, TargetBreakpointKindSet.class, logObj, attributeName, fallback);
-	}
-
-	public static TargetObjectRefList<?> expectTargetObjectRefList(Object val,
-			Object logObj, String attributeName, TargetObjectRefList<?> fallback) {
-		return expectType(val, TargetObjectRefList.class, logObj, attributeName, fallback);
 	}
 }

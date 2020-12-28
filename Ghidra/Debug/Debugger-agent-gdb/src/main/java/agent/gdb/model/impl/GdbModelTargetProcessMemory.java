@@ -32,13 +32,19 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.TargetMemory;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "Memory", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetProcessMemory
 		extends DefaultTargetObject<GdbModelTargetMemoryRegion, GdbModelTargetInferior>
 		implements TargetMemory<GdbModelTargetProcessMemory> {
+	public static final String NAME = "Memory";
 
 	protected final GdbModelImpl impl;
 	protected final GdbInferior inferior;
@@ -47,7 +53,7 @@ public class GdbModelTargetProcessMemory
 		new WeakValueHashMap<>();
 
 	public GdbModelTargetProcessMemory(GdbModelTargetInferior inferior) {
-		super(inferior.impl, inferior, "Memory", "ProcessMemory");
+		super(inferior.impl, inferior, NAME, "ProcessMemory");
 		this.impl = inferior.impl;
 		this.inferior = inferior.inferior;
 	}

@@ -23,10 +23,15 @@ import java.util.stream.Collectors;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.util.Msg;
 
 /**
  * A bank of registers on the debug target
+ * 
+ * <p>
+ * The bank allows access to registers' <em>values</em>; whereas, a {@link TargetRegisterContainer}
+ * allows reflection of the registers' names and structures.
  */
 @DebuggerTargetObjectIface("RegisterBank")
 public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends TypedTargetObject<T> {
@@ -46,6 +51,7 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 	 * 
 	 * @return a future which completes with object
 	 */
+	@TargetAttributeType(name = DESCRIPTIONS_ATTRIBUTE_NAME)
 	@SuppressWarnings("unchecked")
 	public default TypedTargetObjectRef<? extends TargetRegisterContainer<?>> getDescriptions() {
 		return getTypedRefAttributeNowByName(DESCRIPTIONS_ATTRIBUTE_NAME,
@@ -216,6 +222,6 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 		 * @param updates a name-value map of updated registers
 		 */
 		default void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
-		};
+		}
 	}
 }

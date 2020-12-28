@@ -24,12 +24,18 @@ import agent.gdb.manager.GdbStackFrame;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "StackFrame", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, GdbModelTargetStack>
 		implements TargetStackFrame<GdbModelTargetStackFrame>,
 		TargetRegisterBank<GdbModelTargetStackFrame>, GdbModelSelectableObject {
@@ -59,7 +65,7 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 	protected String func;
 	protected String display;
 
-	private GdbModelTargetStackFrameRegisterContainer registers;
+	private final GdbModelTargetStackFrameRegisterContainer registers;
 
 	public GdbModelTargetStackFrame(GdbModelTargetStack stack, GdbModelTargetThread thread,
 			GdbModelTargetInferior inferior, GdbStackFrame frame) {
@@ -70,14 +76,20 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 
 		this.registers = new GdbModelTargetStackFrameRegisterContainer(this);
 
-		changeAttributes(List.of(), List.of( //
-			registers //
-		), Map.of( //
-			DESCRIPTIONS_ATTRIBUTE_NAME, getDescriptions(), //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
-		), "Initialized");
+		changeAttributes(List.of(),
+			List.of(
+				registers),
+			Map.of(
+				DESCRIPTIONS_ATTRIBUTE_NAME, getDescriptions(),
+				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame),
+				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED),
+			"Initialized");
 		setFrame(frame);
+	}
+
+	@TargetAttributeType(name = GdbModelTargetStackFrameRegisterContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetStackFrameRegisterContainer getRegisters() {
+		return registers;
 	}
 
 	@Override
@@ -166,4 +178,8 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		return frame.select();
 	}
 
+	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME)
+	public String getFunction() {
+		return func;
+	}
 }

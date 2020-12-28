@@ -16,10 +16,12 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * A marker interface which indicates a thread, usually within a process
  * 
+ * <p>
  * This object must be associated with a suitable {@link TargetExecutionStateful}. In most cases,
  * the object should just implement it.
  */
@@ -35,4 +37,9 @@ public interface TargetThread<T extends TargetThread<T>> extends TypedTargetObje
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	Class<Private.Cls> tclass = (Class) TargetThread.class;
+
+	@TargetAttributeType(name = TID_ATTRIBUTE_NAME, hidden = true)
+	public default Integer getTid() {
+		return getTypedAttributeNowByName(TID_ATTRIBUTE_NAME, Integer.class, null);
+	}
 }

@@ -22,10 +22,18 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
 import ghidra.dbg.util.CollectionUtils.AbstractNSet;
 import ghidra.program.model.address.*;
 
+/**
+ * A container for breakpoint specifications and/or locations
+ * 
+ * <p>
+ * This interface provides for the placment (creation) of breakpoints and as a listening point for
+ * breakpoint events. Typically, it is implemented by an object whose elements are breakpoints.
+ */
 @DebuggerTargetObjectIface("BreakpointContainer")
 public interface TargetBreakpointContainer<T extends TargetBreakpointContainer<T>>
 		extends TypedTargetObject<T> {
@@ -74,17 +82,60 @@ public interface TargetBreakpointContainer<T extends TargetBreakpointContainer<T
 		}
 	}
 
+	/**
+	 * Get the kinds of supported breakpoints
+	 * 
+	 * <p>
+	 * Different debuggers have differing vocabularies of breakpoints, and may only support a subset
+	 * of those recognized by Ghidra. This attribute describes those supported.
+	 * 
+	 * @return the set of supported kinds
+	 */
+	@TargetAttributeType(name = SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TargetBreakpointKindSet getSupportedBreakpointKinds() {
 		return getTypedAttributeNowByName(SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME,
 			TargetBreakpointKindSet.class, TargetBreakpointKindSet.of());
 	}
 
+	/**
+	 * Specify a breakpoint having the given expression and kinds
+	 * 
+	 * <p>
+	 * Certain combinations of kinds and expression may not be reasonable. In those cases, the
+	 * debugger may choose to reject, split, and/or adjust the request.
+	 * 
+	 * @param expression the expression, in the native debugger's syntax
+	 * @param kinds the desired set of kinds
+	 * @return a future which completes when the request is processed
+	 */
 	public CompletableFuture<Void> placeBreakpoint(String expression,
 			Set<TargetBreakpointKind> kinds);
 
+	/**
+	 * Specify a breakpoint having the given range and kinds
+	 * 
+	 * <p>
+	 * Certain combinations of kinds and range may not be reasonable. In those cases, the debugger
+	 * may choose to reject, split, and/or adjust the request.
+	 * 
+	 * @param range the range of addresses for the breakpoint
+	 * @param kinds the desired set of kinds
+	 * @return a future which completes when the request is processed
+	 */
 	public CompletableFuture<Void> placeBreakpoint(AddressRange range,
 			Set<TargetBreakpointKind> kinds);
 
+	/**
+	 * Specify a breakpoint having the given address and kinds
+	 * 
+	 * <p>
+	 * Certain combinations of kinds may not be reasonable. In those cases, the debugger may choose
+	 * to reject, split, and/or adjust the request.
+	 * 
+	 * @param expression the expression, in the native debugger's syntax
+	 * @param kinds the desired set of kinds
+	 * @return a future which completes when the request is processed
+	 */
 	public default CompletableFuture<Void> placeBreakpoint(Address address,
 			Set<TargetBreakpointKind> kinds) {
 		return placeBreakpoint(new AddressRangeImpl(address, address), kinds);

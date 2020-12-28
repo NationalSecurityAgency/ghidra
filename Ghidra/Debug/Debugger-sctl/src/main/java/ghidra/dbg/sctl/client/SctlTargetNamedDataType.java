@@ -128,7 +128,7 @@ public abstract class SctlTargetNamedDataType<T extends SctlTargetNamedDataType<
 	}
 
 	@Override
-	public NamedDataTypeKind getKind() {
+	public NamedDataTypeKind getTypeKind() {
 		return kind;
 	}
 }

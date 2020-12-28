@@ -16,6 +16,7 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * Provides information about a given target object
@@ -65,8 +66,9 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the target architecture
 	 */
+	@TargetAttributeType(name = VISIBLE_ARCH_ATTRIBUTE_NAME)
 	default String getArchitecture() {
-		return getTypedAttributeNowByName(ARCH_ATTRIBUTE_NAME, String.class, "");
+		return getTypedAttributeNowByName(VISIBLE_ARCH_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	/**
@@ -82,6 +84,7 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the host debugger
 	 */
+	@TargetAttributeType(name = DEBUGGER_ATTRIBUTE_NAME, hidden = true)
 	default String getDebugger() {
 		return getTypedAttributeNowByName(DEBUGGER_ATTRIBUTE_NAME, String.class, "");
 	}
@@ -98,8 +101,9 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the target operating system
 	 */
+	@TargetAttributeType(name = VISIBLE_OS_ATTRIBUTE_NAME)
 	default String getOperatingSystem() {
-		return getTypedAttributeNowByName(OS_ATTRIBUTE_NAME, String.class, "");
+		return getTypedAttributeNowByName(VISIBLE_OS_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	/**
@@ -112,8 +116,9 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the target endianness
 	 */
+	@TargetAttributeType(name = VISIBLE_ENDIAN_ATTRIBUTE_NAME)
 	default String getEndian() {
-		return getTypedAttributeNowByName(ENDIAN_ATTRIBUTE_NAME, String.class, "");
+		return getTypedAttributeNowByName(VISIBLE_ENDIAN_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	// TODO: Devices? File System?

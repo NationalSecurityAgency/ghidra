@@ -24,10 +24,16 @@ import agent.gdb.manager.GdbModule;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "Module", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetModule
 		extends DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer>
 		implements TargetModule<GdbModelTargetModule> {
@@ -47,6 +53,8 @@ public class GdbModelTargetModule
 	protected final GdbModelTargetSymbolContainer symbols;
 	// TODO Types? See GDB's ptype, but that'll require some C parsing
 
+	protected AddressRange range;
+
 	public GdbModelTargetModule(GdbModelTargetModuleContainer modules, GdbModule module) {
 		super(modules.impl, modules, keyModule(module), "Module");
 		this.impl = modules.impl;
@@ -56,11 +64,18 @@ public class GdbModelTargetModule
 		this.sections = new GdbModelTargetSectionContainer(this);
 		this.symbols = new GdbModelTargetSymbolContainer(this);
 
+		range = doGetRange(); // Likely [0,0]
 		changeAttributes(List.of(),
-			Map.of(sections.getName(), sections, symbols.getName(), symbols,
-				MODULE_NAME_ATTRIBUTE_NAME, module.getName(), UPDATE_MODE_ATTRIBUTE_NAME,
-				TargetUpdateMode.FIXED, DISPLAY_ATTRIBUTE_NAME, module.getName() //
-			), "Initialized");
+			List.of(
+				sections,
+				symbols),
+			Map.of(
+				VISIBLE_RANGE_ATTRIBUTE_NAME, range,
+				RANGE_ATTRIBUTE_NAME, range,
+				MODULE_NAME_ATTRIBUTE_NAME, module.getName(),
+				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED,
+				DISPLAY_ATTRIBUTE_NAME, module.getName()),
+			"Initialized");
 	}
 
 	public CompletableFuture<Void> init() {
@@ -68,6 +83,16 @@ public class GdbModelTargetModule
 			Msg.error(this, "Could not initialize module sections and base", ex);
 			return null;
 		});
+	}
+
+	@TargetAttributeType(name = GdbModelTargetSectionContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetSectionContainer getSections() {
+		return sections;
+	}
+
+	@TargetAttributeType(name = GdbModelTargetSymbolContainer.NAME, required = true, fixed = true)
+	public GdbModelTargetSymbolContainer getSymbols() {
+		return symbols;
 	}
 
 	@Override
@@ -78,7 +103,7 @@ public class GdbModelTargetModule
 	protected AddressRange doGetRange() {
 		Long base = module.getKnownBase();
 		Long max = module.getKnownMax();
-		max = max == null ? base : max - 1; // GDB gives end+1
+		max = max == null ? base : (Long) (max - 1); // GDB gives end+1
 		if (base == null) {
 			Address addr = impl.space.getMinAddress();
 			return new AddressRangeImpl(addr, addr);
@@ -88,8 +113,20 @@ public class GdbModelTargetModule
 
 	public void sectionsRefreshed() {
 		AddressRange range = doGetRange();
-		changeAttributes(List.of(), Map.of(RANGE_ATTRIBUTE_NAME, range, //
-			VISIBLE_RANGE_ATTRIBUTE_NAME, range //
-		), "Sections Refreshed");
+		changeAttributes(List.of(), Map.of(
+			RANGE_ATTRIBUTE_NAME, range,
+			VISIBLE_RANGE_ATTRIBUTE_NAME, range),
+			"Sections Refreshed");
+	}
+
+	@Override
+	public AddressRange getRange() {
+		return range;
+	}
+
+	@Deprecated(forRemoval = true)
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME)
+	public AddressRange getInvisibleRange() {
+		return range;
 	}
 }

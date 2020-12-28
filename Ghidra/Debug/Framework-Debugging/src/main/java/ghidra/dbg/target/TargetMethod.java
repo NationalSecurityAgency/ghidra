@@ -22,12 +22,14 @@ import java.util.stream.Stream;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptyMap;
 import ghidra.dbg.util.CollectionUtils.AbstractNMap;
 
 /**
- * A marker interface which indicates a method on an object
+ * An object which can be invoked as a method
  * 
+ * TODO: Should parameters and return type be something incorporated into Schemas?
  */
 @DebuggerTargetObjectIface("Method")
 public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObject<T> {
@@ -47,19 +49,42 @@ public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObje
 	 * A description of a method parameter
 	 * 
 	 * <p>
-	 * TODO: Most of this should probably eventually go into {@link TargetMethod}
-	 * <p>
 	 * TODO: For convenience, these should be programmable via annotations.
+	 * <P>
+	 * TODO: Should this be incorporated into schemas?
 	 * 
 	 * @param <T> the type of the parameter
 	 */
 	class ParameterDescription<T> {
+		/**
+		 * Create a parameter
+		 * 
+		 * @param <T> the type of the parameter
+		 * @param type the class representing the type of the parameter
+		 * @param name the name of the parameter
+		 * @param required true if this parameter must be provided
+		 * @param defaultValue the default value of this parameter
+		 * @param display the human-readable name of this parameter
+		 * @param description the human-readable description of this parameter
+		 * @return the new parameter description
+		 */
 		public static <T> ParameterDescription<T> create(Class<T> type, String name,
 				boolean required, T defaultValue, String display, String description) {
 			return new ParameterDescription<>(type, name, required, defaultValue, display,
 				description, List.of());
 		}
 
+		/**
+		 * Create a parameter having enumerated choices
+		 * 
+		 * @param <T> the type of the parameter
+		 * @param type the class representing the type of the parameter
+		 * @param name the name of the parameter
+		 * @param choices the non-empty set of choices
+		 * @param display the human-readable name of this parameter
+		 * @param description the human-readable description of this parameter
+		 * @return the new parameter description
+		 */
 		public static <T> ParameterDescription<T> choices(Class<T> type, String name,
 				Collection<T> choices, String display, String description) {
 			T defaultValue = choices.iterator().next();
@@ -266,6 +291,13 @@ public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObje
 		return valid;
 	}
 
+	/**
+	 * A convenience method used by {@link TargetLauncher} as a stopgap until "launch" becomes a
+	 * {@link TargetMethod}.
+	 * 
+	 * @param obj the object having a "parameters" attribute.
+	 * @return the parameter map
+	 */
 	static TargetParameterMap getParameters(TargetObject obj) {
 		return obj.getTypedAttributeNowByName(PARAMETERS_ATTRIBUTE_NAME,
 			TargetParameterMap.class, TargetParameterMap.of());
@@ -274,11 +306,9 @@ public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObje
 	/**
 	 * Get the parameter descriptions of this method
 	 * 
-	 * <p>
-	 * TODO: This attribute needs better type checking. Probably delay for schemas.
-	 * 
 	 * @return the name-description map of parameters
 	 */
+	@TargetAttributeType(name = PARAMETERS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default public TargetParameterMap getParameters() {
 		return getParameters(this);
 	}
@@ -293,22 +323,13 @@ public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObje
 	 * 
 	 * @return the return type
 	 */
+	@TargetAttributeType(name = RETURN_TYPE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default public Class<?> getReturnType() {
 		return getTypedAttributeNowByName(RETURN_TYPE_ATTRIBUTE_NAME, Class.class,
 			Object.class);
 	}
 
-	/**
-	 * Check if extra parameters are allowed
-	 * 
-	 * <p>
-	 * If not allowed, any named parameter not in the descriptions is considered an error.
-	 * 
-	 * @return true if extras allowed, false if not
-	 */
-	default public boolean allowsExtra() {
-		return false;
-	}
+	// TODO: Allow extra parameters, i.e., varargs?
 
 	/**
 	 * Invoke the method with the given arguments

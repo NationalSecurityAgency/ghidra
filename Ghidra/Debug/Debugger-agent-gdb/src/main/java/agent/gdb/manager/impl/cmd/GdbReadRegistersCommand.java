@@ -136,7 +136,7 @@ public class GdbReadRegistersCommand
 			}
 			catch (GdbParseError | AssertionError e) {
 				Msg.warn(this,
-					"Could not figure register value for [" + number + "] = " + value, e);
+					"Could not figure register value for [" + number + "] = " + value/*, e*/);
 			}
 		}
 		return result;

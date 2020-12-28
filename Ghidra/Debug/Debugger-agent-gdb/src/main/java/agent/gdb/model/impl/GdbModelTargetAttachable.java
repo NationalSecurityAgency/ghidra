@@ -22,8 +22,14 @@ import agent.gdb.manager.GdbProcessThreadGroup;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetAttachable;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
+@TargetObjectSchemaInfo(name = "Attachable", elements = {
+	@TargetElementType(type = Void.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+})
 public class GdbModelTargetAttachable
 		extends DefaultTargetObject<TargetObject, GdbModelTargetAvailableContainer>
 		implements TargetAttachable<GdbModelTargetAttachable> {
@@ -58,6 +64,7 @@ public class GdbModelTargetAttachable
 		), "Initialized");
 	}
 
+	@TargetAttributeType(name = PID_ATTRIBUTE_NAME, hidden = true)
 	public long getPid() {
 		return pid;
 	}

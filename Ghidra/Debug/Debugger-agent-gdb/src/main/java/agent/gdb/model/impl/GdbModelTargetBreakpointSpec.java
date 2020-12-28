@@ -23,16 +23,22 @@ import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointLocation;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpec;
+import ghidra.dbg.target.TargetDeletable;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetBreakpointSpec extends
-		DefaultTargetObject<TargetBreakpointLocation<GdbModelTargetBreakpointLocation>, GdbModelTargetBreakpointContainer>
+		DefaultTargetObject<GdbModelTargetBreakpointLocation, GdbModelTargetBreakpointContainer>
 		implements TargetBreakpointSpec<GdbModelTargetBreakpointSpec>,
 		TargetDeletable<GdbModelTargetBreakpointSpec> {
 
@@ -68,7 +74,15 @@ public class GdbModelTargetBreakpointSpec extends
 		this.impl = breakpoints.impl;
 		this.number = info.getNumber();
 
-		updateInfo(null, info, "Created").exceptionally(ex -> {
+		this.info = info;
+
+		changeAttributes(List.of(), Map.of(
+			CONTAINER_ATTRIBUTE_NAME, breakpoints),
+			"Initialized");
+	}
+
+	protected CompletableFuture<Void> init() {
+		return updateInfo(info, info, "Created").exceptionally(ex -> {
 			Msg.info(this, "Initial breakpoint info update failed", ex);
 			return null;
 		});
@@ -242,5 +256,10 @@ public class GdbModelTargetBreakpointSpec extends
 	@Override
 	public String getDisplay() {
 		return display;
+	}
+
+	@Override
+	public GdbModelTargetBreakpointContainer getContainer() {
+		return parent;
 	}
 }

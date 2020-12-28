@@ -24,12 +24,18 @@ import agent.gdb.manager.*;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "RegisterContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetRegisterContainer
 		extends DefaultTargetObject<GdbModelTargetRegister, GdbModelTargetInferior>
 		implements TargetRegisterContainer<GdbModelTargetRegisterContainer> {
+	public static final String NAME = "Registers";
 
 	protected final GdbModelImpl impl;
 	protected final GdbInferior inferior;
@@ -38,7 +44,7 @@ public class GdbModelTargetRegisterContainer
 		new WeakValueHashMap<>();
 
 	public GdbModelTargetRegisterContainer(GdbModelTargetInferior inferior) {
-		super(inferior.impl, inferior, "Registers", "RegisterContainer");
+		super(inferior.impl, inferior, NAME, "RegisterContainer");
 		this.impl = inferior.impl;
 		this.inferior = inferior.inferior;
 	}

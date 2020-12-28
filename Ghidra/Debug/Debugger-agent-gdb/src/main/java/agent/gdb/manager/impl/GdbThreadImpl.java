@@ -263,10 +263,11 @@ public class GdbThreadImpl implements GdbThread {
 		return execute(new GdbDetachCommand(manager, inferior, id));
 	}
 
-	public void dispose(String reason) {
+	public void dispose(Throwable reason) {
 		state.dispose(reason);
 	}
 
+	@Override
 	public CompletableFuture<GdbThreadInfo> getInfo() {
 		return manager.getThreadInfo(id);
 	}

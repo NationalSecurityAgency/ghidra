@@ -27,13 +27,19 @@ import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "ModuleContainer", attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public class GdbModelTargetModuleContainer
 		extends DefaultTargetObject<GdbModelTargetModule, GdbModelTargetInferior>
 		implements TargetModuleContainer<GdbModelTargetModuleContainer> {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
+	public static final String NAME = "Modules";
 
 	protected final GdbModelImpl impl;
 	protected final GdbInferior inferior;
@@ -42,7 +48,7 @@ public class GdbModelTargetModuleContainer
 	protected final Map<String, GdbModelTargetModule> modulesByName = new HashMap<>();
 
 	public GdbModelTargetModuleContainer(GdbModelTargetInferior inferior) {
-		super(inferior.impl, inferior, "Modules", "ModuleContainer");
+		super(inferior.impl, inferior, NAME, "ModuleContainer");
 		this.impl = inferior.impl;
 		this.inferior = inferior.inferior;
 	}

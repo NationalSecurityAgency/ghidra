@@ -24,7 +24,7 @@ public interface GadpClientTargetExecutionStateful
 
 	default TargetExecutionState stateFromObj(Object obj) {
 		return ValueUtils.expectType(obj, TargetExecutionState.class, this,
-			STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE);
+			STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE, true);
 	}
 
 	@GadpAttributeChangeCallback(STATE_ATTRIBUTE_NAME)
