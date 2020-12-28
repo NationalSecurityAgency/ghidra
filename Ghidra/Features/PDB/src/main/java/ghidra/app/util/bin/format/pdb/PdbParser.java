@@ -262,21 +262,21 @@ public class PdbParser {
 			throw new PdbException("Unable to find " + PDB_EXE);
 		}
 		/* ---- HACK - make it work with old PDBs. Uncomment to the end this to remove hack ----
-		
+
 		if (noValidation) {*/
 			return new String[] { pdbExe, pdbFile.getAbsolutePath() };
 		}/*
-		
+
 		String pdbAge = programAttributes.getPdbAge();
 		String pdbGuid = programAttributes.getPdbGuid();
 		String pdbSignature = programAttributes.getPdbSignature();
-		
+
 		if (pdbAge != null && pdbGuid != null) {
 			return new String[] { pdbExe, pdbFile.getAbsolutePath(), pdbGuid, pdbAge };
-		
+
 		if (pdbAge != null && pdbSignature != null) {
 			return new String[] { pdbExe, pdbFile.getAbsolutePath(), pdbSignature, pdbAge };
-		
+
 		throw new PdbException("Unable to determine PDB GUID/Signature or Age. " +
 			"Please re-import the executable and try again.");
 		*/
