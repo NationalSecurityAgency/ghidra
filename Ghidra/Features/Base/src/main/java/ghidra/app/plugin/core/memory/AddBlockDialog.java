@@ -418,8 +418,14 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private void baseAddressChanged() {
-		Address baseAddress = baseAddrField.getAddress();
-		model.setBaseAddress(baseAddress);
+		Address addr = null;
+		try {
+			addr = baseAddrField.getAddress();
+		}
+		catch (IllegalArgumentException e) {
+			// just let it be null
+		}
+		model.setBaseAddress(addr);
 	}
 	
 	private void schemeSrcByteCountChanged() {

@@ -380,7 +380,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a valid starting address", msg);
+		assertEquals("Please enter a valid Start Address", msg);
 		assertFalse(okButton.isEnabled());
 		close(d);
 	}
@@ -412,7 +412,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a name", msg);
+		assertEquals("Please enter a Block Name", msg);
 		assertFalse(okButton.isEnabled());
 
 	}
@@ -445,7 +445,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a valid length between 0 and 0x400000000", msg);
+		assertEquals("Please enter a valid Length: 1 to 0x100000000", msg);
 		assertFalse(okButton.isEnabled());
 		close(d);
 	}
@@ -485,7 +485,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertFalse(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Please enter a valid length between 0 and 0x400000000", msg);
+		assertEquals("Please enter a valid Length: 1 to 0x100000000", msg);
 		assertFalse(okButton.isEnabled());
 		close(d);
 	}
@@ -521,7 +521,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(okButton.isEnabled());
 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
-		assertEquals("Warning! Block name already exists", msg);
+		assertEquals("Warning! Duplicate Block Name", msg);
 
 		close(d);
 	}
