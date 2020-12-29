@@ -451,9 +451,8 @@ class RootNode extends WindowNode {
 		invalid = true;
 		detachChild();
 		setLastFocusedProviderInWindow(null);   // clear out stale last focused provider
-		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
-		while (it.hasNext()) {
-			DetachedWindowNode windowNode = it.next();
+		List<DetachedWindowNode> copy = new ArrayList<>(detachedWindows);
+		for (DetachedWindowNode windowNode : copy) {
 			notifyWindowRemoved(windowNode);
 			windowNode.dispose();
 		}

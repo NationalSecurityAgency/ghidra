@@ -139,7 +139,7 @@ class DetachedWindowNode extends WindowNode {
 	}
 
 	private void setFrameIcon(Frame frame, Image image) {
-		List<Image> list = new ArrayList<Image>();
+		List<Image> list = new ArrayList<>();
 		list.add(image);
 		setFrameIcon(frame, list);
 	}
@@ -222,7 +222,7 @@ class DetachedWindowNode extends WindowNode {
 	}
 
 	private String getTitleOfChildren() {
-		List<ComponentPlaceholder> placeholders = new ArrayList<ComponentPlaceholder>();
+		List<ComponentPlaceholder> placeholders = new ArrayList<>();
 
 		child.populateActiveComponents(placeholders);
 
@@ -253,12 +253,12 @@ class DetachedWindowNode extends WindowNode {
 		// the same provider.
 		//
 		Map<String, List<ComponentPlaceholder>> providerNameToPlacholdersMap =
-			new HashMap<String, List<ComponentPlaceholder>>();
+			new HashMap<>();
 		for (ComponentPlaceholder placeholder : placeholders) {
 			String providerName = placeholder.getProvider().getName();
 			List<ComponentPlaceholder> list = providerNameToPlacholdersMap.get(providerName);
 			if (list == null) {
-				list = new ArrayList<ComponentPlaceholder>();
+				list = new ArrayList<>();
 				providerNameToPlacholdersMap.put(providerName, list);
 			}
 			list.add(placeholder);
@@ -267,13 +267,13 @@ class DetachedWindowNode extends WindowNode {
 		//
 		// Turn the created mapping into a mapping of providers names to sub-titles
 		//
-		Map<String, List<String>> providerNameToTitlesMap = new HashMap<String, List<String>>();
+		Map<String, List<String>> providerNameToTitlesMap = new HashMap<>();
 		Set<Entry<String, List<ComponentPlaceholder>>> entrySet =
 			providerNameToPlacholdersMap.entrySet();
 		for (Entry<String, List<ComponentPlaceholder>> entry : entrySet) {
 			String providerName = entry.getKey();
 			List<ComponentPlaceholder> placeholdersList = entry.getValue();
-			List<String> titles = new ArrayList<String>();
+			List<String> titles = new ArrayList<>();
 			if (placeholdersList.size() == 1) {
 				titles.add(placeholdersList.get(0).getTitle());
 			}
@@ -290,7 +290,7 @@ class DetachedWindowNode extends WindowNode {
 		// Use the created mapping to create an individual title based on a single provider
 		// or a group of providers.
 		//
-		List<String> finalTitles = new ArrayList<String>();
+		List<String> finalTitles = new ArrayList<>();
 		Set<Entry<String, List<String>>> providersEntrySet = providerNameToTitlesMap.entrySet();
 		for (Entry<String, List<String>> entry : providersEntrySet) {
 			String providerName = entry.getKey();
@@ -473,6 +473,7 @@ class DetachedWindowNode extends WindowNode {
 
 	@Override
 	void dispose() {
+
 		if (dropTargetHandler != null) {
 			dropTargetHandler.dispose();
 		}
@@ -485,8 +486,11 @@ class DetachedWindowNode extends WindowNode {
 			window = null;
 		}
 
-		child.parent = null;
-		child = null;
+		if (child != null) {
+			child.parent = null;
+			child.dispose();
+			child = null;
+		}
 	}
 
 	@Override
