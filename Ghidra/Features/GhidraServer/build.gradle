@@ -79,16 +79,14 @@ task generateGhidraServerClasspath {
 		outfile.withPrintWriter { out ->
 			int idx = 0
 			configurations.runGhidraServer.each { jarFile ->	
-				if (!jarFile.path.contains("/libsForBuild/")) {			
-					def JAR_PATH = rootProject.relativePath(jarFile.absolutePath)
-					File distPath = file("/")
-					String resPath
-					for (Configuration conf : project.getConfigurations()) {
-						resPath = findJarInDistribution(project, conf, jarFile)
-						if (resPath != null) {
-							out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${resPath}")
-							break
-						}
+				def JAR_PATH = rootProject.relativePath(jarFile.absolutePath)
+				File distPath = file("/")
+				String resPath
+				for (Configuration conf : project.getConfigurations()) {
+					resPath = findJarInDistribution(project, conf, jarFile)
+					if (resPath != null) {
+						out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${resPath}")
+						break
 					}
 				}						
 			}

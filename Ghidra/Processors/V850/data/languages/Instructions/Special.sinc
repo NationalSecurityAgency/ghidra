@@ -63,7 +63,6 @@
 :jarl adr22, R1115 is (op0610=0x1E & R1115) ... & adr22
 {
 	R1115 = inst_next;
-	PC = & adr22;
 	call adr22;
 }
 
@@ -71,40 +70,35 @@
 :jarl adr32, R0004 is op0515=0x017 & R0004; adr32
 {
 	R0004 = inst_next;
-	PC = & adr32;
 	call adr32;
 }
 
 # JMP [reg1] - 00000000011RRRRR
 :jmp [R0004] is op0515=0x03 & R0004 & op0004=0x1F
 {
-	PC = R0004;
 	return [R0004];
 }
 :jmp [R0004] is op0515=0x03 & R0004 & op0004!=0x1F
 {
-	PC = R0004;
 	call [R0004];
 }
 
 # JMP disp32[reg1] - 00000110111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD
-:jmp adr32[R0004] is op0515=0x037 & R0004; adr32
+:jmp adr32i[R0004] is op0515=0x037 & R0004; adr32i
 {
-	local adr = adr32 + R0004;
+	local adr = adr32i + R0004;
 	goto [adr];
 }
 
 # JR disp22 - 00000111110ddddd|ddddddddddddddd0
 :jr adr22 is op0615=0x1E ... & adr22
 {
-	PC = & adr22;
 	goto adr22;
 }
 
 # JR disp32 - 0000001011100000|ddddddddddddddd0|DDDDDDDDDDDDDDDD
 :jr adr32 is op0015=0x2E0; adr32
 {
-	PC = & adr32;
 	goto adr32;
 }
 

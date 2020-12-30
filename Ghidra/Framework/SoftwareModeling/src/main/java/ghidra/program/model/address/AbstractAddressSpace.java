@@ -234,14 +234,14 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		}
 		catch (NumberFormatException e) {
 			throw new AddressFormatException(
-				addrString + ": Cannot parse (" + offStr + ") as a number.");
+				addrString + " contains invalid address hex offset");
 		}
 		catch (AddressOutOfBoundsException e) {
 			throw new AddressFormatException(e.getMessage());
 		}
 	}
 
-	private long parseString(String addr) {
+	private long parseString(String addr) throws NumberFormatException, AddressFormatException {
 		if (addr.startsWith("0x") || addr.startsWith("0X")) {
 			addr = addr.substring(2);
 		}
@@ -250,12 +250,20 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		if (unitSize > 1) {
 			int ix = addr.indexOf('.');
 			if (ix > 0) {
-				mod = (new BigInteger(addr.substring(ix + 1), 16)).longValue();
+				String unitOffset = addr.substring(ix + 1);
+				BigInteger bi = new BigInteger(unitOffset, 16);
+				mod = bi.longValue();
+				if (bi.bitLength() > 8 || mod >= unitSize) {
+					throw new AddressFormatException("invalid address unit offset: ." + unitOffset);
+				}
 				addr = addr.substring(0, ix);
 			}
 		}
 
 		BigInteger bi = new BigInteger(addr, 16);
+		if (bi.bitLength() > 64) {
+			throw new AddressFormatException("unsupported address offset: " + addr);
+		}
 		return (unitSize * bi.longValue()) + mod;
 	}
 

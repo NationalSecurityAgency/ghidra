@@ -139,7 +139,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x01003000", 0x2000);
 		builder.createMemory(".data", "0x01005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
+		setupDummy32TypeInfo(builder);
 		return builder;
 	}
 
@@ -157,7 +157,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
+		setupDummy64TypeInfo(builder);
 		return builder;
 	}
 
@@ -175,7 +175,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
+		setupDummy64TypeInfo(builder);
 		return builder;
 	}
 
@@ -192,8 +192,24 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".text", "0x101001000", 0x2000);
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
-		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
+		setupDummy64TypeInfo(builder);
 		return builder;
+	}
+	
+	
+	protected void setupDummy32TypeInfo(ProgramBuilder builder) throws Exception {
+		builder.setBytes("0x01005000", getHexAddress32AsByteString("0x01004000", false));
+		builder.setBytes("0x01005004", getHexAddress32AsByteString("0x00000000", false));
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
+		
+		builder.setBytes("0x01004000", getHexAddress32AsByteString("0x01008000", false));
+	}
+	
+	protected void setupDummy64TypeInfo(ProgramBuilder builder) throws Exception {
+		builder.setBytes("0x101005000", getHexAddress64AsByteString("0x101006000", false));
+		builder.setBytes("0x101005008", getHexAddress64AsByteString("0x00000000", false));
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101006000", getHexAddress64AsByteString("0x101006080", false));
 	}
 
 	protected void setupCode32Bytes(ProgramBuilder builder, String address) throws Exception {
