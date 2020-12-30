@@ -77,6 +77,7 @@ public class DockableHeader extends GenericHeader
 		setTitle(info.getFullTitle());
 		setIcon(info.getIcon());
 
+		toolBarMgr.dispose(); // reset the default manager before we create our own
 		toolBarMgr = new DockableToolBarManager(dockableComp, this);
 
 		dragSource.createDefaultDragGestureRecognizer(titlePanel.getDragComponent(),

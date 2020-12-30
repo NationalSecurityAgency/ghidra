@@ -32,6 +32,12 @@ adr32: res is op1631 & op1616=0; op3247
 	export *:4 res;
 }
 
+adr32i: res is op1631 & op1616=0; op3247
+[ res = ((op3247 << 16) | op1631); ]
+{
+	export *[const]:4 res;
+}
+
 reg4: op0_1720 is op2323=0 & op0_1720 { export op0_1720; }
 reg4: op1_1720 is op2323=1 & op1_1720 { export op1_1720; }
 

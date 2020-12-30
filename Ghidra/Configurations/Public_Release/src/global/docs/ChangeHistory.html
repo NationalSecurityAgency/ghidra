@@ -6,6 +6,18 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.2.2 Change History (December 2020)</H1>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Graphing</I>. Fixed issue with Graph filters not working and satellite view sometimes not matching graph. (GP-526)</li>
+    <li><I>Importer:MachO</I>. MachO DYLD cache incorrect offset use has been fixed. (GP-550, Issue ##2560)</li>
+    <li><I>Listing</I>. Fixed issue where Edit Label action (L key) did not work on primary function symbols. (GP-537)</li>
+    <li><I>Multi-User</I>. Corrected Ghidra Server build issue for version 9.2.1 which had an improperly generated <B>classpath.frag</B> file.  Issue caused server to fail startup with a ClassNotFoundException. (GP-542)</li>
+    <li><I>Processors</I>. The V850 JMP instruction has been corrected not to use the PC in the address calculation (GP-548, Issue #2570)</li>
+    <li><I>Processors</I>. Removed erroneous VST4 variant, most likely from a copy/paste error.  This fixes the ARM Thumb BL instruction disassembly with a negative offset. (GP-549, Issue #2559)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.2.1 Change History (December 2020)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>

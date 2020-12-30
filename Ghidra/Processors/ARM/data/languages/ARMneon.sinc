@@ -4487,39 +4487,6 @@ vst4DdList2: "{"^buildVst4DdList2^"}"	is  TMode=1 & ((thv_c1011=1 & thv_c0505=1)
 :vst4.^esize1011 vst4DdList2,vst4RnAligned2,VRm	is ( ($(AMODE) & cond=15 & c2327=9 & c2021=0 & c1011<3 & c0809=3) |
 													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3) ) & VRm & vst4RnAligned2 & esize1011 & vst4DdList2 unimpl
 
-#######
-# VST4 (single 4-element structure to all lanes)
-#
-
-vst4Align3:			is TMode=0 & c0404=0						{ }
-vst4Align3:	"@32"	is TMode=0 & c0404=1 & c0607=0				{ }
-vst4Align3: "@64" 	is TMode=0 & c0404=1 & (c0607=1 | c0607=2)	{ }
-vst4Align3: "@128" 	is TMode=0 & c0404=1 & c0607=3				{ }
-vst4Align3:			is TMode=1 & thv_c0404=0					{ }
-vst4Align3:	"@32"	is TMode=1 & thv_c0404=1 & thv_c0607=0		{ }
-vst4Align3: "@64" 	is TMode=1 & thv_c0404=1 & (thv_c0607=1 | thv_c0607=2)	{ }
-vst4Align3: "@128" 	is TMode=1 & thv_c0404=1 & thv_c0607=3		{ }
-
-vst4RnAligned3: "["^VRn^vst4Align3^"]" 	is VRn & vst4Align3	{ export VRn; }
-
-buildVst4DdList3:									is counter=0			{ }
-buildVst4DdList3: Dreg^"[]"							is counter=1 & Dreg		[ counter=0; regNum=regNum+regInc; ] { }
-buildVst4DdList3: Dreg^"[]",buildVst4DdList3		is Dreg & buildVst4DdList3	[ counter=counter-1; regNum=regNum+regInc; ] { }
-
-vst4DdList3: "{"^buildVst4DdList3^"}"	is  TMode=0 & c0505=0 & D22 & c1215 & buildVst4DdList3 [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
-vst4DdList3: "{"^buildVst4DdList3^"}"	is  TMode=0 & c0505=1 & D22 & c1215 & buildVst4DdList3 [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double
-vst4DdList3: "{"^buildVst4DdList3^"}"	is  TMode=1 & thv_c0505=0 & thv_D22 & thv_c1215 & buildVst4DdList3 [ regNum=(thv_D22<<4)+thv_c1215-1; regInc=1; counter=4; ] { } # Single
-vst4DdList3: "{"^buildVst4DdList3^"}"	is  TMode=1 & thv_c0505=1 & thv_D22 & thv_c1215 & buildVst4DdList3 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=4; ] { } # Double
-
-:vst4.^esize0607 vst4DdList3,vst4RnAligned3		is ( ($(AMODE) & cond=15 & c2327=9 & c2021=0 & c0811=15 & c0003=15) |
-													 ($(TMODE_F) & thv_c2327=9 & thv_c2021=0 & thv_c0811=15 & thv_c0003=15) ) & vst4RnAligned3 & esize0607 & vst4DdList3	unimpl
-
-:vst4.^esize0607 vst4DdList3,vst4RnAligned3^"!"	is ( ($(AMODE) & cond=15 & c2327=9 & c2021=0 & c0811=15 & c0003=13) |
-													 ($(TMODE_F) & thv_c2327=9 & thv_c2021=0 & thv_c0811=15 & thv_c0003=13) ) & vst4RnAligned3 & esize0607 & vst4DdList3 unimpl
-
-:vst4.^esize0607 vst4DdList3,vst4RnAligned3,VRm	is ( ($(AMODE) & cond=15 & c2327=9 & c2021=0 & c0811=15) |
-													 ($(TMODE_F) & thv_c2327=9 & thv_c2021=0 & thv_c0811=15) ) & VRm & vst4RnAligned3 & esize0607 & vst4DdList3 unimpl
-
 @endif # SIMD
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
