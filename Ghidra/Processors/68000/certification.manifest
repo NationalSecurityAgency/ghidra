@@ -2,6 +2,7 @@
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/languages/68000.cspec||GHIDRA||||END|
+data/languages/68000.dwarf||GHIDRA||||END|
 data/languages/68000.ldefs||GHIDRA||||END|
 data/languages/68000.opinion||GHIDRA||||END|
 data/languages/68000.pspec||GHIDRA||||END|
