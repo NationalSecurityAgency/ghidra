@@ -1528,6 +1528,142 @@ bool CollapseStructure::ruleBlockWhileDo(FlowBlock *bl)
   return false;
 }
 
+
+bool CollapseStructure::ruleBlockFor(FlowBlock *bl)
+
+{
+  FlowBlock *clauseblock;
+  int4 i;
+
+  if (bl->sizeOut() != 2) return false; // Must be binary condition
+  if (bl->isSwitchOut()) return false;
+  if (bl->getOut(0) == bl) return false; // No loops at this point
+  if (bl->getOut(1) == bl) return false;
+  if (bl->isInteriorGotoTarget()) return false;
+  if (bl->isGotoOut(0)) return false;
+  if (bl->isGotoOut(1)) return false;
+  if (bl->isComplex()) return false; // complex conditions don't work well for `for'
+
+  bool clauseokay = false;
+
+  for(i=0;i<2;++i) {
+    clauseblock = bl->getOut(i);
+    if (clauseblock->sizeIn() != 1) continue; // Nothing else must hit clause
+    if (clauseblock->sizeOut() != 1) continue; // Only one way out of clause
+    if (clauseblock->isSwitchOut()) continue;
+    if (clauseblock->getOut(0) != bl) continue; // Clause must loop back to bl
+
+    clauseokay = true;
+    break;
+  }
+
+  if (!clauseokay) return false;
+
+  // Find the last basic block of the for loop body to promote to post-loop statements
+  FlowBlock *blpost = clauseblock->getBackBasicLeaf();
+
+  // Find the last basic block that will execute right before bl, if any
+
+  FlowBlock *blin = NULL, *blinit = NULL;
+
+  for (i=0; i < bl->sizeIn(); i++) {
+    FlowBlock *blinCandidate = bl->getIn(i);
+
+    if (blinCandidate == clauseblock) continue;
+    if (blinCandidate->getOut(0) != bl) continue;
+
+    blin = blinCandidate;
+    blinit = blin->getBackBasicLeaf();
+    break;
+  }
+
+  // filter out unsuitable initializers
+  if (blinit) {
+    if (blinit->isInteriorGotoTarget()) blinit = NULL;
+  }
+
+  int4 blinitStatements = 0;
+  int4 blpostStatements = 0;
+  
+  if (blinit) {
+    BlockBasic * bb = (BlockBasic*)blinit->subBlock(0);
+    list<PcodeOp *>::reverse_iterator iter;
+
+    // skip last op as its control flow
+    for (iter=bb->rbeginOp();iter!=bb->rendOp();++iter) {
+      PcodeOp *inst = *iter;
+
+      // TODO: include calls that assign to varnode of interest
+      if (inst->isCallOrBranch()) break;
+      if (inst->notPrinted()) continue;
+
+      const Varnode *vn = inst->getOut();
+
+      // we are only interested in assignments
+      if (vn == 0) continue;
+      if ((vn!=(const Varnode *)0)&&(vn->isImplied())) continue;
+
+      blinitStatements++;
+    }
+  }
+
+  if (blpost) {
+    BlockBasic * bb = (BlockBasic*)blpost->subBlock(0);
+    list<PcodeOp *>::reverse_iterator iter;
+
+    // skip last op as its control flow
+    for (iter=++(bb->rbeginOp());iter!=bb->rendOp();++iter) {
+      PcodeOp *inst = *iter;
+
+      // TODO: include calls that assign to varnode of interest
+      if (inst->isCallOrBranch()) break;
+      if (inst->notPrinted()) continue;
+
+      const Varnode *vn = inst->getOut();
+
+      // we are only interested in assignments
+      if (vn == 0) continue;
+      if ((vn!=(const Varnode *)0)&&(vn->isImplied())) continue;
+
+      blpostStatements++;
+    }
+  }
+
+  if (!blinitStatements) {
+    // nothing would be printed, so don't include it
+    blinit = NULL;
+  }
+
+  if (!blpostStatements) {
+    // nothing would be printed, so don't include it
+    blpost = NULL;
+  }
+
+  if (!blinit && !blpost) return false;
+
+  // The found basic block is owned by another structured node (can only be a list)
+  // Safely steal it and reparent it to bl's parent
+  if (blinit && blinit->getParent() != bl->getParent()) {
+    BlockGraph *parent = (BlockGraph*)blinit->getParent();
+
+    parent->reparent(blinit, (BlockGraph*)bl->getParent());
+
+    // Rewire it into the graph as all edge info was cleared
+    graph.addEdge(blin, blinit);
+    graph.addEdge(blinit, bl);
+
+  }
+
+  if (i==0) {	// clause must be true out of bl
+    if (bl->negateCondition(true))
+      dataflow_changecount += 1;
+  }
+
+  graph.newBlockFor(bl, clauseblock, blinit);
+  return true;
+
+}
+
 /// Try to find a do/while structure, starting with the given FlowBlock.
 /// Any \e break and \e continue must have already been collapsed as some form of \e goto.
 /// \param bl is the given FlowBlock
@@ -1787,6 +1923,10 @@ int4 CollapseStructure::collapseInternal(FlowBlock *targetbl)
 	  continue;
 	}
 	if (ruleBlockIfElse(bl)) {
+	  change = true;
+	  continue;
+	}
+	if (ruleBlockFor(bl)) {
 	  change = true;
 	  continue;
 	}

@@ -220,6 +220,7 @@ public:
   virtual void emitBlockCondition(const BlockCondition *bl);
   virtual void emitBlockIf(const BlockIf *bl);
   virtual void emitBlockWhileDo(const BlockWhileDo *bl);
+  virtual void emitBlockFor(const BlockFor *bl);
   virtual void emitBlockDoWhile(const BlockDoWhile *bl);
   virtual void emitBlockInfLoop(const BlockInfLoop *bl);
   virtual void emitBlockSwitch(const BlockSwitch *bl);

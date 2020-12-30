@@ -63,6 +63,7 @@ class BlockCopy;
 class BlockGoto;
 class BlockIf;
 class BlockCondition;
+class BlockFor;
 class BlockWhileDo;
 class BlockDoWhile;
 class BlockInfLoop;
@@ -465,6 +466,7 @@ public:
   virtual void emitBlockCondition(const BlockCondition *bl)=0;		///< Emit a conditional statement
   virtual void emitBlockIf(const BlockIf *bl)=0;			///< Emit an if/else style construct
   virtual void emitBlockWhileDo(const BlockWhileDo *bl)=0;		///< Emit a loop structure, check at top
+  virtual void emitBlockFor(const BlockFor *bl)=0;			///< TODO
   virtual void emitBlockDoWhile(const BlockDoWhile *bl)=0;		///< Emit a loop structure, check at bottom
   virtual void emitBlockInfLoop(const BlockInfLoop *bl)=0;		///< Emit an infinite loop structure
   virtual void emitBlockSwitch(const BlockSwitch *bl)=0;		///< Emit a switch structure
