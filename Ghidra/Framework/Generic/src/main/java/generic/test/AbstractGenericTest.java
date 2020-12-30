@@ -1113,7 +1113,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * 
 	 * @param r the runnable code snippet
 	 */
-	public void runSwingLater(Runnable r) {
+	public static void runSwingLater(Runnable r) {
 		runSwing(r, false);
 	}
 
@@ -1603,23 +1603,34 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 				(WeakSet<SwingUpdateManager>) getInstanceField("instances",
 					SwingUpdateManager.class);
 			for (AbstractSwingUpdateManager manager : s) {
+
+				// Ignore update managers that fire often and are unlikely to affect tests.  
+				// (Hardcoding this is brittle, but these update managers live in lower packages 
+				// and a larger refactoring didn't seem worth the cost at this time.)
+				String name = manager.getName();
+				if (name.equals("Context Updater") ||
+					name.equals("Docking Windows Updater")) {
+					continue;
+				}
+
 				set.add(manager);
 			}
 		});
 
 		/*
+		// performance debug
 		long start = System.nanoTime();
-		boolean wasEverBusy = waitForSwing(set, true);
+		boolean wasEverBusy = waitForSwing(set);
 		long end = System.nanoTime();
 		Msg.out("\twaitForSwing() - " +
 			TimeUnit.MILLISECONDS.convert(end - start, TimeUnit.NANOSECONDS));
 		*/
 
-		boolean wasEverBusy = waitForSwing(set, true);
+		boolean wasEverBusy = waitForSwing(set);
 		return wasEverBusy;
 	}
 
-	private static boolean waitForSwing(Set<AbstractSwingUpdateManager> managers, boolean flush) {
+	private static boolean waitForSwing(Set<AbstractSwingUpdateManager> managers) {
 
 		// Note: not sure how long is too long to wait for the Swing thread and update managers
 		//       to finish.  This is usually less than a second.  We have seen a degenerate
@@ -1629,7 +1640,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		int totalTime = 0;
 
 		// flush all managers up front to get them started before we check them
-		flushAllManagers(managers, flush);
+		flushAllManagers(managers);
 
 		boolean wasEverBusy = false;
 		boolean keepGoing = true;
@@ -1648,13 +1659,12 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 				// Msg.out("busy manager: " + manager.toStringDebug());
 
-				doFlush(flush, manager);
+				doFlush(manager);
 
+				keepGoing = true; // true, since we had a busy signal
+				wasEverBusy = true;
 				boolean isBusy = true;
 				while (isBusy) {
-
-					keepGoing = true; // true, since we had a busy signal
-					wasEverBusy = true;
 
 					totalTime += sleep(DEFAULT_WAIT_DELAY);
 					if (totalTime >= MAX_SWING_TIMEOUT) {
@@ -1676,7 +1686,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return wasEverBusy;
 	}
 
-	private static void flushAllManagers(Set<AbstractSwingUpdateManager> managers, boolean flush) {
+	private static void flushAllManagers(Set<AbstractSwingUpdateManager> managers) {
 
 		//
 		// Some update managers will make an update that causes another manager to schedule an
@@ -1693,21 +1703,26 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		// which would be 2
 		int n = 3;
 		for (int i = 0; i < n; i++) {
+			boolean didFlush = false;
 			for (AbstractSwingUpdateManager manager : managers) {
-				doFlush(flush, manager);
+				didFlush = doFlush(manager);
+			}
+
+			if (!didFlush) {
+				return; // skip extra waiting when no work was done
 			}
 		}
 	}
 
-	private static void doFlush(boolean doFlush, AbstractSwingUpdateManager manager) {
-		if (!doFlush) {
-			return;
+	private static boolean doFlush(AbstractSwingUpdateManager manager) {
+
+		if (!manager.hasPendingUpdates()) {
+			return false; // skip the yield call, as it consumes time
 		}
 
-		runSwing(() -> {
-			manager.flush();
-		}, false);
+		runSwingLater(() -> manager.flush());
 		yieldToSwing();
+		return true;
 	}
 
 	/**
