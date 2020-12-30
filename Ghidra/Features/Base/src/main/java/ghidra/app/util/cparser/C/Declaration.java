@@ -149,9 +149,8 @@ public class Declaration {
 	 * @throws ParseException exception if bitfield to large for the current data type.
 	 */
 	void setBitFieldSize(int bits) throws ParseException {
-		if (bits > (dt.getLength() * 8)) {
-			throw new ParseException(
-				"Declared bitsize " + bits + " too large for field type " + dt.getName());
+		if (bits < 0) {
+			throw new ParseException("Negative bitfield size not permitted: " + dt.getName());
 		}
 		bitSize = bits;
 	}
