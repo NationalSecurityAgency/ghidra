@@ -89,7 +89,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<? extends TargetModule<?>> addSyntheticModule(String name) {
-		throw new UnsupportedOperationException("GDB Does not support synthetic modules");
+		throw new UnsupportedOperationException("Dbgeng Does not support synthetic modules");
 	}
 
 	@Override

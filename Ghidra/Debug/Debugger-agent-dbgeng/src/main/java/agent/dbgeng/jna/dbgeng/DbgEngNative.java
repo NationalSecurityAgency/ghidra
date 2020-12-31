@@ -241,8 +241,8 @@ public interface DbgEngNative extends StdCallLibrary {
 		@SuppressWarnings("unchecked")
 		public <T extends DebugValue> T convertTo(Class<T> desiredType) {
 			if (desiredType != null && desiredType != DebugValue.class &&
-				DebugValueType.getDebugValueTypeForClass(
-					desiredType).ordinal() != Type.intValue()) {
+				DebugValueType.getDebugValueTypeForClass(desiredType).ordinal() != Type
+						.intValue()) {
 				// TODO: Display value in exception
 				throw new ClassCastException("debug value is not of the desired type");
 			}
@@ -346,6 +346,36 @@ public interface DbgEngNative extends StdCallLibrary {
 
 		public ULONGLONG ModuleBase;
 		public ULONGLONG Id;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+	}
+
+	public class DEBUG_MODULE_PARAMETERS extends Structure {
+		public static class ByReference extends DEBUG_MODULE_PARAMETERS
+				implements Structure.ByReference {
+		}
+
+		public static final List<String> FIELDS =
+			createFieldsOrder("Base", "Size", "TimeDateStamp", "Checksum", "Flags", "SymbolType",
+				"ImageNameSize", "ModuleNameSize", "LoadedImageNameSize", "SymbolFileNameSize",
+				"MappedImageNameSize", "Reserved0", "Reserved1");
+
+		public ULONGLONG Base;
+		public ULONG Size;
+		public ULONG TimeDateStamp;
+		public ULONG Checksum;
+		public ULONG Flags;
+		public ULONG SymbolType;
+		public ULONG ImageNameSize;
+		public ULONG ModuleNameSize;
+		public ULONG LoadedImageNameSize;
+		public ULONG SymbolFileNameSize;
+		public ULONG MappedImageNameSize;
+		public ULONGLONG Reserved0;
+		public ULONGLONG Reserved1;
 
 		@Override
 		protected List<String> getFieldOrder() {

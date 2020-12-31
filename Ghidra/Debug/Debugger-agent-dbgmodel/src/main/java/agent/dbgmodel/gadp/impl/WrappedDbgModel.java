@@ -824,6 +824,11 @@ public class WrappedDbgModel
 	}
 
 	@Override
+	public DebugModuleInfo getModuleParameters(int count, int startIndex) {
+		return client.getSymbols().getModuleParameters(count, startIndex);
+	}
+
+	@Override
 	public Iterable<DebugSymbolName> iterateSymbolMatches(String pattern) {
 		return client.getSymbols().iterateSymbolMatches(pattern);
 	}

@@ -26,6 +26,7 @@ import ghidra.util.Msg;
 public class DbgListModulesCommand extends AbstractDbgCommand<Map<String, DbgModule>> {
 	protected final DbgProcessImpl process;
 	private Map<String, DebugModule> updatedModules = new HashMap<>();
+	private Map<DebugModule, DebugModuleInfo> moduleInfo = new HashMap<>();
 
 	public DbgListModulesCommand(DbgManagerImpl manager, DbgProcessImpl process) {
 		super(manager);
@@ -42,7 +43,9 @@ public class DbgListModulesCommand extends AbstractDbgCommand<Map<String, DbgMod
 			}
 			// Need to create the thread as if we receive =thread-created
 			Msg.warn(this, "Resync: Was missing module: " + id);
-			new DbgModuleImpl(manager, process, id).add();
+			DbgModuleImpl module = new DbgModuleImpl(manager, process, id);
+			module.setInfo(moduleInfo.get(updatedModules.get(id)));
+			module.add();
 		}
 		for (String id : new ArrayList<>(cur)) {
 			if (updatedModules.containsKey(id)) {
@@ -59,7 +62,9 @@ public class DbgListModulesCommand extends AbstractDbgCommand<Map<String, DbgMod
 		so.setCurrentProcessId(process.getId());
 		DebugSymbols symbols = manager.getSymbols();
 		for (DebugModule module : symbols.iterateModules(0)) {
+			DebugModuleInfo info = symbols.getModuleParameters(1, module.getIndex());
 			updatedModules.put(module.getName(DebugModuleName.MODULE), module);
+			moduleInfo.put(module, info);
 		}
 	}
 

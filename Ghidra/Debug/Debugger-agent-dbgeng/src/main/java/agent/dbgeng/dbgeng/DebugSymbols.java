@@ -32,6 +32,8 @@ public interface DebugSymbols {
 
 	DebugModule getModuleByOffset(long offset, int startIndex);
 
+	DebugModuleInfo getModuleParameters(int count, int startIndex);
+
 	/**
 	 * A shortcut for iterating over all loaded modules, lazily.
 	 * 

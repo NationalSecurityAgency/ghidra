@@ -18,12 +18,7 @@ package agent.dbgeng.manager.cmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.jna.platform.win32.COM.COMException;
-
-import agent.dbgeng.dbgeng.DebugDataSpaces;
-import agent.dbgeng.dbgeng.DebugDataSpaces.*;
-import agent.dbgeng.dbgeng.DebugModule;
-import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
+import agent.dbgeng.dbgeng.DebugDataSpaces.PageState;
 import agent.dbgeng.manager.DbgModuleMemory;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgModuleMemoryImpl;
@@ -43,6 +38,15 @@ public class DbgListKernelMemoryRegionsCommand extends AbstractDbgCommand<List<D
 
 	@Override
 	public void invoke() {
+		DbgModuleMemoryImpl section =
+			new DbgModuleMemoryImpl("lomem", 0L, 0x7FFFFFFFFFFFFFFFL, 0L, new ArrayList<String>(),
+				new ArrayList<String>(), PageState.COMMIT, "NONE", true, true, true);
+		memoryRegions.add(section);
+		section = new DbgModuleMemoryImpl("himem", 0x8000000000000000L, 0xFFFFFFFFFFFFFFFFL,
+			0x8000000000000000L, new ArrayList<String>(), new ArrayList<String>(), PageState.COMMIT,
+			"NONE", true, true, true);
+		memoryRegions.add(section);
+		/*
 		DebugDataSpaces dataSpaces = manager.getDataSpaces();
 		for (DebugMemoryBasicInformation info : dataSpaces.iterateVirtual(0)) {
 			if (info.state == PageState.FREE) {
@@ -65,7 +69,7 @@ public class DbgListKernelMemoryRegionsCommand extends AbstractDbgCommand<List<D
 			}
 			long vmaStart = info.baseAddress;
 			long vmaEnd = info.baseAddress + info.regionSize;
-
+		
 			boolean isRead = false;
 			boolean isWrite = false;
 			boolean isExec = false;
@@ -88,6 +92,7 @@ public class DbgListKernelMemoryRegionsCommand extends AbstractDbgCommand<List<D
 					info.allocationBase, ap, ip, info.state, type, isRead, isWrite, isExec);
 			memoryRegions.add(section);
 		}
+		*/
 	}
 
 }

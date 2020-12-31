@@ -18,11 +18,13 @@ package agent.dbgeng.impl.dbgeng.symbols;
 import java.util.Objects;
 
 import agent.dbgeng.dbgeng.DebugModule;
+import agent.dbgeng.dbgeng.DebugModuleInfo;
 
 public class DebugModuleImpl implements DebugModule {
 	private final DebugSymbolsInternal symbols;
 	final int index;
 	final long base;
+	DebugModuleInfo info;
 
 	DebugModuleImpl(DebugSymbolsInternal symbols, int index, long base) {
 		this.symbols = symbols;

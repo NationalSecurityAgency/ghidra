@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.sequence;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -1338,11 +1338,6 @@ public class DbgManagerImpl implements DbgManager {
 		synchronized (threads) {
 			DebugEventInformation info = getLastEventInformation();
 			if (info == null) {
-				return null;
-			}
-			DebugSystemObjects so = getSystemObjects();
-			int tid = so.getCurrentThreadSystemId();
-			if (tid < 0) {
 				return null;
 			}
 			return threads.get(info.getThreadId());

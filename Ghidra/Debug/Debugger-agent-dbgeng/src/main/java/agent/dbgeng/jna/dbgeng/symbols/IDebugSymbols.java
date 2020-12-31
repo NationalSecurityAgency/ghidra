@@ -18,10 +18,10 @@ package agent.dbgeng.jna.dbgeng.symbols;
 import com.sun.jna.platform.win32.Guid.IID;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
-
-import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
-
 import com.sun.jna.platform.win32.COM.IUnknown;
+
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_MODULE_PARAMETERS;
+import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
 
 public interface IDebugSymbols extends IUnknown {
 	final IID IID_IDEBUG_SYMBOLS = new IID("8c31e98c-983a-48a5-9016-6fe5d667a950");
@@ -101,6 +101,9 @@ public interface IDebugSymbols extends IUnknown {
 			ULONG ModuleNameBufferSize, ULONGByReference ModuleNameSize,
 			byte[] LoadedImageNameBuffer, ULONG LoadedImageNameBufferSize,
 			ULONGByReference LoadedImageNameSize);
+
+	HRESULT GetModuleParameters(ULONG Count, ULONGLONGByReference Bases, ULONG Start,
+			DEBUG_MODULE_PARAMETERS.ByReference Params);
 
 	HRESULT StartSymbolMatch(String Pattern, ULONGLONGByReference Handle);
 

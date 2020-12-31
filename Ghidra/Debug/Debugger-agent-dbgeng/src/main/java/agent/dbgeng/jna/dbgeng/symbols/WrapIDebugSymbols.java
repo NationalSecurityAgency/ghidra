@@ -20,6 +20,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_MODULE_PARAMETERS;
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils;
 
 public class WrapIDebugSymbols extends UnknownWithUtils implements IDebugSymbols {
@@ -66,6 +67,13 @@ public class WrapIDebugSymbols extends UnknownWithUtils implements IDebugSymbols
 		return _invokeHR(VTIndices.GET_MODULE_NAMES, getPointer(), Index, Base, ImageNameBuffer,
 			ImageNameBufferSize, ImageNameSize, ModuleNameBuffer, ModuleNameBufferSize,
 			ModuleNameSize, LoadedImageNameBuffer, LoadedImageNameBufferSize, LoadedImageNameSize);
+	}
+
+	@Override
+	public HRESULT GetModuleParameters(ULONG Count, ULONGLONGByReference Bases, ULONG Start,
+			DEBUG_MODULE_PARAMETERS.ByReference Params) {
+		return _invokeHR(VTIndices.GET_MODULE_PARAMETERS, getPointer(), Count, Bases, Start,
+			Params);
 	}
 
 	@Override

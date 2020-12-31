@@ -21,8 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
-import agent.dbgeng.dbgeng.DebugModule;
-import agent.dbgeng.dbgeng.DebugSymbols;
+import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
@@ -69,4 +68,7 @@ public interface DebugSymbolsInternal extends DebugSymbols {
 	}
 
 	String getModuleName(DebugModuleName which, DebugModule module);
+
+	DebugModuleInfo getModuleParameters(int count, int startIndex);
+
 }
