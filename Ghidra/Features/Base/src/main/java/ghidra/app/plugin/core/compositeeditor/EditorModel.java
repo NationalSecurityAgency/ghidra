@@ -323,7 +323,6 @@ public interface EditorModel {
 
 	/**
 	 * 
-	 * @param parent
 	 * @throws UsrException
 	 */
 	public void createArray() throws UsrException;

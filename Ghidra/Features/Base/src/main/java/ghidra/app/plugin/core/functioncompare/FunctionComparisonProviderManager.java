@@ -28,10 +28,12 @@ import ghidra.program.model.listing.Program;
 /**
  * Provides access to all open {@link FunctionComparisonProvider comparison providers}
  * and allows users to do the following:
+ * <ul>
  * <li>create new providers</li>
  * <li>add comparisons to existing providers</li>
  * <li>remove comparisons</li>
  * <li>notify subscribers when providers are opened/closed</li>
+ * </ul>
  */
 public class FunctionComparisonProviderManager implements FunctionComparisonProviderListener {
 

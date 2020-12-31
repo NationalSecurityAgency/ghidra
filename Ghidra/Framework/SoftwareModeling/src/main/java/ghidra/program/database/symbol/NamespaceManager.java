@@ -198,7 +198,7 @@ public class NamespaceManager implements ManagerDB {
 	/**
 	 * Checks if an existing namespace's address set intersects with
 	 * the given set. If so, return the first overlapping range.
-	 * @returns null if no overlaps, or an address range of the first overlap
+	 * @return null if no overlaps, or an address range of the first overlap
 	 */
 	public AddressRange overlapsNamespace(AddressSetView set) {
 		AddressRangeIterator addressRanges = set.getAddressRanges();

@@ -118,7 +118,7 @@ abstract class AbstractFrameSection implements CieSource {
 	/**
 	 * This class maintains a lookup of common information entry (CIE) objects; this 
 	 * retrieves an existing object (by address), and creates a new CIE if not found.
-	 * @param curAddress the address with the CIE
+	 * @param currAddress the address with the CIE
 	 * @param isInDebugFrame true indicates the frame containing this CIE is a debug frame.
 	 * @return the <code>Cie</code> that was either previously created, or a newly minted object.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read

@@ -67,8 +67,8 @@ public class OffsetTablePlugin extends Plugin {
 	private boolean lastSigned = true;
 	
 	/**
-	 * @param pluginName
-	 * @param tool
+	 * Constructs a new OffsetTablePlugin
+	 * @param tool the plugin tool
 	 */
 	public OffsetTablePlugin(PluginTool tool) {
 		super(tool);

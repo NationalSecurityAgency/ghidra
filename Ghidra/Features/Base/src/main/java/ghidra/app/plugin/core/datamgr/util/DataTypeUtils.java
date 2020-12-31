@@ -382,7 +382,7 @@ public class DataTypeUtils {
 	 * <br>If "INT" is a typedef on a "dword" then INT[7][3] would have a base data type of dword.
 	 * If you wanted to get the INT from INT[7][3] 
 	 * you should call getNamedBasedDataType(DataType) instead.
-	 * @param baseDataType the data type whose base data type is to be determined.
+	 * @param dt the data type whose base data type is to be determined.
 	 * @return the base data type.
 	 */
 	public static DataType getBaseDataType(DataType dt) {

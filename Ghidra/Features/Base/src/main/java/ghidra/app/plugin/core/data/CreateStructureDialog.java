@@ -413,7 +413,7 @@ public class CreateStructureDialog extends DialogComponentProvider {
 	/**
 	 * Shows a dialog that allows the user to create a new structure.
 	 * <p>
-	 * This method expects that <tt>program</tt> and <tt>structure</tt> be
+	 * This method expects that <code>program</code> and <code>structure</code> be
 	 * non-null.
 	 *
 	 * @param  program The current program which will be used to obtain current

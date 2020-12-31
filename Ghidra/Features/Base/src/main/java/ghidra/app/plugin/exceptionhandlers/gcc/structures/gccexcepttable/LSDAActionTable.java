@@ -59,7 +59,7 @@ public class LSDAActionTable {
 	 * Create an LSDA Action Table from the bytes at <code>address</code>.
 	 * <br>Note: This method must get called before any of the "get..." methods.
 	 * @param address the start (minimum address) of this action table.
-	 * @param maxddress the end (maximum address) of this action table.
+	 * @param maxAddress the end (maximum address) of this action table.
 	 */
 	public void create(Address address, Address maxAddress) {
 

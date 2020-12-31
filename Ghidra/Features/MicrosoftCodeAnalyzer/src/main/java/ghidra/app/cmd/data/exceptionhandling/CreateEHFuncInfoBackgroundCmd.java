@@ -44,7 +44,7 @@ public class CreateEHFuncInfoBackgroundCmd
 	/**
 	 * Constructs a command for applying a FuncInfo exception handling dataType at an address.
 	 * @param address the address where the data should be created using the data type.
-	 * @param validationvalidationOptions, applyOptions the options for controlling how validation is performed when 
+	 * @param validationOptions the options for controlling how validation is performed when 
 	 * determining whether or not to create the data structure at the indicated address.
 	 * @param applyOptions the options for creating the new data structure and its associated
 	 * markup in the program as well as whether to follow other data references and create their 

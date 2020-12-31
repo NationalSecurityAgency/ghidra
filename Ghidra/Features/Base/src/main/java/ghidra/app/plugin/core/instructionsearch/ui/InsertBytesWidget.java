@@ -390,8 +390,10 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 
 	/**
 	 * Verifies that the input entered by the user is valid. Meaning:
+	 * <ul>
 	 * <li>The string represents a hex or binary number.</li>
 	 * <li>The string contains only full bytes.</li>
+	 * </ul>
 	 * 
 	 * @return true if input is valid
 	 */

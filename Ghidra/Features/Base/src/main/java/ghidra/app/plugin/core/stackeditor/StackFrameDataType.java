@@ -57,7 +57,8 @@ public class StackFrameDataType extends BiDirectionDataType {
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
 	 * 
-	 * @param stack the function stack frame to be edited.
+	 * @param stackDt the function stack frame to be edited.
+	 * @param dtm the data type manager.
 	 */
 	public StackFrameDataType(StackFrameDataType stackDt, DataTypeManager dtm) {
 		super(stackDt.getCategoryPath(), stackDt.getName(), stackDt.getNegativeLength(),
@@ -613,9 +614,9 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	/**
-	 * Returns the default name for the indicated stack offset.
+	 * Returns the default name for the indicated element.
 	 * 
-	 * @param offset
+	 * @param element the stack frame element.
 	 * @return the default stack variable name.
 	 */
 	public String getDefaultName(DataTypeComponent element) {

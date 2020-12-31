@@ -56,8 +56,7 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * Constructor
 	 *
-	 * @param plugintool
-	 *            reference to the tool
+	 * @param tool reference to the tool
 	 */
 	public LabelMgrPlugin(PluginTool tool) {
 		super(tool);

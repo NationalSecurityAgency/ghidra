@@ -51,10 +51,6 @@ public class EditStackAction extends ListingContextAction {
 		setHelpLocation(new HelpLocation("StackEditor", "Stack_Editor"));
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 		Function function = getFunction(context);

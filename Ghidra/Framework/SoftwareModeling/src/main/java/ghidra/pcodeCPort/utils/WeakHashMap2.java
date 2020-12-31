@@ -141,10 +141,10 @@ public class WeakHashMap2<K, V> extends AbstractMap<K, V> {
 
 	/**
 	 * Constructs a new <code>WeakHashMap2</code> with the same mappings as the
-	 * specified <tt>Map</tt>.  The <code>WeakHashMap2</code> is created with an
+	 * specified <code>Map</code>.  The <code>WeakHashMap2</code> is created with an
 	 * initial capacity of twice the number of mappings in the specified map
 	 * or 11 (whichever is greater), and a default load factor, which is
-	 * <tt>0.75</tt>.
+	 * <code>0.75</code>.
 	 *
 	 * @param   t the map whose mappings are to be placed in this map.
 	 * @since	1.3

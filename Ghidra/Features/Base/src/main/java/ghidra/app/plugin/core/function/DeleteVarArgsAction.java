@@ -54,10 +54,6 @@ public class DeleteVarArgsAction extends ListingContextAction {
 		}
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 * @param ev details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 		Function function = functionPlugin.getFunction(context);

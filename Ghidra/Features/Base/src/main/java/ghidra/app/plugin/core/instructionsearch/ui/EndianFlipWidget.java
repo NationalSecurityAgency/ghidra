@@ -36,14 +36,12 @@ public class EndianFlipWidget extends ControlPanelWidget {
 	private InsertBytesWidget parent;
 
 	/**
-	 * Constructor.
+	 * Constructs a new EndianFlipWidget
 	 * 
-	 * @param plugin
-	 * @param title
-	 * @param parent
+	 * @param title the widget title
+	 * @param parent the widget parent
 	 */
-	public EndianFlipWidget( String title,
-			InsertBytesWidget parent) {
+	public EndianFlipWidget(String title, InsertBytesWidget parent) {
 		super(title);
 		this.parent = parent;
 	}

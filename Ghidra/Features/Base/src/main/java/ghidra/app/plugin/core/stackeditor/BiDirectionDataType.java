@@ -35,8 +35,12 @@ public abstract class BiDirectionDataType extends StructureDataType
 	protected int splitOffset; // division offset between negative/positive halves
 
 	/**
-	 * @param name
-	 * @param length
+	 * Constructs a new BiDirectionDataType
+	 * @param name the data type name
+	 * @param negativeLength the negative length
+	 * @param positiveLength the positive length
+	 * @param splitOffset the offset where the data type is split
+	 * @param dtm the data type manager
 	 */
 	protected BiDirectionDataType(String name, int negativeLength, int positiveLength,
 			int splitOffset, DataTypeManager dtm) {
@@ -46,6 +50,15 @@ public abstract class BiDirectionDataType extends StructureDataType
 		this.splitOffset = splitOffset;
 	}
 
+	/**
+	 * Constructs a new BiDirectionDataType
+	 * @param catPath the category path
+	 * @param name the data type name
+	 * @param negativeLength the negative length
+	 * @param positiveLength the positive length
+	 * @param splitOffset the offset where the data type is split
+	 * @param dtm the data type manager
+	 */
 	protected BiDirectionDataType(CategoryPath catPath, String name, int negativeLength,
 			int positiveLength, int splitOffset, DataTypeManager dtm) {
 		super(catPath, name, negativeLength + positiveLength, dtm);
@@ -526,12 +539,12 @@ public abstract class BiDirectionDataType extends StructureDataType
 //		}
 	}
 
-	/**
-	 * 
-	 * @param index the index of the defined component that is consuming the bytes.
-	 * @param numBytes the number of undefined bytes to consume
-	 * @return the number of bytes actually consumed
-	 */
+//	/**
+//	 * 
+//	 * @param index the index of the defined component that is consuming the bytes.
+//	 * @param numBytes the number of undefined bytes to consume
+//	 * @return the number of bytes actually consumed
+//	 */
 //	private int consumeBytesAfter(int index, int numBytes) {
 //	throw new AssertException("BiDirectionDataType.consumeBytesAfter() not implemented.");
 //		DataTypeComponentImpl thisDtc = (DataTypeComponentImpl)components.get(index);

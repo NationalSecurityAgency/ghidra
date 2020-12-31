@@ -95,9 +95,7 @@ public class CategoryNode extends DataTypeTreeNode {
 	public int hashCode() {
 		return name.hashCode();
 	}
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -287,7 +285,7 @@ public class CategoryNode extends DataTypeTreeNode {
 	 * a cut/paste operation.
 	 * <p>
 	 * This implementation will throw a runtime exception if this method is called and
-	 * {@link #canCutNode()} returns false.
+	 * {@link #canCut()} returns false.
 	 * @param isCut true signals that the node has been cut; false that it is not cut.
 	 */
 	@Override
@@ -299,25 +297,16 @@ public class CategoryNode extends DataTypeTreeNode {
 		fireNodeChanged(getParent(), this);
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode#canCut()
-	 */
 	@Override
 	public boolean canCut() {
 		return isModifiable();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode#canPaste(java.util.List)
-	 */
 	@Override
 	public boolean canPaste(List<GTreeNode> pastedNodes) {
 		return isModifiable();
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode#isCut()
-	 */
 	@Override
 	public boolean isCut() {
 		return isCut;

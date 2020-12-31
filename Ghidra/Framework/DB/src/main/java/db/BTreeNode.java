@@ -88,12 +88,11 @@ interface BTreeNode {
 
 	/**
 	 * Check the consistency of this node and all of its children.
-	 * @return true if consistency check passed, else false
 	 * @param tableName name of table containing this node
 	 * @param monitor task monitor
+	 * @return true if consistency check passed, else false
 	 * @throws IOException if IO error occured
 	 * @throws CancelledException if task cancelled
-	 * @{@link ThrowsTag} CancelledException
 	 */
 	public boolean isConsistent(String tableName, TaskMonitor monitor)
 			throws IOException, CancelledException;

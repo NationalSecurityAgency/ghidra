@@ -223,7 +223,7 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Peforms a bitwise & on the given arrays.
+	 * Peforms a bitwise &amp; on the given arrays.
 	 * 
 	 * @param mask
 	 * @param bytes

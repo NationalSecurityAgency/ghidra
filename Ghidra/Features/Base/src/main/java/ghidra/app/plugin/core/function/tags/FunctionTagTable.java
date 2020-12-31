@@ -80,8 +80,10 @@ public class FunctionTagTable extends GhidraTable {
 
 	/**
 	 * We need to override the renderer for the following cases:
+	 * <ul>
 	 * <li>italicize tags that cannot be edited</li>
-	 * <li>disable rows in the source table that have already been added to the selected function </li>
+	 * <li>disable rows in the source table that have already been added to the selected function</li>
+	 * </ul>
 	 */
 	@Override
 	public TableCellRenderer getCellRenderer(int row, int col) {

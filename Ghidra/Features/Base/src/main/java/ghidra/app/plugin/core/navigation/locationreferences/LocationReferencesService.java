@@ -38,7 +38,7 @@ public interface LocationReferencesService {
 	 * location.
 	 * @param location The location for which to show references.
 	 * @param navigatable The navigatable in which the references should be shown
-	 * @throws NullPointerException if <tt>location</tt> is null.
+	 * @throws NullPointerException if <var>location</var> is null.
 	 */
 	public void showReferencesToLocation(ProgramLocation location, Navigatable navigatable);
 

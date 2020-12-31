@@ -27,7 +27,7 @@ import ghidra.program.model.symbol.SymbolTable;
  *
  *
  * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ * {@literal Window->Preferences->Java->Code Generation->Code and Comments}
  */
 public class FunctionMatchSet extends ArrayList<SubroutineMatch> {
 	public final Program aProgram;
@@ -36,9 +36,9 @@ public class FunctionMatchSet extends ArrayList<SubroutineMatch> {
 	private final SymbolTable bSymbolTable;
 
 	/**
-	 * @param thisProgramName Name of this program (i.e. the program from
+	 * @param aProgram Name of this program (i.e. the program from
 	 * which the matching was initiated.
-	 * @param otherProgramName Name of the program being matched.
+	 * @param bProgram Name of the program being matched.
 	 */
 	public FunctionMatchSet(Program aProgram, Program bProgram) {
 		super();

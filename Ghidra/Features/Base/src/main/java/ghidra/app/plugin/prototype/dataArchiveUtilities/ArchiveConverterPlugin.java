@@ -67,10 +67,9 @@ public class ArchiveConverterPlugin extends ProgramPlugin {
 	private Hashtable<String, DataType> dataTypes = new Hashtable<>();
 
 	/**
-	 * @param id
-	 * @param plugintool
-	 * @param consumeLocationChange
-	 * @param consumeSelectionChange
+	 * Constructs a new ArchiveConverterPlugin
+	 * 
+	 * @param plugintool the plugin tool
 	 */
 	public ArchiveConverterPlugin(PluginTool plugintool) {
 		super(plugintool, false, false);

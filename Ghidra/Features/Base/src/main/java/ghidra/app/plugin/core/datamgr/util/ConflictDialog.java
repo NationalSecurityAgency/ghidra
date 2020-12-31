@@ -48,7 +48,7 @@ public class ConflictDialog extends DialogComponentProvider {
 	/**
 	 * Constructor
 	 * @param dtName data type name
-	 * @param categoryName category path
+	 * @param categoryPath category path
 	 * @param newDTName new name to resolve conflict
 	 */
 	public ConflictDialog(String dtName, String categoryPath, String newDTName) {
