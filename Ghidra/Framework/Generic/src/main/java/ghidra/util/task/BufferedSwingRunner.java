@@ -36,11 +36,11 @@ public class BufferedSwingRunner extends AbstractSwingUpdateManager {
 	 * @param maxDelay the maximum amount of time to wait between gui updates.
 	 */
 	public BufferedSwingRunner(int minDelay, int maxDelay) {
-		super(minDelay, maxDelay, null);
+		super(minDelay, maxDelay, DEFAULT_NAME);
 	}
 
 	public BufferedSwingRunner() {
-		super(DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY, null);
+		super(DEFAULT_MIN_DELAY, DEFAULT_MAX_DELAY, DEFAULT_NAME);
 	}
 
 	@Override

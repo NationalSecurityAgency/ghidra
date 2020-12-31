@@ -144,10 +144,6 @@ class ThreadedTableModelUpdateMgr<T> {
 	 * is performed.  It also is called if too many add/removes have been accumulated.
 	 */
 	void reload() {
-		if (isDisposed()) {
-			return;
-		}
-
 		synchronized (addRemoveUpdater) {
 			cancelAllJobs();
 			runJob(new LoadJob<>(model, monitor));
@@ -155,10 +151,6 @@ class ThreadedTableModelUpdateMgr<T> {
 	}
 
 	void reloadSpecificData(List<T> data) {
-		if (isDisposed()) {
-			return;
-		}
-
 		synchronized (addRemoveUpdater) {
 			cancelAllJobs();
 			TableData<T> tableData = TableData.createFullDataset(data);
@@ -183,10 +175,6 @@ class ThreadedTableModelUpdateMgr<T> {
 	 *                  to be re-sorted.
 	 */
 	void sort(TableSortingContext<T> sortingContext, boolean forceSort) {
-		if (isDisposed()) {
-			return;
-		}
-
 		synchronized (addRemoveUpdater) {
 			if (currentJob != null && pendingJob == null &&
 				currentJob.requestSort(sortingContext, forceSort)) {
@@ -215,10 +203,6 @@ class ThreadedTableModelUpdateMgr<T> {
 	 * start a thread to do the work.
 	 */
 	void filter() {
-		if (isDisposed()) {
-			return;
-		}
-
 		synchronized (addRemoveUpdater) {
 			if (currentJob != null && pendingJob == null && currentJob.requestFilter()) {
 				return;
@@ -242,10 +226,6 @@ class ThreadedTableModelUpdateMgr<T> {
 	 * @param item the add/remove item to process.
 	 */
 	void addRemove(AddRemoveListItem<T> item) {
-		if (isDisposed()) {
-			return;
-		}
-
 		synchronized (addRemoveUpdater) {
 			if (pendingJob != null) {
 				pendingJob.addRemove(item, getMaxAddRemoveCount());
@@ -345,11 +325,6 @@ class ThreadedTableModelUpdateMgr<T> {
 			cancelAllJobs();
 			addRemoveUpdater.dispose();
 		}
-	}
-
-	private boolean isDisposed() {
-		// the updater knows when it is disposed; use the updater to avoid keeping our own variable
-		return addRemoveUpdater.isDisposed();
 	}
 
 	/**
