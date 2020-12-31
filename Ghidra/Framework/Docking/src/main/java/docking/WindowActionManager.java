@@ -35,7 +35,7 @@ public class WindowActionManager {
 	private ComponentPlaceholder placeHolderForScheduledActionUpdate;
 	private Runnable updateActionsRunnable = () -> processContextChanged();
 	private SwingUpdateManager updateManager =
-		new SwingUpdateManager(500, 500, "Context Updater", updateActionsRunnable);
+		new SwingUpdateManager(500, 500, "Context Update Manager", updateActionsRunnable);
 
 	public WindowActionManager(WindowNode node, MenuHandler menuBarHandler,
 			DockingWindowManager winMgr, MenuGroupMap menuGroupMap) {
