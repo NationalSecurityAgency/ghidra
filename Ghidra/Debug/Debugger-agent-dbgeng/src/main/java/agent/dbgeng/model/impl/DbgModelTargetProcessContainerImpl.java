@@ -24,6 +24,7 @@ import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -41,6 +42,8 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public void processAdded(DbgProcess proc, DbgCause cause) {
+		DbgModelTargetSession session = (DbgModelTargetSession) getImplParent();
+		session.setAccessibility(TargetAccessibility.ACCESSIBLE);
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
 		process.processStarted(proc.getPid());

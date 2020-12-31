@@ -326,11 +326,11 @@ public class ObjectTree implements ObjectPane {
 	public void setFocus(TargetFocusScope<?> object, TargetObjectRef focused) {
 		Swing.runIfSwingOrRunLater(() -> {
 			List<String> path = focused.getPath();
-			tree.setSelectedNodeByNamePath(addRootNameToPath(path));
 			ObjectContainer container = getProvider().getContainerByPath(path);
 			if (container != null) {
 				container.subscribe();
 			}
+			tree.setSelectedNodeByNamePath(addRootNameToPath(path));
 		});
 	}
 
