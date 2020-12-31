@@ -27,8 +27,8 @@ import java.util.Map.Entry;
  */
 class PlaceholderSet {
 	private Map<ComponentProvider, ComponentPlaceholder> activePlaceholderMap =
-		new HashMap<ComponentProvider, ComponentPlaceholder>();
-	private Set<ComponentPlaceholder> unusedPlaceholders = new HashSet<ComponentPlaceholder>();
+		new HashMap<>();
+	private Set<ComponentPlaceholder> unusedPlaceholders = new HashSet<>();
 	private PlaceholderManager manager;
 
 	PlaceholderSet(PlaceholderManager manager) {
@@ -62,7 +62,7 @@ class PlaceholderSet {
 	}
 
 	Set<ComponentPlaceholder> getUsedPlaceholders() {
-		return new HashSet<ComponentPlaceholder>(activePlaceholderMap.values());
+		return new HashSet<>(activePlaceholderMap.values());
 	}
 
 	Set<ComponentPlaceholder> getUnusedPlaceholders() {
@@ -94,10 +94,22 @@ class PlaceholderSet {
 		return activePlaceholderMap;
 	}
 
-	void removeAll(String owner) {
+	void remove(ComponentPlaceholder oldPlaceholder) {
+
+		ComponentProvider provider = oldPlaceholder.getProvider();
+		ComponentPlaceholder currentPlaceholder = activePlaceholderMap.get(provider);
+		if (currentPlaceholder == oldPlaceholder) {
+			activePlaceholderMap.remove(provider);
+		}
+
+		unusedPlaceholders.remove(oldPlaceholder);
+		manager.disposePlaceholder(oldPlaceholder, false);
+	}
+
+	void removeAll() {
 		// copy the set to prevent concurrent modifications
 		Set<Entry<ComponentProvider, ComponentPlaceholder>> entries =
-			new HashSet<Entry<ComponentProvider, ComponentPlaceholder>>(
+			new HashSet<>(
 				activePlaceholderMap.entrySet());
 
 		for (Entry<ComponentProvider, ComponentPlaceholder> entry : entries) {

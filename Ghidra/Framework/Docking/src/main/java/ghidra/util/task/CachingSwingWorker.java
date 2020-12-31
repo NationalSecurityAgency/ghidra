@@ -55,6 +55,7 @@ import ghidra.util.exception.CancelledException;
  *      is finished.
  *  </li>
  * </ol>
+ * @param <T> the value type
  */
 public abstract class CachingSwingWorker<T> implements CachingLoader<T> {
 	private String name;
@@ -137,6 +138,15 @@ public abstract class CachingSwingWorker<T> implements CachingLoader<T> {
 	 */
 	public synchronized T getCachedValue() {
 		return cachedValue;
+	}
+
+	/**
+	 * Cancels this swing worker
+	 */
+	public synchronized void cancel() {
+		if (worker != null) {
+			worker.cancel(true);
+		}
 	}
 
 	/**

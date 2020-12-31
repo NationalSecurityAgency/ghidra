@@ -48,7 +48,6 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		this.threadedModel = threadedModel;
 		this.listener = listener;
 		this.updateManager = threadedModel.getUpdateManager();
-		this.incrementalAccumulator = new IncrementalUpdatingAccumulator();
 	}
 
 	@Override

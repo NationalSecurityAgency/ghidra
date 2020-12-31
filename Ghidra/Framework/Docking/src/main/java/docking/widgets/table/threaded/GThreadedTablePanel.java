@@ -137,7 +137,7 @@ public class GThreadedTablePanel<T> extends JPanel {
 	}
 
 	public void dispose() {
-		threadedModel.dispose();
+		table.dispose();
 	}
 
 	public TaskMonitor getTaskMonitor() {

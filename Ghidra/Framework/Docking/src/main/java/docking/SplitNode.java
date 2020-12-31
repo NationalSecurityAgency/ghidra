@@ -194,7 +194,7 @@ class SplitNode extends Node {
 
 	@Override
 	List<Node> getChildren() {
-		List<Node> list = new ArrayList<Node>();
+		List<Node> list = new ArrayList<>();
 		if (child1 != null) {
 			list.add(child1);
 		}
@@ -218,10 +218,12 @@ class SplitNode extends Node {
 	void dispose() {
 		if (child1 != null) {
 			child1.dispose();
+			child1 = null;
 		}
 
 		if (child2 != null) {
 			child2.dispose();
+			child2 = null;
 		}
 	}
 }

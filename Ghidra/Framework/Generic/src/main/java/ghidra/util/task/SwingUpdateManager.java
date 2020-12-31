@@ -82,7 +82,8 @@ public class SwingUpdateManager extends AbstractSwingUpdateManager {
 	 * @param r the runnable that performs the client work.
 	 */
 	public SwingUpdateManager(int minDelay, int maxDelay, Runnable r) {
-		this(minDelay, maxDelay, null, r);
+		super(minDelay, maxDelay, DEFAULT_NAME);
+		this.clientRunnable = r;
 	}
 
 	/**

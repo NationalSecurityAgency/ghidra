@@ -55,8 +55,7 @@ public class ComponentPlaceholder {
 		this.componentProvider = provider;
 		updateInfo(provider);
 		this.actions = new ArrayList<>();
-
-		instanceID = provider.getInstanceID();
+		this.instanceID = provider.getInstanceID();
 	}
 
 	/**
@@ -202,6 +201,7 @@ public class ComponentPlaceholder {
 	}
 
 	void dispose() {
+
 		disposed = true;
 
 		if (comp != null) {
@@ -219,6 +219,7 @@ public class ComponentPlaceholder {
 		}
 
 		compNode.remove(this);
+		compNode = null;
 	}
 
 	private void disposeComponent() {
@@ -562,5 +563,9 @@ public class ComponentPlaceholder {
 	@Override
 	public String toString() {
 		return "name=\"" + name + "\", fullTitle=\"" + getFullTitle() + "\"";
+	}
+
+	public boolean isDisposed() {
+		return disposed;
 	}
 }
