@@ -83,6 +83,7 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 
 		ClangToken token = ((ClangTextField) field).getToken(fieldLocation);
 		if (token instanceof ClangFuncNameToken) {
+
 			Function function = ((ClangFuncNameToken)token).getHighFunction().getFunction();
 			String content = ToolTipUtils.getToolTipText(function, false);
 			return createTooltipComponent(content);
