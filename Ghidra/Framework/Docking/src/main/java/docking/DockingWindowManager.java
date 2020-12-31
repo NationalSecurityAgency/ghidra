@@ -100,7 +100,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 
 	// The update should happen fairly quickly, as it is what rebuilds the window layout
-	private SwingUpdateManager rebuildUpdater = new SwingUpdateManager(100, 750, this::doUpdate);
+	private SwingUpdateManager rebuildUpdater =
+		new SwingUpdateManager(100, 750, "Docking Windows Updater", this::doUpdate);
 	private boolean isVisible;
 	private boolean isDocking;
 	private boolean hasStatusBar;
@@ -819,8 +820,15 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		actionToGuiMapper.dispose();
 		root.dispose();
-
 		placeholderManager.disposePlaceholders();
+
+		if (focusedPlaceholder != null) {
+			focusedPlaceholder.dispose();
+		}
+
+		if (nextFocusedPlaceholder != null) {
+			nextFocusedPlaceholder.dispose();
+		}
 
 		setNextFocusPlaceholder(null);
 		removeInstance(this);
@@ -1766,7 +1774,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 	This method seeks to accomplish 2 goals:
 		 		1) find a suitable component over which to center, and
 		 		2) ensure that the chosen component is in the parent hierarchy
-
+		
 		 */
 		Component bestComponent = centeredOnComponent;
 		if (SwingUtilities.isDescendingFrom(parent, bestComponent)) {
@@ -1800,7 +1808,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		/*
 		 	Note: Which window should be the parent of the dialog when the user does not specify?
-
+		
 		 	Some use cases; a dialog is shown from:
 		 		1) A toolbar action
 		 		2) A component provider's code
@@ -1808,7 +1816,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		4) A background thread
 		 		5) The help window
 		 		6) A modal password dialog appears over the splash screen
-
+		
 		 	It seems like the parent should be the active window for 1-2.
 		 	Case 3 should probably use the window of the dialog provider.
 		 	Case 4 should probably use the main tool frame, since the user may be
@@ -1816,12 +1824,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 	active window, we can default to the tool's frame.
 		 	Case 5 should use the help window.
 		 	Case 6 should use the splash screen as the parent.
-
+		
 		 	We have not yet solidified how we should parent.  This documentation is meant to
 		 	move us towards clarity as we find Use Cases that don't make sense.  (Once we
 		 	finalize our understanding, we should update the javadoc to list exactly where
 		 	the given Dialog Component will be shown.)
-
+		
 		 	Use Case
 		 		A -The user presses an action on a toolbar from a window on screen 1, while the
 		 		   main tool frame is on screen 2.  We want the popup window to appear on screen
@@ -1833,8 +1841,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		 	-modal - Java handles this correctly, allowing the new dialog to be used
 		 		 	-non-modal - Java prevents the non-modal from being editing if not parented
 		 		 	             correctly
-
-
+		
+		
 		 	For now, the easiest mental model to use is to always prefer the active window so
 		 	that a dialog will appear in the user's view.  If we find a case where this is
 		 	not desired, then document it here.

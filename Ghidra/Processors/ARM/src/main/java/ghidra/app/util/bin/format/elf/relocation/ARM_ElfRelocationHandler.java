@@ -344,12 +344,28 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_PREL31: {
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_MOVW_ABS_NC: {
+*/
+			case ARM_ElfRelocationConstants.R_ARM_MOVW_ABS_NC: 
+			case ARM_ElfRelocationConstants.R_ARM_MOVT_ABS: {	// Target Class: ARM Instruction		
+				oldValue = memory.getInt(relocationAddress, instructionBigEndian);
+				newValue = oldValue;
+				
+				oldValue = ((oldValue & 0xf0000) >> 4) | (oldValue & 0xfff);
+				oldValue = (oldValue ^ 0x8000) - 0x8000;
+
+				oldValue += symbolValue;
+				if (type == ARM_ElfRelocationConstants.R_ARM_MOVT_ABS)
+					oldValue >>= 16;
+
+				newValue &= 0xfff0f000;
+				newValue |= ((oldValue & 0xf000) << 4) |
+					(oldValue & 0x0fff);
+
+				memory.setInt(relocationAddress, newValue, instructionBigEndian);
+
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_MOVT_ABS: {
-				break;
-			}
+/*
 			case ARM_ElfRelocationConstants.R_ARM_MOVW_PREL_NC: {
 				break;
 			}

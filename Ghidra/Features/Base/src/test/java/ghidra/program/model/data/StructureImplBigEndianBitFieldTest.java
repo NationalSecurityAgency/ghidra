@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 public class StructureImplBigEndianBitFieldTest extends AbstractCompositeImplBitFieldTest {
@@ -67,6 +69,29 @@ public class StructureImplBigEndianBitFieldTest extends AbstractCompositeImplBit
 			"}\n" + 
 			"Size = 12   Actual Alignment = 4", struct);
 		//@formatter:on
+	}
+
+	@Test
+	public void testStructureBitFieldsA3() {
+		Structure struct = getStructure("A3");
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/A3\n" + 
+			"Aligned\n" + 
+			"Structure A3 {\n" + 
+			"   0   char[5]   5   a   \"\"\n" + 
+			"   5   int:3(5)   1   b   \"\"\n" + 
+			"   5   int:8(5)   2   c   \"\"\n" + 
+			"   8   int:85(0)   4   d   \"\"\n" + 
+			"   12   int:6(2)   1   e   \"\"\n" + 
+			"}\n" + 
+			"Size = 16   Actual Alignment = 4\n", struct);
+		//@formatter:on
+		DataTypeComponent c = struct.getComponent(3);
+		assertTrue(c.isBitFieldComponent());
+		BitFieldDataType bfDt = (BitFieldDataType) c.getDataType();
+		assertEquals(4, bfDt.getBaseTypeSize());
+		assertEquals(32, bfDt.getBitSize());
+		assertEquals(85, bfDt.getDeclaredBitSize());
 	}
 
 	@Test

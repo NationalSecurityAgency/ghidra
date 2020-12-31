@@ -56,7 +56,6 @@ public abstract class AbstractSwingUpdateManager {
 	public static final int DEFAULT_MAX_DELAY = 30000;
 	protected static final int MIN_DELAY_FLOOR = 10;
 	protected static final int DEFAULT_MIN_DELAY = 250;
-	protected static final String DEFAULT_NAME = AbstractSwingUpdateManager.class.getSimpleName();
 	private static final WeakSet<AbstractSwingUpdateManager> instances =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
 
@@ -107,7 +106,7 @@ public abstract class AbstractSwingUpdateManager {
 	 * @param maxDelay the maximum amount of time to wait between gui updates.
 	 */
 	protected AbstractSwingUpdateManager(int minDelay, int maxDelay) {
-		this(minDelay, maxDelay, DEFAULT_NAME);
+		this(minDelay, maxDelay, null);
 	}
 
 	/**
@@ -124,7 +123,7 @@ public abstract class AbstractSwingUpdateManager {
 	protected AbstractSwingUpdateManager(int minDelay, int maxDelay, String name) {
 
 		this.maxDelay = maxDelay;
-		this.name = name;
+		this.name = name != null ? name : getClass().getSimpleName();
 
 		recordInception();
 		this.minDelay = Math.max(MIN_DELAY_FLOOR, minDelay);
@@ -181,6 +180,15 @@ public abstract class AbstractSwingUpdateManager {
 		}
 
 		Swing.runNow(this::checkForWork);
+	}
+
+	/**
+	 * Returns the name given to this update manager.  If no name was provided at construction, 
+	 * then the class name is used.
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -363,12 +371,10 @@ public abstract class AbstractSwingUpdateManager {
 		StackTraceElement[] trace = t.getStackTrace();
 		String classInfo = trace[0].toString();
 
-		/*
 		// debug source of creation
 		Throwable filtered = ReflectionUtilities.filterJavaThrowable(t);
 		String string = ReflectionUtilities.stackTraceToString(filtered);
 		classInfo = classInfo + "\n\tfrom:\n\n" + string;
-		*/
 
 		return classInfo;
 	}
