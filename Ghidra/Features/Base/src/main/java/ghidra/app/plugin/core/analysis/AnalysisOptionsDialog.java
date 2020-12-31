@@ -66,17 +66,10 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-
-//		// On any analyzer status change, update the options for all programs
-//		// being analyzed. This is necessary to keep options consistent across all
-//		// programs being analyzed.
-//		//
-//		// Note: It's possible to receive a property change notification before the 
-//		//       analysis panel has finished being constructed, so protect against
-//		//       that before calling the update method.
-//		if (panel != null) {
-//			panel.updateOptionForAllPrograms(evt.getPropertyName(), (Boolean) evt.getNewValue());
-//		}
+		// This used to update all the programs every time the user made a change in the gui. This
+		// was bad. Instead, the "applyChanges" now saves the options to the first program and then copies
+		// them all to each of the other program. This way, if the user cancels the dialog, none
+		// of the program's options are changed.
 	}
 
 	@Override
