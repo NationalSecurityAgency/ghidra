@@ -83,18 +83,9 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 		ClangToken token = ((ClangTextField) field).getToken(fieldLocation);
 		if (token instanceof ClangFuncNameToken) {
 
-			// Obvious function reference
-			String name = token.getText();
-			Symbol symbol = getSymbolForLocation(program, name);
-			if (symbol == null) {
-				return null;
-			}
-
-			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
-				Function function = program.getFunctionManager().getFunctionAt(symbol.getAddress());
-				String content = ToolTipUtils.getToolTipText(function, false);
-				return createTooltipComponent(content);
-			}
+			Function function = ((ClangFuncNameToken)token).getHighFunction().getFunction();
+			String content = ToolTipUtils.getToolTipText(function, false);
+			return createTooltipComponent(content);
 		}
 		else if (token instanceof ClangVariableToken) {
 
@@ -141,17 +132,6 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 			}
 		}
 
-		return null;
-	}
-
-	private Symbol getSymbolForLocation(Program program, String symName) {
-		SymbolTable symTable = program.getSymbolTable();
-		SymbolIterator symbols = symTable.getSymbols(symName);
-		for (Symbol symbol : symbols) {
-			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
-				return symbol;
-			}
-		}
 		return null;
 	}
 
