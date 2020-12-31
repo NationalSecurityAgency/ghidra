@@ -17,7 +17,7 @@
  * Created on Nov 10, 2003
  *
  * To change the template for this generated file go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ * {@literal Window->Preferences->Java->Code Generation->Code and Comments}
  */
 package ghidra.app.plugin.match;
 
@@ -33,7 +33,7 @@ import ghidra.program.model.symbol.SymbolTable;
  *
  *
  * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ * {@literal Window->Preferences->Java->Code Generation->Code and Comments}
  */
 public class SubroutineMatchSet extends ArrayList<SubroutineMatch> {
 	public final Program aProgram;
@@ -44,9 +44,12 @@ public class SubroutineMatchSet extends ArrayList<SubroutineMatch> {
 	private final CodeBlockModel bModel;
 
 	/**
-	 * @param thisProgramName Name of this program (i.e. the program from
-	 * which the matching was initiated.
-	 * @param otherProgramName Name of the program being matched.
+	 * @param aProgram Name of this program (i.e. the program from
+	 * which the matching was initiated.)
+	 * @param aModel Model of this code block (i.e. the code block
+	 * from which the matching was initiated.)
+	 * @param bProgram Name of the program being matched.
+	 * @param bModel Model of the code block being matched.
 	 */
 	public SubroutineMatchSet(Program aProgram, CodeBlockModel aModel, Program bProgram,
 			CodeBlockModel bModel) {

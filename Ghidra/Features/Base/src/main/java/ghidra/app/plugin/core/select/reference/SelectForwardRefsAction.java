@@ -53,10 +53,6 @@ public class SelectForwardRefsAction extends NavigatableContextAction {
 		return context.getAddress() != null || context.hasSelection();
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(NavigatableActionContext context) {
 

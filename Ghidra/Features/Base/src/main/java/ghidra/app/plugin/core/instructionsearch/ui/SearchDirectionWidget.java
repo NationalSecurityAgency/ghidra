@@ -40,10 +40,9 @@ public class SearchDirectionWidget extends ControlPanelWidget {
 	private InstructionSearchDialog dialog;
 
 	/**
-	 * 
-	 * @param plugin
-	 * @param title
-	 * @param dialog
+	 * Constructs a new SearchDirectionWidget
+	 * @param title the widget title
+	 * @param dialog the instruction search dialog
 	 */
 	public SearchDirectionWidget(String title, InstructionSearchDialog dialog) {
 		super(title);
@@ -59,9 +58,6 @@ public class SearchDirectionWidget extends ControlPanelWidget {
 	 * PROTECTED METHODS
 	 ********************************************************************************************/
 
-	/**
-	 * 
-	 */
 	@Override
 	protected JPanel createContent() {
 

@@ -27,10 +27,10 @@ public class MaskContainer {
 	private byte[] value;
 
 	/**
-	 * 
-	 * @param mask
-	 * @param value
-	 * @throws InvalidInputException
+	 * Constructs a new MaskContainer
+	 * @param mask the byte mask
+	 * @param value the byte values
+	 * @throws IllegalArgumentException if the mask/value is null or are not the same size
 	 */
 	public MaskContainer(byte[] mask, byte[] value) throws IllegalArgumentException {
 
@@ -107,9 +107,7 @@ public class MaskContainer {
 	/**
 	 * Returns the bytes and masking merged together, as a binary string.
 	 * 
-	 * @param mask
-	 * @param value
-	 * @return list containing the value (index 0) and mask (index 1).
+	 * @return a binary string of the masked bytes.
 	 */
 	public String toBinaryString() {
 

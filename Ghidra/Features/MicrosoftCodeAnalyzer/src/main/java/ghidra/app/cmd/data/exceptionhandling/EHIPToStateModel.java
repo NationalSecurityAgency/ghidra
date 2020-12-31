@@ -142,7 +142,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Gets the IP value for the IP To State map as either an address of IP or as an IP value, 
 	 * if there is one, in the IpToStateMapEntry indicated by the ordinal.
-	 * @param ipToStateOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
+	 * @param ipToStateEntryOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
 	 * @return the IP value (as either an Address or a Scalar) for IP To State map.
 	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for 
 	 * the indicated ordinal.
@@ -169,7 +169,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 	 * Gets the address of the component containing the IP To State address, if there is one 
 	 * in the IpToStateMapEntry indicated by the ordinal. 
 	 * Otherwise, this returns null.
-	 * @param ipToStateOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
+	 * @param ipToStateEntryOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
 	 * @return the address of the component with the IP To State address or null.
 	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for 
 	 * the indicated ordinal.
@@ -185,7 +185,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * Gets the state value, if there is one, in the IpToStateMapEntry indicated by the ordinal.
-	 * @param ipToStateOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
+	 * @param ipToStateEntryOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
 	 * @return the state value.
 	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for 
 	 * the indicated ordinal.

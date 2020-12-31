@@ -68,7 +68,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	 * This class is not meant to be instantiated directly, but rather by
 	 * subclasses.
 	 *
-	 * @param plugin A reference to the FunctionPlugin.
+	 * @param tool The plugin tool.
 	 * @param title The title of the dialog.
 	 * @param function the function which is having its signature edited.
 	 */

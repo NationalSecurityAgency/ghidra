@@ -26,7 +26,7 @@ import ghidra.xml.XmlPullParser;
  * The pattern can be constructed or restored from XML of the form,
  * where alignOffset=mark, alignmask=bits
  * 
- *     <align mark="0" bits="1"/>
+ *     {@code <align mark="0" bits="1"/>}
  *   
  */
 

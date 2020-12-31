@@ -20,9 +20,9 @@ package ghidra.app.util.demangler;
  * 
  * <p>This class and its children have many overlapping concepts that we wish to refine at a 
  * future date.  Below is a listing of known uses:
- * <TABLE>
+ * <TABLE><caption></caption>
  * 		<TR>
- * 			<TH ALIGN="left">Method</TH><TH ALIGN="left">Description</TH>
+ * 			<TH STYLE="float:left">Method</TH><TH STYLE="float:left">Description</TH>
  * 		</TR>
  * 		<TR>
  * 			<TD>

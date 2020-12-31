@@ -658,7 +658,7 @@ public class InstructionSearchData extends Observable {
 	 * Searches through instructions in the given program for a specific byte
 	 * pattern. If found, returns the instruction. i
 	 * 
-	 * @param program the program to search
+	 * @param plugin the program plugin
 	 * @param searchBounds the addresses to search
 	 * @param taskMonitor the task monitor
 	 * @param forwardSearch if true, search through addresses forward

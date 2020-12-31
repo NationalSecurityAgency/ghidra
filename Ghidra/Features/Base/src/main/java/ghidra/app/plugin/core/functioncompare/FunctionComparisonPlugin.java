@@ -99,11 +99,13 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	/**
 	 * Overridden to listen for two event types:
+	 * <ul>
 	 * <li>Object Restored: In the event of a redo/undo that affects a function
 	 * being shown in the comparison provider, this will allow tell the provider
 	 * to reload</li>
 	 * <li>Object Removed: If a function is deleted, this will tell the provider
 	 * to purge it from the view</li>
+	 * </ul>
 	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {

@@ -56,9 +56,6 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Construct a new stack editor provider. 
 	 * @param plugin owner of this provider
-	 * @param program program for data type; may be null if data type
-	 * is part of an archive
-	 * @param stack the stack frame to be edited
 	 */
 	protected CompositeEditorProvider(Plugin plugin) {
 		super(plugin.getTool(), "Composite Editor", plugin.getName());

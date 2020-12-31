@@ -91,7 +91,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	/**
 	 * Returns the address where the item described by this object is used.  For example, for 
 	 * data types, the address is where a data type is applied; for references, this value is the
-	 * <tt>from</tt> address.
+	 * <var>from</var> address.
 	 * 
 	 * @return  the address where the item described by this object is used. 
 	 */

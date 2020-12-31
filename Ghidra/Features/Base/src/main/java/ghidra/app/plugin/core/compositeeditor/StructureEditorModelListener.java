@@ -20,11 +20,11 @@ package ghidra.app.plugin.core.compositeeditor;
 public interface StructureEditorModelListener extends CompositeEditorModelListener {
 
 	/**
-	 * Called whenever the structure data type editor internal packing state changes
+	 * Called whenever the structure data type editor alignment state changes
 	 * for the data type being edited.
-	 * Whether the structure is free form, aligned, or packed to a particular maximum alignment.
+	 * Whether the structure is aligned or not.
 	 *
-	 * @param type the new packing state: FREE_FORM, ALIGN, PACK, PACK2, PACK4, or PACK8.
+	 * @param aligned true if aligned else false.
 	 */
 	public abstract void internalAlignmentStateChanged(boolean aligned);
 
@@ -33,7 +33,7 @@ public interface StructureEditorModelListener extends CompositeEditorModelListen
 	 * for the data type being edited.
 	 * Whether the structure is free form, aligned, or packed to a particular maximum alignment.
 	 *
-	 * @param type the new packing state: FREE_FORM, ALIGN, PACK, PACK2, PACK4, or PACK8.
+	 * @param packingValue the new packing value.
 	 */
 	public abstract void packStateChanged(long packingValue);
 

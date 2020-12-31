@@ -43,21 +43,16 @@ public class SelectionModeWidget extends ControlPanelWidget {
 	InsertBytesWidget parent;
 
 	/**
-	 * Constructor.
+	 * Constructs a new SelectionModeWidget
 	 * 
-	 * @param plugin
-	 * @param title
-	 * @param parent
+	 * @param title the widget title
+	 * @param parent the widget parent
 	 */
 	public SelectionModeWidget(String title, InsertBytesWidget parent) {
 		super(title);
 		this.parent = parent;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	@Override
 	protected JPanel createContent() {
 		JPanel rbPanel = new JPanel();

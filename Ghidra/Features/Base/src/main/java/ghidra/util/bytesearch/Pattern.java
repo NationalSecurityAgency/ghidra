@@ -185,7 +185,7 @@ public class Pattern extends DittedBitSequence {
 	}
 
 	/**
-	 * Read just the post patterns from the <patternpair> tags
+	 * Read just the post patterns from the {@code <patternpair>} tags
 	 * @param file is the file to read from
 	 * @param patternList collects the resulting Pattern objects
 	 * @param pfactory is the factory for constructing postrules and matchactions

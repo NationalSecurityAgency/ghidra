@@ -329,12 +329,12 @@ public class DittedBitSequence {
 
 	/**
 	 * restore ditted string from XML stream with hex/binary ditted sequences in the form:
-	 *    <data> 0x..d.4de2 ....0000 .1...... 00101101 11101001 </data>
+	 *    {@code <data> 0x..d.4de2 ....0000 .1...... 00101101 11101001 </data>}
 	 * where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
 	 * 
 	 * @param parser XML pull parser stream
 	 * 
-	 * @return number of bytes read from XML <data> tag
+	 * @return number of bytes read from XML {@code <data>} tag
 	 * 
 	 * @throws IOException if XML read has an error
 	 */

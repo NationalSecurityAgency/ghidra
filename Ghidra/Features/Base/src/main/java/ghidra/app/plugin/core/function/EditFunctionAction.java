@@ -44,10 +44,6 @@ public class EditFunctionAction extends ProgramContextAction {
 		setHelpLocation(new HelpLocation("FunctionPlugin", "Edit_Function"));
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 * @param ev details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(ProgramActionContext context) {
 

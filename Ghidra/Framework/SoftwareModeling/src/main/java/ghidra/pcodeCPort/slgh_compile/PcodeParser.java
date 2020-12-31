@@ -62,7 +62,8 @@ public class PcodeParser extends PcodeCompile {
 	/**
 	 * Build parser from a translator string
 	 * @param sleighSpec sleigh translator spec including address-spaces and register definitions, see
-	 * {@link SleighLanguage#buildTranslatorTag(ghidra.program.model.address.AddressFactory, long, ghidra.app.plugin.processors.sleigh.symbol.SymbolTable, boolean)}
+	 * {@link SleighLanguage#buildTranslatorTag(ghidra.program.model.address.AddressFactory, long, ghidra.app.plugin.processors.sleigh.symbol.SymbolTable)
+	 * SleighLanguage.buildTranslatorTag(AddressFactory, long, SymbolTable)}
 	 * @throws JDOMException
 	 */
 	public PcodeParser(String sleighSpec) throws JDOMException {

@@ -84,7 +84,7 @@ public class BundleHost {
 	}
 
 	/**
-	 * If a {@link GhidraBundle} hasn't already been added for {@bundleFile}, add it now as a 
+	 * If a {@link GhidraBundle} hasn't already been added for <var>bundleFile</var>, add it now as a 
 	 * non-system bundle.
 	 * 
 	 * <p>Enable the bundle.

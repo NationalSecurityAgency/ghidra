@@ -162,7 +162,7 @@ public class AddressTable {
 	/**
 	 * Get a generic name for the table
 	 * 
-	 * @param offset from the top of the table, normally 0
+	 * @param offsetLen from the top of the table, normally 0
 	 * @return a general name for the table based on the start and an optional
 	 *         offset
 	 */
@@ -294,12 +294,11 @@ public class AddressTable {
 	 * Create a switch table. If any new code is found while disassembling the
 	 * table destinations, don't finish making the table!
 	 *
-	 * @param program
-	 * @param start_inst
-	 * @param opindex
-	 * @param table
-	 * @param flagNewCode
-	 * @param monitor
+	 * @param program the program
+	 * @param start_inst the start instruction
+	 * @param opindex the operand index
+	 * @param flagNewCode whether or not to flag new code
+	 * @param monitor the task monitor
 	 *
 	 * @return true if any new code was discovered!
 	 */
@@ -622,7 +621,6 @@ public class AddressTable {
 	 *
 	 * @param program program we are in
 	 * @param start_inst start instruction of the jump table
-	 * @param table
 	 * @param monitor monitor to output results.
 	 */
 	public void fixupFunctionBody(Program program, Instruction start_inst, TaskMonitor monitor) {
