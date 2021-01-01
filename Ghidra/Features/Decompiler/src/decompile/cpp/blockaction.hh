@@ -217,6 +217,7 @@ class CollapseStructure {
   bool ruleCaseFallthru(FlowBlock *bl);		///< Attempt to one switch case falling through to another
   int4 collapseInternal(FlowBlock *targetbl);	///< The main collapsing loop
   void collapseConditions(void);		///< Simplify conditionals
+  int4 selectBestNoExit(FlowBlock *clause0,FlowBlock *clause1);
 public:
   CollapseStructure(BlockGraph &g);		///< Construct given a control-flow graph
   int4 getChangeCount(void) const { return dataflow_changecount; }	///< Get number of data-flow changes

@@ -176,6 +176,8 @@ public:
   bool isCallOrBranch(void) const { return ((flags&(PcodeOp::branch|PcodeOp::call))!=0); }
   /// \brief Return \b true if this op breaks fall-thru flow
   bool isFlowBreak(void) const { return ((flags&(PcodeOp::branch|PcodeOp::returns))!=0); }
+  /// \brief Return \b true if this op will be decompiled as "return"
+  bool isStandardReturn(void) const { return ((flags&PcodeOp::returns)!=0 && getHaltType()==0); }
   /// \brief Return \b true if this op flips the true/false meaning of its control-flow branching
   bool isBooleanFlip(void) const { return ((flags&PcodeOp::boolean_flip)!=0); }
   /// \brief Return \b true if the fall-thru branch is taken when the boolean input is true
