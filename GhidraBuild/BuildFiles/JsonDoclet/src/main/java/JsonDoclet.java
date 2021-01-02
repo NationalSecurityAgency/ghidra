@@ -66,39 +66,41 @@ public class JsonDoclet implements Doclet {
 
 	@Override
 	public Set<? extends Option> getSupportedOptions() {
-		Option[] options = { new Option() {
-			@Override
-			public int getArgumentCount() {
-				return 1;
-			}
+		Option[] options = {
+			new Option() {
+				@Override
+				public int getArgumentCount() {
+					return 1;
+				}
 
-			@Override
-			public String getDescription() {
-				return "the destination directory";
-			}
+				@Override
+				public String getDescription() {
+					return "the destination directory";
+				}
 
-			@Override
-			public Kind getKind() {
-				return Option.Kind.STANDARD;
-			}
+				@Override
+				public Kind getKind() {
+					return Option.Kind.STANDARD;
+				}
 
-			@Override
-			public List<String> getNames() {
-				return Arrays.asList("-d");
-			}
+				@Override
+				public List<String> getNames() {
+					return Arrays.asList("-d");
+				}
 
-			@Override
-			public String getParameters() {
-				return "directory";
-			}
+				@Override
+				public String getParameters() {
+					return "directory";
+				}
 
-			@Override
-			public boolean process(String option, List<String> arguments) {
-				destDir = new File(arguments.get(0));
-				return true;
-			}
-
-		} };
+				@Override
+				public boolean process(String option, List<String> arguments) {
+					destDir = new File(arguments.get(0));
+					return true;
+				}
+			},
+			new IgnoredOption("-doctitle"), new IgnoredOption("-windowtitle")
+		};
 		return new HashSet<>(Arrays.asList(options));
 	}
 
@@ -459,6 +461,45 @@ public class JsonDoclet implements Doclet {
 		}
 		catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private static class IgnoredOption implements Option {
+		
+		private final List<String> names;
+
+		IgnoredOption(String name) {
+			this.names = Arrays.asList(name);
+		}
+		
+		@Override
+		public int getArgumentCount() {
+			return 1;
+		}
+
+		@Override
+		public String getDescription() {
+			return "ignored";
+		}
+
+		@Override
+		public Kind getKind() {
+			return Option.Kind.EXTENDED;
+		}
+
+		@Override
+		public List<String> getNames() {
+			return names;
+		}
+
+		@Override
+		public String getParameters() {
+			return "none";
+		}
+
+		@Override
+		public boolean process(String option, List<String> arguments) {
+			return true;
 		}
 	}
 }
