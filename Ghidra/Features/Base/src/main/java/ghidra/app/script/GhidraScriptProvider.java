@@ -133,4 +133,19 @@ public abstract class GhidraScriptProvider
 	protected void writeBody(PrintWriter writer) {
 		writer.println(getCommentCharacter() + "TODO Add User Code Here");
 	}
+
+	/**
+	 * Fixup a script name for searching in script directories.
+	 *
+	 * <p>This method is part of a poorly specified behavior that is due for future amendment, 
+	 * see {@link GhidraScriptUtil#fixupName(String)}.
+	 * 
+	 * @param scriptName the name of the script, must end with this provider's extension
+	 * @return a (relative) file path to the corresponding script
+	 */
+	@Deprecated
+	protected String fixupName(String scriptName) {
+		return scriptName;
+	}
+
 }
