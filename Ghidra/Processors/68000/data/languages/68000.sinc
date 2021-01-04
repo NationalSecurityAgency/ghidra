@@ -52,6 +52,10 @@ define register offset=0x600 size=4 [ EMACSR ACC0 ACC1 ACC2 ACC3 ACCext01 ACCext
 @define DAT_DIR_CTL_ADDR_MODES2 "(mode2=0 | mode2=2 | mode2=5 | mode2=6 | mode=7)" # Data direct and control addressing modes
 @define CTL_ADDR_MODES2 "(mode2=2 | mode2=5 | mode2=6 | mode2=7)" # Control addressing modes
 
+@ifdef CPU32
+@define TBL_ADDR_MODES "(tbl_mode=2 | tbl_mode=4 | tbl_mode=5 | tbl_mode=6 | tbl_mode=7)" # Addressing modes for tblxx instructions
+@endif
+
 # Floating-point condition code bits within FPSR
 @define N_FP				"FPSR[27,1]"
 @define Z_FP				"FPSR[26,1]"
@@ -149,7 +153,31 @@ define token extword (16)
   sfact = (9,10)
   accmsb = (4,4)  
 @endif  
+@ifdef CPU32 # Data register interpolation fields for TBL instructions.
+  tbl_dr_size  = (6,7)
+  tbl_dr_round = (10,10)
+  tbl_dr_sign  = (11,11)
+  tbl_dr_reg = (0,2)
+@endif
 ;
+
+@ifdef CPU32
+# The TBLxx instructions are two 16-bit tokens optionally followed by a disp16 token.
+# The presence of the disp16 token is governed by bits in the first token.
+# Sleigh's ... operator follows the second token, but needs the bits from the first.
+# To work around that, a single 32-bit token is used in place of the standard tokens.
+define token tbl_instrA(32)
+  tbl_regan=(16,18)
+  tbl_mode=(19,21)
+  tbl_op37=(19,23)
+  tbl_op67=(22,23)
+  tbl_opbig=(24,31)
+  tbl_size=(6,7)
+  tbl_round=(10,10)
+  tbl_sign=(11,11)
+  tbl_regxdn=(12,14)
+;
+@endif
 
 define token extword2 (16)
   regda2  = (12,15)
@@ -281,7 +309,12 @@ define context contextreg
   extGUARD = (14,14)        # guard for saving off modes before starting instructions
 ;
 
+@ifdef CPU32
+attach variables [ regdn regxdn reg9dn regdr regdq regsdn regdu regdc regdu2 regdc2 tbl_regxdn tbl_dr_reg ]    [ D0 D1 D2 D3 D4 D5 D6 D7 ];
+@else
 attach variables [ regdn regxdn reg9dn regdr regdq regsdn regdu regdc regdu2 regdc2 ]    [ D0 D1 D2 D3 D4 D5 D6 D7 ];
+@endif
+
 attach variables [ fldoffreg fldwdreg f_reg fcnt fkfacreg fldynreg ]    [ D0 D1 D2 D3 D4 D5 D6 D7 ];
 attach variables [ regdnw regxdnw reg9dnw regsdnw regduw regdcw regdu2w regdc2w ] [ D0w D1w D2w D3w D4w D5w D6w D7w ];
 attach variables [ regdnb reg9dnb regsdnb regdub regdcb ]         [ D0b D1b D2b D3b D4b D5b D6b D7b ];
@@ -526,11 +559,13 @@ Tyb: regdnb	is rmbit=0 & regdnb		{ export regdnb; }
 Txb: -(reg9an)	is rmbit=1 & reg9an		{ reg9an = reg9an-1; export *:1 reg9an; }
 Txb: reg9dnb	is rmbit=0 & reg9dnb		{ export reg9dnb; }
 
+@ifndef CPU32
 # Bit field parameters
 f_off: fldoffdat	is flddo=0 & fldoffdat	{ export *[const]:4 fldoffdat; }
 f_off: fldoffreg	is flddo=1 & fldoffreg	{ export fldoffreg; }
 f_wd: fldwddat		is flddw=0 & fldwddat	{ export *[const]:4 fldwddat; }
 f_wd: fldwdreg		is flddw=1 & fldwdreg	{ export fldwdreg; }
+@endif # CPU32
 
 rreg: regxdn		is da=0 & regxdn	{ export regxdn; }
 rreg: regxan		is da=1 & regxan	{ export regxan; }
@@ -772,6 +807,7 @@ with : extGUARD=1 {
 :bclr.l reg9dn,regdn	is op=0 & reg9dn & op68=6 & mode=0 & regdn			{ mask:4 = 1<<(reg9dn&31); ZF=(regdn&mask)==0; regdn=regdn&(~mask); }
 :bclr.l d8,regdn		is opbig=8 & op67=2 & mode=0 & regdn; d8			{ mask:4 = 1<<d8; ZF=(regdn&mask)==0; regdn=regdn&(~mask); }
 
+@ifndef CPU32
 :bfchg e2l{f_off:f_wd}		is opbig=0xea & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd; e2l	[ savmod2=savmod1; regtsan=regtfan; ] {
    logflags(); tmp:4 = e2l; getbitfield(tmp, f_off, f_wd); resbitflags(tmp, f_wd-1); mask:4 = 0; bfmask(mask, f_off, f_wd); e2l = (e2l & ~mask) | (~(e2l & mask) & mask);
 }
@@ -826,6 +862,7 @@ define pcodeop countLeadingZeros;
 :bftst e2l{f_off:f_wd}		is opbig=0xe8 & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd; e2l	[ savmod2=savmod1; regtsan=regtfan; ] {
    logflags(); tmp:4 = e2l; getbitfield(tmp, f_off, f_wd); resbitflags(tmp, f_wd-1);
 }
+@endif # CPU32
 
 :bkpt "#"op02			is opbig=0x48 & op67=1 & op5=0 & op34=1 & op02			unimpl
 
@@ -847,6 +884,7 @@ define pcodeop countLeadingZeros;
 :btst.l reg9dn,regdn		is op=0 & reg9dn & op68=4 & mode=0 & regdn			{ mask:4 = 1<<(reg9dn&31); ZF=(regdn&mask)==0; }
 :btst.l d8,regdn		is opbig=8 & op67=0 & mode=0 & regdn; d8			{ mask:4 = 1<<d8; ZF=(regdn&mask)==0; }
 
+@ifndef CPU32
 :callm "#"^d8,e2l			is opbig=6 & op67=3 & $(CTL_ADDR_MODES); d8; e2l 			[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 
 #TODO: should constrain CAS to ignore mode=7 & regan=4 (place CAS2 before CAS to avoid problem)
@@ -914,6 +952,7 @@ define pcodeop countLeadingZeros;
    ZF = 1;
    NF = 0; 
 }
+@endif # CPU32
 
 :chk.w eaw,reg9dnw		is (op=4 & reg9dnw & op68=6 & $(DAT_ALTER_ADDR_MODES))... & eaw				unimpl
 :chk.l eal,reg9dn		is (op=4 & reg9dn & op68=4 & $(DAT_ALTER_ADDR_MODES))... & eal				unimpl
@@ -969,11 +1008,16 @@ cachetype: "both"		is op67=3							{ export 3:4; }
 												  subflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
 :cmpm.l (regan)+,(reg9an)+	is op=11 & reg9an & op8=1 & op67=2 & op5=0 & op34=1 & regan	{ local tmp1=*:4 regan; regan=regan+4; local tmp2=*:4 reg9an; reg9an=reg9an+4;
 												  subflags(tmp2,tmp1); local tmp =tmp2-tmp1; resflags(tmp); }
+
+@ifndef CPU32
 # cpBcc      # need to know specific copressors  use copcc1
 # cpDBcc     # use copcc2
 # cpGEN
+# cpRESTORE
+# cpSAVE
 # cpScc	     # use copcc2
 # cpTRAPcc   # use copcc2
+@endif # CPU32
 
 :db^cc regdnw,addr16		is op=5 & cc & op67=3 & op5=0 & op34=1 & regdnw; addr16		{ if (cc) goto inst_next; regdnw=regdnw-1; if (regdnw!=-1) goto addr16; }
 
@@ -1467,7 +1511,9 @@ macro negResFlags(result) {
 :ori "#"^d8,"CCR"			is opbig=0 & op37=7 & op02=4; d8			{ packflags(SR); SR=SR|d8; unpackflags(SR); }
 :ori "#"^d16,SR			is SR; opbig=0x00 & d8base=0x7c; d16			{ packflags(SR); SR=SR|d16; unpackflags(SR); }
 
+@ifndef CPU32
 :pack Tyb,Txb,"#"d16		is op=8 & op48=20 & Txb & Tyb; d16			unimpl
+@endif # CPU32
 
 :pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ SP = SP-4; *SP = eaptr; }
 
@@ -1605,8 +1651,10 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :rtd "#"^d16			is opbig=0x4e & op37=14 & op02=4; d16				{ PC = *SP; SP = SP + 4 + d16; return [PC]; }
 :rte				is d16=0x4e73							{ tmp:4 = 0; return [tmp]; }
 
+@ifndef CPU32
 :rtm regdn			is opbig=0x06 & op37=24 & regdn					unimpl
 :rtm regan			is opbig=0x06 & op37=25 & regan					unimpl
+@endif # CPU32
 
 :rtr				is opbig=0x4e & op37=14 & op02=7				{ SR = *SP; SP = SP+2; PC = *SP; SP = SP+4; unpackflags(SR); return [PC]; }
 
@@ -1617,7 +1665,16 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :s^cc eab			is (op=5 & cc & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ eab = -cc; }
 
-:stop "#"^d16			is opbig=0x4e & d8base=0x72; d16				unimpl
+#TODO: implement STOP
+:stop "#"^d16			is opbig=0x4e & d8base=0x72; d16				{ SR = d16; }
+
+@ifdef CPU32
+#TODO: implement interrupt mask → EBI; STOP
+:lpstop "#"^d16			is opbig=0xf8 & d8base=0x00; opbig=0x01 & d8base=0xC0; d16				{ SR = d16; }
+
+#TODO: implement: if (background mode enabled) then enter Background Mode else Format/Vector offset  → –(SSP); PC → –(SSP); SR  → –(SSP); (Vector) → PC
+:bgnd				is opbig=0x4A & d8base=0xFA { }
+@endif # CPU32
 
 :sub.b eab,reg9dnb		is (op=9 & reg9dnb & op68=0)... & eab
 					{ subflags(reg9dnb, eab); reg9dnb = reg9dnb - eab; resflags(reg9dnb); }
@@ -1680,6 +1737,96 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :tas eab			is (opbig=0x4a & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; }
 @endif # COLDFIRE
 
+@ifdef CPU32
+
+# TODO: tbl_mode=4 and tbl_mode=5 constructors
+
+tbl_eal: (tbl_regan) is tbl_mode=2 & tbl_regan			{ export *:4 tbl_regan; }
+# tbl_eal: -(tbl_regan) is tbl_mode=4 & tbl_regan			{ tbl_regan = tbl_regan - 4; export *:4 tbl_regan; }
+# tbl_eal: (d16,tbl_regan) is tbl_mode=5 & tbl_regan; d16		{ local tmp  = tbl_regan + d16; export *:4 tmp; }
+tbl_eal: (extw) is tbl_mode=6 & tbl_regan; extw		[ regtfan = tbl_regan; pcmode = 0; ] { build extw; export *:4 extw; }
+tbl_eal: (d16,PC) is PC & tbl_mode=7 & tbl_regan=2; d16	{ tmp:4 = inst_start + 2 + d16; export *:4 tmp; }
+tbl_eal: (extw) is tbl_mode=7 & tbl_regan=3; extw		[ pcmode=1; ] { build extw; export *:4 extw; }
+tbl_eal: (d16)".w" is tbl_mode=7 & tbl_regan=0; d16		{ export *:4 d16; }
+tbl_eal: (d32)".l" is tbl_mode=7 & tbl_regan=1; d32		{ export *:4 d32; }
+tbl_eal: "#"^d32 is tbl_mode=7 & tbl_regan=4; d32		{ export *[const]:4 d32; }
+
+tbl_eaw: (tbl_regan) is tbl_mode=2 & tbl_regan			{ export *:2 tbl_regan; }
+# tbl_eaw: -(tbl_regan) is tbl_mode=4 & tbl_regan			{ tbl_regan = tbl_regan - 2; export *:2 tbl_regan; }
+# tbl_eaw: (d16,tbl_regan) is tbl_mode=5 & tbl_regan; d16		{ local tmp  = tbl_regan + d16; export *:2 tmp; }
+tbl_eaw: (extw) is tbl_mode=6 & tbl_regan; extw		[ pcmode=0; regtfan=tbl_regan; ] { build extw; export *:2 extw; }
+tbl_eaw: (d16,PC) is PC & tbl_mode=7 & tbl_regan=2; d16	{ tmp:4 = inst_start + 2 + d16; export *:2 tmp; }
+tbl_eaw: (extw) is tbl_mode=7 & tbl_regan=3; extw		[ pcmode=1; ] { build extw; export *:2 extw; }
+tbl_eaw: (d16)".w" is tbl_mode=7 & tbl_regan=0; d16		{ export *:2 d16; }
+tbl_eaw: (d32)".l" is tbl_mode=7 & tbl_regan=1; d32		{ export *:2 d32; }
+tbl_eaw: "#"^d16 is tbl_mode=7 & tbl_regan=4; d16		{ export *[const]:2 d16; }
+
+tbl_eab: (tbl_regan) is tbl_mode=2 & tbl_regan			{ export *:1 tbl_regan; }
+# tbl_eab: -(tbl_regan) is tbl_mode=4 & tbl_regan			{ tbl_regan = tbl_regan - 1; export *:1 tbl_regan; }
+# tbl_eab: (d16,tbl_regan) is tbl_mode=5 & tbl_regan; d16		{ local tmp  = tbl_regan + d16; export *:1 tmp; }
+tbl_eab: (extw) is tbl_mode=6 & tbl_regan; extw		[ pcmode=0; regtfan=tbl_regan; ] { build extw; export *:1 extw; }
+tbl_eab: (d16,PC) is PC & tbl_mode=7 & tbl_regan=2; d16	{ tmp:4 = inst_start + 2 + d16; export *:1 tmp; }
+tbl_eab: (extw) is tbl_mode=7 & tbl_regan=3; extw		[ pcmode=1; ] { build extw; export *:1 extw; }
+tbl_eab: (d16)".w" is tbl_mode=7 & tbl_regan=0; d16		{ export *:1 d16; }
+tbl_eab: (d32)".l" is tbl_mode=7 & tbl_regan=1; d32		{ export *:1 d32; }
+tbl_eab: "#"^d8 is tbl_mode=7 & tbl_regan=4; d8		{ export *[const]:1 d8; }
+
+tblsign: "u"   is tbl_sign=0 { }
+tblsign: "s"   is tbl_sign=1 { }
+
+tbldrsign: "u"   is tbl_dr_sign=0 { }
+tbldrsign: "s"   is tbl_dr_sign=1 { }
+
+define pcodeop tableLookup;
+
+# Rounded Table Lookup and Interpolate
+
+:tbl^tblsign^".b" tbl_eab,tbl_regxdn    is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=0 & tblsign & tbl_round=0 & tbl_regxdn) ... & tbl_eab
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eab); }
+	
+:tbl^tblsign^".w" tbl_eaw,tbl_regxdn    is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=1 & tblsign & tbl_round=0 & tbl_regxdn) ... & tbl_eaw
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eaw); }
+	
+:tbl^tblsign^".l" tbl_eal,tbl_regxdn    is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=2 & tblsign & tbl_round=0 & tbl_regxdn) ... & tbl_eal
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eal); }
+
+# Unrounded Table Lookup and Interpolate
+
+:tbl^tblsign^"n.b" tbl_eab,tbl_regxdn	is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=0 & tblsign & tbl_round=1 & tbl_regxdn) ... & tbl_eab
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eab); }
+
+:tbl^tblsign^"n.w" tbl_eaw,tbl_regxdn	is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=1 & tblsign & tbl_round=1 & tbl_regxdn) ... & tbl_eaw
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eaw); }
+
+:tbl^tblsign^"n.l" tbl_eal,tbl_regxdn	is (tbl_opbig=0xF8 & tbl_op67=0 & $(TBL_ADDR_MODES) & tbl_size=2 & tblsign & tbl_round=1 & tbl_regxdn) ... & tbl_eal
+	{ tbl_regxdn = tableLookup(tbl_regxdn, tbl_eal); }
+
+define pcodeop interpolate;
+
+# Rounded Data Register Interpolate
+
+:tbl^tbldrsign^".b" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=0 & tbldrsign & tbl_dr_round=0 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+	
+:tbl^tbldrsign^".w" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=1 & tbldrsign & tbl_dr_round=0 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^".l" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=2 & tbldrsign & tbl_dr_round=0 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+# Unrounded Data Register Interpolate
+
+:tbl^tbldrsign^"n.b" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=0 & tbldrsign & tbl_dr_round=1 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^"n.w" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=1 & tbldrsign & tbl_dr_round=1 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+:tbl^tbldrsign^"n.l" regdn:tbl_dr_reg,regxdn  is opbig=0xF8 & op37=0 & mode=0 & regdn ; tbl_dr_size=2 & tbldrsign & tbl_dr_round=1 & tbl_dr_reg & regxdn
+	{ regxdn = interpolate(regdn, tbl_dr_reg); }
+
+@endif # CPU32
+
 :trap "#"^op03			is opbig=0x4e & op67=1 & op45=0 & op03			{ vector:1 = op03; __m68k_trap(vector); }
 :trap^cc			is op=5 & cc & op37=31 & op02=4					{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; vector:1 = 7; __m68k_trap(vector); }
 :trap^cc^".w" "#"^d16		is op=5 & cc & op37=31 & op02=2; d16		{ if (!cc) goto inst_next; SP = SP - 4; *:4 SP = PC; __m68k_trapv(); }
@@ -1696,7 +1843,9 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
 
+@ifndef CPU32
 :unpk Tyb,Txb,"#"^d16		is op=8 & Txb & op48=24 & Tyb; d16				unimpl
+@endif # CPU32
 
 # Floating Point Instructions
 
