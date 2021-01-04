@@ -197,6 +197,13 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
+	public void onExit() {
+		super.onExit();
+		DbgModelTargetProcessContainer processes = (DbgModelTargetProcessContainer) getImplParent();
+		processes.processRemoved(process.getId(), DbgCause.Causes.UNCLAIMED);
+	}
+
+	@Override
 	public CompletableFuture<Void> select() {
 		DbgManagerImpl manager = getManager();
 		return manager.execute(new DbgProcessSelectCommand(manager, process));

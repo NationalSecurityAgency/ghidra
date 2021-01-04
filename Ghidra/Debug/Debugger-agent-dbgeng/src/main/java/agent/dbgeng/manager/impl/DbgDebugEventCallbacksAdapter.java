@@ -100,7 +100,11 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 			if (DebugStatus.isInsideWait(argument)) {
 				return DebugStatus.NO_CHANGE;
 			}
-			Msg.info(this, "***ExecutionStatus: " + DebugStatus.fromArgument(argument));
+			DebugStatus status = DebugStatus.fromArgument(argument);
+			Msg.info(this, "***ExecutionStatus: " + status);
+			if (status.equals(DebugStatus.NO_DEBUGGEE)) {
+				event.setState(DbgState.EXIT);
+			}
 			return manager.processEvent(event);
 		}
 		if (flags.contains(ChangeEngineState.BREAKPOINTS)) {
