@@ -317,6 +317,10 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		return inputPanel;
 	}
 
+	/*tests*/ void pressEnterOnTagInputField() {
+		processCreates();
+	}
+
 	Set<FunctionTag> backgroundLoadTags() {
 		// Add any tags from the file system that are not in the db
 		List<? extends FunctionTag> dbTags = getAllTagsFromDatabase();
@@ -500,5 +504,4 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 		return inputPanel;
 	}
-
 }

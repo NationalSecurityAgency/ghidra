@@ -15,8 +15,6 @@
  */
 package docking;
 
-import ghidra.util.Msg;
-
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +22,8 @@ import java.util.List;
 import javax.swing.*;
 
 import org.jdom.Element;
+
+import ghidra.util.Msg;
 
 /**
  * Node for managing a JSplitPane view of two component trees.
@@ -194,7 +194,7 @@ class SplitNode extends Node {
 
 	@Override
 	List<Node> getChildren() {
-		List<Node> list = new ArrayList<Node>();
+		List<Node> list = new ArrayList<>();
 		if (child1 != null) {
 			list.add(child1);
 		}
@@ -212,6 +212,19 @@ class SplitNode extends Node {
 	@Override
 	String getDescription() {
 		return "Split Node";
+	}
+
+	@Override
+	void dispose() {
+		if (child1 != null) {
+			child1.dispose();
+			child1 = null;
+		}
+
+		if (child2 != null) {
+			child2.dispose();
+			child2 = null;
+		}
 	}
 }
 
