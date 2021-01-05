@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugSessionId;
-import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgSessionImpl;
@@ -51,7 +50,7 @@ public class DbgModelImpl extends AbstractDbgModel {
 		this.root = new DbgModelTargetRootImpl(this);
 		this.completedRoot = CompletableFuture.completedFuture(root);
 		DbgSessionImpl s = new DbgSessionImpl((DbgManagerImpl) dbg, new DebugSessionId(0));
-		s.add(Causes.UNCLAIMED);
+		s.add();
 		DbgModelTargetSessionContainer sessions = root.sessions;
 		this.session = (DbgModelTargetSessionImpl) sessions.getTargetSession(s);
 	}

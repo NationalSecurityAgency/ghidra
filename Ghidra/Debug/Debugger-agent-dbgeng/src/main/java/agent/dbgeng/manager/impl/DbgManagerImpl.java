@@ -123,7 +123,11 @@ public class DbgManagerImpl implements DbgManager {
 	public DbgThreadImpl getThreadComputeIfAbsent(DebugThreadId id, DbgProcessImpl process,
 			int tid) {
 		synchronized (threads) {
-			return threads.computeIfAbsent(id, i -> new DbgThreadImpl(this, process, id, tid));
+			if (!threads.containsKey(id)) {
+				DbgThreadImpl thread = new DbgThreadImpl(this, process, id, tid);
+				thread.add();
+			}
+			return threads.get(id);
 		}
 	}
 
@@ -188,7 +192,11 @@ public class DbgManagerImpl implements DbgManager {
 
 	public DbgProcessImpl getProcessComputeIfAbsent(DebugProcessId id, int pid) {
 		synchronized (processes) {
-			return processes.computeIfAbsent(id, i -> new DbgProcessImpl(this, id, pid));
+			if (!processes.containsKey(id)) {
+				DbgProcessImpl process = new DbgProcessImpl(this, id, pid);
+				process.add();
+			}
+			return processes.get(id);
 		}
 	}
 
@@ -221,7 +229,11 @@ public class DbgManagerImpl implements DbgManager {
 
 	public DbgSessionImpl getSessionComputeIfAbsent(DebugSessionId id) {
 		synchronized (sessions) {
-			return sessions.computeIfAbsent(id, i -> new DbgSessionImpl(this, id));
+			if (!sessions.containsKey(id)) {
+				DbgSessionImpl session = new DbgSessionImpl(this, id);
+				session.add();
+			}
+			return sessions.get(id);
 		}
 	}
 
@@ -720,7 +732,7 @@ public class DbgManagerImpl implements DbgManager {
 		so.setCurrentProcessId(id);
 		int pid = so.getCurrentProcessSystemId();
 		DbgProcessImpl proc = new DbgProcessImpl(this, id, pid);
-		proc.add(evt.getCause());
+		proc.add();
 		getEventListeners().fire.processAdded(proc, evt.getCause());
 		getEventListeners().fire.processSelected(proc, evt.getCause());
 
@@ -1325,50 +1337,62 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public DbgThreadImpl getCurrentThread() {
-		DebugEventInformation info = getLastEventInformation();
-		if (info == null) {
-			return null;
+		synchronized (threads) {
+			DebugEventInformation info = getLastEventInformation();
+			if (info == null) {
+				return null;
+			}
+			DebugSystemObjects so = getSystemObjects();
+			int tid = so.getCurrentThreadSystemId();
+			if (tid < 0) {
+				return null;
+			}
+			return threads.get(info.getThreadId());
 		}
-		DebugSystemObjects so = getSystemObjects();
-		int tid = so.getCurrentThreadSystemId();
-		if (tid < 0) {
-			return null;
-		}
-		return threads.get(info.getThreadId());
 	}
 
 	public DbgProcessImpl getCurrentProcess() {
-		DebugEventInformation info = getLastEventInformation();
-		if (info == null) {
-			return null;
+		synchronized (processes) {
+			DebugEventInformation info = getLastEventInformation();
+			if (info == null) {
+				return null;
+			}
+			return processes.get(info.getProcessId());
 		}
-		return processes.get(info.getProcessId());
 	}
 
 	public DbgSessionImpl getCurrentSession() {
-		DebugEventInformation info = getLastEventInformation();
-		if (info == null) {
-			return null;
+		synchronized (sessions) {
+			DebugEventInformation info = getLastEventInformation();
+			if (info == null) {
+				return null;
+			}
+			return sessions.get(info.getSessionId());
 		}
-		return sessions.get(info.getSessionId());
 	}
 
 	public DbgThreadImpl getEventThread() {
-		DebugSystemObjects so = getSystemObjects();
-		DebugThreadId id = so.getEventThread();
-		return threads.get(id);
+		synchronized (threads) {
+			DebugSystemObjects so = getSystemObjects();
+			DebugThreadId id = so.getEventThread();
+			return threads.get(id);
+		}
 	}
 
 	public DbgProcessImpl getEventProcess() {
-		DebugSystemObjects so = getSystemObjects();
-		DebugProcessId id = so.getEventProcess();
-		return processes.get(id);
+		synchronized (processes) {
+			DebugSystemObjects so = getSystemObjects();
+			DebugProcessId id = so.getEventProcess();
+			return processes.get(id);
+		}
 	}
 
 	public DbgSessionImpl getEventSession() {
-		DebugSystemObjects so = getSystemObjects();
-		DebugSessionId id = so.getEventSystem();
-		return sessions.get(id);
+		synchronized (sessions) {
+			DebugSystemObjects so = getSystemObjects();
+			DebugSessionId id = so.getEventSystem();
+			return sessions.get(id);
+		}
 	}
 
 	public CompletableFuture<Void> selectThread(DbgThreadImpl thread) {

@@ -42,8 +42,6 @@ public class DbgSessionImpl implements DbgSession {
 	public DbgSessionImpl(DbgManagerImpl manager, DebugSessionId id) {
 		this.manager = manager;
 		this.id = id;
-		manager.sessions.put(id, this);
-		manager.getEventListeners().fire.sessionAdded(this, DbgCause.Causes.UNCLAIMED);
 	}
 
 	public DbgSessionImpl(DbgManagerImpl manager) {
@@ -83,7 +81,9 @@ public class DbgSessionImpl implements DbgSession {
 	 * 
 	 * @param cause the cause of the new inferior
 	 */
-	public void add(DbgCause cause) {
+	public void add() {
+		manager.sessions.put(id, this);
+		manager.getEventListeners().fire.sessionAdded(this, DbgCause.Causes.UNCLAIMED);
 		//manager.addSession(this, cause);
 	}
 

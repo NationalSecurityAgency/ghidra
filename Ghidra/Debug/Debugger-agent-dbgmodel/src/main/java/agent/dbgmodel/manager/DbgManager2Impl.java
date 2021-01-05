@@ -120,14 +120,18 @@ public class DbgManager2Impl extends DbgManagerImpl {
 
 	@Override
 	public DbgProcessImpl getCurrentProcess() {
-		DebugProcessId id = getSystemObjects().getCurrentProcessId();
-		return processes.get(id);
+		synchronized (processes) {
+			DebugProcessId id = getSystemObjects().getCurrentProcessId();
+			return processes.get(id);
+		}
 	}
 
 	@Override
 	public DbgThreadImpl getCurrentThread() {
-		DebugThreadId id = getSystemObjects().getCurrentThreadId();
-		return threads.get(id);
+		synchronized (threads) {
+			DebugThreadId id = getSystemObjects().getCurrentThreadId();
+			return threads.get(id);
+		}
 	}
 
 }
