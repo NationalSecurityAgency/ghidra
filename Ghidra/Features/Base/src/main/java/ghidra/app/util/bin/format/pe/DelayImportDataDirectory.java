@@ -30,6 +30,7 @@ import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -38,8 +39,14 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DelayImportDataDirectory extends DataDirectory {
     private final static String NAME = "IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT";
+    public enum ThunkType {
+    	IAT,
+    	INT,
+    	DEFAULT;
+    }
 
     private DelayImportDescriptor [] descriptors; 
+    private DelayImportInfo[] imports;
 
     static DelayImportDataDirectory createDelayImportDataDirectory(
             NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
@@ -57,9 +64,19 @@ public class DelayImportDataDirectory extends DataDirectory {
 	private void initDelayImportDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
 
+		if (imports == null) {
+			imports = new DelayImportInfo[0];
+		}
         if (descriptors == null) descriptors = new DelayImportDescriptor[0];
 	}
 
+	/**
+	 * Returns the array of DelayImportInfo defined in this delay import directory.
+	 * @return the array of DelayImportInfo defined in this delay import directory
+	 */
+	public DelayImportInfo[] getImports() {
+		return imports;
+	}
 	/**
 	 * Returns the array of delay import descriptors defined in this delay import data directory.
 	 * @return the array of delay import descriptors defined in this delay import data directory
@@ -127,40 +144,41 @@ public class DelayImportDataDirectory extends DataDirectory {
 			//create string for descriptor dll name
 			Address tmpAddr = addr(space, isBinary, descriptor, descriptor.getPointerToDLLName());
 			createTerminatedString(program, tmpAddr, true, log);
+			String dllName = descriptor.getDLLName().toUpperCase();
+			createExternalLibrary(program, dllName);
 
 			tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfModuleHandle());
 			createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-				DelayImportDescriptor.NAME + "_Module_Handle", tmpAddr));
+				DelayImportDescriptor.NAME + "_" + dllName + "_Module_Handle", tmpAddr));
 
 			tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfIAT());
-			createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-				DelayImportDescriptor.NAME + "_IAT", tmpAddr));
+			//createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
+			//	DelayImportDescriptor.NAME  + "_" + dllName +  "_IAT", tmpAddr));
 			markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfIAT(),
-				descriptor.getThunksIAT(), monitor, log);
+				descriptor.getThunksIAT(),ThunkType.IAT, monitor, log);
 
 			tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfINT());
-			createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-				DelayImportDescriptor.NAME + "_INT", tmpAddr));
+			//createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
+			//	DelayImportDescriptor.NAME  + "_" + dllName +  "_INT", tmpAddr));
 			markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfINT(),
-				descriptor.getThunksINT(), monitor, log);
+				descriptor.getThunksINT(), ThunkType.INT, monitor, log);
 
 			// This table is optional
 			if (descriptor.getAddressOfBoundIAT() != 0) {
 				tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfBoundIAT());
 				createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-					DelayImportDescriptor.NAME + "_Bound_IAT", tmpAddr));
-				markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfBoundIAT(),
-					descriptor.getThunksBoundIAT(), monitor, log);
+					DelayImportDescriptor.NAME  + "_" + dllName +  "_Bound_IAT", tmpAddr));
+				markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfBoundIAT(), 
+					descriptor.getThunksBoundIAT(), ThunkType.DEFAULT, monitor, log);
 			}
 
 			// This table is optional
 			if (descriptor.getAddressOfOriginalIAT() != 0) {
 				tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfOriginalIAT());
 				createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-					DelayImportDescriptor.NAME + "_Unload_IAT", tmpAddr));
-				markupThunk(program, isBinary, space, descriptor,
-					descriptor.getAddressOfOriginalIAT(), descriptor.getThunksUnloadIAT(), monitor,
-					log);
+					DelayImportDescriptor.NAME  + "_" + dllName +  "_Unload_IAT", tmpAddr));
+				markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfOriginalIAT(), 
+					descriptor.getThunksUnloadIAT(), ThunkType.DEFAULT, monitor, log);
 			}
 
 
@@ -168,6 +186,18 @@ public class DelayImportDataDirectory extends DataDirectory {
 
 			addr = addr.add(descriptor.sizeof());
 		}
+    }
+    
+    private void createExternalLibrary(Program program, String dllName) {
+    	try {
+		    program.getExternalManager().addExternalLibraryName(dllName, SourceType.IMPORTED);
+		} catch (DuplicateNameException | InvalidInputException e) {}
+    }
+    
+    private void createExternalFunction(Program program, String dllName, String function) {
+    	try {
+    		program.getExternalManager().addExtFunction(dllName, function, null, SourceType.IMPORTED);
+    	} catch (DuplicateNameException | InvalidInputException e) {}
     }
 
     private void createSymbol(Program program, Address addr, String name) {
@@ -201,6 +231,7 @@ public class DelayImportDataDirectory extends DataDirectory {
 									MessageLog log)
 			throws DataTypeConflictException, DuplicateNameException {
 
+		String dllName = descriptor.getDLLName().toUpperCase();
 		Map<ThunkData, ImportByName> map = descriptor.getImportByNameMap();
 		Iterator<ThunkData> thunks = map.keySet().iterator();
 		while (thunks.hasNext()) {
@@ -214,6 +245,10 @@ public class DelayImportDataDirectory extends DataDirectory {
 			}
 			Address thunkAddress = space.getAddress(thunkPtr);
 			ImportByName ibn = map.get(thunk);
+			String function = String.format("ImportByName_%s",
+					ibn.getName() != null ? ibn.getName() : SymbolUtilities.ORDINAL_PREFIX + ibn.getHint());
+			createSymbol(program, thunkAddress, function);
+			createExternalFunction(program, dllName, ibn.getName() != null ? ibn.getName() : SymbolUtilities.ORDINAL_PREFIX + ibn.getHint());
 			PeUtils.createData(program, thunkAddress, ibn.toDataType(), log);
 		}
 	}
@@ -224,12 +259,11 @@ public class DelayImportDataDirectory extends DataDirectory {
 						DelayImportDescriptor descriptor,
 						long ptr,
 						List<ThunkData> thunks,
+						ThunkType thunkType,
 						TaskMonitor monitor,
-						MessageLog log) {
+						MessageLog log) throws DuplicateNameException {
 
-		DataType dt = ntHeader.getOptionalHeader().is64bit() 
-				? (DataType)QWORD 
-				: (DataType)DWORD;
+		DataType dt = null;
 		
 		long thunkPtr = va(ptr, isBinary);
 		if (!descriptor.isUsingRVA()) {
@@ -241,8 +275,21 @@ public class DelayImportDataDirectory extends DataDirectory {
 				return;
 			}
 			Address thunkAddress = space.getAddress(thunkPtr);
+			if (thunkType == ThunkType.DEFAULT || thunk.getAddressOfData() == 0) {
+				dt = ntHeader.getOptionalHeader().is64bit() 
+				? (DataType)QWORD 
+				: (DataType)DWORD;
+			} else if (thunkType == ThunkType.IAT) {
+				createSymbol(program, thunkAddress, SymbolUtilities.getAddressAppendedName(
+					DelayImportDescriptor.NAME + "_IAT", thunkAddress));
+				dt = PointerDataType.getPointer(null,-1);
+			} else if (thunkType == ThunkType.INT) {
+				createSymbol(program, thunkAddress, SymbolUtilities.getAddressAppendedName(
+						DelayImportDescriptor.NAME + "_INT", thunkAddress));
+				dt = thunk.toDataType();
+			}
 			PeUtils.createData(program, thunkAddress, dt, log);
-			setEolComment(program, thunkAddress, thunk.getStructName());
+			setEolComment(program, thunkAddress, "Delay Import Data");
 			thunkPtr += thunk.getStructSize();
 		}
 	}

@@ -24,19 +24,35 @@ package ghidra.app.util.bin.format.pe;
  * parsing the PE header data structures.
  * It does not map back to a PE data data structure.
  * 
- * 
+ * The offset tracks the location of a pointer into 
+ * the import name table. The same offset is used to
+ * calculate the associated import address table.
  */
 public class DelayImportInfo {
     private long ordinal;
     private String name;
+    private long offset;
 
     DelayImportInfo(long ordinal) {
         this.ordinal = ordinal;
+        this.offset  = -1;
     }
 
     DelayImportInfo(int ordinal, String name) {
         this.ordinal = ordinal;
         this.name = name;
+        this.offset  = -1;
+    }
+    
+    DelayImportInfo(long ordinal, long offset) {
+        this.ordinal = ordinal;
+        this.offset  = offset;
+    }
+
+    DelayImportInfo(int ordinal, String name, long offset) {
+        this.ordinal = ordinal;
+        this.name = name;
+        this.offset = offset;
     }
 
 	/**
@@ -53,6 +69,14 @@ public class DelayImportInfo {
 	 */
     public String getName() {
         return name;
+    }
+    
+    /**
+	 * Returns the offset into the Import Name Table.
+	 * @return the offset into the Import Name Table. -1 if there is none.
+	 */
+    public long getOffset() {
+    	return offset;
     }
 
 	/**

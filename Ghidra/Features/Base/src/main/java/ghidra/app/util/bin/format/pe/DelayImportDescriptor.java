@@ -121,6 +121,7 @@ public class DelayImportDescriptor implements StructConverter {
 		}
 
 		long thunkPtr = 0;
+		long offset   = 0;
 		if (isUsingRVA()) {
 			thunkPtr = ntHeader.rvaToPointer(ptr);
 		}
@@ -141,6 +142,7 @@ public class DelayImportDescriptor implements StructConverter {
 				break;
 
 			thunkPtr += thunk.getStructSize();
+		
 
 			if (!isName) {
 				continue;
@@ -148,7 +150,7 @@ public class DelayImportDescriptor implements StructConverter {
 
 			if (thunk.isOrdinal()) {
 				long ordinal = thunk.getOrdinal();
-				delayImportInfoList.add(new DelayImportInfo(ordinal));
+				delayImportInfoList.add(new DelayImportInfo(ordinal, offset));
 			}
 			else {
 				long ibnPtr = 0;
@@ -166,9 +168,10 @@ public class DelayImportDescriptor implements StructConverter {
 				importByNameMap.put(thunk, ibn);
 				int ordinal = ibn.getHint();
 				String name = ibn.getName();
-				delayImportInfoList.add(new DelayImportInfo(ordinal, name));
+				delayImportInfoList.add(new DelayImportInfo(ordinal, name, offset));
 				thunk.setImportByName(ibn);
 			}
+			offset   += thunk.getStructSize();
 		}
 
 		return thunkList;

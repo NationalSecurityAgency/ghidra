@@ -17,6 +17,7 @@ package ghidra.app.util.opinion;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.lang.Long;
 import java.util.*;
 
 import generic.continues.GenericFactory;
@@ -34,6 +35,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -46,6 +48,7 @@ import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -140,6 +143,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
+			processDelayImports(optionalHeader, ntHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
 			processDebug(optionalHeader, fileHeader, sectionToAddress, program, monitor);
 			processProperties(optionalHeader, program, monitor);
@@ -444,7 +448,99 @@ public class PeLoader extends AbstractPeDebugLoader {
 			}
 		}
 	}
+	/**
+	 * Read the descriptors from the delay import directory and process them.
+	 * 
+	 * @param optionalHeader
+	 * @param ntHeader
+	 * @param program
+	 * @param monitor
+	 * @param log
+	 */
+	private void processDelayImports(OptionalHeader optionalHeader, NTHeader ntHeader, Program program, TaskMonitor monitor,
+			MessageLog log) {
 
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("[" + program.getName() + "]: processing delay imports...");
+
+		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
+		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT) {
+			return;
+		}
+		
+		DelayImportDataDirectory didd =
+			(DelayImportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
+		if (didd == null) {
+			return;
+		}
+		
+		log.appendMsg("Delay imports detected...");
+		
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		ExternalManager externalManager = program.getExternalManager();
+		Listing listing = program.getListing();
+		ReferenceManager refManager = program.getReferenceManager();
+		FunctionManager funcManager = program.getFunctionManager();
+		
+		DelayImportDescriptor[] descriptors = didd.getDelayImportDescriptors();
+		for (DelayImportDescriptor descriptor : descriptors) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+			//The DLL library name normalized to all caps.
+			String dllName = descriptor.getDLLName().toUpperCase();
+			//Address of the first entry in the Import Address Table
+			long iatptr = descriptor.isUsingRVA() ? descriptor.getAddressOfIAT() + optionalHeader.getImageBase()
+			: descriptor.getAddressOfIAT();
+			
+			for (DelayImportInfo dii : descriptor.getImportList()) {
+				//Retrieve the offset from the import list. -1 is the default (no offset).
+				long offset = dii.getOffset();
+				if (offset < 0) {
+					break;
+				}
+				//A pointer into the import address table. 
+				Address iatAddress = space.getAddress(iatptr + offset);
+				Data iatd = listing.getDataAt(iatAddress);
+				if (iatd == null || !iatd.isPointer()) {
+					continue;
+				}
+				//The name of the function being loaded. If the function is loaded by ordinal, 
+				//we use the ordinal_prefix + ordinal as the name.
+				String funcName = dii.hasName() ? dii.getName() : SymbolUtilities.ORDINAL_PREFIX + dii.getOrdinal();
+			
+				//This is the address of the function that acts as the 'proxy' for the delay loaded function.
+				Address funAddr = (Address) iatd.getValue();
+				// Check to see if there is a function defined at the address for the proxy.
+				Function target = funcManager.getFunctionAt(funAddr);
+				if (target == null) {
+					try {
+						//Create a function at the location for the proxy.
+						target = funcManager.createFunction(funcName, funAddr, new AddressSet(funAddr), SourceType.IMPORTED);
+					} catch (InvalidInputException | OverlappingFunctionException e) {
+						// Let the user known that create function failed.
+						log.appendMsg("Create function failed: " + e.getMessage());
+					}
+					
+				}
+				ExternalLocation extLoc = externalManager.getUniqueExternalLocation(dllName, funcName);
+				//Try to set the target function created at the proxy location to a thunked function
+				//for the external function.
+				target.setThunkedFunction(extLoc.getFunction());
+				try {
+					refManager.addExternalReference(iatAddress, 0,extLoc, SourceType.IMPORTED, RefType.DATA);
+				} catch (InvalidInputException e) {
+					// Let the user known that adding the external reference failed.
+					log.appendMsg("External reference not added: " + e.getMessage());
+				}
+			}
+		}
+	}
+
+	
+	
 	/**
 	 * Mark this location as code in the CodeMap.
 	 * The analyzers will pick this up and disassemble the code.
