@@ -660,7 +660,6 @@ public class DbgManagerImpl implements DbgManager {
 		int tid = so.getCurrentThreadSystemId();
 		DbgThreadImpl thread = new DbgThreadImpl(this, process, eventId, tid);
 		thread.add();
-		getEventListeners().fire.threadCreated(thread, evt.getCause());
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
@@ -733,7 +732,6 @@ public class DbgManagerImpl implements DbgManager {
 		int pid = so.getCurrentProcessSystemId();
 		DbgProcessImpl proc = new DbgProcessImpl(this, id, pid);
 		proc.add();
-		getEventListeners().fire.processAdded(proc, evt.getCause());
 		getEventListeners().fire.processSelected(proc, evt.getCause());
 
 		handle = info.initialThreadInfo.handle;
