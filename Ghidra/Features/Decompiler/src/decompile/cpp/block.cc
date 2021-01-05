@@ -3058,23 +3058,35 @@ PcodeOp *BlockWhileDo::testTerminal(Funcdata &data,int4 slot) const
   return resOp;
 }
 
-/// This is a final sanity check on the \e iterate statement.  If statement is just a
-/// CAST or COPY, we revert to displaying the whole loop using \e while
-/// \return \b true is the statement looks like a suitable for-loop iterator.
+/// Make sure the loop variable is involved as input in the iterator statement.
+/// \return \b true if the loop variable is an input to the iterator statement
 bool BlockWhileDo::testIterateForm(void) const
 
 {
-  PcodeOp *curOp = iterateOp;
-  OpCode opc = curOp->code();
-  while(opc == CPUI_COPY || opc == CPUI_CAST) {
-    Varnode *vn = curOp->getIn(0);
-    if (!curOp->notPrinted())
-      if (vn->isExplicit()) return false;		// End of statement, no substantive op seen
-    if (!vn->isWritten()) return false;
-    curOp = vn->getDef();
-    opc = curOp->code();
+  Varnode *targetVn = loopDef->getOut();
+  HighVariable *high = targetVn->getHigh();
+
+  vector<PcodeOpNode> path;
+  PcodeOp *op = iterateOp;
+  path.push_back(PcodeOpNode(op,0));
+  while(!path.empty()) {
+    PcodeOpNode &node(path.back());
+    if (node.op->numInput() <= node.slot) {
+      path.pop_back();
+      continue;
+    }
+    Varnode *vn = node.op->getIn(node.slot);
+    node.slot += 1;
+    if (vn->isAnnotation()) continue;
+    if (vn->getHigh() == high) {
+      return true;
+    }
+    if (vn->isExplicit()) continue;	// Truncate at explicit
+    if (!vn->isWritten()) continue;
+    op = vn->getDef();
+    path.push_back(PcodeOpNode(vn->getDef(),0));
   }
-  return true;
+  return false;
 }
 
 void BlockWhileDo::markLabelBumpUp(bool bump)
