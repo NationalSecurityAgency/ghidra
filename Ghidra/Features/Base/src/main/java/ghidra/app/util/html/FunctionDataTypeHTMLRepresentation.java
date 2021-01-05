@@ -104,8 +104,8 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 			String name = var.getName();
 
 			DataType locatableType = getLocatableDataType(dataType);
-			lines.add(new VariableTextLine(HTMLUtilities.friendlyEncodeHTML(displayName), name,
-				locatableType));
+			lines.add(new VariableTextLine(HTMLUtilities.friendlyEncodeHTML(displayName),
+				HTMLUtilities.friendlyEncodeHTML(name), locatableType));
 		}
 
 		return lines;
@@ -114,7 +114,7 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 	private static String buildHTMLText(TextLine returnType, TextLine functionName,
 			List<ValidatableLine> arguments, TextLine varArgs, TextLine voidArgs) {
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		String returnTypeText = returnType.getText();
 		returnTypeText = wrapStringInColor(returnTypeText, returnType.getTextColor());
