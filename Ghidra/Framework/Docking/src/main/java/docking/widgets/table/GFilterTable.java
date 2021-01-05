@@ -70,7 +70,7 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 	private void addTableSelectionListener(GTable gTable) {
 		gTable.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
-				rowSelected();
+				rowSelectionChanged();
 			}
 		});
 	}
@@ -116,6 +116,7 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 
 	public void clearSelection() {
 		table.clearSelection();
+		table.getSelectionManager().clearSavedSelection();
 	}
 
 	/**
@@ -163,19 +164,31 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 		listeners.remove(l);
 	}
 
-	/**
-	 * Notifies listeners that an item was selected.
-	 */
-	protected void rowSelected() {
+	private void rowSelectionChanged() {
 		ROW_OBJECT selectedObject = null;
 		if (table.getSelectedRow() >= 0) {
 			selectedObject = getSelectedRowObject();
 		}
 
 		if (selectedObject == null) {
+			rowSelectionCleared();
 			return; // can happen for transient events
 		}
 
+		rowSelected(selectedObject);
+	}
+
+	protected void rowSelectionCleared() {
+		for (ObjectSelectedListener<ROW_OBJECT> l : listeners) {
+			l.objectSelected(null);
+		}
+	}
+
+	/**
+	 * Notifies listeners that an item was selected
+	 * @param selectedObject the selected row object
+	 */
+	protected void rowSelected(ROW_OBJECT selectedObject) {
 		for (ObjectSelectedListener<ROW_OBJECT> l : listeners) {
 			l.objectSelected(selectedObject);
 		}
