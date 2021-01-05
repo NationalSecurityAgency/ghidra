@@ -105,38 +105,38 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 		long index = reader.getPointerIndex();
 
 		if (tocoff > 0) {
-			reader.setPointerIndex(header.getStartIndexInProvider() + tocoff);
+			reader.setPointerIndex(header.getStartIndex() + tocoff);
 			for (int i = 0; i < ntoc; ++i) {
 				tocList.add(TableOfContents.createTableOfContents(reader));
 			}
 		}
 		if (modtaboff > 0) {
-			reader.setPointerIndex(header.getStartIndexInProvider() + modtaboff);
+			reader.setPointerIndex(header.getStartIndex() + modtaboff);
 			for (int i = 0; i < nmodtab; ++i) {
 				moduleList.add(DynamicLibraryModule.createDynamicLibraryModule(reader, header));
 			}
 		}
 		if (extrefsymoff > 0) {
-			reader.setPointerIndex(header.getStartIndexInProvider() + extrefsymoff);
+			reader.setPointerIndex(header.getStartIndex() + extrefsymoff);
 			for (int i = 0; i < nextrefsyms; ++i) {
 				referencedList.add(DynamicLibraryReference.createDynamicLibraryReference(reader));
 			}
 		}
 		if (indirectsymoff > 0) {
-			reader.setPointerIndex(header.getStartIndexInProvider() + indirectsymoff);
+			reader.setPointerIndex(header.getStartIndex() + indirectsymoff);
 			indirectSymbols = new int[nindirectsyms];
 			for (int i = 0; i < nindirectsyms; ++i) {
 				indirectSymbols[i] = reader.readNextInt();
 			}
 		}
 		if (extreloff > 0) {
-			reader.setPointerIndex(header.getStartIndexInProvider() + extreloff);
+			reader.setPointerIndex(header.getStartIndex() + extreloff);
 			for (int i = 0; i < nextrel; ++i) {
 				externalRelocations.add(RelocationFactory.readRelocation(reader, header.is32bit()));
 			}
 		}
 		if (locreloff > 0) {
-			reader.setPointerIndex(header.getStartIndexInProvider() + locreloff);
+			reader.setPointerIndex(header.getStartIndex() + locreloff);
 			for (int i = 0; i < nlocrel; ++i) {
 				localRelocations.add(RelocationFactory.readRelocation(reader, header.is32bit()));
 			}
