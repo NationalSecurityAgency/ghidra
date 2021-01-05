@@ -41,9 +41,9 @@ class SplitNode extends Node {
 	/**
 	 * Constructs a new SplitNode object
 	 * @param winMgr the DockingWindowsManager that this node belongs to.
-	 * @param orientation the JSplitPane orientation (JSplitPane.HORIZONTAL_SPLIT or JSplitPane.VERTICAL_SPLIT)
 	 * @param child1 the node managing the first component tree.
 	 * @param child2 the node managing the second component tree.
+	 * @param isHorizontal true for horizontal layout
 	 */
 	SplitNode(DockingWindowManager winMgr, Node child1, Node child2, boolean isHorizontal) {
 		super(winMgr);
@@ -59,6 +59,7 @@ class SplitNode extends Node {
 	 * @param elem the XML JDOM element containing the configuration information.
 	 * @param mgr the DockingWindowsManager for this node.
 	 * @param parent the parent node for this node.
+	 * @param restoredPlaceholders the list into which any restored placeholders will be placed
 	 */
 	SplitNode(Element elem, DockingWindowManager mgr, Node parent,
 			List<ComponentPlaceholder> restoredPlaceholders) {
@@ -216,15 +217,8 @@ class SplitNode extends Node {
 
 	@Override
 	void dispose() {
-		if (child1 != null) {
-			child1.dispose();
-			child1 = null;
-		}
-
-		if (child2 != null) {
-			child2.dispose();
-			child2 = null;
-		}
+		child1.dispose();
+		child2.dispose();
 	}
 }
 
