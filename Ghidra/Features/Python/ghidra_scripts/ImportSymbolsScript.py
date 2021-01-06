@@ -1,5 +1,6 @@
 # Imports a file with lines in the form "symbolName 0xADDRESS function_or_label" where "f" indicates a function and "l" a label
-# @author unkown; edited by matedealer <git@matedealer.de>
+# Additionally, if a comment type and a comment is included, those will be added to the line
+# @author unkown; edited by matedealer <git@matedealer.de>, and then joeFischetti <git@joeFischetti>
 # @category Data
 #
 
@@ -36,3 +37,20 @@ for line in file(f.absolutePath):  # note, cannot use open(), since that is in G
     else:
         print("Created label {} at address {}".format(name, address))
         createLabel(address, name, False)
+        
+    try:
+        comment_type = pieces[3]
+        comment = pieces[4]
+
+        commentTypes = {
+            '0': ghidra.program.model.listing.CodeUnit.EOL_COMMENT,
+            '1': ghidra.program.model.listing.CodeUnit.PRE_COMMENT,
+            '2': ghidra.program.model.listing.CodeUnit.POST_COMMENT,
+            '3': ghidra.program.model.listing.CodeUnit.PLATE_COMMENT,
+            '4': ghidra.program.model.listing.CodeUnit.REPEATABLE_COMMENT,
+        }
+
+        currentProgram.getListing().setComment(address, commentTypes[comment_type], comment)
+
+    except IndexError:
+        print("No comments specified for: " + name)
