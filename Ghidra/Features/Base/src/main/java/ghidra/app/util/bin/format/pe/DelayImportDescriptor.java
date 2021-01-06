@@ -66,7 +66,7 @@ public class DelayImportDescriptor implements StructConverter {
 
 	private List<DelayImportInfo> delayImportInfoList = new ArrayList<DelayImportInfo>();
 	private Map<ThunkData, ImportByName> importByNameMap = new HashMap<ThunkData, ImportByName>();
-	
+
 	private boolean isValid;
 
 	static DelayImportDescriptor createDelayImportDescriptor(NTHeader ntHeader,
@@ -85,11 +85,11 @@ public class DelayImportDescriptor implements StructConverter {
 
 	private void initDelayImportDescriptor(NTHeader ntHeader,
 			FactoryBundledWithBinaryReader reader, int index) throws IOException {
-		
-        if (!ntHeader.checkPointer(index)) {
+
+		if (!ntHeader.checkPointer(index)) {
 			Msg.error(this, "Invalid file index for " + Integer.toHexString(index));
 			return;
-        }
+		}
 
 		readFields(reader, index);
 		readName(ntHeader, reader);
@@ -121,7 +121,7 @@ public class DelayImportDescriptor implements StructConverter {
 		}
 
 		long thunkPtr = 0;
-		long offset   = 0;
+		long offset = 0;
 		if (isUsingRVA()) {
 			thunkPtr = ntHeader.rvaToPointer(ptr);
 		}
@@ -131,7 +131,7 @@ public class DelayImportDescriptor implements StructConverter {
 
 		while (true) {
 			if (!ntHeader.checkPointer(thunkPtr)) {
-				Msg.error(this, "Invalid thunkPtr for "+Long.toHexString(ptr));
+				Msg.error(this, "Invalid thunkPtr for " + Long.toHexString(ptr));
 				return null;
 			}
 			ThunkData thunk =
@@ -142,7 +142,6 @@ public class DelayImportDescriptor implements StructConverter {
 				break;
 
 			thunkPtr += thunk.getStructSize();
-		
 
 			if (!isName) {
 				continue;
@@ -161,7 +160,7 @@ public class DelayImportDescriptor implements StructConverter {
 					ibnPtr = ntHeader.vaToPointer(thunk.getAddressOfData());
 				}
 				if (ibnPtr < 0) {
-					Msg.error(this, "Invalid import pointer for "+thunk.getAddressOfData());
+					Msg.error(this, "Invalid import pointer for " + thunk.getAddressOfData());
 					return thunkList;
 				}
 				ImportByName ibn = ImportByName.createImportByName(reader, (int) ibnPtr);
@@ -171,7 +170,7 @@ public class DelayImportDescriptor implements StructConverter {
 				delayImportInfoList.add(new DelayImportInfo(ordinal, name, offset));
 				thunk.setImportByName(ibn);
 			}
-			offset   += thunk.getStructSize();
+			offset += thunk.getStructSize();
 		}
 
 		return thunkList;
@@ -185,7 +184,7 @@ public class DelayImportDescriptor implements StructConverter {
 		long namePtr =
 			(isUsingRVA() ? ntHeader.rvaToPointer(szName) : ntHeader.vaToPointer(szName));
 		if (!ntHeader.checkPointer(namePtr)) {
-			Msg.warn(this, "Invalid namePtr for "+Long.toHexString(szName));
+			Msg.warn(this, "Invalid namePtr for " + Long.toHexString(szName));
 			return;
 		}
 		dllName = reader.readAsciiString((int) namePtr);
