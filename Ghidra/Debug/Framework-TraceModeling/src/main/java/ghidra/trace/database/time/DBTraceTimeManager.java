@@ -18,6 +18,7 @@ package ghidra.trace.database.time;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
@@ -25,8 +26,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.model.time.*;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -40,6 +40,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	protected final DBTraceThreadManager threadManager;
 
 	protected final DBCachedObjectStore<DBTraceSnapshot> snapshotStore;
+	protected final DBCachedObjectIndex<String, DBTraceSnapshot> snapshotsBySchedule;
 
 	public DBTraceTimeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
@@ -52,6 +53,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 		snapshotStore = factory.getOrCreateCachedStore(DBTraceSnapshot.TABLE_NAME,
 			DBTraceSnapshot.class, (s, r) -> new DBTraceSnapshot(this, s, r), true);
+		snapshotsBySchedule = snapshotStore.getIndex(String.class, DBTraceSnapshot.SCHEDULE_COLUMN);
 	}
 
 	@Override
@@ -68,7 +70,11 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	public DBTraceSnapshot createSnapshot(String description) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			DBTraceSnapshot snapshot = snapshotStore.create();
-			snapshot.set(System.currentTimeMillis(), description, 0);
+			snapshot.set(System.currentTimeMillis(), description);
+			if (snapshot.getKey() == 0) {
+				// Convention for first snap
+				snapshot.setSchedule(TraceSchedule.snap(0));
+			}
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceSnapshotChangeType.ADDED, null, snapshot));
 			return snapshot;
@@ -76,7 +82,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	@Override
-	public TraceSnapshot getSnapshot(long snap, boolean createIfAbsent) {
+	public DBTraceSnapshot getSnapshot(long snap, boolean createIfAbsent) {
 		if (!createIfAbsent) {
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
 				return snapshotStore.getObjectAt(snap);
@@ -86,7 +92,11 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 			DBTraceSnapshot snapshot = snapshotStore.getObjectAt(snap);
 			if (snapshot == null) {
 				snapshot = snapshotStore.create(snap);
-				snapshot.set(System.currentTimeMillis(), "", 0);
+				snapshot.set(System.currentTimeMillis(), "");
+				if (snapshot.getKey() == 0) {
+					// Convention for first snap
+					snapshot.setSchedule(TraceSchedule.snap(0));
+				}
 				trace.setChanged(
 					new TraceChangeRecord<>(TraceSnapshotChangeType.ADDED, null, snapshot));
 			}
@@ -95,8 +105,28 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	@Override
+	public DBTraceSnapshot getMostRecentSnapshot(long snap) {
+		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			Entry<Long, DBTraceSnapshot> ent = snapshotStore.asMap().floorEntry(snap);
+			return ent == null ? null : ent.getValue();
+		}
+	}
+
+	@Override
+	public Collection<? extends TraceSnapshot> getSnapshotsWithSchedule(TraceSchedule schedule) {
+		return snapshotsBySchedule.get(schedule.toString());
+	}
+
+	@Override
 	public Collection<? extends DBTraceSnapshot> getAllSnapshots() {
 		return Collections.unmodifiableCollection(snapshotStore.asMap().values());
+	}
+
+	@Override
+	public Collection<? extends DBTraceSnapshot> getSnapshots(long fromSnap, boolean fromInclusive,
+			long toSnap, boolean toInclusive) {
+		return Collections.unmodifiableCollection(
+			snapshotStore.asMap().subMap(fromSnap, fromInclusive, toSnap, toInclusive).values());
 	}
 
 	@Override

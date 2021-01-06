@@ -22,6 +22,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -65,18 +66,18 @@ public class DebuggerTimePluginScreenShots extends GhidraScreenShotGenerator {
 			snap = tb.trace.getTimeManager().createSnapshot("Thread BREAKPOINT_HIT");
 			snap.setEventThread(thread);
 			snap.setRealTime(fakeClock);
-			snap.setTicks(1);
 			fakeClock += 2300;
 
 			snap = tb.trace.getTimeManager().createSnapshot("Thread STEP_COMPLETED");
 			snap.setEventThread(thread);
 			snap.setRealTime(fakeClock);
-			snap.setTicks(1);
+			snap.setSchedule(TraceSchedule.parse(snap.getKey() - 1 + ":1"));
 			fakeClock += 444;
 
 			snap = tb.trace.getTimeManager().createSnapshot("Thread STEP_COMPLETED");
 			snap.setEventThread(thread);
 			snap.setRealTime(fakeClock);
+			snap.setSchedule(TraceSchedule.parse(snap.getKey() - 1 + ":1"));
 			fakeClock += 100;
 		}
 

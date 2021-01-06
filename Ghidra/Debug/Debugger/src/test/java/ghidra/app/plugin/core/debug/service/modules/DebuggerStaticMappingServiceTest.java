@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -314,7 +315,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	public void testAddMappingThenTranslateTraceViewToStaticEmpty() throws Exception {
 		addMapping();
 
-		Map<Program, AddressSetView> views =
+		Map<Program, Pair<Long, AddressSetView>> views =
 			mappingService.getOpenMappedViews(tb.trace, new AddressSet(), 0);
 		assertTrue(views.isEmpty());
 	}
@@ -335,9 +336,12 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(dynSpace.getAddress(0xbadbadbadL), dynSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<Program, AddressSetView> views = mappingService.getOpenMappedViews(tb.trace, set, 0);
+		Map<Program, Pair<Long, AddressSetView>> views =
+			mappingService.getOpenMappedViews(tb.trace, set, 0);
 		assertEquals(1, views.size());
-		AddressSetView inStatic = views.get(program);
+		Pair<Long, AddressSetView> pair = views.get(program);
+		assertEquals(0x100000, pair.getLeft().longValue());
+		AddressSetView inStatic = pair.getRight();
 		assertEquals(3, inStatic.getNumAddressRanges());
 		AddressSet expected = new AddressSet();
 		expected.add(stSpace.getAddress(0x00200000), stSpace.getAddress(0x002000ff));
@@ -352,7 +356,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		copyTrace();
 		add2ndMapping();
 
-		Map<TraceSnap, AddressSetView> views =
+		Map<TraceSnap, Pair<Long, AddressSetView>> views =
 			mappingService.getOpenMappedViews(program, new AddressSet());
 		assertTrue(views.isEmpty());
 	}
@@ -375,12 +379,13 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(stSpace.getAddress(0xbadbadbadL), stSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<TraceSnap, AddressSetView> views = mappingService.getOpenMappedViews(program, set);
+		Map<TraceSnap, Pair<Long, AddressSetView>> views =
+			mappingService.getOpenMappedViews(program, set);
 		Msg.info(this, views);
 		assertEquals(2, views.size());
-		AddressSetView in1st = views.get(new DefaultTraceSnap(tb.trace, 0));
+		AddressSetView in1st = views.get(new DefaultTraceSnap(tb.trace, 0)).getRight();
 		assertEquals(5, in1st.getNumAddressRanges());
-		AddressSetView in2nd = views.get(new DefaultTraceSnap(copy, 0));
+		AddressSetView in2nd = views.get(new DefaultTraceSnap(copy, 0)).getRight();
 		assertEquals(3, in2nd.getNumAddressRanges());
 
 		AddressSet expectedIn1st = new AddressSet();

@@ -70,9 +70,9 @@ import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceRegisterUtils;
+import ghidra.trace.util.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
@@ -171,13 +171,12 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!Objects.equals(a.getThread(), b.getThread())) {
 			return false;
 		}
-		if (!Objects.equals(a.getSnap(), b.getSnap())) {
+		if (!Objects.equals(a.getTime(), b.getTime())) {
 			return false;
 		}
 		if (!Objects.equals(a.getFrame(), b.getFrame())) {
 			return false;
 		}
-		// TODO: Ticks
 		return true;
 	}
 
@@ -185,6 +184,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		public TraceChangeListener() {
 			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored(e));
 			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registerValueChanged);
+			listenFor(TraceMemoryStateChangeType.CHANGED, this::registerStateChanged);
 			listenFor(TraceCodeChangeType.ADDED, this::registerTypeAdded);
 			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::registerTypeReplaced);
 			listenFor(TraceCodeChangeType.LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
@@ -211,9 +211,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			if (!isVisible(space)) {
 				return false;
 			}
-			if (!range.getLifespan().contains(current.getSnap())) {
+			TraceProgramView view = current.getView();
+			if (view == null || !view.getViewport().containsAnyUpper(range.getLifespan())) {
 				return false;
 			}
+			// Probably not worth checking for occlusion here. Just a little refresh waste.
 			return true;
 		}
 
@@ -238,13 +240,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
+		private void registerStateChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+				TraceMemoryState oldState, TraceMemoryState newState) {
+			if (!isVisible(space, range)) {
+				return;
+			}
+			recomputeViewKnown();
+			refreshRange(range.getRange());
+		}
+
 		private void registerTypeAdded(TraceAddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit oldIsNull, TraceCodeUnit newUnit) {
 			if (!isVisible(space, range)) {
 				return;
 			}
 			refreshRange(range.getRange());
-
 		}
 
 		private void registerTypeReplaced(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -260,10 +270,15 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			if (!isVisible(space)) {
 				return;
 			}
-			long snap = current.getSnap();
-			if (oldSpan.contains(snap) == newSpan.contains(snap)) {
+			TraceProgramView view = current.getView();
+			if (view == null) {
 				return;
 			}
+			TraceTimeViewport viewport = view.getViewport();
+			if (viewport.containsAnyUpper(oldSpan) == viewport.containsAnyUpper(newSpan)) {
+				return;
+			}
+			// A little waste if occluded, but probably cheaper than checking.
 			AddressRange range = new AddressRangeImpl(unit.getMinAddress(), unit.getMaxAddress());
 			refreshRange(range); // Slightly wasteful, as we already have the data unit
 		}
@@ -418,6 +433,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	DockingAction actionClearDataType;
 
 	DebuggerRegisterActionContext myActionContext;
+	AddressSetView viewKnown;
 
 	protected DebuggerRegistersProvider(final DebuggerRegistersPlugin plugin,
 			Map<CompilerSpec, LinkedHashSet<Register>> selectionByCSpec,
@@ -710,6 +726,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		doSetRecorder(current.getRecorder());
 		updateSubTitle();
 
+		recomputeViewKnown();
 		loadRegistersAndValues();
 		contextChanged();
 		//checkEditsEnabled();
@@ -725,16 +742,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	boolean canWriteTarget() {
+		if (!current.isAliveAndPresent()) {
+			return false;
+		}
 		TraceRecorder recorder = current.getRecorder();
-		if (recorder == null) {
-			return false;
-		}
-		if (!recorder.isRecording()) {
-			return false;
-		}
-		if (recorder.getSnap() != current.getSnap()) {
-			return false;
-		}
 		TargetRegisterBank targetRegs =
 			recorder.getTargetRegisterBank(current.getThread(), current.getFrame());
 		if (targetRegs == null) {
@@ -760,8 +771,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (regs == null) {
 			return BigInteger.ZERO;
 		}
-		long snap = current.getSnap();
-		return regs.getValue(snap, register).getUnsignedValue();
+		return regs.getViewValue(current.getViewSnap(), register).getUnsignedValue();
 	}
 
 	void writeRegisterValue(Register register, BigInteger value) {
@@ -840,15 +850,24 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return TraceRegisterUtils.getValueRepresentationHackPointer(data);
 	}
 
-	boolean isRegisterKnown(Register register) {
+	void recomputeViewKnown() {
 		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
-		if (regs == null) {
+		TraceProgramView view = current.getView();
+		if (regs == null || view == null) {
+			viewKnown = null;
+			return;
+		}
+		viewKnown = new AddressSet(view.getViewport()
+				.unionedAddresses(snap -> regs.getAddressesWithState(snap,
+					state -> state == TraceMemoryState.KNOWN)));
+	}
+
+	boolean isRegisterKnown(Register register) {
+		if (viewKnown == null) {
 			return false;
 		}
 		AddressRange range = TraceRegisterUtils.rangeForRegister(register);
-		return regs
-				.getAddressesWithState(current.getSnap(), state -> state == TraceMemoryState.KNOWN)
-				.contains(range.getMinAddress(), range.getMaxAddress());
+		return viewKnown.contains(range.getMinAddress(), range.getMaxAddress());
 	}
 
 	boolean isRegisterChanged(Register register) {
@@ -861,20 +880,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!isRegisterKnown(register)) {
 			return false;
 		}
-		TraceMemoryRegisterSpace curVals = getRegisterMemorySpace(current, false);
-		TraceMemoryRegisterSpace prevVals = getRegisterMemorySpace(previous, false);
-		if (prevVals == null) {
+		TraceMemoryRegisterSpace curSpace = getRegisterMemorySpace(current, false);
+		TraceMemoryRegisterSpace prevSpace = getRegisterMemorySpace(previous, false);
+		if (prevSpace == null) {
 			return false;
 		}
-		// is register known at previous? // Do I care?
-		/*AddressRange range = TraceRegisterUtils.rangeForRegister(register);
-		if (!prevVals
-				.getAddressesWithState(previous.getSnap(), state -> state == TraceMemoryState.KNOWN)
-				.contains(range.getMinAddress(), range.getMaxAddress())) {
-			return false;
-		}*/
-		return !Objects.equals(curVals.getValue(current.getSnap(), register),
-			prevVals.getValue(previous.getSnap(), register));
+		RegisterValue curRegVal = curSpace.getViewValue(current.getViewSnap(), register);
+		RegisterValue prevRegVal = prevSpace.getViewValue(previous.getViewSnap(), register);
+		return !Objects.equals(curRegVal, prevRegVal);
 	}
 
 	private boolean computeEditsEnabled() {

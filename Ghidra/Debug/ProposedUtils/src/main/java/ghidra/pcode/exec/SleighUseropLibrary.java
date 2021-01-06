@@ -23,12 +23,14 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.sleigh.grammar.Location;
 
 public interface SleighUseropLibrary<T> {
-	public static final SleighUseropLibrary<?> NIL = new SleighUseropLibrary<Object>() {
+	final class EmptySleighUseropLibrary implements SleighUseropLibrary<Object> {
 		@Override
 		public Map<String, SleighUseropDefinition<Object>> getUserops() {
 			return Map.of();
 		}
-	};
+	}
+
+	SleighUseropLibrary<?> NIL = new EmptySleighUseropLibrary();
 
 	@SuppressWarnings("unchecked")
 	public static <T> SleighUseropLibrary<T> nil() {
@@ -45,33 +47,41 @@ public interface SleighUseropLibrary<T> {
 
 	Map<String, SleighUseropDefinition<T>> getUserops();
 
+	default SleighUseropLibrary<T> compose(SleighUseropLibrary<T> lib) {
+		if (lib == null) {
+			return this;
+		}
+		return new ComposedSleighUseropLibrary<>(List.of(this, lib));
+	}
+
+	/**
+	 * Get named symbols defined by this library that are not already defined in the language
+	 * 
+	 * @param language the language whose existing symbols to consider
+	 * @return a map of new user-op indices to extra user-op symbols
+	 */
 	default Map<Integer, UserOpSymbol> getSymbols(SleighLanguage language) {
-		Map<String, Integer> langDefedOps = new HashMap<>();
+		//Set<String> langDefedNames = new HashSet<>();
 		Map<Integer, UserOpSymbol> symbols = new HashMap<>();
 		Set<String> allNames = new HashSet<>();
 		int langOpCount = language.getNumberOfUserDefinedOpNames();
 		for (int i = 0; i < langOpCount; i++) {
 			String name = language.getUserDefinedOpName(i);
-			langDefedOps.put(name, i);
+			allNames.add(name);
 		}
 		int nextOpNo = langOpCount;
-		for (SleighUseropDefinition<?> uop : getUserops().values()) {
+		for (SleighUseropDefinition<?> uop : new TreeMap<>(getUserops()).values()) {
 			String opName = uop.getName();
 			if (!allNames.add(opName)) {
-				// Will emit warning at execute
+				// Real duplicates will cause a warning during execution
 				continue;
 			}
-			Integer langOpNo = langDefedOps.get(opName);
-			if (langOpNo != null) {
-				symbols.put(langOpNo, null);
-			}
-			else {
-				int opNo = nextOpNo++;
-				Location loc = new Location(getClass().getName() + ":" + opName, 0);
-				UserOpSymbol sym = new UserOpSymbol(loc, opName);
-				sym.setIndex(opNo);
-				symbols.put(opNo, sym);
-			}
+
+			int opNo = nextOpNo++;
+			Location loc = new Location(getClass().getName() + ":" + opName, 0);
+			UserOpSymbol sym = new UserOpSymbol(loc, opName);
+			sym.setIndex(opNo);
+			symbols.put(opNo, sym);
 		}
 		return symbols;
 	}

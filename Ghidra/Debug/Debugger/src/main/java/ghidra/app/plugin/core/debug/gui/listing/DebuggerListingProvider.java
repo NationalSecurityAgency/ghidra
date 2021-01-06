@@ -81,6 +81,7 @@ import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -104,8 +105,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
 			return false; // For capture memory action
 		}
-		if (!Objects.equals(a.getSnap(), b.getSnap())) {
-			return false; // Subsumed by view, but I care that it's snap has changed
+		if (!Objects.equals(a.getTime(), b.getTime())) {
+			return false;
 		}
 		if (!Objects.equals(a.getThread(), b.getThread())) {
 			return false; // for reg/pc tracking
@@ -113,7 +114,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (!Objects.equals(a.getFrame(), b.getFrame())) {
 			return false; // for reg/pc tracking
 		}
-		// TODO: Ticks
 		return true;
 	}
 
@@ -129,14 +129,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			if (current.getView() == null) {
+			if (!current.isAliveAndReadsPresent()) {
 				return;
 			}
 			Trace trace = current.getTrace();
 			TraceRecorder recorder = current.getRecorder();
-			if (recorder == null) {
-				return;
-			}
 			BackgroundUtils.async(plugin.getTool(), trace, NAME, true, true, false,
 				(__, monitor) -> recorder
 						.captureProcessMemory(getListingPanel().getProgramSelection(), monitor));
@@ -144,13 +141,10 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
+			if (!current.isAliveAndReadsPresent()) {
+				return false;
+			}
 			TraceRecorder recorder = current.getRecorder();
-			if (recorder == null) {
-				return false;
-			}
-			if (recorder.getSnap() != current.getSnap()) {
-				return false;
-			}
 			ProgramSelection selection = getSelection();
 			if (selection == null || selection.isEmpty()) {
 				return false;
@@ -334,7 +328,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_REGISTER_MARKERS)
+	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS)
 	private Color trackingColor;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
@@ -757,7 +751,9 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			return;
 		}
 		// Avoid odd race conditions by fixing the snap
-		TraceProgramView fixed = current.getTrace().getFixedProgramView(current.getSnap());
+		TraceProgramView fixed = current.getView() instanceof TraceVariableSnapProgramView
+				? current.getTrace().getFixedProgramView(current.getSnap())
+				: current.getView();
 
 		ExporterDialog dialog =
 			new ExporterDialog(tool, fixed.getDomainFile(), fixed, getSelection());
@@ -1056,13 +1052,14 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		// Change of current snap (TODO)
 		// Change of current frame (TODO)
 		// Change of tracking settings
-		DebuggerCoordinates cur = this.current;
+		DebuggerCoordinates cur = current;
 		TraceThread thread = cur.getThread();
 		if (thread == null || trackingSpec == null) {
 			return null;
 		}
-		Address address = trackingSpec.computeTraceAddress(cur);
-		return address == null ? null : new ProgramLocation(cur.getView(), address);
+		// NB: view's snap may be forked for emulation
+		Address address = trackingSpec.computeTraceAddress(cur, current.getView().getSnap());
+		return address == null ? null : new ProgramLocation(current.getView(), address);
 	}
 
 	protected ProgramLocation doMarkTrackedLocation() {
@@ -1082,16 +1079,16 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (loc == null) {
 			return;
 		}
-		DebuggerCoordinates cur = current;
+		TraceProgramView curView = current.getView();
 		if (!syncToStaticListing || trackedStatic == null) {
 			Swing.runIfSwingOrRunLater(() -> {
-				goTo(cur.getView(), loc);
+				goTo(curView, loc);
 				doAutoImportCurrentModule();
 			});
 		}
 		else {
 			Swing.runIfSwingOrRunLater(() -> {
-				goTo(cur.getView(), loc);
+				goTo(curView, loc);
 				doAutoImportCurrentModule();
 				plugin.fireStaticLocationEvent(trackedStatic);
 			});
@@ -1118,7 +1115,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	public void staticProgramLocationChanged(ProgramLocation location) {
-		TraceProgramView view = current.getView();
+		TraceProgramView view = current.getView(); // NB. Used for snap (don't want emuSnap)
 		if (!isSyncToStaticListing() || view == null || location == null) {
 			return;
 		}
@@ -1134,10 +1131,9 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			return coordinates;
 		}
 		// Because the view's snap is changing with or without us.... So go with.
-		return current.withSnap(coordinates.getSnap());
+		return current.withTime(coordinates.getTime());
 	}
 
-	// TODO: Figure out clone action
 	public void goToCoordinates(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;

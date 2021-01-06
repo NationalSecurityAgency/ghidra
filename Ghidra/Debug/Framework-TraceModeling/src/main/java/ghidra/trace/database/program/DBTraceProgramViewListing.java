@@ -22,8 +22,6 @@ import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-// TODO: Make at/since configurable?
-// NOTE: Probably not, esp., if I get the coloring right.
 public class DBTraceProgramViewListing extends AbstractDBTraceProgramViewListing {
 	protected final AddressSet allMemory;
 
@@ -36,10 +34,10 @@ public class DBTraceProgramViewListing extends AbstractDBTraceProgramViewListing
 	public boolean isUndefined(Address start, Address end) {
 		try (LockHold hold = program.trace.lockRead()) {
 			for (AddressRange range : program.getAddressFactory().getAddressSet(start, end)) {
-				if (!codeOperations.undefinedData()
-						.coversRange(
-							Range.closed(program.snap, program.snap), range)) {
-					return false;
+				for (long s : program.viewport.getOrderedSnaps()) {
+					if (!isUndefinedRange(s, range)) {
+						return false;
+					}
 				}
 			}
 			return true;

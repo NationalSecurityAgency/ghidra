@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 
 import org.apache.commons.collections4.IteratorUtils;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 import generic.NestedIterator;
@@ -96,14 +97,16 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 			if (space == null) {
 				return null;
 			}
-			for (TraceBookmark bm : space.getBookmarksAt(program.snap, addr)) {
-				if (!type.equals(bm.getTypeString())) {
-					continue;
+			for (long s : program.viewport.getOrderedSnaps()) {
+				for (TraceBookmark bm : space.getBookmarksAt(s, addr)) {
+					if (!type.equals(bm.getTypeString())) {
+						continue;
+					}
+					if (!category.equals(bm.getCategory())) {
+						continue;
+					}
+					return bm;
 				}
-				if (!category.equals(bm.getCategory())) {
-					continue;
-				}
-				return bm;
 			}
 			return null;
 		}
@@ -222,11 +225,13 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 				return EMPTY_BOOKMARK_ARRAY;
 			}
 			List<Bookmark> list = new ArrayList<>();
-			for (TraceBookmark bm : space.getBookmarksAt(program.snap, addr)) {
-				if (!bm.getLifespan().contains(program.snap)) {
-					continue;
+			for (long s : program.viewport.getOrderedSnaps()) {
+				for (TraceBookmark bm : space.getBookmarksAt(s, addr)) {
+					if (!bm.getLifespan().contains(program.snap)) {
+						continue;
+					}
+					list.add(bm);
 				}
-				list.add(bm);
 			}
 			return list.toArray(new Bookmark[list.size()]);
 		}
@@ -241,11 +246,13 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 				return EMPTY_BOOKMARK_ARRAY;
 			}
 			List<Bookmark> list = new ArrayList<>();
-			for (TraceBookmark bm : space.getBookmarksAt(program.snap, address)) {
-				if (!type.equals(bm.getTypeString())) {
-					continue;
+			for (long s : program.viewport.getOrderedSnaps()) {
+				for (TraceBookmark bm : space.getBookmarksAt(s, address)) {
+					if (!type.equals(bm.getTypeString())) {
+						continue;
+					}
+					list.add(bm);
 				}
-				list.add(bm);
 			}
 			return list.toArray(new Bookmark[list.size()]);
 		}
@@ -261,10 +268,10 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 				return result;
 			}
 			for (TraceBookmark bm : bmt.getBookmarks()) {
-				if (bm.getAddress().isRegisterAddress()) {
+				if (bm.getAddress().getAddressSpace().isRegisterSpace()) {
 					continue;
 				}
-				if (!bm.getLifespan().contains(program.snap)) {
+				if (!program.viewport.containsAnyUpper(bm.getLifespan())) {
 					continue;
 				}
 				result.add(bm.getAddress());
@@ -287,7 +294,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	@SuppressWarnings("unchecked")
 	protected static <T, U extends T> Iterator<T> filteredIterator(Iterator<U> it,
 			Predicate<? super U> predicate) {
-		return IteratorUtils.filteredIterator(it, e -> predicate.test((U) e));
+		return (Iterator<T>) Iterators.filter(it, e -> predicate.test(e));
 	}
 
 	@Override
@@ -298,14 +305,22 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 		}
 		// TODO: May want to offer memory-only and/or register-only bookmark iterators
 		return filteredIterator(bmt.getBookmarks().iterator(),
-			bm -> !bm.getAddress().isRegisterAddress() && bm.getLifespan().contains(program.snap));
+			bm -> !bm.getAddress().getAddressSpace().isRegisterSpace() &&
+				program.viewport.containsAnyUpper(bm.getLifespan()));
 	}
 
 	@Override
 	public Iterator<Bookmark> getBookmarksIterator() {
+		// TODO: This seems terribly inefficient. We'll have to see how/when it's used.
 		return NestedIterator.start(bookmarkManager.getActiveMemorySpaces().iterator(),
 			space -> filteredIterator(space.getAllBookmarks().iterator(),
-				bm -> bm.getLifespan().contains(program.snap)));
+				bm -> program.viewport.containsAnyUpper(bm.getLifespan())));
+	}
+
+	protected Comparator<Bookmark> getBookmarkComparator(boolean forward) {
+		return forward
+				? (b1, b2) -> b1.getAddress().compareTo(b2.getAddress())
+				: (b1, b2) -> -b1.getAddress().compareTo(b2.getAddress());
 	}
 
 	@Override
@@ -320,8 +335,9 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 			if (space == null) {
 				return Collections.emptyIterator();
 			}
-			return space.getBookmarksIntersecting(Range.closed(program.snap, program.snap),
-				rng).iterator();
+			return program.viewport.mergedIterator(
+				s -> space.getBookmarksIntersecting(Range.closed(s, s), rng).iterator(),
+				getBookmarkComparator(forward));
 		});
 	}
 

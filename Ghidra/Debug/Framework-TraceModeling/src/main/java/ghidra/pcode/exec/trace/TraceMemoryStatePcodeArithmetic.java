@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.exec.trace;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.pcode.opbehavior.UnaryOpBehavior;
@@ -44,7 +46,17 @@ public enum TraceMemoryStatePcodeArithmetic implements PcodeArithmetic<TraceMemo
 	}
 
 	@Override
+	public TraceMemoryState fromConst(BigInteger value, int size) {
+		return TraceMemoryState.KNOWN;
+	}
+
+	@Override
 	public boolean isTrue(TraceMemoryState cond) {
 		throw new AssertionError("Cannot decide branches using TraceMemoryState");
+	}
+
+	@Override
+	public BigInteger toConcrete(TraceMemoryState value) {
+		throw new AssertionError("Cannot make TraceMemoryState a 'concrete value'");
 	}
 }

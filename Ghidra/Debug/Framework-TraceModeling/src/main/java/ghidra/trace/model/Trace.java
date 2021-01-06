@@ -273,8 +273,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 			new TraceSymbolChangeType<>();
 		public static final TraceSymbolChangeType<Address> ADDRESS_CHANGED =
 			new TraceSymbolChangeType<>();
-		public static final TraceSymbolChangeType<Range<Long>> LIFESPAN_CHANGED =
-			new TraceSymbolChangeType<>();
+		public static final DefaultTraceChangeType<TraceSymbolWithLifespan, Range<Long>> LIFESPAN_CHANGED =
+			new DefaultTraceChangeType<>();
 		public static final TraceSymbolChangeType<Void> DELETED = new TraceSymbolChangeType<>();
 		// Other changes not captured above
 		public static final TraceSymbolChangeType<Void> CHANGED = new TraceSymbolChangeType<>();

@@ -490,9 +490,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	// TODO: Display modules in timeline?
-	// TODO: Select module/section containing current address? 
-
 	private final DebuggerModulesPlugin plugin;
 
 	// @AutoServiceConsumed via method

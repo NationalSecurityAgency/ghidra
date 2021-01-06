@@ -17,6 +17,7 @@ package docking.widgets.table;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.math.BigInteger;
 import java.util.function.BiFunction;
 
 import javax.swing.JTable;
@@ -33,24 +34,32 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 
 	public static final CustomToStringCellRenderer<Object> MONO_OBJECT =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Object.class,
-			(v, s) -> v == null ? "<null>" : v.toString());
+			(v, s) -> v == null ? "<null>" : v.toString(), false);
+	public static final CustomToStringCellRenderer<String> MONO_HTML =
+		new CustomToStringCellRenderer<String>(CustomFont.MONOSPACED, String.class,
+			(v, s) -> v == null ? "<null>" : v, true);
 	public static final CustomToStringCellRenderer<Long> MONO_LONG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Long.class,
-			(v, s) -> v == null ? "<null>" : "0x" + Long.toString(v, 16));
+			(v, s) -> v == null ? "<null>" : "0x" + Long.toString(v, 16), false);
 	public static final CustomToStringCellRenderer<Long> MONO_ULONG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Long.class,
-			(v, s) -> v == null ? "<null>" : "0x" + Long.toUnsignedString(v, 16));
+			(v, s) -> v == null ? "<null>" : "0x" + Long.toUnsignedString(v, 16), false);
+	public static final CustomToStringCellRenderer<BigInteger> MONO_BIG_HEX =
+		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, BigInteger.class,
+			(v, s) -> v == null ? "<null>" : "0x" + v.toString(16), false);
 
 	private final CustomFont customFont;
 	private final Class<T> cls;
 	private final BiFunction<T, Settings, String> toString;
 
-	public CustomToStringCellRenderer(Class<T> cls, BiFunction<T, Settings, String> toString) {
-		this(null, cls, toString);
+	public CustomToStringCellRenderer(Class<T> cls, BiFunction<T, Settings, String> toString,
+			boolean enableHtml) {
+		this(null, cls, toString, enableHtml);
 	}
 
 	public CustomToStringCellRenderer(CustomFont font, Class<T> cls,
-			BiFunction<T, Settings, String> toString) {
+			BiFunction<T, Settings, String> toString, boolean enableHtml) {
+		this.setHTMLRenderingEnabled(enableHtml);
 		this.customFont = font;
 		this.cls = cls;
 		this.toString = toString;

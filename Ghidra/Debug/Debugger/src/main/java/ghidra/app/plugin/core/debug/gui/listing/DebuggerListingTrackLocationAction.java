@@ -27,6 +27,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -90,7 +91,7 @@ public interface DebuggerListingTrackLocationAction extends TrackLocationAction 
 		 */
 		String computeTitle(DebuggerCoordinates coordinates);
 
-		Address computeTraceAddress(DebuggerCoordinates coordinates);
+		Address computeTraceAddress(DebuggerCoordinates coordinates, long emuSnap);
 
 		// TODO: Is there a way to generalize these so that other dependencies need not
 		// have their own bespoke methods?
@@ -115,7 +116,7 @@ public interface DebuggerListingTrackLocationAction extends TrackLocationAction 
 		}
 
 		@Override
-		public Address computeTraceAddress(DebuggerCoordinates coordinates) {
+		public Address computeTraceAddress(DebuggerCoordinates coordinates, long emuSnap) {
 			return null;
 		}
 
@@ -147,7 +148,7 @@ public interface DebuggerListingTrackLocationAction extends TrackLocationAction 
 		}
 
 		@Override
-		default Address computeTraceAddress(DebuggerCoordinates coordinates) {
+		default Address computeTraceAddress(DebuggerCoordinates coordinates, long emuSnap) {
 			Trace trace = coordinates.getTrace();
 			TraceThread thread = coordinates.getThread();
 			long snap = coordinates.getSnap();
@@ -164,7 +165,13 @@ public interface DebuggerListingTrackLocationAction extends TrackLocationAction 
 			if (regs == null) {
 				return null;
 			}
-			RegisterValue value = regs.getValue(snap, reg);
+			RegisterValue value;
+			if (regs.getState(emuSnap, reg) == TraceMemoryState.KNOWN) {
+				value = regs.getValue(emuSnap, reg);
+			}
+			else {
+				value = regs.getValue(snap, reg);
+			}
 			if (value == null) {
 				return null;
 			}
@@ -230,18 +237,23 @@ public interface DebuggerListingTrackLocationAction extends TrackLocationAction 
 		}
 
 		@Override
-		public Address computeTraceAddress(DebuggerCoordinates coordinates) {
-			Address pc = computePCViaStack(coordinates);
-			if (pc != null) {
-				return pc;
+		public Address computeTraceAddress(DebuggerCoordinates coordinates, long emuSnap) {
+			if (coordinates.getTime().isSnapOnly()) {
+				Address pc = computePCViaStack(coordinates);
+				if (pc != null) {
+					return pc;
+				}
 			}
-			return RegisterLocationTrackingSpec.super.computeTraceAddress(coordinates);
+			return RegisterLocationTrackingSpec.super.computeTraceAddress(coordinates, emuSnap);
 		}
 
 		// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.
 		@Override
 		public boolean affectedByStackChange(TraceStack stack, DebuggerCoordinates coordinates) {
 			if (stack.getThread() != coordinates.getThread()) {
+				return false;
+			}
+			if (!coordinates.getTime().isSnapOnly()) {
 				return false;
 			}
 			// TODO: Would be nice to have stack lifespan...

@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.exec;
 
+import java.math.BigInteger;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -65,7 +66,18 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
+	public Pair<L, R> fromConst(BigInteger value, int size) {
+		return new ImmutablePair<>(leftArith.fromConst(value, size),
+			rightArith.fromConst(value, size));
+	}
+
+	@Override
 	public boolean isTrue(Pair<L, R> cond) {
 		return leftArith.isTrue(cond.getLeft());
+	}
+
+	@Override
+	public BigInteger toConcrete(Pair<L, R> value) {
+		return leftArith.toConcrete(value.getLeft());
 	}
 }

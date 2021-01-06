@@ -82,20 +82,37 @@ public interface TraceSnapshot {
 	void setEventThread(TraceThread thread);
 
 	/**
-	 * Get the number of ticks, if known, between this snapshot and the next
+	 * Get the schedule, if applicable and known, relating this snapshot to a previous one
 	 * 
-	 * @return the (unsigned) number of ticks, or 0 for unspecified.
+	 * <p>
+	 * This information is not always known, or even applicable. If recording a single step,
+	 * ideally, this is simply the previous snap plus one step of the event thread, e.g., for snap
+	 * 6, the schedule would be "5:1". For an emulated machine cached in scratch space, this should
+	 * be the schedule that would recover the same machine state.
+	 * 
+	 * <p>
+	 * The object managers in the trace pay no heed to this schedule. In particular, when retrieving
+	 * the "most-recent" information from a snapshot with a known schedule, the "previous snap" part
+	 * of that schedule is <em>not</em> taken into account. In other words, the managers still
+	 * interpret time linearly, even though this schedule field might imply built-in forking.
+	 * 
+	 * @return the (possibly null) schedule
 	 */
-	long getTicks();
+	TraceSchedule getSchedule();
 
 	/**
-	 * Set the number of ticks between this snapshot and the next
+	 * Get the string representation of the schedule
 	 * 
-	 * Conventionally, 0 indicates unknown or unspecified
-	 * 
-	 * @param ticks the number of ticks
+	 * @return the (possibly empty) string representation of the schedule
 	 */
-	void setTicks(long ticks);
+	String getScheduleString();
+
+	/**
+	 * Set the schedule from some previous snapshot to this one
+	 * 
+	 * @param schedule the schedule
+	 */
+	void setSchedule(TraceSchedule schedule);
 
 	/**
 	 * Delete this snapshot

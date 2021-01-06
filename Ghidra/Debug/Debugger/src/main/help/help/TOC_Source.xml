@@ -136,8 +136,12 @@
 					sortgroup="o"
 					target="help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html" />
 			
+			<tocdef id="DebuggerPcodeStepperPlugin" text="P-code Stepper"
+					sortgroup="p"
+					target="help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html" />
+			
 	        <tocdef id="DebuggerBots" text="Bots: Workflow Automation" 
-	        		sortgroup="p" 
+	        		sortgroup="q" 
 	                target="help/topics/DebuggerBots/DebuggerBots.html" />
 	    </tocdef>
 	</tocref>

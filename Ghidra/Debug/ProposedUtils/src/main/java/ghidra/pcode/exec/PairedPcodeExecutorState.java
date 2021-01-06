@@ -18,8 +18,24 @@ package ghidra.pcode.exec;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemBuffer;
 
+/**
+ * A paired executor state
+ * 
+ * <p>
+ * Where a response cannot be composed of both states, the paired state defers to the left. In this
+ * way, the left state controls the machine, while the right is computed in tandem. The right never
+ * directly controls the machine; however, by overriding
+ * {@link #getVar(AddressSpace, Object, int, boolean)} and/or
+ * {@link #setVar(AddressSpace, Object, int, boolean, Object)}, the right can affect the left and
+ * indirectly control the machine.
+ * 
+ * @param <L> the type of values for the "left" state
+ * @param <R> the type of values for the "right" state
+ */
 public class PairedPcodeExecutorState<L, R>
 		extends AbstractOffsetTransformedPcodeExecutorState<Pair<L, R>, L, Pair<L, R>>
 		implements PcodeExecutorState<Pair<L, R>> {
@@ -40,5 +56,10 @@ public class PairedPcodeExecutorState<L, R>
 	@Override
 	protected L transformOffset(Pair<L, R> offset) {
 		return offset.getLeft();
+	}
+
+	@Override
+	public MemBuffer getConcreteBuffer(Address address) {
+		return left.getConcreteBuffer(address);
 	}
 }

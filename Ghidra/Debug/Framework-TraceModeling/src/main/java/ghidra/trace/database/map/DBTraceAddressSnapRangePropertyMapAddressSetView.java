@@ -165,7 +165,8 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 				: new AddressRangeImpl(fullSpace.getMinAddress(), start);
 		Iterator<Entry<TraceAddressSnapRange, T>> mapIt = map
 				.reduce(TraceAddressSnapRangeQuery.intersecting(within, Range.all())
-						.starting(forward ? Rectangle2DDirection.LEFTMOST
+						.starting(forward
+								? Rectangle2DDirection.LEFTMOST
 								: Rectangle2DDirection.RIGHTMOST))
 				.orderedEntries()
 				.iterator();

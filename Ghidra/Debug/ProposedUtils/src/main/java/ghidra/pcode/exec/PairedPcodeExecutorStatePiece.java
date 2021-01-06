@@ -18,8 +18,17 @@ package ghidra.pcode.exec;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemBuffer;
 
+/**
+ * A paired executor state piece
+ * 
+ * @param <A> the type of offset, usually the type of a controlling state
+ * @param <L> the type of the "left" state
+ * @param <R> the type of the "right" state
+ */
 public class PairedPcodeExecutorStatePiece<A, L, R>
 		implements PcodeExecutorStatePiece<A, Pair<L, R>> {
 
@@ -50,5 +59,10 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 		return new ImmutablePair<>(
 			left.getVar(space, offset, size, truncateAddressableUnit),
 			right.getVar(space, offset, size, truncateAddressableUnit));
+	}
+
+	@Override
+	public MemBuffer getConcreteBuffer(Address address) {
+		return left.getConcreteBuffer(address);
 	}
 }

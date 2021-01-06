@@ -35,6 +35,7 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingPlugin;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsPlugin;
+import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperPlugin;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersPlugin;
 import ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPlugin;
 import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
@@ -48,7 +49,9 @@ import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.trace.model.Trace;
 import ghidra.util.*;
+import resources.MultiIcon;
 import resources.ResourceManager;
+import resources.icons.RotateIcon;
 
 public interface DebuggerResources {
 	String OPTIONS_CATEGORY_WORKFLOW = "Debugger.Workflow";
@@ -66,15 +69,19 @@ public interface DebuggerResources {
 	ImageIcon ICON_LAUNCH = ResourceManager.loadImage("images/launch.png");
 	ImageIcon ICON_ATTACH = ResourceManager.loadImage("images/attach.png");
 	ImageIcon ICON_RESUME = ResourceManager.loadImage("images/continue.png");
-	ImageIcon ICON_STEP_INTO = ResourceManager.loadImage("images/stepinto.png");
-	ImageIcon ICON_STEP_OVER = ResourceManager.loadImage("images/stepover.png");
-	ImageIcon ICON_STEP_FINISH = ResourceManager.loadImage("images/stepout.png");
-	ImageIcon ICON_REV_STEP_INTO = ResourceManager.loadImage("images/stepback.png");
 	ImageIcon ICON_TERMINATE = ResourceManager.loadImage("images/stop.png");
 	ImageIcon ICON_KILL = ResourceManager.loadImage("images/kill.png");
 	ImageIcon ICON_DETACH = ResourceManager.loadImage("images/detach.png");
-	ImageIcon ICON_SEEK_PRESENT = ICON_RESUME; // TODO: Draw a new icon?
 	ImageIcon ICON_RECORD = ResourceManager.loadImage("images/record.png");
+
+	ImageIcon ICON_STEP_INTO = ResourceManager.loadImage("images/stepinto.png");
+	ImageIcon ICON_STEP_OVER = ResourceManager.loadImage("images/stepover.png");
+	ImageIcon ICON_STEP_FINISH = ResourceManager.loadImage("images/stepout.png");
+	ImageIcon ICON_STEP_BACK = ResourceManager.loadImage("images/stepback.png");
+	// TODO: Draw new icons?
+	ImageIcon ICON_SNAP_FORWARD = ResourceManager.loadImage("images/2rightarrow.png");
+	ImageIcon ICON_SNAP_BACKWARD = ResourceManager.loadImage("images/2leftarrow.png");
+	ImageIcon ICON_SEEK_PRESENT = ICON_RESUME;
 
 	ImageIcon ICON_SET_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-set.png");
 	ImageIcon ICON_CLEAR_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-clear.png");
@@ -95,6 +102,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_BREAKPOINTS = ResourceManager.loadImage("images/breakpoints.png");
 	ImageIcon ICON_MODULES = ResourceManager.loadImage("images/modules.png");
 	ImageIcon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
+	ImageIcon ICON_PCODE = ResourceManager.loadImage("images/stepinto.png"); // TODO
 	//ResourceManager.loadImage("images/mappings.png");
 	ImageIcon ICON_REGIONS = ResourceManager.loadImage("images/memory16.gif");
 	ImageIcon ICON_TIME = ResourceManager.loadImage("images/time.png");
@@ -157,6 +165,11 @@ public interface DebuggerResources {
 	ImageIcon ICON_PROVIDER_MODULES = ICON_MODULES;
 	HelpLocation HELP_PROVIDER_MODULES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerModulesPlugin.class), HELP_ANCHOR_PLUGIN);
+
+	String TITLE_PROVIDER_PCODE = "Pcode Stepper";
+	ImageIcon ICON_PROVIDER_PCODE = ICON_PCODE;
+	HelpLocation HELP_PROVIDER_PCODE = new HelpLocation(
+		PluginUtils.getPluginNameFromClass(DebuggerPcodeStepperPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_REGIONS = "Regions";
 	ImageIcon ICON_PROVIDER_REGIONS = ICON_REGIONS;
@@ -233,6 +246,9 @@ public interface DebuggerResources {
 	String OPTION_NAME_COLORS_WATCH_CHANGED_SEL = "Colors.Changed Watches (selected)";
 	Color DEFAULT_COLOR_WATCH_CHANGED_SEL = ColorUtils.blend(Color.RED, Color.WHITE, 0.5f);
 
+	String OPTION_NAME_COLORS_PCODE_COUNTER = "Colors.Pcode Counter";
+	Color DEFAULT_COLOR_PCODE_COUNTER = new Color(0.75f, 0.875f, 0.75f);
+
 	String MARKER_NAME_BREAKPOINT_ENABLED = "Enabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_DISABLED = "Disabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_MIXED_ED = "Mixed Enabled-Disabled Breakpont";
@@ -247,6 +263,11 @@ public interface DebuggerResources {
 		ResourceManager.loadImage("images/breakpoint-mixed-ed.png");
 	ImageIcon ICON_BREAKPOINT_MIXED_DE_MARKER =
 		ResourceManager.loadImage("images/breakpoint-mixed-de.png");
+
+	Icon ICON_UNIQUE_REF_READ =
+		new RotateIcon(ResourceManager.loadImage("images/cursor_arrow.gif"), 180); // TODO
+	ImageIcon ICON_UNIQUE_REF_WRITE = ResourceManager.loadImage("images/cursor_arrow.gif"); // TODO
+	Icon ICON_UNIQUE_REF_RW = new MultiIcon(ICON_UNIQUE_REF_READ, ICON_UNIQUE_REF_WRITE); // TODO
 
 	String OPTION_NAME_COLORS_ENABLED_BREAKPOINT_MARKERS = "Colors.Enabled Breakpoint Markers";
 	Color DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS = new Color(0.875f, 0.75f, 0.75f);
@@ -1088,6 +1109,23 @@ public interface DebuggerResources {
 		}
 	}
 
+	/*interface SelectAddressesAction { // TODO: Finish this conversion
+		String NAME = "Select Addresses";
+		Icon ICON = ICON_SELECT_ADDRESSES;
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "select_addresses";
+	
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}*/
+
 	abstract class AbstractSelectAddressesAction extends DockingAction {
 		public static final String NAME = "Select Addresses";
 		public static final Icon ICON = ICON_SELECT_ADDRESSES;
@@ -1146,27 +1184,85 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractStepTraceForwardAction extends DockingAction {
-		public static final String NAME = "Step Trace Forward";
-		public static final Icon ICON = ICON_STEP_INTO;
-		public static final String HELP_ANCHOR = "step_trace_forward";
+	abstract class AbstractStepSnapForwardAction extends DockingAction {
+		public static final String NAME = "Step Trace Snap Forward";
+		public static final Icon ICON = ICON_SNAP_FORWARD;
+		public static final String HELP_ANCHOR = "step_trace_snap_forward";
 
-		public AbstractStepTraceForwardAction(Plugin owner) {
+		public AbstractStepSnapForwardAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Move the recording forward one tick");
+			setDescription("Navigate the recording forward one snap");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
 
-	abstract class AbstractStepTraceBackwardAction extends DockingAction {
-		public static final String NAME = "Step Trace Backward";
-		public static final Icon ICON = ICON_REV_STEP_INTO;
-		public static final String HELP_ANCHOR = "step_trace_backward";
+	abstract class AbstractStepTickForwardAction extends DockingAction {
+		public static final String NAME = "Step Trace Tick Forward";
+		public static final Icon ICON = ICON_STEP_INTO;
+		public static final String HELP_ANCHOR = "step_trace_tick_forward";
 
-		public AbstractStepTraceBackwardAction(Plugin owner) {
+		public AbstractStepTickForwardAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Move the recording backward one tick");
+			setDescription("Navigate the recording forward one tick");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	interface StepPcodeForwardAction {
+		String NAME = "Step Trace p-code Forward";
+		String DESCRIPTION = "Navigate the recording forward one p-code tick";
+		Icon ICON = ICON_STEP_INTO;
+		String GROUP = GROUP_CONTROL;
+		String HELP_ANCHOR = "step_trace_pcode_forward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	abstract class AbstractStepTickBackwardAction extends DockingAction {
+		public static final String NAME = "Step Trace Tick Backward";
+		public static final Icon ICON = ICON_STEP_BACK;
+		public static final String HELP_ANCHOR = "step_trace_tick_backward";
+
+		public AbstractStepTickBackwardAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Navigate the recording backward one tick");
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	abstract class AbstractStepSnapBackwardAction extends DockingAction {
+		public static final String NAME = "Step Trace Snap Backward";
+		public static final Icon ICON = ICON_SNAP_BACKWARD;
+		public static final String HELP_ANCHOR = "step_trace_snap_backward";
+
+		public AbstractStepSnapBackwardAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Navigate the recording backward one snap");
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	interface StepPcodeBackwardAction {
+		String NAME = "Step Trace p-code Backward";
+		String DESCRIPTION = "Navigate the recording backward one p-code tick";
+		Icon ICON = ICON_STEP_BACK;
+		String GROUP = GROUP_CONTROL;
+		String HELP_ANCHOR = "step_trace_pcode_backward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -1368,6 +1464,22 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface HideScratchSnapshotsAction {
+		String NAME = "Hide Scratch";
+		String DESCRIPTION = "Hide negative snaps, typically used as emulation scratch space";
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "hide_scratch";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP_GENERAL)
+					.menuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

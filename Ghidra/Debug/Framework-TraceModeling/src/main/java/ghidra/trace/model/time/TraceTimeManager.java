@@ -35,11 +35,43 @@ public interface TraceTimeManager {
 	TraceSnapshot getSnapshot(long snap, boolean createIfAbsent);
 
 	/**
+	 * Get the most recent snapshot since a given key
+	 * 
+	 * @param snap the snapshot key
+	 * @return the snapshot or {@code null}
+	 */
+	TraceSnapshot getMostRecentSnapshot(long snap);
+
+	/**
+	 * Get all snapshots with the given schedule
+	 * 
+	 * <p>
+	 * Ideally, the snapshot schedules should be managed such that the returned collection contains
+	 * at most one snapshot.
+	 * 
+	 * @param schedule the schedule to find
+	 * @return the snapshot, or {@code null} if no such snapshot exists
+	 */
+	Collection<? extends TraceSnapshot> getSnapshotsWithSchedule(TraceSchedule schedule);
+
+	/**
 	 * List all snapshots in the trace
 	 * 
 	 * @return the set of snapshots
 	 */
 	Collection<? extends TraceSnapshot> getAllSnapshots();
+
+	/**
+	 * List all snapshots between two given snaps in the trace
+	 * 
+	 * @param fromSnap the starting snap
+	 * @param fromInclusive whether to include the from snap
+	 * @param toSnap the ending snap
+	 * @param toInclusive when to include the to snap
+	 * @return the set of snapshots
+	 */
+	Collection<? extends TraceSnapshot> getSnapshots(long fromSnap, boolean fromInclusive,
+			long toSnap, boolean toInclusive);
 
 	/**
 	 * Get maximum snapshot key that has ever existed, usually that of the latest snapshot

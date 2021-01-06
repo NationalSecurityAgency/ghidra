@@ -39,7 +39,7 @@ public enum TraceSleighUtils {
 		if (space.isRegisterSpace()) {
 			if (thread == null) {
 				throw new IllegalArgumentException(
-					"Cannot execute with register context unless a thread is given.");
+					"Cannot access register unless a thread is given.");
 			}
 			return trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, toWrite);
 		}

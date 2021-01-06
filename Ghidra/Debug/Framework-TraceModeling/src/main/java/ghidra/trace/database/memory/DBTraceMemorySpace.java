@@ -46,7 +46,9 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceViewportSpanIterator;
 import ghidra.util.LockHold;
+import ghidra.util.MathUtilities;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 import ghidra.util.exception.DuplicateNameException;
@@ -329,8 +331,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 
 	protected void checkState(TraceMemoryState state) {
 		if (state == null || state == TraceMemoryState.UNKNOWN) {
-			throw new IllegalArgumentException(
-				"User cannot erase memory state without removing bytes");
+			throw new IllegalArgumentException("Cannot erase memory state without removing bytes");
 		}
 	}
 
@@ -377,10 +378,46 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	}
 
 	@Override
+	public Entry<Long, TraceMemoryState> getViewState(long snap, Address address) {
+		TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
+		while (spit.hasNext()) {
+			Range<Long> span = spit.next();
+			TraceMemoryState state = getState(span.upperEndpoint(), address);
+			switch (state) {
+				case KNOWN:
+				case ERROR:
+					return Map.entry(span.upperEndpoint(), state);
+				default: // fall through
+			}
+			// Only the snap with the schedule specified gets the source snap's states
+			if (span.upperEndpoint() - span.lowerEndpoint() > 0) {
+				return Map.entry(snap, TraceMemoryState.UNKNOWN);
+			}
+		}
+		return Map.entry(snap, TraceMemoryState.UNKNOWN);
+	}
+
+	@Override
 	public Entry<TraceAddressSnapRange, TraceMemoryState> getMostRecentStateEntry(long snap,
 			Address address) {
 		return stateMapSpace.reduce(
 			TraceAddressSnapRangeQuery.mostRecent(address, snap)).firstEntry();
+	}
+
+	@Override
+	public Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
+			Address address) {
+		TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
+		while (spit.hasNext()) {
+			Range<Long> span = spit.next();
+			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
+				stateMapSpace.reduce(TraceAddressSnapRangeQuery.mostRecent(address, span))
+						.firstEntry();
+			if (entry != null) {
+				return entry;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -656,6 +693,58 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			blockStore.dbError(e);
 		}
 		return result;
+	}
+
+	@Override
+	public int getViewBytes(long snap, Address start, ByteBuffer buf) {
+		AddressRange toRead;
+		int len = MathUtilities.unsignedMin(buf.remaining(),
+			start.getAddressSpace().getMaxAddress().subtract(start) + 1);
+		try {
+			toRead = new AddressRangeImpl(start, len);
+		}
+		catch (AddressOverflowException e) {
+			throw new AssertionError(e);
+		}
+		Map<AddressRange, Long> sources = new TreeMap<>();
+		AddressSet remains = new AddressSet(toRead);
+		TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
+		spans: while (spit.hasNext()) {
+			Range<Long> span = spit.next();
+			Iterator<AddressRange> arit =
+				getAddressesWithState(span, s -> s == TraceMemoryState.KNOWN).iterator(start, true);
+			while (arit.hasNext()) {
+				AddressRange rng = arit.next();
+				if (rng.getMinAddress().compareTo(toRead.getMaxAddress()) > 0) {
+					break;
+				}
+				for (AddressRange sub : remains.intersectRange(rng.getMinAddress(),
+					rng.getMaxAddress())) {
+					sources.put(sub, span.upperEndpoint());
+				}
+				remains.delete(rng);
+				if (remains.isEmpty()) {
+					break spans;
+				}
+			}
+		}
+		int lim = buf.limit();
+		int pos = buf.position();
+		for (Map.Entry<AddressRange, Long> ent : sources.entrySet()) {
+			AddressRange rng = ent.getKey();
+			int offset = (int) rng.getMinAddress().subtract(toRead.getMinAddress());
+			int length = (int) rng.getLength();
+			buf.position(pos + offset);
+			buf.limit(pos + offset + length);
+			int read = getBytes(ent.getValue(), rng.getMinAddress(), buf);
+			if (read < length) {
+				break;
+			}
+		}
+		// We "got it all", even if there were gaps in "KNOWN"
+		buf.limit(lim);
+		buf.position(pos + len);
+		return len;
 	}
 
 	@Override

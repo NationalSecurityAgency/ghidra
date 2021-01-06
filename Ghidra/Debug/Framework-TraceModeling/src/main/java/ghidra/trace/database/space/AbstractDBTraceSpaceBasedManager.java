@@ -33,7 +33,9 @@ import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
+import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -127,7 +129,11 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		for (DBTraceSpaceEntry ent : spaceStore.asMap().values()) {
 			AddressFactory addressFactory = baseLanguage.getAddressFactory();
 			AddressSpace space = addressFactory.getAddressSpace(ent.spaceName);
-			if (space.isRegisterSpace()) {
+			if (space == null) {
+				Msg.error(this, "Space " + ent.spaceName + " does not exist in " + baseLanguage +
+					". Perhaps the language changed.");
+			}
+			else if (space.isRegisterSpace()) {
 				DBTraceThread thread = threadManager.getThread(ent.threadKey);
 				R regSpace;
 				if (ent.space == null) {
@@ -227,10 +233,10 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		return baseLanguage;
 	}
 
-	public M get(DBTraceSpaceKey key, boolean createIfAbsent) {
-		AddressSpace addressSpace = key.getAddressSpace();
+	public M get(TraceAddressSpace space, boolean createIfAbsent) {
+		AddressSpace addressSpace = space.getAddressSpace();
 		if (addressSpace.isRegisterSpace()) {
-			return getForRegisterSpace(key.getThread(), key.getFrameLevel(), createIfAbsent);
+			return getForRegisterSpace(space.getThread(), space.getFrameLevel(), createIfAbsent);
 		}
 		return getForSpace(addressSpace, createIfAbsent);
 	}

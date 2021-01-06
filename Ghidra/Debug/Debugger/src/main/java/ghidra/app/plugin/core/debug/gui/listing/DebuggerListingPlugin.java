@@ -53,40 +53,40 @@ import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-@PluginInfo(//
-		shortDescription = "View and annotate listings of trace (possibly live) memory", //
-		description = "Provides the memory listing display window. Functions similarly to " +
-			"the main program listing display window, but for traces. If the trace is the " +
-			"destination of a live recording, the view(s) retrieve live memory on demand.", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { //
-			// ProgramSelectionPluginEvent.class, // TODO: Later or remove
-			// ProgramHighlightPluginEvent.class, // TODO: Later or remove
-			ProgramClosedPluginEvent.class, // For marker set cleanup
-			ProgramLocationPluginEvent.class, // For static listing sync
-			TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
-			TraceClosedPluginEvent.class, //
-		}, //
-		eventsProduced = { //
-			ProgramLocationPluginEvent.class, //
-			// ProgramSelectionPluginEvent.class, //
-			TraceLocationPluginEvent.class, //
-			TraceSelectionPluginEvent.class //
-		}, //
-		servicesRequired = { //
-			DebuggerModelService.class, // For memory capture
-			DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
-			ProgramManager.class, // TODO: Needed?
-			GoToService.class, // For static listing sync
-			ClipboardService.class, //
-			MarkerService.class // TODO: Make optional?
-		}, //
-		servicesProvided = { //
-			DebuggerListingService.class, //
-		} //
-)
+@PluginInfo(
+	shortDescription = "View and annotate listings of trace (possibly live) memory",
+	description = "Provides the memory listing display window. Functions similarly to " +
+		"the main program listing display window, but for traces. If the trace is the " +
+		"destination of a live recording, the view(s) retrieve live memory on demand.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		// ProgramSelectionPluginEvent.class, // TODO: Later or remove
+		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
+		ProgramClosedPluginEvent.class, // For marker set cleanup
+		ProgramLocationPluginEvent.class, // For static listing sync
+		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
+		TraceClosedPluginEvent.class,
+	},
+	eventsProduced = {
+		ProgramLocationPluginEvent.class,
+		// ProgramSelectionPluginEvent.class, 
+		TraceLocationPluginEvent.class,
+		TraceSelectionPluginEvent.class
+	},
+	servicesRequired = {
+		DebuggerModelService.class, // For memory capture
+		DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
+		DebuggerEmulationService.class, // TODO: Optional?
+		ProgramManager.class, // For static listing sync
+		//GoToService.class, // For static listing sync
+		ClipboardService.class,
+		MarkerService.class // TODO: Make optional?
+	},
+	servicesProvided = {
+		DebuggerListingService.class,
+	})
 public class DebuggerListingPlugin extends CodeBrowserPlugin implements DebuggerListingService {
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
 	private static final String KEY_DISCONNECTED_COUNT = "disconnectedCount";
@@ -118,8 +118,8 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 
 	protected NewListingAction actionNewListing;
 
-	@AutoServiceConsumed
-	private GoToService goToService;
+	//@AutoServiceConsumed
+	//private GoToService goToService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
 	// NOTE: ListingPlugin doesn't extend AbstractDebuggerPlugin
@@ -127,22 +127,22 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 	private AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_COLORS_STALE_MEMORY, //
-			description = "Color of memory addresses whose content is not known in the view's " +
-				"snap", //
-			help = @HelpInfo(anchor = "colors"))
+		name = OPTION_NAME_COLORS_STALE_MEMORY, //
+		description = "Color of memory addresses whose content is not known in the view's " +
+			"snap", //
+		help = @HelpInfo(anchor = "colors"))
 	private Color staleMemoryColor = DEFAULT_COLOR_BACKGROUND_STALE;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_COLORS_ERROR_MEMORY, //
-			description = "Color of memory addresses whose content could not be read in the " +
-				"view's snap", //
-			help = @HelpInfo(anchor = "colors"))
+		name = OPTION_NAME_COLORS_ERROR_MEMORY, //
+		description = "Color of memory addresses whose content could not be read in the " +
+			"view's snap", //
+		help = @HelpInfo(anchor = "colors"))
 	private Color errorMemoryColor = DEFAULT_COLOR_BACKGROUND_ERROR;
 	// NOTE: Static programs are marked via markerSet. Dynamic are marked via custom color model
 	@AutoOptionDefined( //
-			name = OPTION_NAME_COLORS_REGISTER_MARKERS, //
-			description = "Background color for locations referred to by a tracked register", //
-			help = @HelpInfo(anchor = "colors"))
+		name = OPTION_NAME_COLORS_REGISTER_MARKERS, //
+		description = "Background color for locations referred to by a tracked register", //
+		help = @HelpInfo(anchor = "colors"))
 	private Color trackingColor = DEFAULT_COLOR_REGISTER_MARKERS;
 	@SuppressWarnings("unused")
 	private AutoOptions.Wiring autoOptionsWiring;

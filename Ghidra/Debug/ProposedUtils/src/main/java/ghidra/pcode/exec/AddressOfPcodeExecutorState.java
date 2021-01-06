@@ -21,6 +21,7 @@ import java.util.Map;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemBuffer;
 
 public class AddressOfPcodeExecutorState
 		implements PcodeExecutorStatePiece<byte[], Address> {
@@ -54,5 +55,10 @@ public class AddressOfPcodeExecutorState
 			return space.getAddress(off);
 		}
 		return unique.get(off);
+	}
+
+	@Override
+	public MemBuffer getConcreteBuffer(Address address) {
+		throw new AssertionError("Cannot make 'address of' concrete buffers");
 	}
 }

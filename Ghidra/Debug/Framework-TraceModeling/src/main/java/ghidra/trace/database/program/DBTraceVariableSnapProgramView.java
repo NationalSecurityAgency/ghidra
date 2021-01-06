@@ -30,6 +30,7 @@ import ghidra.trace.model.program.TraceVariableSnapProgramView;
  */
 public class DBTraceVariableSnapProgramView extends DBTraceProgramView
 		implements TraceVariableSnapProgramView {
+
 	//private static final int SNAP_CHANGE_EVENT_THRESHHOLD = 100;
 
 	public DBTraceVariableSnapProgramView(DBTrace trace, long snap, CompilerSpec compilerSpec) {
@@ -50,6 +51,7 @@ public class DBTraceVariableSnapProgramView extends DBTraceProgramView
 		}
 		//long oldSnap = this.snap;
 		this.snap = newSnap;
+		viewport.setSnap(newSnap);
 		memory.setSnap(newSnap);
 
 		// TODO: I could be more particular, but this seems to work fast enough, now.

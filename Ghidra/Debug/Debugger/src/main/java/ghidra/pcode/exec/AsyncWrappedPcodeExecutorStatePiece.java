@@ -19,7 +19,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import ghidra.async.AsyncUtils;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemBuffer;
 
 public class AsyncWrappedPcodeExecutorStatePiece<A, T>
 		implements PcodeExecutorStatePiece<CompletableFuture<A>, CompletableFuture<T>> {
@@ -28,6 +30,10 @@ public class AsyncWrappedPcodeExecutorStatePiece<A, T>
 
 	public AsyncWrappedPcodeExecutorStatePiece(PcodeExecutorStatePiece<A, T> state) {
 		this.state = state;
+	}
+
+	protected boolean isWriteDone() {
+		return lastWrite.isDone();
 	}
 
 	protected <U> CompletableFuture<U> nextRead(Supplier<CompletableFuture<U>> next) {
@@ -67,5 +73,13 @@ public class AsyncWrappedPcodeExecutorStatePiece<A, T>
 	@Override
 	public CompletableFuture<A> longToOffset(AddressSpace space, long l) {
 		return CompletableFuture.completedFuture(state.longToOffset(space, l));
+	}
+
+	@Override
+	public MemBuffer getConcreteBuffer(Address address) {
+		if (!isWriteDone()) {
+			throw new AssertionError("An async write is still pending");
+		}
+		return state.getConcreteBuffer(address);
 	}
 }

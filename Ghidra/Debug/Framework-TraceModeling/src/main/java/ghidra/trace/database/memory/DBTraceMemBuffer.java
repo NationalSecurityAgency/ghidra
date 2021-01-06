@@ -56,7 +56,7 @@ public class DBTraceMemBuffer implements MemBufferAdapter {
 	@Override
 	public int getBytes(ByteBuffer buffer, int offset) {
 		try {
-			return space.getBytes(snap, start.addNoWrap(offset), buffer);
+			return space.getViewBytes(snap, start.addNoWrap(offset), buffer);
 		}
 		catch (AddressOverflowException e) {
 			return 0;

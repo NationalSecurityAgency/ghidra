@@ -26,11 +26,9 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.DataAdapterFromDataType;
 import ghidra.util.LockHold;
 
-public abstract class AbstractDBTraceDataComponent
-		implements DBTraceDefinedDataAdapter, DataAdapterFromDataType {
+public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedDataAdapter {
 
 	protected final DBTraceData root;
 	protected final DBTraceDefinedDataAdapter parent;

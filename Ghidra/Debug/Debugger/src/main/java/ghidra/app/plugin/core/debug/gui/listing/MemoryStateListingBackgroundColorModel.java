@@ -63,11 +63,11 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 			return defaultBackgroundColor;
 		}
 
-		TraceMemoryState state = memory.getState(view.getSnap(), address);
+		Entry<Long, TraceMemoryState> state = memory.getViewState(view.getSnap(), address);
 		if (state == null) {
 			return defaultBackgroundColor;
 		}
-		switch (state) {
+		switch (state.getValue()) {
 			case UNKNOWN:
 				return getUnknownColor(address);
 			case ERROR:
@@ -84,11 +84,11 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 
 	protected Color getUnknownColor(Address address) {
 		Entry<TraceAddressSnapRange, TraceMemoryState> ent =
-			memory.getMostRecentStateEntry(view.getSnap(), address);
+			memory.getViewMostRecentStateEntry(view.getSnap(), address);
 		if (ent == null || ent.getValue() != TraceMemoryState.KNOWN) {
 			return unknownColor;
 		}
-		TraceMemoryRegion region = memory.getRegionContaining(view.getSnap(), address);
+		TraceMemoryRegion region = memory.getRegionContaining(ent.getKey().getY1(), address);
 		if (region != null && !region.isWrite()) {
 			return unknownBlendedColor;
 		}

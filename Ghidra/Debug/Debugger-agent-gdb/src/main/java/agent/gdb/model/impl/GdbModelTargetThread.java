@@ -35,10 +35,8 @@ import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "Thread",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
-		@TargetAttributeType(type = Void.class) })
+	elements = { @TargetElementType(type = Void.class) },
+	attributes = { @TargetAttributeType(type = Void.class) })
 public class GdbModelTargetThread
 		extends DefaultTargetObject<TargetObject, GdbModelTargetThreadContainer> implements
 		TargetThread, TargetExecutionStateful, TargetSteppable, GdbModelSelectableObject {

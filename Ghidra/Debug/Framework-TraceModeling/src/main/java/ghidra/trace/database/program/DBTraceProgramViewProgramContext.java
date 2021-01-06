@@ -53,8 +53,11 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 		List<Register> registers = language.getRegisters();
 		List<Register> result = new ArrayList<>(registers.size());
 		for (Register register : registers) {
-			if (registerContextManager.hasRegisterValue(language, register, program.snap)) {
-				result.add(register);
+			for (long s : program.viewport.getReversedSnaps()) {
+				if (registerContextManager.hasRegisterValue(language, register, s)) {
+					result.add(register);
+					break;
+				}
 			}
 		}
 		return result.toArray(new Register[result.size()]);
@@ -66,10 +69,27 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 		return value == null ? null : signed ? value.getSignedValue() : value.getUnsignedValue();
 	}
 
+	protected RegisterValue combine(RegisterValue v1, RegisterValue v2) {
+		if (v1 == null) {
+			return v2;
+		}
+		else if (v2 == null) {
+			return v1;
+		}
+		return v1.combineValues(v2);
+	}
+
+	protected RegisterValue stack(RegisterValue value, Register register, Address address) {
+		for (long s : program.viewport.getReversedSnaps()) {
+			value = combine(value, registerContextManager.getValue(language, register, s, address));
+		}
+		return value;
+	}
+
 	@Override
 	public RegisterValue getRegisterValue(Register register, Address address) {
-		return registerContextManager.getValueWithDefault(language, register, program.snap,
-			address);
+		RegisterValue value = registerContextManager.getDefaultValue(language, register, address);
+		return stack(value, register, address);
 	}
 
 	@Override
@@ -81,7 +101,8 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 
 	@Override
 	public RegisterValue getNonDefaultValue(Register register, Address address) {
-		return registerContextManager.getValue(language, register, program.snap, address);
+		RegisterValue value = new RegisterValue(register);
+		return stack(value, register, address);
 	}
 
 	@Override
@@ -105,22 +126,24 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 
 	@Override
 	public AddressRangeIterator getRegisterValueAddressRanges(Register register) {
-		return registerContextManager.getRegisterValueAddressRanges(language, register,
-			program.snap).getAddressRanges();
+		return program.viewport.unionedAddresses(
+			s -> registerContextManager.getRegisterValueAddressRanges(language, register,
+				s)).getAddressRanges();
 	}
 
 	@Override
 	public AddressRangeIterator getRegisterValueAddressRanges(Register register, Address start,
 			Address end) {
 		return new NestedAddressRangeIterator<>(
-			language.getAddressFactory().getAddressSet(start, end).iterator(), range -> {
-				return registerContextManager.getRegisterValueAddressRanges(language, register,
-					program.snap, range).iterator();
-			});
+			language.getAddressFactory().getAddressSet(start, end).iterator(),
+			range -> program.viewport.unionedAddresses(
+				s -> registerContextManager.getRegisterValueAddressRanges(language, register,
+					s, range)).iterator());
 	}
 
 	@Override
 	public AddressRange getRegisterValueRangeContaining(Register register, Address address) {
+		// TODO: I don't know the value of making this work through the viewport.
 		Entry<TraceAddressSnapRange, RegisterValue> entry =
 			registerContextManager.getEntry(language, register, program.snap, address);
 		if (entry != null) {
@@ -164,6 +187,7 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 	@Override
 	public boolean hasValueOverRange(Register register, BigInteger value,
 			AddressSetView addressSet) {
+		// TODO: Not sure the value of making this use the viewport
 		RegisterValue regVal = new RegisterValue(register, value);
 		try (LockHold hold = program.trace.lockRead()) {
 			AddressSet remains = new AddressSet(addressSet);

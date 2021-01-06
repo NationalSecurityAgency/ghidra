@@ -32,6 +32,10 @@ public interface DBTraceDelegatingManager<M> {
 		void accept(T t) throws E1, E2;
 	}
 
+	interface ExcSupplier<T, E1 extends Throwable, E2 extends Throwable> {
+		T get() throws E1, E2;
+	}
+
 	interface ExcPredicate<T, E1 extends Throwable, E2 extends Throwable> {
 		boolean test(T t) throws E1, E2;
 	}
@@ -79,7 +83,7 @@ public interface DBTraceDelegatingManager<M> {
 
 	default <T, E1 extends Throwable, E2 extends Throwable> T delegateRead(AddressSpace space,
 			ExcFunction<M, T, E1, E2> func) throws E1, E2 {
-		return delegateRead(space, func, null);
+		return delegateRead(space, func, (T) null);
 	}
 
 	default <T, E1 extends Throwable, E2 extends Throwable> T delegateRead(AddressSpace space,
@@ -89,6 +93,18 @@ public interface DBTraceDelegatingManager<M> {
 			M m = getForSpace(space, false);
 			if (m == null) {
 				return ifNull;
+			}
+			return func.apply(m);
+		}
+	}
+
+	default <T, E1 extends Throwable, E2 extends Throwable> T delegateRead(AddressSpace space,
+			ExcFunction<M, T, E1, E2> func, ExcSupplier<T, E1, E2> ifNull) throws E1, E2 {
+		checkIsInMemory(space);
+		try (LockHold hold = LockHold.lock(readLock())) {
+			M m = getForSpace(space, false);
+			if (m == null) {
+				return ifNull.get();
 			}
 			return func.apply(m);
 		}

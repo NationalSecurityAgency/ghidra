@@ -138,7 +138,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
 			return false; // May need to read target
 		}
-		if (!Objects.equals(a.getSnap(), b.getSnap())) {
+		if (!Objects.equals(a.getTime(), b.getTime())) {
 			return false;
 		}
 		if (!Objects.equals(a.getThread(), b.getThread())) {
@@ -147,7 +147,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		if (!Objects.equals(a.getFrame(), b.getFrame())) {
 			return false;
 		}
-		// TODO: Ticks
 		return true;
 	}
 
@@ -236,21 +235,25 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_WATCH_STALE, //
-			description = "Text color for watches whose value is not known", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_STALE, //
+		description = "Text color for watches whose value is not known", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color watchStaleColor = DebuggerResources.DEFAULT_COLOR_WATCH_STALE;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_WATCH_STALE_SEL, //
-			description = "Selected text color for watches whose value is not known", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_STALE_SEL, //
+		description = "Selected text color for watches whose value is not known", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color watchStaleSelColor = DebuggerResources.DEFAULT_COLOR_WATCH_STALE_SEL;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_WATCH_CHANGED, //
-			description = "Text color for watches whose value just changed", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_CHANGED, //
+		description = "Text color for watches whose value just changed", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color watchChangesColor = DebuggerResources.DEFAULT_COLOR_WATCH_CHANGED;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_WATCH_CHANGED_SEL, //
-			description = "Selected text color for watches whose value just changed", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_CHANGED_SEL, //
+		description = "Selected text color for watches whose value just changed", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color watchChangesSelColor = DebuggerResources.DEFAULT_COLOR_WATCH_CHANGED_SEL;
 
 	private final AddressSet changed = new AddressSet();
@@ -554,7 +557,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 		setRowsContext(coordinates);
 
-		if (current.isAliveAndPresent()) {
+		if (current.isAliveAndReadsPresent()) {
 			readTarget();
 		}
 		reevaluate();

@@ -189,10 +189,10 @@ public class WatchRow {
 		}
 
 		@Override
-		public void execute(SleighProgram program,
+		public PcodeFrame execute(PcodeProgram program,
 				SleighUseropLibrary<Pair<byte[], Address>> library) {
 			depsState.reset();
-			super.execute(program, library);
+			return super.execute(program, library);
 		}
 
 		public AddressSet getReads() {
@@ -204,7 +204,7 @@ public class WatchRow {
 			DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		ReadDepsTraceBytesPcodeExecutorState state =
-			new ReadDepsTraceBytesPcodeExecutorState(trace, coordinates.getSnap(),
+			new ReadDepsTraceBytesPcodeExecutorState(trace, coordinates.getViewSnap(),
 				coordinates.getThread(), coordinates.getFrame());
 		Language language = trace.getBaseLanguage();
 		PcodeExecutorState<Pair<byte[], Address>> paired =
@@ -232,11 +232,11 @@ public class WatchRow {
 			language = (SleighLanguage) newLanguage;
 			recompile();
 		}
-		if (coordinates.isAliveAndPresent()) {
+		if (coordinates.isAliveAndReadsPresent()) {
 			asyncExecutor = TracePcodeUtils.executorForCoordinates(coordinates);
 		}
 		executorWithState = TraceSleighUtils.buildByteWithStateExecutor(trace,
-			coordinates.getSnap(), coordinates.getThread(), coordinates.getFrame());
+			coordinates.getViewSnap(), coordinates.getThread(), coordinates.getFrame());
 		executorWithAddress = buildAddressDepsExecutor(coordinates);
 	}
 

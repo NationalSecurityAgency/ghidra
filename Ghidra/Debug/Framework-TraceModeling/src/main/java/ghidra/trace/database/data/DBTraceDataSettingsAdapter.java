@@ -29,10 +29,10 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceSettingsEntry;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -226,8 +226,8 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	public DBTraceDataSettingsSpace get(DBTraceSpaceKey key, boolean createIfAbsent) {
-		return (DBTraceDataSettingsSpace) super.get(key, createIfAbsent);
+	public DBTraceDataSettingsSpace get(TraceAddressSpace space, boolean createIfAbsent) {
+		return (DBTraceDataSettingsSpace) super.get(space, createIfAbsent);
 	}
 
 	@Override

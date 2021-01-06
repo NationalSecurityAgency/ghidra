@@ -56,6 +56,8 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
@@ -119,8 +121,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 
 		private void threadDeleted(TraceThread thread) {
-			if (threadFocusByTrace.get(trace) == thread) {
-				threadFocusByTrace.remove(trace);
+			DebuggerCoordinates last = lastCoordsByTrace.get(trace);
+			if (last != null && last.getThread() == thread) {
+				lastCoordsByTrace.remove(trace);
 			}
 			if (current.getThread() == thread) {
 				activate(DebuggerCoordinates.trace(trace));
@@ -158,7 +161,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	protected final Map<Trace, TraceThread> threadFocusByTrace = new WeakHashMap<>();
+	protected final Map<Trace, DebuggerCoordinates> lastCoordsByTrace = new WeakHashMap<>();
 	protected final Map<Trace, ListenerForTraceChanges> listenersByTrace = new WeakHashMap<>();
 	protected final Set<Trace> tracesView = Collections.unmodifiableSet(listenersByTrace.keySet());
 
@@ -177,6 +180,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	// @AutoServiceConsumed via method
 	private DebuggerModelService modelService;
+	@AutoServiceConsumed
+	private DebuggerEmulationService emulationService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -422,6 +427,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (trace == null) {
 			return DebuggerCoordinates.NOWHERE;
 		}
+		DebuggerCoordinates lastForTrace = lastCoordsByTrace.get(trace);
 		// Note: override recorder with that known to service
 		TraceRecorder recorder = computeRecorder(trace);
 		TargetObject focus = recorder == null ? null : recorder.getFocus();
@@ -431,7 +437,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				thread = threadFromTargetFocus(recorder, focus);
 			}
 			if (thread /*still*/ == null) { // either no focus support, or focus is not a thread
-				thread = threadFocusByTrace.get(trace);
+				thread = lastForTrace == null ? null : lastForTrace.getThread();
 			}
 			// NOTE, if still null without focus support,
 			// we will take the eldest live thread at the resolved snap
@@ -444,20 +450,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		 */
 		// Note: override view. May not agree on snap now, but will upon activation
 		TraceProgramView view = trace.getProgramView();
-		Long snap = coordinates.getSnap();
-		if (snap == null) {
+		TraceSchedule time = coordinates.getTime();
+		if (time == null) {
 			if (recorder != null && autoActivatePresent.get() && trace != current.getTrace()) {
-				snap = recorder.getSnap();
+				time = TraceSchedule.snap(recorder.getSnap());
 			}
 			else {
-				snap = view.getSnap();
+				time = lastForTrace == null ? TraceSchedule.snap(0) : lastForTrace.getTime();
 			}
 		}
 
 		if (!supportsFocus(recorder)) {
 			if (thread /*still*/ == null) {
 				Iterator<? extends TraceThread> it =
-					trace.getThreadManager().getLiveThreads(snap).iterator();
+					trace.getThreadManager().getLiveThreads(time.getSnap()).iterator();
 				// docs say eldest come first
 				if (it.hasNext()) {
 					thread = it.next();
@@ -472,15 +478,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 
-		String ticks = coordinates.getTicks();
-		// TODO: Memorize ticks by trace and frame by thread
-		if (ticks == null && trace == current.getTrace()) {
-			ticks = current.getTicks();
-		}
-		if (ticks == null) {
-			ticks = "";
-		}
-		// Note, not likely we can view non-zero frame with emulated ticks
 		Integer frame = coordinates.getFrame();
 		if (frame == null) {
 			if (supportsFocus(recorder)) {
@@ -493,17 +490,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 					frame = traceFrame.getLevel();
 				}
 			}
-			if (frame /*still*/ == null && thread == current.getThread()) {
-				frame = current.getFrame();
+			if (frame /*still*/ == null && lastForTrace != null &&
+				thread == lastForTrace.getThread()) {
+				// TODO: Memorize frame by thread, instead of by trace?
+				frame = lastForTrace.getFrame();
 			}
 		}
 		// TODO: Is it reasonable to change back to frame 0 on snap change?
 		// Only 0 (possibly synthetic) is guaranteed to exist in any snap
-		if (frame == null || !"".equals(ticks) || !Objects.equals(snap, current.getSnap())) {
+		if (frame == null || !time.isSnapOnly() ||
+			!Objects.equals(time.getSnap(), current.getSnap())) {
 			frame = 0;
 		}
-		return DebuggerCoordinates.all(trace, recorder, thread, view, Objects.requireNonNull(snap),
-			Objects.requireNonNull(ticks), Objects.requireNonNull(frame));
+		return DebuggerCoordinates.all(trace, recorder, thread, view, Objects.requireNonNull(time),
+			Objects.requireNonNull(frame));
 	}
 
 	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent) {
@@ -515,8 +515,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			current = resolved;
 			contextChanged();
-			if (current.getTrace() != null && current.getThread() != null) {
-				threadFocusByTrace.put(current.getTrace(), current.getThread());
+			if (resolved.getTrace() != null) {
+				lastCoordsByTrace.put(resolved.getTrace(), resolved);
 			}
 			return resolved;
 		}
@@ -561,10 +561,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		TraceThread thread = threadFromTargetFocus(recorder, obj);
 		long snap = recorder.getSnap();
-		String ticks = "";
 		TraceStackFrame traceFrame = frameFromTargetFocus(recorder, obj);
 		Integer frame = traceFrame == null ? null : traceFrame.getLevel();
-		activateNoFocus(DebuggerCoordinates.all(trace, recorder, thread, null, snap, ticks, frame));
+		activateNoFocus(DebuggerCoordinates.all(trace, recorder, thread, null,
+			TraceSchedule.snap(snap), frame));
 		return true;
 	}
 
@@ -651,7 +651,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public TraceThread getCurrentThreadFor(Trace trace) {
-		return threadFocusByTrace.get(trace);
+		DebuggerCoordinates coords = lastCoordsByTrace.get(trace);
+		return coords == null ? null : coords.getThread();
 	}
 
 	@Override
@@ -664,14 +665,44 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return current.getFrame();
 	}
 
-	protected void fireLocationEvent(DebuggerCoordinates coordinates) {
+	protected void prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
-		if (varView != null) {
-			varView.setSnap(coordinates.getSnap());
+		if (varView == null) { // Should only happen with NOWHERE
+			fireLocationEvent(coordinates);
 		}
-		Swing.runIfSwingOrRunLater(() -> {
-			firePluginEvent(new TraceActivatedPluginEvent(getName(), coordinates));
-		});
+		else if (coordinates.getTime().isSnapOnly()) {
+			varView.setSnap(coordinates.getSnap());
+			fireLocationEvent(coordinates);
+		}
+		else {
+			Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
+					.getTimeManager()
+					.getSnapshotsWithSchedule(coordinates.getTime());
+			if (!suitable.isEmpty()) {
+				TraceSnapshot found = suitable.iterator().next();
+				varView.setSnap(found.getKey());
+				fireLocationEvent(coordinates);
+				return;
+			}
+			if (emulationService == null) {
+				throw new IllegalStateException(
+					"Cannot navigate to coordinates with execution schedules, " +
+						"because the emulation service is not available.");
+			}
+			CompletableFuture<Long> bg =
+				emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
+			bg.thenAccept(emuSnap -> Swing.runLater(() -> {
+				if (!coordinates.equals(current)) {
+					return; // We navigated elsewhere before emulation completed
+				}
+				varView.setSnap(emuSnap);
+				fireLocationEvent(coordinates);
+			}));
+		}
+	}
+
+	protected void fireLocationEvent(DebuggerCoordinates coordinates) {
+		firePluginEvent(new TraceActivatedPluginEvent(getName(), coordinates));
 	}
 
 	@Override
@@ -874,7 +905,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected void doTraceClosed(Trace trace) {
 		synchronized (listenersByTrace) {
 			trace.release(this);
-			threadFocusByTrace.remove(trace);
+			lastCoordsByTrace.remove(trace);
 			trace.removeListener(listenersByTrace.remove(trace));
 			//Msg.debug(this, "Remaining Consumers of " + trace + ": " + trace.getConsumerList());
 		}
@@ -909,12 +940,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			while (it.hasNext()) {
 				Trace trace = it.next();
 				trace.release(this);
-				threadFocusByTrace.remove(trace);
+				lastCoordsByTrace.remove(trace);
 				trace.removeListener(listenersByTrace.get(trace));
 				it.remove();
 			}
 			// Be certain
-			threadFocusByTrace.clear();
+			lastCoordsByTrace.clear();
 		}
 		autoServiceWiring.dispose();
 	}
@@ -931,7 +962,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (resolved == null) {
 			return;
 		}
-		fireLocationEvent(resolved);
+		prepareViewAndFireEvent(resolved);
 	}
 
 	protected static TargetObject translateToFocus(DebuggerCoordinates prev,
@@ -970,7 +1001,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (resolved == null) {
 			return;
 		}
-		fireLocationEvent(resolved);
+		prepareViewAndFireEvent(resolved);
 		if (!synchronizeFocus.get()) {
 			return;
 		}
@@ -995,6 +1026,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void activateSnap(long snap) {
 		activate(DebuggerCoordinates.snap(snap));
+	}
+
+	@Override
+	public void activateTime(TraceSchedule time) {
+		activate(DebuggerCoordinates.time(time));
 	}
 
 	@Override
@@ -1142,24 +1178,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		List<Trace> traces;
 		DebuggerCoordinates currentCoords;
-		Map<Trace, TraceThread> threadByTrace;
-		Map<Trace, Long> snapByTrace;
+		Map<Trace, DebuggerCoordinates> coordsByTrace;
 		synchronized (listenersByTrace) {
 			currentCoords = current;
 			traces = tracesView.stream().filter(t -> {
 				ProjectLocator loc = t.getDomainFile().getProjectLocator();
 				return loc != null && !loc.isTransient();
 			}).collect(Collectors.toList());
-			threadByTrace = Map.copyOf(threadFocusByTrace);
-			snapByTrace = tracesView.stream()
-					.collect(Collectors.toMap(t -> t, t -> t.getProgramView().getSnap()));
+			coordsByTrace = Map.copyOf(lastCoordsByTrace);
 		}
 
 		saveState.putInt(KEY_TRACE_COUNT, traces.size());
 		for (int index = 0; index < traces.size(); index++) {
 			Trace t = traces.get(index);
-			DebuggerCoordinates coords = DebuggerCoordinates.all(t, null, threadByTrace.get(t),
-				null, snapByTrace.get(t), null, null);
+			DebuggerCoordinates coords = coordsByTrace.get(t);
 			String stateName = PREFIX_OPEN_TRACE + index;
 			coords.writeDataState(tool, saveState, stateName);
 		}
@@ -1173,7 +1205,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		for (int index = 0; index < traceCount; index++) {
 			String stateName = PREFIX_OPEN_TRACE + index;
 			// Trace will be opened by readDataState, resolve causes update to focus and view
-			DebuggerCoordinates.readDataState(tool, saveState, stateName, true);
+			DebuggerCoordinates coords =
+				DebuggerCoordinates.readDataState(tool, saveState, stateName, true);
+			if (coords.getTrace() != null) {
+				lastCoordsByTrace.put(coords.getTrace(), coords);
+			}
 		}
 
 		activate(DebuggerCoordinates.readDataState(tool, saveState, KEY_CURRENT_COORDS, false));

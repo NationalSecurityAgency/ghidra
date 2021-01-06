@@ -35,22 +35,22 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.model.Trace;
 import ghidra.util.Msg;
 
-@PluginInfo( //
-		shortDescription = "Debugger registers manager", //
-		description = "GUI to view and modify register values", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { TraceActivatedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-			DebuggerModelService.class, //
-			DebuggerTraceManagerService.class, //
-			MarkerService.class, // TODO
-			DataTypeManagerService.class, // For DataType selection field
-		} //
-)
+@PluginInfo(
+	shortDescription = "Debugger registers manager",
+	description = "GUI to view and modify register values",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerModelService.class,
+		DebuggerTraceManagerService.class,
+		MarkerService.class, // TODO
+		DataTypeManagerService.class, // For DataType selection field
+	})
 public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 	private static final String KEY_SELECTION_BY_CSPEC = "selectionByCSpec";
 	private static final String KEY_FAVORITES_BY_CSPEC = "favoritesByCSpec";

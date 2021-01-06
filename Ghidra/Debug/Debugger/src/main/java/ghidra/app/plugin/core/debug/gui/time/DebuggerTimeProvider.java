@@ -19,6 +19,8 @@ import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -31,16 +33,19 @@ import com.google.common.collect.Collections2;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
+import docking.action.ToggleDockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.plugintool.AutoService;
+import ghidra.framework.options.SaveState;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -50,13 +55,15 @@ import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.table.GhidraTableFilterPanel;
 
 public class DebuggerTimeProvider extends ComponentProviderAdapter {
+	private static final AutoConfigState.ClassHandler<DebuggerTimeProvider> CONFIG_STATE_HANDLER =
+		AutoConfigState.wireHandler(DebuggerTimeProvider.class, MethodHandles.lookup());
 
 	protected enum SnapshotTableColumns
 		implements EnumeratedTableColumn<SnapshotTableColumns, SnapshotRow> {
 		SNAP("Snap", Long.class, SnapshotRow::getSnap),
 		TIMESTAMP("Timestamp", String.class, SnapshotRow::getTimeStamp), // TODO: Use Date type here
 		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName),
-		TICKS("Ticks", Long.class, SnapshotRow::getTicks),
+		SCHEDULE("Schedule", String.class, SnapshotRow::getSchedule),
 		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, SnapshotRow::setDescription);
 
 		private final String header;
@@ -103,17 +110,6 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
-		if (!Objects.equals(a.getTrace(), b.getTrace())) {
-			return false;
-		}
-		if (!Objects.equals(a.getSnap(), b.getSnap())) {
-			return false;
-		}
-		// TODO: Ticks?
-		return true;
-	}
-
 	private class SnapshotListener extends TraceDomainObjectListener {
 		public SnapshotListener() {
 			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
@@ -128,6 +124,9 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		}
 
 		private void snapAdded(TraceSnapshot snapshot) {
+			if (snapshot.getKey() < 0 && hideScratch) {
+				return;
+			}
 			SnapshotRow row = new SnapshotRow(current.getTrace(), snapshot);
 			snapshotTableModel.add(row);
 			if (current.getSnap() == snapshot.getKey()) {
@@ -136,12 +135,28 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		}
 
 		private void snapChanged(TraceSnapshot snapshot) {
+			if (snapshot.getKey() < 0 && hideScratch) {
+				return;
+			}
 			snapshotTableModel.notifyUpdatedWith(row -> row.getSnapshot() == snapshot);
 		}
 
 		private void snapDeleted(TraceSnapshot snapshot) {
+			if (snapshot.getKey() < 0 && hideScratch) {
+				return;
+			}
 			snapshotTableModel.deleteWith(row -> row.getSnapshot() == snapshot);
 		}
+	}
+
+	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
+		if (!Objects.equals(a.getTrace(), b.getTrace())) {
+			return false;
+		}
+		if (!Objects.equals(a.getTime(), b.getTime())) {
+			return false;
+		}
+		return true;
 	}
 
 	protected final DebuggerTimePlugin plugin;
@@ -163,7 +178,12 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	/* testing */ GTable snapshotTable;
 	/* testing */ GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
 
-	private DebuggerSnapActionContext currentCtx;
+	private DebuggerSnapActionContext myActionContext;
+
+	ToggleDockingAction actionHideScratch;
+
+	@AutoConfigStateField
+	/* testing */ boolean hideScratch = true;
 
 	public DebuggerTimeProvider(DebuggerTimePlugin plugin) {
 		super(plugin.getTool(), TITLE_PROVIDER_TIME, plugin.getName());
@@ -177,6 +197,11 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
 
 		buildMainPanel();
+
+		myActionContext = new DebuggerSnapActionContext(0);
+		createActions();
+		contextChanged();
+
 		setVisible(true);
 	}
 
@@ -192,7 +217,10 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return currentCtx;
+		if (myActionContext == null) {
+			return super.getActionContext(event);
+		}
+		return myActionContext;
 	}
 
 	protected void buildMainPanel() {
@@ -209,15 +237,16 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 			}
 			SnapshotRow row = snapshotFilterPanel.getSelectedItem();
 			if (row == null) {
-				currentCtx = null;
+				myActionContext = null;
 				return;
 			}
 			long snap = row.getSnap();
 			if (snap == current.getSnap().longValue()) {
 				return;
 			}
-			currentCtx = new DebuggerSnapActionContext(snap);
+			myActionContext = new DebuggerSnapActionContext(snap);
 			viewManager.activateSnap(snap);
+			contextChanged();
 		});
 
 		TableColumnModel columnModel = snapshotTable.getColumnModel();
@@ -227,10 +256,27 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		timeCol.setPreferredWidth(200);
 		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
 		etCol.setPreferredWidth(40);
-		TableColumn ticksCol = columnModel.getColumn(SnapshotTableColumns.TICKS.ordinal());
-		ticksCol.setPreferredWidth(60);
+		TableColumn schdCol = columnModel.getColumn(SnapshotTableColumns.SCHEDULE.ordinal());
+		schdCol.setPreferredWidth(60);
 		TableColumn descCol = columnModel.getColumn(SnapshotTableColumns.DESCRIPTION.ordinal());
 		descCol.setPreferredWidth(200);
+	}
+
+	protected void createActions() {
+		actionHideScratch = DebuggerResources.HideScratchSnapshotsAction.builder(plugin)
+				.selected(hideScratch)
+				.onAction(this::activatedHideScratch)
+				.buildAndInstallLocal(this);
+	}
+
+	private void activatedHideScratch(ActionContext ctx) {
+		hideScratch = !hideScratch;
+		if (hideScratch) {
+			deleteScratchSnapshots();
+		}
+		else {
+			loadScratchSnapshots();
+		}
 	}
 
 	private void addNewListeners() {
@@ -290,7 +336,35 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 			return;
 		}
 		TraceTimeManager manager = curTrace.getTimeManager();
-		snapshotTableModel.addAll(
-			Collections2.transform(manager.getAllSnapshots(), s -> new SnapshotRow(curTrace, s)));
+		Collection<? extends TraceSnapshot> snapshots = hideScratch
+				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
+				: manager.getAllSnapshots();
+		snapshotTableModel.addAll(Collections2.transform(snapshots,
+			s -> new SnapshotRow(curTrace, s)));
+	}
+
+	protected void deleteScratchSnapshots() {
+		snapshotTableModel.deleteWith(s -> s.getSnap() < 0);
+	}
+
+	protected void loadScratchSnapshots() {
+		Trace curTrace = current.getTrace();
+		if (curTrace == null) {
+			return;
+		}
+		TraceTimeManager manager = curTrace.getTimeManager();
+		snapshotTableModel.addAll(Collections2.transform(
+			manager.getSnapshots(Long.MIN_VALUE, true, 0, false),
+			s -> new SnapshotRow(curTrace, s)));
+	}
+
+	public void writeConfigState(SaveState saveState) {
+		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+	}
+
+	public void readConfigState(SaveState saveState) {
+		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+
+		actionHideScratch.setSelected(hideScratch);
 	}
 }

@@ -225,7 +225,7 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 			throw new MemoryAccessException();
 		}
 		ByteBuffer buf = ByteBuffer.allocate(1);
-		if (space.getBytes(program.snap, addr, buf) != 1) {
+		if (space.getViewBytes(program.snap, addr, buf) != 1) {
 			throw new MemoryAccessException();
 		}
 		return buf.get(0);
@@ -242,7 +242,7 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 			throw new MemoryAccessException();
 		}
 		len = (int) Math.min(len, range.getMaxAddress().subtract(addr) + 1);
-		return space.getBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
+		return space.getViewBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
 	}
 
 	@Override

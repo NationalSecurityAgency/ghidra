@@ -80,15 +80,22 @@ public class SleighProgramCompiler {
 		return List.of(emit.getPcodeOp());
 	}
 
+	/**
+	 * Add extra user-op symbols to the parser's table
+	 * 
+	 * <p>
+	 * The map cannot contain symbols whose user-op indices are already defined by the language.
+	 * 
+	 * @param parser the parser to modify
+	 * @param symbols the map of extra symbols
+	 */
 	protected static void addParserSymbols(PcodeParser parser, Map<Integer, UserOpSymbol> symbols) {
 		for (UserOpSymbol sym : symbols.values()) {
-			if (sym != null) {
-				parser.addSymbol(sym);
-			}
+			parser.addSymbol(sym);
 		}
 	}
 
-	public static SleighProgram compileProgram(SleighLanguage language, String sourceName,
+	public static PcodeProgram compileProgram(SleighLanguage language, String sourceName,
 			List<String> lines, SleighUseropLibrary<?> library) {
 		PcodeParser parser = createParser(language);
 		Map<Integer, UserOpSymbol> symbols = library.getSymbols(language);
@@ -97,7 +104,7 @@ public class SleighProgramCompiler {
 		ConstructTpl template =
 			compileTemplate(language, parser, sourceName, StringUtils.join(lines, "\n"));
 		try {
-			return new SleighProgram(language, buildOps(language, template), symbols);
+			return new PcodeProgram(language, buildOps(language, template), symbols);
 		}
 		catch (UnknownInstructionException | MemoryAccessException e) {
 			throw new AssertionError(e);

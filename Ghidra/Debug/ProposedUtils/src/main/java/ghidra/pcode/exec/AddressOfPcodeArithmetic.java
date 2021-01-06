@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.exec;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.pcode.opbehavior.UnaryOpBehavior;
 import ghidra.program.model.address.Address;
@@ -40,7 +42,17 @@ public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	}
 
 	@Override
+	public Address fromConst(BigInteger value, int size) {
+		return null;
+	}
+
+	@Override
 	public boolean isTrue(Address cond) {
-		throw new AssertionError("Cannot decide branches using an address");
+		throw new AssertionError("Cannot decide branches using 'address of'");
+	}
+
+	@Override
+	public BigInteger toConcrete(Address value) {
+		throw new AssertionError("Should not attempt to concretize 'address of'");
 	}
 }

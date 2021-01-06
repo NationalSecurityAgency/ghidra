@@ -62,10 +62,23 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 	}
 
 	@Override
+	public CompletableFuture<T> fromConst(BigInteger value, int size) {
+		return CompletableFuture.completedFuture(arithmetic.fromConst(value, size));
+	}
+
+	@Override
 	public boolean isTrue(CompletableFuture<T> cond) {
 		if (!cond.isDone()) {
 			throw new AssertionError("You need a better 8-ball");
 		}
 		return arithmetic.isTrue(cond.getNow(null));
+	}
+
+	@Override
+	public BigInteger toConcrete(CompletableFuture<T> cond) {
+		if (!cond.isDone()) {
+			throw new AssertionError("You need a better 8-ball");
+		}
+		return arithmetic.toConcrete(cond.getNow(null));
 	}
 }

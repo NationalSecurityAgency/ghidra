@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 import generic.NestedIterator;
@@ -35,42 +33,16 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.EmptyFunctionIterator;
+import ghidra.trace.util.WrappingFunctionIterator;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceProgramViewFunctionManager implements FunctionManager {
-
-	public static class FunctionIteratorAdapter implements FunctionIterator {
-		private Iterator<? extends Function> it;
-
-		public FunctionIteratorAdapter(Iterator<? extends Function> it) {
-			this.it = it;
-		}
-
-		public <T extends Function> FunctionIteratorAdapter(Iterator<T> it,
-				Predicate<? super T> filter) {
-			this.it = Iterators.filter(it, filter);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public Function next() {
-			return it.next();
-		}
-
-		@Override
-		public Iterator<Function> iterator() {
-			return this;
-		}
-	}
 
 	protected final DBTraceProgramView program;
 	protected final DBTraceFunctionSymbolView functions;
@@ -176,10 +148,16 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 		if (!entryPoint.getAddressSpace().isMemorySpace()) {
 			return null;
 		}
-		// NOTE: There ought only to be one, since no overlaps allowed.
-		for (TraceFunctionSymbol at : functions.getAt(program.snap, null, entryPoint, false)) {
-			if (entryPoint.equals(at.getEntryPoint())) {
-				return at;
+
+		for (long s : program.viewport.getOrderedSnaps()) {
+			// NOTE: There ought only to be one, since no overlaps allowed.
+			for (TraceFunctionSymbol at : functions.getAt(s, null, entryPoint, false)) {
+				if (entryPoint.equals(at.getEntryPoint())) {
+					return at;
+				}
+				else {
+					return null; // Anything below is occluded by the found function
+				}
 			}
 		}
 		return null;
@@ -187,16 +165,20 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 
 	@Override
 	public TraceFunctionSymbol getReferencedFunction(Address address) {
+		if (!address.getAddressSpace().isMemorySpace()) {
+			return null;
+		}
 		TraceFunctionSymbol found = getFunctionAt(address);
 		if (found != null) {
 			return found;
 		}
-		// We're assuming a data reference
-		if (program.trace.getCodeManager().data().getContaining(program.snap, address) == null) {
+		TraceData data =
+			program.getTopCode(address, (space, s) -> space.data().getContaining(s, address));
+		if (data == null) {
 			return null;
 		}
-		DBTraceReference ref =
-			program.trace.getReferenceManager().getPrimaryReferenceFrom(program.snap, address, 0);
+		DBTraceReference ref = program.trace.getReferenceManager()
+				.getPrimaryReferenceFrom(data.getStartSnap(), address, 0);
 		return ref == null ? null : getFunctionAt(ref.getToAddress());
 	}
 
@@ -228,7 +210,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 
 	@Override
 	public FunctionIterator getFunctions(AddressSetView asv, boolean forward) {
-		return new FunctionIteratorAdapter(
+		return new WrappingFunctionIterator(
 			NestedIterator.start(asv.iterator(forward), rng -> getFunctionsInRange(rng, forward)),
 			f -> {
 				if (!asv.contains(f.getEntryPoint())) {
@@ -251,7 +233,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 
 	@Override
 	public FunctionIterator getFunctionsNoStubs(AddressSetView asv, boolean forward) {
-		return new FunctionIteratorAdapter(
+		return new WrappingFunctionIterator(
 			NestedIterator.start(asv.iterator(forward), rng -> getFunctionsInRange(rng, forward)),
 			f -> {
 				if (f.isThunk()) {
@@ -316,7 +298,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 
 	@Override
 	public Iterator<Function> getFunctionsOverlapping(AddressSetView set) {
-		return new FunctionIteratorAdapter(
+		return new WrappingFunctionIterator(
 			NestedIterator.start(set.iterator(true), rng -> getFunctionsInRange(rng, true)));
 	}
 

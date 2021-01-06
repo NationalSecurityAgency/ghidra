@@ -90,7 +90,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 		Language language = trace.getBaseLanguage();
 
-		SleighProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language, "test",
+		PcodeProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language, "test",
 			List.of("r2 = r0 + r1;"), SleighUseropLibrary.NIL);
 
 		TraceRecorderAsyncPcodeExecutorState asyncState =

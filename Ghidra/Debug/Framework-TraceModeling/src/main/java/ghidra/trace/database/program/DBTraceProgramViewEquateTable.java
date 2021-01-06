@@ -27,6 +27,7 @@ import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
 import ghidra.trace.database.symbol.DBTraceEquate;
 import ghidra.trace.database.symbol.DBTraceEquateManager;
+import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.LockHold;
 import ghidra.util.exception.*;
@@ -97,8 +98,13 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	@Override
 	public Equate getEquate(Address reference, int opndPosition, long value) {
 		try (LockHold hold = program.trace.lockRead()) {
-			return doGetViewEquate(
-				equateManager.getReferencedByValue(program.snap, reference, opndPosition, value));
+			TraceCodeUnit cu = program.getTopCode(reference,
+				(space, s) -> space.definedUnits().getContaining(s, reference));
+			if (cu == null) {
+				return null;
+			}
+			return doGetViewEquate(equateManager.getReferencedByValue(cu.getStartSnap(), reference,
+				opndPosition, value));
 		}
 	}
 
@@ -106,7 +112,12 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	public List<Equate> getEquates(Address reference, int opndPosition) {
 		try (LockHold hold = program.trace.lockRead()) {
 			List<Equate> result = new ArrayList<>();
-			for (DBTraceEquate equate : equateManager.getReferenced(program.snap, reference,
+			TraceCodeUnit cu = program.getTopCode(reference,
+				(space, s) -> space.definedUnits().getContaining(s, reference));
+			if (cu == null) {
+				return result;
+			}
+			for (DBTraceEquate equate : equateManager.getReferenced(cu.getStartSnap(), reference,
 				opndPosition)) {
 				result.add(doGetViewEquate(equate));
 			}
@@ -118,7 +129,12 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	public List<Equate> getEquates(Address reference) {
 		try (LockHold hold = program.trace.lockRead()) {
 			List<Equate> result = new ArrayList<>();
-			for (DBTraceEquate equate : equateManager.getReferenced(program.snap, reference)) {
+			TraceCodeUnit cu = program.getTopCode(reference,
+				(space, s) -> space.definedUnits().getContaining(s, reference));
+			if (cu == null) {
+				return result;
+			}
+			for (DBTraceEquate equate : equateManager.getReferenced(cu.getStartSnap(), reference)) {
 				result.add(doGetViewEquate(equate));
 			}
 			return result;
@@ -127,9 +143,9 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 
 	@Override
 	public AddressIterator getEquateAddresses() {
-		return equateManager.getReferringAddresses(Range.singleton(program.snap))
-				.getAddresses(
-					true);
+		return program.viewport
+				.unionedAddresses(s -> equateManager.getReferringAddresses(Range.singleton(s)))
+				.getAddresses(true);
 	}
 
 	@Override
@@ -150,14 +166,15 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 
 	@Override
 	public AddressIterator getEquateAddresses(Address start) {
-		return equateManager.getReferringAddresses(Range.singleton(program.snap))
-				.getAddresses(
-					start, true);
+		return program.viewport
+				.unionedAddresses(s -> equateManager.getReferringAddresses(Range.singleton(s)))
+				.getAddresses(start, true);
 	}
 
 	@Override
 	public AddressIterator getEquateAddresses(AddressSetView asv) {
-		return new IntersectionAddressSetView(asv,
-			equateManager.getReferringAddresses(Range.singleton(program.snap))).getAddresses(true);
+		return new IntersectionAddressSetView(asv, program.viewport
+				.unionedAddresses(s -> equateManager.getReferringAddresses(Range.singleton(s))))
+						.getAddresses(true);
 	}
 }

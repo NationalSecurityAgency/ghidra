@@ -22,9 +22,11 @@ import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
+import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 
@@ -33,14 +35,14 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	protected static final String TABLE_NAME = "Snapshots";
 
 	protected static final String REAL_TIME_COLUMN_NAME = "RealTime";
-	protected static final String TICKS_COLUMN_NAME = "Ticks";
+	protected static final String SCHEDULE_COLUMN_NAME = "Schedule";
 	protected static final String DESCRIPTION_COLUMN_NAME = "Description";
 	protected static final String THREAD_COLUMN_NAME = "Thread";
 
 	@DBAnnotatedColumn(REAL_TIME_COLUMN_NAME)
 	static DBObjectColumn REAL_TIME_COLUMN;
-	@DBAnnotatedColumn(TICKS_COLUMN_NAME)
-	static DBObjectColumn TICKS_COLUMN;
+	@DBAnnotatedColumn(SCHEDULE_COLUMN_NAME)
+	static DBObjectColumn SCHEDULE_COLUMN;
 	@DBAnnotatedColumn(DESCRIPTION_COLUMN_NAME)
 	static DBObjectColumn DESCRIPTION_COLUMN;
 	@DBAnnotatedColumn(THREAD_COLUMN_NAME)
@@ -48,8 +50,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 
 	@DBAnnotatedField(column = REAL_TIME_COLUMN_NAME)
 	long realTime; // milliseconds
-	@DBAnnotatedField(column = TICKS_COLUMN_NAME)
-	long ticks;
+	@DBAnnotatedField(column = SCHEDULE_COLUMN_NAME, indexed = true)
+	String scheduleStr = "";
 	@DBAnnotatedField(column = DESCRIPTION_COLUMN_NAME)
 	String description;
 	@DBAnnotatedField(column = THREAD_COLUMN_NAME)
@@ -58,6 +60,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	public final DBTraceTimeManager manager;
 
 	private DBTraceThread eventThread;
+	private TraceSchedule schedule;
 
 	public DBTraceSnapshot(DBTraceTimeManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -69,23 +72,33 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	protected void fresh(boolean created) throws IOException {
 		if (created) {
 			threadKey = -1;
+			scheduleStr = "";
 		}
 		else {
 			eventThread = manager.threadManager.getThread(threadKey);
+			if (!"".equals(scheduleStr)) {
+				try {
+					schedule = TraceSchedule.parse(scheduleStr);
+				}
+				catch (IllegalArgumentException e) {
+					Msg.error(this, "Could not parse schedule: " + schedule, e);
+					// Leave as null (or previous value?)
+				}
+			}
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("<DBTraceSnapshot realTime=%d, ticks=%d, description='%s'>", realTime,
-			ticks, description);
+		return String.format(
+			"<DBTraceSnapshot key=%d, realTime=%d, schedule='%s', description='%s'>",
+			key, realTime, scheduleStr, description);
 	}
 
-	protected void set(long realTime, String description, long ticks) {
+	protected void set(long realTime, String description) {
 		this.realTime = realTime;
 		this.description = description;
-		this.ticks = ticks;
-		update(REAL_TIME_COLUMN, DESCRIPTION_COLUMN, TICKS_COLUMN);
+		update(REAL_TIME_COLUMN, DESCRIPTION_COLUMN);
 	}
 
 	@Override
@@ -146,15 +159,21 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	}
 
 	@Override
-	public long getTicks() {
-		return ticks;
+	public TraceSchedule getSchedule() {
+		return schedule;
 	}
 
 	@Override
-	public void setTicks(long ticks) {
+	public String getScheduleString() {
+		return scheduleStr;
+	}
+
+	@Override
+	public void setSchedule(TraceSchedule schedule) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			this.ticks = ticks;
-			update(TICKS_COLUMN);
+			this.schedule = schedule;
+			this.scheduleStr = schedule == null ? "" : schedule.toString();
+			update(SCHEDULE_COLUMN);
 		}
 		manager.trace.setChanged(
 			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));

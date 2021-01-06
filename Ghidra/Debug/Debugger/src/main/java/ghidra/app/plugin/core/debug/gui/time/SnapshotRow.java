@@ -51,8 +51,8 @@ public class SnapshotRow {
 		return thread == null ? "" : thread.getName();
 	}
 
-	public long getTicks() {
-		return snapshot.getTicks();
+	public String getSchedule() {
+		return snapshot.getScheduleString();
 	}
 
 	public String getDescription() {

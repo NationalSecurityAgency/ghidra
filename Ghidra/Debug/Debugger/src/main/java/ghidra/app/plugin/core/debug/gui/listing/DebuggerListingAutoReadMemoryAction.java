@@ -104,7 +104,7 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		@Override
 		public CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates,
 				AddressSetView visible) {
-			if (!coordinates.isAliveAndPresent()) {
+			if (!coordinates.isAliveAndReadsPresent()) {
 				return AsyncUtils.NIL;
 			}
 			TraceRecorder recorder = coordinates.getRecorder();
@@ -135,7 +135,7 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		@Override
 		public CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates,
 				AddressSetView visible) {
-			if (!coordinates.isAliveAndPresent()) {
+			if (!coordinates.isAliveAndReadsPresent()) {
 				return AsyncUtils.NIL;
 			}
 			TraceRecorder recorder = coordinates.getRecorder();

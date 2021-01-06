@@ -20,21 +20,22 @@ import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
 @PluginInfo( //
-		shortDescription = "Lists recorded snapshots in a trace", //
-		description = "Provides the component which lists snapshots and allows navigation", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { //
-			TraceActivatedPluginEvent.class //
-		}, //
-		servicesRequired = { //
-			DebuggerTraceManagerService.class //
-		} //
+	shortDescription = "Lists recorded snapshots in a trace", //
+	description = "Provides the component which lists snapshots and allows navigation", //
+	category = PluginCategoryNames.DEBUGGER, //
+	packageName = DebuggerPluginPackage.NAME, //
+	status = PluginStatus.RELEASED, //
+	eventsConsumed = { //
+		TraceActivatedPluginEvent.class //
+	}, //
+	servicesRequired = { //
+		DebuggerTraceManagerService.class //
+	} //
 )
 public class DebuggerTimePlugin extends AbstractDebuggerPlugin {
 	protected DebuggerTimeProvider provider;
@@ -62,5 +63,15 @@ public class DebuggerTimePlugin extends AbstractDebuggerPlugin {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
 			provider.coordinatesActivated(ev.getActiveCoordinates());
 		}
+	}
+
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		provider.writeConfigState(saveState);
+	}
+
+	@Override
+	public void readConfigState(SaveState saveState) {
+		provider.readConfigState(saveState);
 	}
 }

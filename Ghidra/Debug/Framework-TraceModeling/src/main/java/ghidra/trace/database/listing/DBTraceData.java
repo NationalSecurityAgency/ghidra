@@ -27,7 +27,6 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
-import ghidra.trace.util.DataAdapterFromDataType;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -35,8 +34,7 @@ import ghidra.util.database.annot.*;
 
 @DBAnnotatedObjectInfo(version = 0)
 public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
-		implements DBTraceDefinedDataAdapter, DataAdapterFromDataType {
-	static final int[] EMPTY_INT_ARRAY = new int[0];
+		implements DBTraceDefinedDataAdapter {
 	private static final String TABLE_NAME = "Data";
 
 	static final String LANGUAGE_COLUMN_NAME = "Langauge";

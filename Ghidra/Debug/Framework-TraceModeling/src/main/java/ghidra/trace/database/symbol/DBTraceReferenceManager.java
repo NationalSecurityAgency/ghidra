@@ -230,10 +230,10 @@ public class DBTraceReferenceManager extends
 	}
 
 	@Override
-	public Collection<? extends DBTraceReference> getFlowRefrencesFrom(long snap,
+	public Collection<? extends DBTraceReference> getFlowReferencesFrom(long snap,
 			Address fromAddress) {
 		return delegateRead(fromAddress.getAddressSpace(),
-			s -> s.getFlowRefrencesFrom(snap, fromAddress), Collections.emptyList());
+			s -> s.getFlowReferencesFrom(snap, fromAddress), Collections.emptyList());
 	}
 
 	@Override

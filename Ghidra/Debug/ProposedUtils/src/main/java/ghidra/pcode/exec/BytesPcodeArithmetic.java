@@ -75,6 +75,11 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	}
 
 	@Override
+	public byte[] fromConst(BigInteger value, int size) {
+		return Utils.bigIntegerToBytes(value, size, isBigEndian);
+	}
+
+	@Override
 	public boolean isTrue(byte[] cond) {
 		for (byte b : cond) {
 			if (b != 0) {
@@ -82,5 +87,10 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public BigInteger toConcrete(byte[] value) {
+		return Utils.bytesToBigInteger(value, value.length, isBigEndian, false);
 	}
 }

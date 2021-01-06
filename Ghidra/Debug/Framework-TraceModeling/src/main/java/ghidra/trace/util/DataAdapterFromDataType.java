@@ -21,6 +21,23 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.scalar.Scalar;
 
 public interface DataAdapterFromDataType extends Data {
+
+	default String doToString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(getMnemonicString());
+		String valueRepresentation = getDefaultValueRepresentation();
+		if (valueRepresentation != null) {
+			builder.append(' ');
+			builder.append(valueRepresentation);
+		}
+		return builder.toString();
+	}
+
+	@Override
+	default String getMnemonicString() {
+		return getDataType().getMnemonic(this);
+	}
+
 	@Override
 	default Address getAddress(int opIndex) {
 		if (opIndex != 0) {

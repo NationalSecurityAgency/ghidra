@@ -47,25 +47,56 @@ public class PcodeExecutor<T> {
 	}
 
 	public void executeLine(String line) {
-		SleighProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
+		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
 			"line", List.of(line + ";"), SleighUseropLibrary.NIL);
 		execute(program, SleighUseropLibrary.nil());
 	}
 
-	public void execute(SleighProgram program, SleighUseropLibrary<T> library) {
-		execute(program.code, program.useropNames, library);
+	public PcodeFrame begin(PcodeProgram program) {
+		return begin(program.code, program.useropNames);
 	}
 
-	public void execute(List<PcodeOp> code, Map<Integer, String> useropNames,
+	public PcodeFrame execute(PcodeProgram program, SleighUseropLibrary<T> library) {
+		return execute(program.code, program.useropNames, library);
+	}
+
+	public PcodeFrame begin(List<PcodeOp> code, Map<Integer, String> useropNames) {
+		return new PcodeFrame(language, code, useropNames);
+	}
+
+	public PcodeFrame execute(List<PcodeOp> code, Map<Integer, String> useropNames,
 			SleighUseropLibrary<T> library) {
-		PcodeFrame frame = new PcodeFrame(code);
-		while (!frame.isFinished()) {
-			step(frame, useropNames, library);
+		PcodeFrame frame = begin(code, useropNames);
+		finish(frame, library);
+		return frame;
+	}
+
+	/**
+	 * Finish execution of a frame
+	 * 
+	 * <p>
+	 * TODO: This is not really sufficient for continuation after a break, esp. if that break occurs
+	 * within a nested call back into the executor. This would likely become common when using pCode
+	 * injection.
+	 * 
+	 * @param frame the incomplete frame
+	 * @param library the library of userops to use
+	 */
+	public void finish(PcodeFrame frame, SleighUseropLibrary<T> library) {
+		try {
+			while (!frame.isFinished()) {
+				step(frame, library);
+			}
+		}
+		catch (PcodeExecutionException e) {
+			if (e.frame == null) {
+				e.frame = frame;
+			}
+			throw e;
 		}
 	}
 
-	public void stepOp(PcodeOp op, PcodeFrame frame, Map<Integer, String> useropNames,
-			SleighUseropLibrary<T> library) {
+	public void stepOp(PcodeOp op, PcodeFrame frame, SleighUseropLibrary<T> library) {
 		OpBehavior b = OpBehaviorFactory.getOpBehavior(op.getOpcode());
 		if (b == null) {
 			throw new LowlevelError("Unsupported pcode op" + op);
@@ -113,7 +144,7 @@ public class PcodeExecutor<T> {
 				executeIndirectCall(op, frame);
 				return;
 			case PcodeOp.CALLOTHER:
-				executeCallother(op, useropNames, library);
+				executeCallother(op, frame, library);
 				return;
 			case PcodeOp.RETURN:
 				executeReturn(op, frame);
@@ -123,9 +154,17 @@ public class PcodeExecutor<T> {
 		}
 	}
 
-	public void step(PcodeFrame frame, Map<Integer, String> useropNames,
-			SleighUseropLibrary<T> library) {
-		stepOp(frame.nextOp(), frame, useropNames, library);
+	public void step(PcodeFrame frame, SleighUseropLibrary<T> library) {
+		try {
+			stepOp(frame.nextOp(), frame, library);
+		}
+		catch (PcodeExecutionException e) {
+			e.frame = frame;
+			throw e;
+		}
+		catch (Exception e) {
+			throw new PcodeExecutionException("Exception during pcode execution", frame, e);
+		}
 	}
 
 	protected int getIntConst(Varnode vn) {
@@ -151,7 +190,19 @@ public class PcodeExecutor<T> {
 		state.setVar(space, offset, valVar.getSize(), true, val);
 	}
 
-	protected void branchTo(T offset, PcodeFrame frame) {
+	/**
+	 * Called when execution branches to a target address
+	 * 
+	 * <p>
+	 * NOTE: This is <em>not</em> called for the fall-through case
+	 * 
+	 * @param target the target address
+	 */
+	protected void branchToAddress(Address target) {
+		// Extension point
+	}
+
+	protected void branchToOffset(T offset, PcodeFrame frame) {
 		state.setVar(pc.getAddressSpace(), pc.getOffset(), (pc.getBitLength() + 7) / 8, false,
 			offset);
 		frame.finishAsBranch();
@@ -163,7 +214,8 @@ public class PcodeExecutor<T> {
 			frame.branch((int) target.getOffset());
 		}
 		else {
-			branchTo(arithmetic.fromConst(target.getOffset(), pointerSize), frame);
+			branchToOffset(arithmetic.fromConst(target.getOffset(), pointerSize), frame);
+			branchToAddress(target);
 		}
 	}
 
@@ -177,22 +229,33 @@ public class PcodeExecutor<T> {
 
 	public void executeIndirectBranch(PcodeOp op, PcodeFrame frame) {
 		T offset = state.getVar(op.getInput(0));
-		branchTo(offset, frame);
+		branchToOffset(offset, frame);
+
+		long concrete = arithmetic.toConcrete(offset).longValue();
+		Address target = op.getSeqnum().getTarget().getNewAddress(concrete);
+		branchToAddress(target);
 	}
 
 	public void executeCall(PcodeOp op, PcodeFrame frame) {
 		Address target = op.getInput(0).getAddress();
-		branchTo(arithmetic.fromConst(target.getOffset(), pointerSize), frame);
+		branchToOffset(arithmetic.fromConst(target.getOffset(), pointerSize), frame);
+		branchToAddress(target);
 	}
 
 	public void executeIndirectCall(PcodeOp op, PcodeFrame frame) {
 		executeIndirectBranch(op, frame);
 	}
 
-	public void executeCallother(PcodeOp op, Map<Integer, String> useropNames,
-			SleighUseropLibrary<T> library) {
+	public String getUseropName(int opNo, PcodeFrame frame) {
+		if (opNo < language.getNumberOfUserDefinedOpNames()) {
+			return language.getUserDefinedOpName(opNo);
+		}
+		return frame.getUseropName(opNo);
+	}
+
+	public void executeCallother(PcodeOp op, PcodeFrame frame, SleighUseropLibrary<T> library) {
 		int opNo = getIntConst(op.getInput(0));
-		String opName = useropNames.get(opNo);
+		String opName = getUseropName(opNo, frame);
 		if (opName == null) {
 			throw new AssertionError(
 				"Pcode userop " + opNo + " is not defined");
@@ -200,7 +263,7 @@ public class PcodeExecutor<T> {
 		SleighUseropDefinition<T> opDef = library.getUserops().get(opName);
 		if (opDef == null) {
 			throw new SleighLinkException(
-				"Sleigh userop " + opName + " is not in the library " + library);
+				"Sleigh userop '" + opName + "' is not in the library " + library);
 		}
 		opDef.execute(state, op.getOutput(), List.of(op.getInputs()).subList(1, op.getNumInputs()));
 	}

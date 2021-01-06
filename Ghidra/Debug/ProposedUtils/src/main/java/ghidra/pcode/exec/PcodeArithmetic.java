@@ -31,5 +31,25 @@ public interface PcodeArithmetic<T> {
 
 	T fromConst(long value, int size);
 
+	T fromConst(BigInteger value, int size);
+
+	/**
+	 * Make concrete, if possible, the given abstract condition to a boolean value
+	 * 
+	 * @param cond the abstract condition
+	 * @return the boolean value
+	 */
 	boolean isTrue(T cond);
+
+	/**
+	 * Make concrete, if possible, the given abstract value
+	 * 
+	 * <p>
+	 * If the conversion is not possible, throw an exception. TODO: Decide on conventions of which
+	 * exception to throw and/or establish a hierarchy of checked exceptions.
+	 * 
+	 * @param value the abstract value
+	 * @return the concrete value
+	 */
+	BigInteger toConcrete(T value);
 }

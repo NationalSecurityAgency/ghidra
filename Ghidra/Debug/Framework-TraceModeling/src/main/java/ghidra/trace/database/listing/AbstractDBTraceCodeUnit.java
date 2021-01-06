@@ -25,6 +25,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 
@@ -40,6 +41,11 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			DBRecord record) {
 		super(tree, store, record);
 		this.space = space;
+	}
+
+	@Override
+	public TraceAddressSpace getTraceSpace() {
+		return space;
 	}
 
 	@Override
@@ -96,7 +102,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 				byteCache.limit(Math.min(byteCache.capacity(), end));
 				// TODO: Retrieve the memory space at code space construction time
 				DBTraceMemorySpace mem = space.trace.getMemoryManager().get(space, false);
-				mem.getBytes(getStartSnap(), address.add(byteCache.position()), byteCache);
+				mem.getViewBytes(getStartSnap(), address.add(byteCache.position()), byteCache);
 			}
 			// Copy from the cache
 			int toCopyFromCache =
@@ -110,7 +116,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			int startRemains = Math.max(addressOffset, byteCache.position());
 			DBTraceMemorySpace mem = space.trace.getMemoryManager().get(space, false);
 			return toCopyFromCache +
-				mem.getBytes(getStartSnap(), address.add(startRemains), buffer);
+				mem.getViewBytes(getStartSnap(), address.add(startRemains), buffer);
 		}
 	}
 }

@@ -115,7 +115,9 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 		if (found == null) {
 			return null;
 		}
-		if (found.getThread() != thread) {
+		if (found.getThread() != thread || found.getSnap() > snap) {
+			// Encoded <thread,snap> field results in unsigned index
+			// NB. Conventionally, a search should never traverse 0 (real to scratch space)
 			return null;
 		}
 		return found;

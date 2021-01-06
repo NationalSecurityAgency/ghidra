@@ -44,19 +44,17 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.IntersectionAddressSetView;
-import ghidra.util.UnionAddressSetView;
+import ghidra.trace.util.*;
+import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 @DebuggerBotInfo( //
-		description = "Disassemble memory at the program counter", //
-		details = "Listens for changes in memory or pc (stack or registers) and disassembles", //
-		help = @HelpInfo(anchor = "disassemble_at_pc"), //
-		enabledByDefault = true //
+	description = "Disassemble memory at the program counter", //
+	details = "Listens for changes in memory or pc (stack or registers) and disassembles", //
+	help = @HelpInfo(anchor = "disassemble_at_pc"), //
+	enabledByDefault = true //
 )
 public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 
@@ -64,11 +62,10 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 		private final TraceStackManager stackManager;
 		private final TraceMemoryManager memoryManager;
 		private final TraceCodeManager codeManager;
+		private final TraceTimeViewport viewport;
 
 		private final Register pc;
 		private final AddressRange pcRange;
-
-		private boolean usesStacks = false;
 
 		private final Set<DisassemblyInject> injects = new LinkedHashSet<>();
 		private final ChangeListener injectsChangeListener = e -> updateInjects();
@@ -83,6 +80,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			this.stackManager = trace.getStackManager();
 			this.memoryManager = trace.getMemoryManager();
 			this.codeManager = trace.getCodeManager();
+			this.viewport = trace.getProgramView().getViewport();
 
 			this.pc = trace.getBaseLanguage().getProgramCounter();
 			this.pcRange = TraceRegisterUtils.rangeForRegister(pc);
@@ -117,13 +115,18 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 		}
 
 		private void processQueue(Void __) {
-			List<Runnable> copy;
-			synchronized (runQueue) {
-				copy = List.copyOf(runQueue);
-				runQueue.clear();
+			try {
+				List<Runnable> copy;
+				synchronized (runQueue) {
+					copy = List.copyOf(runQueue);
+					runQueue.clear();
+				}
+				for (Runnable r : copy) {
+					r.run();
+				}
 			}
-			for (Runnable r : copy) {
-				r.run();
+			catch (Throwable e) {
+				Msg.error(this, "Error processing queue", e);
 			}
 		}
 
@@ -139,21 +142,41 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 
 		private void stackChanged(TraceStack stack) {
 			queueRunnable(() -> {
-				usesStacks = true;
 				disassembleStackPcVals(stack, stack.getSnap(), null);
 			});
 		}
 
+		private long findNonScratchSnap(long snap) {
+			if (snap >= 0) {
+				return snap;
+			}
+			TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
+			while (spit.hasNext()) {
+				Range<Long> span = spit.next();
+				if (span.upperEndpoint() >= 0) {
+					return span.upperEndpoint();
+				}
+			}
+			return snap;
+		}
+
 		private void memoryChanged(TraceAddressSnapRange range) {
+			if (!viewport.containsAnyUpper(range.getLifespan())) {
+				return;
+			}
+			// This is a wonky case, because we care about where the user is looking.
+			long pcSnap = trace.getProgramView().getSnap();
+			long memSnap = range.getY1();
 			queueRunnable(() -> {
-				long snap = range.getY1();
-				for (TraceThread thread : trace.getThreadManager().getLiveThreads(snap)) {
-					TraceStack stack = stackManager.getLatestStack(thread, snap);
+				for (TraceThread thread : trace.getThreadManager()
+						.getLiveThreads(findNonScratchSnap(pcSnap))) {
+					TraceStack stack = stackManager.getLatestStack(thread, pcSnap);
 					if (stack != null) {
-						usesStacks = true;
-						disassembleStackPcVals(stack, snap, range.getRange());
+						disassembleStackPcVals(stack, memSnap, range.getRange());
 					}
-					disassembleRegPcVal(thread, 0, snap);
+					else {
+						disassembleRegPcVal(thread, 0, pcSnap, memSnap);
+					}
 				}
 			});
 		}
@@ -166,11 +189,16 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				if (!range.getRange().intersects(pcRange)) {
 					return;
 				}
-				disassembleRegPcVal(space.getThread(), space.getFrameLevel(), range.getY1());
+				TraceThread thread = space.getThread();
+				long snap = range.getY1();
+				if (stackManager.getLatestStack(thread, snap) != null) {
+					return;
+				}
+				disassembleRegPcVal(thread, space.getFrameLevel(), snap, snap);
 			});
 		}
 
-		protected void disassembleStackPcVals(TraceStack stack, long snap, AddressRange range) {
+		protected void disassembleStackPcVals(TraceStack stack, long memSnap, AddressRange range) {
 			TraceStackFrame frame = stack.getFrame(0, false);
 			if (frame == null) {
 				return;
@@ -181,11 +209,12 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			}
 			if (range == null || range.contains(pcVal)) {
 				// NOTE: If non-0 frames are ever used, level should be passed in for injects
-				disassemble(pcVal, stack.getThread(), snap);
+				disassemble(pcVal, stack.getThread(), memSnap);
 			}
 		}
 
-		protected void disassembleRegPcVal(TraceThread thread, int frameLevel, long snap) {
+		protected void disassembleRegPcVal(TraceThread thread, int frameLevel, long pcSnap,
+				long memSnap) {
 			TraceData pcUnit = null;
 			try (UndoableTransaction tid =
 				UndoableTransaction.start(trace, "Disassemble: PC is code pointer", true)) {
@@ -193,74 +222,80 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 					codeManager.getCodeRegisterSpace(thread, frameLevel, true);
 				try {
 					pcUnit = regCode.definedData()
-							.create(Range.atLeast(snap), pc, PointerDataType.dataType);
+							.create(Range.atLeast(pcSnap), pc, PointerDataType.dataType);
 				}
 				catch (CodeUnitInsertionException e) {
 					// I guess something's already there. Leave it, then!
 					// Try to get it, in case it's already a pointer type
-					pcUnit = regCode.definedData().getForRegister(snap, pc);
+					pcUnit = regCode.definedData().getForRegister(pcSnap, pc);
 				}
 			}
-			if (!usesStacks && pcUnit != null) {
+			if (pcUnit != null) {
 				Address pcVal = (Address) TraceRegisterUtils.getValueHackPointer(pcUnit);
 				if (pcVal != null) {
-					disassemble(pcVal, thread, snap);
+					disassemble(pcVal, thread, memSnap);
 				}
 			}
 		}
 
-		protected boolean isKnownRWOrEverKnownRO(Address start, long snap) {
-			Entry<TraceAddressSnapRange, TraceMemoryState> ent =
-				memoryManager.getMostRecentStateEntry(snap, start);
-			if (ent == null || ent.getValue() != TraceMemoryState.KNOWN) {
+		protected Long isKnownRWOrEverKnownRO(Address start, long snap) {
+			Entry<Long, TraceMemoryState> kent = memoryManager.getViewState(snap, start);
+			if (kent != null && kent.getValue() == TraceMemoryState.KNOWN) {
+				return kent.getKey();
+			}
+			Entry<TraceAddressSnapRange, TraceMemoryState> mrent =
+				memoryManager.getViewMostRecentStateEntry(snap, start);
+			if (mrent == null || mrent.getValue() != TraceMemoryState.KNOWN) {
 				// It has never been known up to this snap
-				return false;
+				return null;
 			}
-			if (ent.getKey().getLifespan().contains(snap)) {
-				// It is known at this snap, so RO vs RW is irrelevant
-				return true;
-			}
-			TraceMemoryRegion region = memoryManager.getRegionContaining(snap, start);
-			if (region.isWrite()) {
+			TraceMemoryRegion region =
+				memoryManager.getRegionContaining(mrent.getKey().getY1(), start);
+			if (region == null || region.isWrite()) {
 				// It could have changed this snap, so unknown
-				return false;
+				return null;
 			}
-			return true;
+			return mrent.getKey().getY1();
 		}
 
 		protected void disassemble(Address start, TraceThread thread, long snap) {
-			if (!isKnownRWOrEverKnownRO(start, snap)) {
+			Long knownSnap = isKnownRWOrEverKnownRO(start, snap);
+			if (knownSnap == null) {
 				return;
 			}
-			if (codeManager.definedUnits().containsAddress(snap, start)) {
+			long ks = knownSnap;
+			if (codeManager.definedUnits().containsAddress(ks, start)) {
 				return;
 			}
 
 			/**
 			 * TODO: Is this composition of laziness upon laziness efficient enough?
 			 * 
+			 * <p>
 			 * Can experiment with ordering of address-set-view "expression" to optimize early
 			 * termination.
 			 * 
+			 * <p>
 			 * Want addresses satisfying {@code known | (readOnly & everKnown)}
 			 */
 			AddressSetView readOnly =
-				memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite());
-			AddressSetView everKnown = memoryManager.getAddressesWithState(Range.atMost(snap),
+				memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
+			AddressSetView everKnown = memoryManager.getAddressesWithState(Range.atMost(ks),
 				s -> s == TraceMemoryState.KNOWN);
 			AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
 			AddressSetView known =
-				memoryManager.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
-			AddressSetView disassemblable = new UnionAddressSetView(known, roEverKnown);
+				memoryManager.getAddressesWithState(ks, s -> s == TraceMemoryState.KNOWN);
+			AddressSetView disassemblable =
+				new AddressSet(new UnionAddressSetView(known, roEverKnown));
 
 			// TODO: Should I just keep a variable-snap view around?
-			TraceProgramView view = trace.getFixedProgramView(snap);
+			TraceProgramView view = trace.getFixedProgramView(ks);
 			DisassembleCommand dis =
 				new DisassembleCommand(start, disassemblable, true) {
 					@Override
 					public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 						synchronized (injects) {
-							if (codeManager.definedUnits().containsAddress(snap, start)) {
+							if (codeManager.definedUnits().containsAddress(ks, start)) {
 								return true;
 							}
 							for (DisassemblyInject i : injects) {

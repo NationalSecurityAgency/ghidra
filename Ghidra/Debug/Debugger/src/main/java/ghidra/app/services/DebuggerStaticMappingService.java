@@ -18,6 +18,8 @@ package ghidra.app.services;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.google.common.collect.Range;
 
 import ghidra.framework.model.DomainFile;
@@ -637,7 +639,8 @@ public interface DebuggerStaticMappingService {
 	 * @param snap the source snap
 	 * @return a map of destination programs to corresponding computed destination address sets
 	 */
-	Map<Program, AddressSetView> getOpenMappedViews(Trace trace, AddressSetView set, long snap);
+	Map<Program, Pair<Long, AddressSetView>> getOpenMappedViews(Trace trace,
+			AddressSetView set, long snap);
 
 	/**
 	 * Find/compute all source address sets given a destination program address set
@@ -646,7 +649,8 @@ public interface DebuggerStaticMappingService {
 	 * @param set the destination address set, from which we are mapping back
 	 * @return a map of source traces to corresponding computed source address sets
 	 */
-	Map<TraceSnap, AddressSetView> getOpenMappedViews(Program program, AddressSetView set);
+	Map<TraceSnap, Pair<Long, AddressSetView>> getOpenMappedViews(Program program,
+			AddressSetView set);
 
 	/**
 	 * Open all destination programs in mappings intersecting the given source trace, address set,

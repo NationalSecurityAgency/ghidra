@@ -27,6 +27,7 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.*;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -45,6 +46,19 @@ import ghidra.util.task.TaskMonitor;
  * states can be manipulated directly; however, this is recommended only to record read failures,
  * using the state {@link TraceMemoryState#ERROR}. A state of {@code null} is equivalent to
  * {@link TraceMemoryState#UNKNOWN} and indicates no observation has been made.
+ * 
+ * <p>
+ * Negative snaps may have different semantics than positive, since negative snaps are used as
+ * "scratch space". These snaps are not presumed to have any temporal relation to their neighbors,
+ * or any other snap for that matter. Clients may use the description field of the
+ * {@link TraceSnapshot} to indicate a relationship to another snap. Operations which seek the
+ * "most-recent" data might not retrieve anything from scratch snaps, and writing to a scratch snap
+ * might not cause any changes to others. Note the "integrity" of data where the memory state is not
+ * {@link TraceMemoryState#KNOWN} may be neglected to some extent. For example, writing bytes to
+ * snap -10 may cause bytes in snap -9 to change, where the effected range at snap -9 has state
+ * {@link TraceMemoryState#UNKNOWN}. The time semantics are not necessarily prohibited in scratch
+ * space, but implementations may choose cheaper semantics if desired. Clients should be wary not to
+ * accidentally rely on implied temporal relationships in scratch space.
  */
 public interface TraceMemoryOperations {
 	/**
@@ -220,6 +234,15 @@ public interface TraceMemoryOperations {
 	TraceMemoryState getState(long snap, Address address);
 
 	/**
+	 * Get the state of memory at a given snap and address, following schedule forks
+	 * 
+	 * @param snap the time
+	 * @param address the location
+	 * @return the state, and the snap where it was found
+	 */
+	Entry<Long, TraceMemoryState> getViewState(long snap, Address address);
+
+	/**
 	 * Get the entry recording the most recent state at the given snap and address
 	 * 
 	 * <p>
@@ -231,6 +254,17 @@ public interface TraceMemoryOperations {
 	 * @return the entry including the entire recorded range
 	 */
 	Entry<TraceAddressSnapRange, TraceMemoryState> getMostRecentStateEntry(long snap,
+			Address address);
+
+	/**
+	 * Get the entry recording the most recent state at the given snap and address, following
+	 * schedule forks
+	 * 
+	 * @param snap the time
+	 * @param address the location
+	 * @return the state
+	 */
+	Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			Address address);
 
 	/**
@@ -358,6 +392,22 @@ public interface TraceMemoryOperations {
 	 * @return the number of bytes read
 	 */
 	int getBytes(long snap, Address start, ByteBuffer buf);
+
+	/**
+	 * Read the most recent bytes from the given snap and address, following schedule forks
+	 * 
+	 * <p>
+	 * This behaves similarly to {@link #getBytes(long, Address, ByteBuffer)}, except it checks for
+	 * the {@link TraceMemoryState#KNOWN} state among each involved snap range and reads the
+	 * applicable address ranges, preferring the most recent. Where memory is never known the buffer
+	 * is left unmodified.
+	 * 
+	 * @param snap the time
+	 * @param start the location
+	 * @param buf the destination buffer of bytes
+	 * @return the number of bytes read
+	 */
+	int getViewBytes(long snap, Address start, ByteBuffer buf);
 
 	/**
 	 * Search the given address range at the given snap for a given byte pattern

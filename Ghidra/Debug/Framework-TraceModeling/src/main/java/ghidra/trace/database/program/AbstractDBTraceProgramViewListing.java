@@ -15,8 +15,12 @@
  */
 package ghidra.trace.database.program;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Range;
 
 import generic.NestedIterator;
@@ -32,17 +36,21 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
+import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemoryRegion;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbol;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.listing.TraceCodeOperations;
-import ghidra.trace.model.listing.TraceData;
+import ghidra.trace.database.thread.DBTraceThread;
+import ghidra.trace.model.*;
+import ghidra.trace.model.listing.*;
 import ghidra.trace.model.map.TracePropertyMap;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
-import ghidra.util.IntersectionAddressSetView;
-import ghidra.util.LockHold;
+import ghidra.trace.util.*;
+import ghidra.util.*;
+import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -50,72 +58,19 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public static final String[] EMPTY_STRING_ARRAY = new String[] {};
 	public static final String TREE_NAME = "Trace Tree";
 
-	protected static class WrappingCodeUnitIterator implements CodeUnitIterator {
-		protected final Iterator<? extends CodeUnit> it;
-
-		public WrappingCodeUnitIterator(Iterator<? extends CodeUnit> it) {
-			this.it = it;
+	protected class DBTraceProgramViewUndefinedData extends UndefinedDBTraceData {
+		public DBTraceProgramViewUndefinedData(DBTrace trace, long snap, Address address,
+				DBTraceThread thread, int frameLevel) {
+			super(trace, snap, address, thread, frameLevel);
 		}
 
 		@Override
-		public Iterator<CodeUnit> iterator() {
-			return this;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public CodeUnit next() {
-			return it.next();
-		}
-	}
-
-	protected static class WrappingInstructionIterator implements InstructionIterator {
-		protected final Iterator<? extends Instruction> it;
-
-		public WrappingInstructionIterator(Iterator<? extends Instruction> it) {
-			this.it = it;
-		}
-
-		@Override
-		public Iterator<Instruction> iterator() {
-			return this;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public Instruction next() {
-			return it.next();
-		}
-	}
-
-	protected static class WrappingDataIterator implements DataIterator {
-		protected final Iterator<? extends Data> it;
-
-		public WrappingDataIterator(Iterator<? extends Data> it) {
-			this.it = it;
-		}
-
-		@Override
-		public Iterator<Data> iterator() {
-			return this;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public Data next() {
-			return it.next();
+		public int getBytes(ByteBuffer buffer, int addressOffset) {
+			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
+			if (mem == null) {
+				// TODO: 0-fill instead? Will need to check memory space bounds.
+			}
+			return mem.getViewBytes(program.snap, address.add(addressOffset), buffer);
 		}
 	}
 
@@ -126,12 +81,25 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	protected final Map<DBTraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
 		new HashMap<>();
 
+	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
+		CacheBuilder.newBuilder()
+				.removalListener(
+					this::undefinedRemovedFromCache)
+				.weakValues()
+				.build()
+				.asMap();
+
 	public AbstractDBTraceProgramViewListing(DBTraceProgramView program,
 			TraceCodeOperations codeOperations) {
 		this.program = program;
 		this.codeOperations = codeOperations;
 
 		this.rootModule = new DBTraceProgramViewRootModule(this);
+	}
+
+	private void undefinedRemovedFromCache(
+			RemovalNotification<AddressSnap, UndefinedDBTraceData> rn) {
+		// Do nothing
 	}
 
 	@Override
@@ -149,32 +117,241 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		return program.snap;
 	}
 
+	protected <T extends TraceCodeUnit> T getTopCode(
+			java.util.function.Function<Long, T> codeFunc) {
+		return program.viewport.getTop(s -> {
+			T cu = codeFunc.apply(s);
+			if (cu != null && program.isCodeVisible(cu, cu.getLifespan())) {
+				return cu;
+			}
+			return null;
+		});
+	}
+
+	protected TraceCodeUnit orUndef(TraceCodeUnit cu, Address address) {
+		if (cu != null) {
+			return cu;
+		}
+		return doCreateUndefinedUnit(address);
+	}
+
+	protected TraceData orUndefData(TraceData data, Address address) {
+		return (TraceData) orUndef(data, address);
+	}
+
+	protected TraceData reqUndef(TraceCodeUnit cu, Address address) {
+		if (cu != null) {
+			return null;
+		}
+		return doCreateUndefinedUnit(address);
+	}
+
+	protected <T> T next(Iterator<T> it) {
+		if (it.hasNext()) {
+			return it.next();
+		}
+		return null;
+	}
+
+	protected Comparator<CodeUnit> getUnitComparator(boolean forward) {
+		return forward
+				? (u1, u2) -> u1.getMinAddress().compareTo(u2.getMinAddress())
+				: (u1, u2) -> -u1.getMinAddress().compareTo(u2.getMinAddress());
+	}
+
+	protected <T extends TraceCodeUnit> Iterator<T> getTopCodeIterator(
+			java.util.function.Function<Long, Iterator<T>> iterFunc, boolean forward) {
+		return Iterators.filter(
+			program.viewport.mergedIterator(iterFunc, getUnitComparator(forward)),
+			cu -> program.isCodeVisible(cu, cu.getLifespan()));
+	}
+
+	protected AddressSet getAddressSet(Address start, boolean forward) {
+		AddressFactory factory = program.getAddressFactory();
+		AddressSet all = program.allAddresses;
+		return forward
+				? factory.getAddressSet(start, all.getMaxAddress())
+				: factory.getAddressSet(all.getMinAddress(), start);
+	}
+
+	protected UndefinedDBTraceData doCreateUndefinedUnit(Address address) {
+		return undefinedCache.computeIfAbsent(new DefaultAddressSnap(address, program.snap),
+			ot -> new DBTraceProgramViewUndefinedData(program.trace, program.snap, address, null,
+				0));
+	}
+
+	protected Iterator<? extends TraceInstruction> getInstructionIterator(Address start,
+			boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.instructions().get(s, start, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceInstruction> getInstructionIterator(AddressSetView set,
+			boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.instructions().get(s, set, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceInstruction> getInstructionIterator(boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.instructions().get(s, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceData> getDefinedDataIterator(Address start, boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.definedData().get(s, start, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceData> getDefinedDataIterator(AddressSetView set,
+			boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.definedData().get(s, set, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceData> getDefinedDataIterator(boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.definedData().get(s, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceCodeUnit> getDefinedUnitIterator(Address start,
+			boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.definedUnits().get(s, start, forward).iterator(), forward);
+	}
+
+	protected Iterator<? extends TraceCodeUnit> getDefinedUnitIterator(AddressSetView set,
+			boolean forward) {
+		return getTopCodeIterator(
+			s -> codeOperations.definedUnits().get(s, set, forward).iterator(), forward);
+	}
+
+	protected Iterator<TraceData> getUndefinedDataIterator(Address start, boolean forward) {
+		AddressSet set = getAddressSet(start, forward);
+		Address defStart = start;
+		if (forward) {
+			CodeUnit defUnit =
+				getTopCode(s -> codeOperations.definedUnits().getContaining(s, start));
+			if (defUnit != null) {
+				defStart = defUnit.getMinAddress();
+			}
+		}
+		Iterator<AddressRange> defIter = Iterators.transform(
+			getDefinedUnitIterator(defStart, forward), u -> u.getRange());
+		AddressRangeIterator undefIter =
+			AddressRangeIterators.subtract(set.iterator(forward), defIter, start, forward);
+		AddressIteratorAdapter undefAddrIter = new AddressIteratorAdapter(undefIter, forward);
+		return Iterators.transform(undefAddrIter.iterator(), a -> doCreateUndefinedUnit(a));
+	}
+
+	protected AddressRangeIterator getUndefinedRangeIterator(AddressSetView set, boolean forward) {
+		Iterator<AddressRange> defIter = Iterators.transform(
+			getDefinedUnitIterator(set, forward), u -> u.getRange());
+		return AddressRangeIterators.subtract(set.iterator(forward), defIter,
+			forward ? set.getMinAddress() : set.getMaxAddress(), forward);
+	}
+
+	protected boolean isUndefinedRange(long snap, AddressRange range) {
+		if (codeOperations.undefinedData().coversRange(Range.singleton(snap), range)) {
+			return true;
+		}
+		TraceCodeUnit minUnit =
+			codeOperations.definedUnits().getContaining(snap, range.getMinAddress());
+		if (minUnit != null && program.isCodeVisible(minUnit, minUnit.getLifespan())) {
+			return false;
+		}
+		TraceCodeUnit maxUnit =
+			codeOperations.definedUnits().getContaining(snap, range.getMaxAddress());
+		if (maxUnit != null && program.isCodeVisible(maxUnit, maxUnit.getLifespan())) {
+			return false;
+		}
+		return true;
+	}
+
+	protected Iterator<TraceData> getUndefinedDataIterator(AddressSetView set, boolean forward) {
+		AddressRangeIterator undefIter = getUndefinedRangeIterator(set, forward);
+		AddressIteratorAdapter undefAddrIter = new AddressIteratorAdapter(undefIter, forward);
+		return Iterators.transform(undefAddrIter.iterator(), a -> doCreateUndefinedUnit(a));
+	}
+
+	protected Iterator<TraceCodeUnit> getCodeUnitIterator(AddressSetView set, boolean forward) {
+		return new MergeSortingIterator<>(List.of(
+			getDefinedUnitIterator(set, forward),
+			getUndefinedDataIterator(set, forward)),
+			getUnitComparator(forward));
+	}
+
+	protected Iterator<TraceCodeUnit> getCodeUnitIterator(Address start, boolean forward) {
+		return new MergeSortingIterator<>(List.of(
+			getDefinedUnitIterator(start, forward),
+			getUndefinedDataIterator(start, forward)),
+			getUnitComparator(forward));
+	}
+
+	protected Iterator<TraceCodeUnit> getCodeUnitIterator(boolean forward) {
+		AddressSetView set = program.allAddresses;
+		return getCodeUnitIterator(forward ? set.getMinAddress() : set.getMaxAddress(), forward);
+	}
+
+	protected Iterator<TraceData> getDataIterator(AddressSetView set, boolean forward) {
+		return new MergeSortingIterator<>(List.of(
+			getDefinedDataIterator(set, forward),
+			getUndefinedDataIterator(set, forward)),
+			getUnitComparator(forward));
+	}
+
+	protected Iterator<TraceData> getDataIterator(Address start, boolean forward) {
+		return new MergeSortingIterator<>(List.of(
+			getDefinedDataIterator(start, forward),
+			getUndefinedDataIterator(start, forward)),
+			getUnitComparator(forward));
+	}
+
+	protected Iterator<TraceData> getDataIterator(boolean forward) {
+		AddressSetView set = program.allAddresses;
+		return getDataIterator(forward ? set.getMinAddress() : set.getMaxAddress(), forward);
+	}
+
 	@Override
 	public CodeUnit getCodeUnitAt(Address addr) {
-		return codeOperations.codeUnits().getAt(program.snap, addr);
+		CodeUnit containing = getCodeUnitContaining(addr);
+		if (containing == null) {
+			return doCreateUndefinedUnit(addr);
+		}
+		if (!containing.getMinAddress().equals(addr)) {
+			return null;
+		}
+		return containing;
 	}
 
 	@Override
 	public CodeUnit getCodeUnitContaining(Address addr) {
-		return codeOperations.codeUnits().getContaining(program.snap, addr);
+		try (LockHold hold = program.trace.lockRead()) {
+			return orUndef(getTopCode(s -> codeOperations.definedUnits().getContaining(s, addr)),
+				addr);
+		}
 	}
 
 	@Override
 	public CodeUnit getCodeUnitAfter(Address addr) {
-		return codeOperations.codeUnits().getAfter(program.snap, addr);
+		addr = addr.next();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getCodeUnitIterator(addr, true));
+		}
 	}
 
 	@Override
 	public CodeUnit getCodeUnitBefore(Address addr) {
-		return codeOperations.codeUnits().getBefore(program.snap, addr);
+		addr = addr.previous();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getCodeUnitIterator(addr, false));
+		}
 	}
 
 	@Override
 	public CodeUnitIterator getCodeUnitIterator(String property, boolean forward) {
 		// HACK
 		if (CodeUnit.INSTRUCTION_PROPERTY.equals(property)) {
-			return new WrappingCodeUnitIterator(
-				codeOperations.instructions().get(program.snap, forward).iterator());
+			return new WrappingCodeUnitIterator(getInstructionIterator(forward));
 		}
 		// TODO: Other "special" property types
 
@@ -184,28 +361,19 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
+		// TODO: The property map doesn't heed forking.
 		return new WrappingCodeUnitIterator(NestedIterator.start(
 			map.getAddressSetView(Range.singleton(program.snap)).iterator(forward),
-			rng -> program.trace.getCodeManager()
-					.codeUnits()
-					.get(program.snap, rng, forward)
-					.iterator()));
-	}
-
-	protected static AddressRange fixRange(AddressRange range, Address start, boolean forward) {
-		if (!range.contains(start)) {
-			return range;
-		}
-		return forward ? new AddressRangeImpl(start, range.getMaxAddress())
-				: new AddressRangeImpl(range.getMinAddress(), start);
+			rng -> getTopCodeIterator(
+				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
+				forward)));
 	}
 
 	@Override
 	public CodeUnitIterator getCodeUnitIterator(String property, Address addr, boolean forward) {
 		// HACK
 		if (CodeUnit.INSTRUCTION_PROPERTY.equals(property)) {
-			return new WrappingCodeUnitIterator(
-				codeOperations.instructions().get(program.snap, addr, forward).iterator());
+			return new WrappingCodeUnitIterator(getInstructionIterator(addr, forward));
 		}
 		// TODO: Other "special" property types
 
@@ -215,12 +383,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
+		// TODO: The property map doesn't heed forking.
 		return new WrappingCodeUnitIterator(NestedIterator.start(
 			map.getAddressSetView(Range.singleton(program.snap)).iterator(addr, forward),
-			rng -> program.trace.getCodeManager()
-					.codeUnits()
-					.get(program.snap, fixRange(rng, addr, forward), forward)
-					.iterator()));
+			rng -> getTopCodeIterator(
+				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
+				forward)));
 	}
 
 	@Override
@@ -228,8 +396,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			boolean forward) {
 		// HACK
 		if (CodeUnit.INSTRUCTION_PROPERTY.equals(property)) {
-			return new WrappingCodeUnitIterator(
-				codeOperations.instructions().get(program.snap, addrSet, forward).iterator());
+			return new WrappingCodeUnitIterator(getInstructionIterator(addrSet, forward));
 		}
 		// TODO: Other "special" property types
 
@@ -239,13 +406,13 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
+		// TODO: The property map doesn't heed forking.
 		return new WrappingCodeUnitIterator(NestedIterator.start(
 			new IntersectionAddressSetView(map.getAddressSetView(Range.singleton(program.snap)),
 				addrSet).iterator(forward),
-			rng -> program.trace.getCodeManager()
-					.codeUnits()
-					.get(program.snap, rng, forward)
-					.iterator()));
+			rng -> getTopCodeIterator(
+				s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
+				forward)));
 	}
 
 	@Override
@@ -269,7 +436,10 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public String getComment(int commentType, Address address) {
-		return program.trace.getCommentAdapter().getComment(program.snap, address, commentType);
+		try (LockHold hold = program.trace.lockRead()) {
+			return program.viewport.getTop(
+				s -> program.trace.getCommentAdapter().getComment(s, address, commentType));
+		}
 	}
 
 	@Override
@@ -281,190 +451,227 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public CodeUnitIterator getCodeUnits(boolean forward) {
-		return new WrappingCodeUnitIterator(
-			codeOperations.codeUnits().get(program.snap, forward).iterator());
+		return new WrappingCodeUnitIterator(getCodeUnitIterator(forward));
 	}
 
 	@Override
 	public CodeUnitIterator getCodeUnits(Address start, boolean forward) {
-		return new WrappingCodeUnitIterator(
-			codeOperations.codeUnits().get(program.snap, start, forward).iterator());
+		return new WrappingCodeUnitIterator(getCodeUnitIterator(start, forward));
 	}
 
 	@Override
 	public CodeUnitIterator getCodeUnits(AddressSetView addressSet, boolean forward) {
-		return new WrappingCodeUnitIterator(
-			codeOperations.codeUnits().get(program.snap, addressSet, forward).iterator());
+		return new WrappingCodeUnitIterator(getCodeUnitIterator(addressSet, forward));
 	}
 
 	@Override
 	public Instruction getInstructionAt(Address addr) {
-		return codeOperations.instructions().getAt(program.snap, addr);
+		try (LockHold hold = program.trace.lockRead()) {
+			return getTopCode(s -> codeOperations.instructions().getAt(s, addr));
+		}
 	}
 
 	@Override
 	public Instruction getInstructionContaining(Address addr) {
-		return codeOperations.instructions().getContaining(program.snap, addr);
+		try (LockHold hold = program.trace.lockRead()) {
+			return getTopCode(s -> codeOperations.instructions().getContaining(s, addr));
+		}
 	}
 
 	@Override
 	public Instruction getInstructionAfter(Address addr) {
-		return codeOperations.instructions().getAfter(program.snap, addr);
+		addr = addr.next();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getInstructionIterator(addr, true));
+		}
 	}
 
 	@Override
 	public Instruction getInstructionBefore(Address addr) {
-		return codeOperations.instructions().getBefore(program.snap, addr);
+		addr = addr.previous();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getInstructionIterator(addr, false));
+		}
 	}
 
 	@Override
 	public InstructionIterator getInstructions(boolean forward) {
-		return new WrappingInstructionIterator(
-			codeOperations.instructions().get(program.snap, forward).iterator());
+		return new WrappingInstructionIterator(getInstructionIterator(forward));
 	}
 
 	@Override
 	public InstructionIterator getInstructions(Address start, boolean forward) {
-		return new WrappingInstructionIterator(
-			codeOperations.instructions().get(program.snap, start, forward).iterator());
+		return new WrappingInstructionIterator(getInstructionIterator(start, forward));
 	}
 
 	@Override
 	public InstructionIterator getInstructions(AddressSetView addressSet, boolean forward) {
-		return new WrappingInstructionIterator(
-			codeOperations.instructions().get(program.snap, addressSet, forward).iterator());
+		return new WrappingInstructionIterator(getInstructionIterator(addressSet, forward));
 	}
 
 	@Override
 	public Data getDataAt(Address addr) {
-		return codeOperations.data().getAt(program.snap, addr);
+		CodeUnit containing = getCodeUnitContaining(addr);
+		if (containing == null) {
+			return doCreateUndefinedUnit(addr);
+		}
+		if (!(containing instanceof Data)) {
+			return null;
+		}
+		if (!containing.getMinAddress().equals(addr)) {
+			return null;
+		}
+		return (Data) containing;
 	}
 
 	@Override
 	public Data getDataContaining(Address addr) {
-		return codeOperations.data().getContaining(program.snap, addr);
+		CodeUnit cu = getCodeUnitContaining(addr);
+		if (cu instanceof Data) {
+			return (Data) cu;
+		}
+		return null;
 	}
 
 	@Override
 	public Data getDataAfter(Address addr) {
-		return codeOperations.data().getAfter(program.snap, addr);
+		addr = addr.next();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getDataIterator(addr, true));
+		}
 	}
 
 	@Override
 	public Data getDataBefore(Address addr) {
-		return codeOperations.data().getBefore(program.snap, addr);
+		addr = addr.previous();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getDataIterator(addr, false));
+		}
 	}
 
 	@Override
 	public DataIterator getData(boolean forward) {
-		return new WrappingDataIterator(
-			codeOperations.data().get(program.snap, forward).iterator());
+		return new WrappingDataIterator(getDataIterator(forward));
 	}
 
 	@Override
 	public DataIterator getData(Address start, boolean forward) {
-		return new WrappingDataIterator(
-			codeOperations.data().get(program.snap, start, forward).iterator());
+		return new WrappingDataIterator(getDataIterator(start, forward));
 	}
 
 	@Override
 	public DataIterator getData(AddressSetView addressSet, boolean forward) {
-		return new WrappingDataIterator(
-			codeOperations.data().get(program.snap, addressSet, forward).iterator());
+		return new WrappingDataIterator(getDataIterator(addressSet, forward));
 	}
 
 	@Override
 	public Data getDefinedDataAt(Address addr) {
-		return codeOperations.definedData().getAt(program.snap, addr);
+		try (LockHold hold = program.trace.lockRead()) {
+			return getTopCode(s -> codeOperations.definedData().getAt(s, addr));
+		}
 	}
 
 	@Override
 	public Data getDefinedDataContaining(Address addr) {
-		return codeOperations.definedData().getContaining(program.snap, addr);
+		try (LockHold hold = program.trace.lockRead()) {
+			return getTopCode(s -> codeOperations.definedData().getContaining(s, addr));
+		}
 	}
 
 	@Override
 	public Data getDefinedDataAfter(Address addr) {
-		return codeOperations.definedData().getAfter(program.snap, addr);
+		addr = addr.next();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getDefinedDataIterator(addr, true));
+		}
 	}
 
 	@Override
 	public Data getDefinedDataBefore(Address addr) {
-		return codeOperations.definedData().getBefore(program.snap, addr);
+		addr = addr.previous();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getDefinedDataIterator(addr, false));
+		}
 	}
 
 	@Override
 	public DataIterator getDefinedData(boolean forward) {
-		return new WrappingDataIterator(
-			codeOperations.definedData().get(program.snap, forward).iterator());
+		return new WrappingDataIterator(getDefinedDataIterator(forward));
 	}
 
 	@Override
 	public DataIterator getDefinedData(Address start, boolean forward) {
-		return new WrappingDataIterator(
-			codeOperations.definedData().get(program.snap, start, forward).iterator());
+		return new WrappingDataIterator(getDefinedDataIterator(start, forward));
 	}
 
 	@Override
 	public DataIterator getDefinedData(AddressSetView addressSet, boolean forward) {
-		return new WrappingDataIterator(
-			codeOperations.definedData().get(program.snap, addressSet, forward).iterator());
+		return new WrappingDataIterator(getDefinedDataIterator(addressSet, forward));
 	}
 
 	@Override
 	public Data getUndefinedDataAt(Address addr) {
-		return codeOperations.undefinedData().getAt(program.snap, addr);
+		try (LockHold hold = program.trace.lockRead()) {
+			return reqUndef(getTopCode(s -> codeOperations.definedUnits().getContaining(s, addr)),
+				addr);
+		}
 	}
 
 	@Override
 	public Data getUndefinedDataAfter(Address addr, TaskMonitor monitor) {
-		return codeOperations.undefinedData().getAfter(program.snap, addr);
+		addr = addr.next();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getUndefinedDataIterator(addr, true));
+		}
 	}
 
 	@Override
 	public Data getUndefinedDataBefore(Address addr, TaskMonitor monitor) {
-		return codeOperations.undefinedData().getBefore(program.snap, addr);
+		addr = addr.previous();
+		try (LockHold hold = program.trace.lockRead()) {
+			return addr == null ? null : next(getUndefinedDataIterator(addr, false));
+		}
 	}
 
 	@Override
 	public Data getFirstUndefinedData(AddressSetView addressSet, TaskMonitor monitor) {
 		try (LockHold hold = program.trace.lockRead()) {
-			for (TraceData u : codeOperations.undefinedData().get(program.snap, addressSet, true)) {
-				return u;
-			}
-			return null;
+			return next(getUndefinedDataIterator(addressSet, true));
 		}
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @implNote This could technically use a (lazy) view; however, to be consistent with
-	 *           expectations established by {@link ProgramDB}, it constructs the actual set, and
-	 *           permits cancellation by the monitor.
+	 * @implNote This could maybe use a (lazy) view; however, to be consistent with expectations
+	 *           established by {@link ProgramDB}, it constructs the actual set, and permits
+	 *           cancellation by the monitor.
 	 */
 	@Override
 	public AddressSet getUndefinedRanges(AddressSetView set, boolean initializedMemoryOnly,
 			TaskMonitor monitor) throws CancelledException {
 		AddressSet result = new AddressSet();
-		for (AddressRange range : set) {
-			for (AddressRange und : codeOperations.undefinedData()
-					.getAddressSetView(program.snap, range)) {
-				monitor.checkCanceled();
-				result.add(und.intersect(range));
-			}
+		for (AddressRange range : getUndefinedRangeIterator(set, true)) {
+			result.add(range);
+			monitor.checkCanceled();
 		}
 		return result;
 	}
 
 	@Override
 	public CodeUnit getDefinedCodeUnitAfter(Address addr) {
-		return codeOperations.definedUnits().getAfter(program.snap, addr);
+		addr = addr.next();
+		try (LockHold hold = program.trace.lockRead()) {
+			return next(getDefinedUnitIterator(addr, true));
+		}
 	}
 
 	@Override
 	public CodeUnit getDefinedCodeUnitBefore(Address addr) {
-		return codeOperations.definedUnits().getBefore(program.snap, addr);
+		addr = addr.previous();
+		try (LockHold hold = program.trace.lockRead()) {
+			return next(getDefinedUnitIterator(addr, false));
+		}
 	}
 
 	@Override
@@ -561,8 +768,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, Address addr) {
-		DBTraceMemoryRegion region =
-			program.trace.getMemoryManager().getRegionContaining(program.snap, addr);
+		DBTraceMemoryRegion region = program.memory.getTopRegion(
+			s -> program.trace.getMemoryManager().getRegionContaining(s, addr));
 		if (region == null) {
 			return null;
 		}
@@ -580,8 +787,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		DBTraceMemoryRegion region =
-			program.trace.getMemoryManager().getLiveRegionByPath(program.snap, name);
+		DBTraceMemoryRegion region = program.memory.getTopRegion(
+			s -> program.trace.getMemoryManager().getLiveRegionByPath(s, name));
 		if (region == null) {
 			return null;
 		}
@@ -648,8 +855,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public long getNumInstructions() {
-		// TODO: See getNumCodeUnits
-		return Long.MAX_VALUE;
+		// TODO: See getNumCodeUnits... Why was this Long.MAX_VALUE before?
+		return codeOperations.instructions().size();
 	}
 
 	@Override

@@ -19,15 +19,21 @@ import java.nio.ByteBuffer;
 
 import com.google.common.collect.Range;
 
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.util.TypeMismatchException;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.Saveable;
 
+/**
+ * A code unit in a {@link Trace}
+ */
 public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Get the trace in which this code unit exists
@@ -39,9 +45,12 @@ public interface TraceCodeUnit extends CodeUnit {
 	@Override
 	TraceProgramView getProgram();
 
+	TraceAddressSpace getTraceSpace();
+
 	/**
 	 * Get the thread associated with this code unit
 	 * 
+	 * <p>
 	 * A thread is associated with a code unit if it exists in a register space
 	 * 
 	 * @return the thread
@@ -51,12 +60,27 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Get the language of this code unit
 	 * 
+	 * <p>
 	 * Currently, for data units, this is always the base or "host" language of the trace. For
 	 * instructions, this may be a guest language.
 	 * 
 	 * @return the language
 	 */
 	Language getLanguage();
+
+	/**
+	 * Get the bounds of this unit in space and time
+	 * 
+	 * @return the bounds
+	 */
+	TraceAddressSnapRange getBounds();
+
+	/**
+	 * Get the address range covered by this unit
+	 * 
+	 * @return the range
+	 */
+	AddressRange getRange();
 
 	/**
 	 * Get the lifespan of this code unit
@@ -95,6 +119,7 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Read bytes starting at this unit's address plus the given offset into the given buffer
 	 * 
+	 * <p>
 	 * This method honors the markers (position and limit) of the destination buffer. Use those
 	 * markers to control the destination offset and maximum length.
 	 * 
@@ -107,15 +132,19 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Set a property of the given type to the given value
 	 * 
+	 * <p>
 	 * This method is preferred to {@link #setTypedProperty(String, Object)}, because in the case
 	 * the property map does not already exist, the desired type is given explicitly.
 	 * 
-	 * While it is best practice to match -valueClass- exactly with the type of the map, this method
-	 * will work so long as the given -valueClass- is a subtype of the map's type. If the property
-	 * map does not already exist, it is created with the given -valueClass-. Note that there is no
-	 * established mechanism for restoring values of a subtype from the underlying database.
+	 * <p>
+	 * While it is best practice to match {@code valueClass} exactly with the type of the map, this
+	 * method will work so long as the given {@code valueClass} is a subtype of the map's type. If
+	 * the property map does not already exist, it is created with the given {@code valueClass}.
+	 * Note that there is no established mechanism for restoring values of a subtype from the
+	 * underlying database.
 	 * 
-	 * Currently, the only supported types are {@link Integer},{@link String}, {@link Void}, and
+	 * <p>
+	 * Currently, the only supported types are {@link Integer}, {@link String}, {@link Void}, and
 	 * subtypes of {@link Saveable}.
 	 * 
 	 * @param name the name of the property
@@ -127,10 +156,12 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Set a property having the same type as the given value
 	 * 
+	 * <p>
 	 * If the named property has a super-type of the value's type, the value is accepted. If not, a
 	 * {@link TypeMismatchException} is thrown. If the property map does not already exist, it is
 	 * created having <em>exactly</em> the type of the given value.
 	 * 
+	 * <p>
 	 * This method exists for two reasons: 1) To introduce the type variable U, which is more
 	 * existential, and 2) to remove the requirement to subtype {@link Saveable}. Otherwise, this
 	 * method is identical in operation to {@link #setProperty(String, Saveable)}.
@@ -143,11 +174,13 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Get a property having the given type
 	 * 
-	 * If the named property has a sub-type of the given -valueClass-, the value (possibly
+	 * <p>
+	 * If the named property has a sub-type of the given {@code valueClass}, the value (possibly
 	 * {@code null}) is returned. If the property does not exist, {@code null} is returned.
 	 * Otherwise {@link TypeMismatchException} is thrown, even if the property is not set at this
 	 * unit's address.
 	 * 
+	 * <p>
 	 * Note that getting a {@link Void} property will always return {@code null}. Use
 	 * {@link #getVoidProperty(String)} instead to detect if the property is set.
 	 * {@link #hasProperty(String)} will also work, but it does not verify that the property's type

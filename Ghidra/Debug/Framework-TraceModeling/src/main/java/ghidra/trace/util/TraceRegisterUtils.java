@@ -17,6 +17,7 @@ package ghidra.trace.util;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -159,5 +160,23 @@ public enum TraceRegisterUtils {
 			}
 		}
 		return regs.getValue(snap, reg.getBaseRegister()).combineValues(rv);
+	}
+
+	public static RegisterValue getRegisterValue(Register register,
+			BiConsumer<Address, ByteBuffer> readAction) {
+		int byteLength = TraceRegisterUtils.byteLengthOf(register);
+		byte[] mask = register.getBaseMask();
+		ByteBuffer buf = ByteBuffer.allocate(mask.length * 2);
+		buf.put(mask);
+		int maskOffset = TraceRegisterUtils.computeMaskOffset(mask);
+		int startVal = buf.position() + maskOffset;
+		buf.position(startVal);
+		buf.limit(buf.position() + byteLength);
+		readAction.accept(register.getAddress(), buf);
+		byte[] arr = buf.array();
+		if (!register.isBigEndian()) {
+			ArrayUtils.reverse(arr, startVal, startVal + byteLength);
+		}
+		return new RegisterValue(register, arr);
 	}
 }

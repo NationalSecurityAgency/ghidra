@@ -15,13 +15,21 @@
  */
 package ghidra.trace.database.listing;
 
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.util.TraceAddressSpace;
 
 public class DBTraceDataArrayElementComponent extends AbstractDBTraceDataComponent {
 	public DBTraceDataArrayElementComponent(DBTraceData root, DBTraceDefinedDataAdapter parent,
 			int index, Address address, DataType dataType, int length) {
 		super(root, parent, index, address, dataType, length);
+	}
+
+	@Override
+	public TraceAddressSpace getTraceSpace() {
+		return parent.getTraceSpace();
 	}
 
 	@Override
@@ -32,5 +40,17 @@ public class DBTraceDataArrayElementComponent extends AbstractDBTraceDataCompone
 	@Override
 	public String getFieldSyntax() {
 		return getFieldName();
+	}
+
+	@Override
+	public AddressRange getRange() {
+		// TODO: Cache this?
+		return new AddressRangeImpl(getMinAddress(), getMaxAddress());
+	}
+
+	@Override
+	public TraceAddressSnapRange getBounds() {
+		// TODO: Cache this?
+		return new ImmutableTraceAddressSnapRange(getMinAddress(), getMaxAddress(), getLifespan());
 	}
 }

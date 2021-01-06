@@ -23,11 +23,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.DefaultTraceTimeViewport;
 
 public class TraceBytesPcodeExecutorState
 		extends AbstractLongOffsetPcodeExecutorState<byte[], TraceMemorySpace> {
@@ -38,12 +41,17 @@ public class TraceBytesPcodeExecutorState
 	private TraceThread thread;
 	private int frame;
 
+	private final DefaultTraceTimeViewport viewport;
+
 	public TraceBytesPcodeExecutorState(Trace trace, long snap, TraceThread thread, int frame) {
 		super(trace.getBaseLanguage(), BytesPcodeArithmetic.forLanguage(trace.getBaseLanguage()));
 		this.trace = trace;
 		this.snap = snap;
 		this.thread = thread;
 		this.frame = frame;
+
+		this.viewport = new DefaultTraceTimeViewport(trace);
+		this.viewport.setSnap(snap);
 	}
 
 	public PcodeExecutorState<Pair<byte[], TraceMemoryState>> withMemoryState() {
@@ -81,6 +89,7 @@ public class TraceBytesPcodeExecutorState
 
 	public void setSnap(long snap) {
 		this.snap = snap;
+		this.viewport.setSnap(snap);
 	}
 
 	public long getSnap() {
@@ -147,10 +156,15 @@ public class TraceBytesPcodeExecutorState
 	@Override
 	protected byte[] getFromSpace(TraceMemorySpace space, long offset, int size) {
 		ByteBuffer buf = ByteBuffer.allocate(size);
-		int read = space.getBytes(snap, space.getAddressSpace().getAddress(offset), buf);
+		int read = space.getViewBytes(snap, space.getAddressSpace().getAddress(offset), buf);
 		if (read != size) {
 			throw new RuntimeException("Could not read full value from trace");
 		}
 		return buf.array();
+	}
+
+	@Override
+	public MemBuffer getConcreteBuffer(Address address) {
+		return trace.getMemoryManager().getBufferAt(snap, address);
 	}
 }

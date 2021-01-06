@@ -17,8 +17,9 @@ package ghidra.trace.database.program;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.help.UnsupportedOperationException;
 
@@ -175,21 +176,42 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 		dbRef.setPrimary(isPrimary);
 	}
 
+	protected boolean any(boolean noSpace, Predicate<Long> predicate) {
+		if (refs(false) == null) {
+			return noSpace;
+		}
+		for (long s : program.viewport.getOrderedSnaps()) {
+			if (predicate.test(s)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	protected Collection<Reference> collect(
+			Function<Long, Collection<? extends Reference>> refFunc) {
+		if (refs(false) == null) {
+			return Collections.emptyList();
+		}
+		Set<Reference> result = new LinkedHashSet<>();
+		for (long s : program.viewport.getOrderedSnaps()) {
+			Collection<? extends Reference> from = refFunc.apply(s);
+			if (from != null) {
+				result.addAll(from);
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public boolean hasFlowReferencesFrom(Address addr) {
-		if (refs(false) == null) {
-			return false;
-		}
-		return !refs.getFlowRefrencesFrom(program.snap, addr).isEmpty();
+		return any(false, s -> !refs.getFlowReferencesFrom(s, addr).isEmpty());
 	}
 
 	@Override
 	public Reference[] getFlowReferencesFrom(Address addr) {
-		Collection<? extends TraceReference> from = refs(false) == null
-				? Collections.emptyList()
-				: refs.getFlowRefrencesFrom(program.snap, addr);
-		// TODO: Requires two traversals. Not terrible for this size....
-		return from.toArray(new Reference[from.size()]);
+		Collection<Reference> result = collect(s -> refs.getFlowReferencesFrom(s, addr));
+		return result.toArray(new Reference[result.size()]);
 	}
 
 	@Override
@@ -199,138 +221,151 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 
 	@Override
 	public ReferenceIterator getReferencesTo(Address addr) {
-		Collection<? extends TraceReference> to = refs(false) == null
-				? Collections.emptyList()
-				: refs.getReferencesTo(program.snap, addr);
-		return new ReferenceIteratorAdapter(to.iterator());
+		Collection<Reference> result = collect(s -> refs.getReferencesTo(s, addr));
+		return new ReferenceIteratorAdapter(result.iterator());
+	}
+
+	protected Comparator<Reference> getReferenceFromComparator(boolean forward) {
+		return forward
+				? (r1, r2) -> r1.getFromAddress().compareTo(r2.getFromAddress())
+				: (r1, r2) -> -r1.getFromAddress().compareTo(r2.getFromAddress());
 	}
 
 	@Override
 	public ReferenceIterator getReferenceIterator(Address startAddr) {
-		Collection<? extends TraceReference> from = refs(false) == null
-				? Collections.emptyList()
-				: refs.getReferencesFrom(program.snap, startAddr);
-		return new ReferenceIteratorAdapter(from.iterator());
+		if (refs(false) == null) {
+			return new ReferenceIteratorAdapter(Collections.emptyIterator());
+		}
+		return new ReferenceIteratorAdapter(
+			program.viewport.mergedIterator(s -> refs.getReferencesFrom(s, startAddr).iterator(),
+				getReferenceFromComparator(true)));
 	}
 
 	@Override
 	public Reference getReference(Address fromAddr, Address toAddr, int opIndex) {
-		return refs(false) == null
-				? null
-				: refs.getReference(program.snap, fromAddr, toAddr, opIndex);
+		if (refs(false) == null) {
+			return null;
+		}
+		return program.viewport.getTop(s -> refs.getReference(s, fromAddr, toAddr, opIndex));
 	}
 
 	@Override
 	public Reference[] getReferencesFrom(Address addr) {
-		Collection<? extends TraceReference> from = refs(false) == null
-				? Collections.emptyList()
-				: refs.getReferencesFrom(program.snap, addr);
-		return from.toArray(new Reference[from.size()]);
+		Collection<Reference> result = collect(s -> refs.getReferencesFrom(s, addr));
+		return result.toArray(new Reference[result.size()]);
 	}
 
 	@Override
 	public Reference[] getReferencesFrom(Address fromAddr, int opIndex) {
-		Collection<? extends TraceReference> from = refs(false) == null
-				? Collections.emptyList()
-				: refs.getReferencesFrom(program.snap, fromAddr, opIndex);
-		return from.toArray(new Reference[from.size()]);
+		Collection<Reference> result = collect(s -> refs.getReferencesFrom(s, fromAddr, opIndex));
+		return result.toArray(new Reference[result.size()]);
 	}
 
 	@Override
 	public boolean hasReferencesFrom(Address fromAddr, int opIndex) {
-		return refs(false) == null
-				? false
-				: !refs.getReferencesFrom(program.snap, fromAddr, opIndex).isEmpty();
+		return any(false, s -> !refs.getReferencesFrom(s, fromAddr, opIndex).isEmpty());
 	}
 
 	@Override
 	public boolean hasReferencesFrom(Address fromAddr) {
-		return refs(false) == null
-				? false
-				: !refs.getReferencesFrom(program.snap, fromAddr).isEmpty();
+		return any(false, s -> !refs.getReferencesFrom(s, fromAddr).isEmpty());
 	}
 
 	@Override
 	public Reference getPrimaryReferenceFrom(Address addr, int opIndex) {
-		return refs(false) == null
-				? null
-				: refs.getPrimaryReferenceFrom(program.snap, addr, opIndex);
+		if (refs(false) == null) {
+			return null;
+		}
+		return program.viewport.getTop(s -> refs.getPrimaryReferenceFrom(s, addr, opIndex));
 	}
 
 	@Override
 	public AddressIterator getReferenceSourceIterator(Address startAddr, boolean forward) {
-		return refs(false) == null
-				? new EmptyAddressIterator()
-				: refs.getReferenceSources(Range.closed(program.snap, program.snap))
-						.getAddresses(startAddr, forward);
+		if (refs(false) == null) {
+			return new EmptyAddressIterator();
+		}
+		return program.viewport.unionedAddresses(
+			s -> refs.getReferenceSources(Range.singleton(s))).getAddresses(startAddr, forward);
 	}
 
 	@Override
 	public AddressIterator getReferenceSourceIterator(AddressSetView addrSet, boolean forward) {
-		return refs(false) == null
-				? new EmptyAddressIterator()
-				: new IntersectionAddressSetView(
-					refs.getReferenceSources(Range.closed(program.snap, program.snap)), addrSet)
-							.getAddresses(forward);
+		if (refs(false) == null) {
+			return new EmptyAddressIterator();
+		}
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> refs.getReferenceSources(Range.singleton(s)))).getAddresses(forward);
 	}
 
 	@Override
 	public AddressIterator getReferenceDestinationIterator(Address startAddr, boolean forward) {
-		return refs(false) == null
-				? new EmptyAddressIterator()
-				: refs.getReferenceDestinations(Range.closed(program.snap, program.snap))
-						.getAddresses(startAddr, forward);
+		if (refs(false) == null) {
+			return new EmptyAddressIterator();
+		}
+		return program.viewport.unionedAddresses(
+			s -> refs.getReferenceDestinations(Range.singleton(s)))
+				.getAddresses(startAddr, forward);
 	}
 
 	@Override
 	public AddressIterator getReferenceDestinationIterator(AddressSetView addrSet,
 			boolean forward) {
-		return refs(false) == null
-				? new EmptyAddressIterator()
-				: new IntersectionAddressSetView(
-					refs.getReferenceDestinations(Range.closed(program.snap, program.snap)),
-					addrSet).getAddresses(forward);
+		if (refs(false) == null) {
+			return new EmptyAddressIterator();
+		}
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> refs.getReferenceDestinations(Range.singleton(s)))).getAddresses(forward);
 	}
 
 	@Override
 	public int getReferenceCountTo(Address toAddr) {
-		return refs(false) == null
-				? 0
-				: refs.getReferenceCountTo(program.snap, toAddr);
+		if (refs(false) == null) {
+			return 0;
+		}
+		if (!program.viewport.isForked()) {
+			return refs.getReferenceCountTo(program.snap, toAddr);
+		}
+		return collect(s -> refs.getReferencesTo(s, toAddr)).size();
 	}
 
 	@Override
 	public int getReferenceCountFrom(Address fromAddr) {
-		return refs(false) == null
-				? 0
-				: refs.getReferenceCountFrom(program.snap, fromAddr);
+		if (refs(false) == null) {
+			return 0;
+		}
+		if (!program.viewport.isForked()) {
+			return refs.getReferenceCountFrom(program.snap, fromAddr);
+		}
+		return collect(s -> refs.getReferencesFrom(s, fromAddr)).size();
 	}
 
 	@Override
 	public int getReferenceDestinationCount() {
 		// TODO: It is unclear if the interface definition means to include unique addresses
 		// or also unique references
-		return refs(false) == null
-				? 0
-				: (int) refs.getReferenceDestinations(Range.closed(program.snap, program.snap))
-						.getNumAddresses();
+		if (refs(false) == null) {
+			return 0;
+		}
+		return (int) program.viewport
+				.unionedAddresses(s -> refs.getReferenceDestinations(Range.singleton(s)))
+				.getNumAddresses();
 	}
 
 	@Override
 	public int getReferenceSourceCount() {
 		// TODO: It is unclear if the interface definition means to include unique addresses
 		// or also unique references
-		return refs(false) == null
-				? 0
-				: (int) refs.getReferenceSources(Range.closed(program.snap, program.snap))
-						.getNumAddresses();
+		if (refs(false) == null) {
+			return 0;
+		}
+		return (int) program.viewport
+				.unionedAddresses(s -> refs.getReferenceSources(Range.singleton(s)))
+				.getNumAddresses();
 	}
 
 	@Override
 	public boolean hasReferencesTo(Address toAddr) {
-		return refs(false) == null
-				? false
-				: !refs.getReferencesTo(program.snap, toAddr).isEmpty();
+		return any(false, s -> !refs.getReferencesTo(s, toAddr).isEmpty());
 	}
 
 	@Override
@@ -361,9 +396,11 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	/**
 	 * Get the reference level for a given reference type
 	 * 
+	 * <p>
 	 * TODO: Why is this not a property of {@link RefType}, or a static method of
 	 * {@link SymbolUtilities}?
 	 * 
+	 * <p>
 	 * Note that this was copy-pasted from {@code BigRefListV0}, and there's an exact copy also in
 	 * {@code RefListV0}.
 	 * 
@@ -389,11 +426,13 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * To clarify, "reference level" is a sort of priority assigned to each reference type. See,
 	 * e.g., {@link SymbolUtilities#SUB_LEVEL}. Each is a byte constant, and greater values imply
 	 * higher priority. This method returns the highest priority of any reference to the given
 	 * address.
 	 * 
+	 * <p>
 	 * TODO: Track this in the database?
 	 */
 	@Override
@@ -402,8 +441,10 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return SymbolUtilities.UNK_LEVEL;
 		}
 		byte highest = SymbolUtilities.UNK_LEVEL;
-		for (TraceReference ref : refs.getReferencesTo(program.snap, toAddr)) {
-			highest = (byte) Math.max(highest, getRefLevel(ref.getReferenceType()));
+		for (long s : program.viewport.getOrderedSnaps()) {
+			for (TraceReference ref : refs.getReferencesTo(s, toAddr)) {
+				highest = (byte) Math.max(highest, getRefLevel(ref.getReferenceType()));
+			}
 		}
 		return highest;
 	}

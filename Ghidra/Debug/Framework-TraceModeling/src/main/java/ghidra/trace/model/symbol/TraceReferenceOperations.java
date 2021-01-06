@@ -66,7 +66,7 @@ public interface TraceReferenceOperations {
 
 	TraceReference getPrimaryReferenceFrom(long snap, Address fromAddress, int operandIndex);
 
-	Collection<? extends TraceReference> getFlowRefrencesFrom(long snap, Address fromAddress);
+	Collection<? extends TraceReference> getFlowReferencesFrom(long snap, Address fromAddress);
 
 	void clearReferencesFrom(Range<Long> span, AddressRange range);
 
@@ -94,7 +94,7 @@ public interface TraceReferenceOperations {
 	}
 
 	default boolean hasFlowReferencesFrom(long snap, Address fromAddress) {
-		return !getFlowRefrencesFrom(snap, fromAddress).isEmpty();
+		return !getFlowReferencesFrom(snap, fromAddress).isEmpty();
 	}
 
 	default boolean hasReferencesTo(long snap, Address toAddress) {

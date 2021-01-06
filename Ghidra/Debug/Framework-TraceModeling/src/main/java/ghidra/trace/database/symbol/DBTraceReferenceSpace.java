@@ -564,7 +564,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public Collection<? extends DBTraceReference> getFlowRefrencesFrom(long snap,
+	public Collection<? extends DBTraceReference> getFlowReferencesFrom(long snap,
 			Address fromAddress) {
 		return Collections2.filter(getReferencesFrom(snap, fromAddress),
 			r -> r.getReferenceType().isFlow());

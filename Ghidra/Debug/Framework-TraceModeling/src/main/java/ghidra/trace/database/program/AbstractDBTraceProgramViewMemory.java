@@ -18,7 +18,6 @@ package ghidra.trace.database.program;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
 
 import com.google.common.cache.RemovalNotification;
@@ -31,12 +30,14 @@ import ghidra.trace.database.memory.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
+import ghidra.trace.util.MemoryAdapter;
 import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
-public abstract class AbstractDBTraceProgramViewMemory implements TraceProgramViewMemory {
+public abstract class AbstractDBTraceProgramViewMemory
+		implements TraceProgramViewMemory, MemoryAdapter {
 	protected final DBTraceProgramView program;
 	protected final DBTraceMemoryManager memoryManager;
 
@@ -95,7 +96,7 @@ public abstract class AbstractDBTraceProgramViewMemory implements TraceProgramVi
 	public AddressSetView getExecuteSet() {
 		AddressSet result = new AddressSet();
 		for (DBTraceMemoryRegion region : memoryManager.getRegionsInternal()) {
-			if (!region.isExecute()) {
+			if (!region.isExecute() || !program.isRegionVisible(region, region.getLifespan())) {
 				continue;
 			}
 			result.add(region.getRange());
@@ -247,6 +248,8 @@ public abstract class AbstractDBTraceProgramViewMemory implements TraceProgramVi
 			if (space == null) {
 				continue;
 			}
+			// TODO: findBytes must heed fork, or there should exist a variant that does....
+			// Lest I have to implement the forked search here.
 			Address found =
 				space.findBytes(snap, range, bufBytes, bufMasks, forward, monitor);
 			if (found != null) {
@@ -266,11 +269,6 @@ public abstract class AbstractDBTraceProgramViewMemory implements TraceProgramVi
 	}
 
 	@Override
-	public int getBytes(Address addr, byte[] dest) throws MemoryAccessException {
-		return getBytes(addr, dest, 0, dest.length);
-	}
-
-	@Override
 	public int getBytes(Address addr, byte[] dest, int destIndex, int size)
 			throws MemoryAccessException {
 		MemoryBlock block = getBlock(addr);
@@ -283,109 +281,6 @@ public abstract class AbstractDBTraceProgramViewMemory implements TraceProgramVi
 		return block.getBytes(addr, dest, destIndex, size);
 	}
 
-	protected ByteBuffer mustRead(Address addr, int length, boolean bigEndian)
-			throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(length);
-		if (getBytes(addr, buf.array()) != length) {
-			throw new MemoryAccessException();
-		}
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		return buf;
-	}
-
-	@Override
-	public short getShort(Address addr) throws MemoryAccessException {
-		return mustRead(addr, Short.BYTES, true).getShort(0);
-	}
-
-	@Override
-	public short getShort(Address addr, boolean bigEndian) throws MemoryAccessException {
-		return mustRead(addr, Short.BYTES, bigEndian).getShort(0);
-	}
-
-	@Override
-	public int getShorts(Address addr, short[] dest) throws MemoryAccessException {
-		return getShorts(addr, dest, 0, dest.length, true);
-	}
-
-	@Override
-	public int getShorts(Address addr, short[] dest, int dIndex, int nElem)
-			throws MemoryAccessException {
-		return getShorts(addr, dest, dIndex, nElem, true);
-	}
-
-	@Override
-	public int getShorts(Address addr, short[] dest, int dIndex, int nElem, boolean bigEndian)
-			throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(Short.BYTES * nElem);
-		int got = getBytes(addr, buf.array()) / Short.BYTES;
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		buf.asShortBuffer().get(dest, dIndex, got);
-		return got;
-	}
-
-	@Override
-	public int getInt(Address addr) throws MemoryAccessException {
-		return mustRead(addr, Integer.BYTES, true).getInt(0);
-	}
-
-	@Override
-	public int getInt(Address addr, boolean bigEndian) throws MemoryAccessException {
-		return mustRead(addr, Integer.BYTES, bigEndian).getInt(0);
-	}
-
-	@Override
-	public int getInts(Address addr, int[] dest) throws MemoryAccessException {
-		return getInts(addr, dest, 0, dest.length, true);
-	}
-
-	@Override
-	public int getInts(Address addr, int[] dest, int dIndex, int nElem)
-			throws MemoryAccessException {
-		return getInts(addr, dest, dIndex, nElem, true);
-	}
-
-	@Override
-	public int getInts(Address addr, int[] dest, int dIndex, int nElem, boolean bigEndian)
-			throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES * nElem);
-		int got = getBytes(addr, buf.array()) / Integer.BYTES;
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		buf.asIntBuffer().get(dest, dIndex, got);
-		return got;
-	}
-
-	@Override
-	public long getLong(Address addr) throws MemoryAccessException {
-		return mustRead(addr, Long.BYTES, true).getLong(0);
-	}
-
-	@Override
-	public long getLong(Address addr, boolean bigEndian) throws MemoryAccessException {
-		return mustRead(addr, Long.BYTES, bigEndian).getLong(0);
-	}
-
-	@Override
-	public int getLongs(Address addr, long[] dest) throws MemoryAccessException {
-		return getLongs(addr, dest, 0, dest.length, true);
-	}
-
-	@Override
-	public int getLongs(Address addr, long[] dest, int dIndex, int nElem)
-			throws MemoryAccessException {
-		return getLongs(addr, dest, dIndex, nElem, true);
-	}
-
-	@Override
-	public int getLongs(Address addr, long[] dest, int dIndex, int nElem, boolean bigEndian)
-			throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(Long.BYTES * nElem);
-		int got = getBytes(addr, buf.array()) / Long.BYTES;
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		buf.asLongBuffer().get(dest, dIndex, got);
-		return got;
-	}
-
 	@Override
 	public void setByte(Address addr, byte value) throws MemoryAccessException {
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
@@ -395,57 +290,12 @@ public abstract class AbstractDBTraceProgramViewMemory implements TraceProgramVi
 	}
 
 	@Override
-	public void setBytes(Address addr, byte[] source) throws MemoryAccessException {
-		setBytes(addr, source, 0, source.length);
-	}
-
-	@Override
 	public void setBytes(Address addr, byte[] source, int sIndex, int size)
 			throws MemoryAccessException {
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(source, sIndex, size)) != size) {
 			throw new MemoryAccessException();
 		}
-	}
-
-	@Override
-	public void setShort(Address addr, short value) throws MemoryAccessException {
-		setShort(addr, value, true);
-	}
-
-	@Override
-	public void setShort(Address addr, short value, boolean bigEndian)
-			throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(Short.BYTES);
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		buf.putShort(value);
-		setBytes(addr, buf.array());
-	}
-
-	@Override
-	public void setInt(Address addr, int value) throws MemoryAccessException {
-		setInt(addr, value, true);
-	}
-
-	@Override
-	public void setInt(Address addr, int value, boolean bigEndian) throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		buf.putInt(value);
-		setBytes(addr, buf.array());
-	}
-
-	@Override
-	public void setLong(Address addr, long value) throws MemoryAccessException {
-		setLong(addr, value, true);
-	}
-
-	@Override
-	public void setLong(Address addr, long value, boolean bigEndian) throws MemoryAccessException {
-		ByteBuffer buf = ByteBuffer.allocate(Long.BYTES);
-		buf.order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-		buf.putLong(value);
-		setBytes(addr, buf.array());
 	}
 
 	@Override

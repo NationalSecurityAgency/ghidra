@@ -39,7 +39,7 @@ public enum TracePcodeUtils {
 		PcodeExecutorState<CompletableFuture<byte[]>> state;
 		if (coordinates.getRecorder() == null) {
 			state = new AsyncWrappedPcodeExecutorState<>(
-				new TraceBytesPcodeExecutorState(trace, coordinates.getSnap(),
+				new TraceBytesPcodeExecutorState(trace, coordinates.getViewSnap(),
 					coordinates.getThread(), coordinates.getFrame()));
 		}
 		else {

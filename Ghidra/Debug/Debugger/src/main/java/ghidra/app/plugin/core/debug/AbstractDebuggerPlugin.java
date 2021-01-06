@@ -17,6 +17,9 @@ package ghidra.app.plugin.core.debug;
 
 import ghidra.framework.plugintool.*;
 
+/**
+ * All this really does anymore is handle the auto-service wiring thing
+ */
 public abstract class AbstractDebuggerPlugin extends Plugin {
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;

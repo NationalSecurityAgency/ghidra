@@ -20,66 +20,39 @@ import java.util.Collection;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.symbol.DBTraceReference;
-import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceReference;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 
-public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, TraceData {
+public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterMinimal,
+		DataAdapterFromDataType, DataAdapterFromSettings, TraceData {
 	static String[] EMPTY_STRING_ARRAY = new String[] {};
-
-	default String doToString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append(getMnemonicString());
-		String valueRepresentation = getDefaultValueRepresentation();
-		if (valueRepresentation != null) {
-			builder.append(' ');
-			builder.append(valueRepresentation);
-		}
-		return builder.toString();
-	}
-
-	@Override
-	default String getMnemonicString() {
-		return getDataType().getMnemonic(this);
-	}
 
 	@Override
 	DBTraceDataAdapter getRoot();
 
-	default String getPrimarySymbolOrDynamicName() {
-		/** TODO: Use primary symbol or dynamic name as in {@link DataDB#getPathName()} */
-		return "DAT_" + getAddressString(false, false);
-	}
-
-	@Override
-	default int getNumOperands() {
-		return 1;
-	}
-
 	@Override
 	default TraceReference[] getValueReferences() {
-		return getOperandReferences(TraceCodeManager.DATA_OP_INDEX);
+		return (TraceReference[]) DataAdapterMinimal.super.getValueReferences();
 	}
 
 	@Override
 	default void addValueReference(Address refAddr, RefType type) {
 		getTrace().getReferenceManager()
 				.addMemoryReference(getLifespan(), getAddress(), refAddr,
-					type, SourceType.USER_DEFINED, TraceCodeManager.DATA_OP_INDEX);
+					type, SourceType.USER_DEFINED, DATA_OP_INDEX);
 	}
 
 	@Override
 	default void removeValueReference(Address refAddr) {
 		DBTraceReference ref = getTrace().getReferenceManager()
 				.getReference(getStartSnap(),
-					getAddress(), refAddr, TraceCodeManager.DATA_OP_INDEX);
+					getAddress(), refAddr, DATA_OP_INDEX);
 		if (ref == null) {
 			return;
 		}
@@ -198,36 +171,19 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, TraceData {
 		return space.isEmpty(getLifespan(), getAddress());
 	}
 
+	@Override
 	default <T extends SettingsDefinition> T getSettingsDefinition(
 			Class<T> settingsDefinitionClass) {
-		DataType dt = getBaseDataType();
-		for (SettingsDefinition def : dt.getSettingsDefinitions()) {
-			if (settingsDefinitionClass.isAssignableFrom(def.getClass())) {
-				return settingsDefinitionClass.cast(def);
-			}
+		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
+			return DataAdapterFromSettings.super.getSettingsDefinition(settingsDefinitionClass);
 		}
-		return null;
 	}
 
+	@Override
 	default boolean hasMutability(int mutabilityType) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			MutabilitySettingsDefinition def =
-				getSettingsDefinition(MutabilitySettingsDefinition.class);
-			if (def != null) {
-				return def.getChoice(this) == mutabilityType;
-			}
-			return false;
+			return DataAdapterFromSettings.super.hasMutability(mutabilityType);
 		}
-	}
-
-	@Override
-	default boolean isConstant() {
-		return hasMutability(MutabilitySettingsDefinition.CONSTANT);
-	}
-
-	@Override
-	default boolean isVolatile() {
-		return hasMutability(MutabilitySettingsDefinition.VOLATILE);
 	}
 
 	@Override

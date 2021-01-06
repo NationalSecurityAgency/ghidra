@@ -23,10 +23,12 @@ import com.google.common.primitives.UnsignedLong;
 import ghidra.pcode.exec.AbstractLongOffsetPcodeExecutorStatePiece;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.DefaultTraceTimeViewport;
 
 public class TraceMemoryStatePcodeExecutorStatePiece extends
 		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, TraceMemorySpace> {
@@ -37,6 +39,8 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	private TraceThread thread;
 	private int frame;
 
+	private final DefaultTraceTimeViewport viewport;
+
 	public TraceMemoryStatePcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
 			int frame) {
 		super(trace.getBaseLanguage(), TraceMemoryStatePcodeArithmetic.INSTANCE);
@@ -44,6 +48,9 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 		this.snap = snap;
 		this.thread = thread;
 		this.frame = frame;
+
+		this.viewport = new DefaultTraceTimeViewport(trace);
+		this.viewport.setSnap(snap);
 	}
 
 	public Trace getTrace() {
@@ -52,6 +59,7 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 
 	public void setSnap(long snap) {
 		this.snap = snap;
+		this.viewport.setSnap(snap);
 	}
 
 	public long getSnap() {
@@ -137,7 +145,15 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	@Override
 	protected TraceMemoryState getFromSpace(TraceMemorySpace space, long offset, int size) {
 		AddressSet set = new AddressSet(range(space.getAddressSpace(), offset, size));
-		set.delete(space.getAddressesWithState(snap, set, s -> s == TraceMemoryState.KNOWN));
+		for (long snap : viewport.getOrderedSnaps()) {
+			set.delete(
+				space.getAddressesWithState(snap, set, state -> state == TraceMemoryState.KNOWN));
+		}
 		return set.isEmpty() ? TraceMemoryState.KNOWN : TraceMemoryState.UNKNOWN;
+	}
+
+	@Override
+	public MemBuffer getConcreteBuffer(Address address) {
+		throw new AssertionError("Cannot make TraceMemoryState into a concrete buffer");
 	}
 }

@@ -16,6 +16,7 @@
 package ghidra.util;
 
 import java.util.Iterator;
+import java.util.List;
 
 import ghidra.program.model.address.*;
 
@@ -139,13 +140,16 @@ public abstract class AbstractAddressSetView implements AddressSetView {
 	@Override
 	public boolean intersects(AddressSetView addrSet) {
 		AddressRangeIterator iit =
-			AddressRangeIterators.intersect(this.iterator(), addrSet.iterator(), true);
+			AddressRangeIterators.intersect(this.iterator(addrSet.getMinAddress(), true),
+				addrSet.iterator(this.getMinAddress(), true), true);
 		return iit.hasNext();
 	}
 
 	@Override
 	public boolean intersects(Address start, Address end) {
-		return intersects(new AddressSet(start, end));
+		AddressRangeIterator iit = AddressRangeIterators.intersect(this.iterator(start, true),
+			List.of((AddressRange) new AddressRangeImpl(start, end)).iterator(), true);
+		return iit.hasNext();
 	}
 
 	@Override

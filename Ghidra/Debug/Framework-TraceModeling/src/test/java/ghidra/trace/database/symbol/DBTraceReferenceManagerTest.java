@@ -403,7 +403,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		}
 
 		assertEquals(Set.of(flowRef),
-			new HashSet<>(manager.getFlowRefrencesFrom(0, b.addr(0x4000))));
+			new HashSet<>(manager.getFlowReferencesFrom(0, b.addr(0x4000))));
 	}
 
 	@Test

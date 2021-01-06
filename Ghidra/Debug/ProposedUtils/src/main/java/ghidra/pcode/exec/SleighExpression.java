@@ -22,7 +22,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.pcode.PcodeOp;
 
-public class SleighExpression extends SleighProgram {
+public class SleighExpression extends PcodeProgram {
 	public static final String RESULT_NAME = "___result";
 	protected static final SleighUseropLibrary<?> CAPTURING =
 		new ValueCapturingSleighUseropLibrary<>();
@@ -30,12 +30,6 @@ public class SleighExpression extends SleighProgram {
 	protected static class ValueCapturingSleighUseropLibrary<T>
 			extends AnnotatedSleighUseropLibrary<T> {
 		T result;
-
-		@Override
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		protected Class<T> getOperandType() {
-			return (Class) Object.class;
-		}
 
 		@SleighUserop
 		public void ___result(T result) {

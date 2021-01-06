@@ -22,7 +22,6 @@ import java.util.*;
 import com.google.common.collect.Range;
 
 import db.DBRecord;
-import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
@@ -47,7 +46,7 @@ import ghidra.util.database.annot.*;
 
 @DBAnnotatedObjectInfo(version = 0)
 public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstruction> implements
-		TraceInstruction, InstructionAdapterFromPrototype, InstructionContext, Unfinished {
+		TraceInstruction, InstructionAdapterFromPrototype, InstructionContext {
 	private static final Address[] EMPTY_ADDRESS_ARRAY = new Address[] {};
 	private static final String TABLE_NAME = "Instructions";
 
@@ -347,7 +346,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 				return EMPTY_ADDRESS_ARRAY;
 			}
 			Collection<? extends DBTraceReference> refs =
-				refSpace.getFlowRefrencesFrom(getStartSnap(), getAddress());
+				refSpace.getFlowReferencesFrom(getStartSnap(), getAddress());
 			if (refs.isEmpty()) {
 				return EMPTY_ADDRESS_ARRAY;
 			}
@@ -461,7 +460,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			update(FLAGS_COLUMN);
 
 			DBTraceReferenceSpace refSpace = space.referenceManager.get(space, true);
-			for (DBTraceReference ref : refSpace.getFlowRefrencesFrom(getStartSnap(), getX1())) {
+			for (DBTraceReference ref : refSpace.getFlowReferencesFrom(getStartSnap(), getX1())) {
 				if (!isSameFlowType(origFlowType, ref.getReferenceType())) {
 					continue;
 				}

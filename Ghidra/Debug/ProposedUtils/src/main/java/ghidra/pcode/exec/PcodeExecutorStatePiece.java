@@ -18,6 +18,7 @@ package ghidra.pcode.exec;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.pcode.Varnode;
 
 public interface PcodeExecutorStatePiece<A, T> {
@@ -57,4 +58,6 @@ public interface PcodeExecutorStatePiece<A, T> {
 	default T getVar(AddressSpace space, long offset, int size, boolean truncateAddressableUnit) {
 		return getVar(space, longToOffset(space, offset), size, truncateAddressableUnit);
 	}
+
+	MemBuffer getConcreteBuffer(Address address);
 }

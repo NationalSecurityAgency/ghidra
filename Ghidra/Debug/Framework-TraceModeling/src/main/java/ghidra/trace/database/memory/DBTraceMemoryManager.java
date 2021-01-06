@@ -212,10 +212,22 @@ public class DBTraceMemoryManager
 	}
 
 	@Override
+	public Entry<Long, TraceMemoryState> getViewState(long snap, Address address) {
+		return delegateRead(address.getAddressSpace(), m -> m.getViewState(snap, address));
+	}
+
+	@Override
 	public Entry<TraceAddressSnapRange, TraceMemoryState> getMostRecentStateEntry(long snap,
 			Address address) {
 		return delegateRead(address.getAddressSpace(),
 			m -> m.getMostRecentStateEntry(snap, address));
+	}
+
+	@Override
+	public Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
+			Address address) {
+		return delegateRead(address.getAddressSpace(),
+			m -> m.getViewMostRecentStateEntry(snap, address));
 	}
 
 	@Override
@@ -260,6 +272,16 @@ public class DBTraceMemoryManager
 	@Override
 	public int getBytes(long snap, Address start, ByteBuffer buf) {
 		return delegateReadI(start.getAddressSpace(), m -> m.getBytes(snap, start, buf), () -> {
+			Address max = start.getAddressSpace().getMaxAddress();
+			int len = MathUtilities.unsignedMin(buf.remaining(), max.subtract(start));
+			buf.position(buf.position() + len);
+			return len;
+		});
+	}
+
+	@Override
+	public int getViewBytes(long snap, Address start, ByteBuffer buf) {
+		return delegateReadI(start.getAddressSpace(), m -> m.getViewBytes(snap, start, buf), () -> {
 			Address max = start.getAddressSpace().getMaxAddress();
 			int len = MathUtilities.unsignedMin(buf.remaining(), max.subtract(start));
 			buf.position(buf.position() + len);

@@ -26,6 +26,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSchedule;
 import ghidra.util.TriConsumer;
 
 @ServiceInfo(defaultProvider = DebuggerTraceManagerServicePlugin.class)
@@ -127,6 +128,8 @@ public interface DebuggerTraceManagerService {
 	void activateThread(TraceThread thread);
 
 	void activateSnap(long snap);
+
+	void activateTime(TraceSchedule time);
 
 	void activateFrame(int frameLevel);
 

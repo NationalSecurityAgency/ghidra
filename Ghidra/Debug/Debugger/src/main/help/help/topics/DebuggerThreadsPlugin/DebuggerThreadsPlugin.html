@@ -86,25 +86,46 @@
     <A href="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time</A> window for a way to
     display and navigate to specific events in the trace's timeline.</P>
 
-    <H3><A name="step_trace_backward"></A><IMG alt="" src="images/stepback.png">Step Track
-    Backward</H3>
+    <H3><A name="step_trace_snap_backward"></A><IMG alt="" src="images/arrow_up.png">Step Track
+    Snap Backward</H3>
+
+    <P>This action is available when there exists a snapshot previous to the current. It steps the
+    trace backward to the previous snapshot, causing most windows to display the recorded data from
+    the new point in time. Note that stepping backward does not affect the target, and many windows
+    that would ordinarily interact with a live target, may no longer do so, until the user steps
+    back to the present. Note also that any component or script that does interact with the target
+    and record things "into the present" will not cause updates in windows that are not displaying
+    the present.</P>
+
+    <H3><A name="step_trace_snap_forward"></A><IMG alt="" src="images/arrow_down.png">Step Trace
+    Snap Forward</H3>
+
+    <P>This action is available when there exists a snapshot ahead of the current. It steps the
+    trace forward to the next snapshot, causing most windows to display the recorded data from the
+    new point in time. If the new point in time represents "the present" for a live trace, then
+    many windows will resume interacting with the target. Note that stepping the trace does not
+    affect the target; however, stepping back to the present may cause some windows to query the
+    target.</P>
+
+    <H3><A name="step_trace_tick_backward"></A><IMG alt="" src="images/stepback.png">Step Track
+    Tick Backward</H3>
 
     <P>This action is available when there exists a point in time previous to the current. It steps
-    the trace backward once, causing most windows to display the recorded data from the new point
-    in time. Note that stepping backward does not affect the target, and many windows that would
-    ordinarily interact with a live target, may no longer do so, until the user steps back to the
-    present. Note also that any component or script that does interact with the target and record
-    things "into the present" will not cause updates in windows that are not displaying the
-    present.</P>
+    the trace backward to the previous tick, possibly using emulation. Note that stepping backward
+    does not affect the target, and many windows that would ordinarily interact with a live target,
+    may no longer do so, until the user steps back to the present. Note also that any component or
+    script that does interact with the target and record things "into the present" may not cause
+    updates in windows that are not displaying the present.</P>
 
-    <H3><A name="step_trace_forward"></A><IMG alt="" src="images/stepinto.png">Step Trace
+    <H3><A name="step_trace_tick_forward"></A><IMG alt="" src="images/stepinto.png">Step Trace Tick
     Forward</H3>
 
-    <P>This action is available when there exists a point in time ahead of the current. It steps
-    the trace forward once, causing most windows to display the recorded data from the new point in
-    time. If the new point in time represents "the present" for a live trace, then many windows
-    will resume interacting with the target. Note that stepping the trace does not affect the
-    target; however, stepping back to the present may cause some windows to query the target.</P>
+    <P>This action is available when a thread is selected. It steps the current thread forward to
+    the next tick, using emulation. Note that emulation does not affect the target, and many
+    windows that would ordinarily interact with a live target, may no longer do so, until the user
+    steps back to the present. Note also that any component or script that does interact with the
+    target and record things "into the present" may not cause updates in windows that are not
+    displaying the present.</P>
 
     <H3><A name="seek_trace_present"></A><IMG alt="" src="images/continue.png">Seek Trace to
     Present</H3>

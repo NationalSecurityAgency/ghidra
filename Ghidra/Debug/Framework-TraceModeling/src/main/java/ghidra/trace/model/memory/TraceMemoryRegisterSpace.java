@@ -19,8 +19,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -71,20 +69,13 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 	}
 
 	default RegisterValue getValue(long snap, Register register) {
-		int byteLength = TraceRegisterUtils.byteLengthOf(register);
-		byte[] mask = register.getBaseMask();
-		ByteBuffer buf = ByteBuffer.allocate(mask.length * 2);
-		buf.put(mask);
-		int maskOffset = TraceRegisterUtils.computeMaskOffset(mask);
-		int startVal = buf.position() + maskOffset;
-		buf.position(startVal);
-		buf.limit(buf.position() + byteLength);
-		getBytes(snap, register.getAddress(), buf);
-		byte[] arr = buf.array();
-		if (!register.isBigEndian()) {
-			ArrayUtils.reverse(arr, startVal, startVal + byteLength);
-		}
-		return new RegisterValue(register, arr);
+		return TraceRegisterUtils.getRegisterValue(register,
+			(a, buf) -> getBytes(snap, a, buf));
+	}
+
+	default RegisterValue getViewValue(long snap, Register register) {
+		return TraceRegisterUtils.getRegisterValue(register,
+			(a, buf) -> getViewBytes(snap, a, buf));
 	}
 
 	default int getBytes(long snap, Register register, ByteBuffer buf) {

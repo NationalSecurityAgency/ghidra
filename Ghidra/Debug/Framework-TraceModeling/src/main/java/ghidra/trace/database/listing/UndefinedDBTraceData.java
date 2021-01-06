@@ -22,8 +22,7 @@ import java.util.List;
 import com.google.common.collect.Range;
 
 import ghidra.docking.settings.Settings;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Data;
@@ -33,11 +32,12 @@ import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThread;
+import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceData;
-import ghidra.trace.util.DataAdapterFromDataType;
+import ghidra.trace.util.TraceAddressSpace;
 
-public class UndefinedDBTraceData
-		implements DBTraceDataAdapter, DataAdapterFromDataType, DBTraceSpaceKey {
+public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey {
 	protected final DBTrace trace;
 	protected final long snap;
 	protected final Range<Long> lifespan;
@@ -53,6 +53,11 @@ public class UndefinedDBTraceData
 		this.address = address;
 		this.thread = thread;
 		this.frameLevel = frameLevel;
+	}
+
+	@Override
+	public TraceAddressSpace getTraceSpace() {
+		return this;
 	}
 
 	@Override
@@ -73,6 +78,18 @@ public class UndefinedDBTraceData
 	@Override
 	public Language getLanguage() {
 		return trace.getBaseLanguage();
+	}
+
+	@Override
+	public AddressRange getRange() {
+		// TODO: Cache this?
+		return new AddressRangeImpl(getMinAddress(), getMaxAddress());
+	}
+
+	@Override
+	public TraceAddressSnapRange getBounds() {
+		// TODO: Cache this?
+		return new ImmutableTraceAddressSnapRange(getMinAddress(), getMaxAddress(), getLifespan());
 	}
 
 	@Override
@@ -207,7 +224,7 @@ public class UndefinedDBTraceData
 
 	@Override
 	public int[] getComponentPath() {
-		return DBTraceData.EMPTY_INT_ARRAY;
+		return EMPTY_INT_ARRAY;
 	}
 
 	@Override

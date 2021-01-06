@@ -41,6 +41,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -614,6 +615,11 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	@Override
 	public long getSnap() {
 		return view.getSnap();
+	}
+
+	@Override
+	public TraceTimeViewport getViewport() {
+		return view.getViewport();
 	}
 
 	@Override

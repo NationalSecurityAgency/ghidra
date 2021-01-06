@@ -43,6 +43,7 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 @DisassemblyInjectInfo(langIDs = { "x86:LE:64:default" })
+// TODO: Filter / selector on debugger. This is running for GDB, too....
 public class DbgengX64DisassemblyInject implements DisassemblyInject {
 
 	enum Mode {

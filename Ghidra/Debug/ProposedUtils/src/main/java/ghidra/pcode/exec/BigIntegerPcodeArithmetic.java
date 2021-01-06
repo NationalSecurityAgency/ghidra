@@ -40,7 +40,17 @@ public enum BigIntegerPcodeArithmetic implements PcodeArithmetic<BigInteger> {
 	}
 
 	@Override
+	public BigInteger fromConst(BigInteger value, int size) {
+		return value;
+	}
+
+	@Override
 	public boolean isTrue(BigInteger cond) {
 		return !cond.equals(BigInteger.ZERO);
+	}
+
+	@Override
+	public BigInteger toConcrete(BigInteger value) {
+		return value;
 	}
 }

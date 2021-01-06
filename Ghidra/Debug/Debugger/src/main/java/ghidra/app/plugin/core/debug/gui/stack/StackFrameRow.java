@@ -27,11 +27,21 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
 public class StackFrameRow {
+	public static class Synthetic extends StackFrameRow {
+		public Synthetic(DebuggerStackProvider provider, Address pc) {
+			super(provider, pc);
+		}
+
+		public void updateProgramCounter(Address pc) {
+			this.pc = pc;
+		}
+	}
+
 	private final DebuggerStackProvider provider;
 
 	final TraceStackFrame frame;
 	private int level;
-	private Address pc;
+	Address pc;
 
 	public StackFrameRow(DebuggerStackProvider provider, TraceStackFrame frame) {
 		this.provider = provider;
@@ -40,7 +50,7 @@ public class StackFrameRow {
 		this.pc = frame.getProgramCounter();
 	}
 
-	public StackFrameRow(DebuggerStackProvider provider, Address pc) {
+	private StackFrameRow(DebuggerStackProvider provider, Address pc) {
 		this.provider = provider;
 		this.frame = null;
 		this.level = 0;

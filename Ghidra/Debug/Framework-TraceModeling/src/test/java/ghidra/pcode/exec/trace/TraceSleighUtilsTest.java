@@ -206,7 +206,7 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 	@Test
 	public void testCompileSleighProgram() throws Exception {
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
-			SleighProgram sp = SleighProgramCompiler.compileProgram((SleighLanguage) b.language,
+			PcodeProgram sp = SleighProgramCompiler.compileProgram((SleighLanguage) b.language,
 				"test", List.of(
 					"if (r0) goto <else>;",
 					"    r1 = 6;",

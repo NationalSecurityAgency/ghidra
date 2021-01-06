@@ -25,6 +25,7 @@ import generic.util.PeekableIterator;
 /**
  * An iterator which merges sorted iterators according to a comparator
  * 
+ * <P>
  * TODO: This may be replaceable with {@link Iterators#mergeSorted(Iterable, Comparator)}. I
  * hesitate, since I benefit from this implementation complying with {@link PeekableIterator}, while
  * Guava's does not -- though, they would use {@link PeekingIterator} instead. Currently, my
@@ -97,6 +98,7 @@ public class MergeSortingIterator<T> implements PeekableIterator<T> {
 	/**
 	 * Construct a merge-sorting iterator which generates labeled values
 	 * 
+	 * <p>
 	 * The map of iterators is a map of entries, each giving a label and an iterator to be merged.
 	 * Each iterator must return values as sorted by the given comparator. The entries returned by
 	 * the combined iterator give the values in sorted order, but each has a the key indicating

@@ -19,6 +19,7 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
+import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.program.TraceProgramViewRegisterListing;
 import ghidra.util.exception.CancelledException;
@@ -43,6 +44,11 @@ public class DBTraceProgramViewRegisterListing extends AbstractDBTraceProgramVie
 	@Override
 	public DBTraceThread getThread() {
 		return thread;
+	}
+
+	@Override
+	public UndefinedDBTraceData doCreateUndefinedUnit(Address address) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

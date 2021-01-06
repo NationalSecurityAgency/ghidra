@@ -28,4 +28,5 @@ dependencies {
 	annotationProcessor project(':AnnotationValidator')
 
 	testCompile project(':Base')
+	testRuntime project(':ARM')  // For its emulator state modifier
 }

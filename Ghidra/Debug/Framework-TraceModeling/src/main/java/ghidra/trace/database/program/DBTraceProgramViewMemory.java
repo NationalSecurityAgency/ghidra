@@ -16,6 +16,8 @@
 package ghidra.trace.database.program;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.google.common.cache.CacheBuilder;
 
@@ -32,13 +34,33 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		super(program);
 	}
 
+	protected DBTraceMemoryRegion getTopRegion(Function<Long, DBTraceMemoryRegion> regFunc) {
+		return program.viewport.getTop(s -> {
+			// TODO: There is probably an early-bail condition I can check for.
+			DBTraceMemoryRegion reg = regFunc.apply(s);
+			if (reg != null && program.isRegionVisible(reg)) {
+				return reg;
+			}
+			return null;
+		});
+	}
+
+	protected void forVisibleRegions(Consumer<? super DBTraceMemoryRegion> action) {
+		for (long s : program.viewport.getOrderedSnaps()) {
+			// NOTE: This is slightly faster than new AddressSet(mm.getRegionsAddressSet(snap))
+			for (DBTraceMemoryRegion reg : memoryManager.getRegionsAtSnap(s)) {
+				if (program.isRegionVisible(reg)) {
+					action.accept(reg);
+				}
+			}
+		}
+	}
+
 	@Override
 	protected void recomputeAddressSet() {
 		AddressSet temp = new AddressSet();
-		// NOTE: This is slightly faster than new AddressSet(mm.getRegionsAddressSet(snap))
-		for (DBTraceMemoryRegion reg : memoryManager.getRegionsAtSnap(snap)) {
-			temp.add(reg.getRange());
-		}
+		// TODO: Performance test this
+		forVisibleRegions(reg -> temp.add(reg.getRange()));
 		addressSet = temp;
 	}
 
@@ -49,26 +71,21 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	@Override
 	public MemoryBlock getBlock(Address addr) {
-		DBTraceMemoryRegion region = memoryManager.getRegionContaining(snap, addr);
+		DBTraceMemoryRegion region = getTopRegion(s -> memoryManager.getRegionContaining(s, addr));
 		return region == null ? null : getBlock(region);
 	}
 
 	@Override
 	public MemoryBlock getBlock(String blockName) {
-		DBTraceMemoryRegion region = memoryManager.getLiveRegionByPath(snap, blockName);
+		DBTraceMemoryRegion region =
+			getTopRegion(s -> memoryManager.getLiveRegionByPath(s, blockName));
 		return region == null ? null : getBlock(region);
 	}
 
 	@Override
 	public MemoryBlock[] getBlocks() {
 		List<MemoryBlock> result = new ArrayList<>();
-		for (DBTraceMemoryRegion region : memoryManager.getRegionsInternal()) {
-			MemoryBlock block = getBlock(region);
-			if (block == null) {
-				continue;
-			}
-			result.add(block);
-		}
+		forVisibleRegions(reg -> result.add(getBlock(reg)));
 		return result.toArray(new MemoryBlock[result.size()]);
 	}
 

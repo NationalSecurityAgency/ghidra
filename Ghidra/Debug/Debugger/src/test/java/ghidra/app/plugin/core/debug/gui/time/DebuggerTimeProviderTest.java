@@ -26,6 +26,7 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
 
@@ -44,11 +45,21 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		DBTraceTimeManager timeManager = tb.trace.getTimeManager();
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceSnapshot first = timeManager.createSnapshot("First");
-			first.setTicks(123);
 			Calendar c = Calendar.getInstance(); // System time zone
 			c.set(2020, 0, 1, 9, 0, 0);
 			first.setRealTime(c.getTimeInMillis());
-			timeManager.getSnapshot(10, true).setDescription("Snap 10");
+			TraceSnapshot second = timeManager.getSnapshot(10, true);
+			second.setDescription("Snap 10");
+			second.setSchedule(TraceSchedule.parse("0:5,t1-5"));
+		}
+	}
+
+	protected void addScratchSnapshot() {
+		DBTraceTimeManager timeManager = tb.trace.getTimeManager();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceSnapshot scratch = timeManager.getSnapshot(Long.MIN_VALUE, true);
+			scratch.setDescription("Scratch");
+			scratch.setSchedule(TraceSchedule.parse("0:t0-5"));
 		}
 	}
 
@@ -64,13 +75,13 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		SnapshotRow firstRow = snapsDisplayed.get(0);
 		assertEquals(0, firstRow.getSnap());
 		assertEquals("First", firstRow.getDescription());
-		assertEquals(123, firstRow.getTicks());
+		assertEquals("0", firstRow.getSchedule()); // Snap 0 has "0" schedule
 		assertEquals("Jan 01, 2020 09:00 AM", firstRow.getTimeStamp());
 
 		SnapshotRow secondRow = snapsDisplayed.get(1);
 		assertEquals(10, secondRow.getSnap());
 		assertEquals("Snap 10", secondRow.getDescription());
-		assertEquals(0, secondRow.getTicks());
+		assertEquals("0:5,t1-5", secondRow.getSchedule());
 		// Timestamp is left unchecked, since default is current time
 	}
 
@@ -288,5 +299,87 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		waitForSwing();
 
 		assertNull(timeProvider.snapshotFilterPanel.getSelectedItem());
+	}
+
+	@Test
+	public void testAddScratchThenActivateIsHidden() throws Exception {
+		createSnaplessTrace();
+		traceManager.openTrace(tb.trace);
+		addSnapshots();
+		addScratchSnapshot();
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		List<SnapshotRow> data = timeProvider.snapshotTableModel.getModelData();
+		assertEquals(2, data.size());
+		for (SnapshotRow row : data) {
+			assertTrue(row.getSnap() >= 0);
+		}
+	}
+
+	@Test
+	public void testActiveThenAddScratchIsHidden() throws Exception {
+		createSnaplessTrace();
+		traceManager.openTrace(tb.trace);
+		addSnapshots();
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(2, timeProvider.snapshotTableModel.getModelData().size());
+
+		addScratchSnapshot();
+		waitForDomainObject(tb.trace);
+
+		List<SnapshotRow> data = timeProvider.snapshotTableModel.getModelData();
+		assertEquals(2, data.size());
+		for (SnapshotRow row : data) {
+			assertTrue(row.getSnap() >= 0);
+		}
+	}
+
+	@Test
+	public void testAddScratchThenActivateThenToggleIsShown() throws Exception {
+		createSnaplessTrace();
+		traceManager.openTrace(tb.trace);
+		addSnapshots();
+		addScratchSnapshot();
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(true, timeProvider.hideScratch);
+		assertEquals(2, timeProvider.snapshotTableModel.getModelData().size());
+
+		performAction(timeProvider.actionHideScratch);
+
+		assertEquals(false, timeProvider.hideScratch);
+		assertEquals(3, timeProvider.snapshotTableModel.getModelData().size());
+
+		performAction(timeProvider.actionHideScratch);
+
+		assertEquals(true, timeProvider.hideScratch);
+		assertEquals(2, timeProvider.snapshotTableModel.getModelData().size());
+	}
+
+	@Test
+	public void testToggleThenAddScratchThenActivateIsShown() throws Exception {
+		performAction(timeProvider.actionHideScratch);
+
+		createSnaplessTrace();
+		traceManager.openTrace(tb.trace);
+		addSnapshots();
+		addScratchSnapshot();
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(false, timeProvider.hideScratch);
+		assertEquals(3, timeProvider.snapshotTableModel.getModelData().size());
 	}
 }

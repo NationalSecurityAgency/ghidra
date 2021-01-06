@@ -505,6 +505,12 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
 		}
 
+		public static TraceAddressSnapRangeQuery mostRecent(Address address, Range<Long> span) {
+			return intersecting(
+				new ImmutableTraceAddressSnapRange(address, span),
+				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
+		}
+
 		public static TraceAddressSnapRangeQuery equalTo(TraceAddressSnapRange shape) {
 			return equalTo(shape, null, TraceAddressSnapRangeQuery::new);
 		}

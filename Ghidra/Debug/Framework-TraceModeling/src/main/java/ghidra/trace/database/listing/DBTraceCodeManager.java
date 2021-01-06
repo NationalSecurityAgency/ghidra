@@ -50,8 +50,10 @@ import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.AddressSnap;
 import ghidra.trace.model.DefaultAddressSnap;
 import ghidra.trace.model.listing.TraceCodeManager;
+import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -293,6 +295,11 @@ public class DBTraceCodeManager
 	@Override
 	public Lock writeLock() {
 		return spaceStore.writeLock();
+	}
+
+	@Override
+	public TraceCodeSpace getCodeSpace(TraceAddressSpace space, boolean createIfAbsent) {
+		return get(space, createIfAbsent);
 	}
 
 	@Override

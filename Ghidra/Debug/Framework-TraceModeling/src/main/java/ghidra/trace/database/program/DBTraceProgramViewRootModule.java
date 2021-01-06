@@ -17,11 +17,14 @@ package ghidra.trace.database.program;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.util.ComparatorMath;
 import ghidra.util.LockHold;
 import ghidra.util.exception.*;
 
@@ -102,11 +105,10 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 		// NOTE: Would flush on snap change
 		try (LockHold hold = LockHold.lock(program.trace.getReadWriteLock().readLock())) {
 			List<DBTraceProgramViewFragment> frags = new ArrayList<>();
-			for (DBTraceMemoryRegion region : program.trace.getMemoryManager()
-					.getRegionsAtSnap(program.snap)) {
+			program.memory.forVisibleRegions(region -> {
 				frags.add(listing.fragmentsByRegion.computeIfAbsent(region,
 					r -> new DBTraceProgramViewFragment(listing, r)));
-			}
+			});
 			return frags.toArray(new DBTraceProgramViewFragment[frags.size()]);
 		}
 	}
@@ -114,17 +116,11 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 	@Override
 	public int getIndex(String name) {
 		// TODO: This isn't pretty at all. Really should database these.
+		List<String> names = new ArrayList<>();
 		try (LockHold hold = LockHold.lock(program.trace.getReadWriteLock().readLock())) {
-			int i = 0;
-			for (DBTraceMemoryRegion region : program.trace.getMemoryManager()
-					.getRegionsAtSnap(program.snap)) {
-				if (name.equals(region.getName())) {
-					return i;
-				}
-				i++;
-			}
+			program.memory.forVisibleRegions(region -> names.add(region.getName()));
 		}
-		return -1;
+		return names.indexOf(names);
 	}
 
 	@Override
@@ -173,14 +169,44 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 		return true;
 	}
 
+	protected <T> T reduceRegions(java.util.function.Function<TraceMemoryRegion, T> func,
+			BiFunction<T, T, T> reducer) {
+		var action = new Consumer<TraceMemoryRegion>() {
+			public T cur;
+
+			@Override
+			public void accept(TraceMemoryRegion region) {
+				if (cur == null) {
+					cur = func.apply(region);
+				}
+				else {
+					cur = reducer.apply(cur, func.apply(region));
+				}
+			}
+		};
+		return action.cur;
+	}
+
 	@Override
 	public Address getMinAddress() {
-		return program.trace.getMemoryManager().getRegionsAddressSet(program.snap).getMinAddress();
+		if (!program.viewport.isForked()) {
+			return program.trace.getMemoryManager()
+					.getRegionsAddressSet(program.snap)
+					.getMinAddress();
+		}
+		// TODO: There has got to be a better way
+		return reduceRegions(TraceMemoryRegion::getMinAddress, ComparatorMath::cmin);
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		return program.trace.getMemoryManager().getRegionsAddressSet(program.snap).getMaxAddress();
+		if (!program.viewport.isForked()) {
+			return program.trace.getMemoryManager()
+					.getRegionsAddressSet(program.snap)
+					.getMaxAddress();
+		}
+		// TODO: There has got to be a better way
+		return reduceRegions(TraceMemoryRegion::getMaxAddress, ComparatorMath::cmax);
 	}
 
 	@Override
@@ -195,7 +221,8 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 
 	@Override
 	public AddressSetView getAddressSet() {
-		return program.trace.getMemoryManager().getRegionsAddressSet(program.snap);
+		return program.viewport
+				.unionedAddresses(s -> program.trace.getMemoryManager().getRegionsAddressSet(s));
 	}
 
 	@Override
