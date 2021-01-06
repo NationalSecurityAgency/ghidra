@@ -193,12 +193,6 @@ public class DelayImportDataDirectory extends DataDirectory {
 		    program.getExternalManager().addExternalLibraryName(dllName, SourceType.IMPORTED);
 		} catch (DuplicateNameException | InvalidInputException e) {}
     }
-    
-    private void createExternalFunction(Program program, String dllName, String function) {
-    	try {
-    		program.getExternalManager().addExtFunction(dllName, function, null, SourceType.IMPORTED);
-    	} catch (DuplicateNameException | InvalidInputException e) {}
-    }
 
     private void createSymbol(Program program, Address addr, String name) {
 		try {
@@ -248,7 +242,6 @@ public class DelayImportDataDirectory extends DataDirectory {
 			String function = String.format("ImportByName_%s",
 					ibn.getName() != null ? ibn.getName() : SymbolUtilities.ORDINAL_PREFIX + ibn.getHint());
 			createSymbol(program, thunkAddress, function);
-			createExternalFunction(program, dllName, ibn.getName() != null ? ibn.getName() : SymbolUtilities.ORDINAL_PREFIX + ibn.getHint());
 			PeUtils.createData(program, thunkAddress, ibn.toDataType(), log);
 		}
 	}
@@ -283,10 +276,14 @@ public class DelayImportDataDirectory extends DataDirectory {
 				createSymbol(program, thunkAddress, SymbolUtilities.getAddressAppendedName(
 					DelayImportDescriptor.NAME + "_IAT", thunkAddress));
 				dt = PointerDataType.getPointer(null,-1);
-			} else if (thunkType == ThunkType.INT) {
+			} else if (thunkType == ThunkType.INT && !thunk.isOrdinal()) {
 				createSymbol(program, thunkAddress, SymbolUtilities.getAddressAppendedName(
 						DelayImportDescriptor.NAME + "_INT", thunkAddress));
 				dt = thunk.toDataType();
+			} else if (thunkType == ThunkType.INT && thunk.isOrdinal()) {
+				createSymbol(program, thunkAddress, SymbolUtilities.getAddressAppendedName(
+						DelayImportDescriptor.NAME + "_INT", thunkAddress));
+				dt = (DataType)DWORD;
 			}
 			PeUtils.createData(program, thunkAddress, dt, log);
 			setEolComment(program, thunkAddress, "Delay Import Data");
