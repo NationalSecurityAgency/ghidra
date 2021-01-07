@@ -476,6 +476,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		FunctionTagTable list = getSourceTable();
 		selectTagInTable(name, list);
+
 		clickButton("addBtn");
 	}
 
@@ -501,10 +502,12 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private FunctionTagTable getTargetTable() {
+		waitForTables();
 		return provider.getTargetPanel().getTable();
 	}
 
 	private FunctionTagTable getSourceTable() {
+		waitForTables();
 		return provider.getSourcePanel().getTable();
 	}
 
@@ -538,6 +541,9 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	private void clickButton(String name) {
 		FunctionTagButtonPanel btnPanel = provider.getButtonPanel();
+
+		// if we try to press a button before the panel is showing, the test will fail
+		waitFor(btnPanel::isShowing);
 		pressButtonByName(btnPanel, name);
 		waitForSwing();
 	}
@@ -602,7 +608,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		HintTextField inputField = provider.getTagInputField();
 		setText(inputField, nameList);
-		triggerEnter(inputField);
+		provider.pressEnterOnTagInputField();
 		waitForTasks();
 		waitForTables();
 
@@ -668,8 +674,10 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		FunctionTagTable table = getSourceTable();
 		FunctionTagTableModel model = (FunctionTagTableModel) table.getModel();
-		Optional<FunctionTagRowObject> optional =
-			model.getModelData().stream().filter(row -> row.isImmutable()).findAny();
+		Optional<FunctionTagRowObject> optional = model.getModelData()
+				.stream()
+				.filter(row -> row.isImmutable())
+				.findAny();
 		assertTrue("No Immutable tags found", optional.isPresent());
 		FunctionTag foundTag = optional.get().getTag();
 		return (InMemoryFunctionTag) foundTag;

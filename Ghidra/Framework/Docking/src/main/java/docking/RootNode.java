@@ -452,11 +452,11 @@ class RootNode extends WindowNode {
 		detachChild();
 		setLastFocusedProviderInWindow(null);   // clear out stale last focused provider
 		List<DetachedWindowNode> copy = new ArrayList<>(detachedWindows);
+		detachedWindows.clear();
 		for (DetachedWindowNode windowNode : copy) {
 			notifyWindowRemoved(windowNode);
 			windowNode.dispose();
 		}
-		detachedWindows.clear();
 
 		int x = Integer.parseInt(rootNodeElement.getAttributeValue("X_POS"));
 		int y = Integer.parseInt(rootNodeElement.getAttributeValue("Y_POS"));

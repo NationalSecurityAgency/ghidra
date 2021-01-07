@@ -29,6 +29,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
+import ghidra.util.exception.AssertException;
 
 /**
  * Node object for managing one or more components. If more that one managed component
@@ -39,6 +40,7 @@ class ComponentNode extends Node {
 	private ComponentPlaceholder top;
 	private List<ComponentPlaceholder> windowPlaceholders;
 	private JComponent comp;
+	private boolean isDisposed;
 
 	// keep track of top ComponentWindowingPlaceholder
 	private ChangeListener tabbedPaneChangeListener = e -> {
@@ -243,6 +245,12 @@ class ComponentNode extends Node {
 
 	@Override
 	JComponent getComponent() {
+
+		if (isDisposed) {
+			throw new AssertException(
+				"Attempted to reuse a component window node");
+		}
+
 		if (!invalid) {
 			return comp;
 		}
@@ -528,9 +536,11 @@ class ComponentNode extends Node {
 
 	@Override
 	void dispose() {
+		isDisposed = true;
 		if (top != null) {
 			top.dispose();
 		}
+		windowPlaceholders.clear();
 	}
 
 //==================================================================================================

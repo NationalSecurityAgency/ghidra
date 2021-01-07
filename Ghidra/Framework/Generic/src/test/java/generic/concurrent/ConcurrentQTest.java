@@ -42,11 +42,6 @@ public class ConcurrentQTest extends AbstractGenericTest {
 	private ConcurrentQ<TestItem, TestResult> q;
 	private TestCallback callback = new TestCallback();
 
-	public ConcurrentQTest() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-
 	// @formatter:off
 	@Before
 	public void setUp() throws Exception {
@@ -558,8 +553,10 @@ public class ConcurrentQTest extends AbstractGenericTest {
 //		Msg.debug(this, "\tAFTER WAITING");
 
 		assertTrue("Timed-out waiting for queued items", checkpointRunner.waitForFinish(3000));
-		Assert.assertNotEquals("All items were processed even though we cancelled the monitor - items " +
-			"processed: " + callback.itemsProcessed(), callback.itemsProcessed(), totalItems);
+		Assert.assertNotEquals(
+			"All items were processed even though we cancelled the monitor - items " +
+				"processed: " + callback.itemsProcessed(),
+			callback.itemsProcessed(), totalItems);
 	}
 
 	@Test
@@ -710,7 +707,7 @@ public class ConcurrentQTest extends AbstractGenericTest {
 		private boolean expectException;
 		private volatile Exception exception;
 
-		/** A thread to offer things to our bounded queue, which will block when full. */
+		/* A thread to offer things to our bounded queue, which will block when full. */
 		OfferThread(Iterator<TestItem> items, boolean expectException) {
 			this.items = items;
 			this.expectException = expectException;
