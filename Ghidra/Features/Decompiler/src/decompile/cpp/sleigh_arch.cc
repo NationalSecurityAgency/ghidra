@@ -59,11 +59,11 @@ void LanguageDescription::restoreXml(const Element *el)
     if (subel->getName() == "description")
       description = subel->getContent();
     else if (subel->getName() == "compiler") {
-      compilers.push_back(CompilerTag());
+      compilers.emplace_back();
       compilers.back().restoreXml(subel);
     }
     else if (subel->getName() == "truncate_space") {
-      truncations.push_back(TruncationTag());
+      truncations.emplace_back();
       truncations.back().restoreXml(subel);
     }
   }
@@ -113,7 +113,7 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
   List::const_iterator iter;
   for(iter=list.begin();iter!=list.end();++iter) {
     if ((*iter)->getName() != "language") continue;
-    description.push_back(LanguageDescription());
+    description.emplace_back();
     description.back().restoreXml( *iter );
   }
   delete doc;

@@ -53,12 +53,11 @@ SymbolEntry::SymbolEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const R
   uselimit = rnglist;
 }
 
-/// Assuming the boundary offsets have been specified with
-/// the constructor, fill in the rest of the data.
+/// Establish the boundary offsets and fill in additional data
 /// \param data contains the raw initialization data
 /// \param a is the starting offset of the entry
 /// \param b is the ending offset of the entry
-void SymbolEntry::initialize(const EntryInitData &data,uintb a,uintb b)
+SymbolEntry::SymbolEntry(const EntryInitData &data,uintb a,uintb b)
 
 {
   addr = Address(data.space,a);

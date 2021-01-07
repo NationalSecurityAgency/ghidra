@@ -2660,7 +2660,7 @@ void JumpTable::restoreXml(const Element *el)
 	missedlabel = true;	// No following entries are allowed to have a label attribute
     }
     else if (subel->getName() == "loadtable") {
-      loadpoints.push_back(LoadTable());
+      loadpoints.emplace_back();
       loadpoints.back().restoreXml(subel,glb);
     }
     else if (subel->getName() == "basicoverride") {

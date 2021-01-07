@@ -1066,7 +1066,7 @@ void Architecture::parsePreferSplit(const Element *el)
   List::const_iterator iter;
 
   for(iter=list.begin();iter!=list.end();++iter) {
-    splitrecords.push_back(PreferSplitRecord());
+    splitrecords.emplace_back();
     PreferSplitRecord &record( splitrecords.back() );
     record.storage.restoreXml( *iter, this );
     record.splitoffset = record.storage.size/2;

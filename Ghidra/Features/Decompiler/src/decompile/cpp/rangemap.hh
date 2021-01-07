@@ -28,11 +28,10 @@
 /// intervals.  I.e. a map from a linear ordered domain to
 /// (multiple) records.
 /// The \b recordtype is the main object in the container, it must support:
-///    - recordtype()   a constructor taking no parameters
+///    - recordtype(inittype,linetype,linetype)   a constructor taking 3 parameters
 ///    - getFirst()     beginning of range
 ///    - getLast()      end of range (inclusive)
 ///    - getSubsort()   retrieve the subsorttype object (see below)
-///    - initialize(inittype,linetype,linetype)  an initializer routine
 ///
 /// The \b recordtype must define data-types:
 ///    - linetype
@@ -231,8 +230,7 @@ rangemap<_recordtype>::insert(const inittype &data,linetype a,linetype b)
       unzip(f-1,low);		// If so do the refinement
   }
 
-  record.push_front( _recordtype() );
-  record.front().initialize( data, a, b );
+  record.emplace_front( data, a, b );
   liter = record.begin();
 
   AddrRange addrrange(b,(*liter).getSubsort());
