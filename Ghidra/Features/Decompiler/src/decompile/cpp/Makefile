@@ -49,7 +49,7 @@ YACC=bison
 # libraries
 #INCLUDES=-I$(BFDHOME)/include
 INCLUDES=
-BFDLIB=-lbfd -liberty -lz
+BFDLIB=-lbfd -lz
 
 LNK=
 

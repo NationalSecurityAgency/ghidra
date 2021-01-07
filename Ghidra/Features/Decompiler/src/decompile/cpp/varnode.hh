@@ -310,6 +310,7 @@ public:
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
   void saveXml(ostream &s) const; ///< Save a description of \b this as an XML tag
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
+  static void printRaw(ostream &s,const Varnode *vn);	///< Print raw info about a Varnode to stream
   //  static Varnode *restoreXml(const Element *el,Funcdata &fd,bool coderef);
 };
 
