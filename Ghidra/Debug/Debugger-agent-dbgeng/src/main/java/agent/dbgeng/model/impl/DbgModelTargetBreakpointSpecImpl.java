@@ -22,9 +22,14 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface2.DbgModelTargetBreakpointContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
 
+@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetBreakpointSpec {
 

@@ -31,9 +31,15 @@ import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "Memory", elements = { //
+	@TargetElementType(type = DbgModelTargetMemoryRegionImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetMemoryContainer {
 

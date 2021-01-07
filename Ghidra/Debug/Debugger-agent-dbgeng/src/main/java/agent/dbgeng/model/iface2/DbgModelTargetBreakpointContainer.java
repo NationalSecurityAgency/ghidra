@@ -26,8 +26,14 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.TargetBreakpointContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 
+@TargetObjectSchemaInfo(name = "BreakpointContainer", elements = {
+	@TargetElementType(type = DbgModelTargetBreakpointSpec.class)
+}, attributes = {
+	@TargetAttributeType(type = Void.class)
+}, canonicalContainer = true)
 public interface DbgModelTargetBreakpointContainer extends DbgModelTargetObject,
 		TargetBreakpointContainer<DbgModelTargetBreakpointContainer>, DbgEventsListenerAdapter {
 

@@ -21,8 +21,14 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.DbgModuleSection;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "SectionContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetModuleSectionImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetModuleSectionContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleSectionContainer {
 

@@ -45,6 +45,8 @@ import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject.TargetObjectListener;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.AllTargetObjectListenerAdapter;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
@@ -1065,6 +1067,24 @@ public abstract class AbstractModelForDbgTest
 				assertEquals(List.of("Sessions", "[0]", "Processes", "[0]"), focusProcPath.get());
 				seq.exit();
 			}).finish());
+		}
+	}
+
+	protected void init(ModelHost m) throws Throwable {
+		waitOn(m.init());
+	}
+
+	@Test
+	public void testSerializeSchema() throws Throwable {
+		try (ModelHost m = modelHost()) {
+			DebuggerObjectModel model = m.getModel();
+			init(m);
+
+			TargetObjectSchema rootSchema = model.getRootSchema();
+			String serialized = XmlSchemaContext.serialize(rootSchema.getContext());
+			System.out.println(serialized);
+
+			assertEquals("Debugger", rootSchema.getName().toString());
 		}
 	}
 }

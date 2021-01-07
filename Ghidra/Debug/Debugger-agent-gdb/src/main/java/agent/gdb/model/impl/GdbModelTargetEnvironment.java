@@ -24,7 +24,6 @@ import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(name = "Environment", elements = {
 	@TargetElementType(type = Void.class)
@@ -35,6 +34,10 @@ public class GdbModelTargetEnvironment
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferior>
 		implements TargetEnvironment<GdbModelTargetEnvironment> {
 	public static final String NAME = "Environment";
+
+	public static final String VISIBLE_ARCH_ATTRIBUTE_NAME = "arch";
+	public static final String VISIBLE_OS_ATTRIBUTE_NAME = "os";
+	public static final String VISIBLE_ENDIAN_ATTRIBUTE_NAME = "endian";
 
 	protected final GdbModelImpl impl;
 
@@ -96,7 +99,7 @@ public class GdbModelTargetEnvironment
 			//       But, that may also be (perhaps more) version dependent
 			this.arch = arch;
 		}).exceptionally(e -> {
-			Msg.error(this, "Could not get target architecture", e);
+			model.reportError(this, "Could not get target architecture", e);
 			return null;
 		});
 	}
@@ -130,7 +133,7 @@ public class GdbModelTargetEnvironment
 			//       Would need to ignore "auto", "default", and "none"?
 			this.os = os;
 		}).exceptionally(e -> {
-			Msg.error(this, "Could not get target os", e);
+			model.reportError(this, "Could not get target os", e);
 			return null;
 		});
 	}
@@ -148,7 +151,7 @@ public class GdbModelTargetEnvironment
 				endian = "(unknown)";
 			}
 		}).exceptionally(e -> {
-			Msg.error(this, "Could not get target endian", e);
+			model.reportError(this, "Could not get target endian", e);
 			return null;
 		});
 	}
@@ -170,21 +173,18 @@ public class GdbModelTargetEnvironment
 		});
 	}
 
-	@TargetAttributeType(name = ARCH_ATTRIBUTE_NAME, hidden = true)
-	@Deprecated(forRemoval = true)
-	public String getInvisibleArch() {
+	@TargetAttributeType(name = VISIBLE_ARCH_ATTRIBUTE_NAME)
+	public String getVisibleArch() {
 		return arch;
 	}
 
-	@TargetAttributeType(name = OS_ATTRIBUTE_NAME, hidden = true)
-	@Deprecated(forRemoval = true)
-	public String getInvisibleOs() {
+	@TargetAttributeType(name = VISIBLE_OS_ATTRIBUTE_NAME)
+	public String getVisibleOs() {
 		return os;
 	}
 
-	@TargetAttributeType(name = ENDIAN_ATTRIBUTE_NAME, hidden = true)
-	@Deprecated(forRemoval = true)
-	public String getInvisibleEndian() {
+	@TargetAttributeType(name = VISIBLE_ENDIAN_ATTRIBUTE_NAME)
+	public String getVisibleEndian() {
 		return endian;
 	}
 

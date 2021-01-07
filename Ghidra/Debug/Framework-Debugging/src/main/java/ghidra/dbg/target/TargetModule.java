@@ -39,7 +39,6 @@ public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObje
 	Class<Private.Cls> tclass = (Class) TargetModule.class;
 	TypeSpec<TargetModule<?>> TYPE = TypeSpec.auto();
 
-	String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
 	String MODULE_NAME_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module_name";
 
@@ -54,9 +53,9 @@ public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObje
 	 * 
 	 * @return the base address, or {@code null}
 	 */
-	@TargetAttributeType(name = VISIBLE_RANGE_ATTRIBUTE_NAME, required = true)
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default AddressRange getRange() {
-		return getTypedAttributeNowByName(VISIBLE_RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
+		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
 	}
 
 	/**

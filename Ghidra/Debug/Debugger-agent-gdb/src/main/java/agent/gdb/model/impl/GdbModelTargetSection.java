@@ -34,6 +34,9 @@ import ghidra.program.model.address.*;
 public class GdbModelTargetSection
 		extends DefaultTargetObject<TargetObject, GdbModelTargetSectionContainer>
 		implements TargetSection<GdbModelTargetSection> {
+
+	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
+
 	protected static String indexSection(GdbModuleSection section) {
 		return section.getName();
 	}
@@ -85,9 +88,8 @@ public class GdbModelTargetSection
 		return range;
 	}
 
-	@Deprecated(forRemoval = true)
-	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME)
-	public AddressRange getInvisibleRange() {
+	@TargetAttributeType(name = VISIBLE_RANGE_ATTRIBUTE_NAME)
+	public AddressRange getVisibleRange() {
 		return range;
 	}
 

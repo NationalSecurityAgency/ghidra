@@ -45,7 +45,6 @@ public interface TargetSection<T extends TargetSection<T>> extends TypedTargetOb
 
 	String MODULE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module";
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
-	String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 
 	/**
 	 * Get the module to which this section belongs
@@ -66,9 +65,9 @@ public interface TargetSection<T extends TargetSection<T>> extends TypedTargetOb
 	 * 
 	 * @return the range
 	 */
-	@TargetAttributeType(name = VISIBLE_RANGE_ATTRIBUTE_NAME, required = true, fixed = true)
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, required = true, fixed = true)
 	public default AddressRange getRange() {
-		return getTypedAttributeNowByName(VISIBLE_RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
+		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
 	}
 
 	/**

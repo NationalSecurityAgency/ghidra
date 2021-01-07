@@ -25,9 +25,14 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.reason.*;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-// TODO: Should TargetThreadContainer be a thing?
+@TargetObjectSchemaInfo(name = "ThreadContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetThreadImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetThreadContainer {
 

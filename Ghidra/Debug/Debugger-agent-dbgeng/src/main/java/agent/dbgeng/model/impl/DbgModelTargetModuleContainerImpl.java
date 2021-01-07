@@ -26,9 +26,15 @@ import ghidra.async.AsyncFence;
 import ghidra.async.AsyncLazyMap;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "ModuleContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetModuleImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleContainer {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.

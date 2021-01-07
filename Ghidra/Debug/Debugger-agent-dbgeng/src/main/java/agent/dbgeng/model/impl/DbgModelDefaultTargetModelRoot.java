@@ -16,6 +16,7 @@
 package agent.dbgeng.model.impl;
 
 import ghidra.dbg.target.TargetAggregate;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 
 public class DbgModelDefaultTargetModelRoot extends DbgModelTargetObjectImpl
 		implements TargetAggregate {
@@ -23,4 +24,10 @@ public class DbgModelDefaultTargetModelRoot extends DbgModelTargetObjectImpl
 	public DbgModelDefaultTargetModelRoot(DbgModelImpl model, String typeHint) {
 		super(model, null, null, typeHint);
 	}
+
+	public DbgModelDefaultTargetModelRoot(DbgModelImpl model, String typeHint,
+			TargetObjectSchema schema) {
+		super(model, null, null, typeHint, schema);
+	}
+
 }

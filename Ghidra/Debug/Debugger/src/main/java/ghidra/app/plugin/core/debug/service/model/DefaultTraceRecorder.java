@@ -1993,6 +1993,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	protected synchronized void removeProcessModule(TargetModule<?> module) {
 		String path = PathUtils.toString(module.getPath());
 		long snap = snapshot.getKey();
+		TraceThread eventThread = snapshot.getEventThread();
 		TraceModule traceModule = moduleManager.getLoadedModuleByPath(snap, path);
 		if (traceModule == null) {
 			Msg.warn(this, "unloaded " + path + " is not in the trace");
@@ -2000,6 +2001,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 		try (PermanentTransaction tid =
 			PermanentTransaction.start(trace, "Module " + path + " unloaded")) {
+			if (traceModule.getLoadedSnap() == snap) {
+				Msg.warn(this, "Observed module unload in the same snap as its load");
+				createSnapshot("WARN: Module removed", eventThread, tid);
+				snap = snapshot.getKey();
+			}
 			traceModule.setUnloadedSnap(snap - 1);
 		}
 		catch (DuplicateNameException e) {

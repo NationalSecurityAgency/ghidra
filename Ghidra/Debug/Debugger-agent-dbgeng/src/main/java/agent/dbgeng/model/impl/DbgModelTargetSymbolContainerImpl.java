@@ -23,8 +23,14 @@ import java.util.stream.Collectors;
 import agent.dbgeng.manager.impl.DbgMinimalSymbol;
 import agent.dbgeng.model.iface2.DbgModelTargetSymbolContainer;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "SymbolContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetSymbolImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetSymbolContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSymbolContainer {
 

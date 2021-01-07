@@ -30,9 +30,26 @@ import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
+@TargetObjectSchemaInfo(name = "StackFrame", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.FUNC_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.FUNC_TABLE_ENTRY_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.INST_OFFSET_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.FRAME_OFFSET_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.RETURN_OFFSET_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.STACK_OFFSET_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.VIRTUAL_ATTRIBUTE_NAME, type = Boolean.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM0_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM1_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM2_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM3_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetStackFrame {
 

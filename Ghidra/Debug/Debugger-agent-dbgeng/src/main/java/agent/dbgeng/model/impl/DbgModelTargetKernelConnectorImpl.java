@@ -26,7 +26,13 @@ import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "KernelConnector", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetKernelConnectorImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetConnector {
 

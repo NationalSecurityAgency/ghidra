@@ -28,13 +28,23 @@ import agent.dbgeng.model.iface2.DbgModelTargetSessionAttributes;
 import agent.dbgeng.model.iface2.DbgModelTargetSessionAttributesMachine;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "SessionAttributesMachine", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Arch", type = String.class), //
+	@TargetAttributeType(name = "Debugger", type = String.class), //
+	@TargetAttributeType(name = "OS", type = String.class), //
+	@TargetAttributeType(name = "Mode", type = String.class), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetSessionAttributesMachineImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSessionAttributesMachine {
 
-	String ARCH_ATTRIBUTE_NAME = "Arch";
-	String DEBUGGER_ATTRIBUTE_NAME = "Debugger";
-	String OS_ATTRIBUTE_NAME = "OS";
+	static String ARCH_ATTRIBUTE_NAME = "Arch";
+	static String DEBUGGER_ATTRIBUTE_NAME = "Debugger";
+	static String OS_ATTRIBUTE_NAME = "OS";
 
 	public DbgModelTargetSessionAttributesMachineImpl(DbgModelTargetSessionAttributes attributes) {
 		super(attributes.getModel(), attributes, "Machine", "SessionMachineAttributes");

@@ -221,7 +221,12 @@ public interface TargetObject extends TargetObjectRef {
 				.collect(Collectors.toList());
 	}
 
-	@Deprecated
+	/**
+	 * A conventional prefix of hidden attributes defined by the {@code TargetObject} interfaces
+	 * 
+	 * <p>
+	 * When the "hidden" field of attributes can be overridden, this prefix should be removed
+	 */
 	String PREFIX_INVISIBLE = "_";
 
 	String DISPLAY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "display";

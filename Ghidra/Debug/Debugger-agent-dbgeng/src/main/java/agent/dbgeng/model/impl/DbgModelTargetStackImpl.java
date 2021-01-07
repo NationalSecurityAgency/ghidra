@@ -24,19 +24,27 @@ import agent.dbgeng.manager.DbgStackFrame;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "Stack", elements = { //
+	@TargetElementType(type = DbgModelTargetStackFrameImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetStack {
 
 	protected final DbgModelTargetThread thread;
 
+	public static final String NAME = "Stack";
+
 	protected final Map<Integer, DbgModelTargetStackFrameImpl> framesByLevel =
 		new WeakValueHashMap<>();
 
 	public DbgModelTargetStackImpl(DbgModelTargetThread thread, DbgModelTargetProcess process) {
-		super(thread.getModel(), thread, "Stack", "Stack");
+		super(thread.getModel(), thread, NAME, "Stack");
 		this.thread = thread;
 	}
 

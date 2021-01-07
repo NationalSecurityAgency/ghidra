@@ -20,8 +20,14 @@ import java.util.Map;
 
 import agent.dbgeng.manager.DbgModuleSection;
 import agent.dbgeng.model.iface2.DbgModelTargetModuleSection;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.*;
 
+@TargetObjectSchemaInfo(name = "Section", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleSection {
 	protected static final String OBJFILE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "objfile";
@@ -46,6 +52,7 @@ public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 		), "Initialized");
 	}
 
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME)
 	@Override
 	public AddressRange getRange() {
 		return range;

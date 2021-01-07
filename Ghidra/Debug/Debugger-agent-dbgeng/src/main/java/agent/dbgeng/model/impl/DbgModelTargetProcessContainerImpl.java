@@ -25,9 +25,15 @@ import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "ProcessContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetProcessImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcessContainer {
 

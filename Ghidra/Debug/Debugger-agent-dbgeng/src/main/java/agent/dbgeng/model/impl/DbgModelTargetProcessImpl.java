@@ -33,13 +33,26 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
+@TargetObjectSchemaInfo(name = "Process", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Debug", type = DbgModelTargetDebugContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Memory", type = DbgModelTargetMemoryContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Modules", type = DbgModelTargetModuleContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Threads", type = DbgModelTargetThreadContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcess {
 
 	public static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
+
+	protected static final TargetAttachKindSet SUPPORTED_KINDS = TargetAttachKindSet.of( //
+		TargetAttachKind.BY_OBJECT_REF, TargetAttachKind.BY_ID);
 
 	protected static String indexProcess(DebugProcessId debugProcessId) {
 		return PathUtils.makeIndex(debugProcessId.id);
@@ -79,8 +92,11 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			//sections, //
 			threads //
 		), Map.of( //
+			ACCESSIBLE_ATTRIBUTE_NAME, false, //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, PARAMETERS //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, PARAMETERS, //
+			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
+			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, DbgModelTargetThreadImpl.SUPPORTED_KINDS //
 		), "Initialized");
 		setExecutionState(TargetExecutionState.ALIVE, "Initialized");
 

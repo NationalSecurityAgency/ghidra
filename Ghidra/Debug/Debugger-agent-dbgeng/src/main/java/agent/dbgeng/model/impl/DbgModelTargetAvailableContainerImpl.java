@@ -24,8 +24,14 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "AvailableContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetAvailableImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetAvailableContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetAvailableContainer {
 

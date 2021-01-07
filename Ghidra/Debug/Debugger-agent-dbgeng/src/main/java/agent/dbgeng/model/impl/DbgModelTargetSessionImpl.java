@@ -24,8 +24,16 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
 import agent.dbgeng.model.iface2.DbgModelTargetProcessContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
+@TargetObjectSchemaInfo(name = "Session", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = DbgModelTargetSessionAttributesImpl.class, fixed = true), //
+	@TargetAttributeType(name = "Processes", type = DbgModelTargetProcessContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSession {
 
@@ -61,8 +69,9 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 			attributes, //
 			processes //
 		), Map.of( //
+			ACCESSIBLE_ATTRIBUTE_NAME, true, //
 			PROMPT_ATTRIBUTE_NAME, DBG_PROMPT, //
-			//STATE_ATTRIBUTE_NAME, TargetExecutionState.RUNNING, //
+			STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE, //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");
 

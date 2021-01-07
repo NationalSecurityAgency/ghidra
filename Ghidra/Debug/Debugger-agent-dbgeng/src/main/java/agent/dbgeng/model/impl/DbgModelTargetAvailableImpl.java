@@ -20,8 +20,14 @@ import java.util.Map;
 
 import agent.dbgeng.model.iface2.DbgModelTargetAvailable;
 import agent.dbgeng.model.iface2.DbgModelTargetAvailableContainer;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
+@TargetObjectSchemaInfo(name = "Available", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetAvailableImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetAvailable {
 
@@ -44,7 +50,7 @@ public class DbgModelTargetAvailableImpl extends DbgModelTargetObjectImpl
 		this.pid = pid;
 
 		this.changeAttributes(List.of(), List.of(), Map.of(//
-			PID_ATTRIBUTE_NAME, pid, //
+			PID_ATTRIBUTE_NAME, (long) pid, //
 			DISPLAY_ATTRIBUTE_NAME, keyAttachable(pid) + " : " + name.trim(),
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");
@@ -61,6 +67,7 @@ public class DbgModelTargetAvailableImpl extends DbgModelTargetObjectImpl
 		), "Initialized");
 	}
 
+	@TargetAttributeType(name = PID_ATTRIBUTE_NAME, hidden = true)
 	@Override
 	public long getPid() {
 		return pid;

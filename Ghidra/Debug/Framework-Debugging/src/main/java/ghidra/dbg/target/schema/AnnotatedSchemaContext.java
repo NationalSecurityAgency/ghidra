@@ -31,6 +31,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.util.Msg;
 import utilities.util.reflection.ReflectionUtilities;
 
 public class AnnotatedSchemaContext extends DefaultSchemaContext {
@@ -115,8 +116,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 			return Set.of(TargetObject.class);
 		}
 		throw new IllegalArgumentException("Getter " + getter +
-			" for attribute must return primitive or subclass of " +
-			TargetObjectRef.class);
+			" for attribute must return primitive or subclass of " + TargetObjectRef.class);
 	}
 
 	protected final Map<Class<? extends TargetObject>, SchemaName> namesByClass =
@@ -126,13 +126,14 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 	protected SchemaName nameFromAnnotatedClass(Class<? extends TargetObject> cls) {
 		synchronized (namesByClass) {
+			TargetObjectSchemaInfo info = cls.getAnnotation(TargetObjectSchemaInfo.class);
+			if (info == null) {
+				// TODO: Compile-time validation?
+				Msg.warn(this, "Class " + cls + " is not annotated with @" +
+					TargetObjectSchemaInfo.class.getSimpleName());
+				return EnumerableTargetObjectSchema.OBJECT.getName();
+			}
 			return namesByClass.computeIfAbsent(cls, c -> {
-				TargetObjectSchemaInfo info = cls.getAnnotation(TargetObjectSchemaInfo.class);
-				if (info == null) {
-					// TODO: Compile-time validation?
-					throw new IllegalArgumentException("Class " + cls + " is not annotated with @" +
-						TargetObjectSchemaInfo.class.getSimpleName());
-				}
 				String name = info.name();
 				if (name.equals("")) {
 					return new SchemaName(cls.getSimpleName());
@@ -166,8 +167,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 			AttributeSchema attrSchema;
 			try {
-				attrSchema =
-					attributeSchemaFromAnnotatedMethod(declCls, method, at);
+				attrSchema = attributeSchemaFromAnnotatedMethod(declCls, method, at);
 			}
 			catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(
@@ -209,7 +209,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 					if (bounds.size() != 1) {
 						// TODO: Compile-time validation?
 						throw new IllegalArgumentException(
-							"Could not identify unique element class: " + bounds);
+							"Could not identify unique element class (" + bounds + ") for " + cls);
 					}
 					else {
 						Class<? extends TargetObject> bound = bounds.iterator().next();
@@ -219,8 +219,8 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 						}
 						catch (IllegalArgumentException e) {
 							throw new IllegalArgumentException(
-								"Could not get schema name from bound " + bound + " of " +
-									cls + ".fetchElements()",
+								"Could not get schema name from bound " + bound + " of " + cls +
+									".fetchElements()",
 								e);
 						}
 						builder.setDefaultElementSchema(schemaName);
@@ -245,30 +245,27 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	}
 
 	protected String attributeNameFromBean(String beanName, boolean isBool) {
-		beanName = isBool
-				? StringUtils.removeStartIgnoreCase(beanName, "is")
+		beanName = isBool ? StringUtils.removeStartIgnoreCase(beanName, "is")
 				: StringUtils.removeStartIgnoreCase(beanName, "get");
 		if (beanName.equals("")) {
 			throw new IllegalArgumentException("Attribute getter must have a name");
 		}
-		return beanName
-				.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")
+		return beanName.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")
 				.replaceAll("([a-z])([A-Z])", "$1_$2")
 				.toLowerCase();
 	}
 
 	protected AttributeSchema attributeSchemaFromAnnotation(TargetAttributeType at) {
-		return new DefaultAttributeSchema(at.name(), nameFromClass(at.type()),
-			at.required(), at.fixed(), at.hidden());
+		return new DefaultAttributeSchema(at.name(), nameFromClass(at.type()), at.required(),
+			at.fixed(), at.hidden());
 	}
 
 	protected AttributeSchema attributeSchemaFromAnnotatedMethod(Class<? extends TargetObject> cls,
 			Method method, TargetAttributeType at) {
 		if (method.getParameterCount() != 0) {
 			// TODO: Compile-time validation?
-			throw new IllegalArgumentException(
-				"Non-getter method " + method + " is annotated with @" +
-					TargetAttributeType.class.getSimpleName());
+			throw new IllegalArgumentException("Non-getter method " + method +
+				" is annotated with @" + TargetAttributeType.class.getSimpleName());
 		}
 		String name = at.name();
 		Class<?> ret = method.getReturnType();
@@ -276,11 +273,10 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 			name = attributeNameFromBean(method.getName(),
 				EnumerableTargetObjectSchema.BOOL.getTypes().contains(ret));
 		}
-		SchemaName primitiveName =
-			EnumerableTargetObjectSchema.nameForPrimitive(ret);
+		SchemaName primitiveName = EnumerableTargetObjectSchema.nameForPrimitive(ret);
 		if (primitiveName != null) {
-			return new DefaultAttributeSchema(name, primitiveName,
-				at.required(), at.fixed(), at.hidden());
+			return new DefaultAttributeSchema(name, primitiveName, at.required(), at.fixed(),
+				at.hidden());
 		}
 		Set<Class<? extends TargetObject>> bounds = getBoundsOfObjectAttributeGetter(cls, method);
 		if (bounds.size() != 1) {

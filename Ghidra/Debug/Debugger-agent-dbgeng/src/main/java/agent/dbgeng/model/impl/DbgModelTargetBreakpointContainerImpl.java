@@ -26,8 +26,14 @@ import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "BreakpointContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetBreakpointSpecImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetBreakpointContainer {
 

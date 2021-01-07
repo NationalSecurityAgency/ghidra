@@ -230,7 +230,7 @@ public class GdbModelTargetThread
 	protected CompletableFuture<?> updateStack() {
 		Msg.debug(this, "Updating stack for " + this);
 		return stack.update().thenCompose(__ -> updateInfo()).exceptionally(ex -> {
-			Msg.error(this, "Could not update stack for thread " + this, ex);
+			model.reportError(this, "Could not update stack for thread " + this, ex);
 			return null;
 		});
 	}

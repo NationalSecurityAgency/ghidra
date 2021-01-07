@@ -20,9 +20,20 @@ import java.util.Map;
 
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.DbgModelTargetModule;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
+@TargetObjectSchemaInfo(name = "Module", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Symbols", type = DbgModelTargetSymbolContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "BaseAddress", type = Address.class), //
+	@TargetAttributeType(name = "ImageName", type = String.class), //
+	@TargetAttributeType(name = "TimeStamp", type = Integer.class), //
+	@TargetAttributeType(name = "Len", type = String.class), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetModuleImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModule {
 	protected static String indexModule(DbgModule module) {

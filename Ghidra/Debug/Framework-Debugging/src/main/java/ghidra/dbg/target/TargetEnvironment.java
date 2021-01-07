@@ -50,9 +50,6 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	String DEBUGGER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "debugger";
 	String OS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "os";
 	String ENDIAN_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "endian";
-	String VISIBLE_ARCH_ATTRIBUTE_NAME = "arch";
-	String VISIBLE_OS_ATTRIBUTE_NAME = "os";
-	String VISIBLE_ENDIAN_ATTRIBUTE_NAME = "endian";
 
 	/**
 	 * Get a description of the target architecture
@@ -66,9 +63,9 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the target architecture
 	 */
-	@TargetAttributeType(name = VISIBLE_ARCH_ATTRIBUTE_NAME)
+	@TargetAttributeType(name = ARCH_ATTRIBUTE_NAME, hidden = true)
 	default String getArchitecture() {
-		return getTypedAttributeNowByName(VISIBLE_ARCH_ATTRIBUTE_NAME, String.class, "");
+		return getTypedAttributeNowByName(ARCH_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	/**
@@ -101,9 +98,9 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the target operating system
 	 */
-	@TargetAttributeType(name = VISIBLE_OS_ATTRIBUTE_NAME)
+	@TargetAttributeType(name = OS_ATTRIBUTE_NAME, hidden = true)
 	default String getOperatingSystem() {
-		return getTypedAttributeNowByName(VISIBLE_OS_ATTRIBUTE_NAME, String.class, "");
+		return getTypedAttributeNowByName(OS_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	/**
@@ -116,9 +113,9 @@ public interface TargetEnvironment<T extends TargetEnvironment<T>> extends Typed
 	 * 
 	 * @return the target endianness
 	 */
-	@TargetAttributeType(name = VISIBLE_ENDIAN_ATTRIBUTE_NAME)
+	@TargetAttributeType(name = ENDIAN_ATTRIBUTE_NAME, hidden = true)
 	default String getEndian() {
-		return getTypedAttributeNowByName(VISIBLE_ENDIAN_ATTRIBUTE_NAME, String.class, "");
+		return getTypedAttributeNowByName(ENDIAN_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	// TODO: Devices? File System?

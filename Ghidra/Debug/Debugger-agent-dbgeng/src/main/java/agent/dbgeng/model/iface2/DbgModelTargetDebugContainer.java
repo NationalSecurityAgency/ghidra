@@ -15,7 +15,6 @@
  */
 package agent.dbgeng.model.iface2;
 
-public interface DbgModelTargetDebugContainer extends
-		DbgModelTargetObject {
+public interface DbgModelTargetDebugContainer extends DbgModelTargetObject {
 
 }

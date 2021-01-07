@@ -27,7 +27,16 @@ import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "Debugger", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Available", type = DbgModelTargetAvailableContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Connectors", type = DbgModelTargetConnectorContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Sessions", type = DbgModelTargetSessionContainerImpl.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 		implements DbgModelTargetRoot {
 
@@ -39,8 +48,8 @@ public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 
 	protected DbgModelSelectableObject focus;
 
-	public DbgModelTargetRootImpl(DbgModelImpl impl) {
-		super(impl, "Debugger");
+	public DbgModelTargetRootImpl(DbgModelImpl impl, TargetObjectSchema schema) {
+		super(impl, "Debugger", schema);
 
 		this.available = new DbgModelTargetAvailableContainerImpl(this);
 		this.connectors = new DbgModelTargetConnectorContainerImpl(this);

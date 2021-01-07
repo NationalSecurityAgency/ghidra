@@ -29,6 +29,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 
 public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, TargetObject>
 		implements DbgModelTargetObject {
@@ -40,6 +41,12 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	public DbgModelTargetObjectImpl(AbstractDbgModel impl, TargetObject parent, String name,
 			String typeHint) {
 		super(impl, parent, name, typeHint);
+		getManager().addStateListener(accessListener);
+	}
+
+	public DbgModelTargetObjectImpl(AbstractDbgModel impl, TargetObject parent, String name,
+			String typeHint, TargetObjectSchema schema) {
+		super(impl, parent, name, typeHint, schema);
 		getManager().addStateListener(accessListener);
 	}
 

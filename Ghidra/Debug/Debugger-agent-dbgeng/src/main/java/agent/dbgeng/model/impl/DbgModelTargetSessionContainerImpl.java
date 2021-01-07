@@ -23,8 +23,14 @@ import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "SessionContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetSessionImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetSessionContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSessionContainer {
 

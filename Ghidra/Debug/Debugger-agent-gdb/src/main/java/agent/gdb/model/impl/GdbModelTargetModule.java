@@ -37,6 +37,9 @@ import ghidra.util.Msg;
 public class GdbModelTargetModule
 		extends DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer>
 		implements TargetModule<GdbModelTargetModule> {
+
+	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
+
 	protected static String indexModule(GdbModule module) {
 		return module.getName();
 	}
@@ -124,9 +127,10 @@ public class GdbModelTargetModule
 		return range;
 	}
 
-	@Deprecated(forRemoval = true)
-	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME)
-	public AddressRange getInvisibleRange() {
+	// TODO: Consider a way to override the "hidden" field of an attribute
+	// Otherwise, this information is duplicated in memory and on the wire
+	@TargetAttributeType(name = VISIBLE_RANGE_ATTRIBUTE_NAME)
+	public AddressRange getVisibleRange() {
 		return range;
 	}
 }
