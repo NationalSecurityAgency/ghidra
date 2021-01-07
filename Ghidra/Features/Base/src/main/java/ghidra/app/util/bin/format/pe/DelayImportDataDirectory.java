@@ -160,15 +160,9 @@ public class DelayImportDataDirectory extends DataDirectory {
 			createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
 				DelayImportDescriptor.NAME + "_" + dllName + "_Module_Handle", tmpAddr));
 
-			tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfIAT());
-			//createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-			//	DelayImportDescriptor.NAME  + "_" + dllName +  "_IAT", tmpAddr));
 			markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfIAT(),
 				descriptor.getThunksIAT(), ThunkType.IAT, monitor, log);
 
-			tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfINT());
-			//createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
-			//	DelayImportDescriptor.NAME  + "_" + dllName +  "_INT", tmpAddr));
 			markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfINT(),
 				descriptor.getThunksINT(), ThunkType.INT, monitor, log);
 
@@ -270,6 +264,7 @@ public class DelayImportDataDirectory extends DataDirectory {
 			MessageLog log) throws DuplicateNameException {
 
 		DataType dt = null;
+		String comment = "Delay Import Data";
 
 		long thunkPtr = va(ptr, isBinary);
 		if (!descriptor.isUsingRVA()) {
@@ -299,10 +294,13 @@ public class DelayImportDataDirectory extends DataDirectory {
 			else if (thunkType == ThunkType.INT && thunk.isOrdinal()) {
 				createSymbol(program, thunkAddress, SymbolUtilities.getAddressAppendedName(
 					DelayImportDescriptor.NAME + "_INT", thunkAddress));
+				
+				long hint =  thunk.getImportByOrdinal().getHint();
+				comment = String.format("Delay Import by ordinal: %s ->  %d", descriptor.getDLLName().toUpperCase(), hint);
 				dt = (DataType) DWORD;
 			}
 			PeUtils.createData(program, thunkAddress, dt, log);
-			setEolComment(program, thunkAddress, "Delay Import Data");
+			setEolComment(program, thunkAddress, comment);
 			thunkPtr += thunk.getStructSize();
 		}
 	}

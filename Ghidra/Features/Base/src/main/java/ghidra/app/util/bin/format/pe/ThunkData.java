@@ -62,6 +62,7 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 	private boolean is64bit;
 	private long value;
 	private ImportByName ibn;
+	private ImportByOrdinal ibo;
 
 	static ThunkData createThunkData(FactoryBundledWithBinaryReader reader, int index,
 			boolean is64bit) throws IOException {
@@ -169,6 +170,18 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 	 */
 	public ImportByName getImportByName() {
 		return ibn;
+	}
+	
+	void setImportByOrdinal(ImportByOrdinal ibo) {
+		this.ibo = ibo;
+	}
+
+	/**
+	 * Returns the underlying import by name structure.
+	 * @return the underlying import by name structure
+	 */
+	public ImportByOrdinal getImportByOrdinal() {
+		return ibo;
 	}
 
 	/**

@@ -448,6 +448,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			}
 		}
 	}
+
 	/**
 	 * Read the descriptors from the delay import directory and process them.
 	 * 
@@ -457,7 +458,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 	 * @param monitor
 	 * @param log
 	 */
-	private void processDelayImports(OptionalHeader optionalHeader, NTHeader ntHeader, Program program, TaskMonitor monitor,
+	private void processDelayImports(OptionalHeader optionalHeader, NTHeader ntHeader,
+			Program program, TaskMonitor monitor,
 			MessageLog log) {
 
 		if (monitor.isCancelled()) {
@@ -469,21 +471,20 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT) {
 			return;
 		}
-		
+
 		DelayImportDataDirectory didd =
 			(DelayImportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
 		if (didd == null) {
 			return;
 		}
-		
+
 		log.appendMsg("Delay imports detected...");
-		
+
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-		ExternalManager externalManager = program.getExternalManager();
 		Listing listing = program.getListing();
 		ReferenceManager refManager = program.getReferenceManager();
 		FunctionManager funcManager = program.getFunctionManager();
-		
+
 		DelayImportDescriptor[] descriptors = didd.getDelayImportDescriptors();
 		for (DelayImportDescriptor descriptor : descriptors) {
 			if (monitor.isCancelled()) {
@@ -492,9 +493,10 @@ public class PeLoader extends AbstractPeDebugLoader {
 			//The DLL library name normalized to all caps.
 			String dllName = descriptor.getDLLName().toUpperCase();
 			//Address of the first entry in the Import Address Table
-			long iatptr = descriptor.isUsingRVA() ? descriptor.getAddressOfIAT() + optionalHeader.getImageBase()
-			: descriptor.getAddressOfIAT();
-			
+			long iatptr = descriptor.isUsingRVA()
+					? descriptor.getAddressOfIAT() + optionalHeader.getImageBase()
+					: descriptor.getAddressOfIAT();
+
 			for (DelayImportInfo dii : descriptor.getImportList()) {
 				//Retrieve the offset from the import list. -1 is the default (no offset).
 				long offset = dii.getOffset();
@@ -509,8 +511,23 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 				//The name of the function being loaded. If the function is loaded by ordinal, 
 				//we use the ordinal_prefix + ordinal as the name.
-				String funcName = dii.hasName() ? dii.getName() : SymbolUtilities.ORDINAL_PREFIX + dii.getOrdinal();
-			
+				String funcName = dii.hasName() ? dii.getName()
+						: SymbolUtilities.ORDINAL_PREFIX + dii.getOrdinal();
+
+				ExternalLocation extLoc = null;
+				try {
+					extLoc = program.getExternalManager()
+							.addExtFunction(dllName, funcName, null, SourceType.IMPORTED);
+
+					refManager.addExternalReference(iatAddress, (dii.hasName() ? 0 : 1), extLoc,
+						SourceType.IMPORTED,
+						RefType.DATA);
+				}
+				catch (DuplicateNameException | InvalidInputException e) {
+					// Let the user known that create function failed.
+					log.appendMsg("Create external function failed: " + e.getMessage());
+				}
+
 				//This is the address of the function that acts as the 'proxy' for the delay loaded function.
 				Address funAddr = (Address) iatd.getValue();
 				// Check to see if there is a function defined at the address for the proxy.
@@ -518,29 +535,32 @@ public class PeLoader extends AbstractPeDebugLoader {
 				if (target == null) {
 					try {
 						//Create a function at the location for the proxy.
-						target = funcManager.createFunction(funcName, funAddr, new AddressSet(funAddr), SourceType.IMPORTED);
-					} catch (InvalidInputException | OverlappingFunctionException e) {
+						target = funcManager.createFunction(funcName, funAddr,
+							new AddressSet(funAddr), SourceType.IMPORTED);
+
+					}
+					catch (InvalidInputException | OverlappingFunctionException e) {
 						// Let the user known that create function failed.
 						log.appendMsg("Create function failed: " + e.getMessage());
 					}
-					
+
 				}
-				ExternalLocation extLoc = externalManager.getUniqueExternalLocation(dllName, funcName);
+
+				if (!dii.hasName()) {
+					continue;
+				}
 				//Try to set the target function created at the proxy location to a thunked function
 				//for the external function.
-				target.setThunkedFunction(extLoc.getFunction());
 				try {
-					refManager.addExternalReference(iatAddress, 0,extLoc, SourceType.IMPORTED, RefType.DATA);
-				} catch (InvalidInputException e) {
-					// Let the user known that adding the external reference failed.
-					log.appendMsg("External reference not added: " + e.getMessage());
+					target.setThunkedFunction(extLoc.getFunction());
+				}
+				catch (NullPointerException e) {
+					log.appendMsg("Create external function creation failed: " + e.getMessage());
 				}
 			}
 		}
 	}
 
-	
-	
 	/**
 	 * Mark this location as code in the CodeMap.
 	 * The analyzers will pick this up and disassemble the code.
@@ -579,8 +599,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-				program.getProgramContext().setRegisterValue(space.getMinAddress(),
-					space.getMaxAddress(), thumbMode);
+				program.getProgramContext()
+						.setRegisterValue(space.getMinAddress(),
+							space.getMaxAddress(), thumbMode);
 			}
 		}
 		catch (ContextChangeException e) {

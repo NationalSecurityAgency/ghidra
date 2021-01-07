@@ -149,7 +149,9 @@ public class DelayImportDescriptor implements StructConverter {
 
 			if (thunk.isOrdinal()) {
 				long ordinal = thunk.getOrdinal();
+				ImportByOrdinal ibo = new ImportByOrdinal(ordinal);
 				delayImportInfoList.add(new DelayImportInfo(ordinal, offset));
+				thunk.setImportByOrdinal(ibo);
 			}
 			else {
 				long ibnPtr = 0;
