@@ -64,7 +64,7 @@ for /f "tokens=* delims=" %%a in ('dir %arg1% /s /b') do (
 			setlocal enableDelayedExpansion
 			(
 				echo "Processing file: %%a"
-				START /B /WAIT "" "%PDB_EXE%" %%a > "%%a.xml"
+				START /B /WAIT "" "%PDB_EXE%" "%%a" > "%%a.xml"
 
 				REM Exit if executable returned non-zero error code (signifies that there is a problem).
 				if !errorlevel! neq 0 (
