@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.beans.*;
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +61,9 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	public final static int COLUMN_ANALYZER_IS_ENABLED = 0;
 
 	private static final String ANALYZER_OPTIONS_SAVE_DIR = "analyzer_options";
-	private static final String LAST_DEFAULT_OPTIONS = "DEFAULT_ANALYSIS_OPTIONS";
+
+	// preference which retains last used analyzer_options file name 
+	private static final String LAST_DEFAULT_OPTIONS = "LAST_ANALYSIS_OPTIONS_USED";
 
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
@@ -488,9 +489,9 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private boolean checkForDifferencesWithProgram() {
 		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
 		boolean changes = false;
-		for (int i = 0; i < analyzerStates.size(); ++i) {
-			String analyzerName = analyzerStates.get(i).getName();
-			boolean currEnabled = analyzerStates.get(i).isEnabled();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			boolean currEnabled = analyzerState.isEnabled();
 			boolean origEnabled = analysisOptions.getBoolean(analyzerName, false);
 			if (currEnabled != origEnabled) {
 				changes = true;
