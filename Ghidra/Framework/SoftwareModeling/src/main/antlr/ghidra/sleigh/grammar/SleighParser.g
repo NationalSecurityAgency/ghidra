@@ -94,6 +94,8 @@ fieldmod
     :   lc=KEY_SIGNED -> OP_SIGNED[$lc]
     |   lc=KEY_HEX -> OP_HEX[$lc]
     |   lc=KEY_DEC -> OP_DEC[$lc]
+    |   lc=KEY_OCT -> OP_OCT[$lc]
+    |   lc=KEY_BIN -> OP_BIN[$lc]
     ;
 
 contextfielddefs[Token lc]
@@ -114,6 +116,8 @@ contextfieldmod
     |   lc=KEY_NOFLOW -> OP_NOFLOW[$lc]
     |   lc=KEY_HEX -> OP_HEX[$lc]
     |   lc=KEY_DEC -> OP_DEC[$lc]
+    |   lc=KEY_OCT -> OP_OCT[$lc]
+    |   lc=KEY_BIN -> OP_BIN[$lc]
     ;
 
 contextdef
@@ -549,32 +553,34 @@ identifier
 key_as_id
 	:	lc=KEY_ALIGNMENT	-> ^(OP_IDENTIFIER[$lc, "KEY_ALIGNMENT"] KEY_ALIGNMENT)
 	|	lc=KEY_ATTACH		-> ^(OP_IDENTIFIER[$lc, "KEY_ATTACH"] KEY_ATTACH)
-	|	lc=KEY_BIG			-> ^(OP_IDENTIFIER[$lc, "KEY_BIG"] KEY_BIG)
+	|	lc=KEY_BIG		-> ^(OP_IDENTIFIER[$lc, "KEY_BIG"] KEY_BIG)
+	|	lc=KEY_BIN		-> ^(OP_IDENTIFIER[$lc, "KEY_BIN"] KEY_BIN)
 	|	lc=KEY_BITRANGE		-> ^(OP_IDENTIFIER[$lc, "KEY_BITRANGE"] KEY_BITRANGE)
 	|	lc=KEY_BUILD		-> ^(OP_IDENTIFIER[$lc, "KEY_BUILD"] KEY_BUILD)
-	|	lc=KEY_CALL			-> ^(OP_IDENTIFIER[$lc, "KEY_CALL"] KEY_CALL)	// appeared in printpiece
+	|	lc=KEY_CALL		-> ^(OP_IDENTIFIER[$lc, "KEY_CALL"] KEY_CALL)	// appeared in printpiece
 	|	lc=KEY_CONTEXT		-> ^(OP_IDENTIFIER[$lc, "KEY_CONTEXT"] KEY_CONTEXT)
 	|	lc=KEY_CROSSBUILD	-> ^(OP_IDENTIFIER[$lc, "KEY_CROSSBUILD"] KEY_CROSSBUILD)
-	|	lc=KEY_DEC			-> ^(OP_IDENTIFIER[$lc, "KEY_DEC"] KEY_DEC)	// appeared in printpiece
+	|	lc=KEY_DEC		-> ^(OP_IDENTIFIER[$lc, "KEY_DEC"] KEY_DEC)	// appeared in printpiece
 	|	lc=KEY_DEFAULT		-> ^(OP_IDENTIFIER[$lc, "KEY_DEFAULT"] KEY_DEFAULT)
 	|	lc=KEY_DEFINE		-> ^(OP_IDENTIFIER[$lc, "KEY_DEFINE"] KEY_DEFINE)
 	|	lc=KEY_ENDIAN		-> ^(OP_IDENTIFIER[$lc, "KEY_ENDIAN"] KEY_ENDIAN)
 	|	lc=KEY_EXPORT		-> ^(OP_IDENTIFIER[$lc, "KEY_EXPORT"] KEY_EXPORT)
-	|	lc=KEY_GOTO			-> ^(OP_IDENTIFIER[$lc, "KEY_GOTO"] KEY_GOTO)
-	|	lc=KEY_HEX			-> ^(OP_IDENTIFIER[$lc, "KEY_HEX"] KEY_HEX)
+	|	lc=KEY_GOTO		-> ^(OP_IDENTIFIER[$lc, "KEY_GOTO"] KEY_GOTO)
+	|	lc=KEY_HEX		-> ^(OP_IDENTIFIER[$lc, "KEY_HEX"] KEY_HEX)
 	|	lc=KEY_LITTLE		-> ^(OP_IDENTIFIER[$lc, "KEY_LITTLE"] KEY_LITTLE)
 	|	lc=KEY_LOCAL		-> ^(OP_IDENTIFIER[$lc, "KEY_LOCAL"] KEY_LOCAL)
 	|	lc=KEY_MACRO		-> ^(OP_IDENTIFIER[$lc, "KEY_MACRO"] KEY_MACRO)
 	|	lc=KEY_NAMES		-> ^(OP_IDENTIFIER[$lc, "KEY_NAMES"] KEY_NAMES)
 	|	lc=KEY_NOFLOW		-> ^(OP_IDENTIFIER[$lc, "KEY_NOFLOW"] KEY_NOFLOW)
+	|	lc=KEY_OCT		-> ^(OP_IDENTIFIER[$lc, "KEY_OCT"] KEY_OCT)
 	|	lc=KEY_OFFSET		-> ^(OP_IDENTIFIER[$lc, "KEY_OFFSET"] KEY_OFFSET)
 	|	lc=KEY_PCODEOP		-> ^(OP_IDENTIFIER[$lc, "KEY_PCODEOP"] KEY_PCODEOP)
 	|	lc=KEY_RETURN		-> ^(OP_IDENTIFIER[$lc, "KEY_RETURN"] KEY_RETURN)
 	|	lc=KEY_SIGNED		-> ^(OP_IDENTIFIER[$lc, "KEY_SIGNED"] KEY_SIGNED)
-	|	lc=KEY_SIZE			-> ^(OP_IDENTIFIER[$lc, "KEY_SIZE"] KEY_SIZE)
+	|	lc=KEY_SIZE		-> ^(OP_IDENTIFIER[$lc, "KEY_SIZE"] KEY_SIZE)
 	|	lc=KEY_SPACE		-> ^(OP_IDENTIFIER[$lc, "KEY_SPACE"] KEY_SPACE)
 	|	lc=KEY_TOKEN		-> ^(OP_IDENTIFIER[$lc, "KEY_TOKEN"] KEY_TOKEN)
-	|	lc=KEY_TYPE			-> ^(OP_IDENTIFIER[$lc, "KEY_TYPE"] KEY_TYPE)
+	|	lc=KEY_TYPE		-> ^(OP_IDENTIFIER[$lc, "KEY_TYPE"] KEY_TYPE)
 	|	lc=KEY_UNIMPL		-> ^(OP_IDENTIFIER[$lc, "KEY_UNIMPL"] KEY_UNIMPL)
 	|	lc=KEY_VALUES		-> ^(OP_IDENTIFIER[$lc, "KEY_VALUES"] KEY_VALUES)
 	|	lc=KEY_VARIABLES	-> ^(OP_IDENTIFIER[$lc, "KEY_VARIABLES"] KEY_VARIABLES)

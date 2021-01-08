@@ -244,8 +244,10 @@ fieldmods
 fieldmod
     :   OP_SIGNED { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.signext = true; }
     |   OP_NOFLOW { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.flow = false; }
-    |   OP_HEX { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.hex = true; }
-    |   OP_DEC { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.hex = false; }
+    |   OP_HEX { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.base = 16; }
+    |   OP_DEC { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.base = 10; }
+    |   OP_OCT { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.base = 8; }
+    |   OP_BIN { if ($fielddef::fieldQuality != null) $fielddef::fieldQuality.base = 2; }
     ;
 
 specific_identifier[String purpose] returns [Tree value]

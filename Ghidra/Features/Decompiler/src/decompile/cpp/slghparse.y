@@ -98,7 +98,7 @@
 %token BADINTEGER GOTO_KEY CALL_KEY RETURN_KEY IF_KEY
 %token DEFINE_KEY ATTACH_KEY MACRO_KEY SPACE_KEY TYPE_KEY RAM_KEY DEFAULT_KEY
 %token REGISTER_KEY ENDIAN_KEY WITH_KEY ALIGN_KEY OP_UNIMPL
-%token TOKEN_KEY SIGNED_KEY NOFLOW_KEY HEX_KEY DEC_KEY BIG_KEY LITTLE_KEY
+%token TOKEN_KEY SIGNED_KEY NOFLOW_KEY HEX_KEY DEC_KEY OCT_KEY BIN_KEY BIG_KEY LITTLE_KEY
 %token SIZE_KEY WORDSIZE_KEY OFFSET_KEY NAMES_KEY VALUES_KEY VARIABLES_KEY PCODEOP_KEY IS_KEY LOCAL_KEY
 %token DELAYSLOT_KEY CROSSBUILD_KEY EXPORT_KEY BUILD_KEY CONTEXT_KEY ELLIPSIS_KEY GLOBALSET_KEY BITRANGE_KEY
 
@@ -196,15 +196,19 @@ contextprop: DEFINE_KEY CONTEXT_KEY VARSYM { $$ = $3; }
 fielddef: STRING '=' '(' INTEGER ',' INTEGER ')' { $$ = new FieldQuality($1,$4,$6); }
   | anysymbol '=' '(' INTEGER ',' INTEGER ')' { delete $4; delete $6; string errmsg = $1->getName()+": redefined as field"; yyerror(errmsg.c_str()); YYERROR; }
   | fielddef SIGNED_KEY			{ $$ = $1; $$->signext = true; }
-  | fielddef HEX_KEY			{ $$ = $1; $$->hex = true; }
-  | fielddef DEC_KEY			{ $$ = $1; $$->hex = false; }
+  | fielddef HEX_KEY			{ $$ = $1; $$->base = 16; }
+  | fielddef DEC_KEY			{ $$ = $1; $$->base = 10; }
+  | fielddef OCT_KEY			{ $$ = $1; $$->base = 8; }
+  | fielddef BIN_KEY			{ $$ = $1; $$->base = 2; }
   ;
 contextfielddef: STRING '=' '(' INTEGER ',' INTEGER ')' { $$ = new FieldQuality($1,$4,$6); }
   | anysymbol '=' '(' INTEGER ',' INTEGER ')' { delete $4; delete $6; string errmsg = $1->getName()+": redefined as field"; yyerror(errmsg.c_str()); YYERROR; }
   | contextfielddef SIGNED_KEY			{ $$ = $1; $$->signext = true; }
   | contextfielddef NOFLOW_KEY			{ $$ = $1; $$->flow = false; }
-  | contextfielddef HEX_KEY			{ $$ = $1; $$->hex = true; }
-  | contextfielddef DEC_KEY			{ $$ = $1; $$->hex = false; }
+  | contextfielddef HEX_KEY			{ $$ = $1; $$->base = 16; }
+  | contextfielddef DEC_KEY			{ $$ = $1; $$->base = 10; }
+  | contextfielddef OCT_KEY			{ $$ = $1; $$->base = 8; }
+  | contextfielddef BIN_KEY			{ $$ = $1; $$->base = 2; }
   ;
 spacedef: spaceprop ';'			{ slgh->newSpace($1); }
   ;

@@ -79,6 +79,8 @@ keywords:
 signed
 hex
 dec
+bin
+oct
 </pre></div>
 <p>
 These attributes are defined in the next section. There can be any
@@ -104,11 +106,14 @@ The attributes of the field affect the resulting specific symbol in
 obvious ways. The <span class="bold"><strong>signed</strong></span> attribute
 determines whether the integer encoding should be treated as just an
 unsigned encoding or if a twos-complement encoding should be used to
-obtain a signed integer. The <span class="bold"><strong>hex</strong></span>
-or <span class="bold"><strong>dec</strong></span> attributes describe whether
-the integer should be displayed with a hexadecimal or decimal
-representation. The default is hexadecimal. [Currently
-the <span class="bold"><strong>dec</strong></span> attribute is not supported]
+obtain a signed integer. The <span class="bold"><strong>hex</strong></span>, 
+<span class="bold"><strong>dec</strong></span>,
+<span class="bold"><strong>oct</strong></span> or
+<span class="bold"><strong>bin</strong></span> attributes describe which numeric
+base should be used to display the integer (respectively hexadecimal, decimal,
+octal or binary). The default is hexadecimal. [Currently
+the <span class="bold"><strong>oct</strong></span> and
+<span class="bold"><strong>bin</strong></span> attributes are not supported]
 </p>
 </div>
 <div class="sect2">

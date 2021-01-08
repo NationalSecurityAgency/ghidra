@@ -39,6 +39,7 @@ public class TokenField extends PatternValue {
 	private int bitstart, bitend;	// Bits within token, 0 bit is LEAST sig
 	private int bytestart, byteend;	// Bytes to read to get value
 	private int shift;				// Amount to shift to align value
+	private int base;               // The base to use to display the token value.
 
 	@Override
 	public int hashCode() {
@@ -51,6 +52,8 @@ public class TokenField extends PatternValue {
 		result += Boolean.hashCode(signbit);
 		result *= 31;
 		result += Boolean.hashCode(bigendian);
+		result *= 31;
+		result += base;
 		return result;
 	}
 
@@ -70,6 +73,9 @@ public class TokenField extends PatternValue {
 			return false;
 		}
 		if (this.bigendian != that.bigendian) {
+			return false;
+		}
+		if (this.base != that.base) {
 			return false;
 		}
 		return true;
@@ -124,6 +130,10 @@ public class TokenField extends PatternValue {
 	public int getByteEnd() {
 		return byteend;
 	}
+	
+	public int getBase() {
+		return base;
+	}
 
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#restoreXml(org.jdom.Element)
@@ -138,6 +148,7 @@ public class TokenField extends PatternValue {
 		bytestart = SpecXmlUtils.decodeInt(el.getAttribute("bytestart"));
 		byteend = SpecXmlUtils.decodeInt(el.getAttribute("byteend"));
 		shift = SpecXmlUtils.decodeInt(el.getAttribute("shift"));
+		base = SpecXmlUtils.decodeInt(el.getAttribute("base"));
 		parser.end(el);
 	}
 
@@ -242,6 +253,7 @@ public class TokenField extends PatternValue {
 		}
 		sb.append(", bytes " + bytestart + "-" + byteend);
 		sb.append(", shift=" + shift);
+		sb.append(", base=" + base);
 		sb.append("]");
 		return sb.toString();
 	}

@@ -82,6 +82,8 @@ fieldmod returns [String value]
     |   OP_NOFLOW { $value = "noflow"; }
     |   OP_HEX { $value = "hex"; }
     |   OP_DEC { $value = "dec"; }
+    |   OP_OCT { $value = "oct"; }
+    |   OP_BIN { $value = "bin"; }
     ;
 
 contextdef

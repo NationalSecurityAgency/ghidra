@@ -871,7 +871,7 @@ public class SleighCompile extends SleighBase {
 	public void addTokenField(Location location, TokenSymbol sym, FieldQuality qual) {
 		entry("addTokenField", location, sym, qual);
 		TokenField field =
-			new TokenField(location, sym.getToken(), qual.signext, qual.low, qual.high);
+			new TokenField(location, sym.getToken(), qual.signext, qual.low, qual.high, qual.base);
 		addSymbol(new ValueSymbol(location, qual.name, field));
 	}
 

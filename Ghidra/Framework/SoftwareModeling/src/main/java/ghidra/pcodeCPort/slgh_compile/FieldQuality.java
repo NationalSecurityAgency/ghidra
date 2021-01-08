@@ -24,7 +24,7 @@ public class FieldQuality {
     public int low, high;
     public boolean signext;
     public boolean flow;
-    public boolean hex;
+    public int base;
 
     public FieldQuality(String nm, Location location, long l, long h) {
         name = nm;
@@ -33,10 +33,10 @@ public class FieldQuality {
         high = (int) h;
         signext = false;
         flow = true;
-        hex = true;
+        base = 16;
     }
     @Override
     public String toString() {
-        return "fq:{" + name + "," + low + "," + high + "," + signext + "," + hex + "}";
+        return "fq:{" + name + "," + low + "," + high + "," + signext + "," + base + "}";
     }
 }
