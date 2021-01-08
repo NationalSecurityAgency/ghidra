@@ -69,7 +69,7 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 
 		// data type info
 		dataTypeEditor =
-			new DataTypeSelectionEditor(plugin.getTool(), Integer.MAX_VALUE, AllowedDataTypes.ALL);
+			new DataTypeSelectionEditor(plugin.getTool(), AllowedDataTypes.ALL);
 		panel.add(new GLabel("Data type:"));
 		panel.add(dataTypeEditor.getEditorComponent());
 
