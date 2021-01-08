@@ -16,11 +16,17 @@
 package agent.dbgmodel.model.impl;
 
 import ghidra.dbg.target.TargetAggregate;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 
 public class DbgModel2DefaultTargetModelRoot extends DbgModel2TargetObjectImpl
 		implements TargetAggregate {
 
 	public DbgModel2DefaultTargetModelRoot(DbgModel2Impl model, String typeHint) {
 		super(model, null, null, typeHint);
+	}
+
+	public DbgModel2DefaultTargetModelRoot(DbgModel2Impl model, String typeHint,
+			TargetObjectSchema schema) {
+		super(model, null, null, typeHint, schema);
 	}
 }

@@ -148,6 +148,19 @@ public class SchemaBuilder {
 		return Map.copyOf(attributeSchemas);
 	}
 
+	public AttributeSchema getAttributeSchema(String name) {
+		return attributeSchemas.get(name);
+	}
+
+	public SchemaBuilder replaceAttributeSchema(AttributeSchema schema, Object origin) {
+		if (schema.getName().equals("")) {
+			return setDefaultAttributeSchema(schema);
+		}
+		attributeSchemas.put(schema.getName(), schema);
+		attributeOrigins.put(schema.getName(), origin);
+		return this;
+	}
+
 	public SchemaBuilder setDefaultAttributeSchema(AttributeSchema defaultAttributeSchema) {
 		this.defaultAttributeSchema = defaultAttributeSchema;
 		return this;

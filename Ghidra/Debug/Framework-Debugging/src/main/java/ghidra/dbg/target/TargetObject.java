@@ -27,7 +27,6 @@ import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.dbg.util.ValueUtils;
@@ -161,44 +160,18 @@ import ghidra.util.Msg;
  */
 public interface TargetObject extends TargetObjectRef {
 
-	Set<Class<? extends TargetObject>> ALL_INTERFACES = Set.of(
-		TargetAccessConditioned.class,
-		TargetAggregate.class,
-		TargetAttachable.class,
-		TargetAttacher.class,
-		TargetBreakpointContainer.class,
-		TargetBreakpointSpec.class,
-		TargetDataTypeMember.class,
-		TargetDataTypeNamespace.class,
-		TargetDeletable.class,
-		TargetDetachable.class,
-		TargetBreakpointLocation.class,
-		TargetEnvironment.class,
-		TargetEventScope.class,
-		TargetExecutionStateful.class,
-		TargetFocusScope.class,
-		TargetInterpreter.class,
-		TargetInterruptible.class,
-		TargetKillable.class,
-		TargetLauncher.class,
-		TargetMethod.class,
-		TargetMemory.class,
-		TargetMemoryRegion.class,
-		TargetModule.class,
-		TargetModuleContainer.class,
-		TargetNamedDataType.class,
-		TargetProcess.class,
-		TargetRegister.class,
-		TargetRegisterBank.class,
-		TargetRegisterContainer.class,
-		TargetResumable.class,
-		TargetSection.class,
-		TargetStack.class,
-		TargetStackFrame.class,
-		TargetSteppable.class,
-		TargetSymbol.class,
-		TargetSymbolNamespace.class,
-		TargetThread.class);
+	Set<Class<? extends TargetObject>> ALL_INTERFACES = Set.of(TargetAccessConditioned.class,
+		TargetAggregate.class, TargetAttachable.class, TargetAttacher.class,
+		TargetBreakpointContainer.class, TargetBreakpointSpec.class, TargetDataTypeMember.class,
+		TargetDataTypeNamespace.class, TargetDeletable.class, TargetDetachable.class,
+		TargetBreakpointLocation.class, TargetEnvironment.class, TargetEventScope.class,
+		TargetExecutionStateful.class, TargetFocusScope.class, TargetInterpreter.class,
+		TargetInterruptible.class, TargetKillable.class, TargetLauncher.class, TargetMethod.class,
+		TargetMemory.class, TargetMemoryRegion.class, TargetModule.class,
+		TargetModuleContainer.class, TargetNamedDataType.class, TargetProcess.class,
+		TargetRegister.class, TargetRegisterBank.class, TargetRegisterContainer.class,
+		TargetResumable.class, TargetSection.class, TargetStack.class, TargetStackFrame.class,
+		TargetSteppable.class, TargetSymbol.class, TargetSymbolNamespace.class, TargetThread.class);
 	Map<String, Class<? extends TargetObject>> INTERFACES_BY_NAME = initInterfacesByName();
 
 	/**
@@ -209,12 +182,11 @@ public interface TargetObject extends TargetObjectRef {
 	@Internal
 	static Map<String, Class<? extends TargetObject>> initInterfacesByName() {
 		return ALL_INTERFACES.stream()
-				.collect(Collectors.toUnmodifiableMap(
-					DebuggerObjectModel::requireIfaceName, i -> i));
+				.collect(
+					Collectors.toUnmodifiableMap(DebuggerObjectModel::requireIfaceName, i -> i));
 	}
 
-	static List<Class<? extends TargetObject>> getInterfacesByName(
-			Collection<String> names) {
+	static List<Class<? extends TargetObject>> getInterfacesByName(Collection<String> names) {
 		return names.stream()
 				.filter(INTERFACES_BY_NAME::containsKey)
 				.map(INTERFACES_BY_NAME::get)
@@ -627,9 +599,10 @@ public interface TargetObject extends TargetObjectRef {
 	 * @return the value casted to the expected type, or the fallback value
 	 */
 	public default <T> T getTypedAttributeNowByName(String name, Class<T> cls, T fallback) {
-		AttributeSchema as = getSchema().getAttributeSchema(name);
 		Object obj = getCachedAttribute(name);
-		return ValueUtils.expectType(obj, cls, this, name, fallback, as.isRequired());
+		TargetObjectSchema schema = getSchema();
+		boolean required = schema == null ? false : schema.getAttributeSchema(name).isRequired();
+		return ValueUtils.expectType(obj, cls, this, name, fallback, required);
 	}
 
 	/**

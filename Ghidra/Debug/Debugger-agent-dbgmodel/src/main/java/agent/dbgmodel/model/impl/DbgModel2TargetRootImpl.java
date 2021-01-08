@@ -32,6 +32,7 @@ import ghidra.async.TypeSpec;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointListener;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
@@ -46,6 +47,29 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	public DbgModel2TargetRootImpl(DbgModel2Impl impl) {
 		super(impl, "Debugger");
+		this.impl = impl;
+
+		this.available = new DbgModel2TargetAvailableContainerImpl(this);
+		this.connectors = new DbgModelTargetConnectorContainerImpl(this);
+		this.systemMarker = new DbgModel2TargetSystemMarkerImpl(this);
+
+		DbgModelTargetConnector defaultConnector = connectors.getDefaultConnector();
+		changeAttributes(List.of(), List.of( //
+			available, //
+			connectors, //
+			systemMarker //
+		), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, "Debugger", //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, defaultConnector.getParameters() //
+		//  ARCH_ATTRIBUTE_NAME, "x86_64", //
+		//  DEBUGGER_ATTRIBUTE_NAME, "dbgeng", //
+		//  OS_ATTRIBUTE_NAME, "Windows", //
+		), "Initialized");
+		impl.getManager().addEventsListener(this);
+	}
+
+	public DbgModel2TargetRootImpl(DbgModel2Impl impl, TargetObjectSchema schema) {
+		super(impl, "Debugger", schema);
 		this.impl = impl;
 
 		this.available = new DbgModel2TargetAvailableContainerImpl(this);

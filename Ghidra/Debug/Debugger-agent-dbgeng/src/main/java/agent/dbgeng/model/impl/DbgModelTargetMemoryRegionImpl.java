@@ -21,6 +21,7 @@ import java.util.Map;
 import agent.dbgeng.manager.DbgModuleMemory;
 import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetMemoryRegion;
+import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
@@ -28,6 +29,9 @@ import ghidra.program.model.address.*;
 @TargetObjectSchemaInfo(name = "MemoryRegion", elements = { //
 	@TargetElementType(type = Void.class) //
 }, attributes = { //
+	@TargetAttributeType( //
+			name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME, //
+			type = DbgModelTargetMemoryContainerImpl.class), //
 	@TargetAttributeType(name = "BaseAddress", type = Address.class), //
 	@TargetAttributeType(name = "EndAddress", type = Address.class), //
 	@TargetAttributeType(name = "RegionSize", type = String.class), //

@@ -73,7 +73,9 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 		this.typeHint = typeHint;
 
 		this.schema = schema;
-		schema.validateTypeAndInterfaces(getProxy(), null, enforcesStrictSchema());
+		if (schema != null) {
+			schema.validateTypeAndInterfaces(getProxy(), null, enforcesStrictSchema());
+		}
 	}
 
 	/**
@@ -124,8 +126,12 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 
 	@Override
 	public String toString() {
-		return String.format("<%s: path=%s model=%s schema=%s>",
-			getClass().getSimpleName(), path, getModel(), schema.getName());
+		if (schema == null) {
+			return String.format("<%s: path=%s model=%s schema=NULL>", getClass().getSimpleName(),
+				path, getModel());
+		}
+		return String.format("<%s: path=%s model=%s schema=%s>", getClass().getSimpleName(), path,
+			getModel(), schema.getName());
 	}
 
 	@Override

@@ -36,6 +36,27 @@ import utilities.util.reflection.ReflectionUtilities;
 
 public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
+	public static class AnnotatedAttributeSchema extends DefaultAttributeSchema {
+		protected final Class<?> javaClass;
+
+		public AnnotatedAttributeSchema(String name, SchemaName schema, boolean isRequired,
+				boolean isFixed, boolean isHidden, Class<?> javaClass) {
+			super(name, schema, isRequired, isFixed, isHidden);
+			this.javaClass = javaClass;
+		}
+
+		public AnnotatedAttributeSchema lower(AnnotatedAttributeSchema that) {
+			if (this.javaClass.isAssignableFrom(that.javaClass)) {
+				return that;
+			}
+			if (that.javaClass.isAssignableFrom(this.javaClass)) {
+				return this;
+			}
+			throw new IllegalArgumentException("Cannot find lower of " + this.javaClass + " and " +
+				that.javaClass + ". They are unrelated.");
+		}
+	}
+
 	static <T> Stream<Class<? extends T>> filterBounds(Class<T> base, Stream<Class<?>> bounds) {
 		return bounds.filter(base::isAssignableFrom).map(c -> c.asSubclass(base));
 	}
@@ -129,8 +150,12 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 			TargetObjectSchemaInfo info = cls.getAnnotation(TargetObjectSchemaInfo.class);
 			if (info == null) {
 				// TODO: Compile-time validation?
-				Msg.warn(this, "Class " + cls + " is not annotated with @" +
-					TargetObjectSchemaInfo.class.getSimpleName());
+				DebuggerTargetObjectIface iface =
+					cls.getAnnotation(DebuggerTargetObjectIface.class);
+				if (iface == null) {
+					Msg.warn(this, "Class " + cls + " is not annotated with @" +
+						TargetObjectSchemaInfo.class.getSimpleName());
+				}
 				return EnumerableTargetObjectSchema.OBJECT.getName();
 			}
 			return namesByClass.computeIfAbsent(cls, c -> {
@@ -235,8 +260,12 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 					}
 				}
 				for (TargetAttributeType at : info.attributes()) {
-					AttributeSchema attrSchema = attributeSchemaFromAnnotation(at);
-					builder.addAttributeSchema(attrSchema, at);
+					AnnotatedAttributeSchema attrSchema = attributeSchemaFromAnnotation(at);
+					AttributeSchema exists = builder.getAttributeSchema(attrSchema.getName());
+					if (exists != null) {
+						attrSchema = attrSchema.lower((AnnotatedAttributeSchema) exists);
+					}
+					builder.replaceAttributeSchema(attrSchema, at);
 				}
 
 				return builder.buildAndAdd();
@@ -255,9 +284,9 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 				.toLowerCase();
 	}
 
-	protected AttributeSchema attributeSchemaFromAnnotation(TargetAttributeType at) {
-		return new DefaultAttributeSchema(at.name(), nameFromClass(at.type()), at.required(),
-			at.fixed(), at.hidden());
+	protected AnnotatedAttributeSchema attributeSchemaFromAnnotation(TargetAttributeType at) {
+		return new AnnotatedAttributeSchema(at.name(), nameFromClass(at.type()), at.required(),
+			at.fixed(), at.hidden(), at.type());
 	}
 
 	protected AttributeSchema attributeSchemaFromAnnotatedMethod(Class<? extends TargetObject> cls,
@@ -275,8 +304,8 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 		}
 		SchemaName primitiveName = EnumerableTargetObjectSchema.nameForPrimitive(ret);
 		if (primitiveName != null) {
-			return new DefaultAttributeSchema(name, primitiveName, at.required(), at.fixed(),
-				at.hidden());
+			return new AnnotatedAttributeSchema(name, primitiveName, at.required(), at.fixed(),
+				at.hidden(), ret);
 		}
 		Set<Class<? extends TargetObject>> bounds = getBoundsOfObjectAttributeGetter(cls, method);
 		if (bounds.size() != 1) {
@@ -284,8 +313,9 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 			throw new IllegalArgumentException(
 				"Could not identify unique attribute class for method " + method + ": " + bounds);
 		}
-		return new DefaultAttributeSchema(name, nameFromClass(bounds.iterator().next()),
-			at.required(), at.fixed(), at.hidden());
+		Class<? extends TargetObject> bound = bounds.iterator().next();
+		return new AnnotatedAttributeSchema(name, nameFromClass(bound),
+			at.required(), at.fixed(), at.hidden(), bound);
 	}
 
 	protected SchemaName nameFromClass(Class<?> cls) {

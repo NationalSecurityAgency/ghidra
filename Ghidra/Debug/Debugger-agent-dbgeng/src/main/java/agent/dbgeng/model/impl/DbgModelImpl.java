@@ -92,6 +92,11 @@ public class DbgModelImpl extends AbstractDbgModel {
 	}
 
 	@Override
+	public TargetObjectSchema getRootSchema() {
+		return root.getSchema();
+	}
+	
+	@Override
 	public CompletableFuture<? extends TargetObject> fetchModelRoot() {
 		return completedRoot;
 	}

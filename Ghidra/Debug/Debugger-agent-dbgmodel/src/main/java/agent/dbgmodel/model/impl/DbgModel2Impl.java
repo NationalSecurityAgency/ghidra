@@ -44,7 +44,7 @@ public class DbgModel2Impl extends AbstractDbgModel {
 
 	public DbgModel2Impl() {
 		this.dbg = new DbgManager2Impl();
-		this.root = new DbgModel2TargetRootImpl(this);
+		this.root = new DbgModel2TargetRootImpl(this, null);
 		this.completedRoot = CompletableFuture.completedFuture(root);
 	}
 

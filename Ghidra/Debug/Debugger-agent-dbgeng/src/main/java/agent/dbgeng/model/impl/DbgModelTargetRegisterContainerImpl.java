@@ -37,6 +37,9 @@ import ghidra.dbg.util.ConversionUtils;
 @TargetObjectSchemaInfo(name = "RegisterContainer", elements = { //
 	@TargetElementType(type = DbgModelTargetRegisterImpl.class) //
 }, attributes = { //
+	@TargetAttributeType( // 
+		name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, //
+		type=DbgModelTargetRegisterContainerImpl.class),
 	@TargetAttributeType(type = Void.class) //
 }, canonicalContainer = true)
 public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImpl

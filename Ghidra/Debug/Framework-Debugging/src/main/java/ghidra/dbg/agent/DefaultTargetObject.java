@@ -237,7 +237,10 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (this.elements) {
 			delta = Delta.computeAndSet(this.elements, elements, Delta.SAME);
 		}
-		getSchema().validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+		TargetObjectSchema schemax = getSchema();
+		if (schemax != null) {
+			schemax.validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+		}
 		doInvalidateElements(delta.removed.values(), reason);
 		if (!delta.isEmpty()) {
 			listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
@@ -279,7 +282,10 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (elements) {
 			delta = Delta.apply(this.elements, remove, add, Delta.SAME);
 		}
-		getSchema().validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+		TargetObjectSchema schemax = getSchema();
+		if (schemax != null) {
+			schemax.validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+		}
 		doInvalidateElements(delta.removed.values(), reason);
 		if (!delta.isEmpty()) {
 			listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
@@ -395,7 +401,10 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (this.attributes) {
 			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
 		}
-		getSchema().validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+		TargetObjectSchema schemax = getSchema();
+		if (schemax != null) {
+			schemax.validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
@@ -437,7 +446,10 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (attributes) {
 			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
 		}
-		getSchema().validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+		TargetObjectSchema schemax = getSchema();
+		if (schemax != null) {
+			schemax.validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
