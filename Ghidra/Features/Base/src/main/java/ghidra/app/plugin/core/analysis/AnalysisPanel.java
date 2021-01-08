@@ -42,6 +42,7 @@ import docking.widgets.table.GTable;
 import ghidra.GhidraOptions;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.Application;
+import ghidra.framework.GenericRunInfo;
 import ghidra.framework.options.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
@@ -51,7 +52,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 import utilities.util.FileUtilities;
 
-class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListener {
+class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	// create an empty options to represent the defaults of the analyzers
 	private static final Options STANDARD_DEFAULT_OPTIONS =
 		new FileOptions("Standard Defaults");
@@ -60,8 +61,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 	public static final String PROTOTYPE = " (Prototype)";
 	public final static int COLUMN_ANALYZER_IS_ENABLED = 0;
 
-	private static final String ANALYZER_OPTIONS_SAVE_DIR = "AnalyzerDefaults";
-	private static final String LAST_DEFAULT_OPTIONS = "LAST_OPTIONS_DEFAULTS";
+	private static final String ANALYZER_OPTIONS_SAVE_DIR = "analyzer_options";
+	private static final String LAST_DEFAULT_OPTIONS = "DEFAULT_ANALYSIS_OPTIONS";
 
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
@@ -94,6 +95,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 			PropertyChangeListener propertyChangeListener) {
 		this(List.of(program), editorStateFactory, propertyChangeListener);
 	}
+
+	/**
+	 * Constructor
+	 *
+	 * @param programs list of programs that will be analyzed
+	 * @param editorStateFactory the editor factory
+	 * @param propertyChangeListener subscriber for property change notifications
+	 */
+	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory) {
+		this(programs, editorStateFactory, e -> {});
+	}
+	
 
 	/**
 	 * Constructor
@@ -180,8 +193,6 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 		setLayout(new BorderLayout());
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		add(buildMainPanel(), BorderLayout.CENTER);
-//		add(buildOptionsComboBoxPanel(), BorderLayout.NORTH);
-//		add(buildMainPanel(), BorderLayout.CENTER);
 	}
 
 	private JComponent buildMainPanel() {
@@ -207,7 +218,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 		defaultOptionsCombo = new GhidraComboBox<>(defaultOptionsArray);
 		selectedOptions = findOptions(defaultOptionsArray, getLastUsedDefaultOptionsName());
 		defaultOptionsCombo.setSelectedItem(selectedOptions);
-		defaultOptionsCombo.addItemListener(this);
+		defaultOptionsCombo.addItemListener(this::analysisComboChanged);
 		Dimension preferredSize = defaultOptionsCombo.getPreferredSize();
 		defaultOptionsCombo.setPreferredSize(new Dimension(200, preferredSize.height));
 		panel.add(defaultOptionsCombo);
@@ -343,7 +354,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 			reloadOptionsCombo(saved);
 		}
 		catch (IOException e) {
-			Msg.error(this, "Error Saving Default Options", e);
+			Msg.error(this, "Error saving default options", e);
 		}
 	}
 
@@ -506,7 +517,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 	 * analyzed.
 	 */
 	void applyChanges() {
-		int id = programs.get(0).startTransaction("setting analysis options");
+		int id = programs.get(0).startTransaction("Setting Analysis Options");
 		boolean commit = false;
 		try {
 			List<AnalyzerEnablementState> analyzerStates = model.getModelData();
@@ -533,7 +544,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 		for (int i = 1; i < programs.size(); i++) {
 			Program program = programs.get(i);
 
-			int id = program.startTransaction("setting analysis options");
+			int id = program.startTransaction("Setting Analysis Options");
 			boolean commit = false;
 			try {
 				copyOptionsTo(program);
@@ -709,8 +720,13 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 		File userSettingsDirectory = Application.getUserSettingsDirectory();
 		File optionsDir = new File(userSettingsDirectory, ANALYZER_OPTIONS_SAVE_DIR);
 		if (!optionsDir.isDirectory()) {
-			return Collections.emptyList();
+			// new installation, copy any old saved analysis options files to current
+			migrateOptionsFromPreviousRevision(optionsDir);
 		}
+		return readSavedOptions(optionsDir);
+	}
+
+	private List<Options> readSavedOptions(File optionsDir) {
 		List<Options> list = new ArrayList<>();
 		File[] listFiles = optionsDir.listFiles();
 		for (File file : listFiles) {
@@ -729,6 +745,40 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 		return list;
 	}
 
+	private void migrateOptionsFromPreviousRevision(File optionsDir) {
+		FileUtilities.mkdirs(optionsDir);
+		File previous = getMostRecentApplicationSettingsDirWithSavedOptions();
+		if (previous == null) {
+			return;
+		}
+		List<Options> readSavedOptions = readSavedOptions(previous);
+		for (Options options : readSavedOptions) {
+			FileOptions fileOptions = (FileOptions) options;
+			String name = fileOptions.getName();
+			try {
+				fileOptions.save(getOptionsSaveFile(name));
+			} catch (IOException e) {
+				Msg.error(this, "Error copying analysis options from previous Ghidra install", e);
+			}
+		}
+	}
+	private File getMostRecentApplicationSettingsDirWithSavedOptions() {
+		List<File> ghidraUserDirsByTime = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
+		if (ghidraUserDirsByTime.size() == 0) {
+			return null;
+		}
+
+		// get the tools from the most recent projects first
+		for (File ghidraUserDir : ghidraUserDirsByTime) {
+			File possible = new File(ghidraUserDir, ANALYZER_OPTIONS_SAVE_DIR);
+			if (possible.exists()) {
+				return possible;
+			}
+		}
+		return null;
+	}
+
+
 	private boolean isUserConfiguration(Options options) {
 		if (options == STANDARD_DEFAULT_OPTIONS ||
 			options == currentProgramOptions) {
@@ -739,8 +789,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 
 	}
 
-	@Override
-	public void itemStateChanged(ItemEvent e) {
+	private void analysisComboChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
 			selectedOptions = (FileOptions) defaultOptionsCombo.getSelectedItem();
 			updateDeleteButton();
@@ -753,8 +802,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener, ItemListen
 	}
 
 	private void updateDeleteButton() {
-		if (deleteButton != null) {
-			deleteButton.setEnabled(isUserConfiguration(selectedOptions));
-		}
+		deleteButton.setEnabled(isUserConfiguration(selectedOptions));
 	}
 }
+
