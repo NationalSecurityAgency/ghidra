@@ -15,13 +15,22 @@
  */
 package ghidra.app.script;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.ConsoleTaskMonitor;
 
 public class GhidraScriptUtilTest extends AbstractGenericTest {
+
+	@Before
+	public void setup() throws CancelledException {
+		ClassSearcher.search(false, new ConsoleTaskMonitor());
+	}
 
 	@Test
 	public void fixupName_WithExtension() {
@@ -58,4 +67,11 @@ public class GhidraScriptUtilTest extends AbstractGenericTest {
 		String input = "a.b.c.Bob$InnerClass";
 		assertEquals(GhidraScriptUtil.fixupName(input), "a/b/c/Bob.java");
 	}
+
+	@Test
+	public void fixupName_Python() {
+		String input = "Bob.py";
+		assertEquals(GhidraScriptUtil.fixupName(input), "Bob.py");
+	}
+
 }

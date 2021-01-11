@@ -669,6 +669,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		// always get the current predicate from the main view and test with it,
 		satellite.getRenderContext()
 				.setVertexIncludePredicate(v -> viewer.getRenderContext().getVertexIncludePredicate().test(v));
+		satellite.getRenderContext()
+				.setEdgeIncludePredicate(e -> viewer.getRenderContext().getEdgeIncludePredicate().test(e));
 		satellite.getComponent().setBorder(BorderFactory.createEtchedBorder());
 		parentViewer.getComponent().addComponentListener(new ComponentAdapter() {
 			@Override
