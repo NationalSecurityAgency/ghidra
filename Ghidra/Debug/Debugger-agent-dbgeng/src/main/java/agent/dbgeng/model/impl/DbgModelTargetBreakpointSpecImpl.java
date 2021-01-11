@@ -32,8 +32,12 @@ import ghidra.util.datastruct.ListenerSet;
 			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, //
 			type = DbgModelTargetBreakpointContainerImpl.class), //
 	@TargetAttributeType( //
-		name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
-		type = DbgModelTargetBreakpointSpecImpl.class), //
+			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
+			type = DbgModelTargetBreakpointSpecImpl.class), //
+	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_TYPE_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_DISP_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_PENDING_ATTRIBUTE_NAME, type = String.class), //
+	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_TIMES_ATTRIBUTE_NAME, type = Integer.class), //
 	@TargetAttributeType(type = Void.class) //
 }, canonicalContainer = true)
 public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl

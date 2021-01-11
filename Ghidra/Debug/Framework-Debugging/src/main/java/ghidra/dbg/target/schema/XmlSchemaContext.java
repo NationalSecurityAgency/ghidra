@@ -15,8 +15,7 @@
  */
 package ghidra.dbg.target.schema;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import org.jdom.*;
@@ -82,8 +81,7 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 		XmlUtilities.setStringAttr(result, "name", schema.getName().toString());
 		for (Class<? extends TargetObject> iface : schema.getInterfaces()) {
 			Element ifElem = new Element("interface");
-			XmlUtilities.setStringAttr(ifElem, "name",
-				DebuggerObjectModel.requireIfaceName(iface));
+			XmlUtilities.setStringAttr(ifElem, "name", DebuggerObjectModel.requireIfaceName(iface));
 			result.addContent(ifElem);
 		}
 
@@ -98,8 +96,7 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 			result.addContent(elemElem);
 		}
 		Element deElem = new Element("element");
-		XmlUtilities.setStringAttr(deElem, "schema",
-			schema.getDefaultElementSchema().toString());
+		XmlUtilities.setStringAttr(deElem, "schema", schema.getDefaultElementSchema().toString());
 		result.addContent(deElem);
 
 		for (AttributeSchema as : schema.getAttributeSchemas().values()) {
@@ -119,13 +116,21 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 
 	public static XmlSchemaContext deserialize(byte[] xml) throws JDOMException {
 		try {
-			SAXBuilder sb = XmlUtilities.createSecureSAXBuilder(false, false);
-			Document doc = sb.build(new ByteArrayInputStream(xml));
-			return contextFromXml(doc.getRootElement());
+			return deserialize(new ByteArrayInputStream(xml));
 		}
 		catch (IOException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	public static XmlSchemaContext deserialize(File file) throws JDOMException, IOException {
+		return deserialize(new FileInputStream(file));
+	}
+
+	public static XmlSchemaContext deserialize(InputStream is) throws JDOMException, IOException {
+		SAXBuilder sb = XmlUtilities.createSecureSAXBuilder(false, false);
+		Document doc = sb.build(Objects.requireNonNull(is));
+		return contextFromXml(doc.getRootElement());
 	}
 
 	public static XmlSchemaContext contextFromXml(Element contextElem) {

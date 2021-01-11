@@ -18,11 +18,16 @@ package agent.dbgmodel.model.impl;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+import org.jdom.JDOMException;
+
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.framework.Application;
 import ghidra.program.model.address.*;
 
 public class DbgModel2Impl extends AbstractDbgModel {
@@ -30,7 +35,22 @@ public class DbgModel2Impl extends AbstractDbgModel {
 	// The model must convert to and from Ghidra's address space names
 	protected static final String SPACE_NAME = "ram";
 
-	// Don't make this static, so each model has a unique "GDB" space
+	public static final XmlSchemaContext SCHEMA_CTX;
+	public static final TargetObjectSchema ROOT_SCHEMA;
+	static {
+		try {
+			//SCHEMA_CTX =
+			//		XmlSchemaContext.deserialize(ResourceManager.getResourceAsStream("dbgmodel.xml"));
+			SCHEMA_CTX = XmlSchemaContext
+					.deserialize(DbgModel2Impl.class.getResourceAsStream("dbgmodel_schema.xml"));
+			ROOT_SCHEMA = SCHEMA_CTX.getSchema(SCHEMA_CTX.name("Debugger"));
+		}
+		catch (IOException | JDOMException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	// Don't make this static, so each model has a unique "ram" space
 	protected final AddressSpace space =
 		new GenericAddressSpace(SPACE_NAME, 64, AddressSpace.TYPE_RAM, 0);
 	protected final AddressFactory addressFactory =
@@ -44,7 +64,8 @@ public class DbgModel2Impl extends AbstractDbgModel {
 
 	public DbgModel2Impl() {
 		this.dbg = new DbgManager2Impl();
-		this.root = new DbgModel2TargetRootImpl(this, null);
+		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
+		this.root = new DbgModel2TargetRootImpl(this, ROOT_SCHEMA);
 		this.completedRoot = CompletableFuture.completedFuture(root);
 	}
 
@@ -75,6 +96,11 @@ public class DbgModel2Impl extends AbstractDbgModel {
 	@Override
 	public void terminate() throws IOException {
 		dbg.terminate();
+	}
+
+	@Override
+	public TargetObjectSchema getRootSchema() {
+		return root.getSchema();
 	}
 
 	@Override

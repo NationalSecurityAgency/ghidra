@@ -139,6 +139,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		List<Class<? extends TargetObject>> mixins = new ArrayList<>();
 		String lkey = key;
 		String pname = parent.getName();
+
+		/*
 		if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD) || lkey.contains(")")) {
 			mixins.add(DbgModelTargetMethod.class);
 			// NB: We're passing the parent's mixin model to the method on the assumption
@@ -147,9 +149,16 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			lkey = pname;
 			pname = "";
 		}
-		Class<? extends DbgModelTargetObject> mixin = lookupWrapperType(lkey, pname);
-		if (mixin != null) {
-			mixins.add(mixin);
+		*/
+
+		if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD)) {
+			mixins.add(DbgModelTargetMethod.class);
+		}
+		else {
+			Class<? extends DbgModelTargetObject> mixin = lookupWrapperType(lkey, pname);
+			if (mixin != null) {
+				mixins.add(mixin);
+			}
 		}
 		return new DelegateDbgModel2TargetObject(model, parent, key, object, mixins).proxy;
 	}

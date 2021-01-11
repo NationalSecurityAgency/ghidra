@@ -409,6 +409,100 @@ public class ObjectContainer implements Comparable {
 		return result;
 	}
 
+	/*
+	public void toXmlSchema(Element root) {
+		Element element = this.toXmlSchema();
+		root.addContent(element);
+	
+		for (ObjectContainer child : getCurrentChildren()) {
+			String key = child.getShortName();
+			if (attributeMap.containsKey(key)) {
+				if (!(child.targetObject instanceof DummyTargetObject)) {
+					child.toXmlSchema(root);
+				}
+			}
+		}
+		for (ObjectContainer child : getCurrentChildren()) {
+			if (elementMap.containsValue(child.targetObject)) {
+				child.toXmlSchema(root);
+				break;
+			}
+		}
+	}
+	
+	public Element toXmlSchema() {
+		String name = getPrefixedName();
+		if (name == null) {
+			name = provider.getRoot().getName();
+		}
+		name = sanitize(name);
+		Element result = new Element("schema");
+		XmlUtilities.setStringAttr(result, "name", name);
+		for (ObjectContainer child : getCurrentChildren()) {
+			String key = child.getShortName();
+			if (attributeMap.containsKey(key)) {
+				Element n = new Element("attribute");
+				String typeHint = null;
+				if (child.targetObject != null) {
+					typeHint = child.targetObject.getTypeHint();
+				}
+				XmlUtilities.setStringAttr(n, "name", key);
+				if (typeHint != null) {
+					XmlUtilities.setStringAttr(n, "schema", typeHint);
+				}
+				if (key.startsWith("_")) {
+					XmlUtilities.setStringAttr(n, "hidden", "yes");
+				}
+				result.addContent(n);
+			}
+		}
+		if (elementMap.isEmpty()) {
+			Element n = new Element("element");
+			XmlUtilities.setStringAttr(n, "schema", "VOID");
+			result.addContent(n);
+		}
+		else {
+			for (ObjectContainer child : getCurrentChildren()) {
+				if (elementMap.containsValue(child.targetObject)) {
+					Element n = new Element("element");
+					String typeHint = null;
+					if (child.targetObject != null) {
+						typeHint = child.targetObject.getTypeHint();
+					}
+					XmlUtilities.setStringAttr(n, "name", child.getName());
+					if (typeHint != null) {
+						Element ifc = new Element("interface");
+						try {
+							XmlUtilities.setStringAttr(n, "name", sanitize(typeHint));
+						}
+						catch (Exception e) {
+							//do nothing
+						}
+						result.addContent(ifc);
+					}
+					result.addContent(n);
+					break;
+				}
+			}
+		}
+		Element n = new Element("attribute");
+		XmlUtilities.setStringAttr(n, "schema", "VOID");
+		result.addContent(n);
+		return result;
+	}
+	
+	private String sanitize(String name) {
+		name = name.replaceAll(" ", "_");
+		name = name.replaceAll("/", "_");
+		if (name.contains("[")) {
+			name = name.replaceAll("\\[", "_");
+			name = name.replaceAll("\\]", "");
+			name = name.replaceAll("/", "_");
+		}
+		return name;
+	}
+	*/
+
 	public boolean isImmutable() {
 		return immutable;
 	}
@@ -502,4 +596,5 @@ public class ObjectContainer implements Comparable {
 		}
 		return this.hashCode() - that.hashCode();
 	}
+
 }

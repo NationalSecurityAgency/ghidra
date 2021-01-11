@@ -484,7 +484,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (map == null) {
 				return;
 			}
-			setAttributes(List.of(), map, "Refreshed");
+			changeAttributes(List.of(), map, "Refreshed");
 		});
 	}
 
