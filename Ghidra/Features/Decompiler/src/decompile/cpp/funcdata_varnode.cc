@@ -731,38 +731,35 @@ void Funcdata::clearDeadVarnodes(void)
 void Funcdata::calcNZMask(void)
 
 {
-  vector<PcodeOp *> opstack;
-  vector<int4> slotstack;
+  vector<PcodeOpNode> opstack;
   list<PcodeOp *>::const_iterator oiter;
 
   for(oiter=beginOpAlive();oiter!=endOpAlive();++oiter) {
     PcodeOp *op = *oiter;
     if (op->isMark()) continue;
-    opstack.push_back(op);
-    slotstack.push_back(0);
+    opstack.push_back(PcodeOpNode(op,0));
     op->setMark();
 
     do {
       // Get next edge
-      op = opstack.back();
-      int4 slot = slotstack.back();
-      if (slot >= op->numInput()) { // If no edge left
-	Varnode *outvn = op->getOut();
+      PcodeOpNode &node( opstack.back() );
+      if (node.slot >= node.op->numInput()) { // If no edge left
+	Varnode *outvn = node.op->getOut();
 	if (outvn != (Varnode *)0) {
-	  outvn->nzm = op->getNZMaskLocal(true);
+	  outvn->nzm = node.op->getNZMaskLocal(true);
 	}
 	opstack.pop_back();	// Pop a level
-	slotstack.pop_back();
 	continue;
       }
-      slotstack.back() = slot + 1; // Advance to next input
+      int4 oldslot = node.slot;
+      node.slot += 1; // Advance to next input
       // Determine if we want to traverse this edge
-      if (op->code() == CPUI_MULTIEQUAL) {
-	if (op->getParent()->isLoopIn(slot)) // Clip looping edges
+      if (node.op->code() == CPUI_MULTIEQUAL) {
+	if (node.op->getParent()->isLoopIn(oldslot)) // Clip looping edges
 	  continue;
       }
       // Traverse edge indicated by slot
-      Varnode *vn = op->getIn(slot);
+      Varnode *vn = node.op->getIn(oldslot);
       if (!vn->isWritten()) {
 	if (vn->isConstant())
 	  vn->nzm = vn->getOffset();
@@ -773,32 +770,32 @@ void Funcdata::calcNZMask(void)
 	}
       }
       else if (!vn->getDef()->isMark()) { // If haven't traversed before
-	opstack.push_back(vn->getDef());
-	slotstack.push_back(0);
+	opstack.push_back(PcodeOpNode(vn->getDef(),0));
 	vn->getDef()->setMark();
       }
     } while(!opstack.empty());
   }
 
+  vector<PcodeOp *> worklist;
   // Clear marks and push ops with looping edges onto worklist
   for(oiter=beginOpAlive();oiter!=endOpAlive();++oiter) {
     PcodeOp *op = *oiter;
     op->clearMark();
     if (op->code() == CPUI_MULTIEQUAL)
-      opstack.push_back(op);
+      worklist.push_back(op);
   }
 
   // Continue to propagate changes along all edges
-  while(!opstack.empty()) {
-    PcodeOp *op = opstack.back();
-    opstack.pop_back();
+  while(!worklist.empty()) {
+    PcodeOp *op = worklist.back();
+    worklist.pop_back();
     Varnode *vn = op->getOut();
     if (vn == (Varnode *)0) continue;
     uintb nzmask = op->getNZMaskLocal(false);
     if (nzmask != vn->nzm) {
       vn->nzm = nzmask;
       for(oiter=vn->beginDescend();oiter!=vn->endDescend();++oiter)
-	opstack.push_back(*oiter);
+	worklist.push_back(*oiter);
     }
   }
 }

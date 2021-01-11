@@ -4532,7 +4532,7 @@ void ActionInferTypes::propagateOneType(TypeFactory *typegrp,Varnode *vn)
   PropagationState *ptr;
   vector<PropagationState> state;
 
-  state.push_back(PropagationState(vn));
+  state.emplace_back(vn);
   vn->setMark();
 
   while(!state.empty()) {
@@ -4545,7 +4545,7 @@ void ActionInferTypes::propagateOneType(TypeFactory *typegrp,Varnode *vn)
       if (propagateTypeEdge(typegrp,ptr->op,ptr->inslot,ptr->slot)) {
 	vn = (ptr->slot==-1) ? ptr->op->getOut() : ptr->op->getIn(ptr->slot);
 	ptr->step();		// Make sure to step before push_back
-	state.push_back(PropagationState(vn));
+	state.emplace_back(vn);
 	vn->setMark();
       }
       else
@@ -5100,6 +5100,7 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( actcleanup );
 
   act->addAction( new ActionPreferComplement("blockrecovery") );
+  act->addAction( new ActionStructureTransform("blockrecovery") );
   act->addAction( new ActionNormalizeBranches("normalizebranches") );
   act->addAction( new ActionAssignHigh("merge") );
   act->addAction( new ActionMergeRequired("merge") );

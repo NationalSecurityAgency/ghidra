@@ -546,7 +546,7 @@ uintb JoinSpace::restoreXmlAttributes(const Element *el,uint4 &size) const
     }
     int4 pos = (int4)(attrName[5] - '1');
     while(pieces.size() <= pos)
-      pieces.push_back(VarnodeData());
+      pieces.emplace_back();
     VarnodeData &vdat( pieces[pos] );
 
     string attrVal = el->getAttributeValue(i);
@@ -604,7 +604,7 @@ uintb JoinSpace::read(const string &s,int4 &size) const
   int4 szsum = 0;
   int4 i=0;
   while(i < s.size()) {
-    pieces.push_back(VarnodeData()); // Prepare to read next VarnodeData
+    pieces.emplace_back();	// Prepare to read next VarnodeData
     string token;
     while((i<s.size())&&(s[i]!=',')) {
       token += s[i];

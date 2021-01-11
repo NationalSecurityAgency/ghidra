@@ -262,6 +262,19 @@ public:
   void clear(void);				///< Clear for a new test
 };
 
+/// \brief Give each control-flow structure an opportunity to make a final transform
+///
+/// This is currently used to set up \e for loops via BlockWhileDo
+class ActionStructureTransform : public Action {
+public:
+  ActionStructureTransform(const string &g) : Action(0,"structuretransform",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionStructureTransform(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
 /// \brief Flip conditional control-flow so that \e preferred comparison operators are used
 ///
 /// This is used as an alternative to the standard algorithm that structures control-flow, when

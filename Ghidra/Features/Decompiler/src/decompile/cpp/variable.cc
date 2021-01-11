@@ -488,6 +488,62 @@ void HighVariable::saveXml(ostream &s) const
   s << "</high>";
 }
 
+/// Given a Varnode at the root of an expression, we collect all the \e explicit HighVariables
+/// involved in the expression.  This should only be run after \e explicit and \e implicit
+/// properties have been computed on Varnodes.  The expression is traced back from the root
+/// until explicit Varnodes are encountered; then their HighVariable is marked and added to the list.
+/// The routine returns a value based on PcodeOps encountered in the expression:
+///   - 1 for call instructions
+///   - 2 for LOAD instructions
+///   - 3 for both call and LOAD
+///   - 0 for no calls or LOADS
+///
+/// \param vn is the given root Varnode of the expression
+/// \param highList will hold the collected HighVariables
+/// \return a value based on call and LOAD instructions in the expression
+int4 HighVariable::markExpression(Varnode *vn,vector<HighVariable *> &highList)
+
+{
+  HighVariable *high = vn->getHigh();
+  high->setMark();
+  highList.push_back(high);
+  int4 retVal = 0;
+  if (!vn->isWritten()) return retVal;
+
+  vector<PcodeOpNode> path;
+  PcodeOp *op = vn->getDef();
+  if (op->isCall())
+    retVal |= 1;
+  if (op->code() == CPUI_LOAD)
+    retVal |= 2;
+  path.push_back(PcodeOpNode(op,0));
+  while(!path.empty()) {
+    PcodeOpNode &node(path.back());
+    if (node.op->numInput() <= node.slot) {
+      path.pop_back();
+      continue;
+    }
+    Varnode *vn = node.op->getIn(node.slot);
+    node.slot += 1;
+    if (vn->isAnnotation()) continue;
+    if (vn->isExplicit()) {
+      high = vn->getHigh();
+      if (high->isMark()) continue;	// Already in the list
+      high->setMark();
+      highList.push_back(high);
+      continue;				// Truncate at explicit
+    }
+    if (!vn->isWritten()) continue;
+    op = vn->getDef();
+    if (op->isCall())
+      retVal |= 1;
+    if (op->code() == CPUI_LOAD)
+      retVal |= 2;
+    path.push_back(PcodeOpNode(vn->getDef(),0));
+  }
+  return retVal;
+}
+
 #ifdef MERGEMULTI_DEBUG
 /// \brief Check that there are no internal Cover intersections within \b this
 ///

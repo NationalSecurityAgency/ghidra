@@ -79,7 +79,7 @@ void PcodeCacher::addLabelRef(VarnodeData *ptr)
 
 { // Store off a reference to a label and the next instruction
   // address
-  label_refs.push_back(RelativeRecord());
+  label_refs.emplace_back();
   label_refs.back().dataptr = ptr;
   label_refs.back().calling_index = issued.size();
 }
