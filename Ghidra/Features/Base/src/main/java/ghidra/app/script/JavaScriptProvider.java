@@ -164,4 +164,29 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return "//";
 	}
 
+	/**
+	 *
+	 * Fix script name for search in script directories, such as Java package parts in the name and inner class names.
+	 *
+	 * <p>This method can handle names with '$' (inner classes) and names with '.' 
+	 * characters for package separators
+	 *
+	 * <p>It is part of a poorly specified behavior that is due for future amendment, 
+	 * see {@link GhidraScriptUtil#fixupName(String)}.
+	 *
+	 * @param scriptName the name of the script
+	 * @return the name as a '.java' file path (with '/'s and not '.'s)
+	 */
+	@Override
+	protected String fixupName(String scriptName) {
+		scriptName = scriptName.substring(0, scriptName.length() - 5);
+
+		String path = scriptName.replace('.', '/');
+		int innerClassIndex = path.indexOf('$');
+		if (innerClassIndex != -1) {
+			path = path.substring(0, innerClassIndex);
+		}
+		return path + ".java";
+	}
+
 }
