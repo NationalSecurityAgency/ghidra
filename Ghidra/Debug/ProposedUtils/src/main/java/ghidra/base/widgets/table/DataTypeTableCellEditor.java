@@ -90,19 +90,6 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 		return service;
 	}
 
-	/**
-	 * Get the maximum allowed size for the given row and column
-	 * 
-	 * Defaults to unlimited.
-	 * 
-	 * @param row the row being edited
-	 * @param column the column being edited
-	 * @return the maximum size or -1 for unlimited
-	 */
-	protected int getMaxLength(int row, int column) {
-		return -1;
-	}
-
 	protected AllowedDataTypes getAllowed(int row, int column) {
 		return AllowedDataTypes.ALL;
 	}
@@ -134,8 +121,7 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 
 	protected void init(int row, int column) {
 		updateService();
-		editor = new DataTypeSelectionEditor(service, getMaxLength(row, column),
-			getAllowed(row, column));
+		editor = new DataTypeSelectionEditor(service, getAllowed(row, column));
 		editor.setPreferredDataTypeManager(getPreferredDataTypeManager(row, column));
 		editor.setTabCommitsEdit(true);
 		editor.setConsumeEnterKeyPress(false);
