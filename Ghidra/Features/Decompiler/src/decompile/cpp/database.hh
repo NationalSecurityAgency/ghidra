@@ -112,7 +112,7 @@ public:
   typedef EntrySubsort subsorttype;	///< The sub-sort object for a rangemap
   typedef EntryInitData inittype;	///< Initialization data for a SymbolEntry in a rangemap
 
-  SymbolEntry(void) {}			///< Constructor for use with rangemap
+  SymbolEntry(const EntryInitData &data,uintb a,uintb b);		///< Fully initialize \b this
   SymbolEntry(Symbol *sym,uint4 exfl,uint8 h,int4 off,int4 sz,const RangeList &rnglist);	///< Construct a dynamic SymbolEntry
   bool isPiece(void) const { return ((extraflags&(Varnode::precislo|Varnode::precishi))!=0); }	///< Is \b this a high or low piece of the whole Symbol
   bool isDynamic(void) const { return addr.isInvalid(); }		///< Is \b storage \e dynamic
@@ -122,7 +122,6 @@ public:
   uintb getFirst(void) const { return addr.getOffset(); }		///< Get the first offset of \b this storage location
   uintb getLast(void) const { return (addr.getOffset()+size-1); }	///< Get the last offset of \b this storage location
   subsorttype getSubsort(void) const;					///< Get the sub-sort object
-  void initialize(const EntryInitData &data,uintb a,uintb b);		///< Fully initialize \b this
   Symbol *getSymbol(void) const { return symbol; }			///< Get the Symbol associated with \b this
   const Address &getAddr(void) const { return addr; }			///< Get the starting address of \b this storage
   uint8 getHash(void) const { return hash; }				///< Get the hash used to identify \b this storage
@@ -819,13 +818,12 @@ private:
   Address first;		///< The first address of the range
   Address last;			///< The last address of the range
 public:
-  ScopeMapper(void) {}		///< Constructor for use with rangemap
+  ScopeMapper(const inittype &data,const Address &f,const Address &l) {
+    scope = data; first = f; last = l; }	///< Initialize the range (with the owning Scope)
   Address getFirst(void) const { return first; }		///< Get the first address in the range
   Address getLast(void) const { return last; }			///< Get the last address in the range
   NullSubsort getSubsort(void) const { return NullSubsort(); }	///< Get the sub-subsort object
   Scope *getScope(void) const { return scope; }			///< Get the Scope owning this address range
-  void initialize(const inittype &data,const Address &f,const Address &l) {
-    scope = data; first = f; last = l; }	///< Initialize the range (with the owning Scope)
 };
 typedef rangemap<ScopeMapper> ScopeResolve;		///< A map from address to the owning Scope
 

@@ -61,7 +61,7 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor implements TableCel
 	}
 
 	private void init() {
-		editor = new DataTypeSelectionEditor(service, -1, DataTypeParser.AllowedDataTypes.ALL);
+		editor = new DataTypeSelectionEditor(service, DataTypeParser.AllowedDataTypes.ALL);
 		editor.setTabCommitsEdit(true);
 		editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
@@ -88,25 +88,16 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor implements TableCel
 			}
 		};
 
-		dataTypeChooserButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						DataType dataType = service.getDataType((String) null);
-						if (dataType != null) {
-							editor.setCellEditorValue(dataType);
-							editor.stopCellEditing();
-						}
-						else {
-							editor.cancelCellEditing();
-						}
-					}
-				});
+		dataTypeChooserButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
+			DataType dataType = service.getDataType((String) null);
+			if (dataType != null) {
+				editor.setCellEditorValue(dataType);
+				editor.stopCellEditing();
 			}
-		});
+			else {
+				editor.cancelCellEditing();
+			}
+		}));
 
 		FocusAdapter focusListener = new FocusAdapter() {
 			@Override

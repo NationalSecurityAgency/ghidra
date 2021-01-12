@@ -482,6 +482,8 @@ public:
   /// \brief End of all (alive) PcodeOp objects attached to a specific Address
   PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
 
+  bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
+
   // Jumptable routines
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND

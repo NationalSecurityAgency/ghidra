@@ -2345,7 +2345,7 @@ void IfcPreferSplit::execute(istream &s)
   s >> dec >> split;
   if (split == -1)
     throw IfaceParseError("Bad split offset");
-  dcp->conf->splitrecords.push_back(PreferSplitRecord());
+  dcp->conf->splitrecords.emplace_back();
   PreferSplitRecord &rec( dcp->conf->splitrecords.back() );
 
   rec.storage.space = addr.getSpace();

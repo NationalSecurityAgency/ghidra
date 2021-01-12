@@ -204,7 +204,7 @@ public class BitFieldEditorPanel extends JPanel {
 	private JComponent createDataTypeChoiceEditor() {
 
 		dtChoiceEditor =
-			new DataTypeSelectionEditor(dtmService, -1, AllowedDataTypes.BITFIELD_BASE_TYPE);
+			new DataTypeSelectionEditor(dtmService, AllowedDataTypes.BITFIELD_BASE_TYPE);
 		dtChoiceEditor.setConsumeEnterKeyPress(false);
 		dtChoiceEditor.setTabCommitsEdit(true);
 		//dtChoiceEditor.setPreferredDataTypeManager(composite.getDataTypeManager());
@@ -539,7 +539,7 @@ public class BitFieldEditorPanel extends JPanel {
 			dtChoiceEditor.getDropDownTextField().setText("");
 			fieldNameTextField.setText(null);
 			fieldCommentTextField.setText(null);
-			;
+
 			bitOffsetModel.setValue(0L);
 			bitSizeModel.setValue(1L);
 		}

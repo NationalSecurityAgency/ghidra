@@ -227,7 +227,7 @@ void SleighBase::restoreXml(const Element *el)
   List::const_iterator iter;
   iter = list.begin();
   while((*iter)->getName() == "floatformat") {
-    floatformats.push_back(FloatFormat());
+    floatformats.emplace_back();
     floatformats.back().restoreXml(*iter);
     ++iter;
   }

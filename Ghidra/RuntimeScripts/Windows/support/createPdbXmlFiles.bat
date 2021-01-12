@@ -26,7 +26,7 @@ set OS_DIR=build\os
 :continue
 
 REM create absolute path
-for /f %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
+for /f "delims=" %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
 
 REM Determine if 64-bit or 32-bit
 if exist "%PROGRAMFILES(X86)%" (
@@ -64,7 +64,7 @@ for /f "tokens=* delims=" %%a in ('dir %arg1% /s /b') do (
 			setlocal enableDelayedExpansion
 			(
 				echo "Processing file: %%a"
-				START /B /WAIT "" "%PDB_EXE%" %%a > "%%a.xml"
+				START /B /WAIT "" "%PDB_EXE%" "%%a" > "%%a.xml"
 
 				REM Exit if executable returned non-zero error code (signifies that there is a problem).
 				if !errorlevel! neq 0 (
