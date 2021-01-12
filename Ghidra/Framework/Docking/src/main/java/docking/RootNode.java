@@ -576,7 +576,7 @@ class RootNode extends WindowNode {
 			return;
 		}
 
-		statusBar.setStatusText(text, getMainWindow().isActive());
+		statusBar.setStatusText(text);
 
 		Iterator<DetachedWindowNode> iter = detachedWindows.iterator();
 		while (iter.hasNext()) {
