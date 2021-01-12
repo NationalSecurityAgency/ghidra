@@ -6,4 +6,4 @@ Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 src/javaprovider/def/javaprovider.def||GHIDRA||||END|
 src/javaprovider/rc/javaprovider.rc||GHIDRA||||END|
-sxrc/main/resources/agent/dbgmodel/model/impl/dbgmodel_schema.xml||GHIDRA||||END|
+src/main/resources/agent/dbgmodel/model/impl/dbgmodel_schema.xml||GHIDRA||||END|
