@@ -44,6 +44,7 @@ src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerListingPlugin.png
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerModuleImportDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin_old.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/images/filter_off.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/images/sync_enabled.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/images/view-refresh.png||Tango Icons - Public Domain|||tango icon set|END|
