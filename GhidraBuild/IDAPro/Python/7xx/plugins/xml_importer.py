@@ -14,6 +14,12 @@ import idaxml
 import idc
 import sys
 
+if sys.version_info.major >= 3:
+    from idaxml import _exc_info
+
+    sys.exc_value = lambda: _exc_info()[1]
+    sys.exc_type = lambda: _exc_info()[0]
+
 
 class XmlImporterPlugin(ida_idaapi.plugin_t):
     """
@@ -65,7 +71,7 @@ class XmlImporterPlugin(ida_idaapi.plugin_t):
                 idc.warning(msg)
             except:
                 msg = "***** Exception occurred: XML Importer failed! *****"
-                print("\n" + msg + "\n", sys.exc_info()[0], sys.exc_info()[1])
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()

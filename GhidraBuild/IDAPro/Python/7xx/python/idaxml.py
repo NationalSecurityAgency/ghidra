@@ -36,10 +36,16 @@ import datetime
 import os
 import sys
 import time
+
 from xml.etree import cElementTree
 
 if sys.version_info.major >= 3:
+    import copy
+
     time.clock = time.perf_counter
+    _exc_info = copy.copy(sys.exc_info)
+    sys.exc_value = lambda: _exc_info()[1]
+    sys.exc_type = lambda: _exc_info()[0]
 
 DEBUG = False  # print debug statements
 
@@ -2653,7 +2659,7 @@ class XmlImporter(IdaXml):
                     break
         except:
             msg = "** Exception occurred in import_bookmark **"
-            print("\n" + msg + "\n", sys.exc_info()[0], sys.exc_info()[1])
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
 
     def import_cmts(self, element, sid, typ):
         """
@@ -2984,7 +2990,7 @@ class XmlImporter(IdaXml):
                 self.import_register_var(register_var, func)
         except:
             msg = "** Exception occurred in import_function **"
-            print("\n" + msg + "\n", sys.exc_info()[0], sys.exc_info()[1])
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
 
     def import_function_def(self, function_def):
         # import_function_def: NOT IMPLEMENTED

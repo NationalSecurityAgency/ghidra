@@ -15,6 +15,12 @@ import idaxml
 import idc
 import sys
 
+if sys.version_info.major >= 3:
+    from idaxml import _exc_info
+
+    sys.exc_value = lambda: _exc_info()[1]
+    sys.exc_type = lambda: _exc_info()[0]
+
 
 class XmlExporterPlugin(ida_idaapi.plugin_t):
     """
@@ -62,7 +68,7 @@ class XmlExporterPlugin(ida_idaapi.plugin_t):
             except:
                 ida_kernwin.hide_wait_box()
                 msg = "***** Exception occurred: XML Exporter failed! *****"
-                print("\n" + msg + "\n", sys.exc_info()[0], sys.exc_info()[1])
+                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()

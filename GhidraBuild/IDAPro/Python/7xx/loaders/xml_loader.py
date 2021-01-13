@@ -16,6 +16,11 @@ import idaxml
 import idc
 import sys
 
+if sys.version_info.major >= 3:
+    from idaxml import _exc_info
+
+    sys.exc_value = lambda: _exc_info()[1]
+    sys.exc_type = lambda: _exc_info()[0]
 
 """
 Loader functions
@@ -85,7 +90,7 @@ def load_file(li, neflags, format):
     except:
         print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print("\n" + msg + "\n", sys.exc_info()[0], sys.exc_info()[1])
+        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
         print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:
