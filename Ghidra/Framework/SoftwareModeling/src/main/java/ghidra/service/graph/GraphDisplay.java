@@ -15,6 +15,8 @@
  */
 package ghidra.service.graph;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import docking.action.DockingAction;
@@ -33,6 +35,8 @@ public interface GraphDisplay {
 	public static final int ALIGN_LEFT = 0;  // aligns graph text to the left
 	public static final int ALIGN_CENTER = 1; // aligns graph text to the center
 	public static final int ALIGN_RIGHT = 2; // aligns graph text to the right
+	public static final int ALIGN_TOP = 3; // aligns graph text to the right
+	public static final int ALIGN_BOTTOM = 4; // aligns graph text to the right
 
 	/**
 	 * Sets a {@link GraphDisplayListener} to be notified when the user changes the vertex focus
@@ -108,7 +112,7 @@ public interface GraphDisplay {
 	/**
 	 * Sets the name of the attribute which should be used as the primary vertex label in the display.
 	 * @param attributeName the name of the attribute to use as the display label for vertices.
-	 * @param alignment (ALIGN_LEFT, ALIGN_RIGHT, or ALIGN_CENTER)
+	 * @param alignment (ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER, ALIGN_TOP, or ALIGN_BOTTOM)
 	 * @param size the font size to use for the display label
 	 * @param monospace true if the font should be monospaced
 	 * @param maxLines the maximum number lines to display in the vertex labels
@@ -152,5 +156,16 @@ public interface GraphDisplay {
 	 * @param action the action to add.
 	 */
 	public void addAction(DockingAction action);
+
+	default void setProperty(String key, String value) {
+	}
+
+	default String getValue(String key) {
+		return null;
+	}
+
+	default Map<String, String> getProperties() {
+		return Collections.emptyMap();
+	}
 
 }

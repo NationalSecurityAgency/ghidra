@@ -15,7 +15,9 @@
  */
 package ghidra.app.services;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import ghidra.app.plugin.core.graph.GraphDisplayBrokerListener;
 import ghidra.app.plugin.core.graph.GraphDisplayBrokerPlugin;
@@ -60,7 +62,12 @@ public interface GraphDisplayBroker {
 	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
 	 * @throws GraphException thrown if an error occurs trying to get a graph display
 	 */
-	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+	default GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+			throws GraphException {
+		return getDefaultGraphDisplay(reuseGraph, Collections.emptyMap(), monitor);
+	}
+
+	GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties, TaskMonitor monitor)
 			throws GraphException;
 
 	/**

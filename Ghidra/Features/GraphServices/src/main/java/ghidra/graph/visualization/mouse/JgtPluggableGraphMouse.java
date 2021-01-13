@@ -15,14 +15,13 @@
  */
 package ghidra.graph.visualization.mouse;
 
-import java.awt.event.InputEvent;
-
 import org.jungrapht.visualization.control.*;
 
-import docking.DockingUtils;
 import ghidra.graph.visualization.DefaultGraphDisplay;
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
+
+import java.awt.event.InputEvent;
 
 /**
  * Pluggable graph mouse for jungrapht
@@ -34,7 +33,7 @@ public class JgtPluggableGraphMouse extends DefaultGraphMouse<AttributedVertex, 
 	// TODO we should not need the graph display for any mouse plugins, but the API is net yet
 	//      robust enough to communicate fully without it
 	public JgtPluggableGraphMouse(DefaultGraphDisplay graphDisplay) {
-		super(DefaultGraphMouse.<AttributedVertex, AttributedEdge> builder());
+		super(DefaultGraphMouse.builder());
 		this.graphDisplay = graphDisplay;
 	}
 
@@ -47,23 +46,22 @@ public class JgtPluggableGraphMouse extends DefaultGraphMouse<AttributedVertex, 
 		//
 
 		// edge 
-		add(new JgtEdgeNavigationPlugin<AttributedVertex, AttributedEdge>());
+		add(new JgtEdgeNavigationPlugin<>(InputEvent.BUTTON1_DOWN_MASK));
 
-		add(new JgtVertexFocusingPlugin<AttributedVertex, AttributedEdge>(graphDisplay));
+		add(new JgtVertexFocusingPlugin<>(InputEvent.BUTTON1_DOWN_MASK, graphDisplay));
 
-		// scaling
-		add(new ScalingGraphMousePlugin(new CrossoverScalingControl(), 0, in, out));
+		add(new SelectingGraphMousePlugin<>());
+
+		add(new RegionSelectingGraphMousePlugin<>());
 
 		// the grab/pan feature
-		add(new JgtTranslatingPlugin<AttributedVertex, AttributedEdge>());
+		add(new TranslatingGraphMousePlugin(InputEvent.BUTTON1_DOWN_MASK));
 
-		add(new SelectingGraphMousePlugin<AttributedVertex, AttributedEdge>(
-			InputEvent.BUTTON1_DOWN_MASK,
-			0,
-			DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		// scaling
+		add(new ScalingGraphMousePlugin());
 
 		// cursor cleanup
-		add(new JgtCursorRestoringPlugin<AttributedVertex, AttributedEdge>());
+		add(new JgtCursorRestoringPlugin<>());
 
 		setPluginsLoaded();
 	}

@@ -45,14 +45,6 @@ public abstract class AbstractJgtGraphMousePlugin<V, E>
 	protected V selectedVertex;
 	protected E selectedEdge;
 
-	public AbstractJgtGraphMousePlugin() {
-		this(InputEvent.BUTTON1_DOWN_MASK);
-	}
-
-	public AbstractJgtGraphMousePlugin(int selectionModifiers) {
-		super(selectionModifiers);
-	}
-
 	public VisualizationViewer<V, E> getViewer(MouseEvent e) {
 		VisualizationViewer<V, E> viewer = getGraphViewer(e);
 		return viewer;

@@ -30,6 +30,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.service.graph.*;
 import ghidra.util.Msg;
+import java.util.*;
 
 public class GraphAST extends GhidraScript {
 	protected static final String COLOR_ATTRIBUTE = "Color";
@@ -64,8 +65,14 @@ public class GraphAST extends GhidraScript {
 		graph = new AttributedGraph();
 		buildGraph();
 
+		Map<String, String> properties = new HashMap<>();
+		properties.put("selectedVertexColor", "0xFF1493");
+		properties.put("selectedEdgeColor", "0xFF1493");
+		properties.put("initialLayoutAlgorithm", "Hierarchical MinCross Coffman Graham");
+		properties.put("displayVerticesAsIcons", "false");
+		properties.put("vertexLabelPosition", "S");
 		GraphDisplay graphDisplay =
-			graphDisplayBroker.getDefaultGraphDisplay(false, monitor);
+			graphDisplayBroker.getDefaultGraphDisplay(false, properties, monitor);
 //        graphDisplay.defineVertexAttribute(CODE_ATTRIBUTE); //
 //        graphDisplay.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
 //        graphDisplay.defineEdgeAttribute(EDGE_TYPE_ATTRIBUTE);

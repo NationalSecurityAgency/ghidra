@@ -15,8 +15,6 @@
  */
 package ghidra.graph.visualization;
 
-import static org.jungrapht.visualization.VisualizationServer.*;
-
 import java.awt.*;
 import java.util.Map;
 
@@ -27,6 +25,8 @@ import com.google.common.base.Splitter;
 
 import ghidra.service.graph.Attributed;
 import ghidra.service.graph.AttributedEdge;
+
+import static org.jungrapht.visualization.layout.util.PropertyLoader.PREFIX;
 
 /**
  * a container for various functions used by ProgramGraph
@@ -125,13 +125,14 @@ abstract class ProgramGraphFunctions {
 	/**
 	 * gets a display label from an {@link Attributed} object (vertex)
 	 * @param attributed the attributed object to get a label for
+	 * @param preferredLabelKey the attribute to use for the label, if available
 	 * @return the label for the given {@link Attributed}
 	 */
-	public static String getLabel(Attributed attributed) {
+	public static String getLabel(Attributed attributed, String preferredLabelKey) {
 		Map<String, String> map = attributed.getAttributeMap();
 		String name = StringEscapeUtils.escapeHtml4(map.get("Name"));
-		if (map.containsKey("Code")) {
-			name = StringEscapeUtils.escapeHtml4(map.get("Code"));
+		if (map.containsKey(preferredLabelKey)) {
+			name = StringEscapeUtils.escapeHtml4(map.get(preferredLabelKey));
 		}
 		return "<html>" + String.join("<p>", Splitter.on('\n').split(name));
 	}

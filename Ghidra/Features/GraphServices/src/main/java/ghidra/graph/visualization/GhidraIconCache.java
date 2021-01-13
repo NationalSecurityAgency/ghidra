@@ -27,6 +27,7 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 
 import ghidra.service.graph.AttributedVertex;
+import ghidra.service.graph.GraphDisplay;
 
 public class GhidraIconCache {
 
@@ -42,6 +43,8 @@ public class GhidraIconCache {
 	private final Map<AttributedVertex, Icon> map = new ConcurrentHashMap<>();
 
 	private final IconShape.Function iconShapeFunction = new IconShape.Function();
+	private String preferredLabel = null;
+	private int labelAlignment = GraphDisplay.ALIGN_CENTER;
 
 	Icon get(AttributedVertex vertex) {
 
@@ -62,7 +65,7 @@ public class GhidraIconCache {
 	}
 
 	private Icon createIcon(AttributedVertex vertex) {
-		rendererLabel.setText(ProgramGraphFunctions.getLabel(vertex));
+		rendererLabel.setText(ProgramGraphFunctions.getLabel(vertex, preferredLabel));
 		rendererLabel.setFont(new Font(DEFAULT_FONT_NAME, Font.BOLD, DEFAULT_FONT_SIZE));
 		rendererLabel.setForeground(Color.black);
 		rendererLabel.setBackground(Color.white);
@@ -192,5 +195,13 @@ public class GhidraIconCache {
 	 */
 	public void evict(AttributedVertex vertex) {
 		map.remove(vertex);
+	}
+
+	public void setPreferredLabel(String attributeName) {
+		this.preferredLabel  = attributeName;
+	}
+
+	public void setLabelAlignment(int labelAlignment) {
+		this.labelAlignment = labelAlignment;
 	}
 }
