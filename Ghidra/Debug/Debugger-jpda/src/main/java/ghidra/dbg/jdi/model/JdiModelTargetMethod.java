@@ -21,7 +21,15 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.*;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
+@TargetObjectSchemaInfo(name = "Method", elements = { //
+	//@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 
 	protected final Method method;

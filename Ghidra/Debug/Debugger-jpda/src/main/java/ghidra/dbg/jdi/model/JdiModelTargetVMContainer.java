@@ -28,9 +28,15 @@ import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.target.TargetEventScope.TargetEventScopeListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "VMContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetVM.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 

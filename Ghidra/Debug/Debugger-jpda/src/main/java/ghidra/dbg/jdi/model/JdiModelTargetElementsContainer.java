@@ -23,10 +23,15 @@ import com.sun.jdi.ThreadGroupReference;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-// TODO: Should TargetThreadContainer be a thing?
+@TargetObjectSchemaInfo(name = "ElementsContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetObject.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetElementsContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 

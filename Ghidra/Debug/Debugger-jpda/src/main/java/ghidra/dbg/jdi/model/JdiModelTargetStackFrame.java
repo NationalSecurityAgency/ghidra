@@ -30,9 +30,16 @@ import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface1.JdiModelSelectableObject;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetFocusScope;
 import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "StackFrame", elements = { //
+	//@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl
 		implements TargetStackFrame<JdiModelTargetStackFrame>, //
 		//TargetRegisterBank<JdiModelTargetStackFrame>, //

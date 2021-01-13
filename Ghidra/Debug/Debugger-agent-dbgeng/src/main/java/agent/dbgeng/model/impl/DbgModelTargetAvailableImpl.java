@@ -61,7 +61,7 @@ public class DbgModelTargetAvailableImpl extends DbgModelTargetObjectImpl
 		this.pid = pid;
 
 		this.changeAttributes(List.of(), List.of(), Map.of(//
-			PID_ATTRIBUTE_NAME, pid, //
+			PID_ATTRIBUTE_NAME, (long) pid, //
 			DISPLAY_ATTRIBUTE_NAME, keyAttachable(pid), //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");

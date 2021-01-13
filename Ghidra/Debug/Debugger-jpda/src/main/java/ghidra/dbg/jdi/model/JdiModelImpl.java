@@ -25,6 +25,8 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
 import ghidra.dbg.jdi.manager.JdiManager;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.AnnotatedSchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
 
 public class JdiModelImpl extends AbstractDebuggerObjectModel {
@@ -34,6 +36,10 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 
 	public static final long BLOCK_SIZE = 0x1000L;
 	public static final long DEFAULT_SECTION = 0x0000L;
+
+	protected static final AnnotatedSchemaContext SCHEMA_CTX = new AnnotatedSchemaContext();
+	protected static final TargetObjectSchema ROOT_SCHEMA =
+		SCHEMA_CTX.getSchemaForClass(JdiModelTargetRoot.class);
 
 	protected JdiManager jdi;
 	protected final AddressSpace ram = new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
@@ -51,7 +57,9 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 
 	public JdiModelImpl() {
 		this.jdi = JdiManager.newInstance();
-		this.root = new JdiModelTargetRoot(this);
+		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
+		this.root = new JdiModelTargetRoot(this, ROOT_SCHEMA);
+		//this.root = new JdiModelTargetRoot(this, EnumerableTargetObjectSchema.OBJECT);
 		this.completedRoot = CompletableFuture.completedFuture(root);
 
 		Address start = ram.getAddress(0L);
@@ -106,43 +114,45 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 				JdiModelTargetVM targetVM = getTargetVM(declaringType);
 				JdiModelTargetReferenceType classRef =
 					(JdiModelTargetReferenceType) targetVM.getTargetObject(declaringType);
-				JdiModelTargetSectionContainer sectionContainer = classRef.sections;
-				for (Method m : declaringType.methods()) {
-					if (m.location() != null && targetVM.vm.canGetBytecodes()) {
-						byte[] bytecodes = m.bytecodes();
-						int length = bytecodes.length;
-						if (length > 0) {
-							synchronized (ramIndex) {
-								Address start = ram.getAddress(ramIndex);
+				if (classRef != null) {
+					JdiModelTargetSectionContainer sectionContainer = classRef.sections;
+					for (Method m : declaringType.methods()) {
+						if (m.location() != null && targetVM.vm.canGetBytecodes()) {
+							byte[] bytecodes = m.bytecodes();
+							int length = bytecodes.length;
+							if (length > 0) {
+								synchronized (ramIndex) {
+									Address start = ram.getAddress(ramIndex);
+									AddressRangeImpl range =
+										new AddressRangeImpl(start, start.add(BLOCK_SIZE - 1));
+									String key = methodToKey(m);
+									if (addressRangeByMethod.containsKey(key)) {
+										System.err.println("non-null location: " + m.location() +
+											" with " + length + " bytes");
+										//throw new RuntimeException("non-null location: " +
+										//	m.location() + " with " + length + " bytes");
+									}
+									addressRangeByMethod.put(key, range);
+									if (sectionContainer != null) {
+										sectionContainer.addSection(m);
+									}
+									else {
+										System.err.println("null sectionContainer");
+									}
+									ramIndex += 0x1000; //bytecodes.length;
+								}
+							}
+							else {
+								Address start = ram.getAddress(DEFAULT_SECTION);
 								AddressRangeImpl range =
 									new AddressRangeImpl(start, start.add(BLOCK_SIZE - 1));
 								String key = methodToKey(m);
 								if (addressRangeByMethod.containsKey(key)) {
-									System.err.println("non-null location: " + m.location() +
-										" with " + length + " bytes");
-									//throw new RuntimeException("non-null location: " +
-									//	m.location() + " with " + length + " bytes");
+									throw new RuntimeException("non-null location: " +
+										m.location() + " with " + length + " bytes");
 								}
 								addressRangeByMethod.put(key, range);
-								if (sectionContainer != null) {
-									sectionContainer.addSection(m);
-								}
-								else {
-									System.err.println("null sectionContainer");
-								}
-								ramIndex += 0x1000; //bytecodes.length;
 							}
-						}
-						else {
-							Address start = ram.getAddress(DEFAULT_SECTION);
-							AddressRangeImpl range =
-								new AddressRangeImpl(start, start.add(BLOCK_SIZE - 1));
-							String key = methodToKey(m);
-							if (addressRangeByMethod.containsKey(key)) {
-								throw new RuntimeException("non-null location: " + m.location() +
-									" with " + length + " bytes");
-							}
-							addressRangeByMethod.put(key, range);
 						}
 					}
 				}

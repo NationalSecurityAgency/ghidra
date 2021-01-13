@@ -30,9 +30,20 @@ import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetThread;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "Thread", elements = { //
+	//@TargetElementType(type = TargetObject.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(name = "Registers", type = JdiModelTargetRegisterContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Stack", type = JdiModelTargetStack.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Status", type = Integer.class), //
+	@TargetAttributeType(type = Object.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetThread extends JdiModelTargetObjectReference implements //
 		TargetThread<JdiModelTargetThread>, //
 		JdiModelTargetAccessConditioned<JdiModelTargetThread>, //

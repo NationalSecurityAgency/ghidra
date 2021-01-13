@@ -23,9 +23,17 @@ import com.sun.jdi.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetModule;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 
+@TargetObjectSchemaInfo(name = "ReferenceType", elements = { //
+	//@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetReferenceType extends JdiModelTargetType implements //
 		TargetModule<JdiModelTargetReferenceType> {
 

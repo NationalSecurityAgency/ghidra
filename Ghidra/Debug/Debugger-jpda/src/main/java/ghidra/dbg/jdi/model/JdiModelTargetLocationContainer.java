@@ -23,7 +23,13 @@ import com.sun.jdi.Location;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "LocationContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetLocation.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetLocationContainer extends JdiModelTargetObjectImpl {
 
 	private List<Location> locations;

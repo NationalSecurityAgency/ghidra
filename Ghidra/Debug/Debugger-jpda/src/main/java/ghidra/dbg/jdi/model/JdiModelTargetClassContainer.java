@@ -23,8 +23,14 @@ import com.sun.jdi.ReferenceType;
 
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "ClassContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetReferenceType.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetClassContainer extends JdiModelTargetObjectImpl {
 
 	protected final JdiModelTargetVM vm;

@@ -22,7 +22,15 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.*;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
+@TargetObjectSchemaInfo(name = "ObjectReference", elements = { //
+	//@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "UID", type = Long.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetObjectReference extends JdiModelTargetValue {
 
 	private static final long MAX_REFERRERS = 100;

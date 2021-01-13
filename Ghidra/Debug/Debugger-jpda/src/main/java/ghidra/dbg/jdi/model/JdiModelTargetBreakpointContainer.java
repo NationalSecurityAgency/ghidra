@@ -27,9 +27,15 @@ import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetBreakpointContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "BreakpointContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetBreakpointSpec.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl implements
 		TargetBreakpointContainer<JdiModelTargetBreakpointContainer>, JdiEventsListenerAdapter {
 

@@ -27,7 +27,16 @@ import ghidra.dbg.jdi.model.iface1.JdiModelTargetLauncher;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "Connector", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Description", type = String.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Default Arguments", type = Object.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Transport", type = Object.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetConnector extends JdiModelTargetObjectImpl
 		implements JdiModelSelectableObject,
 		// TODO: Make a JidModelTargetLaunchingConnector and JdiModelTargetAttachingConnector
@@ -35,7 +44,7 @@ public class JdiModelTargetConnector extends JdiModelTargetObjectImpl
 
 	protected final JdiModelTargetConnectorContainer connectors;
 	protected final Connector cx;
-	protected final Map<String, ParameterDescription<?>> paramDescs;
+	protected final TargetParameterMap paramDescs;
 
 	public JdiModelTargetConnector(JdiModelTargetConnectorContainer connectors, Connector cx) {
 		super(connectors, cx.name(), cx);
@@ -47,7 +56,8 @@ public class JdiModelTargetConnector extends JdiModelTargetObjectImpl
 			"Description", cx.description(), //
 			"Default Arguments", cx.defaultArguments(), //
 			"Transport", cx.transport(), //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, paramDescs = computeParameters(), //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME,
+			paramDescs = TargetParameterMap.copyOf(computeParameters()), //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");
 	}

@@ -23,8 +23,14 @@ import com.sun.jdi.Method;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetSection;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 
+@TargetObjectSchemaInfo(name = "Section", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+})
 public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements //
 		//TargetMemory<JdiModelTargetSection>,  
 		TargetMemoryRegion<JdiModelTargetSection>, TargetSection<JdiModelTargetSection> {

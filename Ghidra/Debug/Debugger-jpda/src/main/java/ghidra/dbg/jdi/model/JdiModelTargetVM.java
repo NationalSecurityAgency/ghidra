@@ -35,6 +35,8 @@ import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.lifecycle.Internal;
 
 /**
@@ -43,6 +45,13 @@ import ghidra.lifecycle.Internal;
  * TODO: Implementing {@link TargetLauncher} here doesn't seem right. While it's convenient from a
  * UI perspective, it doesn't make sense semantically.
  */
+@TargetObjectSchemaInfo(name = "VM", elements = { //
+//	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(name = "Threads", type = JdiModelTargetThreadContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Object.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		TargetProcess<JdiModelTargetVM>, //
 		TargetAggregate, //
@@ -57,7 +66,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		JdiEventsListenerAdapter, //
 		JdiModelSelectableObject {
 
-	public static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
+	public static final String ID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "id";
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
 
 	protected final VirtualMachine vm;
@@ -256,7 +265,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 			if (id != null) {
 				changeAttributes(List.of(), List.of(), Map.of( //
 					STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE, //
-					PID_ATTRIBUTE_NAME, id, //
+					ID_ATTRIBUTE_NAME, id, //
 					DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 				), "Started");
 			}

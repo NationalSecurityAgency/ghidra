@@ -21,10 +21,22 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetDeletable;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.datastruct.ListenerSet;
 
+@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = { //
+	@TargetAttributeType( //
+			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, //
+			type = JdiModelTargetBreakpointContainer.class), //
+	@TargetAttributeType( //
+			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
+			type = JdiModelTargetBreakpointSpec.class), //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl implements //
 		TargetBreakpointSpec<JdiModelTargetBreakpointSpec>, //
 		JdiModelTargetDeletable<JdiModelTargetBreakpointSpec> {

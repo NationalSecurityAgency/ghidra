@@ -46,7 +46,7 @@ public class JdiModelTargetObjectImpl extends
 	private boolean modified;
 
 	public JdiModelTargetObjectImpl(JdiModelTargetObject parent, String id) {
-		super(parent.getModel(), parent, id, "Object", null);
+		super(parent.getModel(), parent, id, "Object");
 		this.impl = parent.getModelImpl();
 		this.mirror = (Mirror) parent.getObject();
 		this.object = null;

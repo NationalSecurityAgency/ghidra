@@ -26,9 +26,19 @@ import com.sun.jdi.request.EventRequestManager;
 
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
+@TargetObjectSchemaInfo(name = "Location", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Method", type = String.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Line", type = Integer.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Index", type = Long.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Address", type = String.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetLocation extends JdiModelTargetObjectImpl {
 
 	public static String getUniqueId(Location obj) {

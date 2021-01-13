@@ -22,7 +22,13 @@ import java.util.stream.Collectors;
 import com.sun.jdi.Method;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "TargetMethodContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetMethod.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetMethodContainer extends JdiModelTargetObjectImpl {
 
 	protected final JdiModelTargetReferenceType reftype;

@@ -24,8 +24,14 @@ import com.sun.jdi.connect.Connector;
 
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "ConnectorContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetConnector.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetConnectorContainer extends JdiModelTargetObjectImpl {
 
 	protected final JdiModelTargetRoot root;

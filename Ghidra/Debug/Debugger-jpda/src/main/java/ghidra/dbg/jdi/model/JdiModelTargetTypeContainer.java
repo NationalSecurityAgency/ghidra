@@ -23,7 +23,13 @@ import com.sun.jdi.Type;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "TargetTypeContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetType.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetTypeContainer extends JdiModelTargetObjectImpl {
 
 	private List<Type> types;

@@ -27,8 +27,14 @@ import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetEventScope;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "ThreadContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetThread.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl implements //		 
 		JdiModelTargetEventScope<JdiModelTargetThreadContainer>, //
 		JdiEventsListenerAdapter {
@@ -42,7 +48,9 @@ public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl impl
 		super(object, name);
 		this.threads = threads;
 
-		impl.getManager().addEventsListener(targetVM.vm, this);
+		if (targetVM != null) {
+			impl.getManager().addEventsListener(targetVM.vm, this);
+		}
 
 	}
 

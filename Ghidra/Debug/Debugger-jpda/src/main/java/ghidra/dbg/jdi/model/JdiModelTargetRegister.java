@@ -23,9 +23,19 @@ import com.sun.jdi.Location;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetRegister;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.program.model.address.Address;
 
+@TargetObjectSchemaInfo(name = "RegisterDescriptor", elements = { //
+	//@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType( //
+			name = TargetRegister.CONTAINER_ATTRIBUTE_NAME, //
+			type = JdiModelTargetRegisterContainer.class), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class JdiModelTargetRegister extends JdiModelTargetObjectImpl implements //
 		TargetRegister<JdiModelTargetRegister> {
 

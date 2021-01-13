@@ -22,7 +22,13 @@ import java.util.stream.Collectors;
 import com.sun.jdi.Field;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "FieldsContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetField.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetFieldContainer extends JdiModelTargetObjectImpl {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
 

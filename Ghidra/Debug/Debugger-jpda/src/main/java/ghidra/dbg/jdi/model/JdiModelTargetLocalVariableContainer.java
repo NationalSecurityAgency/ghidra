@@ -23,7 +23,13 @@ import com.sun.jdi.LocalVariable;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "LocalVariableContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetLocalVariable.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetLocalVariableContainer extends JdiModelTargetObjectImpl {
 
 	private List<LocalVariable> vars;

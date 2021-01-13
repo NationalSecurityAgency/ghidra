@@ -34,6 +34,7 @@ import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
@@ -47,6 +48,14 @@ import ghidra.util.Msg;
  * {@link DebugModelConventions#findSuitable(Class, TargetObject)} requires a unique answer. That
  * would mean neither attach nor launch will be enabled anywhere except on a connector....
  */
+@TargetObjectSchemaInfo(name = "Debugger", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "Connectors", type = JdiModelTargetConnectorContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "VirtualMachines", type = JdiModelTargetVMContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class JdiModelTargetRoot extends DefaultTargetModelRoot implements // 
 		JdiModelTargetAccessConditioned<JdiModelTargetRoot>, //
 		//JdiModelTargetAttacher<JdiModelTargetRoot>, //
@@ -72,8 +81,8 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 
 	protected String debugger = "Jdi"; // Used by JdiModelTargetEnvironment
 
-	public JdiModelTargetRoot(JdiModelImpl impl) {
-		super(impl, "VirtualMachineManager");
+	public JdiModelTargetRoot(JdiModelImpl impl, TargetObjectSchema schema) {
+		super(impl, "VirtualMachineManager", schema);
 		this.impl = impl;
 		this.vmm = this.impl.getManager().getVirtualMachineManager();
 
