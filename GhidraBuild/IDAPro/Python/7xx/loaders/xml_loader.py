@@ -1,12 +1,13 @@
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # xmlldr.py - IDA XML loader
-#---------------------------------------------------------------------
+# ---------------------------------------------------------------------
 """
 Loader for IDA to import a XML PROGRAM file and create a new database (.idb).
 This file must be placed in the IDA loaders directory.
 The file idaxml.py must be placed in the IDA python directory.
 """
 
+from __future__ import print_function
 import ida_idaapi
 import ida_idp
 import ida_kernwin
@@ -19,6 +20,8 @@ import sys
 """
 Loader functions
 """
+
+
 def accept_file(li, filename):
     """
     Check if the file is of supported format
@@ -40,13 +43,16 @@ def accept_file(li, filename):
     start = data.find("<PROGRAM")
     if start >= 0:
         s = data.find("<PROCESSOR ")
-        p = data[s+11:]
+        p = data[s + 11 :]
         e = p.find("/>")
         proc = p[:e]
-        ida_kernwin.info("Processor specified in the XML file is:\n" + proc +
-                         "\n\nYou must select and set the compatible " +
-                         "IDA processor type.")
-        return { 'format': "XML PROGRAM file", 'options': 0x8001 }
+        ida_kernwin.info(
+            "Processor specified in the XML file is:\n"
+            + proc
+            + "\n\nYou must select and set the compatible "
+            + "IDA processor type."
+        )
+        return {"format": "XML PROGRAM file", "options": 0x8001}
     return 0
 
 
@@ -68,19 +74,19 @@ def load_file(li, neflags, format):
         status = xml.import_xml()
     except idaxml.Cancelled:
         msg = "XML PROGRAM import cancelled!"
-        print "\n" + msg
+        print("\n" + msg)
         idc.warning(msg)
     except idaxml.MultipleAddressSpacesNotSupported:
-        msg  = "XML Import cancelled!"
+        msg = "XML Import cancelled!"
         msg += "\n\nXML Import does not currently support"
         msg += "\nimporting multiple address spaces."
-        print "\n" + msg
+        print("\n" + msg)
         idc.warning(msg)
     except:
-        print "\nHouston, we have a problem!"
+        print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print "\n" + msg + "\n", sys.exc_type, sys.exc_value
-        print event, element.tag, element.attrib
+        print("\n" + msg + "\n", sys.exc_info()[0], sys.exc_info()[1])
+        print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:
         idc.set_ida_state(st)
