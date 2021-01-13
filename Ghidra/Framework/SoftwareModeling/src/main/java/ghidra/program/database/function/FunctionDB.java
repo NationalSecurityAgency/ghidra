@@ -283,8 +283,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager().getComment(CodeUnit.REPEATABLE_COMMENT,
-				getEntryPoint());
+			return manager.getCodeManager()
+					.getComment(CodeUnit.REPEATABLE_COMMENT,
+						getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -301,8 +302,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkDeleted();
-			manager.getCodeManager().setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT,
-				comment);
+			manager.getCodeManager()
+					.setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT,
+						comment);
 		}
 		finally {
 			manager.lock.release();
@@ -885,8 +887,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 				}
 			}
 		}
-		program.getBookmarkManager().setBookmark(getEntryPoint(), BookmarkType.ERROR,
-			"Bad Variables Removed", "Removed " + badSymbols.size() + " bad variables");
+		program.getBookmarkManager()
+				.setBookmark(getEntryPoint(), BookmarkType.ERROR,
+					"Bad Variables Removed", "Removed " + badSymbols.size() + " bad variables");
 		for (Symbol s : badSymbols) {
 			s.delete();
 		}
@@ -2703,8 +2706,10 @@ public class FunctionDB extends DatabaseObject implements Function {
 				callFixupMap.remove(entryPoint);
 			}
 			else {
-				if (program.getCompilerSpec().getPcodeInjectLibrary().getPayload(
-					InjectPayload.CALLFIXUP_TYPE, name, null, null) == null) {
+				if (program.getCompilerSpec()
+						.getPcodeInjectLibrary()
+						.getPayload(
+							InjectPayload.CALLFIXUP_TYPE, name, null, null) == null) {
 					Msg.warn(this, "Undefined CallFixup set at " + entryPoint + ": " + name);
 				}
 				callFixupMap.add(entryPoint, name);
@@ -2719,6 +2724,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public Set<Function> getCallingFunctions(TaskMonitor monitor) {
+		monitor = TaskMonitor.dummyIfNull(monitor);
 		Set<Function> set = new HashSet<>();
 		ReferenceIterator iter = program.getReferenceManager().getReferencesTo(getEntryPoint());
 		while (iter.hasNext()) {
@@ -2737,6 +2743,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public Set<Function> getCalledFunctions(TaskMonitor monitor) {
+		monitor = TaskMonitor.dummyIfNull(monitor);
 		Set<Function> set = new HashSet<>();
 		Set<Reference> references = getReferencesFromBody(monitor);
 		for (Reference reference : references) {
