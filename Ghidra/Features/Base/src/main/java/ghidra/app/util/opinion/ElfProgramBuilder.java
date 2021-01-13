@@ -167,6 +167,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			markupHashTable(monitor);
 			markupGnuHashTable(monitor);
+			markupGnuBuildId(monitor);
+			markupGnuDebugLink(monitor);
 
 			processGNU(monitor);
 			processGNU_readOnly(monitor);
@@ -749,7 +751,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			Address baseAddress =  relocationSpace.getTruncatedAddress(baseWordOffset, true);
 //			long relocationOffset = baseWordOffset + reloc.getOffset();
 			// r_offset is defined to be a byte offset (assume byte size is 1)
-			Address relocAddr = context != null ? context.getRelocationAddress(baseAddress, reloc.getOffset()) : baseAddress.addWrap(reloc.getOffset());;
+			Address relocAddr = context != null ? context.getRelocationAddress(baseAddress, reloc.getOffset()) : baseAddress.addWrap(reloc.getOffset());
 //			Address relocAddr = relocationSpace.getTruncatedAddress(relocationOffset, true);
 
 			long[] values = new long[] { reloc.getSymbolIndex() };
@@ -867,7 +869,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		Structure phStructDt = (Structure) elf.getProgramHeaders()[0].toDataType();
-		phStructDt = (Structure) phStructDt.clone(program.getDataTypeManager());
+		phStructDt = phStructDt.clone(program.getDataTypeManager());
 
 		Array arrayDt = new ArrayDataType(phStructDt, headerCount, size);
 
@@ -925,7 +927,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		Structure shStructDt = (Structure) elf.getSections()[0].toDataType();
-		shStructDt = (Structure) shStructDt.clone(program.getDataTypeManager());
+		shStructDt = shStructDt.clone(program.getDataTypeManager());
 
 		Array arrayDt = new ArrayDataType(shStructDt, elf.e_shnum(), elf.e_shentsize());
 
@@ -1898,6 +1900,38 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 //		}
 //		return new AddressRangeImpl(alignedAddress, freeRange.getMaxAddress());
 //	}
+
+	private void markupGnuBuildId(TaskMonitor monitor) {
+
+		ElfSectionHeader sh = elf.getSection(".note.gnu.build-id");
+		Address addr = findLoadAddress(sh, 0);
+		if (addr == null) {
+			return;
+		}
+		try {
+			listing.createData(addr,
+				new GnuBuildIdDataType(program.getDataTypeManager(), sh.getSize()));
+		}
+		catch (Exception e) {
+			log("Failed to properly markup Gnu Build-Id at " + addr + ": " + getMessage(e));
+		}
+	}
+
+	private void markupGnuDebugLink(TaskMonitor monitor) {
+
+		ElfSectionHeader sh = elf.getSection(".gnu_debuglink");
+		Address addr = findLoadAddress(sh, 0);
+		if (addr == null) {
+			return;
+		}
+		try {
+			listing.createData(addr,
+				new GnuDebugLinkDataType(program.getDataTypeManager(), sh.getSize()));
+		}
+		catch (Exception e) {
+			log("Failed to properly markup Gnu DebugLink at " + addr + ": " + getMessage(e));
+		}
+	}
 
 	private void markupHashTable(TaskMonitor monitor) {
 
