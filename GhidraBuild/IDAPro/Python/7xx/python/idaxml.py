@@ -720,7 +720,7 @@ class XmlExporter(IdaXml):
             # TODO: How to handle print_type for data mangled names?
             # outbuf = idaapi.print_type(addr, False)
             if demangled == "'string'":
-                demangled == None
+                demangled = None
             has_typeinfo = (demangled != None and len(demangled) > 0) or (
                 outbuf != None and len(outbuf) > 0
             )
@@ -3113,11 +3113,11 @@ class XmlImporter(IdaXml):
         """
         regcmt = member.find(REGULAR_CMT)
         if regcmt != None:
-            idc.set_member_cmt(mbr, regcmt.text, False)
+            ida_struct.set_member_cmt(mbr, regcmt.text, False)
             self.update_counter(MEMBER + ":" + REGULAR_CMT)
         rptcmt = member.find(REPEATABLE_CMT)
         if rptcmt != None:
-            idc.set_member_cmt(mbr, rptcmt.text, True)
+            ida_struct.set_member_cmt(mbr, rptcmt.text, True)
             self.update_counter(MEMBER + ":" + REPEATABLE_CMT)
 
     def import_members(self, element, sptr):
