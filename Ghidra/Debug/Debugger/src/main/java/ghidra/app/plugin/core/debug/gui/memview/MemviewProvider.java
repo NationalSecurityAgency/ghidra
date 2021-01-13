@@ -152,6 +152,10 @@ public class MemviewProvider extends ComponentProviderAdapter {
 
 	private void performApplyFilterToPanel(ActionContext ctx) {
 		applyFilter = !isApplyFilter();
+		applyFilter();
+	}
+
+	public void applyFilter() {
 		if (applyFilter) {
 			memviewTable.applyFilter();
 		}
@@ -265,7 +269,8 @@ public class MemviewProvider extends ComponentProviderAdapter {
 	public void setBoxes(List<MemoryBox> blist) {
 		Swing.runIfSwingOrRunLater(() -> {
 			memviewTable.setBoxes(blist);
-			memviewPanel.setBoxes(blist);
+			memviewTable.applyFilter();
+			//memviewPanel.setBoxes(memviewTable.getBoxes());
 		});
 	}
 
@@ -285,7 +290,8 @@ public class MemviewProvider extends ComponentProviderAdapter {
 	public void addBoxes(List<MemoryBox> blist) {
 		Swing.runIfSwingOrRunLater(() -> {
 			memviewTable.addBoxes(blist);
-			memviewPanel.addBoxes(blist);
+			memviewTable.applyFilter();
+			//memviewPanel.addBoxes(memviewTable.getBoxes());
 		});
 	}
 

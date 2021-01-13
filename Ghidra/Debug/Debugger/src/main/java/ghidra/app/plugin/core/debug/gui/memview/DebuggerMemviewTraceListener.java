@@ -211,6 +211,9 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 				}
 			});
 		}
+		else {
+			provider.reset();
+		}
 	}
 
 	public void traceClosed(Trace trace) {
