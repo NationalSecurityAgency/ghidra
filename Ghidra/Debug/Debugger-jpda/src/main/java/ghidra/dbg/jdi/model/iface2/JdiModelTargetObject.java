@@ -25,6 +25,9 @@ import ghidra.dbg.agent.InvalidatableTargetObjectIf;
 import ghidra.dbg.jdi.manager.JdiManager;
 import ghidra.dbg.jdi.model.*;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -61,33 +64,44 @@ public interface JdiModelTargetObject extends TargetObject, InvalidatableTargetO
 		if (targetObject == null) {
 			if (object instanceof ThreadReference) {
 				ThreadReference thread = (ThreadReference) object;
-				targetObject = new JdiModelTargetThread(this, thread);
+				targetObject = new JdiModelTargetThread(this, thread, acceptsElement("Thread"));
 			}
 			else if (object instanceof ObjectReference) {
 				ObjectReference ref = (ObjectReference) object;
-				targetObject = new JdiModelTargetObjectReference(this, ref);
+				targetObject =
+					new JdiModelTargetObjectReference(this, ref, acceptsElement("ObjectReference"));
 			}
 			else if (object instanceof ReferenceType) {
 				ReferenceType reftype = (ReferenceType) object;
-				targetObject = new JdiModelTargetReferenceType(this, reftype);
+				targetObject =
+					new JdiModelTargetReferenceType(this, reftype, acceptsElement("ReferenceType"));
 			}
 			else if (object instanceof Field) {
 				Field field = (Field) object;
-				targetObject = new JdiModelTargetField(this, field);
+				targetObject = new JdiModelTargetField(this, field, acceptsElement("Field"));
 			}
 			else if (object instanceof Method) {
 				Method method = (Method) object;
-				targetObject = new JdiModelTargetMethod(this, method);
+				targetObject = new JdiModelTargetMethod(this, method, acceptsElement("Method"));
 			}
 			else if (object instanceof Type) {
 				Type type = (Type) object;
-				targetObject = new JdiModelTargetType(this, type);
+				targetObject = new JdiModelTargetType(this, type, acceptsElement("Type"));
 			}
 			else {
 				throw new RuntimeException();
 			}
 		}
 		return targetObject;
+	}
+
+	public default boolean acceptsElement(String schemaName) {
+		TargetObjectSchema schema = this.getSchema();
+		if (schema.equals(EnumerableTargetObjectSchema.ANY)) {
+			return true;
+		}
+		SchemaName s = schema.getElementSchema(schemaName);
+		return s.toString().equals(schemaName);
 	}
 
 	public JdiModelTargetObject getTargetObject(Object object);

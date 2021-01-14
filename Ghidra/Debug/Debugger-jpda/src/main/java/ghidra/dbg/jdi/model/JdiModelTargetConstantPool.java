@@ -36,8 +36,9 @@ public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl impleme
 	private AddressRange range;
 	private byte[] pool;
 
-	public JdiModelTargetConstantPool(JdiModelTargetSectionContainer parent, byte[] pool) {
-		super(parent, "Constant Pool", pool);
+	public JdiModelTargetConstantPool(JdiModelTargetSectionContainer parent, byte[] pool,
+			boolean isElement) {
+		super(parent, "Constant Pool", pool, isElement);
 		this.pool = pool;
 
 		this.range = impl.getAddressRange(getClassType(), pool.length);

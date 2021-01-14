@@ -75,7 +75,7 @@ public class JdiModelTargetLocalVariableContainer extends JdiModelTargetObjectIm
 
 	protected synchronized JdiModelTargetLocalVariable getTargetVariable(LocalVariable var) {
 		return variablesByName.computeIfAbsent(var.name(),
-			n -> new JdiModelTargetLocalVariable(this, var));
+			n -> new JdiModelTargetLocalVariable(this, var, true));
 	}
 
 	public synchronized JdiModelTargetLocalVariable getTargetVariableIfPresent(String name) {

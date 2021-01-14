@@ -53,8 +53,8 @@ public class JdiModelTargetProcess extends JdiModelTargetObjectImpl implements /
 	private Thread input;
 	private Thread error;
 
-	public JdiModelTargetProcess(JdiModelTargetVM vm, Process process) {
-		super(vm, getUniqueId(process), process);
+	public JdiModelTargetProcess(JdiModelTargetVM vm, Process process, boolean isElement) {
+		super(vm, getUniqueId(process), process, isElement);
 		this.process = process;
 
 		//writer = new PrintWriter(process.getOutputStream());

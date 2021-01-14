@@ -44,17 +44,18 @@ public class JdiModelTargetObjectReferenceContainer extends JdiModelTargetObject
 	}
 
 	protected CompletableFuture<Void> updateUsingReferences(Map<String, ObjectReference> byName) {
-		List<JdiModelTargetObjectReference> objects;
+		Map<String, JdiModelTargetObjectReference> objects;
 		synchronized (this) {
-			objects =
-				byName.values().stream().map(this::getTargetObject).collect(Collectors.toList());
+			objects = byName.entrySet()
+					.stream()
+					.collect(Collectors.toMap(e -> e.getKey(), e -> getTargetObject(e.getValue())));
 		}
 		AsyncFence fence = new AsyncFence();
-		for (JdiModelTargetObjectReference m : objects) {
+		for (JdiModelTargetObjectReference m : objects.values()) {
 			fence.include(m.init());
 		}
 		return fence.ready().thenAccept(__ -> {
-			changeElements(List.of(), objects, Map.of(), "Refreshed");
+			changeElements(List.of(), List.of(), objects, "Refreshed");
 		});
 	}
 

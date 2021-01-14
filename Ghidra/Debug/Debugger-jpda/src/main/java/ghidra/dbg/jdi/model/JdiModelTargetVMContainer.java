@@ -170,12 +170,12 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 
 	public synchronized JdiModelTargetVM getTargetVM(VirtualMachine vm) {
 		return vmsById.computeIfAbsent(vm.name(),
-			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i)));
+			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i), true));
 	}
 
 	public synchronized JdiModelTargetVM getTargetVMByName(String name) {
 		return vmsById.computeIfAbsent(name,
-			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i)));
+			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i), true));
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {

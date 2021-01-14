@@ -38,8 +38,9 @@ public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements /
 	protected final Method method;
 	private AddressRange range;
 
-	public JdiModelTargetSection(JdiModelTargetSectionContainer parent, Method method) {
-		super(parent, method.toString(), method);
+	public JdiModelTargetSection(JdiModelTargetSectionContainer parent, Method method,
+			boolean isElement) {
+		super(parent, method.toString(), method, isElement);
 		this.method = method;
 
 		this.range = impl.getAddressRange(method);

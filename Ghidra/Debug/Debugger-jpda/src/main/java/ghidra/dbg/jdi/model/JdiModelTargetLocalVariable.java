@@ -41,8 +41,8 @@ public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 	private JdiModelTargetAttributesContainer addedAttributes;
 
 	public JdiModelTargetLocalVariable(JdiModelTargetLocalVariableContainer variables,
-			LocalVariable var) {
-		super(variables, var.name(), var);
+			LocalVariable var, boolean isElement) {
+		super(variables, var.name(), var, isElement);
 		this.var = var;
 
 		changeAttributes(List.of(), List.of(), Map.of( //

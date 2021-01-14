@@ -30,18 +30,18 @@ import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetThread;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(name = "Thread", elements = { //
-	//@TargetElementType(type = TargetObject.class) //
+	@TargetElementType(type = Void.class) //
 }, attributes = { //
 	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
 	@TargetAttributeType(name = "Registers", type = JdiModelTargetRegisterContainer.class, required = true, fixed = true), //
 	@TargetAttributeType(name = "Stack", type = JdiModelTargetStack.class, required = true, fixed = true), //
 	@TargetAttributeType(name = "Status", type = Integer.class), //
+	@TargetAttributeType(name = "UID", type = Long.class, fixed = true), //
 	@TargetAttributeType(type = Object.class) //
 }, canonicalContainer = true)
 public class JdiModelTargetThread extends JdiModelTargetObjectReference implements //
@@ -72,8 +72,9 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	protected JdiModelTargetObjectReferenceContainer ownedMonitors;
 	protected JdiModelTargetAttributesContainer addedAttributes;
 
-	public JdiModelTargetThread(JdiModelTargetObject parent, ThreadReference thread) {
-		super(parent, thread.name(), thread);
+	public JdiModelTargetThread(JdiModelTargetObject parent, ThreadReference thread,
+			boolean isElement) {
+		super(parent, thread.name(), thread, isElement);
 		this.thread = thread;
 		this.eventManager = thread.virtualMachine().eventRequestManager();
 
@@ -160,7 +161,8 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 			}
 		}
 		ThreadGroupReference tg = thread.threadGroup();
-		this.threadGroup = tg == null ? null : new JdiModelTargetThreadGroupContainer(this, tg);
+		this.threadGroup =
+			tg == null ? null : new JdiModelTargetThreadGroupContainer(this, tg, false);
 		if (threadGroup != null) {
 			changeAttributes(List.of(), List.of(), Map.of( //
 				"Thread Group", thread.threadGroup() //
@@ -381,7 +383,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	}
 
 	public void setLocation(Location location) {
-		this.location = new JdiModelTargetLocation(this, location);
+		this.location = new JdiModelTargetLocation(this, location, false);
 		Method method = location.method();
 		impl.registerMethod(method);
 	}

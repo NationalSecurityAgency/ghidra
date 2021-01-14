@@ -51,8 +51,8 @@ public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 	}
 
 	public JdiModelTargetThreadGroupContainer(JdiModelTargetObject parent,
-			ThreadGroupReference group) {
-		super(parent, keyGroup(group));
+			ThreadGroupReference group, boolean isElement) {
+		super(parent, isElement ? keyGroup(group) : group.name());
 		this.baseGroup = group;
 	}
 
@@ -89,7 +89,7 @@ public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 	public synchronized JdiModelTargetThreadGroupContainer getTargetThreadGroup(
 			ThreadGroupReference group) {
 		return threadGroupsById.computeIfAbsent(group.name(),
-			i -> new JdiModelTargetThreadGroupContainer(this, group));
+			i -> new JdiModelTargetThreadGroupContainer(this, group, true));
 	}
 
 }

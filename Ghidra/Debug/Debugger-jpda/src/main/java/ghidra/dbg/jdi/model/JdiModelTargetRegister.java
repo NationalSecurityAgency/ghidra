@@ -23,13 +23,12 @@ import com.sun.jdi.Location;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetRegister;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.program.model.address.Address;
 
 @TargetObjectSchemaInfo(name = "RegisterDescriptor", elements = { //
-	//@TargetElementType(type = Void.class) //
+	@TargetElementType(type = Void.class) //
 }, attributes = { //
 	@TargetAttributeType( //
 			name = TargetRegister.CONTAINER_ATTRIBUTE_NAME, //
@@ -42,8 +41,8 @@ public class JdiModelTargetRegister extends JdiModelTargetObjectImpl implements 
 	protected final String name;
 	protected Address addr;
 
-	public JdiModelTargetRegister(JdiModelTargetObject parent, String name) {
-		super(parent, name, name);
+	public JdiModelTargetRegister(JdiModelTargetObject parent, String name, boolean isElement) {
+		super(parent, name, name, isElement);
 		this.name = name;
 
 		changeAttributes(List.of(), List.of(), Map.of( //
@@ -77,9 +76,8 @@ public class JdiModelTargetRegister extends JdiModelTargetObjectImpl implements 
 	}
 
 	public byte[] readRegister(Location location) {
-		JdiModelTargetLocation targetLocation = new JdiModelTargetLocation(this, location);
 		Address oldval = (Address) getCachedAttribute(VALUE_ATTRIBUTE_NAME);
-		addr = targetLocation.getAddress();
+		addr = JdiModelTargetLocation.getAddressFromLocation(impl, location);
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //

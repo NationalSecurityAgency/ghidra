@@ -53,8 +53,8 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl imple
 		};
 
 	public JdiModelTargetBreakpointSpec(JdiModelTargetBreakpointContainer breakpoints,
-			JdiBreakpointInfo info) {
-		super(breakpoints, info.toString(), info);
+			JdiBreakpointInfo info, boolean isElement) {
+		super(breakpoints, info.toString(), info, isElement);
 	}
 
 	@Override

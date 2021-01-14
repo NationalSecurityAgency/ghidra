@@ -45,9 +45,9 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 	public JdiModelTargetRegisterContainer(JdiModelTargetThread thread) {
 		super(thread, "Registers");
 		this.thread = thread;
-		this.pc = new JdiModelTargetRegister(this, "PC");
-		this.sp = new JdiModelTargetRegister(this, "SP");
-		this.retAddr = new JdiModelTargetRegister(this, "return_address");
+		this.pc = new JdiModelTargetRegister(this, "PC", true);
+		this.sp = new JdiModelTargetRegister(this, "SP", true);
+		this.retAddr = new JdiModelTargetRegister(this, "return_address", true);
 		registersByName.put(pc.getName(), pc);
 		registersByName.put(sp.getName(), sp);
 		registersByName.put(retAddr.getName(), retAddr);
@@ -80,7 +80,8 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 	*/
 
 	protected synchronized JdiModelTargetRegister getTargetRegister(String rname) {
-		return registersByName.computeIfAbsent(rname, n -> new JdiModelTargetRegister(this, rname));
+		return registersByName.computeIfAbsent(rname,
+			n -> new JdiModelTargetRegister(this, rname, true));
 	}
 
 	public synchronized JdiModelTargetRegister getTargetMethodIfPresent(String rname) {

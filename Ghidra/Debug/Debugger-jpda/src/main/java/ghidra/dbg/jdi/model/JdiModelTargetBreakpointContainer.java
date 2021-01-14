@@ -83,7 +83,7 @@ public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl 
 			JdiModelTargetLocation targetLocation =
 				(JdiModelTargetLocation) getTargetObject(location);
 			if (targetLocation == null) {
-				targetLocation = new JdiModelTargetLocation(this, location);
+				targetLocation = new JdiModelTargetLocation(this, location, true);
 			}
 			JdiBreakpointInfo info = targetLocation.addBreakpoint();
 			breakpointCreated(info, JdiCause.Causes.UNCLAIMED);
@@ -122,7 +122,8 @@ public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl 
 
 	public synchronized JdiModelTargetBreakpointSpec getTargetBreakpointSpec(
 			JdiBreakpointInfo info) {
-		return specsByInfo.computeIfAbsent(info, i -> new JdiModelTargetBreakpointSpec(this, info));
+		return specsByInfo.computeIfAbsent(info,
+			i -> new JdiModelTargetBreakpointSpec(this, info, true));
 	}
 
 	protected void updateUsingBreakpoints(Map<Long, JdiBreakpointInfo> byNumber) {

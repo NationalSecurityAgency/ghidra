@@ -68,7 +68,7 @@ public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 		return framesByLocation.compute(frame.location(), (l, f) -> {
 			if (f == null || f.getFrameLevel() != level) {
 				JdiModelTargetStackFrame tf =
-					new JdiModelTargetStackFrame(this, thread, level, frame);
+					new JdiModelTargetStackFrame(this, thread, level, frame, true);
 				framesByLevel.put(level, tf);
 				return tf;
 			}

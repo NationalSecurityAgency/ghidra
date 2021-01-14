@@ -26,7 +26,8 @@ import ghidra.dbg.target.schema.*;
 @TargetObjectSchemaInfo(name = "Module", elements = { //
 	@TargetElementType(type = Void.class) //
 }, attributes = { //
-	@TargetAttributeType(type = Void.class) //
+	@TargetAttributeType(name = "UID", type = Long.class, fixed = true), //
+	@TargetAttributeType(type = Object.class) //
 })
 public class JdiModelTargetModule extends JdiModelTargetObjectReference {
 
@@ -38,8 +39,9 @@ public class JdiModelTargetModule extends JdiModelTargetObjectReference {
 
 	///protected final JdiModelTargetSymbolContainer symbols;
 
-	public JdiModelTargetModule(JdiModelTargetModuleContainer modules, ModuleReference module) {
-		super(modules, module);
+	public JdiModelTargetModule(JdiModelTargetModuleContainer modules, ModuleReference module,
+			boolean isElement) {
+		super(modules, module, isElement);
 		this.module = module;
 
 		changeAttributes(List.of(), List.of(), Map.of( //

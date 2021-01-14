@@ -24,11 +24,10 @@ import com.sun.jdi.request.*;
 
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(name = "Field", elements = { //
-	//@TargetElementType(type = Void.class) //
+	@TargetElementType(type = Void.class) //
 }, attributes = { //
 	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
 	@TargetAttributeType(type = Void.class) //
@@ -41,8 +40,8 @@ public class JdiModelTargetField extends JdiModelTargetObjectImpl {
 	private JdiModelTargetReferenceType declaringType;
 	private JdiModelTargetAttributesContainer addedAttributes;
 
-	public JdiModelTargetField(JdiModelTargetObject fields, Field field) {
-		super(fields, field.toString(), field);
+	public JdiModelTargetField(JdiModelTargetObject fields, Field field, boolean isElement) {
+		super(fields, field.toString(), field, isElement);
 		this.field = field;
 
 		changeAttributes(List.of(), List.of(), Map.of( //

@@ -72,7 +72,7 @@ public class JdiModelTargetLocationContainer extends JdiModelTargetObjectImpl {
 
 	protected synchronized JdiModelTargetLocation getTargetLocation(Location loc) {
 		return locationsByName.computeIfAbsent(loc.toString(),
-			n -> new JdiModelTargetLocation(this, loc));
+			n -> new JdiModelTargetLocation(this, loc, true));
 	}
 
 	public synchronized JdiModelTargetLocation getTargetLocationsIfPresent(String name) {

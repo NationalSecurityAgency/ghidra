@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
@@ -90,6 +91,8 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 			}
 			catch (InterruptedException | ExecutionException e) {
 				// Ignore
+				Msg.warn(this, e);
+				//e.printStackTrace();
 			}
 		}
 		return new ArrayList<>();

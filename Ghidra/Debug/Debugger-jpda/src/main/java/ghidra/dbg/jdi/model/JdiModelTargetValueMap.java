@@ -68,7 +68,8 @@ public class JdiModelTargetValueMap extends JdiModelTargetObjectImpl {
 	}
 
 	protected synchronized JdiModelTargetValue getTargetValue(LocalVariable var, Value val) {
-		return valuesByVariable.computeIfAbsent(var, n -> new JdiModelTargetValue(this, val));
+		return valuesByVariable.computeIfAbsent(var,
+			n -> new JdiModelTargetValue(this, val, false));
 	}
 
 	public synchronized JdiModelTargetValue getTargetValueIfPresent(LocalVariable var) {

@@ -49,7 +49,11 @@ import ghidra.lifecycle.Internal;
 //	@TargetElementType(type = Void.class) //
 }, attributes = { //
 	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(name = "Breakpoints", type = JdiModelTargetBreakpointContainer.class, fixed = true), //
+	@TargetAttributeType(name = "Classes", type = JdiModelTargetClassContainer.class, fixed = true), //
+	@TargetAttributeType(name = "Modules", type = JdiModelTargetModuleContainer.class, fixed = true), //
 	@TargetAttributeType(name = "Threads", type = JdiModelTargetThreadContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "ThreadGroups", type = JdiModelTargetThreadGroupContainer.class, fixed = true), //
 	@TargetAttributeType(type = Object.class) //
 }, canonicalContainer = true)
 public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
@@ -91,8 +95,8 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	private final MonitorContendedEnterRequest monitorEnterRequest;
 	private final MonitorContendedEnteredRequest monitorEnteredRequest;
 
-	public JdiModelTargetVM(JdiModelTargetVMContainer vms, VirtualMachine vm) {
-		super(vms, vm.name(), vm);
+	public JdiModelTargetVM(JdiModelTargetVMContainer vms, VirtualMachine vm, boolean isElement) {
+		super(vms, vm.name(), vm, isElement);
 		vms.vmsById.put(vm.name(), this);
 		this.vm = vm;
 		this.eventManager = vm.eventRequestManager();
@@ -124,7 +128,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 
 		Process proc = vm.process();
 		if (proc != null) {
-			this.process = new JdiModelTargetProcess(this, proc);
+			this.process = new JdiModelTargetProcess(this, proc, false);
 		}
 		else {
 			this.process = null;

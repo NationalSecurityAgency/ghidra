@@ -79,7 +79,7 @@ public class JdiModelTargetConnectorContainer extends JdiModelTargetObjectImpl {
 
 	protected synchronized JdiModelTargetConnector getTargetConnector(Connector cx) {
 		return connectorsByName.computeIfAbsent(cx.name(),
-			n -> new JdiModelTargetConnector(this, cx));
+			n -> new JdiModelTargetConnector(this, cx, true));
 	}
 
 	public synchronized JdiModelTargetConnector getTargetConnectorIfPresent(String name) {

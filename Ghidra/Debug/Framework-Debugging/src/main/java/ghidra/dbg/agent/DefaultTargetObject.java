@@ -193,7 +193,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		Map<String, E> asMap = new LinkedHashMap<>();
 		for (E e : canonical) {
 			if (!PathUtils.parent(e.getPath()).equals(getPath())) {
-				Msg.error(this, "Link found in canonical elements: " + e);
+				Msg.error(this, "Link found in canonical elements of " + parent + ": " + e);
 			}
 			asMap.put(e.getIndex(), e);
 		}

@@ -54,7 +54,7 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 	@Override
 	protected CompletableFuture<Void> requestAttributes(boolean refresh) {
 
-		constantPool = new JdiModelTargetConstantPool(this, reftype.reftype.constantPool());
+		constantPool = new JdiModelTargetConstantPool(this, reftype.reftype.constantPool(), false);
 		changeAttributes(List.of(), List.of( //
 			constantPool //
 		), Map.of(), "Initialized");
@@ -70,7 +70,7 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 
 	protected synchronized JdiModelTargetSection getTargetSection(Method method) {
 		return sectionsByName.computeIfAbsent(JdiModelImpl.methodToKey(method),
-			n -> new JdiModelTargetSection(this, method));
+			n -> new JdiModelTargetSection(this, method, true));
 	}
 
 	public synchronized JdiModelTargetSection getTargetSectionIfPresent(String name) {

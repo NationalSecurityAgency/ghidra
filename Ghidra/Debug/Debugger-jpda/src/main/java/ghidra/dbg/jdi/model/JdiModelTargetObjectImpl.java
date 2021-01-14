@@ -63,8 +63,9 @@ public class JdiModelTargetObjectImpl extends
 		), "Initialized");
 	}
 
-	public JdiModelTargetObjectImpl(JdiModelTargetObject parent, String id, Object object) {
-		super(parent.getModel(), parent, keyObject(id), "Object");
+	public JdiModelTargetObjectImpl(JdiModelTargetObject parent, String id, Object object,
+			boolean isElement) {
+		super(parent.getModel(), parent, isElement ? keyObject(id) : id, "Object");
 		this.impl = parent.getModelImpl();
 		this.mirror = object instanceof Mirror ? (Mirror) object : null;
 		this.object = object;
@@ -118,7 +119,7 @@ public class JdiModelTargetObjectImpl extends
 		if (targetVM != null) {
 			return targetVM.getTargetObject(obj);
 		}
-		System.err.println("Attempt to getTargetObject from class without Mirror " + this);
+		//System.err.println("Attempt to getTargetObject from class without Mirror " + this);
 		return null;
 	}
 

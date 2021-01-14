@@ -74,7 +74,7 @@ public class JdiModelTargetValueContainer extends JdiModelTargetObjectImpl {
 
 	protected synchronized JdiModelTargetValue getTargetValue(Value val) {
 		return valuesByName.computeIfAbsent(val.toString(),
-			n -> new JdiModelTargetValue(this, val));
+			n -> new JdiModelTargetValue(this, val, true));
 	}
 
 	public synchronized JdiModelTargetValue getTargetValueIfPresent(String name) {

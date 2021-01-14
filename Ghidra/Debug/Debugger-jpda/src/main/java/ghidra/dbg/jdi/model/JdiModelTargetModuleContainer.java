@@ -111,7 +111,7 @@ public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl
 
 	protected synchronized JdiModelTargetModule getTargetModule(ModuleReference module) {
 		return modulesByName.computeIfAbsent(JdiModelTargetModule.getUniqueId(module),
-			n -> new JdiModelTargetModule(this, module));
+			n -> new JdiModelTargetModule(this, module, true));
 	}
 
 	public synchronized JdiModelTargetModule getTargetModuleIfPresent(String name) {

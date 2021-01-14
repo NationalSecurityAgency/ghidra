@@ -588,11 +588,12 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 				else {
 					addToPanel(buildTableFromAttributes(oc));
 				}
+				seq.exit();
 			}
 			catch (Exception e) {
 				e.printStackTrace();
 			}
-		}).finish();
+		}).finish().completeExceptionally(new RuntimeException("Unable to add table"));
 	}
 
 	private ObjectTable<ObjectAttributeRow> buildTableFromAttributes(ObjectContainer container) {

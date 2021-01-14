@@ -23,13 +23,12 @@ import com.sun.jdi.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetModule;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 
 @TargetObjectSchemaInfo(name = "ReferenceType", elements = { //
-	//@TargetElementType(type = Void.class) //
+	@TargetElementType(type = Void.class) //
 }, attributes = { //
 	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
 	@TargetAttributeType(type = Object.class) //
@@ -52,13 +51,14 @@ public class JdiModelTargetReferenceType extends JdiModelTargetType implements /
 	private JdiModelTargetAttributesContainer addedAttributes;
 	protected JdiModelTargetSectionContainer sections;
 
-	public JdiModelTargetReferenceType(JdiModelTargetObject parent, ReferenceType reftype) {
-		this(parent, reftype.name(), reftype);
+	public JdiModelTargetReferenceType(JdiModelTargetObject parent, ReferenceType reftype,
+			boolean isElement) {
+		this(parent, reftype.name(), reftype, isElement);
 	}
 
 	public JdiModelTargetReferenceType(JdiModelTargetObject parent, String id,
-			ReferenceType reftype) {
-		super(parent, id, reftype);
+			ReferenceType reftype, boolean isElement) {
+		super(parent, id, reftype, isElement);
 		this.reftype = reftype;
 
 		if (reftype instanceof ClassType) {
@@ -120,7 +120,7 @@ public class JdiModelTargetReferenceType extends JdiModelTargetType implements /
 		this.instances = new JdiModelTargetObjectReferenceContainer(this, "Objects",
 			reftype.instances(maxInstances));
 		this.classLoader = reftype.classLoader() == null ? null
-				: new JdiModelTargetObjectReference(this, reftype.classLoader());
+				: new JdiModelTargetObjectReference(this, reftype.classLoader(), false);
 		this.classObject = (JdiModelTargetObjectReference) getInstance(reftype.classObject());
 
 		populateAttributes();

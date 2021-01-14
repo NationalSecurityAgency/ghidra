@@ -46,8 +46,9 @@ public class JdiModelTargetConnector extends JdiModelTargetObjectImpl
 	protected final Connector cx;
 	protected final TargetParameterMap paramDescs;
 
-	public JdiModelTargetConnector(JdiModelTargetConnectorContainer connectors, Connector cx) {
-		super(connectors, cx.name(), cx);
+	public JdiModelTargetConnector(JdiModelTargetConnectorContainer connectors, Connector cx,
+			boolean isElement) {
+		super(connectors, cx.name(), cx, isElement);
 		this.connectors = connectors;
 		this.cx = cx;
 
