@@ -139,10 +139,6 @@ public class ElfSectionHeaderType {
 	public final String description;
 
 	public ElfSectionHeaderType(int value, String name, String description) {
-		if (value < 0) {
-			throw new IllegalArgumentException(
-				"ElfProgramHeaderType value out of range: 0x" + Long.toHexString(value));
-		}
 		this.value = value;
 		this.name = name;
 		this.description = description;
