@@ -450,6 +450,18 @@
 
         <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
       </BLOCKQUOTE>
+      <H3><A name="Format_String_Analyzer"></A>Format String Analyzer</H3>
+
+      <BLOCKQUOTE>
+        <P>This analyzer detects variadic function calls in the bodies of each function that intersect 
+        the current selection. It then parses their format string arguments to infer the correct function 
+        call signatures. Currently, this analyzer only supports printf, scanf, and their variants (e.g., snprintf, fscanf). 
+        If the current selection is emtpy, it searches through every function within the binary. Once 
+        the signatures are inferred, they are overridden.</P>
+
+        <P><U>Started By:</U> Importing or adding to a program, Auto Analyze command</P>
+
+      </BLOCKQUOTE>
 
       <H3><A name="Image"></A>Image Analyzer</H3>
 
