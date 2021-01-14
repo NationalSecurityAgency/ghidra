@@ -38,8 +38,8 @@ public class DWARFAttributeSpecification {
 	 * @throws IOException
 	 */
 	public static DWARFAttributeSpecification read(BinaryReader reader) throws IOException {
-		int attribute = LEB128.decode32u(reader);
-		DWARFForm attributeForm = DWARFForm.find(LEB128.decode32u(reader));
+		int attribute = LEB128.readAsUInt32(reader);
+		DWARFForm attributeForm = DWARFForm.find(LEB128.readAsUInt32(reader));
 
 		return attribute != 0 && attributeForm != DWARFForm.NULL
 				? new DWARFAttributeSpecification(attribute, attributeForm) : null;

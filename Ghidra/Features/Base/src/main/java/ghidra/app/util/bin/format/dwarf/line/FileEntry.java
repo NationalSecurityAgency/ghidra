@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,33 +18,34 @@ package ghidra.app.util.bin.format.dwarf.line;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
 
 public class FileEntry {
 	private String   fileName;
-	private LEB128   directoryIndex;
-	private LEB128   lastModifiedTime;
-	private LEB128   fileLengthInBytes;
+	private long directoryIndex;
+	private long lastModifiedTime;
+	private long fileLengthInBytes;
 
 	FileEntry(BinaryReader reader) throws IOException {
 		fileName = reader.readNextAsciiString();
 		if (fileName.length() == 0) {
 			return;
 		}
-		directoryIndex = new LEB128(reader, false);
-		lastModifiedTime = new LEB128(reader, false);
-		fileLengthInBytes = new LEB128(reader, false);
+		directoryIndex = LEB128.readAsLong(reader, false);
+		lastModifiedTime = LEB128.readAsLong(reader, false);
+		fileLengthInBytes = LEB128.readAsLong(reader, false);
 	}
 
 	public String getFileName() {
 		return fileName;
 	}
-	public LEB128 getDirectoryIndex() {
+	public long getDirectoryIndex() {
 		return directoryIndex;
 	}
-	public LEB128 getLastModifiedTime() {
+	public long getLastModifiedTime() {
 		return lastModifiedTime;
 	}
-	public LEB128 getFileLengthInBytes() {
+	public long getFileLengthInBytes() {
 		return fileLengthInBytes;
 	}
 
