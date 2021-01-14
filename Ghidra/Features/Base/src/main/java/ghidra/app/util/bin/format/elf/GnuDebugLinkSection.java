@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Factory data type that marks up a ELF .gnu_debuglink section.
  */
-class GnuDebugLinkDataType extends FactoryStructureDataType {
+public class GnuDebugLinkSection extends FactoryStructureDataType {
 	private long sectionSize;
 
 	/**
@@ -35,7 +35,7 @@ class GnuDebugLinkDataType extends FactoryStructureDataType {
 	 * @param dtm the program's {@link DataTypeManager}
 	 * @param sectionSize the size of the section (for bounds checking)
 	 */
-	GnuDebugLinkDataType(DataTypeManager dtm, long sectionSize) {
+	public GnuDebugLinkSection(DataTypeManager dtm, long sectionSize) {
 		super("Gnu_DebugLink", dtm);
 		this.sectionSize = sectionSize;
 	}
@@ -45,7 +45,7 @@ class GnuDebugLinkDataType extends FactoryStructureDataType {
 		if (dtm == dataMgr) {
 			return this;
 		}
-		return new GnuDebugLinkDataType(dtm, sectionSize);
+		return new GnuDebugLinkSection(dtm, sectionSize);
 	}
 
 	@Override

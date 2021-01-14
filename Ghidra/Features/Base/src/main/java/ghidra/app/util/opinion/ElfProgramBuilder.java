@@ -1910,7 +1910,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		try {
 			listing.createData(addr,
-				new GnuBuildIdDataType(program.getDataTypeManager(), sh.getSize()));
+				new GnuBuildIdSection(program.getDataTypeManager(), sh.getSize()));
 		}
 		catch (Exception e) {
 			log("Failed to properly markup Gnu Build-Id at " + addr + ": " + getMessage(e));
@@ -1926,7 +1926,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		try {
 			listing.createData(addr,
-				new GnuDebugLinkDataType(program.getDataTypeManager(), sh.getSize()));
+				new GnuDebugLinkSection(program.getDataTypeManager(), sh.getSize()));
 		}
 		catch (Exception e) {
 			log("Failed to properly markup Gnu DebugLink at " + addr + ": " + getMessage(e));

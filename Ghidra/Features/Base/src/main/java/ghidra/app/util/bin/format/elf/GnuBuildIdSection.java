@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
  * Factory data type that marks up a Gnu Build-Id record from a 
  * ELF .note.gnu.build-id section
  */
-class GnuBuildIdDataType extends FactoryStructureDataType {
+public class GnuBuildIdSection extends FactoryStructureDataType {
 	private static final int MAX_SANE_STR_LENS = 1024;
 	private long sectionSize;
 
@@ -37,7 +37,7 @@ class GnuBuildIdDataType extends FactoryStructureDataType {
 	 * @param sectionSize the size of the section (for bounds checking, assumes this
 	 * is the only record in the section)
 	 */
-	GnuBuildIdDataType(DataTypeManager dtm, long sectionSize) {
+	public GnuBuildIdSection(DataTypeManager dtm, long sectionSize) {
 		super("Gnu_BuildId", dtm);
 		this.sectionSize = sectionSize;
 	}
@@ -47,7 +47,7 @@ class GnuBuildIdDataType extends FactoryStructureDataType {
 		if (dtm == dataMgr) {
 			return this;
 		}
-		return new GnuBuildIdDataType(dtm, sectionSize);
+		return new GnuBuildIdSection(dtm, sectionSize);
 	}
 
 	@Override
