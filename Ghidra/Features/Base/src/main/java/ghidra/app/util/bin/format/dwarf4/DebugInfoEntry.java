@@ -53,7 +53,7 @@ public class DebugInfoEntry {
 	public static DebugInfoEntry read(BinaryReader reader, DWARFCompilationUnit unit,
 			DWARFAttributeFactory attributeFactory) throws IOException {
 		long offset = reader.getPointerIndex();
-		int abbreviationCode = LEB128.decode32u(reader);
+		int abbreviationCode = LEB128.readAsUInt32(reader);
 
 		// Check for terminator DIE
 		if (abbreviationCode == 0) {

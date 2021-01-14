@@ -15,17 +15,13 @@
  */
 package ghidra.file.formats.android.dex.format;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.file.formats.android.dex.util.Leb128;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class DebugInfoItem implements StructConverter {
 
@@ -38,30 +34,25 @@ public class DebugInfoItem implements StructConverter {
 	private byte [] stateMachineOpcodes;
 
 	public DebugInfoItem( BinaryReader reader ) throws IOException {
-		lineStart = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		lineStartLength = Leb128.unsignedLeb128Size( lineStart );
-		reader.readNextByteArray( lineStartLength );// consume leb...
+		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		lineStart = leb128.asUInt32();
+		lineStartLength = leb128.getLength();
 
-		parametersSize = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		parametersSizeLength = Leb128.unsignedLeb128Size( parametersSize );
-		reader.readNextByteArray( parametersSizeLength );// consume leb...
+		leb128 = LEB128.readUnsignedValue(reader);
+		parametersSize = leb128.asUInt32();
+		parametersSizeLength = leb128.getLength();
 
 		parameterNames = new int[ parametersSize ];
 		parameterNamesLengths = new int[ parametersSize ];
 
 		for ( int i = 0 ; i < parametersSize ; ++i ) {
-			int value = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-			int valueLength = Leb128.unsignedLeb128Size( value );
-			reader.readNextByteArray( valueLength );// consume leb...
+			leb128 = LEB128.readUnsignedValue(reader);
 
-			parameterNames[ i ] = value - 1;// uleb128p1
-
-			parameterNamesLengths[ i ] = valueLength;
+			parameterNames[i] = leb128.asUInt32() - 1;// uleb128p1
+			parameterNamesLengths[i] = leb128.getLength();
 		}
 
-		long startIndex = reader.getPointerIndex( );
-		int count = DebugInfoStateMachineReader.computeLength( reader );
-		reader.setPointerIndex( startIndex );
+		int count = DebugInfoStateMachineReader.computeLength( reader.clone() );
 		stateMachineOpcodes = reader.readNextByteArray( count );
 	}
 

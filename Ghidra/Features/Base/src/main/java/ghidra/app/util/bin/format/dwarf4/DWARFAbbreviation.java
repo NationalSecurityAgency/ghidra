@@ -43,11 +43,11 @@ public class DWARFAbbreviation
 			TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		int ac = LEB128.decode32u(reader);
+		int ac = LEB128.readAsUInt32(reader);
 		if (ac == 0) {
 			return null;
 		}
-		int tag = LEB128.decode32u(reader);
+		int tag = LEB128.readAsUInt32(reader);
 		DWARFChildren hasChildren = DWARFChildren.find((int) reader.readNextByte());
 
 		// Read each attribute specification until attribute and its value is 0

@@ -15,102 +15,64 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.file.formats.android.dex.util.Leb128;
-
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
+
 class DebugInfoStateMachineReader {
+	private static final int MAX_SIZE = 0x10000; // 64k
 
 	static int computeLength( BinaryReader reader ) throws IOException {
-		int length = 0;
+		long start = reader.getPointerIndex();
 
-		while ( true ) {
-
-			if ( length > 0x10000 ) {//don't loop forever!
-				return 0;
-			}
+		while (reader.getPointerIndex() - start < MAX_SIZE) {
 
 			byte opcode = reader.readNextByte( );
 
-			++length;
-
             switch( opcode ) {
                 case DebugStateMachineOpCodes.DBG_END_SEQUENCE: {
-                    return length;//done!
+					return (int) (reader.getPointerIndex() - start);//done!
                 }
                 case DebugStateMachineOpCodes.DBG_ADVANCE_PC: {
-            		int advance = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int advanceLength = Leb128.unsignedLeb128Size( advance );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + advanceLength );
-            		length += advanceLength;
+					LEB128.readAsUInt32(reader);
                     break;
                 }
                 case DebugStateMachineOpCodes.DBG_ADVANCE_LINE: {
-            		int advance = Leb128.readSignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int advanceLength = Leb128.signedLeb128Size( advance );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + advanceLength );
-            		length += advanceLength;
+					LEB128.readAsUInt32(reader);
                     break;
                 }
                 case DebugStateMachineOpCodes.DBG_START_LOCAL: {
-            		int register = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int registerLength = Leb128.unsignedLeb128Size( register );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + registerLength );
-            		length += registerLength;
+					int register = LEB128.readAsUInt32(reader);
 
             		//TODO uleb128p1
-            		int name = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int nameLength = Leb128.unsignedLeb128Size( name );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + nameLength );
-            		length += nameLength;
+					int name = LEB128.readAsUInt32(reader);
 
             		//TODO uleb128p1
-            		int type = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int typeLength = Leb128.unsignedLeb128Size( type );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + typeLength );
-            		length += typeLength;
+					int type = LEB128.readAsUInt32(reader);
 
                     break;
                 }
                 case DebugStateMachineOpCodes.DBG_START_LOCAL_EXTENDED: {
-            		int register = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int registerLength = Leb128.unsignedLeb128Size( register );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + registerLength );
-            		length += registerLength;
+					int register = LEB128.readAsUInt32(reader);
 
             		//TODO uleb128p1
-            		int name = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int nameLength = Leb128.unsignedLeb128Size( name );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + nameLength );
-            		length += nameLength;
+					int name = LEB128.readAsUInt32(reader);
 
             		//TODO uleb128p1
-            		int type = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int typeLength = Leb128.unsignedLeb128Size( type );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + typeLength );
-            		length += typeLength;
+					int type = LEB128.readAsUInt32(reader);
 
             		//TODO uleb128p1
-            		int signature = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int signatureLength = Leb128.unsignedLeb128Size( signature );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + signatureLength	 );
-            		length += signatureLength;
+					int signature = LEB128.readAsUInt32(reader);
 
                     break;
                 }
                 case DebugStateMachineOpCodes.DBG_END_LOCAL: {
-                	int register = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int registerLength = Leb128.unsignedLeb128Size( register );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + registerLength );
-            		length += registerLength;
+					int register = LEB128.readAsUInt32(reader);
                     break;
                 }
                 case DebugStateMachineOpCodes.DBG_RESTART_LOCAL: {
-                	int register = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int registerLength = Leb128.unsignedLeb128Size( register );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + registerLength );
-            		length += registerLength;
+					int register = LEB128.readAsUInt32(reader);
                     break;
                 }
                 case DebugStateMachineOpCodes.DBG_SET_PROLOGUE_END: {
@@ -121,10 +83,7 @@ class DebugInfoStateMachineReader {
                 }
                 case DebugStateMachineOpCodes.DBG_SET_FILE: {
                 	//TODO uleb128p1
-                	int name = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-            		int nameLength = Leb128.unsignedLeb128Size( name );
-            		reader.setPointerIndex( reader.getPointerIndex( ) + nameLength );
-            		length += nameLength;
+					int name = LEB128.readAsUInt32(reader);
                     break;
                 }
                 default: {
@@ -132,5 +91,7 @@ class DebugInfoStateMachineReader {
                 }
             }
 		}
+
+		return 0;
 	}
 }
