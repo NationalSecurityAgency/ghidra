@@ -264,7 +264,7 @@ String getCurrentPlatformName() {
 	String archName = System.getProperty("os.arch")
 		
 	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
-	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
+	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64") || archName.equals("aarch64");
 
 	if (osName.startsWith("Windows")) {
 		if (isX86_32) {
