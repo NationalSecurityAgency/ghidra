@@ -181,6 +181,20 @@ typedef char int1;
 typedef uint8 uintp;
 #endif
 
+#if defined (__APPLE_CC__) && defined (__aarch64__)
+#define HOST_ENDIAN 0
+typedef unsigned int uintm;
+typedef int intm;
+typedef unsigned long uint8;
+typedef long int8;
+typedef unsigned int uint4;
+typedef int int4;
+typedef unsigned short uint2;
+typedef short int2;
+typedef unsigned char uint1;
+typedef char int1;
+typedef uint8 uintp;
+#endif
 
 #if defined(_WINDOWS)
 #pragma warning (disable:4312)
