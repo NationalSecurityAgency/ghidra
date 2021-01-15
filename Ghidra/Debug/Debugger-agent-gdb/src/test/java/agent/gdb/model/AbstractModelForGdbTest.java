@@ -58,7 +58,6 @@ import ghidra.program.model.address.Address;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.*;
 
-@Ignore("Need correct version for CI")
 public abstract class AbstractModelForGdbTest
 		extends AbstractGhidraHeadlessIntegrationTest implements DebuggerModelTestUtils {
 	protected static final Map<String, byte[]> AMD64_TEST_REG_VALUES = Map.of( //

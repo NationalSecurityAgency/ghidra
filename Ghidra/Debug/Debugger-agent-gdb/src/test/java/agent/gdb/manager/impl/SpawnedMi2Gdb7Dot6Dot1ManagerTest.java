@@ -18,8 +18,11 @@ package agent.gdb.manager.impl;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.Ignore;
+
 import agent.gdb.manager.GdbManager;
 
+@Ignore("Need to install GDB 7.6.1 to the expected directory on CI")
 public class SpawnedMi2Gdb7Dot6Dot1ManagerTest extends AbstractGdbManagerTest {
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {

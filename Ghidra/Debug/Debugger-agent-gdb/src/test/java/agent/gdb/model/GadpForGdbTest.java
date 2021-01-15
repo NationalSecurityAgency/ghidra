@@ -23,6 +23,7 @@ import java.net.SocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import agent.gdb.gadp.GdbGadpServer;
@@ -35,6 +36,7 @@ import ghidra.dbg.gadp.client.GadpClientTestHelper;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.util.Msg;
 
+@Ignore("Need compatible GDB version for CI")
 public class GadpForGdbTest extends AbstractModelForGdbTest {
 
 	class GdbGadpModelHost implements ModelHost {

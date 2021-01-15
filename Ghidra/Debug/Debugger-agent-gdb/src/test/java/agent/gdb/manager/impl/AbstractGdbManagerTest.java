@@ -40,7 +40,6 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
-@Ignore("Need correct version for CI")
 public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected static final long TIMEOUT_MILLISECONDS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;

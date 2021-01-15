@@ -17,10 +17,13 @@ package agent.gdb.model;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.Ignore;
+
 import agent.gdb.model.impl.GdbModelImpl;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.util.Msg;
 
+@Ignore("Need compatible GDB version for CI")
 public class ModelForGdbTest extends AbstractModelForGdbTest {
 
 	static class GdbGadpModelHost implements ModelHost {
