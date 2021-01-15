@@ -292,30 +292,30 @@ public class GadpClientHandler
 			return channel.write(buildError(req, error.getCode(), error.getMessage()));
 		}
 		if (t instanceof UnsupportedOperationException) {
-			return channel.write(buildError(req, ErrorCode.NOT_SUPPORTED, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_NOT_SUPPORTED, t.getMessage()));
 		}
 		if (t instanceof DebuggerModelNoSuchPathException) {
-			return channel.write(buildError(req, ErrorCode.NO_OBJECT, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_NO_OBJECT, t.getMessage()));
 		}
 		if (t instanceof DebuggerModelTypeException) {
-			return channel.write(buildError(req, ErrorCode.NO_INTERFACE, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_NO_INTERFACE, t.getMessage()));
 		}
 		if (t instanceof DebuggerIllegalArgumentException) {
-			return channel.write(buildError(req, ErrorCode.BAD_ARGUMENT, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_BAD_ARGUMENT, t.getMessage()));
 		}
 		if (t instanceof DebuggerMemoryAccessException) {
-			return channel.write(buildError(req, ErrorCode.MEMORY_ACCESS, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_MEMORY_ACCESS, t.getMessage()));
 		}
 		if (t instanceof DebuggerRegisterAccessException) {
-			return channel.write(buildError(req, ErrorCode.REGISTER_ACCESS, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_REGISTER_ACCESS, t.getMessage()));
 		}
 		if (t instanceof DebuggerUserException) {
-			return channel.write(buildError(req, ErrorCode.USER_ERROR, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_USER_ERROR, t.getMessage()));
 		}
 		if (t instanceof DebuggerModelAccessException) {
-			return channel.write(buildError(req, ErrorCode.MODEL_ACCESS, t.getMessage()));
+			return channel.write(buildError(req, ErrorCode.EC_MODEL_ACCESS, t.getMessage()));
 		}
-		return channel.write(buildError(req, ErrorCode.UNKNOWN, "Unknown server-side error"));
+		return channel.write(buildError(req, ErrorCode.EC_UNKNOWN, "Unknown server-side error"));
 	}
 
 	protected GadpVersion getVersion() {
@@ -367,7 +367,7 @@ public class GadpClientHandler
 			case INVOKE_REQUEST:
 				return processInvoke(msg.getSequence(), msg.getInvokeRequest());
 			default:
-				throw new GadpErrorException(ErrorCode.BAD_REQUEST,
+				throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
 					"Unrecognized request: " + msg.getMsgCase());
 		}
 	}
@@ -375,7 +375,8 @@ public class GadpClientHandler
 	protected CompletableFuture<?> processConnect(int seqno, Gadp.ConnectRequest req) {
 		String ver = getVersion().getName();
 		if (!req.getVersionList().contains(ver)) {
-			throw new GadpErrorException(ErrorCode.NO_VERSION, "No listed version is supported");
+			throw new GadpErrorException(Gadp.ErrorCode.EC_NO_VERSION,
+				"No listed version is supported");
 		}
 		TargetObjectSchema rootSchema = model.getRootSchema();
 		return channel.write(Gadp.RootMessage.newBuilder()
@@ -523,7 +524,7 @@ public class GadpClientHandler
 				case PID:
 					return attacher.attach(req.getPid());
 				default:
-					throw new GadpErrorException(ErrorCode.BAD_REQUEST,
+					throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
 						"Unrecognized attach specification:" + req);
 			}
 		}).thenCompose(__ -> {
@@ -546,7 +547,7 @@ public class GadpClientHandler
 					AddressRange range = server.getAddressRange(req.getAddress());
 					return breaks.placeBreakpoint(range, kinds);
 				default:
-					throw new GadpErrorException(ErrorCode.BAD_REQUEST,
+					throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
 						"Unrecognized breakpoint specification: " + req);
 			}
 		}).thenCompose(__ -> {

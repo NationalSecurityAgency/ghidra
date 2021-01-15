@@ -143,33 +143,33 @@ public class GadpClient implements DebuggerObjectModel {
 		Gadp.ErrorReply error = MSG_HELPER.expect(msg, Gadp.ErrorReply.getDefaultInstance());
 		if (error != null) {
 			switch (error.getCode()) {
-				case NO_INTERFACE:
+				case EC_NO_INTERFACE:
 					throw new DebuggerModelTypeException(error.getMessage());
-				case NO_OBJECT:
+				case EC_NO_OBJECT:
 					throw new DebuggerModelNoSuchPathException(error.getMessage());
-				case BAD_ARGUMENT:
+				case EC_BAD_ARGUMENT:
 					throw new DebuggerIllegalArgumentException(error.getMessage());
-				case MEMORY_ACCESS:
+				case EC_MEMORY_ACCESS:
 					throw new DebuggerMemoryAccessException(error.getMessage());
-				case REGISTER_ACCESS:
+				case EC_REGISTER_ACCESS:
 					throw new DebuggerRegisterAccessException(error.getMessage());
-				case BAD_ADDRESS:
+				case EC_BAD_ADDRESS:
 					throw new AssertionError(
 						"Client implementation sent an invalid address: " + error.getMessage());
-				case BAD_REQUEST:
+				case EC_BAD_REQUEST:
 					throw new AssertionError(
 						"Client implementation sent an invalid request: " + error.getMessage());
 				case UNRECOGNIZED:
 					throw new AssertionError(
 						"Server replied with an error code unknown to the client: " +
 							error.getCodeValue() + ": " + error.getMessage());
-				case USER_ERROR:
+				case EC_USER_ERROR:
 					throw new DebuggerUserException(error.getMessage());
-				case MODEL_ACCESS:
+				case EC_MODEL_ACCESS:
 					throw new DebuggerModelAccessException(error.getMessage());
-				case UNKNOWN:
+				case EC_UNKNOWN:
 					throw new RuntimeException("Unknown: " + error.getMessage());
-				case NO_VERSION:
+				case EC_NO_VERSION:
 				default:
 					throw new GadpErrorException(error.getCode(), error.getMessage());
 			}

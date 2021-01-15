@@ -17,18 +17,18 @@ syntax = "proto3";
 package ghidra.dbg.gadp.protocol;
 
 enum ErrorCode {
-	UNKNOWN = 0;
-	BAD_REQUEST = 1;
-	NO_VERSION = 2;
-	NO_OBJECT = 3;
-	NO_INTERFACE = 4;
-	BAD_ARGUMENT = 5;
-	BAD_ADDRESS = 6;
-	NOT_SUPPORTED = 7;
-	MEMORY_ACCESS = 8;
-	REGISTER_ACCESS = 9;
-	USER_ERROR = 10;
-	MODEL_ACCESS = 11;
+	EC_UNKNOWN = 0;
+	EC_BAD_REQUEST = 1;
+	EC_NO_VERSION = 2;
+	EC_NO_OBJECT = 3;
+	EC_NO_INTERFACE = 4;
+	EC_BAD_ARGUMENT = 5;
+	EC_BAD_ADDRESS = 6;
+	EC_NOT_SUPPORTED = 7;
+	EC_MEMORY_ACCESS = 8;
+	EC_REGISTER_ACCESS = 9;
+	EC_USER_ERROR = 10;
+	EC_MODEL_ACCESS = 11;
 }
 
 // For testing: cause the server to report an unrecognized request error
@@ -78,10 +78,10 @@ message PathList {
 }
 
 enum BreakKind {
-	READ = 0;
-	WRITE = 1;
-	EXECUTE = 2;
-	SOFTWARE = 3;
+	BK_READ = 0;
+	BK_WRITE = 1;
+	BK_EXECUTE = 2;
+	BK_SOFTWARE = 3;
 }
 
 message BreakKindsSet {
@@ -89,15 +89,15 @@ message BreakKindsSet {
 }
 
 enum StepKind {
-	INTO = 0;
-	ADVANCE = 1;
-	FINISH = 2;
-	LINE = 3;
-	OVER = 4;
-	OVER_LINE = 5;
-	SKIP = 6;
-	RETURN = 7;
-	UNTIL = 8;
+	SK_INTO = 0;
+	SK_ADVANCE = 1;
+	SK_FINISH = 2;
+	SK_LINE = 3;
+	SK_OVER = 4;
+	SK_OVER_LINE = 5;
+	SK_SKIP = 6;
+	SK_RETURN = 7;
+	SK_UNTIL = 8;
 }
 
 message StepKindsSet {
@@ -109,8 +109,8 @@ message StringList {
 }
 
 enum AttachKind {
-	BY_OBJECT_REF = 0;
-	BY_ID = 1;
+	AK_BY_OBJECT_REF = 0;
+	AK_BY_ID = 1;
 }
 
 message AttachKindSet {
@@ -118,20 +118,20 @@ message AttachKindSet {
 }
 
 enum ExecutionState {
-	INACTIVE = 0;
-	ALIVE = 1;
-	STOPPED = 2;
-	RUNNING = 3;
-	TERMINATED = 4;
+	ES_INACTIVE = 0;
+	ES_ALIVE = 1;
+	ES_STOPPED = 2;
+	ES_RUNNING = 3;
+	ES_TERMINATED = 4;
 }
 
 enum PrimitiveKind {
-	UNDEFINED = 0;
-	VOID = 1;
-	UINT = 2;
-	SINT = 3;
-	FLOAT = 4;
-	COMPLEX = 5;
+	PK_UNDEFINED = 0;
+	PK_VOID = 1;
+	PK_UINT = 2;
+	PK_SINT = 3;
+	PK_FLOAT = 4;
+	PK_COMPLEX = 5;
 }
 
 message DataType {
@@ -166,9 +166,9 @@ message DataType {
 }
 
 enum UpdateMode {
-	UNSOLICITED = 0;
-	SOLICITED = 1;
-	FIXED = 2;
+	UM_UNSOLICITED = 0;
+	UM_SOLICITED = 1;
+	UM_FIXED = 2;
 }
 
 enum ValueType {
@@ -493,18 +493,18 @@ message InvokeReply {
 }
 
 enum TargetEventType {
-	EV_STOPPED = 0; // Stupid name conflict
+	EV_STOPPED = 0;
 	EV_RUNNING = 1;
-	PROCESS_CREATED = 2;
-	PROCESS_EXITED = 3;
-	THREAD_CREATED = 4;
-	THREAD_EXITED = 5;
-	MODULE_LOADED = 6;
-	MODULE_UNLOADED = 7;
-	BREAKPOINT_HIT = 8;
-	STEP_COMPLETED = 9;
-	EXCEPTION = 10;
-	SIGNAL = 11;
+	EV_PROCESS_CREATED = 2;
+	EV_PROCESS_EXITED = 3;
+	EV_THREAD_CREATED = 4;
+	EV_THREAD_EXITED = 5;
+	EV_MODULE_LOADED = 6;
+	EV_MODULE_UNLOADED = 7;
+	EV_BREAKPOINT_HIT = 8;
+	EV_STEP_COMPLETED = 9;
+	EV_EXCEPTION = 10;
+	EV_SIGNAL = 11;
 }
 
 message TargetEvent {

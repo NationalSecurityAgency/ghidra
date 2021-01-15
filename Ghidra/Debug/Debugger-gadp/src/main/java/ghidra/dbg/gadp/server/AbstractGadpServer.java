@@ -23,7 +23,6 @@ import ghidra.comm.service.AbstractAsyncServer;
 import ghidra.dbg.*;
 import ghidra.dbg.gadp.error.GadpErrorException;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.protocol.Gadp.ErrorCode;
 import ghidra.program.model.address.*;
 
 public abstract class AbstractGadpServer
@@ -59,7 +58,7 @@ public abstract class AbstractGadpServer
 	protected AddressRange getAddressRange(Gadp.AddressRange range) {
 		AddressSpace space = model.getAddressSpace(range.getSpace());
 		if (space == null) {
-			throw new GadpErrorException(ErrorCode.BAD_ADDRESS,
+			throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_ADDRESS,
 				"Unrecognized address space: " + range);
 		}
 		Address min = space.getAddress(range.getOffset());
