@@ -107,7 +107,7 @@ public class MemviewProvider extends ComponentProviderAdapter {
 				.toolBarIcon(DebuggerResources.ICON_SYNC)
 				.helpLocation(new HelpLocation(plugin.getName(), "toggle_process_trace")) //
 				.onAction(ctx -> performToggleTrace(ctx))
-				.selected(true)
+				.selected(false)
 				.buildAndInstallLocal(this);
 
 		new ToggleActionBuilder("Apply Filter To Panel", plugin.getName()) //
