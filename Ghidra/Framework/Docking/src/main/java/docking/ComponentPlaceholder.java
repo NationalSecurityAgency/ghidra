@@ -22,10 +22,14 @@ import java.util.List;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Class to hold information about a dockable component with respect to its position within the
@@ -108,6 +112,16 @@ public class ComponentPlaceholder {
 	 * @param node the component node containing this placeholder.
 	 */
 	void setNode(ComponentNode node) {
+
+		if (node != null && disposed) {
+			//
+			// TODO Hack Alert!  (When this is removed, also update ComponentNode)
+			// 
+			// This should not happen!  We have seen this bug recently
+			Msg.debug(this, "Found disposed component that was not removed from the hierarchy " +
+				"list: " + this, ReflectionUtilities.createJavaFilteredThrowable());
+		}
+
 		compNode = node;
 	}
 
@@ -200,6 +214,10 @@ public class ComponentPlaceholder {
 		}
 	}
 
+	public boolean isDisposed() {
+		return disposed;
+	}
+
 	void dispose() {
 
 		disposed = true;
@@ -289,8 +307,9 @@ public class ComponentPlaceholder {
 	public DockableComponent getComponent() {
 		if (disposed) {
 			throw new AssertException(
-				"Attempted to get a component for a disposed component placeholder");
+				"Attempted to get a component for a disposed placeholder - " + this);
 		}
+
 		boolean isDocking = true;
 		if (compNode != null) {
 			isDocking = compNode.winMgr.isDocking();
@@ -554,7 +573,7 @@ public class ComponentPlaceholder {
 	 */
 	public String getFullTitle() {
 		String text = title;
-		if (subTitle != null && !subTitle.isEmpty()) {
+		if (!StringUtils.isBlank(subTitle)) {
 			text += " - " + subTitle;
 		}
 		return text;
@@ -563,9 +582,5 @@ public class ComponentPlaceholder {
 	@Override
 	public String toString() {
 		return "name=\"" + name + "\", fullTitle=\"" + getFullTitle() + "\"";
-	}
-
-	public boolean isDisposed() {
-		return disposed;
 	}
 }
