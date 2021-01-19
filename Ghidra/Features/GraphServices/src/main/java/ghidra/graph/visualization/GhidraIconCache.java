@@ -197,11 +197,11 @@ public class GhidraIconCache {
 		map.remove(vertex);
 	}
 
+	/**
+	 * Sets the vertex label to the value of the passed attribute name
+	 * @param attributeName the attribute key for the vertex label value to be displayed
+	 */
 	public void setPreferredLabel(String attributeName) {
 		this.preferredLabel  = attributeName;
-	}
-
-	public void setLabelAlignment(int labelAlignment) {
-		this.labelAlignment = labelAlignment;
 	}
 }

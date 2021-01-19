@@ -67,6 +67,14 @@ public interface GraphDisplayBroker {
 		return getDefaultGraphDisplay(reuseGraph, Collections.emptyMap(), monitor);
 	}
 
+	/**
+	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider
+	 * @param reuseGraph if true, the provider will attempt to re-use a current graph display
+	 * @param properties a {@code Map} of property key/values that can be used to customize the display
+	 * @param monitor the {@link TaskMonitor} that can be used to cancel the operation
+	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
+	 * @throws GraphException thrown if an error occurs trying to get a graph display
+	 */
 	GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties, TaskMonitor monitor)
 			throws GraphException;
 

@@ -35,8 +35,6 @@ public interface GraphDisplay {
 	public static final int ALIGN_LEFT = 0;  // aligns graph text to the left
 	public static final int ALIGN_CENTER = 1; // aligns graph text to the center
 	public static final int ALIGN_RIGHT = 2; // aligns graph text to the right
-	public static final int ALIGN_TOP = 3; // aligns graph text to the right
-	public static final int ALIGN_BOTTOM = 4; // aligns graph text to the right
 
 	/**
 	 * Sets a {@link GraphDisplayListener} to be notified when the user changes the vertex focus
@@ -112,7 +110,7 @@ public interface GraphDisplay {
 	/**
 	 * Sets the name of the attribute which should be used as the primary vertex label in the display.
 	 * @param attributeName the name of the attribute to use as the display label for vertices.
-	 * @param alignment (ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER, ALIGN_TOP, or ALIGN_BOTTOM)
+	 * @param alignment (ALIGN_LEFT, ALIGN_RIGHT, or ALIGN_CENTER)
 	 * @param size the font size to use for the display label
 	 * @param monospace true if the font should be monospaced
 	 * @param maxLines the maximum number lines to display in the vertex labels
@@ -157,13 +155,27 @@ public interface GraphDisplay {
 	 */
 	public void addAction(DockingAction action);
 
+	/**
+	 * set a property key/value pair. This may be used to pass preferences to the implementation
+	 * @param key the property key
+	 * @param value the propery value
+	 */
 	default void setProperty(String key, String value) {
 	}
 
+	/**
+	 *
+	 * @param key the key to fetch a value for
+	 * @return the value associated with the passed key
+	 */
 	default String getValue(String key) {
 		return null;
 	}
 
+	/**
+	 * Returns the property {@code Map} Should be implemented to pass an unmodifiable or copy
+	 * @return the complete {@code Map} of properties.
+	 */
 	default Map<String, String> getProperties() {
 		return Collections.emptyMap();
 	}

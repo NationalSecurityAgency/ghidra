@@ -46,6 +46,15 @@ public interface GraphDisplayProvider extends ExtensionPoint {
 	 */
 	public GraphDisplay getGraphDisplay(boolean reuseGraph,	TaskMonitor monitor) throws GraphException;
 
+	/**
+	 * Returns a GraphDisplay that can be used to "display" a graph
+	 *
+	 * @param reuseGraph if true, this provider will attempt to re-use an existing GraphDisplay
+	 * @param properties a {@code Map} of property key/values that can be used to customize the display
+	 * @param monitor the {@link TaskMonitor} that can be used to monitor and cancel the operation
+	 * @return A GraphDisplay that can be used to display (or otherwise consume - e.g. export) the graph
+	 * @throws GraphException thrown if there is a problem creating a GraphDisplay
+	 */
 	default GraphDisplay getGraphDisplay(boolean reuseGraph, Map<String, String> properties,
 										TaskMonitor monitor) throws GraphException {
 		return getGraphDisplay(reuseGraph, monitor);

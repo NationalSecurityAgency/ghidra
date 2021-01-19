@@ -81,6 +81,13 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private static final String ACTION_OWNER = "GraphServices";
 
 	private static final String FAVORED_EDGE = "Fall-Through";
+
+	private static final String SELECTED_VERTEX_COLOR = "selectedVertexColor";
+	private static final String SELECTED_EDGE_COLOR = "selectedEdgeColor";
+	private static final String INITIAL_LAYOUT_ALGORITHM = "initialLayoutAlgorithm";
+	private static final String DISPLAY_VERTICES_AS_ICONS = "displayVerticesAsIcons";
+	private static final String VERTEX_LABEL_POSITION = "vertexLabelPosition";
+
 	private static final int MAX_NODES = Integer.getInteger("maxNodes", 10000);
 	private static final Dimension PREFERRED_VIEW_SIZE = new Dimension(1000, 1000);
 	private static final Dimension PREFERRED_LAYOUT_SIZE = new Dimension(3000, 3000);
@@ -210,25 +217,28 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		connectSelectionStateListeners();
 	}
 
+	@Override
 	public void setProperty(String key, String value) {
 		this.graphDisplayProperties.put(key, value);
 	}
 
-	public String getProperty(String key) {
+	@Override
+	public String getValue(String key) {
 		return graphDisplayProperties.get(key);
 	}
 
-	public Map<String, String> getPropertyMap() {
+	@Override
+	public Map<String, String> getProperties() {
 		return Collections.unmodifiableMap(graphDisplayProperties);
 	}
 
 	private Color getSelectedVertexColor() {
-		return Colors.getHexColor(graphDisplayProperties.getOrDefault("selectedVertexColor",
+		return Colors.getHexColor(graphDisplayProperties.getOrDefault(SELECTED_VERTEX_COLOR,
 				"0xFF0000"));
 	}
 
 	private Color getSelectedEdgeColor() {
-		return Colors.getHexColor(graphDisplayProperties.getOrDefault("selectedEdgeColor", "0xFF0000"));
+		return Colors.getHexColor(graphDisplayProperties.getOrDefault(SELECTED_EDGE_COLOR, "0xFF0000"));
 	}
 
 
@@ -933,8 +943,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void setInitialLayoutAlgorithm() {
-		if (graphDisplayProperties.containsKey("initialLayoutAlgorithm")) {
-			String layoutAlgorithmName = graphDisplayProperties.get("initialLayoutAlgorithm");
+		if (graphDisplayProperties.containsKey(INITIAL_LAYOUT_ALGORITHM)) {
+			String layoutAlgorithmName = graphDisplayProperties.get(INITIAL_LAYOUT_ALGORITHM);
 			layoutTransitionManager.setLayout(layoutAlgorithmName);
 		} else {
 			LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
@@ -1284,7 +1294,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private void setVertexPreferences(VisualizationViewer<AttributedVertex, AttributedEdge> vv) {
 		RenderContext<AttributedVertex, AttributedEdge> renderContext = vv.getRenderContext();
-		if (Boolean.parseBoolean(graphDisplayProperties.getOrDefault("displayVerticesAsIcons", "true"))) {
+		if (Boolean.parseBoolean(graphDisplayProperties.getOrDefault(DISPLAY_VERTICES_AS_ICONS, "true"))) {
 			// set up the shape and color functions
 			IconShapeFunction<AttributedVertex> nodeImageShapeFunction =
 					new IconShapeFunction<>(new EllipseShapeFunction<>());
@@ -1307,7 +1317,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			vv.getRenderContext().setVertexLabelFunction(Object::toString);
 			vv.getRenderContext().setVertexLabelPosition(
 					VertexLabel.Position.valueOf(
-							graphDisplayProperties.getOrDefault("vertexLabelPosition", "AUTO")));
+							graphDisplayProperties.getOrDefault(VERTEX_LABEL_POSITION, "AUTO")));
 		}
 	}
 
