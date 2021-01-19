@@ -28,29 +28,34 @@ import agent.dbgmodel.dbgmodel.debughost.*;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.Msg;
 
 public class HDMAUtil {
 
-	private DataModelManager1 manager;
-	private DebugHost host;
 	private DebugClient client;
+	private HostDataModelAccess access;
 
 	public HDMAUtil(HostDataModelAccess access) {
-		manager = access.getManager();
-		host = access.getHost();
-		client = access.getClient();
+		this.access = access;
+		this.client = access.getClient();
 	}
 
 	public DataModelManager1 getManager() {
-		return manager;
+		return access.getManager();
 	}
 
 	public DebugHost getHost() {
-		return host;
+		return access.getHost();
 	}
 
 	public ModelObject getRootNamespace() {
-		return getManager().getRootNamespace();
+		ModelObject rootNamespace = getManager().getRootNamespace();
+		if (rootNamespace == null) {
+			Msg.debug(this, "resetting HostDataModelAccess manager/host " + access);
+			access.getDataModel();
+			rootNamespace = getManager().getRootNamespace();
+		}
+		return rootNamespace;
 	}
 
 	public DebugHostContext getCurrentContext() {
@@ -110,8 +115,8 @@ public class HDMAUtil {
 	}
 
 	public ModelObject getMethod(List<String> path) {
-		DebugHostEvaluator2 eval = host.asEvaluator();
-		DebugHostContext context = host.getCurrentContext();
+		DebugHostEvaluator2 eval = getHost().asEvaluator();
+		DebugHostContext context = getHost().getCurrentContext();
 		List<String> npath = PathUtils.parent(path);
 		int last = path.size() - 1;
 		String cmd = path.get(last);
@@ -158,24 +163,23 @@ public class HDMAUtil {
 	}
 
 	private ModelObject evaluatePredicate(ModelObject target, String call) {
-		DebugHostEvaluator2 eval = host.asEvaluator();
-		DebugHostContext context = host.getCurrentContext();
+		DebugHostEvaluator2 eval = getHost().asEvaluator();
+		DebugHostContext context = getHost().getCurrentContext();
 		return eval.evaluateExtendedExpression(context, new WString(call), target);
 	}
 
 	public ModelObject getSession(String id) {
-		ModelObject sessions = getRootNamespace().getKeyValue("Debugger").getKeyValue("Sessions");
-		return sessions.getChild(manager, string2variant(id));
+		return getRootNamespace().getKeyValue("Debugger").getKeyValue("Sessions");
 	}
 
 	public ModelObject getProcess(ModelObject session, String id) {
 		ModelObject processes = session.getKeyValue("Processes");
-		return processes.getChild(manager, string2variant(id));
+		return processes.getChild(getManager(), string2variant(id));
 	}
 
 	public ModelObject getThread(ModelObject process, String id) {
 		ModelObject threads = process.getKeyValue("Threads");
-		return threads.getChild(manager, string2variant(id));
+		return threads.getChild(getManager(), string2variant(id));
 	}
 
 	public ModelObject getSettings() {
@@ -215,7 +219,7 @@ public class HDMAUtil {
 	}
 
 	public List<DebugModule> getModuleList() {
-		DebugHostSymbols symbols = host.asSymbols();
+		DebugHostSymbols symbols = getHost().asSymbols();
 		DebugHostSymbolEnumerator enumerator = symbols.enumerateModules(getCurrentContext());
 		List<DebugModule> modules = new ArrayList<DebugModule>();
 		DebugHostSymbol1 next;
@@ -252,12 +256,12 @@ public class HDMAUtil {
 
 	public void setCurrentProcess(ModelObject context, String id) {
 		VARIANT v = new VARIANT(id);
-		context.switchTo(manager, v);
+		context.switchTo(getManager(), v);
 	}
 
 	public void setCurrentThread(ModelObject context, String id) {
 		VARIANT v = new VARIANT(id);
-		context.switchTo(manager, v);
+		context.switchTo(getManager(), v);
 	}
 
 	public String getCtlId(ModelObject object) {

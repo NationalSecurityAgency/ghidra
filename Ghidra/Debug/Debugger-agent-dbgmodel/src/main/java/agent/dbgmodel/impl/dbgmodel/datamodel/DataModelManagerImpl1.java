@@ -130,8 +130,7 @@ public class DataModelManagerImpl1 implements DataModelManagerInternal {
 	public ModelObject createSyntheticObject(DebugHostContext context) {
 		Pointer pContext = context.getPointer();
 		PointerByReference ppObject = new PointerByReference();
-		COMUtils.checkRC(
-			jnaData.CreateSyntheticObject(pContext, ppObject));
+		COMUtils.checkRC(jnaData.CreateSyntheticObject(pContext, ppObject));
 
 		WrapIModelObject wrap = new WrapIModelObject(ppObject.getValue());
 		try {
@@ -289,7 +288,11 @@ public class DataModelManagerImpl1 implements DataModelManagerInternal {
 		PointerByReference ppObject = new PointerByReference();
 		COMUtils.checkRC(jnaData.GetRootNamespace(ppObject));
 
-		WrapIModelObject wrap = new WrapIModelObject(ppObject.getValue());
+		Pointer value = ppObject.getValue();
+		if (value == null) {
+			return null;
+		}
+		WrapIModelObject wrap = new WrapIModelObject(value);
 		try {
 			return ModelObjectInternal.tryPreferredInterfaces(wrap::QueryInterface);
 		}
