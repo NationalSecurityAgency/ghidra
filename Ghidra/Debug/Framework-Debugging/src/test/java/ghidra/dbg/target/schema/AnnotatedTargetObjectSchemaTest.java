@@ -31,6 +31,26 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 
 public class AnnotatedTargetObjectSchemaTest {
 
+	protected static SchemaBuilder addBasicAttributes(SchemaBuilder builder) {
+		builder.addAttributeSchema(new DefaultAttributeSchema("_value",
+			EnumerableTargetObjectSchema.ANY.getName(), false, false, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_type",
+			EnumerableTargetObjectSchema.STRING.getName(), false, false, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_display",
+			EnumerableTargetObjectSchema.STRING.getName(), false, false, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_short_display",
+			EnumerableTargetObjectSchema.STRING.getName(), false, false, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_kind",
+			EnumerableTargetObjectSchema.STRING.getName(), false, true, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_update_mode",
+			EnumerableTargetObjectSchema.UPDATE_MODE.getName(), false, false, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_order",
+			EnumerableTargetObjectSchema.INT.getName(), false, false, true), null);
+		builder.addAttributeSchema(new DefaultAttributeSchema("_modified",
+			EnumerableTargetObjectSchema.BOOL.getName(), false, false, true), null);
+		return builder;
+	}
+
 	@TargetObjectSchemaInfo
 	static class TestAnnotatedTargetRootPlain extends DefaultTargetModelRoot {
 		public TestAnnotatedTargetRootPlain(DebuggerObjectModel model, String typeHint) {
@@ -43,7 +63,7 @@ public class AnnotatedTargetObjectSchemaTest {
 		AnnotatedSchemaContext ctx = new AnnotatedSchemaContext();
 		TargetObjectSchema schema = ctx.getSchemaForClass(TestAnnotatedTargetRootPlain.class);
 
-		TargetObjectSchema exp = ctx.builder(schema.getName())
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
 				.addInterface(TargetAggregate.class) // Inherited from root
 				.build();
 		assertEquals(exp, schema);
@@ -61,7 +81,7 @@ public class AnnotatedTargetObjectSchemaTest {
 		AnnotatedSchemaContext ctx = new AnnotatedSchemaContext();
 		TargetObjectSchema schema = ctx.getSchemaForClass(TestAnnotatedTargetRootNoElems.class);
 
-		TargetObjectSchema exp = ctx.builder(schema.getName())
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
 				.addInterface(TargetAggregate.class) // Inherited from root
 				.setDefaultElementSchema(EnumerableTargetObjectSchema.VOID.getName())
 				.build();
@@ -100,7 +120,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		SchemaName schemaProc = ctx.nameFromClass(TestAnnotatedTargetProcessStub.class);
 
-		TargetObjectSchema exp = ctx.builder(schema.getName())
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
 				.addInterface(TargetAggregate.class)
 				.setDefaultElementSchema(schemaProc)
 				.build();
@@ -124,14 +144,8 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		SchemaName schemaProc = ctx.nameFromClass(TestAnnotatedTargetProcessStub.class);
 
-		TargetObjectSchema exp = ctx.builder(schema.getName())
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
 				.setDefaultElementSchema(schemaProc)
-				.addAttributeSchema(new DefaultAttributeSchema("_display",
-					EnumerableTargetObjectSchema.STRING.getName(), false, false, true), null)
-				.addAttributeSchema(new DefaultAttributeSchema("_short_display",
-					EnumerableTargetObjectSchema.STRING.getName(), false, false, true), null)
-				.addAttributeSchema(new DefaultAttributeSchema("_update_mode",
-					EnumerableTargetObjectSchema.UPDATE_MODE.getName(), false, false, true), null)
 				.build();
 		assertEquals(exp, schema);
 	}
@@ -172,7 +186,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		SchemaName schemaProc = ctx.nameFromClass(TestAnnotatedTargetProcessParam.class);
 
-		TargetObjectSchema exp = ctx.builder(schema.getName())
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
 				.addInterface(TargetAggregate.class)
 				.addAttributeSchema(new DefaultAttributeSchema("int_attribute",
 					EnumerableTargetObjectSchema.INT.getName(), false, false, false), null)
@@ -183,13 +197,17 @@ public class AnnotatedTargetObjectSchemaTest {
 		assertEquals("TestAnnotatedTargetRootWithAnnotatedAttrs", schema.getName().toString());
 	}
 
-	@TargetObjectSchemaInfo(attributes = {
-		@TargetAttributeType(type = Void.class),
-		@TargetAttributeType(name = "some_int_attribute", type = Integer.class),
-		@TargetAttributeType(name = "some_object_attribute", type = TestAnnotatedTargetProcessStub.class)
-	}, elements = {
-		@TargetElementType(index = "reserved", type = Void.class)
-	})
+	@TargetObjectSchemaInfo(
+		attributes = {
+			@TargetAttributeType(type = Void.class),
+			@TargetAttributeType(name = "some_int_attribute", type = Integer.class),
+			@TargetAttributeType(
+				name = "some_object_attribute",
+				type = TestAnnotatedTargetProcessStub.class)
+		},
+		elements = {
+			@TargetElementType(index = "reserved", type = Void.class)
+		})
 	static class TestAnnotatedTargetRootWithListedAttrs extends DefaultTargetModelRoot {
 		public TestAnnotatedTargetRootWithListedAttrs(DebuggerObjectModel model,
 				String typeHint) {
@@ -205,7 +223,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		SchemaName schemaProc = ctx.nameFromClass(TestAnnotatedTargetProcessStub.class);
 
-		TargetObjectSchema exp = ctx.builder(schema.getName())
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
 				.addInterface(TargetAggregate.class)
 				.setDefaultAttributeSchema(new DefaultAttributeSchema("",
 					EnumerableTargetObjectSchema.VOID.getName(), false, false, false))
@@ -248,8 +266,11 @@ public class AnnotatedTargetObjectSchemaTest {
 		ctx.getSchemaForClass(DefaultTargetObject.class);
 	}
 
+	static class Dummy {
+	}
+
 	@TargetObjectSchemaInfo
-	static class TestAnnotatedTargetRootWithAnnotatedAttrsNonUnique<T extends TargetProcess<T> & TargetInterpreter<T>>
+	static class TestAnnotatedTargetRootWithAnnotatedAttrsNonUnique<T extends Dummy & TargetProcess<T> & TargetInterpreter<T>>
 			extends DefaultTargetModelRoot {
 
 		public TestAnnotatedTargetRootWithAnnotatedAttrsNonUnique(DebuggerObjectModel model,
@@ -270,7 +291,7 @@ public class AnnotatedTargetObjectSchemaTest {
 	}
 
 	@TargetObjectSchemaInfo
-	static class TestAnnotatedTargetRootWithElemsNonUnique<T extends TargetProcess<T> & TargetInterpreter<T>>
+	static class TestAnnotatedTargetRootWithElemsNonUnique<T extends Dummy & TargetProcess<T> & TargetInterpreter<T>>
 			extends DefaultTargetModelRoot {
 
 		public TestAnnotatedTargetRootWithElemsNonUnique(DebuggerObjectModel model,
@@ -329,7 +350,8 @@ public class AnnotatedTargetObjectSchemaTest {
 		ctx.getSchemaForClass(TestAnnotatedTargetRootWithAnnotatedAttrsBadGetter.class);
 	}
 
-	@TargetObjectSchemaInfo(attributes = @TargetAttributeType(name = "some_attr", type = NotAPrimitive.class))
+	@TargetObjectSchemaInfo(
+		attributes = @TargetAttributeType(name = "some_attr", type = NotAPrimitive.class))
 	static class TestAnnotatedTargetRootWithListedAttrsBadType extends DefaultTargetModelRoot {
 		public TestAnnotatedTargetRootWithListedAttrsBadType(DebuggerObjectModel model,
 				String typeHint) {

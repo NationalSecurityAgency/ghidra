@@ -205,7 +205,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitForDomainObject(tb.trace);
 
 		assertEquals(Set.of(), traceManager.getOpenTraces());
-		assertEquals(Set.of(tb), tb.trace.getConsumerList());
+		assertEquals(Set.of(tb), Set.copyOf(tb.trace.getConsumerList()));
 
 		traceManager.openTrace(tb.trace);
 		waitForSwing();

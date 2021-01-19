@@ -60,6 +60,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	/**
 	 * Tracks the current set of logical breakpoints.
 	 * 
+	 * <p>
 	 * Its assertions require perfection in the sequence of events: 1) No double-adds. 2) No
 	 * double-removes. 3) No extraneous updates. At the end of each test, the current set of
 	 * breakpoints in this listener should be verified against those reported by the service.
@@ -1057,17 +1058,20 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addTargetSoftwareBreakpoint(recorder3, text3);
 		waitForSwing();
 
-		assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
+		waitForPass(
+			() -> assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3));
 
 		expectMappingChange(() -> {
 			// TODO: Change breakpoint manager to require both open and recording...
 			// If I don't close the trace here, the test will fail.
 			recorder3.stopRecording();
-			traceManager.closeTrace(trace3);
+			// NB. Auto-close on stop is the default
+			//traceManager.closeTrace(trace3);
 		});
 		waitForSwing();
 
-		assertLogicalBreakpointForMappedBookmarkAnd1TraceBreakpoint(trace1);
+		// NB. Auto-close is possibly delayed because of auto-save
+		waitForPass(() -> assertLogicalBreakpointForMappedBookmarkAnd1TraceBreakpoint(trace1));
 	}
 
 	/**
@@ -1318,7 +1322,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addTargetSoftwareBreakpoint(recorder1, text);
 		waitForDomainObject(trace);
 
-		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace);
+		waitForPass(() -> assertLogicalBreakpointForLoneSoftwareBreakpoint(trace));
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 

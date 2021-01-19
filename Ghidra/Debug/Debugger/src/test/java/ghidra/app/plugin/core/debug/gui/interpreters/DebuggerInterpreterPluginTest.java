@@ -45,7 +45,8 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		InterpreterComponentProvider interpreter =
 			waitForComponentProvider(InterpreterComponentProvider.class);
 
-		assertEquals("Interpreter: Test Debugger", interpreter.getTitle());
+		// TODO: Sub-title instead
+		assertEquals("Test Debugger", interpreter.getTitle());
 		assertTrue(interpreter.isVisible());
 	}
 
@@ -83,7 +84,8 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 
 		// I/O processing has a dedicated thread
-		waitForPass(() -> assertEquals("Hello, World!\n", interpreter.getOutputText()));
+		// FIXME: The trailing space is a hack to fix scrolling....
+		waitForPass(() -> assertEquals("Hello, World!\n ", interpreter.getOutputText()));
 	}
 
 	@Test
@@ -109,7 +111,8 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		mb.testModel.session.interpreter.setDisplay("Test Debugger X.0");
 		waitForSwing();
 
-		assertEquals("Interpreter: Test Debugger X.0", interpreter.getTitle());
+		// TODO: Sub-title instead
+		assertEquals("Test Debugger X.0", interpreter.getTitle());
 	}
 
 	@Test

@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
@@ -92,14 +93,17 @@ public interface DebuggerTraceManagerService {
 	 * 
 	 * <p>
 	 * If a different domain file of the trace's name already exists, an incrementing integer is
-	 * appended.
+	 * appended. Errors are handled in the same fashion as saving a program, so there is little/no
+	 * need to invoke {@link CompletableFuture#exceptionally(java.util.function.Function)} on the
+	 * returned future. The future is returned as a means of registering follow-up actions.
 	 * 
 	 * <p>
 	 * TODO: Support save-as, prompting to overwrite, etc?
 	 * 
 	 * @param trace the trace to save
+	 * @return a future which completes when the save is finished
 	 */
-	void saveTrace(Trace trace);
+	CompletableFuture<Void> saveTrace(Trace trace);
 
 	void closeTrace(Trace trace);
 

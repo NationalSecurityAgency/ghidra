@@ -26,8 +26,20 @@ import ghidra.util.database.spatial.rect.EuclideanSpace2D;
 public class TraceAddressSnapSpace implements EuclideanSpace2D<Address, Long> {
 	private static final Map<AddressSpace, TraceAddressSnapSpace> SPACES = new HashMap<>();
 
+	/**
+	 * Get the trace-address-snap space for a given address space
+	 * 
+	 * <p>
+	 * Because this synchronizes on a cache of spaces, it should only be called by space
+	 * constructors, never by entry constructors.
+	 * 
+	 * @param space the address space
+	 * @return the trace-address-snap space
+	 */
 	public static TraceAddressSnapSpace forAddressSpace(AddressSpace space) {
-		return SPACES.computeIfAbsent(space, TraceAddressSnapSpace::new);
+		synchronized (SPACES) {
+			return SPACES.computeIfAbsent(space, TraceAddressSnapSpace::new);
+		}
 	}
 
 	private ImmutableTraceAddressSnapRange full;

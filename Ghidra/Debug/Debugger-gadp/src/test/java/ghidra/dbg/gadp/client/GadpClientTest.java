@@ -141,10 +141,14 @@ public class GadpClientTest {
 					.setSequence(seqno)
 					.setConnectRequest(GadpVersion.makeRequest())
 					.build());
+			// TODO: Test schemas here?
+			// Seems they're already hit well enough in dependent tests
 			send(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setConnectReply(Gadp.ConnectReply.newBuilder()
-							.setVersion(version.getName()))
+							.setVersion(version.getName())
+							.setSchemaContext("<context/>")
+							.setRootSchema("OBJECT"))
 					.build());
 			seqno++;
 		}

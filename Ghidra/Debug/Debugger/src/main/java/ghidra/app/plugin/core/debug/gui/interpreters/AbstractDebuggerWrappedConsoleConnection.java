@@ -71,6 +71,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 
 		@Override
 		public void displayChanged(TargetObject object, String display) {
+			// TODO: Would rather update the sub-title
 			guiConsole.updateTitle();
 		}
 
@@ -121,6 +122,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 
 	@Override
 	public String getTitle() {
+		// This is kruft. Would be better to have control of the sub-title.
 		if (firstTimeAskedTitle) {
 			firstTimeAskedTitle = false;
 			return plugin.getName();

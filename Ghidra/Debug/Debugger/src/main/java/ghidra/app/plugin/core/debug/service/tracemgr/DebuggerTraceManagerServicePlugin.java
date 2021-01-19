@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import docking.ActionContext;
@@ -33,6 +35,7 @@ import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.async.AsyncReference;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.TargetThread;
@@ -61,25 +64,25 @@ import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
 @PluginInfo( //
-		shortDescription = "Debugger Trace View Management Plugin", //
-		description = "Manages UI Components, Wrappers, Focus, etc.", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsProduced = { //
-			TraceActivatedPluginEvent.class, //
-		}, //
-		eventsConsumed = { //
-			TraceActivatedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-			ModelObjectFocusedPluginEvent.class, //
-			TraceRecorderAdvancedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-		}, //
-		servicesProvided = { //
-			DebuggerTraceManagerService.class, //
-		} //
+	shortDescription = "Debugger Trace View Management Plugin", //
+	description = "Manages UI Components, Wrappers, Focus, etc.", //
+	category = PluginCategoryNames.DEBUGGER, //
+	packageName = DebuggerPluginPackage.NAME, //
+	status = PluginStatus.RELEASED, //
+	eventsProduced = { //
+		TraceActivatedPluginEvent.class, //
+	}, //
+	eventsConsumed = { //
+		TraceActivatedPluginEvent.class, //
+		TraceClosedPluginEvent.class, //
+		ModelObjectFocusedPluginEvent.class, //
+		TraceRecorderAdvancedPluginEvent.class, //
+	}, //
+	servicesRequired = { //
+	}, //
+	servicesProvided = { //
+		DebuggerTraceManagerService.class, //
+	} //
 )
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
@@ -127,21 +130,29 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	class ForRecordersListener implements CollectionChangeListener<TraceRecorder> {
 		@Override
 		public void elementAdded(TraceRecorder recorder) {
-			updateCurrentRecorder();
+			Swing.runLater(() -> updateCurrentRecorder());
 		}
 
 		@Override
 		public void elementRemoved(TraceRecorder recorder) {
-			if (isAutoCloseOnTerminate()) {
-				Trace trace = recorder.getTrace();
-				if (getOpenTraces().contains(trace)) {
-					if (isSaveTracesByDefault()) {
-						saveTrace(trace);
-					}
-					closeTrace(trace);
+			Swing.runLater(() -> {
+				updateCurrentRecorder();
+				if (!isAutoCloseOnTerminate()) {
+					return;
 				}
-			}
-			updateCurrentRecorder();
+				Trace trace = recorder.getTrace();
+				synchronized (listenersByTrace) {
+					if (!listenersByTrace.containsKey(trace)) {
+						return;
+					}
+				}
+				if (!isSaveTracesByDefault()) {
+					closeTrace(trace);
+					return;
+				}
+				// Errors already handled by saveTrace
+				tryHarder(() -> saveTrace(trace), 3, 100).thenRun(() -> closeTrace(trace));
+			});
 		}
 	}
 
@@ -188,6 +199,22 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private <T> T strongRef(T t) {
 		strongRefs.add(t);
 		return t;
+	}
+
+	protected <T> CompletableFuture<T> tryHarder(Supplier<CompletableFuture<T>> action,
+			int retries, long retryAfterMillis) {
+		Executor exe = CompletableFuture.delayedExecutor(retryAfterMillis, TimeUnit.MILLISECONDS);
+		// NB. thenCompose(f -> f) also ensures exceptions are handled here, not passed through
+		CompletableFuture<T> result =
+			CompletableFuture.supplyAsync(action, AsyncUtils.SWING_EXECUTOR).thenCompose(f -> f);
+		if (retries > 0) {
+			return result.thenApply(CompletableFuture::completedFuture).exceptionally(ex -> {
+				return CompletableFuture
+						.supplyAsync(() -> tryHarder(action, retries - 1, retryAfterMillis), exe)
+						.thenCompose(f -> f);
+			}).thenCompose(f -> f);
+		}
+		return result;
 	}
 
 	@Override
@@ -746,8 +773,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	public static void saveTrace(PluginTool tool, Trace trace) {
+	public static CompletableFuture<Void> saveTrace(PluginTool tool, Trace trace) {
 		tool.prepareToSave(trace);
+		CompletableFuture<Void> future = new CompletableFuture<>();
 		// TODO: Get all the nuances for this correct...
 		// "Save As" action, Locking, transaction flushing, etc....
 		if (trace.getDomainFile().getParent() != null) {
@@ -756,17 +784,24 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				public void run(TaskMonitor monitor) throws CancelledException {
 					try {
 						trace.getDomainFile().save(monitor);
+						future.complete(null);
 					}
 					catch (CancelledException e) {
 						// Done
+						future.completeExceptionally(e);
 					}
 					catch (NotConnectedException | ConnectException e) {
 						ClientUtil.promptForReconnect(tool.getProject().getRepository(),
 							tool.getToolFrame());
+						future.completeExceptionally(e);
 					}
 					catch (IOException e) {
 						ClientUtil.handleException(tool.getProject().getRepository(), e,
 							"Save Trace", tool.getToolFrame());
+						future.completeExceptionally(e);
+					}
+					catch (Throwable e) {
+						future.completeExceptionally(e);
 					}
 				}
 			});
@@ -795,34 +830,41 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 					try {
 						traces.createFile(finalFilename, trace, monitor);
 						trace.save("Initial save", monitor);
+						future.complete(null);
 					}
 					catch (CancelledException e) {
 						// Done
+						future.completeExceptionally(e);
 					}
 					catch (NotConnectedException | ConnectException e) {
 						ClientUtil.promptForReconnect(tool.getProject().getRepository(),
 							tool.getToolFrame());
+						future.completeExceptionally(e);
 					}
 					catch (IOException e) {
 						ClientUtil.handleException(tool.getProject().getRepository(), e,
 							"Save New Trace", tool.getToolFrame());
+						future.completeExceptionally(e);
 					}
 					catch (InvalidNameException e) {
 						Msg.showError(DebuggerTraceManagerServicePlugin.class, null,
 							"Save New Trace Error", e.getMessage());
+						future.completeExceptionally(e);
 					}
 					catch (Throwable e) {
 						Msg.showError(DebuggerTraceManagerServicePlugin.class, null,
 							"Save New Trace Error", e.getMessage(), e);
+						future.completeExceptionally(e);
 					}
 				}
 			});
 		}
+		return future;
 	}
 
 	@Override
-	public void saveTrace(Trace trace) {
-		saveTrace(tool, trace);
+	public CompletableFuture<Void> saveTrace(Trace trace) {
+		return saveTrace(tool, trace);
 	}
 
 	protected void doTraceClosed(Trace trace) {

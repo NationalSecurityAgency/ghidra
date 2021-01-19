@@ -38,6 +38,14 @@ public interface SchemaContext {
 	TargetObjectSchema getSchema(SchemaName name);
 
 	/**
+	 * Resolve a schema in this context by name
+	 * 
+	 * @param name the schema's name
+	 * @return the schema, or null if no schema by the given name exists
+	 */
+	TargetObjectSchema getSchemaOrNull(SchemaName name);
+
+	/**
 	 * Collect all schemas in this context
 	 * 
 	 * @return the set of all schemas

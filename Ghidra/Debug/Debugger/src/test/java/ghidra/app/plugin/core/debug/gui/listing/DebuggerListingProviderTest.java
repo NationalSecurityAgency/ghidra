@@ -664,6 +664,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertArrayEquals(zero, buf.array());
 
 		runSwing(() -> goToDyn(addr(trace, 0x55551800)));
+		waitForPass(() -> assertEquals(addr(trace, 0x55551800),
+			listingProvider.getLocation().getAddress()));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,

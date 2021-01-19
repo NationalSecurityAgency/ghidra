@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.*;
 
 import generic.Unique;
@@ -158,7 +159,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertEquals("{ de ad be ef }", row.getRawValueString());
+		assertEquals("0xdeadbeef", row.getRawValueString());
 		assertEquals("DEADBEEFh", row.getValueString());
 		assertNoErr(row);
 
@@ -180,7 +181,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertEquals("{ 00 00 00 00 00 40 00 08 }", row.getRawValueString());
+		assertEquals("0x400008", row.getRawValueString());
 		assertEquals("400008h", row.getValueString());
 		assertNoErr(row);
 
@@ -226,6 +227,9 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		row.setDataType(LongDataType.dataType);
 
 		waitForPass(() -> {
+			if (row.getError() != null) {
+				ExceptionUtils.rethrow(row.getError());
+			}
 			assertEquals("{ 01 02 03 04 }", row.getRawValueString());
 			assertEquals("1020304h", row.getValueString());
 		});

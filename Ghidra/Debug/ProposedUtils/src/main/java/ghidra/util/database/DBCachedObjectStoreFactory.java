@@ -558,7 +558,10 @@ public class DBCachedObjectStoreFactory {
 
 	@SuppressWarnings("unchecked")
 	public static <T extends DBAnnotatedObject> TableInfo<T> getInfo(Class<T> cls) {
-		return (TableInfo<T>) INFO_MAP.computeIfAbsent(cls, DBCachedObjectStoreFactory::buildInfo);
+		synchronized (INFO_MAP) {
+			return (TableInfo<T>) INFO_MAP.computeIfAbsent(cls,
+				DBCachedObjectStoreFactory::buildInfo);
+		}
 	}
 
 	static <OT extends DBAnnotatedObject> List<DBFieldCodec<?, OT, ?>> getCodecs(

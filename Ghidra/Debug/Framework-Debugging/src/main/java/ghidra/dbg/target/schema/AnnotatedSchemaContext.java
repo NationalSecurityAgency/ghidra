@@ -29,6 +29,7 @@ import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema.MinimalSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.util.Msg;
@@ -207,8 +208,19 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	protected TargetObjectSchema fromAnnotatedClass(Class<? extends TargetObject> cls) {
 		synchronized (namesByClass) {
 			SchemaName name = nameFromAnnotatedClass(cls);
+			TargetObjectSchema enumerable = MinimalSchemaContext.INSTANCE.getSchemaOrNull(name);
+			if (enumerable != null) {
+				throw new IllegalArgumentException("Class " + cls + " is assigned name " + name +
+					". This usually means it's missing the @" +
+					TargetObjectSchemaInfo.class.getSimpleName() +
+					" annotation, or that the class was referenced by accident.");
+			}
 			return schemasByClass.computeIfAbsent(cls, c -> {
 				TargetObjectSchemaInfo info = cls.getAnnotation(TargetObjectSchemaInfo.class);
+				if (info == null) {
+					throw new IllegalArgumentException("Class " + cls + " is not annotated with @" +
+						TargetObjectSchemaInfo.class.getSimpleName());
+				}
 				SchemaBuilder builder = builder(name);
 
 				Set<Class<?>> allParents = ReflectionUtilities.getAllParents(cls);

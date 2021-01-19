@@ -40,6 +40,11 @@ public class DefaultSchemaContext implements SchemaContext {
 	}
 
 	@Override
+	public synchronized TargetObjectSchema getSchemaOrNull(SchemaName name) {
+		return schemas.get(name);
+	}
+
+	@Override
 	public synchronized TargetObjectSchema getSchema(SchemaName name) {
 		return Objects.requireNonNull(schemas.get(name), "No such schema name: " + name);
 	}

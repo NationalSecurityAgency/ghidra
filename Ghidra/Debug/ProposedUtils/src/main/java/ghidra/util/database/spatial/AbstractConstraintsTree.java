@@ -247,7 +247,7 @@ public abstract class AbstractConstraintsTree< //
 				data.sort(Comparator.comparing(DR::getBounds, query.getBoundsComparator()));
 			}
 			for (DR d : data) {
-				if (query != null && query.terminateEarlyData(d.getShape())) {
+				if (query != null && ordered && query.terminateEarlyData(d.getShape())) {
 					break;
 				}
 				boolean included = query == null || query.testData(d.getShape());
@@ -268,7 +268,7 @@ public abstract class AbstractConstraintsTree< //
 			nodes.sort(Comparator.comparing(NR::getBounds, query.getBoundsComparator()));
 		}
 		for (NR n : nodes) {
-			if (query != null && query.terminateEarlyNode(n.getShape())) {
+			if (query != null && ordered && query.terminateEarlyNode(n.getShape())) {
 				break;
 			}
 			r = visit(node, n, query, visitor, ordered);

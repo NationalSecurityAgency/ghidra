@@ -462,6 +462,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).size());
 
 		traceManager.closeTrace(tb.trace);
+		waitForSwing();
 
 		assertTrue(mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).isEmpty());
@@ -490,11 +491,14 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			throws Exception {
 		addMapping();
 		traceManager.closeTrace(tb.trace);
+		waitForSwing();
+
 		// pre-check
 		assertTrue(mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).isEmpty());
 
 		traceManager.openTrace(tb.trace);
+		waitForSwing();
 
 		assertEquals(1, mappingService.getOpenMappedLocations(
 			new ProgramLocation(program, stSpace.getAddress(0x00200c0d))).size());

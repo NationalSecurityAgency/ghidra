@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.*;
 import java.util.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.dbg.testutil.DummyProc;
@@ -136,7 +135,8 @@ public class PtyTest {
 			PtyMaster master = pty.getMaster();
 			PrintWriter writer = new PrintWriter(master.getOutputStream());
 			BufferedReader reader = loggingReader(master.getInputStream());
-			Process bash = pty.getSlave().session(new String[] { DummyProc.which("bash") }, env);
+			Process bash =
+				pty.getSlave().session(new String[] { DummyProc.which("bash"), "--norc" }, env);
 			runExitCheck(3, bash);
 
 			writer.println("echo test");
@@ -150,14 +150,15 @@ public class PtyTest {
 			writer.println("exit 3");
 			writer.flush();
 
-			assertTrue(Set.of("BASH:exit 3", "exit 3").contains(reader.readLine()));
+			line = reader.readLine();
+			assertTrue("Not 'exit 3' or 'BASH:exit 3': '" + line + "'",
+				Set.of("BASH:exit 3", "exit 3").contains(line));
 
 			assertEquals(3, bash.waitFor());
 		}
 	}
 
 	@Test
-	@Ignore("Some extra bash kruft is sneaking in, and I don't know how")
 	public void testSessionBashInterruptCat() throws IOException, InterruptedException {
 		Map<String, String> env = new HashMap<>();
 		env.put("PS1", "BASH:");
@@ -165,7 +166,8 @@ public class PtyTest {
 			PtyMaster master = pty.getMaster();
 			PrintWriter writer = new PrintWriter(master.getOutputStream());
 			BufferedReader reader = loggingReader(master.getInputStream());
-			Process bash = pty.getSlave().session(new String[] { DummyProc.which("bash") }, env);
+			Process bash =
+				pty.getSlave().session(new String[] { DummyProc.which("bash"), "--norc" }, env);
 			runExitCheck(3, bash);
 
 			writer.println("echo test");
@@ -178,7 +180,9 @@ public class PtyTest {
 
 			writer.println("cat");
 			writer.flush();
-			assertTrue(Set.of("BASH:cat", "cat").contains(reader.readLine()));
+			line = reader.readLine();
+			assertTrue("Not 'cat' or 'BASH:cat': '" + line + "'",
+				Set.of("BASH:cat", "cat").contains(line));
 
 			writer.println("Hello, cat!");
 			writer.flush();

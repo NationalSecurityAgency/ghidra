@@ -93,8 +93,8 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	EXECUTION_STATE("EXECUTION_STATE", TargetExecutionState.class),
 	UPDATE_MODE("UPDATE_MODE", TargetUpdateMode.class);
 
-	private static class MinimalSchemaContext extends DefaultSchemaContext {
-		private static final SchemaContext INSTANCE = new MinimalSchemaContext();
+	public static final class MinimalSchemaContext extends DefaultSchemaContext {
+		public static final SchemaContext INSTANCE = new MinimalSchemaContext();
 	}
 
 	/**
