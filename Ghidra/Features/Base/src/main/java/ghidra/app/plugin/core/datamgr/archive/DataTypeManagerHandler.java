@@ -438,9 +438,7 @@ public class DataTypeManagerHandler {
 			addArchive(archive);
 		}
 		if (isUserAction && (archive instanceof FileArchive)) {
-			if (file != null) {
-				userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
-			}
+			userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
 		}
 		return archive;
 	}
@@ -1251,8 +1249,8 @@ public class DataTypeManagerHandler {
 
 	public Set<String> getPossibleEquateNames(long value) {
 		Set<String> equateNames = new HashSet<>();
-		for (int i = 0; i < openArchives.size(); i++) {
-			DataTypeManager dtMgr = openArchives.get(i).getDataTypeManager();
+		for (Archive element : openArchives) {
+			DataTypeManager dtMgr = element.getDataTypeManager();
 			dtMgr.findEnumValueNames(value, equateNames);
 		}
 		return equateNames;

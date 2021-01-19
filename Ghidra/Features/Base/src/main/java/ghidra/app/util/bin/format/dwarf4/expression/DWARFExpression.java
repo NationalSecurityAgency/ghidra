@@ -137,9 +137,9 @@ public class DWARFExpression {
 				case U_LONG:
 					return reader.readNextLong(); /* & there is no mask for ulong */
 				case S_LEB128:
-					return LEB128.decode(reader, true);
+					return LEB128.readAsLong(reader, true);
 				case U_LEB128:
-					return LEB128.decode(reader, false);
+					return LEB128.readAsLong(reader, false);
 				case SIZED_BLOB:
 					throw new IOException("Can't read SIZED_BLOB as a Long value");
 				case DWARF_INT:

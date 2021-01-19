@@ -74,9 +74,18 @@ public class BinaryReader {
 	 */
 	public BinaryReader clone(long newIndex) {
 		BinaryReader clone = new BinaryReader(provider, isLittleEndian());
-		clone.converter = converter;
 		clone.currentIndex = newIndex;
 		return clone;
+	}
+
+	/**
+	 * Returns an independent clone of this reader positioned at the same index.
+	 * 
+	 * @return a independent clone of this reader positioned at the same index
+	 */
+	@Override
+	public BinaryReader clone() {
+		return clone(currentIndex);
 	}
 
 	/**

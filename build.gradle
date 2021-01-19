@@ -265,6 +265,7 @@ String getCurrentPlatformName() {
 		
 	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
 	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
+	boolean isAARCH_64 = archName.equals("aarch64");
 
 	if (osName.startsWith("Windows")) {
 		if (isX86_32) {
@@ -282,6 +283,9 @@ String getCurrentPlatformName() {
 	else if (osName.startsWith("Mac OS X")) {
 		if (isX86_64) {
 			return 'osx64'
+		}
+		if (isAARCH_64) {
+			return 'aarch64'
 		}
 	}
 	throw new GradleException("Unrecognized current platform -> osName = $osName, archName = $archName")

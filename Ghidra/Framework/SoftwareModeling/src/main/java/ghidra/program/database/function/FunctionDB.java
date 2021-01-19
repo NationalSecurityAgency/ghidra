@@ -2724,6 +2724,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public Set<Function> getCallingFunctions(TaskMonitor monitor) {
+		monitor = TaskMonitor.dummyIfNull(monitor);
 		Set<Function> set = new HashSet<>();
 		ReferenceIterator iter = program.getReferenceManager().getReferencesTo(getEntryPoint());
 		while (iter.hasNext()) {
@@ -2742,6 +2743,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public Set<Function> getCalledFunctions(TaskMonitor monitor) {
+		monitor = TaskMonitor.dummyIfNull(monitor);
 		Set<Function> set = new HashSet<>();
 		Set<Reference> references = getReferencesFromBody(monitor);
 		for (Reference reference : references) {

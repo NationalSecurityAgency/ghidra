@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +30,13 @@ public class DockingCheckBoxMenuItem extends JCheckBoxMenuItem {
 
 	@Override
 	protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-		return true; // we will take care of the action ourselves
+		// TODO this note doesn't really make sense.  I think this idea is outdated.  Leaving this
+		//      here for a bit, in case there is something we missed.  This code is also in
+		//      DockingMenuItem.
+		// return true; // we will take care of the action ourselves
+
+		// Our KeyBindingOverrideKeyEventDispatcher processes actions for us, so there is no
+		// need to have the menu item do it
+		return false;
 	}
 }

@@ -32,6 +32,16 @@ public interface TaskMonitor {
 
 	public static final TaskMonitor DUMMY = new StubTaskMonitor();
 
+	/**
+	 * Returns the given task monitor if it is not {@code null}.  Otherwise, a {@link #DUMMY} 
+	 * monitor is returned.
+	 * @param tm the monitor to check for {@code null}
+	 * @return a non-null task monitor
+	 */
+	public static TaskMonitor dummyIfNull(TaskMonitor tm) {
+		return tm == null ? DUMMY : tm;
+	}
+
 	/** A value to indicate that this monitor has no progress value set */
 	public static final int NO_PROGRESS_VALUE = -1;
 

@@ -33,7 +33,8 @@ public class DockingMenuItem extends JMenuItem implements GComponent {
 	@Override
 	protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
 		// TODO this note doesn't really make sense.  I think this idea is outdated.  Leaving this
-		//      here for a bit, in case there is something we missed
+		//      here for a bit, in case there is something we missed.  This code is also in
+		//      DockingCheckboxMenuItemUI.
 		// return true; // we will take care of the action ourselves
 
 		// Our KeyBindingOverrideKeyEventDispatcher processes actions for us, so there is no
