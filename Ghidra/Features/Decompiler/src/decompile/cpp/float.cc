@@ -19,32 +19,6 @@
 #include <cmath>
 #include "address.hh"
 
-#if defined(_WINDOWS) && !defined(INFINITY)
-
-// Some definitions for Windows floating point stuff
-#include <cfloat>
-
-inline int4 signbit(double x) {
-  return (((_fpclass(x)& (_FPCLASS_NINF | _FPCLASS_NN
-			  | _FPCLASS_ND | _FPCLASS_NZ))!=0) ? 1 : 0);
-}
-
-inline int4 isnan(double x) {
-  return (((_fpclass(x)& (_FPCLASS_SNAN | _FPCLASS_QNAN))!=0) ? 1 : 0);
-}
-
-inline int4 isinf(double x) {
-  int4 classify = _fpclass(x);
-  if (classify == _FPCLASS_NINF) return -1;
-  if (classify == _FPCLASS_PINF) return 1;
-  return 0;
-}
-
-#define INFINITY HUGE_VAL
-#define NAN (INFINITY/INFINITY)
-
-#endif
-
 /// Set format for a given encoding size according to IEEE 754 standards
 /// \param sz is the size of the encoding in bytes
 FloatFormat::FloatFormat(int4 sz)
@@ -105,10 +79,10 @@ FloatFormat::floatclass FloatFormat::extractExpSig(double x,bool *sgn,uintb *sig
 {
   int4 e;
 
-  *sgn = (signbit(x) != 0);
+  *sgn = std::signbit(x);
   if (x == 0.0) return zero;
-  if (isinf(x)!=0) return infinity;
-  if (isnan(x)!=0) return nan;
+  if (std::isinf(x)) return infinity;
+  if (std::isnan(x)) return nan;
   if (*sgn)
     x = -x;
   double norm = frexp(x,&e);  // norm is between 1/2 and 1
