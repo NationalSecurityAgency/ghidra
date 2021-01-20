@@ -30,10 +30,8 @@ import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(name = "Module", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetModule
 		extends DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer>
 		implements TargetModule<GdbModelTargetModule> {
@@ -68,16 +66,10 @@ public class GdbModelTargetModule
 		this.symbols = new GdbModelTargetSymbolContainer(this);
 
 		range = doGetRange(); // Likely [0,0]
-		changeAttributes(List.of(),
-			List.of(
-				sections,
-				symbols),
-			Map.of(
-				VISIBLE_RANGE_ATTRIBUTE_NAME, range,
-				RANGE_ATTRIBUTE_NAME, range,
-				MODULE_NAME_ATTRIBUTE_NAME, module.getName(),
-				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED,
-				DISPLAY_ATTRIBUTE_NAME, module.getName()),
+		changeAttributes(List.of(), List.of(sections, symbols),
+			Map.of(VISIBLE_RANGE_ATTRIBUTE_NAME, range, RANGE_ATTRIBUTE_NAME, range,
+				MODULE_NAME_ATTRIBUTE_NAME, module.getName(), UPDATE_MODE_ATTRIBUTE_NAME,
+				TargetUpdateMode.FIXED, DISPLAY_ATTRIBUTE_NAME, module.getName()),
 			"Initialized");
 	}
 
@@ -115,10 +107,9 @@ public class GdbModelTargetModule
 	}
 
 	public void sectionsRefreshed() {
-		AddressRange range = doGetRange();
-		changeAttributes(List.of(), Map.of(
-			RANGE_ATTRIBUTE_NAME, range,
-			VISIBLE_RANGE_ATTRIBUTE_NAME, range),
+		range = doGetRange();
+		changeAttributes(List.of(),
+			Map.of(RANGE_ATTRIBUTE_NAME, range, VISIBLE_RANGE_ATTRIBUTE_NAME, range),
 			"Sections Refreshed");
 	}
 
