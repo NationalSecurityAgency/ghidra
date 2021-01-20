@@ -166,7 +166,8 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONG ulHandle = new ULONG(systemId);
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetProcessIdBySystemId(ulHandle, pulId);
-		if (hr.equals(COMUtilsExtra.E_UNEXPECTED) || hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
+		if (hr.equals(COMUtilsExtra.E_UNEXPECTED) || hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED) ||
+			hr.equals(COMUtilsExtra.E_NOINTERFACE)) {
 			return null;
 		}
 		COMUtils.checkRC(hr);
