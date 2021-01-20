@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.memview;
 
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 import com.google.common.collect.Range;
 
@@ -49,15 +48,16 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	private boolean trackModules = true;
 	private boolean trackSections = true;
 	private boolean trackBreakpoints = true;
-	private boolean trackBytes = false;
+	private boolean trackBytes = true;
 
+	List<MemoryBox> updateList = new ArrayList<>();
 	private final AsyncDebouncer<Void> updateLabelDebouncer =
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
 
 	public DebuggerMemviewTraceListener(MemviewProvider provider) {
 		this.provider = provider;
 
-		updateLabelDebouncer.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdateLabel()));
+		updateLabelDebouncer.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdate()));
 
 		listenFor(TraceThreadChangeType.ADDED, this::threadChanged);
 		listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);
@@ -104,7 +104,8 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		AddressRange rng = rng(defaultSpace, threadId, threadId);
 		MemoryBox box = new MemoryBox("Thread " + thread.getName(), MemviewBoxType.THREAD, rng,
 			thread.getLifespan());
-		provider.addBox(box);
+		updateList.add(box);
+		updateLabelDebouncer.contact(null);
 	}
 
 	private void regionChanged(TraceMemoryRegion region) {
@@ -113,7 +114,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		}
 		MemoryBox box = new MemoryBox("Region " + region.getName(), MemviewBoxType.VIRTUAL_ALLOC,
 			region.getRange(), region.getLifespan());
-		provider.addBox(box);
+		updateList.add(box);
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -122,10 +123,12 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			return;
 		}
 		AddressRange range = module.getRange();
-		AddressRange xrange = new AddressRangeImpl(range.getMinAddress(), range.getMaxAddress());
-		MemoryBox box = new MemoryBox("Module " + module.getName(), MemviewBoxType.MODULE, xrange,
+		if (range == null) {
+			return;
+		}
+		MemoryBox box = new MemoryBox("Module " + module.getName(), MemviewBoxType.MODULE, range,
 			module.getLifespan());
-		provider.addBox(box);
+		updateList.add(box);
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -135,7 +138,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		}
 		MemoryBox box = new MemoryBox("Section " + section.getName(), MemviewBoxType.IMAGE,
 			section.getRange(), section.getModule().getLifespan());
-		provider.addBox(box);
+		updateList.add(box);
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -145,7 +148,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		}
 		MemoryBox box = new MemoryBox("Breakpoint " + bpt.getName(), MemviewBoxType.BREAKPOINT,
 			bpt.getRange(), bpt.getLifespan());
-		provider.addBox(box);
+		updateList.add(box);
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -157,12 +160,12 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		Range<Long> newspan = Range.closedOpen(lifespan.lowerEndpoint(), lifespan.lowerEndpoint());
 		MemoryBox box = new MemoryBox("BytesChanged " + range.description(),
 			MemviewBoxType.WRITE_MEMORY, range.getRange(), newspan);
-		provider.addBox(box);
+		updateList.add(box);
 		updateLabelDebouncer.contact(null);
 	}
 
-	private void doUpdateLabel() {
-		//updateLocationLabel();
+	private void doUpdate() {
+		provider.addBoxes(updateList);
 	}
 
 	protected void addListener() {
