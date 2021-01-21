@@ -43,6 +43,11 @@ public interface DbgModelTargetModule extends //
 						: nameAttr.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
 				String sizestr =
 					size == null ? "1" : size.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
+				String shortnamestr = namestr;
+				int sep = shortnamestr.lastIndexOf('\\');
+				if (sep > 0 && sep < shortnamestr.length()) {
+					shortnamestr = shortnamestr.substring(sep + 1);
+				}
 				Long base = Long.parseUnsignedLong(basestr, 16);
 				Integer sz = Integer.parseInt(sizestr, 16);
 				Address min = space.getAddress(base);
@@ -52,8 +57,9 @@ public interface DbgModelTargetModule extends //
 
 				String oldval = (String) getCachedAttribute(DISPLAY_ATTRIBUTE_NAME);
 				map.put(MODULE_NAME_ATTRIBUTE_NAME, namestr);
-				map.put(DISPLAY_ATTRIBUTE_NAME, namestr);
-				setModified(map, !namestr.equals(oldval));
+				map.put(SHORT_DISPLAY_ATTRIBUTE_NAME, shortnamestr);
+				map.put(DISPLAY_ATTRIBUTE_NAME, shortnamestr);
+				setModified(map, !shortnamestr.equals(oldval));
 			}
 		});
 	}

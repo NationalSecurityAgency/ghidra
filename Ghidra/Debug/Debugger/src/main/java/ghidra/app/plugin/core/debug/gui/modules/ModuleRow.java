@@ -39,6 +39,19 @@ public class ModuleRow {
 		}
 	}
 
+	public String getShortName() {
+		String name = module.getName();
+		int sep = name.lastIndexOf('\\');
+		if (sep > 0 && sep < name.length()) {
+			name = name.substring(sep + 1);
+		}
+		sep = name.lastIndexOf('/');
+		if (sep > 0 && sep < name.length()) {
+			name = name.substring(sep + 1);
+		}
+		return name;
+	}
+
 	public String getName() {
 		return module.getName();
 	}

@@ -73,6 +73,11 @@ public class DbgModuleImpl implements DbgModule {
 	}
 
 	@Override
+	public String getModuleName() {
+		return info == null ? getName() : info.moduleName;
+	}
+
+	@Override
 	public Long getKnownBase() {
 		return info == null ? 0L : info.baseOffset;
 	}

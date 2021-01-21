@@ -26,6 +26,8 @@ public interface DbgModule {
 
 	String getImageName();
 
+	String getModuleName();
+
 	Long getKnownBase();
 
 	Integer getSize();

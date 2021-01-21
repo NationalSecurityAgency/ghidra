@@ -65,7 +65,8 @@ public class DbgModelTargetModuleImpl extends DbgModelTargetObjectImpl
 		//  sections.getName(), sections, //
 		), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getIndex(), //
-			MODULE_NAME_ATTRIBUTE_NAME, module.getName(), //
+			SHORT_DISPLAY_ATTRIBUTE_NAME, module.getName(), //
+			MODULE_NAME_ATTRIBUTE_NAME, module.getImageName(), //
 			"BaseAddress", space.getAddress(module.getKnownBase()), //
 			"ImageName", module.getImageName(), //
 			"TimeStamp", module.getTimeStamp(), //
