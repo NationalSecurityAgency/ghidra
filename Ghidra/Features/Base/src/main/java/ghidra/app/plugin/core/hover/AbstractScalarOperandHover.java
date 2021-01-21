@@ -131,14 +131,14 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 		if (localHTMLText.length() > 0) {
 			htmlText.append("<hr>");
 			htmlText.append("<table width=\"100%\">") //
-				.append(localHTMLText) //
-				.append("</table>");
+					.append(localHTMLText) //
+					.append("</table>");
 		}
 	}
 
 	private String appendCharDataTypeFormattedHTML(String prevCharVal, DataType charDt,
 			ByteMemBufferImpl charMemBuffer, StringBuilder htmlText) {
-		// appends a HTML table row to the stringbuilder with the scalar displayed as the
+		// appends a HTML table row to the string builder with the scalar displayed as the
 		// specified data type, only if its a value that hasn't already been added to the buffer.
 
 		if (charMemBuffer.getLength() >= charDt.getLength()) {
@@ -155,11 +155,11 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 				|| hasEncodingError(charVal);
 			if (!shouldSkip) {
 				htmlText.append("<tr><td>") // 
-					.append(charDt.getName()) //
-					.append(isArray ? "[]" : "");
+						.append(charDt.getName()) //
+						.append(isArray ? "[]" : "");
 				htmlText.append("</td><td>") //
-					.append(HTMLUtilities.friendlyEncodeHTML(charRep)) //
-					.append("</td></tr>");
+						.append(HTMLUtilities.friendlyEncodeHTML(charRep)) //
+						.append("</td></tr>");
 				prevCharVal = charVal;
 			}
 		}
@@ -213,8 +213,9 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 	}
 
 	private boolean hasEncodingError(String s) {
-		return s.codePoints().anyMatch(
-			codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
+		return s.codePoints()
+				.anyMatch(
+					codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 	}
 
 	private ByteMemBufferImpl getScalarOperandAsMemBuffer(Address addr, Scalar scalar,
