@@ -21,10 +21,8 @@
 /// \param ad is the Address of the instruction associated with the comment
 /// \param uq is used internally to sub-sort comments at the same address
 /// \param txt is the body of the comment
-Comment::Comment(uint4 tp,const Address &fad,
-			     const Address &ad,int4 uq,
-			     const string &txt) :
-  type(tp), funcaddr(fad), addr(ad), uniq(uq), text(txt)
+Comment::Comment(uint4 tp,const Address &fad,const Address &ad,int4 uq,const string &txt) :
+  type(tp), uniq(uq), funcaddr(fad), addr(ad), text(txt), emitted(false)
 {
 }
 
@@ -55,6 +53,7 @@ void Comment::saveXml(ostream &s) const
 void Comment::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
+  emitted = false;
   type = 0;
   type = Comment::encodeCommentType(el->getAttributeValue("type"));
   const List &list(el->getChildren());
@@ -344,6 +343,7 @@ void CommentSorter::setupFunctionList(uint4 tp,const Funcdata *fd,const CommentD
   while(iter != lastiter) {
     Comment *comm = *iter;
     if (findPosition(subsort, comm, fd)) {
+      comm->setEmitted(false);
       commmap[ subsort ] = comm;
       subsort.pos += 1;		// Advance the uniqueness counter
     }
