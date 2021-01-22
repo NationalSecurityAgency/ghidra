@@ -67,7 +67,8 @@ public class GdbInterruptCommand extends AbstractGdbCommand<Void> {
 
 	@Override
 	public Void complete(GdbPendingCommand<?> pending) {
-		pending.findSingleOf(GdbStoppedEvent.class);
+		// When using -exec-interrupt, ^done will come before *stopped
+		//pending.findSingleOf(GdbStoppedEvent.class);
 		return null;
 	}
 

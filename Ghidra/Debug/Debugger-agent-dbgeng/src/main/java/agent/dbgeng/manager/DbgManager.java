@@ -45,7 +45,9 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 		/** Equivalent to {@code stepi} in the CLI */
 		STEP_INSTRUCTION("step-instruction"),
 		/** Equivalent to {@code until} in the CLI */
-		UNTIL("until"),;
+		UNTIL("until"),
+		/** Equivalent to {@code ext} in the CLI */
+		EXTENDED("ext"),;
 
 		final String str;
 

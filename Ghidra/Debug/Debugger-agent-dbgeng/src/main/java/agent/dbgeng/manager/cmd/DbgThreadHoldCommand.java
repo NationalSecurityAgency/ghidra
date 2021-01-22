@@ -15,13 +15,27 @@
  */
 package agent.dbgeng.manager.cmd;
 
+import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
-public class DbgThreadSelectCommand extends AbstractDbgCommand<Void> {
+public class DbgThreadHoldCommand extends AbstractDbgCommand<Void> {
+
+	static final String FREEZE_ALL_THREADS_COMMAND = "~* f";
+	static final String FREEZE_CURRENT_THREAD_COMMAND = "~. f";
+	static final String UNFREEZE_CURRENT_THREAD_COMMAND = "~. u";
+	static final String UNFREEZE_ALL_THREADS_COMMAND = "~* u";
+
+	static final String SUSPEND_ALL_THREADS_COMMAND = "~* n";
+	static final String SUSPEND_CURRENT_THREAD_COMMAND = "~. n";
+	static final String RESUME_CURRENT_THREAD_COMMAND = "~. m";
+	static final String RESUME_ALL_THREADS_COMMAND = "~* m";
+
+	static final Boolean preferFreeze = true;
 
 	private DbgThread thread;
+	private Boolean set;
 
 	/**
 	 * Select the given thread and frame level
@@ -30,11 +44,12 @@ public class DbgThreadSelectCommand extends AbstractDbgCommand<Void> {
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param thread the desired thread
-	 * @param frameId the desired frame level
+	 * @param set hold or release
 	 */
-	public DbgThreadSelectCommand(DbgManagerImpl manager, DbgThread thread, Integer frameId) {
+	public DbgThreadHoldCommand(DbgManagerImpl manager, DbgThread thread, Boolean set) {
 		super(manager);
 		this.thread = thread;
+		this.set = set;
 	}
 
 	@Override
@@ -42,6 +57,17 @@ public class DbgThreadSelectCommand extends AbstractDbgCommand<Void> {
 		DebugThreadId id = thread.getId();
 		if (id != null) {
 			manager.getSystemObjects().setCurrentThreadId(id);
+			if (!manager.isKernelMode()) {
+				DebugControl control = manager.getControl();
+				if (preferFreeze) {
+					control.execute(
+						set ? FREEZE_CURRENT_THREAD_COMMAND : UNFREEZE_CURRENT_THREAD_COMMAND);
+				}
+				else {
+					control.execute(
+						set ? SUSPEND_CURRENT_THREAD_COMMAND : RESUME_CURRENT_THREAD_COMMAND);
+				}
+			}
 		}
 	}
 }

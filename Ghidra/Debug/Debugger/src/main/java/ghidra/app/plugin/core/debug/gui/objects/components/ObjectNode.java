@@ -44,6 +44,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	private String name;
 	private ObjectTree tree;
 	private Set<GTreeNode> oldChildren;
+	private boolean restructured = false;
 
 	public ObjectNode(ObjectTree tree, ObjectContainer parent, ObjectContainer container) {
 		this.tree = tree;
@@ -76,7 +77,6 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	}
 
 	@Override
-	//public List<GTreeNode> generateChildren() {
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 
 		if (!container.isImmutable() || isInProgress()) {
@@ -184,20 +184,61 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	}
 
 	public void markExpanded() {
-		container.subscribe();
+		//container.subscribe();
 	}
 
 	public void markCollapsed() {
-		container.unsubscribe();
+		//container.unsubscribe();
 	}
 
 	public void cleanUpOldChildren(List<GTreeNode> newChildren) {
 		if (oldChildren != null) {
-			oldChildren.removeAll(newChildren);
-			for (GTreeNode node : oldChildren) {
-				tree.cleanupOldNode((ObjectNode) node);
+			synchronized (oldChildren) {
+				oldChildren.removeAll(newChildren);
+				for (GTreeNode node : oldChildren) {
+					setRestructured(true);
+					tree.cleanupOldNode((ObjectNode) node);
+				}
 			}
 		}
 		oldChildren = new HashSet<>(newChildren);
 	}
+
+	public void callUpdate() {
+		// NB: this has to be in its own thread
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				List<GTreeNode> updateNodes = tree.update(container);
+				if (isRestructured()) {
+					setChildren(updateNodes);
+				}
+				// Unnecessary: fireNodeStructureChanged(ObjectNode.this);
+			}
+		});
+		thread.start();
+	}
+
+	public void callModified() {
+		// NB: this has to be in its own thread
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				List<GTreeNode> updateNodes = tree.update(container);
+				for (GTreeNode n : updateNodes) {
+					n.fireNodeChanged(ObjectNode.this, n);
+				}
+			}
+		});
+		thread.start();
+	}
+
+	public boolean isRestructured() {
+		return restructured;
+	}
+
+	public void setRestructured(boolean restructured) {
+		this.restructured = restructured;
+	}
+
 }

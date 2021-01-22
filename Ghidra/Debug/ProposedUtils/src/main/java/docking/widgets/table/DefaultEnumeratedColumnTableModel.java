@@ -251,6 +251,9 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 	@Override
 	public void delete(R row) {
 		int rowIndex = modelData.indexOf(row);
+		if (rowIndex == -1) {
+			return;
+		}
 		modelData.remove(rowIndex);
 		fireTableRowsDeleted(rowIndex, rowIndex);
 	}

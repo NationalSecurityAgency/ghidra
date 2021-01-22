@@ -17,6 +17,7 @@ package ghidra.dbg.target;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -193,6 +194,10 @@ public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTarg
 		 * line of source code after the line which generated the instruction about to be executed.
 		 */
 		UNTIL,
+		/**
+		 * Step until some condition is met.
+		 */
+		EXTENDED,
 	}
 
 	String SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "supported_step_kinds";
@@ -206,7 +211,11 @@ public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTarg
 	 * 
 	 * @return the set of supported multi-step operations
 	 */
-	@TargetAttributeType(name = SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	public default TargetStepKindSet getSupportedStepKinds() {
 		return getTypedAttributeNowByName(SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME,
 			TargetStepKindSet.class, TargetStepKindSet.of());
@@ -245,10 +254,20 @@ public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTarg
 	public CompletableFuture<Void> step(TargetStepKind kind);
 
 	/**
+	 * Step a target using the given arguments
+	 * 
+	 * @param args the map of arguments.
+	 * @return a future which completes when the command is completed
+	 */
+	public default CompletableFuture<Void> step(Map<String, ?> args) {
+		return step(TargetStepKind.INTO);
+	}
+
+	/**
 	 * Step a single instruction
 	 * 
 	 * <p>
-	 * This convenience is exactly equivalent to calling {@code step(TargetStepKind.INSTRUCTION)}
+	 * This convenience is exactly equivalent to calling {@code step(TargetStepKind.INTO)}
 	 * 
 	 * @see #step(TargetStepKind)
 	 * @see TargetStepKind#INTO

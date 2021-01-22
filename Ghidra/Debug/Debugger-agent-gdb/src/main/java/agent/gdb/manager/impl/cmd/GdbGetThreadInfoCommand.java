@@ -33,7 +33,7 @@ public class GdbGetThreadInfoCommand extends AbstractGdbCommandWithThreadId<GdbT
 
 	@Override
 	protected String encode(String threadPart) {
-		return "-thread-info" + threadPart;
+		return "-thread-info " + threadId; // Note the trailing space
 	}
 
 	@Override

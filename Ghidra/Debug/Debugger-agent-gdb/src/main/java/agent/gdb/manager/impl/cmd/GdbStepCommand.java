@@ -19,6 +19,7 @@ import agent.gdb.manager.GdbManager.ExecSuffix;
 import agent.gdb.manager.GdbThread;
 import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
 /**
  * Implementation of {@link GdbThread#stepInstruction()}
@@ -32,8 +33,26 @@ public class GdbStepCommand extends AbstractGdbCommandWithThreadId<Void> {
 	}
 
 	@Override
+	public Interpreter getInterpreter() {
+		if (manager.hasCli()) {
+			return Interpreter.CLI;
+		}
+		return Interpreter.MI2;
+	}
+
+	@Override
 	protected String encode(String threadPart) {
-		return "-exec-" + suffix + threadPart;
+		String mi2Cmd = "-exec-" + suffix + threadPart;
+		switch (getInterpreter()) {
+			case CLI:
+				// The significance is the Pty, not so much the actual command
+				// Using MI2 simplifies event processing (no console output parsing)
+				return "interpreter-exec mi2 \"" + mi2Cmd + "\"";
+			case MI2:
+				return mi2Cmd;
+			default:
+				throw new AssertionError();
+		}
 	}
 
 	@Override

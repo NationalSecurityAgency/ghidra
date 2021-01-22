@@ -96,9 +96,24 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		boolean doFire;
 		synchronized (this) {
 			doFire = !Objects.equals(this.focus, sel);
-			this.focus = sel;
+			if (doFire && focus != null) {
+				List<String> focusPath = focus.getPath();
+				List<String> selPath = sel.getPath();
+				for (int i = 0; i < focusPath.size(); i++) {
+					if (i >= selPath.size()) {
+						doFire = false;
+						break;
+					}
+					if (!focusPath.get(i).equals(selPath.get(i))) {
+						doFire = true;
+						break;
+					}
+				}
+				//doFire = !focusPath.containsAll(selPath);
+			}
 		}
 		if (doFire) {
+			this.focus = sel;
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus //
 			), "Focus changed");

@@ -98,6 +98,7 @@ enum StepKind {
 	SK_SKIP = 6;
 	SK_RETURN = 7;
 	SK_UNTIL = 8;
+	SK_EXTENDED = 9;
 }
 
 message StepKindsSet {

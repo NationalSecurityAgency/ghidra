@@ -32,18 +32,25 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Thread", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Thread",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetThread
 		extends DefaultTargetObject<TargetObject, GdbModelTargetThreadContainer> implements
 		TargetThread<GdbModelTargetThread>, TargetExecutionStateful<GdbModelTargetThread>,
 		TargetSteppable<GdbModelTargetThread>, GdbModelSelectableObject {
 	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, TargetStepKind.FINISH, TargetStepKind.LINE, TargetStepKind.OVER,
-		TargetStepKind.OVER_LINE, TargetStepKind.RETURN, TargetStepKind.UNTIL);
+		TargetStepKind.ADVANCE, //
+		TargetStepKind.FINISH, //
+		TargetStepKind.LINE, //
+		TargetStepKind.OVER, //
+		TargetStepKind.OVER_LINE, //
+		TargetStepKind.RETURN, //
+		TargetStepKind.UNTIL, //
+		TargetStepKind.EXTENDED);
 
 	protected static String indexThread(int threadId) {
 		return PathUtils.makeIndex(threadId);
@@ -75,16 +82,14 @@ public class GdbModelTargetThread
 
 		this.stack = new GdbModelTargetStack(this, inferior);
 
-		changeAttributes(List.of(),
-			List.of(
-				stack),
-			Map.of(
-				STATE_ATTRIBUTE_NAME, convertState(thread.getState()),
-				SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS,
-				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(),
-				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED,
-				stack.getName(), stack),
-			"Initialized");
+		changeAttributes(List.of(), List.of(stack), Map.of( //
+			STATE_ATTRIBUTE_NAME, convertState(thread.getState()), //
+			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
+			SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(), //
+			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
+			stack.getName(), stack //
+		), "Initialized");
 
 		updateInfo().exceptionally(ex -> {
 			Msg.error(this, "Could not initialize thread info");
@@ -110,11 +115,9 @@ public class GdbModelTargetThread
 
 	protected String computeDisplay() {
 		StringBuilder sb = new StringBuilder();
+		sb.append(shortDisplay);
 		if (info != null) {
-			sb.append(shortDisplay);
 			sb.append(" ");
-			//sb.append(info.getTargetId());
-			//sb.append(" ");
 			sb.append(info.getInferiorName());
 			sb.append(" ");
 			sb.append(info.getState());
@@ -127,22 +130,23 @@ public class GdbModelTargetThread
 				sb.append(" in ");
 				sb.append(frame.getFunc());
 			}
-			return sb.toString();
 		}
-		sb.append(thread.getId());
-		sb.append(" ");
-		sb.append(stack.inferior.inferior.getDescriptor());
-		sb.append(" ");
-		sb.append(stack.inferior.inferior.getExecutable());
-		GdbModelTargetStackFrame top = stack.framesByLevel.get(0);
-		if (top == null) {
-			return sb.toString();
+		else {
+			sb.append(" ");
+			String executableName = stack.inferior.inferior.getExecutable();
+			if (executableName != null) {
+				sb.append(executableName);
+			}
+			GdbModelTargetStackFrame top = stack.framesByLevel.get(0);
+			if (top == null) {
+				return sb.toString();
+			}
+			sb.append(" 0x");
+			sb.append(top.frame.getAddress().toString(16));
+			sb.append(" in ");
+			sb.append(top.frame.getFunction());
+			sb.append(" ()");
 		}
-		sb.append(" 0x");
-		sb.append(top.frame.getAddress().toString(16));
-		sb.append(" in ");
-		sb.append(top.frame.getFunction());
-		sb.append(" ()");
 		return sb.toString();
 	}
 
@@ -151,10 +155,15 @@ public class GdbModelTargetThread
 		sb.append("[");
 		sb.append(inferior.getId());
 		sb.append(".");
-		sb.append(info.getId());
-		if (info.getTid() != null) {
-			sb.append(":");
-			sb.append(info.getTid());
+		if (info == null) {
+			sb.append(thread.getId());
+		}
+		else {
+			sb.append(info.getId());
+			if (info.getTid() != null) {
+				sb.append(":");
+				sb.append(info.getTid());
+			}
 		}
 		sb.append("]");
 		return sb.toString();
@@ -205,6 +214,8 @@ public class GdbModelTargetThread
 				return ExecSuffix.RETURN;
 			case UNTIL:
 				return ExecSuffix.UNTIL;
+			case EXTENDED:
+				return ExecSuffix.EXTENDED;
 			default:
 				throw new AssertionError();
 		}

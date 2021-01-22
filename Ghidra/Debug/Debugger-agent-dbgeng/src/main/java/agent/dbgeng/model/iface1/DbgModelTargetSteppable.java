@@ -15,11 +15,12 @@
  */
 package agent.dbgeng.model.iface1;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.DbgThread;
-import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetSteppable;
 
 /**
@@ -48,6 +49,8 @@ public interface DbgModelTargetSteppable<T extends TargetSteppable<T>>
 				return ExecSuffix.RETURN;
 			case UNTIL:
 				return ExecSuffix.UNTIL;
+			case EXTENDED:
+				return ExecSuffix.EXTENDED;
 			default:
 				throw new AssertionError();
 		}
@@ -62,7 +65,21 @@ public interface DbgModelTargetSteppable<T extends TargetSteppable<T>>
 			case ADVANCE: // Why no exec-advance in dbgeng?
 				return thread.console("advance");
 			default:
+				if (this instanceof DbgModelTargetThread) {
+					DbgModelTargetThread targetThread = (DbgModelTargetThread) this;
+					return targetThread.getThread().step(convertToDbg(kind));
+				}
+				if (this instanceof DbgModelTargetProcess) {
+					DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) this;
+					return targetProcess.getProcess().step(convertToDbg(kind));
+				}
 				return thread.step(convertToDbg(kind));
 		}
 	}
+
+	default CompletableFuture<Void> step(Map<String, ?> args) {
+		DbgThread thread = getManager().getCurrentThread();
+		return thread.step(args);
+	}
+
 }

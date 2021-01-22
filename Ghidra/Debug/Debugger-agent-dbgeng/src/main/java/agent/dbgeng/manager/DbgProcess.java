@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.impl.DbgSectionImpl;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetAttachable;
@@ -181,6 +182,32 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 * @return a future that completes once the process is running
 	 */
 	CompletableFuture<Void> cont();
+
+	/**
+	 * Step the process
+	 * 
+	 * Note that the command can complete before the process has finished stepping. The command
+	 * completes as soon as the process is running. A separate stop event is emitted when the step is
+	 * completed.
+	 * 
+	 * @param suffix specifies how far to step, or on what conditions stepping ends.
+	 * 
+	 * @return a future that completes once the process is running
+	 */
+	CompletableFuture<Void> step(ExecSuffix suffix);
+
+	/**
+	 * Step the process
+	 * 
+	 * Note that the command can complete before the process has finished stepping. The command
+	 * completes as soon as the process is running. A separate stop event is emitted when the step is
+	 * completed.
+	 * 
+	 * @param args specifies how far to step, or on what conditions stepping ends.
+	 * 
+	 * @return a future that completes once the process is running
+	 */
+	CompletableFuture<Void> step(Map<String, ?> args);
 
 	/**
 	 * Evaluate an expression

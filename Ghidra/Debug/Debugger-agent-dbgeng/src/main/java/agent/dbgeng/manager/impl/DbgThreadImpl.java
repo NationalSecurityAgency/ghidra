@@ -220,7 +220,16 @@ public class DbgThreadImpl implements DbgThread {
 		return sequence(TypeSpec.VOID).then((seq) -> {
 			select().handle(seq::next);
 		}).then((seq) -> {
-			manager.execute(new DbgStepCommand(manager, suffix)).handle(seq::exit);
+			manager.execute(new DbgStepCommand(manager, id, suffix)).handle(seq::exit);
+		}).finish();
+	}
+
+	@Override
+	public CompletableFuture<Void> step(Map<String, ?> args) {
+		return sequence(TypeSpec.VOID).then((seq) -> {
+			select().handle(seq::next);
+		}).then((seq) -> {
+			manager.execute(new DbgStepCommand(manager, id, args)).handle(seq::exit);
 		}).finish();
 	}
 

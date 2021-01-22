@@ -38,7 +38,9 @@ public interface ObjectPane {
 
 	public List<? extends Object> update(ObjectContainer container);
 
-	public void signalDataChange(ObjectContainer container);
+	public void signalDataChanged(ObjectContainer container);
+
+	public void signalContentsChanged(ObjectContainer container);
 
 	public void signalUpdate(ObjectContainer container);
 

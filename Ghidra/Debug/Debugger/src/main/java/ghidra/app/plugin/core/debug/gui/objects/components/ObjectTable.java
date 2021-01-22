@@ -109,7 +109,14 @@ public class ObjectTable<R> implements ObjectPane {
 	}
 
 	@Override
-	public void signalDataChange(ObjectContainer oc) {
+	public void signalDataChanged(ObjectContainer oc) {
+		Swing.runIfSwingOrRunLater(() -> {
+			update(oc);
+		});
+	}
+
+	@Override
+	public void signalContentsChanged(ObjectContainer oc) {
 		Swing.runIfSwingOrRunLater(() -> {
 			update(oc);
 		});

@@ -27,11 +27,11 @@
     pull-down, and pop-up menus. Commands are enabled in two ways: (1) the object selected has a
     property that marks it as a logical target for that command, or (2) the object has an ancestor
     for which the command makes sense. The <A href=
-    "DebuggerObjectsPlugin.html#act_on_selection_only">Act on Selection Only</A> function
+    "DebuggerObjectsPlugin.html#act_on_selection_only">Enable By Selection Only</A> function
     determines whether both options are in play. For example, threads and inferiors/processes are
     both <B>resumable</B>, so the <A href="DebuggerObjectsPlugin.html#resume">Resume</A> action
     works on both. For many of our targets, processes are <B>interruptible</B> while threads are
-    not. Nevertheless, if <B>Act On Selection Only</B> is off, you can interrupt a thread because
+    not. Nevertheless, if <B>Enable By Selection Only</B> is off, you can interrupt a thread because
     it descends from an inferior or process. In almost every case, the selection directly or
     indirectly determines the set of valid or enabled actions.</P>
 
@@ -152,7 +152,7 @@
 
     <P>Step the current target to the next instruction in the current subroutine.</P>
 
-    <H3><A name="step_finish"></A><IMG alt="" src="images/stepout.png"> Step Finish</H3>
+    <H3><A name="step_finish"></A><IMG alt="" src="images/stepout.png"> Finish</H3>
 
     <P>Allow the current target to finish the current subroutine, pausing after.</P>
 
@@ -298,7 +298,7 @@
 
     <P>Asks the recorder to include or exclude the current object from the trace.</P>
 
-    <H3><A name="act_on_selection_only"></A>Act on Selection Only</H3>
+    <H3><A name="act_on_selection_only"></A>Enable By Selection Only</H3>
 
     <P>Toggles the scope of the other action menus. If "selection only" is chosen, the current
     object must have the property used to enable the particular action. For instance, the

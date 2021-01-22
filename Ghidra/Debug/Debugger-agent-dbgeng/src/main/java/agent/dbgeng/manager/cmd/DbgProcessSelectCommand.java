@@ -20,6 +20,7 @@ import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 public class DbgProcessSelectCommand extends AbstractDbgCommand<Void> {
+
 	private DbgProcess process;
 
 	/**

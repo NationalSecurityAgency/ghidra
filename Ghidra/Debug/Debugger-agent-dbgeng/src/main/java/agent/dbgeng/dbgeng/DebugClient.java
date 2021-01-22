@@ -41,7 +41,7 @@ public interface DebugClient extends DebugClientReentrant {
 		STEP_INTO(true, ExecutionState.RUNNING, 5), //
 		BREAK(false, ExecutionState.STOPPED, 0), //
 		NO_DEBUGGEE(true, null, 1), // shouldWait is true to handle process creation
-		STEP_BRANCH(true, null, 6), //
+		STEP_BRANCH(true, ExecutionState.RUNNING, 6), //
 		IGNORE_EVENT(false, null, 11), //
 		RESTART_REQUESTED(true, null, 12), //
 		REVERSE_GO(true, null, 0xff), //

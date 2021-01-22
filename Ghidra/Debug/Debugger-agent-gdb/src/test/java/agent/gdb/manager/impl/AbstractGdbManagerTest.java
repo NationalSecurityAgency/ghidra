@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.junit.*;
@@ -183,6 +184,30 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 		}
 	}
 
+	public static class LibraryWaiter extends CompletableFuture<String>
+			implements GdbEventsListenerAdapter {
+		protected final Predicate<String> predicate;
+
+		public LibraryWaiter(Predicate<String> predicate) {
+			this.predicate = predicate;
+		}
+
+		@Override
+		public void libraryLoaded(GdbInferior inferior, String name, GdbCause cause) {
+			if (predicate.test(name)) {
+				complete(name);
+			}
+		}
+	}
+
+	public void assertResponsive(GdbManager mgr) throws Throwable {
+		//Msg.debug(this, "Waiting for prompt");
+		//waitOn(mgr.waitForPrompt());
+		Msg.debug(this, "Testing echo test");
+		String out = waitOn(mgr.consoleCapture("echo test"));
+		assertEquals("test", out.trim());
+	}
+
 	@Test
 	public void testStartInterrupt() throws Throwable {
 		assumeFalse("I know no way to get this to pass with these conditions",
@@ -194,15 +219,8 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			 * and the time its signal handlers are installed. It seems waiting for libc to load
 			 * guarantees that GDB is ready to interrupt the process.
 			 */
-			CompletableFuture<Void> libcLoaded = new CompletableFuture<>();
-			mgr.addEventsListener(new GdbEventsListenerAdapter() {
-				@Override
-				public void libraryLoaded(GdbInferior inferior, String name, GdbCause cause) {
-					if (name.contains("libc")) {
-						libcLoaded.complete(null);
-					}
-				}
-			});
+			LibraryWaiter libcLoaded = new LibraryWaiter(name -> name.contains("libc"));
+			mgr.addEventsListener(libcLoaded);
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/sleep"));
 			waitOn(mgr.currentInferior().console("set args 3"));
@@ -211,13 +229,40 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			Thread.sleep(100); // TODO: Why?
 			Msg.debug(this, "Interrupting");
 			waitOn(mgr.interrupt());
-			Msg.debug(this, "Waiting for prompt");
-			waitOn(mgr.waitForPrompt());
-			Msg.debug(this, "Testing echo test");
-			String out = waitOn(mgr.consoleCapture("echo test"));
-			// Check that we have a responsive console, now.
-			// Otherwise, the interrupt failed
-			assertEquals("test", out.trim());
+			waitOn(mgr.waitForState(GdbState.STOPPED));
+			assertResponsive(mgr);
+		}
+	}
+
+	@Test
+	public void testStepSyscallInterrupt() throws Throwable {
+		assumeFalse("I know no way to get this to pass with these conditions",
+			this instanceof JoinedGdbManagerTest);
+		// Repeat the start-interrupt sequence, then verify we're preparing to step a syscall
+		try (GdbManager mgr = GdbManager.newInstance()) {
+			LibraryWaiter libcLoaded = new LibraryWaiter(name -> name.contains("libc"));
+			mgr.addEventsListener(libcLoaded);
+			waitOn(startManager(mgr));
+			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/sleep"));
+			waitOn(mgr.currentInferior().console("set args 5"));
+			waitOn(mgr.currentInferior().run());
+			waitOn(libcLoaded);
+			Thread.sleep(100); // TODO: Why?
+			Msg.debug(this, "Interrupting");
+			waitOn(mgr.interrupt());
+			Msg.debug(this, "Verifying at syscall");
+			String out = waitOn(mgr.consoleCapture("x/1i $pc-2"));
+			// TODO: This is x86-specific
+			assertTrue("Didn't stop at syscall", out.contains("syscall"));
+
+			// Now the real test
+			waitOn(mgr.currentInferior().step(ExecSuffix.STEP_INSTRUCTION));
+			CompletableFuture<Void> stopped = mgr.waitForState(GdbState.STOPPED);
+			Thread.sleep(100); // NB: Not exactly reliable, but verify we're waiting
+			assertFalse(stopped.isDone());
+			waitOn(mgr.interrupt());
+			waitOn(stopped);
+			assertResponsive(mgr);
 		}
 	}
 
@@ -229,7 +274,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			waitOn(mgr.currentInferior().setVar("$rax=", "0xdeadbeef")); // Corrupts it
 			String val = waitOn(mgr.currentInferior().evaluate("$rax+1"));
 			assertEquals(0xdeadbeef + 1, Integer.parseUnsignedInt(val));
@@ -270,7 +315,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			GdbRegisterSet regs = waitOn(thread.listRegisters());
 			Set<GdbRegister> toRead = new HashSet<>();
 			toRead.add(regs.get("eflags"));
@@ -306,7 +351,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			String str = waitOn(mgr.currentInferior().evaluate("(long)main"));
 			long addr = Long.parseLong(str);
 			ByteBuffer buf = ByteBuffer.allocate(1024);
@@ -336,7 +381,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			waitOn(thread.cont());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			assertEquals(0L, (long) mgr.currentInferior().getExitCode());
@@ -351,7 +396,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			waitOn(thread.step(ExecSuffix.NEXT_INSTRUCTION));
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			assertNull(mgr.currentInferior().getExitCode());
@@ -366,7 +411,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			waitOn(thread.select());
 		}
 	}
@@ -379,7 +424,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
-			waitOn(mgr.waitForPrompt());
+			//waitOn(mgr.waitForPrompt());
 			waitOn(mgr.insertBreakpoint("write"));
 			waitOn(mgr.currentInferior().cont());
 			waitOn(mgr.waitForState(GdbState.STOPPED));

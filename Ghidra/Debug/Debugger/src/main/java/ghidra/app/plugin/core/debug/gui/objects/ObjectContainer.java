@@ -212,11 +212,13 @@ public class ObjectContainer implements Comparable {
 	public void augmentElements(Collection<String> elementsRemoved,
 			Map<String, ? extends TargetObject> elementsAdded) {
 		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		boolean structureChanged = false;
 		synchronized (elementMap) {
 			for (ObjectContainer child : currentChildren) {
 				String name = child.getName();
 				if (elementsRemoved.contains(name) && !elementsAdded.containsKey(name)) {
 					elementMap.remove(name);
+					structureChanged = true;
 					continue;
 				}
 				result.add(child);
@@ -224,12 +226,21 @@ public class ObjectContainer implements Comparable {
 			for (String key : elementsAdded.keySet()) {
 				TargetObject val = elementsAdded.get(key);
 				ObjectContainer child =
-					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, true);
+					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, false);
+				if (!elementMap.containsKey(key)) {
+					structureChanged = true;
+				}
+				else {
+					provider.signalDataChanged(child);
+				}
 				elementMap.put(key, val);
 				result.add(child);
 			}
 		}
 		currentChildren = result;
+		if (structureChanged) {
+			provider.signalContentsChanged(this);
+		}
 		provider.fireObjectUpdated(this);
 		//provider.update(this);
 	}
@@ -237,11 +248,13 @@ public class ObjectContainer implements Comparable {
 	public void augmentAttributes(Collection<String> attributesRemoved,
 			Map<String, ?> attributesAdded) {
 		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		boolean structureChanged = false;
 		synchronized (attributeMap) {
 			for (ObjectContainer child : currentChildren) {
 				String name = child.getName();
 				if (attributesRemoved.contains(name) && !attributesAdded.containsKey(name)) {
 					attributeMap.remove(name);
+					structureChanged = true;
 					continue;
 				}
 				result.add(child);
@@ -250,16 +263,22 @@ public class ObjectContainer implements Comparable {
 				Object val = attributesAdded.get(key);
 				ObjectContainer child =
 					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, true);
-				if (child == null) {
-					Msg.error(this, "Null container for " + key);
-				}
-				else {
+				if (child != null) {
+					if (!attributeMap.containsKey(key)) {
+						structureChanged = true;
+					}
+					else {
+						provider.signalDataChanged(child);
+					}
 					attributeMap.put(key, val);
 					result.add(child);
 				}
 			}
 		}
 		currentChildren = result;
+		if (structureChanged) {
+			provider.signalContentsChanged(this);
+		}
 		provider.fireObjectUpdated(this);
 		//provider.update(this);
 	}

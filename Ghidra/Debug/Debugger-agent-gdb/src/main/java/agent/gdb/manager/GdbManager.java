@@ -55,7 +55,8 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 		STEP_INSTRUCTION("step-instruction"),
 		/** Equivalent to {@code until} in the CLI */
 		UNTIL("until"),
-		;
+		/** User-defined */
+		EXTENDED("until"),;
 
 		final String str;
 
@@ -332,8 +333,12 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * 
 	 * <p>
 	 * This waits for a prompt from GDB unless the last line printed is already a prompt. This is
-	 * generally not necessary following normal commands, but may be necessary after interrupting a
-	 * running inferior, or after waiting for an inferior to reach a stopped state.
+	 * generally not necessary following normal commands. Note that depending on circumstances and
+	 * GDB version, the MI console may produce a prompt before it produces all of the events
+	 * associated with an interrupt. If the <em>last</em> line is not currently a prompt, then the
+	 * returned future will not be complete. In other words, this is not a reliable way of verifying
+	 * GDB is waiting for a command. It's primary use is confirming that GDB has started
+	 * successfully and is awaiting its first command.
 	 * 
 	 * @return a future which completes when GDB presents a prompt
 	 */
@@ -393,7 +398,10 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * <p>
 	 * The output will not be printed to the CLI console. To ensure a certain thread or inferior has
 	 * focus for a console command, see {@link GdbThread#consoleCapture(String)} and
-	 * {@link GdbInferior#consoleCapture(String)}.
+	 * {@link GdbInferior#consoleCapture(String)}. The caller should take care that other commands
+	 * or events are not actively producing console output. If they are, those lines may be captured
+	 * though they are unrelated to the given command. Generally, this can be achieved by assuring
+	 * that GDB is in the {@link GdbState#STOPPED} state using {@link #waitForState(GdbState)}.
 	 * 
 	 * @param command the command to execute
 	 * @return a future that completes with the captured output when GDB has executed the command
@@ -404,14 +412,14 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * Interrupt the GDB session
 	 * 
 	 * <p>
-	 * This is equivalent to typing Ctrl-C in the CLI. This typically results in the target being
-	 * interrupted, either because GDB and the target have the same controlling TTY, or because GDB
-	 * will "forward" the interrupt to the target.
-	 * 
-	 * <p>
-	 * For whatever reason, interrupting the session does not always reliably interrupt the target.
-	 * The manager will send Ctrl-C to the pseudo-terminal up to three times, waiting about 10ms
-	 * between each, until GDB issues a stopped event and presents a new prompt.
+	 * The manager may employ a variety of mechanisms depending on the current configuration. If
+	 * multiple interpreters are available, it will issue an "interrupt" command on whichever
+	 * interpreter it believes is responsive -- usually the opposite of the one issuing the last
+	 * run, continue, step, etc. command. Otherwise, it sends Ctrl-C to GDB's TTY, which
+	 * unfortunately is notoriously unreliable. The manager will send Ctrl-C to the TTY up to three
+	 * times, waiting about 10ms between each, until GDB issues a stopped event and presents a new
+	 * prompt. If that fails, it is up to the user to find an alternative means to interrupt the
+	 * target, e.g., issuing {@code kill [pid]} from the a terminal on the target's host.
 	 * 
 	 * @return a future that completes when GDB has entered the stopped state
 	 */

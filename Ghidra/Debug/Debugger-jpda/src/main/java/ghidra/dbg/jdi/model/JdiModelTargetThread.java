@@ -57,8 +57,14 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		JdiModelSelectableObject {
 
 	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, TargetStepKind.FINISH, TargetStepKind.LINE, TargetStepKind.OVER,
-		TargetStepKind.OVER_LINE, TargetStepKind.RETURN, TargetStepKind.UNTIL);
+		TargetStepKind.ADVANCE, //
+		TargetStepKind.FINISH, //
+		TargetStepKind.LINE, //
+		TargetStepKind.OVER, //
+		TargetStepKind.OVER_LINE, //
+		TargetStepKind.RETURN, //
+		TargetStepKind.UNTIL, //
+		TargetStepKind.EXTENDED);
 
 	private EventRequestManager eventManager;
 	protected final ThreadReference thread;

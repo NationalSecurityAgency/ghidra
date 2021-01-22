@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.cmd.DbgThreadSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
@@ -46,8 +45,14 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetThread {
 
 	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, TargetStepKind.FINISH, TargetStepKind.LINE, TargetStepKind.OVER,
-		TargetStepKind.OVER_LINE, TargetStepKind.RETURN, TargetStepKind.UNTIL);
+		TargetStepKind.ADVANCE, //
+		TargetStepKind.FINISH, //
+		TargetStepKind.LINE, //
+		TargetStepKind.OVER, //
+		TargetStepKind.OVER_LINE, //
+		TargetStepKind.RETURN, //
+		TargetStepKind.UNTIL, //
+		TargetStepKind.EXTENDED);
 
 	protected static String indexThread(DebugThreadId debugThreadId) {
 		return PathUtils.makeIndex(debugThreadId.id);
@@ -117,31 +122,10 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		TargetExecutionState targetState = convertState(state);
 		String executionType = thread.getExecutingProcessorType().description;
 		changeAttributes(List.of(), List.of(), Map.of( //
+			STATE_ATTRIBUTE_NAME, targetState, //
 			TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType //
 		), reason.desc());
 		setExecutionState(targetState, reason.desc());
-	}
-
-	@Override
-	public ExecSuffix convertToDbg(TargetStepKind kind) {
-		switch (kind) {
-			case FINISH:
-				return ExecSuffix.FINISH;
-			case INTO:
-				return ExecSuffix.STEP_INSTRUCTION;
-			case LINE:
-				return ExecSuffix.STEP;
-			case OVER:
-				return ExecSuffix.NEXT_INSTRUCTION;
-			case OVER_LINE:
-				return ExecSuffix.NEXT;
-			case RETURN:
-				return ExecSuffix.RETURN;
-			case UNTIL:
-				return ExecSuffix.UNTIL;
-			default:
-				throw new AssertionError();
-		}
 	}
 
 	@Override
@@ -154,6 +138,11 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 			default:
 				return thread.step(convertToDbg(kind));
 		}
+	}
+
+	@Override
+	public CompletableFuture<Void> step(Map<String, ?> args) {
+		return thread.step(args);
 	}
 
 	@Override

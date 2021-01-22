@@ -16,6 +16,7 @@
 package agent.dbgeng.manager;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugThreadId;
@@ -105,6 +106,19 @@ public interface DbgThread
 	 * @return a future that completes once the thread is running
 	 */
 	CompletableFuture<Void> step(ExecSuffix suffix);
+
+	/**
+	 * Step the thread
+	 * 
+	 * Note that the command can complete before the thread has finished stepping. The command
+	 * completes as soon as the thread is running. A separate stop event is emitted when the step is
+	 * completed.
+	 * 
+	 * @param args specifies how far to step, or on what conditions stepping ends.
+	 * 
+	 * @return a future that completes once the thread is running
+	 */
+	CompletableFuture<Void> step(Map<String, ?> args);
 
 	/**
 	 * Detach from the entire process

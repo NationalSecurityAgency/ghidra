@@ -28,6 +28,7 @@ import com.google.common.collect.RangeSet;
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugClient.DebugAttachFlags;
 import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.cmd.*;
 import ghidra.async.TypeSpec;
 import ghidra.comm.util.BitmaskSet;
@@ -301,6 +302,24 @@ public class DbgProcessImpl implements DbgProcess {
 			select().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgContinueCommand(manager)).handle(seq::exit);
+		}).finish();
+	}
+
+	@Override
+	public CompletableFuture<Void> step(ExecSuffix suffix) {
+		return sequence(TypeSpec.VOID).then((seq) -> {
+			select().handle(seq::next);
+		}).then((seq) -> {
+			manager.execute(new DbgStepCommand(manager, null, suffix)).handle(seq::exit);
+		}).finish();
+	}
+
+	@Override
+	public CompletableFuture<Void> step(Map<String, ?> args) {
+		return sequence(TypeSpec.VOID).then((seq) -> {
+			select().handle(seq::next);
+		}).then((seq) -> {
+			manager.execute(new DbgStepCommand(manager, null, args)).handle(seq::exit);
 		}).finish();
 	}
 

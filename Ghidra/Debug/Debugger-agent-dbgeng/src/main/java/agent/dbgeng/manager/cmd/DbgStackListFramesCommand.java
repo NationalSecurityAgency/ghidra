@@ -63,6 +63,6 @@ public class DbgStackListFramesCommand extends AbstractDbgCommand<List<DbgStackF
 				tf.Params[3].longValue());
 			result.add(frame);
 		}
-		so.setCurrentThreadId(previous);
+		//so.setCurrentThreadId(previous);
 	}
 }

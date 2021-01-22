@@ -33,11 +33,12 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Inferior", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Inferior",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer> implements //
 		TargetProcess<GdbModelTargetInferior>,  //
@@ -92,20 +93,19 @@ public class GdbModelTargetInferior
 		this.registers = new GdbModelTargetRegisterContainer(this);
 		this.threads = new GdbModelTargetThreadContainer(this);
 
-		changeAttributes(List.of(),
-			List.of(
-				environment,
-				memory,
-				modules,
-				registers,
-				threads),
-			Map.of(
-				STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE,
-				DISPLAY_ATTRIBUTE_NAME, updateDisplay(),
-				TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS,
-				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED,
-				SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS,
-				SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, GdbModelTargetThread.SUPPORTED_KINDS),
+		changeAttributes(List.of(), //
+			List.of( //
+				environment, //
+				memory, //
+				modules, //
+				registers, //
+				threads), //
+			Map.of(STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE, //
+				DISPLAY_ATTRIBUTE_NAME, updateDisplay(), //
+				TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
+				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
+				SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
+				SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, GdbModelTargetThread.SUPPORTED_KINDS), //
 			"Initialized");
 	}
 
@@ -160,6 +160,8 @@ public class GdbModelTargetInferior
 				return ExecSuffix.RETURN;
 			case UNTIL:
 				return ExecSuffix.UNTIL;
+			case EXTENDED:
+				return ExecSuffix.EXTENDED;
 			default:
 				throw new AssertionError();
 		}

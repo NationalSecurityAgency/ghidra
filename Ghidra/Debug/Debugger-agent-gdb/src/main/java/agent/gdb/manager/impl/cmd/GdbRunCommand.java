@@ -19,6 +19,7 @@ import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbThread;
 import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
 /**
  * Implementation of {@link GdbInferior#run()}
@@ -30,8 +31,25 @@ public class GdbRunCommand extends AbstractGdbCommand<GdbThread> {
 	}
 
 	@Override
+	public Interpreter getInterpreter() {
+		if (manager.hasCli()) {
+			return Interpreter.CLI;
+		}
+		return Interpreter.MI2;
+	}
+
+	@Override
 	public String encode() {
-		return "-exec-run";
+		switch (getInterpreter()) {
+			case CLI:
+				// The significance is the Pty, not so much the actual command
+				// Using MI2 simplifies event processing (no console output parsing)
+				return "interpreter-exec mi2 \"-exec-run\"";
+			case MI2:
+				return "-exec-run";
+			default:
+				throw new AssertionError();
+		}
 	}
 
 	@Override
@@ -40,7 +58,7 @@ public class GdbRunCommand extends AbstractGdbCommand<GdbThread> {
 			pending.claim(evt);
 			return pending.hasAny(GdbRunningEvent.class);
 		}
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
+		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
 			pending.claim(evt);
 			return true; // Not the expected Completed event
 		}

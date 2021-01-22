@@ -19,7 +19,6 @@ import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
-import ghidra.util.Msg;
 
 /**
  * Implementation of {@link GdbInferior#cont()}
@@ -30,10 +29,20 @@ public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void> {
 	}
 
 	@Override
+	public Interpreter getInterpreter() {
+		if (manager.hasCli()) {
+			return Interpreter.CLI;
+		}
+		return Interpreter.MI2;
+	}
+
+	@Override
 	public String encode(String threadPart) {
 		switch (getInterpreter()) {
 			case CLI:
-				return "continue";
+				// The significance is the Pty, not so much the actual command
+				// Using MI2 simplifies event processing (no console output parsing)
+				return "interpreter-exec mi2 \"-exec-continue" + threadPart + "\"";
 			case MI2:
 				return "-exec-continue" + threadPart;
 			default:
@@ -43,48 +52,20 @@ public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			if (!pending.hasAny(AbstractGdbCompletedCommandEvent.class)) {
-				pending.claim(evt);
-			}
-			return evt instanceof GdbCommandErrorEvent || pending.hasAny(GdbRunningEvent.class);
+		if (evt instanceof GdbCommandRunningEvent) {
+			pending.claim(evt);
+			return pending.hasAny(GdbRunningEvent.class);
+		}
+		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
+			pending.claim(evt);
+			return true; // Not the expected Completed event 
 		}
 		else if (evt instanceof GdbRunningEvent) {
 			// Event happens no matter which interpreter received the command
 			pending.claim(evt);
-			return pending.hasAny(AbstractGdbCompletedCommandEvent.class);
-		}
-		else if (evt instanceof GdbConsoleOutputEvent) {
-			Msg.debug(this, "EXAMINING: " + evt);
-			if (pending.hasAny(GdbCommandRunningEvent.class)) {
-				// Only attempt to process/claim the first line after our command
-				return false;
-			}
-			GdbConsoleOutputEvent out = (GdbConsoleOutputEvent) evt;
-			if (out.getOutput().trim().equals("continue")) {
-				// Echoed back my command
-				return false;
-			}
-			pending.claim(evt);
-			if (out.getOutput().trim().startsWith("Continuing") &&
-				!pending.hasAny(GdbCommandRunningEvent.class)) {
-				pending.claim(new GdbCommandRunningEvent());
-				return pending.hasAny(GdbRunningEvent.class);
-			}
-			else {
-				pending.claim(GdbCommandErrorEvent.fromMessage(out.getOutput()));
-				return true;
-			}
+			return pending.hasAny(GdbCommandRunningEvent.class);
 		}
 		return false;
-	}
-
-	@Override
-	public Interpreter getInterpreter() {
-		if (manager.hasCli()) {
-			return Interpreter.CLI;
-		}
-		return Interpreter.MI2;
 	}
 
 	@Override

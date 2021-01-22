@@ -180,15 +180,19 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> step(TargetStepKind kind) {
-		DbgThread thread = getManager().getCurrentThread();
 		switch (kind) {
 			case SKIP:
 				throw new UnsupportedOperationException(kind.name());
 			case ADVANCE: // Why no exec-advance in dbgeng?
-				return thread.console("advance");
+				throw new UnsupportedOperationException(kind.name());
 			default:
-				return thread.step(convertToDbg(kind));
+				return process.step(convertToDbg(kind));
 		}
+	}
+
+	@Override
+	public CompletableFuture<Void> step(Map<String, ?> args) {
+		return process.step(args);
 	}
 
 	@Override

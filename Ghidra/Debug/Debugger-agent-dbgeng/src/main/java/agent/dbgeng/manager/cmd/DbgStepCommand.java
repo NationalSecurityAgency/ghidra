@@ -15,23 +15,38 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import agent.dbgeng.dbgeng.DebugClient.DebugStatus;
+import java.util.Map;
+
 import agent.dbgeng.dbgeng.DebugControl;
+import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgEvent;
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.evt.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgThreadImpl;
+import ghidra.util.Msg;
 
 /**
  * Implementation of {@link DbgThread#stepInstruction()}
  */
 public class DbgStepCommand extends AbstractDbgCommand<Void> {
-	protected final ExecSuffix suffix;
 
-	public DbgStepCommand(DbgManagerImpl manager, ExecSuffix suffix) {
+	private DebugThreadId id;
+	protected final ExecSuffix suffix;
+	private String lastCommand = "tct";
+
+	public DbgStepCommand(DbgManagerImpl manager, DebugThreadId id, ExecSuffix suffix) {
 		super(manager);
+		this.id = id;
 		this.suffix = suffix;
+	}
+
+	public DbgStepCommand(DbgManagerImpl manager, DebugThreadId id, Map<String, ?> args) {
+		super(manager);
+		this.id = id;
+		this.suffix = ExecSuffix.EXTENDED;
+		this.lastCommand = (String) args.get("Command");
 	}
 
 	@Override
@@ -48,17 +63,53 @@ public class DbgStepCommand extends AbstractDbgCommand<Void> {
 		return false;
 	}
 
+	// NB:  Would really prefer to do this through the API, but the API does
+	//  not appear to support freeze/unfreeze and suspend/resume thread.  These appear
+	//  to be applied via the kernel32 API.  Worse, the Windbg/KD API appears to lack
+	//  commands to query the freeze/suspend count for a given thread.  Rather than 
+	//  wrestle with the underlying API, we're going to just use the WIndbg commands.
+	//  Note that the thread-restricted form is used iff we're stepping a thread other
+	//  then the event thread.
 	@Override
 	public void invoke() {
+		String cmd = "";
+		String prefix = id == null ? "" : "~" + id.id + " ";
 		DebugControl control = manager.getControl();
 		if (suffix.equals(ExecSuffix.STEP_INSTRUCTION)) {
-			control.setExecutionStatus(DebugStatus.STEP_INTO);
+			cmd = "t";
+			//control.setExecutionStatus(DebugStatus.STEP_INTO);
 		}
 		else if (suffix.equals(ExecSuffix.NEXT_INSTRUCTION)) {
-			control.setExecutionStatus(DebugStatus.STEP_OVER);
+			cmd = "p";
+			//control.setExecutionStatus(DebugStatus.STEP_OVER);
 		}
 		else if (suffix.equals(ExecSuffix.FINISH)) {
-			control.setExecutionStatus(DebugStatus.STEP_BRANCH);
+			cmd = "gu";
+			//control.setExecutionStatus(DebugStatus.STEP_BRANCH);
 		}
+		else if (suffix.equals(ExecSuffix.EXTENDED)) {
+			cmd = getLastCommand();
+		}
+		DbgThreadImpl eventThread = manager.getEventThread();
+		if (eventThread != null && eventThread.getId().equals(id)) {
+			control.execute(cmd);
+		}
+		else {
+			if (manager.isKernelMode()) {
+				Msg.info(this, "Thread-specific stepping ignored in kernel-mode");
+				control.execute(cmd);
+			}
+			else {
+				control.execute(prefix + cmd);
+			}
+		}
+	}
+
+	public String getLastCommand() {
+		return lastCommand;
+	}
+
+	public void setLastCommand(String lastCommand) {
+		this.lastCommand = lastCommand;
 	}
 }

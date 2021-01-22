@@ -26,11 +26,12 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "RegisterValue", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "RegisterValue",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrameRegister
 		extends DefaultTargetObject<TargetObject, GdbModelTargetStackFrameRegisterContainer> {
 
@@ -57,7 +58,8 @@ public class GdbModelTargetStackFrameRegister
 
 		changeAttributes(List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
+			MODIFIED_ATTRIBUTE_NAME, false //
 		), "Initialized");
 	}
 
@@ -72,11 +74,11 @@ public class GdbModelTargetStackFrameRegister
 		boolean modified = (bigNewVal.longValue() != 0 && value.equals(oldval));
 
 		String newval = getName() + " : " + value;
-		Delta<?, ?> delta = changeAttributes(List.of(), Map.of(
-			VALUE_ATTRIBUTE_NAME, value,
-			DISPLAY_ATTRIBUTE_NAME, newval,
-			MODIFIED_ATTRIBUTE_NAME, modified),
-			"Value Updated");
+		Delta<?, ?> delta = changeAttributes(List.of(), Map.of( //
+			VALUE_ATTRIBUTE_NAME, value, //
+			DISPLAY_ATTRIBUTE_NAME, newval, //
+			MODIFIED_ATTRIBUTE_NAME, modified //
+		), "Value Updated");
 		if (delta.added.containsKey(DISPLAY_ATTRIBUTE_NAME)) {
 			listeners.fire.displayChanged(this, newval);
 		}

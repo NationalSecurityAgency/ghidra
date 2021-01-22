@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.gadp.util;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -159,6 +159,8 @@ public enum GadpValueUtils {
 				return TargetStepKind.SKIP;
 			case SK_UNTIL:
 				return TargetStepKind.UNTIL;
+			case SK_EXTENDED:
+				return TargetStepKind.EXTENDED;
 			default:
 				throw new IllegalArgumentException();
 		}
@@ -184,6 +186,8 @@ public enum GadpValueUtils {
 				return Gadp.StepKind.SK_SKIP;
 			case UNTIL:
 				return Gadp.StepKind.SK_UNTIL;
+			case EXTENDED:
+				return Gadp.StepKind.SK_EXTENDED;
 			default:
 				throw new IllegalArgumentException();
 		}

@@ -180,6 +180,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	)
 	Color linkForegroundColor = Color.GREEN;
 
+	@AutoOptionDefined( //
+			name = "Default Extended Step", //
+			description = "The default string for the extended step command" //
+	//help = @HelpInfo(anchor = "colors") //
+	)
+	String extendedStep = "";
+
 	private static final Icon ENABLED_ICON = ResourceManager.loadImage("images/enabled.png");
 	private static final Icon DISABLED_ICON = ResourceManager.loadImage("images/disabled.png");
 
@@ -432,7 +439,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	public void traceOpened(Trace trace) {
-		refresh();
+		//refresh();
 		repeatLastSet.run();
 	}
 
@@ -660,6 +667,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		TargetObject targetObject = container.getTargetObject();
 		if (targetObject != null) {
 			String key = targetObject.getJoinedPath(PATH_JOIN_CHAR);
+			container.subscribe();
 			targetMap.put(key, container);
 			refSet.add(targetObject);
 			if (targetObject instanceof TargetInterpreter) {
@@ -752,6 +760,18 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			targetObject.removeListener(this);
 		}
 		super.closeComponent();
+	}
+
+	public void signalDataChanged(ObjectContainer container) {
+		if (pane != null) {
+			pane.signalDataChanged(container);
+		}
+	}
+
+	public void signalContentsChanged(ObjectContainer container) {
+		if (pane != null) {
+			pane.signalContentsChanged(container);
+		}
 	}
 
 	@Override
@@ -875,8 +895,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		
 		groupTargetIndex++;
 
-		actionToggleSelectionOnly = new ToggleActionBuilder("Act on Selection Only", plugin.getName())
-			.menuPath("Maintenance","Act on &Selection Only")
+		actionToggleSelectionOnly = new ToggleActionBuilder("Enable By Selection Only", plugin.getName())
+			.menuPath("Maintenance","Enable By &Selection Only")
 			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
 			.helpLocation(new HelpLocation(plugin.getName(), "act_on_selection_only"))
 			.onAction(ctx -> performToggleSelectionOnly(ctx))
@@ -1094,25 +1114,44 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		
 		groupTargetIndex++;
 
-		new ActionBuilder("Step Finish", plugin.getName())
-			.keyBinding("F12")
-			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-			.toolBarIcon(AbstractStepFinishAction.ICON)
-			.popupMenuPath("&Step Finish")
-			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
-			.popupMenuIcon(AbstractStepFinishAction.ICON)
-			.helpLocation(AbstractStepFinishAction.help(plugin))
-			//.withContext(ObjectActionContext.class)
-			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
-			.popupWhen(ctx -> 
-				isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
-			.onAction(ctx -> performStepFinish(ctx))
-			.enabled(false)
-			.buildAndInstallLocal(this);
-		
-		groupTargetIndex++;
-		
+		new ActionBuilder("Finish", plugin.getName())
+		.keyBinding("F12")
+		.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+		.toolBarIcon(AbstractStepFinishAction.ICON)
+		.popupMenuPath("&Finish")
+		.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+		.popupMenuIcon(AbstractStepFinishAction.ICON)
+		.helpLocation(AbstractStepFinishAction.help(plugin))
+		//.withContext(ObjectActionContext.class)
+		.enabledWhen(ctx -> 
+			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+		.popupWhen(ctx -> 
+			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+		.onAction(ctx -> performStepFinish(ctx))
+		.enabled(false)
+		.buildAndInstallLocal(this);
+	
+	groupTargetIndex++;
+	
+	new ActionBuilder("Step Last", plugin.getName())
+		.keyBinding("ALT F8")
+		.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+		.toolBarIcon(AbstractStepFinishAction.ICON)
+		.popupMenuPath("&Step Last")
+		.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
+		.popupMenuIcon(AbstractStepFinishAction.ICON)
+		.helpLocation(AbstractStepFinishAction.help(plugin))
+		//.withContext(ObjectActionContext.class)
+		.enabledWhen(ctx -> 
+			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+		.popupWhen(ctx -> 
+			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+		.onAction(ctx -> performStepLast(ctx))
+		.enabled(false)
+		.buildAndInstallLocal(this);
+	
+	groupTargetIndex++;
+
 		actionAddBreakpoint = new ActionBuilder("Add Breakpoint", plugin.getName())
 			.keyBinding("F3")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
@@ -1475,6 +1514,26 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		}
 	}
 
+	public void performStepLast(ActionContext context) {
+		TargetObject obj = getObjectFromContext(context);
+		if (!isLocalOnly()) {
+			DebugModelConventions.findSuitable(TargetSteppable.class, obj).thenAccept(steppable -> {
+				steppable.step(TargetStepKind.EXTENDED);
+			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
+		}
+		else {
+			TargetSteppable<?> steppable = (TargetSteppable<?>) obj;
+			if (extendedStep.equals("")) {
+				steppable.step(TargetStepKind.EXTENDED);
+			}
+			else {
+				Map<String, String> args = new HashMap<String, String>();
+				args.put("Command", extendedStep);
+				steppable.step(args);
+			}
+		}
+	}
+
 	public void performSetBreakpoint(ActionContext context) {
 		TargetObject obj = getObjectFromContext(context);
 		if (!isLocalOnly()) {
@@ -1553,7 +1612,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public void displayChanged(TargetObject object, String display) {
 		//System.err.println("displayChanged: " + display);
 		if (ObjectContainer.visibleByDefault(object.getName())) {
-			pane.signalDataChange(getContainerByPath(object.getPath()));
+			pane.signalDataChanged(getContainerByPath(object.getPath()));
 		}
 	}
 
@@ -1579,7 +1638,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 
 	@Override
 	public void memoryUpdated(TargetMemory<?> memory, Address address, byte[] data) {
-		System.err.println("memoryUpdated");
+		//System.err.println("memoryUpdated");
 	}
 
 	@Override

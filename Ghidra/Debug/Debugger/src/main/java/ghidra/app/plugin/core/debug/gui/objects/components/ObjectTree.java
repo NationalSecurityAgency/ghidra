@@ -26,6 +26,7 @@ import javax.swing.JComponent;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -92,12 +93,32 @@ public class ObjectTree implements ObjectPane {
 					}
 				}
 				provider.getTool().contextChanged(provider);
-				if (e.getEventOrigin() == EventOrigin.INTERNAL_GENERATED) {
-					restoreTreeStateManager.updateLater();
+				if (e.getEventOrigin() != EventOrigin.INTERNAL_GENERATED) {
+					currentExpandedPaths = tree.getExpandedPaths();
+					if (e.getEventOrigin() == EventOrigin.USER_GENERATED) {
+						currentSelectionPaths = tree.getSelectionPaths();
+						currentViewPosition = tree.getViewPosition();
+					}
+					else {
+						TreePath[] selectionPaths = tree.getSelectionPaths();
+						if (currentSelectionPaths != null && currentSelectionPaths.length > 0) {
+							if (selectionPaths != null && selectionPaths.length > 0) {
+								TreePath currentPath = currentSelectionPaths[0];
+								TreePath selectedPath = selectionPaths[0];
+								// NB. isDescendant == has a descendent
+								if (currentPath.isDescendant(selectedPath)) {
+									currentSelectionPaths = selectionPaths;
+									currentViewPosition = tree.getViewPosition();
+								}
+								else if (!selectedPath.isDescendant(currentPath)) {
+									currentSelectionPaths = selectionPaths;
+									currentViewPosition = tree.getViewPosition();
+								}
+							}
+						}
+					}
 				}
-				else {
-					currentSelectionPaths = tree.getSelectionPaths();
-				}
+				restoreTreeStateManager.updateLater();
 			}
 		});
 		tree.setCellRenderer(new ObjectTreeCellRenderer(root.getProvider()));
@@ -146,6 +167,7 @@ public class ObjectTree implements ObjectPane {
 			}
 		});
 
+		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		tree.setSelectedNode(root);
 	}
 
@@ -209,10 +231,19 @@ public class ObjectTree implements ObjectPane {
 	}
 
 	@Override
-	public void signalDataChange(ObjectContainer container) {
+	public void signalContentsChanged(ObjectContainer container) {
+		ObjectNode node = nodeMap.get(path(container));
+		if (node != null) {
+			node.callUpdate();
+		}
+	}
+
+	@Override
+	public void signalDataChanged(ObjectContainer container) {
 		Swing.runIfSwingOrRunLater(() -> {
 			ObjectNode node = nodeMap.get(path(container));
 			if (node != null) {
+				node.setContainer(this, container.getParent(), container);
 				node.fireNodeChanged(node.getParent(), node);
 			}
 		});
@@ -288,13 +319,14 @@ public class ObjectTree implements ObjectPane {
 	public List<GTreeNode> update(ObjectContainer container) {
 		ObjectNode node = nodeMap.get(path(container));
 		if (node == null) {
-			System.err.println("Missing node: " + path(container));
+			Msg.warn(this, "Missing node: " + path(container));
 			return new ArrayList<>();
 		}
 
 		Set<ObjectContainer> currentChildren = container.getCurrentChildren();
 		List<GTreeNode> childList = new ArrayList<GTreeNode>();
 
+		node.setRestructured(false);
 		for (ObjectContainer c : currentChildren) {
 			ObjectNode nc;
 			String path = path(c);
@@ -305,6 +337,7 @@ public class ObjectTree implements ObjectPane {
 					nc.setContainer(this, container, c);
 				}
 				else {
+					node.setRestructured(true);
 					nc = new ObjectNode(this, container, c);
 				}
 				childList.add(nc);
@@ -326,10 +359,6 @@ public class ObjectTree implements ObjectPane {
 	public void setFocus(TargetFocusScope<?> object, TargetObjectRef focused) {
 		Swing.runIfSwingOrRunLater(() -> {
 			List<String> path = focused.getPath();
-			ObjectContainer container = getProvider().getContainerByPath(path);
-			if (container != null) {
-				container.subscribe();
-			}
 			tree.setSelectedNodeByNamePath(addRootNameToPath(path));
 		});
 	}
@@ -398,5 +427,4 @@ public class ObjectTree implements ObjectPane {
 			}
 		}
 	}
-
 }
