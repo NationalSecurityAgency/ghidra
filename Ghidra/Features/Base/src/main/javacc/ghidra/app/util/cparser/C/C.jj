@@ -939,7 +939,7 @@ TOKEN :
 	|
 	<FAR : "far">
 	| 
-	<HUGE : "huge"> 
+	<HUGE : "huge">
 	|
 	<FOR : "for"> 
 	|
@@ -960,7 +960,7 @@ TOKEN :
 
 TOKEN :
 {
-	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
+	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> | "::")*> 
 	|
 	<#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
 	|
@@ -2268,7 +2268,7 @@ Declaration DirectAbstractDeclarator(Declaration dt) : {
 {
 	(
 		LOOKAHEAD(2)
-		"(" [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
+		"(" [TypeQualifier(dt)] [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
 		|
 		"[" [ ConstantExpression() ] "]" 
 		|

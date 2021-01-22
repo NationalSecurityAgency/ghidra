@@ -25,7 +25,6 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.DataType.AddressModel;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;

@@ -170,7 +170,7 @@ public class Declaration {
 		if (dt == null) {
 			return false;
 		} else {
-			return dt.getAddressModel() == DataType.AddressModel.near;
+			return dt.getAddressModel().equals(AddressModel.near);
 		}
 	}
 
@@ -181,9 +181,9 @@ public class Declaration {
 		if (dt == null) {
 			return;
 		} else if (isNear) {
-			dt.setAddressModel(DataType.AddressModel.near);
+			dt.setAddressModel(AddressModel.near);
 		} else {
-			dt.setAddressModel(null);
+			dt.setAddressModel(AddressModel.unknown);
 		}
 	}
 
@@ -194,7 +194,7 @@ public class Declaration {
 		if (dt == null) {
 			return false;
 		} else {
-			return dt.getAddressModel() == DataType.AddressModel.far;
+			return dt.getAddressModel().equals(AddressModel.far);
 		}
 	}
 
@@ -205,7 +205,7 @@ public class Declaration {
 		if (dt == null) {
 			return;
 		} else if (isFar) {
-			dt.setAddressModel(DataType.AddressModel.far);
+			dt.setAddressModel(AddressModel.far);
 		} else {
 			dt.setAddressModel(null);
 		}
@@ -218,7 +218,7 @@ public class Declaration {
 		if (dt == null) {
 			return false;
 		} else {
-			return dt.getAddressModel() == DataType.AddressModel.huge;
+			return dt.getAddressModel().equals(AddressModel.huge);
 		}
 	}
 
@@ -229,9 +229,9 @@ public class Declaration {
 		if (dt == null) {
 			return;
 		} else if (isHuge) {
-			dt.setAddressModel(DataType.AddressModel.huge);
+			dt.setAddressModel(AddressModel.huge);
 		} else {
-			dt.setAddressModel(null);
+			dt.setAddressModel(AddressModel.unknown);
 		}
 	}
 }
