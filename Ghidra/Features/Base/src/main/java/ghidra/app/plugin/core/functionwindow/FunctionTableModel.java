@@ -31,6 +31,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 
+    static final String OPTION_DISPLAY_NAMESPACE = "Display Namespace";
+    
 	static final int LOCATION_COL_WIDTH = 50;
 
 	static final int NAME_COL = 0;
@@ -172,7 +174,11 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 			if (function == null) {
 				return null;
 			}
-			return function.getName();
+			
+			var opt = ((PluginTool)sp).getOptions("Functions Window");
+			boolean displayNamespace = opt.getBoolean(OPTION_DISPLAY_NAMESPACE, false);
+			
+			return function.getName(displayNamespace);
 		}
 
 	}

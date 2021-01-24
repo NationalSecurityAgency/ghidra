@@ -22,6 +22,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
+import ghidra.framework.options.*;
 import docking.ActionContext;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -29,15 +30,18 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.table.*;
 import resources.ResourceManager;
 
 /**
  * Provider that displays all functions in the selected program
  */
-public class FunctionWindowProvider extends ComponentProviderAdapter {
+public class FunctionWindowProvider extends ComponentProviderAdapter implements OptionsChangeListener {
 
 	public static final ImageIcon icon = ResourceManager.loadImage("images/functions.gif");
+
+	static final String OPTION_DISPLAY_NAMESPACE = "Display Namespace";
 
 	private FunctionWindowPlugin plugin;
 	private GhidraTable functionTable;
@@ -61,6 +65,18 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		tool = plugin.getTool();
 		mainPanel = createWorkPanel();
 		tool.addComponentProvider(this, false);
+
+		registerOptions();
+	}
+
+	void registerOptions() {
+		ToolOptions opt = tool.getOptions("Functions Window");
+		HelpLocation help = this.getHelpLocation();
+		opt.setOptionsHelpLocation(help);
+
+		opt.registerOption(OPTION_DISPLAY_NAMESPACE, false, help,
+				"Choose if namespace tokens should be displayed along with function names");
+		opt.addOptionsChangeListener(this);
 	}
 
 	@Override
@@ -161,10 +177,8 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	}
 
 	private void setFunctionTableRenderer() {
-		functionTable.getColumnModel()
-				.getColumn(FunctionTableModel.LOCATION_COL)
-				.setPreferredWidth(
-					FunctionTableModel.LOCATION_COL_WIDTH);
+		functionTable.getColumnModel().getColumn(FunctionTableModel.LOCATION_COL)
+				.setPreferredWidth(FunctionTableModel.LOCATION_COL_WIDTH);
 	}
 
 	void update(Function function) {
@@ -207,5 +221,13 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	@Override
 	public boolean isTransient() {
 		return false;
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue, Object newValue)
+			throws OptionsVetoException {
+		if (optionName.equals(OPTION_DISPLAY_NAMESPACE)) {
+			functionTable.updateUI();
+		}
 	}
 }
