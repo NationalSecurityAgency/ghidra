@@ -131,8 +131,8 @@ public:
   static void registerAllCommands(IfaceStatus *status);
 };
 
+/// \brief Current state of the console mode interface
 class IfaceStatus {
-  vector<istream *> inputstack;
   vector<string> promptstack;
   vector<uint4> flagstack;
   string prompt;
@@ -140,13 +140,12 @@ class IfaceStatus {
   int4 curhistory;		// most recent history
   vector<string> history;
   bool sorted;			// Are commands sorted
-  bool inerror;			// -true- if last command did not succeed
   bool errorisdone;		// -true- if any error terminates the process
   void restrict(vector<IfaceCommand *>::const_iterator &first,vector<IfaceCommand *>::const_iterator &last,vector<string> &input);
-  virtual void readLine(string &line) { getline(*sptr,line,'\n'); }
+  virtual void readLine(string &line)=0;
   void saveHistory(const string &line);
 protected:
-  istream *sptr;		// Where to get input
+  bool inerror;			// -true- if last command did not succeed
   vector<IfaceCommand *> comlist; // List of commands
   map<string,IfaceData *> datamap; // Data associated with particular modules
   int4 expandCom(vector<string> &expand,istream &s,
@@ -157,13 +156,13 @@ public:
   ostream *optr;		// Where to put command line output
   ostream *fileoptr;		// Where to put bulk output
 
-  IfaceStatus(const string &prmpt,istream &is,ostream &os,int4 mxhist=10);
+  IfaceStatus(const string &prmpt,ostream &os,int4 mxhist=10);
   virtual ~IfaceStatus(void);
   void setErrorIsDone(bool val) { errorisdone = val; }
-  void pushScript(const string &filename,const string &newprompt);
-  void popScript(void);
+  virtual void pushScript(const string &filename,const string &newprompt);
+  virtual void popScript(void);
   void reset(void);
-  int4 getNumInputStreamSize(void) const { return inputstack.size(); }
+  int4 getNumInputStreamSize(void) const { return promptstack.size(); }
   void writePrompt(void) { *optr << prompt; }
   void registerCom(IfaceCommand *fptr, const char *nm1,
 		   const char *nm2 = (const char *)0,
@@ -174,7 +173,7 @@ public:
   bool runCommand(void);
   void getHistory(string &line,int4 i) const;
   int4 getHistorySize(void) const { return history.size(); }
-  bool isStreamFinished(void) const { if (done||inerror) return true; return sptr->eof(); }
+  virtual bool isStreamFinished(void) const=0;
   bool isInError(void) const { return inerror; }
   void evaluateError(void);
   static void wordsToString(string &res,const vector<string> &list);

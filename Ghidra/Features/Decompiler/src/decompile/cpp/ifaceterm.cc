@@ -16,8 +16,9 @@
 #include "ifaceterm.hh"
 
 IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
-  : IfaceStatus(prmpt,is,os)
+  : IfaceStatus(prmpt,os)
 {
+  sptr = &is;
 #ifdef __TERMINAL__
   struct termios ittypass;
 
@@ -229,3 +230,28 @@ void IfaceTerm::readLine(string &line)
   } while(val != '\n');
 }
 
+void IfaceTerm::pushScript(const string &filename,const string &newprompt)
+
+{
+  ifstream *s = new ifstream(filename.c_str());
+  if (!*s)
+    throw IfaceParseError("Unable to open script file");
+  inputstack.push_back(sptr);
+  sptr = s;
+  IfaceStatus::pushScript(filename,newprompt);
+}
+
+void IfaceTerm::popScript(void)
+
+{
+  delete sptr;
+  sptr = inputstack.back();
+  inputstack.pop_back();
+}
+
+bool IfaceTerm::isStreamFinished(void) const
+
+{
+  if (done||inerror) return true;
+  return sptr->eof();
+}

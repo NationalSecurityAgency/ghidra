@@ -29,9 +29,14 @@ class IfaceTerm : public IfaceStatus {
   int4 ifd;			// Underlying file descriptor
   struct termios itty;		// Original terminal settings
 #endif
+  istream *sptr;		// Where to get input
+  vector<istream *> inputstack;
   int4 doCompletion(string &line,int4 cursor);
   virtual void readLine(string &line);
 public:
   IfaceTerm(const string &prmpt,istream &is,ostream &os);
   virtual ~IfaceTerm(void);
+  virtual void pushScript(const string &filename,const string &newprompt);
+  virtual void popScript(void);
+  virtual bool isStreamFinished(void) const;
 };

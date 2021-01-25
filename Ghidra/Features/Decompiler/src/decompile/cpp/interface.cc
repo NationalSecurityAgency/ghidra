@@ -114,10 +114,9 @@ bool RemoteSocket::isSocketOpen(void)
 
 #endif
 
-IfaceStatus::IfaceStatus(const string &prmpt,istream &is,ostream &os,int4 mxhist)
+IfaceStatus::IfaceStatus(const string &prmpt,ostream &os,int4 mxhist)
 
 {
-  sptr = &is;
   optr = &os;
   fileoptr = optr;		// Bulk out, defaults to command line output
   sorted = false;
@@ -132,25 +131,17 @@ IfaceStatus::IfaceStatus(const string &prmpt,istream &is,ostream &os,int4 mxhist
 void IfaceStatus::pushScript(const string &filename,const string &newprompt)
 
 { // Push new input stream on stack (with new prompt)
-  ifstream *s = new ifstream(filename.c_str());
-  if (!*s)
-    throw IfaceParseError("Unable to open script file");
-  inputstack.push_back(sptr);
   promptstack.push_back(prompt);
   uint4 flags = 0;
   if (errorisdone)
     flags |= 1;
   flagstack.push_back(flags);
-  sptr = s;
   prompt = newprompt;
 }
 
 void IfaceStatus::popScript(void)
 
 { // Pop the current input stream (and current prompt)
-  delete sptr;
-  sptr = inputstack.back();
-  inputstack.pop_back();
   prompt = promptstack.back();
   promptstack.pop_back();
   uint4 flags = flagstack.back();
@@ -162,7 +153,7 @@ void IfaceStatus::popScript(void)
 void IfaceStatus::reset(void)
 
 {
-  while(!inputstack.empty())
+  while(!promptstack.empty())
     popScript();
   errorisdone = false;
   done = false;
@@ -228,7 +219,7 @@ IfaceStatus::~IfaceStatus(void)
     ((ofstream *)fileoptr)->close();
     delete fileoptr;
   }
-  while(!inputstack.empty())
+  while(!promptstack.empty())
     popScript();
   for(int4 i=0;i<comlist.size();++i)
     delete comlist[i];
