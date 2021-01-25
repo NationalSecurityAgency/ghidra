@@ -184,10 +184,11 @@ define pcodeop special2;
     Status = Status | 1;
 }
 
-# http://people.cs.pitt.edu/~don/coe1502/current/Unit4a/Unit4a.html
+# MIPS R3000 only, replaced with ERET >= R4000
 # 0100 0010 0000 0000 0000 0000 0001 0000
 :rfe                           is $(AMODE) & prime=0x10 & fct=0x10 & bit25=1 & copfill=0  {
-    Status = (Status & 0xfffffff0) | ((Status & 0x3c) >> 2);
+    local currentStatus = Status;
+    Status = (currentStatus & 0xfffffff0) | ((currentStatus & 0x3c) >> 2);
 }
 
 # 0100 0010 0000 0000 0000 0000 0001 1000
