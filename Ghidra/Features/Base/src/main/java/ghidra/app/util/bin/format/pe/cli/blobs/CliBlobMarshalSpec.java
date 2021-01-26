@@ -22,14 +22,30 @@ import ghidra.app.util.bin.format.pe.cli.blobs.CliAbstractSig.CliElementType;
 import ghidra.program.model.data.*;
 
 public class CliBlobMarshalSpec extends CliBlob {
-	private static final int INIT_VALUE = -1;
 
+	// Underlying marshal type
 	private CliNativeType nativeIntrinsic;
+
+	// Element type of an underlying SafeArray
+	private CliSafeArrayElemType safeArrayElemType;
+
+	// FixedString ID of an underlying FIXEDSYSSTRING
+	private int fixedStringId;
+
+	// Parameters in an underlying CUSTOMMARSHALLER
+	private String customMarshallerGuidOrTypeName;
+	private String customMarshallerTypeName;
+	private String customMarshallerCookie;
+
+	// Type, count, and byte size of count of an underlying array
 	private CliNativeType arrayElemType;
-	private int paramNum = INIT_VALUE;
-	private int paramNumBytes;
-	private int numElem = INIT_VALUE;
-	private int numElemBytes;
+	private int arrayParamNum = INIT_VALUE;
+	private int arrayParamNumBytes;
+	private int arrayNumElem = INIT_VALUE;
+	private int arrayNumElemBytes;
+
+	private static final int INIT_VALUE = -1;
+	private static final int CLIBLOBMARSHALSPEC_GUID_LENGTH = 0x26;
 
 	public enum CliNativeType {
 		NATIVE_TYPE_END(0x00),
@@ -105,14 +121,71 @@ public class CliBlobMarshalSpec extends CliBlob {
 		}
 	}
 
+
+	public enum CliSafeArrayElemType {
+		VT_I2(0x2),
+		VT_I4(0x3),
+		VT_R4(0x4),
+		VT_R8(0x5),
+		VT_CY(0x6),
+		VT_DATE(0x7),
+		VT_BSTR(0x8),
+		VT_DISPATCH(0x9),
+		VT_ERROR(0xA),
+		VT_BOOL(0xB),
+		VT_VARIANT(0xC),
+		VT_UNKNOWN(0xD),
+		VT_DECIMAL(0xE),
+		VT_I1(0x10),
+		VT_UI1(0x11),
+		VT_UI2(0x12),
+		VT_UI4(0x13),
+		VT_INT(0x16),
+		VT_UINT(0x17);
+
+		private final int id;
+
+		CliSafeArrayElemType(int id) {
+			this.id = id;
+		}
+
+		public int id() {
+			return id;
+		}
+
+		public static CliSafeArrayElemType fromInt(int id) {
+			CliSafeArrayElemType[] values = CliSafeArrayElemType.values();
+			for (CliSafeArrayElemType value : values) {
+				if (value.id == id) {
+					return value;
+				}
+			}
+			return null;
+		}
+	}
+
 	public static class CliNativeTypeDataType extends EnumDataType {
 
 		public final static CliNativeTypeDataType dataType = new CliNativeTypeDataType();
 
 		public CliNativeTypeDataType() {
 			super(new CategoryPath(PATH), "NativeType", 1);
-
+			// TODO: specify CategoryPath, etc.
 			for (CliElementType c : CliElementType.values()) {
+				add(c.toString(), c.id());
+			}
+		}
+	}
+
+
+	public static class CliSafeArrayElemTypeDataType extends EnumDataType {
+
+		public final static CliNativeTypeDataType dataType = new CliNativeTypeDataType();
+
+		public CliSafeArrayElemTypeDataType() {
+			super(new CategoryPath(PATH), "ElemType", 1);
+			// TODO: specify CategoryPath, etc.
+			for (CliSafeArrayElemType c : CliSafeArrayElemType.values()) {
 				add(c.toString(), c.id());
 			}
 		}
@@ -122,6 +195,7 @@ public class CliBlobMarshalSpec extends CliBlob {
 		super(blob);
 
 		BinaryReader reader = blob.getContentsReader();
+
 		nativeIntrinsic = CliNativeType.fromInt(reader.readNextByte());
 		if (nativeIntrinsic == CliNativeType.NATIVE_TYPE_ARRAY ||
 			nativeIntrinsic == CliNativeType.NATIVE_TYPE_FIXEDARRAY) {
@@ -136,8 +210,47 @@ public class CliBlobMarshalSpec extends CliBlob {
 					origIndex = reader.getPointerIndex();
 					numElem = decodeCompressedUnsignedInt(reader);
 					numElemBytes = (int) (reader.getPointerIndex() - origIndex);
+
+		switch (nativeIntrinsic) {
+			case NATIVE_TYPE_ARRAY:
+			case NATIVE_TYPE_FIXEDARRAY:
+				arrayElemType = CliNativeType.fromInt(reader.readNextByte());
+
+				// There is no sentinel other than blob size that indicates whether
+				// 0, 1, or 2 compressed unsigned ints follow
+				if (contentsSize > 2) {
+					long origIndex = reader.getPointerIndex();
+					arrayParamNum = decodeCompressedUnsignedInt(reader);
+					arrayParamNumBytes = (int) (reader.getPointerIndex() - origIndex);
+					if (contentsSize > (2 + arrayParamNumBytes)) {
+						origIndex = reader.getPointerIndex();
+						arrayNumElem = decodeCompressedUnsignedInt(reader);
+						arrayNumElemBytes = (int) (reader.getPointerIndex() - origIndex);
+					}
 				}
-			}
+				break;
+
+			case NATIVE_TYPE_FIXEDSYSSTRING:
+				fixedStringId = reader.readNextByte();
+				break;
+
+			case NATIVE_TYPE_CUSTOMMARSHALER:
+				customMarshallerGuidOrTypeName =
+					reader.readTerminatedString(reader.getPointerIndex(), '\0');
+				customMarshallerTypeName =
+					reader.readTerminatedString(reader.getPointerIndex(), '\0');
+				if (reader.peekNextByte() > 0) {
+					customMarshallerCookie =
+						reader.readTerminatedString(reader.getPointerIndex(), '\0');
+				}
+				break;
+
+			case NATIVE_TYPE_SAFEARRAY:
+				safeArrayElemType = CliSafeArrayElemType.fromInt(reader.readNextByte());
+				break;
+
+			default:
+				break;
 		}
 	}
 
@@ -153,9 +266,45 @@ public class CliBlobMarshalSpec extends CliBlob {
 				if (numElem != INIT_VALUE) {
 					struct.add(getDataTypeForBytes(numElemBytes), "NumElem",
 						"number of elements or additional elements");
+		struct.add(CliNativeTypeDataType.dataType, nativeIntrinsic.name(), "NativeIntrinsic");
+
+		switch (nativeIntrinsic) {
+			case NATIVE_TYPE_ARRAY:
+			case NATIVE_TYPE_FIXEDARRAY:
+				struct.add(CliNativeTypeDataType.dataType, arrayElemType.name(), "ArrayElemTyp");
+				if (arrayParamNum != INIT_VALUE) {
+					struct.add(getDataTypeForBytes(arrayParamNumBytes), "ParamNum",
+						"which parameter provides number of elems for this array");
+					if (arrayNumElem != INIT_VALUE) {
+						struct.add(getDataTypeForBytes(arrayNumElemBytes), "NumElem",
+							"number of elements or additional elements");
+					}
 				}
-			}
+				break;
+
+			case NATIVE_TYPE_FIXEDSYSSTRING:
+				struct.add(BYTE, "Fixed String Identifier", "");
+				break;
+
+			case NATIVE_TYPE_SAFEARRAY:
+				struct.add(CliSafeArrayElemTypeDataType.dataType, "ElemType", "Type");
+				break;
+
+			case NATIVE_TYPE_CUSTOMMARSHALER:
+				struct.add(UTF8, customMarshallerGuidOrTypeName.length(), "", "GUID or Type Name");
+				struct.add(UTF8, customMarshallerGuidOrTypeName.length(), "", "Type Name");
+				if (customMarshallerCookie.compareTo("") != 0) {
+					struct.add(UTF8, customMarshallerGuidOrTypeName.length(), "", "Cookie");
+				}
+				else {
+					struct.add(BYTE, "Terminator for absent Cookie", "");
+				}
+				break;
+
+			default:
+				break;
 		}
+
 		return struct;
 	}
 
