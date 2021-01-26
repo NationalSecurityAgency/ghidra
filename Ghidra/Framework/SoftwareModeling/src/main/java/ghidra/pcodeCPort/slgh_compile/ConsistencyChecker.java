@@ -26,7 +26,6 @@ import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.util.Msg;
 
 class ConsistencyChecker {
 
@@ -1177,6 +1176,9 @@ class ConsistencyChecker {
 	 */
 	void checkLargeTemporaries(Constructor ct) {
 		ConstructTpl ctTpl = ct.getTempl();
+		if (ctTpl == null) {
+			return;
+		}
 		VectorSTL<OpTpl> ops = ctTpl.getOpvec();
 		for (IteratorSTL<OpTpl> iter = ops.begin(); !iter.isEnd(); iter.increment()) {
 			if (hasLargeTemporary(iter.get())) {
