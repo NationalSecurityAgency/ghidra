@@ -78,7 +78,8 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		if (!useCustom) {
 			// remove original params which replicate auto params
 			for (int i = 0; i < autoParamCnt; i++) {
-				model.setSelectedParameterRow(new int[] { autoParamCnt });
+				// be sure to select beyond auto-params.  First auto-param is on row 1
+				model.setSelectedParameterRow(new int[] { autoParamCnt + 1 });
 				model.removeParameters();
 			}
 

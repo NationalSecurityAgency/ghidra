@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
@@ -67,25 +66,25 @@ public class OpBehaviorFloatFloat2FloatTest extends AbstractOpBehaviorTest {
 		FloatFormat ff8 = FloatFormatFactory.getFloatFormat(8);
 		FloatFormat ff4 = FloatFormatFactory.getFloatFormat(4);
 
-		BigInteger a = ff4.getEncoding(BigDecimal.valueOf(1.75d));
+		BigInteger a = ff4.getEncoding(ff4.getBigFloat(1.75d));
 		BigInteger result = op.evaluateUnary(8, 4, a);
-		Assert.assertEquals(BigDecimal.valueOf(1.75d), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigFloat(1.75d), ff8.getHostFloat(result));
 
-		a = ff4.getEncoding(BigDecimal.valueOf(-1.75d));
+		a = ff4.getEncoding(ff4.getBigFloat(-1.75d));
 		result = op.evaluateUnary(8, 4, a);
-		Assert.assertEquals(BigDecimal.valueOf(-1.75d), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigFloat(-1.75d), ff8.getHostFloat(result));
 
-		a = ff4.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY);
+		a = ff4.getEncoding(ff4.getBigInfinity(false));
 		result = op.evaluateUnary(8, 4, a);
-		Assert.assertEquals(FloatFormat.BIG_POSITIVE_INFINITY, ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigInfinity(false), ff8.getHostFloat(result));
 
-		a = ff4.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY);
+		a = ff4.getEncoding(ff4.getBigInfinity(true));
 		result = op.evaluateUnary(8, 4, a);
-		Assert.assertEquals(FloatFormat.BIG_NEGATIVE_INFINITY, ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigInfinity(true), ff8.getHostFloat(result));
 
-		a = ff4.getEncoding(FloatFormat.BIG_NaN);
+		a = ff4.getEncoding(ff4.getBigNaN(false));
 		result = op.evaluateUnary(8, 4, a);
-		Assert.assertEquals(FloatFormat.BIG_NaN, ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigNaN(false), ff8.getHostFloat(result));
 	}
 
 }
