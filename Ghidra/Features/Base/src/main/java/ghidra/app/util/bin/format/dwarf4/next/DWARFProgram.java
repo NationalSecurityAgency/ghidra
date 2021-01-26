@@ -770,8 +770,7 @@ public class DWARFProgram implements Closeable {
 				if (refdOffset == -1) {
 					continue;
 				}
-				DWARFCompilationUnit targetCU = getCompilationUnitFor(refdOffset);
-				if (targetCU != null && targetCU != die.getCompilationUnit()) {
+				if (!die.getCompilationUnit().containsOffset(refdOffset)) {
 					return true;
 				}
 			}

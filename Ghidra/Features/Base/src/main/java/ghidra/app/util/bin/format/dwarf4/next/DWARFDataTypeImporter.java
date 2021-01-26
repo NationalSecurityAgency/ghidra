@@ -26,6 +26,7 @@ import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
+import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -139,6 +140,10 @@ public class DWARFDataTypeImporter {
 		if (result != null) {
 			return result;
 		}
+		DataType alreadyImportedDT = dwarfDTM.getDataType(diea.getOffset(), null);
+		if (alreadyImportedDT != null) {
+			return new DWARFDataType(alreadyImportedDT, null, diea.getOffset());
+		}
 
 		if (!trackRecursion(diea.getOffset(), 1)) {
 			return defaultValue;
@@ -229,6 +234,10 @@ public class DWARFDataTypeImporter {
 	 * 						offset -> ddt
 	 */
 	private void recordTempDataType(DWARFDataType ddt) {
+		if (ddt.dataType instanceof DatabaseObject) {
+			// don't store info about types that are already in the database
+			return;
+		}
 		dataTypeInstanceToDDTMap.put(ddt.dataType, ddt);
 		for (Long offset : ddt.offsets) {
 			dieOffsetToDataTypeMap.put(offset, ddt);
