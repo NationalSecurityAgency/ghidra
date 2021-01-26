@@ -631,6 +631,7 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
     emit->tagComment(commentend.c_str(),EmitXml::comment_color,
 		      spc,off);
   emit->stopComment(id);
+  comm->setEmitted(true);
 }
 
 /// Tell the emitter whether to emit just the raw tokens or if

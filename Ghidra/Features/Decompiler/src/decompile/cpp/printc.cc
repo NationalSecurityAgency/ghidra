@@ -2586,19 +2586,21 @@ void PrintC::emitBlockIf(const BlockIf *bl)
 
   pushMod();
   setMod(no_branch);
-  bl->getBlock(0)->emit(this);
+  FlowBlock *condBlock = bl->getBlock(0);
+  condBlock->emit(this);
   popMod();
+  emitCommentBlockTree(condBlock);
   emit->tagLine();
-  op = bl->getBlock(0)->lastOp();
+  op = condBlock->lastOp();
   emit->tagOp("if",EmitXml::keyword_color,op);
   emit->spaces(1);
   pushMod();
   setMod(only_branch);
-  bl->getBlock(0)->emit(this);
+  condBlock->emit(this);
   popMod();
   if (bl->getGotoTarget() != (FlowBlock *)0) {
     emit->spaces(1);
-    emitGotoStatement(bl->getBlock(0),bl->getGotoTarget(),bl->getGotoType());
+    emitGotoStatement(condBlock,bl->getGotoTarget(),bl->getGotoType());
     popMod();
     return;
   }
@@ -2644,8 +2646,10 @@ void PrintC::emitForLoop(const BlockWhileDo *bl)
   pushMod();
   unsetMod(no_branch|only_branch);
   emitAnyLabelStatement(bl);
+  FlowBlock *condBlock = bl->getBlock(0);
+  emitCommentBlockTree(condBlock);
   emit->tagLine();
-  op = bl->getBlock(0)->lastOp();
+  op = condBlock->lastOp();
   emit->tagOp("for",EmitXml::keyword_color,op);
   emit->spaces(1);
   int4 id1 = emit->openParen('(');
@@ -2659,7 +2663,7 @@ void PrintC::emitForLoop(const BlockWhileDo *bl)
   }
   emit->print(";");
   emit->spaces(1);
-  bl->getBlock(0)->emit(this);		// Emit the conditional statement
+  condBlock->emit(this);		// Emit the conditional statement
   emit->print(";");
   emit->spaces(1);
   op = bl->getIterateOp();		// Emit the iterator statement
@@ -2695,13 +2699,14 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
   pushMod();
   unsetMod(no_branch|only_branch);
   emitAnyLabelStatement(bl);
-  emit->tagLine();
-  op = bl->getBlock(0)->lastOp();
+  FlowBlock *condBlock = bl->getBlock(0);
+  op = condBlock->lastOp();
   if (bl->hasOverflowSyntax()) {
     // Print conditional block as
     //     while( true ) {
     //       conditionbody ...
     //       if (conditionalbranch) break;
+    emit->tagLine();
     emit->tagOp("while",EmitXml::keyword_color,op);
     int4 id1 = emit->openParen('(');
     emit->spaces(1);
@@ -2713,27 +2718,30 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
     emit->print("{");
     pushMod();
     setMod(no_branch);
-    bl->getBlock(0)->emit(this);
+    condBlock->emit(this);
     popMod();
+    emitCommentBlockTree(condBlock);
     emit->tagLine();
     emit->tagOp("if",EmitXml::keyword_color,op);
     emit->spaces(1);
     pushMod();
     setMod(only_branch);
-    bl->getBlock(0)->emit(this);
+    condBlock->emit(this);
     popMod();
     emit->spaces(1);
-    emitGotoStatement(bl->getBlock(0),(const FlowBlock *)0,FlowBlock::f_break_goto);
+    emitGotoStatement(condBlock,(const FlowBlock *)0,FlowBlock::f_break_goto);
   }
   else {
     // Print conditional block "normally" as
     //     while(condition) {
+    emitCommentBlockTree(condBlock);
+    emit->tagLine();
     emit->tagOp("while",EmitXml::keyword_color,op);
     emit->spaces(1);
     int4 id1 = emit->openParen('(');
     pushMod();
     setMod(comma_separate);
-    bl->getBlock(0)->emit(this);
+    condBlock->emit(this);
     popMod();
     emit->closeParen(')',id1);
     emit->spaces(1);
@@ -2924,9 +2932,36 @@ void PrintC::emitCommentGroup(const PcodeOp *inst)
   commsorter.setupOpList(inst);
   while(commsorter.hasNext()) {
     Comment *comm = commsorter.getNext();
+    if (comm->isEmitted()) continue;
     if ((instr_comment_type & comm->getType())==0) continue;
     emitLineComment(-1,comm);
   }
+}
+
+/// With the control-flow hierarchy, print any comments associated with basic blocks in
+/// the specified subtree.  Used where statements from multiple basic blocks are printed on
+/// one line and a normal comment would get printed in the middle of this line.
+/// \param bl is the root of the control-flow subtree
+void PrintC::emitCommentBlockTree(const FlowBlock *bl)
+
+{
+  if (bl == (const FlowBlock *)0) return;
+  FlowBlock::block_type btype = bl->getType();
+  if (btype == FlowBlock::t_copy) {
+    bl = bl->subBlock(0);
+    btype = bl->getType();
+  }
+  if (btype == FlowBlock::t_plain) return;
+  if (bl->getType() != FlowBlock::t_basic) {
+    const BlockGraph *rootbl = (const BlockGraph *)bl;
+    int4 size = rootbl->getSize();
+    for(int4 i=0;i<size;++i) {
+      emitCommentBlockTree(rootbl->subBlock(i));
+    }
+    return;
+  }
+  commsorter.setupBlockList(bl);
+  emitCommentGroup((const PcodeOp *)0);	// Emit any comments for the block
 }
 
 /// Collect all comment lines marked as \e header for the function and
@@ -2939,6 +2974,7 @@ void PrintC::emitCommentFuncHeader(const Funcdata *fd)
   commsorter.setupHeader(CommentSorter::header_basic);
   while(commsorter.hasNext()) {
     Comment *comm = commsorter.getNext();
+    if (comm->isEmitted()) continue;
     if ((head_comment_type & comm->getType())==0) continue;
     emitLineComment(0,comm);
     extralinebreak = true;
@@ -2950,6 +2986,7 @@ void PrintC::emitCommentFuncHeader(const Funcdata *fd)
     commsorter.setupHeader(CommentSorter::header_unplaced);
     while(commsorter.hasNext()) {
       Comment *comm = commsorter.getNext();
+      if (comm->isEmitted()) continue;
       if (!extralinebreak) {
 	Comment label(Comment::warningheader,fd->getAddress(),fd->getAddress(),0,
 		      "Comments that could not be placed in the function body:");

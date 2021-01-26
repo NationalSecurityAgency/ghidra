@@ -435,6 +435,9 @@ public class DecompilerUtils {
 		FieldSelection fieldSelection = new FieldSelection();
 		for (ClangToken clangToken : tokens) {
 			ClangLine lineParent = clangToken.getLineParent();
+			if (lineParent == null) {
+				continue;
+			}
 			int lineNumber = lineParent.getLineNumber();
 			// lineNumber is one-based, we need zero-based
 			fieldSelection.addRange(lineNumber - 1, lineNumber);
@@ -629,6 +632,62 @@ public class DecompilerUtils {
 		return text.startsWith("goto");
 	}
 
+	/**
+	 * Within a token stream, after seeing an initial comment token, collect the contiguous
+	 * sequence of tokens that are part of the comment and group them into a single
+	 * ClangCommentToken.  This makes post processing on the full comment string easier.
+	 * A single comment string can contain white space that manifests as ClangSyntaxTokens
+	 * with white space as text. 
+	 * @param alltoks is the token stream
+	 * @param i is the position of the initial comment token
+	 * @param first is the initial comment token
+	 * @param current is the ClangLine object currently being scanned
+	 * @param builder is used to collect the full comment string
+	 * @return the position of the first token after the comment string
+	 */
+	private static int consumeCommentTokens(List<ClangNode> alltoks, int i, ClangCommentToken first,
+			ClangLine current, StringBuilder builder) {
+		builder.setLength(0);
+		builder.append(first.getText());
+		i += 1;
+		while (i < alltoks.size()) {
+			ClangToken tok = (ClangToken) alltoks.get(i);
+			if (tok instanceof ClangCommentToken) {
+				if (first.getSyntaxType() != tok.getSyntaxType()) {
+					break;
+				}
+				builder.append(tok.getText());
+			}
+			else if (tok instanceof ClangSyntaxToken) {
+				// Comments can have blank space tokens embedded in them
+				String val = tok.getText();
+				if (val.isBlank()) {
+					builder.append(val);
+				}
+				else {
+					break;
+				}
+			}
+			else {
+				break;
+			}
+			i += 1;
+		}
+		ClangCommentToken commentToken = ClangCommentToken.derive(first, builder.toString());
+		commentToken.setLineParent(current);
+		current.addToken(commentToken);
+
+		return i;
+	}
+
+	/**
+	 * A token hierarchy is flattened and then split into individual lines at the
+	 * ClangBreak tokens.  An array of the lines, each as a ClangLine object that owns
+	 * its respective tokens, is returned.  Sequences of comment tokens are collapsed into
+	 * a single ClangCommentToken.
+	 * @param group is the token hierarchy
+	 * @return the array of ClangLine objects
+	 */
 	public static ArrayList<ClangLine> toLines(ClangTokenGroup group) {
 
 		List<ClangNode> alltoks = new ArrayList<>();
@@ -650,12 +709,20 @@ public class DecompilerUtils {
 		else {
 			current = new ClangLine(lineNumber++, 0); // otherwise use zero indent
 		}
+
+		StringBuilder commentBuilder = new StringBuilder();
 		for (; i < alltoks.size(); ++i) {
+
 			ClangToken tok = (ClangToken) alltoks.get(i);
 			if (tok instanceof ClangBreak) {
 				lines.add(current);
 				brk = (ClangBreak) tok;
 				current = new ClangLine(lineNumber++, brk.getIndent());
+			}
+			else if (tok instanceof ClangCommentToken) {
+				i = consumeCommentTokens(alltoks, i, (ClangCommentToken) tok, current,
+					commentBuilder);
+				i -= 1;
 			}
 			else {
 				tok.setLineParent(current);

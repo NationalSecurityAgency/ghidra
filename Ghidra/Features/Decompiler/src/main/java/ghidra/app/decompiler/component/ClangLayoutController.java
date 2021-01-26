@@ -18,7 +18,6 @@ package ghidra.app.decompiler.component;
 import java.awt.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.*;
 
@@ -183,10 +182,6 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		ClangFieldElement lineNumberFieldElement =
 			createLineNumberFieldElement(line, lineCount, paintLineNumbers);
 
-		if (isComment(tokens)) {
-			return createCommentField(tokens, lineNumberFieldElement, line.getIndent());
-		}
-
 		FieldElement[] elements = createFieldElementsForLine(tokens);
 
 		int indent = line.getIndent() * indentWidth;
@@ -196,64 +191,27 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			hlFactory);
 	}
 
-	private ClangTextField createCommentField(List<ClangToken> tokens,
-			ClangFieldElement lineNumberFieldElement, int indentCount) {
-
-		StringBuilder buffy = new StringBuilder();
-		for (ClangToken t : tokens) {
-			buffy.append(t.getText());
-		}
-
-		String text = buffy.toString();
-		ClangCommentToken token = getFirstCommentToken(tokens);
-		Color color = syntax_color[token.getSyntaxType()];
-		AttributedString prototype = new AttributedString("prototype", color, metrics);
-		Program program = decompilerPanel.getProgram();
-		FieldElement element = CommentUtils.parseTextForAnnotations(text, program, prototype, 0);
-
-		FieldElement[] elements = new FieldElement[] { element };
-		ClangCommentToken newCommentToken = ClangCommentToken.derive(token, text);
-		List<ClangToken> newTokens = Arrays.asList(newCommentToken);
-
-		int indent = indentCount * indentWidth;
-		int lineNumberWidth = lineNumberFieldElement.getStringWidth();
-		int updatedMaxWidth = maxWidth + lineNumberWidth;
-		return new ClangTextField(newTokens, elements, lineNumberFieldElement, indent,
-			updatedMaxWidth, hlFactory);
-	}
-
 	private FieldElement[] createFieldElementsForLine(List<ClangToken> tokens) {
 
-		ClangFieldElement[] elements = new ClangFieldElement[tokens.size()];
+		FieldElement[] elements = new FieldElement[tokens.size()];
 		int columnPosition = 0;
 		for (int i = 0; i < tokens.size(); ++i) {
 			ClangToken token = tokens.get(i);
-			AttributedString as =
-				new AttributedString(token.getText(), syntax_color[token.getSyntaxType()], metrics);
-			elements[i] = new ClangFieldElement(token, as, columnPosition);
-			columnPosition += as.length();
+			Color color = syntax_color[token.getSyntaxType()];
+			if (token instanceof ClangCommentToken) {
+				AttributedString prototype = new AttributedString("prototype", color, metrics);
+				Program program = decompilerPanel.getProgram();
+				elements[i] =
+					CommentUtils.parseTextForAnnotations(token.getText(), program, prototype, 0);
+				columnPosition += elements[i].length();
+			}
+			else {
+				AttributedString as = new AttributedString(token.getText(), color, metrics);
+				elements[i] = new ClangFieldElement(token, as, columnPosition);
+				columnPosition += as.length();
+			}
 		}
 		return elements;
-	}
-
-	private ClangCommentToken getFirstCommentToken(List<ClangToken> tokens) {
-		for (ClangToken t : tokens) {
-			if (t instanceof ClangCommentToken) {
-				return (ClangCommentToken) t;
-			}
-		}
-		return null;
-	}
-
-	private boolean isComment(List<ClangToken> tokens) {
-		for (ClangToken t : tokens) {
-			if (t instanceof ClangCommentToken) {
-				// for now, I believe all comments are on a line by themselves, so if we find
-				// a comment token, then these are all comments
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private ClangFieldElement createLineNumberFieldElement(ClangLine line, int lineCount,
