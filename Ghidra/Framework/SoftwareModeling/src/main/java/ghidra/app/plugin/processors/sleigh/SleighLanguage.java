@@ -42,6 +42,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.program.model.util.ProcessorSymbolType;
+import ghidra.sleigh.grammar.SourceFileIndexer;
 import ghidra.sleigh.grammar.SleighPreprocessor;
 import ghidra.util.*;
 import ghidra.util.task.TaskMonitor;
@@ -52,8 +53,18 @@ import utilities.util.FileUtilities;
 
 public class SleighLanguage implements Language {
 
-	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this expects
-													// This value should always match SleighBase.SLA_FORMAT_VERSION
+	/**
+	 * NOTE: The value of {@link SleighLanguage#SLA_FORMAT_VERSION} must match that of
+	 * {@link ghidra.pcodeCPort.sleighbase.SleighBase#SLA_FORMAT_VERSION}!.
+	 * <p>
+	 * SLA_FORMAT_VERSION should be incremented whenever the format of the .sla
+	 * files change.
+	 * <p>
+	 * Version 3: October 2020: added source file information for each constructor. <br>
+	 * Version 2: April 2019: Changed numbering of Overlay spaces.<br>
+	 * Version 1: Initial version.<br>
+	 */
+	public static final int SLA_FORMAT_VERSION = 3;
 	private Map<CompilerSpecID, SleighCompilerSpecDescription> compilerSpecDescriptions;
 	private HashMap<CompilerSpecID, BasicCompilerSpec> compilerSpecs;
 	private List<InjectPayloadSleigh> additionalInject = null;
@@ -70,6 +81,7 @@ public class SleighLanguage implements Language {
 	private int defaultPointerWordSize = 1;		// Default wordsize to send down with pointer data-types
 	private SleighLanguageDescription description;
 	private ParallelInstructionLanguageHelper parallelHelper;
+	private SourceFileIndexer indexer;  //used to provide source file info for constructors
 
 	/**
 	 * Symbols used by sleigh
@@ -427,6 +439,14 @@ public class SleighLanguage implements Language {
 		return symtab;
 	}
 
+	/**
+	 * Returns the source file indexer
+	 * @return indexer
+	 */
+	public SourceFileIndexer getSourceFileIndexer() {
+		return indexer;
+	}
+
 	@Override
 	public void reloadLanguage(TaskMonitor monitor) throws IOException {
 		reloadLanguage(monitor, false);
@@ -663,8 +683,7 @@ public class SleighLanguage implements Language {
 		while (!parser.peek().isEnd()) {
 			element = parser.start("properties", "segmented_address", "segmentop", "programcounter",
 				"data_space", "inferptrbounds", "context_data", "volatile", "jumpassist",
-				"incidentalcopy",
-				"register_data", "default_symbols", "default_memory_blocks");
+				"incidentalcopy", "register_data", "default_symbols", "default_memory_blocks");
 			if (element.getName().equals("properties")) {
 				while (!parser.peek().isEnd()) {
 					XmlElement next = parser.start("property");
@@ -907,6 +926,8 @@ public class SleighLanguage implements Language {
 		if (numsecstr != null) {
 			numSections = SpecXmlUtils.decodeInt(numsecstr);
 		}
+		indexer = new SourceFileIndexer();
+		indexer.restoreXml(parser);
 		parseSpaces(parser);
 		symtab = new SymbolTable();
 		symtab.restoreXml(parser, this);

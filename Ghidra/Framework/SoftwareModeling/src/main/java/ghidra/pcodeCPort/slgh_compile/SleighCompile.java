@@ -381,8 +381,7 @@ public class SleighCompile extends SleighBase {
 		final int symSize = sym.getSize();
 		if (symSize % 4 != 0) {
 			reportError(sym.location,
-				String.format(
-					"Invalid size of context register '%s' (%d); must be a multiple of 4",
+				String.format("Invalid size of context register '%s' (%d); must be a multiple of 4",
 					sym.getName(), symSize));
 		}
 		final int maxBits = symSize * 8 - 1;
@@ -563,8 +562,7 @@ public class SleighCompile extends SleighBase {
 				noCollisions = false;
 				if (warnalllocalcollisions) {
 					reportWarning(ct.location,
-						String.format(
-							"Possible operand collision between symbols '%s' and '%s'",
+						String.format("Possible operand collision between symbols '%s' and '%s'",
 							ct.getOperand(collideOperand).getName(), ct.getOperand(i).getName()));
 
 				}
@@ -648,7 +646,6 @@ public class SleighCompile extends SleighBase {
 		root = null;
 		pcode.resetLabelCount();
 	}
-
 
 	public void reportError(Location location, String msg) {
 		entry("reportError", location, msg);
@@ -922,9 +919,8 @@ public class SleighCompile extends SleighBase {
 		insertSpace(spc);
 		if (qual.isdefault) {
 			if (getDefaultSpace() != null) {
-				reportError(location,
-					"Multiple default spaces -- '" + getDefaultSpace().getName() + "', '" +
-						qual.name + "'");
+				reportError(location, "Multiple default spaces -- '" + getDefaultSpace().getName() +
+					"', '" + qual.name + "'");
 			}
 			else {
 				setDefaultSpace(spc.getIndex()); // Make the flagged space
@@ -1331,6 +1327,10 @@ public class SleighCompile extends SleighBase {
 		sym.addConstructor(curct);
 		symtab.addScope(); // Make a new symbol scope for our constructor
 		pcode.resetLabelCount();
+		Integer index = indexer.index(location);
+		if (index != null) {
+			curct.setSourceFileIndex(index);
+		}
 		return curct;
 	}
 
@@ -1452,8 +1452,7 @@ public class SleighCompile extends SleighBase {
 				big.markSubtableOperands(check);
 				Pair<Integer, Location> res = cur.section.fillinBuild(check, getConstantSpace());
 				if (res.first == 1) {
-					myErrors.push_back(
-						scopeString + "Duplicate BUILD statements at " + res.second);
+					myErrors.push_back(scopeString + "Duplicate BUILD statements at " + res.second);
 				}
 				if (res.first == 2) {
 					myErrors.push_back(
@@ -1461,8 +1460,7 @@ public class SleighCompile extends SleighBase {
 				}
 
 				if (!pcode.propagateSize(cur.section)) {
-					myErrors.push_back(
-						scopeString + "Could not resolve at least 1 variable size");
+					myErrors.push_back(scopeString + "Could not resolve at least 1 variable size");
 				}
 			}
 			if (i < 0) {		// These potential errors only apply to main section
