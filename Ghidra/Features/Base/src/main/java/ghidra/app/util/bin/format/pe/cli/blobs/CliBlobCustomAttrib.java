@@ -52,6 +52,15 @@ public class CliBlobCustomAttrib extends CliBlob {
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128 = 0x80;
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_192 = 0xC0;
 
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_ONE = 0x01;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO = 0x02;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO_BITMASK = 0x7F;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR = 0x03;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR_BITMASK = 0x3F;
+
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_SHIFT = 0x06;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_BITMASK = 0x03;
+
 	// UTF-8 boundaries that help detect the end of a string where
 	// lengths aren't specified in FixedArg
 	private static final int CLIBLOBCUSTOMATTRIB_UTF8_LOW = 0x1F;
@@ -289,7 +298,8 @@ public class CliBlobCustomAttrib extends CliBlob {
 	// based on the length of the string. This measures and decodes the Byte, Word,
 	// or DWord length field and returns it.
 	private int readSerStringLength(BinaryReader reader) throws IOException {
-		byte[] length;
+		byte[] lengthBytes;
+		int length = 0;
 		ByteBuffer buf;
 
 		// The first byte is either the size or an indicator that we have more
@@ -297,50 +307,47 @@ public class CliBlobCustomAttrib extends CliBlob {
 		// big-endian.
 		byte firstByte = reader.readNextByte();
 
-		if (firstByte < CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128) {
+		// Shift the highest two bits to the bottom and mask off to detect the
+		// size of the field holding the size of the string (1, 2, or 4 bytes)
+		byte stringSizeIndicator = (byte) (firstByte >> CLIBLOBCUSTOMATTRIB_STRING_SIZE_SHIFT &
+			CLIBLOBCUSTOMATTRIB_STRING_SIZE_BITMASK);
+
+		if (stringSizeIndicator <= CLIBLOBCUSTOMATTRIB_STRING_SIZE_ONE) {
 			// A size less than 128 indicates this is the only size byte
-			return firstByte;
+			length = firstByte;
 		}
-		else if (firstByte < CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_192) {
+		else if (stringSizeIndicator == CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO) {
 			// A value in the first byte in range [128 - 191] indicates the size
 			// is stored as a Word and the value in the highest bit must be unset
-			length = new byte[] { firstByte, reader.readNextByte() };
+			lengthBytes = new byte[] { firstByte, reader.readNextByte() };
 
-			// Unset the highest bit if it's set
-			if ((length[1] &
-				CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128) == CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128) {
-				length[1] ^= CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128;
-			}
+			// Unset what will become the highest bit if it's set
+			lengthBytes[1] = (byte) (lengthBytes[1] & CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO_BITMASK);
 
 			// Convert from big-endian
-			buf = ByteBuffer.wrap(length);
+			buf = ByteBuffer.wrap(lengthBytes);
 			buf.order(ByteOrder.BIG_ENDIAN);
-			return buf.getShort();
+			length = buf.getShort();
 		}
-		else {
+		else if (stringSizeIndicator == CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR) {
 			// A value in the first byte > 128 indicates the size is stored as
 			// a DWord and the first two bits must be unset
-			length = new byte[4];
-			length[0] = firstByte;
-			length[1] = reader.readNextByte();
-			length[2] = reader.readNextByte();
-			length[3] = reader.readNextByte();
+			lengthBytes = new byte[Integer.BYTES];
+			lengthBytes[0] = firstByte;
+			lengthBytes[1] = reader.readNextByte();
+			lengthBytes[2] = reader.readNextByte();
+			lengthBytes[3] = reader.readNextByte();
 
 			// Unset what will become the highest two bits if they're set
-			if ((length[3] &
-				CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128) == CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128) {
-				length[3] ^= CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128;
-			}
-			if ((length[3] &
-				CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_64) == CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_64) {
-				length[3] ^= CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_64;
-			}
+			lengthBytes[3] = (byte) (lengthBytes[3] & CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR_BITMASK);
 
 			// Convert from big-endian
-			buf = ByteBuffer.wrap(length);
+			buf = ByteBuffer.wrap(lengthBytes);
 			buf.order(ByteOrder.BIG_ENDIAN);
-			return buf.getInt();
+			length = buf.getInt();
 		}
+
+		return length;
 	}
 
 	private ArrayList<CliFixedArg> processFixedArgs(BinaryReader reader, CliParam[] params)
@@ -361,8 +368,10 @@ public class CliBlobCustomAttrib extends CliBlob {
 				// end of the name
 
 				StringBuilder sb = new StringBuilder();
-				while ((reader.peekNextByte() > CLIBLOBCUSTOMATTRIB_UTF8_LOW) &&
-					(reader.peekNextByte() < CLIBLOBCUSTOMATTRIB_UTF8_HIGH)) {
+				while (((reader.peekNextByte() &
+					CLIBLOBCUSTOMATTRIB_UTF8_HIGH) > CLIBLOBCUSTOMATTRIB_UTF8_LOW) &&
+					((reader.peekNextByte() &
+						CLIBLOBCUSTOMATTRIB_UTF8_HIGH) < CLIBLOBCUSTOMATTRIB_UTF8_HIGH)) {
 					sb.append((char) reader.readNextByte());
 				}
 
