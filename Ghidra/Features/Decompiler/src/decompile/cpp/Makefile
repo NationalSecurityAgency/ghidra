@@ -279,7 +279,6 @@ libdecomp.a:	$(LIBDECOMP_OPT_OBJS)
 	ranlib libdecomp.a
 
 sleighexamp_dir:
-	rm -rf $(SLEIGHVERSION)
 	mkdir $(SLEIGHVERSION)
 	mkdir $(SLEIGHVERSION)/src $(SLEIGHVERSION)/specfiles
 	cp ../../../../../Processors/x86/data/languages/x86.sla \

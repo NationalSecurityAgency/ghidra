@@ -2497,6 +2497,8 @@ Constructor *SleighCompile::createConstructor(SubtableSymbol *sym)
   sym->addConstructor(curct);
   symtab.addScope();		// Make a new symbol scope for our constructor
   pcode.resetLabelCount();
+  int4 index = indexer.index(ctorLocationMap[curct].getFilename());
+  curct->setSrcIndex(index);
   return curct;
 }
 
