@@ -35,10 +35,14 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	// implementation
 
 	/**
-	 * Note: The value of {@link SleighBase#SLA_FORMAT_VERSION} must match 
-	 * {@link ghidra.app.plugin.processors.sleigh.SleighLanguage#SLA_FORMAT_VERSION}.
+	 * Note: The values of {@link #SLA_FORMAT_VERSION} and {@link #MAX_UNIQUE_SIZE} 
+	 * must match the corresponding values defined by sleighbase.cc
 	 */
 	public static final int SLA_FORMAT_VERSION = 3;
+
+	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.  
+	                                                 //Should match value in sleighbase.cc
+
 	private VectorSTL<String> userop = new VectorSTL<>();
 	private address_set varnode_xref = new address_set(); // Cross-reference registers by address
 	protected SubtableSymbol root;

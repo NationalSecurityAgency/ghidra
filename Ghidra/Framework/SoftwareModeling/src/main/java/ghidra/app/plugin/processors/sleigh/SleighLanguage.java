@@ -33,6 +33,7 @@ import ghidra.app.plugin.processors.sleigh.expression.ContextField;
 import ghidra.app.plugin.processors.sleigh.expression.PatternValue;
 import ghidra.app.plugin.processors.sleigh.symbol.*;
 import ghidra.framework.Application;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slgh_compile.SleighCompileLauncher;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -42,8 +43,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.program.model.util.ProcessorSymbolType;
-import ghidra.sleigh.grammar.SourceFileIndexer;
 import ghidra.sleigh.grammar.SleighPreprocessor;
+import ghidra.sleigh.grammar.SourceFileIndexer;
 import ghidra.util.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.SpecXmlUtils;
@@ -54,17 +55,14 @@ import utilities.util.FileUtilities;
 public class SleighLanguage implements Language {
 
 	/**
-	 * NOTE: The value of {@link SleighLanguage#SLA_FORMAT_VERSION} must match that of
-	 * {@link ghidra.pcodeCPort.sleighbase.SleighBase#SLA_FORMAT_VERSION}!.
-	 * <p>
-	 * SLA_FORMAT_VERSION should be incremented whenever the format of the .sla
+	 * SLA_FORMAT_VERSION will be incremented whenever the format of the .sla
 	 * files change.
 	 * <p>
-	 * Version 3: October 2020: added source file information for each constructor. <br>
+	 * Version 3: January 2021: added source file information for each constructor. <br>
 	 * Version 2: April 2019: Changed numbering of Overlay spaces.<br>
 	 * Version 1: Initial version.<br>
 	 */
-	public static final int SLA_FORMAT_VERSION = 3;
+	public static final int SLA_FORMAT_VERSION = SleighBase.SLA_FORMAT_VERSION;
 	private Map<CompilerSpecID, SleighCompilerSpecDescription> compilerSpecDescriptions;
 	private HashMap<CompilerSpecID, BasicCompilerSpec> compilerSpecs;
 	private List<InjectPayloadSleigh> additionalInject = null;

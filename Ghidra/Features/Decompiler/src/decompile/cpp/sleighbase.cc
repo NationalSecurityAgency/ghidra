@@ -17,6 +17,8 @@
 
 const int4 SleighBase::SLA_FORMAT_VERSION = 3;
 
+const uintb SleighBase::MAX_UNIQUE_SIZE = 128;
+
 int4 SourceFileIndexer::index(const string filename){
 	auto it = fileToIndex.find(filename);
 	if (fileToIndex.end() != it){
@@ -56,7 +58,6 @@ void SourceFileIndexer::saveXml(ostream& s) const {
 	}
 	s << "</sourcefiles>\n";
 }
-
 
 SleighBase::SleighBase(void)
 
