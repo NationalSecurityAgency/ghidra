@@ -1273,7 +1273,11 @@ void ConsistencyChecker::checkUnusedTemps(Constructor *ct,const map<uintb,Optimi
 /// returns after the first large varnode is found.
 ///
 void ConsistencyChecker::checkLargeTemporaries(Constructor *ct){
-    vector<OpTpl *> ops = ct->getTempl()->getOpvec();
+	ConstructTpl *ctTpl = ct->getTempl();
+    if (ctTpl == (ConstructTpl *) 0){
+        return;
+    }
+    vector<OpTpl *> ops = ctTpl->getOpvec();
     for (vector<OpTpl *>::iterator iter = ops.begin(); iter != ops.end(); ++iter){
     	if (hasLargeTemporary(*iter)){
     		if (printlargetempwarning){
