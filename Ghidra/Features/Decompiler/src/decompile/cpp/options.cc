@@ -838,6 +838,10 @@ string OptionAliasBlock::apply(Architecture *glb,const string &p1,const string &
   return "Alias block level set to " + p1;
 }
 
+/// \class OptionMaxInstruction
+/// \brief Maximum number of instructions that can be processed in a single function
+///
+/// The first parameter is an integer specifying the maximum.
 string OptionMaxInstruction::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {

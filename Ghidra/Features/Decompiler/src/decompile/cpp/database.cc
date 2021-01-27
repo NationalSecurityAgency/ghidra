@@ -2817,7 +2817,7 @@ void Database::fillResolve(Scope *scope)
 
 /// Initialize a new symbol table, with no initial scopes or symbols.
 /// \param g is the Architecture that owns the symbol table
-/// \param isByName is \b true if scope ids are calculated as a hash of the scope name.
+/// \param idByName is \b true if scope ids are calculated as a hash of the scope name.
 Database::Database(Architecture *g,bool idByName)
 
 {

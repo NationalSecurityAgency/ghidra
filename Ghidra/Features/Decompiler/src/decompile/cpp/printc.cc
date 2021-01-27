@@ -199,9 +199,9 @@ void PrintC::pushSymbolScope(const Symbol *symbol)
   }
 }
 
-/// Emit the elements of the given function's namespace path that distinguish it within
+/// Emit the elements of the given symbol's namespace path that distinguish it within
 /// the current scope.
-/// \param fd is the given function
+/// \param symbol is the given Symbol
 void PrintC::emitSymbolScope(const Symbol *symbol)
 
 {

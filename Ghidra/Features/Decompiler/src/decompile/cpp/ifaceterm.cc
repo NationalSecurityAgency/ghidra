@@ -58,9 +58,16 @@ IfaceTerm::~IfaceTerm(void)
 #endif
 }
 
+/// Respond to a TAB key press and try to 'complete' any existing tokens.
+/// The method is handed the current state of the command-line in a string, and
+/// it updates the command-line in place.
+///
+/// \param line is current command-line and will hold the final completion
+/// \param cursor is the current position of the cursor
+/// \return the (possibly new) position of the cursor, after completion
 int4 IfaceTerm::doCompletion(string &line,int4 cursor)
 
-{				// Try to complete the current command
+{
   vector<string> fullcommand;
   istringstream s(line);
   string tok;
