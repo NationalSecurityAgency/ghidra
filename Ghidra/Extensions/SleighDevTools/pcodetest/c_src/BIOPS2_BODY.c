@@ -15,401 +15,78 @@
  */
 #include "pcode_test.h"
 
-u2 u2_complexLogic(u2 a, u2 b, u2 c, u2 d, u2 e, u2 f)
-{
-	u2 ret = 0;
-
-	if (a > b && b > c || d < e && f < e) {
-		ret += 1;
-	}
-	if (a != b || a != c && d != e || f != e) {
-		ret += 2;
-	}
-	if (a && b && c || d && e && f) {
-		ret += 4;
-	}
-	if (a || b || c && d || e || f) {
-		ret += 8;
-	}
-	return ret;
-}
-
-i2 i2_complexLogic(i2 a, i2 b, i2 c, i2 d, i2 e, i2 f)
-{
-	i2 ret = 0;
-
-	if (a > b && b > c || d < e && f < e) {
-		ret += 1;
-	}
-	if (a != b || a != c && d != e || f != e) {
-		ret += 2;
-	}
-	if (a && b && c || d && e && f) {
-		ret += 4;
-	}
-	if (a || b || c && d || e || f) {
-		ret += 8;
-	}
-	return ret;
-}
-
-u2 u2_compareLogic(u2 lhs, u2 rhs)
-{
-	if (lhs < rhs)
-		lhs += 2;
-	if (lhs > rhs)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-
-i2 i2_compareLogic(i2 lhs, i2 rhs)
-{
-	if (lhs < 0)
-		lhs += 2;
-	if (lhs > 0)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-
-/* Comparison operators */
-u2 u2_greaterThan(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs > rhs;
-	return z;
-}
-
-u2 u2_greaterThanEquals(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs >= rhs;
-	return z;
-}
-
-u2 u2_lessThan(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-u2 u2_lessThanEquals(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-u2 u2_equals(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs == rhs;
-	return z;
-}
+PCODE_COMPLEX_LOGIC(u2)
+PCODE_COMPLEX_LOGIC(i2)
 
-u2 u2_notEquals(u2 lhs, u2 rhs)
-{
-	u2 z;
+PCODE_COMPARE_LOGIC(u2)
+PCODE_COMPARE_LOGIC(i2)
 
-	z = lhs != rhs;
-	return z;
-}
+PCODE_GREATERTHAN(u2)
+PCODE_GREATERTHAN(i2)
 
-i2 i2_greaterThan(i2 lhs, i2 rhs)
-{
-	i2 z;
+PCODE_GREATERTHANEQUALS(u2)
+PCODE_GREATERTHANEQUALS(i2)
 
-	z = lhs > rhs;
-	return z;
-}
+PCODE_LESSTHAN(u2)
+PCODE_LESSTHAN(i2)
 
-i2 i2_greaterThanEquals(i2 lhs, i2 rhs)
-{
-	i2 z;
+PCODE_LESSTHANEQUALS(u2)
+PCODE_LESSTHANEQUALS(i2)
 
-	z = lhs >= rhs;
-	return z;
-}
+PCODE_EQUALS(u2)
+PCODE_EQUALS(i2)
 
-i2 i2_lessThan(i2 lhs, i2 rhs)
-{
-	i2 z;
+PCODE_NOTEQUALS(u2)
+PCODE_NOTEQUALS(i2)
 
-	z = lhs < rhs;
-	return z;
-}
+PCODE_BITWISE_AND(u2)
+PCODE_BITWISE_AND(i2)
 
-i2 i2_lessThanEquals(i2 lhs, i2 rhs)
-{
-	i2 z;
+PCODE_BITWISE_OR(u2)
+PCODE_BITWISE_OR(i2)
 
-	z = lhs <= rhs;
-	return z;
-}
+PCODE_LOGICAL_AND(u2)
+PCODE_LOGICAL_AND(i2)
 
-i2 i2_equals(i2 lhs, i2 rhs)
-{
-	i2 z;
+PCODE_LOGICAL_OR(u2)
+PCODE_LOGICAL_OR(i2)
 
-	z = lhs == rhs;
-	return z;
-}
+PCODE_LOGICAL_NOT(u2)
+PCODE_LOGICAL_NOT(i2)
 
-i2 i2_notEquals(i2 lhs, i2 rhs)
-{
-	i2 z;
+PCODE_XOR(u2)
+PCODE_XOR(i2)
 
-	z = lhs != rhs;
-	return z;
-}
+PCODE_SHIFTLEFT(u2)
+PCODE_SHIFTLEFT(i2)
 
-/* Bitwise operators */
-u2 u2_bitwiseAnd(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs & rhs;
-	return z;
-}
-
-u2 u2_bitwiseOr(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-u2 u2_bitwiseXor(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-i2 i2_bitwiseAnd(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs & rhs;
-	return z;
-}
-
-i2 i2_bitwiseOr(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-i2 i2_bitwiseXor(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-/* Logical operators */
-u2 u2_logicalAnd(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-u2 u2_logicalOr(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-u2 u2_logicalNot(u2 lhs)
-{
-	u2 z;
-
-	z = !lhs;
-	return z;
-}
-
-i2 i2_logicalAnd(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-i2 i2_logicalOr(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-i2 i2_logicalNot(i2 lhs)
-{
-	i2 z;
-
-	z = !lhs;
-	return z;
-}
-
-/* Shift operators */
-u2 u2_shiftLeft(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-u2 u2_shiftRight(u2 lhs, u2 rhs)
-{
-	u2 z;
-
-	z = lhs >> rhs;
-	return z;
-}
-
-i2 i2_shiftRight(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs >> rhs;
-	return z;
-}
-
-i2 i2_shiftLeft(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-/* Arithmetic operators */
-u2 u2_unaryPlus(u2 lhs)
-{
-	u2 z;
-
-	z = +lhs;
-	return z;
-}
+PCODE_SHIFTRIGHT(u2)
+PCODE_SHIFTRIGHT(i2)
 
-u2 u2_addition(u2 lhs, u2 rhs)
-{
-	u2 z;
+PCODE_UNARY_PLUS(u2)
+PCODE_UNARY_PLUS(i2)
 
-	z = lhs + rhs;
-	return z;
-}
+PCODE_UNARY_MINUS(u2)
+PCODE_UNARY_MINUS(i2)
 
-u2 u2_subtract(u2 lhs, u2 rhs)
-{
-	u2 z;
+PCODE_ADDITION(u2)
+PCODE_ADDITION(i2)
 
-	z = lhs - rhs;
-	return z;
-}
+PCODE_SUBTRACT(u2)
+PCODE_SUBTRACT(i2)
 
-u2 u2_multiply(u2 lhs, u2 rhs)
-{
-	u2 z;
+#ifdef HAS_MULTIPLY
 
-	z = lhs * rhs;
-	return z;
-}
+PCODE_MUL(u2)
+PCODE_MUL(i2)
 
-i2 u2_divide(i2 lhs, i2 rhs)
-{
-	i2 z;
+#endif /* #ifdef HAS_MULTIPLY */
+#ifdef HAS_DIVIDE
 
-	z = lhs / rhs;
-	return z;
-}
+PCODE_DIV(u2)
+PCODE_DIV(i2)
 
-u2 u2_remainder(u2 lhs, u2 rhs)
-{
-	u2 z;
+PCODE_REM(u2)
+PCODE_REM(i2)
 
-	z = lhs % rhs;
-	return z;
-}
-
-i2 i2_unaryMinus(i2 lhs)
-{
-	i2 z;
-
-	z = -lhs;
-	return z;
-}
-
-i2 i2_unaryPlus(i2 lhs)
-{
-	i2 z;
-
-	z = +lhs;
-	return z;
-}
-
-i2 i2_addition(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-i2 i2_subtract(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-i2 i2_multiply(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-i2 i2_divide(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs / rhs;
-	return z;
-}
-
-i2 i2_remainder(i2 lhs, i2 rhs)
-{
-	i2 z;
-
-	z = lhs % rhs;
-	return z;
-}
-
-
+#endif /* #ifdef HAS_DIVIDE */

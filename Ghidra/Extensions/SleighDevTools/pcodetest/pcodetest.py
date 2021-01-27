@@ -216,6 +216,11 @@ class PCodeBuildSDCC(PCodeTestBuild):
         f += ['-DHAS_FLOAT=1' if self.config.has_float else '-DHAS_FLOAT_OVERRIDE=1']
         f += ['-DHAS_DOUBLE=1' if self.config.has_double else '-DHAS_DOUBLE_OVERRIDE=1']
         f += ['-DHAS_LONGLONG=1' if self.config.has_longlong else '-DHAS_LONGLONG_OVERRIDE=1']
+
+        # this is just in case for future platforms, breaking logic out now
+        f += ['-DHAS_MULTIPLY=1']
+        f += ['-DHAS_DIVIDE=1']
+
         if self.config.has_shortfloat: f += ['-DHAS_SHORTFLOAT=1']
         if self.config.has_vector: f += ['-DHAS_VECTOR=1']
         if self.config.has_decimal128: f += ['-DHAS_DECIMAL128=1']
@@ -265,6 +270,11 @@ class PCodeBuildCCS(PCodeTestBuild):
         f += ['-DHAS_FLOAT=1' if self.config.has_float else '-DHAS_FLOAT_OVERRIDE=1']
         f += ['-DHAS_DOUBLE=1' if self.config.has_double else '-DHAS_DOUBLE_OVERRIDE=1']
         f += ['-DHAS_LONGLONG=1' if self.config.has_longlong else '-DHAS_LONGLONG_OVERRIDE=1']
+
+        # this is just in case for future platforms, breaking logic out now
+        f += ['-DHAS_MULTIPLY=1']
+        f += ['-DHAS_DIVIDE=1']
+
         if self.config.has_shortfloat: f += ['-DHAS_SHORTFLOAT=1']
         if self.config.has_vector: f += ['-DHAS_VECTOR=1']
         if self.config.has_decimal128: f += ['-DHAS_DECIMAL128=1']
@@ -367,6 +377,11 @@ class PCodeBuildGCC(PCodeTestBuild):
         f += ['-DHAS_FLOAT=1' if self.config.has_float else '-DHAS_FLOAT_OVERRIDE=1']
         f += ['-DHAS_DOUBLE=1' if self.config.has_double else '-DHAS_DOUBLE_OVERRIDE=1']
         f += ['-DHAS_LONGLONG=1' if self.config.has_longlong else '-DHAS_LONGLONG_OVERRIDE=1']
+
+        # this is just in case for future platforms, breaking logic out now
+        f += ['-DHAS_MULTIPLY=1']
+        f += ['-DHAS_DIVIDE=1']
+
         if self.config.has_shortfloat: f += ['-DHAS_SHORTFLOAT=1']
         if self.config.has_vector: f += ['-DHAS_VECTOR=1']
         if self.config.has_decimal128: f += ['-DHAS_DECIMAL128=1']
@@ -380,7 +395,7 @@ class PCodeBuildGCC(PCodeTestBuild):
         # or maybe f += ['-Xlinker', '--no-data-init']
         # This helps to alleviate undefined main, etc
         f += ['--entry', 'main']
-        f += ['-static', '-Wno-unused-macros', '-nodefaultlibs', '-nostartfiles', '-fno-builtin']
+        f += ['-static', '-Wno-unused-macros', '-nodefaultlibs', '-nostartfiles', '-fno-builtin', '-fno-stack-protector']
         # can pass this if weak symbols aren't defined
         # f += ['-Xlinker', '--unresolved-symbols=ignore-all']
 

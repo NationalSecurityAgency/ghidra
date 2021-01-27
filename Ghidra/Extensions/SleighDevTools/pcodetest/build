@@ -52,6 +52,9 @@ pcodetest_group.add_argument('--variants', default=json.dumps(PCodeTest.defaults
 sys.argv.pop(0)
 args = parser.parse_args(sys.argv)
 
+PCodeTest.defaults.toolchain_root = args.toolchain_root
+PCodeTest.defaults.build_root = args.build_root
+PCodeTest.defaults.gcc_version = args.gcc_version
 PCodeTest.defaults.skip_files = args.skip_files
 PCodeTest.defaults.pcodetest_root = args.pcodetest_root
 PCodeTest.defaults.pcodetest_src = args.pcodetest_src
