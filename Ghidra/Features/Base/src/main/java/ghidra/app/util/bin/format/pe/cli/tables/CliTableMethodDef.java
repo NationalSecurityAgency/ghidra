@@ -244,7 +244,7 @@ public class CliTableMethodDef extends CliAbstractTable {
 				}
 				catch (InvalidInputException e) {
 					Msg.warn(this, "Error processing parameter \"" + paramName +
-						"\" in function \"" + funcName + "\"");
+						"\" in function \"" + funcName + "\": " + e.getMessage());
 				}
 
 				stackOffset += dataType.getLength();

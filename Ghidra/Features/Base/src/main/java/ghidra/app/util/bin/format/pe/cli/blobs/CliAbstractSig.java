@@ -107,12 +107,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		ELEMENT_TYPE_VALUETYPE(0x11),
 		ELEMENT_TYPE_VAR(0x13), // "Class type variable VAR"
 		(0x16),
-
+		
 		ELEMENT_TYPE_MVAR(0x1e), // Method type variable MVAR
-
+		
 		ELEMENT_TYPE_INTERNAL(0x21), // Internal (generated internally, "will not be persisted in any way")
 		ELEMENT_TYPE_MAX(0x22),
-
+		
 		*/
 
 		switch (typeCode) {
@@ -122,7 +122,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			case ELEMENT_TYPE_BOOLEAN:
 				return BooleanDataType.dataType;
 			case ELEMENT_TYPE_CHAR:
-				return StringUTF8DataType.dataType;
+				return CharDataType.dataType;
 			case ELEMENT_TYPE_I1:
 				return SignedByteDataType.dataType;
 			case ELEMENT_TYPE_U1:
@@ -159,14 +159,18 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			case ELEMENT_TYPE_FNPTR:
 				return PointerDataType.dataType;
 
-			case ELEMENT_TYPE_SZARRAY:
 			case ELEMENT_TYPE_STRING:
 				return new PointerDataType(new CharDataType());
 			case ELEMENT_TYPE_ARRAY:
+			case ELEMENT_TYPE_SZARRAY:
+			case ELEMENT_TYPE_VAR:
+			case ELEMENT_TYPE_MVAR:
 				return new PointerDataType(new ByteDataType());
 
 			case ELEMENT_TYPE_OBJECT: // System.Object
 			case ELEMENT_TYPE_CLASS:
+			case ELEMENT_TYPE_VALUETYPE:
+			case ELEMENT_TYPE_GENERICINST:
 				return PointerDataType.dataType;
 
 			case ELEMENT_TYPE_SENTINEL:
@@ -293,12 +297,53 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 	}
 
 	public class CliTypeArray extends CliSigType {
-		private CliElementType arrayType;
+		private CliSigType arrayType;
 		private CliArrayShape arrayShape;
 
-		public CliTypeArray(BinaryReader reader, CliElementType typeCode) throws IOException {
+		public CliTypeArray(BinaryReader reader, CliElementType typeCode)
+				throws IOException, InvalidInputException {
 			super(typeCode);
-			arrayType = CliElementType.fromInt(reader.readNextByte());
+			CliElementType valueCode = CliElementType.fromInt(reader.readNextByte());
+
+			switch (valueCode) {
+				case ELEMENT_TYPE_VALUETYPE:
+					arrayType = new CliTypeValueType(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_CLASS:
+					arrayType = new CliTypeClass(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_FNPTR:
+					arrayType = new CliTypeFnPtr(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_GENERICINST:
+					arrayType = new CliTypeGenericInst(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_MVAR:
+				case ELEMENT_TYPE_VAR:
+					arrayType = new CliTypeVarOrMvar(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_PTR:
+					arrayType = new CliTypePtr(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_SZARRAY: // Single dimensional, zero-based array, e.g. a vector
+					arrayType = new CliTypeSzArray(reader, typeCode);
+					break;
+
+				case ELEMENT_TYPE_ARRAY:
+					arrayType = new CliTypeArray(reader, typeCode);
+					break;
+
+				default:
+					arrayType = new CliTypePrimitive(valueCode);
+					break;
+			}
+
 			arrayShape = new CliArrayShape(reader);
 		}
 
@@ -313,7 +358,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 			StructureDataType struct = new StructureDataType(new CategoryPath(PATH), "Array", 0);
 			struct.add(CliTypeCodeDataType.dataType, "Array",
 				String.format("Fixed value: 0x%x", CliElementType.ELEMENT_TYPE_ARRAY.id()));
-			struct.add(CliTypeCodeDataType.dataType, "Type", "Type of array");
+			if (arrayType instanceof CliTypePrimitive) {
+				struct.add(CliTypeCodeDataType.dataType, "Type", "Type of array");
+			}
+			else {
+				struct.add(arrayType.getDefinitionDataType(), "ValueType", "Class token");
+			}
 			struct.add(arrayShape.getDefinitionDataType(), "ArrayShape", null);
 			return struct;
 		}
