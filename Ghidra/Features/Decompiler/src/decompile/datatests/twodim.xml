@@ -1,0 +1,29 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Contrived example of reading and writing to a two dimensional array.
+-->
+<bytechunk space="ram" offset="0x400568" readonly="true">
+                554889e5897dec89
+75e88b05240b20008b55ec4863ca4863
+d04889d048c1e0024801d04801c88b04
+85601060008945fc8b05fe0a20008b55
+fc8d4a0a8b55e84863f24863d04889d0
+48c1e0024801d04801f0890c85601060
+008b45fc5dc3
+</bytechunk>
+<symbol space="ram" offset="0x400568" name="array_access"/>
+</binaryimage>
+<script>
+  <com>map addr r0x60109c int4 globindex</com>
+  <com>map addr r0x601060 int4 myarray[3][5]</com>
+  <com>parse line extern int4 array_access(int4 valin,int4 valout);</com>
+  <com>lo fu array_access</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Two dimension #1" min="1" max="1">iVar. = myarray\[globindex\]\[valin\];</stringmatch>
+<stringmatch name="Two dimension #2" min="1" max="1">myarray\[globindex\]\[valout\] = iVar. \+ 10;</stringmatch>
+<stringmatch name="Two dimension #3" min="0" max="0"> \* </stringmatch>
+</decompilertest>

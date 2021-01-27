@@ -104,6 +104,7 @@ public:
 
   static ArchitectureCapability *findCapability(const string &filename);	///< Find an extension to process a file
   static ArchitectureCapability *findCapability(Document *doc);		///< Find an extension to process an XML document
+  static ArchitectureCapability *getCapability(const string &name);	///< Get a capability by name
   static void sortCapabilities(void);					///< Sort extensions
   static uint4 getMajorVersion(void) { return majorversion; }		///< Get \e major decompiler version
   static uint4 getMinorVersion(void) { return minorversion; }		///< Get \e minor decompiler version

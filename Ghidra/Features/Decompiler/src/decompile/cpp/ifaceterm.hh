@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /// \file ifaceterm.hh
 /// \brief Add some terminal capabilities to the command-line interface (IfaceStatus)
 

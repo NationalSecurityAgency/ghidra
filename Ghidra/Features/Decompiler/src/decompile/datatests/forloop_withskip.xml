@@ -1,0 +1,24 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   For-loop where the loop var may be additionally incremented in the loop body.  Contrived example.
+-->
+<bytechunk space="ram" offset="0x400592" readonly="true">
+    554889e553897df4bb00000000eb
+0c837df40a7e0383c30183c3018b057d
+0a200039c37cea905b5dc3
+</bytechunk>
+<symbol space="ram" offset="0x400592" name="forloop_withskip"/>
+</binaryimage>
+<script>
+  <com>map addr r0x601030 int4 globvar</com>
+  <com>parse line extern void forloop_withskip(int4 val);</com>
+  <com>lo fu forloop_withskip</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="For-loop with skip #1" min="1" max="1">for.*iVar1 = 0; iVar1 &lt; globvar; iVar1 = iVar1 \+ 1</stringmatch>
+<stringmatch name="For-loop with skip #2" min="1" max="1">if \(10 &lt; val\)</stringmatch>
+<stringmatch name="For-loop with skip #3" min="1" max="1">iVar1 = iVar1 \+ 1;</stringmatch>
+</decompilertest>
