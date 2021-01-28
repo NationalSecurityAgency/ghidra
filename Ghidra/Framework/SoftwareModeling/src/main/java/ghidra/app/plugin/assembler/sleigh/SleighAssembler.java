@@ -29,8 +29,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -240,6 +239,13 @@ public class SleighAssembler implements Assembler {
 			final SymbolIterator it = program.getSymbolTable().getAllSymbols(false);
 			while (it.hasNext()) {
 				Symbol sym = it.next();
+				if (sym.isExternal()) {
+					continue; // skip externals - will generally be referenced indirectly not directly
+				}
+				SymbolType symbolType = sym.getSymbolType();
+				if (symbolType != SymbolType.LABEL && symbolType != SymbolType.FUNCTION) {
+					continue;
+				}
 				labels.put(sym.getName(), sym.getAddress().getOffset());
 			}
 		}
