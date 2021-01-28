@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
@@ -69,31 +68,29 @@ public class OpBehaviorFloatFloorTest extends AbstractOpBehaviorTest {
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		BigInteger a = ff.getEncoding(BigDecimal.valueOf(2.5d));
+		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(BigDecimal.valueOf(2.0d).stripTrailingZeros(), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.0d), ff.getHostFloat(result));
 
-		a = ff.getEncoding(BigDecimal.valueOf(-2.0d));
+		a = ff.getEncoding(ff.getBigFloat(-2.0d));
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(BigDecimal.valueOf(-2.0d).stripTrailingZeros(),
-			ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
 
-		a = ff.getEncoding(BigDecimal.valueOf(-2.5d));
+		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(BigDecimal.valueOf(-3.0d).stripTrailingZeros(),
-			ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-3.0d), ff.getHostFloat(result));
 
-		a = ff.getEncoding(FloatFormat.BIG_POSITIVE_INFINITY);
+		a = ff.getBigInfinityEncoding(false);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(FloatFormat.BIG_POSITIVE_INFINITY, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
 
-		a = ff.getEncoding(FloatFormat.BIG_NEGATIVE_INFINITY);
+		a = ff.getBigInfinityEncoding(true);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(FloatFormat.BIG_NEGATIVE_INFINITY, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
 
-		a = ff.getEncoding(FloatFormat.BIG_NaN);
+		a = ff.getBigNaNEncoding(false);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(FloatFormat.BIG_NaN, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
 	}
 
 }

@@ -27,14 +27,22 @@ import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.sleigh.grammar.SourceFileIndexer;
 
 public abstract class SleighBase extends Translate implements NamedSymbolProvider {
 
 	// NOTE: restoreXml method removed as it is only used by the decompiler's
 	// implementation
 
-	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this produces
-													// This value should always match SleighLanguage.SLA_FORMAT_VERSION
+	/**
+	 * Note: The values of {@link #SLA_FORMAT_VERSION} and {@link #MAX_UNIQUE_SIZE} 
+	 * must match the corresponding values defined by sleighbase.cc
+	 */
+	public static final int SLA_FORMAT_VERSION = 3;
+
+	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.  
+	                                                 //Should match value in sleighbase.cc
+
 	private VectorSTL<String> userop = new VectorSTL<>();
 	private address_set varnode_xref = new address_set(); // Cross-reference registers by address
 	protected SubtableSymbol root;
@@ -42,6 +50,8 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	protected int maxdelayslotbytes;	// Maximum number of bytes in a delayslot directive
 	protected int unique_allocatemask;	// Bits that are guaranteed to be zero in the unique allocation scheme
 	protected int numSections;		// Number of named sections
+	protected SourceFileIndexer indexer;  //indexer for source files
+										//used to provide source file info for constructors
 
 	@Override
 	public SleighSymbol findSymbol(String nm) {
@@ -61,6 +71,7 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		maxdelayslotbytes = 0;
 		unique_allocatemask = 0;
 		numSections = 0;
+		indexer = new SourceFileIndexer();
 	}
 
 	public boolean isInitialized() {
@@ -74,18 +85,21 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		for (iter = glb.begin(); !iter.isEnd(); iter.increment()) {
 			SleighSymbol sym = iter.get();
 			if (sym.getType() == symbol_type.varnode_symbol) {
-				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res = varnode_xref.insert((VarnodeSymbol) sym);
+				Pair<IteratorSTL<VarnodeSymbol>, Boolean> res =
+					varnode_xref.insert((VarnodeSymbol) sym);
 				if (!res.second) {
 					errorPairs.add(sym);
 					errorPairs.add(res.first.get());
 				}
-			} else if (sym.getType() == symbol_type.userop_symbol) {
+			}
+			else if (sym.getType() == symbol_type.userop_symbol) {
 				int index = ((UserOpSymbol) sym).getIndex();
 				while (userop.size() <= index) {
 					userop.push_back("");
 				}
 				userop.set(index, sym.getName());
-			} else if (sym.getType() == symbol_type.context_symbol) {
+			}
+			else if (sym.getType() == symbol_type.context_symbol) {
 				ContextSymbol csym = (ContextSymbol) sym;
 				ContextField field = (ContextField) csym.getPatternValue();
 				int startbit = field.getStartBit();
@@ -189,13 +203,14 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 			XmlUtils.a_v_u(s, "numsections", numSections);
 		}
 		s.append(">\n");
+		indexer.saveXml(s);
 		s.append("<spaces");
 		XmlUtils.a_v(s, "defaultspace", getDefaultSpace().getName());
 		s.append(">\n");
 		for (int i = 0; i < numSpaces(); ++i) {
 			AddrSpace spc = getSpace(i);
-			if ((spc.getType() == spacetype.IPTR_CONSTANT) || (spc.getType() == spacetype.IPTR_FSPEC)
-					|| (spc.getType() == spacetype.IPTR_IOP)) {
+			if ((spc.getType() == spacetype.IPTR_CONSTANT) ||
+				(spc.getType() == spacetype.IPTR_FSPEC) || (spc.getType() == spacetype.IPTR_IOP)) {
 				continue;
 			}
 			spc.saveXml(s);

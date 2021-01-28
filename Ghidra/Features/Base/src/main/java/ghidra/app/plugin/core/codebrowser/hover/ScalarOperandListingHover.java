@@ -23,7 +23,6 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.hover.AbstractScalarOperandHover;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InstructionPrototype;
@@ -47,18 +46,18 @@ public class ScalarOperandListingHover extends AbstractScalarOperandHover
 	}
 
 	@Override
-	public void initializeOptions() {
-		options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_POPUPS);
-		options.registerOption(NAME, true, null, DESCRIPTION);
-		setOptions(options, NAME);
-		options.addOptionsChangeListener(this);
+	protected String getName() {
+		return NAME;
 	}
 
 	@Override
-	public void setOptions(Options options, String optionName) {
-		if (optionName.equals(NAME)) {
-			enabled = options.getBoolean(NAME, true);
-		}
+	protected String getDescription() {
+		return DESCRIPTION;
+	}
+
+	@Override
+	protected String getOptionsCategory() {
+		return GhidraOptions.CATEGORY_BROWSER_POPUPS;
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.semantics.*;
 import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
 
@@ -31,8 +32,12 @@ class ConsistencyChecker {
 	int unnecessarypcode;
 	int readnowrite;
 	int writenoread;
+	// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
+	int largetemp;           
 	boolean printextwarning;
 	boolean printdeadwarning;
+	//if true, print information about constructors using temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
+	boolean printlargetempwarning; 
 	SleighCompile compiler;
 	SubtableSymbol root_symbol;
 	VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
@@ -98,7 +103,7 @@ class ConsistencyChecker {
 					return true;
 				}
 				printOpError(op, ct, -1, 0, "Input and output sizes must match; " +
-								op.getIn(0).getSize() + " != " + op.getOut().getSize());
+						op.getIn(0).getSize() + " != " + op.getOut().getSize());
 				return false;
 			case CPUI_INT_ADD:
 			case CPUI_INT_SUB:
@@ -493,9 +498,9 @@ class ConsistencyChecker {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Size restriction error in table '")
-			.append(sym.getName())
-			.append("' in constructor at ").append(ct.location)
-			.append("\n");
+		.append(sym.getName())
+		.append("' in constructor at ").append(ct.location)
+		.append("\n");
 
 
 		sb.append("  Problem");
@@ -635,6 +640,38 @@ class ConsistencyChecker {
 			}
 		}
 		return testresult;
+	}
+
+	/**
+	 * Returns true precisely when {@code opTpl} uses a {@link VarnodeTpl} in 
+	 * the unique space whose size is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.  
+	 * Note that this method returns as soon as one large {@link VarnodeTpl} is found.
+	 * @param opTpl the op to check
+	 * @return true if {@code opTpl} uses a large temporary varnode
+	 */
+	boolean hasLargeTemporary(OpTpl opTpl) {
+		VarnodeTpl out = opTpl.getOut();
+		if (out != null && isTemporaryAndTooBig(out)) {
+			return true;
+		}
+		for (int i = 0; i < opTpl.numInput(); ++i) {
+			VarnodeTpl in = opTpl.getIn(i);
+			if (isTemporaryAndTooBig(in)) {
+				return true;
+			}
+		}	
+		return false;
+	}
+
+	/**
+	 * Returns true precisely when {@code vn} is in the unique space
+	 * and has a size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @param vn varnode template to check
+	 * @return true if it uses a large temporary
+	 */
+	boolean isTemporaryAndTooBig(VarnodeTpl vn) {
+		return vn.getSpace().isUniqueSpace() && 
+				vn.getSize().getReal() > SleighBase.MAX_UNIQUE_SIZE;
 	}
 
 	boolean checkVarnodeTruncation(Constructor ct,int slot,OpTpl op,VarnodeTpl vn,boolean isbigendian) {
@@ -1131,6 +1168,28 @@ class ConsistencyChecker {
 			iter.increment();
 		}
 	}
+	
+	/**
+	 * Checks {@code ct} to see whether it contains an {@link OpTpl} which
+	 * uses a varnode in the unique space which is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @param ct constructor to check
+	 */
+	void checkLargeTemporaries(Constructor ct) {
+		ConstructTpl ctTpl = ct.getTempl();
+		if (ctTpl == null) {
+			return;
+		}
+		VectorSTL<OpTpl> ops = ctTpl.getOpvec();
+		for (IteratorSTL<OpTpl> iter = ops.begin(); !iter.isEnd(); iter.increment()) {
+			if (hasLargeTemporary(iter.get())) {
+			    if (printlargetempwarning) {
+			    	compiler.reportWarning(ct.location, "Constructor uses temporary varnode larger than " + SleighBase.MAX_UNIQUE_SIZE + " bytes.");
+			    }
+				largetemp++;
+				return;		    
+			}		
+		}
+	}
 
 	void optimize(Constructor ct) {
 		OptimizeRecord currec;
@@ -1149,16 +1208,21 @@ class ConsistencyChecker {
 		}
 		while (currec != null);
 		checkUnusedTemps(ct, recs);
+		checkLargeTemporaries(ct);
 	}
 
-	ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary, boolean warndead) {
+	ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary, boolean warndead, boolean warnlargetemp) {
 		compiler = cp;
 		root_symbol = rt;
 		unnecessarypcode = 0;
 		readnowrite = 0;
 		writenoread = 0;
+		//number of constructors which reference a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
+		largetemp = 0;      
 		printextwarning = unnecessary;
 		printdeadwarning = warndead;
+		//whether to print information about constructors which reference large temporary varnodes
+		printlargetempwarning = warnlargetemp;
 	}
 
 	// Main entry point for size consistency check
@@ -1228,5 +1292,14 @@ class ConsistencyChecker {
 
 	int getNumWriteNoRead() {
 		return writenoread;
+	}
+	
+	/**
+	 * Returns the number of constructors which reference a varnode in the
+	 * unique space with size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @return num constructors with large temp varnodes
+	 */
+	int getNumLargeTemporaries() {
+		return largetemp;
 	}
 }

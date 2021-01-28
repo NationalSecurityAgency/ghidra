@@ -156,6 +156,7 @@ protected:
   void emitLabelStatement(const FlowBlock *bl);		///< Emit any required label statement for a given basic block
   void emitAnyLabelStatement(const FlowBlock *bl);	///< Emit any required label statement for a given control-flow block
   void emitCommentGroup(const PcodeOp *inst);		///< Emit comments associated with a given statement
+  void emitCommentBlockTree(const FlowBlock *bl);	///< Emit any comments under the given control-flow subtree
   void emitCommentFuncHeader(const Funcdata *fd);	///< Emit comments in the given function's header
   void emitForLoop(const BlockWhileDo *bl);		///< Emit block as a \e for loop
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack

@@ -15,9 +15,8 @@
  */
 package ghidra.pcode.opbehavior;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
@@ -68,22 +67,20 @@ public class OpBehaviorFloatInt2FloatTest extends AbstractOpBehaviorTest {
 
 		BigInteger result = op.evaluateUnary(4, 4, BigInteger.valueOf(2));
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(BigDecimal.valueOf(2.0d).stripTrailingZeros(), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.0d), ff.getHostFloat(result));
 
 		result = op.evaluateUnary(4, 4, BigInteger.valueOf(-2));
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(BigDecimal.valueOf(-2.0d).stripTrailingZeros(),
-			ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
 
 		result = op.evaluateUnary(4, 4, BigInteger.ZERO);
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(BigDecimal.ZERO, ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigZero(false), ff.getHostFloat(result));
 
 		BigInteger NEG_ONE = Utils.bytesToBigInteger(
 			new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff }, 4, false, false);
 		result = op.evaluateUnary(4, 4, NEG_ONE);
-		Assert.assertEquals(BigDecimal.valueOf(-1.0d).stripTrailingZeros(),
-			ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-1.0d), ff.getHostFloat(result));
 
 	}
 

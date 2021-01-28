@@ -17,7 +17,8 @@ package ghidra.app.merge.datatypes;
 
 import static org.junit.Assert.*;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 import ghidra.program.database.*;
 import ghidra.program.model.data.*;
@@ -1246,11 +1247,9 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 	}
 
-	@Test
-	@Ignore
+//	TODO   See GP-585 for design issue preventing this test from passing
+//	@Test
 	public void testEditStructureWithReplacementAndRemoval() throws Exception {
-
-		// See GP-585 for design issue preventing this test from passing
 
 		mtf.initialize("notepad", new OriginalProgramModifierListener() {
 

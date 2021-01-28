@@ -27,6 +27,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
+import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
@@ -483,8 +484,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-				program.getProgramContext().setRegisterValue(space.getMinAddress(),
-					space.getMaxAddress(), thumbMode);
+				program.getProgramContext()
+						.setRegisterValue(space.getMinAddress(), space.getMaxAddress(), thumbMode);
 			}
 		}
 		catch (ContextChangeException e) {
@@ -755,14 +756,70 @@ public class PeLoader extends AbstractPeDebugLoader {
 		long imageBase = optionalHeader.getImageBase();
 		Address entryAddr = baseAddr.addWrap(imageBase);
 		entry += optionalHeader.getImageBase();
+
+		// get IL entry if it has one
+		Address ILEntryPointVA = getILEntryPoint(optionalHeader);
+		if (ILEntryPointVA != null) {
+			// The OptionalHeader can specify a single-instruction native code
+			// entry point even in IL-only binaries for backwards compatibility
+			if (entry > 0) {
+				try {
+					symTable.createLabel(entryAddr, "__x86_CIL_", SourceType.IMPORTED);
+					markAsCode(prog, entryAddr);
+					symTable.addExternalEntryPoint(entryAddr);
+				}
+				catch (InvalidInputException e) {
+					Msg.warn(this,
+						"Backwards compatible native entry point in the CIL binary couldn't be processed");
+				}
+			}
+
+			// Replace native entry point address with IL entry point
+			entryAddr = ILEntryPointVA;
+		}
+
 		try {
+			// mark up entry (either Native or IL)
 			symTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
 			markAsCode(prog, entryAddr);
 		}
 		catch (InvalidInputException e) {
 			// ignore
 		}
+
 		symTable.addExternalEntryPoint(entryAddr);
+	}
+
+	// @return IL entry point, or null if the binary has a native Entry point
+	private Address getILEntryPoint(OptionalHeader optionalHeader) {
+		// Check to see if this binary has a COMDescriptorDataDirectory in it. If so,
+		// it might be a .NET binary, and if it is and only has a managed code entry point
+		// the value at entry is actually a table index and and row index that we parse in
+		// the ImageCor20Header class. Use that to create the entry label instead later.
+
+		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
+		for (DataDirectory element : dataDirectories) {
+			if (element == null) {
+				continue;
+			}
+			if (!(element instanceof COMDescriptorDataDirectory)) {
+				continue;
+			}
+
+			COMDescriptorDataDirectory comDescriptorDataDirectory =
+				(COMDescriptorDataDirectory) element;
+			ImageCor20Header imageCor20Header = comDescriptorDataDirectory.getHeader();
+
+			if ((imageCor20Header.getFlags() &
+				ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) != ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) {
+				continue;
+			}
+			// Check the flag to see if there's a native code entry point, and if
+			// not this binary has an IL entry that we should label
+			return imageCor20Header.getEntryPointVA();
+		}
+
+		return null;
 	}
 
 	private void processDebug(OptionalHeader optionalHeader, FileHeader fileHeader,

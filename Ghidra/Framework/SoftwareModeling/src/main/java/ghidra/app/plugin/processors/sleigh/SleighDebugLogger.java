@@ -84,8 +84,8 @@ public class SleighDebugLogger {
 		}
 
 		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("unsupport language provider: " +
-				language.getClass().getSimpleName());
+			throw new IllegalArgumentException(
+				"unsupport language provider: " + language.getClass().getSimpleName());
 		}
 
 		ContextCache contextCache = new ContextCache();
@@ -112,9 +112,8 @@ public class SleighDebugLogger {
 		}
 
 		try {
-			prototype =
-				new SleighInstructionPrototype((SleighLanguage) language, buf, context,
-					contextCache, false, this);
+			prototype = new SleighInstructionPrototype((SleighLanguage) language, buf, context,
+				contextCache, false, this);
 
 			prototype.cacheInfo(buf, context, false);
 
@@ -148,8 +147,9 @@ public class SleighDebugLogger {
 	 * @throws IllegalArgumentException if program language provider is not Sleigh
 	 */
 	public SleighDebugLogger(Program program, Address start, SleighDebugMode mode) {
-		this(new MemoryBufferImpl(program.getMemory(), start), new MyProcessorContextView(
-			program.getProgramContext(), start), program.getLanguage(), mode);
+		this(new MemoryBufferImpl(program.getMemory(), start),
+			new MyProcessorContextView(program.getProgramContext(), start), program.getLanguage(),
+			mode);
 	}
 
 	private class DebugInstructionContext implements InstructionContext {
@@ -240,7 +240,8 @@ public class SleighDebugLogger {
 		if (!"instruction".equals(tableName) || name.startsWith("\n")) {
 			name = tableName;
 		}
-		list.add(name + "(" + Integer.toString(ct.getLineno()) + ")");
+
+		list.add(name + "(" + ct.getSourceFile() + ":" + Integer.toString(ct.getLineno()) + ")");
 
 		int flowthruindex = ct.getFlowthruIndex();
 		if (flowthruindex != -1) {
@@ -338,8 +339,7 @@ public class SleighDebugLogger {
 		endbit = endbit % 8;
 
 		for (int i = 0; i < value.length; i++) {
-			String byteStr =
-				StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
+			String byteStr = StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
 			if (startbit >= 0) {
 				if (endByte == i) {
 					byteStr =
@@ -621,8 +621,8 @@ public class SleighDebugLogger {
 			Math.min(contextBaseRegister.getMinimumByteSize() - byteOffset, maskvec.length * 4);
 
 		byte[] maskPatternValue = new byte[2 * contextBaseRegister.getMinimumByteSize()];
-		System.arraycopy(getBytes(valvec), 0, maskPatternValue, (maskPatternValue.length / 2) +
-			byteOffset, vecByteCnt);
+		System.arraycopy(getBytes(valvec), 0, maskPatternValue,
+			(maskPatternValue.length / 2) + byteOffset, vecByteCnt);
 
 		byte[] mask = getBytes(maskvec);
 		System.arraycopy(mask, 0, maskActualValue, byteOffset, vecByteCnt);
@@ -640,9 +640,8 @@ public class SleighDebugLogger {
 				BigInteger actual = childActualValue.getUnsignedValueIgnoreMask();
 				BigInteger match = childMatchValue.getUnsignedValueIgnoreMask();
 				String partialMatch = childMatchValue.hasValue() ? "" : "*";
-				String matchStr =
-					match.equals(actual) ? " Match" : (" Failed (=0x" +
-						Long.toHexString(actual.longValue()) + ")");
+				String matchStr = match.equals(actual) ? " Match"
+						: (" Failed (=0x" + Long.toHexString(actual.longValue()) + ")");
 				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 				append(partialMatch + reg.getName() + "(" + lsb + "," + msb + ") == 0x" +
@@ -719,7 +718,8 @@ public class SleighDebugLogger {
 		dumpGlobalSet(state, num, mask, value, null);
 	}
 
-	private void dumpGlobalSet(ConstructState state, int num, int mask, int value, Address setAddr) {
+	private void dumpGlobalSet(ConstructState state, int num, int mask, int value,
+			Address setAddr) {
 
 		byte[] maskActualValue = new byte[contextBaseRegister.getMinimumByteSize() * 2];
 		int byteOffset = num * 4;
@@ -951,8 +951,7 @@ public class SleighDebugLogger {
 	public static String getFormattedBytes(byte[] value) {
 		StringBuffer buf = new StringBuffer();
 		for (int i = 0; i < value.length; i++) {
-			String byteStr =
-				StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
+			String byteStr = StringUtilities.pad(Integer.toBinaryString(value[i] & 0xff), '0', 8);
 			buf.append(byteStr);
 			if (i < (value.length - 1)) {
 				buf.append(" ");

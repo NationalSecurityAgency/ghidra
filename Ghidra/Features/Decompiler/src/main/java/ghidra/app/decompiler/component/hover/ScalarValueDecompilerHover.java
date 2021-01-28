@@ -24,7 +24,6 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.plugin.core.hover.AbstractScalarOperandHover;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractIntegerDataType;
@@ -39,8 +38,8 @@ public class ScalarValueDecompilerHover extends AbstractScalarOperandHover
 
 	private static final int PRIORITY = 20;
 
-	protected static final String NAME = "Scalar Operand Display";
-	protected static final String DESCRIPTION =
+	private static final String NAME = "Scalar Operand Display";
+	private static final String DESCRIPTION =
 		"Scalars are shown as 1-, 2-, 4-, and 8-byte values, each in decimal, hexadecimal, and " +
 			"as ASCII character sequences.";
 
@@ -49,18 +48,18 @@ public class ScalarValueDecompilerHover extends AbstractScalarOperandHover
 	}
 
 	@Override
-	public void initializeOptions() {
-		options = tool.getOptions(GhidraOptions.CATEGORY_DECOMPILER_POPUPS);
-		options.registerOption(NAME, true, null, DESCRIPTION);
-		setOptions(options, NAME);
-		options.addOptionsChangeListener(this);
+	protected String getName() {
+		return NAME;
 	}
 
 	@Override
-	public void setOptions(Options options, String optionName) {
-		if (optionName.equals(NAME)) {
-			enabled = options.getBoolean(NAME, true);
-		}
+	protected String getDescription() {
+		return DESCRIPTION;
+	}
+
+	@Override
+	protected String getOptionsCategory() {
+		return GhidraOptions.CATEGORY_DECOMPILER_POPUPS;
 	}
 
 	@Override

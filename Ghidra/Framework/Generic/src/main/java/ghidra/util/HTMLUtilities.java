@@ -270,7 +270,7 @@ public class HTMLUtilities {
 	 * @param text the text to check
 	 * @return true if the text cannot be correctly broken into lines
 	 */
-	private static boolean isUnbreakableHTML(String text) {
+	public static boolean isUnbreakableHTML(String text) {
 		if (text.contains(HTML_SPACE) && !text.contains(" ")) {
 			// this can happen if the client has called a method on this class that turns spaces
 			// to the HTML_SPACE

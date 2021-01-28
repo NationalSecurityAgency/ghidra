@@ -517,6 +517,7 @@ model {
 	binaries {
 		all{ b ->
 			if (b.toolChain in Gcc) {
+				b.cppCompiler.args "-std=c++11"
 				b.cppCompiler.args "-Wall"
 				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
 				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line

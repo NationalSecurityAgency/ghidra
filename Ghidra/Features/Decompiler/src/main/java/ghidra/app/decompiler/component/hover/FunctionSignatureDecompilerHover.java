@@ -26,7 +26,6 @@ import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
 import ghidra.app.util.ToolTipUtils;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.AbstractIntegerDataType;
@@ -55,18 +54,18 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 	}
 
 	@Override
-	public void initializeOptions() {
-		options = tool.getOptions(GhidraOptions.CATEGORY_DECOMPILER_POPUPS);
-		options.registerOption(NAME, true, null, DESCRIPTION);
-		setOptions(options, NAME);
-		options.addOptionsChangeListener(this);
+	protected String getName() {
+		return NAME;
 	}
 
 	@Override
-	public void setOptions(Options options, String optionName) {
-		if (optionName.equals(NAME)) {
-			enabled = options.getBoolean(NAME, true);
-		}
+	protected String getDescription() {
+		return DESCRIPTION;
+	}
+
+	@Override
+	protected String getOptionsCategory() {
+		return GhidraOptions.CATEGORY_DECOMPILER_POPUPS;
 	}
 
 	@Override

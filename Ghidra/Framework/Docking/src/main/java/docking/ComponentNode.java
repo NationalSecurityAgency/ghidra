@@ -27,9 +27,9 @@ import org.jdom.Element;
 import docking.help.HelpService;
 import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Node object for managing one or more components. If more that one managed component
@@ -187,14 +187,20 @@ class ComponentNode extends Node {
 		if (getTopLevelNode() == null) {
 			return;   // this node has been disconnected.
 		}
+
 		if (placeholder.isShowing()) {
 			if (top == placeholder) {
 				top = null;
 			}
 			invalidate();
 		}
+
 		WindowNode topLevelNode = getTopLevelNode();
 		topLevelNode.componentRemoved(placeholder);
+		doRemove(placeholder);
+	}
+
+	private void doRemove(ComponentPlaceholder placeholder) {
 		windowPlaceholders.remove(placeholder);
 		placeholder.setNode(null);
 		if (windowPlaceholders.isEmpty()) {
@@ -217,13 +223,10 @@ class ComponentNode extends Node {
 			invalidate();
 			winMgr.scheduleUpdate();
 		}
+
 		placeholder.setProvider(null);
 		if (!keepEmptyPlaceholder) {
-			windowPlaceholders.remove(placeholder);
-			placeholder.setNode(null);
-			if (windowPlaceholders.isEmpty()) {
-				parent.removeNode(this);
-			}
+			doRemove(placeholder);
 		}
 	}
 
@@ -248,7 +251,7 @@ class ComponentNode extends Node {
 
 		if (isDisposed) {
 			throw new AssertException(
-				"Attempted to reuse a component window node");
+				"Attempted to reuse a disposed component window node");
 		}
 
 		if (!invalid) {
@@ -265,6 +268,18 @@ class ComponentNode extends Node {
 		populateActiveComponents(activeComponents);
 		int count = activeComponents.size();
 		if (count == 1) {
+
+			//
+			// TODO Hack Alert!  (When this is removed, also update ComponentPlaceholder)
+			// 
+			ComponentPlaceholder nextTop = activeComponents.get(0);
+			if (nextTop.isDisposed()) {
+				// This should not happen!  We have seen this bug recently
+				Msg.debug(this, "Found disposed component that was not removed from the active " +
+					"list: " + nextTop, ReflectionUtilities.createJavaFilteredThrowable());
+				return null;
+			}
+
 			top = activeComponents.get(0);
 			comp = top.getComponent();
 			comp.setBorder(BorderFactory.createRaisedBevelBorder());
