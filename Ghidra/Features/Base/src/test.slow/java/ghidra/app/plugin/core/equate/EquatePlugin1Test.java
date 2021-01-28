@@ -904,11 +904,11 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 			}
 			else if (name.indexOf("Double") >= 0) {
 				assertTrue(popupPath[1].startsWith("Double"));
-				assertTrue(popupPath[1].endsWith(" 1.112536929253602E-308"));
+				assertTrue(popupPath[1].endsWith(" 1.976262583364986E-323"));
 			}
 			else if (name.indexOf("Float") >= 0) {
 				assertTrue(popupPath[1].startsWith("Float"));
-				assertTrue(popupPath[1].endsWith(" 5.877475E-39"));
+				assertTrue(popupPath[1].endsWith(" 5.605194E-45"));
 			}
 			else {
 				fail("Unhandled Convert item: " + name);
