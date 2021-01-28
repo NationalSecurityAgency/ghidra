@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,7 +121,6 @@ public class CliBlobMarshalSpec extends CliBlob {
 		}
 	}
 
-
 	public enum CliSafeArrayElemType {
 		VT_I2(0x2),
 		VT_I4(0x3),
@@ -177,7 +176,6 @@ public class CliBlobMarshalSpec extends CliBlob {
 		}
 	}
 
-
 	public static class CliSafeArrayElemTypeDataType extends EnumDataType {
 
 		public final static CliNativeTypeDataType dataType = new CliNativeTypeDataType();
@@ -197,19 +195,6 @@ public class CliBlobMarshalSpec extends CliBlob {
 		BinaryReader reader = blob.getContentsReader();
 
 		nativeIntrinsic = CliNativeType.fromInt(reader.readNextByte());
-		if (nativeIntrinsic == CliNativeType.NATIVE_TYPE_ARRAY ||
-			nativeIntrinsic == CliNativeType.NATIVE_TYPE_FIXEDARRAY) {
-			arrayElemType = CliNativeType.fromInt(reader.readNextByte());
-
-			// There is no sentinel other than blob size that indicates whether 0, 1, or 2 compressed unsigned ints follow
-			if (contentsSize > 2) {
-				long origIndex = reader.getPointerIndex();
-				paramNum = decodeCompressedUnsignedInt(reader);
-				paramNumBytes = (int) (reader.getPointerIndex() - origIndex);
-				if (contentsSize > (2 + paramNumBytes)) {
-					origIndex = reader.getPointerIndex();
-					numElem = decodeCompressedUnsignedInt(reader);
-					numElemBytes = (int) (reader.getPointerIndex() - origIndex);
 
 		switch (nativeIntrinsic) {
 			case NATIVE_TYPE_ARRAY:
@@ -257,15 +242,6 @@ public class CliBlobMarshalSpec extends CliBlob {
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(CliNativeTypeDataType.dataType, "NativeIntrinsic", "Type");
-		if (arrayElemType != null) {
-			struct.add(CliNativeTypeDataType.dataType, "ArrayElemTyp", null);
-			if (paramNum != INIT_VALUE) {
-				struct.add(getDataTypeForBytes(paramNumBytes), "ParamNum",
-					"which parameter provides number of elems for this array");
-				if (numElem != INIT_VALUE) {
-					struct.add(getDataTypeForBytes(numElemBytes), "NumElem",
-						"number of elements or additional elements");
 		struct.add(CliNativeTypeDataType.dataType, nativeIntrinsic.name(), "NativeIntrinsic");
 
 		switch (nativeIntrinsic) {
@@ -322,5 +298,4 @@ public class CliBlobMarshalSpec extends CliBlob {
 	public String getRepresentation() {
 		return "Blob (" + getContentsDataType().getDisplayName() + ")";
 	}
-
 }
