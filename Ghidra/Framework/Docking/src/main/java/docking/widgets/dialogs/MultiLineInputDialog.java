@@ -43,6 +43,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 
 		setFocusComponent(inputTextArea);
 
+		setTransient(true);
 		addOKButton();
 		addCancelButton();
 	}

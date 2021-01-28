@@ -1344,7 +1344,7 @@ class StructureEditorModel extends CompEditorModel {
 		String title = "Specify the Structure's Name";
 		InputDialog nameStructureDialog =
 			new InputDialog(title, new String[] { "New Structure's Name: " },
-				new String[] { defaultName }, true, listener);
+				new String[] { defaultName }, listener);
 
 		provider.getPlugin().getTool().showDialog(nameStructureDialog);
 

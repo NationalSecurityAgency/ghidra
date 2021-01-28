@@ -55,10 +55,11 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 
 		super(dialogTitle, true, false, true, false);
 
-		this.addOKButton();
-		this.addCancelButton();
-		this.setRememberSize(false);
-		this.setRememberLocation(false);
+		setTransient(true);
+		addOKButton();
+		addCancelButton();
+		setRememberSize(false);
+		setRememberLocation(false);
 		buildMainPanel(label, optionValues, initialValue, messageIcon);
 
 		setFocusComponent(combo);

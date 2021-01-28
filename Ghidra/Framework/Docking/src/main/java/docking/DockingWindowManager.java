@@ -1766,41 +1766,45 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 	This method seeks to accomplish 2 goals:
 		 		1) find a suitable component over which to center, and
 		 		2) ensure that the chosen component is in the parent hierarchy
-
+		
 		 */
-		Component bestComponent = centeredOnComponent;
-		if (SwingUtilities.isDescendingFrom(parent, bestComponent)) {
-			return bestComponent;
+		if (SwingUtilities.isDescendingFrom(parent, centeredOnComponent)) {
+			return centeredOnComponent;
 		}
 
-		// by default, prefer to center over the active window
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Window activeWindow = kfm.getActiveWindow();
-		bestComponent = activeWindow;
-		if (SwingUtilities.isDescendingFrom(parent, bestComponent)) {
-			return bestComponent;
+		//
+		// By default, prefer to center over the active window
+		//
+		Window activeWindow = getActiveNonTransientWindow();
+		if (SwingUtilities.isDescendingFrom(parent, activeWindow)) {
+			//
+			// Have an active, visible, non-transient window, which may be another dialog. 
+			// We prefer this to be the parent.
+			//
+			return activeWindow;
 		}
 
+		// 
 		// The chosen component is not in the parent's hierarchy.  See if there exists a
 		// non-transient parent window for that component.
-		Window newWindow = getParentWindow(parent);
+		// 
+		Window newWindow = getParentWindow(centeredOnComponent);
 		if (newWindow != null) {
 			// the component is safe to use; the caller of this method will validate the component
 			// we return, updating the parent as needed
-			return bestComponent;
+			return centeredOnComponent;
 		}
 
 		// We were unable to find a suitable parent for the 'best' component.  Just return the
 		// parent as the thing over which to center.
 		return parent;
-
 	}
 
 	private static Window getParentWindow(Component parent) {
 
 		/*
 		 	Note: Which window should be the parent of the dialog when the user does not specify?
-
+		
 		 	Some use cases; a dialog is shown from:
 		 		1) A toolbar action
 		 		2) A component provider's code
@@ -1808,7 +1812,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		4) A background thread
 		 		5) The help window
 		 		6) A modal password dialog appears over the splash screen
-
+		
 		 	It seems like the parent should be the active window for 1-2.
 		 	Case 3 should probably use the window of the dialog provider.
 		 	Case 4 should probably use the main tool frame, since the user may be
@@ -1816,12 +1820,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 	active window, we can default to the tool's frame.
 		 	Case 5 should use the help window.
 		 	Case 6 should use the splash screen as the parent.
-
+		
 		 	We have not yet solidified how we should parent.  This documentation is meant to
 		 	move us towards clarity as we find Use Cases that don't make sense.  (Once we
 		 	finalize our understanding, we should update the javadoc to list exactly where
 		 	the given Dialog Component will be shown.)
-
+		
 		 	Use Case
 		 		A -The user presses an action on a toolbar from a window on screen 1, while the
 		 		   main tool frame is on screen 2.  We want the popup window to appear on screen
@@ -1833,11 +1837,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		 	-modal - Java handles this correctly, allowing the new dialog to be used
 		 		 	-non-modal - Java prevents the non-modal from being editing if not parented
 		 		 	             correctly
-
-
-		 	For now, the easiest mental model to use is to always prefer the active window so
-		 	that a dialog will appear in the user's view.  If we find a case where this is
+		 		D -The user runs a script that shows an input dialog before the non-modal script
+		 		   dialog is shown.  If the non-modal dialog is parented to the modal input dialog,
+		 		   then the script progress dialog appears on top (which we do not want) and the
+		 		   progress dialog goes away when the input dialog is closed.
+		
+		
+		 	For now, the easiest mental model to use is to always prefer the active non-transient
+		 	window so that a dialog will appear in the user's view.  If we find a case where this is
 		 	not desired, then document it here.
+		 	
 		 */
 
 		//
