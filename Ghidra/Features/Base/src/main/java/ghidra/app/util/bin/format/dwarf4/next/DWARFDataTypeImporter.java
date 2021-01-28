@@ -16,20 +16,56 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.DataTypeNamingUtil;
-import ghidra.app.util.bin.format.dwarf4.*;
-import ghidra.app.util.bin.format.dwarf4.encoding.*;
+import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEndianity;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.BitFieldDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataTypeImpl;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.DefaultDataType;
+import ghidra.program.model.data.Dynamic;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.EnumDataType;
+import ghidra.program.model.data.FactoryDataType;
+import ghidra.program.model.data.FunctionDefinitionDataType;
+import ghidra.program.model.data.GenericCallingConvention;
+import ghidra.program.model.data.InvalidDataTypeException;
+import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.data.ParameterDefinitionImpl;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.TypeDef;
+import ghidra.program.model.data.TypedefDataType;
+import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.UnionDataType;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -141,7 +177,13 @@ public class DWARFDataTypeImporter {
 			return result;
 		}
 		DataType alreadyImportedDT = dwarfDTM.getDataType(diea.getOffset(), null);
-		if (alreadyImportedDT != null) {
+		if (alreadyImportedDT != null &&
+			!(alreadyImportedDT instanceof Array &&
+				((Array) alreadyImportedDT).getNumElements() == 1)) {
+			// HACK: don't re-use previously imported single-element 
+			// Ghidra array datatype because they may have actually been an empty array
+			// definition we need the special meta-data flag DWARFDataType.isEmptyArrayType
+			// which is only available in a freshly created DWARFDataType.
 			return new DWARFDataType(alreadyImportedDT, null, diea.getOffset());
 		}
 
