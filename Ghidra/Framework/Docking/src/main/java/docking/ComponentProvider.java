@@ -204,13 +204,18 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	// Default implementation
 	public void requestFocus() {
 
+		JComponent component = getComponent();
+		if (component == null) {
+			return; // this shouldn't happen; this implies we have been disposed
+		}
+
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
+		if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, component)) {
 			return;
 		}
 
-		getComponent().requestFocus();
+		component.requestFocus();
 	}
 
 	/**
