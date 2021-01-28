@@ -71,6 +71,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 	private static ErrorReporter errorReporter;
 
 	private List<ErrorEntry> errors = new ArrayList<>();
+	private String baseTitle;
 
 	public static ErrLogDialog createExceptionDialog(String title, String message, Throwable t) {
 		return new ErrLogDialog(title, message, t);
@@ -78,6 +79,8 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 	private ErrLogDialog(String title, String message, Throwable throwable) {
 		super(title != null ? title : "Error");
+
+		baseTitle = getTitle();
 
 		ErrorEntry error = new ErrorEntry(message, throwable);
 		errors.add(error);
@@ -246,6 +249,11 @@ public class ErrLogDialog extends AbstractErrDialog {
 		return errors.size();
 	}
 
+	@Override
+	String getBaseTitle() {
+		return baseTitle;
+	}
+
 	private class ErrorDetailsSplitPane extends JSplitPane {
 
 		private final double TOP_PREFERRED_RESIZE_WEIGHT = .80;
@@ -323,7 +331,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 			setLayout(new BorderLayout());
 			model = new ErrEntryTableModel();
 			errorsTable = new GTable(model);
-			tableFilterPanel = new GTableFilterPanel<ErrorEntry>(errorsTable, model);
+			tableFilterPanel = new GTableFilterPanel<>(errorsTable, model);
 
 			errorsTable.getSelectionManager().addListSelectionListener(e -> {
 				if (e.getValueIsAdjusting()) {
@@ -458,7 +466,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 		@Override
 		protected TableColumnDescriptor<ErrorEntry> createTableColumnDescriptor() {
-			TableColumnDescriptor<ErrorEntry> descriptor = new TableColumnDescriptor<ErrorEntry>();
+			TableColumnDescriptor<ErrorEntry> descriptor = new TableColumnDescriptor<>();
 			descriptor.addVisibleColumn(new IdColumn(), 1, true);
 			descriptor.addVisibleColumn(new MessageColumn());
 			descriptor.addHiddenColumn(new DetailsColumn());
