@@ -48,8 +48,10 @@ public abstract class AbstractErrDialog extends DialogComponentProvider {
 
 	abstract int getExceptionCount();
 
+	abstract String getBaseTitle();
+
 	void updateTitle() {
-		setTitle(getTitle() + ERRORS_PREFIX + getExceptionCount() + ERRORS_SUFFIX);
+		setTitle(getBaseTitle() + ERRORS_PREFIX + getExceptionCount() + ERRORS_SUFFIX);
 	}
 
 	void setClosedCallback(Callback callback) {

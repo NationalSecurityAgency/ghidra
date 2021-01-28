@@ -66,6 +66,11 @@ public class DockingErrorDisplayTest extends AbstractDockingTest {
 		reportException(display, logger, new NullPointerException("It is null!"));
 		assertExceptionCount(dialog, 2);
 
+		reportException(display, logger, new NullPointerException("It is null!"));
+		assertExceptionCount(dialog, 3);
+
+		assertEquals("Test Title (3 Errors)", dialog.getTitle());
+
 		close(dialog);
 	}
 
