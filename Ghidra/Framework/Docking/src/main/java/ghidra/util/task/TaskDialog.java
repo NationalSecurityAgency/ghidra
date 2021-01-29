@@ -339,15 +339,17 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	@Override
 	public void initialize(long max) {
 
+		monitorComponent.initialize(max);
+
 		if (!supportsProgress) {
 			return;
 		}
 
 		if (!monitorComponent.isShowing()) {
+			// Note: it is not clear why we only wish to show progress if the monitor is not 
+			// visible.  This seems wrong.   If someone knows, please update this code.
 			installProgressMonitor();
 		}
-
-		monitorComponent.initialize(max);
 	}
 
 	@Override
@@ -364,6 +366,17 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	public void setIndeterminate(boolean indeterminate) {
 		supportsProgress = !indeterminate;
 		monitorComponent.setIndeterminate(indeterminate);
+
+		// Assumption: if the client calls this method to show progress, then we should honor 
+		// that request.  If we find that nested monitor usage causes dialogs to incorrectly
+		// toggle monitors, then we need to update those clients to use a wrapping style
+		// monitor that prevents the behavior.
+		if (supportsProgress) {
+			installProgressMonitor();
+		}
+		else {
+			installActivityDisplay();
+		}
 	}
 
 	@Override
