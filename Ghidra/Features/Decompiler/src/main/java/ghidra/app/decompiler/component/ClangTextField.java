@@ -44,7 +44,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 	 *
 	 * @param initialX The original x value passed to the constructor of this class
 	 * @param lineNumberElement he line number element for this field from which we get a width
-	 * @return
+	 * @return the calculated offset
 	 */
 	private static int calculateXPositionWithLineNumberOffset(int initialX,
 			FieldElement lineNumberElement) {
@@ -70,7 +70,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 			FieldElement lineNumberFieldElement, int x, int width, HighlightFactory hlFactory) {
 		super(createSingleLineElement(fieldElements),
 			calculateXPositionWithLineNumberOffset(x, lineNumberFieldElement),
-			calculateWidthFromXPosition(x, lineNumberFieldElement, width), 30, hlFactory);
+			calculateWidthFromXPosition(x, lineNumberFieldElement, width), 30, hlFactory, false);
 		this.tokenList = tokenList;
 		this.lineNumberFieldElement = lineNumberFieldElement;
 	}
@@ -157,8 +157,8 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 	}
 
 	@Override
-	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager selectionMap, RowColLocation cursorLoc, int rowHeight) {
+	public void paint(JComponent c, Graphics g, PaintContext context, Rectangle clip,
+			FieldBackgroundColorManager selectionMap, RowColLocation cursorLoc, int rowHeight) {
 
 		// Don't print line numbers; don't copy line numbers.  We are assuming that the user only
 		// wants to copy code.
