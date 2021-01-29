@@ -26,7 +26,7 @@ import javax.swing.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDHtmlLabel;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
@@ -208,7 +208,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		//       a task dialog for fast background tasks.
 		//		
 		isIndeterminate.set(indeterminate);
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			boolean newValue = isIndeterminate.get();
 			progressBar.setIndeterminate(newValue);
 			progressBar.setStringPainted(!newValue);
@@ -219,7 +219,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	public synchronized void setCancelEnabled(boolean enable) {
 		if (cancelEnabled != enable) {
 			cancelEnabled = enable;
-			SystemUtilities.runSwingLater(updateCancelButtonRunnable);
+			Swing.runLater(updateCancelButtonRunnable);
 		}
 	}
 
@@ -237,7 +237,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 			isCancelled = true;
 		}
 
-		notifyChangeListeners();
+		notifyCancelListeners();
 	}
 
 	@Override
@@ -286,7 +286,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	public synchronized void showProgress(boolean show) {
 		if (show != showingProgress) {
 			showingProgress = show;
-			SystemUtilities.runSwingLater(updateProgressPanelRunnable);
+			Swing.runLater(updateProgressPanelRunnable);
 		}
 	}
 
@@ -298,7 +298,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	 */
 	public void setTaskName(String name) {
 		taskName = name;
-		SystemUtilities.runSwingLater(updateToolTipRunnable);
+		Swing.runLater(updateToolTipRunnable);
 	}
 
 	/**
@@ -342,16 +342,16 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 			showingIcon = visible;
 		};
 
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 	}
 
-	protected void notifyChangeListeners() {
+	protected void notifyCancelListeners() {
 		Runnable r = () -> {
 			for (CancelledListener mcl : listeners) {
 				mcl.cancelled();
 			}
 		};
-		SwingUtilities.invokeLater(r);
+		Swing.runLater(r);
 	}
 
 	private synchronized void startUpdateTimer() {
@@ -493,7 +493,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 		cancelButton.setName("CANCEL_TASK");
 		cancelButton.setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
-		cancelButton.addActionListener(e -> SwingUtilities.invokeLater(shouldCancelRunnable));
+		cancelButton.addActionListener(e -> Swing.runLater(shouldCancelRunnable));
 		cancelButton.setFocusable(false);
 		cancelButton.setRolloverEnabled(true);
 

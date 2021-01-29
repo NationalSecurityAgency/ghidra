@@ -55,13 +55,47 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	public final static int DEFAULT_WIDTH = 275;
 
+	/*
+	 * Note: all paths of finishing should end up calling this runnable.
+	 * 
+	 * Workflow:
+	 * 
+	 * Dialog Close Button Pressed:
+	 * 	-calls cancelCallback()
+	 *  -calls verifyCancel runnable
+	 *  -calls iternalCancel()
+	 *  -triggers taskProcessed()
+	 *  -calls closeDialog runnable
+	 *  
+	 * Cancel Button Pressed:
+	 * 	-(same as Dialog Close Button Pressed)
+	 * 
+	 * Task Monitor Stop Button Pressed:
+	 *  -triggers taskProcessed()
+	 *  -calls closeDialog runnable
+	 *  
+	 * Public API dispose() is Called:
+	 *  -calls iternalCancel()
+	 *  -triggers taskProcessed()
+	 *  -calls closeDialog runnable
+	 *  
+	 * Task Monitor Cancelled by API:
+	 *  -triggers taskProcessed()
+	 *  -calls closeDialog runnable
+	 *  
+	 * Task Finishes Normally:
+	 *  -triggers taskProcessed()
+	 *  -calls closeDialog runnable
+	 * 
+	 * 
+	 */
 	private Runnable closeDialog = () -> {
 		close();
-		dispose();
+		cleanup();
 	};
 	private Runnable verifyCancel = () -> {
 		if (promptToVerifyCancel()) {
-			cancel();
+			internalCancel();
 		}
 	};
 
@@ -196,6 +230,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	@Override
 	protected void cancelCallback() {
+		// note: this is called from the cancel button and when the dialog close button is pressed
 		Swing.runLater(verifyCancel);
 	}
 
@@ -211,11 +246,10 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	/**
-	 * Called after the task has been executed
+	 * Called after the task has been executed or when the task is cancelled
 	 */
 	public void taskProcessed() {
 		finished.countDown();
-		monitorComponent.notifyChangeListeners();
 		Swing.runLater(closeDialog);
 	}
 
@@ -305,8 +339,14 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		}
 	}
 
+	/**
+	 * Cancels the task and closes this dialog
+	 */
 	public void dispose() {
-		cancel();
+		internalCancel();
+	}
+
+	private void cleanup() {
 		showTimer.cancel();
 		messageUpdater.dispose();
 	}
@@ -339,17 +379,21 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	@Override
 	public void initialize(long max) {
 
-		monitorComponent.initialize(max);
-
-		if (!supportsProgress) {
+		if (max <= 0) {
 			return;
 		}
 
-		if (!monitorComponent.isShowing()) {
-			// Note: it is not clear why we only wish to show progress if the monitor is not 
-			// visible.  This seems wrong.   If someone knows, please update this code.
-			installProgressMonitor();
+		monitorComponent.initialize(max);
+		if (!supportsProgress) {
+			supportsProgress = true;
+			setIndeterminate(false);
 		}
+
+		// Note: it is not clear why we only wish to show progress if the monitor is not 
+		// visible.  This seems wrong.   If someone knows, please update this code.
+		//if (!monitorComponent.isShowing()) {
+		installProgressMonitor();
+		//}
 	}
 
 	@Override
@@ -391,11 +435,15 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	@Override
 	public synchronized void cancel() {
+		internalCancel();
+	}
+
+	private void internalCancel() {
 		if (monitorComponent.isCancelled()) {
 			return;
 		}
-		// Mark as cancelled, must be detected by task which should terminate
-		// and invoke setCompleted which will dismiss dialog.
+
+		// mark as cancelled; the task will terminate and the callback will dismiss this dialog
 		monitorComponent.cancel();
 	}
 

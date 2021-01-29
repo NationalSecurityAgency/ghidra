@@ -68,8 +68,14 @@ public class WrappingTaskMonitor implements TaskMonitor {
 			delegate.removeCancelledListener(l);
 		}
 
-		newDelegate.setIndeterminate(delegate.isIndeterminate());
-		newDelegate.initialize(delegate.getMaximum());
+		if (delegate.isIndeterminate()) {
+			newDelegate.setIndeterminate(true);
+		}
+		else {
+			newDelegate.setIndeterminate(false);
+			newDelegate.initialize(delegate.getMaximum());
+		}
+
 		newDelegate.setProgress(delegate.getProgress());
 		newDelegate.setMessage(delegate.getMessage());
 		newDelegate.setCancelEnabled(delegate.isCancelEnabled());

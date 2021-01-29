@@ -1446,7 +1446,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param centeredOnComponent the component on which to center the dialog.
 	 */
 	public void showDialog(DialogComponentProvider dialogComponent, Component centeredOnComponent) {
-		DockingWindowManager.showDialog(getToolFrame(), dialogComponent, centeredOnComponent);
+		DockingWindowManager.showDialog(centeredOnComponent, dialogComponent);
 	}
 
 	public Window getActiveWindow() {
