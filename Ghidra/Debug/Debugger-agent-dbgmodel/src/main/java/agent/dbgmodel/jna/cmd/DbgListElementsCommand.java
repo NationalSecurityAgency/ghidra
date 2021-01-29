@@ -19,14 +19,13 @@ import java.util.*;
 
 import agent.dbgeng.manager.cmd.AbstractDbgCommand;
 import agent.dbgeng.manager.cmd.DbgPendingCommand;
-import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.gadp.impl.WrappedDbgModel;
 import agent.dbgmodel.manager.DbgManager2Impl;
-import agent.dbgmodel.model.impl.DbgModel2TargetObjectImpl;
-import agent.dbgmodel.model.impl.DelegateDbgModel2TargetObject;
+import agent.dbgmodel.model.impl.*;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.util.PathUtils;
 
 public class DbgListElementsCommand extends AbstractDbgCommand<List<TargetObject>> {
 
@@ -51,23 +50,27 @@ public class DbgListElementsCommand extends AbstractDbgCommand<List<TargetObject
 
 	@Override
 	public void invoke() {
-		updatedElements = new ArrayList<>();
-		List<ModelObject> list = access.getElements(path);
-		Map<String, ? extends TargetObjectRef> existingElements = targetObject.getCachedElements();
-		for (ModelObject obj : list) {
-			DbgModelTargetObject proxyElement;
-			if (existingElements.containsKey(obj.getSearchKey())) {
-				proxyElement = (DbgModelTargetObject) existingElements.get(obj.getSearchKey());
-				DelegateDbgModel2TargetObject delegate =
-					DelegateDbgModel2TargetObject.getDelegate(proxyElement);
-				delegate.setModelObject(obj);
+		synchronized (access) {
+			updatedElements = new ArrayList<>();
+			List<ModelObject> list = access.getElements(path);
+			Map<String, ? extends TargetObjectRef> existingElements =
+				targetObject.getCachedElements();
+
+			for (ModelObject obj : list) {
+				DbgModel2TargetProxy proxyElement;
+				String searchKey = obj.getSearchKey();
+				String elKey = PathUtils.makeKey(searchKey);
+				if (existingElements.containsKey(searchKey)) {
+					proxyElement = (DbgModel2TargetProxy) existingElements.get(searchKey);
+					DelegateDbgModel2TargetObject delegate = proxyElement.getDelegate();
+					delegate.setModelObject(obj);
+				}
+				else {
+					proxyElement = (DbgModel2TargetProxy) DelegateDbgModel2TargetObject
+							.makeProxy(targetObject.getModel(), targetObject, elKey, obj);
+				}
+				updatedElements.add(proxyElement);
 			}
-			else {
-				String elKey = DbgModel2TargetObjectImpl.keyObject(obj);
-				proxyElement = DelegateDbgModel2TargetObject.makeProxy(targetObject.getModel(),
-					targetObject, elKey, obj);
-			}
-			updatedElements.add(proxyElement);
 		}
 	}
 }

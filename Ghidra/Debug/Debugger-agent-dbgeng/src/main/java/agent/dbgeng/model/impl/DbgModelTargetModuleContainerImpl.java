@@ -77,6 +77,9 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	@Override
 	@Internal
 	public void libraryUnloaded(String name) {
+		if (!modulesByName.containsKey(name)) {
+			return;
+		}
 		modulesByName.get(name).thenAccept(mod -> {
 			getListeners().fire(TargetEventScopeListener.class)
 					.event(this, null, TargetEventType.MODULE_UNLOADED,

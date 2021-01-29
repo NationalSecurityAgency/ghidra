@@ -27,7 +27,6 @@ import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.framework.Application;
 import ghidra.program.model.address.*;
 
 public class DbgModel2Impl extends AbstractDbgModel {

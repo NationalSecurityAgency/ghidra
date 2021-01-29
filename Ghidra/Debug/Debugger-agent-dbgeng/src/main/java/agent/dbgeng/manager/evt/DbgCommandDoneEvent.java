@@ -15,12 +15,15 @@
  */
 package agent.dbgeng.manager.evt;
 
+import agent.dbgeng.manager.DbgCommand;
 import agent.dbgeng.manager.DbgState;
 
 /**
  * The event corresponding with "{@code ^done}"
  */
 public class DbgCommandDoneEvent extends AbstractDbgCompletedCommandEvent {
+
+	private DbgCommand<?> cmd;
 
 	/**
 	 * Construct a new event, parsing the tail for information
@@ -29,13 +32,18 @@ public class DbgCommandDoneEvent extends AbstractDbgCompletedCommandEvent {
 		super();
 	}
 
-	public DbgCommandDoneEvent(String info) {
-		super(info);
+	public DbgCommandDoneEvent(DbgCommand<?> cmd) {
+		super(cmd.toString());
+		this.cmd = cmd;
 	}
 
 	@Override
 	public DbgState newState() {
 		return DbgState.STOPPED;
+	}
+
+	public DbgCommand<?> getCmd() {
+		return cmd;
 	}
 
 }

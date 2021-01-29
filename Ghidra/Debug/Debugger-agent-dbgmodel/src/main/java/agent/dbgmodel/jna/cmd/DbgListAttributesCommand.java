@@ -23,8 +23,7 @@ import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.gadp.impl.WrappedDbgModel;
 import agent.dbgmodel.manager.DbgManager2Impl;
-import agent.dbgmodel.model.impl.DbgModel2TargetObjectImpl;
-import agent.dbgmodel.model.impl.DelegateDbgModel2TargetObject;
+import agent.dbgmodel.model.impl.*;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 
 public class DbgListAttributesCommand extends AbstractDbgCommand<Map<String, ?>> {
@@ -54,20 +53,19 @@ public class DbgListAttributesCommand extends AbstractDbgCommand<Map<String, ?>>
 		Map<String, ModelObject> map = access.getAttributes(path);
 		Map<String, ?> existingAttributes = targetObject.getCachedAttributes();
 		for (String key : map.keySet()) {
-			DbgModelTargetObject proxyAttribute;
+			DbgModel2TargetProxy proxyAttribute;
 			ModelObject obj = map.get(key);
-			Object object = existingAttributes.get(key);
+			String atKey = obj.getSearchKey();
+			Object object = existingAttributes.get(atKey);
 			if (object != null && (object instanceof DbgModelTargetObject)) {
-				proxyAttribute = (DbgModelTargetObject) object;
-				DelegateDbgModel2TargetObject delegate =
-					DelegateDbgModel2TargetObject.getDelegate(proxyAttribute);
+				proxyAttribute = (DbgModel2TargetProxy) object;
+				DelegateDbgModel2TargetObject delegate = proxyAttribute.getDelegate();
 				delegate.setModelObject(obj);
 				updatedAttributes.put(key, proxyAttribute);
 			}
 			else {
-				String atKey = obj.getSearchKey();
-				proxyAttribute = DelegateDbgModel2TargetObject.makeProxy(targetObject.getModel(),
-					targetObject, atKey, obj);
+				proxyAttribute = (DbgModel2TargetProxy) DelegateDbgModel2TargetObject
+						.makeProxy(targetObject.getModel(), targetObject, atKey, obj);
 				updatedAttributes.put(key, proxyAttribute);
 			}
 		}

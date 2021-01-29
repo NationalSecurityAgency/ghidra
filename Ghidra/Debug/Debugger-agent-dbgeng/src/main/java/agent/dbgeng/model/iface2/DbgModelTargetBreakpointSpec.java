@@ -108,6 +108,7 @@ public interface DbgModelTargetBreakpointSpec extends //
 				}
 				map.put(AFFECTS_ATTRIBUTE_NAME, doGetAffects());
 				map.put(SPEC_ATTRIBUTE_NAME, this);
+				map.put(EXPRESSION_ATTRIBUTE_NAME, addstr);
 				map.put(KINDS_ATTRIBUTE_NAME, getKinds());
 				map.put(BPT_INDEX_ATTRIBUTE_NAME, Long.decode(idstr));
 				map.put(ENABLED_ATTRIBUTE_NAME, enstr.equals("-1"));

@@ -17,7 +17,6 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute name="_supported_attach_kinds" schema="SET_ATTACH_KIND" required="yes" hidden="yes" />
         <attribute name="_event_process" schema="STRING" hidden="yes" />
         <attribute name="_event_thread" schema="STRING" hidden="yes" />
         <attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" hidden="yes" />
@@ -29,7 +28,7 @@
         <attribute name="Settings" schema="OBJECT" />
 		<attribute name="State" schema="OBJECT" />
 		<attribute name="Utility" schema="OBJECT" />
-   <attribute schema="VOID" />
+        <attribute schema="VOID" />
     </schema>
     <schema name="SessionContainer" canonical="yes">
         <element schema="Session" />
@@ -41,7 +40,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="ConnectorContainer" canonical="yes">
         <element schema="OBJECT" />
@@ -135,7 +134,7 @@
         <interface name="Interruptible" />
         <interface name="Resumable" />
         <element schema="VOID" />
-        <attribute name="_accessible" schema="BOOL" required="yes" hidden="yes" />
+        <attribute name="_accessible" schema="BOOL" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
@@ -154,7 +153,7 @@
     <schema name="Available">
         <interface name="Attachable" />
         <element schema="VOID" />
-        <attribute name="_pid" schema="LONG" hidden="yes" />
+        <attribute name="_pid" schema="INT" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
@@ -182,7 +181,7 @@
         <attribute name="_order" schema="INT" hidden="yes" />
         <attribute name="Machine" schema="SessionAttributesMachine" fixed="yes" />
 		<attribute name="Target" schema="OBJECT" />
-		<attribute schema="VOID" />
+		<attribute schema="ANY" />
     </schema>
     <schema name="ProcessContainer" canonical="yes">
         <interface name="EventScope" />
@@ -197,7 +196,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="SessionAttributesMachine">
         <element schema="VOID" />
@@ -213,7 +212,7 @@
         <attribute name="Debugger" schema="STRING" />
         <attribute name="OS" schema="STRING" />
         <attribute name="Mode" schema="STRING" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="Process">
         <interface name="Aggregate" />
@@ -242,7 +241,6 @@
         <attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
         <attribute name="_accessible" schema="BOOL" required="yes" hidden="yes" />
         <attribute name="_supported_attach_kinds" schema="SET_ATTACH_KIND" required="yes" hidden="yes" />
-        <attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" fixed="yes" hidden="yes" />
         <attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
         <attribute name="Debug" schema="DebugContainer" required="yes" fixed="yes" />
         <attribute name="Memory" schema="Memory" required="yes" fixed="yes" />
@@ -253,8 +251,8 @@
 		<attribute name="Handle" schema="OBJECT" />
 		<attribute name="Id" schema="OBJECT" />
 		<attribute name="Io" schema="OBJECT" />
-		<attribute name="Name" schema="STRING" />
-        <attribute schema="VOID" />
+		<attribute name="Name" schema="OBJECT" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="Memory" canonical="yes">
         <interface name="Memory" />
@@ -267,7 +265,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="ModuleContainer" canonical="yes">
         <interface name="ModuleContainer" />
@@ -284,7 +282,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="DebugContainer" canonical="yes">
         <element schema="OBJECT" />
@@ -297,7 +295,7 @@
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
         <attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="ThreadContainer" canonical="yes">
         <interface name="EventScope" />
@@ -312,7 +310,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="MemoryRegion">
         <interface name="MemoryRegion" />
@@ -360,11 +358,11 @@
         <attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
         <attribute name="Registers" schema="RegisterContainer" required="yes" fixed="yes" />
         <attribute name="Stack" schema="Stack" required="yes" fixed="yes" />
-		<attribute name="Environment" schema="OBJECT" />
+ 		<attribute name="Environment" schema="OBJECT" />
 		<attribute name="Id" schema="OBJECT" />
-		<attribute name="Name" schema="STRING" />
-       <attribute name="_arch" schema="STRING" />
-        <attribute schema="VOID" />
+		<attribute name="Name" schema="OBJECT" />
+        <attribute name="_arch" schema="STRING" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="Module">
         <interface name="Module" />
@@ -379,12 +377,13 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute name="Symbols" schema="SymbolContainer" required="yes" fixed="yes" />
-        <attribute name="BaseAddress" schema="ADDRESS" />
-        <attribute name="ImageName" schema="STRING" />
-        <attribute name="TimeStamp" schema="INT" />
-        <attribute name="Len" schema="STRING" />
-        <attribute schema="VOID" />
+        <attribute name="BaseAddress" schema="OBJECT" />
+        <attribute name="ImageName" schema="OBJECT" />
+        <attribute name="TimeStamp" schema="OBJECT" />
+        <attribute name="Len" schema="OBJECT" />
+        <attribute name="Name" schema="OBJECT" />
+        <attribute name="Size" schema="OBJECT" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="BreakpointContainer" canonical="yes">
         <interface name="BreakpointContainer" />
@@ -398,7 +397,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="SymbolContainer" canonical="yes">
         <interface name="SymbolNamespace" />
@@ -411,7 +410,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="RegisterContainer" canonical="yes">
         <interface name="RegisterContainer" />
@@ -430,7 +429,7 @@
 		<attribute name="SIMD" schema="OBJECT" />
 		<attribute name="User" schema="RegisterBank" />
 		<attribute name="VFP" schema="OBJECT" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="RegisterBank">
         <interface name="RegisterBank" />
@@ -447,6 +446,19 @@
         <attribute schema="OBJECT" />
     </schema>
     <schema name="Stack" canonical="yes">
+        <element schema="VOID" />
+        <attribute name="_modified" schema="BOOL" hidden="yes" />
+        <attribute name="_display" schema="STRING" hidden="yes" />
+        <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
+        <attribute name="_short_display" schema="STRING" hidden="yes" />
+        <attribute name="_value" schema="ANY" hidden="yes" />
+        <attribute name="_type" schema="STRING" hidden="yes" />
+        <attribute name="_order" schema="INT" hidden="yes" />
+        <attribute name="Frames" schema="Frames" />
+        <attribute schema="ANY" />
+    </schema>
+    <schema name="Frames" canonical="yes">
         <interface name="Stack" />
         <element schema="StackFrame" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
@@ -457,7 +469,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="BreakpointSpec" canonical="yes">
         <interface name="BreakpointSpec" />
@@ -480,10 +492,10 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute name="Type" schema="STRING" />
-        <attribute name="Disposition" schema="STRING" />
-        <attribute name="Pending" schema="STRING" />
-        <attribute name="Times" schema="INT" />
+        <attribute name="Type" schema="OBJECT" />
+        <attribute name="Disposition" schema="OBJECT" />
+        <attribute name="Pending" schema="OBJECT" />
+        <attribute name="Times" schema="OBJECT" />
         <attribute schema="VOID" />
     </schema>
     <schema name="StackFrame">
@@ -499,11 +511,11 @@
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
         <attribute name="Attributes" schema="StackFrameAttributes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="StackFrameAttributes">
         <element schema="VOID" />
-        <attribute name="_pc" schema="ADDRESS" required="yes" hidden="yes" />
+        <attribute name="_pc" schema="ADDRESS" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
@@ -512,14 +524,14 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="FrameNumber" schema="STRING" />
-		<attribute name="FrameOffset" schema="STRING" />
-		<attribute name="FuncTableEntry" schema="STRING" />
-		<attribute name="InstructionOffset" schema="STRING" />
-		<attribute name="ReturnOffset" schema="STRING" />
-		<attribute name="StackOffset" schema="STRING" />
-		<attribute name="Virtual" schema="STRING" />
-        <attribute schema="VOID" />
+		<attribute name="FrameNumber" schema="OBJECT" />
+		<attribute name="FrameOffset" schema="OBJECT" />
+		<attribute name="FuncTableEntry" schema="OBJECT" />
+		<attribute name="InstructionOffset" schema="OBJECT" />
+		<attribute name="ReturnOffset" schema="OBJECT" />
+		<attribute name="StackOffset" schema="OBJECT" />
+		<attribute name="Virtual" schema="OBJECT" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="Symbol">
         <interface name="Symbol" />

@@ -21,7 +21,6 @@ import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugSystemObjects;
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.DbgProcess;
-import agent.dbgeng.manager.cmd.DbgProcessSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.*;
 import ghidra.dbg.target.TargetAggregate;
@@ -77,6 +76,6 @@ public interface DbgModelTargetProcess extends //
 		if (process == null) {
 			process = manager.getEventProcess();
 		}
-		return manager.execute(new DbgProcessSelectCommand(manager, process));
+		return manager.selectProcess(process);
 	}
 }

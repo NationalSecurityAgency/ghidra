@@ -27,8 +27,8 @@ import agent.dbgmodel.dbgmodel.UnknownEx;
 import agent.dbgmodel.dbgmodel.datamodel.DataModelManager1;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostContext;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostType1;
-import agent.dbgmodel.jna.dbgmodel.IUnknownEx;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.*;
+import agent.dbgmodel.jna.dbgmodel.IUnknownEx;
 import agent.dbgmodel.jna.dbgmodel.main.IModelObject;
 
 /**
@@ -129,6 +129,8 @@ public interface ModelObject extends UnknownEx {
 	void switchTo(DataModelManager1 manager, VARIANT v);
 
 	ModelMethod getMethod(String name);
+
+	String getOriginalKey();
 
 	String getSearchKey();
 

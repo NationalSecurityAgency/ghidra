@@ -82,7 +82,7 @@ public class HDMAUtil {
 	public Map<String, ModelObject> getAttributes(List<String> path) {
 		ModelObject target = getTerminalModelObject(path);
 		if (target == null) {
-			System.err.println("(A) Null target for path=" + path);
+			//System.err.println("(A) Null target for path=" + path);
 			return new HashMap<String, ModelObject>();
 		}
 		ModelObjectKind kind = target.getKind();
@@ -102,7 +102,7 @@ public class HDMAUtil {
 	public List<ModelObject> getElements(List<String> path) {
 		ModelObject target = getTerminalModelObject(path);
 		if (target == null) {
-			System.err.println("(C) Null target for path=" + path);
+			//System.err.println("(C) Null target for path=" + path);
 			return new ArrayList<ModelObject>();
 		}
 		ModelObjectKind kind = target.getKind();
@@ -127,9 +127,11 @@ public class HDMAUtil {
 	public ModelObject getTerminalModelObject(List<String> path) {
 		//System.err.println(path);
 		ModelObject target = getRootNamespace();
+		boolean found;
 		for (String str : path) {
 			//System.err.println(":" + str);
 			String indexStr = null;
+			found = false;
 			if (str.endsWith(")")) {
 				target = evaluatePredicate(target, str);
 				if (target.getKind().equals(ModelObjectKind.OBJECT_ERROR)) {
@@ -143,11 +145,13 @@ public class HDMAUtil {
 			Map<String, ModelObject> keyMap = target.getKeyValueMap();
 			if (keyMap.containsKey(str)) {
 				target = keyMap.get(str);
+				found = true;
 			}
 			else {
 				Map<String, ModelObject> rawMap = target.getRawValueMap();
 				if (rawMap.containsKey(str)) {
 					target = rawMap.get(str);
+					found = true;
 				}
 			}
 			if (indexStr != null) {
@@ -155,8 +159,12 @@ public class HDMAUtil {
 				for (ModelObject child : children) {
 					if (indexStr.equals(child.getSearchKey())) {
 						target = child;
+						found = true;
 					}
 				}
+			}
+			if (found == false) {
+				return null;
 			}
 		}
 		return target;

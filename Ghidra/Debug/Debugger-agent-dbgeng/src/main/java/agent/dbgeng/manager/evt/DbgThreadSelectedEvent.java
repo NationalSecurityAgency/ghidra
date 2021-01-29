@@ -17,6 +17,7 @@ package agent.dbgeng.manager.evt;
 
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgStackFrameImpl;
 import agent.dbgeng.manager.impl.DbgThreadImpl;
 
@@ -26,7 +27,7 @@ import agent.dbgeng.manager.impl.DbgThreadImpl;
 public class DbgThreadSelectedEvent extends AbstractDbgEvent<DebugThreadId> {
 	private final DebugThreadId id;
 	private DbgState state;
-	private DbgThreadImpl thread;
+	private DbgThread thread;
 	private DbgStackFrameImpl frame;
 
 	/**
@@ -35,7 +36,7 @@ public class DbgThreadSelectedEvent extends AbstractDbgEvent<DebugThreadId> {
 	 * @param frame
 	 * @param id dbgeng-provided id
 	 */
-	public DbgThreadSelectedEvent(DbgState state, DbgThreadImpl thread, DbgStackFrameImpl frame) {
+	public DbgThreadSelectedEvent(DbgState state, DbgThread thread, DbgStackFrameImpl frame) {
 		super(thread.getId());
 		this.id = thread.getId();
 		this.state = state;
@@ -57,7 +58,7 @@ public class DbgThreadSelectedEvent extends AbstractDbgEvent<DebugThreadId> {
 	}
 
 	public DbgThreadImpl getThread() {
-		return thread;
+		return (DbgThreadImpl) thread;
 	}
 
 	public DbgStackFrameImpl getFrame() {

@@ -24,10 +24,10 @@ import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.util.ConversionUtils;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
 public interface DbgModelTargetRegisterBank
@@ -40,7 +40,7 @@ public interface DbgModelTargetRegisterBank
 			Collection<String> names) {
 		DbgManagerImpl manager = getManager();
 		if (manager.isWaiting()) {
-			throw new DebuggerModelAccessException(
+			Msg.warn(this,
 				"Cannot process command readRegistersNamed while engine is waiting for events");
 		}
 

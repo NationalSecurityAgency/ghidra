@@ -93,31 +93,26 @@ public class ObjectTree implements ObjectPane {
 					}
 				}
 				provider.getTool().contextChanged(provider);
-				if (e.getEventOrigin() != EventOrigin.INTERNAL_GENERATED) {
-					currentExpandedPaths = tree.getExpandedPaths();
-					if (e.getEventOrigin() == EventOrigin.USER_GENERATED) {
-						currentSelectionPaths = tree.getSelectionPaths();
-						currentViewPosition = tree.getViewPosition();
-					}
-					else {
-						TreePath[] selectionPaths = tree.getSelectionPaths();
-						if (currentSelectionPaths != null && currentSelectionPaths.length > 0) {
-							if (selectionPaths != null && selectionPaths.length > 0) {
-								TreePath currentPath = currentSelectionPaths[0];
-								TreePath selectedPath = selectionPaths[0];
-								// NB. isDescendant == has a descendent
-								if (currentPath.isDescendant(selectedPath)) {
-									currentSelectionPaths = selectionPaths;
-									currentViewPosition = tree.getViewPosition();
-								}
-								else if (!selectedPath.isDescendant(currentPath)) {
-									currentSelectionPaths = selectionPaths;
-									currentViewPosition = tree.getViewPosition();
-								}
+				if (e.getEventOrigin() == EventOrigin.INTERNAL_GENERATED) {
+					restoreTreeStateManager.updateLater();
+					return;
+				}
+				TreePath[] selectionPaths = tree.getSelectionPaths();
+				if (e.getEventOrigin() == EventOrigin.API_GENERATED) {
+					if (currentSelectionPaths != null && currentSelectionPaths.length > 0) {
+						if (selectionPaths != null && selectionPaths.length > 0) {
+							TreePath currentPath = currentSelectionPaths[0];
+							TreePath selectedPath = selectionPaths[0];
+							// NB. isDescendant == has a descendent
+							if (selectedPath.isDescendant(currentPath)) {
+								return;
 							}
 						}
 					}
 				}
+				currentSelectionPaths = selectionPaths;
+				currentExpandedPaths = tree.getExpandedPaths();
+				currentViewPosition = tree.getViewPosition();
 				restoreTreeStateManager.updateLater();
 			}
 		});
@@ -137,23 +132,27 @@ public class ObjectTree implements ObjectPane {
 
 			@Override
 			public void treeExpanded(TreeExpansionEvent event) {
-				currentExpandedPaths = tree.getExpandedPaths();
 				TreePath expandedPath = event.getPath();
 				Object last = expandedPath.getLastPathComponent();
 				if (last instanceof ObjectNode) {
 					ObjectNode node = (ObjectNode) last;
-					node.markExpanded();
+					if (!node.isExpanded()) {
+						//currentExpandedPaths = tree.getExpandedPaths();
+						node.markExpanded();
+					}
 				}
 			}
 
 			@Override
 			public void treeCollapsed(TreeExpansionEvent event) {
-				currentExpandedPaths = tree.getExpandedPaths();
 				TreePath collapsedPath = event.getPath();
 				Object last = collapsedPath.getLastPathComponent();
 				if (last instanceof ObjectNode) {
 					ObjectNode node = (ObjectNode) last;
-					node.markCollapsed();
+					if (node.isExpanded()) {
+						//currentExpandedPaths = tree.getExpandedPaths();
+						node.markCollapsed();
+					}
 				}
 			}
 		});
@@ -406,6 +405,9 @@ public class ObjectTree implements ObjectPane {
 	protected void navigateToSelectedObject() {
 		if (listingService != null) {
 			TargetObject selectedObject = getSelectedObject();
+			if (selectedObject == null) {
+				return;
+			}
 			Object value = selectedObject.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
 			Address addr = null;
 			if (value instanceof Address) {

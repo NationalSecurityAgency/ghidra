@@ -216,6 +216,9 @@ public class ObjectContainer implements Comparable {
 		synchronized (elementMap) {
 			for (ObjectContainer child : currentChildren) {
 				String name = child.getName();
+				if (name.startsWith("[")) {
+					name = name.substring(1, name.length() - 1);
+				}
 				if (elementsRemoved.contains(name) && !elementsAdded.containsKey(name)) {
 					elementMap.remove(name);
 					structureChanged = true;
@@ -387,6 +390,7 @@ public class ObjectContainer implements Comparable {
 	public void setTargetObject(TargetObject rootObject) {
 		this.targetObject = rootObject;
 		this.targetObjectRef = rootObject;
+		rebuildContainers(rootObject.getCachedElements(), rootObject.getCachedAttributes());
 		if (provider != null) {
 			provider.addTargetToMap(this);
 			provider.update(this);

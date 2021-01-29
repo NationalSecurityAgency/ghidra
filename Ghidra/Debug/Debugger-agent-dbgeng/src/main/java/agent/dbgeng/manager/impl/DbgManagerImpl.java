@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.sequence;
+import static ghidra.async.AsyncUtils.*;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -40,9 +40,11 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.evt.*;
+import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import ghidra.async.*;
+import ghidra.async.seq.AsyncSequenceHandlerForRunner;
 import ghidra.comm.util.BitmaskSet;
-import ghidra.dbg.error.DebuggerModelAccessException;
+import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
@@ -99,6 +101,12 @@ public class DbgManagerImpl implements DbgManager {
 		new ListenerSet<>(DbgEventsListener.class);
 
 	private DebugEventInformation lastEventInformation;
+	private DbgSession currentSession;
+	private DbgProcess currentProcess;
+	private DbgThread currentThread;
+	private DbgSession eventSession;
+	private DbgProcess eventProcess;
+	private DbgThread eventThread;
 	private volatile boolean waiting = false;
 	private boolean kernelMode = false;
 
@@ -411,26 +419,42 @@ public class DbgManagerImpl implements DbgManager {
 		assert cmd != null;
 		checkStarted();
 		DbgPendingCommand<T> pcmd = new DbgPendingCommand<>(cmd);
-		if (isWaiting()) {
-			throw new DebuggerModelAccessException(
-				"Cannot process command " + cmd.toString() + " while engine is waiting for events");
+		//if (isWaiting()) {
+		//	throw new DebuggerModelAccessException(
+		//		"Cannot process command " + cmd.toString() + " while engine is waiting for events");
+		//}
+
+		if (engThread.isCurrentThread()) {
+			sequence(TypeSpec.VOID).then((seq) -> {
+				addCommand(cmd, pcmd, seq);
+				seq.exit();
+			}).finish().exceptionally((exc) -> {
+				pcmd.completeExceptionally(exc);
+				return null;
+			});
 		}
-		sequence(TypeSpec.VOID).then(engThread, (seq) -> {
-			synchronized (this) {
-				if (!cmd.validInState(state.get())) {
-					throw new DbgCommandError(
-						"Command " + cmd + " is not valid while " + state.get());
-				}
-				activeCmds.add(pcmd);
-			}
-			cmd.invoke();
-			processEvent(new DbgCommandDoneEvent(cmd.toString()));
-			seq.exit();
-		}).finish().exceptionally((exc) -> {
-			pcmd.completeExceptionally(exc);
-			return null;
-		});
+		else {
+			sequence(TypeSpec.VOID).then(engThread, (seq) -> {
+				addCommand(cmd, pcmd, seq);
+				seq.exit();
+			}).finish().exceptionally((exc) -> {
+				pcmd.completeExceptionally(exc);
+				return null;
+			});
+		}
 		return pcmd;
+	}
+
+	private <T> void addCommand(DbgCommand<? extends T> cmd, DbgPendingCommand<T> pcmd,
+			AsyncSequenceHandlerForRunner<Void> seq) {
+		synchronized (this) {
+			if (!cmd.validInState(state.get())) {
+				throw new DbgCommandError("Command " + cmd + " is not valid while " + state.get());
+			}
+			activeCmds.add(pcmd);
+		}
+		cmd.invoke();
+		processEvent(new DbgCommandDoneEvent(cmd));
 	}
 
 	/*@Override
@@ -586,9 +610,13 @@ public class DbgManagerImpl implements DbgManager {
 		lastEventInformation = control.getLastEventInformation();
 		lastEventInformation.setSession(esid);
 		lastEventInformation.setExecutingProcessorType(execType);
-		DbgThreadImpl eventThread = threads.get(etid);
+		currentSession = eventSession = getSessionComputeIfAbsent(esid);
+		currentProcess =
+			eventProcess = getProcessComputeIfAbsent(epid, so.getCurrentProcessSystemId());
+		currentThread = eventThread = getThreadComputeIfAbsent(etid, (DbgProcessImpl) eventProcess,
+			so.getCurrentThreadSystemId());
 		if (eventThread != null) {
-			eventThread.setInfo(lastEventInformation);
+			((DbgThreadImpl) eventThread).setInfo(lastEventInformation);
 		}
 		return etid;
 	}
@@ -658,8 +686,7 @@ public class DbgManagerImpl implements DbgManager {
 		DebugThreadId eventId = updateState();
 		DbgProcessImpl process = getCurrentProcess();
 		int tid = so.getCurrentThreadSystemId();
-		DbgThreadImpl thread = new DbgThreadImpl(this, process, eventId, tid);
-		thread.add();
+		DbgThreadImpl thread = getThreadComputeIfAbsent(eventId, process, tid);
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
@@ -703,9 +730,9 @@ public class DbgManagerImpl implements DbgManager {
 	protected DebugStatus processThreadSelected(DbgThreadSelectedEvent evt, Void v) {
 		DebugThreadId eventId = updateState();
 
-		DbgThreadImpl thread = evt.getThread();
-		thread.setState(evt.getState(), evt.getCause(), evt.getReason());
-		getEventListeners().fire.threadSelected(thread, evt.getFrame(), evt.getCause());
+		currentThread = evt.getThread();
+		currentThread.setState(evt.getState(), evt.getCause(), evt.getReason());
+		getEventListeners().fire.threadSelected(currentThread, evt.getFrame(), evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
 		if (statusByNameMap.containsKey(key)) {
@@ -722,6 +749,7 @@ public class DbgManagerImpl implements DbgManager {
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processProcessCreated(DbgProcessCreatedEvent evt, Void v) {
+		DebugThreadId eventId = updateState();
 		DebugClient dbgeng = engThread.getClient();
 		DebugSystemObjects so = dbgeng.getSystemObjects();
 
@@ -730,8 +758,7 @@ public class DbgManagerImpl implements DbgManager {
 		DebugProcessId id = so.getProcessIdByHandle(handle);
 		so.setCurrentProcessId(id);
 		int pid = so.getCurrentProcessSystemId();
-		DbgProcessImpl proc = new DbgProcessImpl(this, id, pid);
-		proc.add();
+		DbgProcessImpl proc = getProcessComputeIfAbsent(id, pid);
 		getEventListeners().fire.processSelected(proc, evt.getCause());
 
 		handle = info.initialThreadInfo.handle;
@@ -742,10 +769,8 @@ public class DbgManagerImpl implements DbgManager {
 		getEventListeners().fire.threadCreated(thread, evt.getCause());
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
-		DebugModuleInfo moduleInfo = info.moduleInfo;
-		String moduleName = moduleInfo.moduleName;
-		proc.moduleLoaded(moduleName, moduleInfo);
-		getEventListeners().fire.moduleLoaded(proc, moduleName, evt.getCause());
+		proc.moduleLoaded(info.moduleInfo);
+		getEventListeners().fire.moduleLoaded(proc, info.moduleInfo, evt.getCause());
 
 		String key = Integer.toHexString(id.id);
 		if (statusByNameMap.containsKey(key)) {
@@ -795,8 +820,8 @@ public class DbgManagerImpl implements DbgManager {
 	protected DebugStatus processProcessSelected(DbgProcessSelectedEvent evt, Void v) {
 		DebugThreadId eventId = updateState();
 
-		DbgProcessImpl process = evt.getProcess();
-		getEventListeners().fire.processSelected(process, evt.getCause());
+		currentProcess = evt.getProcess();
+		getEventListeners().fire.processSelected(currentProcess, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
 		if (statusByNameMap.containsKey(key)) {
@@ -816,9 +841,8 @@ public class DbgManagerImpl implements DbgManager {
 		updateState();
 		DbgProcessImpl process = getCurrentProcess();
 		DebugModuleInfo info = evt.getInfo();
-		String moduleName = info.moduleName;
-		process.moduleLoaded(moduleName, info);
-		getEventListeners().fire.moduleLoaded(process, moduleName, evt.getCause());
+		process.moduleLoaded(info);
+		getEventListeners().fire.moduleLoaded(process, info, evt.getCause());
 
 		String key = info.moduleName;
 		if (statusByNameMap.containsKey(key)) {
@@ -838,9 +862,8 @@ public class DbgManagerImpl implements DbgManager {
 		updateState();
 		DbgProcessImpl process = getCurrentProcess();
 		DebugModuleInfo info = evt.getInfo();
-		String moduleName = info.moduleName;
-		process.moduleUnloaded(moduleName);
-		getEventListeners().fire.moduleUnloaded(process, moduleName, evt.getCause());
+		process.moduleUnloaded(info);
+		getEventListeners().fire.moduleUnloaded(process, info, evt.getCause());
 
 		String key = info.moduleName;
 		if (statusByNameMap.containsKey(key)) {
@@ -872,23 +895,23 @@ public class DbgManagerImpl implements DbgManager {
 			if (!threads.isEmpty()) {
 				//DbgSessionImpl session = getCurrentSession();
 				//DbgProcessImpl process = getCurrentProcess();
-				DbgThreadImpl thread = getCurrentThread();
+				eventThread = getCurrentThread();
 				DbgState dbgState = null;
-				if (thread != null) {
+				if (eventThread != null) {
 					if (status.threadState.equals(ExecutionState.STOPPED)) {
 						dbgState = DbgState.STOPPED;
 						//System.err.println("STOPPED " + id);
-						processEvent(new DbgStoppedEvent(thread.getId()));
+						processEvent(new DbgStoppedEvent(eventThread.getId()));
 					}
 					if (status.threadState.equals(ExecutionState.RUNNING)) {
 						//System.err.println("RUNNING " + id);
 						dbgState = DbgState.RUNNING;
-						processEvent(new DbgRunningEvent(thread.getId()));
+						processEvent(new DbgRunningEvent(eventThread.getId()));
 					}
 					// Don't fire 
 					if (dbgState != null) {
-						processEvent(
-							new DbgThreadSelectedEvent(dbgState, thread, evt.getFrame(thread)));
+						processEvent(new DbgThreadSelectedEvent(dbgState, eventThread,
+							evt.getFrame(eventThread)));
 					}
 					return DebugStatus.NO_CHANGE;
 				}
@@ -934,8 +957,8 @@ public class DbgManagerImpl implements DbgManager {
 	protected DebugStatus processSessionSelected(DbgSessionSelectedEvent evt, Void v) {
 		DebugThreadId eventId = updateState();
 
-		DbgSessionImpl session = evt.getSession();
-		getEventListeners().fire.sessionSelected(session, evt.getCause());
+		currentSession = evt.getSession();
+		getEventListeners().fire.sessionSelected(currentSession, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
 		if (statusByNameMap.containsKey(key)) {
@@ -1335,75 +1358,51 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public DbgThreadImpl getCurrentThread() {
-		synchronized (threads) {
-			DebugEventInformation info = getLastEventInformation();
-			if (info == null) {
-				return null;
-			}
-			return threads.get(info.getThreadId());
-		}
+		return (DbgThreadImpl) (currentThread != null ? currentThread : eventThread);
+	}
+
+	public void setCurrentThread(DbgThreadImpl thread) {
+		currentThread = thread;
 	}
 
 	public DbgProcessImpl getCurrentProcess() {
-		synchronized (processes) {
-			DebugEventInformation info = getLastEventInformation();
-			if (info == null) {
-				return null;
-			}
-			return processes.get(info.getProcessId());
-		}
+		return (DbgProcessImpl) (currentProcess != null ? currentProcess : eventProcess);
 	}
 
 	public DbgSessionImpl getCurrentSession() {
-		synchronized (sessions) {
-			DebugEventInformation info = getLastEventInformation();
-			if (info == null) {
-				return null;
-			}
-			return sessions.get(info.getSessionId());
-		}
+		return (DbgSessionImpl) (currentSession != null ? currentSession : eventSession);
 	}
 
 	public DbgThreadImpl getEventThread() {
-		synchronized (threads) {
-			DebugSystemObjects so = getSystemObjects();
-			DebugThreadId id = so.getEventThread();
-			return threads.get(id);
-		}
+		return (DbgThreadImpl) eventThread;
 	}
 
 	public DbgProcessImpl getEventProcess() {
-		synchronized (processes) {
-			DebugSystemObjects so = getSystemObjects();
-			DebugProcessId id = so.getEventProcess();
-			return processes.get(id);
-		}
+		return (DbgProcessImpl) eventProcess;
 	}
 
 	public DbgSessionImpl getEventSession() {
-		synchronized (sessions) {
-			DebugSystemObjects so = getSystemObjects();
-			DebugSessionId id = so.getEventSystem();
-			return sessions.get(id);
-		}
+		return (DbgSessionImpl) eventSession;
 	}
 
-	public CompletableFuture<Void> selectThread(DbgThreadImpl thread) {
-		DebugEventInformation info = getLastEventInformation();
-		info.setThread(thread.getId());
+	public CompletableFuture<Void> selectThread(DbgThread thread) {
+		currentThread = thread;
 		return execute(new DbgThreadSelectCommand(this, thread, null));
 	}
 
-	public CompletableFuture<Void> selectProcess(DbgProcessImpl process) {
-		DebugEventInformation info = getLastEventInformation();
-		info.setProcess(process.getId());
+	public CompletableFuture<Void> selectProcess(DbgProcess process) {
+		currentProcess = process;
 		return execute(new DbgProcessSelectCommand(this, process));
 	}
 
-	public CompletableFuture<Void> selectSession(DbgSessionImpl session) {
-		DebugEventInformation info = getLastEventInformation();
-		info.setSession(session.getId());
+	public CompletableFuture<Void> selectSession(DbgSession session) {
+		currentSession = session;
 		return execute(new DbgSessionSelectCommand(this, session));
+	}
+
+	public CompletableFuture<Void> requestFocus(DbgModelTargetFocusScope<?> scope,
+			TargetObjectRef ref) {
+		return execute(new DbgRequestFocusCommand(this, scope, ref));
 	}
 
 	@Override

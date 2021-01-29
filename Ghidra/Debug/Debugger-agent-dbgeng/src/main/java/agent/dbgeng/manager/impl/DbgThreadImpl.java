@@ -132,7 +132,7 @@ public class DbgThreadImpl implements DbgThread {
 
 	@Override
 	public CompletableFuture<Void> select() {
-		return manager.execute(new DbgThreadSelectCommand(manager, this, null));
+		return manager.selectThread(this);
 	}
 
 	@Override

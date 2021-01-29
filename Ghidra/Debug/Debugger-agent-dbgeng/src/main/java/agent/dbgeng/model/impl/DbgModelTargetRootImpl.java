@@ -28,6 +28,7 @@ import ghidra.async.TypeSpec;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(name = "Debugger", elements = { //
 	@TargetElementType(type = Void.class) //
@@ -61,7 +62,10 @@ public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 			connectors, //
 			sessions //
 		), Map.of( //
+			ACCESSIBLE_ATTRIBUTE_NAME, true, //
 			DISPLAY_ATTRIBUTE_NAME, "Debugger", //
+			FOCUS_ATTRIBUTE_NAME, this, //
+			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, DbgModelTargetProcessImpl.SUPPORTED_KINDS, //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, defaultConnector.getParameters() //
 		//  ARCH_ATTRIBUTE_NAME, "x86_64", //
 		//  DEBUGGER_ATTRIBUTE_NAME, "dbgeng", //
@@ -90,17 +94,7 @@ public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 			if (doFire && focus != null) {
 				List<String> focusPath = focus.getPath();
 				List<String> selPath = sel.getPath();
-				for (int i = 0; i < focusPath.size(); i++) {
-					if (i >= selPath.size()) {
-						doFire = false;
-						break;
-					}
-					if (!focusPath.get(i).equals(selPath.get(i))) {
-						doFire = true;
-						break;
-					}
-				}
-				//doFire = !focusPath.containsAll(selPath);
+				doFire = !PathUtils.isAncestor(selPath, focusPath);
 			}
 		}
 		if (doFire) {

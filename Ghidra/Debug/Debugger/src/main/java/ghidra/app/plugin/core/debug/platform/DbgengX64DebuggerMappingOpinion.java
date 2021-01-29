@@ -98,7 +98,7 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment<?> env,
 			TargetProcess<?> process) {
-		if (!env.getDebugger().toLowerCase().contains("dbg")) {
+		if (env == null || !env.getDebugger().toLowerCase().contains("dbg")) {
 			return Set.of();
 		}
 		boolean is64Bit =

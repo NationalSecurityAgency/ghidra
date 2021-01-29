@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.cmd.DbgProcessSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
@@ -51,7 +50,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	public static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
 
-	protected static final TargetAttachKindSet SUPPORTED_KINDS = TargetAttachKindSet.of( //
+	public static final TargetAttachKindSet SUPPORTED_KINDS = TargetAttachKindSet.of( //
 		TargetAttachKind.BY_OBJECT_REF, TargetAttachKind.BY_ID);
 
 	protected static String indexProcess(DebugProcessId debugProcessId) {
@@ -226,7 +225,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public CompletableFuture<Void> select() {
 		DbgManagerImpl manager = getManager();
-		return manager.execute(new DbgProcessSelectCommand(manager, process));
+		return manager.selectProcess(process);
 	}
 
 	@Override

@@ -40,10 +40,11 @@ public class DbgModuleImpl implements DbgModule {
 	 * @param process the process to which the module belongs
 	 * @param id the dbgeng-assigned module ID
 	 */
-	public DbgModuleImpl(DbgManagerImpl manager, DbgProcessImpl process, String name) {
+	public DbgModuleImpl(DbgManagerImpl manager, DbgProcessImpl process, DebugModuleInfo info) {
 		this.manager = manager;
 		this.process = process;
-		this.name = name;
+		this.info = info;
+		this.name = info.moduleName;
 	}
 
 	@Override
@@ -56,7 +57,7 @@ public class DbgModuleImpl implements DbgModule {
 	 */
 	public void add() {
 		process.addModule(this);
-		manager.getEventListeners().fire.moduleLoaded(process, name, Causes.UNCLAIMED);
+		manager.getEventListeners().fire.moduleLoaded(process, info, Causes.UNCLAIMED);
 	}
 
 	/**
@@ -64,7 +65,7 @@ public class DbgModuleImpl implements DbgModule {
 	 */
 	public void remove() {
 		process.removeModule(name);
-		manager.getEventListeners().fire.moduleUnloaded(process, name, Causes.UNCLAIMED);
+		manager.getEventListeners().fire.moduleUnloaded(process, info, Causes.UNCLAIMED);
 	}
 
 	@Override
@@ -103,8 +104,8 @@ public class DbgModuleImpl implements DbgModule {
 		return minimalSymbols.request();
 	}
 
-	public void setInfo(DebugModuleInfo info) {
-		this.info = info;
+	public DebugModuleInfo getInfo() {
+		return info;
 	}
 
 }

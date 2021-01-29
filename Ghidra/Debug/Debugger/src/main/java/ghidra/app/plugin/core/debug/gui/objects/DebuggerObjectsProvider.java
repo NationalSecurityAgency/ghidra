@@ -665,7 +665,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			Msg.error(this, "TargetMap corrupted");
 		}
 		TargetObject targetObject = container.getTargetObject();
-		if (targetObject != null) {
+		if (targetObject != null && !container.isLink()) {
 			String key = targetObject.getJoinedPath(PATH_JOIN_CHAR);
 			container.subscribe();
 			targetMap.put(key, container);

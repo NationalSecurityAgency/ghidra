@@ -61,6 +61,7 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 			LENGTH_ATTRIBUTE_NAME, info.getSize(), //
 			AFFECTS_ATTRIBUTE_NAME, doGetAffects(), //
 			SPEC_ATTRIBUTE_NAME, this, //
+			EXPRESSION_ATTRIBUTE_NAME, info.getLocation(), //
 			KINDS_ATTRIBUTE_NAME, getKinds() //
 		), reason);
 		this.changeAttributes(List.of(), List.of(), Map.of( //

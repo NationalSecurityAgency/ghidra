@@ -21,7 +21,6 @@ import agent.dbgeng.dbgeng.DebugClient.DebugOutputFlags;
 import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.DbgSession;
-import agent.dbgeng.manager.cmd.DbgSessionSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.*;
 import ghidra.dbg.target.TargetAggregate;
@@ -80,6 +79,6 @@ public interface DbgModelTargetSession extends //
 		if (session == null) {
 			session = manager.getEventSession();
 		}
-		return manager.execute(new DbgSessionSelectCommand(manager, session));
+		return manager.selectSession(session);
 	}
 }

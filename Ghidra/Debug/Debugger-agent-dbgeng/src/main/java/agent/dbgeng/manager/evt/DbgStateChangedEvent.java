@@ -17,8 +17,8 @@ package agent.dbgeng.manager.evt;
 
 import agent.dbgeng.dbgeng.DebugClient.ChangeEngineState;
 import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgStackFrameImpl;
-import agent.dbgeng.manager.impl.DbgThreadImpl;
 import ghidra.comm.util.BitmaskSet;
 
 public class DbgStateChangedEvent extends AbstractDbgEvent<BitmaskSet<ChangeEngineState>> {
@@ -38,7 +38,7 @@ public class DbgStateChangedEvent extends AbstractDbgEvent<BitmaskSet<ChangeEngi
 		this.argument = argument;
 	}
 
-	public DbgStackFrameImpl getFrame(DbgThreadImpl thread) {
+	public DbgStackFrameImpl getFrame(DbgThread thread) {
 		return null;
 	}
 

@@ -26,6 +26,7 @@ import agent.dbgeng.model.iface1.DbgModelSelectableObject;
 import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
 import agent.dbgeng.model.iface2.*;
 import agent.dbgeng.model.impl.DbgModelTargetConnectorContainerImpl;
+import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -59,7 +60,9 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			connectors, //
 			systemMarker //
 		), Map.of( //
+			ACCESSIBLE_ATTRIBUTE_NAME, true, //
 			DISPLAY_ATTRIBUTE_NAME, "Debugger", //
+			FOCUS_ATTRIBUTE_NAME, this, //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, defaultConnector.getParameters() //
 		//  ARCH_ATTRIBUTE_NAME, "x86_64", //
 		//  DEBUGGER_ATTRIBUTE_NAME, "dbgeng", //
@@ -82,7 +85,9 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			connectors, //
 			systemMarker //
 		), Map.of( //
+			ACCESSIBLE_ATTRIBUTE_NAME, true, //
 			DISPLAY_ATTRIBUTE_NAME, "Debugger", //
+			FOCUS_ATTRIBUTE_NAME, this, //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, defaultConnector.getParameters() //
 		//  ARCH_ATTRIBUTE_NAME, "x86_64", //
 		//  DEBUGGER_ATTRIBUTE_NAME, "dbgeng", //
@@ -99,21 +104,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (doFire && focus != null) {
 				List<String> focusPath = focus.getPath();
 				List<String> selPath = sel.getPath();
-				for (int i = 0; i < focusPath.size(); i++) {
-					if (i >= selPath.size()) {
-						doFire = false;
-						break;
-					}
-					if (!focusPath.get(i).equals(selPath.get(i))) {
-						doFire = true;
-						break;
-					}
-				}
-				//doFire = !focusPath.containsAll(selPath);
+				doFire = !PathUtils.isAncestor(selPath, focusPath);
 			}
 		}
 		if (doFire) {
 			this.focus = sel;
+			fireAttributesChanged = true;
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus //
 			), "Focus changed");
@@ -201,28 +197,28 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 	}
 
 	@Override
-	public void moduleLoaded(DbgProcess proc, String name, DbgCause cause) {
-		getObject(proc, List.of("Modules"), name).thenAccept(obj -> {
+	public void moduleLoaded(DbgProcess proc, DebugModuleInfo info, DbgCause cause) {
+		getObjectRevisited(proc, List.of("Modules"), info).thenAccept(obj -> {
 			DbgModelTargetModule mod = (DbgModelTargetModule) obj;
 			if (mod == null) {
 				return;
 			}
 			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, null, TargetEventType.MODULE_LOADED, "Library " + name + " loaded",
-						List.of(mod));
+					.event(this, null, TargetEventType.MODULE_LOADED,
+						"Library " + info.moduleName + " loaded", List.of(mod));
 		});
 	}
 
 	@Override
-	public void moduleUnloaded(DbgProcess proc, String name, DbgCause cause) {
-		getObject(proc, List.of("Modules"), name).thenAccept(obj -> {
+	public void moduleUnloaded(DbgProcess proc, DebugModuleInfo info, DbgCause cause) {
+		getObjectRevisited(proc, List.of("Modules"), info).thenAccept(obj -> {
 			DbgModelTargetModule mod = (DbgModelTargetModule) obj;
 			if (mod == null) {
 				return;
 			}
 			getListeners().fire(TargetEventScopeListener.class)
 					.event(this, null, TargetEventType.MODULE_UNLOADED,
-						"Library " + name + " unloaded", List.of(mod));
+						"Library " + info.moduleName + " unloaded", List.of(mod));
 		});
 	}
 
@@ -241,8 +237,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		}).finish();
 	}
 
-	private CompletableFuture<DbgModelTargetObject> getObject(Object object, List<String> ext,
-			String name) {
+	private CompletableFuture<DbgModelTargetObject> getObjectRevisited(Object object,
+			List<String> ext, Object info) {
 		List<String> objPath = findObject(object);
 		if (objPath == null) {
 			return CompletableFuture.completedFuture(null);
@@ -257,19 +253,23 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				seq.exit();
 				return;
 			}
-			DbgModelTargetObject proxy = (DbgModelTargetObject) pobj;
-			DelegateDbgModel2TargetObject delegate =
-				DelegateDbgModel2TargetObject.getDelegate(proxy);
-			delegate.requestElements(true).thenAccept(__ -> {
-				Map<String, TargetObject> cachedElements = delegate.getCachedElements();
-				for (TargetObject val : cachedElements.values()) {
-					DbgModelTargetObject obj = (DbgModelTargetObject) val;
-					if (obj.getDisplay().contains(name)) {
-						seq.exit(obj);
-					}
+			DbgModel2TargetProxy proxy = (DbgModel2TargetProxy) pobj;
+			DelegateDbgModel2TargetObject delegate = proxy.getDelegate();
+
+			xpath.add(0, "Debugger");
+			DbgManager2Impl manager = (DbgManager2Impl) getManager();
+			List<ModelObject> list = manager.getAccess().getElements(xpath);
+			for (ModelObject obj : list) {
+				String searchKey = obj.getSearchKey();
+				if (searchKey.equals(info.toString())) {
+					String elKey = PathUtils.makeKey(searchKey);
+					DbgModel2TargetProxy proxyElement =
+						(DbgModel2TargetProxy) DelegateDbgModel2TargetObject
+								.makeProxy(delegate.getModel(), delegate, elKey, obj);
+					delegate.changeElements(List.of(), List.of(proxyElement), "Created");
+					seq.exit(proxyElement);
 				}
-				seq.exit((DbgModelTargetObject) null);
-			});
+			}
 		}).finish();
 	}
 
@@ -350,17 +350,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 	public void breakpointCreated(DbgBreakpointInfo info, DbgCause cause) {
 		int id = info.getDebugBreakpoint().getId();
 		bptInfoMap.put(id, info);
-		getObject(info.getProc(), List.of("Debug", "Breakpoints"), Integer.toHexString(id));
-		/*
-		getObject(info).thenAccept(obj -> {
-			DbgModelTargetBreakpointSpec bpt = (DbgModelTargetBreakpointSpec) obj;
-			if (bpt == null) {
-				return;
-			}
-			bpt.setBreakpointInfo(info);
-			bpt.setEnabled(true, "Created");
-		});
-		*/
+		getObjectRevisited(info.getProc(), List.of("Debug", "Breakpoints"), info);
 	}
 
 	@Override
@@ -368,20 +358,19 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			DbgCause cause) {
 		int id = newInfo.getDebugBreakpoint().getId();
 		bptInfoMap.put(id, newInfo);
-		getObject(newInfo.getProc(), List.of("Debug", "Breakpoints"), Integer.toHexString(id));
+		getObjectRevisited(newInfo.getProc(), List.of("Debug", "Breakpoints"), newInfo);
 	}
 
 	@Override
 	public void breakpointDeleted(DbgBreakpointInfo info, DbgCause cause) {
 		int id = info.getDebugBreakpoint().getId();
 		bptInfoMap.remove(id);
-		getObject(info.getProc(), List.of("Debug", "Breakpoints"), Integer.toHexString(id));
+		getObjectRevisited(info.getProc(), List.of("Debug", "Breakpoints"), info);
 	}
 
 	@Override
 	public void breakpointHit(DbgBreakpointInfo info, DbgCause cause) {
-		int id = info.getDebugBreakpoint().getId();
-		getObject(info.getProc(), List.of("Debug", "Breakpoints"), Integer.toHexString(id))
+		getObjectRevisited(info.getProc(), List.of("Debug", "Breakpoints"), info)
 				.thenAccept(obj -> {
 					DbgModelTargetBreakpointSpec bpt = (DbgModelTargetBreakpointSpec) obj;
 					if (bpt == null) {

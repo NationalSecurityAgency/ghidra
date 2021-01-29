@@ -41,4 +41,8 @@ public class DebugModuleInfo {
 		this.checkSum = checkSum;
 		this.timeDateStamp = timeDateStamp; // TODO: Convert to DateTime?
 	}
+
+	public String toString() {
+		return Long.toHexString(baseOffset);
+	}
 }

@@ -103,12 +103,12 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 	 * there is no guarantee of consistency after an exception is thrown. In general, models without
 	 * explicit schemas should not fail validation, since objects will likely be assigned
 	 * {@link EnumerableTargetObjectSchema#ANY}. When developing a schema for an existing model, it
-	 * may be useful to override this to return false in the interim.
+	 * may be useful to override this to return true to fail fast.
 	 * 
 	 * @return true to throw exceptions on schema violations.
 	 */
 	protected boolean enforcesStrictSchema() {
-		return true;
+		return false;
 	}
 
 	@Override

@@ -437,20 +437,20 @@ public interface TargetObjectSchema {
 						getType() + " of schema " + this
 					: "Value " + value + " for " + path + " does not conform to required type " +
 						getType() + " of schema " + this;
+			Msg.error(this, msg);
 			if (strict) {
 				throw new AssertionError(msg);
 			}
-			Msg.error(this, msg);
 		}
 		for (Class<? extends TargetObject> iface : getInterfaces()) {
 			if (!iface.isAssignableFrom(cls)) {
 				// TODO: Should this throw an exception, eventually?
 				String msg = "Value " + value + " does not implement required interface " +
 					iface + " of schema " + this;
+				Msg.error(this, msg);
 				if (strict) {
 					throw new AssertionError(msg);
 				}
-				Msg.error(this, msg);
 			}
 		}
 	}
@@ -475,10 +475,10 @@ public interface TargetObjectSchema {
 		if (!missing.isEmpty()) {
 			String msg = "Object " + object + " is missing required attributes " + missing +
 				" of schema " + this;
+			Msg.error(this, msg);
 			if (strict) {
 				throw new AssertionError(msg);
 			}
-			Msg.error(this, msg);
 		}
 	}
 
@@ -505,13 +505,6 @@ public interface TargetObjectSchema {
 			AttributeSchema as = getAttributeSchema(key);
 			TargetObjectSchema schema = getContext().getSchema(as.getSchema());
 			schema.validateTypeAndInterfaces(value, parentPath, key, strict);
-
-			if (value instanceof TargetObject) {
-				TargetObject ov = (TargetObject) value;
-				if (!PathUtils.isLink(parentPath, ent.getKey(), ov.getPath())) {
-					schema.validateRequiredAttributes(ov, strict);
-				}
-			}
 		}
 
 		// TODO: Creating these sets *every* change could be costly
@@ -525,10 +518,10 @@ public interface TargetObjectSchema {
 		if (!violatesRequired.isEmpty()) {
 			String msg = "Object " + parentPath + " removed required attributes " +
 				violatesRequired + " of schema " + this;
+			Msg.error(this, msg);
 			if (strict) {
 				throw new AssertionError(msg);
 			}
-			Msg.error(this, msg);
 		}
 		// TODO: Another set....
 		// NB. "removed" includes changed things
@@ -543,10 +536,10 @@ public interface TargetObjectSchema {
 		if (!violatesFixed.isEmpty()) {
 			String msg = "Object " + parentPath + " modified or removed fixed attributes " +
 				violatesFixed + " of schema " + this;
+			Msg.error(this, msg);
 			if (strict) {
 				throw new AssertionError(msg);
 			}
-			Msg.error(this, msg);
 		}
 	}
 
@@ -566,7 +559,6 @@ public interface TargetObjectSchema {
 			TargetObject element = ent.getValue();
 			TargetObjectSchema schema = getContext().getSchema(getElementSchema(ent.getKey()));
 			schema.validateTypeAndInterfaces(element, parentPath, ent.getKey(), strict);
-			schema.validateRequiredAttributes(element, strict);
 		}
 	}
 }

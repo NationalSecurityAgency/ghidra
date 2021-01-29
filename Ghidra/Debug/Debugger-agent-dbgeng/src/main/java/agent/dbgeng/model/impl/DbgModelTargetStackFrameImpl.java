@@ -22,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.cmd.DbgThreadSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
@@ -151,8 +150,7 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 	@Override
 	public CompletableFuture<Void> select() {
 		DbgManagerImpl manager = getManager();
-		return manager
-				.execute(new DbgThreadSelectCommand(manager, thread.getThread(), frame.getLevel()));
+		return manager.selectThread(thread.getThread());
 	}
 
 	@Override

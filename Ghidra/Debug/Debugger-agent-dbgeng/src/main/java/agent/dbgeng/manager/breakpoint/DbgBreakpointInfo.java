@@ -86,12 +86,17 @@ public class DbgBreakpointInfo {
 		return Objects.hash(number, bptType, getFlags(), location, enabled, access, size);
 	}
 
+	public String toString() {
+		return Integer.toHexString(bpt.getId());
+	}
+	/*
 	@Override
 	public String toString() {
 		return "<DbgBreakpointInfo number=" + number + ",type=" + getType() + ",flags=" +
 			getFlags() + ",addr=" + location + ",times=" + getTimes() + ",size=" + getSize() +
 			",access=" + getAccess() + ">";
 	}
+	*/
 
 	@Override
 	public boolean equals(Object obj) {

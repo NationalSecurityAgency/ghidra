@@ -44,7 +44,7 @@ import ghidra.dbg.util.PathUtils;
 public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetThread {
 
-	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
+	public static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
 		TargetStepKind.ADVANCE, //
 		TargetStepKind.FINISH, //
 		TargetStepKind.LINE, //

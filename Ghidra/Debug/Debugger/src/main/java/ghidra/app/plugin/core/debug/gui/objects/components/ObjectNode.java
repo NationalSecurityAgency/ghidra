@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -85,17 +84,21 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 				if (cf != null) {
 					// NB: We're allowed to do this because we're guaranteed to be 
 					//   in our own thread by the GTreeSlowLoadingNode
-					ObjectContainer oc = cf.get();
+					ObjectContainer oc = cf.get(5, TimeUnit.SECONDS);
 					return tree.update(oc);
 				}
 			}
-			catch (InterruptedException | ExecutionException e) {
+			catch (InterruptedException | ExecutionException | TimeoutException e) {
 				// Ignore
 				Msg.warn(this, e);
 				//e.printStackTrace();
 			}
 		}
-		return new ArrayList<>();
+		List<GTreeNode> list = new ArrayList<>();
+		if (oldChildren != null) {
+			list.addAll(oldChildren);
+		}
+		return list;
 	}
 
 	public DebuggerObjectsProvider getProvider() {
@@ -206,22 +209,20 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 
 	public void callUpdate() {
 		// NB: this has to be in its own thread
-		Thread thread = new Thread(new Runnable() {
+		CompletableFuture.runAsync(new Runnable() {
 			@Override
 			public void run() {
 				List<GTreeNode> updateNodes = tree.update(container);
 				if (isRestructured()) {
 					setChildren(updateNodes);
 				}
-				// Unnecessary: fireNodeStructureChanged(ObjectNode.this);
 			}
 		});
-		thread.start();
 	}
 
 	public void callModified() {
 		// NB: this has to be in its own thread
-		Thread thread = new Thread(new Runnable() {
+		CompletableFuture.runAsync(new Runnable() {
 			@Override
 			public void run() {
 				List<GTreeNode> updateNodes = tree.update(container);
@@ -230,7 +231,6 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 				}
 			}
 		});
-		thread.start();
 	}
 
 	public boolean isRestructured() {

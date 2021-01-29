@@ -39,7 +39,7 @@ import utilities.util.ProxyUtilities;
 public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl implements //
 		DbgModelTargetAccessConditioned<DelegateDbgModel2TargetObject>, //
 		DbgModelTargetExecutionStateful<DelegateDbgModel2TargetObject>, //
-		DbgModelTargetBptHelper {
+		DbgModel2TargetProxy, DbgModelTargetBptHelper {
 	// Probably don-t need any of the handler-map or annotation stuff
 
 	protected final DbgStateListener accessListener = this::checkExited;
@@ -163,12 +163,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		return new DelegateDbgModel2TargetObject(model, parent, key, object, mixins).proxy;
 	}
 
-	private static Map<DbgModelTargetObject, DelegateDbgModel2TargetObject> map = new HashMap<>();
-
-	public static DelegateDbgModel2TargetObject getDelegate(DbgModelTargetObject proxy) {
-		return map.get(proxy);
-	}
-
 	protected static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
 	// NOTE: The Cleanable stuff is the replacement for overriding Object.finalize(), which
@@ -201,13 +195,25 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 		getManager().addStateListener(accessListener);
 
+		mixins.add(DbgModel2TargetProxy.class);
 		this.proxy =
 			ProxyUtilities.composeOnDelegate(DbgModelTargetObject.class, this, mixins, LOOKUP);
-		map.put(proxy, this);
 		if (proxy instanceof DbgEventsListener) {
 			model.getManager().addEventsListener((DbgEventsListener) proxy);
 		}
 		setModelObject(modelObject);
+	}
+
+	public DelegateDbgModel2TargetObject clone(String key, ModelObject modelObject) {
+		DbgModelTargetObject p = (DbgModelTargetObject) getImplParent();
+		List<Class<? extends TargetObject>> mixins = new ArrayList<>();
+		Class<? extends DbgModelTargetObject> mixin = lookupWrapperType(key, p.getName());
+		if (mixin != null) {
+			mixins.add(mixin);
+		}
+		DelegateDbgModel2TargetObject delegate =
+			new DelegateDbgModel2TargetObject(getModel(), p, key, modelObject, mixins);
+		return delegate;
 	}
 
 	@Override
@@ -346,6 +352,10 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 				accessibility == TargetAccessibility.ACCESSIBLE //
 			), "Accessibility changed");
 		}
+	}
+
+	public DelegateDbgModel2TargetObject getDelegate() {
+		return this;
 	}
 
 	// Methods required for DbgModelTargetBreakpointSpec mixin

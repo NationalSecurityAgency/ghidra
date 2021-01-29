@@ -22,12 +22,11 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.dbgeng.DebugClient;
 import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgState;
-import agent.dbgeng.manager.impl.*;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgmodel.dbgmodel.DbgModel;
-import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.gadp.impl.DbgModelClientThreadExecutor;
 import agent.dbgmodel.gadp.impl.WrappedDbgModel;
 import agent.dbgmodel.jna.cmd.*;
@@ -108,6 +107,7 @@ public class DbgManager2Impl extends DbgManagerImpl {
 		return execute(new DbgGetRegisterMapCommand(this, path));
 	}
 
+	/*
 	@Override
 	public DbgSessionImpl getCurrentSession() {
 		ModelObject currentSession = dbgmodel.getUtil().getCurrentSession();
@@ -117,7 +117,7 @@ public class DbgManager2Impl extends DbgManagerImpl {
 		curSession = getSessionComputeIfAbsent(sid);
 		return curSession;
 	}
-
+	
 	@Override
 	public DbgProcessImpl getCurrentProcess() {
 		synchronized (processes) {
@@ -125,7 +125,7 @@ public class DbgManager2Impl extends DbgManagerImpl {
 			return processes.get(id);
 		}
 	}
-
+	
 	@Override
 	public DbgThreadImpl getCurrentThread() {
 		synchronized (threads) {
@@ -133,5 +133,6 @@ public class DbgManager2Impl extends DbgManagerImpl {
 			return threads.get(id);
 		}
 	}
+	*/
 
 }

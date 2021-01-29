@@ -901,6 +901,19 @@ public class ModelObjectImpl implements ModelObjectInternal {
 		if (key == null) {
 			throw new RuntimeException("null key for " + this);
 		}
+		Map<String, ModelObject> map = getKeyValueMap();
+		if (map.containsKey("BaseAddress")) {
+			String valueString = map.get("BaseAddress").getValueString();
+			return valueString;
+		}
+		return key;
+	}
+
+	@Override
+	public String getOriginalKey() {
+		if (key == null) {
+			throw new RuntimeException("null key for " + this);
+		}
 		return key;
 	}
 

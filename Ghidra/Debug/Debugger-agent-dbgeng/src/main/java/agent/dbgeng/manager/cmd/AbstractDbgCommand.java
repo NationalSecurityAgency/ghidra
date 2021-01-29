@@ -16,7 +16,7 @@
 package agent.dbgeng.manager.cmd;
 
 import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
+import agent.dbgeng.manager.evt.DbgCommandDoneEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
@@ -43,8 +43,8 @@ public abstract class AbstractDbgCommand<T> implements DbgCommand<T> {
 
 	@Override
 	public boolean handle(DbgEvent<?> evt, DbgPendingCommand<?> pending) {
-		if (evt instanceof AbstractDbgCompletedCommandEvent) {
-			if (pending.getCommand().equals(this)) {
+		if (evt instanceof DbgCommandDoneEvent) {
+			if (pending.getCommand().equals(((DbgCommandDoneEvent) evt).getCmd())) {
 				return true;
 			}
 		}

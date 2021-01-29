@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.DbgStackFrame;
-import agent.dbgeng.manager.cmd.DbgThreadSelectCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgThreadImpl;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
@@ -53,7 +52,7 @@ public interface DbgModelTargetStackFrame extends //
 	public default CompletableFuture<Void> select() {
 		DbgManagerImpl manager = getManager();
 		DbgThreadImpl thread = manager.getCurrentThread();
-		return manager.execute(new DbgThreadSelectCommand(manager, thread, null));
+		return manager.selectThread(thread);
 	}
 
 	@Override

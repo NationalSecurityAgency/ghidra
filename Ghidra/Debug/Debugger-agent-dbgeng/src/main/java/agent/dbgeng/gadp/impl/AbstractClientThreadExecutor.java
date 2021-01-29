@@ -217,6 +217,10 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 		}
 	}
 
+	public boolean isCurrentThread() {
+		return thread.equals(Thread.currentThread());
+	}
+
 	/**
 	 * Schedule a task with the given priority, taking a reference to the client.
 	 * 

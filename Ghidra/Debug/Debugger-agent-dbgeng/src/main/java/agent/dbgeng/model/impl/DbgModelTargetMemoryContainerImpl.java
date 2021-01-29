@@ -138,7 +138,10 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		ByteBuffer buf = ByteBuffer.allocate(length);
 		long offset = address.getOffset();
 		if (!manager.isKernelMode() || address.getAddressSpace().getName().equals("ram")) {
-			return readVirtualMemory(address, length);
+			return manager.execute(new DbgReadMemoryCommand(manager, offset, buf, buf.remaining()))
+					.thenApply(set -> {
+						return readAssist(address, buf, offset, set);
+					});
 		}
 		if (address.getAddressSpace().getName().equals("phys")) {
 			return manager
@@ -199,7 +202,10 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		ByteBuffer buf = ByteBuffer.wrap(data);
 		long offset = address.getOffset();
 		if (!manager.isKernelMode() || address.getAddressSpace().getName().equals("ram")) {
-			return writeVirtualMemory(address, data);
+			return manager.execute(new DbgWriteMemoryCommand(manager, offset, buf, buf.remaining()))
+					.thenAccept(___ -> {
+						writeAssist(address, data);
+					});
 		}
 		if (address.getAddressSpace().getName().equals("phys")) {
 			return manager

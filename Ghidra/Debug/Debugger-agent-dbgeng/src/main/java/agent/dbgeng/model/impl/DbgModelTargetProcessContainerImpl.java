@@ -20,13 +20,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.dbgeng.DebugProcessId;
-import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
-import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(name = "ProcessContainer", elements = { //
@@ -106,15 +105,15 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public void moduleLoaded(DbgProcess proc, String name, DbgCause cause) {
+	public void moduleLoaded(DbgProcess proc, DebugModuleInfo info, DbgCause cause) {
 		DbgModelTargetProcess process = getTargetProcess(proc);
-		process.getModules().libraryLoaded(name);
+		process.getModules().libraryLoaded(info.toString());
 	}
 
 	@Override
-	public void moduleUnloaded(DbgProcess proc, String name, DbgCause cause) {
+	public void moduleUnloaded(DbgProcess proc, DebugModuleInfo info, DbgCause cause) {
 		DbgModelTargetProcess process = getTargetProcess(proc);
-		process.getModules().libraryUnloaded(name);
+		process.getModules().libraryUnloaded(info.toString());
 	}
 
 	@Override

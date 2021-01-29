@@ -330,7 +330,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			}
 			req = curAttrsRequest;
 		}
-		return req.thenApply(__ -> getCachedAttributes());
+		return req.thenApply(__ -> {
+			synchronized (attributes) {
+				if (schema != null) { // TODO: Remove this. Schema should never be null.
+					schema.validateRequiredAttributes(this, enforcesStrictSchema());
+				}
+				return getCachedAttributes();
+			}
+		});
 	}
 
 	@Override

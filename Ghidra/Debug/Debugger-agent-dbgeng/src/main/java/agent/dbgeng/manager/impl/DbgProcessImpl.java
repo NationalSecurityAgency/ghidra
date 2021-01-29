@@ -169,11 +169,11 @@ public class DbgProcessImpl implements DbgProcess {
 	 * @param module the thread to add
 	 */
 	public void addModule(DbgModuleImpl module) {
-		DbgModuleImpl exists = modules.get(module.getName());
+		DbgModuleImpl exists = modules.get(module.getInfo().toString());
 		if (exists != null) {
 			throw new IllegalArgumentException("There is already module " + exists);
 		}
-		modules.put(module.getName(), module);
+		modules.put(module.getInfo().toString(), module);
 
 	}
 
@@ -233,7 +233,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	@Override
 	public CompletableFuture<Void> select() {
-		return manager.execute(new DbgProcessSelectCommand(manager, this));
+		return manager.selectProcess(this);
 	}
 
 	@Override
@@ -353,17 +353,15 @@ public class DbgProcessImpl implements DbgProcess {
 		return null;
 	}
 
-	protected DbgModuleImpl createModule(String name) {
-		return new DbgModuleImpl(manager, this, name);
+	protected void moduleLoaded(DebugModuleInfo info) {
+		if (!modules.containsKey(info.moduleName)) {
+			DbgModuleImpl module = new DbgModuleImpl(manager, this, info);
+			modules.put(info.toString(), module);
+		}
 	}
 
-	protected void moduleLoaded(String name, DebugModuleInfo info) {
-		DbgModuleImpl module = modules.computeIfAbsent(name, this::createModule);
-		module.setInfo(info);
-	}
-
-	protected void moduleUnloaded(String name) {
-		modules.remove(name);
+	protected void moduleUnloaded(DebugModuleInfo info) {
+		modules.remove(info.toString());
 	}
 
 	protected void threadCreated(DbgThreadImpl thread) {

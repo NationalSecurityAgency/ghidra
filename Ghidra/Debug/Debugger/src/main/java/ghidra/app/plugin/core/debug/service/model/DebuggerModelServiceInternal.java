@@ -97,7 +97,8 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * @param focused the focused object
 	 */
 	default void fireFocusEvent(TargetObjectRef focused) {
-		firePluginEvent(new ModelObjectFocusedPluginEvent(getName(), focused));
+		Swing.runIfSwingOrRunLater(
+			() -> firePluginEvent(new ModelObjectFocusedPluginEvent(getName(), focused)));
 	}
 
 	/**
