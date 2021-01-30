@@ -20,7 +20,7 @@ vector<UnitTest *> UnitTest::tests;
 
 /// Run all the tests unless a non-empty set of names is passed in.
 /// In which case, only the named tests in the set are run.
-/// \param testnames is the set of names
+/// \param testNames is the set of names
 void UnitTest::run(set<string> &testNames)
 
 {

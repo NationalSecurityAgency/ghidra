@@ -574,7 +574,10 @@ int4 FlowBlock::getOutIndex(const FlowBlock *bl) const
 void FlowBlock::printHeader(ostream &s) const
 
 {
-  s << dec << index << ' ' << getStart() << '-' << getStop();
+  s << dec << index;
+  if (!getStart().isInvalid() && !getStop().isInvalid()) {
+    s << ' ' << getStart() << '-' << getStop();
+  }
 }
 
 /// Recursively print out the hierarchical structure of \b this FlowBlock.

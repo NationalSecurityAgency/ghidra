@@ -19,8 +19,8 @@
 /// Include this file and any additional headers. Use TEST(testname) as
 /// prototype in test function definitions.  E.g.
 ///     test.cc:
-///         #include "float.hh"
-///         #include "test.hh"
+///         \#include "float.hh"
+///         \#include "test.hh"
 ///
 ///         TEST(zero_is_less_than_one) {
 ///             ASSERT(0.0 < 1.0);
@@ -32,7 +32,7 @@
 #include <string>
 #include <iostream>
 
-typedef void (*testfunc_t)();
+typedef void (*testfunc_t)();	///< A unit-test function
 
 /// \brief Simple unit test class
 ///
@@ -58,17 +58,20 @@ struct UnitTest {
 };
 
 
+/// \brief Main unit test macro
 #define TEST(testname)                                                                                                 \
     void testname();                                                                                                   \
     UnitTest testname##_obj{ #testname, testname };                                                                        \
     void testname()
 
+/// \brief Assert that a boolean is \b true for a unit test
 #define ASSERT(test)                                                                                                   \
     if (!(test)) {                                                                                                     \
         std::cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << #test << "\"." << std::endl;  \
         throw 0;                                                                                                       \
     }
 
+/// \brief Assert that two values are equal for a unit test
 #define ASSERT_EQUALS(a, b)                                                                                            \
     if ((a) != (b)) {                                                                                                  \
         std::stringstream ssa, ssb;                                                                                    \
@@ -79,6 +82,7 @@ struct UnitTest {
         throw 0;                                                                                                       \
     }
 
+/// \brief Assert that two values are not equal for a unit test
 #define ASSERT_NOT_EQUALS(a, b)                                                                                        \
     if ((a) == (b)) {                                                                                                  \
         std::stringstream ssa, ssb;                                                                                    \
