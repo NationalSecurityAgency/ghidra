@@ -32,6 +32,7 @@ import ghidra.app.util.headless.HeadlessAnalyzer;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import utilities.util.FileUtilities;
 
 /**
  * A utility class for managing script directories and ScriptInfo objects.
@@ -129,19 +130,13 @@ public class GhidraScriptUtil {
 	 * @return the source directory if found, or null if not
 	 */
 	public static ResourceFile findSourceDirectoryContaining(ResourceFile sourceFile) {
-		String sourcePath;
-		try {
-			sourcePath = sourceFile.getCanonicalPath();
-			for (ResourceFile sourceDir : getScriptSourceDirectories()) {
-				if (sourcePath.startsWith(sourceDir.getCanonicalPath() + File.separatorChar)) {
-					return sourceDir;
-				}
+		for (ResourceFile sourceDir : getScriptSourceDirectories()) {
+			if (FileUtilities.relativizePath(sourceDir, sourceFile) != null) {
+				return sourceDir;
 			}
 		}
-		catch (IOException e) {
-			Msg.error(GhidraScriptUtil.class,
-				"Failed to find script in any script directory: " + sourceFile.toString(), e);
-		}
+		Msg.error(GhidraScriptUtil.class,
+			"Failed to find script in any script directory: " + sourceFile.toString());
 		return null;
 	}
 
