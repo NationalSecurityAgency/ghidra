@@ -43,6 +43,7 @@ import resources.ResourceManager;
  * behave.  If the table entries should not be edited, call setEditingEnabled(false).
  */
 public class PathManager {
+
 	private JPanel panel;
 	private GTable pathTable;
 	private PathManagerModel pathModel;
@@ -97,13 +98,6 @@ public class PathManager {
 		allowMultiFileSelection = allowMultiSelection;
 		this.filter = filter;
 		this.fileChooser = null;
-	}
-
-	/**
-	 * Return enabled paths in the table.
-	 */
-	public List<Path> getPaths() {
-		return pathModel.getPaths();
 	}
 
 	/**
@@ -400,69 +394,123 @@ public class PathManager {
 		ss.putBooleans("PathManagerPanel_READ", readArr);
 	}
 
+	/**
+	 * Restore paths from user Preferences using the specified keys.  
+	 * If preferences have never been saved, the specified {@code defaultEnablePaths}
+	 * will be used.  Note: the encoded path list must have been stored
+	 * using the same keys using the {@link #savePathsToPreferences(String, String, Path[])}
+	 * or {@link #saveToPreferences(String, String)} methods.
+	 * @param enablePathKey preference key for storing enabled paths
+	 * @param defaultEnablePaths default paths
+	 * @param disabledPathKey preference key for storing disabled paths
+	 */
 	public void restoreFromPreferences(String enablePathKey, Path[] defaultEnablePaths,
 			String disabledPathKey) {
+		pathModel.clear();
 		for (Path path : getPathsFromPreferences(enablePathKey, defaultEnablePaths,
 			disabledPathKey)) {
 			pathModel.addPath(path, addToTop);
 		}
 	}
 
+	/**
+	 * Restore paths from user Preferences using the specified keys.  
+	 * If preferences have never been saved, the specified {@code defaultEnablePaths}
+	 * will be returned.  Note: the encoded path list must have been stored
+	 * using the same keys using the {@link #savePathsToPreferences(String, String, Path[])}
+	 * or {@link #saveToPreferences(String, String)} methods.
+	 * @param enablePathKey preference key for storing enabled paths
+	 * @param defaultEnablePaths default paths
+	 * @param disabledPathKey preference key for storing disabled paths
+	 * @return ordered paths from Preferences
+	 */
 	public static Path[] getPathsFromPreferences(String enablePathKey, Path[] defaultEnablePaths,
 			String disabledPathKey) {
 		String enablePath = Preferences.getProperty(enablePathKey, null, true);
 		if (enablePath != null && enablePath.length() == 0) {
 			enablePath = null;
 		}
-		String[] enabledPaths;
-		if (defaultEnablePaths != null && enablePath == null) {
-			enabledPaths = new String[defaultEnablePaths.length];
-			for (int i = 0; i < enabledPaths.length; i++) {
-				enabledPaths[i] = defaultEnablePaths[i].getPathAsString();
-			}
-		}
-		else {
-			enabledPaths =
-				enablePath != null ? enablePath.split(File.pathSeparator) : new String[0];
-		}
 		String disabledPath = Preferences.getProperty(disabledPathKey, null);
 		if (disabledPath != null && disabledPath.length() == 0) {
 			disabledPath = null;
 		}
-		String[] disabledPaths =
+		String[] enabledPaths = null;
+		String[] disabledPaths = null;
+		if (defaultEnablePaths != null && enablePath == null && disabledPath == null) {
+			return defaultEnablePaths;
+		}
+
+		enabledPaths = enablePath != null ? enablePath.split(File.pathSeparator) : new String[0];
+
+		disabledPaths =
 			disabledPath != null ? disabledPath.split(File.pathSeparator) : new String[0];
-		Path[] paths = new Path[enabledPaths.length + disabledPaths.length];
-		int index = 0;
+
+		ArrayList<Path> list = new ArrayList<>();
+		int disabledIndex = 0;
 		for (String p : enabledPaths) {
-			paths[index++] = new Path(p);
+			if (p.length() == 0) {
+				// insert next disabled path at empty placeholder
+				if (disabledIndex < disabledPaths.length) {
+					list.add(new Path(disabledPaths[disabledIndex++], false));
+				}
+			}
+			else {
+				list.add(new Path(p, true));
+			}
 		}
-		for (String p : disabledPaths) {
-			paths[index++] = new Path(p);
+		// add remaining disabled paths
+		for (int i = disabledIndex; i < disabledPaths.length; i++) {
+			list.add(new Path(disabledPaths[i], false));
 		}
-		return paths;
+		Path[] paths = new Path[list.size()];
+		return list.toArray(paths);
 	}
 
 	public boolean saveToPreferences(String enablePathKey, String disabledPathKey) {
-		List<Path> pathList = getPaths();
+		List<Path> pathList = pathModel.getAllPaths();
 		return savePathsToPreferences(enablePathKey, disabledPathKey,
 			pathList.toArray(new Path[pathList.size()]));
 	}
 
+	private static void appendPath(StringBuilder buf, String path, boolean previousPathIsEmpty) {
+		if (buf.length() != 0 || previousPathIsEmpty) {
+			buf.append(File.pathSeparatorChar);
+		}
+		buf.append(path);
+	}
+
+	/**
+	 * Save the specified paths to the user Preferences using the specified keys.
+	 * Note: The encoded path Preferences are intended to be decoded by the 
+	 * {@link #restoreFromPreferences(String, Path[], String)} and
+	 * {@link #getPathsFromPreferences(String, Path[], String)} methods.
+	 * @param enablePathKey preference key for storing enabled paths
+	 * @param disabledPathKey preference key for storing disabled paths
+	 * @param paths paths to be saved
+	 * @return true if Preference saved properly
+	 */
 	public static boolean savePathsToPreferences(String enablePathKey, String disabledPathKey,
 			Path[] paths) {
-		StringBuffer enabledPathBuffer = new StringBuffer();
-		StringBuffer disabledPathBuffer = new StringBuffer();
+		StringBuilder enabledPathBuffer = new StringBuilder();
+		StringBuilder disabledPathBuffer = new StringBuilder();
+		boolean previousPathDisabled = false;
 		for (Path path : paths) {
-			StringBuffer buf = path.isEnabled() ? enabledPathBuffer : disabledPathBuffer;
-			if (buf.length() != 0) {
-				buf.append(File.pathSeparatorChar);
+			if (path.isEnabled()) {
+				appendPath(enabledPathBuffer, path.getPathAsString(), previousPathDisabled);
+				previousPathDisabled = false;
 			}
-			buf.append(path.getPathAsString());
+			else {
+				appendPath(disabledPathBuffer, path.getPathAsString(), false);
+				appendPath(enabledPathBuffer, "", previousPathDisabled);
+				previousPathDisabled = true;
+			}
 		}
 		if (enablePathKey != null) {
 			Preferences.setProperty(enablePathKey, enabledPathBuffer.toString());
 		}
-		Preferences.setProperty(disabledPathKey, disabledPathBuffer.toString());
+		if (disabledPathKey != null) {
+			Preferences.setProperty(disabledPathKey, disabledPathBuffer.toString());
+		}
 		return Preferences.store();
 	}
 

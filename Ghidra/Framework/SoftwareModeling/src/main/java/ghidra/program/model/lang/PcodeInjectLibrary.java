@@ -24,6 +24,7 @@ import org.xml.sax.*;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.*;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slgh_compile.PcodeParser;
 import ghidra.program.model.lang.InjectPayload.InjectParameter;
 import ghidra.program.model.listing.Program;
@@ -160,7 +161,7 @@ public class PcodeInjectLibrary {
 		ConstTpl c = v.getOffset();
 		long offset = c.getReal();
 		if (offset >= uniqueBase) {
-			uniqueBase = offset + 16;
+			uniqueBase = offset + SleighBase.MAX_UNIQUE_SIZE;
 		}
 	}
 

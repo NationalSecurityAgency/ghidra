@@ -809,6 +809,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 			COMDescriptorDataDirectory comDescriptorDataDirectory =
 				(COMDescriptorDataDirectory) element;
 			ImageCor20Header imageCor20Header = comDescriptorDataDirectory.getHeader();
+			if (imageCor20Header == null) {
+				continue;
+			}
 
 			if ((imageCor20Header.getFlags() &
 				ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) != ImageCor20Flags.COMIMAGE_FLAGS_NATIVE_ENTRYPOINT) {

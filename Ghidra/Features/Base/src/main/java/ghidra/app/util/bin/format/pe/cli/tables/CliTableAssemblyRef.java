@@ -126,7 +126,7 @@ public class CliTableAssemblyRef extends CliAbstractTable {
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		for (CliAbstractTableRow row : rows) {
 			CliAssemblyRefRow assemblyRefRow = (CliAssemblyRefRow) row;
-			if (assemblyRefRow.hashValueIndex > 0) {
+			if (assemblyRefRow.hashValueIndex == 0) {
 				continue;
 			}
 
