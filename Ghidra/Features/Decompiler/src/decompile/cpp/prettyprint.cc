@@ -595,11 +595,21 @@ void EmitPrettyPrint::overflow(void)
     else
       break;
   }
+  int4 newspaceremain;
   if (!indentstack.empty())
-    spaceremain = indentstack.back();
+    newspaceremain = indentstack.back();
   else
-    spaceremain = maxlinesize;
+    newspaceremain = maxlinesize;
+  if (newspaceremain == spaceremain)
+    return;		// Line breaking doesn't give us any additional space
+  if (commentmode && (newspaceremain == spaceremain + commentfill.size()))
+    return;		// Line breaking doesn't give us any additional space
+  spaceremain = newspaceremain;
   lowlevel->tagLine(maxlinesize-spaceremain);
+  if (commentmode &&(commentfill.size() != 0)) {
+    lowlevel->print(commentfill.c_str(),EmitXml::comment_color);
+    spaceremain -= commentfill.size();
+  }
 }
 
 /// Content and markup is sent to the low-level emitter if appropriate. The
