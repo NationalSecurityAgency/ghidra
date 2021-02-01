@@ -191,4 +191,10 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
+	
+	/** MIPS-specific SHN values */
+	/** MIPS text symbol */
+	public static final short SHN_MIPS_TEXT = (short) 0xff01;
+	/**MIPS data symbol*/
+	public static final short SHN_MIPS_DATA = (short) 0xff02;
 }

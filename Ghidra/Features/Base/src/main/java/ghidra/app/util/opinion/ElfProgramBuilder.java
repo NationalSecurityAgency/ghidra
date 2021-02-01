@@ -1276,6 +1276,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 		}
 	}
+	
+	/**
+	 * Check if the section index is in the processor-specific SHN range.
+	 * @param sectionIndex
+	 * @return true if sectionIndex is in the range(SHN_LOPROC, SHN_HIPROC), false otherwise
+	 */
+	private boolean isProcSpecificShn(short sectionIndex) {
+		return sectionIndex >= ElfSectionHeaderConstants.SHN_LOPROC && 
+				sectionIndex <= ElfSectionHeaderConstants.SHN_HIPROC;
+	}
 
 	/**
 	 * Calculate the load address associated with a specified elfSymbol.
@@ -1310,6 +1320,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		AddressSpace defaultDataSpace = getDefaultDataSpace();
 		AddressSpace symbolSpace = defaultSpace;
 		long symOffset = elfSymbol.getValue();
+		short machine = elf.e_machine();
 
 		if (sectionIndex > 0) {
 			if (sectionIndex < elfSections.length) {
@@ -1340,6 +1351,34 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// EXTERNAL block is affected by the program image base
 			symOffset = loadAdapter.getAdjustedMemoryOffset(symOffset, defaultSpace);
 			symOffset += getImageBaseWordAdjustmentOffset();
+		}
+		else if (isProcSpecificShn(sectionIndex))  {
+			// Basic handling for processor-specific SHN sectionIndex values
+			// TODO: If this grows beyond MIPS, it will need to be handled differently
+			// FIXME: The constants SHN_BEFORE and SHN_AFTER also fall into this range, for some reason.
+			// No idea what the best way is to handle that scenario.
+			if (machine == ElfConstants.EM_MIPS || 
+				machine == ElfConstants.EM_MIPS_RS3_LE || 
+				machine == ElfConstants.EM_MIPS_X){
+				if (sectionIndex == ElfSectionHeaderConstants.SHN_MIPS_TEXT || 
+					sectionIndex == ElfSectionHeaderConstants.SHN_MIPS_DATA)  {
+					// Process like a normal symbol, make sure to adjust offset
+					symOffset = loadAdapter.getAdjustedMemoryOffset(symOffset, defaultSpace);
+					symOffset += getImageBaseWordAdjustmentOffset();
+				}
+				else {
+					errorConsumer.accept("Unhandled MIPS SHN type for: " + elfSymbol.getNameAsString() +
+						" - value=0x" + Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
+						Integer.toHexString(sectionIndex & 0xffff));
+					return null;
+				}
+			}
+			else {
+				errorConsumer.accept("Unhandled processor-specific SHN for: " + elfSymbol.getNameAsString() +
+					" - value=0x" + Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
+					Integer.toHexString(sectionIndex & 0xffff));
+				return null;
+			}
 		}
 		else if (sectionIndex == ElfSectionHeaderConstants.SHN_ABS) { // Absolute value/address - 0xfff1
 			// TODO: Which space ? Can't distinguish simple constant vs. data vs. code/default space
