@@ -399,7 +399,7 @@ void Varnode::setSymbolEntry(SymbolEntry *entry)
 /// This used when there is a constant address reference to the Symbol and the Varnode holds the
 /// reference, not the actual value of the Symbol.
 /// \param entry is a mapping to the given Symbol
-/// \off is the byte offset into the Symbol of the reference
+/// \param off is the byte offset into the Symbol of the reference
 void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
 
 {

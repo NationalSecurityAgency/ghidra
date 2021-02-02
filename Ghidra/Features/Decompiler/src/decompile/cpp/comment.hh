@@ -54,8 +54,8 @@ public:
   };
   Comment(uint4 tp,const Address &fad,const Address &ad,int4 uq,const string &txt);	///< Constructor
   Comment(void) {} 	///< Constructor for use with restoreXml
-  void setEmitted(bool val) const { emitted = val; }
-  bool isEmitted(void) const { return emitted; }
+  void setEmitted(bool val) const { emitted = val; }		///< Mark that \b this comment has been emitted
+  bool isEmitted(void) const { return emitted; }		///< Return \b true if \b this comment is already emitted
   uint4 getType(void) const { return type; }			///< Get the properties associated with the comment
   const Address &getFuncAddr(void) const { return funcaddr; }	///< Get the address of the function containing the comment
   const Address &getAddr(void) const { return addr; }		///< Get the address to which the instruction is attached

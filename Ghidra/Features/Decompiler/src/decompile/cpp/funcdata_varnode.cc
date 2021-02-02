@@ -291,7 +291,7 @@ void Funcdata::destroyVarnode(Varnode *vn)
 
 /// Check if the given storage range is a potential laned register.
 /// If so, record the storage with the matching laned register record.
-/// \param s is the size of the storage range in bytes
+/// \param size is the size of the storage range in bytes
 /// \param addr is the starting address of the storage range
 void Funcdata::checkForLanedRegister(int4 size,const Address &addr)
 

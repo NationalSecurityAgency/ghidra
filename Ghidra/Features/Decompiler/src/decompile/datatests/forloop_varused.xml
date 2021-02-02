@@ -1,0 +1,31 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   For-loop where the loop variable is used elsewhere in the loop body. Contrived example.
+-->
+<bytechunk space="ram" offset="0x400544" readonly="true">
+        554889e5534883ec18897dec
+bb00000000eb2e89d883e00385c07511
+bf26084000b800000000e8d1feffffeb
+1189debf2e084000b800000000e8befe
+ffff83c3013b5dec7ccd904883c4185b
+5dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x400826" readonly="true">
+    30206d6f6420340076616c203d2025640a00
+</bytechunk>
+<symbol space="ram" offset="0x400544" name="forloop_loopvarused"/>
+<symbol space="ram" offset="0x400440" name="printf"/>
+</binaryimage>
+<script>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>parse line extern void forloop_loopvarused(int4 max);</com>
+  <com>lo fu forloop_loopvarused</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="For-loop var used #1" min="1" max="1">for.*uVar1 = 0;.*uVar1 &lt; max; uVar1 = uVar1 \+ 1</stringmatch>
+<stringmatch name="For-loop var used #2" min="1" max="1">if \(\(uVar1 &amp; 3\) == 0\)</stringmatch>
+<stringmatch name="For-loop var used #3" min="1" max="1">val = %d.*uVar1</stringmatch>
+</decompilertest>

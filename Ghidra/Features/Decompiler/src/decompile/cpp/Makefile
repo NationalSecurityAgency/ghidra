@@ -56,6 +56,9 @@ LNK=
 # Source files
 ALL_SOURCE= $(wildcard *.cc)
 ALL_NAMES=$(subst .cc,,$(ALL_SOURCE))
+UNITTEST_SOURCE= $(wildcard ../unittests/*.cc)
+UNITTEST_NAMES=$(subst .cc,,$(UNITTEST_SOURCE))
+UNITTEST_STRIP=$(subst ../unittests/,,$(UNITTEST_NAMES))
 
 COREEXT_SOURCE= $(wildcard coreext_*.cc)
 COREEXT_NAMES=$(subst .cc,,$(COREEXT_SOURCE))
@@ -91,7 +94,7 @@ GHIDRA=	ghidra_arch inject_ghidra ghidra_translate loadimage_ghidra \
 # Additional files specific to the sleigh compiler
 SLACOMP=slgh_compile slghparse slghscan
 # Additional special files that should not be considered part of the library
-SPECIAL=consolemain sleighexample test
+SPECIAL=consolemain sleighexample test testfunction
 # Any additional modules for the command line decompiler
 EXTRA= $(filter-out $(CORE) $(DECCORE) $(SLEIGH) $(GHIDRA) $(SLACOMP) $(SPECIAL),$(ALL_NAMES))
 
@@ -114,8 +117,8 @@ COMMANDLINE_NAMES=$(CORE) $(DECCORE) $(EXTRA) $(SLEIGH) consolemain
 COMMANDLINE_DEBUG=-DCPUI_DEBUG -D__TERMINAL__
 COMMANDLINE_OPT=-D__TERMINAL__
 
-TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) test
-TEST_DEBUG=-D__TERMINAL__ -g -O0
+TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) testfunction test 
+TEST_DEBUG=-D__TERMINAL__
 
 GHIDRA_NAMES=$(CORE) $(DECCORE) $(GHIDRA)
 GHIDRA_NAMES_DBG=$(GHIDRA_NAMES) callgraph ifacedecomp ifaceterm interface
@@ -136,7 +139,7 @@ LIBDECOMP_NAMES=$(CORE) $(DECCORE) $(EXTRA) $(SLEIGH)
 # object file macros
 COMMANDLINE_DBG_OBJS=$(COMMANDLINE_NAMES:%=com_dbg/%.o)
 COMMANDLINE_OPT_OBJS=$(COMMANDLINE_NAMES:%=com_opt/%.o)
-TEST_DEBUG_OBJS=$(TEST_NAMES:%=test_dbg/%.o)
+TEST_DEBUG_OBJS=$(TEST_NAMES:%=test_dbg/%.o) $(UNITTEST_STRIP:%=test_dbg/%.o)
 GHIDRA_DBG_OBJS=$(GHIDRA_NAMES_DBG:%=ghi_dbg/%.o)
 GHIDRA_OPT_OBJS=$(GHIDRA_NAMES:%=ghi_opt/%.o)
 SLEIGH_DBG_OBJS=$(SLEIGH_NAMES:%=sla_dbg/%.o)
@@ -214,7 +217,9 @@ com_dbg/%.o:	%.cc
 com_opt/%.o:	%.cc
 	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(COMMANDLINE_OPT)   $< -o $@
 test_dbg/%.o:	%.cc
-	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG)   $< -o $@
+	$(CXX) $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG)        $< -o $@
+test_dbg/%.o:	../unittests/%.cc
+	$(CXX) -I. $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(TEST_DEBUG)        $< -o $@
 ghi_dbg/%.o:	%.cc
 	$(CXX) $(ARCH_TYPE) -c $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(GHIDRA_DEBUG)      $< -o $@
 ghi_opt/%.o:	%.cc
@@ -248,7 +253,7 @@ decomp_opt:	$(COMMANDLINE_OPT_OBJS)
 	$(CXX) $(OPT_CXXFLAGS) $(ARCH_TYPE) -o decomp_opt $(COMMANDLINE_OPT_OBJS) $(BFDLIB) $(LNK)
 
 ghidra_test_dbg:	$(TEST_DEBUG_OBJS)
-	$(CXX) $(OPT_CXXFLAGS) $(ARCH_TYPE) -o ghidra_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
+	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o ghidra_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
 
 test: ghidra_test_dbg
 	./ghidra_test_dbg
@@ -339,10 +344,10 @@ com_opt/depend:	$(COMMANDLINE_NAMES:%=%.cc)
 	sed 's,\(.*\)\.o[ :]*,com_opt/\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-test_dbg/depend:	$(TEST_NAMES:%=%.cc)
+test_dbg/depend:	$(TEST_NAMES:%=%.cc) $(UNITTEST_NAMES:%=%.cc)
 	mkdir -p test_dbg
 	@set -e; rm -f $@; \
-	$(CXX) -MM $(TEST_DEBUG) $^ > $@.$$$$; \
+	$(CXX) -I. -MM $(TEST_DEBUG) $^ > $@.$$$$; \
 	sed 's,\(.*\)\.o[ :]*,test_dbg/\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 

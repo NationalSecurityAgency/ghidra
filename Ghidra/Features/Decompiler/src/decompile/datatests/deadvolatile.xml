@@ -1,0 +1,30 @@
+<decompilertest>
+<binaryimage arch="MIPS:LE:32:default:default">
+<!--
+   Contrived example of a LOAD off of a pointer that eventually
+   collapses to an address in a volatile region.  The value returned
+   by the LOAD is unused. This test makes sure the side-effects of
+   the volatile read are still present.
+-->
+<bytechunk space="ram" offset="0xbfc05558" readonly="true">
+                  c1bf053c5cdfa58c
+  e8ffbd2701a0023c5491428c1400bfaf
+  120001240000a090
+  8618f00f00000000
+  0800e0038001bd27
+</bytechunk>
+<bytechunk space="ram" offset="0xbfc0df5c" readonly="true">
+  00100000
+</bytechunk>
+<symbol space="ram" offset="0xbfc05558" name="deadvolatile"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>volatile [ram,0x1000,16]</com>
+  <com>lo fu deadvolatile</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Dead Volatile #1" min="1" max="1">read_volatile.*0x1000</stringmatch>
+</decompilertest>
