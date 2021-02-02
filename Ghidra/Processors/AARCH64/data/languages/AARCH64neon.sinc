@@ -466,9 +466,9 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR128.4S
 is b_3031=1 & u=0 & b_2428=0x1e & b_23=1 & b_1722=0x38 & b_1216=0x1b & b_1011=2 & Rn_VPR128.2D & Rd_FPR64 & Zd
 {
 	# sipd infix Rd_FPR64 = +(Rn_VPR128.2D) on pairs lane size (8 to 8)
-	tmp1 = Rn_VPR128.2D[0,64];
-	tmp2 = Rn_VPR128.2D[64,64];
-	Rd_FPR64[0,64] = tmp1 + tmp2;
+	local tmp1 = Rn_VPR128.2D[0,64];
+	local tmp2 = Rn_VPR128.2D[64,64];
+	Rd_FPR64 = tmp1 + tmp2;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -483,8 +483,8 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_2121=1 & Rm_VPR128.16
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.16B,Rm_VPR128.16B) on pairs lane size (1 to 1)
-	tmp2 = Rn_VPR128.16B[0,8];
-	tmp3 = Rn_VPR128.16B[8,8];
+	local tmp2 = Rn_VPR128.16B[0,8];
+	local tmp3 = Rn_VPR128.16B[8,8];
 	TMPQ1[0,8] = tmp2 + tmp3;
 	tmp2 = Rn_VPR128.16B[16,8];
 	tmp3 = Rn_VPR128.16B[24,8];
@@ -546,8 +546,8 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=3 & b_2121=1 & Rm_VPR128.2D
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.2D,Rm_VPR128.2D) on pairs lane size (8 to 8)
-	tmp2 = Rn_VPR128.2D[0,64];
-	tmp3 = Rn_VPR128.2D[64,64];
+	local tmp2 = Rn_VPR128.2D[0,64];
+	local tmp3 = Rn_VPR128.2D[64,64];
 	TMPQ1[0,64] = tmp2 + tmp3;
 	tmp2 = Rm_VPR128.2D[0,64];
 	tmp3 = Rm_VPR128.2D[64,64];
@@ -567,8 +567,8 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR64.2S 
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.2S,Rm_VPR64.2S) on pairs lane size (4 to 4)
-	tmp2 = Rn_VPR64.2S[0,32];
-	tmp3 = Rn_VPR64.2S[32,32];
+	local tmp2 = Rn_VPR64.2S[0,32];
+	local tmp3 = Rn_VPR64.2S[32,32];
 	TMPD1[0,32] = tmp2 + tmp3;
 	tmp2 = Rm_VPR64.2S[0,32];
 	tmp3 = Rm_VPR64.2S[32,32];
@@ -588,8 +588,8 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR64.4H 
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.4H,Rm_VPR64.4H) on pairs lane size (2 to 2)
-	tmp2 = Rn_VPR64.4H[0,16];
-	tmp3 = Rn_VPR64.4H[16,16];
+	local tmp2 = Rn_VPR64.4H[0,16];
+	local tmp3 = Rn_VPR64.4H[16,16];
 	TMPD1[0,16] = tmp2 + tmp3;
 	tmp2 = Rn_VPR64.4H[32,16];
 	tmp3 = Rn_VPR64.4H[48,16];
@@ -615,8 +615,8 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR128.4S
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.4S,Rm_VPR128.4S) on pairs lane size (4 to 4)
-	tmp2 = Rn_VPR128.4S[0,32];
-	tmp3 = Rn_VPR128.4S[32,32];
+	local tmp2 = Rn_VPR128.4S[0,32];
+	local tmp3 = Rn_VPR128.4S[32,32];
 	TMPQ1[0,32] = tmp2 + tmp3;
 	tmp2 = Rn_VPR128.4S[64,32];
 	tmp3 = Rn_VPR128.4S[96,32];
@@ -642,8 +642,8 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_2121=1 & Rm_VPR64.8B 
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.8B,Rm_VPR64.8B) on pairs lane size (1 to 1)
-	tmp2 = Rn_VPR64.8B[0,8];
-	tmp3 = Rn_VPR64.8B[8,8];
+	local tmp2 = Rn_VPR64.8B[0,8];
+	local tmp3 = Rn_VPR64.8B[8,8];
 	TMPD1[0,8] = tmp2 + tmp3;
 	tmp2 = Rn_VPR64.8B[16,8];
 	tmp3 = Rn_VPR64.8B[24,8];
@@ -681,8 +681,8 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_2121=1 & Rm_VPR128.8H
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.8H,Rm_VPR128.8H) on pairs lane size (2 to 2)
-	tmp2 = Rn_VPR128.8H[0,16];
-	tmp3 = Rn_VPR128.8H[16,16];
+	local tmp2 = Rn_VPR128.8H[0,16];
+	local tmp3 = Rn_VPR128.8H[16,16];
 	TMPQ1[0,16] = tmp2 + tmp3;
 	tmp2 = Rn_VPR128.8H[32,16];
 	tmp3 = Rn_VPR128.8H[48,16];
@@ -3376,9 +3376,9 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 is b_3031=1 & u=1 & b_2428=0x1e & b_23=0 & b_1722=0x38 & b_1216=0xd & b_1011=2 & Rn_VPR128.2D & Rd_FPR64 & Zd
 {
 	# sipd infix Rd_FPR64 = f+(Rn_VPR128.2D) on pairs lane size (8 to 8)
-	tmp1 = Rn_VPR128.2D[0,64];
-	tmp2 = Rn_VPR128.2D[64,64];
-	Rd_FPR64[0,64] = tmp1 f+ tmp2;
+	local tmp1 = Rn_VPR128.2D[0,64];
+	local tmp2 = Rn_VPR128.2D[64,64];
+	Rd_FPR64 = tmp1 f+ tmp2;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -3392,9 +3392,9 @@ is b_3031=1 & u=1 & b_2428=0x1e & b_23=0 & b_1722=0x38 & b_1216=0xd & b_1011=2 &
 is b_3031=1 & u=1 & b_2428=0x1e & b_23=0 & b_1722=0x18 & b_1216=0xd & b_1011=2 & Rn_VPR64.2S & Rd_FPR32 & Zd
 {
 	# sipd infix Rd_FPR32 = f+(Rn_VPR64.2S) on pairs lane size (4 to 4)
-	tmp1 = Rn_VPR64.2S[0,32];
-	tmp2 = Rn_VPR64.2S[32,32];
-	Rd_FPR32[0,32] = tmp1 f+ tmp2;
+	local tmp1 = Rn_VPR64.2S[0,32];
+	local tmp2 = Rn_VPR64.2S[32,32];
+	Rd_FPR32 = tmp1 f+ tmp2;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 }
 
@@ -3409,9 +3409,9 @@ is b_3031=1 & u=1 & b_2428=0x1e & b_23=0 & b_1722=0x18 & b_1216=0xd & b_1011=2 &
 is b_1031=0b0101111000110000110110 & Rd_FPR16 & vRn_VPR128 & Rn_FPR32 & Zd
 {
 	# sipd infix Rd_FPR16 = f+(Rn_FPR32) on pairs lane size (2 to 2)
-	tmp1 = Rn_FPR32[0,16];
-	tmp2 = Rn_FPR32[16,16];
-	Rd_FPR16[0,16] = tmp1 f+ tmp2;
+	local tmp1 = Rn_FPR32[0,16];
+	local tmp2 = Rn_FPR32[16,16];
+	Rd_FPR16 = tmp1 f+ tmp2;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 }
 
@@ -3426,8 +3426,8 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_21=1 & Rm_VPR128.2D &
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = f+(Rn_VPR128.2D,Rm_VPR128.2D) on pairs lane size (8 to 8)
-	tmp2 = Rn_VPR128.2D[0,64];
-	tmp3 = Rn_VPR128.2D[64,64];
+	local tmp2 = Rn_VPR128.2D[0,64];
+	local tmp3 = Rn_VPR128.2D[64,64];
 	TMPQ1[0,64] = tmp2 f+ tmp3;
 	tmp2 = Rm_VPR128.2D[0,64];
 	tmp3 = Rm_VPR128.2D[64,64];
@@ -3447,8 +3447,8 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_21=1 & Rm_VPR64.2S & 
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = f+(Rn_VPR64.2S,Rm_VPR64.2S) on pairs lane size (4 to 4)
-	tmp2 = Rn_VPR64.2S[0,32];
-	tmp3 = Rn_VPR64.2S[32,32];
+	local tmp2 = Rn_VPR64.2S[0,32];
+	local tmp3 = Rn_VPR64.2S[32,32];
 	TMPD1[0,32] = tmp2 f+ tmp3;
 	tmp2 = Rm_VPR64.2S[0,32];
 	tmp3 = Rm_VPR64.2S[32,32];
@@ -3468,8 +3468,8 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_21=1 & Rm_VPR128.4S &
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = f+(Rn_VPR128.4S,Rm_VPR128.4S) on pairs lane size (4 to 4)
-	tmp2 = Rn_VPR128.4S[0,32];
-	tmp3 = Rn_VPR128.4S[32,32];
+	local tmp2 = Rn_VPR128.4S[0,32];
+	local tmp3 = Rn_VPR128.4S[32,32];
 	TMPQ1[0,32] = tmp2 f+ tmp3;
 	tmp2 = Rn_VPR128.4S[64,32];
 	tmp3 = Rn_VPR128.4S[96,32];
@@ -3496,8 +3496,8 @@ is b_31=0 & b_30=0 & b_2129=0b101110010 & b_1015=0b000101 & Rd_VPR64.4H & Rn_VPR
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = f+(Rm_VPR64.4H,Rn_VPR64.4H) on pairs lane size (2 to 2)
-	tmp2 = Rm_VPR64.4H[0,16];
-	tmp3 = Rm_VPR64.4H[16,16];
+	local tmp2 = Rm_VPR64.4H[0,16];
+	local tmp3 = Rm_VPR64.4H[16,16];
 	TMPD1[0,16] = tmp2 f+ tmp3;
 	tmp2 = Rm_VPR64.4H[32,16];
 	tmp3 = Rm_VPR64.4H[48,16];
@@ -3524,8 +3524,8 @@ is b_31=0 & b_30=1 & b_2129=0b101110010 & b_1015=0b000101 & Rd_VPR128.8H & Rn_VP
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = f+(Rn_VPR128.8H,Rm_VPR128.8H) on pairs lane size (2 to 2)
-	tmp2 = Rn_VPR128.8H[0,16];
-	tmp3 = Rn_VPR128.8H[16,16];
+	local tmp2 = Rn_VPR128.8H[0,16];
+	local tmp3 = Rn_VPR128.8H[16,16];
 	TMPQ1[0,16] = tmp2 f+ tmp3;
 	tmp2 = Rn_VPR128.8H[32,16];
 	tmp3 = Rn_VPR128.8H[48,16];
@@ -13271,10 +13271,10 @@ is b_31=0 & b_30=0 & b_2429=0b001110 & b_2223=0b00 & b_1021=0b100000011010 & Rd_
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.8B) on pairs lane size (1 to 2)
-	tmp2 = Rn_VPR64.8B[0,8];
-	tmp4 = sext(tmp2);
-	tmp3 = Rn_VPR64.8B[8,8];
-	tmp5 = sext(tmp3);
+	local tmp2 = Rn_VPR64.8B[0,8];
+	local tmp4 = sext(tmp2);
+	local tmp3 = Rn_VPR64.8B[8,8];
+	local tmp5 = sext(tmp3);
 	TMPD1[0,16] = tmp4 + tmp5;
 	tmp2 = Rn_VPR64.8B[16,8];
 	tmp4 = sext(tmp2);
@@ -13311,10 +13311,10 @@ is b_31=0 & b_30=1 & b_2429=0b001110 & b_2223=0b00 & b_1021=0b100000011010 & Rd_
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.16B) on pairs lane size (1 to 2)
-	tmp2 = Rn_VPR128.16B[0,8];
-	tmp4 = sext(tmp2);
-	tmp3 = Rn_VPR128.16B[8,8];
-	tmp5 = sext(tmp3);
+	local tmp2 = Rn_VPR128.16B[0,8];
+	local tmp4 = sext(tmp2);
+	local tmp3 = Rn_VPR128.16B[8,8];
+	local tmp5 = sext(tmp3);
 	TMPQ1[0,16] = tmp4 + tmp5;
 	tmp2 = Rn_VPR128.16B[16,8];
 	tmp4 = sext(tmp2);
@@ -13375,10 +13375,10 @@ is b_31=0 & b_30=0 & b_2429=0b001110 & b_2223=0b01 & b_1021=0b100000011010 & Rd_
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.4H) on pairs lane size (2 to 4)
-	tmp2 = Rn_VPR64.4H[0,16];
-	tmp4 = sext(tmp2);
-	tmp3 = Rn_VPR64.4H[16,16];
-	tmp5 = sext(tmp3);
+	local tmp2 = Rn_VPR64.4H[0,16];
+	local tmp4 = sext(tmp2);
+	local tmp3 = Rn_VPR64.4H[16,16];
+	local tmp5 = sext(tmp3);
 	TMPD1[0,32] = tmp4 + tmp5;
 	tmp2 = Rn_VPR64.4H[32,16];
 	tmp4 = sext(tmp2);
@@ -13403,10 +13403,10 @@ is b_31=0 & b_30=1 & b_2429=0b001110 & b_2223=0b01 & b_1021=0b100000011010 & Rd_
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.8H) on pairs lane size (2 to 4)
-	tmp2 = Rn_VPR128.8H[0,16];
-	tmp4 = sext(tmp2);
-	tmp3 = Rn_VPR128.8H[16,16];
-	tmp5 = sext(tmp3);
+	local tmp2 = Rn_VPR128.8H[0,16];
+	local tmp4 = sext(tmp2);
+	local tmp3 = Rn_VPR128.8H[16,16];
+	local tmp5 = sext(tmp3);
 	TMPQ1[0,32] = tmp4 + tmp5;
 	tmp2 = Rn_VPR128.8H[32,16];
 	tmp4 = sext(tmp2);
@@ -13441,14 +13441,15 @@ is b_31=0 & b_30=1 & b_2429=0b001110 & b_2223=0b01 & b_1021=0b100000011010 & Rd_
 :sadalp Rd_VPR64.1D, Rn_VPR64.2S
 is b_31=0 & b_30=0 & b_2429=0b001110 & b_2223=0b10 & b_1021=0b100000011010 & Rd_VPR64.1D & Rn_VPR64.2S & Zd
 {
+	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.2S) on pairs lane size (4 to 8)
-	tmp2 = Rn_VPR64.2S[0,32];
-	tmp4 = sext(tmp2);
-	tmp3 = Rn_VPR64.2S[32,32];
-	tmp5 = sext(tmp3);
-	tmpd1 = tmp4 + tmp5;
+	local tmp2 = Rn_VPR64.2S[0,32];
+	local tmp4 = sext(tmp2);
+	local tmp3 = Rn_VPR64.2S[32,32];
+	local tmp5 = sext(tmp3);
+	TMPD1 = tmp4 + tmp5;
 	# simd infix Rd_VPR64.1D = Rd_VPR64.1D + TMPD1 on lane size 8
-	Rd_VPR64.1D[0,64] = Rd_VPR64.1D[0,64] + tmpd1;
+	Rd_VPR64.1D = Rd_VPR64.1D + TMPD1;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -13464,10 +13465,10 @@ is b_31=0 & b_30=1 & b_2429=0b001110 & b_2223=0b10 & b_1021=0b100000011010 & Rd_
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.4S) on pairs lane size (4 to 8)
-	tmp2 = Rn_VPR128.4S[0,32];
-	tmp4 = sext(tmp2);
-	tmp3 = Rn_VPR128.4S[32,32];
-	tmp5 = sext(tmp3);
+	local tmp2 = Rn_VPR128.4S[0,32];
+	local tmp4 = sext(tmp2);
+	local tmp3 = Rn_VPR128.4S[32,32];
+	local tmp5 = sext(tmp3);
 	TMPQ1[0,64] = tmp4 + tmp5;
 	tmp2 = Rn_VPR128.4S[64,32];
 	tmp4 = sext(tmp2);
@@ -13671,11 +13672,11 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x10 & b_1216=2 
 {
 	TMPD1 = Rn_VPR64.2S;
 	# sipd infix Rd_VPR64.1D = +(TMPD1) on pairs lane size (4 to 8)
-	tmp2 = TMPD1[0,32];
-	tmp4 = sext(tmp2);
-	tmp3 = TMPD1[32,32];
-	tmp5 = sext(tmp3);
-	Rd_VPR64.1D[0,64] = tmp4 + tmp5;
+	local tmp2 = TMPD1[0,32];
+	local tmp4 = sext(tmp2);
+	local tmp3 = TMPD1[32,32];
+	local tmp5 = sext(tmp3);
+	Rd_VPR64.1D = tmp4 + tmp5;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -13690,10 +13691,10 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x10 & b_1216=2 
 {
 	TMPD1 = Rn_VPR64.4H;
 	# sipd infix Rd_VPR64.2S = +(TMPD1) on pairs lane size (2 to 4)
-	tmp2 = TMPD1[0,16];
-	tmp4 = sext(tmp2);
-	tmp3 = TMPD1[16,16];
-	tmp5 = sext(tmp3);
+	local tmp2 = TMPD1[0,16];
+	local tmp4 = sext(tmp2);
+	local tmp3 = TMPD1[16,16];
+	local tmp5 = sext(tmp3);
 	Rd_VPR64.2S[0,32] = tmp4 + tmp5;
 	tmp2 = TMPD1[32,16];
 	tmp4 = sext(tmp2);
@@ -13714,10 +13715,10 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x10 & b_1216=2 
 {
 	TMPD1 = Rn_VPR64.8B;
 	# sipd infix Rd_VPR64.4H = +(TMPD1) on pairs lane size (1 to 2)
-	tmp2 = TMPD1[0,8];
-	tmp4 = sext(tmp2);
-	tmp3 = TMPD1[8,8];
-	tmp5 = sext(tmp3);
+	local tmp2 = TMPD1[0,8];
+	local tmp4 = sext(tmp2);
+	local tmp3 = TMPD1[8,8];
+	local tmp5 = sext(tmp3);
 	Rd_VPR64.4H[0,16] = tmp4 + tmp5;
 	tmp2 = TMPD1[16,8];
 	tmp4 = sext(tmp2);
@@ -13748,10 +13749,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x10 & b_1216=2 
 {
 	TMPQ1 = Rn_VPR128.4S;
 	# sipd infix Rd_VPR128.2D = +(TMPQ1) on pairs lane size (4 to 8)
-	tmp2 = TMPQ1[0,32];
-	tmp4 = sext(tmp2);
-	tmp3 = TMPQ1[32,32];
-	tmp5 = sext(tmp3);
+	local tmp2 = TMPQ1[0,32];
+	local tmp4 = sext(tmp2);
+	local tmp3 = TMPQ1[32,32];
+	local tmp5 = sext(tmp3);
 	Rd_VPR128.2D[0,64] = tmp4 + tmp5;
 	tmp2 = TMPQ1[64,32];
 	tmp4 = sext(tmp2);
@@ -13772,10 +13773,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x10 & b_1216=2 
 {
 	TMPQ1 = Rn_VPR128.8H;
 	# sipd infix Rd_VPR128.4S = +(TMPQ1) on pairs lane size (2 to 4)
-	tmp2 = TMPQ1[0,16];
-	tmp4 = sext(tmp2);
-	tmp3 = TMPQ1[16,16];
-	tmp5 = sext(tmp3);
+	local tmp2 = TMPQ1[0,16];
+	local tmp4 = sext(tmp2);
+	local tmp3 = TMPQ1[16,16];
+	local tmp5 = sext(tmp3);
 	Rd_VPR128.4S[0,32] = tmp4 + tmp5;
 	tmp2 = TMPQ1[32,16];
 	tmp4 = sext(tmp2);
@@ -13806,10 +13807,10 @@ is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x10 & b_1216=2 
 {
 	TMPQ1 = Rn_VPR128.16B;
 	# sipd infix Rd_VPR128.8H = +(TMPQ1) on pairs lane size (1 to 2)
-	tmp2 = TMPQ1[0,8];
-	tmp4 = sext(tmp2);
-	tmp3 = TMPQ1[8,8];
-	tmp5 = sext(tmp3);
+	local tmp2 = TMPQ1[0,8];
+	local tmp4 = sext(tmp2);
+	local tmp3 = TMPQ1[8,8];
+	local tmp5 = sext(tmp3);
 	Rd_VPR128.8H[0,16] = tmp4 + tmp5;
 	tmp2 = TMPQ1[16,8];
 	tmp4 = sext(tmp2);
@@ -23639,10 +23640,10 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x10 & b_1216=0x
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.16B) on pairs lane size (1 to 2)
-	tmp2 = Rn_VPR128.16B[0,8];
-	tmp4 = zext(tmp2);
-	tmp3 = Rn_VPR128.16B[8,8];
-	tmp5 = zext(tmp3);
+	local tmp2 = Rn_VPR128.16B[0,8];
+	local tmp4 = zext(tmp2);
+	local tmp3 = Rn_VPR128.16B[8,8];
+	local tmp5 = zext(tmp3);
 	TMPQ1[0,16] = tmp4 + tmp5;
 	tmp2 = Rn_VPR128.16B[16,8];
 	tmp4 = zext(tmp2);
@@ -23700,14 +23701,15 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x10 & b_1216=0x
 :uadalp Rd_VPR64.1D, Rn_VPR64.2S
 is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x10 & b_1216=0x6 & b_1011=2 & Rn_VPR64.2S & Rd_VPR64.1D & Zd
 {
+	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.2S) on pairs lane size (4 to 8)
-	tmp2 = Rn_VPR64.2S[0,32];
-	tmp4 = zext(tmp2);
-	tmp3 = Rn_VPR64.2S[32,32];
-	tmp5 = zext(tmp3);
-	tmpd1 = tmp4 + tmp5;
+	local tmp2 = Rn_VPR64.2S[0,32];
+	local tmp4 = zext(tmp2);
+	local tmp3 = Rn_VPR64.2S[32,32];
+	local tmp5 = zext(tmp3);
+	TMPD1 = tmp4 + tmp5;
 	# simd infix Rd_VPR64.1D = Rd_VPR64.1D + TMPD1 on lane size 8
-	Rd_VPR64.1D[0,64] = Rd_VPR64.1D[0,64] + tmpd1;
+	Rd_VPR64.1D = Rd_VPR64.1D + TMPD1;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -23722,10 +23724,10 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x10 & b_1216=0x
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.4H) on pairs lane size (2 to 4)
-	tmp2 = Rn_VPR64.4H[0,16];
-	tmp4 = zext(tmp2);
-	tmp3 = Rn_VPR64.4H[16,16];
-	tmp5 = zext(tmp3);
+	local tmp2 = Rn_VPR64.4H[0,16];
+	local tmp4 = zext(tmp2);
+	local tmp3 = Rn_VPR64.4H[16,16];
+	local tmp5 = zext(tmp3);
 	TMPD1[0,32] = tmp4 + tmp5;
 	tmp2 = Rn_VPR64.4H[32,16];
 	tmp4 = zext(tmp2);
@@ -23749,10 +23751,10 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=2 & b_1721=0x10 & b_1216=0x
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.4S) on pairs lane size (4 to 8)
-	tmp2 = Rn_VPR128.4S[0,32];
-	tmp4 = zext(tmp2);
-	tmp3 = Rn_VPR128.4S[32,32];
-	tmp5 = zext(tmp3);
+	local tmp2 = Rn_VPR128.4S[0,32];
+	local tmp4 = zext(tmp2);
+	local tmp3 = Rn_VPR128.4S[32,32];
+	local tmp5 = zext(tmp3);
 	TMPQ1[0,64] = tmp4 + tmp5;
 	tmp2 = Rn_VPR128.4S[64,32];
 	tmp4 = zext(tmp2);
@@ -23776,10 +23778,10 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_1721=0x10 & b_1216=0x
 {
 	TMPD1 = 0;
 	# sipd infix TMPD1 = +(Rn_VPR64.8B) on pairs lane size (1 to 2)
-	tmp2 = Rn_VPR64.8B[0,8];
-	tmp4 = zext(tmp2);
-	tmp3 = Rn_VPR64.8B[8,8];
-	tmp5 = zext(tmp3);
+	local tmp2 = Rn_VPR64.8B[0,8];
+	local tmp4 = zext(tmp2);
+	local tmp3 = Rn_VPR64.8B[8,8];
+	local tmp5 = zext(tmp3);
 	TMPD1[0,16] = tmp4 + tmp5;
 	tmp2 = Rn_VPR64.8B[16,8];
 	tmp4 = zext(tmp2);
@@ -23815,10 +23817,10 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=1 & b_1721=0x10 & b_1216=0x
 {
 	TMPQ1 = 0;
 	# sipd infix TMPQ1 = +(Rn_VPR128.8H) on pairs lane size (2 to 4)
-	tmp2 = Rn_VPR128.8H[0,16];
-	tmp4 = zext(tmp2);
-	tmp3 = Rn_VPR128.8H[16,16];
-	tmp5 = zext(tmp3);
+	local tmp2 = Rn_VPR128.8H[0,16];
+	local tmp4 = zext(tmp2);
+	local tmp3 = Rn_VPR128.8H[16,16];
+	local tmp5 = zext(tmp3);
 	TMPQ1[0,32] = tmp4 + tmp5;
 	tmp2 = Rn_VPR128.8H[32,16];
 	tmp4 = zext(tmp2);
@@ -24035,10 +24037,10 @@ is b_31=0 & b_30=0 & b_2429=0b101110 & b_2223=0b00 & b_1021=0b100000001010 & Rd_
 {
 	TMPD1 = Rn_VPR64.8B;
 	# sipd infix Rd_VPR64.4H = +(TMPD1) on pairs lane size (1 to 2)
-	tmp2 = TMPD1[0,8];
-	tmp4 = zext(tmp2);
-	tmp3 = TMPD1[8,8];
-	tmp5 = zext(tmp3);
+	local tmp2 = TMPD1[0,8];
+	local tmp4 = zext(tmp2);
+	local tmp3 = TMPD1[8,8];
+	local tmp5 = zext(tmp3);
 	Rd_VPR64.4H[0,16] = tmp4 + tmp5;
 	tmp2 = TMPD1[16,8];
 	tmp4 = zext(tmp2);
@@ -24070,10 +24072,10 @@ is b_31=0 & b_30=1 & b_2429=0b101110 & b_2223=0b00 & b_1021=0b100000001010 & Rd_
 {
 	TMPQ1 = Rn_VPR128.16B;
 	# sipd infix Rd_VPR128.8H = +(TMPQ1) on pairs lane size (1 to 2)
-	tmp2 = TMPQ1[0,8];
-	tmp4 = zext(tmp2);
-	tmp3 = TMPQ1[8,8];
-	tmp5 = zext(tmp3);
+	local tmp2 = TMPQ1[0,8];
+	local tmp4 = zext(tmp2);
+	local tmp3 = TMPQ1[8,8];
+	local tmp5 = zext(tmp3);
 	Rd_VPR128.8H[0,16] = tmp4 + tmp5;
 	tmp2 = TMPQ1[16,8];
 	tmp4 = zext(tmp2);
@@ -24125,10 +24127,10 @@ is b_31=0 & b_30=0 & b_2429=0b101110 & b_2223=0b01 & b_1021=0b100000001010 & Rd_
 {
 	TMPD1 = Rn_VPR64.4H;
 	# sipd infix Rd_VPR64.2S = +(TMPD1) on pairs lane size (2 to 4)
-	tmp2 = TMPD1[0,16];
-	tmp4 = zext(tmp2);
-	tmp3 = TMPD1[16,16];
-	tmp5 = zext(tmp3);
+	local tmp2 = TMPD1[0,16];
+	local tmp4 = zext(tmp2);
+	local tmp3 = TMPD1[16,16];
+	local tmp5 = zext(tmp3);
 	Rd_VPR64.2S[0,32] = tmp4 + tmp5;
 	tmp2 = TMPD1[32,16];
 	tmp4 = zext(tmp2);
@@ -24150,10 +24152,10 @@ is b_31=0 & b_30=1 & b_2429=0b101110 & b_2223=0b01 & b_1021=0b100000001010 & Rd_
 {
 	TMPQ1 = Rn_VPR128.8H;
 	# sipd infix Rd_VPR128.4S = +(TMPQ1) on pairs lane size (2 to 4)
-	tmp2 = TMPQ1[0,16];
-	tmp4 = zext(tmp2);
-	tmp3 = TMPQ1[16,16];
-	tmp5 = zext(tmp3);
+	local tmp2 = TMPQ1[0,16];
+	local tmp4 = zext(tmp2);
+	local tmp3 = TMPQ1[16,16];
+	local tmp5 = zext(tmp3);
 	Rd_VPR128.4S[0,32] = tmp4 + tmp5;
 	tmp2 = TMPQ1[32,16];
 	tmp4 = zext(tmp2);
@@ -24185,11 +24187,11 @@ is b_31=0 & b_30=0 & b_2429=0b101110 & b_2223=0b10 & b_1021=0b100000001010 & Rd_
 {
 	TMPD1 = Rn_VPR64.2S;
 	# sipd infix Rd_VPR64.1D = +(TMPD1) on pairs lane size (4 to 8)
-	tmp2 = TMPD1[0,32];
-	tmp4 = zext(tmp2);
-	tmp3 = TMPD1[32,32];
-	tmp5 = zext(tmp3);
-	Rd_VPR64.1D[0,64] = tmp4 + tmp5;
+	local tmp2 = TMPD1[0,32];
+	local tmp4 = zext(tmp2);
+	local tmp3 = TMPD1[32,32];
+	local tmp5 = zext(tmp3);
+	Rd_VPR64.1D = tmp4 + tmp5;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -24205,10 +24207,10 @@ is b_31=0 & b_30=1 & b_2429=0b101110 & b_2223=0b10 & b_1021=0b100000001010 & Rd_
 {
 	TMPQ1 = Rn_VPR128.4S;
 	# sipd infix Rd_VPR128.2D = +(TMPQ1) on pairs lane size (4 to 8)
-	tmp2 = TMPQ1[0,32];
-	tmp4 = zext(tmp2);
-	tmp3 = TMPQ1[32,32];
-	tmp5 = zext(tmp3);
+	local tmp2 = TMPQ1[0,32];
+	local tmp4 = zext(tmp2);
+	local tmp3 = TMPQ1[32,32];
+	local tmp5 = zext(tmp3);
 	Rd_VPR128.2D[0,64] = tmp4 + tmp5;
 	tmp2 = TMPQ1[64,32];
 	tmp4 = zext(tmp2);
