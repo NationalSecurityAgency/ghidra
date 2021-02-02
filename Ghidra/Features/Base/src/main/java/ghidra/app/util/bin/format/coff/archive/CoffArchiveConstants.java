@@ -17,10 +17,7 @@ package ghidra.app.util.bin.format.coff.archive;
 
 public final class CoffArchiveConstants {
 
-	public final static String MAGIC      = "!<arch>\n";
-	public final static int    MAGIC_LEN  = MAGIC.length();
-	public static final int MAGIC_LEN_CONST_EXPR = 8;
+	public static final String MAGIC = "!<arch>\n";
+	public static final int MAGIC_LEN = MAGIC.length();
 	public static final byte[] MAGIC_BYTES = MAGIC.getBytes();
-
-	public final static String END_OF_HEADER_MAGIC = "'\n";
 }
