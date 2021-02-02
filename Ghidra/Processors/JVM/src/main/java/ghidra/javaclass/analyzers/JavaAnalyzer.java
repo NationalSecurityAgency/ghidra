@@ -36,10 +36,10 @@ import ghidra.javaclass.flags.MethodsInfoAccessFlags;
 import ghidra.javaclass.format.*;
 import ghidra.javaclass.format.attributes.*;
 import ghidra.javaclass.format.constantpool.*;
+import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.BasicCompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -138,7 +138,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		disassembleMethods(program, classFile, monitor);
 		processInstructions(program, constantPoolData, classFile, monitor);
 		recordJavaVersionInfo(program, classFile);
-		BasicCompilerSpec.enableJavaLanguageDecompilation(program);
+		ProgramCompilerSpec.enableJavaLanguageDecompilation(program);
 		return true;
 	}
 

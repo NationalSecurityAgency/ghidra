@@ -98,8 +98,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            created tables. 
 	 * 18-Feb-2021 - version 23   Added support for Big Reflist for tracking FROM references.
 	 *                            Primarily used for large numbers of Entry Point references.
+	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions                          
 	 */
-	static final int DB_VERSION = 23;
+	static final int DB_VERSION = 24;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -189,7 +190,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private ProgramUserDataDB programUserData;
 	private Table table;
 	private Language language;
-	private CompilerSpec compilerSpec;
+	private ProgramCompilerSpec compilerSpec;
 
 	private LanguageID languageID;
 	private CompilerSpecID compilerSpecID;
@@ -219,7 +220,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		super(new DBHandle(), name, 500, 1000, consumer);
 
 		this.language = language;
-		this.compilerSpec = compilerSpec;
+		this.compilerSpec = new ProgramCompilerSpec(this, compilerSpec);
 
 		languageID = language.getLanguageID();
 		compilerSpecID = compilerSpec.getCompilerSpecID();
@@ -244,7 +245,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			programUserData = new ProgramUserDataDB(this);
 			endTransaction(id, true);
 			clearUndo(false);
-			compilerSpec.registerProgramOptions(this);
+			this.compilerSpec.registerProgramOptions();
 			getCodeManager().activateContextLocking();
 			success = true;
 		}
@@ -353,7 +354,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			recordChanges = true;
 			endTransaction(id, true);
 			clearUndo(false);
-			compilerSpec.registerProgramOptions(this);
+			SpecExtension.checkFormatVersion(this);
+			compilerSpec.installExtensions();
+			compilerSpec.registerProgramOptions();
 			getCodeManager().activateContextLocking();
 			success = true;
 		}
@@ -374,12 +377,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @throws CompilerSpecNotFoundException if the compiler spec cannot be found
 	 */
 	private void initCompilerSpec() throws CompilerSpecNotFoundException {
+		CompilerSpec langSpec;
 		try {
 			if (languageUpgradeTranslator != null) {
-				compilerSpec = languageUpgradeTranslator.getOldCompilerSpec(compilerSpecID);
+				langSpec = languageUpgradeTranslator.getOldCompilerSpec(compilerSpecID);
 			}
 			else {
-				compilerSpec = language.getCompilerSpecByID(compilerSpecID);
+				langSpec = language.getCompilerSpecByID(compilerSpecID);
 			}
 		}
 		catch (CompilerSpecNotFoundException e) {
@@ -387,12 +391,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				"Compiler Spec " + compilerSpecID + " for Language " +
 					language.getLanguageDescription().getDescription() +
 					" Not Found, using default: " + e);
-			compilerSpec = language.getDefaultCompilerSpec();
+			langSpec = language.getDefaultCompilerSpec();
 			if (compilerSpec == null) {
 				throw e;
 			}
 			compilerSpecID = compilerSpec.getCompilerSpecID();
 		}
+		compilerSpec = new ProgramCompilerSpec(this, langSpec);
 	}
 
 	/**
@@ -412,8 +417,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			Language newLanguage = language;
 
 			Language oldLanguage = OldLanguageFactory.getOldLanguageFactory()
-					.getOldLanguage(
-						languageID, languageVersion);
+					.getOldLanguage(languageID, languageVersion);
 			if (oldLanguage == null) {
 				// Assume minor version behavior - old language does not exist for current major version
 				Msg.error(this, "Old language specification not found: " + languageID +
@@ -422,10 +426,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			}
 
 			// Ensure that we can upgrade the language
-			languageUpgradeTranslator =
-				LanguageTranslatorFactory.getLanguageTranslatorFactory()
-						.getLanguageTranslator(
-							oldLanguage, newLanguage);
+			languageUpgradeTranslator = LanguageTranslatorFactory.getLanguageTranslatorFactory()
+					.getLanguageTranslator(oldLanguage, newLanguage);
 			if (languageUpgradeTranslator == null) {
 
 // TODO: This is a bad situation!! Most language revisions should be supportable, if not we have no choice but to throw 
@@ -467,10 +469,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private VersionException checkForLanguageChange(LanguageNotFoundException e, int openMode)
 			throws LanguageNotFoundException {
 
-		languageUpgradeTranslator =
-			LanguageTranslatorFactory.getLanguageTranslatorFactory()
-					.getLanguageTranslator(
-						languageID, languageVersion);
+		languageUpgradeTranslator = LanguageTranslatorFactory.getLanguageTranslatorFactory()
+				.getLanguageTranslator(languageID, languageVersion);
 		if (languageUpgradeTranslator == null) {
 			throw e;
 		}
@@ -1201,8 +1201,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @throws MemoryConflictException if image base override is active
 	 */
 	public AddressSpace addOverlaySpace(String blockName, AddressSpace originalSpace,
-			long minOffset, long maxOffset)
-			throws LockException, MemoryConflictException {
+			long minOffset, long maxOffset) throws LockException, MemoryConflictException {
 
 		checkExclusiveAccess();
 		if (imageBaseOverride) {
@@ -1838,6 +1837,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			for (int i = 0; i < NUM_MANAGERS; i++) {
 				managers[i].invalidateCache(all);
 			}
+			compilerSpec.installExtensions();		// Reload any extensions
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -2002,8 +2002,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 		LanguageTranslator languageTranslator =
 			LanguageTranslatorFactory.getLanguageTranslatorFactory()
-					.getLanguageTranslator(language,
-						newLanguage);
+					.getLanguageTranslator(language, newLanguage);
 		if (languageTranslator == null) {
 			throw new IncompatibleLanguageException("Language translation not supported");
 		}
@@ -2054,7 +2053,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				}
 
 				if (newCompilerSpecID != null) {
-					compilerSpec = language.getCompilerSpecByID(newCompilerSpecID);
+					compilerSpec = new ProgramCompilerSpec(this,
+						language.getCompilerSpecByID(newCompilerSpecID));
 				}
 				compilerSpecID = compilerSpec.getCompilerSpecID();
 				languageVersion = language.getVersion();
@@ -2458,5 +2458,19 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		ProgramRegisterContextDB contextMgr = (ProgramRegisterContextDB) getProgramContext();
 		contextMgr.flushProcessorContextWriteCache();
 		super.flushWriteCache();
+	}
+
+	/**
+	 * Install updated compiler spec extension options.
+	 * See {@link SpecExtension}.
+	 */
+	protected void installExtensions() {
+		lock.acquire();
+		try {
+			compilerSpec.installExtensions();
+		}
+		finally {
+			lock.release();
+		}
 	}
 }

@@ -38,8 +38,7 @@ public class JumpTable {
 
 	/** 
 	 * Translate address into preferred memory space (JumpTable.preferredSpace) 
-	 * @param addr
-	 * @param preferredSpace
+	 * @param addr is the given Address
 	 * @return preferred address or original addr
 	 */
 	private Address translateOverlayAddress(Address addr) {
@@ -84,7 +83,7 @@ public class JumpTable {
 			size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
 			num = SpecXmlUtils.decodeInt(el.getAttribute("num"));
 			XmlElement subel = parser.start("addr");
-			addr = translateOverlayAddress(Varnode.readXMLAddress(subel, addrFactory));
+			addr = translateOverlayAddress(AddressXML.readXML(subel, addrFactory));
 			parser.end(subel);
 			parser.end(el);
 		}
@@ -106,7 +105,7 @@ public class JumpTable {
 			buf.append("<basicoverride>\n");
 			for (Address element : destlist) {
 				buf.append("<dest");
-				Varnode.appendSpaceOffset(buf, element);
+				AddressXML.appendAttributes(buf, element);
 				buf.append("/>\n");
 			}
 			// We could add  <normaddr> and <normhash> tags to specify switch variable
@@ -150,41 +149,42 @@ public class JumpTable {
 	}
 
 	public boolean isEmpty() {
-		if (addressTable == null)
+		if (addressTable == null) {
 			return true;
-		if (addressTable.length == 0)
+		}
+		if (addressTable.length == 0) {
 			return true;
+		}
 		return false;
 	}
 
 	/**
 	 * Create a JumpTable object by parsing the XML elements
-	 * @param parser
-	 * @param addrFactory
-	 * @throws PcodeXMLException
+	 * @param parser is the XML parser
+	 * @param addrFactory is used to look-up address spaces
+	 * @throws PcodeXMLException for improperly formed XML
 	 */
 	public void restoreXml(XmlPullParser parser, AddressFactory addrFactory)
 			throws PcodeXMLException {
 		XmlElement el = parser.start("jumptable");
 		try {
-			ArrayList<Address> aTable = new ArrayList<Address>();
-			ArrayList<Integer> lTable = new ArrayList<Integer>();
-			ArrayList<LoadTable> ldTable = new ArrayList<LoadTable>();
+			ArrayList<Address> aTable = new ArrayList<>();
+			ArrayList<Integer> lTable = new ArrayList<>();
+			ArrayList<LoadTable> ldTable = new ArrayList<>();
 
 			if (!parser.peek().isStart()) {		// Empty jumptable
 				return;
 			}
 
 			XmlElement addrel = parser.start("addr");
-			Address switchAddr =
-				translateOverlayAddress(Varnode.readXMLAddress(addrel, addrFactory));
+			Address switchAddr = translateOverlayAddress(AddressXML.readXML(addrel, addrFactory));
 			parser.end(addrel);
 
 			while (parser.peek().isStart()) {
 				if (parser.peek().getName().equals("dest")) {
 					XmlElement subel = parser.start("dest");
 					Address caseAddr =
-						translateOverlayAddress(Varnode.readXMLAddress(subel, addrFactory));
+						translateOverlayAddress(AddressXML.readXML(subel, addrFactory));
 					aTable.add(caseAddr);
 					String slabel = subel.getAttribute("label");
 					if (slabel != null) {
@@ -198,8 +198,9 @@ public class JumpTable {
 					loadtable.restoreXml(parser, addrFactory);
 					ldTable.add(loadtable);
 				}
-				else
+				else {
 					parser.discardSubTree();
+				}
 			}
 
 			opAddress = switchAddr;
@@ -217,18 +218,18 @@ public class JumpTable {
 
 	public void buildXml(StringBuilder buf) {
 		buf.append("<jumptable>\n");
-		buf.append("<addr");
-		Varnode.appendSpaceOffset(buf, opAddress);
-		buf.append("/>\n");
+		AddressXML.buildXML(buf, opAddress);
+		buf.append('\n');
 		if (addressTable != null) {
 			for (Address element : addressTable) {
 				buf.append("<dest");
-				Varnode.appendSpaceOffset(buf, element);
+				AddressXML.appendAttributes(buf, element);
 				buf.append("/>\n");
 			}
 		}
-		if (override != null)
+		if (override != null) {
 			override.buildXml(buf);
+		}
 		buf.append("</jumptable>\n");
 	}
 
@@ -249,24 +250,29 @@ public class JumpTable {
 	}
 
 	public void writeOverride(Function func) throws InvalidInputException {
-		if (override == null)
+		if (override == null) {
 			throw new InvalidInputException("Jumptable is not an override");
+		}
 		Address[] destlist = override.getDestinations();
-		if (destlist.length == 0)
+		if (destlist.length == 0) {
 			throw new InvalidInputException("Jumptable has no destinations");
-		if (!func.getBody().contains(opAddress))
+		}
+		if (!func.getBody().contains(opAddress)) {
 			throw new InvalidInputException("Switch is not in function body");
+		}
 		Program program = func.getProgram();
 		SymbolTable symtab = program.getSymbolTable();
 
 		Namespace space = HighFunction.findCreateOverrideSpace(func);
-		if (space == null)
+		if (space == null) {
 			throw new InvalidInputException("Could not create \"override\" namespace");
+		}
 		space = HighFunction.findCreateNamespace(symtab, space, "jmp_" + opAddress.toString());
 
-		if (!HighFunction.clearNamespace(symtab, space))
+		if (!HighFunction.clearNamespace(symtab, space)) {
 			throw new InvalidInputException(
 				"Jumptable override namespace contains non-label symbols.");
+		}
 
 		HighFunction.createLabelSymbol(symtab, opAddress, "switch", space, SourceType.USER_DEFINED,
 			false);
@@ -279,20 +285,24 @@ public class JumpTable {
 
 	public static JumpTable readOverride(Namespace space, SymbolTable symtab) {
 		Address branchind = null;
-		ArrayList<Address> destlist = new ArrayList<Address>();
+		ArrayList<Address> destlist = new ArrayList<>();
 		SymbolIterator iter = symtab.getSymbols(space);
 		while (iter.hasNext()) {
 			Symbol sym = iter.next();
-			if (!(sym instanceof CodeSymbol))
+			if (!(sym instanceof CodeSymbol)) {
 				continue;
+			}
 			Address addr = sym.getAddress();
-			if (sym.getName().equals("switch"))
+			if (sym.getName().equals("switch")) {
 				branchind = addr;
-			else if (sym.getName().startsWith("case"))
+			}
+			else if (sym.getName().startsWith("case")) {
 				destlist.add(addr);
+			}
 		}
-		if ((branchind != null) && (destlist.size() > 0))
+		if ((branchind != null) && (destlist.size() > 0)) {
 			return new JumpTable(branchind, destlist, true);
+		}
 		return null;
 	}
 

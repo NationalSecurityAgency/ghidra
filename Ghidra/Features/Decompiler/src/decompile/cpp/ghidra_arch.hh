@@ -82,7 +82,8 @@ class ArchitectureGhidra : public Architecture {
   virtual void postSpecFile(void);
   virtual void resolveArchitecture(void);
 public:
-  ArchitectureGhidra(const string &pspec,const string &cspec,const string &tspec,const string &corespec,istream &i,ostream &o);
+  ArchitectureGhidra(const string &pspec,const string &cspec,const string &tspec,const string &corespec,
+		     istream &i,ostream &o);
   const string &getWarnings(void) const { return warnings; }	///< Get warnings produced by the last decompilation
   void clearWarnings(void) { warnings.clear(); }		///< Clear warnings
   Document *getRegister(const string &regname);			///< Retrieve a register description given a name
