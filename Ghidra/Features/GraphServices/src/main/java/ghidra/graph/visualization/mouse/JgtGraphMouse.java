@@ -15,24 +15,24 @@
  */
 package ghidra.graph.visualization.mouse;
 
+import java.awt.event.InputEvent;
+
 import org.jungrapht.visualization.control.*;
 
 import ghidra.graph.visualization.DefaultGraphDisplay;
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
 
-import java.awt.event.InputEvent;
-
 /**
  * Pluggable graph mouse for jungrapht
  */
-public class JgtPluggableGraphMouse extends DefaultGraphMouse<AttributedVertex, AttributedEdge> {
+public class JgtGraphMouse extends DefaultGraphMouse<AttributedVertex, AttributedEdge> {
 
 	private DefaultGraphDisplay graphDisplay;
 
 	// TODO we should not need the graph display for any mouse plugins, but the API is net yet
 	//      robust enough to communicate fully without it
-	public JgtPluggableGraphMouse(DefaultGraphDisplay graphDisplay) {
+	public JgtGraphMouse(DefaultGraphDisplay graphDisplay) {
 		super(DefaultGraphMouse.builder());
 		this.graphDisplay = graphDisplay;
 	}
@@ -50,7 +50,12 @@ public class JgtPluggableGraphMouse extends DefaultGraphMouse<AttributedVertex, 
 
 		add(new JgtVertexFocusingPlugin<>(InputEvent.BUTTON1_DOWN_MASK, graphDisplay));
 
-		add(new SelectingGraphMousePlugin<>());
+		//
+		// JUNGRAPHT CHANGE 1,2
+		//
+		// Note: this code can go away when we can turn off the picking square
+		add(new JgtSelectingGraphMousePlugin());
+		// add(new SelectingGraphMousePlugin<>());
 
 		add(new RegionSelectingGraphMousePlugin<>());
 
@@ -65,4 +70,5 @@ public class JgtPluggableGraphMouse extends DefaultGraphMouse<AttributedVertex, 
 
 		setPluginsLoaded();
 	}
+
 }
