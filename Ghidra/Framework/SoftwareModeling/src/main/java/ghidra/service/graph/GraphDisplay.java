@@ -15,8 +15,6 @@
  */
 package ghidra.service.graph;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import docking.action.DockingAction;
@@ -115,7 +113,7 @@ public interface GraphDisplay {
 	 * @param monospace true if the font should be monospaced
 	 * @param maxLines the maximum number lines to display in the vertex labels
 	 */
-	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size, boolean monospace,
 			int maxLines);
 
 	/**
@@ -154,30 +152,4 @@ public interface GraphDisplay {
 	 * @param action the action to add.
 	 */
 	public void addAction(DockingAction action);
-
-	/**
-	 * set a property key/value pair. This may be used to pass preferences to the implementation
-	 * @param key the property key
-	 * @param value the propery value
-	 */
-	default void setProperty(String key, String value) {
-	}
-
-	/**
-	 *
-	 * @param key the key to fetch a value for
-	 * @return the value associated with the passed key
-	 */
-	default String getValue(String key) {
-		return null;
-	}
-
-	/**
-	 * Returns the property {@code Map} Should be implemented to pass an unmodifiable or copy
-	 * @return the complete {@code Map} of properties.
-	 */
-	default Map<String, String> getProperties() {
-		return Collections.emptyMap();
-	}
-
 }

@@ -74,7 +74,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size, boolean monospace,
 			int maxLines) {
 		//  nothing
 	}

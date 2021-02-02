@@ -15,9 +15,7 @@
  */
 package ghidra.app.services;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.app.plugin.core.graph.GraphDisplayBrokerListener;
 import ghidra.app.plugin.core.graph.GraphDisplayBrokerPlugin;
@@ -62,20 +60,26 @@ public interface GraphDisplayBroker {
 	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
 	 * @throws GraphException thrown if an error occurs trying to get a graph display
 	 */
-	default GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+	public default GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
 			throws GraphException {
 		return getDefaultGraphDisplay(reuseGraph, Collections.emptyMap(), monitor);
 	}
 
 	/**
 	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider
+	 * 
+	 * <p>This method allows users to override default graph properties defined by 
+	 * <b>jungrapht</b>.   See that library for a complete list of available properties.   
+	 * Default properties  can be changed in the {@code jungrapht.properties} file. 
+	 * 
 	 * @param reuseGraph if true, the provider will attempt to re-use a current graph display
 	 * @param properties a {@code Map} of property key/values that can be used to customize the display
 	 * @param monitor the {@link TaskMonitor} that can be used to cancel the operation
 	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
 	 * @throws GraphException thrown if an error occurs trying to get a graph display
 	 */
-	GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties, TaskMonitor monitor)
+	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
+			TaskMonitor monitor)
 			throws GraphException;
 
 	/**

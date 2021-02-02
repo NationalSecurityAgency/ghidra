@@ -150,7 +150,7 @@ public class BlockGraphTask extends Task {
 			if (showCode) {
 				display.defineVertexAttribute(CODE_ATTRIBUTE);
 				display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
-				display.setVertexLabel(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
+				display.setVertexLabelAttribute(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
 					codeLimitPerBlock + 1);
 			}
 			display.setGraph(graph, graphTitle, appendGraph, monitor);

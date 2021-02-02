@@ -122,7 +122,7 @@ public class ASTGraphTask extends Task {
 			display.defineVertexAttribute(CODE_ATTRIBUTE);
 			display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
 
-			display.setVertexLabel(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
+			display.setVertexLabelAttribute(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
 				graphType == GraphType.CONTROL_FLOW_GRAPH ? (codeLimitPerBlock + 1) : 1);
 
 			String description =
