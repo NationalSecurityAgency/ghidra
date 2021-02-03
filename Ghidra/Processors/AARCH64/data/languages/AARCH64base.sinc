@@ -1331,6 +1331,17 @@ is sf=1 & op=1 & s=1 & b_2428=0x1a & b_2123=2 & Rm_GPR64 & CondOp & b_1111=0 & o
 	affectflags();
 }
 
+# C6.2.50 CFINV page C6-860 line 48145 MATCH xd500401f/mask=xfffff0ff
+# C6.2.194 MSR (immediate) page C6-1126 line 62879 MATCH xd500401f/mask=xfff8f01f
+# CONSTRUCT xd500401f/mask=xfffff0ff MATCHED 2 DOCUMENTED OPCODES
+# xd500401f/mask=xfffff0ff NOT MATCHED BY ANY CONSTRUCTOR
+
+:cfinv
+is b_1231=0b11010101000000000100 & b_0811 & b_0007=0b00011111
+{
+	CY = !CY;
+}
+
 # C6.2.52 CINC page C6-862 line 48243 MATCH x1a800400/mask=x7fe00c00
 # C6.2.70 CSET page C6-892 line 49783 MATCH x1a9f07e0/mask=x7fff0fe0
 # C6.2.72 CSINC page C6-896 line 49956 MATCH x1a800400/mask=x7fe00c00
