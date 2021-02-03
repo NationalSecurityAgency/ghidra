@@ -24,8 +24,6 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public abstract class GenericDataType extends DataTypeImpl {
 
-	protected boolean packed = false;
-
 	protected GenericDataType(CategoryPath path, String name, DataTypeManager dataMgr) {
 		super(path, name, dataMgr);
 		if (!DataUtilities.isValidDataTypeName(name)) {
@@ -72,8 +70,9 @@ public abstract class GenericDataType extends DataTypeImpl {
 	}
 
 	private void doSetCategoryPath(CategoryPath path) {
-		if (path == null)
+		if (path == null) {
 			path = CategoryPath.ROOT;
+		}
 		categoryPath = path;
 	}
 

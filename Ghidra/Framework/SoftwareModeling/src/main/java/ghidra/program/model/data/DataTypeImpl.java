@@ -15,8 +15,9 @@
  */
 package ghidra.program.model.data;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.function.Consumer;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -31,7 +32,7 @@ public abstract class DataTypeImpl extends AbstractDataType implements ChangeLis
 
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
 	protected Settings defaultSettings;
-	private ArrayList<DataType> parentList;
+	private List<WeakReference<DataType>> parentList;
 	private UniversalID universalID;
 	private SourceArchive sourceArchive;
 	private long lastChangeTime;
@@ -102,59 +103,78 @@ public abstract class DataTypeImpl extends AbstractDataType implements ChangeLis
 		if (length < 0) {
 			return 1;
 		}
-		return getDataOrganization().getAlignment(this, length);
+		return getDataOrganization().getAlignment(this);
 	}
 
 	@Override
 	public void addParent(DataType dt) {
-		parentList.add(dt);
+		parentList.add(new WeakReference<>(dt));
 	}
 
 	@Override
 	public void removeParent(DataType dt) {
-		parentList.remove(dt);
+		Iterator<WeakReference<DataType>> iterator = parentList.iterator();
+		while (iterator.hasNext()) {
+			WeakReference<DataType> ref = iterator.next();
+			DataType dataType = ref.get();
+			if (dataType == null) {
+				iterator.remove();
+			}
+			else if (dt == dataType) {
+				iterator.remove();
+				break;
+			}
+		}
 	}
 
 	@Override
 	public DataType[] getParents() {
-		DataType[] dts = new DataType[parentList.size()];
-		return parentList.toArray(dts);
-
+		List<DataType> parents = new ArrayList<>();
+		Iterator<WeakReference<DataType>> iterator = parentList.iterator();
+		while (iterator.hasNext()) {
+			WeakReference<DataType> ref = iterator.next();
+			DataType dataType = ref.get();
+			if (dataType == null) {
+				iterator.remove();
+			}
+			else {
+				parents.add(dataType);
+			}
+		}
+		DataType[] array = new DataType[parents.size()];
+		return parents.toArray(array);
 	}
 
 	/**
-	 * Notify any parent data types that my size has changed.
+	 * Notify all parents that the size of this datatype has changed or
+	 * other significant change that may affect a parent containing this
+	 * datatype.
 	 */
 	protected void notifySizeChanged() {
-		Iterator<DataType> it = parentList.iterator();
-		while (it.hasNext()) {
-			DataType dt = it.next();
-			dt.dataTypeSizeChanged(this);
-		}
+		notifyParents(dt -> dt.dataTypeSizeChanged(this));
 	}
 
 	/**
-	 * Notify any parents that my name has changed.
+	 * Notify all parents that this datatype's alignment has changed
+	 */
+	protected void notifyAlignmentChanged() {
+		notifyParents(dt -> dt.dataTypeAlignmentChanged(this));
+	}
+
+	/**
+	 * Notify all parents that this datatype's name has changed
 	 *
 	 * @param oldName
 	 */
 	protected void notifyNameChanged(String oldName) {
-		Iterator<DataType> it = parentList.iterator();
-		while (it.hasNext()) {
-			DataType dt = it.next();
-			dt.dataTypeNameChanged(this, oldName);
-		}
+		notifyParents(dt -> dt.dataTypeNameChanged(this, oldName));
 	}
 
 	/**
-	 * Notify any parents that I am deleted.
+	 * Notify all parents that this datatype has been deleted
 	 */
 	protected void notifyDeleted() {
-		Iterator<DataType> it = parentList.iterator();
-		while (it.hasNext()) {
-			DataType dt = it.next();
-			dt.dataTypeDeleted(this);
-		}
+		notifyParents(dt -> dt.dataTypeDeleted(this));
 	}
 
 	/**
@@ -162,10 +182,20 @@ public abstract class DataTypeImpl extends AbstractDataType implements ChangeLis
 	 * @param replacement replacement data type
 	 */
 	protected void notifyReplaced(DataType replacement) {
-		Iterator<DataType> it = parentList.iterator();
-		while (it.hasNext()) {
-			DataType dt = it.next();
-			dt.dataTypeReplaced(this, replacement);
+		notifyParents(dt -> dt.dataTypeReplaced(this, replacement));
+	}
+
+	protected final void notifyParents(Consumer<DataType> consumer) {
+		Iterator<WeakReference<DataType>> iterator = parentList.iterator();
+		while (iterator.hasNext()) {
+			WeakReference<DataType> ref = iterator.next();
+			DataType dataType = ref.get();
+			if (dataType == null) {
+				iterator.remove();
+			}
+			else {
+				consumer.accept(dataType);
+			}
 		}
 	}
 

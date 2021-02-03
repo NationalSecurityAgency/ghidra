@@ -15,55 +15,12 @@
  */
 package ghidra.program.model.data;
 
+import java.util.Set;
+
 /**
  * Interface for common methods in Structure and Union
  */
 public interface Composite extends DataType {
-
-	/**
-	 * AlignmentType defined the three states for the type of alignment of a composite data type.
-	 * This can be default aligned, machine aligned or aligned by value.
-	 * <BR>This controls how this data type will be aligned within other data types.
-	 * <BR><B>Default Aligned</B> means to determine this data type's alignment based upon the
-	 * alignments of its components. This is controlled by the Data Organization that is provided
-	 * by its data type manager. If there is no data type manager then a default data organization 
-	 * is used.
-	 * <BR><B>Machine Aligned</B> means this data type's alignment will use a minimum alignment that
-	 * is the machine alignment specified by the data organization.
-	 * <BR><B>Align By Value</B> means that a "minimum alignment value", which is a power of 2 and 
-	 * specified elsewhere, will affect the alignment so that it will be at least the 
-	 * indicated value and will be a multiple of the minimum value and of the default value.
-	 * <BR>Note: If the data organization specifies a maximum alignment, other than 0, then the
-	 * alignment value will not be allowed to exceed the maximum alignment for any of these types.
-	 */
-	public static enum AlignmentType implements NamedAlignment {
-		DEFAULT_ALIGNED("Default Aligned"),
-		MACHINE_ALIGNED("Machine Aligned"),
-		ALIGNED_BY_VALUE("Align By Value");
-
-		private String name;
-
-		AlignmentType(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public String toString() {
-			return name;
-		}
-	}
-
-	interface NamedAlignment {
-		public String getName();
-	}
-
-	public final static int DEFAULT_ALIGNMENT_VALUE = 0;
-	public final static int NOT_PACKING = 0;
 
 	/**
 	 * Sets the string describing this data type.
@@ -74,8 +31,8 @@ public interface Composite extends DataType {
 
 	/**
 	 * Gets the number of component data types in this composite.
-	 * The count will include all undefined filler components which may be present
-	 * within an unaligned structure.  Structures do not include the
+	 * If this is Structure with packing disabled, the count will include all undefined filler
+	 * components which may be present.  In addition, Structures do not include the
 	 * optional trailing flexible array component in this count 
 	 * (see {@link Structure#hasFlexibleArrayComponent()}).
 	 * @return the number of components that make up this composite
@@ -84,9 +41,13 @@ public interface Composite extends DataType {
 
 	/**
 	 * Returns the number of explicitly defined components in this composite. 
-	 * For Unions and aligned Structures this is equivalent to {@link #getNumComponents()} 
-	 * since they do not contain undefined components.  The count will exclude all undefined 
-	 * filler components which may be present within an unaligned structure.
+	 * For Unions and packed Structures this is equivalent to {@link #getNumComponents()} 
+	 * since they do not contain undefined components.  
+	 * This count will always exclude all undefined filler components which may be present 
+	 * within a Structure whoose packing is disabled (see {@link #isPackingEnabled()}).
+	 * In addition, Structures do not include the
+	 * optional trailing flexible array component in this count 
+	 * (see {@link Structure#hasFlexibleArrayComponent()}).
 	 * @return  the number of explicitly defined components in this composite
 	 */
 	public abstract int getNumDefinedComponents();
@@ -95,27 +56,28 @@ public interface Composite extends DataType {
 	 * Returns the component of this data type with the indicated ordinal.
 	 * @param ordinal the component's ordinal (zero based).
 	 * @return the data type component.
-	 * @throws ArrayIndexOutOfBoundsException if the ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if the ordinal is out of bounds
 	 */
-	public abstract DataTypeComponent getComponent(int ordinal);
+	public abstract DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
 	 * Returns an array of Data Type Components that make up this composite including
-	 * undefined filler components which may be present within an unaligned structure.
+	 * undefined filler components which may be present within a Structure whch has packing disabled.
+	 * Structures do not include the optional trailing flexible array component in the returned array.
 	 * The number of components corresponds to {@link #getNumComponents()}.
-	 * @return list all components
+	 * @return array all components
 	 */
 	public abstract DataTypeComponent[] getComponents();
 
 	/**
 	 * Returns an array of Data Type Components that make up this composite excluding
-	 * undefined filler components which may be present within an unaligned structure.
-	 * The number of components corresponds to {@link #getNumComponents()}.  For Unions and 
-	 * aligned Structures this is equivalent to {@link #getComponents()} 
-	 * since they do not contain undefined components.  Structures do not include the
-	 * optional trailing flexible array component in this list 
+	 * undefined filler components which may be present within Structures where packing is disabled.
+	 * The number of components corresponds to {@link #getNumDefinedComponents()}.  For Unions and 
+	 * packed Structures this is equivalent to {@link #getComponents()} 
+	 * since they do not contain undefined filler components.  Structures do not include the
+	 * optional trailing flexible array component in the returned array 
 	 * (see {@link Structure#getFlexibleArrayComponent()}).
-	 * @return list all explicitly defined components
+	 * @return array all explicitly defined components
 	 */
 	public abstract DataTypeComponent[] getDefinedComponents();
 
@@ -164,9 +126,9 @@ public interface Composite extends DataType {
 
 	/**
 	 * Adds a new bitfield to the end of this composite.  This method is intended 
-	 * to be used with aligned structures/unions only where the bitfield will be 
+	 * to be used with packed structures/unions only where the bitfield will be 
 	 * appropriately packed.  The minimum storage storage byte size will be applied.
-	 * It will not provide useful results within unaligned composites.
+	 * It will not provide useful results for composites with packing disabled.
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the bitfield size in bits
 	 * @param componentName the field name to associate with this component.
@@ -208,9 +170,10 @@ public interface Composite extends DataType {
 	 * allowed to be inserted into this composite data type.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
-	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public DataTypeComponent insert(int ordinal, DataType dataType) throws IllegalArgumentException;
+	public DataTypeComponent insert(int ordinal, DataType dataType)
+			throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
@@ -226,10 +189,10 @@ public interface Composite extends DataType {
 	 * length is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
-	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length)
-			throws IllegalArgumentException;
+			throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
 	 * Inserts a new datatype at the specified ordinal position in this composite.
@@ -247,28 +210,28 @@ public interface Composite extends DataType {
 	 * is specified.
 	 * For example, suppose dt1 contains dt2. Therefore it is not valid
 	 * to insert dt1 to dt2 since this would cause a cyclic dependency.
-	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length, String name,
-			String comment) throws ArrayIndexOutOfBoundsException, IllegalArgumentException;
+			String comment) throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
 	 * Deletes the component at the given ordinal position.
-	 * <BR>Note: Removal of bitfields from an unaligned structure will 
-	 * not shift other components with vacated bytes reverting to undefined.
+	 * <BR>Note: Removal of bitfields from a structure with packing disabled will 
+	 * not shift other components causing vacated bytes to revert to undefined filler.
 	 * @param ordinal the ordinal of the component to be deleted.
-	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public void delete(int ordinal) throws ArrayIndexOutOfBoundsException;
+	public void delete(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Deletes the components at the given ordinal positions.
-	 * <BR>Note: Removal of bitfields from an unaligned structure will 
-	 * not shift other components with vacated bytes reverting to undefined.
+	 * Deletes the specified set of components at the given ordinal positions.
+	 * <BR>Note: Removal of bitfields from a structure with packing disabled will 
+	 * not shift other components causing vacated bytes to revert to undefined filler.
 	 * @param ordinals the ordinals of the component to be deleted.
-	 * @throws ArrayIndexOutOfBoundsException if any specified component ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if any specified component ordinal is out of bounds
 	 */
-	public void delete(int[] ordinals) throws ArrayIndexOutOfBoundsException;
+	public void delete(Set<Integer> ordinals) throws IndexOutOfBoundsException;
 
 	/**
 	 * Check if a data type is part of this data type.  A data type could
@@ -283,111 +246,194 @@ public interface Composite extends DataType {
 	public abstract boolean isPartOf(DataType dataType);
 
 	/**
-	 * Updates the composite to any changes in the data organization. If the composite is not
-	 * internally aligned, this method does nothing.
-	 */
-	public void realign();
-
-	/**
-	 * Determine if this data type has its internal components currently aligned.
-	 * @return true if this data type's components are aligned relative to each other using the
-	 * current data organization. When internally aligned the end of this data type will be padded 
-	 * to a multiple of its actual alignment.
-	 */
-	public boolean isInternallyAligned();
-
-	/**
-	 * Sets whether this data type's internal components are currently aligned or unaligned.
-	 * @param aligned true means align the internal components of this data type. 
-	 * false means don't align it. True also causes the end of this data type to be padded 
-	 * to a multiple of its actual alignment.
-	 */
-	public void setInternallyAligned(boolean aligned);
-
-	/**
-	 * The overall (external) alignment changed for the specified data type. 
-	 * In other words, the data type has a different alignment when placed inside other structures.
+	 * The alignment changed for the specified data type.  If packing is enabled for this
+	 * composite, the placement of the component may be affected by a change in its alignment.
+	 * A non-packed composite can ignore this notification.
 	 * @param dt the data type whose alignment changed.
 	 */
+	@Override
 	public void dataTypeAlignmentChanged(DataType dt);
 
 	/**
-	 * Gets the current packing value (typically a power of 2). If this isn't a packed data
-	 * type then NOT_PACKING is returned. The packing value only pertains to internally aligned composite
-	 * data types. Aligned structures allow packing.
-	 * @return the current packing value or NOT_PACKING.
+	 * Updates packed composite to any changes in the data organization. If the composite does
+	 * not have packing enabled this method does nothing.
+	 * <BR>
+	 * NOTE: Changes to data organization is discouraged.  Attempts to use this method in such
+	 * cases should be performed on all composites in dependency order (ignoring pointer components).
 	 */
-	public int getPackingValue();
+	public void repack();
 
 	/**
-	 * Sets the current packing value (usually a power of 2). A value of NOT_PACKING should be passed 
-	 * if this isn't a packed data type. Otherwise this value indicates a maximum alignment
-	 * for any component within this data type. Calling this method will cause the data type to
-	 * become an internally aligned data type.
-	 * <br>Note: If a component's data type has a specific external alignment, it will 
-	 * override this value if necessary.
-	 * @param packingValue the new packing value or 0 for NOT_PACKING.
-	 * A negative value will be treated the same as 0.
+	 * @return the packing type set for this composite
 	 */
-	public void setPackingValue(int packingValue);
+	public PackingType getPackingType();
 
 	/**
-	 * Get the external alignment (a minimum alignment) for this DataType.
-	 * This controls where this data type will get aligned within other data types.
-	 * It also causes the end of this data type to get padded so its length is a multiple 
-	 * of the alignment.
-	 * @return the external alignment for this DataType or DEFAULT_ALIGNMENT_VALUE.
+	 * Determine if this data type has its internal components currently packed
+	 * based upon alignment and packing settings.  If disabled, component placement
+	 * is based upon explicit placement by offset.
+	 * @return true if this data type's components auto-packed
 	 */
-	public int getMinimumAlignment();
-
-	/**
-	 * Sets the external alignment (a minimum alignment) for this DataType.
-	 * This controls where this data type will get aligned within other data types.
-	 * It also causes the end of this data type to get padded so its length is a multiple 
-	 * of the alignment. Calling this method will cause the data type to
-	 * become an internally aligned data type.
-	 * @param minimumAlignment the external (minimum) alignment for this DataType.
-	 * Any value less than 1 will revert to default alignment.
-	 */
-	public void setMinimumAlignment(int minimumAlignment);
-
-	/**
-	 * Sets this data type's external (minimum) alignment to the default alignment. This data type's
-	 * external alignment will be based upon the components it contains. This should be used
-	 * when a data type doesn't have an alignment attribute specified. Calling this method will 
-	 * cause the data type to become an internally aligned data type.
-	 */
-	public void setToDefaultAlignment();
-
-	/**
-	 * Sets this data type's external (minimum) alignment to a multiple of the machine alignment that is 
-	 * specified in the DataOrganization. The machine alignment is defined as the maximum useful 
-	 * alignment for the target machine. This should be used when a data type has an alignment 
-	 * attribute specified without a size (indicating to use the machine alignment).
-	 * Calling this method will cause the data type to become an internally aligned data type.
-	 */
-	public void setToMachineAlignment();
-
-	/**
-	 * Whether or not this data type is using the default external (minimum) alignment.
-	 * @return true if this data type has the default external alignment.
-	 */
-	public boolean isDefaultAligned();
-
-	/**
-	 * Whether or not this data type is using the machine alignment value from the 
-	 * DataOrganization for its external (minimum) alignment.
-	 * @return true if this data type is using the machine alignment as the minimum alignment.
-	 */
-	public boolean isMachineAligned();
-
-	/**
-	 * Get the bitfield packing information associated with the underlying
-	 * data organization.
-	 * @return bitfield packing information
-	 */
-	public default BitFieldPacking getBitFieldPacking() {
-		return getDataOrganization().getBitFieldPacking();
+	public default boolean isPackingEnabled() {
+		return getPackingType() != PackingType.DISABLED;
 	}
+
+	/**
+	 * Sets whether this data type's internal components are currently packed.  The 
+	 * affect of disabled packing differs between {@link Structure} and {@link Union}.  When
+	 * packing disabled:
+	 * <ul>
+	 * <li>Structures utilize explicit component offsets and produce undefined filler
+	 * components where defined components do not consume space.</li>
+	 * <li>Unions always place components at offset 0 and do not pad for alignment.
+	 * </ul>
+	 * In addition, when packing is disabled the default alignment is always 1 unless a
+	 * different minimum alignment has been set.  When packing is enabled the overall 
+	 * composite length infleunced by the composite's minimum alignment setting.
+	 * If a change in enablement occurs, the default alignment and packing behavior 
+	 * will be used.
+	 * @param enabled true enables packing of components respecting component 
+	 * alignment and pack setting, whereas false disables packing.
+	 */
+	public void setPackingEnabled(boolean enabled);
+
+	/**
+	 * Determine if packing is enabled with an explicit packing value (see {@link #getExplicitPackingValue()}).
+	 * @return true if packing is enabled with an explicit packing value, else false.
+	 */
+	public default boolean hasExplicitPackingValue() {
+		return getPackingType() == PackingType.EXPLICIT;
+	}
+
+	/**
+	 * Determine if default packing is enabled.
+	 * @return true if default packing is enabled.
+	 */
+	public default boolean hasDefaultPacking() {
+		return getPackingType() == PackingType.DEFAULT;
+	}
+
+	/**
+	 * Gets the current packing value (typically a power of 2). 
+	 * If this isn't a packed composite with an explicit packing value (see {@link #hasExplicitPackingValue()}) 
+	 * then the return value is undefined. 
+	 * @return the current packing value or an undefined non-positive value
+	 */
+	public int getExplicitPackingValue();
+
+	/**
+	 * Sets the pack value for this composite (positive value, usually a power of 2). 
+	 * If packing was previously disabled, packing will be enabled.  This value will 
+	 * establish the maximum effective alignment for this composite and each of the 
+	 * components during the alignment computation (e.g., a value of 1 will eliminate 
+	 * any padding).  The overall composite length may be infleunced by the composite's
+	 * minimum alignment setting.
+	 * @param packingValue the new positive packing value.
+	 * @throws IllegalArgumentException if a non-positive value is specified.
+	 */
+	public void setExplicitPackingValue(int packingValue);
+
+	/**
+	 * Same as {@link #setExplicitPackingValue(int)}.
+	 * @param packingValue the new positive packing value.
+	 * @throws IllegalArgumentException if a non-positive value is specified.
+	 */
+	public default void pack(int packingValue) {
+		setExplicitPackingValue(packingValue);
+	}
+
+	/**
+	 * Enables default packing behavior. 
+	 * If packing was previously disabled, packing will be enabled.  
+	 * Composite will automatically pack based upon the alignment requirements
+	 * of its components with overall composite length possibly infleunced by the composite's
+	 * minimum alignment setting.
+	 */
+	public void setToDefaultPacking();
+
+	/**
+	 * Get the computed alignment for this composite based upon packing and minimum
+	 * alignment settings as well as component alignment.  If packing is disabled,
+	 * the alignment will always be 1 unless a minimum alignment has been set.
+	 * @return this composites alignment
+	 */
+	@Override
+	abstract int getAlignment();
+
+	/**
+	 * @return the alignment type set for this composite
+	 */
+	abstract AlignmentType getAlignmentType();
+
+	/**
+	 * Whether or not this data type is using the default alignment.  When Structure packing 
+	 * is disabled the default alignment is always 1 (see {@link Structure#setPackingEnabled(boolean)}.
+	 * @return true if this data type is using its default alignment. 
+	 */
+	public default boolean isDefaultAligned() {
+		return getAlignmentType() == AlignmentType.DEFAULT;
+	}
+
+	/**
+	 * Whether or not this data type is using the machine alignment value, specified by 
+	 * {@link DataOrganization#getMachineAlignment()}, for its alignment.
+	 * @return true if this data type is using the machine alignment as its alignment.
+	 */
+	public default boolean isMachineAligned() {
+		return getAlignmentType() == AlignmentType.MACHINE;
+	}
+
+	/**
+	 * Determine if an explicit minimum alignment has been set (see {@link #getExplicitMinimumAlignment()}).
+	 * An undefined value is returned if default alignment or machine alignment is enabled.
+	 * @return true if an explicit minimum alignment has been set, else false
+	 */
+	public default boolean hasExplicitMinimumAlignment() {
+		return getAlignmentType() == AlignmentType.EXPLICIT;
+	}
+
+	/**
+	 * Get the explicitminimum alignment setting for this Composite which contributes 
+	 * to the actual computed alignment value (see {@link #getAlignment()}.
+	 * @return the minimum alignment setting for this Composite or an undefined 
+	 * non-positive value if an explicit minimum alignment has not been set.
+	 */
+	public int getExplicitMinimumAlignment();
+
+	/**
+	 * Sets this data type's explicit minimum alignment (positive value).  
+	 * Together with the pack setting and component alignments will
+	 * affect the actual computed alignment of this composite.
+	 * When packing is enabled, the alignment setting may also affect padding 
+	 * at the end of the composite and its length.  When packing is disabled,
+	 * this setting will not affect the length of thhis composite. 
+	 * @param minAlignment the minimum alignment for this Composite.
+	 * @throws IllegalArgumentException if a non-positive value is specified
+	 */
+	public void setExplicitMinimumAlignment(int minAlignment);
+
+	/**
+	 * Same as {@link #setExplicitMinimumAlignment(int)}.
+	 * @param minAlignment the explicit minimum alignment for this Composite.
+	 * @throws IllegalArgumentException if a non-positive value is specified
+	 */
+	public default void align(int minAlignment) {
+		setExplicitMinimumAlignment(minAlignment);
+	}
+
+	/**
+	 * Sets this data type's alignment to its default alignment. For packed
+	 * composites, this data type's alignment will be based upon the components it contains and
+	 * its current pack settings.  This is the default state and only needs to be used 
+	 * when changing from a non-default alignment type. 
+	 */
+	public void setToDefaultAligned();
+
+	/**
+	 * Sets this data type's minimum alignment to the machine alignment which is 
+	 * specified by {@link DataOrganization#getMachineAlignment()}. The machine alignment is 
+	 * defined as the maximum useful alignment for the target machine.
+	 */
+	public void setToMachineAligned();
 
 }

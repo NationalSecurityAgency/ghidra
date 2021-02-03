@@ -113,6 +113,11 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
+	public boolean isZeroLength() {
+		return false;
+	}
+
+	@Override
 	public String toString() {
 		return getDisplayName();
 	}
@@ -135,6 +140,11 @@ public abstract class AbstractDataType implements DataType {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		// do nothing
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
 		// do nothing
 	}
 

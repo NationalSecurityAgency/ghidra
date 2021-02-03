@@ -76,7 +76,7 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 		record.setIntValue(FunctionParameterAdapter.PARAMETER_DT_LENGTH_COL, type.getLength());
 		try {
 			adapter.updateRecord(record);
-			dataMgr.dataTypeChanged(parent);
+			dataMgr.dataTypeChanged(parent, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -109,7 +109,7 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 		record.setString(FunctionParameterAdapter.PARAMETER_NAME_COL, name);
 		try {
 			adapter.updateRecord(record);
-			dataMgr.dataTypeChanged(parent);
+			dataMgr.dataTypeChanged(parent, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -126,7 +126,7 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 		record.setString(FunctionParameterAdapter.PARAMETER_COMMENT_COL, comment);
 		try {
 			adapter.updateRecord(record);
-			dataMgr.dataTypeChanged(parent);
+			dataMgr.dataTypeChanged(parent, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);

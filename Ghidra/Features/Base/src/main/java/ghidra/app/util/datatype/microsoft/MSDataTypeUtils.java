@@ -85,8 +85,10 @@ public class MSDataTypeUtils {
 			CategoryPath categoryPath, String structureName, int packValue) {
 		StructureDataType struct =
 			new StructureDataType(categoryPath, structureName, 0, dataTypeManager);
-		struct.setInternallyAligned(true);
-		struct.setPackingValue(packValue);
+		struct.setPackingEnabled(true);
+		if (packValue > 0) {
+			struct.setExplicitPackingValue(packValue);
+		}
 		return struct;
 	}
 

@@ -813,11 +813,17 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * notification the a datatype has changed
 	 * @param dataTypeID the id of the datatype that changed.
 	 * @param type the type of the change (moved, renamed, etc.)
+	 * @param isAutoChange true if change was an automatic change in response to 
+	 * another datatype's change (e.g., size, alignment), else false in which case this
+	 * change will be added to program change-set to aid merge conflict detection.
 	 * @param oldValue the old datatype.
 	 * @param newValue the new datatype.
 	 */
-	public void dataTypeChanged(long dataTypeID, int type, Object oldValue, Object newValue) {
-		if (recordChanges) {
+	public void dataTypeChanged(long dataTypeID, int type, boolean isAutoChange,
+			Object oldValue, Object newValue) {
+		// TODO: do not need to record type changes for packed composite change which is in repsonse
+		// to component size or alignment change.
+		if (recordChanges && !isAutoChange) {
 			((ProgramDBChangeSet) changeSet).dataTypeChanged(dataTypeID);
 		}
 		changed = true;

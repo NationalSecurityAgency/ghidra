@@ -20,6 +20,7 @@ import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -37,9 +38,14 @@ public class RenameStructureFieldTask extends RenameTask {
 
 	@Override
 	public void commit() throws DuplicateNameException, InvalidInputException {
-		if (structure.isNotYetDefined()) {
-			DataType newtype = new Undefined1DataType();
-			structure.insert(0, newtype);
+		// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
+		int len = structure.isZeroLength() ? 0 : structure.getLength();
+		if (len < offset) {
+			if (!structure.isPackingEnabled()) {
+				Msg.warn(this, "Structure '" + structure.getName() + "' converted to non-packed");
+				structure.setPackingEnabled(false);
+			}
+			structure.growStructure(offset);
 		}
 		DataTypeComponent comp = structure.getComponentAt(offset);
 		if (comp.getDataType() == DataType.DEFAULT) {		// Is this just a placeholder

@@ -148,7 +148,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public int getOffset() {
 		if (isFlexibleArrayComponent) {
-			if (parent.isNotYetDefined()) {
+			if (parent.isZeroLength()) {
 				// some structures have only a flexible array defined
 				return 0;
 			}
@@ -223,7 +223,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			if (record != null) {
 				record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 				adapter.updateRecord(record);
-				notifyChanged();
+				dataMgr.dataTypeChanged(getParent(), false);
 			}
 		}
 		catch (IOException e) {
@@ -268,7 +268,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 				}
 				record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
 				adapter.updateRecord(record);
-				notifyChanged();
+				dataMgr.dataTypeChanged(getParent(), false);
 			}
 		}
 		catch (IOException e) {
@@ -279,7 +279,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	private void checkDuplicateName(String name) throws DuplicateNameException {
 		DataTypeComponentImpl.checkDefaultFieldName(name);
-		for (DataTypeComponent comp : parent.getComponents()) {
+		for (DataTypeComponent comp : parent.getDefinedComponents()) {
 			if (comp == this) {
 				continue;
 			}
@@ -344,7 +344,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		}
 		DataType myParent = getParent();
 		boolean aligned =
-			(myParent instanceof Composite) ? ((Composite) myParent).isInternallyAligned() : false;
+			(myParent instanceof Composite) ? ((Composite) myParent).isPackingEnabled() : false;
 		// Components don't need to have matching offset when they are aligned
 		// NOTE: use getOffset() method since returned values will differ from
 		// stored values for flexible array component
@@ -450,11 +450,6 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 				dataMgr.getResolvedID(newDt));
 			updateRecord();
 		}
-	}
-
-	private void notifyChanged() {
-		DataType dt = getParent();
-		dataMgr.dataTypeChanged(dt);
 	}
 
 	@Override

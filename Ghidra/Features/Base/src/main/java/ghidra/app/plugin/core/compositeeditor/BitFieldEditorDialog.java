@@ -38,7 +38,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 	private Composite composite;
 	private CompositeChangeListener listener;
 
-	private BitFieldEditorPanel bitFieldEditorPanel; // for unaligned use case
+	private BitFieldEditorPanel bitFieldEditorPanel; // for non-packed use case
 
 	BitFieldEditorDialog(Composite composite, DataTypeManagerService dtmService, int editOrdinal,
 			boolean showOffsetsInHex, CompositeChangeListener listener) {
@@ -290,11 +290,11 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 	}
 
 	private static String getCompositeType(Composite composite) {
-		// currently supports unaligned case only!
-		if (composite.isInternallyAligned()) {
-			throw new IllegalArgumentException("Aligned use not supported");
+		// currently supports non-packed case only!
+		if (composite.isPackingEnabled()) {
+			throw new IllegalArgumentException("Packed use not supported");
 		}
-		String alignmentMode = composite.isInternallyAligned() ? "Aligned" : "Unaligned";
+		String alignmentMode = composite.isPackingEnabled() ? "Packed" : "Non-Packed";
 		String type = (composite instanceof Union) ? "Union" : "Structure";
 		return alignmentMode + " " + type;
 	}
@@ -309,7 +309,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 				baseDataType = ((BitFieldDataType) dtc.getDataType()).getBaseDataType();
 			}
 		}
-		else if (!composite.isNotYetDefined()) {
+		else if (!composite.isZeroLength()) {
 			offset = composite.getLength();
 		}
 
@@ -346,7 +346,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 
 		// Assume a reasonable alignment in identifying aligned offset
 		int alignment = CompositeAlignmentHelper.getPackedAlignment(dataOrganization,
-			Composite.NOT_PACKING, bitfieldDt.getBaseDataType(), bitfieldDt.getBaseTypeSize());
+			CompositeInternal.NO_PACKING, bitfieldDtc);
 
 		int adjustedOffset = offset - (offset % alignment);
 

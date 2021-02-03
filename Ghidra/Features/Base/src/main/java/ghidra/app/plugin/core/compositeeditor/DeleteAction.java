@@ -52,7 +52,7 @@ public class DeleteAction extends CompositeEditorTableAction {
 
 	private void doDelete(TaskMonitor monitor) {
 		try {
-			model.deleteSelectedComponents(monitor);
+			model.deleteSelectedComponents();
 		}
 		catch (CancelledException e) {
 			// user cancelled

@@ -1164,7 +1164,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		updateAlignment(sourceDt, destStruct);
 
 		DataTypeManager sourceDTM = sourceDt.getDataTypeManager();
-		boolean aligned = sourceDt.isInternallyAligned();
+		boolean aligned = sourceDt.isPackingEnabled();
 
 		// Add each of the defined components back in.
 		DataTypeComponent[] comps = sourceDt.getDefinedComponents();
@@ -1480,17 +1480,25 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void updateAlignment(Composite sourceDt, Composite destinationDt) {
 		if (sourceDt.isDefaultAligned()) {
-			destinationDt.setToDefaultAlignment();
+			destinationDt.setToDefaultAligned();
 		}
 		else if (sourceDt.isMachineAligned()) {
-			destinationDt.setToMachineAlignment();
+			destinationDt.setToMachineAligned();
 		}
 		else {
-			destinationDt.setMinimumAlignment(sourceDt.getMinimumAlignment());
+			destinationDt.setExplicitMinimumAlignment(sourceDt.getExplicitMinimumAlignment());
 		}
-		destinationDt.setPackingValue(sourceDt.getPackingValue());
-		boolean aligned = sourceDt.isInternallyAligned();
-		destinationDt.setInternallyAligned(aligned);
+		if (sourceDt.isPackingEnabled()) {
+			if (sourceDt.hasExplicitPackingValue()) {
+				destinationDt.setExplicitPackingValue(sourceDt.getExplicitPackingValue());
+			}
+			else {
+				destinationDt.setToDefaultPacking();
+			}
+		}
+		else {
+			destinationDt.setPackingEnabled(false);
+		}
 	}
 
 	private void updateComposite(long sourceDtID, Composite sourceDt, Composite destDt,
@@ -1860,11 +1868,15 @@ public class DataTypeMergeManager implements MergeResolver {
 	private boolean compositeDataTypeWasChanged(Composite c1, Composite c2) {
 		DataTypeManager dtm1 = c1.getDataTypeManager();
 		DataTypeManager dtm2 = c2.getDataTypeManager();
-		if (c1.isInternallyAligned() != c2.isInternallyAligned() ||
-			c1.isDefaultAligned() != c2.isDefaultAligned() ||
-			c1.isMachineAligned() != c2.isMachineAligned() ||
-			c1.getMinimumAlignment() != c2.getMinimumAlignment() ||
-			c1.getPackingValue() != c2.getPackingValue()) {
+
+		PackingType packingType = c1.getPackingType();
+		AlignmentType alignmentType = c1.getAlignmentType();
+
+		if ((packingType != c2.getPackingType()) || (alignmentType != c2.getAlignmentType()) ||
+			(packingType == PackingType.EXPLICIT &&
+				c1.getExplicitPackingValue() != c2.getExplicitPackingValue()) ||
+			(alignmentType == AlignmentType.EXPLICIT &&
+				c1.getExplicitMinimumAlignment() != c2.getExplicitMinimumAlignment())) {
 			return true;
 		}
 
@@ -1877,7 +1889,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		boolean checkOffsets = false;
 
 		if (c1 instanceof Structure) {
-			if (!((Structure) c1).isInternallyAligned()) {
+			if (!((Structure) c1).isPackingEnabled()) {
 				if (c1.getNumComponents() != c2.getNumComponents()) {
 					return true;
 				}
@@ -2444,13 +2456,13 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Process fixup for unaligned structure component
+	 * Process fixup for non-packed structure component
 	 * @param info fixup info
 	 * @param struct result structure
 	 * @param dt component datatype
 	 * @return false if component not found, else true
 	 */
-	private boolean fixUpUnalignedStructureComponent(FixUpInfo info, Structure struct,
+	private boolean fixUpNonPackedStructureComponent(FixUpInfo info, Structure struct,
 			DataType dt) {
 		int offset = info.index;
 		DataTypeComponent dtc = struct.getComponentAt(offset);
@@ -2533,7 +2545,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			boolean isFlexArrayFixup = (info.index == Integer.MAX_VALUE);
 
 			if (compDt != null) {
-				if (struct.isInternallyAligned() || isFlexArrayFixup) {
+				if (struct.isPackingEnabled() || isFlexArrayFixup) {
 					if (!fixUpAlignedStructureComponent(info, struct, compDt)) {
 						String msg =
 							isFlexArrayFixup ? "flex-array component" : ("component " + info.index);
@@ -2544,7 +2556,7 @@ public class DataTypeMergeManager implements MergeResolver {
 					return true;
 				}
 
-				if (!fixUpUnalignedStructureComponent(info, struct, compDt)) {
+				if (!fixUpNonPackedStructureComponent(info, struct, compDt)) {
 					Msg.warn(this, "Structure Merge: Couldn't get component at offset " +
 						info.index + " in " + struct.getPathName());
 					return false;
@@ -2556,7 +2568,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			else if (isFlexArrayFixup) {
 				struct.clearFlexibleArrayComponent();
 			}
-			else if (struct.isInternallyAligned()) {
+			else if (struct.isPackingEnabled()) {
 				int ordinal = info.index;
 				int numComponents = struct.getNumComponents();
 				if (ordinal >= 0 && ordinal < numComponents) {
@@ -2595,7 +2607,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @return the number of contiguous undefined bytes or 0.
 	 */
 	private int getNumUndefinedBytes(Structure struct, int ordinal) {
-		if (struct.isInternallyAligned()) {
+		if (struct.isPackingEnabled()) {
 			return 0;
 		}
 		int numComponents = struct.getNumComponents();
@@ -3276,7 +3288,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private static int getComponentFixupIndex(DataTypeComponent dtc) {
 		Composite composite = (Composite) dtc.getParent();
-		if (composite.isInternallyAligned() || (composite instanceof Union)) {
+		if (composite.isPackingEnabled() || (composite instanceof Union)) {
 			return dtc.getOrdinal();
 		}
 		return dtc.getOffset();
@@ -3301,7 +3313,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * or components were resolved.
 		 * @param id id of data type needed to be fixed up
 		 * @param compID id of either component or base type
-		 * @param index offset into unaligned structure, or ordinal into union or aligned 
+		 * @param index offset into non-packed structure, or ordinal into union or packed 
 		 * structure; or parameter/return ordinal; for other data types index is not used (specify -1).
 		 * For structure trailing flex-array specify {@link Integer#MAX_VALUE}.
 		 * @param resolvedDataTypes hashtable used for resolving the data type
@@ -3333,7 +3345,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 
 		/**
-		 * Find unaligned structure bitfield component at or after specified component
+		 * Find non-packed structure bitfield component at or after specified component
 		 * which matches this info's bitfield data.
 		 * @param struct structure
 		 * @param dtc structure component contained within struct
@@ -3412,7 +3424,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		/**
 		 * 
-		 * @param index offset into unaligned structure, or ordinal into union or aligned 
+		 * @param index offset into non-packed structure, or ordinal into union or packed 
 		 * structure; for other data types, offset is not used (specify -1)
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
@@ -3466,7 +3478,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 
 		private void cleanUpStructure(int[] indexArray, Structure dt) {
-			boolean aligned = dt.isInternallyAligned();
+			boolean aligned = dt.isPackingEnabled();
 			Arrays.sort(indexArray);
 			for (int i = indexArray.length - 1; i >= 0; i--) {
 				if (aligned) {

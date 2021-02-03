@@ -116,6 +116,11 @@ class ArrayDB extends DataTypeDB implements Array {
 	}
 
 	@Override
+	public boolean isZeroLength() {
+		return getDataType().isZeroLength();
+	}
+
+	@Override
 	public int getLength() {
 		checkIsValid();
 		return getNumElements() * getElementLength();
@@ -244,10 +249,10 @@ class ArrayDB extends DataTypeDB implements Array {
 					notifyNameChanged(myOldName);
 				}
 				if (getLength() != oldLength) {
-					notifySizeChanged();
+					notifySizeChanged(false);
 				}
 				else {
-					dataMgr.dataTypeChanged(this);
+					dataMgr.dataTypeChanged(this, false);
 				}
 			}
 		}
@@ -265,10 +270,21 @@ class ArrayDB extends DataTypeDB implements Array {
 	public void dataTypeSizeChanged(DataType dt) {
 		lock.acquire();
 		try {
-			checkIsValid();
+			if (checkIsValid() && dt == getDataType()) {
+				notifySizeChanged(true);
+			}
+		}
+		finally {
+			lock.release();
+		}
+	}
 
-			if (dt == getDataType()) {
-				notifySizeChanged();
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		lock.acquire();
+		try {
+			if (checkIsValid() && dt == getDataType()) {
+				notifyAlignmentChanged(true);
 			}
 		}
 		finally {

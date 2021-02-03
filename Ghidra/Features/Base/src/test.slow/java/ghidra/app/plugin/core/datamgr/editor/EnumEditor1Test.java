@@ -774,14 +774,14 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			enumm.add("One", 1);
 
 			Structure structX = new StructureDataType("StructX", 0);
-			structX.setInternallyAligned(true);
+			structX.setPackingEnabled(true);
 			structX.add(new ByteDataType());
 			structX.add(enumm);
 			structX.add(new ByteDataType());
 			category.addDataType(structX, DataTypeConflictHandler.DEFAULT_HANDLER);
 
 			Structure structY = new StructureDataType("StructY", 0);
-			structY.setInternallyAligned(false);
+			structY.setPackingEnabled(false);
 			structY.add(new ByteDataType());
 			structY.add(enumm);
 			category.addDataType(structY, DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -815,7 +815,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(intValue, 4);
 
 		Structure structX = (Structure) category.getDataType("StructX");
-		assertTrue(structX.isInternallyAligned());
+		assertTrue(structX.isPackingEnabled());
 		assertEquals(3, structX.getNumComponents());
 		assertEquals(1, structX.getComponent(0).getLength());
 		assertEquals(4, structX.getComponent(1).getLength());
@@ -823,7 +823,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(12, structX.getLength());
 
 		Structure structY = (Structure) category.getDataType("StructY");
-		assertFalse(structY.isInternallyAligned());
+		assertFalse(structY.isPackingEnabled());
 		assertEquals(2, structY.getNumComponents());
 		assertEquals(1, structY.getComponent(0).getLength());
 		assertEquals(4, structY.getComponent(1).getLength());
@@ -846,14 +846,14 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			enumm.setDescription("ABCD");
 
 			Structure structX = new StructureDataType("StructX", 0);
-			structX.setInternallyAligned(true);
+			structX.setPackingEnabled(true);
 			structX.add(new ByteDataType());
 			structX.add(enumm);
 			structX.add(new ByteDataType());
 			category.addDataType(structX, DataTypeConflictHandler.DEFAULT_HANDLER);
 
 			Structure structY = new StructureDataType("StructY", 0);
-			structY.setInternallyAligned(false);
+			structY.setPackingEnabled(false);
 			structY.add(new ByteDataType());
 			structY.add(enumm);
 			category.addDataType(structY, DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -926,7 +926,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, value1);
 
 		Structure structX = (Structure) category.getDataType("StructX");
-		assertTrue(structX.isInternallyAligned());
+		assertTrue(structX.isPackingEnabled());
 		assertEquals(3, structX.getNumComponents());
 		assertEquals(1, structX.getComponent(0).getLength());
 		assertEquals(4, structX.getComponent(1).getLength());
@@ -934,7 +934,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(12, structX.getLength());
 
 		Structure structY = (Structure) category.getDataType("StructY");
-		assertFalse(structY.isInternallyAligned());
+		assertFalse(structY.isPackingEnabled());
 		assertEquals(2, structY.getNumComponents());
 		assertEquals(1, structY.getComponent(0).getLength());
 		assertEquals(4, structY.getComponent(1).getLength());

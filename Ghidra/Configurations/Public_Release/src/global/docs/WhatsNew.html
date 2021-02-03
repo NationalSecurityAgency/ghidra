@@ -7,10 +7,12 @@
 		li { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; margin-bottom: 8px; }
 		h1 { color:#000080; font-family:times new roman; font-size:28pt; font-style:italic; font-weight:bold; text-align:center; color:#000080; font-family:times new roman; }
 		h2 { padding-top:20px; color:#984c4c; font-family:times new roman; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+		h3 { margin-left:40px; padding-top:10px; font-family:times new roman; font-family:times new roman; font-size:14pt; font-weight:bold; }
 		p { margin-left:40px; font-family:times new roman; font-size:14pt; }
-		td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:14px; }
-		th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:14px; }
-		code { color:black; font-family:courier new font-size: 14pt; }
+		table, th, td { border: 1px solid black; border-collapse: collapse; font-size:10pt; }
+		td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; text-align:left; vertical-align:top; }
+		th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; text-align:left; }
+		code { color:black; font-family:courier new; font-size: 12pt; }
 		span.code { font-family:courier new font-size: 14pt; color:#000000; }
 	 </STYLE>
   </HEAD>
@@ -39,6 +41,145 @@
     vulnerabilities in networks and systems.
     </P>
 
+	<BR />
+    <H1> What's New in Ghidra 10.0</H1>
+    
+    <H2>Debugger</H2>
+    
+    <P>Stay tuned...
+    
+    <H2>Structure/Union Changes</H2>
+    
+    <P>A significant refactor of the Composite datatype interfaces and internals has been completed which affects
+    Structures and Unions.  The intent of these changes was to provide a more unstandable API and allow an alignment 
+    to be specified for non-packed composites (aka, composites with internal alignment disabled).</P>
+    
+    <H3>Editor Changes</H3>
+    
+    <P>Previously, the editor contained an <B>Align</B> checkbox which determined if packing should be performed or not.
+    This checkbox has been replaced by a checkbox adjacent to the <B>pack</B> choices (i.e., enable/disable packing).  
+    Generally, this setting would be "not-checked" (i.e., disabled) when reverse-engineering the content of a 
+    structure so that components may be placed at specific offsets.  Only when there is a complete understanding 
+    of all components, as conveyed by a source header file, should
+    this be enabled with the appropriate <B>pack</B> and <B>align</B> settings specified.  In addition, when <B>pack</B>
+    is enabled it is important that the component datatypes eimit the correct alignment to ensure proper 
+    placement during packing.</P> 
+    
+    <P>The <B>align</B> setting may know be used when packing is disabled with the composite adopting 
+    the specified alignment.  The default alignment for a non-packed composite is <B>1</B> which is consistent 
+    with the current behavior in Ghidra 9.x.</P>
+    
+    <H3>Composite API Changes</H3>
+    
+    <P>The various pack and align methods of the <I>Composite</I> (i.e., <I>Structure</I> and <I>Union</I>) 
+    API have been changed extensively. Since these changes were primarly intended to "cleanup" the
+    interface it was decided not eliminate (not depricate) the old methods.  It was felt leaving them in
+    place would only confuse matters when attempting to understand the new interface.  It is also believed that 
+    most uses of the API generally do not utilize the pack and align settings which should minimize the 
+    impact to existing user code.<P>
+    
+    <P>The tables below convey the <I>Composite</I> API changes as they relate to the pack and align settings.</P>
+    <BLOCKQUOTE>
+    <P>
+    <TABLE WIDTH="100%">
+       <TR>
+           <TD COLSPAN="3" padding-top:14px; padding-bottom:14px;><CENTER><B>Composite Pack API Changes</B></CENTER></TD>
+       </TR><TR style="background-color:#DFDFDF;">
+           <TH>Old Method 9.x</TH><TH>New Method 10.0</TH><TH>Comments</TH>
+       </TR><TR>
+           <TD><CODE>setInternallyAligned(<font color="blue">boolean</font>)</CODE></TD>
+           <TD><CODE>setPackingEnabled(<font color="blue">boolean</font>)</CODE></TD>
+           <TD> </TD>
+       </TR><TR>
+           <TD><CODE>isInternallyAligned()</CODE></TD>
+           <TD><CODE>isPackingEnabled()</CODE></TD>
+           <TD>Equivalent to: <CODE>getPackingType() != DISABLED</CODE></TD>
+       </TR><TR>
+           <TD><CODE>setPackingValue(NOT_PACKING)<BR>setPackingValue(1..n)</CODE></TD>
+           <TD><CODE>setToDefaultPacking()<BR>setExplicitPackingValue(1..n)<BR>pack(1..n)</CODE></TD>
+           <TD>Packing will be enabled if not previously enabled.  Old constant <CODE>NOT_PACKING</CODE> has been elliminated.</TD>
+       </TR><TR>
+           <TD><CODE>getPackingValue()</CODE></TD>
+           <TD><CODE>getExplicitPackingValue()</CODE></TD>
+           <TD>New method use does not directly map (see Javadocs).  Old constant <CODE>NOT_PACKING</CODE> has been elliminated.</TD>
+       </TR><TR>
+           <TD> </TD>
+           <TD><CODE>hasDefaultPacking()</CODE></TD>
+           <TD>Equivalent to: <CODE>getPackingType() == DEFAULT</CODE></TD>
+       </TR><TR>
+           <TD> </TD>
+           <TD><CODE>hasExplicitPackingValue()</TD>
+           <TD>Equivalent to: <CODE>getPackingType() == EXPLICIT</CODE></TD>
+       </TR><TR>
+           <TD> </TD>
+           <TD><CODE>getPackingType()</TD>
+           <TD>Possible values: <CODE>DISABLED</CODE>, <CODE>DEFAULT</CODE> or <CODE>EXPLICIT</CODE></TD>
+       </TR><TR>
+           <TD><CODE>realign()</CODE></TD>
+           <TD><CODE>repack()</CODE></TD>
+           <TD>Update component sizing and placement if composite has packing enabled. 
+             Changes to data organization (e.g., type sizes and alignments) are problematic and difficult to fully 
+             recover from.  Any attempted repair to component sizes and alignments need to be performed in 
+             dependency order (ignoring pointer components).</TD>
+       </TR>
+    </TABLE>
+    <P>
+    <TABLE WIDTH="100%">
+       <TR>
+           <TD COLSPAN="3"><CENTER><B>Composite Align API Changes</B></CENTER><BR>
+           <B>NOTE!</B> The old alignment <I>set</I> methods previously forced packing to be enabled.  
+             This is no longer the case since the alignment setting is now supported for composites 
+             where packing is not enabled.  If packing should be enabled a separate 
+             call to a packing enablement method (see above) is required.  When packing is <U>disabled</U>
+             the composite's computed alignment will match the specified align setting (default is 
+             1 which is consistent with old behavior).
+           </TD>
+       </TR><TR style="background-color:#DFDFDF;">
+           <TH>Old Method 9.x</TH><TH>New Method 10.0</TH><TH>Comments</TH>    
+       </TR><TR>
+           <TD><CODE>setToDefaultAlignment()</CODE></TD>
+           <TD><CODE>setToDefaultAligned()</CODE></TD>
+           <TD>Default alignment for a non-packed composite is 1.  When packing is enabled the 
+           default alignment is a function of the component packing.</TD>
+       </TR><TR>
+           <TD><CODE>isDefaultAligned()</CODE></TD>
+           <TD><CODE>isDefaultAligned()</CODE></TD>
+           <TD>Equivalent to: <CODE>getAlignmentType() == DEFAULT</CODE></TD>
+       </TR><TR>
+           <TD><CODE>setToMachineAlignment()</CODE></TD>
+           <TD><CODE>setToMachineAligned()</CODE></TD>
+           <TD>Non-packed composites will have an alignment which equals the machine alignment
+           specified by the compiler specification (data organization).  Packed structures 
+           will have an alignment which is a multiple of the machine alignment.</TD>
+       </TR><TR>
+           <TD><CODE>isMachineAligned()</CODE></TD>
+           <TD><CODE>isMachineAligned()</CODE></TD>
+           <TD>Equivalent to: <CODE>getAlignmentType() == MACHINE</CODE></TD>
+       </TR><TR>
+           <TD><CODE>setMinimumAlignment(DEFAULT_ALIGNMENT_VALUE)<BR>setMinimumAlignment(1..n)</CODE></TD>
+           <TD><CODE>setToDefaultAligned()<BR>setExplicitMinimumAlignment(1..n)<BR>align(1..n)</CODE></TD>
+           <TD> 
+             If an explicit minimum alignment is set (1..n), non-packed composites will have an alignment 
+             which equals this value, while packed structures 
+             will have an alignment which is a multiple of this value.
+             Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been elliminated.
+           </TD>
+       </TR><TR>
+           <TD><CODE>getMinimumAlignment()</CODE></TD>
+           <TD><CODE>getExplicitMinimumAlignment()</CODE></TD>
+           <TD>New method use does not directly map (see Javadocs).  Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been elliminated.</TD>
+       </TR><TR>
+           <TD></TD>
+           <TD><CODE>hasExplicitMinimumAlignment()</CODE></TD>
+           <TD>Equivalent to: <CODE>getAlignmentType() == EXPLICIT</CODE></TD>
+       </TR><TR>
+           <TD></TD>
+           <TD><CODE>getAlignmentType()</CODE></TD>
+           <TD>Possible values: <CODE>DEFAULT, MACHINE or EXPLICIT</CODE></TD>
+       </TR>
+    </TABLE>
+    </BLOCKQUOTE>
+    
     <BR />
     <H1> What's New in Ghidra 9.2</H1>
         

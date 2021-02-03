@@ -80,8 +80,8 @@ public class DBTraceDataTypeManager extends DataTypeManagerDB
 	}
 
 	@Override
-	public void dataTypeChanged(DataType dataType) {
-		super.dataTypeChanged(dataType);
+	public void dataTypeChanged(DataType dataType, boolean isAutoChange) {
+		super.dataTypeChanged(dataType, isAutoChange);
 		if (!isCreatingDataType()) {
 			trace.getCodeManager().invalidateCache(false);
 			trace.getSymbolManager().invalidateCache(false);

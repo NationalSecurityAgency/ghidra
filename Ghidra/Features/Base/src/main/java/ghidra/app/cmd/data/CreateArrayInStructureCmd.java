@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +102,7 @@ public class CreateArrayInStructureCmd implements Command {
 		try {
         	ArrayDataType adt = new ArrayDataType(dataType, numElements, dataType.getLength());
 			clearStruct(struct, compData.getParentOffset(), length);
-			if (struct.isInternallyAligned()) {
+			if (struct.isPackingEnabled()) {
 				struct.insert(index, adt, adt.getLength());
 			}
 			else {

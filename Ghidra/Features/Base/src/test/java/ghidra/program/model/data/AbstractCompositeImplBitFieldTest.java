@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ public abstract class AbstractCompositeImplBitFieldTest extends AbstractGTest {
 
 		DataTypeManager dataMgr = getDataTypeManager();
 		if (dataMgr.getDataTypeCount(false) != 0) {
-			Msg.info(this, "Using previously parsed data types");
+//			Msg.info(this, "Using previously parsed data types");
 			return; // already have types
 		}
 

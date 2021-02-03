@@ -35,7 +35,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.*;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Model for editing a composite data type. Specific composite data type editors
@@ -546,7 +545,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	@Override
-	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
+	public void deleteSelectedComponents() throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
@@ -610,8 +609,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 	private boolean hasCompPathNameChanges(Composite currentViewComposite, Composite oldComposite) {
 		// Check component data type pathnames.
-		DataTypeComponent[] comps = currentViewComposite.getComponents();
-		DataTypeComponent[] oldComps = oldComposite.getComponents();
+		DataTypeComponent[] comps = currentViewComposite.getDefinedComponents();
+		DataTypeComponent[] oldComps = oldComposite.getDefinedComponents();
 		if (comps.length != oldComps.length) {
 			return true;
 		}

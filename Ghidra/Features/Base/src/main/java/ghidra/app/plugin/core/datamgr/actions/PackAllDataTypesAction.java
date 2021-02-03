@@ -29,19 +29,18 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
-import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
-public class AlignAllDataTypesAction extends DockingAction {
+public class PackAllDataTypesAction extends DockingAction {
 
 	private DataTypeManagerPlugin plugin;
 
-	public AlignAllDataTypesAction(DataTypeManagerPlugin plugin) {
-		super("Align All Data Types", plugin.getName());
+	public PackAllDataTypesAction(DataTypeManagerPlugin plugin) {
+		super("Pack All Composites", plugin.getName());
 		this.plugin = plugin;
 
-		setPopupMenuData(new MenuData(new String[] { "Align All..." }, "Edit"));
-		setHelpLocation(new HelpLocation(plugin.getName(), getName()));
+		setPopupMenuData(new MenuData(new String[] { "Pack All..." }, "Edit"));
+//		setHelpLocation(new HelpLocation(plugin.getName(), getName()));
 	}
 
 	@Override
@@ -85,27 +84,27 @@ public class AlignAllDataTypesAction extends DockingAction {
 				int result =
 					OptionDialog.showOptionDialog(
 						plugin.getTool().getToolFrame(),
-						"Align Data Types",
-						"Are you sure you want to align all of the data types in " +
+						"Pack All Composites",
+						"Are you sure you want to enable packing of all non-packed composites in " +
 							dataTypeManager.getName() +
-							"?\nBoth structures and unions that are currently unaligned will become aligned.\n" +
-							"This could cause component offsets to change and datatype sizes to change.\n" +
+							"?\nAll structures and unions that are not currently packed will default packing enabled.\n" +
+							"This could cause component offsets to change as well as size and alignment of these data types to change.\n" +
 							"Do you want to continue?", "Continue", OptionDialog.WARNING_MESSAGE);
 				if (result == OptionDialog.CANCEL_OPTION) {
 					return;
 				}
-				alignDataTypes(dataTypeManager, dataOrganization);
+				packDataTypes(dataTypeManager, dataOrganization);
 			}
 			else {
-				Msg.showWarn(this, gTree, "Alignment Not Allowed",
-					"The archive must be modifiable to align data types.");
+				Msg.showWarn(this, gTree, "Modification Not Allowed",
+					"The archive must be modifiable to pack data types.");
 			}
 		}
 	}
 
-	private void alignDataTypes(DataTypeManager dataTypeManager, DataOrganization dataOrganization) {
+	private void packDataTypes(DataTypeManager dataTypeManager, DataOrganization dataOrganization) {
 		if (dataTypeManager == null) {
-			Msg.error(this, "Can't align data types without a data type manager.");
+			Msg.error(this, "Can't pack data types without a data type manager.");
 			return;
 		}
 		int transactionID = -1;
@@ -113,9 +112,8 @@ public class AlignAllDataTypesAction extends DockingAction {
 		try {
 			// start a transaction
 			transactionID =
-				dataTypeManager.startTransaction("Align all data types in " +
-					dataTypeManager.getName());
-			alignEachStructure(dataTypeManager, dataOrganization);
+				dataTypeManager.startTransaction("Pack Composite Types");
+			packEachStructure(dataTypeManager, dataOrganization);
 			commit = true;
 		}
 		finally {
@@ -124,12 +122,14 @@ public class AlignAllDataTypesAction extends DockingAction {
 		}
 	}
 
-	private void alignEachStructure(DataTypeManager dataTypeManager,
+	private void packEachStructure(DataTypeManager dataTypeManager,
 			DataOrganization dataOrganization) {
 		Iterator<? extends Composite> allComposites = dataTypeManager.getAllComposites();
 		while (allComposites.hasNext()) {
 			Composite composite = allComposites.next();
-			composite.setInternallyAligned(true);
+			if (!composite.isPackingEnabled()) {
+				composite.setPackingEnabled(true);
+			}
 		}
 	}
 

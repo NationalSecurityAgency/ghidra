@@ -42,6 +42,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
 	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return name;
 	}
@@ -49,6 +50,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	/**
 	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
 	 */
+	@Override
 	public boolean isDynamicallySized() {
 		return false;
 	}
@@ -57,6 +59,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "IEEE-754 Float";
 	}
@@ -65,6 +68,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		try {
 			int len = getLength(); // use type length (ignore length arg)
@@ -97,10 +101,12 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		Object obj = getValue(buf, settings, length);
-		if (obj == null)
+		if (obj == null) {
 			return "??";
+		}
 		return obj.toString();
 	}
 

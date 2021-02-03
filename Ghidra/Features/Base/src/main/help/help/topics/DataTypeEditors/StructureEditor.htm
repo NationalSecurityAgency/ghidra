@@ -54,9 +54,9 @@
       <UL>
         <LI><I>Edit Actions</I>: The icon buttons at the top of the editor are used to modify this
         structure. Each button has a different <A href="#Structure_Editor_Edit_Actions">edit
-        action</A> associated with it. These allow the user to: apply changes, insert Undefined
-        bytes, reorganize the current components, duplicate components, clear components (changes
-        them to Undefined bytes), delete components, create array components, and unpackage a
+        action</A> associated with it. These allow the user to: apply changes, insert 
+        Undefined components, reorganize the current components, duplicate components, clear components (changes
+        them to <i>undefined</i> components), delete components, create array components, and unpackage a
         structure or array component changing it into its component parts.<BR>
         </LI>
 
@@ -79,11 +79,9 @@
         be changed by <A href="#Structure_Editor_Cycle">cycling</A> the data type.</LI>
 
         <LI><I>Structure Information Area</I>: This is the area below the component table with the
-        name, description, category, size and alignment of the structure or union. The structure or
+        name, description, category, size, packing and alignment of the structure or union. The structure or
         union being edited can be <A href="#Structure_Editor_Name">renamed</A> from here. Its <A
-        href="#Structure_Editor_Description">description</A> can be specified here. Also, it can be
-        changed between <A href="#Structure_Editor_InternallyAligned">unaligned and
-        aligned</A>.<BR>
+        href="#Structure_Editor_Description">description</A> can be specified here.<BR>
         </LI>
 
         <LI>Immediately below the structure information area is a status line where status messages
@@ -146,45 +144,54 @@
       <P>To change the size of the structure being edited, edit the <I>Size</I> field in the bottom
       of the editor and press the <SPAN style="font-weight: bold;">Enter</SPAN> key to apply the
       new size to the structure. If you are reducing the size of the structure, you will be
-      prompted to determine that you really want to truncate the structure.</P>
+      prompted to determine that you really want to truncate the structure.  The ability to specify the 
+      size is only permitted for non-packed structures.  For other situations the field is read-only.</P>
     </BLOCKQUOTE>
 
     <H2><A name="Structure_Editor_ActualAlignment"></A>Alignment</H2>
 
     <BLOCKQUOTE>
-      <P>At the bottom of the editor is an <SPAN style="font-style: italic;">Alignment</SPAN>
-      field, which indicates how the structure or union being edited will be aligned within other
-      data types. All unaligned structures and unions will have an alignment of 1 (byte aligned)
-      and will therefore not be aligned within other data types. For aligned structures and unions
-      the alignment value is determined based on the alignments of the individual components they
-      contain, whether they are <A href="#Structure_Editor_PackMaximum">packed internally</A> and
-      whether they have a <A href="#Structure_Editor_AlignMinimum">minimum alignment</A>
-      specified.<BR>
+      <P>At the bottom of the editor is a read-only <SPAN style="font-style: italic;">Alignment</SPAN>
+      field which conveys the acutal alignment of this data type. 
+      All non-packed structures and unions (i.e., pack disabled) will have a default alignment of 1 (byte aligned)
+      unless a <A href="#Structure_Editor_Align">minimum alignment</A> value has been specified.  For packed structures and unions
+      the actual alignment value is calculated based on the <A href="#Structure_Editor_Pack">pack</A> setting, 
+      preferred alignments of the individual components, 
+      and the minimum alignment setting. The size of a packed structure or union will always be a multiple 
+      of this alignment value.  This value is always expressed in terms of 8-bit bytes.</P>
+      <P>
+      This alignment is considered when this data type, or dirivative data type, is placed within another packed composite.  
+      A compiler will also utilize this when placing components within memory although Ghidra does not
+      enforce such placement.<BR>
       </P>
     </BLOCKQUOTE>
 
-    <H2><A name="Structure_Editor_InternallyAligned"></A>Unaligned vs. Aligned</H2>
+    <H2><A name="Structure_Editor_NonPacked"></A>Packed vs. Non-Packed</H2>
 
     <BLOCKQUOTE>
-      <P>In the lower right corner of the editor is an <SPAN style=
-      "font-style: italic;">Align</SPAN> check box. When the box is checked the structure or union
-      is aligned. Click the checkbox to change between aligned and unaligned. When a structure or
-      union is aligned, additional choices will appear that allow minimum alignment and packing to
-      be specified.<BR>
+      <P>In the lower right corner of the editor is a series of <SPAN style=
+      "font-style: italic;">pack</SPAN> choice buttons. The <B>disabled</B> button corresponds to a non-packed
+      structure or union, while the <B>default</B> or value-entry buttons enable packing.<BR>
       </P>
     </BLOCKQUOTE>
     
     <BLOCKQUOTE>
 
-    <H3>Unaligned Structures</H3>
+    <H3>Non-Packed Structures</H3>
 
     <BLOCKQUOTE>
-      <P>When a structure is unaligned, with the exception of bitfields, each component shown within 
-      the editor immediately follows the one before it. In other words, no automatic alignment or padding occurs. 
-      Unaligned structures may be used to position components with known data
-      types at specific offsets within a structure. Therefore, when editing an unaligned structure,
-      the structure editor attempts to prevent defined components from moving
-      to a different offset when performing operations like drag and drop which may consume undefined bytes. <BR>
+      <P>When packing is disabled for a structure all bytes are accounted for
+      by the displayed components.  Use of <i>undefined</i> filler components as padding and reservation of space. 
+      This differs from a packed structure which does not reveal padding in the form of components and does not provide
+      a means of reserving space.
+      Non-packed structures may be used to position components with known data
+      types at specific offsets within a structure whose size has been specified. When editing a non-packed structure
+      the editor attempts to prevent defined components from moving
+      to a different offset when performing operations like drag and drop which may consume undefined bytes. 
+      The default alignment for non-packed structures is 1-byte but may be overriden by setting a specific 
+      non-default <A href="#Structure_Editor_Align">minimum alignment</A>. 
+      The alignment will not influence the size of a non-packed structure so it is advised
+      that the size always be explicity set to a multiple of the alignment value.<BR>
       </P>
 
       <DIV style="text-align: center; margin-top: 10px;">
@@ -192,108 +199,114 @@
       </DIV>
     </BLOCKQUOTE>
 
-    <H3>Aligned Structures</H3>
+    <H3>Packed Structures</H3>
 
     <BLOCKQUOTE>
-      <P>An aligned structure is defined similar to a structure in a C header file. The data types
-      are specified for each of the components, but their offsets will be automatically adjusted to
-      the correct alignment based on the data type and position in the structure. A default
-      "undefined" byte cannot be added to an aligned structure, although an "undefined1" component 
-      can be and is treated like any other fixed-length datatype.   The overall size of the structure is
-      determined by the components it contains and the specified pack value. The alignment and 
-      packing behavior is determined by the effective data organization as defined by each compiler
-      specification (data type archives utilize a default data organization).  When you select the
-      <B>Align</B> checkbox, the GUI displays buttons to allow an align attribute, <SPAN style=
-      "font-weight: bold; font-style: italic;">align( minimum )</SPAN>, to be specified. It also
-      allows a pack value, <SPAN style="font-style: italic;"><SPAN style=
-      "font-weight: bold;">pack</SPAN></SPAN> <SPAN style=
-      "font-weight: bold; font-style: italic;">( maximum )</SPAN>, to be specified. The following
-      image shows these GUI components for aligning the data type being edited.<BR>
+      <P>A packed structure is defined similar to a structure in a C header file and is intended 
+      to automatically adjust component placement, size and alignment in a manner consistent 
+      with the associated compiler specification. Data types
+      are specified for each of the components, but their offsets are automatically computed
+      based upon the pack settings and preferred alignment of each component's data type. A default
+      datatype (i.e., <i>undefined</i>) cannot be added to a packed structure, although other sized datatypes 
+      (e.g., <i>undefined1</i>, <i>undefined4</i>, etc.) may be used as component place-holders and will 
+      pack appropriately based upon their size.   The overall size of the structure is
+      determined by the components it contains, the pack setting (default or explicit value) and the minimum alignment setting. 
+      The default alignment and pack behavior is controlled by the effective data organization.  This can
+      cause the same structure viewed within a program to be layed-out quite differently than within a datatype archive 
+      which uses a default data organization.</P>   
+      <P>The following image shows the editor state reflecting a default packed structure with 
+      default alignment.<BR>
       </P>
 
       <DIV style="text-align: center; margin-top: 10px;">
-        <IMG alt="" src="images/StructureEditorAligned.png"><BR>
+        <IMG alt="" src="images/StructureEditorPacked.png"><BR>
       </DIV>
     </BLOCKQUOTE>
 
-    <H4><A name="Structure_Editor_AlignMinimum"></A>align( minimum )</H4>
+    <H4><A name="Structure_Editor_Align"></A>align (minimum)</H4>
 
     <BLOCKQUOTE>
-      <P>This indicates the minimum alignment to be used when aligning this data type inside
-      another data type. Setting this to a value other than <SPAN style=
-      "font-weight: bold;">none</SPAN> forces this structure to be aligned within other structures
-      at an offset that is a multiple of the specified value. Specifying a minimum alignment also
-      causes the end of the structure to be padded so its size is a multiple of the minimum
-      alignment.<BR>
+      <P>This setting controls the minimum alignment to be used when computing this data type's 
+      <A href="#Structure_Editor_ActualAlignment">actual alignment</A>.<BR>
       </P>
 
       <UL>
-        <LI><SPAN style="font-weight: bold;">none</SPAN> - Sets this data type to have <SPAN style=
-        "font-weight: bold;">no</SPAN> specified minimum alignment when aligning this data type
-        inside another data type. Align this data type based only on its components and their
-        minimum alignments and packing.<BR>
+        <LI><SPAN style="font-weight: bold;">default</SPAN> - Sets this data type to compute its <SPAN style=
+        "font-weight: bold;">default</SPAN> alignment based only on the pack setting and the alignment of 
+        the individual components.  If packing is disabled (i.e., explicit component placement by offset)
+        the default alignment will always be 1-byte and preferred component alignments are ignored.<BR>
         </LI>
 
-        <LI><SPAN style="font-weight: bold;">machine</SPAN> - Sets this data type to have a minimum
-        alignment that is a multiple of the <SPAN style="font-weight: bold;">machine</SPAN>
-        alignment when aligning this data type inside another data type. In this case <SPAN style=
-        "font-weight: bold;">machine</SPAN> alignment means the largest alignment which is ever
-        used for any data type on the program's intended machine.<BR>
+        <LI>explicit value - The radio-button with a text field next to it allows you to specify an
+        explicit minimum alignment value. This sets the data types minimum alignment.  The 
+        computed alignment for the data type will be a multiple of this value.</LI>
+        
+        <LI><SPAN style="font-weight: bold;">machine</SPAN> - Sets the minimum alignment to conform 
+        to the machine alignment specified by the associated data organization (i.e., compiler specification).
+        This genrally corresponds to the largest alignment which is ever
+        used for any data type on the program's intended machine.  If this is choosen and
+        the resulting alignment is larger, this is likely due to a component data type
+        having an alignment larger than the machine alignment.
+        <BR>
         </LI>
-
-        <LI>by value - The bottom button with a text field next to it allows you to specify a
-        minimum alignment value. This sets this data type to have a minimum alignment that is a
-        multiple of the <SPAN style="font-weight: bold;">specified value</SPAN> when aligning this
-        data type inside another data type.</LI>
       </UL>
 
-      <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C code align
-      attribute</I> on the structure or union is to choose <B>none</B>. The equivalent for a C code
-      attribute of <I>align()</I> without a value is to choose <B>machine</B> alignment. The
-      equivalent of <I>align(4)</I> is to specify a <B>value</B> of 4.</P>
+      <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C/C++ code aligned/alignas
+      attribute</I> on the structure or union is to choose <B>default</B>. The equivalent for the C code
+      <i>aligned</i> attribute without a value is to choose <B>machine</B> alignment. The
+      equivalent of <I>aligned(4)</I> or <I>alignas(4)</I> is to specify an explicit alignment <B>value</B> of 4.</P>
     </BLOCKQUOTE>
 
-    <H4><A name="Structure_Editor_PackMaximum"></A>pack( maximum )</H4>
+    <H4><A name="Structure_Editor_Pack"></A>pack</H4>
 
     <BLOCKQUOTE>
-      <P>This indicates a packing value to be used when aligning the components within this data
-      type. Setting this to a value other than <B>none</B> forces each component of this structure
-      to be packed so that its maximum alignment within the structure is no more than the pack
-      value. However, a component will not be packed if the data type or one of its subcomponents
-      data types has a minimum alignment value specified that exceeds the pack value. Packing also
-      affects the padding at the end of this structure so that the overall size of the structure is
-      the smallest possible multiple of the pack value. If the minimum alignment is greater than
-      the pack value, the end of the structure or union is padded based on the minimum alignment
-      instead.<BR>
+      <P>This setting controls the packing behavior of the structure or union.  In general, packing should 
+      be disabled when a complete definition is unknown and it is neccessary to reverse engineer the 
+      component specifications.  This is the initial state of a new structure with the <B>pack</B>
+      checkbox left unchecked.  When a the specifications of a composite are known, such as from
+      a source header file, it may be preferred to enable packing to allow for automatic placement of 
+      components and calculation of alignment and size.  To enable packing the <B>pack</B> checkbox
+      should be checked and either a <B>default</B> or explicit pack value specified.<BR>
       </P>
-
       <UL>
-        <LI><B>none</B> - The components within this structure should align themselves in the
-        default way for the compiler. The components are not being packed with a reduced alignment.<BR>
+        <LI><B>default</B> - The components within this structure should align besed upon the 
+        preferred alignment of each component.<BR>
         </LI>
 
-        <LI>by value - The bottom button with a text field next to it allows you to specify a pack
-        value. The <B>specified value</B> indicates the maximum alignment to use when packing any
+        <LI>explicit value - The button with a text entry field next to it allows you to specify an explicit pack
+        value. The specified value indicates the maximum alignment to use when packing each
         component.<BR>
         </LI>
       </UL>
+      <P>
+      When packing is enabled, the padding at the end of a structure will be adjusted to ensure
+      an overall size which is a multiple of the computed alignment.  If an explicit pack
+      value is specified the, the aligned placement of components will not exceed this value. 
+      In addition, the computed alignment will not exceed this value if a <B>default</B> is selected for the
+      <B>align (minimum)</B> setting.  If a minimum alignment other than <B>default</B> is specified, 
+      the computed alignment and overall size will be a multiple of the align value regardless
+      of the <B>pack</B> setting.  The <B>align</B> setting will not influence interior component placement 
+      as does the <B>pack</B> setting.<BR>
+      </P>
 	  <P><IMG alt="Note:" src="../../shared/note.png"> The placement of bitfields may be influenced
-	  based upon the specified pack value.<BR>
+	  based upon the specified pack value based upon the compiler specification.<BR>
       </P>
       <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C #pragma
-      pack attribute</I> on the structure or union is to choose <B>none</B>. The equivalent for a C
+      pack attribute</I> on the structure or union is to choose <B>default</B>. The equivalent for a C
       code attribute of <I>#pragma pack()</I> without a value is to specify a <B>pack value</B> of
       <B>1</B>. The equivalent of <I># pragma</I> <I>pack(4)</I> is to specify a <B>pack value</B>
       of 4.<BR>
       </P>
     </BLOCKQUOTE>
 
-    <H3>Unaligned Unions</H3>
+    <H3>Non-packed Unions</H3>
 
     <BLOCKQUOTE>
-      <P>When a union is unaligned, the union is the size of its largest component.&nbsp; There is
-      no alignment padding and the alignment&nbsp; is 1 when putting an unaligned union into other
-      data types.<BR>
+      <P>When a union is not packed (i.e., pack disabled), the union is the size of its largest component.&nbsp; There is
+      no alignment padding and the default alignment&nbsp; is 1.  As with structures, a <A href=
+      "#Structure_Editor_Align">minimum alignment</A> may be specified to force a specific alignment.
+      The alignment will not influence the size of a non-packed union so it is advised
+      that the size always be explicity set to a multiple of the alignment value.<BR>
       </P>
 
       <DIV style="text-align: center; margin-top: 10px;">
@@ -301,21 +314,21 @@
       </DIV>
     </BLOCKQUOTE>
 
-    <H3>Aligned Unions</H3>
+    <H3>Packed Unions</H3>
 
     <BLOCKQUOTE>
-      <P>&nbsp;In an aligned union the overall size is at least the size of the largest component,
-      but will be padded based on the alignment and packing. The <A href=
-      "#Structure_Editor_AlignMinimum">minimum alignment</A> is specified just as within a
+      <P>&nbsp;In a packed union the overall size is at least the size of the largest component,
+      but will be padded based on the actual computed alignment. The <A href=
+      "#Structure_Editor_Align">minimum alignment</A> is specified in the same manner as for a
       structure and affects the alignment in the same way. The <A href=
-      "#Structure_Editor_PackMaximum">pack value</A> is specified in the same manner as within a
-      structure, but only affects the padding in the overall size of the union. All elements in a
+      "#Structure_Editor_Pack">pack value</A> is specified in the same manner as within a
+      structure, but only affects the trailing padding and overall size of the union. All elements in a
       union have an offset of zero, so the pack value doesn't affect the component offsets. If both
       a minimum alignment and pack value are specified, the minimum alignment will override the
       pack value if it is larger.</P>
 
       <DIV style="text-align: center; margin-top: 10px;">
-        <IMG alt="" src="images/UnionEditorAligned.png">
+        <IMG alt="" src="images/UnionEditorPacked.png">
       </DIV>
     </BLOCKQUOTE>
     
@@ -334,25 +347,25 @@
       		bit-size is generally appended to the base-datatype for datatype specification and 
       		presentation purposes (e.g., char:1).</li>
       		<li>A zero-length bitfield may be defined within a byte but its' precise bit position
-      		is controlled by endianess alone.  A zero-length bitfield has no affect within an unaligned
-      		structure and is intended for use within aligned structures where it may impart alignment
+      		is controlled by endianess alone.  A zero-length bitfield has no affect within a non-packed
+      		structure and is intended for use within packed structures where it may impart alignment
       		affects based upon compiler conventions.</li> 
-      		<li>Inserting a bitfield within an unaligned structure may cause component shifts based 
+      		<li>Inserting a bitfield within a non-packed structure may cause component shifts based 
       		upon the specified offset and allocation unit byte size when a placement conflict occurs.</li>
       		<li>The start/end byte offsets may be shared with adjacent bitfield components.</li>
       		<li>Unoccupied bits within a partially occupied byte are not represented by any component
-      		(similar to padding bytes within aligned structures).</li>
-      		<li>A separate <a href="#Structure_Bitfield_Editor">Bitfield Editor</a>, for use with unaligned structures only, 
+      		(similar to padding bytes within packed structures).</li>
+      		<li>A separate <a href="#Structure_Bitfield_Editor">Bitfield Editor</a>, for use with non-packed structures only, 
       		must be used to precisely place a bitfield component.  Adding a bitfield component via the 
-      		structure table view via datatype text entry (e.g., char:1) provides only rough placement for unaligned 
+      		structure table view via datatype text entry (e.g., char:1) provides only rough placement for non-packed 
       		structures since additional bytes will be introduced. 
       		The BitField Editor may be displayed using the the Add Bitfield and
       		Edit Bitfield popup menu actions on a selected structure component.  The datatype text entry approach
-      		must be used for all unions and aligned structures.</li>
+      		must be used for all unions and packed structures.</li>
       	</ul>
     </BLOCKQUOTE>
     
-    <P><IMG alt="Note:" src="../../shared/note.png">While packing of bitfields within aligned 
+    <P><IMG alt="Note:" src="../../shared/note.png">While packing of bitfields within packed 
     structures is controlled by the compiler specification (e.g., data organization), bit-packing
     order is currently fixed based upon endianess.  Little-endian packs starting with bit-0 (lsb)
     while big-endian packs starting with bit-7 (msb).</P>
@@ -401,9 +414,10 @@
     Insert Undefined Byte</H3>
 
     <BLOCKQUOTE>
-      <P>Undefined Bytes can only be inserted into a structure that is not aligned. A single
-      Undefined byte is inserted before the current selection by clicking the <IMG src=
-      "images/Plus.png" alt=""> <B>Insert Undefined Byte</B> button.</P>
+      <P>Within a non-packed structure <i>undefined</i> components are inserted before the current selection by clicking the <IMG src=
+      "images/Plus.png" alt=""> <B>Insert Undefined Byte</B> button.  Within a packed structure an <i>undefined1<i> datatype component
+      is inserted in a similar fashion, although in packed structures it is more appropriate to use a properly sized datatype (e.g., modify datatype
+      on inserted component).</P>
     </BLOCKQUOTE>
 
     <H3><A name="Structure_Editor_Move_Components_Up"></A> <IMG src="images/up.png" alt=""> Move
@@ -442,9 +456,9 @@
         <LI>A single copy of the component is created immediately following the selected one.</LI>
       </OL>
 
-      <P>If the structure is not aligned, then there must be enough Undefined bytes following the
-      component to accommodate the duplicate. In an unaligned structure, Undefined bytes get
-      replaced by the new copy of the component.</P>
+      <P>If the structure is not packed (i.e., pack disabled), then there must be enough <i>undefined</i> components following the
+      component to accommodate the duplicate. In such a such a structure, <i>undefined</i> bytes get
+      consumed by the new copy of the component.</P>
     </BLOCKQUOTE>
 
     <H3><A name="Structure_Editor_Duplicate_Multiple_of_Component"></A> <IMG src=
@@ -460,8 +474,8 @@
         Component...</B> button.</LI>
 
         <LI><A name="Structure_Editor_Duplicates_NumberInputDialog"></A> The number of duplicates
-        dialog appears. In an unaligned structure, you can only indicate as many duplicates as will
-        fit in place of Undefined bytes.</LI>
+        dialog appears. In a non-packed structure, you can only indicate as many duplicates as will
+        fit in place of <i>undefined</i> bytes.</LI>
       </OL>
     </BLOCKQUOTE>
 
@@ -502,10 +516,10 @@
     Clear Component(s)</H3>
 
     <BLOCKQUOTE>
-      <P>Clearing a component changes it into Undefined byte components that take up the same
-      amount of space as the component being cleared. Components can be cleared in unaligned
-      structures, but not in unions or aligned structures. This is because the resulting Undefined
-      bytes are not valid components in a union or aligned structure.</P>
+      <P>Clearing a component changes it into an <i>undefined</i> components that take up the same
+      amount of space as the component being cleared. Components can only be cleared in non-packed
+      structures (i.e., pack disabled), but not in unions or packed structures. This is because the resulting <i>undefined</i>
+      components are not valid in a union or packed structure.</P>
 
       <P>To clear components in a structure:</P>
 
@@ -514,7 +528,7 @@
 
         <LI>Press the <IMG src="images/erase16.png" alt=""> <B>Clear Component(s)</B> button.</LI>
 
-        <LI>Each selected component is replaced by Undefined Bytes. The number of Undefined Bytes
+        <LI>Each selected component is replaced by <i>undefined</i> components. The number of <i>undefined</i> components
         will be equal to the length of the component being cleared.</LI>
       </OL>
 
@@ -542,8 +556,8 @@
 
     <BLOCKQUOTE>
       <OL start="4">
-        <LI>Specify the number of elements. For an unaligned structure, the maximum size of the
-        array is limited by the number of Undefined bytes following the selected component.</LI>
+        <LI>Specify the number of elements. For a non-packed structure (i.e., pack disabled), the maximum size of the
+        array is limited by the number of <i>undefined</i> components following the selected component.</LI>
 
         <LI>Press the <B>OK</B> button.</LI>
 
@@ -568,7 +582,7 @@
         the data type of the array. The array's dimension is determined by how many of that data
         type will fit in the space that was occupied by the selection. The size of the array will
         be the array that can fit in the selected number of bytes. Any left over (unused) bytes at
-        the end of the selection will become Undefined bytes.</LI>
+        the end of the selection will become <i>undefined</i> components.</LI>
       </OL>
     </BLOCKQUOTE>
     
@@ -621,12 +635,12 @@
     </BLOCKQUOTE><BR>
      
     </BLOCKQUOTE> 
-<H2><A name="Structure_Editor_Bitfield_Actions"></A>Bitfield Actions (unaligned structures)</H2>
+<H2><A name="Structure_Editor_Bitfield_Actions"></A>Bitfield Actions (Non-Packed Structures)</H2>
     
     <BLOCKQUOTE>
-    <P>The following bitfield actions are available when modifying unaligned structures only and are available 
+    <P>The following bitfield actions are available when modifying non-packed structures only (i.e., pack disabled) and are available 
     via the popup menu based upon a selected component or table row.  When working with unions and 
-    aligned structures, bitfields may only be specified via datatype text entry specification within the 
+    packed structures, bitfields may only be specified via datatype text entry specification within the 
     table view (e.g., char:1).</P>
     
     <H3><A name="Structure_Editor_Add_Bitfield"></A>Add Bitfield</H3>
@@ -671,10 +685,10 @@
 
       <P><B><I>Name</I></B> - The field name associated with this component in the structure or
       union. When specified, the field names must be unique for the components in a structure or
-      union. This field is editable, except on components that are Undefined bytes.</P>
+      union. This field is editable, except on <i>undefined</i> components.</P>
 
       <P><B><I>Comment</I></B> - A comment associated with this component. This field is editable,
-      except on components that are Undefined bytes.</P>
+      except on <i>undefined</i> components.</P>
     </BLOCKQUOTE>
 
     <P><IMG src="../../shared/tip.png" alt="" border="0"> To rearrange the order of the component
@@ -687,8 +701,7 @@
       <H3><A name="Structure_Editor_Edit_Component_Field"></A> Editing Component Fields</H3>
 
       <P>The <I>DataType</I>, <I>Name</I> and <I>Comment</I> fields are editable. However, the
-      <I>Name</I> and <I>Comment</I> are not editable when the component's <I>DataType</I> is an
-      Undefined byte.</P>
+      <I>Name</I> and <I>Comment</I> are not editable on <i>undefined</i> components.</P>
 
       <P>To place an editable field into edit mode:</P>
 
@@ -792,28 +805,29 @@
         <H4><A name="EffectOfChangingDataTypeSize"></A> <U>Effect of Changing a Component's
         Size</U></H4>
 
-        <P>An unaligned union's size will always be the size of its largest component. If you
+        <P>A non-packed union's size will always be the size of its largest component. If you
         change a data type for a component and the component size changes, the union size will
-        change if necessary. An aligned union is padded to make its size a multiple of the union's
+        change if necessary. A packed union is padded to make its size a multiple of the union's
         alignment.<BR>
         </P>
 
         <P>How a structure is affected by changing a component's data type depends on whether the
-        structure size is aligned or unaligned.</P>
+        structure size is packed or non-packed.</P>
 
         <BLOCKQUOTE>
-          <P><B>Unaligned</B> - If the structure is <I>unaligned</I>, then the new component must
-          be less than or equal to the original component's size plus any Undefined byte components
-          that immediately follow it in the structure. In an unaligned structure, decreasing the
-          component size will create Undefined byte components following it to maintain the
-          structure size. Increasing the component size replaces Undefined bytes immediately
-          following the component. The last component of a structure can be always be changed which
+          <P><B>Non-Packed</B> - If the structure has <I>pack disabled</I>, then the new component must
+          be less than or equal to the original component's size plus any <i>undefined</i> components
+          that immediately follow it in the structure. Decreasing the
+          component size will create <i>undefined</i> components following it to maintain the
+          structure size and placement of other components. Increasing the component size replaces 
+          <i>undefined</i> components immediately
+          following the component. The last component of a structure can always be changed which
           can cause the structure to grow larger.<BR>
           </P>
 
-          <P><B>Aligned</B> - If the structure is <I>aligned</I>, the component can change size,
-          which affects the structure's overall size and the alignment of individual components
-          that follow it.</P>
+          <P><B>Packed</B> - If the structure is <I>packed</I>, a component can change size or alignment,
+          which can affect the placement of subsequent components within a structure and/or the 
+          overall size and alignment of both structures and unions.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -859,7 +873,7 @@
       </BLOCKQUOTE>
 
       <BLOCKQUOTE>
-        <H3>Union or Aligned Structure<BR>
+        <H3>Union or Packed Structure<BR>
         </H3>
 
         <P>The first data type in a cycle group can be added to the end of a structure as a new
@@ -897,13 +911,13 @@
           cycle group. The data type can then be cycled to any other data type in the group.</P>
         </BLOCKQUOTE>
 
-        <H3><B>Unaligned Structure</B></H3>
+        <H3><B>Non-Packed Structure</B></H3>
 
-        <P>Cycling is implemented similar to how it is implemented in an aligned structure. The
+        <P>Cycling is implemented similar to how it is implemented in a packed structure. The
         only exception is that the user can only cycle to data types that will fit within the data
-        boundary of the current component. If Undefined bytes follow the selected component, the
-        Undefined bytes can be replaced by cycling the data type to a larger sized data type.
-        Likewise, cycling to a smaller data type will add Undefined bytes after the component being
+        boundary of the current component. If <i>undefined</i> components follow the selected component, the
+        component can be replaced by cycling the data type to a larger sized data type.
+        Likewise, cycling to a smaller data type will add <i>undefined</i> components after the component being
         cycled. However, the last component is not restricted to a particular size.<BR>
         </P>
       </BLOCKQUOTE>
@@ -957,8 +971,8 @@
     <H2><A name="AddDataType"></A>Adding a Data Type</H2>
 
     <BLOCKQUOTE>
-      <P>A data type can be added as a component by replacing Undefined bytes. When editing an
-      unaligned structure, there must be enough Undefined bytes for the data type to replace. A
+      <P>A data type can be added as a component by replacing <i>undefined</i> components. When editing a
+      non-packed structure, there must be enough <i>undefined</i> components for the new data type. A
       data type can also be added to the end of a structure or union.</P>
 
       <BLOCKQUOTE>
@@ -997,7 +1011,7 @@
     <H2><A name="InsertDataType"></A>Inserting a Data Type</H2>
 
     <BLOCKQUOTE>
-      <P>In an aligned structure or a union, a data type can be inserted as a new component.</P>
+      <P>In a packed structure or a union, a data type can be inserted as a new component.</P>
 
       <BLOCKQUOTE>
         <H3>Drag and Drop</H3>
@@ -1025,9 +1039,9 @@
     <H2><A name="ReplaceDataType"></A>Replacing a Data Type</H2>
 
     <BLOCKQUOTE>
-      <P>A component can have its data type replaced with a different data type. If an unaligned
-      structure is being edited then Undefined bytes are created or consumed as necessary to
-      maintain the position of other components within the structure. For unions and aligned
+      <P>A component can have its data type replaced with a different data type. If a non-packed
+      structure is being edited then <i>undefined</i> components are created or consumed as necessary to
+      maintain the position of other components within the structure. For unions and packed
       structures, the data type simply changes for the component and the overall size is adjusted
       accordingly.</P>
 
@@ -1041,22 +1055,22 @@
           component in the editor. 
           If the mouse pointer is a 'circle with a slash' then the data type cannot be
           dropped to replace the component. This is probably because the data type being dropped
-          won't fit in the structure in place of the original component. If editing a union or an
-          aligned structure the data type should always fit and the drop is allowed. If editing an
-          unaligned structure, the component is replaced only if the new component will fit. (see
+          won't fit in the structure in place of the original component. If editing a union or 
+          packed structure the data type will always fit and the drop is allowed (provided the datatype is allowed). If editing a
+          non-packed structure, the component is replaced only if the new component will fit. (see
           <A href="#EffectOfChangingDataTypeSize">Effect of Changing a Component's Size</A>)</P>
 
           <H4>Contiguous Selection of Multiple Components</H4>
 
           <P>Drag a data type to a block of selected components. 
-          Whether the structure is aligned or unaligned doesn't matter when dropping a data type on
+          Whether the structure is packed or non-packed doesn't matter when dropping a data type on
           a block of selected components. This is because the new component (s) will occupy the
           same space as the currently selected components.<BR>
            <B>In a union</B>, all selected components will be replaced with a single component
           containing the data type dropped.<BR>
            <B>In a structure</B>, as many components of the dropped data type as will fit in the
-          selection are created to replace the selection. In an unaligned structure any left over
-          bytes in the selection will become Undefined bytes.</P>
+          selection are created to replace the selection. In a non-packed structure any left over
+          bytes in the selection will become <i>undefined</i> components.</P>
 
           <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
           pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
@@ -1085,9 +1099,9 @@
            <B>In a union</B>, all selected components will be replaced with a single component
           containing the favorite data type.<B><BR>
            In a structure</B>, only favorites that will fit in place of the selection will be
-          enabled. Just like with drag and drop, whether the structure is aligned or unaligned
+          enabled. Just like with drag and drop, whether the structure is packed or non-packed
           doesn't matter. The selection becomes as many of the data type as will fit and left over
-          bytes become Undefined bytes for an unaligned structure.</P>
+          bytes become <i>undefined</i> components for a non-packed structure.</P>
 
           <P><IMG src="../../shared/note.png" alt=""> For information about Pointers as a Favorite,
           see <A href="#Structure_Editor_Favorite">Favorites Basics</A>.</P>
@@ -1248,14 +1262,14 @@
       </U></P>
     </BLOCKQUOTE>
     
-    <H2><A name="Structure_Bitfield_Editor"></A>Bitfield Editor (unaligned structures only)</H2>
+    <H2><A name="Structure_Bitfield_Editor"></A>Bitfield Editor (Non-Packed Structures only)</H2>
     
     <BLOCKQUOTE>
     <P>The Bitfield Editor is used by the Structure Editor when adding or modifying bitfield components
-    within unaligned structures to facilitate precise placement at the bit level.  The Bitfield Editor
-    is not supported for unions and aligned structures since automated packing is performed (i.e.,
+    within non-packed structures to facilitate precise placement at the bit level.  The Bitfield Editor
+    is not supported for unions and packed structures since automated packing is performed (i.e.,
     bitfields are specified via datatype text entry within the structure/union table view).  
-    While editing an unaligned structure, the Structure Editor popup menu actions <B>Add Bitfield</B> 
+    While editing a non-packed structure, the Structure Editor popup menu actions <B>Add Bitfield</B> 
     and <B>Edit Bitfield</B> are used to launch the Bitfield Editor.</P>
     
     <P>The Bitfield Editor includes a visual depiction of the storage allocation bytes and associated

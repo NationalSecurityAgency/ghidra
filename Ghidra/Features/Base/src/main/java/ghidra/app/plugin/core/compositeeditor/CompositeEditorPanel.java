@@ -153,7 +153,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private boolean launchBitFieldEditor(int modelColumn, int editingRow) {
 		if (model.viewComposite instanceof Structure &&
-			!model.viewComposite.isInternallyAligned() &&
+			!model.viewComposite.isPackingEnabled() &&
 			model.getDataTypeColumn() == modelColumn && editingRow < model.getNumComponents()) {
 			// check if we are attempting to edit a bitfield
 			DataTypeComponent dtComponent = model.getComponent(editingRow);

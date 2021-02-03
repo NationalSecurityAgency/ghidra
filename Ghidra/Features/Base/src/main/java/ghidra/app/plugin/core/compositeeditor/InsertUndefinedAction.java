@@ -58,7 +58,7 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 				int index = model.getMinIndexSelected();
 				if (index >= 0) {
 					DataType undefinedDt =
-						model.viewComposite.isInternallyAligned() ? Undefined1DataType.dataType
+						model.viewComposite.isPackingEnabled() ? Undefined1DataType.dataType
 								: DataType.DEFAULT;
 					DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(undefinedDt, -1);
 					model.insert(index, dti.getDataType(), dti.getLength());
@@ -77,7 +77,7 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 		if (model.viewComposite instanceof Structure) {
 			boolean isContiguousSelection = model.getSelection().getNumRanges() == 1;
 			DataType undefinedDt =
-				model.viewComposite.isInternallyAligned() ? Undefined1DataType.dataType
+				model.viewComposite.isPackingEnabled() ? Undefined1DataType.dataType
 						: DataType.DEFAULT;
 			enabled = isContiguousSelection &&
 				model.isInsertAllowed(model.getMinIndexSelected(), undefinedDt);

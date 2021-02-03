@@ -131,6 +131,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	@Override
+	public boolean isZeroLength() {
+		return dataType.isZeroLength();
+	}
+
+	@Override
 	public int getLength() {
 		return numElements * getElementLength();
 	}
@@ -160,8 +165,15 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		if (dt.equals(dataType)) {
+		if (dt == dataType) {
 			notifySizeChanged();
+		}
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		if (dt == dataType) {
+			notifyAlignmentChanged();
 		}
 	}
 

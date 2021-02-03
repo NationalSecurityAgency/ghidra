@@ -463,25 +463,25 @@ public class DataTypeEditorManager
 		return editorOptionMgr.showUnionNumbersInHex();
 	}
 
-	public void createNewStructure(Category category, boolean isInternallyAligned) {
+	public void createNewStructure(Category category, boolean isPacked) {
 		String newName = getUniqueName(category, "struct");
 		DataTypeManager dataTypeManager = category.getDataTypeManager();
 		SourceArchive sourceArchive = dataTypeManager.getLocalSourceArchive();
 		StructureDataType structureDataType =
 			new StructureDataType(category.getCategoryPath(), newName, 0, dataTypeManager);
 		structureDataType.setSourceArchive(sourceArchive);
-		structureDataType.setInternallyAligned(isInternallyAligned);
+		structureDataType.setPackingEnabled(isPacked);
 		edit(structureDataType);
 	}
 
-	public void createNewUnion(Category category, boolean isInternallyAligned) {
+	public void createNewUnion(Category category, boolean isPacked) {
 		String newName = getUniqueName(category, "union");
 		DataTypeManager dataTypeManager = category.getDataTypeManager();
 		SourceArchive sourceArchive = dataTypeManager.getLocalSourceArchive();
 		UnionDataType unionDataType =
 			new UnionDataType(category.getCategoryPath(), newName, dataTypeManager);
 		unionDataType.setSourceArchive(sourceArchive);
-		unionDataType.setInternallyAligned(isInternallyAligned);
+		unionDataType.setPackingEnabled(isPacked);
 		edit(unionDataType);
 	}
 

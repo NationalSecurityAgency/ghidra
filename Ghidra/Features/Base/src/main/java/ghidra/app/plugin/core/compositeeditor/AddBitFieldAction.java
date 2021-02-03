@@ -69,8 +69,8 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	public void adjustEnablement() {
 		boolean enabled = true;
 		CompEditorModel editorModel = (CompEditorModel) model;
-		// Union do not support unaligned placement of bitfields
-		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isAligned() ||
+		// Union do not support non-packed placement of bitfields
+		if (!(editorModel.viewComposite instanceof Structure) || editorModel.isPackingEnabled() ||
 			editorModel.getNumSelectedRows() != 1 || editorModel.isFlexibleArraySelection()) {
 			enabled = false;
 		}
