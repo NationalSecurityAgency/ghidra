@@ -80,13 +80,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final String ACTION_OWNER = "GraphServices";
 
-	private static final String FAVORED_EDGE = "Fall-Through";
-
 	/*
-	 	 A handful of jungrapht properties that re used by this graph
+	 	 jungrapht properties that are used by this graph
 	 */
 	private static final String SELECTED_VERTEX_COLOR = "selectedVertexColor";
-	private static final String SELECTED_EDGE_COLOR = "selectedEdgeColor";
 	private static final String INITIAL_LAYOUT_ALGORITHM = "initialLayoutAlgorithm";
 	private static final String DISPLAY_VERTICES_AS_ICONS = "displayVerticesAsIcons";
 	private static final String VERTEX_LABEL_POSITION = "vertexLabelPosition";
@@ -227,11 +224,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			"0xFF0000"));
 	}
 
-//	private Color getSelectedEdgeColor() {
-//		return Colors
-//				.getHexColor(displayProperties.getOrDefault(SELECTED_EDGE_COLOR, "0xFF0000"));
-//	}
-
 	JComponent getComponent() {
 		JComponent component = viewer.getComponent();
 		component.setFocusable(true);
@@ -257,7 +249,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.getTransformer(VIEW);
 
 		MagnifyShapeTransformer shapeTransformer = MagnifyShapeTransformer.builder(lens)
-				// this lens' delegate is the viewer's VIEW layer
+				// this lens' delegate is the viewer's VIEW layer, abandoned above
 				.delegate(transformer)
 				.build();
 		LensGraphMouse lensGraphMouse =
@@ -927,9 +919,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		clearSelection(false);
 		focusedVertex = null;
 		graph = attributedGraph;
-
-		layoutTransitionManager.setEdgeComparator(new EdgeComparator(graph, "EdgeType",
-			DefaultGraphDisplay.FAVORED_EDGE));
 
 		configureViewerPreferredSize();
 
