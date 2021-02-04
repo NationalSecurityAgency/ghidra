@@ -220,7 +220,9 @@ public strictfp class FloatFormat {
 	// set sign bit and return the result if size <= 8
 	private long setSign(long x, boolean sign) {
 		if (!sign)
+		 {
 			return x; // Assume bit is already zero
+		}
 		long mask = 1;
 		mask <<= signbit_pos;
 		x |= mask; // Stick in the bit
@@ -299,7 +301,7 @@ public strictfp class FloatFormat {
 	/**
 	 * Decode {@code encoding} to a BigFloat using this format.
 	 * 
-	 * NB: this method should not be used if {@link #size}>8
+	 * NB: this method should not be used if {@link #size}&gt;8
 	 * 
 	 * @param encoding the encoding
 	 * @return the decoded value as a BigFloat
@@ -535,7 +537,7 @@ public strictfp class FloatFormat {
 	/**
 	 * Convert an encoded value to a binary floating point representation.
 	 * 
-	 * NB: this method should not be used if {@link #size}>8
+	 * NB: this method should not be used if {@link #size}&gt;8
 	 * 
 	 * @param encoding the encoding of a floating point value in this format
 	 * @return a binary string representation of the encoded floating point {@code encoding}
@@ -548,8 +550,9 @@ public strictfp class FloatFormat {
 
 		switch (kind) {
 			case INFINITE:
-				if (sgn)
+				if (sgn) {
 					return "-inf";
+				}
 				return "+inf";
 			case QUIET_NAN:
 				return "qNaN";
