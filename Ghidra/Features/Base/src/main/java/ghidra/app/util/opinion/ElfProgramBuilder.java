@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.function.Consumer;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.MemoryBlockUtils;
@@ -1232,7 +1231,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCanceled();
 			try {
 
-				Address address = calculateSymbolAddress(elfSymbol, msg -> log(msg));
+				Address address = calculateSymbolAddress(elfSymbol);
 				if (address == null) {
 					continue;
 				}
@@ -1280,11 +1279,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	/**
 	 * Calculate the load address associated with a specified elfSymbol.
 	 * @param elfSymbol ELF symbol
-	 * @param errorConsumer error consumer
 	 * @return symbol address or null if symbol not supported and address not determined,
-	 * or NO_ADDRESS if symbol is external and should be allocated to the EXTERNAL block.
+	 * or {@link Address#NO_ADDRESS} if symbol is external and should be allocated to the EXTERNAL block.
 	 */
-	private Address calculateSymbolAddress(ElfSymbol elfSymbol, Consumer<String> errorConsumer) {
+	private Address calculateSymbolAddress(ElfSymbol elfSymbol) {
 
 		if (elfSymbol.getSymbolTableIndex() == 0) {
 			return null; // always skip the first symbol, it is NULL
@@ -1296,12 +1294,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		if (elfSymbol.isTLS()) {
 			// TODO: Investigate support for TLS symbols
-			errorConsumer.accept(
-				"Unsupported Thread-Local Symbol not loaded: " + elfSymbol.getNameAsString());
+			log("Unsupported Thread-Local Symbol not loaded: " + elfSymbol.getNameAsString());
 			return null;
 		}
 
 		ElfLoadAdapter loadAdapter = elf.getLoadAdapter();
+
+		// Allow extension to have first shot at calculating symbol address
+		try {
+			Address address = elf.getLoadAdapter().calculateSymbolAddress(this, elfSymbol);
+			if (address != null) {
+				return address;
+			}
+		}
+		catch (NoValueException e) {
+			return null;
+		}
 
 		ElfSectionHeader[] elfSections = elf.getSections();
 		short sectionIndex = elfSymbol.getSectionHeaderIndex();
@@ -1316,7 +1324,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				ElfSectionHeader symSection = elf.getSections()[sectionIndex];
 				symSectionBase = findLoadAddress(symSection, 0);
 				if (symSectionBase == null) {
-					errorConsumer.accept("Unable to place symbol due to non-loaded section: " +
+					log("Unable to place symbol due to non-loaded section: " +
 						elfSymbol.getNameAsString() + " - value=0x" +
 						Long.toHexString(elfSymbol.getValue()) + ", section=" +
 						symSection.getNameAsString());
@@ -1366,7 +1374,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// SHN_COMMON 0xfff2
 			// SHN_HIRESERVE 0xffff
 
-			errorConsumer.accept("Unable to place symbol: " + elfSymbol.getNameAsString() +
+			log("Unable to place symbol: " + elfSymbol.getNameAsString() +
 				" - value=0x" + Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
 				Integer.toHexString(sectionIndex & 0xffff));
 			return null;
@@ -1389,12 +1397,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		else if (elf.isRelocatable()) {
 			if (sectionIndex < 0 || sectionIndex >= elfSections.length) {
-				errorConsumer.accept("Error creating symbol: " + elfSymbol.getNameAsString() +
+				log("Error creating symbol: " + elfSymbol.getNameAsString() +
 					" - 0x" + Long.toHexString(elfSymbol.getValue()));
 				return Address.NO_ADDRESS;
 			}
 			else if (symSectionBase == null) {
-				errorConsumer.accept("No Memory for symbol: " + elfSymbol.getNameAsString() +
+				log("No Memory for symbol: " + elfSymbol.getNameAsString() +
 					" - 0x" + Long.toHexString(elfSymbol.getValue()));
 				return Address.NO_ADDRESS;
 			}
