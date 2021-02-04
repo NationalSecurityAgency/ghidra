@@ -42,7 +42,7 @@ public class DbgModelTargetConnectorContainerImpl extends DbgModelTargetObjectIm
 	protected final DbgModelTargetKernelConnectorImpl kernelAttacher;
 
 	public DbgModelTargetConnectorContainerImpl(DbgModelTargetRoot root) {
-		super(root.getModel(), root, "Connectors", "ConnectorsContainer", null);
+		super(root.getModel(), root, "Connectors", "ConnectorsContainer");
 		this.root = root;
 
 		this.processLauncher = new DbgModelTargetProcessLaunchConnectorImpl(this, "Launch process");

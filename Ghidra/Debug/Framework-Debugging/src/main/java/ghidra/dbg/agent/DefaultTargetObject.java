@@ -239,7 +239,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateElements(delta.removed.values(), reason);
 		if (!delta.isEmpty()) {
@@ -284,7 +284,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateElements(delta.removed.values(), reason);
 		if (!delta.isEmpty()) {
@@ -403,7 +403,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {
@@ -448,7 +448,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {

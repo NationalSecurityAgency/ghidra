@@ -131,7 +131,7 @@ public interface TargetLauncher<T extends TargetLauncher<T>> extends TypedTarget
 		}
 	}
 
-	@TargetAttributeType(name = TargetMethod.PARAMETERS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(name = TargetMethod.PARAMETERS_ATTRIBUTE_NAME, required = true, hidden = true)
 	default public TargetParameterMap getParameters() {
 		return TargetMethod.getParameters(this);
 	}

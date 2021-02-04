@@ -40,7 +40,7 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 
 	public DbgModelTargetObjectImpl(AbstractDbgModel impl, TargetObject parent, String name,
 			String typeHint) {
-		super(impl, parent, name, typeHint, null);
+		super(impl, parent, name, typeHint);
 		getManager().addStateListener(accessListener);
 	}
 

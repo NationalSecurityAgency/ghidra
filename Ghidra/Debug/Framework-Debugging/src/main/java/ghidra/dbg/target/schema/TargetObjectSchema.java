@@ -19,7 +19,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
@@ -427,13 +426,16 @@ public interface TargetObjectSchema {
 	 * 
 	 * @param value the value
 	 */
-	default void validateTypeAndInterfaces(Object value, String key, boolean strict) {
+	default void validateTypeAndInterfaces(Object value, List<String> parentPath, String key,
+			boolean strict) {
 		Class<?> cls = value.getClass();
 		if (!getType().isAssignableFrom(cls)) {
-			String msg = key == null
+			String path =
+				key == null ? null : PathUtils.toString(PathUtils.extend(parentPath, key));
+			String msg = path == null
 					? "Value " + value + " does not conform to required type " +
 						getType() + " of schema " + this
-					: "Value " + value + " for " + key + " does not conform to required type " +
+					: "Value " + value + " for " + path + " does not conform to required type " +
 						getType() + " of schema " + this;
 			if (strict) {
 				throw new AssertionError(msg);
@@ -495,21 +497,18 @@ public interface TargetObjectSchema {
 	 * 
 	 * @param delta the delta, before or after the fact
 	 */
-	default void validateAttributeDelta(TargetObject object, Delta<?, ?> delta, boolean strict) {
+	default void validateAttributeDelta(List<String> parentPath, Delta<?, ?> delta,
+			boolean strict) {
 		for (Map.Entry<String, ?> ent : delta.added.entrySet()) {
 			String key = ent.getKey();
 			Object value = ent.getValue();
 			AttributeSchema as = getAttributeSchema(key);
 			TargetObjectSchema schema = getContext().getSchema(as.getSchema());
-			/**
-			 * TODO: There's some duplication of effort here, since canonical attributes will
-			 * already have been checked at construction.
-			 */
-			schema.validateTypeAndInterfaces(value, key, strict);
+			schema.validateTypeAndInterfaces(value, parentPath, key, strict);
 
 			if (value instanceof TargetObject) {
 				TargetObject ov = (TargetObject) value;
-				if (!PathUtils.isLink(object.getPath(), ent.getKey(), ov.getPath())) {
+				if (!PathUtils.isLink(parentPath, ent.getKey(), ov.getPath())) {
 					schema.validateRequiredAttributes(ov, strict);
 				}
 			}
@@ -524,7 +523,7 @@ public interface TargetObjectSchema {
 				.filter(delta.getKeysRemoved()::contains)
 				.collect(Collectors.toSet());
 		if (!violatesRequired.isEmpty()) {
-			String msg = "Object " + object + " removed required attributes " +
+			String msg = "Object " + parentPath + " removed required attributes " +
 				violatesRequired + " of schema " + this;
 			if (strict) {
 				throw new AssertionError(msg);
@@ -542,10 +541,7 @@ public interface TargetObjectSchema {
 				.filter(delta.removed::containsKey)
 				.collect(Collectors.toSet());
 		if (!violatesFixed.isEmpty()) {
-			if (strict) {
-
-			}
-			String msg = "Object " + object + " modified or removed fixed attributes " +
+			String msg = "Object " + parentPath + " modified or removed fixed attributes " +
 				violatesFixed + " of schema " + this;
 			if (strict) {
 				throw new AssertionError(msg);
@@ -563,11 +559,14 @@ public interface TargetObjectSchema {
 	 * 
 	 * @param delta the delta, before or after the fact
 	 */
-	default void validateElementDelta(TargetObject object, Delta<?, ? extends TargetObject> delta,
+	default void validateElementDelta(List<String> parentPath,
+			Delta<?, ? extends TargetObject> delta,
 			boolean strict) {
 		for (Map.Entry<String, ? extends TargetObject> ent : delta.added.entrySet()) {
+			TargetObject element = ent.getValue();
 			TargetObjectSchema schema = getContext().getSchema(getElementSchema(ent.getKey()));
-			schema.validateRequiredAttributes(ent.getValue(), strict);
+			schema.validateTypeAndInterfaces(element, parentPath, ent.getKey(), strict);
+			schema.validateRequiredAttributes(element, strict);
 		}
 	}
 }

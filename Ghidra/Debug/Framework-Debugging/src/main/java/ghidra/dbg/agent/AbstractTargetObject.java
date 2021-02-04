@@ -73,9 +73,6 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 		this.typeHint = typeHint;
 
 		this.schema = schema;
-		if (schema != null) {
-			schema.validateTypeAndInterfaces(getProxy(), null, enforcesStrictSchema());
-		}
 	}
 
 	/**

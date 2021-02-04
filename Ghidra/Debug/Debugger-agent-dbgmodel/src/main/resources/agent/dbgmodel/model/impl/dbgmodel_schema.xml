@@ -20,7 +20,7 @@
         <attribute name="_supported_attach_kinds" schema="SET_ATTACH_KIND" required="yes" hidden="yes" />
         <attribute name="_event_process" schema="STRING" hidden="yes" />
         <attribute name="_event_thread" schema="STRING" hidden="yes" />
-        <attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" fixed="yes" hidden="yes" />
+        <attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" hidden="yes" />
         <attribute name="_focus" schema="OBJECT" required="yes" hidden="yes" />
         <attribute name="_system" schema="OBJECT" hidden="yes" />
         <attribute name="Available" schema="AvailableContainer" required="yes" fixed="yes" />
@@ -149,7 +149,7 @@
         <attribute name="Attributes" schema="SessionAttributes" fixed="yes" />
 		<attribute name="Devices" schema="OBJECT" />
 		<attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="Available">
         <interface name="Attachable" />

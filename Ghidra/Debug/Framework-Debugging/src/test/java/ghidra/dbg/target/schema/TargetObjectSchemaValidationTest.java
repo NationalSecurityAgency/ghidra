@@ -133,7 +133,8 @@ public class TargetObjectSchemaValidationTest {
 				.addInterface(TargetAggregate.class)
 				.buildAndAdd();
 
-		new ValidatedModelRoot(model, "Root", schemaRoot);
+		schemaRoot.validateTypeAndInterfaces(new ValidatedModelRoot(model, "Root", schemaRoot),
+			List.of(), null, true);
 		// pass
 	}
 
@@ -143,7 +144,8 @@ public class TargetObjectSchemaValidationTest {
 				.addInterface(TargetProcess.class)
 				.buildAndAdd();
 
-		new ValidatedModelRoot(model, "Root", schemaRoot);
+		schemaRoot.validateTypeAndInterfaces(new ValidatedModelRoot(model, "Root", schemaRoot),
+			List.of(), null, true);
 	}
 
 	protected ValidatedModelRoot createRootAttrWReq() {

@@ -73,7 +73,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	public DbgModel2TargetObjectImpl(AbstractDbgModel model, TargetObject parent, String name,
 			String typeHint) {
-		super(model, parent, name, typeHint, null);
+		super(model, parent, name, typeHint);
 	}
 
 	public DbgModel2TargetObjectImpl(AbstractDbgModel model, TargetObject parent, String name,
