@@ -19,7 +19,7 @@ import java.util.*;
 
 import org.jgrapht.Graph;
 
-import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
@@ -59,8 +59,6 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 		listener.dispose();
 	}
 
-
-
 	/**
 	 * set the {@link AttributedGraph} for visualization
 	 * @param attributedGraph the {@link AttributedGraph} to visualize
@@ -90,7 +88,8 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setVertexLabelAttribute(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
+			boolean monospace,
 			int maxLines) {
 		// no effect
 	}
@@ -122,7 +121,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void addAction(DockingAction action) {
+	public void addAction(DockingActionIf action) {
 		// do nothing, actions are not supported by this display
 	}
 

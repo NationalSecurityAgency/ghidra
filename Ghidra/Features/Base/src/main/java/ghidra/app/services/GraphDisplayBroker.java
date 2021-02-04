@@ -68,9 +68,8 @@ public interface GraphDisplayBroker {
 	/**
 	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider
 	 * 
-	 * <p>This method allows users to override default graph properties defined by 
-	 * <b>jungrapht</b>.   See that library for a complete list of available properties.   
-	 * Default properties  can be changed in the {@code jungrapht.properties} file. 
+	 * <p>This method allows users to override default graph properties for the graph provider 
+	 * being created.  See the graph provider implementation for a list of supported properties
 	 * 
 	 * @param reuseGraph if true, the provider will attempt to re-use a current graph display
 	 * @param properties a {@code Map} of property key/values that can be used to customize the display

@@ -17,7 +17,7 @@ package ghidra.service.graph;
 
 import java.util.Set;
 
-import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -43,7 +43,7 @@ public interface GraphDisplay {
 	public void setGraphDisplayListener(GraphDisplayListener listener);
 
 	/**
-	 * Tells the graph display window to focus the vertex with the given id.
+	 * Tells the graph display window to focus the vertex with the given id
 	 * 
 	 * @param vertex the vertex to focus
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
@@ -63,7 +63,8 @@ public interface GraphDisplay {
 
 	/**
 	 * Returns the currently focused vertex or null if no vertex is focused
-	 * @return  the currently focused vertex or null if no vertex is focused.
+	 * 
+	 * @return  the currently focused vertex or null if no vertex is focused
 	 */
 	public AttributedVertex getFocusedVertex();
 
@@ -82,6 +83,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Returns a set of vertex ids for all the currently selected vertices
+	 * 
 	 * @return  a set of vertex ids for all the currently selected vertices
 	 */
 	public Set<AttributedVertex> getSelectedVertices();
@@ -94,7 +96,7 @@ public interface GraphDisplay {
 	/**
 	 * Defines a vertex attribute type for this graph window
 	 * 
-	 * @param name the name of the attribute which may be attached to vertices.
+	 * @param name the name of the attribute which may be attached to vertices
 	 */
 	public void defineVertexAttribute(String name);
 
@@ -106,22 +108,25 @@ public interface GraphDisplay {
 	public void defineEdgeAttribute(String name);
 
 	/**
-	 * Sets the name of the attribute which should be used as the primary vertex label in the display.
-	 * @param attributeName the name of the attribute to use as the display label for vertices.
+	 * Sets the name of the attribute which should be used as the primary vertex label
+	 * 
+	 * @param attributeName the name of the attribute to use as the display label for vertices
 	 * @param alignment (ALIGN_LEFT, ALIGN_RIGHT, or ALIGN_CENTER)
 	 * @param size the font size to use for the display label
 	 * @param monospace true if the font should be monospaced
 	 * @param maxLines the maximum number lines to display in the vertex labels
 	 */
-	public void setVertexLabelAttribute(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
+			boolean monospace,
 			int maxLines);
 
 	/**
 	 * Sets the graph to be displayed or consumed by this graph display
+	 * 
 	 * @param graph the graph to display or consume
 	 * @param title a title for the graph
 	 * @param monitor a {@link TaskMonitor} which can be used to cancel the graphing operation
-	 * @param append if true, append the new graph to any existing graph.
+	 * @param append if true, append the new graph to any existing graph
 	 * @throws CancelledException thrown if the graphing operation was cancelled
 	 */
 	public void setGraph(AttributedGraph graph, String title, boolean append,
@@ -135,6 +140,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Updates a vertex to a new name
+	 * 
 	 * @param vertex the vertex to rename
 	 * @param newName the new name for the vertex
 	 */
@@ -142,6 +148,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Returns the title of the current graph
+	 * 
 	 * @return the title of the current graph
 	 */
 	public String getGraphTitle();
@@ -149,7 +156,8 @@ public interface GraphDisplay {
 	/**
 	 * Adds the action to the graph display. Not all GraphDisplays support adding custom
 	 * actions, so this may have no effect.
-	 * @param action the action to add.
+	 * 
+	 * @param action the action to add
 	 */
-	public void addAction(DockingAction action);
+	public void addAction(DockingActionIf action);
 }

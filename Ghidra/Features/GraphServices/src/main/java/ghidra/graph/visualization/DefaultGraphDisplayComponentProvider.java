@@ -57,10 +57,11 @@ public class DefaultGraphDisplayComponentProvider extends ComponentProviderAdapt
 	public void closeComponent() {
 		if (display != null) {
 			super.closeComponent();
-			// to prevent looping, null out display before callings its close method.
+			// to prevent looping, null out display before calling its close method.
 			GraphDisplay closingDisplay = display;
 			display = null;
 			closingDisplay.close();
+			removeAllLocalActions();
 		}
 	}
 

@@ -18,8 +18,10 @@ package ghidra.graph.program;
 import java.awt.Color;
 import java.util.*;
 
+import docking.action.builder.ActionBuilder;
 import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
+import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
@@ -28,8 +30,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
@@ -145,6 +146,7 @@ public class BlockGraphTask extends Task {
 			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, monitor);
 			BlockModelGraphDisplayListener listener =
 				new BlockModelGraphDisplayListener(tool, blockModel, display);
+			addActions(display, v -> listener.getAddress(v));
 			display.setGraphDisplayListener(listener);
 
 			if (showCode) {
@@ -172,6 +174,37 @@ public class BlockGraphTask extends Task {
 			if (!monitor.isCancelled()) {
 				Msg.showError(this, null, "Graphing Error", e.getMessage());
 			}
+		}
+	}
+
+	private void addActions(GraphDisplay display,
+			java.util.function.Function<AttributedVertex, Address> addressFunction) {
+
+		display.addAction(new ActionBuilder("Rename Symbol", "Block Graph")
+				.popupMenuPath("Rename Symbol")
+				.withContext(VertexGraphActionContext.class)
+				.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename_Symbol"))
+				// only enable action when vertex corresponds to an address
+				.enabledWhen(c -> addressFunction.apply(c.getClickedVertex()) != null)
+				.onAction(c -> updateVertexName(addressFunction, c))
+				.build());
+	}
+
+	private void updateVertexName(
+			java.util.function.Function<AttributedVertex, Address> addressFunction,
+			VertexGraphActionContext context) {
+
+		AttributedVertex vertex = context.getClickedVertex();
+		Address address = addressFunction.apply(vertex);
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+
+		if (symbol == null) {
+			AddEditDialog dialog = new AddEditDialog("Create Label", tool);
+			dialog.addLabel(address, program, context.getComponentProvider());
+		}
+		else {
+			AddEditDialog dialog = new AddEditDialog("Edit Label", tool);
+			dialog.editLabel(symbol, program, context.getComponentProvider());
 		}
 	}
 
@@ -318,10 +351,8 @@ public class BlockGraphTask extends Task {
 			CodeBlockReference cbRef = refIter.next();
 
 			CodeBlock db = cbRef.getDestinationBlock();
-
-			// must be a reference to a data block
 			if (db == null) {
-				continue;
+				continue; // must be a reference to a data block
 			}
 
 			// don't include destination if it does not overlap selection
@@ -336,7 +367,6 @@ public class BlockGraphTask extends Task {
 			}
 
 			//	put the edge in the graph
-			String edgeAddr = cbRef.getReferent().toString();
 			AttributedEdge newEdge = graph.addEdge(fromVertex, toVertex);
 
 			// set it's attributes (really its name)
