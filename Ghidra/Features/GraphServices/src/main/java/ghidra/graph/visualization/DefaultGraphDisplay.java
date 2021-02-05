@@ -103,8 +103,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final String ACTION_OWNER = "GraphServices";
 
-	private static final String FAVORED_EDGE = "Fall-Through";
-
 	/*
 	 	 A handful of properties that can be set via the constructor
 	 */
@@ -279,7 +277,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.getTransformer(VIEW);
 
 		MagnifyShapeTransformer shapeTransformer = MagnifyShapeTransformer.builder(lens)
-				// this lens' delegate is the viewer's VIEW layer
+				// this lens' delegate is the viewer's VIEW layer, abandoned above
 				.delegate(transformer)
 				.build();
 		LensGraphMouse lensGraphMouse =
@@ -949,9 +947,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		clearSelection(false);
 		focusedVertex = null;
 		graph = attributedGraph;
-
-		layoutTransitionManager.setEdgeComparator(new EdgeComparator(graph, "EdgeType",
-			DefaultGraphDisplay.FAVORED_EDGE));
 
 		configureViewerPreferredSize();
 

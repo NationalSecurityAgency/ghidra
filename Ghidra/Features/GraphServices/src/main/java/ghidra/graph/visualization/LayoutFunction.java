@@ -98,8 +98,8 @@ class LayoutFunction
 						.<AttributedVertex> builder()
 						.verticalVertexSpacing(300);
 			case TREE:
-				return TreeLayoutAlgorithm
-						.builder();
+				return EdgeAwareTreeLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge>edgeAwareBuilder();
 			case TIDIER_TREE:
 			default:
 				return TidierTreeLayoutAlgorithm
