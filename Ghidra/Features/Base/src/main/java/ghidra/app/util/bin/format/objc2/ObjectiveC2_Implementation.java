@@ -28,6 +28,7 @@ import java.io.IOException;
 public class ObjectiveC2_Implementation implements StructConverter {
 	private boolean _is32bit;
 	private long _index;
+	private boolean _isSmall = false;
 
 	private long imp;
 
@@ -43,6 +44,14 @@ public class ObjectiveC2_Implementation implements StructConverter {
 		}
 	}
 
+	public ObjectiveC2_Implementation(ObjectiveC2_State state, BinaryReader reader, boolean isSmall) throws IOException {
+		this._is32bit = state.is32bit;
+		this._index = reader.getPointerIndex();
+		this._isSmall = isSmall;
+		
+		imp = _index + reader.readNextInt();
+	}
+
 	public long getImplementation() {
 		return imp;
 	}
@@ -52,7 +61,10 @@ public class ObjectiveC2_Implementation implements StructConverter {
 	}
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		if (_is32bit) {
+		if (_isSmall) {
+			return new TypedefDataType("ImplementationOffset", DWORD);
+		}
+		else if (_is32bit) {
 			return new TypedefDataType("Implementation", DWORD);
 		}
 		return new TypedefDataType("Implementation", QWORD);
