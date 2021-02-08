@@ -32,8 +32,6 @@ import org.junit.Test;
 import generic.Unique;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.comm.packet.err.PacketDecodeException;
-import ghidra.comm.packet.err.PacketEncodeException;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.protocol.Gadp;
@@ -92,8 +90,7 @@ public class GadpClientTest {
 			this.cli = srv.accept();
 		}
 
-		public void expect(Gadp.RootMessage msg)
-				throws IOException, PacketDecodeException, PacketEncodeException {
+		public void expect(Gadp.RootMessage msg) throws IOException {
 			Msg.debug(this, "Expecting: " + msg);
 
 			while (true) {
@@ -121,8 +118,7 @@ public class GadpClientTest {
 			}
 		}
 
-		public void send(Gadp.RootMessage msg)
-				throws PacketEncodeException, IOException {
+		public void send(Gadp.RootMessage msg) throws IOException {
 			Msg.debug(this, "Server Sending: " + msg);
 			outbuf.clear();
 			AsyncProtobufMessageChannel.marshall(msg, outbuf);
@@ -135,8 +131,7 @@ public class GadpClientTest {
 			}
 		}
 
-		public void handleConnect(GadpVersion version)
-				throws IOException, PacketDecodeException, PacketEncodeException {
+		public void handleConnect(GadpVersion version) throws IOException {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setConnectRequest(GadpVersion.makeRequest())
@@ -153,8 +148,7 @@ public class GadpClientTest {
 			seqno++;
 		}
 
-		public void handlePing()
-				throws IOException, PacketDecodeException, PacketEncodeException {
+		public void handlePing() throws IOException {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setPingRequest(Gadp.PingRequest.newBuilder()
