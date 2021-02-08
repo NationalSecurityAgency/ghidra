@@ -218,6 +218,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
+		setTitle(DebuggerResources.TITLE_PROVIDER_STACK);
 		setIcon(DebuggerResources.ICON_PROVIDER_STACK);
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_STACK);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
@@ -394,14 +395,13 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		selectCurrentFrame();
 	}
 
-	protected String computeTitle() {
+	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		String threadPart = curThread == null ? "" : (": " + curThread.getName());
-		return DebuggerResources.TITLE_PROVIDER_STACK + threadPart;
+		return curThread == null ? "" : curThread.getName();
 	}
 
-	protected void updateTitle() {
-		setTitle(computeTitle());
+	protected void updateSubTitle() {
+		setSubTitle(computeSubTitle());
 	}
 
 	private void removeOldListeners() {
@@ -437,7 +437,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		doSetTrace(current.getTrace());
 
 		loadStack();
-		updateTitle();
+		updateSubTitle();
 	}
 
 	protected void selectCurrentFrame() {

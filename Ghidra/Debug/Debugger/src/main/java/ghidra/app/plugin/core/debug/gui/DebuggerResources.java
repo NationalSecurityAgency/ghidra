@@ -143,7 +143,7 @@ public interface DebuggerResources {
 	HelpLocation HELP_PROVIDER_BREAKPOINTS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerBreakpointsPlugin.class), HELP_ANCHOR_PLUGIN);
 
-	String TITLE_PROVIDER_LISTING = "Listing";
+	String TITLE_PROVIDER_LISTING = "Dynamic";
 	ImageIcon ICON_PROVIDER_LISTING = ICON_LISTING;
 	HelpLocation HELP_PROVIDER_LISTING = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerListingPlugin.class), HELP_ANCHOR_PLUGIN);
@@ -197,6 +197,8 @@ public interface DebuggerResources {
 	ImageIcon ICON_PROVIDER_WATCHES = ICON_AUTOREAD; // TODO: Another icon?
 	HelpLocation HELP_PROVIDER_WATCHES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerWatchesPlugin.class), HELP_ANCHOR_PLUGIN);
+
+	String TITLE_PROVIDER_INTERPRETER = "Interpreter";
 
 	String BOOKMARK_CATEGORY_MEMORY_READ_ERROR = "Debugger Memory Read Error";
 

@@ -378,21 +378,25 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
-			description = "Text color for registers whose value is not known", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
+		description = "Text color for registers whose value is not known", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color registerStaleColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
-			description = "Selected text color for registers whose value is not known", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
+		description = "Selected text color for registers whose value is not known", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color registerStaleSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE_SEL;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
-			description = "Text color for registers whose value just changed", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
+		description = "Text color for registers whose value just changed", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color registerChangesColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
-			description = "Selected text color for registers whose value just changed", //
-			help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(
+		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
+		description = "Selected text color for registers whose value just changed", //
+		help = @HelpInfo(anchor = "colors"))
 	protected Color registerChangesSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED_SEL;
 
 	@SuppressWarnings("unused")
@@ -638,18 +642,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return isClone;
 	}
 
-	protected String computeTitle() {
+	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		String threadPart = curThread == null ? "" : (": " + curThread.getName());
-		if (isClone) {
-			return "[" + DebuggerResources.TITLE_PROVIDER_REGISTERS + threadPart + ", " +
-				current.getSnap() + "]";
-		}
-		return DebuggerResources.TITLE_PROVIDER_REGISTERS + threadPart;
+		return curThread == null ? "" : curThread.getName();
 	}
 
-	protected void updateTitle() {
-		setTitle(computeTitle());
+	protected void updateSubTitle() {
+		setSubTitle(computeSubTitle());
 	}
 
 	private void removeOldTraceListener() {
@@ -711,7 +710,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		readTheseCoords = false;
 		doSetTrace(current.getTrace());
 		doSetRecorder(current.getRecorder());
-		updateTitle();
+		updateSubTitle();
 
 		loadRegistersAndValues();
 		contextChanged();

@@ -28,6 +28,7 @@ import docking.action.ToggleDockingAction;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.PinInterpreterAction;
+import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetConsole.TargetConsoleListener;
@@ -35,6 +36,7 @@ import ghidra.dbg.target.TargetInterpreter;
 import ghidra.dbg.target.TargetInterpreter.TargetInterpreterListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetObject>
 		implements DebuggerInterpreterConnection {
@@ -71,26 +73,29 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 
 		@Override
 		public void displayChanged(TargetObject object, String display) {
-			// TODO: Would rather update the sub-title
-			guiConsole.updateTitle();
+			// TODO: Add setSubTitle(String) to InterpreterConsole
+			InterpreterComponentProvider provider = (InterpreterComponentProvider) guiConsole;
+			Swing.runLater(() -> provider.setSubTitle(display));
 		}
 
 		@Override
 		public void promptChanged(TargetInterpreter<?> i, String prompt) {
-			guiConsole.setPrompt(prompt);
+			Swing.runLater(() -> guiConsole.setPrompt(prompt));
 		}
 
 		@Override
 		public void invalidated(TargetObject object, String reason) {
-			if (object == targetConsole) { // Redundant
-				if (pinned) {
-					running.set(false);
-					plugin.disableConsole(targetConsole, guiConsole);
+			Swing.runLater(() -> {
+				if (object == targetConsole) { // Redundant
+					if (pinned) {
+						running.set(false);
+						plugin.disableConsole(targetConsole, guiConsole);
+					}
+					else {
+						plugin.destroyConsole(targetConsole, guiConsole);
+					}
 				}
-				else {
-					plugin.destroyConsole(targetConsole, guiConsole);
-				}
-			}
+			});
 		}
 	}
 
@@ -108,9 +113,6 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	protected ToggleDockingAction actionPin;
 	protected boolean pinned = false;
 
-	// TODO: Fix InterpreterPanelService to take plugin name instead of just using title
-	protected boolean firstTimeAskedTitle = true;
-
 	public AbstractDebuggerWrappedConsoleConnection(DebuggerInterpreterPlugin plugin,
 			T targetConsole) {
 		this.plugin = plugin;
@@ -122,12 +124,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 
 	@Override
 	public String getTitle() {
-		// This is kruft. Would be better to have control of the sub-title.
-		if (firstTimeAskedTitle) {
-			firstTimeAskedTitle = false;
-			return plugin.getName();
-		}
-		return targetConsole.getDisplay();
+		return DebuggerResources.TITLE_PROVIDER_INTERPRETER;
 	}
 
 	@Override
@@ -145,6 +142,10 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	public void setConsole(InterpreterConsole guiConsole) {
 		assert this.guiConsole == null;
 		this.guiConsole = guiConsole;
+
+		InterpreterComponentProvider provider = (InterpreterComponentProvider) guiConsole;
+		provider.setSubTitle(targetConsole.getDisplay());
+
 		setErrWriter(guiConsole.getErrWriter());
 		setOutWriter(guiConsole.getOutWriter());
 		setStdIn(guiConsole.getStdin());

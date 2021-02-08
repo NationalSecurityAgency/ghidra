@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS;
 
 import java.awt.Color;
 import java.io.File;
@@ -29,6 +30,7 @@ import javax.swing.JLabel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 
 import docking.ActionContext;
@@ -416,7 +418,13 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		addListingDisplayListener(this);
 
 		this.setNorthComponent(locationLabel);
-		updateTitle();
+		if (isConnected) {
+			setTitle(DebuggerResources.TITLE_PROVIDER_LISTING);
+		}
+		else {
+			setTitle("[" + DebuggerResources.TITLE_PROVIDER_LISTING + "]");
+		}
+		updateTitle(); // Actually, the subtitle
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_LISTING);
 	}
 
@@ -630,28 +638,25 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 	}
 
-	protected String computeTitle() {
+	protected String computeSubTitle() {
 		TraceProgramView view = current.getView();
-		String prefix = trackingSpec == null ? "Dynamic" : trackingSpec.computeTitle(current);
-		if (prefix == null) {
-			prefix = "Dynamic";
+		List<String> parts = new ArrayList<>();
+		if (trackingSpec != null) {
+			String specTitle = trackingSpec.computeTitle(current);
+			if (specTitle != null) {
+				parts.add(specTitle);
+			}
 		}
-		String title;
-		if (view == null) {
-			title = prefix;
+		if (view != null) {
+			parts.add(current.getTrace().getDomainFile().getName());
 		}
-		else {
-			title = prefix + ": " + current.getTrace().getDomainFile().getName();
-		}
-		if (followsCurrentThread) {
-			return title;
-		}
-		return "[" + title + "]";
+		return StringUtils.join(parts, ", ");
 	}
 
-	@Override
+	// TODO: Once refactored, this is not part of the abstract impl.
+	@Override // Since we want to override, we can't rename updateSubTitle
 	protected void updateTitle() {
-		setTitle(computeTitle());
+		setSubTitle(computeSubTitle());
 	}
 
 	protected TraceSection getSmallestSectionAt(Address address) {
