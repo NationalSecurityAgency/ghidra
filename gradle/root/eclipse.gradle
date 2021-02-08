@@ -147,3 +147,6 @@ eclipse {
 	 }     
    }
  }
+ 
+ // the GhidraLauncher depends on this file to build the classpath in dev mode
+ tasks.eclipse.dependsOn { generateLibraryDependencyMapping }
