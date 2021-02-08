@@ -37,7 +37,6 @@ import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.util.PluginConstants;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingModelAdapter;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -77,7 +76,7 @@ public class AssembleDockingAction extends DockingAction {
 	private Language lang;
 	private Assembler assembler;
 	private final MyListener listener = new MyListener();
-	private PluginTool tool;
+	//private PluginTool tool;
 
 	// Callback to keep the autocompleter positioned under the fields
 	private FieldPanelOverLayoutListener autoCompleteMover = (FieldPanelOverLayoutEvent ev) -> {
@@ -158,23 +157,7 @@ public class AssembleDockingAction extends DockingAction {
 	 */
 	public AssembleDockingAction(PluginTool tool, String name, String owner) {
 		this(name, owner);
-		this.tool = tool;
-	}
-
-	@Override
-	public void dispose() {
-		super.dispose();
-		input.dispose();
-	}
-
-	protected void onFirstInvocation() {
-		ComponentProvider prov = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
-		cv = (CodeViewerProvider) prov;
-		listpane = cv.getListingPanel();
-		codepane = listpane.getFieldPanel();
-
-		fieldLayoutManager = new FieldPanelOverLayoutManager(codepane);
-		codepane.setLayout(fieldLayoutManager);
+		//this.tool = tool;
 
 		// If I lose focus, cancel the assembly
 		input.addFocusListener(new FocusListener() {
@@ -188,14 +171,37 @@ public class AssembleDockingAction extends DockingAction {
 				cancel();
 			}
 		});
+
 		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
 
 		input.getAutocompleter().addAutocompletionListener(listener);
 		input.addKeyListener(listener);
+	}
 
-		fieldLayoutManager.addLayoutListener(autoCompleteMover);
+	@Override
+	public void dispose() {
+		super.dispose();
+		input.dispose();
+	}
+
+	protected void prepareLayout(ActionContext context) {
+		ComponentProvider prov = context.getComponentProvider();
+		if (cv != prov) {
+			if (cv != null) {
+				codepane.setLayout(null);
+				fieldLayoutManager.removeLayoutListener(autoCompleteMover);
+			}
+
+			cv = (CodeViewerProvider) prov;
+			listpane = cv.getListingPanel();
+			codepane = listpane.getFieldPanel();
+
+			fieldLayoutManager = new FieldPanelOverLayoutManager(codepane);
+			codepane.setLayout(fieldLayoutManager);
+			fieldLayoutManager.addLayoutListener(autoCompleteMover);
+		}
 	}
 
 	/**
@@ -264,11 +270,13 @@ public class AssembleDockingAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (cv == null) {
-			onFirstInvocation();
+		if (!(context instanceof ListingActionContext)) {
+			return;
 		}
+		prepareLayout(context);
+		ListingActionContext lac = (ListingActionContext) context;
 
-		ProgramLocation cur = cv.getLocation();
+		ProgramLocation cur = lac.getLocation();
 
 		prog = cur.getProgram();
 		addr = cur.getAddress();
@@ -351,9 +359,8 @@ public class AssembleDockingAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		// currently on work on the listing
-		Object obj = context.getContextObject();
-		if (obj instanceof ListingActionContext) {
+		// currently only works on listings
+		if (context instanceof ListingActionContext) {
 			return true;
 		}
 		return false;
