@@ -19,7 +19,7 @@ import java.util.*;
 
 import org.jungrapht.visualization.VisualizationServer;
 import org.jungrapht.visualization.selection.MutableSelectedState;
-import org.jungrapht.visualization.subLayout.VisualGraphCollapser;
+import org.jungrapht.visualization.sublayout.VisualGraphCollapser;
 
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
@@ -31,26 +31,14 @@ import ghidra.service.graph.AttributedVertex;
 public class GhidraGraphCollapser extends VisualGraphCollapser<AttributedVertex, AttributedEdge> {
 
 	public GhidraGraphCollapser(VisualizationServer<AttributedVertex, AttributedEdge> vv) {
-		super(vv, null);
-	}
-
-	@Override
-	public AttributedVertex collapse(Collection<AttributedVertex> selected) {
-		// Unusual Code Alert! - We are forced to set the vertex supplier here
-		// instead of in the constructor because we need the set of vertices that are
-		// going to be grouped at the GroupVertex construction time because it will create
-		// a final id that is based on its contained vertices.  A better solution would
-		// be for the super class to take in a vertex factory that can take in the selected
-		// nodes as function parameter when creating the containing GroupVertex.
-		super.setVertexSupplier(() -> GroupVertex.groupVertices(selected));
-		return super.collapse(selected);
+		super(vv);
 	}
 
 	/**
 	 * Ungroups any GroupVertices that are selected
 	 */
 	public void ungroupSelectedVertices() {
-		expand(vv.getSelectedVertexState().getSelected());
+		expand(vv.getSelectedVertices());
 	}
 
 	/**
@@ -63,7 +51,7 @@ public class GhidraGraphCollapser extends VisualGraphCollapser<AttributedVertex,
 		MutableSelectedState<AttributedEdge> selectedEState = vv.getSelectedEdgeState();
 		Collection<AttributedVertex> selected = selectedVState.getSelected();
 		if (selected.size() > 1) {
-			AttributedVertex groupVertex = collapse(selected);
+			AttributedVertex groupVertex = collapse(selected, s -> GroupVertex.groupVertices(selected));
 			selectedVState.clear();
 			selectedEState.clear();
 			selectedVState.select(groupVertex);

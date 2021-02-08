@@ -207,11 +207,8 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setLong(relocationAddress, value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_IRELATIVE:
-				// NOTE: We don't support this since the code actually uses a function to 
-				// compute the relocation value (i.e., indirect)
-				appliedSymbol = false;
-				markAsError(program, relocationAddress, "R_X86_64_IRELATIVE", symbolName,
-					"indirect computed relocation not supported", elfRelocationContext.getLog());
+				value = addend + elfRelocationContext.getImageBaseWordAdjustmentOffset();
+				memory.setLong(relocationAddress, value);
 				break;
 
 //			case ElfRelocationConstants.R_X86_64_TLSGD:

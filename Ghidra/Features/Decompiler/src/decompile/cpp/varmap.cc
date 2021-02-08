@@ -22,7 +22,7 @@
 /// properly, in which case the union of the two ranges can exist without
 /// destroying data-type information.
 /// \param b is the range to reconcile with \b this
-/// \param \b true if the data-type information can be reconciled
+/// \return \b true if the data-type information can be reconciled
 bool RangeHint::reconcile(const RangeHint *b) const
 
 {

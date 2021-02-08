@@ -19,10 +19,12 @@ import static org.jungrapht.visualization.MultiLayerTransformer.Layer.*;
 import static org.jungrapht.visualization.renderers.BiModalRenderer.*;
 
 import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -43,8 +45,11 @@ import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
 import org.jungrapht.visualization.layout.algorithms.util.InitialDimensionFunction;
 import org.jungrapht.visualization.layout.model.LayoutModel;
 import org.jungrapht.visualization.layout.model.Point;
+import org.jungrapht.visualization.layout.model.Rectangle;
 import org.jungrapht.visualization.renderers.*;
 import org.jungrapht.visualization.renderers.Renderer;
+import org.jungrapht.visualization.renderers.Renderer.VertexLabel;
+import org.jungrapht.visualization.renderers.Renderer.VertexLabel.Position;
 import org.jungrapht.visualization.selection.MutableSelectedState;
 import org.jungrapht.visualization.selection.VertexEndpointsSelectedEdgeSelectedState;
 import org.jungrapht.visualization.transform.*;
@@ -53,7 +58,8 @@ import org.jungrapht.visualization.transform.shape.MagnifyShapeTransformer;
 import org.jungrapht.visualization.util.RectangleUtils;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
+import docking.DockingActionProxy;
+import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
 import docking.menu.ActionState;
@@ -64,8 +70,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.graph.AttributeFilters;
 import ghidra.graph.job.GraphJobRunner;
 import ghidra.graph.viewer.popup.*;
-import ghidra.graph.visualization.mouse.JgtPluggableGraphMouse;
-import ghidra.graph.visualization.mouse.JgtUtils;
+import ghidra.graph.visualization.mouse.*;
 import ghidra.service.graph.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -75,18 +80,46 @@ import resources.Icons;
 
 /**
  * Delegates to a {@link VisualizationViewer} to draw a graph visualization
+ * 
+ * <P>This graph uses the following properties:
+ * <UL>
+ *  <LI>selectedVertexColor - hex color using '0x' or '#', with 6 digits
+ *  </LI>
+ *  <LI>selectedEdgeColor - hex color using '0x' or '#', with 6 digits
+ *  </LI>
+ *  <LI>displayVerticesAsIcons - if true, shapes will be used to draw vertices based upon 
+ *      {@link GhidraIconCache}; false, then vertex shapes will be created from 
+ *      {@link ProgramGraphFunctions#getVertexShape(Attributed)}
+ *  </LI>
+ *  <LI>vertexLabelPosition - see {@link Position}
+ *  </LI>
+ *  <LI>initialLayoutAlgorithm - the name of the layout algorithm to be used for the initial 
+ *      graph layout
+ *  </LI>
+ * </UL>
+ * 
  */
 public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final String ACTION_OWNER = "GraphServices";
 
-	private static final String FAVORED_EDGE = "Fall-Through";
+	/*
+	 	 A handful of properties that can be set via the constructor
+	 */
+	private static final String SELECTED_VERTEX_COLOR = "selectedVertexColor";
+	private static final String SELECTED_EDGE_COLOR = "selectedEdgeColor";
+	private static final String INITIAL_LAYOUT_ALGORITHM = "initialLayoutAlgorithm";
+	private static final String DISPLAY_VERTICES_AS_ICONS = "displayVerticesAsIcons";
+	private static final String VERTEX_LABEL_POSITION = "vertexLabelPosition";
+
 	private static final int MAX_NODES = Integer.getInteger("maxNodes", 10000);
 	private static final Dimension PREFERRED_VIEW_SIZE = new Dimension(1000, 1000);
 	private static final Dimension PREFERRED_LAYOUT_SIZE = new Dimension(3000, 3000);
 
 	private Logger log = Logger.getLogger(DefaultGraphDisplay.class.getName());
 
+	private Map<String, String> displayProperties = new HashMap<>();
+	private Set<DockingActionIf> addedActions = new LinkedHashSet<>();
 	private GraphDisplayListener listener = new DummyGraphDisplayListener();
 	private String title;
 
@@ -154,7 +187,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	/**
 	 * Handles all mouse interaction
 	 */
-	private JgtPluggableGraphMouse graphMouse;
+	private JgtGraphMouse graphMouse;
 
 	private ToggleDockingAction hideSelectedAction;
 	private ToggleDockingAction hideUnselectedAction;
@@ -167,12 +200,15 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
 	 * @param displayProvider provides a {@link PluginTool} for Docking features
+	 * @param displayProperties graph properties that will override the default graph properties
 	 * @param id the unique display id
 	 */
-	DefaultGraphDisplay(DefaultGraphDisplayProvider displayProvider, int id) {
+	DefaultGraphDisplay(DefaultGraphDisplayProvider displayProvider,
+			Map<String, String> displayProperties, int id) {
 		this.graphDisplayProvider = displayProvider;
 		this.displayId = id;
 		this.pluginTool = graphDisplayProvider.getPluginTool();
+		this.displayProperties = displayProperties;
 		this.viewer = createViewer();
 		buildHighlighers();
 
@@ -206,6 +242,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		connectSelectionStateListeners();
 	}
 
+	private Color getSelectedVertexColor() {
+		String property = displayProperties.getOrDefault(SELECTED_VERTEX_COLOR, "0xFF0000");
+		return Colors.getHexColor(property);
+	}
+
+	private Color getSelectedEdgeColor() {
+		String property = displayProperties.getOrDefault(SELECTED_EDGE_COLOR, "0xFF0000");
+		return Colors.getHexColor(property);
+	}
+
 	JComponent getComponent() {
 		JComponent component = viewer.getComponent();
 		component.setFocusable(true);
@@ -231,10 +277,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.getTransformer(VIEW);
 
 		MagnifyShapeTransformer shapeTransformer = MagnifyShapeTransformer.builder(lens)
-				// this lens' delegate is the viewer's VIEW layer
+				// this lens' delegate is the viewer's VIEW layer, abandoned above
 				.delegate(transformer)
 				.build();
-		LensGraphMouse lensGraphMouse = new DefaultLensGraphMouse<>(magnificationPlugin);
+		LensGraphMouse lensGraphMouse =
+			DefaultLensGraphMouse.builder().magnificationPlugin(magnificationPlugin).build();
 		return MagnifyImageLensSupport.builder(viewer)
 				.lensTransformer(shapeTransformer)
 				.lensGraphMouse(lensGraphMouse)
@@ -249,7 +296,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		MultiSelectedVertexPaintable<AttributedVertex, AttributedEdge> multiSelectedVertexPaintable =
 			MultiSelectedVertexPaintable.builder(viewer)
 					.selectionStrokeMin(4.f)
-					.selectionPaint(Color.red)
+					.selectionPaint(getSelectedVertexColor())
 					.useBounds(false)
 					.build();
 
@@ -257,7 +304,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		SingleSelectedVertexPaintable<AttributedVertex, AttributedEdge> singleSelectedVertexPaintable =
 			SingleSelectedVertexPaintable.builder(viewer)
 					.selectionStrokeMin(4.f)
-					.selectionPaint(Color.red)
+					.selectionPaint(getSelectedVertexColor())
 					.selectedVertexFunction(vs -> this.focusedVertex)
 					.build();
 
@@ -375,14 +422,20 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.popupMenuPath("Go To Edge Source")
 				.popupMenuGroup("Go To")
 				.withContext(EdgeGraphActionContext.class)
-				.onAction(c -> setFocusedVertex(graph.getEdgeSource(c.getClickedEdge())))
+				.onAction(c -> {
+					selectEdge(c.getClickedEdge());
+					setFocusedVertex(graph.getEdgeSource(c.getClickedEdge()));
+				})
 				.buildAndInstallLocal(componentProvider);
 
 		new ActionBuilder("Edge Target", ACTION_OWNER)
 				.popupMenuPath("Go To Edge Target")
 				.popupMenuGroup("Go To")
 				.withContext(EdgeGraphActionContext.class)
-				.onAction(c -> setFocusedVertex(graph.getEdgeTarget(c.getClickedEdge())))
+				.onAction(c -> {
+					selectEdge(c.getClickedEdge());
+					setFocusedVertex(graph.getEdgeTarget(c.getClickedEdge()));
+				})
 				.buildAndInstallLocal(componentProvider);
 
 		hideSelectedAction = new ToggleActionBuilder("Hide Selected", ACTION_OWNER)
@@ -426,6 +479,18 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.onAction(c -> growSelection(getSourceVerticesFromSelected()))
 				.buildAndInstallLocal(componentProvider);
 
+		new ActionBuilder("Grow Selection To Entire Component", ACTION_OWNER)
+				.popupMenuPath("Grow Selection To Entire Component")
+				.popupMenuGroup("z", "4")
+				.description(
+					"Extends the current selection by including the target/source vertices " +
+						"of all edges whose source/target is selected")
+				.keyBinding("ctrl C")
+				.enabledWhen(c -> !isAllSelected(getSourceVerticesFromSelected()) &&
+					!isAllSelected(getTargetVerticesFromSelected()))
+				.onAction(c -> growSelection(getAllComponentVerticesFromSelected()))
+				.buildAndInstallLocal(componentProvider);
+
 		new ActionBuilder("Clear Selection", ACTION_OWNER)
 				.popupMenuPath("Clear Selection")
 				.popupMenuGroup("z", "5")
@@ -438,7 +503,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.popupMenuPath("Display Selected as New Graph")
 				.popupMenuGroup("zz", "5")
 				.description("Creates a subgraph from the selected nodes")
-				.enabledWhen(c -> !viewer.getSelectedVertexState().getSelected().isEmpty())
+				.enabledWhen(c -> !viewer.getSelectedVertices().isEmpty())
 				.onAction(c -> createAndDisplaySubGraph())
 				.buildAndInstallLocal(componentProvider);
 
@@ -505,23 +570,24 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private boolean hasSelection() {
-		return !(viewer.getSelectedVertexState().getSelected().isEmpty() &&
-			viewer.getSelectedEdgeState().getSelected().isEmpty());
+		return !(viewer.getSelectedVertices().isEmpty() &&
+			viewer.getSelectedEdges().isEmpty());
 	}
 
 	private boolean isSelected(AttributedVertex v) {
-		return viewer.getSelectedVertexState().isSelected(v);
+		return viewer.getSelectedVertices().contains(v);
 	}
 
 	private boolean isSelected(AttributedEdge e) {
-		return viewer.getSelectedEdgeState().isSelected(e);
+		return viewer.getSelectedEdges().contains(e);
 	}
 
 	private void createAndDisplaySubGraph() {
 		GraphDisplay display = graphDisplayProvider.getGraphDisplay(false, TaskMonitor.DUMMY);
 		try {
-			display.setGraph(createSubGraph(), "SubGraph", false, TaskMonitor.DUMMY);
+			display.setGraph(createSubGraph(), title + " - Sub-graph", false, TaskMonitor.DUMMY);
 			display.setGraphDisplayListener(listener.cloneWith(display));
+			copyActionsToNewGraph((DefaultGraphDisplay) display);
 		}
 		catch (CancelledException e) {
 			// using Dummy, so can't happen
@@ -529,16 +595,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private AttributedGraph createSubGraph() {
-		Set<AttributedVertex> selected = viewer.getSelectedVertexState().getSelected();
+		Set<AttributedVertex> selected = viewer.getSelectedVertices();
 		Graph<AttributedVertex, AttributedEdge> subGraph = new AsSubgraph<>(graph, selected);
 
 		AttributedGraph newGraph = new AttributedGraph();
 		subGraph.vertexSet().forEach(newGraph::addVertex);
-		subGraph.edgeSet().forEach(e -> {
+		for (AttributedEdge e : subGraph.edgeSet()) {
 			AttributedVertex source = subGraph.getEdgeSource(e);
 			AttributedVertex target = subGraph.getEdgeTarget(e);
 			newGraph.addEdge(source, target, e);
-		});
+		}
 		return newGraph;
 	}
 
@@ -547,27 +613,71 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private boolean isAllSelected(Set<AttributedVertex> vertices) {
-		return viewer.getSelectedVertexState().getSelected().containsAll(vertices);
-	}
-
-	private Set<AttributedVertex> getTargetVerticesFromSelected() {
-		Set<AttributedVertex> targets = new HashSet<>();
-		Set<AttributedVertex> selectedVertices = getSelectedVertices();
-		selectedVertices.forEach(v -> {
-			Set<AttributedEdge> edges = graph.outgoingEdgesOf(v);
-			edges.forEach(e -> targets.add(graph.getEdgeTarget(e)));
-		});
-		return targets;
+		return viewer.getSelectedVertices().containsAll(vertices);
 	}
 
 	private Set<AttributedVertex> getSourceVerticesFromSelected() {
 		Set<AttributedVertex> sources = new HashSet<>();
 		Set<AttributedVertex> selectedVertices = getSelectedVertices();
-		selectedVertices.forEach(v -> {
+		for (AttributedVertex v : selectedVertices) {
 			Set<AttributedEdge> edges = graph.incomingEdgesOf(v);
 			edges.forEach(e -> sources.add(graph.getEdgeSource(e)));
-		});
+		}
 		return sources;
+	}
+
+	private Set<AttributedVertex> getUnselectedSourceVerticesFromSelected() {
+		MutableSelectedState<AttributedVertex> selectedVertexState =
+			viewer.getSelectedVertexState();
+		return getSourceVerticesFromSelected().stream()
+				.filter(v -> !selectedVertexState.isSelected(v))
+				.collect(Collectors.toSet());
+	}
+
+	private Set<AttributedVertex> getTargetVerticesFromSelected() {
+		Set<AttributedVertex> targets = new HashSet<>();
+		Set<AttributedVertex> selectedVertices = getSelectedVertices();
+		for (AttributedVertex v : selectedVertices) {
+			Set<AttributedEdge> edges = graph.outgoingEdgesOf(v);
+			edges.forEach(e -> targets.add(graph.getEdgeTarget(e)));
+		}
+		return targets;
+	}
+
+	private Set<AttributedVertex> getUnselectedTargetVerticesFromSelected() {
+		MutableSelectedState<AttributedVertex> selectedVertexState =
+			viewer.getSelectedVertexState();
+		return getTargetVerticesFromSelected().stream()
+				.filter(v -> !selectedVertexState.isSelected(v))
+				.collect(Collectors.toSet());
+	}
+
+	private Set<AttributedVertex> getAllDownstreamVerticesFromSelected() {
+		Set<AttributedVertex> downstream = new HashSet<>();
+		Set<AttributedVertex> targets = getUnselectedTargetVerticesFromSelected();
+		while (!targets.isEmpty()) {
+			downstream.addAll(targets);
+			growSelection(targets);
+			targets = getUnselectedTargetVerticesFromSelected();
+		}
+		return downstream;
+	}
+
+	private Set<AttributedVertex> getAllUpstreamVerticesFromSelected() {
+		Set<AttributedVertex> upstream = new HashSet<>();
+		Set<AttributedVertex> sources = getUnselectedSourceVerticesFromSelected();
+		while (!sources.isEmpty()) {
+			growSelection(sources);
+			upstream.addAll(sources);
+			sources = getUnselectedSourceVerticesFromSelected();
+		}
+		return upstream;
+	}
+
+	public Set<AttributedVertex> getAllComponentVerticesFromSelected() {
+		Set<AttributedVertex> componentVertices = getAllDownstreamVerticesFromSelected();
+		componentVertices.addAll(getAllUpstreamVerticesFromSelected());
+		return componentVertices;
 	}
 
 	private void invertSelection() {
@@ -575,14 +685,14 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		try {
 			MutableSelectedState<AttributedVertex> selectedVertexState =
 				viewer.getSelectedVertexState();
-			graph.vertexSet().forEach(v -> {
+			for (AttributedVertex v : graph.vertexSet()) {
 				if (selectedVertexState.isSelected(v)) {
 					selectedVertexState.deselect(v);
 				}
 				else {
 					selectedVertexState.select(v);
 				}
-			});
+			}
 			Set<AttributedVertex> selected = selectedVertexState.getSelected();
 			notifySelectionChanged(selected);
 		}
@@ -659,18 +769,31 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			SatelliteVisualizationViewer.builder(parentViewer)
 					.viewSize(satelliteSize)
 					.build();
-		satellite.setGraphMouse(new DefaultSatelliteGraphMouse());
+
+		//
+		// JUNGRAPHT CHANGE 3
+		//
+		satellite.setGraphMouse(new JgtSatelliteGraphMouse());
+
 		satellite.getRenderContext().setEdgeDrawPaintFunction(Colors::getColor);
 		satellite.getRenderContext()
 				.setEdgeStrokeFunction(ProgramGraphFunctions::getEdgeStroke);
-		satellite.getRenderContext().setVertexFillPaintFunction(Colors::getColor);
+		satellite.getRenderContext()
+				.setEdgeDrawPaintFunction(viewer.getRenderContext().getEdgeDrawPaintFunction());
+		satellite.getRenderContext()
+				.setVertexFillPaintFunction(viewer.getRenderContext().getVertexFillPaintFunction());
+		satellite.getRenderContext()
+				.setVertexDrawPaintFunction(viewer.getRenderContext().getVertexDrawPaintFunction());
+
 		satellite.scaleToLayout();
 		satellite.getRenderContext().setVertexLabelFunction(n -> null);
 		// always get the current predicate from the main view and test with it,
 		satellite.getRenderContext()
-				.setVertexIncludePredicate(v -> viewer.getRenderContext().getVertexIncludePredicate().test(v));
+				.setVertexIncludePredicate(
+					v -> viewer.getRenderContext().getVertexIncludePredicate().test(v));
 		satellite.getRenderContext()
-				.setEdgeIncludePredicate(e -> viewer.getRenderContext().getEdgeIncludePredicate().test(e));
+				.setEdgeIncludePredicate(
+					e -> viewer.getRenderContext().getEdgeIncludePredicate().test(e));
 		satellite.getComponent().setBorder(BorderFactory.createEtchedBorder());
 		parentViewer.getComponent().addComponentListener(new ComponentAdapter() {
 			@Override
@@ -825,21 +948,28 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		focusedVertex = null;
 		graph = attributedGraph;
 
-		layoutTransitionManager.setEdgeComparator(new EdgeComparator(graph, "EdgeType",
-			DefaultGraphDisplay.FAVORED_EDGE));
-
 		configureViewerPreferredSize();
 
 		Swing.runNow(() -> {
 			// set the graph but defer the layout algorithm setting
 			viewer.getVisualizationModel().setGraph(graph, false);
 			configureFilters();
+			setInitialLayoutAlgorithm();
+		});
+		componentProvider.setVisible(true);
+	}
+
+	private void setInitialLayoutAlgorithm() {
+		if (displayProperties.containsKey(INITIAL_LAYOUT_ALGORITHM)) {
+			String layoutAlgorithmName = displayProperties.get(INITIAL_LAYOUT_ALGORITHM);
+			layoutTransitionManager.setLayout(layoutAlgorithmName);
+		}
+		else {
 			LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
 				layoutTransitionManager.getInitialLayoutAlgorithm();
 			initialLayoutAlgorithm.setAfter(() -> centerAndScale());
 			viewer.getVisualizationModel().setLayoutAlgorithm(initialLayoutAlgorithm);
-		});
-		componentProvider.setVisible(true);
+		}
 	}
 
 	/**
@@ -928,14 +1058,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		log.fine("defineEdgeAttribute " + attributeName + " is not implemented");
 	}
 
-	/*
-	 * @see ghidra.program.model.graph.GraphDisplay#setVertexLabel(java.lang.String, int, int, boolean, int)
-	 */
 	@Override
-	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
+			boolean monospace,
 			int maxLines) {
 		log.fine("setVertexLabel " + attributeName);
-		// this would have to set the label function, the label font function
+		this.iconCache.setPreferredVertexLabelAttribute(attributeName);
 	}
 
 	/**
@@ -1071,11 +1199,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	/**
-	 * create and return a {@link VisualizationViewer} to display graphs
+	 * Create and return a {@link VisualizationViewer} to display graphs
 	 * @return the new VisualizationViewer
 	 */
-	public VisualizationViewer<AttributedVertex, AttributedEdge> createViewer() {
-		final VisualizationViewer<AttributedVertex, AttributedEdge> vv =
+	protected VisualizationViewer<AttributedVertex, AttributedEdge> createViewer() {
+		VisualizationViewer<AttributedVertex, AttributedEdge> vv =
 			VisualizationViewer.<AttributedVertex, AttributedEdge> builder()
 					.multiSelectionStrategySupplier(
 						() -> freeFormSelection ? MultiSelectionStrategy.arbitrary()
@@ -1119,21 +1247,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		this.iconCache = new GhidraIconCache();
 		RenderContext<AttributedVertex, AttributedEdge> renderContext = vv.getRenderContext();
 
-		// set up the shape and color functions
-		IconShapeFunction<AttributedVertex> nodeImageShapeFunction =
-			new IconShapeFunction<>(new EllipseShapeFunction<>());
-
-		vv.getRenderContext().setVertexIconFunction(iconCache::get);
-
-		// cause the vertices to be drawn with custom icons/shapes
-		nodeImageShapeFunction.setIconFunction(iconCache::get);
-		renderContext.setVertexShapeFunction(nodeImageShapeFunction);
-		renderContext.setVertexIconFunction(iconCache::get);
-
-		vv.setInitialDimensionFunction(InitialDimensionFunction
-				.builder(
-					nodeImageShapeFunction.andThen(s -> RectangleUtils.convert(s.getBounds2D())))
-				.build());
+		setVertexPreferences(vv);
 
 		// the selectedEdgeState will be controlled by the vertices that are selected.
 		// if both endpoints of an edge are selected, select that edge.
@@ -1143,18 +1257,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		// selected edges will be drawn with a wider stroke
 		renderContext.setEdgeStrokeFunction(
-			e -> renderContext.getSelectedEdgeState().isSelected(e) ? new BasicStroke(20.f)
+			e -> isSelected(e) ? new BasicStroke(20.f)
 					: ProgramGraphFunctions.getEdgeStroke(e));
+
 		// selected edges will be drawn in red (instead of default)
+		Color selectedEdgeColor = getSelectedEdgeColor();
 		renderContext.setEdgeDrawPaintFunction(
-			e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
-					: Colors.getColor(e));
+			e -> isSelected(e) ? selectedEdgeColor : Colors.getColor(e));
 		renderContext.setArrowDrawPaintFunction(
-			e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
-					: Colors.getColor(e));
+			e -> isSelected(e) ? selectedEdgeColor : Colors.getColor(e));
 		renderContext.setArrowFillPaintFunction(
-			e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
-					: Colors.getColor(e));
+			e -> isSelected(e) ? selectedEdgeColor : Colors.getColor(e));
 
 		// assign the shapes to the modal renderer
 		ModalRenderer<AttributedVertex, AttributedEdge> modalRenderer = vv.getRenderer();
@@ -1162,12 +1275,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		Renderer.Vertex<AttributedVertex, AttributedEdge> vertexRenderer =
 			modalRenderer.getVertexRenderer(LIGHTWEIGHT);
+
 		// cause the lightweight (optimized) renderer to use the vertex shapes instead
 		// of using default shapes.
+
 		if (vertexRenderer instanceof LightweightVertexRenderer) {
+			Function<AttributedVertex, Shape> vertexShapeFunction =
+				renderContext.getVertexShapeFunction();
 			LightweightVertexRenderer<AttributedVertex, AttributedEdge> lightweightVertexRenderer =
 				(LightweightVertexRenderer<AttributedVertex, AttributedEdge>) vertexRenderer;
-			lightweightVertexRenderer.setVertexShapeFunction(ProgramGraphFunctions::getVertexShape);
+			lightweightVertexRenderer.setVertexShapeFunction(vertexShapeFunction);
 		}
 
 		renderContext.setVertexLabelRenderer(new JLabelVertexLabelRenderer(Color.black));
@@ -1184,58 +1301,79 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			vv.getComponent().removeMouseListener(mouseListener);
 		}
 
-		graphMouse = new JgtPluggableGraphMouse(this);
+		graphMouse = new JgtGraphMouse(this);
 		vv.setGraphMouse(graphMouse);
 
 		return vv;
 	}
 
-	/**
-	 * Item listener for selection changes in the graph with the additional 
-	 * capability of being able to disable the listener without removing it. 
-	 */
-	class SwitchableSelectionItemListener implements ItemListener {
-		boolean enabled = true;
+	private void setVertexPreferences(VisualizationViewer<AttributedVertex, AttributedEdge> vv) {
+		RenderContext<AttributedVertex, AttributedEdge> renderContext = vv.getRenderContext();
+		String useIcons =
+			displayProperties.getOrDefault(DISPLAY_VERTICES_AS_ICONS, Boolean.TRUE.toString());
+		Function<Shape, Rectangle> toRectangle = s -> RectangleUtils.convert(s.getBounds2D());
+		if (Boolean.parseBoolean(useIcons)) {
+			// set up the shape and color functions
+			IconShapeFunction<AttributedVertex> nodeShaper =
+				new IconShapeFunction<>(new EllipseShapeFunction<>());
 
-		@Override
-		public void itemStateChanged(ItemEvent e) {
-			if (enabled) {
-				Swing.runLater(() -> run(e));
-			}
+			nodeShaper.setIconFunction(iconCache::get);
+			renderContext.setVertexShapeFunction(nodeShaper);
+			renderContext.setVertexIconFunction(iconCache::get);
+
+			vv.setInitialDimensionFunction(InitialDimensionFunction
+					.builder(nodeShaper.andThen(toRectangle))
+					.build());
 		}
-
-		private void run(ItemEvent e) {
-			// there was a change in the set of selected vertices.
-			// if the focused vertex is null, set it from one of the selected
-			// vertices
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				Set<AttributedVertex> selectedVertices = getSelectedVertices();
-				notifySelectionChanged(new HashSet<AttributedVertex>(selectedVertices));
-
-				if (selectedVertices.size() == 1) {
-					// if only one vertex was selected, make it the focused vertex
-					setFocusedVertex(selectedVertices.stream().findFirst().get());
-				}
-				else if (DefaultGraphDisplay.this.focusedVertex == null) {
-					// if there is currently no focused Vertex, attempt to get
-					// one from the selectedVertices
-					setFocusedVertex(selectedVertices.stream().findFirst().orElse(null));
-				}
-			}
-			else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				Set<AttributedVertex> selectedVertices = getSelectedVertices();
-				notifySelectionChanged(selectedVertices);
-			}
-			viewer.repaint();
-		}
-
-		void setEnabled(boolean enabled) {
-			this.enabled = enabled;
+		else {
+			vv.getRenderContext().setVertexShapeFunction(ProgramGraphFunctions::getVertexShape);
+			vv.setInitialDimensionFunction(InitialDimensionFunction
+					.builder(renderContext.getVertexShapeFunction()
+							.andThen(toRectangle))
+					.build());
+			vv.getRenderContext().setVertexLabelFunction(Object::toString);
+			vv.getRenderContext()
+					.setVertexLabelPosition(
+						VertexLabel.Position.valueOf(
+							displayProperties.getOrDefault(VERTEX_LABEL_POSITION, "AUTO")));
 		}
 	}
 
+	private void copyActionsToNewGraph(DefaultGraphDisplay display) {
+
+		for (DockingActionIf action : addedActions) {
+			if (display.containsAction(action)) {
+				// ignore actions added by the graph itself and any actions that the end user may
+				// accidentally add more than once
+				continue;
+			}
+
+			display.addAction(new DockingActionProxy(action));
+		}
+
+	}
+
+	private boolean containsAction(DockingActionIf action) {
+
+		String name = action.getFullName(); // name and owner
+		for (DockingActionIf existingAction : addedActions) {
+			if (name.equals(existingAction.getFullName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
-	public void addAction(DockingAction action) {
+	public void addAction(DockingActionIf action) {
+
+		if (containsAction(action)) {
+			Msg.warn(this, "Action with same name and owner already exixts in graph: " +
+				action.getFullName());
+			return;
+		}
+
+		addedActions.add(action);
 		Swing.runLater(() -> componentProvider.addLocalAction(action));
 	}
 
@@ -1246,7 +1384,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	@Override
 	public Set<AttributedVertex> getSelectedVertices() {
-		return viewer.getSelectedVertexState().getSelected();
+		return viewer.getSelectedVertices();
 	}
 
 	public ActionContext getActionContext(MouseEvent e) {
@@ -1314,11 +1452,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		Swing.runLater(() -> {
 			// remove all actions
 			componentProvider.removeAllLocalActions();
+			addedActions.clear();
 			// put the standard graph actions back
 			createToolbarActions();
 			createPopupActions();
 		});
 	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================	
 
 	// class passed to the PopupRegulator to help construct info popups for the graph
 	private class GraphDisplayPopupSource implements PopupSource<AttributedVertex, AttributedEdge> {
@@ -1418,4 +1561,49 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// this graph display does not have a notion of emphasizing
 		}
 	}
+
+	/**
+	 * Item listener for selection changes in the graph with the additional 
+	 * capability of being able to disable the listener without removing it. 
+	 */
+	private class SwitchableSelectionItemListener implements ItemListener {
+		boolean enabled = true;
+
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			if (enabled) {
+				Swing.runLater(() -> run(e));
+			}
+		}
+
+		private void run(ItemEvent e) {
+			// there was a change in the set of selected vertices.
+			// if the focused vertex is null, set it from one of the selected
+			// vertices
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				Set<AttributedVertex> selectedVertices = getSelectedVertices();
+				notifySelectionChanged(new HashSet<AttributedVertex>(selectedVertices));
+
+				if (selectedVertices.size() == 1) {
+					// if only one vertex was selected, make it the focused vertex
+					setFocusedVertex(selectedVertices.stream().findFirst().get());
+				}
+				else if (DefaultGraphDisplay.this.focusedVertex == null) {
+					// if there is currently no focused Vertex, attempt to get
+					// one from the selectedVertices
+					setFocusedVertex(selectedVertices.stream().findFirst().orElse(null));
+				}
+			}
+			else if (e.getStateChange() == ItemEvent.DESELECTED) {
+				Set<AttributedVertex> selectedVertices = getSelectedVertices();
+				notifySelectionChanged(selectedVertices);
+			}
+			viewer.repaint();
+		}
+
+		void setEnabled(boolean enabled) {
+			this.enabled = enabled;
+		}
+	}
+
 }

@@ -1,0 +1,47 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+A contrived function with different loops, where we put comments on instructions
+comprising the loop conditions.   The comments should get moved to a separate line
+and not get printed in the middle of the condition.
+-->
+<bytechunk space="ram" offset="0x1006e4" readonly="true">
+        554889e54883ec20897dec89
+75e88955e4894de08b45ec83f8097f1c
+837de8647e168b45e43de8030000750c
+488d3d0d020000e864feffffc745fc00
+000000eb28488d3d04020000e84ffeff
+ff488d45ec4889c7e88dffffff488d45
+e04889c7e881ffffff8345fc018b45e0
+3dc70000007f378b45ec83f8137f2f81
+7dfcc70000007ebdeb24488d3dc80100
+00e80afeffff488d45ec4889c7e848ff
+ffff488d45e04889c7e83cffffff8b45
+ec83f8630f9ec28b45e083f80a0f9fc0
+21d084c075c48b45ec83c00a8945ec48
+8d3d8e010000e8c5fdffff8b45ec89c6
+488d3d85010000b800000000e8bffdff
+ff488d45ec4889c7e8edfeffff488d45
+e44889c7e8e1feffff8b45ec3dcf0700
+007f088b45e483f81d7eab8b45ec89c6
+488d3d49010000b800000000e87ffdff
+ff90c9c3
+</bytechunk>
+<symbol space="ram" offset="0x1006e4" name="loopcomment"/>
+</binaryimage>
+<script>
+  <com>lo fu loopcomment</com>
+  <com>comment instr r0x100704 ifcomment</com>
+  <com>comment instr r0x10075d forcomment</com>
+  <com>comment instr r0x100791 whilecomment</com>
+  <com>comment instr r0x1007f9 dowhilecomment</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Loop comment #1" min="1" max="1">^ */\* ifcomment \*/ *$</stringmatch>
+<stringmatch name="Loop comment #2" min="1" max="1">^ */\* forcomment \*/ *$</stringmatch>
+<stringmatch name="Loop comment #3" min="1" max="1">^ */\* whilecomment \*/ *$</stringmatch>
+<stringmatch name="Loop comment #4" min="1" max="1">^ */\* dowhilecomment \*/ *$</stringmatch>
+<stringmatch name="Loop comment #5" min="4" max="4">.*/\*</stringmatch>
+</decompilertest>

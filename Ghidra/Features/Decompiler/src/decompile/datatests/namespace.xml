@@ -1,0 +1,29 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   A routine that uses multiple symbols with the same name.  The decompiler should
+   detect the name collisions and append appropriate namespace tokens.
+-->
+<bytechunk space="ram" offset="0x400537" readonly="true">
+              554889e5897dfc8b45
+fc83c0018905e60a20008b55fc89d0c1
+e00201d001c08905d80a20008b15d60a
+20008b45fc01d05dc3
+</bytechunk>
+<symbol space="ram" offset="0x400537" name="a::b::assign_vals"/>
+</binaryimage>
+<script>
+  <com>map addr r0x601030 int4 spam</com>
+  <com>map addr r0x601034 int4 a::spam</com>
+  <com>map addr r0x601038 int4 c::spam</com>
+  <com>parse line extern int4 a::b::assign_vals(int4 spam);</com>
+  <com>lo fu a::b::assign_vals</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Namespace #1" min="1" max="1">a::b::assign_vals\(int4 spam\)</stringmatch>
+<stringmatch name="Namespace #2" min="1" max="1">^  ::spam = spam \+ 1;</stringmatch>
+<stringmatch name="Namespace #3" min="1" max="1">^  a::spam = spam \* 10;</stringmatch>
+<stringmatch name="Namespace #4" min="1" max="1">return spam \+ c::spam;</stringmatch>
+</decompilertest>

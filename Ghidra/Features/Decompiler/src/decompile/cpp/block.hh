@@ -597,8 +597,8 @@ class BlockWhileDo : public BlockGraph {
   bool testIterateForm(void) const;	///< Return \b false if the iterate statement is of an unacceptable form
 public:
   BlockWhileDo(void) { initializeOp = (PcodeOp *)0; iterateOp = (PcodeOp *)0; loopDef = (PcodeOp *)0; }	///< Constructor
-  PcodeOp *getInitializeOp(void) const { return initializeOp; }
-  PcodeOp *getIterateOp(void) const { return iterateOp; }
+  PcodeOp *getInitializeOp(void) const { return initializeOp; }	///< Get root of initialize statement or null
+  PcodeOp *getIterateOp(void) const { return iterateOp; }	///< Get root of iterate statement or null
   bool hasOverflowSyntax(void) const { return ((getFlags() & f_whiledo_overflow)!=0); }	///< Does \b this require overflow syntax
   void setOverflowSyntax(void) { setFlag(f_whiledo_overflow); }		///< Set that \b this requires overflow syntax
   virtual block_type getType(void) const { return t_whiledo; }

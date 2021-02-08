@@ -47,8 +47,8 @@ public final class CoffArchiveHeader implements StructConverter {
 	 * @throws IOException
 	 */
 	public static boolean isMatch(ByteProvider provider) throws IOException {
-		return (provider.length() > 2) && CoffArchiveConstants.MAGIC.equals(
-			new String(provider.readBytes(0, CoffArchiveConstants.MAGIC_LEN)));
+		return (provider.length() > CoffArchiveConstants.MAGIC_LEN) && CoffArchiveConstants.MAGIC
+				.equals(new String(provider.readBytes(0, CoffArchiveConstants.MAGIC_LEN)));
 	}
 
 	/**

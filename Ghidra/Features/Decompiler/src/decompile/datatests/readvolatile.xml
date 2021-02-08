@@ -1,0 +1,24 @@
+<decompilertest>
+<binaryimage arch="68000:BE:32:MC68020:default">
+<!--
+   Simple example of a read from a volatile region, where the "value" is not
+   used, but the read may have side-effects that the decompiler should see.
+-->
+<bytechunk space="ram" offset="0x484">
+        1028001e4200114000141140
+000a114000141140000a1140000a4e73
+</bytechunk>
+<symbol space="ram" offset="0x484" name="iofunc"/>
+</binaryimage>
+<script>
+  <com>volatile [ram,0x210000,64]</com>
+  <com>map addr r0x210000 int1 NVRAM[32]</com>
+  <com>set track A0 0x210000 r0x484 r0x485</com>
+  <com>lo fu iofunc</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Read Volatile #1" min="1" max="1">read_volatile.*NVRAM.*30</stringmatch>
+<stringmatch name="Read Volatile #2" min="5" max="5">write_volatile.*NVRAM</stringmatch>
+</decompilertest>

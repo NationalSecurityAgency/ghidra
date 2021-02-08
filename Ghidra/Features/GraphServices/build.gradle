@@ -11,14 +11,23 @@ eclipse.project.name = 'Features Graph Services'
 dependencies {
 	compile project(":Base")
 
-	compile "com.github.tomnelson:jungrapht-visualization:1.0"
-	compile "com.github.tomnelson:jungrapht-layout:1.0"
-
+	// jungrapht - exclude slf4j which produces a conflict with other uses with Ghidra
+	compile ("com.github.tomnelson:jungrapht-visualization:1.1") { exclude group: "org.slf4j", module: "slf4j-api" }
+	compile ("com.github.tomnelson:jungrapht-layout:1.1") { exclude group: "org.slf4j", module: "slf4j-api" }
+	
+	compile "org.jgrapht:jgrapht-core:1.5.0"
+	
+	// not using jgrapht-io code that depends on antlr, so exclude antlr
+	compile ("org.jgrapht:jgrapht-io:1.5.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
+	
 	runtime "org.slf4j:slf4j-api:1.7.25"
+	
 	// use this if you want no slf4j log messages
 	runtime "org.slf4j:slf4j-nop:1.7.25"
+	
 	// use this if you want slf4j log messages sent to log4j
-//	runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.12.1"
+	//	runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.12.1" 
+	
 	runtime "org.jheaps:jheaps:0.13"
       
 	helpPath project(path: ":Base", configuration: 'helpPath')

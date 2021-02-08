@@ -37,13 +37,14 @@ import ghidra.program.model.listing.Program;
 public class VfTableModel extends AbstractCreateDataTypeModel {
 
 	public static final String DATA_TYPE_NAME = "vftable";
+	private static final int NO_LAST_COUNT = -1;
 
 	private DataType dataType;
 	private Rtti4Model rtti4Model;
 
 	private Program lastProgram;
 	private DataType lastDataType;
-	private int lastElementCount = -1;
+	private int lastElementCount = NO_LAST_COUNT;
 	private int elementCount = 0;
 
 	/**
@@ -126,7 +127,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	 */
 	private DataType getDataType(Program program) {
 
-		if (program != lastProgram) {
+		if (program != lastProgram || lastElementCount == NO_LAST_COUNT) {
 			setIsDataTypeAlreadyBasedOnCount(true);
 
 			lastProgram = program;

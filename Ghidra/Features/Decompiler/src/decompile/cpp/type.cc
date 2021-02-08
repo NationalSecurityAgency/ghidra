@@ -318,7 +318,7 @@ void Datatype::saveXmlRef(ostream &s) const
 
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
 /// Perform this check.
-/// \param is the given offset
+/// \param offset is the given offset
 /// \return \b true if \b this is a suitable PTRSUB data-type
 bool Datatype::isPtrsubMatching(uintb offset) const
 
@@ -422,7 +422,7 @@ uint8 Datatype::hashName(const string &nm)
 /// The hashing is reversible by feeding the output ID back into this function with the same size.
 /// \param id is the given ID to (de)uniquify
 /// \param size is the instance size of the structure
-/// \param return the (de)uniquified id
+/// \return the (de)uniquified id
 uint8 Datatype::hashSize(uint8 id,int4 size)
 
 {

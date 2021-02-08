@@ -15,7 +15,8 @@
  */
 package ghidra.pcode.floatformat;
 
-import java.math.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * An IEEE 754 floating point class.
@@ -94,12 +95,15 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		BigFloat other = (BigFloat) obj;
 		if (expbits != other.expbits) {
 			return false;
@@ -225,11 +229,12 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 * This function is used internally to round after a computation.
 	 * 
 	 * <p>Assume that the true value is
-	 *    <code>sign * (unscaled + eps) * 2 ^ (scale-fracbits)</code>
+	 * <pre>   sign * (unscaled + eps) * 2 ^ (scale-fracbits)
 	 * and
-	 *    <code>unscaled.bitLength() > fracbits+1</code>
-	 *     (or the value is subnormal with at least 1 bit of extra precision)
-	 *  
+	 *   unscaled.bitLength() &gt; fracbits+1 
+	 *
+	 * (or the value is subnormal with at least 1 bit of extra precision)
+	 * </pre> 
 	 * @param eps &lt; 1
 	 */
 	protected void internalRound(boolean eps) {
@@ -320,8 +325,9 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 			case SIGNALING_NAN:
 				return "sNaN";
 			case INFINITE:
-				if (sign < 0)
+				if (sign < 0) {
 					return "-inf";
+				}
 				return "+inf";
 			case FINITE:
 				String s = (sign < 0) ? "-" : "";

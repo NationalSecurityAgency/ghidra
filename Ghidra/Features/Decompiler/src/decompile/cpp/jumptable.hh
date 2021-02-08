@@ -500,7 +500,7 @@ class JumpTable {
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block
-    int4 addressIndex;				/// Index of address targetting the basic-block
+    int4 addressIndex;				///< Index of address targeting the basic-block
     IndexPair(int4 pos,int4 index) { blockPosition = pos; addressIndex = index; }	///< Constructor
     bool operator<(const IndexPair &op2) const;	///< Compare by position then by index
     static bool compareByPosition(const IndexPair &op1,const IndexPair &op2);	///< Compare just by position

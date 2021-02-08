@@ -18,7 +18,7 @@ package ghidra.graph.program;
 import java.util.HashSet;
 import java.util.Set;
 
-import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -74,7 +74,8 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
+			boolean monospace,
 			int maxLines) {
 		//  nothing
 	}
@@ -116,8 +117,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void addAction(DockingAction action) {
+	public void addAction(DockingActionIf action) {
 		// do nothing, actions are not supported by this display
 	}
-
 }

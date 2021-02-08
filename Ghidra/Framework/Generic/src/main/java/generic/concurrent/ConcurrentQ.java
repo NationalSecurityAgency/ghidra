@@ -114,8 +114,8 @@ import ghidra.util.task.TaskMonitor;
  *     }
  * };
  *
- * QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>() {
- *     public void itemProcessed(QResult<ITEM, RESULT> result) {
+ * {@literal QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>()} {
+ *     {@literal public void itemProcessed(QResult<ITEM, RESULT> result)} {
  *         RESULT result = result.getResult();
  *             // work on my result...
  *         }
