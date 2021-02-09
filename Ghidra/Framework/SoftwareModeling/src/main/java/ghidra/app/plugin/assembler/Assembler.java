@@ -21,8 +21,8 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.lang.InstructionBlock;
 import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.mem.MemoryAccessException;
 
 /**
@@ -36,8 +36,8 @@ public interface Assembler {
 	 * Assemble a sequence of instructions and place them at the given address.
 	 * 
 	 * This method is only valid if the assembler is bound to a program. An instance may optionally
-	 * implement this method without a program binding. In that case, the returned instruction
-	 * block will refer to pseudo instructions.
+	 * implement this method without a program binding. In that case, the returned instruction block
+	 * will refer to pseudo instructions.
 	 * 
 	 * NOTE: There must be an active transaction on the bound program for this method to succeed.
 	 * 
@@ -49,7 +49,8 @@ public interface Assembler {
 	 * @throws MemoryAccessException there is an issue writing the result to program memory
 	 * @throws AddressOverflowException the resulting block is beyond the valid address range
 	 */
-	public InstructionBlock assemble(Address at, String... listing) throws AssemblySyntaxException,
+	public InstructionIterator assemble(Address at, String... listing)
+			throws AssemblySyntaxException,
 			AssemblySemanticException, MemoryAccessException, AddressOverflowException;
 
 	/**
@@ -96,6 +97,7 @@ public interface Assembler {
 	 * Because all parse paths are attempted, it's possible to get many mixed results. For example,
 	 * The input line may be a valid instruction; however, there may be suggestions to continue the
 	 * line toward another valid instruction.
+	 * 
 	 * @param line the line (or partial line) to parse
 	 * @return the results of parsing
 	 */
@@ -108,8 +110,9 @@ public interface Assembler {
 	 * semantic error. Because all resolutions are attempted, it's possible to get many mixed
 	 * results.
 	 * 
-	 * NOTE: The resolved instructions are given as masks and values. Where the mask does not
-	 * cover, you can choose any value.
+	 * NOTE: The resolved instructions are given as masks and values. Where the mask does not cover,
+	 * you can choose any value.
+	 * 
 	 * @param parse a parse result giving a valid tree
 	 * @param at the location of the start of the instruction
 	 * @param ctx the context register value at the start of the instruction
@@ -125,8 +128,9 @@ public interface Assembler {
 	 * semantic error. Because all resolutions are attempted, it's possible to get many mixed
 	 * results.
 	 * 
-	 * NOTE: The resolved instructions are given as masks and values. Where the mask does not
-	 * cover, you can choose any value.
+	 * NOTE: The resolved instructions are given as masks and values. Where the mask does not cover,
+	 * you can choose any value.
+	 * 
 	 * @param parse a parse result giving a valid tree
 	 * @param at the location of the start of the instruction
 	 * @return the results of semantic resolution
@@ -138,6 +142,7 @@ public interface Assembler {
 	 * 
 	 * This method works like {@link #resolveLine(Address, String, AssemblyPatternBlock)}, except
 	 * that it derives the context using {@link #getContextAt(Address)}.
+	 * 
 	 * @param at the location of the start of the instruction
 	 * @param line the textual assembly code
 	 * @return the collection of semantic resolution results
@@ -152,6 +157,7 @@ public interface Assembler {
 	 * This method works like {@link #assembleLine(Address, String, AssemblyPatternBlock)}, except
 	 * that it returns all possible resolutions for the parse trees that pass the
 	 * {@link AssemblySelector}.
+	 * 
 	 * @param at the location of the start of the instruction
 	 * @param line the textual assembly code
 	 * @param ctx the context register value at the start of the instruction
@@ -164,8 +170,9 @@ public interface Assembler {
 	/**
 	 * Place a resolved (and fully-masked) instruction into the bound program.
 	 * 
-	 * This method is not valid without a program binding. Also, this method must be called during
-	 * a program database transaction.
+	 * This method is not valid without a program binding. Also, this method must be called during a
+	 * program database transaction.
+	 * 
 	 * @param res the resolved and fully-masked instruction
 	 * @param at the location of the start of the instruction
 	 * @return the new {@link Instruction} code unit
@@ -177,20 +184,23 @@ public interface Assembler {
 	/**
 	 * Place an instruction into the bound program.
 	 * 
-	 * This method is not valid without a program binding. Also, this method must be called during
-	 * a program database transaction.
+	 * This method is not valid without a program binding. Also, this method must be called during a
+	 * program database transaction.
+	 * 
 	 * @param insbytes the instruction data
 	 * @param at the location of the start of the instruction
 	 * @return the new {@link Instruction} code unit
 	 * @throws MemoryAccessException there is an issue writing the result to program memory
 	 */
-	public Instruction patchProgram(byte[] insbytes, Address at) throws MemoryAccessException;
+	public InstructionIterator patchProgram(byte[] insbytes, Address at)
+			throws MemoryAccessException;
 
 	/**
 	 * Get the context at a given address
 	 * 
 	 * If there is a program binding, this will extract the actual context at the given address.
 	 * Otherwise, it will obtain the default context at the given address for the language.
+	 * 
 	 * @param addr the address
 	 * @return the context
 	 */

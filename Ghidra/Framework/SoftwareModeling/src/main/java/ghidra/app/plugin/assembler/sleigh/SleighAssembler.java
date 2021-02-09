@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.plugin.assembler.*;
@@ -25,7 +27,8 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -98,22 +101,26 @@ public class SleighAssembler implements Assembler {
 		if (!res.getInstruction().isFullMask()) {
 			throw new AssemblySelectionError("Selected instruction must have a full mask.");
 		}
-		return patchProgram(res.getInstruction().getVals(), at);
+		return patchProgram(res.getInstruction().getVals(), at).next();
 	}
 
 	@Override
-	public Instruction patchProgram(byte[] insbytes, Address at) throws MemoryAccessException {
-		listing.clearCodeUnits(at, at.add(insbytes.length - 1), false);
+	public InstructionIterator patchProgram(byte[] insbytes, Address at)
+			throws MemoryAccessException {
+		Address end = at.add(insbytes.length - 1);
+		listing.clearCodeUnits(at, end, false);
 		memory.setBytes(at, insbytes);
 		dis.disassemble(at, new AddressSet(at));
-		return listing.getInstructionAt(at);
+		List<Instruction> result = new ArrayList<>();
+		return listing.getInstructions(new AddressSet(at, end), true);
 	}
 
 	@Override
-	public InstructionBlock assemble(Address at, String... assembly) throws AssemblySyntaxException,
-			AssemblySemanticException, MemoryAccessException, AddressOverflowException {
-		InstructionBlock block = new InstructionBlock(at);
-
+	public InstructionIterator assemble(Address at, String... assembly)
+			throws AssemblySyntaxException, AssemblySemanticException, MemoryAccessException,
+			AddressOverflowException {
+		Address start = at;
+		ByteArrayOutputStream buf = new ByteArrayOutputStream();
 		for (String part : assembly) {
 			for (String line : part.split("\n")) {
 				RegisterValue rv = program.getProgramContext().getDisassemblyContext(at);
@@ -124,13 +131,16 @@ public class SleighAssembler implements Assembler {
 				if (insbytes == null) {
 					return null;
 				}
-
-				Instruction ins = patchProgram(insbytes, at);
-				block.addInstruction(ins);
+				try {
+					buf.write(insbytes);
+				}
+				catch (IOException e) {
+					throw new AssertionError(e);
+				}
 				at = at.addNoWrap(insbytes.length);
 			}
 		}
-		return block;
+		return patchProgram(buf.toByteArray(), start);
 	}
 
 	@Override
@@ -221,10 +231,11 @@ public class SleighAssembler implements Assembler {
 
 	/**
 	 * A convenience to obtain a map of program labels strings to long values
+	 * 
 	 * @return the map
 	 * 
-	 * {@literal TODO Use a Map<String, Address> instead so that, if possible, symbol values can be checked}
-	 * lest they be an invalid substitution for a given operand.
+	 *         {@literal TODO Use a Map<String, Address> instead so that, if possible, symbol values can be checked}
+	 *         lest they be an invalid substitution for a given operand.
 	 */
 	protected Map<String, Long> getProgramLabels() {
 		Map<String, Long> labels = new HashMap<>();
