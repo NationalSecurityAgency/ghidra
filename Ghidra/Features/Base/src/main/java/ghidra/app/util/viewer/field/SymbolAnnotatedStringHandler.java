@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 import docking.widgets.fieldpanel.field.AttributedString;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
-import ghidra.app.services.QueryData;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -142,8 +141,8 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 
 		// try going to the symbol first
 		if (!symbols.isEmpty()) {
-			QueryData data = new QueryData(symbols.get(0).getName(), true);
-			return goToService.goToQuery(sourceNavigatable, null, data, null, null);
+			Symbol s = symbols.get(0);
+			return goToService.goTo(s.getProgramLocation());
 		}
 
 		// try going to the address
