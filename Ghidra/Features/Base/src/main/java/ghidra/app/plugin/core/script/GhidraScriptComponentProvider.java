@@ -608,7 +608,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	void runScript(ResourceFile scriptFile, TaskListener listener) {
 		lastRunScript = scriptFile;
 		GhidraScript script = doGetScriptInstance(scriptFile);
-		doRunScript(script, listener);
+		if (script != null) {
+			doRunScript(script, listener);
+		}
 	}
 
 	private GhidraScript doGetScriptInstance(ResourceFile scriptFile) {
