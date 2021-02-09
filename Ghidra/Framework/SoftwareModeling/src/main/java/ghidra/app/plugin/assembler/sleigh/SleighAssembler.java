@@ -111,7 +111,6 @@ public class SleighAssembler implements Assembler {
 		listing.clearCodeUnits(at, end, false);
 		memory.setBytes(at, insbytes);
 		dis.disassemble(at, new AddressSet(at));
-		List<Instruction> result = new ArrayList<>();
 		return listing.getInstructions(new AddressSet(at, end), true);
 	}
 
