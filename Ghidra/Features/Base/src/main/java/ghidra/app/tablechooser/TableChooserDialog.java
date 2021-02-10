@@ -242,13 +242,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		monitor.initialize(rowObjects.size());
 
 		try {
-			List<AddressableRowObject> deleted;
-			if (executor.useBulkTransaction()) {
-				deleted = doProcessRowsInTransaction(rowObjects, monitor);
-			}
-			else {
-				deleted = doProcessRows(rowObjects, monitor);
-			}
+			List<AddressableRowObject> deleted = doProcessRowsInTransaction(rowObjects, monitor);
 
 			for (AddressableRowObject rowObject : deleted) {
 				model.removeObject(rowObject);

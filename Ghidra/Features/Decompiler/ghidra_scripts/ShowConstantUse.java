@@ -312,11 +312,6 @@ public class ShowConstantUse extends GhidraScript {
 			}
 
 			@Override
-			public boolean useBulkTransaction() {
-				return true;
-			}
-
-			@Override
 			public boolean execute(AddressableRowObject rowObject) {
 				ConstUseLocation constLoc = (ConstUseLocation) rowObject;
 				println("Follow Structure : " + rowObject.getAddress());

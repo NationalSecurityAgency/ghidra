@@ -153,11 +153,6 @@ public class FindSharedReturnFunctionsScript extends GhidraScript {
 			}
 
 			@Override
-			public boolean useBulkTransaction() {
-				return true;
-			}
-
-			@Override
 			public boolean execute(AddressableRowObject rowObject) {
 				SharedReturnLocations sharedRetLoc = (SharedReturnLocations) rowObject;
 				println("Fixup Shared Return Jump at : " + rowObject.getAddress());

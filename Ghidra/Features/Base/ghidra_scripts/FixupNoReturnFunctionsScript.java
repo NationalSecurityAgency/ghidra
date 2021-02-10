@@ -272,11 +272,6 @@ public class FixupNoReturnFunctionsScript extends GhidraScript {
 			}
 
 			@Override
-			public boolean useBulkTransaction() {
-				return true;
-			}
-
-			@Override
 			public boolean execute(AddressableRowObject rowObject) {
 				NoReturnLocations noRetLoc = (NoReturnLocations) rowObject;
 				println("Fixup NoReturn Function at : " + rowObject.getAddress());
