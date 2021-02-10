@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,20 +46,16 @@ public class CliBlobCustomAttrib extends CliBlob {
 	private static final byte CLIBLOBCUSTOMATTRIB_TYPE_FIELD = 0x53;
 	private static final byte CLIBLOBCUSTOMATTRIB_TYPE_PROPERTY = 0x54;
 
-	// SerString processing constants to validate and convert the
-	// length of the string
-	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_64 = 0x40;
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_128 = 0x80;
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_BOUNDARY_192 = 0xC0;
 
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_ONE = 0x01;
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO = 0x02;
-	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO_BITMASK = 0x7F;
 	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR = 0x03;
-	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR_BITMASK = 0x3F;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_BITMASK = 0x3F;
 
-	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_SHIFT = 0x06;
-	private static final int CLIBLOBCUSTOMATTRIB_STRING_SIZE_BITMASK = 0x03;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_INDICATOR_SHIFT = 0x06;
+	private static final int CLIBLOBCUSTOMATTRIB_STRING_INDICATOR_BITMASK = 0x03;
 
 	// UTF-8 boundaries that help detect the end of a string where
 	// lengths aren't specified in FixedArg
@@ -308,21 +304,17 @@ public class CliBlobCustomAttrib extends CliBlob {
 		byte firstByte = reader.readNextByte();
 
 		// Shift the highest two bits to the bottom and mask off to detect the
-		// size of the field holding the size of the string (1, 2, or 4 bytes)
-		byte stringSizeIndicator = (byte) (firstByte >> CLIBLOBCUSTOMATTRIB_STRING_SIZE_SHIFT &
-			CLIBLOBCUSTOMATTRIB_STRING_SIZE_BITMASK);
+		// size of the field holding the size of the string (1, 2, or 4 bytes),
+		// then cut the indicator bits off the first byte of the length.
+		byte stringSizeIndicator = (byte) (firstByte >> CLIBLOBCUSTOMATTRIB_STRING_INDICATOR_SHIFT &
+			CLIBLOBCUSTOMATTRIB_STRING_INDICATOR_BITMASK);
+		firstByte = (byte) (firstByte & CLIBLOBCUSTOMATTRIB_STRING_SIZE_BITMASK);
 
 		if (stringSizeIndicator <= CLIBLOBCUSTOMATTRIB_STRING_SIZE_ONE) {
-			// A size less than 128 indicates this is the only size byte
 			length = firstByte;
 		}
 		else if (stringSizeIndicator == CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO) {
-			// A value in the first byte in range [128 - 191] indicates the size
-			// is stored as a Word and the value in the highest bit must be unset
 			lengthBytes = new byte[] { firstByte, reader.readNextByte() };
-
-			// Unset what will become the highest bit if it's set
-			lengthBytes[1] = (byte) (lengthBytes[1] & CLIBLOBCUSTOMATTRIB_STRING_SIZE_TWO_BITMASK);
 
 			// Convert from big-endian
 			buf = ByteBuffer.wrap(lengthBytes);
@@ -330,16 +322,8 @@ public class CliBlobCustomAttrib extends CliBlob {
 			length = buf.getShort();
 		}
 		else if (stringSizeIndicator == CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR) {
-			// A value in the first byte > 128 indicates the size is stored as
-			// a DWord and the first two bits must be unset
-			lengthBytes = new byte[Integer.BYTES];
-			lengthBytes[0] = firstByte;
-			lengthBytes[1] = reader.readNextByte();
-			lengthBytes[2] = reader.readNextByte();
-			lengthBytes[3] = reader.readNextByte();
-
-			// Unset what will become the highest two bits if they're set
-			lengthBytes[3] = (byte) (lengthBytes[3] & CLIBLOBCUSTOMATTRIB_STRING_SIZE_FOUR_BITMASK);
+			lengthBytes = new byte[] { firstByte, reader.readNextByte(), reader.readNextByte(),
+				reader.readNextByte() };
 
 			// Convert from big-endian
 			buf = ByteBuffer.wrap(lengthBytes);
