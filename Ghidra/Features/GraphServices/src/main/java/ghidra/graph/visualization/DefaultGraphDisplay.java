@@ -379,7 +379,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		new MultiStateActionBuilder<String>("Arrangement", ACTION_OWNER)
 				.description("Arrangement: " + layoutActionStates.get(0).getName())
 				.toolBarIcon(DefaultDisplayGraphIcons.LAYOUT_ALGORITHM_ICON)
-				.fireFirstAction(false)
+				.useCheckboxForIcons(true)
 				.onActionStateChanged((s, t) -> layoutChanged(s.getName()))
 				.addStates(layoutActionStates)
 				.buildAndInstallLocal(componentProvider);
@@ -701,11 +701,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 	}
 
-	/**
-	 * get a {@code List} of {@code ActionState} buttons for the
-	 * configured layout algorithms
-	 * @return a {@code List} of {@code ActionState} buttons
-	 */
 	private List<ActionState<String>> getLayoutActionStates() {
 		String[] names = layoutTransitionManager.getLayoutNames();
 		List<ActionState<String>> actionStates = new ArrayList<>();
@@ -718,20 +713,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		return actionStates;
 	}
 
-	/**
-	 * respond to a change in the layout name
-	 * @param layoutName the name of the layout algorithm to apply
-	 */
 	private void layoutChanged(String layoutName) {
-		if (layoutTransitionManager != null) {
-			new TaskLauncher(new SetLayoutTask(viewer, layoutTransitionManager, layoutName), null,
-				1000);
-		}
+		TaskLauncher.launch(new SetLayoutTask(viewer, layoutTransitionManager, layoutName));
 	}
 
-	/**
-	 * show the dialog with generated filters
-	 */
 	private void showFilterDialog() {
 		if (filterDialog == null) {
 			if (vertexFilters == null) {
@@ -743,10 +728,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		componentProvider.getTool().showDialog(filterDialog);
 	}
 
-	/**
-	 * add or remove the satellite viewer
-	 * @param context information about the event
-	 */
 	private void toggleSatellite(ActionContext context) {
 		boolean selected = ((AbstractButton) context.getSourceObject()).isSelected();
 		graphDisplayProvider.setDefaultSatelliteState(selected);
