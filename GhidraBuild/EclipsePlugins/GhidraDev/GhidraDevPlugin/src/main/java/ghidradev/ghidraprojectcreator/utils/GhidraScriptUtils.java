@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.*;
 
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.GModule;
+import ghidradev.Activator;
 
 /**
  * Utility methods for working with Ghidra scripts in Eclipse.
@@ -87,6 +88,12 @@ public class GhidraScriptUtils {
 
 		// Link in the user's personal ghidra_scripts directory
 		if (linkUserScripts) {
+			if (!userScriptsDir.isDirectory()) {
+				if (!userScriptsDir.mkdirs()) {
+					throw new CoreException(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+						IStatus.ERROR, "Failed to create " + userScriptsDir, null));
+				}
+			}
 			IFolder link = javaProject.getProject().getFolder("Home scripts");
 			link.createLink(new Path(userScriptsDir.getAbsolutePath()), IResource.NONE, monitor);
 			classpathEntries.add(JavaCore.newSourceEntry(link.getFullPath()));
