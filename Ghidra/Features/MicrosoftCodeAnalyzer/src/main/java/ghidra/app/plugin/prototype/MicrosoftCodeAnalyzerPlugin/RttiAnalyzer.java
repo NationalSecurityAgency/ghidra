@@ -58,7 +58,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		setSupportsOneTimeAnalysis();
 		// Set priority of RTTI analyzer to run after Demangler so can see if better 
 		// plate comment or label already exists from Demangler.
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before());
+		setPriority(AnalysisPriority.REFERENCE_ANALYSIS.before());
 		setDefaultEnablement(true);
 		validationOptions = new DataValidationOptions();
 		applyOptions = new DataApplyOptions();
