@@ -25,8 +25,7 @@ import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
@@ -166,7 +165,10 @@ public class RttiUtil {
 				break;
 			}
 			
-			if (!pseudoDisassembler.isValidSubroutine(referencedAddress, true, false)) {
+			Function function = program.getFunctionManager().getFunctionAt(referencedAddress);
+
+			if (function == null &&
+				!pseudoDisassembler.isValidSubroutine(referencedAddress, true, false)) {
 				break; // Not pointing to possible function.
 			}
 
