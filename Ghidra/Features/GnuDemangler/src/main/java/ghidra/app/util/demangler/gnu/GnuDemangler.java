@@ -106,16 +106,14 @@ public class GnuDemangler implements Demangler {
 			}
 
 			boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
-			DemangledObject demangledObject =
-				parse(mangled, process, demangled, onlyKnownPatterns);
+			DemangledObject demangledObject = parse(mangled, process, demangled, onlyKnownPatterns);
 			if (demangledObject == null) {
 				return demangledObject;
 			}
 
 			if (globalPrefix != null) {
-				DemangledFunction dfunc =
-					new DemangledFunction(originalMangled, demangled,
-						globalPrefix + demangledObject.getName());
+				DemangledFunction dfunc = new DemangledFunction(originalMangled, demangled,
+					globalPrefix + demangledObject.getName());
 				dfunc.setNamespace(demangledObject.getNamespace());
 				demangledObject = dfunc;
 			}
@@ -163,6 +161,19 @@ public class GnuDemangler implements Demangler {
 			applicationOptions);
 	}
 
+	/**
+	 * Determines if the given mangled string should not be demangled.  There are a couple
+	 * patterns that will always be skipped.
+	 * If {@link GnuDemanglerOptions#demangleOnlyKnownPatterns()} is true, then only mangled
+	 * symbols matching a list of known start patters will not be skipped.
+	 *
+	 * <P>This demangler class will default to demangling most patterns, since we do not yet
+	 * have a comprehensive list of known start patterns.
+	 *
+	 * @param mangled the mangled string
+	 * @param options the options
+	 * @return true if the string should not be demangled
+	 */
 	private boolean skip(String mangled, GnuDemanglerOptions options) {
 
 		// Ignore versioned symbols which are generally duplicated at the same address
@@ -179,36 +190,29 @@ public class GnuDemangler implements Demangler {
 			return false; // let it go through
 		}
 
-		// TODO provide some checks specific to the other formats
-		GnuDemanglerFormat format = options.getDemanglerFormat();
-		if (format == GnuDemanglerFormat.AUTO) {
+		// This is the current list of known demangler start patterns.  Add to this list if we
+		// find any other known GNU start patterns.
+		if (mangled.startsWith("_Z")) {
 			return false;
 		}
-		if (format == GnuDemanglerFormat.GNUV3) {
-			// add to this list if we find any other known GNU start patterns
-			if (mangled.startsWith("_Z")) {
-				return false;
-			}
-			if (mangled.startsWith("__Z")) {
-				return false;
-			}
-			if (mangled.startsWith("h__")) {
-				return false; // not sure about this one
-			}
-			if (mangled.startsWith("?")) {
-				return false; // not sure about this one
-			}
-			if (isGnu2Or3Pattern(mangled)) {
-				return false;
-			}
+		if (mangled.startsWith("__Z")) {
+			return false;
+		}
+		if (mangled.startsWith("h__")) {
+			return false; // not sure about this one
+		}
+		if (mangled.startsWith("?")) {
+			return false; // not sure about this one
+		}
+		if (isGnu2Or3Pattern(mangled)) {
+			return false;
 		}
 
 		return true;
 	}
 
 	private DemangledObject parse(String mangled, GnuDemanglerNativeProcess process,
-			String demangled,
-			boolean demangleOnlyKnownPatterns) {
+			String demangled, boolean demangleOnlyKnownPatterns) {
 
 		if (demangleOnlyKnownPatterns && !isKnownMangledString(mangled, demangled)) {
 			return null;
@@ -224,7 +228,7 @@ public class GnuDemangler implements Demangler {
 		// We get requests to demangle strings that are not mangled.   For newer mangled strings
 		// we know how to avoid that.  However, older mangled strings can be of many forms.  To
 		// detect whether a string is mangled, we have to resort to examining the output of
-		// the demangler.  
+		// the demangler.
 		//
 
 		// check for the case where good strings have '__' in them (which is valid GNU2 mangling)

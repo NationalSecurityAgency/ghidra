@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -896,9 +896,9 @@ public class GnuDemanglerParser {
 		/*
 			Note: really, this should just be checking a list of known disallowed characters,
 				  which is something like:
-
+		
 				  <,>,(,),&,*,[,]
-
+		
 		 		  It seems like the current code below is unnecessarily restrictive
 		 */
 
@@ -1187,9 +1187,9 @@ public class GnuDemanglerParser {
 
 		/*
 		 	Examples:
-
+		
 		 		NS1::Function<>()::StructureName::StructureConstructor()
-
+		
 		 */
 
 		String nameString = removeBadSpaces(demangled).trim();
@@ -1353,7 +1353,7 @@ public class GnuDemanglerParser {
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledString demangledString = new DemangledString(mangledSource, demangledSource,
 				"typeinfo-name", type, -1/*unknown length*/, false);
-			demangledString.setSpecialPrefix("typeinfo name for ");
+			demangledString.setSpecialPrefix(TYPEINFO_NAME_FOR);
 			String namespaceString = removeBadSpaces(type);
 			setNamespace(demangledString, namespaceString);
 			return demangledString;
@@ -1372,13 +1372,13 @@ public class GnuDemanglerParser {
 			 Samples:
 			 	 prefix: construction vtable for
 			 	 name:   construction-vtable
-
+			
 			 	 prefix: vtable for
 			 	 name:   vtable
-
+			
 			 	 prefix: typeinfo name for
 			 	 name:   typeinfo-name
-
+			
 			 	 prefix: covariant return thunk
 			 	 name:   covariant-return
 			*/

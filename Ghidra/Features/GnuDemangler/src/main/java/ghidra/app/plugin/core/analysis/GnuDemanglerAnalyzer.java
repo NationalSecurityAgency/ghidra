@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 
+import docking.options.editor.BooleanEditor;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.gnu.*;
 import ghidra.app.util.importer.MessageLog;
@@ -26,10 +27,8 @@ import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 
-import docking.options.editor.BooleanEditor;
-
 /**
- * A version of the demangler analyzer to handle GNU GCC symbols 
+ * A version of the demangler analyzer to handle GNU GCC symbols
  */
 public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
@@ -87,12 +86,12 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
-		
+
 		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
 			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER, editor);
-		
-		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE,
-			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
+
+		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE, demanglerFormat,
+			help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
 	}
 
 	@Override
@@ -102,7 +101,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
 		useDeprecatedDemangler =
-				options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
+			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
 	}
 
 	@Override
@@ -118,7 +117,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	@Override
 	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOtions,
 			MessageLog log) throws DemangledException {
-		return demangler.demangle(mangled, (GnuDemanglerOptions) demanglerOtions);
+		return demangler.demangle(mangled, demanglerOtions);
 	}
 
 	private static class FormatEditor extends EnumEditor implements PropertyChangeListener {
@@ -145,16 +144,16 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		@Override
 		public GnuDemanglerFormat[] getEnums() {
 			return Arrays.stream(GnuDemanglerFormat.values())
-				.filter(this::filter)
-				.toArray(GnuDemanglerFormat[]::new);
+					.filter(this::filter)
+					.toArray(GnuDemanglerFormat[]::new);
 		}
 
 		@Override
 		public String[] getTags() {
 			return Arrays.stream(GnuDemanglerFormat.values())
-				.filter(this::filter)
-				.map(GnuDemanglerFormat::name)
-				.toArray(String[]::new);
+					.filter(this::filter)
+					.map(GnuDemanglerFormat::name)
+					.toArray(String[]::new);
 		}
 
 		@Override
@@ -164,7 +163,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			if (format.isAvailable(isDeprecatedDemangler())) {
 				setValue(format);
 				selector.setFormat(format);
-			} else {
+			}
+			else {
 				setValue(GnuDemanglerFormat.AUTO);
 			}
 		}
@@ -178,18 +178,16 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		}
 	}
 
-	@SuppressWarnings("serial")
 	private static class FormatSelector extends PropertySelector {
 
 		public FormatSelector(FormatEditor fe) {
 			super(fe);
 		}
 
-		@SuppressWarnings("unchecked")
 		void reset(String[] tags) {
 			removeAllItems();
-			for (int i = 0; i < tags.length; i++) {
-				addItem(tags[i]);
+			for (String tag : tags) {
+				addItem(tag);
 			}
 		}
 
@@ -200,6 +198,6 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		void setFormat(GnuDemanglerFormat format) {
 			setSelectedItem(format.name());
 		}
-		
+
 	}
 }

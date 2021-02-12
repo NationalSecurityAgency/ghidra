@@ -46,26 +46,45 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	private final GnuDemanglerFormat format;
 	private final boolean isDeprecated;
 
+	/**
+	 * Default constructor to use the modern demangler with auto-detect for the format.  This
+	 * constructor will limit demangling to only known symbols.
+	 */
 	public GnuDemanglerOptions() {
-		// use default values
 		this(GnuDemanglerFormat.AUTO);
 	}
 
+	/**
+	 * Constructor to specify a particular format
+	 *
+	 * @param format signals to use the given format
+	 */
 	public GnuDemanglerOptions(GnuDemanglerFormat format) {
-		this.format = format;
-		// default to the "new" demangler if the format is available in both
-		this.isDeprecated = !format.isModernFormat();
+		this(format, !format.isModernFormat());
 	}
 
+	/**
+	 * Constructor to specify the format to use and whether to prefer the deprecated format when
+	 * both deprecated and modern are available
+	 *
+	 * @param format the format
+	 * @param isDeprecated true if the format is not available in the modern demangler
+	 * @throws IllegalArgumentException if the given format is not available in the deprecated
+	 *         demangler
+	 */
 	public GnuDemanglerOptions(GnuDemanglerFormat format, boolean isDeprecated) {
 		this.format = format;
 		this.isDeprecated = isDeprecated;
 		if (!format.isAvailable(isDeprecated)) {
 			throw new IllegalArgumentException(
-				format.name() + " is not available in the "+getDemanglerName());
+				format.name() + " is not available in the " + getDemanglerName());
 		}
 	}
 
+	/**
+	 * Copy constructor to create a version of this class from a more generic set of options
+	 * @param copy the options to copy
+	 */
 	public GnuDemanglerOptions(DemanglerOptions copy) {
 		super(copy);
 
@@ -73,7 +92,8 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 			GnuDemanglerOptions gCopy = (GnuDemanglerOptions) copy;
 			format = gCopy.format;
 			isDeprecated = gCopy.isDeprecated;
-		} else {
+		}
+		else {
 			format = GnuDemanglerFormat.AUTO;
 			isDeprecated = false;
 		}
@@ -87,7 +107,7 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	}
 
 	/**
-	 * Returns the external demangler executable name to be used for demangling.  The 
+	 * Returns the external demangler executable name to be used for demangling.  The
 	 * default value is {@link #GNU_DEMANGLER_DEFAULT}.
 	 * @return the name
 	 */
@@ -96,24 +116,25 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	}
 
 	/**
-	 * A convenience method to copy the state of this options object, changing the 
-	 * demangler executable name and demangler format to the specified values.
-	 * @param format the demangling format to use
-	 * @param isDeprecated true to use the deprecated gnu demangler, else false
+	 * A convenience method to copy the state of this options object, changing the
+	 * demangler executable name and demangler format to the specified values
+	 *
+	 * @param demanglerFormat the demangling format to use
+	 * @param useDeprecated true to use the deprecated gnu demangler, else false
 	 * @return the new options
 	 * @throws IllegalArgumentException if the current format is not available in the
 	 * selected demangler.
 	 */
-	public GnuDemanglerOptions withDemanglerFormat(GnuDemanglerFormat format, boolean isDeprecated)
-			throws IllegalArgumentException {
-		if (this.format == format && this.isDeprecated == isDeprecated) {
+	public GnuDemanglerOptions withDemanglerFormat(GnuDemanglerFormat demanglerFormat,
+			boolean useDeprecated) throws IllegalArgumentException {
+		if (this.format == demanglerFormat && this.isDeprecated == useDeprecated) {
 			return this;
 		}
-		if (format.isAvailable(isDeprecated)) {
-			return new GnuDemanglerOptions(this, format, isDeprecated);
+		if (demanglerFormat.isAvailable(useDeprecated)) {
+			return new GnuDemanglerOptions(this, demanglerFormat, useDeprecated);
 		}
 		throw new IllegalArgumentException(
-			format.name() + " is not available in the "+getDemanglerName());
+			demanglerFormat.name() + " is not available in the " + getDemanglerName());
 	}
 
 	/**

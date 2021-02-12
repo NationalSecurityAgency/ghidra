@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,8 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		// this throws an exception with the bug in place
 		try {
 			demangler.demangle(mangled);
-		} catch (DemangledException e) {
+		}
+		catch (DemangledException e) {
 			assertTrue(e.isInvalidMangledName());
 		}
 	}
@@ -167,10 +168,10 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 
 		/*
 		 						Note:
-			This test is less of a requirement and more of an observation.   This symbol was 
+			This test is less of a requirement and more of an observation.   This symbol was
 			seen in the wild and is claimed to be of the Edison Design Group (EDG) format.
 			It fails our parsing due to its resemblance to non-mangled text (see
-			the test testNonMangledSymbol()).   If we update the code that checks for this 
+			the test testNonMangledSymbol()).   If we update the code that checks for this
 			noise, then this test and it's parter should be consolidated.
 		 */
 
@@ -185,6 +186,22 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_False()
+			throws DemangledException {
+
+		String mangled = "_$_10MyFunction";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
+		options.setDemangleOnlyKnownPatterns(false);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
+	}
+
+	@Test
 	public void testDemangler_Format_CodeWarrior_MacOS8or9() throws DemangledException {
 		// NOTE: mangled CodeWarrior format symbols with templates will fail
 		// This is because the GNU demangler does not support CodeWarrior
@@ -196,6 +213,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangler.canDemangle(program);// this perform initialization
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
+		options.setDemangleOnlyKnownPatterns(false);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined TTextPanel::scroll(unsigned char,short,int)",

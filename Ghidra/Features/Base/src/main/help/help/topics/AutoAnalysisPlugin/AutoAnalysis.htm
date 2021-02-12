@@ -386,10 +386,7 @@
 			<U><B>Use Deprecated Demangler</B></U> -
 				By default, GCC symbols will be demangled using the most up-to-date demangler
 				that Ghidra contains (<B>version 2.33.1</B> as of this writing).   Turning this 
-				option on will also invoke the now deprecated previous version of the demangler
-				(<B>version 2.24</B>) if the preferred demangler cannot demangle a given symbol.
-				  This option only has an effect when the demangler format is available in both
-				the deprecated and modern demanglers.
+				option on will invoke the now deprecated version of the demangler (<B>version 2.24</B>).
 		</P>
 		<P>	
 				Support for older demangling styles was removed in <CODE>c++filt (v2.32)</CODE>.
@@ -402,10 +399,15 @@
 				<P>
 				The available programs are:
 					<UL>
-						<LI><CODE>demangler_gnu_v2_33_1</CODE></LI>
-						<LI><CODE>demangler_gnu_v2_24</CODE></LI>
+						<LI><CODE CLASS="path">
+					&lt;GHIDRA_INSTALL_DIR&gt;/GPL/DemanglerGnu/os/&lt;OS&gt;/
+					</CODE><CODE>demangler_gnu_v2_33_1</CODE></LI>
+						<LI><CODE CLASS="path">
+					&lt;GHIDRA_INSTALL_DIR&gt;/GPL/DemanglerGnu/os/&lt;OS&gt;/
+					</CODE><CODE>demangler_gnu_v2_24</CODE></LI>
 					</UL>	
 				</P>
+
 				<P style="background-color: #FFF0E0;">
 					<IMG SRC="../../shared/warning.png" />When using an external GNU demangler, 
 					please understand the risks associated with using that version of the 
