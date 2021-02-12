@@ -46,7 +46,7 @@ public class MachHeader implements StructConverter {
 	private long _commandIndex;
 	private FactoryBundledWithBinaryReader _reader;
 	private long _machHeaderStartIndexInProvider;
-	private long _machHeaderStartIndex;
+	private long _machHeaderStartIndex = 0;
 	private boolean _parsed = false;
 
 	/**
