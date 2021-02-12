@@ -17,6 +17,7 @@ package ghidra.util.datastruct;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.cache.*;
@@ -49,6 +50,13 @@ import ghidra.util.Msg;
  * @param <V> the type of listeners
  */
 public class ListenerMap<K, P, V extends P> {
+	public static final Executor CALLING_THREAD = new Executor() {
+		@Override
+		public void execute(Runnable command) {
+			command.run();
+		}
+	};
+
 	protected static final AtomicReference<Throwable> firstExc = new AtomicReference<>();
 
 	protected static void reportError(Object listener, Throwable e) {
@@ -107,27 +115,25 @@ public class ListenerMap<K, P, V extends P> {
 				if (!ext.isAssignableFrom(l.getClass())) {
 					continue;
 				}
-				try {
-					method.invoke(l, args);
-				}
-				catch (InvocationTargetException e) {
-					Throwable cause = e.getCause();
-					for (Class<?> excCls : method.getExceptionTypes()) {
-						if (excCls.isInstance(e)) {
-							throw cause;
-						}
+				executor.execute(() -> {
+					try {
+						method.invoke(l, args);
 					}
-					reportError(l, cause);
-				}
-				catch (Throwable e) {
-					reportError(l, e);
-				}
+					catch (InvocationTargetException e) {
+						Throwable cause = e.getCause();
+						reportError(l, cause);
+					}
+					catch (Throwable e) {
+						reportError(l, e);
+					}
+				});
 			}
 			return null; // TODO: Assumes void return type
 		}
 	}
 
 	private final Class<P> iface;
+	private final Executor executor;
 	private Map<K, V> map = createMap();
 
 	/**
@@ -146,11 +152,29 @@ public class ListenerMap<K, P, V extends P> {
 	 * <P>
 	 * The values in the map must implement the same interface.
 	 * 
+	 * <P>
+	 * Callbacks will be serviced by the invoking thread. This may be risking if the invoking thread
+	 * is "precious" to the invoker. There is no guarantee callbacks into client code will complete
+	 * in a timely fashion.
+	 * 
+	 * @param iface the interface to multiplex
+	 */
+	public ListenerMap(Class<P> iface) {
+		this(iface, CALLING_THREAD);
+	}
+
+	/**
+	 * Construct a new map whose proxy implements the given interface
+	 * 
+	 * <P>
+	 * The values in the map must implement the same interface.
+	 * 
 	 * @param iface the interface to multiplex
 	 */
 	@SuppressWarnings("unchecked")
-	public ListenerMap(Class<P> iface) {
+	public ListenerMap(Class<P> iface, Executor executor) {
 		this.iface = Objects.requireNonNull(iface);
+		this.executor = executor;
 		this.fire = (P) Proxy.newProxyInstance(this.getClass().getClassLoader(),
 			new Class[] { iface }, new ListenerHandler<>(iface));
 	}

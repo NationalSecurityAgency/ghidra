@@ -55,11 +55,11 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 
 	protected boolean valid = true;
 
-	protected final ListenerSet<TargetObjectListener> listeners =
-		new ListenerSet<>(TargetObjectListener.class);
+	protected final ListenerSet<TargetObjectListener> listeners;
 
 	public AbstractTargetObject(DebuggerObjectModel model, P parent, String key, String typeHint,
 			TargetObjectSchema schema) {
+		this.listeners = new ListenerSet<>(TargetObjectListener.class, model.getClientExecutor());
 		this.model = model;
 		this.parent = parent;
 		this.completedParent = CompletableFuture.completedFuture(parent);

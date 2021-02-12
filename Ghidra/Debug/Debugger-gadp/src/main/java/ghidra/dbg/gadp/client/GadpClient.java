@@ -20,8 +20,7 @@ import java.io.IOException;
 import java.lang.ref.Cleaner;
 import java.nio.channels.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -273,8 +272,9 @@ public class GadpClient implements DebuggerObjectModel {
 	protected XmlSchemaContext schemaContext;
 	protected TargetObjectSchema rootSchema;
 
+	protected final Executor clientExecutor = Executors.newSingleThreadExecutor();
 	protected final ListenerSet<DebuggerModelListener> listenersClient =
-		new ListenerSet<>(DebuggerModelListener.class);
+		new ListenerSet<>(DebuggerModelListener.class, clientExecutor);
 	protected final TriConsumer<ChannelState, ChannelState, DebuggerModelClosedReason> listenerForChannelState =
 		this::channelStateChanged;
 	protected final MessagePairingCache messageMatcher = new MessagePairingCache();
@@ -835,5 +835,10 @@ public class GadpClient implements DebuggerObjectModel {
 		for (GadpClientTargetObject proxy : copy) {
 			proxy.getDelegate().doClearCaches();
 		}
+	}
+
+	@Override
+	public Executor getClientExecutor() {
+		return clientExecutor;
 	}
 }

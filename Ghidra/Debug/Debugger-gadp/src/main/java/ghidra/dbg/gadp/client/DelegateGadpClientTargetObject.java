@@ -195,8 +195,7 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	private final List<Class<? extends TargetObject>> ifaces;
 	private final GadpEventHandlerMap eventHandlers;
 	private final GadpAttributeChangeCallbackMap attributeChangeCallbacks;
-	protected final ListenerSet<TargetObjectListener> listeners =
-		new ListenerSet<>(TargetObjectListener.class);
+	protected final ListenerSet<TargetObjectListener> listeners;
 
 	// TODO: Use path element comparators?
 	protected final Map<String, TargetObjectRef> elements = new TreeMap<>();
@@ -210,6 +209,7 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	public DelegateGadpClientTargetObject(GadpClient client, List<String> path, String typeHint,
 			List<String> ifaceNames, List<Class<? extends TargetObject>> ifaces,
 			List<Class<? extends TargetObject>> mixins) {
+		this.listeners = new ListenerSet<>(TargetObjectListener.class, client.getClientExecutor());
 		this.state = new ProxyState(client, path);
 		this.hash = computeHashCode();
 		this.cleanable = GadpClient.CLEANER.register(this, state);

@@ -16,6 +16,7 @@
 package ghidra.util.datastruct;
 
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
@@ -26,6 +27,7 @@ import com.google.common.cache.RemovalNotification;
  * @param <E> the type of multiplexed listeners
  */
 public class ListenerSet<E> {
+	public static final Executor CALLING_THREAD = ListenerMap.CALLING_THREAD;
 	private final ListenerMap<E, E, E> map;
 
 	/**
@@ -36,10 +38,25 @@ public class ListenerSet<E> {
 	/**
 	 * Construct a new set whose elements and proxy implement the given interface
 	 * 
+	 * <p>
+	 * Callbacks will be serviced by the invoking thread. This may be risking if the invoking thread
+	 * is "precious" to the invoker. There is no guarantee callbacks into client code will complete
+	 * in a timely fashion.
+	 * 
 	 * @param iface the interface to multiplex
 	 */
 	public ListenerSet(Class<E> iface) {
-		map = new ListenerMap<E, E, E>(iface) {
+		this(iface, CALLING_THREAD);
+	}
+
+	/**
+	 * Construct a new set whose elements and proxy implement the given interface
+	 * 
+	 * @param iface the interface to multiplex
+	 * @param executor an executor for servicing callbacks
+	 */
+	public ListenerSet(Class<E> iface, Executor executor) {
+		map = new ListenerMap<E, E, E>(iface, executor) {
 			@Override
 			protected Map<E, E> createMap() {
 				return ListenerSet.this.createMap();

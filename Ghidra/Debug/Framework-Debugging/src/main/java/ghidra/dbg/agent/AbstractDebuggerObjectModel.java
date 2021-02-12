@@ -15,12 +15,16 @@
  */
 package ghidra.dbg.agent;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.util.datastruct.ListenerSet;
 
 public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectModel {
+	protected final Executor clientExecutor = Executors.newSingleThreadExecutor();
 	protected final ListenerSet<DebuggerModelListener> listeners =
-		new ListenerSet<>(DebuggerModelListener.class);
+		new ListenerSet<>(DebuggerModelListener.class, clientExecutor);
 
 	@Override
 	public void addModelListener(DebuggerModelListener listener) {
@@ -30,5 +34,10 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	@Override
 	public void removeModelListener(DebuggerModelListener listener) {
 		listeners.remove(listener);
+	}
+
+	@Override
+	public Executor getClientExecutor() {
+		return clientExecutor;
 	}
 }

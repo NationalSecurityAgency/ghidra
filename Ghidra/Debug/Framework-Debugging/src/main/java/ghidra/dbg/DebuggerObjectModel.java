@@ -18,6 +18,7 @@ package ghidra.dbg;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -501,4 +502,11 @@ public interface DebuggerObjectModel {
 			Msg.error(origin, message, ex);
 		}
 	}
+
+	/**
+	 * Get the executor used to invoke client callback routines
+	 * 
+	 * @return the executor
+	 */
+	Executor getClientExecutor();
 }
