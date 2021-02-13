@@ -62,19 +62,8 @@ public class ApplicationUtilities {
 				while (pathFile != null && pathFile.exists()) {
 					ResourceFile applicationPropertiesFile =
 						new ResourceFile(pathFile, ApplicationProperties.PROPERTY_FILE);
-					if (applicationPropertiesFile.exists()) {
-						try {
-							ApplicationProperties applicationProperties =
-								new ApplicationProperties(applicationPropertiesFile);
-							if (!applicationProperties.getApplicationName().isEmpty()) {
-								return pathFile;
-							}
-						}
-						catch (IOException e2) {
-							Msg.error(ApplicationUtilities.class,
-								"Failed to read: " + applicationPropertiesFile, e2);
-							break;
-						}
+					if (validateApplicationPropertiesFile(applicationPropertiesFile)) {
+						return pathFile;
 					}
 					pathFile = pathFile.getParentFile();
 				}
@@ -84,6 +73,31 @@ public class ApplicationUtilities {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Checks to make sure the given application properties file exists and is a valid format
+	 * 
+	 * @param applicationPropertiesFile The application properties file to validate
+	 * @return true if the given application properties file exists and is a valid format;
+	 *   otherwise, false
+	 */
+	private static boolean validateApplicationPropertiesFile(
+			ResourceFile applicationPropertiesFile) {
+		if (applicationPropertiesFile.isFile()) {
+			try {
+				ApplicationProperties applicationProperties =
+					new ApplicationProperties(applicationPropertiesFile);
+				if (!applicationProperties.getApplicationName().isEmpty()) {
+					return true;
+				}
+			}
+			catch (IOException e) {
+				Msg.error(ApplicationUtilities.class,
+					"Failed to read: " + applicationPropertiesFile, e);
+			}
+		}
+		return false;
 	}
 
 	/**
