@@ -1747,7 +1747,7 @@ fcc: "sne"	is fcode=0x1e			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
 
 @define FormatByteWordLongSimple "( ffmt=0 | ffmt=1 | ffmt=4 | ffmt=6 )"
 
-# The following constraint should be used when using fprec (ffmt=7 is not valid) 
+# The following constraint should be used when using fprec
 @define FPREC_BWLS "fprec & ( ffmt=0 | ffmt=1 | ffmt=4 | ffmt=6 )" # Byte,Word,Long,Simple only
 @define FPREC_DXP "fprec & ( ffmt=2 | ffmt=3 | ffmt=5)" # Double,Extended,Packed only
 @define FPREC_XP "fprec & ( ffmt=2 | ffmt=3)" # Extended,Packed only
@@ -1764,6 +1764,7 @@ fprec: "p"                  is ffmt=3              {}
 fprec: "w"                  is ffmt=4              {}
 fprec: "d"                  is ffmt=5              {}
 fprec: "b"                  is ffmt=6              {}
+fprec: "p"                  is ffmt=7              {}
 
 
 :fabs.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x18; e2l  
