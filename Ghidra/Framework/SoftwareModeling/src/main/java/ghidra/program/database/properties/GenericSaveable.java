@@ -39,9 +39,17 @@ public class GenericSaveable implements Saveable {
 	 * @param record the saveable's record.
 	 * @param schema the saveable's database table's schema.
 	 */
-	GenericSaveable(Record record, Schema schema) {
+	public GenericSaveable(Record record, Schema schema) {
 		this.record = record;
 		this.schema = schema;
+	}
+
+	
+	/*
+	 * Retrieve the Record saved within.
+	*/
+	public Record getRecord() {
+		return record;
 	}
 
 	@Override
