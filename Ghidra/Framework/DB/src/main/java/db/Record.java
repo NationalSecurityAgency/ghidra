@@ -44,7 +44,7 @@ public class Record implements Comparable<Record> {
 	 * @param key primary key value
 	 * @param schema
 	 */
-	Record(Field key, Field[] fieldValues) {
+	public Record(Field key, Field[] fieldValues) {
 		this.key = key;
 		this.fieldValues = fieldValues;
 	}
