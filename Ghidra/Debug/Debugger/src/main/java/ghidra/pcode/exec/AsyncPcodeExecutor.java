@@ -24,6 +24,20 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
+/**
+ * An executor which can perform (some of) its work asynchronously
+ * 
+ * <p>
+ * Note that a future returned from, e.g., {@link #executeAsync(SleighProgram, SleighUseropLibrary)}
+ * may complete before the computation has actually been performed. They complete when all of the
+ * operations have been scheduled, and the last future has been written into the state. (This
+ * typically happens when any branch conditions have completed). Instead, a caller should read from
+ * the async state, which will return a future. The state will ensure that future does not complete
+ * until the computation has been performed -- assuming the requested variable actually depends on
+ * that computation.
+ * 
+ * @param <T> the type of values in the state
+ */
 public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 	public AsyncPcodeExecutor(Language language, PcodeArithmetic<CompletableFuture<T>> behavior,
 			PcodeExecutorStatePiece<CompletableFuture<T>, CompletableFuture<T>> state) {

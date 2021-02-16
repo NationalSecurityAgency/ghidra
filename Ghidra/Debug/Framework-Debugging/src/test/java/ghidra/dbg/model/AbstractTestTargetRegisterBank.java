@@ -57,7 +57,7 @@ public abstract class AbstractTestTargetRegisterBank<T extends AbstractTestTarge
 		return regs.getModel().future(result).thenApply(__ -> {
 			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, result);
 			return result;
-		});
+		}).thenCompose(model::gateFuture);
 	}
 
 	protected CompletableFuture<Void> writeRegs(Map<String, byte[]> values,
@@ -81,7 +81,7 @@ public abstract class AbstractTestTargetRegisterBank<T extends AbstractTestTarge
 		}
 		future.thenAccept(__ -> {
 			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, updates);
-		});
+		}).thenCompose(model::gateFuture);
 		return future;
 	}
 

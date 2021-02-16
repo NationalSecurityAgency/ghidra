@@ -509,4 +509,39 @@ public interface DebuggerObjectModel {
 	 * @return the executor
 	 */
 	Executor getClientExecutor();
+
+	/**
+	 * Ensure that dependent computations occur on the client executor
+	 * 
+	 * <p>
+	 * This also preserves scheduling order on the executor. Using just
+	 * {@link CompletableFuture#thenApplyAsync(java.util.function.Function)} makes no guarantees
+	 * about execution order, because that invocation could occur before invocations in the chained
+	 * actions. This one instead uses
+	 * {@link CompletableFuture#thenCompose(java.util.function.Function)} to schedule a final action
+	 * which performs the actual completion via the executor.
+	 * 
+	 * @param <T> the type of the future value
+	 * @param cf the future
+	 * @return a future gated via the client executor
+	 */
+	default <T> CompletableFuture<T> gateFuture(CompletableFuture<T> cf) {
+		return cf.thenCompose(this::gateFuture);
+	}
+
+	/**
+	 * Ensure that dependent computations occur on the client executor
+	 * 
+	 * <p>
+	 * Use as a method reference in a final call to
+	 * {@link CompletableFuture#thenCompose(java.util.function.Function)} to ensure the final stage
+	 * completes on the client executor.
+	 * 
+	 * @param <T> the type of the future value
+	 * @param v the value
+	 * @return a future while completes with the given value on the client executor
+	 */
+	default <T> CompletableFuture<T> gateFuture(T v) {
+		return CompletableFuture.supplyAsync(() -> v, getClientExecutor());
+	}
 }

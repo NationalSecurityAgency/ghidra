@@ -61,8 +61,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		Language language = trace.getBaseLanguage();
 
 		SleighExpression expr = SleighProgramCompiler
-				.compileExpression((SleighLanguage) language,
-					"r0 + r1");
+				.compileExpression((SleighLanguage) language, "r0 + r1");
 
 		AsyncPcodeExecutor<byte[]> executor =
 			new AsyncPcodeExecutor<>(language, AsyncWrappedPcodeArithmetic.forLanguage(language),
@@ -94,10 +93,12 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		SleighProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language, "test",
 			List.of("r2 = r0 + r1;"), SleighUseropLibrary.NIL);
 
-		AsyncPcodeExecutor<byte[]> executor =
-			new AsyncPcodeExecutor<>(language, AsyncWrappedPcodeArithmetic.forLanguage(language),
-				new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0));
+		TraceRecorderAsyncPcodeExecutorState asyncState =
+			new TraceRecorderAsyncPcodeExecutorState(recorder, recorder.getSnap(), thread, 0);
+		AsyncPcodeExecutor<byte[]> executor = new AsyncPcodeExecutor<>(
+			language, AsyncWrappedPcodeArithmetic.forLanguage(language), asyncState);
 		waitOn(executor.executeAsync(prog, SleighUseropLibrary.nil()));
+		waitOn(asyncState.getVar(language.getRegister("r2")));
 
 		assertEquals(BigInteger.valueOf(11), new BigInteger(1, regs.regVals.get("r2")));
 	}

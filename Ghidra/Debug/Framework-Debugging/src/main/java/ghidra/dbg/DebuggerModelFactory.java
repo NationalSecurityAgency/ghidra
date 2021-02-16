@@ -21,6 +21,7 @@ import ghidra.util.classfinder.ExtensionPoint;
 /**
  * A factory for a debugger model
  * 
+ * <p>
  * This provides a discoverable means of creating a debug model.
  */
 public interface DebuggerModelFactory

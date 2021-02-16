@@ -20,11 +20,12 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.Test;
 
 import generic.Unique;
+import ghidra.async.AsyncTestUtils;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
@@ -34,11 +35,8 @@ import ghidra.dbg.util.ElementsChangedListener.ElementsChangedInvocation;
 import ghidra.dbg.util.InvalidatedListener.InvalidatedInvocation;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.util.SystemUtilities;
 
-public class DefaultDebuggerObjectModelTest {
-	static final long TIMEOUT_MILLISECONDS =
-		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
+public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 	public static class FakeTargetObject extends DefaultTargetObject<TargetObject, TargetObject> {
 		public FakeTargetObject(DebuggerObjectModel model, TargetObject parent, String name) {
@@ -89,15 +87,6 @@ public class DefaultDebuggerObjectModelTest {
 		public CompletableFuture<TargetObject> fetchElement(String name) {
 			return CompletableFuture.supplyAsync(() -> null)
 					.thenCompose(v -> super.fetchElement(name));
-		}
-	}
-
-	protected static <T> T waitOn(CompletableFuture<T> future) throws Throwable {
-		try {
-			return future.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
-		}
-		catch (ExecutionException e) {
-			throw e.getCause();
 		}
 	}
 
@@ -187,6 +176,7 @@ public class DefaultDebuggerObjectModelTest {
 
 		PhonyTargetObject phonyA = new PhonyTargetObject(model, model.root, "A");
 		model.root.setAttributes(Map.of("A", phonyA), "Replace");
+		waitOn(model.clientExecutor);
 
 		// Object-valued attribute replacement requires prior removal 
 		assertSame(fakeA, waitOn(model.fetchModelObject("A")));
@@ -197,6 +187,7 @@ public class DefaultDebuggerObjectModelTest {
 		// TODO: Should I permit custom equality check?
 		model.root.setAttributes(Map.of(), "Clear");
 		model.root.setAttributes(Map.of("A", phonyA), "Replace");
+		waitOn(model.clientExecutor);
 
 		assertEquals(2, attrL.invocations.size());
 		AttributesChangedInvocation changed = attrL.invocations.get(0);

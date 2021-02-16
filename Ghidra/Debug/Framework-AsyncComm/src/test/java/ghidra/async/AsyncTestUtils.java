@@ -15,8 +15,7 @@
  */
 package ghidra.async;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import ghidra.util.SystemUtilities;
 
@@ -31,5 +30,9 @@ public interface AsyncTestUtils {
 		catch (Exception e) {
 			throw AsyncUtils.unwrapThrowable(e);
 		}
+	}
+
+	default void waitOn(Executor executor) throws Throwable {
+		waitOn(CompletableFuture.supplyAsync(() -> null, executor));
 	}
 }

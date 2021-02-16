@@ -32,15 +32,13 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 		CompletableFuture.delayedExecutor(DELAY_MILLIS, TimeUnit.MILLISECONDS);
 
 	enum FutureMode {
-		SYNC, ASYNC, DELAYED;
+		ASYNC, DELAYED;
 	}
 
 	protected final AddressSpace ram =
 		new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
 	protected final AddressFactory factory = new DefaultAddressFactory(new AddressSpace[] { ram });
 	public final TestTargetSession session;
-
-	protected TestDebuggerObjectModel.FutureMode futureMode = FutureMode.SYNC;
 
 	protected int invalidateCachesCount;
 
@@ -78,15 +76,7 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 	}
 
 	public <T> CompletableFuture<T> future(T t) {
-		switch (futureMode) {
-			case SYNC:
-				return CompletableFuture.completedFuture(t);
-			case ASYNC:
-				return CompletableFuture.supplyAsync(() -> t);
-			case DELAYED:
-				return CompletableFuture.supplyAsync(() -> t, DELAYED_EXECUTOR);
-		}
-		throw new AssertionError();
+		return CompletableFuture.supplyAsync(() -> t, getClientExecutor());
 	}
 
 	public CompletableFuture<Void> requestFocus(TargetObjectRef obj) {

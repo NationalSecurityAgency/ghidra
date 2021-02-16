@@ -64,7 +64,7 @@ public class TestTargetSession extends DefaultTargetModelRoot
 				FOCUS_ATTRIBUTE_NAME, obj //
 			), "Focus requested");
 			listeners.fire(TargetFocusScopeListener.class).focusChanged(this, obj);
-		});
+		}).thenCompose(model::gateFuture);
 	}
 
 	public void simulateStep(TestTargetThread eventThread) {

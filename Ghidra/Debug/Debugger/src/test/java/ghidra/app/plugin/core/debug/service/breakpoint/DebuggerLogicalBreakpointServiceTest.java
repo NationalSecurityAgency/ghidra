@@ -35,6 +35,7 @@ import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.util.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -49,7 +50,8 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerMap;
 
-public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest
+		implements DebuggerModelTestUtils {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -1261,7 +1263,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	}
 
 	@Test
-	public void testPlaceDisableStepThenEnableTraceOnly() throws Exception {
+	public void testPlaceDisableStepThenEnableTraceOnly() throws Throwable {
 		startRecorder1();
 		Trace trace = recorder1.getTrace();
 		traceManager.openTrace(trace);
@@ -1274,24 +1276,25 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace);
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
-		lb.disable();
+		waitOn(lb.disable());
 		waitForDomainObject(trace);
 		assertEquals(Enablement.DISABLED, lb.computeEnablement());
 
 		// Simulate a step, which should also cause snap advance in recorder
 		long oldSnap = recorder1.getSnap();
 		mb.testModel.session.simulateStep(mb.testThread1);
+		waitOn(mb.testModel.getClientExecutor());
 		assertEquals(oldSnap + 1, recorder1.getSnap());
 
 		assertEquals(Enablement.DISABLED, lb.computeEnablement());
 
-		lb.enable();
+		waitOn(lb.enable());
 		waitForDomainObject(trace);
 		assertEquals(Enablement.ENABLED, lb.computeEnablement());
 	}
 
 	@Test
-	public void testDeleteBreakpointTraceOnly() throws Exception {
+	public void testDeleteBreakpointTraceOnly() throws Throwable {
 		startRecorder1();
 		Trace trace = recorder1.getTrace();
 		traceManager.openTrace(trace);
@@ -1305,14 +1308,14 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
-		lb.delete();
+		waitOn(lb.delete());
 		waitForDomainObject(trace);
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
 
 	@Test
-	public void testPlaceStepThenDeleteBreakpointTraceOnly() throws Exception {
+	public void testPlaceStepThenDeleteBreakpointTraceOnly() throws Throwable {
 		startRecorder1();
 		Trace trace = recorder1.getTrace();
 		traceManager.openTrace(trace);
@@ -1329,9 +1332,10 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		// Simulate a step, which should also cause snap advance in recorder
 		long oldSnap = recorder1.getSnap();
 		mb.testModel.session.simulateStep(mb.testThread1);
+		waitOn(mb.testModel.getClientExecutor());
 		assertEquals(oldSnap + 1, recorder1.getSnap());
 
-		lb.delete();
+		waitOn(lb.delete());
 		waitForDomainObject(trace);
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());

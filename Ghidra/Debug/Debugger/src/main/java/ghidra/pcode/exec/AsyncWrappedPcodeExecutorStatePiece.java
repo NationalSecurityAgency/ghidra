@@ -52,8 +52,7 @@ public class AsyncWrappedPcodeExecutorStatePiece<A, T>
 	}
 
 	protected CompletableFuture<T> doGetVar(AddressSpace space, CompletableFuture<A> offset,
-			int size,
-			boolean truncateAddressableUnit) {
+			int size, boolean truncateAddressableUnit) {
 		return offset.thenApply(off -> {
 			return state.getVar(space, off, size, truncateAddressableUnit);
 		});

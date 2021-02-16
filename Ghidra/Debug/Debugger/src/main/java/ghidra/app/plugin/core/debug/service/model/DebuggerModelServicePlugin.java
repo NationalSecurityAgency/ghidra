@@ -60,18 +60,17 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo( //
-		shortDescription = "Debugger models manager service", //
-		description = "Manage debug sessions, connections, and trace recording", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.HIDDEN, //
-		servicesRequired = { //
-		}, //
-		servicesProvided = { //
-			DebuggerModelService.class, //
-		} //
-)
+@PluginInfo(
+	shortDescription = "Debugger models manager service",
+	description = "Manage debug sessions, connections, and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.HIDDEN,
+	servicesRequired = {
+	},
+	servicesProvided = {
+		DebuggerModelService.class,
+	})
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, FrontEndOnly {
 
@@ -125,6 +124,9 @@ public class DebuggerModelServicePlugin extends Plugin
 					this.root = r;
 				}
 				r.addListener(this.forRemoval);
+				if (!r.isValid()) {
+					forRemoval.invalidated(root, "Who knows?");
+				}
 				CompletableFuture<? extends TargetFocusScope<?>> findSuitable =
 					DebugModelConventions.findSuitable(TargetFocusScope.tclass, r);
 				return findSuitable;
@@ -132,7 +134,9 @@ public class DebuggerModelServicePlugin extends Plugin
 				synchronized (this) {
 					this.focusScope = fs;
 				}
-				fs.addListener(this.forFocus);
+				if (fs != null) {
+					fs.addListener(this.forFocus);
+				}
 			});
 		}
 
@@ -436,6 +440,10 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	@Override
 	public synchronized DebuggerObjectModel getCurrentModel() {
+		if (!currentModel.isAlive()) {
+			currentModel = null;
+
+		}
 		return currentModel;
 	}
 

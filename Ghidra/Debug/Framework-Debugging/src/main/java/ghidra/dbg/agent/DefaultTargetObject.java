@@ -163,7 +163,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			}
 			req = curElemsRequest;
 		}
-		return req.thenApply(__ -> getCachedElements());
+		return req.thenApply(__ -> getCachedElements()).thenCompose(model::gateFuture);
 	}
 
 	@Override
@@ -337,7 +337,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 				}
 				return getCachedAttributes();
 			}
-		});
+		}).thenCompose(model::gateFuture);
 	}
 
 	@Override

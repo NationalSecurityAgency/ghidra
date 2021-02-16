@@ -17,11 +17,17 @@ package ghidra.pcode.exec;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.Varnode;
 
 public interface PcodeExecutorStatePiece<A, T> {
 
 	A longToOffset(AddressSpace space, long l);
+
+	default void setVar(Register reg, T val) {
+		Address address = reg.getAddress();
+		setVar(address.getAddressSpace(), address.getOffset(), reg.getMinimumByteSize(), true, val);
+	}
 
 	default void setVar(Varnode var, T val) {
 		Address address = var.getAddress();
@@ -33,6 +39,12 @@ public interface PcodeExecutorStatePiece<A, T> {
 	default void setVar(AddressSpace space, long offset, int size, boolean truncateAddressableUnit,
 			T val) {
 		setVar(space, longToOffset(space, offset), size, truncateAddressableUnit, val);
+	}
+
+	default T getVar(Register reg) {
+		Address address = reg.getAddress();
+		return getVar(address.getAddressSpace(), address.getOffset(), reg.getMinimumByteSize(),
+			true);
 	}
 
 	default T getVar(Varnode var) {

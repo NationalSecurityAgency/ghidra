@@ -267,8 +267,8 @@ public class GadpClientServerTest {
 			return processes;
 		}
 
-		public void addLinks() {
-			assertNotNull(available.fetchElements().getNow(null));
+		public void addLinks() throws Throwable {
+			waitOn(available.fetchElements());
 			links.setElements(List.of(), Map.of(
 				"1", available.getCachedElements().get("2"),
 				"2", available.getCachedElements().get("1")),
@@ -309,7 +309,7 @@ public class GadpClientServerTest {
 			}
 			Object ret = method.testInvoke(invocation.getValue());
 			changeAttributes(List.of(), Map.of(name, ret), "Invoked " + name);
-			return CompletableFuture.completedFuture(ret);
+			return CompletableFuture.completedFuture(ret).thenCompose(model::gateFuture);
 		}
 
 		@Override
@@ -338,8 +338,7 @@ public class GadpClientServerTest {
 			implements TargetMethod<TestTargetMethod> {
 		private Function<String, ?> method;
 
-		public TestTargetMethod(TargetObject parent, String key,
-				Function<String, ?> method) {
+		public TestTargetMethod(TargetObject parent, String key, Function<String, ?> method) {
 			super(parent.getModel(), parent, key, "Method");
 			this.method = method;
 
@@ -401,8 +400,7 @@ public class GadpClientServerTest {
 		}
 
 		@Override
-		public CompletableFuture<Void> requestElements(
-				boolean refresh) {
+		public CompletableFuture<Void> requestElements(boolean refresh) {
 			setElements(List.of(
 				new TestGadpTargetAvailable(this, 1, "echo"),
 				new TestGadpTargetAvailable(this, 2, "dd")),
@@ -619,7 +617,7 @@ public class GadpClientServerTest {
 			TargetMethod<?> method = waitOn(methodRef.as(TargetMethod.tclass).fetch());
 			assertNotNull(method);
 			assertEquals("Hello, World!", waitOn(avail.fetchAttribute("greet(World)")));
-			runner.server.model.session.available.punct = '?';
+			runner.server.model.session.available.punct = '?'; // No effect before flush
 			assertEquals("Hello, World!", waitOn(avail.fetchAttribute("greet(World)")));
 
 			// Flush the cache
@@ -746,6 +744,7 @@ public class GadpClientServerTest {
 				(TargetObjectRef) attrs.get(TargetFocusScope.FOCUS_ATTRIBUTE_NAME);
 			// NOTE: Could be actual object, but need not be
 			assertEquals(List.of("Processes", "[0]"), ref.getPath());
+			waitOn(focusPath);
 			waitOn(client.close());
 
 			assertFalse(failed.get());
