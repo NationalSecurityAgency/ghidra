@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +96,7 @@ public abstract class AbstractCreateStructureCmd implements Command {
      * structure with data and then returning the data type object that 
      * represents the newly created structure.
      * 
-     * @param structureInfo The stucture info object that describes the newly
+     * @param structureInfo The structure info object that describes the newly
      *        created structure.
      * @return The new data type that represents the created structure.
      */
