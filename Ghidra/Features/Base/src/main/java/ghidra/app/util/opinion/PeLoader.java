@@ -35,6 +35,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -141,6 +142,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
+			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
 			processDebug(optionalHeader, fileHeader, sectionToAddress, program, monitor);
 			processProperties(optionalHeader, program, monitor);
@@ -446,6 +448,84 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
+	private void processDelayImports(OptionalHeader optionalHeader, Program program,
+			TaskMonitor monitor, MessageLog log) {
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("[" + program.getName() + "]: processing delay imports...");
+
+		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
+		if (dataDirectories.length <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT) {
+			return;
+		}
+
+		DelayImportDataDirectory didd =
+			(DelayImportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
+		if (didd == null) {
+			return;
+		}
+
+		log.appendMsg("Delay imports detected...");
+
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		Listing listing = program.getListing();
+		ReferenceManager refManager = program.getReferenceManager();
+		FunctionManager funcManager = program.getFunctionManager();
+
+		DelayImportDescriptor[] descriptors = didd.getDelayImportDescriptors();
+		for (DelayImportDescriptor descriptor : descriptors) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+
+			// Get address of the first entry in the import address table
+			Address iatBaseAddr = space.getAddress(descriptor.isUsingRVA()
+					? descriptor.getAddressOfIAT() + optionalHeader.getImageBase()
+					: descriptor.getAddressOfIAT());
+
+			for (ImportInfo importInfo : descriptor.getImportList()) {
+
+				// Get the offset from the import list. -1 is the default (no offset)
+				long offset = importInfo.getAddress();
+				if (offset < 0) {
+					break;
+				}
+
+				// Get address of current position in the import address table 
+				Address iatAddr = iatBaseAddr.add(offset);
+				Data iatData = listing.getDataAt(iatAddr);
+				if (iatData == null || !(iatData.getValue() instanceof Address)) {
+					continue;
+				}
+
+				// Create external reference
+				try {
+					refManager.addExternalReference(iatAddr, importInfo.getDLL(),
+						importInfo.getName(), null, SourceType.IMPORTED, 0, RefType.DATA);
+				}
+				catch (DuplicateNameException | InvalidInputException e) {
+					log.appendMsg(
+						"Failed to create Delay Load external function at: " + iatAddr);
+				}
+
+				// Create delay load proxy function
+				Address proxyFuncAddr = (Address) iatData.getValue();
+				if (funcManager.getFunctionAt(proxyFuncAddr) == null) {
+					try {
+						funcManager.createFunction("DelayLoad_" + importInfo.getName(),
+							proxyFuncAddr, new AddressSet(proxyFuncAddr), SourceType.IMPORTED);
+					}
+					catch (InvalidInputException | OverlappingFunctionException e) {
+						log.appendMsg(
+							"Failed to create Delay Load proxy function at: " + proxyFuncAddr);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Mark this location as code in the CodeMap.
 	 * The analyzers will pick this up and disassemble the code.
@@ -515,7 +595,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		AddressFactory af = program.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
 		SymbolTable symTable = program.getSymbolTable();
-		Memory memory = program.getMemory();
 		Listing listing = program.getListing();
 		ReferenceManager refManager = program.getReferenceManager();
 
@@ -593,7 +672,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	private Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
-			throws AddressOverflowException, IOException {
+			throws AddressOverflowException {
 
 		AddressFactory af = prog.getAddressFactory();
 		AddressSpace space = af.getDefaultAddressSpace();
