@@ -61,7 +61,7 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
-		options = options.withDeprecatedDemangler();
+		options = options.withDemanglerFormat(GnuDemanglerFormat.AUTO, true);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined MyNamespace::MyFunction($ParamNamespace::paramName *)",
@@ -86,7 +86,7 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
-		options = options.withDeprecatedDemangler();
+		options = options.withDemanglerFormat(GnuDemanglerFormat.AUTO, true);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined SoloGimbalEKF::{unnamed_type#1}::SoloGimbalEKF(void)",
@@ -116,7 +116,7 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
-		options = options.withDeprecatedDemangler();
+		options = options.withDemanglerFormat(GnuDemanglerFormat.AUTO, true);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals(
