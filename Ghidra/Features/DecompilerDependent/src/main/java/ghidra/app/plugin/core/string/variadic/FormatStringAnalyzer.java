@@ -42,9 +42,9 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 	private static final String[] VARIADIC_SUBSTRINGS = { "printf", "scanf" };
 	private static final String NAME = "Variadic Function Signature Override";
 	private static final String DESCRIPTION =
-		"Detects variadic function calls in the bodies of each function that intersect the" +
+		"Detects variadic function calls in the bodies of each function that intersect the " +
 			"current selection and parses their format string arguments to infer the correct " +
-			"signatures. Currently, this analyzer only supports printf, scanf, and thier variants " +
+			"signatures. Currently, this analyzer only supports printf, scanf, and their variants " +
 			"(e.g., snprintf, fscanf). If the current selection is empty, it searches through " +
 			"every function. Once the correct signatures are inferred, they are overridden.";
 	private final static boolean OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED = false;

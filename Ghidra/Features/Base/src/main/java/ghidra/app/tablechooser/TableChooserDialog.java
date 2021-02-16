@@ -112,8 +112,9 @@ public class TableChooserDialog extends DialogComponentProvider
 			navigatable.addNavigatableListener(this);
 			table.installNavigation(goToService, navigatable);
 		}
-		table.getSelectionModel().addListSelectionListener(
-			e -> setOkEnabled(table.getSelectedRowCount() > 0));
+		table.getSelectionModel()
+				.addListSelectionListener(
+					e -> setOkEnabled(table.getSelectedRowCount() > 0));
 
 		GhidraTableFilterPanel<AddressableRowObject> filterPanel =
 			new GhidraTableFilterPanel<>(table, model);
@@ -241,7 +242,8 @@ public class TableChooserDialog extends DialogComponentProvider
 		monitor.initialize(rowObjects.size());
 
 		try {
-			List<AddressableRowObject> deleted = doProcessRowObjects(rowObjects, monitor);
+			List<AddressableRowObject> deleted = doProcessRowsInTransaction(rowObjects, monitor);
+
 			for (AddressableRowObject rowObject : deleted) {
 				model.removeObject(rowObject);
 			}
@@ -254,8 +256,9 @@ public class TableChooserDialog extends DialogComponentProvider
 		}
 	}
 
-	private List<AddressableRowObject> doProcessRowObjects(List<AddressableRowObject> rowObjects,
+	private List<AddressableRowObject> doProcessRows(List<AddressableRowObject> rowObjects,
 			TaskMonitor monitor) {
+
 		List<AddressableRowObject> deleted = new ArrayList<>();
 		for (AddressableRowObject rowObject : rowObjects) {
 			if (monitor.isCancelled()) {
@@ -278,6 +281,18 @@ public class TableChooserDialog extends DialogComponentProvider
 		}
 
 		return deleted;
+	}
+
+	private List<AddressableRowObject> doProcessRowsInTransaction(
+			List<AddressableRowObject> rowObjects, TaskMonitor monitor) {
+
+		int tx = program.startTransaction("Table Chooser: " + getTitle());
+		try {
+			return doProcessRows(rowObjects, monitor);
+		}
+		finally {
+			program.endTransaction(tx, true);
+		}
 	}
 
 	public void addCustomColumn(ColumnDisplay<?> columnDisplay) {

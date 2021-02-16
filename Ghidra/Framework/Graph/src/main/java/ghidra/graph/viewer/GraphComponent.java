@@ -454,7 +454,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		mainStalePanel.setOpaque(false);
 
 		String tooltip = HTMLUtilities.toWrappedHTML("The block model of the function " +
-			"for this graph has changed.  Press the relyout button to refresh the layout." +
+			"for this graph has changed.  Press the relayout button to refresh the layout." +
 			"\n\n") + "<b>Note: </b>You can edit the graph " +
 			"options to have the graph update automatically.";
 
