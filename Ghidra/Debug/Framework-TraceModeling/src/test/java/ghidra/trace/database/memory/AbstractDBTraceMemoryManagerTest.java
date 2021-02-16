@@ -964,4 +964,23 @@ public abstract class AbstractDBTraceMemoryManagerTest
 				frame.getValue(0, r0).getUnsignedValue());
 		}
 	}
+
+	/**
+	 * This test is based on the MWE submitted in GitHub issue #2760.
+	 */
+	@Test
+	public void testManyStateEntries() throws Exception {
+		Register pc = toyLanguage.getRegister("pc");
+		DBTraceThread thread;
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
+			thread = trace.getThreadManager().addThread("Thread1", Range.atLeast(0L));
+			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+
+			for (int i = 1; i < 2000; i++) {
+				//System.err.println("Snap " + i);
+				regs.setState(i, pc, TraceMemoryState.KNOWN);
+				//regs.stateMapSpace.checkIntegrity();
+			}
+		}
+	}
 }

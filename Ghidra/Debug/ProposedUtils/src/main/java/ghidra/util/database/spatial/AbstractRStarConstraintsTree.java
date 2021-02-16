@@ -24,6 +24,23 @@ import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.database.spatial.DBTreeNodeRecord.NodeType;
 import ghidra.util.exception.VersionException;
 
+/**
+ * An R*-Tree implementation of {@link AbstractConstraintsTree}
+ * 
+ * <p>
+ * The implementation follows
+ * <a href="http://dbs.mathematik.uni-marburg.de/publications/myPapers/1990/BKSS90.pdf">The R*-tree:
+ * An Efficient and Robust Access Method for Points and Rectangles</a>. Comments in code referring
+ * to "the paper", specific sections, or steps of algorithms, are referring specifically to that
+ * paper.
+ * 
+ * @param <DS> The shape of each data entry
+ * @param <DR> The record type for each data entry
+ * @param <NS> The shape of each node
+ * @param <NR> The record type for each node
+ * @param <T> The type of value stored in a data entry
+ * @param <Q> The type of supported queries
+ */
 public abstract class AbstractRStarConstraintsTree< //
 		DS extends BoundedShape<NS>, //
 		DR extends DBTreeDataRecord<DS, NS, T>, //
@@ -169,6 +186,7 @@ public abstract class AbstractRStarConstraintsTree< //
 	 * For ChooseSubtree, the part which chooses a leaf node using the <em>nearly</em> minimum
 	 * overlap enlargement cost as defined in Section 4.1 of the paper, at the bottom of page 325.
 	 * 
+	 * <p>
 	 * Ties are resolved using the minimum area enlargement cost.
 	 * 
 	 * @param n the node whose children are leaf nodes
@@ -212,6 +230,7 @@ public abstract class AbstractRStarConstraintsTree< //
 	/**
 	 * Computes the overlap of a bounding shape (with respect to its siblings)
 	 * 
+	 * <p>
 	 * This measure is defined in Section 4.1 of the paper.
 	 * 
 	 * @param n the shape to measure
@@ -404,6 +423,33 @@ public abstract class AbstractRStarConstraintsTree< //
 		return bestIndex + minChildren;
 	}
 
+	protected static class LevelInfo {
+		int dstLevel;
+		long reinsertedLevels = 0; // MAX_LEVELS = 64
+
+		public LevelInfo(int dstLevel) {
+			this.dstLevel = dstLevel;
+		}
+
+		public boolean checkAndSetReinserted() {
+			if ((reinsertedLevels >> dstLevel & 0x1) != 0) {
+				return true;
+			}
+			reinsertedLevels |= (1 << dstLevel);
+			return false;
+		}
+
+		public LevelInfo decLevel() {
+			dstLevel--;
+			return this;
+		}
+
+		public void incDepth() {
+			dstLevel++;
+			reinsertedLevels <<= 1;
+		}
+	}
+
 	@Override
 	protected DR doInsertData(DS shape, T value) {
 		// ID1
@@ -411,15 +457,14 @@ public abstract class AbstractRStarConstraintsTree< //
 		entry.setParentKey(-1); // TODO: Probably unnecessary, except error recovery?
 		entry.setShape(shape);
 		entry.setRecordValue(value);
-		doInsert(entry, leafLevel, new BitSet(MAX_LEVELS));
+		doInsert(entry, new LevelInfo(leafLevel));
 		return entry;
 	}
 
 	// NOTE: entry may actually be a node
-	protected void doInsert(DBTreeRecord<?, ? extends NS> entry, int dstLevel,
-			BitSet reinsertedLevels) {
+	protected void doInsert(DBTreeRecord<?, ? extends NS> entry, LevelInfo levelInfo) {
 		// I1
-		NR node = doChooseSubtree(dstLevel, entry.getBounds());
+		NR node = doChooseSubtree(levelInfo.dstLevel, entry.getBounds());
 
 		// I2
 		if (node.getType() == NodeType.LEAF) {
@@ -453,15 +498,17 @@ public abstract class AbstractRStarConstraintsTree< //
 		// I3
 		NR split = null;
 		if (newChildCount > maxChildren) {
-			split = doOverflowTreatment(node, dstLevel, reinsertedLevels);
+			split = doOverflowTreatment(node, levelInfo);
 		}
+		// NOTE: Depth should never increase more than once per insert
+		int savedLevel = levelInfo.dstLevel;
 		for (NR propa = node, parent = getParentOf(propa); split != null; //
 				propa = parent, //
 				parent = getParentOf(propa), //
-				split = doOverflowTreatment(propa, --dstLevel, reinsertedLevels)) {
+				split = doOverflowTreatment(propa, levelInfo.decLevel())) {
 			if (parent == null) {
 				assert propa == root;
-				assert dstLevel == 0;
+				assert levelInfo.dstLevel == 0;
 				root = nodeStore.create();
 				root.setParentKey(-1);
 				cachedNodeChildren.put(root.getKey(), new ArrayList<>(maxChildren));
@@ -472,6 +519,8 @@ public abstract class AbstractRStarConstraintsTree< //
 				doSetParentKey(propa, root.getKey(), cachedNodeChildren);
 				doSetParentKey(split, root.getKey(), cachedNodeChildren);
 				leafLevel++;
+				levelInfo.dstLevel = savedLevel;
+				levelInfo.incDepth();
 				return;
 			}
 			newChildCount = parent.getChildCount() + 1;
@@ -480,20 +529,21 @@ public abstract class AbstractRStarConstraintsTree< //
 				break;
 			}
 		}
+		levelInfo.dstLevel = savedLevel;
 	}
 
-	protected NR doOverflowTreatment(NR n, int level, BitSet reinsertedLevels) {
+	protected NR doOverflowTreatment(NR n, LevelInfo levelInfo) {
 		// OT1
-		if (n != root && !reinsertedLevels.get(level)) {
-			reinsertedLevels.set(level);
-			doReInsert(n, level, reinsertedLevels);
+		if (n != root && !levelInfo.checkAndSetReinserted()) {
+			doReInsert(n, levelInfo);
 			return null;
 		}
 		return doSplit(n);
 	}
 
-	protected void doReInsert(NR n, int level, BitSet reinsertedLevels) {
+	protected void doReInsert(NR n, LevelInfo levelInfo) {
 		// RI1, RI2
+		// Create a "max heap"
 		PriorityQueue<LeastDistanceFromCenterToPoint> farthest = new PriorityQueue<>();
 		Iterator<? extends DBTreeRecord<?, ? extends NS>> it = getChildrenOf(n).iterator();
 		for (int i = 0; i < reinsertCount; i++) {
@@ -501,6 +551,12 @@ public abstract class AbstractRStarConstraintsTree< //
 			DBTreeRecord<?, ? extends NS> next = it.next();
 			farthest.add(new LeastDistanceFromCenterToPoint(next, n.getShape()));
 		}
+		/**
+		 * Now that the heap is sized "reinsertCount", after each new entry, I can remove the
+		 * nearest, knowing it can't possibly be selected for reinsertion. In the meantime, since I
+		 * know each removed entry will remain in its parent, I can compute the new bounds of the
+		 * parent.
+		 */
 		NS boundsNearest = null;
 		int dataCountNearest = 0;
 		while (it.hasNext()) {
@@ -537,7 +593,7 @@ public abstract class AbstractRStarConstraintsTree< //
 		// NOTE: I know all children will be processed before we could possibly cause a split of n
 		while (!farthest.isEmpty()) {
 			LeastDistanceFromCenterToPoint far = farthest.poll();
-			doInsert(far.record, level, reinsertedLevels);
+			doInsert(far.record, levelInfo);
 		}
 	}
 

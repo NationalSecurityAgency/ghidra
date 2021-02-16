@@ -627,6 +627,7 @@ public class RStarTreeMapTest {
 	}
 
 	public static class MyDomainObject extends DBCachedDomainObjectAdapter {
+		private static final int MAX_CHILDREN = 5;
 		private final DBCachedObjectStoreFactory storeFactory;
 		private final IntRStarTree tree;
 		private final SpatialMap<IntRect, String, IntRectQuery> map;
@@ -636,8 +637,8 @@ public class RStarTreeMapTest {
 				consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
 			try (UndoableTransaction tid = UndoableTransaction.start(this, "CreateMaps", true)) {
-				tree =
-					new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME, true, 5);
+				tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
+					true, MAX_CHILDREN);
 				map = tree.asSpatialMap();
 			}
 		}
@@ -647,7 +648,8 @@ public class RStarTreeMapTest {
 				1000, consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
 			// No transaction, as tree should already exist
-			tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME, true, 5);
+			tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
+				true, MAX_CHILDREN);
 			map = tree.asSpatialMap();
 		}
 
@@ -898,6 +900,20 @@ public class RStarTreeMapTest {
 
 		//obj.tree.onScreen();
 		//Thread.sleep(Long.MAX_VALUE); // Meh
+	}
+
+	@Test
+	public void testIntegrityWith2000VerticallyStackedRects() throws Exception {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddVertical", true)) {
+			for (int i = 0; i < 2000; i++) {
+				System.err.println("Adding " + i);
+				obj.map.put(rect(0, 10, i, i + 1), "Ent" + i);
+				// Note, underlying tree is not synchronized, but map is
+				/*try (LockHold hold = LockHold.lock(obj.getReadWriteLock().readLock())) {
+					obj.tree.checkIntegrity();
+				}*/
+			}
+		}
 	}
 
 	@Test

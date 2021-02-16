@@ -882,11 +882,12 @@ public abstract class AbstractConstraintsTree< //
 	/**
 	 * An integrity checker for use by tree developers and testers.
 	 * 
+	 * <p>
 	 * To incorporate additional checks, please prefer to override
 	 * {@link #checkNodeIntegrity(DBTreeNodeRecord)} and/or
 	 * {@link #checkDataIntegrity(DBTreeDataRecord)} instead of this method.
 	 */
-	protected void checkIntegrity() {
+	public void checkIntegrity() {
 		// Before we visit, integrity check that cache. Visiting will affect cache.
 		for (Entry<Long, Collection<DR>> ent : cachedDataChildren.entrySet()) {
 			Set<DR> databasedChildren = new TreeSet<>(Comparator.comparing(DR::getKey));

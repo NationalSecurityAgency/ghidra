@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 
 import com.google.common.collect.Range;
 
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
@@ -199,5 +200,13 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 
 	public DR getDataByKey(long key) {
 		return tree.getDataByKey(key);
+	}
+
+	/**
+	 * For developers and testers.
+	 */
+	@Internal
+	public void checkIntegrity() {
+		tree.checkIntegrity();
 	}
 }

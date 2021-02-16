@@ -599,7 +599,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 	}
 
 	protected void doInsertDataEntry(DR entry) {
-		super.doInsert(entry, leafLevel, new BitSet());
+		super.doInsert(entry, new LevelInfo(leafLevel));
 	}
 
 	public DBTraceAddressSnapRangePropertyMapSpace<T, DR> getMapSpace() {
