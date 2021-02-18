@@ -203,6 +203,7 @@ public:
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
   Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
+  const vector<VarnodeData> &getPieces() const { return pieces; } ///< Get an iterator over the const pieces
 };
 
 /// \brief Comparator for JoinRecord objects

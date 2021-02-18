@@ -69,7 +69,7 @@ private:
   int4 minsize;			///< Minimum bytes allowed for the logical value
   int4 alignment;		///< How much alignment (0 means only 1 logical value is allowed)
   int4 numslots;		///< (Maximum) number of slots that can store separate parameters
-  JoinRecord *joinrec;		///< Non-null if this is logical variable from joined pieces
+  JoinRecord *joinrec;		///< Non-null if this is a logical variable from joined pieces
   void resolveJoin(void); 	///< If the ParamEntry is initialized with a \e join address, cache the join record
 
   /// \brief Is the logical value left-justified within its container
@@ -98,6 +98,7 @@ public:
   void extraChecks(list<ParamEntry> &entry);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
+  const JoinRecord *getJoinRecord() const { return joinrec; } ///< Get the JoinRecord if present
 };
 
 /// \brief Class for storing ParamEntry objects in an interval range (rangemap)
@@ -514,6 +515,7 @@ protected:
   void forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop) const;
   void calcDelay(void);		///< Calculate the maximum heritage delay for any potential parameter in this list
   void populateResolver(void);	///< Build the ParamEntry resolver maps
+  void consumeGroups(vector<int4> &status,const ParamEntry &element) const;
 public:
   ParamListStandard(void) {}						///< Construct for use with restoreXml()
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor

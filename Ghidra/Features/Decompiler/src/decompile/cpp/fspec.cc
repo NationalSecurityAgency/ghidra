@@ -64,6 +64,21 @@ bool ParamEntry::contains(const ParamEntry &op2) const
 
 {
   if ((type!=TYPE_UNKNOWN)&&(op2.type != type)) return false;
+  if (joinrec) {
+    if (op2.joinrec) {
+      for (const VarnodeData& var : op2.joinrec->getPieces()) {
+        bool contains = false;
+        const size_t len = joinrec->numPieces();
+        for (size_t i = 0; i < len && !contains; i++)
+          contains = joinrec->getPiece(i).contains(var);
+        if (!contains) return false;
+      }
+      return true;
+    }
+    VarnodeData v2{op2.spaceid, op2.addressbase, static_cast<int4>(op2.size)};
+    for (const VarnodeData& v1 : joinrec->getPieces())
+      if (v1.contains(v2)) return true;
+  }
   if (spaceid != op2.spaceid) return false;
   if (op2.addressbase < addressbase) return false;
   if ((op2.addressbase+op2.size-1) > (addressbase+size-1)) return false;
@@ -510,9 +525,7 @@ int4 ParamListStandard::characterizeAsParam(const Address &loc,int4 size) const
 Address ParamListStandard::assignAddress(const Datatype *tp,vector<int4> &status) const
 
 {
-  list<ParamEntry>::const_iterator iter;
-  for(iter=entry.begin();iter!=entry.end();++iter) {
-    const ParamEntry &curEntry( *iter );
+  for(const ParamEntry &curEntry : entry) {
     int4 grp = curEntry.getGroup();
     if (status[grp]<0) continue;
     if ((curEntry.getType() != TYPE_UNKNOWN)&&
@@ -521,14 +534,41 @@ Address ParamListStandard::assignAddress(const Datatype *tp,vector<int4> &status
 
     Address res = curEntry.getAddrBySlot(status[grp],tp->getSize());
     if (res.isInvalid()) continue; // If -tp- doesn't fit an invalid address is returned
-    if (curEntry.isExclusion()) {
-      int4 maxgrp = grp + curEntry.getGroupSize();
-      for(int4 j=grp;j<maxgrp;++j) // For an exclusion entry
-	status[j] = -1;		// some number of groups are taken up
-    }
+    if (curEntry.isExclusion()) consumeGroups(status, curEntry);
     return res;
   }
   return Address();		// Return invalid address to indicated we could not assign anything
+}
+
+static bool containsAny(const ParamEntry& p1,const ParamEntry& p2)
+
+{
+  for (const VarnodeData& v1 : p1.getJoinRecord()->getPieces())
+    for (const VarnodeData& v2 : p2.getJoinRecord()->getPieces())
+      if (v1.contains(v2)) return true;
+  return false;
+}
+
+void ParamListStandard::consumeGroups(vector<int4> &status,const ParamEntry &element) const
+
+{
+  int4 grp = element.getGroup();
+  const int4 maxgrp = grp + element.getGroupSize();
+  for(int4 j=grp;j<maxgrp;++j) // For an exclusion entry
+    status[j] = -1;		// some number of groups are taken up
+  
+  // any entries which this element contains must also be set as taken
+  for (const ParamEntry &e : entry) {
+    if (&e == &element) continue;
+    int4 group = e.getGroup();
+    if (status[group] < 0) continue;
+    if (element.contains(e) || e.contains(element)) {
+      status[group] -= 1;
+      continue;
+    }
+    if (element.getJoinRecord() && e.getJoinRecord())
+      if (containsAny(element, e)) status[group] -= 1;
+  }
 }
 
 void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,TypeFactory &typefactory,
