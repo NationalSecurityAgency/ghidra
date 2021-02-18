@@ -27,7 +27,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.Msg;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
@@ -67,7 +67,7 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 			try {
 				dtm = service.openDataTypeArchive(archiveName);
 				if (dtm == null) {
-					Msg.showError(this, null, "Failed to Apply Data Types",
+					log.appendMsg("Apply Data Archives",
 						"Failed to locate data type archive: " + archiveName);
 				}
 				else {
@@ -75,8 +75,18 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 				}
 			}
 			catch (Exception e) {
-				if (mgr.debugOn) {
-					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+				Throwable cause = e.getCause();
+				if (cause instanceof VersionException) {
+					log.appendMsg("Apply Data Archives",
+						"Unable to open archive " + archiveName + ": " + cause.toString());
+				}
+				else {
+					String msg = e.getMessage();
+					if (msg == null) {
+						msg = e.toString();
+					}
+					log.appendMsg("Apply Data Archives",
+						"Unexpected Error opening archive " + archiveName + ": " + msg);
 				}
 			}
 		}

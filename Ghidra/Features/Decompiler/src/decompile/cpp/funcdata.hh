@@ -249,7 +249,6 @@ public:
   int4 numCalls(void) const { return qlst.size(); }	///< Get the number of calls made by \b this function
   FuncCallSpecs *getCallSpecs(int4 i) const { return qlst[i]; }	///< Get the i-th call specification
   FuncCallSpecs *getCallSpecs(const PcodeOp *op) const;	///< Get the call specification associated with a CALL op
-  void updateOpFromSpec(FuncCallSpecs *fc);
   int4 fillinExtrapop(void);			///< Recover and return the \e extrapop for this function
 
   // Varnode routines
@@ -481,6 +480,8 @@ public:
 
   /// \brief End of all (alive) PcodeOp objects attached to a specific Address
   PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
+
+  bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
 
   // Jumptable routines
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND

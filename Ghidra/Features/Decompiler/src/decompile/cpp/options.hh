@@ -96,6 +96,12 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionForLoops : public ArchOption {
+public:
+  OptionForLoops(void) { name = "analyzeforloops"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 class OptionInline : public ArchOption {
 public:
   OptionInline(void) { name = "inline"; }	///< Constructor

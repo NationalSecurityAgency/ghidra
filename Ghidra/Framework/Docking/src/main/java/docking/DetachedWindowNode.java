@@ -557,8 +557,7 @@ class DetachedWindowNode extends WindowNode {
 	 */
 	public void setStatusText(String text) {
 		if (statusBar != null) {
-			boolean isActive = window == null ? false : window.isActive();
-			statusBar.setStatusText(text, isActive);
+			statusBar.setStatusText(text);
 		}
 	}
 

@@ -2556,6 +2556,26 @@
 	</para>
       </listitem>
     </varlistentry>
+    <varlistentry id="AnalysisForLoops">
+      <term><emphasis role="bold">Recover -for- loops</emphasis></term>
+      <listitem>
+	<para>
+	  When this is toggle <emphasis>on</emphasis>, the decompiler attempts to pinpoint
+	  variables that control the iteration over specific loops in the function body.
+	  When these <emphasis>loop</emphasis> variables are discovered, the loop is
+	  rendered using a standard <emphasis role="bold">for</emphasis> loop header
+	  that contains an initializer statement, condition, and iterating statement.
+	  <informalexample>
+	    <code>for (iVar2 = 10; iVar2 &lt; len; iVar2 = iVar2 + 1) { ...</code>
+	  </informalexample>
+	</para>
+	<para>
+	  If the toggle is <emphasis>off</emphasis>, the loop is displayed using
+	  <emphasis role="bold">while</emphasis> syntax, with any initializer and
+	  iterating statements mixed in with the loop body or preceding basic blocks.
+	</para>
+      </listitem>
+    </varlistentry>
     <varlistentry id="AnalysisUnreachable">
       <term><emphasis role="bold">Eliminate unreachable code</emphasis></term>
       <listitem>

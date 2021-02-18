@@ -15,6 +15,16 @@
  */
 package docking.widgets.table;
 
+/**
+ * An interface for clients to know when an object is selected and when the selection is cleared
+ *
+ * @param <T> the object type
+ */
 public interface ObjectSelectedListener<T> {
+
+	/**
+	 * When an object is select; null if the selection is cleared
+	 * @param t the object selected or null
+	 */
 	public void objectSelected(T t);
 }

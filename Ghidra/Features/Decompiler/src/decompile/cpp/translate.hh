@@ -201,7 +201,7 @@ public:
   bool isFloatExtension(void) const { return (pieces.size() == 1); }	///< Does this record extend a float varnode
   const VarnodeData &getPiece(int4 i) const { return pieces[i]; }	///< Get the i-th piece
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
-  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \join space, get equivalent address of piece
+  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
 };
 

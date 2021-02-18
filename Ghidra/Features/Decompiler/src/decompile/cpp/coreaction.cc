@@ -3477,9 +3477,10 @@ bool ActionDeadCode::isEventualConstant(Varnode *vn,int4 addCount,int4 loadCount
 /// \brief Check if there are any unconsumed LOADs that may be from volatile addresses.
 ///
 /// It may be too early to remove certain LOAD operations even though their result isn't
-/// consumed because it be of a volatile address with side effects.  If a LOAD meets this
+/// consumed because it may be of a volatile address with side effects.  If a LOAD meets this
 /// criteria, it is added to the worklist and \b true is returned.
 /// \param data is the function being analyzed
+/// \param worklist is the container of consumed Varnodes to further process
 /// \return \b true if there was at least one LOAD added to the worklist
 bool ActionDeadCode::lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist)
 
@@ -4532,7 +4533,7 @@ void ActionInferTypes::propagateOneType(TypeFactory *typegrp,Varnode *vn)
   PropagationState *ptr;
   vector<PropagationState> state;
 
-  state.push_back(PropagationState(vn));
+  state.emplace_back(vn);
   vn->setMark();
 
   while(!state.empty()) {
@@ -4545,7 +4546,7 @@ void ActionInferTypes::propagateOneType(TypeFactory *typegrp,Varnode *vn)
       if (propagateTypeEdge(typegrp,ptr->op,ptr->inslot,ptr->slot)) {
 	vn = (ptr->slot==-1) ? ptr->op->getOut() : ptr->op->getIn(ptr->slot);
 	ptr->step();		// Make sure to step before push_back
-	state.push_back(PropagationState(vn));
+	state.emplace_back(vn);
 	vn->setMark();
       }
       else
@@ -5100,6 +5101,7 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( actcleanup );
 
   act->addAction( new ActionPreferComplement("blockrecovery") );
+  act->addAction( new ActionStructureTransform("blockrecovery") );
   act->addAction( new ActionNormalizeBranches("normalizebranches") );
   act->addAction( new ActionAssignHigh("merge") );
   act->addAction( new ActionMergeRequired("merge") );

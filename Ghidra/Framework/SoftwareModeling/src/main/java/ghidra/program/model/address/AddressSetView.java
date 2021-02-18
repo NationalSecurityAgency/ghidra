@@ -242,7 +242,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Trim address set removing all addresses less-than-or-equal to specified 
-	 * address based upon {@link Address#compareTo(Address)} behavior.  
+	 * address based upon {@link Address} comparison.
 	 * The address set may contain address ranges from multiple 
 	 * address spaces.
 	 * @param set address set to be trimmed
@@ -269,7 +269,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Trim address set removing all addresses greater-than-or-equal to specified 
-	 * address based upon {@link Address#compareTo(Address)} behavior.  
+	 * address based upon {@link Address} comparison.  
 	 * The address set may contain address ranges from multiple 
 	 * address spaces.
 	 * @param set address set to be trimmed

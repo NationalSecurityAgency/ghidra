@@ -128,6 +128,7 @@ public class RttiUtil {
 
 		Memory memory = program.getMemory();
 		MemoryBlock textBlock = memory.getBlock(".text");
+		MemoryBlock nepBlock = memory.getBlock(".nep");
 		AddressSetView initializedAddresses = memory.getLoadedAndInitializedAddressSet();
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(program);
 
@@ -148,9 +149,16 @@ public class RttiUtil {
 			if (!initializedAddresses.contains(referencedAddress)) {
 				break; // Not pointing to initialized memory.
 			}
-			if ((textBlock != null) ? !textBlock.equals(memory.getBlock(referencedAddress))
-					: false) {
-				break; // Not pointing to text section.
+
+			// check in .text and .nep if either exists
+			if ( textBlock != null || nepBlock != null) {
+				MemoryBlock refedBlock = memory.getBlock(referencedAddress);
+				boolean inTextBlock = ((textBlock != null) && textBlock.equals(refedBlock));
+				boolean inNepBlock = ((nepBlock != null) && nepBlock.equals(refedBlock));
+				// if not in either labeled .text/.nep block, then bad vftable pointer
+				if (!(inTextBlock || inNepBlock)) {
+					break; // Not pointing to good section.
+				}
 			}
 			
 			// any references after the first one ends the table
@@ -158,7 +166,7 @@ public class RttiUtil {
 				break;
 			}
 			
-			if (!pseudoDisassembler.isValidSubroutine(referencedAddress, true)) {
+			if (!pseudoDisassembler.isValidSubroutine(referencedAddress, true, false)) {
 				break; // Not pointing to possible function.
 			}
 

@@ -15,13 +15,13 @@
  */
 package ghidra.file.formats.android.dex.format;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.file.formats.android.dex.util.Leb128;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class EncodedMethod implements StructConverter {
 
@@ -39,29 +39,22 @@ public class EncodedMethod implements StructConverter {
 	private CodeItem codeItem;
 
 	public EncodedMethod( BinaryReader reader ) throws IOException {
-		_fileOffset = reader.getPointerIndex( );
 
-		methodIndexDifference = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		methodIndexDifferenceLength = Leb128.unsignedLeb128Size( methodIndexDifference );
-		reader.readNextByteArray( methodIndexDifferenceLength );// consume leb...
+		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		_fileOffset = leb128.getOffset();
+		methodIndexDifference = leb128.asUInt32();
+		methodIndexDifferenceLength = leb128.getLength();
 
-		accessFlags = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		accessFlagsLength = Leb128.unsignedLeb128Size( accessFlags );
-		reader.readNextByteArray( accessFlagsLength );// consume leb...
+		leb128 = LEB128.readUnsignedValue(reader);
+		accessFlags = leb128.asUInt32();
+		accessFlagsLength = leb128.getLength();
 
-		codeOffset = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		codeOffsetLength = Leb128.unsignedLeb128Size( codeOffset );
-		reader.readNextByteArray( codeOffsetLength );// consume leb...
+		leb128 = LEB128.readUnsignedValue(reader);
+		codeOffset = leb128.asUInt32();
+		codeOffsetLength = leb128.getLength();
 
 		if ( codeOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
-			try {
-				reader.setPointerIndex( codeOffset );
-				codeItem = new CodeItem( reader );
-			}
-			finally {
-				reader.setPointerIndex( oldIndex );
-			}
+			codeItem = new CodeItem( reader.clone(codeOffset) );
 		}
 	}
 

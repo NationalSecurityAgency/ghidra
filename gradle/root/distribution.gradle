@@ -125,6 +125,8 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	// generate documentation using html5
 	options.addBooleanOption("html5", true)
 
+	options.addBooleanOption('Xdoclint:none', true)
+	
 	// Some internal packages are not public and need to be exported.
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
     															"java.desktop/sun.awt=ALL-UNNAMED", 
@@ -132,7 +134,8 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
     															"java.base/sun.security.provider=ALL-UNNAMED", 
     															"java.base/sun.security.util=ALL-UNNAMED"])
 }
-  
+
+
  /*********************************************************************************
  * JSONDOCS - RAW
  *
@@ -179,6 +182,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Newer versions of gradle set this to true by default.
 	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
 	options.setNoTimestamp(false)
+	
 		
 	// Some internal packages are not public and need to be exported. 
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 

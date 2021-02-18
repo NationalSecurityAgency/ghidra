@@ -120,16 +120,14 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 	private String[] getDefinedPreComments(CodeUnit cu) {
 
-		// If this code unit is the outside of a data
-		// container, then do not display any comments.
-		// If this was allowed, then the comment would appear
-		// on the outside data container and on the 1st
-		// internal member
-		//
+		// Do not show comments for nested components that share the same address as their parent
 		if (cu instanceof Data) {
 			Data data = (Data) cu;
-			if (data.getNumComponents() > 0) {
-				return null;
+			int[] cpath = data.getComponentPath();
+			if (cpath.length > 0) {
+				if (cpath[cpath.length - 1] == 0) {
+					return null;
+				}
 			}
 		}
 

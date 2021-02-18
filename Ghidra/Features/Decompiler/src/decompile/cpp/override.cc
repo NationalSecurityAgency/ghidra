@@ -249,7 +249,7 @@ void Override::printRaw(ostream &s,Architecture *glb) const
     s << "dead code delay on " << spc->getName() << " set to " << dec << deadcodedelay[i] << endl;
   }
 
-  for(iter=forcegoto.begin();iter!=forcegoto.end();++iter)
+  for(iter=indirectover.begin();iter!=indirectover.end();++iter)
     s << "override indirect at " << (*iter).first << " to call directly to " << (*iter).second << endl;
 
   map<Address,FuncProto *>::const_iterator fiter;

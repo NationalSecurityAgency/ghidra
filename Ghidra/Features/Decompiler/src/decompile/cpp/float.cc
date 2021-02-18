@@ -19,32 +19,6 @@
 #include <cmath>
 #include "address.hh"
 
-#if defined(_WINDOWS) && !defined(INFINITY)
-
-// Some definitions for Windows floating point stuff
-#include <cfloat>
-
-inline int4 signbit(double x) {
-  return (((_fpclass(x)& (_FPCLASS_NINF | _FPCLASS_NN
-			  | _FPCLASS_ND | _FPCLASS_NZ))!=0) ? 1 : 0);
-}
-
-inline int4 isnan(double x) {
-  return (((_fpclass(x)& (_FPCLASS_SNAN | _FPCLASS_QNAN))!=0) ? 1 : 0);
-}
-
-inline int4 isinf(double x) {
-  int4 classify = _fpclass(x);
-  if (classify == _FPCLASS_NINF) return -1;
-  if (classify == _FPCLASS_PINF) return 1;
-  return 0;
-}
-
-#define INFINITY HUGE_VAL
-#define NAN (INFINITY/INFINITY)
-
-#endif
-
 /// Set format for a given encoding size according to IEEE 754 standards
 /// \param sz is the size of the encoding in bytes
 FloatFormat::FloatFormat(int4 sz)
@@ -105,10 +79,10 @@ FloatFormat::floatclass FloatFormat::extractExpSig(double x,bool *sgn,uintb *sig
 {
   int4 e;
 
-  *sgn = (signbit(x) != 0);
+  *sgn = std::signbit(x);
   if (x == 0.0) return zero;
-  if (isinf(x)!=0) return infinity;
-  if (isnan(x)!=0) return nan;
+  if (std::isinf(x)) return infinity;
+  if (std::isnan(x)) return nan;
   if (*sgn)
     x = -x;
   double norm = frexp(x,&e);  // norm is between 1/2 and 1
@@ -249,7 +223,6 @@ double FloatFormat::getHostFloat(uintb encoding,floatclass *type) const
   if (exp == 0) {
     if ( frac == 0 ) {		// Floating point zero
       *type = zero;
-      // FIXME:  add on sign-bit  for +0 or -0 allowed by standard
       return sgn ? -0.0 : +0.0;
     }
     *type = denormalized;
@@ -259,7 +232,6 @@ double FloatFormat::getHostFloat(uintb encoding,floatclass *type) const
   else if (exp == maxexponent) {
     if ( frac == 0 ) {		// Floating point infinity
       *type = infinity;
-      // FIXME: add on sign-bit for +inf or -inf allowed by standard
       return sgn ? -INFINITY : +INFINITY;
     }
     *type = nan;
@@ -280,6 +252,27 @@ double FloatFormat::getHostFloat(uintb encoding,floatclass *type) const
   return createFloat(sgn,frac,exp);
 }
 
+/// \brief Round a floating point value to the nearest even
+///
+/// \param signif the significant bits of a floating point value
+/// \param lowbitpos the position in signif of the floating point
+/// \return true if we rounded up
+
+bool FloatFormat::roundToNearestEven(uintb &signif, int4 lowbitpos)
+
+{
+  uintb lowbitmask = (lowbitpos < 8 * sizeof(uintb)) ? (1UL << lowbitpos) : 0;
+  uintb midbitmask = 1UL << (lowbitpos - 1);
+  uintb epsmask = midbitmask - 1;
+  bool odd = (signif & lowbitmask) != 0;
+  if ((signif & midbitmask) != 0 && ((signif & epsmask) != 0 || odd)) {
+    signif += midbitmask;
+    return true;
+  }
+  return false;
+}
+
+
 /// \param host is the double value to convert
 /// \return the equivalent encoded value
 uintb FloatFormat::getEncoding(double host) const
@@ -290,7 +283,7 @@ uintb FloatFormat::getEncoding(double host) const
   uintb signif;
   int4 exp;
 
-  type = extractExpSig(host,&sgn,&signif,&exp);
+  type = extractExpSig(host, &sgn, &signif, &exp);
   if (type == zero)
     return getZeroEncoding(sgn);
   else if (type == infinity)
@@ -300,53 +293,114 @@ uintb FloatFormat::getEncoding(double host) const
 
   // convert exponent and fractional to their encodings
   exp += bias;
-  if (exp < 0)			// Exponent is too small to represent
-    return getZeroEncoding(sgn);
-  if (exp > maxexponent)	// Exponent is too big to represent
+
+  if (exp < -frac_size)	// Exponent is too small to represent
+    return getZeroEncoding(sgn); // TODO handle round to non-zero
+
+  if (exp < 1) {	// Must be denormalized
+    if (roundToNearestEven(signif, 8 * sizeof(uintb) - frac_size - exp)) {
+      // TODO handle round to normal case
+      if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
+	signif = 1UL << (8 * sizeof(uintb) - 1);
+	exp += 1;
+      }
+    }
+    uintb res = getZeroEncoding(sgn);
+    return setFractionalCode(res, signif >> (-exp));
+  }
+
+  if (roundToNearestEven(signif, 8 * sizeof(uintb) - frac_size - 1)) {
+    // if high bit is clear, then the add overflowed. Increase exp and set
+    // signif to 1.
+    if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
+      signif = 1UL << (8 * sizeof(uintb) - 1);
+      exp += 1;
+    }
+  }
+
+  if (exp >= maxexponent)	// Exponent is too big to represent
     return getInfinityEncoding(sgn);
-  if (jbitimplied && (exp !=0))
+
+  if (jbitimplied && (exp != 0))
     signif <<= 1;		// Cut off top bit (which should be 1)
 
   uintb res = 0;
-  res = setFractionalCode(res,signif);
-  res = setExponentCode(res,(uintb)exp);
-  return setSign(res,sgn);
+  res = setFractionalCode(res, signif);
+  res = setExponentCode(res, (uintb)exp);
+  return setSign(res, sgn);
 }
+
 
 /// \param encoding is the value in the \e other FloatFormat
 /// \param formin is the \e other FloatFormat
 /// \return the equivalent value in \b this FloatFormat
-uintb FloatFormat::convertEncoding(uintb encoding,const FloatFormat *formin) const
+uintb FloatFormat::convertEncoding(uintb encoding,
+				   const FloatFormat *formin) const
 
 {
   bool sgn = formin->extractSign(encoding);
-  uintb frac = formin->extractFractionalCode(encoding);
+  uintb signif = formin->extractFractionalCode(encoding);
   int4 exp = formin->extractExponentCode(encoding);
-  
+
   if (exp == formin->maxexponent) { // NaN or INFINITY encoding
     exp = maxexponent;
-  }
-  else {
-    exp -= formin->bias;
-    exp += bias;
-    if (exp < 0)
-      return getZeroEncoding(sgn);
-    if (exp > maxexponent)
+    if (signif != 0)
+      return getNaNEncoding(sgn);
+    else
       return getInfinityEncoding(sgn);
   }
-  if (jbitimplied && !formin->jbitimplied)
-    frac <<= 1;			// Cut off top bit (which should be 1)
-  else if (formin->jbitimplied && !jbitimplied) {
-    frac >>= 1;			// Make room for 1 jbit
-    uintb highbit = 1;
-    highbit <<= 8*sizeof(uintb)-1;
-    frac |= highbit;		// Stick bit in at top
+
+  if (exp == 0) { // incoming is subnormal
+    if (signif == 0)
+      return getZeroEncoding(sgn);
+
+    // normalize
+    int4 lz = count_leading_zeros(signif);
+    signif <<= lz;
+    exp = -formin->bias - lz;
+  }
+  else { // incoming is normal
+    exp -= formin->bias;
+    if (jbitimplied)
+      signif = (1UL << (8 * sizeof(uintb) - 1)) | (signif >> 1);
   }
 
+  exp += bias;
+
+  if (exp < -frac_size)	// Exponent is too small to represent
+    return getZeroEncoding(sgn); // TODO handle round to non-zero
+
+  if (exp < 1) {	// Must be denormalized
+    if (roundToNearestEven(signif, 8 * sizeof(uintb) - frac_size - exp)) {
+      // TODO handle carry to normal case
+      if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
+	signif = 1UL << (8 * sizeof(uintb) - 1);
+	exp += 1;
+      }
+    }
+    uintb res = getZeroEncoding(sgn);
+    return setFractionalCode(res, signif >> (-exp));
+  }
+
+  if (roundToNearestEven(signif, 8 * sizeof(uintb) - frac_size - 1)) {
+    // if high bit is clear, then the add overflowed. Increase exp and set
+    // signif to 1.
+    if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
+      signif = 1UL << (8 * sizeof(uintb) - 1);
+      exp += 1;
+    }
+  }
+
+  if (exp >= maxexponent)	// Exponent is too big to represent
+    return getInfinityEncoding(sgn);
+
+  if (jbitimplied && (exp != 0))
+    signif <<= 1;		// Cut off top bit (which should be 1)
+
   uintb res = 0;
-  res = setFractionalCode(res,frac);
-  res = setExponentCode(res,(uintb)exp);
-  return setSign(res,sgn);
+  res = setFractionalCode(res, signif);
+  res = setExponentCode(res, (uintb)exp);
+  return setSign(res, sgn);
 }
 
 // Currently we emulate floating point operations on the target
@@ -513,9 +567,7 @@ uintb FloatFormat::opInt2Float(uintb a,int4 sizein) const
 uintb FloatFormat::opFloat2Float(uintb a,const FloatFormat &outformat) const
 
 {
-  floatclass type;
-  double val = getHostFloat(a,&type);
-  return outformat.getEncoding(val);
+  return outformat.convertEncoding(a, this);
 }
 
 /// \param a is an encoded floating-point value
@@ -559,7 +611,8 @@ uintb FloatFormat::opRound(uintb a) const
 {
   floatclass type;
   double val = getHostFloat(a,&type);
-  return getEncoding(floor(val+0.5));
+  // return getEncoding(floor(val+.5)); // round half up
+  return getEncoding(round(val)); // round half away from zero
 }
 
 /// Write the format out to a \<floatformat> XML tag.

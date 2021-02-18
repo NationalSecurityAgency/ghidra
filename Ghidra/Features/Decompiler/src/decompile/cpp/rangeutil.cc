@@ -1939,7 +1939,7 @@ ValueSet *ValueSetSolver::ValueSetEdge::getNext(void)
 void ValueSetSolver::newValueSet(Varnode *vn,int4 tCode)
 
 {
-  valueNodes.push_back(ValueSet());
+  valueNodes.emplace_back();
   valueNodes.back().setVarnode(vn, tCode);
 }
 

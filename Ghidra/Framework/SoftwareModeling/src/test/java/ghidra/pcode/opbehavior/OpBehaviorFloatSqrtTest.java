@@ -15,14 +15,12 @@
  */
 package ghidra.pcode.opbehavior;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.pcode.floatformat.FloatFormat;
-import ghidra.pcode.floatformat.FloatFormatFactory;
+import ghidra.pcode.floatformat.*;
 
 public class OpBehaviorFloatSqrtTest extends AbstractOpBehaviorTest {
 
@@ -30,8 +28,8 @@ public class OpBehaviorFloatSqrtTest extends AbstractOpBehaviorTest {
 		super();
 	}
 
-@Test
-    public void testEvaluateBinaryLong() {
+	@Test
+	public void testEvaluateBinaryLong() {
 
 		OpBehaviorFloatSqrt op = new OpBehaviorFloatSqrt();
 
@@ -44,19 +42,18 @@ public class OpBehaviorFloatSqrtTest extends AbstractOpBehaviorTest {
 
 	}
 
-@Test
-    public void testEvaluateBinaryBigInteger() {
+	@Test
+	public void testEvaluateBinaryBigInteger() {
 
 		OpBehaviorFloatSqrt op = new OpBehaviorFloatSqrt();
 
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
 
-		BigDecimal big = BigDecimal.valueOf(2.0);
+		BigFloat big = ff.getBigFloat(2.0);
 		BigInteger encoding = ff.getEncoding(big);
 		encoding = op.evaluateUnary(8, 8, encoding);
-		BigDecimal result = ff.getHostFloat(encoding);
-		Assert.assertEquals("1.414213562373095", result.toString());
-
+		BigFloat result = ff.getHostFloat(encoding);
+		Assert.assertEquals("1.414213562373095", ff.round(result).toString());
 	}
 
 }

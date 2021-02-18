@@ -34,8 +34,17 @@ import ghidra.graph.visualization.CenterAnimationJob;
  */
 public class JgtEdgeNavigationPlugin<V, E> extends AbstractJgtGraphMousePlugin<V, E> {
 
-	public JgtEdgeNavigationPlugin() {
+	protected int getSingleSelectionMask;
+
+	public JgtEdgeNavigationPlugin(int singleSelectionMask) {
+		this.singleSelectionMask = singleSelectionMask;
 		this.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+	}
+
+	protected int singleSelectionMask;
+
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == singleSelectionMask;
 	}
 
 	@Override

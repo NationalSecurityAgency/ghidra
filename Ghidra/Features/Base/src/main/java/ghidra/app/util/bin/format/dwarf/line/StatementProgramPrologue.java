@@ -168,10 +168,10 @@ public class StatementProgramPrologue {
 	 * @param directoryIndex the directory index
 	 * @return the directory or current directory
 	 */
-	public String getDirectoryByIndex(LEB128 directoryIndex) {
-		if (directoryIndex.getValue() == 0) {
+	public String getDirectoryByIndex(long directoryIndex) {
+		if (directoryIndex == 0) {
 			return ".";
 		}
-		return includeDirectories.get((int)directoryIndex.getValue() - 1);
+		return includeDirectories.get((int)directoryIndex - 1);
 	}
 }

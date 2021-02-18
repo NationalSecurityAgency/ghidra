@@ -130,8 +130,7 @@ public:
   typedef SubsortPosition subsorttype;	///< The sub-sort object for a rangemap
   typedef InitData inittype;		///< Initialization data for a ScopeMapper
 
-  ParamEntryRange(void) {}		///< Constructor for use with rangemap
-  void initialize(const inittype &data,uintb f,uintb l) {
+  ParamEntryRange(const inittype &data,uintb f,uintb l) {
     first = f; last = l; position = data.position; entry = data.entry; }	///< Initialize the range
   uintb getFirst(void) const { return first; }	///< Get the first address in the range
   uintb getLast(void) const { return last; }		///< Get the last address in the range
@@ -981,6 +980,8 @@ class ParameterBasic : public ProtoParameter {
 public:
   ParameterBasic(const string &nm,const Address &ad,Datatype *tp,uint4 fl) {
     name = nm; addr = ad; type = tp; flags=fl; }		///< Construct from components
+  ParameterBasic(Datatype *tp) {
+    type = tp; flags = 0; }			///< Construct a \e void parameter
   virtual const string &getName(void) const { return name; }
   virtual Datatype *getType(void) const { return type; }
   virtual Address getAddress(void) const { return addr; }

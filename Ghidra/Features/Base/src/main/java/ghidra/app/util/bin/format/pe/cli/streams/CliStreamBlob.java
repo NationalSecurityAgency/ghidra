@@ -40,7 +40,7 @@ public class CliStreamBlob extends CliAbstractStream {
 
 	/**
 	 * Gets the name of this stream.
-	 * 
+	 *
 	 * @return The name of this stream.
 	 */
 	public static String getName() {
@@ -49,9 +49,9 @@ public class CliStreamBlob extends CliAbstractStream {
 
 	/**
 	 * Creates a new Blob stream.
-	 * 
+	 *
 	 * @param header The stream header associated with this stream.
-	 * @param offset The reader offset where this stream starts. 
+	 * @param offset The reader offset where this stream starts.
 	 * @param rva The relative virtual address where this stream starts.
 	 * @param reader A reader that is used to read the stream.
 	 * @throws IOException if there is a problem reading the stream.
@@ -84,7 +84,7 @@ public class CliStreamBlob extends CliAbstractStream {
 
 	/**
 	 * Gets the blob at the given index.
-	 * 
+	 *
 	 * @param index The index of the blob to get.
 	 * @return The blob at the given index.  Could be null if the index was invalid or
 	 *   there was a problem reading the blob.
@@ -95,7 +95,7 @@ public class CliStreamBlob extends CliAbstractStream {
 
 	/**
 	 * Updates the blob at the given address with the new blob.
-	 * 
+	 *
 	 * @param updatedBlob The updated blob.
 	 * @param addr The address of the blob to update.
 	 * @param program The program that will get the update.
@@ -113,18 +113,21 @@ public class CliStreamBlob extends CliAbstractStream {
 
 		// Make sure there is an old blob at the given address
 		int structureOffset = (int) addr.subtract(containingData.getAddress());
-		DataTypeComponent oldBlobDataComponent = containingStructure.getComponentAt(structureOffset);
+		DataTypeComponent oldBlobDataComponent =
+			containingStructure.getComponentAt(structureOffset);
 		if (oldBlobDataComponent == null) {
 			Msg.error(this, "Existing blob at address " + addr + " was not found.");
 			return false;
 		}
-		
+
 		// Make sure the old blob has the same size as the new blob
 		DataType oldBlobDataType = oldBlobDataComponent.getDataType();
 		DataType newBlobDataType = updatedBlob.toDataType();
 		if (oldBlobDataType.getLength() != newBlobDataType.getLength()) {
-			Msg.error(this, "Cannot replace existing blob at address " + addr + " with " +
-				updatedBlob.getName() + " because they have different sizes.");
+			Msg.error(this,
+				"Cannot replace existing blob at address " + addr + " with " +
+					updatedBlob.getName() + " because they have different sizes (Old: " +
+					oldBlobDataType.getLength() + ", New: " + newBlobDataType.getLength() + ").");
 			return false;
 		}
 
@@ -148,4 +151,3 @@ public class CliStreamBlob extends CliAbstractStream {
 		return struct;
 	}
 }
-

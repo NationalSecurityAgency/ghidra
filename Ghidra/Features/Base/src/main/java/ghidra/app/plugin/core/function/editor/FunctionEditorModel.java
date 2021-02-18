@@ -192,8 +192,9 @@ public class FunctionEditorModel {
 	private void notifyDataChanged(boolean functionDataChanged) {
 		this.modelChanged |= functionDataChanged;
 		validate();
-
-		SwingUtilities.invokeLater(() -> listener.dataChanged());
+		if (listener != null) {
+			SwingUtilities.invokeLater(() -> listener.dataChanged());
+		}
 	}
 
 //	private void notifyParsingModeChanged() {
@@ -580,7 +581,9 @@ public class FunctionEditorModel {
 	}
 
 	public void addParameter() {
-		listener.tableRowsChanged();
+		if (listener != null) {
+			listener.tableRowsChanged();
+		}
 		ParamInfo param = new ParamInfo(this, null, DataType.DEFAULT,
 			VariableStorage.UNASSIGNED_STORAGE, parameters.size());
 		parameters.add(param);
@@ -697,7 +700,9 @@ public class FunctionEditorModel {
 		if (!canRemoveParameters()) {
 			throw new AssertException("Attempted to remove parameters when not allowed.");
 		}
-		listener.tableRowsChanged();
+		if (listener != null) {
+			listener.tableRowsChanged();
+		}
 		Arrays.sort(selectedFunctionRows);
 		for (int i = selectedFunctionRows.length - 1; i >= 0; i--) {
 			int index = selectedFunctionRows[i];
@@ -719,7 +724,9 @@ public class FunctionEditorModel {
 		if (!canMoveParameterUp()) {
 			throw new AssertException("Attempted to move parameters up when not allowed.");
 		}
-		listener.tableRowsChanged();
+		if (listener != null) {
+			listener.tableRowsChanged();
+		}
 		int paramIndex = selectedFunctionRows[0] - 1;  // first row is return value 
 		ParamInfo param = parameters.remove(paramIndex);
 		parameters.add(paramIndex - 1, param);
@@ -733,7 +740,9 @@ public class FunctionEditorModel {
 		if (!canMoveParameterDown()) {
 			throw new AssertException("Attempted to move parameters down when not allowed.");
 		}
-		listener.tableRowsChanged();
+		if (listener != null) {
+			listener.tableRowsChanged();
+		}
 		int paramIndex = selectedFunctionRows[0] - 1;
 		ParamInfo param = parameters.remove(paramIndex);
 		parameters.add(paramIndex + 1, param);
@@ -973,8 +982,7 @@ public class FunctionEditorModel {
 			if (!paramsOrReturnModified) {
 
 				// change param names without impacting signature source
-				for (int i = 0; i < parameters.size(); i++) {
-					ParamInfo paramInfo = parameters.get(i);
+				for (ParamInfo paramInfo : parameters) {
 					if (!paramInfo.isAutoParameter() && paramInfo.isNameModified()) {
 						Parameter param = paramInfo.getOriginalParameter();
 						if (param != null) {
@@ -991,8 +999,7 @@ public class FunctionEditorModel {
 
 			if (paramsOrReturnModified) {
 				List<Parameter> params = new ArrayList<>();
-				for (int i = 0; i < parameters.size(); i++) {
-					ParamInfo paramInfo = parameters.get(i);
+				for (ParamInfo paramInfo : parameters) {
 					if (paramInfo.isAutoParameter()) {
 						continue;
 					}

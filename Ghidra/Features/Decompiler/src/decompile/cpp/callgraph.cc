@@ -193,7 +193,7 @@ void CallGraph::clearMarks(void)
 CallGraphEdge &CallGraph::insertBlankEdge(CallGraphNode *node,int4 slot)
 
 {
-  node->outedge.push_back(CallGraphEdge());
+  node->outedge.emplace_back();
   if (node->outedge.size() > 1) {
     for(int4 i=node->outedge.size()-2;i>=slot;--i) {
       int4 newi = i+1;
@@ -255,7 +255,7 @@ void CallGraph::addEdge(CallGraphNode *from,CallGraphNode *to,const Address &add
   CallGraphEdge &fromedge( insertBlankEdge(from,i) );
 
   int4 toi = to->inedge.size();
-  to->inedge.push_back(CallGraphEdge());
+  to->inedge.emplace_back();
   CallGraphEdge &toedge( to->inedge.back() );
 
   fromedge.from = from;

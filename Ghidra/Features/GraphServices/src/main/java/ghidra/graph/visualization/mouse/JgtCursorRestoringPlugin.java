@@ -33,10 +33,6 @@ import org.jungrapht.visualization.control.AbstractGraphMousePlugin;
 public class JgtCursorRestoringPlugin<V, E> extends AbstractGraphMousePlugin
 		implements MouseMotionListener {
 
-	public JgtCursorRestoringPlugin() {
-		super(0);
-	}
-
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		// don't care

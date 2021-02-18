@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
+import generic.json.Json;
 import ghidra.program.model.listing.FunctionTag;
 
 class FunctionTagRowObject {
@@ -49,5 +50,10 @@ class FunctionTagRowObject {
 
 	String getComment() {
 		return tag.getComment();
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "\n" + Json.toString(this);
 	}
 }

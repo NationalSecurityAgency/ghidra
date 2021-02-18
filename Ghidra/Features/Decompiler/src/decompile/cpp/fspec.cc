@@ -545,7 +545,7 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,T
 	throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
     }
     for(int4 i=1;i<proto.size();++i) {
-      res.push_back(ParameterPieces());
+      res.emplace_back();
       if ((pointermax != 0)&&(proto[i]->getSize() > pointermax)) { // Datatype is too big
 	// Assume datatype is stored elsewhere and only the pointer is passed
 	AddrSpace *spc = spacebase;
@@ -567,7 +567,7 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,T
     }
   }
   else {
-    res.push_back(ParameterPieces());
+    res.emplace_back();
     if (proto[0]->getMetatype() != TYPE_VOID) {
       res.back().addr = assignAddress(proto[0],status);
       if (res.back().addr.isInvalid())
@@ -1050,7 +1050,7 @@ void ParamListStandard::restoreXml(const Element *el,const AddrSpaceManager *man
   for(fiter=flist.begin();fiter!=flist.end();++fiter) {
     const Element *subel = *fiter;
     if (subel->getName() == "pentry") {
-      entry.push_back(ParamEntry(numgroup));
+      entry.emplace_back(numgroup);
       entry.back().restoreXml(subel,manage,normalstack);
       if (entry.back().getType()==TYPE_FLOAT) {
 	  if (nonfloatgroup >= 0)
@@ -1089,7 +1089,7 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinpu
   vector<int4> status(numgroup,0);
 
   // This is always an output list so we ignore -isinput-
-  res.push_back(ParameterPieces());
+  res.emplace_back();
   res.back().type = proto[0];
   res.back().flags = 0;
   if (proto[0]->getMetatype() == TYPE_VOID) {
@@ -1109,8 +1109,8 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinpu
     res.back().type = pointertp;
     res.back().flags = ParameterPieces::indirectstorage;
 
-    res.push_back(ParameterPieces()); // Add extra storage location in the input params
-    res.back().type = pointertp;      // that holds a pointer to where the return value should be stored
+    res.emplace_back();			// Add extra storage location in the input params
+    res.back().type = pointertp;	// that holds a pointer to where the return value should be stored
     // leave its address invalid, to be filled in by the input list assignMap
     res.back().flags = ParameterPieces::hiddenretparm; // Mark it as special
   }
@@ -1851,7 +1851,7 @@ void ProtoModel::assignParameterStorage(const vector<Datatype *> &typelist,vecto
     }
     catch(ParamUnassignedError &err) {
       res.clear();
-      res.push_back(ParameterPieces());
+      res.emplace_back();
       // leave address undefined
       res.back().flags = 0;
       res.back().type = glb->types->getTypeVoid();
@@ -1984,7 +1984,7 @@ void ProtoModel::restoreXml(const Element *el)
       const List &flist(subnode->getChildren());
       List::const_iterator fiter;
       for(fiter=flist.begin();fiter!=flist.end();++fiter) {
-	effectlist.push_back(EffectRecord());
+	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::unaffected,*fiter,glb);
       }
     }
@@ -1992,7 +1992,7 @@ void ProtoModel::restoreXml(const Element *el)
       const List &flist(subnode->getChildren());
       List::const_iterator fiter;
       for(fiter=flist.begin();fiter!=flist.end();++fiter) {
-	effectlist.push_back(EffectRecord());
+	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::killedbycall,*fiter,glb);
       }	
     }
@@ -2000,7 +2000,7 @@ void ProtoModel::restoreXml(const Element *el)
       const List &flist(subnode->getChildren());
       List::const_iterator fiter;
       for(fiter=flist.begin();fiter!=flist.end();++fiter) {
-	effectlist.push_back(EffectRecord());
+	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::return_address,*fiter,glb);
       }
       sawretaddr = true;
@@ -2029,7 +2029,7 @@ void ProtoModel::restoreXml(const Element *el)
       const List &flist(subnode->getChildren());
       List::const_iterator fiter;
       for(fiter=flist.begin();fiter!=flist.end();++fiter) {
-	likelytrash.push_back(VarnodeData());
+	likelytrash.emplace_back();
 	likelytrash.back().restoreXml(*fiter,glb);
       }	
     }
@@ -2088,7 +2088,7 @@ void ScoreProtoModel::addParameter(const Address &addr,int4 sz)
   else
     isparam = model->possibleOutputParamWithSlot(addr,sz,slot,slotsize);
   if (isparam) {
-    entry.push_back(PEntry());
+    entry.emplace_back();
     entry.back().origIndex = orig;
     entry.back().slot = slot;
     entry.back().size = slotsize;
@@ -2731,7 +2731,7 @@ void ProtoStoreInternal::clearOutput(void)
 {
   if (outparam != (ProtoParameter *)0)
     delete outparam;
-  outparam = new ParameterBasic("",Address(),voidtype,0);
+  outparam = new ParameterBasic(voidtype);
 }
 
 ProtoParameter *ProtoStoreInternal::getOutput(void)
@@ -2852,7 +2852,7 @@ void ProtoStoreInternal::restoreXml(const Element *el,ProtoModel *model)
     }
     if ((flags & ParameterPieces::hiddenretparm) == 0)
       namelist.push_back(name);
-    pieces.push_back(ParameterPieces());
+    pieces.emplace_back();
     ParameterPieces &curparam( pieces.back() );
     const List &sublist(subel->getChildren());
     List::const_iterator subiter;
@@ -3963,7 +3963,7 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       const List &list2((*iter)->getChildren());
       List::const_iterator iter2 = list2.begin();
       while(iter2 != list2.end()) {
-	effectlist.push_back(EffectRecord());
+	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::unaffected,*iter2,glb);
 	++iter2;
       }
@@ -3972,7 +3972,7 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       const List &list2((*iter)->getChildren());
       List::const_iterator iter2 = list2.begin();
       while(iter2 != list2.end()) {
-	effectlist.push_back(EffectRecord());
+	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::killedbycall,*iter2,glb);
 	++iter2;
       }
@@ -3981,7 +3981,7 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       const List &list2((*iter)->getChildren());
       List::const_iterator iter2 = list2.begin();
       while(iter2 != list2.end()) {
-	effectlist.push_back(EffectRecord());
+	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::return_address,*iter2,glb);
 	++iter2;
       }
@@ -3990,7 +3990,7 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       const List &list2((*iter)->getChildren());
       List::const_iterator iter2 = list2.begin();
       while(iter2 != list2.end()) {
-	likelytrash.push_back(VarnodeData());
+	likelytrash.emplace_back();
 	likelytrash.back().restoreXml(*iter2,glb);
 	++iter2;
       }

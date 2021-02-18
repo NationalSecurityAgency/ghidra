@@ -123,6 +123,7 @@ public:
   /// Given a specific language and PcodeOp, emit the expression rooted at the operation.
   /// \param lng is the PrintLanguage to emit
   /// \param op is the specific PcodeOp
+  /// \param readOp is the PcodeOp consuming the output (or null)
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const=0;
 
   /// \brief Print (for debugging purposes) \b this specific PcodeOp to the stream

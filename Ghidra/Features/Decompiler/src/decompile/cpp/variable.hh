@@ -137,6 +137,7 @@ public:
   //  Varnode *findGlobalRep(void) const;
   static bool compareName(Varnode *vn1,Varnode *vn2);	///< Determine which given Varnode is most nameable
   static bool compareJustLoc(const Varnode *a,const Varnode *b);	///< Compare based on storage location
+  static int4 markExpression(Varnode *vn,vector<HighVariable *> &highList);	///< Mark and collect variables in expression
 };
 
 #endif

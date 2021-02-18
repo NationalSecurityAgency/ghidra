@@ -254,6 +254,7 @@ public class SleighCompile extends SleighBase {
 	boolean warnunusedfields;   // True if fields are defined but not used
 	boolean enforcelocalkeyword;  // Force slaspec to use 'local' keyword when defining temporary varnodes
 	boolean lenientconflicterrors; // True if we ignore most pattern conflict errors
+	boolean largetemporarywarning; // True if we warn about temporaries larger than SleighBase.MAX_UNIQUE_SIZE
 	public boolean warnalllocalcollisions;
 	public boolean warnallnops;
 	public VectorSTL<String> noplist = new VectorSTL<>();
@@ -381,8 +382,7 @@ public class SleighCompile extends SleighBase {
 		final int symSize = sym.getSize();
 		if (symSize % 4 != 0) {
 			reportError(sym.location,
-				String.format(
-					"Invalid size of context register '%s' (%d); must be a multiple of 4",
+				String.format("Invalid size of context register '%s' (%d); must be a multiple of 4",
 					sym.getName(), symSize));
 		}
 		final int maxBits = symSize * 8 - 1;
@@ -499,7 +499,7 @@ public class SleighCompile extends SleighBase {
 	void checkConsistency() {
 		entry("checkConsistency");
 		ConsistencyChecker checker =
-			new ConsistencyChecker(this, root, warnunnecessarypcode, warndeadtemps);
+			new ConsistencyChecker(this, root, warnunnecessarypcode, warndeadtemps, largetemporarywarning);
 
 		if (!checker.test()) {
 			errors += 1;
@@ -524,6 +524,11 @@ public class SleighCompile extends SleighBase {
 				" operations wrote to temporaries that were not read");
 			reportWarning(null, "Use -t switch to list each individually");
 		}
+		if ((!largetemporarywarning) && checker.getNumLargeTemporaries() > 0) {
+			reportWarning(null, checker.getNumLargeTemporaries() + 
+				" constructors contain temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE + " bytes.");
+			reportWarning(null, "Use -o switch to list each individually.");
+		} 
 	}
 
 	static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
@@ -563,8 +568,7 @@ public class SleighCompile extends SleighBase {
 				noCollisions = false;
 				if (warnalllocalcollisions) {
 					reportWarning(ct.location,
-						String.format(
-							"Possible operand collision between symbols '%s' and '%s'",
+						String.format("Possible operand collision between symbols '%s' and '%s'",
 							ct.getOperand(collideOperand).getName(), ct.getOperand(i).getName()));
 
 				}
@@ -649,7 +653,6 @@ public class SleighCompile extends SleighBase {
 		pcode.resetLabelCount();
 	}
 
-
 	public void reportError(Location location, String msg) {
 		entry("reportError", location, msg);
 		Msg.error(this, MessageFormattingUtils.format(location, msg));
@@ -689,7 +692,7 @@ public class SleighCompile extends SleighBase {
 	long getUniqueAddr() {
 		entry("getUniqueAddr");
 		long base = getUniqueBase();
-		setUniqueBase(base + 16); // Should be maximum size of a unique
+		setUniqueBase(base + MAX_UNIQUE_SIZE); 
 		return base;
 	}
 
@@ -712,6 +715,17 @@ public class SleighCompile extends SleighBase {
 		entry("setEnforceLocalKeyWord", val);
 		enforcelocalkeyword = val;
 		pcode.setEnforceLocalKey(val);
+	}
+	
+	/**
+	 * Sets whether or not to print out warning info about
+	 * {@link Constructor}s which reference varnodes in the
+	 * unique space larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * @param val whether to print info about contructors using large varnodes
+	 */
+	void setLargeTemporaryWarning(boolean val) {
+		entry("setLargeTemporaryWarning",val);
+		largetemporarywarning = val;
 	}
 
 	void setLenientConflict(boolean val) {
@@ -922,9 +936,8 @@ public class SleighCompile extends SleighBase {
 		insertSpace(spc);
 		if (qual.isdefault) {
 			if (getDefaultSpace() != null) {
-				reportError(location,
-					"Multiple default spaces -- '" + getDefaultSpace().getName() + "', '" +
-						qual.name + "'");
+				reportError(location, "Multiple default spaces -- '" + getDefaultSpace().getName() +
+					"', '" + qual.name + "'");
 			}
 			else {
 				setDefaultSpace(spc.getIndex()); // Make the flagged space
@@ -1331,6 +1344,10 @@ public class SleighCompile extends SleighBase {
 		sym.addConstructor(curct);
 		symtab.addScope(); // Make a new symbol scope for our constructor
 		pcode.resetLabelCount();
+		Integer index = indexer.index(location);
+		if (index != null) {
+			curct.setSourceFileIndex(index);
+		}
 		return curct;
 	}
 
@@ -1452,8 +1469,7 @@ public class SleighCompile extends SleighBase {
 				big.markSubtableOperands(check);
 				Pair<Integer, Location> res = cur.section.fillinBuild(check, getConstantSpace());
 				if (res.first == 1) {
-					myErrors.push_back(
-						scopeString + "Duplicate BUILD statements at " + res.second);
+					myErrors.push_back(scopeString + "Duplicate BUILD statements at " + res.second);
 				}
 				if (res.first == 2) {
 					myErrors.push_back(
@@ -1461,8 +1477,7 @@ public class SleighCompile extends SleighBase {
 				}
 
 				if (!pcode.propagateSize(cur.section)) {
-					myErrors.push_back(
-						scopeString + "Could not resolve at least 1 variable size");
+					myErrors.push_back(scopeString + "Could not resolve at least 1 variable size");
 				}
 			}
 			if (i < 0) {		// These potential errors only apply to main section

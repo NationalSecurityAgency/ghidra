@@ -902,6 +902,32 @@ public final class FileUtilities {
 		return childPath;
 	}
 
+	/**
+	 * Return the relative path string of one resource file in another. If
+	 * no path can be constructed or the files are the same, then null is returned.
+	 * 
+	 * Note: unlike {@link #relativizePath(File, File)}, this function does not resolve symbolic links.
+	 *
+	 * <P>For example, given, in this order, two files with these paths
+	 *  <code>/a/b</code> and <code>/a/b/c</code>, this method will return 'c'.
+	 *
+	 * @param f1 the parent resource file
+	 * @param f2 the child resource file
+	 * @return the relative path of {@code f2} in {@code f1}
+	 */
+	public static String relativizePath(ResourceFile f1, ResourceFile f2) {
+		StringBuilder sb = new StringBuilder(f2.getName());
+		f2 = f2.getParentFile();
+		while (f2 != null) {
+			if (f1.equals(f2)) {
+				return sb.toString();
+			}
+			sb.insert(0, f2.getName() + File.separator);
+			f2 = f2.getParentFile();
+		}
+		return null;
+	}
+
 	public static boolean exists(URI uri) {
 
 		String scheme = uri.getScheme();

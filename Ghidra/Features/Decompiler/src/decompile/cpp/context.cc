@@ -119,7 +119,7 @@ uintm ParserContext::getContextBits(int4 startbit,int4 size) const
 void ParserContext::addCommit(TripleSymbol *sym,int4 num,uintm mask,bool flow,ConstructState *point)
 
 {
-  contextcommit.push_back(ContextSet());
+  contextcommit.emplace_back();
   ContextSet &set(contextcommit.back());
 
   set.sym = sym;

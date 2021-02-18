@@ -57,6 +57,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionErrorTooManyInstructions());
   registerOption(new OptionDefaultPrototype());
   registerOption(new OptionInferConstPtr());
+  registerOption(new OptionForLoops());
   registerOption(new OptionInline());
   registerOption(new OptionNoReturn());
   registerOption(new OptionStructAlign());
@@ -242,6 +243,24 @@ string OptionInferConstPtr::apply(Architecture *glb,const string &p1,const strin
     res = "Constant pointers must now be set explicitly";
     glb->infer_pointers = false;
   }
+  return res;
+}
+
+/// \class OptionForLoops
+/// \brief Toggle whether the decompiler attempts to recover \e for-loop variables
+///
+/// Setting the first parameter to "on" causes the decompiler to search for a suitable loop variable
+/// controlling iteration of a \e while-do block.  The \e for-loop displays the following on a single line:
+///    - loop variable initializer (optional)
+///    - loop condition
+///    - loop variable incrementer
+///
+string OptionForLoops::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  glb->analyze_for_loops = onOrOff(p1);
+
+  string res = "Recovery of for-loops is " + p1;
   return res;
 }
 
@@ -819,6 +838,10 @@ string OptionAliasBlock::apply(Architecture *glb,const string &p1,const string &
   return "Alias block level set to " + p1;
 }
 
+/// \class OptionMaxInstruction
+/// \brief Maximum number of instructions that can be processed in a single function
+///
+/// The first parameter is an integer specifying the maximum.
 string OptionMaxInstruction::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {

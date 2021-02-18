@@ -28,9 +28,11 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.plugin.core.osgi.OSGiException;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
+import ghidra.app.util.headless.HeadlessAnalyzer;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import utilities.util.FileUtilities;
 
 /**
  * A utility class for managing script directories and ScriptInfo objects.
@@ -128,20 +130,13 @@ public class GhidraScriptUtil {
 	 * @return the source directory if found, or null if not
 	 */
 	public static ResourceFile findSourceDirectoryContaining(ResourceFile sourceFile) {
-		String sourcePath;
-		try {
-			sourcePath = sourceFile.getCanonicalPath();
-			for (ResourceFile sourceDir : getScriptSourceDirectories()) {
-				if (sourcePath.startsWith(sourceDir.getCanonicalPath() + File.separatorChar)) {
-					return sourceDir;
-				}
+		for (ResourceFile sourceDir : getScriptSourceDirectories()) {
+			if (FileUtilities.relativizePath(sourceDir, sourceFile) != null) {
+				return sourceDir;
 			}
 		}
-		catch (IOException e) {
-			Msg.error(GhidraScriptUtil.class,
-				"Failed to find script in any script directory: " + sourceFile.toString(),
-				e);
-		}
+		Msg.error(GhidraScriptUtil.class,
+			"Failed to find script in any script directory: " + sourceFile.toString());
 		return null;
 	}
 
@@ -293,14 +288,7 @@ public class GhidraScriptUtil {
 	 * @return the Ghidra script provider
 	 */
 	public static GhidraScriptProvider getProvider(ResourceFile scriptFile) {
-		String scriptFileName = scriptFile.getName().toLowerCase();
-
-		for (GhidraScriptProvider provider : getProviders()) {
-			if (scriptFileName.endsWith(provider.getExtension().toLowerCase())) {
-				return provider;
-			}
-		}
-		return null;
+		return findProvider(scriptFile.getName());
 	}
 
 	/**
@@ -310,13 +298,23 @@ public class GhidraScriptUtil {
 	 * @return true if a provider exists that can process the specified file
 	 */
 	public static boolean hasScriptProvider(ResourceFile scriptFile) {
-		String scriptFileName = scriptFile.getName().toLowerCase();
+		return findProvider(scriptFile.getName()) != null;
+	}
+
+	/**
+	 * Find the provider whose extension matches the given filename extension.
+	 * 
+	 * @param fileName name of script file
+	 * @return the first matching provider or null if no provider matches
+	 */
+	private static GhidraScriptProvider findProvider(String fileName) {
+		fileName = fileName.toLowerCase();
 		for (GhidraScriptProvider provider : getProviders()) {
-			if (scriptFileName.endsWith(provider.getExtension().toLowerCase())) {
-				return true;
+			if (fileName.endsWith(provider.getExtension().toLowerCase())) {
+				return provider;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
@@ -362,31 +360,35 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Fixup name issues, such as package parts in the name and inner class names.
+	 * Fix script name issues for searching in script directories.
+	 * If no provider can be identified, Java is assumed.
 	 * 
-	 * <p>This method can handle names with or without '.java' at the end; names with 
-	 * '$' (inner classes) and names with '.' characters for package separators
+	 * <p>This method is part of a poorly specified behavior that is due for future amendment.
 	 * 
+	 * <p>It is used by {@link GhidraScript#runScript(String)} methods, 
+	 * {@link #createNewScript(String, String, ResourceFile, List)}, and by {@link HeadlessAnalyzer} for 
+	 * {@code preScript} and {@code postScript}.  The intent was to allow some freedom in how a user specifies
+	 * a script in two ways: 1) if the extension is omitted ".java" is assumed and 2) if a Java class name is
+	 * given it's converted to a relative path.
+	 *  
 	 * @param name the name of the script
-	 * @return the name as a '.java' file path (with '/'s and not '.'s)
+	 * @return the name as a file path
 	 */
+	@Deprecated
 	static String fixupName(String name) {
-		if (name.endsWith(".java")) {
-			name = name.substring(0, name.length() - 5);
+		GhidraScriptProvider provider = findProvider(name);
+		// assume Java if no provider matched
+		if (provider == null) {
+			name = name + ".java";
+			provider = findProvider(".java");
 		}
-
-		String path = name.replace('.', '/');
-		int innerClassIndex = path.indexOf('$');
-		if (innerClassIndex != -1) {
-			path = path.substring(0, innerClassIndex);
-		}
-		return path + ".java";
+		return provider.fixupName(name);
 	}
 
 	static ResourceFile findScriptFileInPaths(Collection<ResourceFile> scriptDirectories,
-			String filename) {
+			String name) {
 
-		String validatedName = fixupName(filename);
+		String validatedName = fixupName(name);
 
 		for (ResourceFile resourceFile : scriptDirectories) {
 			if (resourceFile.isDirectory()) {

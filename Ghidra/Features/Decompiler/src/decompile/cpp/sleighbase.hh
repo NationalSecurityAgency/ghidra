@@ -21,7 +21,35 @@
 #include "translate.hh"
 #include "slghsymbol.hh"
 
+/// \brief class for recording source file information for SLEIGH constructors.
+
+///
+/// A SLEIGH specification may contain many source files.  This class is
+/// used to associate each constructor in a SLEIGH language to the source
+/// file where it is defined. This information is useful when debugging
+/// SLEIGH specifications.  Sourcefiles are assigned a numeric index and
+/// the mapping from indices to filenames is written to the generated .sla
+/// file.  For each constructor, the data written to the .sla file includes
+/// the source file index.
+class SourceFileIndexer {
+public:
+    SourceFileIndexer() {leastUnusedIndex = 0;}
+    ~SourceFileIndexer(void) { }
+    ///Returns the index of the file.  If the file is not in the index it is added.
+    int4 index(const string filename);
+	int4 getIndex(const string);  ///< get the index of a file.  Error if the file is not in the index.
+	string getFilename(int4);     ///< get the filename corresponding to an index
+    void restoreXml(const Element *el); ///< read a stored index mapping from an XML file
+	void saveXml(ostream&) const;       ///< save the index mapping to an XML file
+
+private:
+	int4 leastUnusedIndex;  ///< one-up count for assigning indices to files
+	map<int4, string> indexToFile;  ///< map from indices to files
+	map<string, int4> fileToIndex;  ///< map from files to indices
+};
+
 /// \brief Common core of classes that read or write SLEIGH specification files natively.
+
 ///
 /// This class represents what's in common across the SLEIGH infrastructure between:
 ///   - Reading the various SLEIGH specification files
@@ -36,10 +64,12 @@ protected:
   uint4 maxdelayslotbytes;	///< Maximum number of bytes in a delay-slot directive
   uint4 unique_allocatemask;	///< Bits that are guaranteed to be zero in the unique allocation scheme
   uint4 numSections;		///< Number of \e named sections
+  SourceFileIndexer indexer;    ///< source file index used when generating SLEIGH constructor debug info
   void buildXrefs(vector<string> &errorPairs);	///< Build register map. Collect user-ops and context-fields.
   void reregisterContext(void);	///< Reregister context fields for a new executable
   void restoreXml(const Element *el);	///< Read a SLEIGH specification from XML
 public:
+  static const uintb MAX_UNIQUE_SIZE;    ///< Maximum size of a varnode in the unique space (should match value in SleighBase.java)
   SleighBase(void);		///< Construct an uninitialized translator
   bool isInitialized(void) const { return (root != (SubtableSymbol *)0); }	///< Return \b true if \b this is initialized
   virtual ~SleighBase(void) {}	///< Destructor

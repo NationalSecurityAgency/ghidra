@@ -15,14 +15,14 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.file.formats.android.dex.util.Leb128;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 import java.util.*;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class ClassDataItem implements StructConverter {
 
@@ -36,27 +36,27 @@ public class ClassDataItem implements StructConverter {
 	private int directMethodsSizeLength;// in bytes
 	private int virtualMethodsSizeLength;// in bytes
 
-	private List< EncodedField > staticFields = new ArrayList< EncodedField >( );
-	private List< EncodedField > instancesFields = new ArrayList< EncodedField >( );
-	private List< EncodedMethod > directMethods = new ArrayList< EncodedMethod >( );
-	private List< EncodedMethod > virtualMethods = new ArrayList< EncodedMethod >( );
+	private List< EncodedField > staticFields = new ArrayList< >( );
+	private List< EncodedField > instancesFields = new ArrayList< >( );
+	private List< EncodedMethod > directMethods = new ArrayList< >( );
+	private List< EncodedMethod > virtualMethods = new ArrayList< >( );
 
 	public ClassDataItem( BinaryReader reader ) throws IOException {
-		staticFieldsSize = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		staticFieldsSizeLength = Leb128.unsignedLeb128Size( staticFieldsSize );
-		reader.readNextByteArray( staticFieldsSizeLength );// consume leb...
+		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		staticFieldsSize = leb128.asUInt32();
+		staticFieldsSizeLength = leb128.getLength();
 
-		instanceFieldsSize = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		instanceFieldsSizeLength = Leb128.unsignedLeb128Size( instanceFieldsSize );
-		reader.readNextByteArray( instanceFieldsSizeLength );// consume leb...
+		leb128 = LEB128.readUnsignedValue(reader);
+		instanceFieldsSize = leb128.asUInt32();
+		instanceFieldsSizeLength = leb128.getLength();
 
-		directMethodsSize = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		directMethodsSizeLength = Leb128.unsignedLeb128Size( directMethodsSize );
-		reader.readNextByteArray( directMethodsSizeLength );// consume leb...
+		leb128 = LEB128.readUnsignedValue(reader);
+		directMethodsSize = leb128.asUInt32();
+		directMethodsSizeLength = leb128.getLength();
 
-		virtualMethodsSize = Leb128.readUnsignedLeb128( reader.readByteArray( reader.getPointerIndex( ), 5 ) );
-		virtualMethodsSizeLength = Leb128.unsignedLeb128Size( virtualMethodsSize );
-		reader.readNextByteArray( virtualMethodsSizeLength );// consume leb...
+		leb128 = LEB128.readUnsignedValue(reader);
+		virtualMethodsSize = leb128.asUInt32();
+		virtualMethodsSizeLength = leb128.getLength();
 
 		for ( int i = 0 ; i < staticFieldsSize ; ++i ) {
 			staticFields.add( new EncodedField( reader ) );

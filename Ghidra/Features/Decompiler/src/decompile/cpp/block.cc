@@ -73,11 +73,11 @@ void FlowBlock::addInEdge(FlowBlock *b,uint4 lab)
 void FlowBlock::restoreNextInEdge(const Element *el,BlockMap &resolver)
 
 {
-  intothis.push_back(BlockEdge());
+  intothis.emplace_back();
   BlockEdge &inedge(intothis.back());
   inedge.restoreXml(el,resolver);
   while(inedge.point->outofthis.size() <= inedge.reverse_index)
-    inedge.point->outofthis.push_back(BlockEdge());
+    inedge.point->outofthis.emplace_back();
   BlockEdge &outedge(inedge.point->outofthis[inedge.reverse_index]);
   outedge.label = 0;
   outedge.point = this;
@@ -574,7 +574,10 @@ int4 FlowBlock::getOutIndex(const FlowBlock *bl) const
 void FlowBlock::printHeader(ostream &s) const
 
 {
-  s << dec << index << ' ' << getStart() << '-' << getStop();
+  s << dec << index;
+  if (!getStart().isInvalid() && !getStop().isInvalid()) {
+    s << ' ' << getStart() << '-' << getStop();
+  }
 }
 
 /// Recursively print out the hierarchical structure of \b this FlowBlock.
@@ -1254,7 +1257,16 @@ FlowBlock *BlockGraph::nextFlowAfter(const FlowBlock *bl) const
   return nextbl;
 }
 
-void BlockGraph::finalizePrinting(const Funcdata &data) const
+void BlockGraph::finalTransform(Funcdata &data)
+
+{
+  // Recurse into all the substructures
+  vector<FlowBlock *>::const_iterator iter;
+  for(iter=list.begin();iter!=list.end();++iter)
+    (*iter)->finalTransform(data);
+}
+
+void BlockGraph::finalizePrinting(Funcdata &data) const
 
 {
   // Recurse into all the substructures
@@ -2916,6 +2928,170 @@ void BlockIf::saveXmlBody(ostream &s) const
   }
 }
 
+/// Try to find a Varnode that represents the controlling \e loop \e variable for \b this loop.
+/// The Varnode must be:
+///   - tested by the exit condition
+///   - have a MULTIEQUAL in the head block
+///   - have a modification coming in from the tail block
+///   - the modification must be the last op or moveable to the last op
+///
+/// If the loop variable is found, this routine sets the \e iterateOp and the \e loopDef.
+/// \param cbranch is the CBRANCH implementing the loop exit
+/// \param head is the head basic-block of the loop
+/// \param tail is the tail basic-block of the loop
+/// \param lastOp is the precomputed last PcodeOp of tail that isn't a BRANCH
+void BlockWhileDo::findLoopVariable(PcodeOp *cbranch,BlockBasic *head,BlockBasic *tail,PcodeOp *lastOp)
+
+{
+  Varnode *vn = cbranch->getIn(1);
+  if (!vn->isWritten()) return;		// No loop variable found
+  PcodeOp *op = vn->getDef();
+  int4 slot = tail->getOutRevIndex(0);
+
+  PcodeOpNode path[4];
+  int4 count = 0;
+  if (op->isCall() || op->isMarker()) {
+      return;
+  }
+  path[0].op = op;
+  path[0].slot = 0;
+  while(count>=0) {
+    PcodeOp *curOp = path[count].op;
+    int4 ind = path[count].slot++;
+    if (ind >= curOp->numInput()) {
+      count -= 1;
+      continue;
+    }
+    Varnode *nextVn = curOp->getIn(ind);
+    if (!nextVn->isWritten()) continue;
+    PcodeOp *defOp = nextVn->getDef();
+    if (defOp->code() == CPUI_MULTIEQUAL) {
+      if (defOp->getParent() != head) continue;
+      Varnode *itvn = defOp->getIn(slot);
+      if (!itvn->isWritten()) continue;
+      PcodeOp *possibleIterate = itvn->getDef();
+      if (possibleIterate->getParent() == tail) {	// Found proper head/tail configuration
+	if (possibleIterate->isMarker())
+	  continue;	// No iteration in tail
+	if (!possibleIterate->isMoveable(lastOp))
+	  continue;	// Not the final statement
+	loopDef = defOp;
+	iterateOp = possibleIterate;
+	return;		// Found the loop variable
+      }
+    }
+    else {
+      if (count == 3) continue;
+      if (defOp->isCall() || defOp->isMarker()) continue;
+      count += 1;
+      path[count].op = defOp;
+      path[count].slot = 0;
+    }
+  }
+  return;		// No loop variable found
+}
+
+/// Given a control flow loop, try to find a putative initializer PcodeOp for the loop variable.
+/// The initializer must be read by read by \e loopDef and by in a block that
+/// flows only into the loop.  If an initializer is found, then
+/// \e initializeOp is set and the lastOp (not including a branch) in the initializer
+/// block is returned. Otherwise null is returned.
+/// \param head is the head block of the loop
+/// \param slot is the block input coming from the loop tail
+/// \return the last PcodeOp in the initializer's block
+PcodeOp *BlockWhileDo::findInitializer(BlockBasic *head,int4 slot) const
+
+{
+  if (head->sizeIn() != 2) return (PcodeOp *)0;
+  slot = 1 - slot;
+  Varnode *initVn = loopDef->getIn(slot);
+  if (!initVn->isWritten()) return (PcodeOp *)0;
+  PcodeOp *res = initVn->getDef();
+  if (res->isMarker()) return (PcodeOp *)0;
+  FlowBlock *initialBlock = res->getParent();
+  if (initialBlock != head->getIn(slot))
+    return (PcodeOp *)0;			// Statement must terminate in block flowing to head
+  PcodeOp *lastOp = initialBlock->lastOp();
+  if (lastOp == (PcodeOp *)0) return (PcodeOp *)0;
+  if (initialBlock->sizeOut() != 1) return (PcodeOp *)0;	// Initializer block must flow only to for loop
+  if (lastOp->isBranch()) {
+    lastOp = lastOp->previousOp();
+    if (lastOp == (PcodeOp *)0) return (PcodeOp *)0;
+  }
+  initializeOp = res;
+  return lastOp;
+}
+
+/// For-loop initializer or iterator statements must be the final statement in
+/// their respective basic block. This method tests that iterateOp/initializeOp (specified
+/// by \e slot) is the root of or can be turned into the root of a terminal statement.
+/// The root output must be an explicit variable being read by the
+/// \e loopDef MULTIEQUAL at the top of the loop. If the root is not the last
+/// PcodeOp in the block, an attempt is made to move it.
+/// Return the root PcodeOp if all these conditions are met, otherwise return null.
+/// \param data is the function containing the while loop
+/// \param slot is the slot read by \e loopDef from the output of the statement
+/// \return an explicit statement or null
+PcodeOp *BlockWhileDo::testTerminal(Funcdata &data,int4 slot) const
+
+{
+  Varnode *vn = loopDef->getIn(slot);
+  if (!vn->isWritten()) return (PcodeOp *)0;
+  PcodeOp *finalOp = vn->getDef();
+  BlockBasic *parentBlock = (BlockBasic *)loopDef->getParent()->getIn(slot);
+  PcodeOp *resOp = finalOp;
+  if (finalOp->code() == CPUI_COPY && finalOp->notPrinted()) {
+    vn = finalOp->getIn(0);
+    if (!vn->isWritten()) return (PcodeOp *)0;
+    resOp = vn->getDef();
+    if (resOp->getParent() != parentBlock) return (PcodeOp *)0;
+  }
+
+  if (!vn->isExplicit()) return (PcodeOp *)0;
+  if (resOp->notPrinted())
+    return (PcodeOp *)0;	// Statement MUST be printed
+
+  // finalOp MUST be the last op in the basic block (except for the branch)
+  PcodeOp *lastOp = finalOp->getParent()->lastOp();
+  if (lastOp->isBranch())
+    lastOp = lastOp->previousOp();
+  if (!data.moveRespectingCover(finalOp, lastOp))
+    return (PcodeOp *)0;
+
+  return resOp;
+}
+
+/// Make sure the loop variable is involved as input in the iterator statement.
+/// \return \b true if the loop variable is an input to the iterator statement
+bool BlockWhileDo::testIterateForm(void) const
+
+{
+  Varnode *targetVn = loopDef->getOut();
+  HighVariable *high = targetVn->getHigh();
+
+  vector<PcodeOpNode> path;
+  PcodeOp *op = iterateOp;
+  path.push_back(PcodeOpNode(op,0));
+  while(!path.empty()) {
+    PcodeOpNode &node(path.back());
+    if (node.op->numInput() <= node.slot) {
+      path.pop_back();
+      continue;
+    }
+    Varnode *vn = node.op->getIn(node.slot);
+    node.slot += 1;
+    if (vn->isAnnotation()) continue;
+    if (vn->getHigh() == high) {
+      return true;
+    }
+    if (vn->isExplicit()) continue;	// Truncate at explicit
+    if (!vn->isWritten()) continue;
+    op = vn->getDef();
+    path.push_back(PcodeOpNode(vn->getDef(),0));
+  }
+  return false;
+}
+
 void BlockWhileDo::markLabelBumpUp(bool bump)
 
 {
@@ -2951,6 +3127,79 @@ FlowBlock *BlockWhileDo::nextFlowAfter(const FlowBlock *bl) const
   if (nextbl != (FlowBlock *)0)
     nextbl = nextbl->getFrontLeaf();
   return nextbl;
+}
+
+/// Determine if \b this block can be printed as a \e for loop, with an \e initializer statement
+/// extracted from the previous block, and an \e iterator statement extracted from the body.
+/// \param data is the function containing \b this loop
+void BlockWhileDo::finalTransform(Funcdata &data)
+
+{
+  BlockGraph::finalTransform(data);
+  if (!data.getArch()->analyze_for_loops) return;
+  if (hasOverflowSyntax()) return;
+  FlowBlock *copyBl = getFrontLeaf();
+  if (copyBl == (FlowBlock *)0) return;
+  BlockBasic *head = (BlockBasic *)copyBl->subBlock(0);
+  if (head->getType() != t_basic) return;
+  PcodeOp *lastOp = getBlock(1)->lastOp();	// There must be a last op in body, for there to be an iterator statement
+  if (lastOp == (PcodeOp *)0) return;
+  BlockBasic *tail = lastOp->getParent();
+  if (tail->sizeOut() != 1) return;
+  if (tail->getOut(0) != head) return;
+  PcodeOp *cbranch = getBlock(0)->lastOp();
+  if (cbranch == (PcodeOp *)0 || cbranch->code() != CPUI_CBRANCH) return;
+  if (lastOp->isBranch()) {			// Convert lastOp to -point- iterateOp must appear after
+    lastOp = lastOp->previousOp();
+    if (lastOp == (PcodeOp *)0) return;
+  }
+
+  findLoopVariable(cbranch, head, tail, lastOp);
+  if (iterateOp == (PcodeOp *)0) return;
+
+  if (iterateOp != lastOp) {
+    data.opUninsert(iterateOp);
+    data.opInsertAfter(iterateOp, lastOp);
+  }
+
+  // Try to set up initializer statement
+  lastOp = findInitializer(head, tail->getOutRevIndex(0));
+  if (lastOp == (PcodeOp *)0) return;
+  if (!initializeOp->isMoveable(lastOp)) {
+    initializeOp = (PcodeOp *)0;		// Turn it off
+    return;
+  }
+  if (initializeOp != lastOp) {
+    data.opUninsert(initializeOp);
+    data.opInsertAfter(initializeOp, lastOp);
+  }
+}
+
+/// Assume that finalTransform() has run and that all HighVariable merging has occurred.
+/// Do any final tests checking that the initialization and iteration statements are good.
+/// Extract initialization and iteration statements from their basic blocks.
+/// \param data is the function containing the loop
+void BlockWhileDo::finalizePrinting(Funcdata &data) const
+
+{
+  BlockGraph::finalizePrinting(data);	// Continue recursing
+  if (iterateOp == (PcodeOp *)0) return;	// For-loop printing not enabled
+  // TODO: We can check that iterate statement is not too complex
+  int4 slot = iterateOp->getParent()->getOutRevIndex(0);
+  iterateOp = testTerminal(data,slot);		// Make sure iterator statement is explicit
+  if (iterateOp == (PcodeOp *)0) return;
+  if (!testIterateForm()) {
+    iterateOp = (PcodeOp *)0;
+    return;
+  }
+  if (initializeOp == (PcodeOp *)0)
+    findInitializer(loopDef->getParent(), slot);	// Last chance initializer
+  if (initializeOp != (PcodeOp *)0)
+    initializeOp = testTerminal(data,1-slot);	// Make sure initializer statement is explicit
+
+  data.opMarkNonPrinting(iterateOp);
+  if (initializeOp != (PcodeOp *)0)
+    data.opMarkNonPrinting(initializeOp);
 }
 
 void BlockDoWhile::markLabelBumpUp(bool bump)
@@ -3025,7 +3274,7 @@ BlockSwitch::BlockSwitch(FlowBlock *ind)
 void BlockSwitch::addCase(FlowBlock *switchbl,FlowBlock *bl,uint4 gt)
 
 {
-  caseblocks.push_back(CaseOrder());
+  caseblocks.emplace_back();
   CaseOrder &curcase( caseblocks.back() );
   const FlowBlock *basicbl = bl->getFrontLeaf()->subBlock(0);
   curcase.block = bl;
@@ -3083,7 +3332,7 @@ void BlockSwitch::grabCaseBasic(FlowBlock *switchbl,const vector<FlowBlock *> &c
   }
 }
 
-void BlockSwitch::finalizePrinting(const Funcdata &data) const
+void BlockSwitch::finalizePrinting(Funcdata &data) const
 
 {
   BlockGraph::finalizePrinting(data);	// Make sure to still recurse

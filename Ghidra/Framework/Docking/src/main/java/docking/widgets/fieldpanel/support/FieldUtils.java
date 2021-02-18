@@ -31,7 +31,7 @@ public class FieldUtils {
 	}
 
 	public static List<FieldElement> wrap(List<FieldElement> fieldElements, int width) {
-		List<FieldElement> wrappedElements = new ArrayList<FieldElement>();
+		List<FieldElement> wrappedElements = new ArrayList<>();
 		for (FieldElement fieldElement : fieldElements) {
 			wrappedElements.addAll(wordWrapList(fieldElement, width));
 		}
@@ -52,7 +52,7 @@ public class FieldUtils {
 			return new FieldElement[] { originalFieldElement };
 		}
 
-		List<FieldElement> lines = new ArrayList<FieldElement>();
+		List<FieldElement> lines = new ArrayList<>();
 		int wordWrapPos = findWordWrapPosition(originalFieldElement, width);
 		while (wordWrapPos > 0) {
 			lines.add(originalFieldElement.substring(0, wordWrapPos));
@@ -67,6 +67,42 @@ public class FieldUtils {
 	}
 
 	/**
+	 * Splits the given FieldElement into sub-elements by wrapping the element in some fashion.
+	 * If breakOnWhiteSpace is indicated, wrapping will break lines on a white space character
+	 * if possible, otherwise wrapping occurs on the last possible character.
+	 * @param fieldElement is the element to wrap
+	 * @param width is the maximum width to allow before wrapping
+	 * @param breakOnWhiteSpace determines whether line breaks should happen at white space chars
+	 * @return the wrapped elements
+	 */
+	public static FieldElement[] wrap(FieldElement fieldElement, int width,
+			boolean breakOnWhiteSpace) {
+		if (breakOnWhiteSpace) {
+			return wrap(fieldElement, width);
+		}
+		FieldElement originalFieldElement = fieldElement.replaceAll(WHITE_SPACE, ' ');
+		if (originalFieldElement.getStringWidth() <= width) {
+			return new FieldElement[] { originalFieldElement };
+		}
+
+		List<FieldElement> lines = new ArrayList<>();
+		int wordWrapPos = originalFieldElement.getMaxCharactersForWidth(width);
+		if (wordWrapPos == originalFieldElement.length()) {
+			wordWrapPos = 0;
+		}
+		while (wordWrapPos > 0) {
+			lines.add(originalFieldElement.substring(0, wordWrapPos));
+			originalFieldElement = originalFieldElement.substring(wordWrapPos);
+			wordWrapPos = originalFieldElement.getMaxCharactersForWidth(width);
+			if (wordWrapPos == originalFieldElement.length()) {
+				wordWrapPos = 0;
+			}
+		}
+		lines.add(originalFieldElement);
+		return lines.toArray(new FieldElement[lines.size()]);
+	}
+
+	/**
 	 * Splits the given FieldElement into sub-elements by wrapping the element on whitespace.
 	 * 
 	 * @param fieldElement The element to wrap
@@ -74,7 +110,7 @@ public class FieldUtils {
 	 * @return The wrapped elements
 	 */
 	public static List<FieldElement> wordWrapList(FieldElement fieldElement, int width) {
-		List<FieldElement> lines = new ArrayList<FieldElement>();
+		List<FieldElement> lines = new ArrayList<>();
 
 		FieldElement originalFieldElement = fieldElement.replaceAll(WHITE_SPACE, ' ');
 		if (originalFieldElement.getStringWidth() <= width) {

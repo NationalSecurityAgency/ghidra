@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/// \file sleigh.hh
+/// \brief Classes and utilities for the main SLEIGH engine
+
 #ifndef __SLEIGH__
 #define __SLEIGH__
 
@@ -20,29 +23,52 @@
 
 class LoadImage;
 
+/// \brief Class for describing a relative p-code branch destination
+///
+/// An intra-instruction p-code branch takes a \e relative operand.
+/// The actual value produced during p-code generation is calculated at
+/// the last second using \b this. It stores the index of the BRANCH
+/// instruction and a reference to its destination operand. This initially
+/// holds a reference to a destination \e label symbol, but is later updated
+/// with the final relative value.
 struct RelativeRecord {
-  VarnodeData *dataptr;	// Record containing relative offset
-  uintb calling_index;		// Index of instruction containing relative offset
+  VarnodeData *dataptr;		///< Varnode indicating relative offset
+  uintb calling_index;		///< Index of instruction containing relative offset
 };
 
-struct PcodeData { // Data for building one pcode instruction
-  OpCode opc;
-  VarnodeData *outvar;	     // Points to outvar is there is an output
-  VarnodeData *invar;		// Inputs
-  int4 isize;			// Number of inputs
+/// \brief Data for building one p-code instruction
+///
+/// Raw data used by the emitter to produce a single PcodeOp
+struct PcodeData {
+  OpCode opc;			///< The op code
+  VarnodeData *outvar;	     	///< Output Varnode data (or null)
+  VarnodeData *invar;		///< Array of input Varnode data
+  int4 isize;			///< Number of input Varnodes
 };
 
-class PcodeCacher { // Cached chunk of pcode, prior to emitting
-  VarnodeData *poolstart;
-  VarnodeData *curpool;
-  VarnodeData *endpool;
-  vector<PcodeData> issued;
-  list<RelativeRecord> label_refs; // References to labels
-  vector<uintb> labels;		// Locations of labels
-  VarnodeData *expandPool(uint4 size);
+/// \brief Class for caching a chunk of p-code, prior to emitting
+///
+/// The engine accumulates PcodeData and VarnodeData objects for
+/// a single instruction.  Once the full instruction is constructed,
+/// the objects are passed to the emitter (PcodeEmit) via the emit() method.
+/// The class acts as a pool of memory for PcodeData and VarnodeData objects
+/// that can be reused repeatedly to emit multiple instructions.
+class PcodeCacher {
+  VarnodeData *poolstart;		///< Start of the pool of VarnodeData objects
+  VarnodeData *curpool;			///< First unused VarnodeData
+  VarnodeData *endpool;			///< End of the pool of VarnodeData objects
+  vector<PcodeData> issued;		///< P-code ops issued for the current instruction
+  list<RelativeRecord> label_refs;	///< References to labels
+  vector<uintb> labels;			///< Locations of labels
+  VarnodeData *expandPool(uint4 size);	///< Expand the memory pool
 public:
-  PcodeCacher(void);
-  ~PcodeCacher(void);
+  PcodeCacher(void);		///< Constructor
+  ~PcodeCacher(void);		///< Destructor
+
+  /// \brief Allocate data objects for a new set of Varnodes
+  ///
+  /// \param size is the number of objects to allocate
+  /// \return a pointer to the array of available VarnodeData objects
   VarnodeData *allocateVarnodes(uint4 size) {
     VarnodeData *newptr = curpool + size;
     if (newptr <= endpool) {
@@ -52,48 +78,65 @@ public:
     }
     return expandPool(size);
   }
+
+  /// \brief Allocate a data object for a new p-code operation
+  ///
+  /// \return the new PcodeData object
   PcodeData *allocateInstruction(void) {
-    issued.push_back(PcodeData());
+    issued.emplace_back();
     PcodeData *res = &issued.back();
     res->outvar = (VarnodeData *)0;
     res->invar = (VarnodeData *)0;
     return res;
   }
-  void addLabelRef(VarnodeData *ptr);
-  void addLabel(uint4 id);
-  void clear(void);
-  void resolveRelatives(void);
-  void emit(const Address &addr,PcodeEmit *emt) const;
+  void addLabelRef(VarnodeData *ptr);	///< Denote a Varnode holding a \e relative \e branch offset
+  void addLabel(uint4 id);		///< Attach a label to the \e next p-code instruction
+  void clear(void);			///< Reset the cache so that all objects are unallocated
+  void resolveRelatives(void);		///< Rewrite branch target Varnodes as \e relative offsets
+  void emit(const Address &addr,PcodeEmit *emt) const;	///< Pass the cached p-code data to the emitter
 };
 
+/// \brief A container for disassembly context used by the SLEIGH engine
+///
+/// This acts as a factor for the ParserContext objects which are used to disassemble
+/// a single instruction.  These all share a ContextCache which is a front end for
+/// accessing the ContextDatabase and resolving context variables from the SLEIGH spec.
+/// ParserContext objects are stored in a hash-table keyed by the address of the instruction.
 class DisassemblyCache {
-  ContextCache *contextcache;
-  AddrSpace *constspace;
-  int4 minimumreuse;		// Can call getParserContext this many times, before a ParserContext is reused
-  uint4 mask;			// Size of the hashtable in form 2^n-1
-  ParserContext **list;		// (circular) array of currently cached ParserContext objects
-  int4 nextfree;		// Current end/beginning of circular list
-  ParserContext **hashtable;	// Hashtable for looking up ParserContext via Address
-  void initialize(int4 min,int4 hashsize);
-  void free(void);
+  ContextCache *contextcache;	///< Cached values from the ContextDatabase
+  AddrSpace *constspace;	///< The constant address space
+  int4 minimumreuse;		///< Can call getParserContext this many times, before a ParserContext is reused
+  uint4 mask;			///< Size of the hashtable in form 2^n-1
+  ParserContext **list;		///< (circular) array of currently cached ParserContext objects
+  int4 nextfree;		///< Current end/beginning of circular list
+  ParserContext **hashtable;	///< Hashtable for looking up ParserContext via Address
+  void initialize(int4 min,int4 hashsize);	///< Initialize the hash-table of ParserContexts
+  void free(void);		///< Free the hash-table of ParserContexts
 public:
-  DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize);
-  ~DisassemblyCache(void) { free(); }
-  ParserContext *getParserContext(const Address &addr);
+  DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize);	///< Constructor
+  ~DisassemblyCache(void) { free(); }	///< Destructor
+  ParserContext *getParserContext(const Address &addr);		///< Get the parser for a particular Address
 };
 
+/// \brief Build p-code from a pre-parsed instruction
+///
+/// Through the build() method, \b this walks the parse tree and prepares data
+/// for final emission as p-code.  (The final emitting is done separately through the
+/// PcodeCacher.emit() method).  Generally, only p-code for one instruction is prepared.
+/// But, through the \b delay-slot mechanism, build() may recursively visit
+/// additional instructions.
 class SleighBuilder : public PcodeBuilder {
   virtual void dump( OpTpl *op );
-  AddrSpace *const_space;
-  AddrSpace *uniq_space;
-  uintb uniquemask;
-  uintb uniqueoffset;
-  DisassemblyCache *discache;
-  PcodeCacher *cache;
+  AddrSpace *const_space;		///< The constant address space
+  AddrSpace *uniq_space;		///< The unique address space
+  uintb uniquemask;			///< Mask of address bits to use to uniquify temporary registers
+  uintb uniqueoffset;			///< Uniquifier bits for \b this instruction
+  DisassemblyCache *discache;		///< Cache of disassembled instructions
+  PcodeCacher *cache;			///< Cache accumulating p-code data for the instruction
   void buildEmpty(Constructor *ct,int4 secnum);
   void generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn);
   AddrSpace *generatePointer(const VarnodeTpl *vntpl,VarnodeData &vn);
-  void setUniqueOffset(const Address &addr);
+  void setUniqueOffset(const Address &addr);	///< Set uniquifying bits for the current instruction
 public:
   SleighBuilder(ParserWalker *w,DisassemblyCache *dcache,PcodeCacher *pc,AddrSpace *cspc,AddrSpace *uspc,uint4 umask);
   virtual void appendBuild(OpTpl *bld,int4 secnum);
@@ -102,21 +145,31 @@ public:
   virtual void appendCrossBuild(OpTpl *bld,int4 secnum);
 };
 
+/// \brief A full SLEIGH engine
+///
+/// Its provided with a LoadImage of the bytes to be disassembled and
+/// a ContextDatabase.
+///
+/// Assembly is produced via the printAssembly() method, provided with an
+/// AssemblyEmit object and an Address.
+///
+/// P-code is produced via the oneInstruction() method, provided with a PcodeEmit
+/// object and an Address.
 class Sleigh : public SleighBase {
-  LoadImage *loader;
-  ContextDatabase *context_db;
-  ContextCache *cache;
-  mutable DisassemblyCache *discache;
-  mutable PcodeCacher pcode_cache;
-  void clearForDelete(void);
+  LoadImage *loader;			///< The mapped bytes in the program
+  ContextDatabase *context_db;		///< Database of context values steering disassembly
+  ContextCache *cache;			///< Cache of recently used context values
+  mutable DisassemblyCache *discache;	///< Cache of recently parsed instructions
+  mutable PcodeCacher pcode_cache;	///< Cache of p-code data just prior to emitting
+  void clearForDelete(void);		///< Delete the context and disassembly caches
 protected:
   ParserContext *obtainContext(const Address &addr,int4 state) const;
-  void resolve(ParserContext &pos) const;
-  void resolveHandles(ParserContext &pos) const;
+  void resolve(ParserContext &pos) const;	///< Generate a parse tree suitable for disassembly
+  void resolveHandles(ParserContext &pos) const;	///< Prepare the parse tree for p-code generation
 public:
-  Sleigh(LoadImage *ld,ContextDatabase *c_db);
-  virtual ~Sleigh(void);
-  void reset(LoadImage *ld,ContextDatabase *c_db);
+  Sleigh(LoadImage *ld,ContextDatabase *c_db);		///< Constructor
+  virtual ~Sleigh(void);				///< Destructor
+  void reset(LoadImage *ld,ContextDatabase *c_db);	///< Reset the engine for a new program
   virtual void initialize(DocumentStorage &store);
   virtual void registerContext(const string &name,int4 sbit,int4 ebit);
   virtual void setContextDefault(const string &nm,uintm val);

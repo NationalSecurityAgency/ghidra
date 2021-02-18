@@ -142,7 +142,7 @@ void PrintLanguage::pushOp(const OpToken *tok,const PcodeOp *op)
     else
       id = emit->openGroup();
   }
-  revpol.push_back(ReversePolish());
+  revpol.emplace_back();
   revpol.back().tok = tok;
   revpol.back().visited = 0;
   revpol.back().paren = paren;
@@ -631,6 +631,7 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
     emit->tagComment(commentend.c_str(),EmitXml::comment_color,
 		      spc,off);
   emit->stopComment(id);
+  comm->setEmitted(true);
 }
 
 /// Tell the emitter whether to emit just the raw tokens or if

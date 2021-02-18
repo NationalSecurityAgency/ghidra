@@ -26,7 +26,7 @@ import docking.action.DockingActionIf;
 class PlaceholderManager {
 
 	private Map<String, PlaceholderSet> ownerToPlaceholderMap =
-		new HashMap<String, PlaceholderSet>();
+		new HashMap<>();
 	private PlaceholderInstaller installer;
 
 	PlaceholderManager(PlaceholderInstaller installer) {
@@ -44,6 +44,7 @@ class PlaceholderManager {
 
 	ComponentPlaceholder replacePlaceholder(ComponentProvider provider,
 			ComponentPlaceholder oldPlaceholder) {
+
 		ComponentPlaceholder newPlaceholder = createOrRecyclePlaceholder(provider, oldPlaceholder);
 
 		moveActions(oldPlaceholder, newPlaceholder);
@@ -62,6 +63,7 @@ class PlaceholderManager {
 
 		if (newPlaceholder != oldPlaceholder) {
 			oldPlaceholder.dispose();
+			removePlaceholder(oldPlaceholder);
 		}
 		return newPlaceholder;
 	}
@@ -96,6 +98,17 @@ class PlaceholderManager {
 		placeholderSet.placeholderUsed(provider, placeholder);
 	}
 
+	private void removePlaceholder(ComponentPlaceholder placeholder) {
+		ComponentProvider provider = placeholder.getProvider();
+		String owner = provider.getOwner();
+		PlaceholderSet placeholderSet = ownerToPlaceholderMap.get(owner);
+		if (placeholderSet == null) {
+			return;
+		}
+
+		placeholderSet.remove(placeholder);
+	}
+
 	ComponentPlaceholder createOrRecyclePlaceholder(ComponentProvider provider) {
 		return createOrRecyclePlaceholder(provider, null /*no default*/);
 	}
@@ -103,14 +116,14 @@ class PlaceholderManager {
 	/**
 	 * Finds or creates a component placeholder object for the given provider.
 	 * @param provider the provider for which to get an placeholder object.
-	 * @param TODO
+	 * @param defaultPlaceholder the placeholder to use if an existing one cannot be found
 	 * @return a component placeholder object that will be used to manager the providers component.
 	 */
 	ComponentPlaceholder createOrRecyclePlaceholder(ComponentProvider provider,
 			ComponentPlaceholder defaultPlaceholder) {
 
-		String windowOwner = provider.getOwner();
-		Set<ComponentPlaceholder> unusedPlaceholders = getUnusedPlaceholdersByOwner(windowOwner);
+		String owner = provider.getOwner();
+		Set<ComponentPlaceholder> unusedPlaceholders = getUnusedPlaceholdersByOwner(owner);
 		ComponentPlaceholder reusablePlaceholder =
 			findBestUnusedPlaceholder(unusedPlaceholders, provider);
 
@@ -355,7 +368,7 @@ class PlaceholderManager {
 
 	Map<ComponentProvider, ComponentPlaceholder> getActiveProvidersToPlaceholders() {
 		Map<ComponentProvider, ComponentPlaceholder> map =
-			new HashMap<ComponentProvider, ComponentPlaceholder>();
+			new HashMap<>();
 		Iterator<PlaceholderSet> placeholderIterator = ownerToPlaceholderMap.values().iterator();
 		while (placeholderIterator.hasNext()) {
 			PlaceholderSet placeholders = placeholderIterator.next();
@@ -366,7 +379,7 @@ class PlaceholderManager {
 
 	private Set<ComponentPlaceholder> getAllActivePlaceholders() {
 
-		Set<ComponentPlaceholder> set = new HashSet<ComponentPlaceholder>();
+		Set<ComponentPlaceholder> set = new HashSet<>();
 		Iterator<PlaceholderSet> placeholderIterator = ownerToPlaceholderMap.values().iterator();
 		while (placeholderIterator.hasNext()) {
 			PlaceholderSet placeholders = placeholderIterator.next();
@@ -391,7 +404,7 @@ class PlaceholderManager {
 
 	void removeAll(String owner) {
 		PlaceholderSet placeholderSet = getOrCreatePlaceholderSet(owner);
-		placeholderSet.removeAll(owner);
+		placeholderSet.removeAll();
 	}
 
 	void clearActivePlaceholders() {

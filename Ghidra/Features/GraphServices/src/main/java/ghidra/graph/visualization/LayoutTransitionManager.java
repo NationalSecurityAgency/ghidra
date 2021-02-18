@@ -18,6 +18,7 @@ package ghidra.graph.visualization;
 import static ghidra.graph.visualization.LayoutFunction.*;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -48,10 +49,23 @@ class LayoutTransitionManager {
 	 */
 	Predicate<AttributedVertex> rootPredicate;
 
+	public static final List<String> EDGE_PRIORITY_LIST =
+			List.of(
+					"Fall-Through",
+					"Conditional-Return",
+					"Unconditional-Jump",
+					"Conditional-Jump",
+					"Unconditional-Call",
+					"Conditional-Call",
+					"Terminator",
+					"Computed",
+					"Indirection",
+					"Entry");
 	/**
 	 * a {@link Comparator} to sort edges during layout graph traversal
+	 * The default uses the {@code EDGE_PRIORTITY_LIST }
 	 */
-	Comparator<AttributedEdge> edgeComparator = (e1, e2) -> 0;
+	Comparator<AttributedEdge> edgeComparator = new EdgeComparator(EDGE_PRIORITY_LIST);
 
 	/**
 	 * a {@link Function} to provide {@link Rectangle} (and thus bounds} for vertices
@@ -106,8 +120,6 @@ class LayoutTransitionManager {
 		}
 		if (layoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) layoutAlgorithm).setRootPredicate(rootPredicate);
-			layoutAlgorithm.setAfter(new PostProcessRunnable<>(
-					visualizationServer.getVisualizationModel().getLayoutModel()));
 		}
 		// remove any previously added layout paintables
 		removePaintable(radialLayoutRings);
@@ -130,8 +142,7 @@ class LayoutTransitionManager {
 			((EdgeSorting<AttributedEdge>) layoutAlgorithm).setEdgeComparator(edgeComparator);
 		}
 		LayoutAlgorithmTransition.apply(visualizationServer,
-				layoutAlgorithm,
-				new PostProcessRunnable<>(visualizationServer.getVisualizationModel().getLayoutModel()));
+				layoutAlgorithm);
 	}
 
 	private void removePaintable(VisualizationServer.Paintable paintable) {
@@ -150,9 +161,6 @@ class LayoutTransitionManager {
 					.setRootPredicate(rootPredicate);
 			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
 					.setVertexBoundsFunction(vertexBoundsFunction);
-			initialLayoutAlgorithm.setAfter(new PostProcessRunnable<>(
-					visualizationServer.getVisualizationModel().getLayoutModel()));
-
 		}
 		if (initialLayoutAlgorithm instanceof EdgeSorting) {
 			((EdgeSorting<AttributedEdge>) initialLayoutAlgorithm)
