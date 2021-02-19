@@ -159,6 +159,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			elf.getLoadAdapter().processElf(this, monitor);
 
 			processEntryPoints(monitor);
+
 			processRelocations(monitor);
 			processImports(monitor);
 
@@ -429,11 +430,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	/**
 	 * Processes the GNU version section.
+	 * @throws CancelledException 
 	 */
-	private void processGNU(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void processGNU(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 
 		Address versionTableAddr = null;
 
@@ -555,10 +555,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void processEntryPoints(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void processEntryPoints(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 		monitor.setMessage("Creating entry points...");
 
 		long entry = elf.e_entry(); // already adjusted for pre-link
@@ -678,11 +676,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return msg;
 	}
 
-	private void markupInterpreter(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
-
+	private void markupInterpreter(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 		monitor.setMessage("Processing interpreter...");
 		Address interpStrAddr = null;
 
@@ -712,10 +707,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		listing.setComment(interpStrAddr, CodeUnit.EOL_COMMENT, "Initial Elf program interpreter");
 	}
 
-	private void processImports(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void processImports(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 		monitor.setMessage("Processing imports...");
 
 		ExternalManager extManager = program.getExternalManager();
