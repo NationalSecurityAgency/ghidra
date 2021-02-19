@@ -171,7 +171,7 @@ public class Section implements StructConverter {
 			header.getFileType() == MachHeaderFileTypes.MH_EXECUTE) {
 			return new SectionInputStream(getSize(), (byte) 0xf4);
 		}
-		return reader.getByteProvider().getInputStream(header.getStartIndexInProvider() + offset);
+		return reader.getByteProvider().getInputStream(header.getStartIndex() + offset);
 	}
 
 	public String getSectionName() {

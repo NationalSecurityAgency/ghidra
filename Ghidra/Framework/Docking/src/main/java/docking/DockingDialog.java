@@ -38,6 +38,9 @@ import ghidra.util.bean.GGlassPane;
 public class DockingDialog extends JDialog implements HelpDescriptor {
 	private static Component focusComponent; // allow only one scheduled focus component. See above.
 
+	private static Map<String, BoundsInfo> dialogBoundsMap =
+		LazyMap.lazyMap(new HashMap<>(), () -> new BoundsInfo());
+
 	private WindowListener windowAdapter;
 	private DialogComponentProvider component;
 	private boolean hasBeenFocused;
@@ -47,11 +50,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 			hasBeenFocused = true;
 		}
 	};
-
-	private static Map<String, BoundsInfo> dialogBoundsMap =
-		LazyMap.lazyMap(new HashMap<>(), () -> new BoundsInfo());
 	private DockingWindowManager owningWindowManager;
-
 	private WindowAdapter modalFixWindowAdapter;
 
 	/**

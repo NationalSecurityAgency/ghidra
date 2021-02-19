@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +15,26 @@
  */
 package ghidra.framework.options;
 
-import ghidra.util.Msg;
-
 import java.beans.PropertyEditorSupport;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+
+import ghidra.util.Msg;
 
 public class EnumEditor extends PropertyEditorSupport {
 
 	private Enum<?> value;
 
-	/**
-	 * 
-	 * @see java.beans.PropertyEditor#setValue(java.lang.Object)
-	 */
 	@Override
 	public void setValue(Object o) {
 		value = (Enum<?>) o;
 	}
 
-	/**
-	 * 
-	 * @see java.beans.PropertyEditor#getValue()
-	 */
 	@Override
 	public Object getValue() {
 		return value;
 	}
 
-	/**
-	 * 
-	 * @see java.beans.PropertyEditor#getTags()
-	 */
 	@Override
 	public String[] getTags() {
 
@@ -85,28 +72,20 @@ public class EnumEditor extends PropertyEditorSupport {
 		return new Enum<?>[] { value };
 	}
 
-	/**
-	 * 
-	 * @see java.beans.PropertyEditor#getAsText()
-	 */
 	@Override
 	public String getAsText() {
 		return value.toString();
 	}
 
-	/**
-	 * 
-	 * @see java.beans.PropertyEditor#setAsText(java.lang.String)
-	 */
 	@Override
 	public void setAsText(String s) {
 
 		try {
 			Method m = value.getClass().getMethod("values");
 			Enum<?>[] enums = (Enum<?>[]) m.invoke(null);
-			for (int i = 0; i < enums.length; i++) {
-				if (s.equals(enums[i].toString())) {
-					value = enums[i];
+			for (Enum<?> enum1 : enums) {
+				if (s.equals(enum1.toString())) {
+					value = enum1;
 					break;
 				}
 			}

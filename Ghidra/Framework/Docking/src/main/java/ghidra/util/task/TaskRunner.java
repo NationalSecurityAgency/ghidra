@@ -47,6 +47,8 @@ class TaskRunner {
 	void run() {
 
 		BasicTaskMonitor internalMonitor = new BasicTaskMonitor();
+		internalMonitor.setIndeterminate(!task.hasProgress());
+		internalMonitor.setCancelEnabled(task.canCancel());
 		WrappingTaskMonitor monitor = new WrappingTaskMonitor(internalMonitor);
 		startTaskThread(monitor);
 		showTaskDialog(monitor);

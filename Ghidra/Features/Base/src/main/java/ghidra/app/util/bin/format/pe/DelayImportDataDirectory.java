@@ -226,10 +226,6 @@ public class DelayImportDataDirectory extends DataDirectory {
 						List<ThunkData> thunks,
 						TaskMonitor monitor,
 						MessageLog log) {
-
-		DataType dt = ntHeader.getOptionalHeader().is64bit() 
-				? (DataType)QWORD 
-				: (DataType)DWORD;
 		
 		long thunkPtr = va(ptr, isBinary);
 		if (!descriptor.isUsingRVA()) {
@@ -240,6 +236,15 @@ public class DelayImportDataDirectory extends DataDirectory {
 			if (monitor.isCancelled()) {
 				return;
 			}
+			DataType dt;
+			if (thunk.getAddressOfData() == 0) {
+				dt = ntHeader.getOptionalHeader().is64bit() ? QWORD : DWORD;
+			}
+			else {
+				dt = ntHeader.getOptionalHeader().is64bit() ? Pointer64DataType.dataType
+						: Pointer32DataType.dataType;
+			}
+
 			Address thunkAddress = space.getAddress(thunkPtr);
 			PeUtils.createData(program, thunkAddress, dt, log);
 			setEolComment(program, thunkAddress, thunk.getStructName());

@@ -138,7 +138,7 @@ public abstract class TagListPanel extends JPanel {
 		String comment = rowObject.getComment();
 		String[] labels = new String[] { "Name:", "Comment:" };
 		String[] init = new String[] { tagName, comment };
-		InputDialog dialog = new InputDialog("Edit Tag", labels, init, true, d -> {
+		InputDialog dialog = new InputDialog("Edit Tag", labels, init, d -> {
 			String[] results = d.getValues();
 			if (results == null || results.length != 2) {
 				return false;

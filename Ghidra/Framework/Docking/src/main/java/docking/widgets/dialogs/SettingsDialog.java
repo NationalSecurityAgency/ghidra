@@ -52,6 +52,8 @@ public class SettingsDialog extends DialogComponentProvider {
 		if (help != null) {
 			setHelpLocation(help);
 		}
+
+		setTransient(true);
 		addWorkPanel(buildWorkPanel());
 		addDismissButton();
 
