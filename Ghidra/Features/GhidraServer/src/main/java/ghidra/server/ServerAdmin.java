@@ -52,7 +52,7 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
-	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
 	 * @param args command line arguments
 	 */
@@ -75,22 +75,19 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
-	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
 	 * @param args command line arguments
 	 */
 	public void execute(String[] args) {
-
 		File serverDir = null;
 
 		int ix = 0;
-		if (args.length != 0 && !args[0].startsWith("-")) {
-			serverDir = new File(args[ix++]);
-		}
-		else {
-			serverDir = getServerDirFromConfig();
-		}
 
+		String configFilePath = args.length != 0 && !args[0].startsWith("-") ? args[ix++]
+				: System.getProperty(CONFIG_FILE_PROPERTY);
+
+		serverDir = getServerDirFromConfig(configFilePath);
 		if (serverDir == null || (args.length - ix) == 0) {
 			displayUsage("");
 			System.exit(-1);
@@ -423,13 +420,12 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 	}
 
-	private File getServerDirFromConfig() {
-		String p = System.getProperty(CONFIG_FILE_PROPERTY);
-		if (p == null) {
+	private File getServerDirFromConfig(String configFilePath) {
+		if (configFilePath == null) {
 			return null;
 		}
-		propertyUsed = true;
-		File configFile = new File(p);
+
+		File configFile = new File(configFilePath);
 
 		if (!configFile.exists()) {
 			System.out.println("Config file not found: " + configFile.getAbsolutePath());
@@ -455,7 +451,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			}
 		}
 
-		p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
+		String p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
 		if (p == null) {
 			return null;
 		}

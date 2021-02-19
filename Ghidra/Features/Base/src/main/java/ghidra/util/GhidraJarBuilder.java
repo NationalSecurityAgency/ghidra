@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 
 import generic.jar.*;
@@ -44,7 +45,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	private static final String LIBS_FILE_MODULE_KEY = "Module: ";
 
 	// this is set in the buildGhidraJar batch/script files
-	private static final String GHIDRA_DIR = "Ghidra.Install.Root.Dir";
 	private static final String INVOCATION_NAME_PROPERTY = "GhidraJarBuilder.Name";
 	private static HashMap<String, List<String>> libsMap = new HashMap<>();
 	private List<File> rootGhidraDirs = new ArrayList<>();
@@ -961,14 +961,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			System.err.println("arg " + i + ": " + args[i]);
 		}
 		String invocationName = System.getProperty(INVOCATION_NAME_PROPERTY);
-		String property = System.getProperty(GHIDRA_DIR);
 
 		StringBuffer buf = new StringBuffer();
 		buf.append("\nUsage: ");
 		buf.append(invocationName != null ? invocationName : "GhidraJarBuilder ");
-		if (property == null) {
-			buf.append("<Installation Root Directory> [<Installation Root Directory> ...] ");
-		}
 		buf.append(
 			" [-output <output file>] [-srczip <src zip output file>] [-bin <compiled classes dir>] [-main <main-class>]\n");
 		System.err.println(buf.toString());
@@ -992,17 +988,15 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			usage(args);
 		}
 
-		List<File> ghidraDirs = new ArrayList<>();
+		List<File> ghidraDirs = layout.getApplicationRootDirs()
+				.stream()
+				.map(f -> f.getFile(false))
+				.collect(Collectors.toCollection(ArrayList::new));
 		File outputFile = null;
 		File srczip = null;
 		File extraBinDir = null;
 		String mainClassArg = null;
 		boolean usingGradle = false;
-
-		String property = System.getProperty(GHIDRA_DIR);
-		if (property != null) {
-			ghidraDirs.add(new File(property));
-		}
 
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];

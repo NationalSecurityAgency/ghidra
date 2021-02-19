@@ -8,9 +8,9 @@ setlocal
 set LAUNCH_MODE=fg
 
 :: Sets SCRIPT_DIR to the directory that contains this file (ends with '\')
-set SCRIPT_DIR=%~dp0
+set "SCRIPT_DIR=%~dp0"
 
-set GHIDRA_ROOT_DIR=%SCRIPT_DIR%..\Ghidra
+set "GHIDRA_ROOT_DIR=%SCRIPT_DIR%..\Ghidra"
 if exist "%GHIDRA_ROOT_DIR%" goto continue
 
 echo This script does not support development mode use
