@@ -188,9 +188,6 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		analysisMgr.initializeOptions(); // get initial options
 
 		if (!showOptionsDialog(program)) {
-			// Must set this to false at each fall-out location.  Setting it true too early
-			// results in false positives.  It is set true only at the beginning of analysis. 
-			GhidraProgramUtilities.setAnalyzedFlag(program, false);
 			return;
 		}
 
