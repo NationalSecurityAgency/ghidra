@@ -1735,11 +1735,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			}
 
 			Component bestCenter = getJavaActiveWindow();
-			Window bestParent = getParentWindow(bestCenter);
-
-			if (!provider.isModal()) {
-				bestParent = getBestNonModalParent(provider, bestParent);
-			}
+			Window bestParent = getBestParent(provider, bestCenter);
 
 			//
 			// Note: prefer the active window; allow user's choice of center component when it is
@@ -1760,6 +1756,20 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		else {
 			Swing.runIfSwingOrRunLater(r);
 		}
+	}
+
+	private static Window getBestParent(DialogComponentProvider provider, Component component) {
+		Window bestParent = getParentWindow(component);
+		if (!provider.isModal()) {
+			bestParent = getBestNonModalParent(provider, bestParent);
+		}
+
+		if (bestParent == null) {
+			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+			bestParent = kfm.getActiveWindow();
+		}
+
+		return bestParent;
 	}
 
 	private static Window getBestNonModalParent(DialogComponentProvider newProvider,
