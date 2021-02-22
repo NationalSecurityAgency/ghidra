@@ -87,10 +87,13 @@ public class GdbWriteRegistersCommand extends AbstractGdbCommandWithThreadAndFra
 			b.append(reg.getName());
 
 			BigInteger value = ent.getValue();
-			if (value.compareTo(UINT128_MAX) <= 0) {
+			//if the register is 16 or fewer bytes, just use the name
+			if (reg.getSize() <= 16) {
 				b.append('=');
 				b.append(value.toString());
 			}
+			//if the register is more than 16 bytes use gdb's struct syntax
+			//note: this only works for x64
 			else {
 				b.append(".v");
 				b.append(reg.getSize());
