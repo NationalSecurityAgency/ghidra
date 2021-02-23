@@ -382,6 +382,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			if (fromRefs == null) {
 				fromRefs = fromAdapter.createRefList(program, fromCache, fromAddr);
 			}
+			fromRefs = fromRefs.checkRefListSize(fromCache, 1);
 			fromRefs.addRef(fromAddr, toAddr, type, opIndex, -1, isPrimary, sourceType, isOffset,
 				isShifted, offsetOrShift);
 

@@ -60,6 +60,9 @@ class FromAdapterV0 extends FromAdapter {
 			long fromAddr) throws IOException {
 		DBRecord rec = table.getRecord(fromAddr);
 		if (rec != null) {
+			if (rec.getBinaryData(REF_DATA_COL) == null) {
+				return new BigRefListV0(rec, this, addrMap, program, cache, true);
+			}
 			return new RefListV0(rec, this, addrMap, program, cache, true);
 		}
 		return null;

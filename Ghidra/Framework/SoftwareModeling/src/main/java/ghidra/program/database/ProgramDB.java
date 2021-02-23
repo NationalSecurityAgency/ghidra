@@ -96,8 +96,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 19-Jun-2020 - version 22 - Corrected fixed length indexing implementation causing
 	 *                            change in index table low-level storage for newly
 	 *                            created tables. 
+	 * 18-Feb-2021 - version 23   Added support for Big Reflist for tracking FROM references.
+	 *                            Primarily used for large numbers of Entry Point references.
 	 */
-	static final int DB_VERSION = 22;
+	static final int DB_VERSION = 23;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
