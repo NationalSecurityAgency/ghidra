@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import com.google.protobuf.ByteString;
 
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetConsole;
 
 public interface GadpClientTargetConsole

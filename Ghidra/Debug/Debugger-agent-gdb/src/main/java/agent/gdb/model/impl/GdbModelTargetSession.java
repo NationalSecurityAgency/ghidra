@@ -33,11 +33,14 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Session", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Session",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetSession extends DefaultTargetModelRoot implements // 
 		TargetAccessConditioned<GdbModelTargetSession>,
 		TargetAttacher<GdbModelTargetSession>,
@@ -91,12 +94,18 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 		return inferiors;
 	}
 
-	@TargetAttributeType(name = GdbModelTargetAvailableContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetAvailableContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetAvailableContainer getAvailable() {
 		return available;
 	}
 
-	@TargetAttributeType(name = GdbModelTargetBreakpointContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetBreakpointContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetBreakpointContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -135,7 +144,6 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 				throw new AssertionError();
 		}
 		listeners.fire(TargetInterpreterListener.class).consoleOutput(this, dbgChannel, out);
-
 	}
 
 	@Override

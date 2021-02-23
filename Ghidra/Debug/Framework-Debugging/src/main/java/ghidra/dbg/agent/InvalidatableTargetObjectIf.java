@@ -56,7 +56,8 @@ public interface InvalidatableTargetObjectIf extends TargetObjectRef {
 	 * {@link DefaultTargetObject#setElements(Collection, String)} will automatically invoke this
 	 * method when they detect object removal.
 	 * 
+	 * @param branch the root of the sub-tree that is being removed
 	 * @param reason a human-consumable explanation for the removal
 	 */
-	void invalidateSubtree(String reason);
+	void invalidateSubtree(TargetObject branch, String reason);
 }

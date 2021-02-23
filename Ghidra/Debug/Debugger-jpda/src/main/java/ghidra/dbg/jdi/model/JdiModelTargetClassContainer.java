@@ -85,7 +85,7 @@ public class JdiModelTargetClassContainer extends JdiModelTargetObjectImpl {
 		return getClassesByName().get(name);
 	}
 
-	public CompletableFuture<?> refresh() {
+	public CompletableFuture<?> refreshInternal() {
 		if (!isObserved()) {
 			return AsyncUtils.NIL;
 		}

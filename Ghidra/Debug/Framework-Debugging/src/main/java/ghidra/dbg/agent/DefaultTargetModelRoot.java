@@ -24,11 +24,11 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 public class DefaultTargetModelRoot extends DefaultTargetObject<TargetObject, TargetObject>
 		implements TargetAggregate {
 
-	public DefaultTargetModelRoot(DebuggerObjectModel model, String typeHint) {
+	public DefaultTargetModelRoot(AbstractDebuggerObjectModel model, String typeHint) {
 		this(model, typeHint, EnumerableTargetObjectSchema.OBJECT);
 	}
 
-	public DefaultTargetModelRoot(DebuggerObjectModel model, String typeHint,
+	public DefaultTargetModelRoot(AbstractDebuggerObjectModel model, String typeHint,
 			TargetObjectSchema schema) {
 		super(model, null, null, typeHint, schema);
 	}

@@ -123,6 +123,7 @@ public abstract class AbstractAsyncServer<S extends AbstractAsyncServer<S, H>, H
 				}
 			}
 		}
+		group.shutdown();
 		if (err != null) {
 			throw err;
 		}

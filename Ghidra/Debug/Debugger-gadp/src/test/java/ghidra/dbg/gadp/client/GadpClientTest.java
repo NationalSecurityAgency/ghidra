@@ -16,6 +16,7 @@
 package ghidra.dbg.gadp.client;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -23,7 +24,8 @@ import java.net.SocketAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +38,6 @@ import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.ElementsChangedListener;
 import ghidra.dbg.util.ElementsChangedListener.ElementsChangedInvocation;
@@ -90,6 +91,10 @@ public class GadpClientTest {
 			this.cli = srv.accept();
 		}
 
+		public void nextSeq() {
+			seqno++;
+		}
+
 		public void expect(Gadp.RootMessage msg) throws IOException {
 			Msg.debug(this, "Expecting: " + msg);
 
@@ -131,13 +136,14 @@ public class GadpClientTest {
 			}
 		}
 
-		public void handleConnect(GadpVersion version) throws IOException {
+		public void expectRequestConnect() throws IOException {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setConnectRequest(GadpVersion.makeRequest())
 					.build());
-			// TODO: Test schemas here?
-			// Seems they're already hit well enough in dependent tests
+		}
+
+		public void sendReplyConnect(GadpVersion version) throws IOException {
 			send(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setConnectReply(Gadp.ConnectReply.newBuilder()
@@ -145,88 +151,162 @@ public class GadpClientTest {
 							.setSchemaContext("<context/>")
 							.setRootSchema("OBJECT"))
 					.build());
-			seqno++;
 		}
 
-		public void handlePing() throws IOException {
+		public void handleConnect(GadpVersion version) throws IOException {
+			expectRequestConnect();
+			sendReplyConnect(version);
+			nextSeq();
+		}
+
+		public void sendNotifyObjectCreated(List<String> path, List<String> interfaces,
+				String typeHint) throws IOException {
+			send(Gadp.RootMessage.newBuilder()
+					.setSequence(seqno)
+					.setEventNotification(Gadp.EventNotification.newBuilder()
+							.setPath(GadpValueUtils.makePath(path))
+							.setObjectCreatedEvent(Gadp.ObjectCreatedEvent.newBuilder()
+									.addAllInterface(interfaces)
+									.setTypeHint(typeHint)))
+					.build());
+		}
+
+		public void sendNotifyRootAdded() throws IOException {
+			send(Gadp.RootMessage.newBuilder()
+					.setSequence(seqno)
+					.setEventNotification(Gadp.EventNotification.newBuilder()
+							.setRootAddedEvent(Gadp.RootAddedEvent.getDefaultInstance()))
+					.build());
+		}
+
+		public void notifyAddRoot() throws IOException {
+			sendNotifyObjectCreated(List.of(), List.of(), "Root");
+			sendNotifyRootAdded();
+		}
+
+		public void expectRequestPing(String content) throws IOException {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setPingRequest(Gadp.PingRequest.newBuilder()
-							.setContent(HELLO_WORLD))
+							.setContent(content))
 					.build());
+		}
+
+		public void sendReplyPing(String content) throws IOException {
 			send(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setPingReply(Gadp.PingReply.newBuilder()
-							.setContent(HELLO_WORLD))
+							.setContent(content))
 					.build());
-			seqno++;
 		}
 
-		public void handleSubscribeValue(List<String> path, Object value)
-				throws Exception {
+		public void handlePing() throws IOException {
+			expectRequestPing(HELLO_WORLD);
+			sendReplyPing(HELLO_WORLD);
+			nextSeq();
+		}
+
+		public Gadp.ModelObjectDelta.Builder makeAttributeDelta(List<String> parentPath,
+				Map<String, Object> primitives, Map<String, List<String>> objects) {
+			Gadp.ModelObjectDelta.Builder delta = Gadp.ModelObjectDelta.newBuilder();
+			if (primitives != null) {
+				for (Map.Entry<String, ?> ent : primitives.entrySet()) {
+					delta.addAdded(GadpValueUtils.makeNamedValue(parentPath, ent));
+				}
+			}
+			if (objects != null) {
+				for (Map.Entry<String, List<String>> ent : objects.entrySet()) {
+					if (PathUtils.isLink(parentPath, ent.getKey(), ent.getValue())) {
+						delta.addAdded(Gadp.NamedValue.newBuilder()
+								.setName(ent.getKey())
+								.setValue(Gadp.Value.newBuilder()
+										.setPathValue(GadpValueUtils.makePath(ent.getValue()))));
+					}
+					else {
+						delta.addAdded(Gadp.NamedValue.newBuilder()
+								.setName(ent.getKey())
+								.setValue(Gadp.Value.newBuilder()
+										.setObjectStub(Gadp.ModelObjectStub.getDefaultInstance())));
+					}
+				}
+			}
+			return delta;
+		}
+
+		public Gadp.ModelObjectDelta.Builder makeElementDelta(List<String> parentPath,
+				Map<String, List<String>> objects) {
+			Gadp.ModelObjectDelta.Builder delta = Gadp.ModelObjectDelta.newBuilder();
+			if (objects != null) {
+				for (Map.Entry<String, List<String>> ent : objects.entrySet()) {
+					if (PathUtils.isElementLink(parentPath, ent.getKey(), ent.getValue())) {
+						delta.addAdded(Gadp.NamedValue.newBuilder()
+								.setName(ent.getKey())
+								.setValue(Gadp.Value.newBuilder()
+										.setPathValue(GadpValueUtils.makePath(ent.getValue()))));
+					}
+					else {
+						delta.addAdded(Gadp.NamedValue.newBuilder()
+								.setName(ent.getKey())
+								.setValue(Gadp.Value.newBuilder()
+										.setObjectStub(Gadp.ModelObjectStub.getDefaultInstance())));
+					}
+				}
+			}
+			return delta;
+		}
+
+		public void expectRequestResync(List<String> path, boolean refreshAttributes,
+				boolean refreshElements) throws IOException {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
-					.setSubscribeRequest(Gadp.SubscribeRequest.newBuilder()
+					.setResyncRequest(Gadp.ResyncRequest.newBuilder()
 							.setPath(GadpValueUtils.makePath(path))
-							.setSubscribe(true))
+							.setAttributes(refreshAttributes)
+							.setElements(refreshElements))
 					.build());
-			send(Gadp.RootMessage.newBuilder()
-					.setSequence(seqno)
-					.setSubscribeReply(Gadp.SubscribeReply.newBuilder()
-							.setValue(GadpValueUtils.makeValue(path, value)))
-					.build());
-			seqno++;
 		}
 
-		public void handleFetchObject(List<String> path) throws Exception {
-			expect(Gadp.RootMessage.newBuilder()
-					.setSequence(seqno)
-					.setSubscribeRequest(Gadp.SubscribeRequest.newBuilder()
-							.setPath(GadpValueUtils.makePath(path))
-							.setSubscribe(true))
-					.build());
-			Gadp.SubscribeReply.Builder reply = Gadp.SubscribeReply.newBuilder()
-					.setValue(Gadp.Value.newBuilder()
-							.setObjectInfo(Gadp.ModelObjectInfo.newBuilder()
-									.setPath(GadpValueUtils.makePath(path))));
+		public void sendNotifyObjects(List<String> parentPath, Map<String, List<String>> elements,
+				Map<String, List<String>> attrObjects, Map<String, Object> attrPrimitives)
+				throws IOException {
 			send(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
-					.setSubscribeReply(reply)
-					.build());
-			seqno++;
-		}
-
-		public void handleFetchElements(List<String> path, Collection<String> indices)
-				throws Exception {
-			expect(Gadp.RootMessage.newBuilder()
-					.setSequence(seqno)
-					.setSubscribeRequest(Gadp.SubscribeRequest.newBuilder()
-							.setPath(GadpValueUtils.makePath(path))
-							.setSubscribe(true)
-							.setFetchElements(true))
-					.build());
-			Gadp.SubscribeReply.Builder reply = Gadp.SubscribeReply.newBuilder()
-					.setValue(Gadp.Value.newBuilder()
-							.setObjectInfo(Gadp.ModelObjectInfo.newBuilder()
-									.setPath(GadpValueUtils.makePath(path))
-									.addAllElementIndex(indices)));
-			send(Gadp.RootMessage.newBuilder()
-					.setSequence(seqno)
-					.setSubscribeReply(reply)
-					.build());
-			seqno++;
-		}
-
-		public void sendModelEvent(List<String> path, Collection<String> indicesAdded)
-				throws Exception {
-			Gadp.ModelObjectEvent.Builder evt = Gadp.ModelObjectEvent.newBuilder();
-			evt.setDelta(Gadp.ModelObjectDelta.newBuilder()
-					.addAllIndexAdded(indicesAdded));
-			send(Gadp.RootMessage.newBuilder()
 					.setEventNotification(Gadp.EventNotification.newBuilder()
-							.setPath(GadpValueUtils.makePath(path))
-							.setModelObjectEvent(evt))
+							.setPath(GadpValueUtils.makePath(parentPath))
+							.setModelObjectEvent(Gadp.ModelObjectEvent.newBuilder()
+									.setAttributeDelta(
+										makeAttributeDelta(parentPath, attrPrimitives,
+											attrObjects))
+									.setElementDelta(makeElementDelta(parentPath, elements))))
 					.build());
+		}
+
+		public void sendReplyResync() throws IOException {
+			send(Gadp.RootMessage.newBuilder()
+					.setSequence(seqno)
+					.setResyncReply(Gadp.ResyncReply.getDefaultInstance())
+					.build());
+		}
+
+		public void handleResyncAttributes(List<String> path, boolean refresh,
+				Map<String, List<String>> objects, Map<String, Object> primitives)
+				throws Exception {
+			expectRequestResync(path, refresh, false);
+			if (primitives != null || objects != null) {
+				sendNotifyObjects(path, null, objects, primitives);
+			}
+			sendReplyResync();
+			nextSeq();
+		}
+
+		public void handleResyncElements(List<String> path, boolean refresh,
+				Map<String, List<String>> objects) throws Exception {
+			expectRequestResync(path, false, refresh);
+			if (objects != null) {
+				sendNotifyObjects(path, objects, null, null);
+			}
+			sendReplyResync();
+			nextSeq();
 		}
 	}
 
@@ -313,29 +393,29 @@ public class GadpClientTest {
 			srv.handleConnect(GadpVersion.VER1);
 			waitOn(gadpConnect);
 
+			List<String> parentPath = PathUtils.parse("Parent");
 			CompletableFuture<? extends TargetObject> fetchParent =
-				client.fetchModelObject(PathUtils.parse("Parent"));
-			srv.handleFetchObject(PathUtils.parse("Parent"));
+				client.fetchModelObject(parentPath);
+			srv.notifyAddRoot();
+			srv.sendNotifyObjectCreated(parentPath, List.of(), "Parent");
+			srv.handleResyncAttributes(List.of(), false, Map.of("Parent", parentPath), null);
 			TargetObject parent = waitOn(fetchParent);
 			parent.addListener(elemL);
 
 			CompletableFuture<? extends Map<String, ? extends TargetObjectRef>> fetchElements =
 				parent.fetchElements();
-			srv.handleFetchElements(PathUtils.parse("Parent"), List.of());
+			srv.handleResyncElements(parentPath, false, Map.of());
 			assertEquals(Map.of(), waitOn(fetchElements));
 
-			srv.sendModelEvent(PathUtils.parse("Parent"), List.of("0"));
+			List<String> elem0Path = PathUtils.parse("Parent[0]");
+			srv.sendNotifyObjectCreated(elem0Path, List.of(), "Element");
+			srv.sendNotifyObjects(parentPath, Map.of("0", elem0Path), null, null);
 			waitOn(elemL.count.waitValue(1));
 			ElementsChangedInvocation changed = Unique.assertOne(elemL.invocations);
 			assertEquals(parent, changed.parent);
 			TargetObjectRef childRef = Unique.assertOne(changed.added.values());
-			assertEquals(PathUtils.parse("Parent[0]"), childRef.getPath());
-
-			// Not cached, since fetchElements just lists refs
-			CompletableFuture<? extends TargetObject> fetchChild = childRef.fetch();
-			srv.handleFetchObject(PathUtils.parse("Parent[0]"));
-			TargetObject child = waitOn(fetchChild);
-			assertEquals(Map.of("0", child), parent.getCachedElements());
+			assertTrue(childRef instanceof GadpClientTargetObject);
+			assertEquals(elem0Path, childRef.getPath());
 		}
 		assertEquals(1, elemL.count.get().intValue()); // After connection is closed
 	}
@@ -354,16 +434,18 @@ public class GadpClientTest {
 			CompletableFuture<Void> gadpConnect = client.connect();
 			srv.handleConnect(GadpVersion.VER1);
 			waitOn(gadpConnect);
+			CompletableFuture<?> cfRoot = client.fetchModelRoot();
+			srv.notifyAddRoot();
+			waitOn(cfRoot);
 
 			CompletableFuture<?> fetchVal1 = client.fetchModelValue(PathUtils.parse("value"));
 			CompletableFuture<?> fetchVal2 = client.fetchModelValue(PathUtils.parse("value"));
-			srv.handleSubscribeValue(PathUtils.parse("value"), HELLO_WORLD);
+			srv.handleResyncAttributes(List.of(), false, null, Map.of("value", HELLO_WORLD));
 			assertEquals(HELLO_WORLD, waitOn(fetchVal1));
 			assertEquals(HELLO_WORLD, waitOn(fetchVal2));
 
-			// Because parent not cached, it should send another request
-			CompletableFuture<?> fetchVal3 = client.fetchModelValue(PathUtils.parse("value"));
-			srv.handleSubscribeValue(PathUtils.parse("value"), "Hi");
+			CompletableFuture<?> fetchVal3 = client.fetchModelValue(PathUtils.parse("value"), true);
+			srv.handleResyncAttributes(List.of(), true, null, Map.of("value", "Hi"));
 			assertEquals("Hi", waitOn(fetchVal3));
 		}
 	}

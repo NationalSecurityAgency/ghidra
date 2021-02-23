@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.util.ValueUtils;
 import ghidra.util.datastruct.ListenerSet;
@@ -65,7 +64,8 @@ public interface GadpClientTargetBreakpointSpec
 
 	@GadpAttributeChangeCallback(ENABLED_ATTRIBUTE_NAME)
 	default void handleEnabledChanged(Object enabled) {
-		getDelegate().listeners.fire(TargetBreakpointSpecListener.class)
+		getDelegate().getListeners()
+				.fire(TargetBreakpointSpecListener.class)
 				.breakpointToggled(this, enabledFromObj(enabled));
 	}
 }

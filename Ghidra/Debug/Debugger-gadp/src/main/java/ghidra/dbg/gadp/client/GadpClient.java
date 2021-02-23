@@ -17,13 +17,11 @@ package ghidra.dbg.gadp.client;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.lang.ref.Cleaner;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom.JDOMException;
@@ -33,29 +31,29 @@ import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
 
 import ghidra.async.*;
-import ghidra.dbg.*;
+import ghidra.dbg.DebuggerModelClosedReason;
+import ghidra.dbg.agent.*;
+import ghidra.dbg.agent.AbstractTargetObject.ProxyFactory;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.*;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.error.*;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.protocol.Gadp.*;
-import ghidra.dbg.gadp.util.*;
+import ghidra.dbg.gadp.protocol.Gadp.ObjectCreatedEvent;
+import ghidra.dbg.gadp.protocol.Gadp.RootMessage;
+import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
+import ghidra.dbg.gadp.util.ProtobufOneofByTypeHelper;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetObject.TargetUpdateMode;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathUtils;
-import ghidra.dbg.util.PathUtils.PathComparator;
-import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.util.*;
-import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.datastruct.WeakValueTreeMap;
 import ghidra.util.exception.DuplicateNameException;
+import utilities.util.ProxyUtilities;
 
-public class GadpClient implements DebuggerObjectModel {
-	protected static final Cleaner CLEANER = Cleaner.create();
+public class GadpClient extends AbstractDebuggerObjectModel
+		implements ProxyFactory<List<Class<? extends TargetObject>>> {
 
 	protected static final int WARN_OUTSTANDING_REQUESTS = 10000;
 	// TODO: More sophisticated cache management
@@ -264,6 +262,7 @@ public class GadpClient implements DebuggerObjectModel {
 	}
 
 	protected final String description;
+	protected final AsynchronousByteChannel byteChannel;
 	protected final AsyncProtobufMessageChannel<Gadp.RootMessage, Gadp.RootMessage> messageChannel;
 
 	protected AsyncReference<ChannelState, DebuggerModelClosedReason> channelState =
@@ -272,42 +271,30 @@ public class GadpClient implements DebuggerObjectModel {
 	protected XmlSchemaContext schemaContext;
 	protected TargetObjectSchema rootSchema;
 
-	protected final Executor clientExecutor = Executors.newSingleThreadExecutor();
-	protected final ListenerSet<DebuggerModelListener> listenersClient =
-		new ListenerSet<>(DebuggerModelListener.class, clientExecutor);
 	protected final TriConsumer<ChannelState, ChannelState, DebuggerModelClosedReason> listenerForChannelState =
 		this::channelStateChanged;
 	protected final MessagePairingCache messageMatcher = new MessagePairingCache();
 	protected final AtomicInteger sequencer = new AtomicInteger();
 
-	protected final NavigableMap<List<String>, GadpClientTargetObject> modelProxies =
-		new WeakValueTreeMap<>(PathComparator.KEYED);
-
-	/**
-	 * Forget all values and rely on getCachedValue instead. This lazy map will just de-dup pending
-	 * requests. Once received, the behavior depends on what we know about the parent object. If
-	 * nothing is known about the parent object, we assume we cannot cache.
-	 */
-	protected final AsyncLazyMap<List<String>, Object> valueRequests =
-		new AsyncLazyMap<>(new HashMap<>(), p -> doRequestValue(p, false));
-	protected final AsyncLazyMap<List<String>, GadpClientTargetObject> attrsRequests =
-		new AsyncLazyMap<>(new HashMap<>(), p -> doRequestAttributes(p, false));
-	protected final AsyncLazyMap<List<String>, GadpClientTargetObject> elemsRequests =
-		new AsyncLazyMap<>(new HashMap<>(), p -> doRequestElements(p, false));
+	protected final Map<List<String>, GadpClientTargetObject> modelProxies = new HashMap<>();
 
 	protected final GadpAddressFactory factory = new GadpAddressFactory();
 
 	{
 		channelState.addChangeListener(listenerForChannelState);
-
-		valueRequests.forgetValues((p, v) -> true);
-		elemsRequests.forgetValues(this::forgetElementsRequests);
-		attrsRequests.forgetValues(this::forgetAttributesRequests);
 	}
 
 	public GadpClient(String description, AsynchronousByteChannel channel) {
 		this.description = description;
+		this.byteChannel = channel;
 		this.messageChannel = createMessageChannel(channel);
+	}
+
+	@Override
+	public SpiTargetObject createProxy(AbstractTargetObject<?> delegate,
+			List<Class<? extends TargetObject>> mixins) {
+		return ProxyUtilities.composeOnDelegate(GadpClientTargetObject.class,
+			(GadpClientTargetObject) delegate, mixins, GadpClientTargetObject.LOOKUP);
 	}
 
 	protected AsyncProtobufMessageChannel<Gadp.RootMessage, Gadp.RootMessage> createMessageChannel(
@@ -323,16 +310,16 @@ public class GadpClient implements DebuggerObjectModel {
 	protected void channelStateChanged(ChannelState old, ChannelState set,
 			DebuggerModelClosedReason reason) {
 		if (old == ChannelState.NEGOTIATING && set == ChannelState.ACTIVE) {
-			listenersClient.fire.modelOpened();
+			listeners.fire.modelOpened();
 		}
 		else if (old == ChannelState.ACTIVE && set == ChannelState.CLOSED) {
-			listenersClient.fire.modelClosed(reason);
+			listeners.fire.modelClosed(reason);
 			List<GadpClientTargetObject> copy;
-			synchronized (modelProxies) {
+			synchronized (lock) {
 				copy = List.copyOf(modelProxies.values());
 			}
 			for (GadpClientTargetObject proxy : copy) {
-				proxy.getDelegate().doInvalidate("GADP Client disconnected");
+				proxy.getDelegate().doInvalidate(root, "GADP Client disconnected");
 			}
 		}
 	}
@@ -369,7 +356,10 @@ public class GadpClient implements DebuggerObjectModel {
 
 	protected <M extends Message> CompletableFuture<M> sendChecked(Message.Builder req,
 			M exampleRep) {
-		return sendCommand(req).thenApply(msg -> require(exampleRep, checkError(msg)));
+		return sendCommand(req)
+				.thenApply(msg -> require(exampleRep, checkError(msg)));
+		//.thenCompose(msg -> flushEvents().thenApply(__ -> msg));
+		// messageMatcher.fulfill happens on clientExecutor already
 	}
 
 	protected void receiveLoop() {
@@ -380,9 +370,7 @@ public class GadpClient implements DebuggerObjectModel {
 			}
 			messageChannel.read(Gadp.RootMessage::parseFrom).handle(loop::consume);
 		}, TypeSpec.cls(Gadp.RootMessage.class), (msg, loop) -> {
-			loop.repeat(); // All async loop to continue while we process
-
-			try {
+			CompletableFuture.runAsync(() -> {
 				Gadp.EventNotification notify =
 					MSG_HELPER.expect(msg, Gadp.EventNotification.getDefaultInstance());
 				if (notify != null) {
@@ -391,10 +379,11 @@ public class GadpClient implements DebuggerObjectModel {
 				else {
 					messageMatcher.fulfill(msg.getSequence(), msg);
 				}
-			}
-			catch (Throwable e) {
-				Msg.error(this, "Error processing message: " + msg, e);
-			}
+			}, clientExecutor).exceptionally(ex -> {
+				Msg.error(this, "Error processing message: ", ex);
+				return null;
+			});
+			loop.repeat(); // All async loop to continue while we process
 		}).exceptionally(exc -> {
 			exc = AsyncUtils.unwrapThrowable(exc);
 			if (exc instanceof NotYetConnectedException) {
@@ -409,6 +398,9 @@ public class GadpClient implements DebuggerObjectModel {
 			else if (exc instanceof CancelledKeyException) {
 				Msg.error(this, "Channel key is cancelled. Probably closed");
 			}
+			else if (exc instanceof RejectedExecutionException) {
+				Msg.trace(this, "Ignoring rejection", exc);
+			}
 			else {
 				Msg.error(this, "Receive failed for an unknown reason", exc);
 			}
@@ -418,18 +410,30 @@ public class GadpClient implements DebuggerObjectModel {
 	}
 
 	protected void processNotification(Gadp.EventNotification notify) {
+		if (!byteChannel.isOpen()) {
+			return;
+		}
 		ProtocolStringList path = notify.getPath().getEList();
-		GadpClientTargetObject obj = getCachedProxy(path);
-		if (obj == null) {
-			if (!hasPendingRequest(path)) {
-				/**
-				 * For pending, I guess we just miss the event. NB: If it was a model event, then
-				 * the pending subscribe reply ought to already reflect the update we're ignoring
-				 * here.
-				 */
-				Msg.error(this, "Server sent notification for non-cached object: " + notify);
+		//Msg.debug(this, "Processing notification: " + path + " " + notify.getEvtCase());
+		if (notify.hasObjectCreatedEvent()) {
+			notify.getObjectCreatedEvent();
+			// AbstractTargetObject invokes created event
+			createProxy(path, notify.getObjectCreatedEvent());
+			return;
+		}
+		if (notify.hasRootAddedEvent()) {
+			if (!path.isEmpty()) {
+				Msg.warn(this, "Server gave non-root path for root-added event: " +
+					PathUtils.toString(path));
+			}
+			synchronized (lock) {
+				addModelRoot(getProxy(List.of(), true));
 			}
 			return;
+		}
+		GadpClientTargetObject obj = getProxy(path, true);
+		if (obj == null) {
+			return; // Error already logged
 		}
 		obj.getDelegate().handleEvent(notify);
 	}
@@ -437,16 +441,6 @@ public class GadpClient implements DebuggerObjectModel {
 	@Override
 	public String getBrief() {
 		return description + " via GADP (" + channelState.get().name().toLowerCase() + ")";
-	}
-
-	@Override
-	public void addModelListener(DebuggerModelListener listener) {
-		listenersClient.add(listener);
-	}
-
-	@Override
-	public void removeModelListener(DebuggerModelListener listener) {
-		listenersClient.remove(listener);
 	}
 
 	public CompletableFuture<Void> connect() {
@@ -493,8 +487,13 @@ public class GadpClient implements DebuggerObjectModel {
 	public CompletableFuture<Void> close() {
 		try {
 			messageChannel.close();
-			channelState.set(ChannelState.CLOSED, DebuggerModelClosedReason.normal());
-			return AsyncUtils.NIL;
+			CompletableFuture.runAsync(() -> {
+				channelState.set(ChannelState.CLOSED, DebuggerModelClosedReason.normal());
+			}, clientExecutor).exceptionally(ex -> {
+				Msg.error("Problem upon firing channel state change", ex);
+				return null;
+			});
+			return super.close();
 		}
 		catch (IOException e) {
 			return CompletableFuture.failedFuture(e);
@@ -528,292 +527,47 @@ public class GadpClient implements DebuggerObjectModel {
 		});
 	}
 
-	protected GadpClientTargetObject getCachedProxy(List<String> path) {
-		synchronized (modelProxies) {
-			return modelProxies.get(path);
-		}
-	}
-
-	protected GadpClientTargetObject removeCachedProxy(List<String> path) {
-		synchronized (modelProxies) {
-			return modelProxies.remove(path);
-		}
-	}
-
-	/**
-	 * Check for a cached value
-	 * 
-	 * This first checks if the given path is a cached object and returns it if so. Otherwise, it
-	 * checks if the parent is cached and, if so, examines its cached children.
-	 * 
-	 * Note, if {@code null} is returned, the cache has no knowledge of the given path; the server
-	 * must be queried. If the returned optional has no value, the cache knows the path does not
-	 * exist.
-	 * 
-	 * @param path the path
-	 * @return an optional value, or {@code null} if not cached
-	 */
-	protected Optional<Object> getCachedValue(List<String> path) {
-		GadpClientTargetObject proxy = getCachedProxy(path);
-		if (proxy != null) {
-			return Optional.of(proxy);
-		}
-		List<String> parentPath = PathUtils.parent(path);
-		if (parentPath == null) {
-			return null;
-		}
-		GadpClientTargetObject parent = getCachedProxy(parentPath);
-		if (parent == null) {
-			return null;
-		}
-		Optional<Object> val = parent.getDelegate().cachedChild(PathUtils.getKey(path));
-		if (val == null) {
-			return null;
-		}
-		if (val.isEmpty()) {
-			if (PathUtils.isInvocation(PathUtils.getKey(path))) {
-				return null;
+	protected GadpClientTargetObject getProxy(List<String> path, boolean internal) {
+		synchronized (lock) {
+			GadpClientTargetObject proxy = modelProxies.get(path);
+			if (proxy == null && internal) {
+				Msg.error(this,
+					"Server referred to non-existent object at path: " + PathUtils.toString(path));
 			}
-			return val;
-		}
-		Object v = val.get();
-		/**
-		 * NOTE: val should not be a TargetObject, otherwise it should have hit via
-		 * getCachedProxy(path). If this is a TargetObject, it's because the proxy was created
-		 * between then and the call to cachedChild -- possible due to a race condition. In that
-		 * case, it seems harmless to just return it anyway.
-		 */
-		if (v instanceof TargetObject) {
-			return val;
-		}
-		if (!(v instanceof TargetObjectRef)) {
-			return val;
-		}
-		TargetObjectRef r = (TargetObjectRef) v;
-		if (path.equals(r.getPath())) {
-			// An TargetObject is expected, but we only have the placeholder cached
-			return null;
-		}
-		// else a link, which we are not required to fetch
-		return val;
-	}
-
-	protected void cacheInParent(List<String> path, GadpClientTargetObject proxy) {
-		List<String> parentPath = PathUtils.parent(path);
-		if (parentPath == null) {
-			return;
-		}
-		GadpClientTargetObject parent = modelProxies.get(parentPath);
-		if (parent == null) {
-			return;
-		}
-		parent.getDelegate().putCachedProxy(PathUtils.getKey(path), proxy);
-	}
-
-	@Internal
-	public GadpClientTargetObject getProxyForInfo(ModelObjectInfo info) {
-		synchronized (modelProxies) {
-			return modelProxies.computeIfAbsent(info.getPath().getEList(), path -> {
-				GadpClientTargetObject proxy = DelegateGadpClientTargetObject.makeModelProxy(this,
-					path, info.getTypeHint(), info.getInterfaceList());
-				cacheInParent(path, proxy);
-				return proxy;
-			});
-		}
-	}
-
-	@Internal
-	public TargetObjectRef getProxyOrStub(List<String> path) {
-		GadpClientTargetObject cached = getCachedProxy(path);
-		if (cached != null) {
-			return cached;
-		}
-		return new GadpClientTargetObjectStub(this, path);
-	}
-
-	protected CompletableFuture<Void> unsubscribe(List<String> path) {
-		AsyncFence fence = new AsyncFence();
-		cleanRequests(path);
-		fence.include(sendChecked(
-			Gadp.SubscribeRequest.newBuilder()
-					.setPath(GadpValueUtils.makePath(path))
-					.setSubscribe(false),
-			Gadp.SubscribeReply.getDefaultInstance()));
-		return fence.ready();
-	}
-
-	protected void invalidateSubtree(List<String> path, String reason) {
-		List<List<String>> pathsToInvalidate = new ArrayList<>();
-		List<GadpClientTargetObject> proxiesToInvalidate;
-		synchronized (modelProxies) {
-			// keySet is the only one which isn't a copy.
-			// TODO: Would rather iterate entries when AbstractWeakValueMap is fixed
-			for (List<String> succPath : modelProxies.tailMap(path, true).keySet()) {
-				if (!PathUtils.isAncestor(path, succPath)) {
-					break;
-				}
-				pathsToInvalidate.add(succPath);
-			}
-			proxiesToInvalidate =
-				pathsToInvalidate.stream().map(modelProxies::remove).collect(Collectors.toList());
-		}
-		for (GadpClientTargetObject proxy : proxiesToInvalidate) {
-			proxy.getDelegate().doInvalidate(reason);
-		}
-	}
-
-	public boolean hasPendingRequest(List<String> path) {
-		return valueRequests.containsKey(path) || attrsRequests.containsKey(path) ||
-			elemsRequests.containsKey(path);
-	}
-
-	public boolean hasPendingAttributes(List<String> path) {
-		return attrsRequests.containsKey(path);
-	}
-
-	public boolean hasPendingElements(List<String> path) {
-		return elemsRequests.containsKey(path);
-	}
-
-	protected void cleanRequests(List<String> path) {
-		valueRequests.forget(path);
-		attrsRequests.forget(path);
-		elemsRequests.forget(path);
-	}
-
-	@Override
-	public CompletableFuture<? extends TargetObject> fetchModelRoot() {
-		return fetchModelObject(List.of());
-	}
-
-	protected CompletableFuture<Object> doRequestValueWithObjectInfo(
-			List<String> path, boolean refresh,
-			boolean fetchElements, boolean refreshElements,
-			boolean fetchAttributes, boolean refreshAttributes) {
-		CompletableFuture<SubscribeReply> reply = sendChecked(Gadp.SubscribeRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(path))
-				.setSubscribe(true)
-				.setRefresh(refresh)
-				.setFetchElements(fetchElements)
-				.setRefreshElements(refreshElements)
-				.setFetchAttributes(fetchAttributes)
-				.setRefreshAttributes(refreshAttributes),
-			Gadp.SubscribeReply.getDefaultInstance());
-		return reply.thenApplyAsync(rep -> { // Async to avoid processing info with a lock
-			Gadp.Value value = rep.getValue();
-			if (value.getSpecCase() == Gadp.Value.SpecCase.OBJECT_STUB) {
-				Msg.error(this, "Server responded to object request with a stub!");
-				return null;
-			}
-			if (value.getSpecCase() != Gadp.Value.SpecCase.OBJECT_INFO) {
-				return GadpValueUtils.getValue(this, path, value);
-			}
-			Gadp.ModelObjectInfo info = value.getObjectInfo();
-			GadpClientTargetObject proxy = getProxyForInfo(info);
-			proxy.getDelegate().updateWithInfo(info);
 			return proxy;
-		}, AsyncUtils.FRAMEWORK_EXECUTOR);
-	}
-
-	protected CompletableFuture<GadpClientTargetObject> doRequestElements(List<String> path,
-			boolean refresh) {
-		return doRequestValueWithObjectInfo(path, false, true, refresh, false, false)
-				.thenApply(GadpClient::targetObjectOrNull);
-	}
-
-	protected CompletableFuture<GadpClientTargetObject> doRequestAttributes(List<String> path,
-			boolean refresh) {
-		return doRequestValueWithObjectInfo(path, false, false, false, true, refresh)
-				.thenApply(GadpClient::targetObjectOrNull);
-	}
-
-	protected boolean forgetElementsRequests(List<String> path, GadpClientTargetObject proxy) {
-		return proxy == null || !proxy.isValid() ||
-			proxy.getUpdateMode() == TargetUpdateMode.SOLICITED;
-	}
-
-	protected CompletableFuture<GadpClientTargetObject> checkProcessedElemsReply(List<String> path,
-			boolean refresh) {
-		if (refresh) { // NB: the map pre-tests the forget condition, too
-			elemsRequests.forget(path);
-			return elemsRequests.get(path, p -> doRequestElements(p, refresh));
 		}
-		return elemsRequests.get(path);
 	}
 
-	@Override
-	public CompletableFuture<? extends Map<String, ? extends TargetObjectRef>> fetchObjectElements(
-			List<String> path, boolean refresh) {
-		CompletableFuture<GadpClientTargetObject> processedReply =
-			checkProcessedElemsReply(path, refresh);
-		return processedReply.thenApply(proxy -> {
-			if (proxy == null) { // The path doesn't exist, so return null, per the docs
-				return null;
+	protected GadpClientTargetObject createProxy(List<String> path, ObjectCreatedEvent evt) {
+		synchronized (lock) {
+			if (modelProxies.containsKey(path)) {
+				Msg.error(this, "Agent announced creation of an already-existing object: " +
+					PathUtils.toString(path));
+				return modelProxies.get(path);
 			}
-			return proxy.getCachedElements();
-		}).exceptionally(GadpClient::nullForNotExist);
-	}
-
-	protected boolean forgetAttributesRequests(List<String> path, GadpClientTargetObject proxy) {
-		return proxy == null || !proxy.isValid();
-	}
-
-	protected CompletableFuture<GadpClientTargetObject> checkProcessedAttrsReply(List<String> path,
-			boolean refresh) {
-		if (refresh) {
-			attrsRequests.forget(path);
-			return attrsRequests.get(path, p -> doRequestAttributes(p, refresh));
-		}
-		return attrsRequests.get(path);
-	}
-
-	@Override
-	public CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(List<String> path,
-			boolean refresh) {
-		CompletableFuture<GadpClientTargetObject> processedReply =
-			checkProcessedAttrsReply(path, refresh);
-		return processedReply.thenApply(proxy -> {
-			if (proxy == null) { // The path doesn't exist, so return null, per the docs
-				return null;
+			List<String> parentPath = PathUtils.parent(path);
+			GadpClientTargetObject parent;
+			if (parentPath == null) {
+				parent = null;
 			}
-			return proxy.getCachedAttributes();
-		}).exceptionally(GadpClient::nullForNotExist);
-	}
-
-	@Override
-	public CompletableFuture<?> fetchModelValue(List<String> path, boolean refresh) {
-		/**
-		 * NB. Not sure there's value in checking for element/attribute requests on the parent. May
-		 * cull some requests, but the logic could get complicated. E.g., if we wait for it to
-		 * complete, and it comes back a TargetObjectRef, well, we have to fetch anyway. For
-		 * attributes, we'd also have to consider the case where it's absent, because it's a method
-		 * invocation.
-		 */
-		if (!refresh) {
-			Optional<Object> cached = getCachedValue(path);
-			if (cached != null) {
-				Object val = cached.orElse(null);
-				if (!(val instanceof TargetObjectRef)) {
-					return CompletableFuture.completedFuture(val);
-				}
-				TargetObjectRef ref = (TargetObjectRef) val;
-				TargetObject obj = GadpValueUtils.getTargetObjectNonLink(path, ref);
-				if (obj != null) {
-					return CompletableFuture.completedFuture(val);
+			else {
+				parent = getProxy(parentPath, true);
+				if (parent == null) {
+					Msg.error(this, "Got object's created event before its parent's: " +
+						PathUtils.toString(path));
 				}
 			}
+			GadpClientTargetObject proxy = DelegateGadpClientTargetObject.makeModelProxy(this,
+				parent, PathUtils.getKey(path), evt.getTypeHint(), evt.getInterfaceList());
+			modelProxies.put(path, proxy);
+			return proxy;
 		}
-		return valueRequests.get(path, p -> doRequestValue(p, refresh))
-				.exceptionally(GadpClient::nullForNotExist);
 	}
 
-	@Override
-	public CompletableFuture<?> fetchModelValue(List<String> path) {
-		return fetchModelValue(path, false);
-	}
-
-	protected CompletableFuture<Object> doRequestValue(List<String> path, boolean refresh) {
-		return doRequestValueWithObjectInfo(path, refresh, false, false, false, false);
+	protected void removeProxy(List<String> path, String reason) {
+		synchronized (lock) {
+			modelProxies.remove(path);
+		}
 	}
 
 	@Override
@@ -823,22 +577,28 @@ public class GadpClient implements DebuggerObjectModel {
 
 	@Override
 	public TargetObjectRef createRef(List<String> path) {
-		return getProxyOrStub(path);
+		synchronized (lock) {
+			GadpClientTargetObject proxy = modelProxies.get(path);
+			if (proxy != null) {
+				return proxy;
+			}
+		}
+		return super.createRef(path);
+	}
+
+	@Override
+	public TargetObject getModelObject(List<String> path) {
+		return getProxy(path, false);
 	}
 
 	@Override
 	public void invalidateAllLocalCaches() {
 		List<GadpClientTargetObject> copy;
-		synchronized (modelProxies) {
+		synchronized (lock) {
 			copy = List.copyOf(modelProxies.values());
 		}
 		for (GadpClientTargetObject proxy : copy) {
 			proxy.getDelegate().doClearCaches();
 		}
-	}
-
-	@Override
-	public Executor getClientExecutor() {
-		return clientExecutor;
 	}
 }

@@ -20,7 +20,6 @@ import java.util.List;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetEventScope;
 import ghidra.dbg.target.TargetThread;
 
@@ -32,12 +31,13 @@ public interface GadpClientTargetEventScope
 		Gadp.Path threadPath = evt.getEventThread();
 		TypedTargetObjectRef<? extends TargetThread<?>> thread =
 			threadPath == null || threadPath.getECount() == 0 ? null
-					: getModel().getProxyOrStub(threadPath.getEList()).as(TargetThread.tclass);
+					: getModel().getProxy(threadPath.getEList(), true).as(TargetThread.tclass);
 		TargetEventType type = GadpValueUtils.getTargetEventType(evt.getType());
 		String description = evt.getDescription();
 		List<Object> parameters =
 			GadpValueUtils.getValues(getModel(), evt.getParametersList());
-		getDelegate().listeners.fire(TargetEventScopeListener.class)
+		getDelegate().getListeners()
+				.fire(TargetEventScopeListener.class)
 				.event(this, thread, type, description, parameters);
 	}
 }

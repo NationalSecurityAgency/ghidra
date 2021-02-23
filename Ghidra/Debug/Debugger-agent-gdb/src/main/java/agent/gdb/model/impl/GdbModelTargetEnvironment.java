@@ -59,7 +59,7 @@ public class GdbModelTargetEnvironment
 			VISIBLE_ENDIAN_ATTRIBUTE_NAME, endian,
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED),
 			"Initialized");
-		refresh();
+		refreshInternal();
 	}
 
 	protected CompletableFuture<Void> refreshArchitecture() {
@@ -156,7 +156,7 @@ public class GdbModelTargetEnvironment
 		});
 	}
 
-	protected CompletableFuture<Void> refresh() {
+	protected CompletableFuture<Void> refreshInternal() {
 		AsyncFence fence = new AsyncFence();
 		fence.include(refreshArchitecture());
 		fence.include(refreshOS());

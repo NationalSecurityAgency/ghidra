@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg.gadp.util;
+package ghidra.dbg.gadp.client;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -26,11 +26,8 @@ import com.google.protobuf.ByteString;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.attributes.*;
 import ghidra.dbg.attributes.TargetObjectRefList.DefaultTargetObjectRefList;
-import ghidra.dbg.gadp.GadpRegistry;
-import ghidra.dbg.gadp.client.GadpClient;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.ModelObjectDelta;
-import ghidra.dbg.gadp.protocol.Gadp.ModelObjectInfo;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
@@ -309,28 +306,22 @@ public enum GadpValueUtils {
 				.build();
 	}
 
-	public static Gadp.ModelObjectInfo makeInfo(TargetObject obj) {
-		ModelObjectInfo.Builder builder = Gadp.ModelObjectInfo.newBuilder()
-				.setPath(GadpValueUtils.makePath(obj.getPath()))
-				.setTypeHint(obj.getTypeHint())
-				.addAllInterface(GadpRegistry.getInterfaceNames(obj));
-
-		builder.addAllElementIndex(obj.getCachedElements().keySet());
-		for (Entry<String, ?> ent : obj.getCachedAttributes().entrySet()) {
-			builder.addAttribute(makeAttribute(obj, ent));
+	public static Gadp.ModelObjectDelta makeElementDelta(List<String> parentPath,
+			Delta<?, ?> delta) {
+		ModelObjectDelta.Builder builder = Gadp.ModelObjectDelta.newBuilder()
+				.addAllRemoved(delta.getKeysRemoved());
+		for (Entry<String, ?> ent : delta.added.entrySet()) {
+			builder.addAdded(makeIndexedValue(parentPath, ent));
 		}
-
 		return builder.build();
 	}
 
-	public static Gadp.ModelObjectDelta makeDelta(TargetObject parent,
-			Delta<?, ? extends TargetObjectRef> deltaE, Delta<?, ?> deltaA) {
+	public static Gadp.ModelObjectDelta makeAttributeDelta(List<String> parentPath,
+			Delta<?, ?> delta) {
 		ModelObjectDelta.Builder builder = Gadp.ModelObjectDelta.newBuilder()
-				.addAllIndexRemoved(deltaE.getKeysRemoved())
-				.addAllIndexAdded(deltaE.added.keySet())
-				.addAllAttributeRemoved(deltaA.getKeysRemoved());
-		for (Entry<String, ?> ent : deltaA.added.entrySet()) {
-			builder.addAttributeAdded(makeAttribute(parent, ent));
+				.addAllRemoved(delta.getKeysRemoved());
+		for (Entry<String, ?> ent : delta.added.entrySet()) {
+			builder.addAdded(makeNamedValue(parentPath, ent));
 		}
 		return builder.build();
 	}
@@ -649,18 +640,25 @@ public enum GadpValueUtils {
 		return b.build();
 	}
 
-	public static Gadp.Argument makeArgument(Map.Entry<String, ?> argument) {
-		return Gadp.Argument.newBuilder()
-				.setName(argument.getKey())
-				.setValue(makeValue(null, argument.getValue()))
+	public static Gadp.NamedValue makeNamedValue(Map.Entry<String, ?> ent) {
+		return makeNamedValue(null, ent);
+	}
+
+	public static Gadp.NamedValue makeNamedValue(List<String> parentPath,
+			Map.Entry<String, ?> ent) {
+		List<String> path = parentPath == null ? null : PathUtils.extend(parentPath, ent.getKey());
+		return Gadp.NamedValue.newBuilder()
+				.setName(ent.getKey())
+				.setValue(makeValue(path, ent.getValue()))
 				.build();
 	}
 
-	public static Gadp.Attribute makeAttribute(TargetObject parent, Map.Entry<String, ?> ent) {
-		return Gadp.Attribute.newBuilder()
+	public static Gadp.NamedValue makeIndexedValue(List<String> parentPath,
+			Map.Entry<String, ?> ent) {
+		List<String> path = parentPath == null ? null : PathUtils.index(parentPath, ent.getKey());
+		return Gadp.NamedValue.newBuilder()
 				.setName(ent.getKey())
-				.setValue(
-					makeValue(PathUtils.extend(parent.getPath(), ent.getKey()), ent.getValue()))
+				.setValue(makeValue(path, ent.getValue()))
 				.build();
 	}
 
@@ -712,14 +710,11 @@ public enum GadpValueUtils {
 			case PARAMETERS_VALUE:
 				return getParameters(model, value.getParametersValue());
 			case PATH_VALUE:
-				return model.createRef(value.getPathValue().getEList());
+				return model.getModelObject(value.getPathValue().getEList());
 			case PATH_LIST_VALUE:
 				return getRefList(model, value.getPathListValue());
-			case OBJECT_INFO:
-				Msg.error(GadpValueUtils.class, "ObjectInfo requires special treatment:" + value);
-				return model.createRef(path);
 			case OBJECT_STUB:
-				return model.createRef(path);
+				return model.getModelObject(path);
 			case TYPE_VALUE:
 				return getValueType(value.getTypeValue());
 			case SPEC_NOT_SET:
@@ -730,17 +725,28 @@ public enum GadpValueUtils {
 		}
 	}
 
-	public static Object getAttributeValue(TargetObject object, Gadp.Attribute attr) {
+	public static Object getAttributeValue(GadpClientTargetObject object, Gadp.NamedValue attr) {
 		return getValue(object.getModel(), PathUtils.extend(object.getPath(), attr.getName()),
 			attr.getValue());
 	}
 
-	public static Map<String, Object> getAttributeMap(TargetObject object,
-			List<Gadp.Attribute> list) {
+	public static GadpClientTargetObject getElementValue(GadpClientTargetObject object,
+			Gadp.NamedValue elem) {
+		Object value = getValue(object.getModel(),
+			PathUtils.index(object.getPath(), elem.getName()), elem.getValue());
+		if (!(value instanceof GadpClientTargetObject)) {
+			Msg.error(GadpValueUtils.class, "Received non-object-valued element: " + elem);
+			return null;
+		}
+		return (GadpClientTargetObject) value;
+	}
+
+	public static Map<String, Object> getAttributeMap(GadpClientTargetObject object,
+			List<Gadp.NamedValue> list) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		for (Gadp.Attribute attr : list) {
-			if (result.put(attr.getName(),
-				GadpValueUtils.getAttributeValue(object, attr)) != null) {
+		for (Gadp.NamedValue attr : list) {
+			Object val = GadpValueUtils.getAttributeValue(object, attr);
+			if (result.put(attr.getName(), val) != null) {
 				Msg.warn(GadpValueUtils.class, "Received duplicate attribute: " + attr);
 			}
 		}
@@ -756,25 +762,30 @@ public enum GadpValueUtils {
 		return values.stream().map(v -> makeValue(null, v)).collect(Collectors.toList());
 	}
 
-	public static List<Gadp.Argument> makeArguments(Map<String, ?> arguments) {
+	public static List<Gadp.NamedValue> makeArguments(Map<String, ?> arguments) {
 		return arguments.entrySet()
 				.stream()
-				.map(ent -> makeArgument(ent))
+				.map(ent -> makeNamedValue(ent))
 				.collect(Collectors.toList());
 	}
 
-	public static Map<String, TargetObjectRef> getElementMap(TargetObject parent,
-			List<String> indices) {
-		Map<String, TargetObjectRef> result = new LinkedHashMap<>();
-		for (String index : indices) {
-			result.put(index,
-				parent.getModel().createRef(PathUtils.index(parent.getPath(), index)));
+	public static Map<String, GadpClientTargetObject> getElementMap(GadpClientTargetObject parent,
+			List<Gadp.NamedValue> list) {
+		Map<String, GadpClientTargetObject> result = new LinkedHashMap<>();
+		for (Gadp.NamedValue elem : list) {
+			GadpClientTargetObject val = GadpValueUtils.getElementValue(parent, elem);
+			if (val == null) {
+				continue;
+			}
+			if (result.put(elem.getName(), val) != null) {
+				Msg.warn(GadpValueUtils.class, "Received duplicate element: " + elem);
+			}
 		}
 		return result;
 	}
 
 	public static Map<String, ?> getArguments(DebuggerObjectModel model,
-			List<Gadp.Argument> arguments) {
+			List<Gadp.NamedValue> arguments) {
 		return arguments.stream()
 				.collect(
 					Collectors.toMap(a -> a.getName(), a -> getValue(model, null, a.getValue())));

@@ -18,7 +18,6 @@ package ghidra.dbg.gadp.client;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetDetachable;
 
 public interface GadpClientTargetDetachable

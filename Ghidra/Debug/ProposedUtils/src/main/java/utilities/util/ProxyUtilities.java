@@ -110,8 +110,8 @@ public enum ProxyUtilities {
 			/**
 			 * NOTE: I cannot replace the delegate with the proxy here (say, to prevent accidental
 			 * leakage) for at least two reasons. 1) I may want direct access to the delegate. 2) It
-			 * wouldn't work when the return value itself wraps or will provde the delegate (e.g., a
-			 * future).
+			 * wouldn't work when the return value itself wraps or will provide the delegate (e.g.,
+			 * a future).
 			 */
 			return result;
 		}

@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
@@ -154,6 +155,11 @@ public class DummyTargetObject implements TargetObject {
 	@Override
 	public String getTypeHint() {
 		return kind;
+	}
+
+	@Override
+	public CompletableFuture<Void> resync(boolean attributes, boolean elements) {
+		return AsyncUtils.NIL;
 	}
 
 	@Override

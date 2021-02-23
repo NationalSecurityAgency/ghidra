@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
 
-import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetObject.TargetUpdateMode;
@@ -58,12 +57,6 @@ public class TargetObjectSchemaValidationTest {
 
 		@Override
 		public AddressFactory getAddressFactory() {
-			fail();
-			return null;
-		}
-
-		@Override
-		public CompletableFuture<Void> close() {
 			fail();
 			return null;
 		}
@@ -107,29 +100,29 @@ public class TargetObjectSchemaValidationTest {
 	}
 
 	static class ValidatedModelRoot extends DefaultTargetModelRoot {
-		public ValidatedModelRoot(DebuggerObjectModel model, String typeHint,
+		public ValidatedModelRoot(AbstractDebuggerObjectModel model, String typeHint,
 				TargetObjectSchema schema) {
 			super(model, typeHint, schema);
 		}
 
 		@Override
-		protected boolean enforcesStrictSchema() {
+		public boolean enforcesStrictSchema() {
 			return true;
 		}
 	}
 
 	static class ValidatedObject extends DefaultTargetObject<TargetObject, TargetObject> {
-		public ValidatedObject(DebuggerObjectModel model, TargetObject parent, String key,
+		public ValidatedObject(AbstractDebuggerObjectModel model, TargetObject parent, String key,
 				TargetObjectSchema schema) {
 			super(model, parent, key, "Object", schema);
 		}
 
-		public ValidatedObject(DebuggerObjectModel model, TargetObject parent, String key) {
+		public ValidatedObject(AbstractDebuggerObjectModel model, TargetObject parent, String key) {
 			super(model, parent, key, "Object");
 		}
 
 		@Override
-		protected boolean enforcesStrictSchema() {
+		public boolean enforcesStrictSchema() {
 			return true;
 		}
 	}

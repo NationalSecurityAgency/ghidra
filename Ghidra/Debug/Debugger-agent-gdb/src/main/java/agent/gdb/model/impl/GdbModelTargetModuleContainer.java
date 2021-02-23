@@ -32,9 +32,12 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "ModuleContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ModuleContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetModuleContainer
 		extends DefaultTargetObject<GdbModelTargetModule, GdbModelTargetInferior>
 		implements TargetModuleContainer<GdbModelTargetModuleContainer> {
@@ -118,7 +121,7 @@ public class GdbModelTargetModuleContainer
 		return modulesByName.get(name);
 	}
 
-	public CompletableFuture<?> refresh() {
+	public CompletableFuture<?> refreshInternal() {
 		if (!isObserved()) {
 			return AsyncUtils.NIL;
 		}

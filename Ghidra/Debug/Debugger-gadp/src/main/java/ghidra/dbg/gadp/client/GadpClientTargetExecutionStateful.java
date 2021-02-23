@@ -29,7 +29,8 @@ public interface GadpClientTargetExecutionStateful
 
 	@GadpAttributeChangeCallback(STATE_ATTRIBUTE_NAME)
 	default void handleStateChanged(Object state) {
-		getDelegate().listeners.fire(TargetExecutionStateListener.class)
+		getDelegate().getListeners()
+				.fire(TargetExecutionStateListener.class)
 				.executionStateChanged(this, stateFromObj(state));
 	}
 }

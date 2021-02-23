@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
@@ -35,7 +34,9 @@ import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerTargetsPluginScreenShots extends GhidraScreenShotGenerator {
 
-	@FactoryDescription(brief = "Demo Debugger", htmlDetails = "A connection for demonstration purposes")
+	@FactoryDescription(
+		brief = "Demo Debugger",
+		htmlDetails = "A connection for demonstration purposes")
 	protected static class ScreenShotDebuggerModelFactory implements DebuggerModelFactory {
 
 		private void nop() {
@@ -63,6 +64,7 @@ public class DebuggerTargetsPluginScreenShots extends GhidraScreenShotGenerator 
 
 		public ScreenShotDebuggerObjectModel(String display) {
 			this.display = display;
+			addModelRoot(root);
 		}
 
 		@Override
@@ -78,11 +80,6 @@ public class DebuggerTargetsPluginScreenShots extends GhidraScreenShotGenerator 
 		@Override
 		public AddressFactory getAddressFactory() {
 			throw new AssertionError();
-		}
-
-		@Override
-		public CompletableFuture<Void> close() {
-			return AsyncUtils.NIL;
 		}
 	}
 

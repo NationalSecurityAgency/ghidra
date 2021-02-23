@@ -29,12 +29,14 @@ import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "InferiorContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "InferiorContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetInferiorContainer
 		extends DefaultTargetObject<GdbModelTargetInferior, GdbModelTargetSession>
 		implements GdbEventsListenerAdapter {
@@ -70,7 +72,7 @@ public class GdbModelTargetInferiorContainer
 							" started " + inf.getExecutable() + " pid=" + inf.getPid(),
 						List.of(inferior));
 		}).exceptionally(ex -> {
-			Msg.error(this, "Could not notify inferior started", ex);
+			impl.reportError(this, "Could not notify inferior started", ex);
 			return null;
 		});
 	}

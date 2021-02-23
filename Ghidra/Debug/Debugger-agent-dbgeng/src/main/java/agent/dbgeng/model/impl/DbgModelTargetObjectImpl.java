@@ -56,8 +56,8 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	}
 
 	@Override
-	protected void doInvalidate(String reason) {
-		super.doInvalidate(reason);
+	protected void doInvalidate(TargetObject branch, String reason) {
+		super.doInvalidate(branch, reason);
 		getManager().removeStateListener(accessListener);
 	}
 

@@ -22,6 +22,13 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TypedTargetObject;
 
+/**
+ * A reference having a known or expected type
+ * 
+ * @param <T> the type
+ * @deprecated I don't think this adds any real value.
+ */
+@Deprecated(forRemoval = true)
 public interface TypedTargetObjectRef<T extends TargetObject> extends TargetObjectRef {
 	public class CastingTargetObjectRef<T extends TypedTargetObject<T>>
 			implements TypedTargetObjectRef<T> {

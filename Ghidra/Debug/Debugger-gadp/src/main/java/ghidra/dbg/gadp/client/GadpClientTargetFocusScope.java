@@ -21,7 +21,6 @@ import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.ValueUtils;
@@ -51,7 +50,8 @@ public interface GadpClientTargetFocusScope
 
 	@GadpAttributeChangeCallback(FOCUS_ATTRIBUTE_NAME)
 	default void handleFocusChanged(Object focus) {
-		getDelegate().listeners.fire(TargetFocusScopeListener.class)
+		getDelegate().getListeners()
+				.fire(TargetFocusScopeListener.class)
 				.focusChanged(this, refFromObj(focus));
 	}
 }

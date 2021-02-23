@@ -220,9 +220,9 @@ public class GdbModelTargetInferior
 
 	protected CompletableFuture<Void> inferiorStarted(Long pid) {
 		AsyncFence fence = new AsyncFence();
-		fence.include(modules.refresh());
-		fence.include(registers.refresh());
-		fence.include(environment.refresh());
+		fence.include(modules.refreshInternal());
+		fence.include(registers.resync());
+		fence.include(environment.refreshInternal());
 		return fence.ready().thenAccept(__ -> {
 			if (pid != null) {
 				changeAttributes(List.of(), Map.of( //

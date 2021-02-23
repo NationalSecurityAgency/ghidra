@@ -47,27 +47,33 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	 */
 	protected class ForInterpreterListener implements TargetInterpreterListener {
 		@Override
-		public void consoleOutput(TargetObject console, Channel channel, String out) {
-			// NB: yes, this is lame... The InterpreterPanel's repositionScrollPane
-			//  method substracts 1 from the text length to compute the new position
-			//  causing it to scroll to the last character printed.  We want it to scroll
-			//  to the next line, so...
-			out += " ";
+		public void consoleOutput(TargetObject console, Channel channel, byte[] out) {
+			OutputStream os;
 			switch (channel) {
 				case STDOUT:
-					if (outWriter == null) {
-						return;
-					}
-					outWriter.print(out);
-					outWriter.flush();
+					os = stdOut;
 					break;
 				case STDERR:
-					if (errWriter == null) {
-						return;
-					}
-					errWriter.print(out);
-					errWriter.flush();
+					os = stdErr;
 					break;
+				default:
+					throw new AssertionError();
+			}
+			// It's possible stdOut/Err was not initialized, yet
+			if (os == null) {
+				return;
+			}
+			/**
+			 * NB: yes, the extra space is lame... The InterpreterPanel's repositionScrollPane
+			 * method subtracts 1 from the text length to compute the new position causing it to
+			 * scroll to the last character printed. We want it to scroll to the next line, so...
+			 */
+			try {
+				os.write(out);
+				os.write(' ');
+			}
+			catch (IOException e) {
+				Msg.error(this, "Cannot write to interpreter window: ", e);
 			}
 		}
 
@@ -84,7 +90,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		}
 
 		@Override
-		public void invalidated(TargetObject object, String reason) {
+		public void invalidated(TargetObject object, TargetObject branch, String reason) {
 			Swing.runLater(() -> {
 				if (object == targetConsole) { // Redundant
 					if (pinned) {
@@ -107,8 +113,8 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	protected Thread thread;
 	protected InterpreterConsole guiConsole;
 	protected BufferedReader inReader;
-	protected PrintWriter outWriter;
-	protected PrintWriter errWriter;
+	protected OutputStream stdOut;
+	protected OutputStream stdErr;
 
 	protected ToggleDockingAction actionPin;
 	protected boolean pinned = false;
@@ -146,8 +152,8 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		InterpreterComponentProvider provider = (InterpreterComponentProvider) guiConsole;
 		provider.setSubTitle(targetConsole.getDisplay());
 
-		setErrWriter(guiConsole.getErrWriter());
-		setOutWriter(guiConsole.getOutWriter());
+		setStdErr(guiConsole.getStdErr());
+		setStdOut(guiConsole.getStdOut());
 		setStdIn(guiConsole.getStdin());
 
 		createActions();
@@ -161,12 +167,12 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		guiConsole.addAction(actionPin);
 	}
 
-	public void setOutWriter(PrintWriter outWriter) {
-		this.outWriter = outWriter;
+	public void setStdOut(OutputStream stdOut) {
+		this.stdOut = stdOut;
 	}
 
-	public void setErrWriter(PrintWriter errWriter) {
-		this.errWriter = errWriter;
+	public void setStdErr(OutputStream stdErr) {
+		this.stdErr = stdErr;
 	}
 
 	public void setStdIn(InputStream stdIn) {

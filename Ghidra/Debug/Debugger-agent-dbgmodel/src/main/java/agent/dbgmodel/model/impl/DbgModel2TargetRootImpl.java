@@ -109,7 +109,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		}
 		if (doFire) {
 			this.focus = sel;
-			fireAttributesChanged = true;
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus //
 			), "Focus changed");
@@ -490,12 +489,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			}
 			changeAttributes(List.of(), map, "Refreshed");
 		});
-	}
-
-	//@Override
-	public void refresh() {
-		// TODO ???
-		System.err.println("root:refresh");
 	}
 
 	@Override

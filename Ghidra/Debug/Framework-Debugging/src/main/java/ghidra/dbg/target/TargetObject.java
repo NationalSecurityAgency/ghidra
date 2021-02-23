@@ -530,6 +530,30 @@ public interface TargetObject extends TargetObjectRef {
 	}
 
 	/**
+	 * Refresh the children of this object
+	 * 
+	 * <p>
+	 * This is necessary when {@link #getUpdateMode()} is {@link TargetUpdateMode#SOLICITED}. It is
+	 * also useful when the user believes things are out of sync. This causes the model to update
+	 * its attributes and/or elements. If either of the {@code refresh} parameters are set, the
+	 * model should be aggressive in ensuring its caches are up to date.
+	 * 
+	 * @param refreshAttributes ask the model to refresh attributes, querying the debugger if needed
+	 * @param refreshElements as the model to refresh elements, querying the debugger if needed
+	 * @return a future which completes when the children are updated.
+	 */
+	CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements);
+
+	/**
+	 * Refresh the elements of this object
+	 * 
+	 * @return a future which completes when the children are updated.
+	 */
+	default CompletableFuture<Void> resync() {
+		return resync(false, true);
+	}
+
+	/**
 	 * Get the (usually opaque) identifier that the underlying connection uses for this object
 	 * 
 	 * <p>
@@ -583,6 +607,14 @@ public interface TargetObject extends TargetObjectRef {
 	 */
 	public default Object getCachedAttribute(String name) {
 		return getCachedAttributes().get(name);
+	}
+
+	@Override
+	default CompletableFuture<?> fetchAttribute(String name) {
+		if (PathUtils.isInvocation(name) && getCachedAttributes().containsKey(name)) {
+			return CompletableFuture.completedFuture(getCachedAttributes().get(name));
+		}
+		return TargetObjectRef.super.fetchAttribute(name);
 	}
 
 	/**
@@ -675,13 +707,19 @@ public interface TargetObject extends TargetObjectRef {
 	}
 
 	public interface TargetObjectListener {
+
 		/**
-		 * The object's display string has changed
+		 * The object was created
 		 * 
-		 * @param object the object
-		 * @param display the new display string
+		 * <p>
+		 * This can only be received by listening on the model. While the created object can now
+		 * appear in other callbacks, it should not be used aside from those callbacks, until it is
+		 * added to its parent. Until that time, the object may not adhere to the schema, since its
+		 * children are still being initialized.
+		 * 
+		 * @param object the newly-created object
 		 */
-		default void displayChanged(TargetObject object, String display) {
+		default void created(TargetObject object) {
 		}
 
 		/**
@@ -704,9 +742,19 @@ public interface TargetObject extends TargetObjectRef {
 		 * mistakenly applied to the replacement or its successors.
 		 * 
 		 * @param object the now-invalid object
+		 * @param branch the root of the sub-tree being invalidated
 		 * @param reason an informational, human-consumable reason, if applicable
 		 */
-		default void invalidated(TargetObject object, String reason) {
+		default void invalidated(TargetObject object, TargetObject branch, String reason) {
+		}
+
+		/**
+		 * The object's display string has changed
+		 * 
+		 * @param object the object
+		 * @param display the new display string
+		 */
+		default void displayChanged(TargetObject object, String display) {
 		}
 
 		/**
@@ -760,7 +808,11 @@ public interface TargetObject extends TargetObjectRef {
 
 	/**
 	 * An adapter which automatically gets new children from the model
+	 * 
+	 * @deprecated {@link TargetObjectRef} is being deprecated, so this is no longer necessary. Just
+	 *             cast refs to {@link TargetObject}
 	 */
+	@Deprecated(forRemoval = true)
 	public interface TargetObjectFetchingListener extends TargetObjectListener {
 		@Override
 		default void elementsChanged(TargetObject parent, Collection<String> removed,

@@ -23,7 +23,8 @@ public interface GadpClientTargetAccessConditioned
 
 	@GadpAttributeChangeCallback(ACCESSIBLE_ATTRIBUTE_NAME)
 	default void handleAccessibleChanged(Object accessible) {
-		getDelegate().listeners.fire(TargetAccessibilityListener.class)
+		getDelegate().getListeners()
+				.fire(TargetAccessibilityListener.class)
 				.accessibilityChanged(this, fromObj(accessible));
 	}
 }

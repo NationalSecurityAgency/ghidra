@@ -23,7 +23,6 @@ import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.Path;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
@@ -64,19 +63,20 @@ public interface GadpClientTargetBreakpointContainer extends GadpClientTargetObj
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.BREAK_HIT_EVENT)
 	default void handleBreakHitEvent(Gadp.EventNotification notification) {
 		Gadp.BreakHitEvent evt = notification.getBreakHitEvent();
-		TargetObjectRef trapped = getModel().getProxyOrStub(evt.getTrapped().getEList());
+		TargetObjectRef trapped = getModel().getProxy(evt.getTrapped().getEList(), true);
 		Path framePath = evt.getFrame();
 		TypedTargetObjectRef<? extends TargetStackFrame<?>> frame =
 			framePath == null || framePath.getECount() == 0 ? null
-					: getModel().getProxyOrStub(framePath.getEList()).as(TargetStackFrame.tclass);
+					: getModel().getProxy(framePath.getEList(), true).as(TargetStackFrame.tclass);
 		Path specPath = evt.getSpec();
 		TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> spec = specPath == null ? null
-				: getModel().getProxyOrStub(specPath.getEList()).as(TargetBreakpointSpec.tclass);
+				: getModel().getProxy(specPath.getEList(), true).as(TargetBreakpointSpec.tclass);
 		Path bptPath = evt.getEffective();
 		TypedTargetObjectRef<? extends TargetBreakpointLocation<?>> breakpoint = bptPath == null
 				? null
-				: getModel().getProxyOrStub(bptPath.getEList()).as(TargetBreakpointLocation.tclass);
-		getDelegate().listeners.fire(TargetBreakpointListener.class)
+				: getModel().getProxy(bptPath.getEList(), true).as(TargetBreakpointLocation.tclass);
+		getDelegate().getListeners()
+				.fire(TargetBreakpointListener.class)
 				.breakpointHit(this, trapped, frame, spec, breakpoint);
 		if (spec instanceof GadpClientTargetBreakpointSpec) {
 			// If I don't have a cached proxy, then I don't have any listeners

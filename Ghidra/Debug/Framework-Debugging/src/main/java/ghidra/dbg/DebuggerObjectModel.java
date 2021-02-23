@@ -18,7 +18,7 @@ package ghidra.dbg;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -146,9 +146,27 @@ public interface DebuggerObjectModel {
 	/**
 	 * Add a listener for model events
 	 * 
+	 * <p>
+	 * If requested, the listener is notified of existing objects via an event replay. It will first
+	 * replay all the created events in the same order they were originally emitted. Any objects
+	 * which have since been invalidated are excluded in the replay. They don't exist anymore, after
+	 * all. Next it will replay the attribute- and element-added events in post order. This is an
+	 * attempt to ensure an object's dependencies are met by the time the client receives its added
+	 * event. This isn't always possible due to cycles, but such cycles are usually informational.
+	 * 
+	 * @param listener the listener
+	 * @param replay true to replay object tree events (doesn't include register or memory caches)
+	 */
+	public void addModelListener(DebuggerModelListener listener, boolean replay);
+
+	/**
+	 * Add a listener for model events, without replay
+	 * 
 	 * @param listener the listener
 	 */
-	public void addModelListener(DebuggerModelListener listener);
+	public default void addModelListener(DebuggerModelListener listener) {
+		addModelListener(listener, false);
+	}
 
 	/**
 	 * Remove a model event listener
@@ -309,8 +327,17 @@ public interface DebuggerObjectModel {
 	 * object represents the debugger itself.
 	 * 
 	 * @return the root
+	 * @deprecated use {@link #getModelRoot()} instead
 	 */
+	@Deprecated(forRemoval = true)
 	public CompletableFuture<? extends TargetObject> fetchModelRoot();
+
+	/**
+	 * Get the root object of the model
+	 * 
+	 * @return the root
+	 */
+	public TargetObject getModelRoot();
 
 	/**
 	 * Fetch the value at the given path
@@ -363,6 +390,38 @@ public interface DebuggerObjectModel {
 	}
 
 	/**
+	 * Get the value at a given path
+	 * 
+	 * <p>
+	 * If the path does not exist, null is returned. Note that an attempt to access the child of a
+	 * primitive is the same as accessing a path that does not exist; however, an error will be
+	 * logged, since this typically indicates a programming error.
+	 * 
+	 * @param path the path
+	 * @return the value
+	 */
+	public default Object getModelValue(List<String> path) {
+		Object cur = getModelRoot();
+		for (String key : path) {
+			if (cur == null) {
+				return null;
+			}
+			if (!(cur instanceof TargetObject)) {
+				Msg.error(this, "Primitive " + cur + " cannot have child '" + key + "'");
+				return null;
+			}
+			TargetObject obj = (TargetObject) cur;
+			if (PathUtils.isIndex(key)) {
+				cur = obj.getCachedElements().get(PathUtils.parseIndex(key));
+				continue;
+			}
+			assert PathUtils.isName(key);
+			cur = obj.getCachedAttribute(key);
+		}
+		return cur;
+	}
+
+	/**
 	 * Fetch the object with the given path
 	 * 
 	 * <p>
@@ -392,10 +451,26 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * @see #fetchModelObject(List)
+	 * @deprecated Use {@link #getModelObject(List)} instead, or {@link #fetchModelObject(List)} if
+	 *             a refresh is needed
 	 */
+	@Deprecated
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path) {
 		return fetchModelObject(path, false);
 	}
+
+	/**
+	 * Get an object from the model
+	 * 
+	 * <p>
+	 * Note this may return an object which is still being constructed, i.e., between being created
+	 * and being added to the model. This differs from {@link #getModelValue(List)}, which will only
+	 * return an object after it has been added.
+	 * 
+	 * @param path the path of the object
+	 * @return the object
+	 */
+	public TargetObject getModelObject(List<String> path);
 
 	/**
 	 * @see #fetchModelObject(List)
@@ -498,50 +573,23 @@ public interface DebuggerObjectModel {
 		if (ex == null || DebuggerModelTerminatingException.isIgnorable(ex)) {
 			Msg.warn(origin, message + ": " + ex);
 		}
+		else if (AsyncUtils.unwrapThrowable(ex) instanceof RejectedExecutionException) {
+			Msg.trace(origin, "Ignoring rejection", ex);
+		}
 		else {
 			Msg.error(origin, message, ex);
 		}
 	}
 
 	/**
-	 * Get the executor used to invoke client callback routines
-	 * 
-	 * @return the executor
-	 */
-	Executor getClientExecutor();
-
-	/**
-	 * Ensure that dependent computations occur on the client executor
+	 * Permit all callbacks to be invoked before proceeding
 	 * 
 	 * <p>
-	 * This also preserves scheduling order on the executor. Using just
-	 * {@link CompletableFuture#thenApplyAsync(java.util.function.Function)} makes no guarantees
-	 * about execution order, because that invocation could occur before invocations in the chained
-	 * actions. This one instead uses
-	 * {@link CompletableFuture#thenCompose(java.util.function.Function)} to schedule a final action
-	 * which performs the actual completion via the executor.
+	 * This operates by placing the request into the queue itself, so that any event callbacks
+	 * queued <em>at the time of the flush invocation</em> are completed first. There are no
+	 * guarantees with respect to events which get queued <em>after the flush invocation</em>.
 	 * 
-	 * @param <T> the type of the future value
-	 * @param cf the future
-	 * @return a future gated via the client executor
+	 * @return a future which completes when all queued callbacks have been invoked
 	 */
-	default <T> CompletableFuture<T> gateFuture(CompletableFuture<T> cf) {
-		return cf.thenCompose(this::gateFuture);
-	}
-
-	/**
-	 * Ensure that dependent computations occur on the client executor
-	 * 
-	 * <p>
-	 * Use as a method reference in a final call to
-	 * {@link CompletableFuture#thenCompose(java.util.function.Function)} to ensure the final stage
-	 * completes on the client executor.
-	 * 
-	 * @param <T> the type of the future value
-	 * @param v the value
-	 * @return a future while completes with the given value on the client executor
-	 */
-	default <T> CompletableFuture<T> gateFuture(T v) {
-		return CompletableFuture.supplyAsync(() -> v, getClientExecutor());
-	}
+	CompletableFuture<Void> flushEvents();
 }

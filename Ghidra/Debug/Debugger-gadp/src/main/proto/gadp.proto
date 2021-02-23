@@ -210,11 +210,6 @@ message ParameterList {
 	repeated Parameter parameter = 1;
 }
 
-message Argument {
-	string name = 1;
-	Value value = 2;
-}
-
 message Value {
 	oneof spec {
 		bool bool_value = 1;
@@ -235,7 +230,6 @@ message Value {
 		UpdateMode update_mode_value = 16;
 		Path path_value = 17;
 		PathList path_list_value = 18;
-		ModelObjectInfo object_info = 19;
 		ModelObjectStub object_stub = 20;
 		ParameterList parameters_value = 21;
 		ValueType type_value = 22;
@@ -243,7 +237,7 @@ message Value {
 	}
 }
 
-message Attribute {
+message NamedValue {
 	string name = 1;
 	Value value = 2;
 }
@@ -251,46 +245,19 @@ message Attribute {
 message ModelObjectStub {	
 }
 
-message ModelObjectInfo {
-	Path path = 1;
-	string type_hint = 2;
-	repeated string interface = 3;
-	repeated string element_index = 4;
-	repeated Attribute attribute = 5;
-}
-
 message ModelObjectDelta {
-	repeated string index_removed = 2;
-	repeated string index_added = 3;
-	// TODO: indices_moved?
-	repeated string attribute_removed = 4;
-	repeated Attribute attribute_added = 5;
+	repeated string removed = 1;
+	repeated NamedValue added = 2;
 }
 
 message ModelObjectEvent {
-	ModelObjectDelta delta = 1;
+	ModelObjectDelta element_delta = 1;
+	ModelObjectDelta attribute_delta = 2;
 }
 
-/**
- * This message both retrieves the requested object(s) and (un)subscribes to further changes
- *
- * If subscribe is true, then future changes to element indices and attribute names are sent to the
- * client. If fetch is true, then the objects current indices and names are included in the
- * response. If refresh is true, then the server-side model is asked to refresh the object's
- * indices and names while servicing the request. 
- */
-message SubscribeRequest {
-	Path path = 1;
-	bool subscribe = 2;
-	bool refresh = 3;
-	bool fetchElements = 4;
-	bool fetchAttributes = 5;
-	bool refreshElements = 6;
-	bool refreshAttributes = 7;
-}
-
-message SubscribeReply {
-	Value value = 1;
+message ObjectCreatedEvent {
+	string type_hint = 2;
+	repeated string interface = 3;
 }
 
 message ObjectInvalidateEvent {
@@ -299,7 +266,7 @@ message ObjectInvalidateEvent {
 
 message LaunchRequest {
 	Path path = 1;
-	repeated Argument argument = 2;
+	repeated NamedValue argument = 2;
 }
 
 message LaunchReply {
@@ -486,11 +453,20 @@ message FocusReply {
 
 message InvokeRequest {
 	Path path = 1;
-	repeated Argument argument = 2;
+	repeated NamedValue argument = 2;
 }
 
 message InvokeReply {
 	Value result = 1;
+}
+
+message ResyncRequest {
+	Path path = 1;
+	bool attributes = 2;
+	bool elements = 3;
+}
+
+message ResyncReply {
 }
 
 enum TargetEventType {
@@ -515,6 +491,9 @@ message TargetEvent {
 	repeated Value parameters = 4;
 }
 
+message RootAddedEvent {
+}
+
 message EventNotification {
 	Path path = 1;
 	oneof evt {
@@ -525,9 +504,11 @@ message EventNotification {
 		ConsoleOutputEvent console_output_event = 312;
 		MemoryUpdateEvent memory_update_event = 317;
 		MemoryErrorEvent memory_error_event = 417;
+		ObjectCreatedEvent object_created_event = 324;
 		ObjectInvalidateEvent object_invalidate_event = 323;
 		RegisterUpdateEvent register_update_event = 322;
 		TargetEvent target_event = 330;
+		RootAddedEvent root_added_event = 326;
 	}
 }
 
@@ -600,10 +581,10 @@ message RootMessage {
 		StepRequest step_request = 119;
 		StepReply step_reply = 219;
 
-		SubscribeRequest subscribe_request = 104;
-		SubscribeReply subscribe_reply = 204;
-		
 		InvokeRequest invoke_request = 105;
 		InvokeReply invoke_reply = 205;
+		
+		ResyncRequest resync_request = 125;
+		ResyncReply resync_reply = 225;
 	}
 }

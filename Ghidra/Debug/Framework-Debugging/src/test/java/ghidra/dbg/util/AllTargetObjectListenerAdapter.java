@@ -59,7 +59,7 @@ public interface AllTargetObjectListenerAdapter
 	}
 
 	@Override
-	default void consoleOutput(TargetObject console, Channel channel, String out) {
+	default void consoleOutput(TargetObject console, Channel channel, byte[] out) {
 		//fail();
 	}
 

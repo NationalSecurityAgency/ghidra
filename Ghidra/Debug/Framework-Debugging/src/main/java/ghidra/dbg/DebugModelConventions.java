@@ -523,7 +523,7 @@ public enum DebugModelConventions {
 		protected abstract boolean checkDescend(TargetObjectRef ref);
 
 		@Override
-		public void invalidated(TargetObject object, String reason) {
+		public void invalidated(TargetObject object, TargetObject branch, String reason) {
 			runNotInSwing(this, () -> doInvalidated(object, reason), "invalidated");
 		}
 

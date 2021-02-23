@@ -15,23 +15,17 @@
  */
 package ghidra.app.plugin.core.debug.gui.objects;
 
-import static ghidra.async.AsyncUtils.*;
-
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.jdom.Element;
 
-import ghidra.async.AsyncFence;
-import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.xml.XmlUtilities;
 
 public class ObjectContainer implements Comparable {
@@ -42,9 +36,6 @@ public class ObjectContainer implements Comparable {
 	private final Map<String, TargetObjectRef> elementMap = new LinkedHashMap<>();
 	private final Map<String, Object> attributeMap = new LinkedHashMap<>();
 	private Set<ObjectContainer> currentChildren = new TreeSet<>();
-
-	public final ListenerSet<ObjectContainerListener> listeners =
-		new ListenerSet<>(ObjectContainerListener.class);
 
 	private boolean immutable;
 	private boolean visible = true;
@@ -171,29 +162,14 @@ public class ObjectContainer implements Comparable {
 	 */
 
 	public CompletableFuture<ObjectContainer> getOffspring() {
-		if (targetObjectRef == null) {
-			return null;
+		if (targetObject == null) {
+			return CompletableFuture.completedFuture(null);
 		}
-		AtomicReference<TargetObject> to = new AtomicReference<>();
-		AtomicReference<Map<String, ? extends TargetObject>> elements = new AtomicReference<>();
-		AtomicReference<Map<String, ?>> attributes = new AtomicReference<>();
-		return sequence(TypeSpec.cls(ObjectContainer.class)).then(seq -> {
-			targetObjectRef.fetch().handle(seq::next);
-		}, to).then(seq -> {
-			targetObject = to.get();
-			AsyncFence fence = new AsyncFence();
-			fence.include(targetObject.fetchElements(true)
-					.thenCompose(DebugModelConventions::fetchAll)
-					.thenAccept(elements::set));
-			fence.include(targetObject.fetchAttributes(true)
-					.thenCompose(attrs -> DebugModelConventions.fetchObjAttrs(targetObject, attrs))
-					.thenAccept(attributes::set));
-			fence.ready().handle(seq::next);
-		}).then(seq -> {
-			rebuildContainers(elements.get(), attributes.get());
+		return targetObject.resync(true, true).thenApply(__ -> {
+			rebuildContainers(targetObject.getCachedElements(), targetObject.getCachedAttributes());
 			propagateProvider(provider);
-			seq.exit(this);
-		}).finish();
+			return this;
+		});
 	}
 
 	protected void checkAutoRecord() {
@@ -375,10 +351,6 @@ public class ObjectContainer implements Comparable {
 			this.provider = newProvider;
 			provider.addTargetToMap(this);
 		}
-		this.addListener(provider);
-		//if (targetObject != null && !currentChildren.isEmpty()) {
-		//	targetObject.addListener(provider);
-		//}
 		for (ObjectContainer c : currentChildren) {
 			c.propagateProvider(provider);
 		}
@@ -534,14 +506,6 @@ public class ObjectContainer implements Comparable {
 		this.immutable = immutable;
 	}
 
-	public void addListener(ObjectContainerListener listener) {
-		listeners.add(listener);
-	}
-
-	public void removeListener(ObjectContainerListener listener) {
-		listeners.remove(listener);
-	}
-
 	public boolean isVisible() {
 		return visible;
 	}
@@ -561,18 +525,10 @@ public class ObjectContainer implements Comparable {
 
 	public void subscribe() {
 		isSubscribed = true;
-		if (targetObject != null && provider != null) {
-			targetObject.addListener(provider);
-			provider.addListener(targetObject);
-		}
 	}
 
 	public void unsubscribe() {
 		isSubscribed = false;
-		targetObject.removeListener(provider);
-		if (provider.isAutorecord()) {
-			//provider.stopRecording(targetObject);
-		}
 	}
 
 	public boolean isModified() {

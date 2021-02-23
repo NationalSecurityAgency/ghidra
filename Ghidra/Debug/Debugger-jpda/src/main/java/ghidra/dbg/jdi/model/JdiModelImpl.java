@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.*;
 
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
 import ghidra.dbg.jdi.manager.JdiManager;
 import ghidra.dbg.target.TargetObject;
@@ -64,6 +63,7 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 
 		Address start = ram.getAddress(0L);
 		this.defaultRange = new AddressRangeImpl(start, start.add(BLOCK_SIZE));
+		addModelRoot(root);
 	}
 
 	@Override
@@ -86,7 +86,7 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 	@Override
 	public CompletableFuture<Void> close() {
 		jdi.terminate();
-		return AsyncUtils.NIL;
+		return super.close();
 	}
 
 	public JdiModelTargetRoot getRoot() {
@@ -227,6 +227,7 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 		return range;
 	}
 
+	@Override
 	public AddressFactory getAddressFactory() {
 		return addressFactory;
 	}

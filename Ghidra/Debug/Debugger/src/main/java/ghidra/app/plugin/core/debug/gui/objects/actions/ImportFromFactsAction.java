@@ -127,7 +127,6 @@ public class ImportFromFactsAction extends ImportExportAsAction {
 					if (root != null) {
 						ObjectContainer c = p.getRoot();
 						c.setTargetObject(root);
-						root.addListener(p);
 						provider.update(c);
 					}
 				}

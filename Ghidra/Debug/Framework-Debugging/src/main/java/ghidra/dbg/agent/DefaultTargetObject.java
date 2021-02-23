@@ -27,7 +27,6 @@ import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A default implementation of {@link TargetObject} suitable for cases where the implementation
@@ -59,7 +58,8 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * @param key the key (attribute name or element index) of this object
 	 * @param typeHint the type hint for this object
 	 */
-	public DefaultTargetObject(DebuggerObjectModel model, P parent, String key, String typeHint) {
+	public DefaultTargetObject(AbstractDebuggerObjectModel model, P parent, String key,
+			String typeHint) {
 		this(model, parent, key, typeHint, parent.getSchema().getChildSchema(key));
 	}
 
@@ -88,12 +88,46 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * @param typeHint the type hint for this object
 	 * @param schema the schema of this object
 	 */
-	public DefaultTargetObject(DebuggerObjectModel model, P parent, String key, String typeHint,
+	public DefaultTargetObject(AbstractDebuggerObjectModel model, P parent, String key,
+			String typeHint, TargetObjectSchema schema) {
+		this(THIS_FACTORY, null, model, parent, key, typeHint, schema);
+	}
+
+	/**
+	 * Construct a new (delegate) default target object
+	 * 
+	 * <p>
+	 * This behaves similarly to
+	 * {@link #DefaultTargetObject(AbstractDebuggerObjectModel, TargetObject, String, String, TargetObjectSchema)}
+	 * when this object is meant to be the delegate of a proxy. The {@code proxyFactory} and
+	 * {@code proxyInfo} arguments are necessary to sidestep Java's insistence that the
+	 * super-constructor be invoked first. It allows information to be passed straight to the
+	 * factory. Using method overrides doesn't work, because the factory method gets called during
+	 * construction, before extensions have a chance to initialize fields, on which the proxy
+	 * inevitably depends.
+	 * 
+	 * @param proxyFactory a factory to create the proxy, invoked in the super constructor
+	 * @param proxyInfo additional information passed to the proxy factory
+	 * @param model the model to which the object belongs
+	 * @param parent the parent of this object
+	 * @param key the key (attribute name or element index) of this object
+	 * @param typeHint the type hint for this object
+	 * @param schema the schema of this object
+	 */
+	public <I> DefaultTargetObject(ProxyFactory<I> proxyFactory, I proxyInfo,
+			AbstractDebuggerObjectModel model, P parent, String key, String typeHint,
 			TargetObjectSchema schema) {
-		super(model, parent, key, typeHint, schema);
-		changeAttributes(List.of(), List.of(), Map.of(DISPLAY_ATTRIBUTE_NAME,
-			key == null ? "<root>" : key, UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED),
+		super(proxyFactory, proxyInfo, model, parent, key, typeHint, schema);
+		changeAttributes(List.of(), List.of(), Map.ofEntries(
+			Map.entry(DISPLAY_ATTRIBUTE_NAME, key == null ? "<root>" : key),
+			Map.entry(UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED)),
 			"Initialized");
+	}
+
+	public <I> DefaultTargetObject(ProxyFactory<I> proxyFactory, I proxyInfo,
+			AbstractDebuggerObjectModel model, P parent, String key, String typeHint) {
+		this(proxyFactory, proxyInfo, model, parent, key, typeHint,
+			parent.getSchema().getChildSchema(key));
 	}
 
 	/**
@@ -115,9 +149,18 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 *           messaging is involved.
 	 * 
 	 * @return true if there is at least one listener on this object
+	 * @deprecated Since the addition of model listeners, everything is always observed
 	 */
+	@Deprecated(forRemoval = true)
 	protected boolean isObserved() {
 		return !listeners.isEmpty();
+	}
+
+	@Override
+	public CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements) {
+		return CompletableFuture.allOf(
+			fetchAttributes(refreshAttributes),
+			fetchElements(refreshElements));
 	}
 
 	/**
@@ -159,11 +202,11 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (elements) {
 			if (refresh || curElemsRequest == null || curElemsRequest.isCompletedExceptionally() ||
 				getUpdateMode() == TargetUpdateMode.SOLICITED) {
-				curElemsRequest = requestElements(refresh);
+				curElemsRequest = requestElements(refresh).thenCompose(model::gateFuture);
 			}
 			req = curElemsRequest;
 		}
-		return req.thenApply(__ -> getCachedElements()).thenCompose(model::gateFuture);
+		return req.thenApply(__ -> getCachedElements());
 	}
 
 	@Override
@@ -173,7 +216,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	@Override
 	public Map<String, E> getCachedElements() {
-		synchronized (elements) {
+		synchronized (model.lock) {
 			return Map.copyOf(elements);
 		}
 	}
@@ -234,7 +277,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	private Delta<E, E> setElements(Map<String, E> elements, String reason) {
 		Delta<E, E> delta;
-		synchronized (this.elements) {
+		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.elements, elements, Delta.SAME);
 		}
 		TargetObjectSchema schemax = getSchema();
@@ -279,7 +322,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	private Delta<E, E> changeElements(Collection<String> remove, Map<String, E> add,
 			String reason) {
 		Delta<E, E> delta;
-		synchronized (elements) {
+		synchronized (model.lock) {
 			delta = Delta.apply(this.elements, remove, add, Delta.SAME);
 		}
 		TargetObjectSchema schemax = getSchema();
@@ -326,18 +369,18 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (attributes) {
 			// update_mode does not affect attributes. They always behave as if UNSOLICITED.
 			if (refresh || curAttrsRequest == null || curAttrsRequest.isCompletedExceptionally()) {
-				curAttrsRequest = requestAttributes(refresh);
+				curAttrsRequest = requestAttributes(refresh).thenCompose(model::gateFuture);
 			}
 			req = curAttrsRequest;
 		}
 		return req.thenApply(__ -> {
-			synchronized (attributes) {
+			synchronized (model.lock) {
 				if (schema != null) { // TODO: Remove this. Schema should never be null.
 					schema.validateRequiredAttributes(this, enforcesStrictSchema());
 				}
 				return getCachedAttributes();
 			}
-		}).thenCompose(model::gateFuture);
+		});
 	}
 
 	@Override
@@ -347,14 +390,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	@Override
 	public Map<String, ?> getCachedAttributes() {
-		synchronized (attributes) {
+		synchronized (model.lock) {
 			return Map.copyOf(attributes);
 		}
 	}
 
 	@Override
 	public Object getCachedAttribute(String name) {
-		synchronized (attributes) {
+		synchronized (model.lock) {
 			return attributes.get(name);
 		}
 	}
@@ -405,7 +448,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<?, ?> setAttributes(Map<String, ?> attributes, String reason) {
 		Delta<?, ?> delta;
-		synchronized (this.attributes) {
+		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
 		}
 		TargetObjectSchema schemax = getSchema();
@@ -450,7 +493,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<?, ?> changeAttributes(List<String> remove, Map<String, ?> add, String reason) {
 		Delta<?, ?> delta;
-		synchronized (attributes) {
+		synchronized (model.lock) {
 			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
 		}
 		TargetObjectSchema schemax = getSchema();
@@ -462,9 +505,5 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
-	}
-
-	public ListenerSet<TargetObjectListener> getListeners() {
-		return listeners;
 	}
 }

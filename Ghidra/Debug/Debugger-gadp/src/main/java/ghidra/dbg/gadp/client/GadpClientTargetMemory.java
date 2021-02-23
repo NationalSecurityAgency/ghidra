@@ -22,7 +22,6 @@ import com.google.protobuf.ByteString;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.memory.MemoryReader;
 import ghidra.dbg.memory.MemoryWriter;
 import ghidra.dbg.target.TargetMemory;
@@ -91,7 +90,7 @@ public interface GadpClientTargetMemory
 		byte[] data = evt.getContent().toByteArray();
 		DelegateGadpClientTargetObject delegate = getDelegate();
 		delegate.getMemoryCache(address.getAddressSpace()).updateMemory(address.getOffset(), data);
-		delegate.listeners.fire(TargetMemoryListener.class).memoryUpdated(this, address, data);
+		delegate.getListeners().fire(TargetMemoryListener.class).memoryUpdated(this, address, data);
 	}
 
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.MEMORY_ERROR_EVENT)
@@ -100,7 +99,8 @@ public interface GadpClientTargetMemory
 		AddressRange range = GadpValueUtils.getAddressRange(getModel(), evt.getRange());
 		String message = evt.getMessage();
 		// Errors are not cached, but recorded in trace
-		getDelegate().listeners.fire(TargetMemoryListener.class)
+		getDelegate().getListeners()
+				.fire(TargetMemoryListener.class)
 				.memoryReadError(this, range, new DebuggerMemoryAccessException(message));
 	}
 }

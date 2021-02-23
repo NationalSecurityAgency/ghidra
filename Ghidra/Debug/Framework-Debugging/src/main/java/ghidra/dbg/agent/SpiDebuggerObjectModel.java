@@ -43,7 +43,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 		return new DefaultTargetObjectRef(this, path);
 	}
 
-	public default CompletableFuture<Object> fetchFreshChild(TargetObject obj, String key) {
+	public static CompletableFuture<Object> fetchFreshChild(TargetObject obj, String key) {
 		if (PathUtils.isIndex(key)) {
 			return obj.fetchElements(true).thenApply(elements -> {
 				return elements.get(PathUtils.parseIndex(key));
@@ -54,7 +54,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 		});
 	}
 
-	public default CompletableFuture<Object> fetchSuccessorValue(TargetObject obj,
+	public static CompletableFuture<Object> fetchSuccessorValue(TargetObject obj,
 			List<String> path, boolean refresh, boolean followLinks) {
 		if (path.isEmpty()) {
 			return CompletableFuture.completedFuture(obj);

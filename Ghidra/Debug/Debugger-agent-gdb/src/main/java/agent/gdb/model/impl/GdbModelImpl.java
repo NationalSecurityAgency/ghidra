@@ -70,6 +70,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 		this.completedSession = CompletableFuture.completedFuture(session);
 
 		gdb.addStateListener(gdbExitListener);
+		addModelRoot(session);
 	}
 
 	@Override
@@ -136,7 +137,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 
 	public void terminate() throws IOException {
 		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
-		session.invalidateSubtree("GDB is terminating");
+		session.invalidateSubtree(session, "GDB is terminating");
 		gdb.terminate();
 	}
 
@@ -154,7 +155,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	public CompletableFuture<Void> close() {
 		try {
 			terminate();
-			return AsyncUtils.NIL;
+			return super.close();
 		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);

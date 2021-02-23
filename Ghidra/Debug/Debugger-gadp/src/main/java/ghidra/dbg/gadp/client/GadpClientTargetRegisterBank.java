@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetRegisterBank;
 
 public interface GadpClientTargetRegisterBank
@@ -84,6 +83,8 @@ public interface GadpClientTargetRegisterBank
 		Map<String, byte[]> updates = GadpValueUtils.getRegisterValueMap(evt.getValueList());
 		DelegateGadpClientTargetObject delegate = getDelegate();
 		delegate.getRegisterCache().putAll(updates);
-		delegate.listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, updates);
+		delegate.getListeners()
+				.fire(TargetRegisterBankListener.class)
+				.registersUpdated(this, updates);
 	}
 }

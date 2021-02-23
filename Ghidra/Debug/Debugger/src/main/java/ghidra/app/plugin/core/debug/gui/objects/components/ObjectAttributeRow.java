@@ -34,7 +34,6 @@ public class ObjectAttributeRow {
 			ref.fetch().handle(seq::next);
 		}, targetObject).then(seq -> {
 			to = targetObject.get();
-			to.addListener(provider);
 		}).finish();
 	}
 

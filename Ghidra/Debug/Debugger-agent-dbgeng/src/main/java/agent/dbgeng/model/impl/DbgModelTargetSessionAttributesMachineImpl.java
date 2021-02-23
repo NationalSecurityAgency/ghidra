@@ -60,15 +60,15 @@ public class DbgModelTargetSessionAttributesMachineImpl extends DbgModelTargetOb
 
 	@Override
 	public void sessionAdded(DbgSession session, DbgCause cause) {
-		refresh();
+		refreshInternal();
 	}
 
 	@Override
 	public void processAdded(DbgProcess process, DbgCause cause) {
-		refresh();
+		refreshInternal();
 	}
 
-	public void refresh() {
+	public void refreshInternal() {
 		DebugControl control = getManager().getControl();
 		int processorType = control.getActualProcessorType();
 		if (processorType < 0) {

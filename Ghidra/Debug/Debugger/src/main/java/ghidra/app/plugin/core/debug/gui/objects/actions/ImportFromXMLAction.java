@@ -87,7 +87,6 @@ public class ImportFromXMLAction extends ImportExportAsAction {
 					DummyTargetObject to = xmlToObject(p, root, path);
 					ObjectContainer c = p.getRoot();
 					c.setTargetObject(to);
-					to.addListener(p);
 					provider.update(c);
 				}
 				catch (Exception e) {

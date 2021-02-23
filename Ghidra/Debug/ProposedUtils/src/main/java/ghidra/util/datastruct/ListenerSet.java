@@ -107,4 +107,16 @@ public class ListenerSet<E> {
 	public void clear() {
 		map.clear();
 	}
+
+	public void addChained(ListenerSet<? extends E> set) {
+		map.addChained(set.map);
+	}
+
+	public void removeChained(ListenerSet<?> set) {
+		map.removeChained(set.map);
+	}
+
+	public void clearChained() {
+		map.clearChained();
+	}
 }

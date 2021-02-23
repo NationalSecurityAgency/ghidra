@@ -435,9 +435,9 @@ public abstract class AbstractModelForGdbTest
 			AllTargetObjectListenerAdapter l = new AllTargetObjectListenerAdapter() {
 				@Override
 				public void consoleOutput(TargetObject interpreter, Channel channel,
-						String out) {
+						byte[] out) {
 					Msg.debug(this, "Got " + channel + " output: " + out);
-					lastOut.set(out, null);
+					lastOut.set(new String(out), null);
 				}
 			};
 

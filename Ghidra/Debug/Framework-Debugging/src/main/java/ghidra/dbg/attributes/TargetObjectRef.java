@@ -40,7 +40,11 @@ import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
  * <p>
  * Note that it is OK for more than one {@link TargetObjectRef} to refer to the same path. These
  * objects must override {@link #equals(Object)} and {@link #hashCode()}.
+ * 
+ * @deprecated Use {@link TargetObjectPath} for model-bound path manipulation instead. Models should
+ *             not longer return nor push stubs, but actual objects.
  */
+@Deprecated
 public interface TargetObjectRef extends Comparable<TargetObjectRef> {
 
 	/**
@@ -143,7 +147,10 @@ public interface TargetObjectRef extends Comparable<TargetObjectRef> {
 	 * Get the actual object
 	 * 
 	 * @return a future which completes with the object
+	 * @deprecated Just cast straight to {@link TargetObject}. There should never exist a
+	 *             {@link TargetObjectRef} that is not already a {@link TargetObject}, anymore.
 	 */
+	@Deprecated
 	public default CompletableFuture<? extends TargetObject> fetch() {
 		return getModel().fetchModelObject(getPath());
 	}
@@ -298,7 +305,19 @@ public interface TargetObjectRef extends Comparable<TargetObjectRef> {
 	 *         does not exist
 	 */
 	public default CompletableFuture<?> fetchAttribute(String name) {
-		return fetchAttributes().thenApply(m -> m.get(name));
+		if (!PathUtils.isInvocation(name)) {
+			return fetchAttributes().thenApply(m -> m.get(name));
+		}
+		// TODO: Make a type for the invocation and parse arguments better?
+		Entry<String, String> invocation = PathUtils.parseInvocation(name);
+		return fetchAttribute(invocation.getKey()).thenCompose(obj -> {
+			if (!(obj instanceof TargetMethod<?>)) {
+				throw new DebuggerModelTypeException(invocation.getKey() + " is not a method");
+			}
+			TargetMethod<?> method = (TargetMethod<?>) obj;
+			// Just blindly invoke and let it sort it out
+			return method.invoke(Map.of("arg", invocation.getValue()));
+		});
 	}
 
 	/**

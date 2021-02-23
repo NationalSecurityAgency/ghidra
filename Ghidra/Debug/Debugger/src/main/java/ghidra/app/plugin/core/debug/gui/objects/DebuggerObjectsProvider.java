@@ -46,22 +46,15 @@ import ghidra.app.plugin.core.debug.gui.objects.components.*;
 import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.*;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionStateListener;
-import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
-import ghidra.dbg.target.TargetInterpreter.TargetInterpreterListener;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.target.TargetMemory.TargetMemoryListener;
 import ghidra.dbg.target.TargetObject.TargetObjectFetchingListener;
-import ghidra.dbg.target.TargetRegisterBank.TargetRegisterBankListener;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.options.AutoOptions;
@@ -80,9 +73,9 @@ import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
 
 public class DebuggerObjectsProvider extends ComponentProviderAdapter implements //AllTargetObjectListenerAdapter,
-		TargetObjectFetchingListener, TargetAccessibilityListener, TargetExecutionStateListener,
-		TargetFocusScopeListener, TargetInterpreterListener, TargetMemoryListener,
-		TargetRegisterBankListener, ObjectContainerListener {
+		TargetObjectFetchingListener, //
+		DebuggerModelListener, //
+		ObjectContainerListener {
 
 	public static final String PATH_JOIN_CHAR = ".";
 	//private static final String AUTOUPDATE_ATTRIBUTE_NAME = "autoupdate";
@@ -310,6 +303,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 
 	public void setModel(DebuggerObjectModel model) {
 		currentModel = model;
+		currentModel.addModelListener(this, true);
 		refresh();
 	}
 
@@ -1384,14 +1378,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		});
 	}
 
-	public void addListener(TargetObject targetObject) {
-		/*
-		if (recorder != null) {
-			recorder.getListenerForRecord().addListener(targetObject);
-		}
-		*/
-	}
-
 	public void stopRecording(TargetObject targetObject) {
 		// TODO: Do `this.recorder = ...` on every object selection change?
 		TraceRecorder rec = modelService.getRecorderForSuccessor(targetObject);
@@ -1681,7 +1667,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public void elementsChangedObjects(TargetObject parent, Collection<String> removed,
 			Map<String, ? extends TargetObject> added) {
 		//System.err.println("local EC: " + parent);
-		ObjectContainer container = getContainerByPath(parent.getPath());
+		ObjectContainer container = parent == null ? null : getContainerByPath(parent.getPath());
 		if (container != null) {
 			container.augmentElements(removed, added);
 			boolean visibleChange = false;
@@ -1702,7 +1688,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public void attributesChangedObjects(TargetObject parent, Collection<String> removed,
 			Map<String, ?> added) {
 		//System.err.println("local AC: " + parent + ":" + removed + ":" + added);
-		ObjectContainer container = getContainerByPath(parent.getPath());
+		ObjectContainer container = parent == null ? null : getContainerByPath(parent.getPath());
 		if (container != null) {
 			container.augmentAttributes(removed, added);
 			boolean visibleChange = false;

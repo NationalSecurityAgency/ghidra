@@ -23,10 +23,12 @@ public class InvalidatedListener extends
 		AbstractInvocationListener<InvalidatedInvocation> implements TargetObjectListener {
 	public static class InvalidatedInvocation {
 		public final TargetObject object;
+		public final TargetObject branch;
 		public final String reason;
 
-		public InvalidatedInvocation(TargetObject object, String reason) {
+		public InvalidatedInvocation(TargetObject object, TargetObject branch, String reason) {
 			this.object = object;
+			this.branch = branch;
 			this.reason = reason;
 		}
 
@@ -37,7 +39,7 @@ public class InvalidatedListener extends
 	}
 
 	@Override
-	public void invalidated(TargetObject object, String reason) {
-		record(new InvalidatedInvocation(object, reason));
+	public void invalidated(TargetObject object, TargetObject branch, String reason) {
+		record(new InvalidatedInvocation(object, branch, reason));
 	}
 }

@@ -24,6 +24,7 @@ import ghidra.dbg.*;
 import ghidra.dbg.gadp.error.GadpErrorException;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.program.model.address.*;
+import ghidra.util.Msg;
 
 public abstract class AbstractGadpServer
 		extends AbstractAsyncServer<AbstractGadpServer, GadpClientHandler>
@@ -85,5 +86,14 @@ public abstract class AbstractGadpServer
 	 */
 	public void setExitOnClosed(boolean exitOnClosed) {
 		this.exitOnClosed = exitOnClosed;
+	}
+
+	@Override
+	public void terminate() throws IOException {
+		super.terminate();
+		model.close().exceptionally(ex -> {
+			Msg.error(this, "Problem closing GADP-served model", ex);
+			return null;
+		});
 	}
 }

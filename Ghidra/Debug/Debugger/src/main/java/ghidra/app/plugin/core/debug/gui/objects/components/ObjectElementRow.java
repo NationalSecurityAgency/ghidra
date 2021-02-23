@@ -38,17 +38,10 @@ public class ObjectElementRow {
 			ref.fetch().handle(seq::next);
 		}, targetObject).then(seq -> {
 			to = targetObject.get();
-			to.addListener(provider);
 			to.fetchAttributes(true).handle(seq::next);
 			//to.getAttributes().thenAccept(v -> map = v);
 		}, attributes).then(seq -> {
 			map = attributes.get();
-			for (Object obj : map.values()) {
-				if (obj instanceof TargetObject) {
-					TargetObject attr = (TargetObject) obj;
-					attr.addListener(provider);
-				}
-			}
 		}).finish();
 	}
 

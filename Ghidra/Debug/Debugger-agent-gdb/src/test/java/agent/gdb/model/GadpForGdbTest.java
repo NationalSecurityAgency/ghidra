@@ -110,7 +110,7 @@ public class GadpForGdbTest extends AbstractModelForGdbTest {
 		catch (AssertionError e) {
 			assertEquals(
 				"Client implementation sent an invalid request: " +
-					"BAD_REQUEST: Unrecognized request: ERROR_REQUEST",
+					"EC_BAD_REQUEST: Unrecognized request: ERROR_REQUEST",
 				e.getMessage());
 		}
 	}

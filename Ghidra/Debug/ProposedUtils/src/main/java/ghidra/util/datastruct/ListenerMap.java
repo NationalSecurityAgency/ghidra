@@ -18,6 +18,7 @@ package ghidra.util.datastruct;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.cache.*;
@@ -110,14 +111,26 @@ public class ListenerMap<K, P, V extends P> {
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			Collection<V> listenersVolatile = map.values();
+			//Msg.debug(this, "Queuing invocation: " + method.getName() + " @" +
+			//	System.identityHashCode(executor));
+			Collection<V> listenersVolatile;
+			Set<ListenerMap<?, ? extends P, ?>> chainedVolatile;
+			synchronized (lock) {
+				listenersVolatile = map.values();
+				chainedVolatile = chained;
+			}
 			for (V l : listenersVolatile) {
 				if (!ext.isAssignableFrom(l.getClass())) {
 					continue;
 				}
 				executor.execute(() -> {
+					//Msg.debug(this,
+					//	"Invoking: " + method.getName() + " @" + System.identityHashCode(executor));
 					try {
 						method.invoke(l, args);
+					}
+					catch (RejectedExecutionException e) {
+						Msg.trace(this, "Listener invocation rejected", e);
 					}
 					catch (InvocationTargetException e) {
 						Throwable cause = e.getCause();
@@ -128,13 +141,30 @@ public class ListenerMap<K, P, V extends P> {
 					}
 				});
 			}
+			for (ListenerMap<?, ? extends P, ?> c : chained) {
+				// Invocation will check if assignable
+				@SuppressWarnings("unchecked")
+				T l = ((ListenerMap<?, P, ?>) c).fire(ext);
+				try {
+					method.invoke(l, args);
+				}
+				catch (InvocationTargetException e) {
+					Throwable cause = e.getCause();
+					reportError(l, cause);
+				}
+				catch (Throwable e) {
+					reportError(l, e);
+				}
+			}
 			return null; // TODO: Assumes void return type
 		}
 	}
 
+	private final Object lock = new Object();
 	private final Class<P> iface;
 	private final Executor executor;
 	private Map<K, V> map = createMap();
+	private Set<ListenerMap<?, ? extends P, ?>> chained = new LinkedHashSet<>();
 
 	/**
 	 * A proxy which passes invocations to each value of this map
@@ -210,21 +240,25 @@ public class ListenerMap<K, P, V extends P> {
 	}
 
 	public V put(K key, V val) {
-		if (map.get(key) == val) {
-			return val;
+		synchronized (lock) {
+			if (map.get(key) == val) {
+				return val;
+			}
+			Map<K, V> newMap = createMap();
+			newMap.putAll(map);
+			V result = newMap.put(key, val);
+			map = newMap;
+			return result;
 		}
-		Map<K, V> newMap = createMap();
-		newMap.putAll(map);
-		V result = newMap.put(key, val);
-		map = newMap;
-		return result;
 	}
 
 	public void putAll(ListenerMap<? extends K, P, ? extends V> that) {
-		Map<K, V> newMap = createMap();
-		newMap.putAll(map);
-		newMap.putAll(that.map);
-		map = newMap;
+		synchronized (lock) {
+			Map<K, V> newMap = createMap();
+			newMap.putAll(map);
+			newMap.putAll(that.map);
+			map = newMap;
+		}
 	}
 
 	public V get(K key) {
@@ -232,20 +266,57 @@ public class ListenerMap<K, P, V extends P> {
 	}
 
 	public V remove(K key) {
-		if (!map.containsKey(key)) {
-			return null;
+		synchronized (lock) {
+			if (!map.containsKey(key)) {
+				return null;
+			}
+			Map<K, V> newMap = createMap();
+			newMap.putAll(map);
+			V result = newMap.remove(key);
+			map = newMap;
+			return result;
 		}
-		Map<K, V> newMap = createMap();
-		newMap.putAll(map);
-		V result = newMap.remove(key);
-		map = newMap;
-		return result;
 	}
 
 	public void clear() {
-		if (map.isEmpty()) {
-			return;
+		synchronized (lock) {
+			if (map.isEmpty()) {
+				return;
+			}
+			map = createMap();
 		}
-		map = createMap();
+	}
+
+	public void addChained(ListenerMap<?, ? extends P, ?> map) {
+		synchronized (lock) {
+			if (chained.contains(map)) {
+				return;
+			}
+			Set<ListenerMap<?, ? extends P, ?>> newChained = new LinkedHashSet<>();
+			newChained.addAll(chained);
+			newChained.add(map);
+			chained = newChained;
+		}
+	}
+
+	public void removeChained(ListenerMap<?, ?, ?> map) {
+		synchronized (lock) {
+			if (!chained.contains(map)) {
+				return;
+			}
+			Set<ListenerMap<?, ? extends P, ?>> newChained = new LinkedHashSet<>();
+			newChained.addAll(chained);
+			newChained.remove(map);
+			chained = newChained;
+		}
+	}
+
+	public void clearChained() {
+		synchronized (lock) {
+			if (chained.isEmpty()) {
+				return;
+			}
+			chained = new LinkedHashSet<>();
+		}
 	}
 }

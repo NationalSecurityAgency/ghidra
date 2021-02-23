@@ -46,8 +46,13 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 		this("Session");
 	}
 
+	public Executor getClientExecutor() {
+		return clientExecutor;
+	}
+
 	public TestDebuggerObjectModel(String rootHint) {
 		this.session = new TestTargetSession(this, rootHint);
+		addModelRoot(session);
 	}
 
 	@Override
@@ -67,8 +72,8 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 
 	@Override
 	public CompletableFuture<Void> close() {
-		session.invalidateSubtree("Model closed");
-		return future(null);
+		session.invalidateSubtree(session, "Model closed");
+		return super.close().thenCompose(__ -> future(null));
 	}
 
 	public TestTargetProcess addProcess(int pid) {

@@ -74,22 +74,26 @@ public interface TargetConsole<T extends TargetConsole<T>> extends TypedTargetOb
 		 */
 		default void consoleOutput(TargetObject console, Channel channel, byte[] data) {
 		}
-	}
 
-	public interface TargetTextConsoleListener extends TargetConsoleListener {
 		/**
 		 * The console has produced output
+		 * 
+		 * @implNote Overriding this method is not a substitute for overriding
+		 *           {@link #consoleOutput(TargetObject, Channel, byte[])}. Some models may invoke
+		 *           this {@code String} variant as a convenience, which by default, invokes the
+		 *           {@code byte[]} variant, but models are only expected to invoke the
+		 *           {@code byte[]} variant. A client may override this method simply to avoid
+		 *           back-and-forth conversions between {@code String}s and {@code byte[]}s.
 		 * 
 		 * @param console the console producing the output
 		 * @param channel identifies the "output stream", stdout or stderr
 		 * @param text the output text
 		 */
 		default void consoleOutput(TargetObject console, Channel channel, String text) {
+			consoleOutput(console, channel, text.getBytes(CHARSET));
 		}
+	}
 
-		@Override
-		default void consoleOutput(TargetObject console, Channel channel, byte[] data) {
-			consoleOutput(console, channel, new String(data, CHARSET));
-		}
+	public interface TargetTextConsoleListener extends TargetConsoleListener {
 	}
 }

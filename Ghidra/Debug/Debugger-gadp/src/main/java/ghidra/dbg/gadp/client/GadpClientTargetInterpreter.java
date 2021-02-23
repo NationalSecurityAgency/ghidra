@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetInterpreter;
 import ghidra.dbg.util.ValueUtils;
 
@@ -53,7 +52,8 @@ public interface GadpClientTargetInterpreter
 
 	@GadpAttributeChangeCallback(PROMPT_ATTRIBUTE_NAME)
 	default void handlePromptChanged(Object prompt) {
-		getDelegate().listeners.fire(TargetInterpreterListener.class)
+		getDelegate().getListeners()
+				.fire(TargetInterpreterListener.class)
 				.promptChanged(this, promptFromObj(prompt));
 	}
 }

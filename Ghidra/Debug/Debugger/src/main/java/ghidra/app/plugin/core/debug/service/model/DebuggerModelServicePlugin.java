@@ -86,7 +86,7 @@ public class DebuggerModelServicePlugin extends Plugin
 
 		protected TargetObjectListener forRemoval = new TargetObjectListener() {
 			@Override
-			public void invalidated(TargetObject object, String reason) {
+			public void invalidated(TargetObject object, TargetObject branch, String reason) {
 				synchronized (listenersByModel) {
 					ListenersForRemovalAndFocus listener = listenersByModel.remove(model);
 					if (listener == null) {
@@ -125,7 +125,7 @@ public class DebuggerModelServicePlugin extends Plugin
 				}
 				r.addListener(this.forRemoval);
 				if (!r.isValid()) {
-					forRemoval.invalidated(root, "Who knows?");
+					forRemoval.invalidated(root, root, "Who knows?");
 				}
 				CompletableFuture<? extends TargetFocusScope<?>> findSuitable =
 					DebugModelConventions.findSuitable(TargetFocusScope.tclass, r);

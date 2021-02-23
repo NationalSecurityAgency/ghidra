@@ -59,8 +59,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	protected String DBG_PROMPT = "(kd2)"; // Used by DbgModelTargetEnvironment
 
-	protected boolean fireAttributesChanged = false;
-
 	protected static String indexObject(ModelObject obj) {
 		return obj.getSearchKey();
 	}
@@ -82,6 +80,12 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public DbgModel2TargetObjectImpl(AbstractDbgModel model, TargetObject parent, String name,
 			String typeHint, TargetObjectSchema schema) {
 		super(model, parent, name, typeHint, schema);
+	}
+
+	public <I> DbgModel2TargetObjectImpl(ProxyFactory<I> proxyFactory, I proxyInfo,
+			AbstractDbgModel model, TargetObject parent, String name,
+			String typeHint) {
+		super(proxyFactory, proxyInfo, model, parent, name, typeHint);
 	}
 
 	@Override
@@ -127,7 +131,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public CompletableFuture<Void> requestAttributes(boolean refresh) {
-		fireAttributesChanged = true;
 		Map<String, Object> nmap = new HashMap<>();
 		return requestNativeAttributes().thenCompose(map -> {
 			synchronized (attributes) {
@@ -418,12 +421,9 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
-		if (parent == null && !delta.isEmpty()) {
+		if (!delta.isEmpty()) {
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 			return delta;
-		}
-		if (fireAttributesChanged && !delta.isEmpty()) {
-			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
 	}
@@ -439,14 +439,9 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
-		if (fireAttributesChanged && !delta.isEmpty()) {
+		if (!delta.isEmpty()) {
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
-	}
-
-	@Override
-	protected boolean enforcesStrictSchema() {
-		return false;
 	}
 }

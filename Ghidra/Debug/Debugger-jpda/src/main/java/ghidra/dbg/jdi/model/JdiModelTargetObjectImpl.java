@@ -46,7 +46,7 @@ public class JdiModelTargetObjectImpl extends
 	private boolean modified;
 
 	public JdiModelTargetObjectImpl(JdiModelTargetObject parent, String id) {
-		super(parent.getModel(), parent, id, "Object");
+		super(parent.getModelImpl(), parent, id, "Object");
 		this.impl = parent.getModelImpl();
 		this.mirror = (Mirror) parent.getObject();
 		this.object = null;
@@ -65,7 +65,7 @@ public class JdiModelTargetObjectImpl extends
 
 	public JdiModelTargetObjectImpl(JdiModelTargetObject parent, String id, Object object,
 			boolean isElement) {
-		super(parent.getModel(), parent, isElement ? keyObject(id) : id, "Object");
+		super(parent.getModelImpl(), parent, isElement ? keyObject(id) : id, "Object");
 		this.impl = parent.getModelImpl();
 		this.mirror = object instanceof Mirror ? (Mirror) object : null;
 		this.object = object;
@@ -88,7 +88,7 @@ public class JdiModelTargetObjectImpl extends
 	}
 
 	public JdiModelTargetObjectImpl(JdiModelTargetSectionContainer parent) {
-		super(parent.getModel(), parent, keyObject("NULL_SPACE"), "Object");
+		super(parent.getModelImpl(), parent, keyObject("NULL_SPACE"), "Object");
 		this.impl = parent.getModelImpl();
 		this.mirror = parent.mirror;
 		this.display = "NULL_SPACE";

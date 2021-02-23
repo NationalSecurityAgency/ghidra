@@ -60,6 +60,7 @@ public class DbgModelImpl extends AbstractDbgModel {
 		s.add();
 		DbgModelTargetSessionContainer sessions = root.sessions;
 		this.session = (DbgModelTargetSessionImpl) sessions.getTargetSession(s);
+		addModelRoot(root);
 	}
 
 	@Override
@@ -110,7 +111,7 @@ public class DbgModelImpl extends AbstractDbgModel {
 	public CompletableFuture<Void> close() {
 		try {
 			terminate();
-			return CompletableFuture.completedFuture(null);
+			return super.close();
 		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);

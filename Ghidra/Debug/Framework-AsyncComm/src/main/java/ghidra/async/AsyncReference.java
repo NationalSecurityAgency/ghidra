@@ -19,6 +19,7 @@ import java.lang.ref.Cleaner.Cleanable;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -165,6 +166,9 @@ public class AsyncReference<T, C> {
 		for (TriConsumer<? super T, ? super T, ? super C> listener : copy) {
 			try {
 				listener.accept(oldVal, newVal, cause);
+			}
+			catch (RejectedExecutionException exc) {
+				Msg.trace(this, "Ignoring rejection", exc);
 			}
 			catch (Throwable exc) {
 				Msg.error(this, "Ignoring exception on async reference listener: ", exc);

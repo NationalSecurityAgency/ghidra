@@ -398,7 +398,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	}
 
 	@Override
-	public void refresh() {
+	public void refreshInternal() {
 		// TODO Auto-generated method stub
 
 	}

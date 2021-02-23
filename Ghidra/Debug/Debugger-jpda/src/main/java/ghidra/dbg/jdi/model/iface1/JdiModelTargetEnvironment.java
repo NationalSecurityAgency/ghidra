@@ -21,7 +21,7 @@ import ghidra.dbg.target.TargetEnvironment;
 public interface JdiModelTargetEnvironment<T extends TargetEnvironment<T>>
 		extends JdiModelTargetObject, TargetEnvironment<T> {
 
-	public void refresh();
+	public void refreshInternal();
 
 	@Override
 	public default String getArchitecture() {

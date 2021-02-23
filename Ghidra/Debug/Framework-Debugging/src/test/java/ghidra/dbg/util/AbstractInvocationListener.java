@@ -15,13 +15,12 @@
  */
 package ghidra.dbg.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
 
 import ghidra.async.AsyncReference;
 
 public abstract class AbstractInvocationListener<T> {
-	public final List<T> invocations = new ArrayList<>();
+	public final LinkedList<T> invocations = new LinkedList<>();
 	public final AsyncReference<Integer, Void> count = new AsyncReference<>(0);
 
 	protected void record(T rec) {

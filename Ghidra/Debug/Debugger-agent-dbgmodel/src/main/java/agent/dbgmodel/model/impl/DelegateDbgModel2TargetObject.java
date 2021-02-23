@@ -28,13 +28,11 @@ import agent.dbgeng.model.iface2.*;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
-import utilities.util.ProxyUtilities;
 
 public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl implements //
 		DbgModelTargetAccessConditioned<DelegateDbgModel2TargetObject>, //
@@ -160,7 +158,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 				mixins.add(mixin);
 			}
 		}
-		return new DelegateDbgModel2TargetObject(model, parent, key, object, mixins).proxy;
+		return new DelegateDbgModel2TargetObject(model, parent, key, object, mixins).getProxy();
 	}
 
 	protected static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
@@ -169,8 +167,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	// is now deprecated.
 	protected final ProxyState state;
 	protected final Cleanable cleanable;
-
-	private final DbgModelTargetObject proxy;
 
 	private boolean breakpointEnabled;
 	private final ListenerSet<TargetBreakpointAction> breakpointActions =
@@ -189,15 +185,12 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 	public DelegateDbgModel2TargetObject(DbgModel2Impl model, DbgModelTargetObject parent,
 			String key, ModelObject modelObject, List<Class<? extends TargetObject>> mixins) {
-		super(model, parent.getProxy(), key, getHintForObject(modelObject));
+		super(model, mixins, model, parent.getProxy(), key, getHintForObject(modelObject));
 		this.state = new ProxyState(model, modelObject);
 		this.cleanable = CLEANER.register(this, state);
 
 		getManager().addStateListener(accessListener);
 
-		mixins.add(DbgModel2TargetProxy.class);
-		this.proxy =
-			ProxyUtilities.composeOnDelegate(DbgModelTargetObject.class, this, mixins, LOOKUP);
 		if (proxy instanceof DbgEventsListener) {
 			model.getManager().addEventsListener((DbgEventsListener) proxy);
 		}
@@ -217,19 +210,14 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	}
 
 	@Override
-	public <T extends TypedTargetObject<T>> T as(Class<T> iface) {
-		return DebuggerObjectModel.requireIface(iface, proxy, getPath());
-	}
-
-	@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public CompletableFuture<? extends DelegateDbgModel2TargetObject> fetch() {
 		return (CompletableFuture) CompletableFuture.completedFuture(proxy);
 	}
 
 	@Override
-	public TargetObject getProxy() {
-		return proxy;
+	public DbgModelTargetObject getProxy() {
+		return (DbgModelTargetObject) proxy;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -311,7 +299,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			return;
 		}
 		if (proxy instanceof DbgModelTargetRegister || proxy instanceof DbgModelTargetStackFrame) {
-			DbgThread thread = proxy.getParentThread().getThread();
+			DbgThread thread = getProxy().getParentThread().getThread();
 			if (thread.equals(getManager().getEventThread())) {
 				requestAttributes(true);
 			}
@@ -354,6 +342,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 	}
 
+	@Override
 	public DelegateDbgModel2TargetObject getDelegate() {
 		return this;
 	}
@@ -388,6 +377,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		this.breakpointEnabled = enabled;
 	}
 
+	@Override
 	public ListenerSet<TargetBreakpointAction> getActions() {
 		return breakpointActions;
 	}

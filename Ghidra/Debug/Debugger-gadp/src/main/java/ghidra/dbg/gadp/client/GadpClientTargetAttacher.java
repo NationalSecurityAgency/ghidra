@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.target.TargetAttachable;
 import ghidra.dbg.target.TargetAttacher;
 

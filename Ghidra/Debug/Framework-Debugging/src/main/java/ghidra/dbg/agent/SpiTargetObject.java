@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg.gadp.client;
+package ghidra.dbg.agent;
 
-import java.util.concurrent.CompletableFuture;
+import ghidra.dbg.target.TargetObject;
 
-import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.target.TargetDeletable;
-
-public interface GadpClientTargetDeletable
-		extends GadpClientTargetObject, TargetDeletable<GadpClientTargetDeletable> {
+public interface SpiTargetObject extends TargetObject, InvalidatableTargetObjectIf {
 	@Override
-	default CompletableFuture<Void> delete() {
-		getDelegate().assertValid();
-		return getModel().sendChecked(Gadp.DeleteRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(getPath())),
-			Gadp.DeleteReply.getDefaultInstance()).thenApply(rep -> null);
-	}
+	AbstractDebuggerObjectModel getModel();
+
+	// TODO:
+	//@Override
+	//Map<String, ? extends SpiTargetObject> getCachedElements();
+
+	boolean enforcesStrictSchema();
 }

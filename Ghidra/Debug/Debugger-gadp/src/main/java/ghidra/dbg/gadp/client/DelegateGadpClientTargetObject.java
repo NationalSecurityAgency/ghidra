@@ -18,27 +18,24 @@ package ghidra.dbg.gadp.client;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.ref.Cleaner.Cleanable;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.gadp.GadpRegistry;
 import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.EventNotification.EvtCase;
-import ghidra.dbg.gadp.util.GadpValueUtils;
 import ghidra.dbg.memory.CachedMemory;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAccessConditioned;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
@@ -47,7 +44,9 @@ import utilities.util.ProxyUtilities;
 /**
  * This class is meant to be used as a delegate to a composed proxy
  */
-public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
+public class DelegateGadpClientTargetObject
+		extends DefaultTargetObject<GadpClientTargetObject, GadpClientTargetObject>
+		implements GadpClientTargetObject {
 	protected abstract static class GadpHandlerMap<A extends Annotation, K> {
 		protected final Class<A> annotationType;
 		protected final Class<?>[] paramClasses;
@@ -148,75 +147,38 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 		}
 	}
 
-	protected static class ProxyState implements Runnable {
-		protected final GadpClient client;
-		protected final List<String> path;
-		protected boolean valid = true;
-
-		public ProxyState(GadpClient client, List<String> path) {
-			this.client = client;
-			this.path = path;
-		}
-
-		@Override
-		public void run() {
-			if (!valid) {
-				return;
-			}
-			client.unsubscribe(path).exceptionally(e -> {
-				Msg.error(this, "Could not unsubscribe from " + path + ": " + e);
-				return null;
-			});
-		}
-	}
-
 	protected static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 	protected static final Map<Set<Class<? extends TargetObject>>, GadpEventHandlerMap> EVENT_HANDLER_MAPS_BY_COMPOSITION =
 		new HashMap<>();
 	protected static final Map<Set<Class<? extends TargetObject>>, GadpAttributeChangeCallbackMap> ATTRIBUTE_CHANGE_CALLBACKS_MAPS_BY_COMPOSITION =
 		new HashMap<>();
 
-	protected static GadpClientTargetObject makeModelProxy(GadpClient client, List<String> path,
-			String typeHint, List<String> ifaceNames) {
+	protected static GadpClientTargetObject makeModelProxy(GadpClient client,
+			GadpClientTargetObject parent, String key, String typeHint, List<String> ifaceNames) {
 		List<Class<? extends TargetObject>> ifaces = TargetObject.getInterfacesByName(ifaceNames);
 		List<Class<? extends TargetObject>> mixins = GadpRegistry.getMixins(ifaces);
-		return new DelegateGadpClientTargetObject(client, path, typeHint, ifaceNames, ifaces,
-			mixins).proxy;
+		TargetObjectSchema schema =
+			parent == null ? client.getRootSchema() : parent.getSchema().getChildSchema(key);
+		return new DelegateGadpClientTargetObject(client, parent, key, typeHint, schema, ifaceNames,
+			ifaces, mixins).getProxy();
 	}
 
-	protected final ProxyState state;
-	protected final int hash;
-	protected final Cleanable cleanable;
-
-	private final GadpClientTargetObject proxy;
-	private TargetObjectSchema schema; // lazily evaluated
-	private final String typeHint;
+	private final GadpClient client;
 	private final List<String> ifaceNames;
 	private final List<Class<? extends TargetObject>> ifaces;
 	private final GadpEventHandlerMap eventHandlers;
 	private final GadpAttributeChangeCallbackMap attributeChangeCallbacks;
-	protected final ListenerSet<TargetObjectListener> listeners;
-
-	// TODO: Use path element comparators?
-	protected final Map<String, TargetObjectRef> elements = new TreeMap<>();
-	// TODO: Use path element comparators?
-	protected final Map<String, Object> attributes = new TreeMap<>();
 
 	protected Map<AddressSpace, CachedMemory> memCache = null; // Becomes active if this is a TargetMemory
 	protected Map<String, byte[]> regCache = null; // Becomes active if this is a TargtRegisterBank
 	protected ListenerSet<TargetBreakpointAction> actions = null; // Becomes active is this is a TargetBreakpointSpec
 
-	public DelegateGadpClientTargetObject(GadpClient client, List<String> path, String typeHint,
-			List<String> ifaceNames, List<Class<? extends TargetObject>> ifaces,
+	public DelegateGadpClientTargetObject(GadpClient client, GadpClientTargetObject parent,
+			String key, String typeHint, TargetObjectSchema schema, List<String> ifaceNames,
+			List<Class<? extends TargetObject>> ifaces,
 			List<Class<? extends TargetObject>> mixins) {
-		this.listeners = new ListenerSet<>(TargetObjectListener.class, client.getClientExecutor());
-		this.state = new ProxyState(client, path);
-		this.hash = computeHashCode();
-		this.cleanable = GadpClient.CLEANER.register(this, state);
-
-		this.proxy = ProxyUtilities.composeOnDelegate(GadpClientTargetObject.class,
-			this, mixins, MethodHandles.lookup());
-		this.typeHint = typeHint;
+		super(client, mixins, client, parent, key, typeHint, schema);
+		this.client = client;
 		this.ifaceNames = ifaceNames;
 		this.ifaces = ifaces;
 
@@ -230,47 +192,13 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return doEquals(obj);
-	}
-
-	@Override
-	public int hashCode() {
-		return hash;
-	}
-
-	@Override
-	public String toString() {
-		return "<GADP TargetObject: '" + PathUtils.toString(getPath()) + "' via " +
-			getModel().description + ">";
-	}
-
-	@Override
 	public GadpClient getModel() {
-		return state.client;
+		return client;
 	}
 
 	@Override
-	public List<String> getProtocolID() {
-		return state.path;
-	}
-
-	@Override
-	public List<String> getPath() {
-		return state.path;
-	}
-
-	@Override
-	public TargetObjectSchema getSchema() {
-		if (schema == null) {
-			schema = getModel().getRootSchema().getSuccessorSchema(getPath());
-		}
-		return schema;
-	}
-
-	@Override
-	public String getTypeHint() {
-		return typeHint;
+	public GadpClientTargetObject getProxy() {
+		return (GadpClientTargetObject) super.getProxy();
 	}
 
 	@Override
@@ -279,104 +207,32 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	}
 
 	@Override
-	public Collection<Class<? extends TargetObject>> getInterfaces() {
+	public Collection<? extends Class<? extends TargetObject>> getInterfaces() {
 		return ifaces;
 	}
 
 	@Override
-	public boolean isValid() {
-		return state.valid;
-	}
-
-	@Override
-	public Map<String, TargetObjectRef> getCachedElements() {
-		synchronized (this.elements) {
-			return Map.copyOf(elements);
-		}
-	}
-
-	@Override
-	public Map<String, ?> getCachedAttributes() {
-		synchronized (this.attributes) {
-			return Map.copyOf(attributes);
-		}
-	}
-
-	@Override
-	public Object getCachedAttribute(String name) {
-		synchronized (attributes) {
-			return attributes.get(name);
-		}
-	}
-
-	protected void putCachedProxy(String key, GadpClientTargetObject proxy) {
-		if (PathUtils.isIndex(key)) {
-			synchronized (elements) {
-				elements.put(PathUtils.parseIndex(key), proxy);
-			}
-		}
-		else {
-			synchronized (attributes) {
-				attributes.put(key, proxy);
-			}
-		}
-	}
-
-	protected Optional<Object> cachedChild(String key) {
-		/**
-		 * TODO: Object metadata which indicates whether the attributes/elements support
-		 * subscription (push notifications). Otherwise, if the parent is cached, GADP will assume
-		 * the server is sending updates. If the model actually requires pulling, the GADP client
-		 * will not know, and will instead use its (likely stale) cache.
-		 */
-		assert key != null;
-		if (PathUtils.isIndex(key)) {
-			/**
-			 * NOTE: I do not need to check the subscription level. The level has to do with
-			 * including object info. Having OBJECT level is sufficient to have up-to-date keys.
-			 */
-			synchronized (elements) {
-				return Optional.ofNullable(elements.get(PathUtils.parseIndex(key)));
-			}
-		}
-		assert PathUtils.isName(key);
-		synchronized (attributes) {
-			return Optional.ofNullable(attributes.get(key));
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * The delegate has to override defaults which introspect on, or otherwise would leak "this".
-	 * "this" is the delegate; we must instead operate on the proxy.
-	 */
-	@Override
-	public <T extends TypedTargetObject<T>> T as(Class<T> iface) {
-		return DebuggerObjectModel.requireIface(iface, proxy, state.path);
-	}
-
-	@Override
 	public CompletableFuture<? extends TargetObject> fetch() {
-		return CompletableFuture.completedFuture(proxy);
+		return CompletableFuture.completedFuture(getProxy());
 	}
 
 	@Override
-	public CompletableFuture<?> fetchAttribute(String name) {
-		if (!PathUtils.isInvocation(name)) {
-			return GadpClientTargetObject.super.fetchAttribute(name);
-		}
-		return state.client.fetchModelValue(PathUtils.extend(state.path, name));
+	public CompletableFuture<Void> resync(boolean attributes, boolean elements) {
+		return client.sendChecked(Gadp.ResyncRequest.newBuilder()
+				.setPath(GadpValueUtils.makePath(path))
+				.setAttributes(attributes)
+				.setElements(elements),
+			Gadp.ResyncReply.getDefaultInstance()).thenApply(rep -> null);
 	}
 
 	@Override
-	public void addListener(TargetObjectListener l) {
-		listeners.add(l);
+	protected CompletableFuture<Void> requestAttributes(boolean refresh) {
+		return resync(refresh, false);
 	}
 
 	@Override
-	public void removeListener(TargetObjectListener l) {
-		listeners.remove(l);
+	protected CompletableFuture<Void> requestElements(boolean refresh) {
+		return resync(false, refresh);
 	}
 
 	@Override
@@ -384,34 +240,25 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 		return this;
 	}
 
-	public void updateWithInfo(Gadp.ModelObjectInfo info) {
-		Map<String, TargetObjectRef> elements =
-			GadpValueUtils.getElementMap(this, info.getElementIndexList());
-		Map<String, Object> attributes =
-			GadpValueUtils.getAttributeMap(this, info.getAttributeList());
-
-		Delta<TargetObjectRef, TargetObjectRef> deltaE = setElements(elements);
-		Delta<Object, Object> deltaA = setAttributes(attributes);
-		fireElementsChanged(deltaE);
-		fireAttributesChanged(deltaA);
-	}
-
-	public void updateWithDelta(Gadp.ModelObjectDelta delta) {
-		Map<String, TargetObjectRef> elementsAdded =
-			GadpValueUtils.getElementMap(this, delta.getIndexAddedList());
+	public void updateWithDeltas(Gadp.ModelObjectDelta deltaE, Gadp.ModelObjectDelta deltaA) {
+		Map<String, GadpClientTargetObject> elementsAdded =
+			GadpValueUtils.getElementMap(this, deltaE.getAddedList());
 		Map<String, Object> attributesAdded =
-			GadpValueUtils.getAttributeMap(this, delta.getAttributeAddedList());
+			GadpValueUtils.getAttributeMap(this, deltaA.getAddedList());
 
-		Delta<TargetObjectRef, TargetObjectRef> deltaE =
-			updateElements(Delta.create(delta.getIndexRemovedList(), elementsAdded));
-		Delta<Object, Object> deltaA =
-			updateAttributes(Delta.create(delta.getAttributeRemovedList(), attributesAdded));
-		fireElementsChanged(deltaE);
-		fireAttributesChanged(deltaA);
+		changeElements(deltaE.getRemovedList(), List.of(), elementsAdded, "Updated");
+		Delta<?, ?> attrDelta =
+			changeAttributes(deltaA.getRemovedList(), attributesAdded, "Updated");
+		for (String name : attrDelta.getKeysRemoved()) {
+			handleAttributeChange(name, null);
+		}
+		for (Map.Entry<String, ?> a : attrDelta.added.entrySet()) {
+			handleAttributeChange(a.getKey(), a.getValue());
+		}
 	}
 
 	protected void handleEvent(Gadp.EventNotification notify) {
-		eventHandlers.handle(proxy, notify.getEvtCase(), notify);
+		eventHandlers.handle(getProxy(), notify.getEvtCase(), notify);
 	}
 
 	/**
@@ -437,61 +284,11 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	 * @param value the new value of the attribute
 	 */
 	protected void handleAttributeChange(String name, Object value) {
-		attributeChangeCallbacks.handle(proxy, name, value);
-	}
-
-	protected <U extends TargetObjectRef> Delta<TargetObjectRef, U> updateElements(
-			Delta<TargetObjectRef, U> delta) {
-		synchronized (this.elements) {
-			return delta.apply(elements);
-		}
-	}
-
-	protected <U extends TargetObjectRef> Delta<TargetObjectRef, U> setElements(
-			Map<String, U> elements) {
-		synchronized (this.elements) {
-			return Delta.computeAndSet(this.elements, elements, Delta.SAME);
-		}
-	}
-
-	protected <U> Delta<Object, U> updateAttributes(Delta<Object, U> delta) {
-		synchronized (this.attributes) {
-			return delta.apply(attributes, Delta.EQUAL);
-		}
-	}
-
-	protected <U> Delta<Object, U> setAttributes(Map<String, U> attributes) {
-		synchronized (this.attributes) {
-			return Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
-		}
-	}
-
-	protected void fireElementsChanged(Delta<?, ? extends TargetObjectRef> delta) {
-		if (!delta.isEmpty()) {
-			listeners.fire.elementsChanged(proxy, delta.getKeysRemoved(), delta.added);
-		}
-	}
-
-	protected void fireAttributesChanged(Delta<?, ?> delta) {
-		if (!delta.isEmpty()) {
-			listeners.fire.attributesChanged(proxy, delta.getKeysRemoved(), delta.added);
-			for (Map.Entry<String, ?> a : delta.added.entrySet()) {
-				handleAttributeChange(a.getKey(), a.getValue());
-			}
-		}
-	}
-
-	protected void doInvalidateSubtree(String reason) {
-		state.client.invalidateSubtree(state.path, reason);
-	}
-
-	protected void doInvalidate(String reason) {
-		state.valid = false;
-		listeners.fire.invalidated(proxy, reason);
+		attributeChangeCallbacks.handle(getProxy(), name, value);
 	}
 
 	protected void assertValid() {
-		if (!state.valid) {
+		if (!valid) {
 			throw new IllegalStateException("Object is no longer valid: " + toString());
 		}
 	}
@@ -505,13 +302,13 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 	public synchronized CompletableFuture<Void> invalidateCaches() {
 		assertValid();
 		doClearCaches();
-		return state.client.sendChecked(Gadp.CacheInvalidateRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(state.path)),
+		return client.sendChecked(Gadp.CacheInvalidateRequest.newBuilder()
+				.setPath(GadpValueUtils.makePath(path)),
 			Gadp.CacheInvalidateReply.getDefaultInstance()).thenApply(rep -> null);
 	}
 
 	protected synchronized CachedMemory getMemoryCache(AddressSpace space) {
-		GadpClientTargetMemory memory = (GadpClientTargetMemory) proxy;
+		GadpClientTargetMemory memory = (GadpClientTargetMemory) getProxy();
 		if (memCache == null) {
 			memCache = new HashMap<>();
 		}
@@ -551,5 +348,11 @@ public class DelegateGadpClientTargetObject implements GadpClientTargetObject {
 			};
 		}
 		return actions;
+	}
+
+	@Override
+	protected void doInvalidate(TargetObject branch, String reason) {
+		client.removeProxy(path, reason);
+		super.doInvalidate(branch, reason);
 	}
 }

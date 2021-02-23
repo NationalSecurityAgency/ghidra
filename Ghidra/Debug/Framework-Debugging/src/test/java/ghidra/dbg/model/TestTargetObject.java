@@ -15,9 +15,9 @@
  */
 package ghidra.dbg.model;
 
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.agent.SpiTargetObject;
 
-public interface TestTargetObject extends TargetObject {
+public interface TestTargetObject extends SpiTargetObject {
 	@Override
 	TestDebuggerObjectModel getModel();
 }

@@ -16,20 +16,27 @@
 package agent.dbgmodel.model.impl;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.jdom.JDOMException;
 
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.AbstractDbgModel;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import agent.dbgmodel.manager.DbgManager2Impl;
+import ghidra.dbg.agent.AbstractTargetObject;
+import ghidra.dbg.agent.AbstractTargetObject.ProxyFactory;
+import ghidra.dbg.agent.SpiTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.program.model.address.*;
+import utilities.util.ProxyUtilities;
 
-public class DbgModel2Impl extends AbstractDbgModel {
+public class DbgModel2Impl extends AbstractDbgModel
+		implements ProxyFactory<List<Class<? extends TargetObject>>> {
 	// TODO: Need some minimal memory modeling per architecture on the model/agent side.
 	// The model must convert to and from Ghidra's address space names
 	protected static final String SPACE_NAME = "ram";
@@ -66,6 +73,15 @@ public class DbgModel2Impl extends AbstractDbgModel {
 		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
 		this.root = new DbgModel2TargetRootImpl(this, ROOT_SCHEMA);
 		this.completedRoot = CompletableFuture.completedFuture(root);
+		addModelRoot(root);
+	}
+
+	@Override
+	public SpiTargetObject createProxy(AbstractTargetObject<?> delegate,
+			List<Class<? extends TargetObject>> mixins) {
+		mixins.add(DbgModel2TargetProxy.class);
+		return ProxyUtilities.composeOnDelegate(DbgModelTargetObject.class,
+			(DbgModelTargetObject) delegate, mixins, DelegateDbgModel2TargetObject.LOOKUP);
 	}
 
 	@Override
@@ -116,7 +132,7 @@ public class DbgModel2Impl extends AbstractDbgModel {
 	public CompletableFuture<Void> close() {
 		try {
 			terminate();
-			return CompletableFuture.completedFuture(null);
+			return super.close();
 		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);
