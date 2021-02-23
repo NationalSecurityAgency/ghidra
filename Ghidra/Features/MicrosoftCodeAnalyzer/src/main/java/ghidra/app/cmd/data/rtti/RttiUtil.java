@@ -25,8 +25,7 @@ import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
@@ -127,6 +126,8 @@ public class RttiUtil {
 	public static int getVfTableCount(Program program, Address vfTableBaseAddress) {
 
 		Memory memory = program.getMemory();
+		ReferenceManager referenceManager = program.getReferenceManager();
+		FunctionManager functionManager = program.getFunctionManager();
 		MemoryBlock textBlock = memory.getBlock(".text");
 		MemoryBlock nepBlock = memory.getBlock(".nep");
 		AddressSetView initializedAddresses = memory.getLoadedAndInitializedAddressSet();
@@ -162,11 +163,14 @@ public class RttiUtil {
 			}
 			
 			// any references after the first one ends the table
-			if (tableSize > 0 && program.getReferenceManager().hasReferencesTo(currentVfPointerAddress)) {
+			if (tableSize > 0 && referenceManager.hasReferencesTo(currentVfPointerAddress)) {
 				break;
 			}
 			
-			if (!pseudoDisassembler.isValidSubroutine(referencedAddress, true, false)) {
+			Function function = functionManager.getFunctionAt(referencedAddress);
+
+			if (function == null &&
+				!pseudoDisassembler.isValidSubroutine(referencedAddress, true, false)) {
 				break; // Not pointing to possible function.
 			}
 
