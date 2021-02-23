@@ -21,6 +21,7 @@ import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
@@ -827,7 +828,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		if (isLocalOnly()) {
 			return clazz.isInstance(object);
 		}
-		TargetObject result = DebugModelConventions.findSuitable(clazz, object).getNow(null);
+		TargetObject result = null;
+		try {
+			result =
+				DebugModelConventions.findSuitable(clazz, object).get(100, TimeUnit.MILLISECONDS);
+		}
+		catch (Exception e) {
+			// IGNORE
+		}
 		return result != null;
 	}
 
@@ -1585,8 +1593,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}
 			return false;
 		}
-		TargetObject result =
-			DebugModelConventions.findSuitable(TargetExecutionStateful.class, object).getNow(null);
+		TargetObject result = null;
+		try {
+			result = DebugModelConventions.findSuitable(TargetExecutionStateful.class, object)
+					.get(100, TimeUnit.MILLISECONDS);
+		}
+		catch (Exception e) {
+			// IGNORE
+		}
 		if (result != null) {
 			TargetExecutionStateful<?> stateful = (TargetExecutionStateful<?>) result;
 			TargetExecutionState executionState = stateful.getExecutionState();
