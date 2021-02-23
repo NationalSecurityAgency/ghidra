@@ -240,6 +240,8 @@ public class GnuDemanglerParser {
 	 *
 	 * Parts:
 	 * 			-required text (capture group 2)
+	 * 					--note: this uses '++', a possessive quantifier, to help keep the 
+	 * 					  backtracking to a minimum
 	 * 			-a space
 	 * 			-'for' or 'to' (capture group 3)
 	 * 			-a space
@@ -258,7 +260,7 @@ public class GnuDemanglerParser {
 	 *		non-virtual thunk to
 	 */
 	private static final Pattern DESCRIPTIVE_PREFIX_PATTERN =
-		Pattern.compile("((.+ )+(for|to) )(.+)");
+		Pattern.compile("((.+ )(for|to) )(.+)");
 
 	/**
 	 * The c 'decltype' keyword pattern
@@ -303,7 +305,7 @@ public class GnuDemanglerParser {
 		// note: this capture group seems to fail with excessive templating
 		String operatorTemplates = "(<.+>){0,1}";
 		String operatorPrefix =
-			".*(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ".*)\\s*";
+			"(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ")\\s*";
 		String parameters = "(\\(.*\\))";
 		String trailing = "(.*)";
 
