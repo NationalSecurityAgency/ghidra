@@ -493,7 +493,8 @@ public class CodeUnitFormat {
 		InstructionScalarInfo info = new InstructionScalarInfo(representations, primaryRef);
 		if (info.hasSingleAddressWithNoScalars()) {
 			int addressIndex = info.getAddressIndex();
-			return markupAddressAsScalar(inst, primaryRef, representations, addressIndex);
+			return markupAddressAsRegister(inst, primaryRef, representations, addressIndex) ||
+				markupAddressAsScalar(inst, primaryRef, representations, addressIndex);
 		}
 
 		if (info.hasNoScalars()) {
@@ -562,6 +563,21 @@ public class CodeUnitFormat {
 			markupScalarWithEquate(scalar, i, equates, representations);
 		}
 		return primaryRef == null;
+	}
+
+	private boolean markupAddressAsRegister(Instruction instr, Reference primaryRef,
+			List<Object> representationList, int addressIndex) {
+		if (primaryRef != null) {
+			return false;
+		}
+		// NOTE: although preferrable, access type/size is not considered
+		Address addr = (Address) representationList.get(addressIndex);
+		Register reg = instr.getProgram().getRegister(addr);
+		if (reg != null) {
+			representationList.set(addressIndex, reg.getName());
+			return true;
+		}
+		return false;
 	}
 
 	private boolean markupAddressAsScalar(Instruction instr, Reference primaryRef,

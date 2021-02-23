@@ -22,7 +22,9 @@ import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.NoValueException;
 import ghidra.util.task.TaskMonitor;
 
 public class PIC30_ElfExtension extends ElfExtension {
@@ -219,6 +221,32 @@ public class PIC30_ElfExtension extends ElfExtension {
 		return language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace());
 	}
 	
+	@Override
+	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
+			throws NoValueException {
+
+		if (elfSymbol.getValue() != 0 || !elfSymbol.isGlobal() ||
+			elfSymbol.getSectionHeaderIndex() != 0) {
+			return null;
+		}
+
+		String name = elfSymbol.getNameAsString();
+		if (name == null) {
+			return null;
+		}
+
+		if (name.startsWith("_")) {
+			name = name.substring(1);
+		}
+
+		Register reg = elfLoadHelper.getProgram().getRegister(name);
+		if (reg != null && !reg.getAddress().isRegisterAddress()) {
+			return reg.getAddress(); // only consider memory-based registers
+		}
+
+		return null;
+	}
+
 	private static class PIC30FilteredDataInputStream extends FilterInputStream {
 
 		// BYTES:  <byte> <pad>
