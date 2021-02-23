@@ -159,8 +159,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 				monitor.incrementProgress(1);
 			}
 			// sort the entries by the index in the string table, so don't jump around reading
-			List<NList> sortedList = nlistList
-					.stream()
+			List<NList> sortedList = nlistList.stream()
 					.sorted((o1, o2) -> Integer.compare(o1.getStringTableIndex(),
 						o2.getStringTableIndex()))
 					.collect(Collectors.toList());
@@ -202,8 +201,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		try {
 			Address addr = localSymbolsInfoAddr.add(nlistOffset);
 			for (NList nlist : nlistList) {
-				Data d = DataUtilities.createData(program, addr, nlist.toDataType(), -1, false,
-					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				Data d = program.getListing().createData(addr, nlist.toDataType());
 				addr = addr.add(d.getLength());
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
@@ -221,8 +219,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		try {
 			Address addr = localSymbolsInfoAddr.add(entriesOffset);
 			for (DyldCacheLocalSymbolsEntry localSymbolsEntry : localSymbolsEntryList) {
-				Data d = DataUtilities.createData(program, addr, localSymbolsEntry.toDataType(), -1,
-					false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				Data d = program.getListing().createData(addr, localSymbolsEntry.toDataType());
 				addr = addr.add(d.getLength());
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);

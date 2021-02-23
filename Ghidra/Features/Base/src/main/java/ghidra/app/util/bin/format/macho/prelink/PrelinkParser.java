@@ -74,23 +74,46 @@ public class PrelinkParser {
 					break;
 				}
 				Element element = (Element) iterator.next();
-				if (element.getName().equals(TAG_KEY)) {
-					String value = element.getValue();
-					if (value.equals(PrelinkConstants.kPrelinkPersonalitiesKey)) {
-						Element arrayElement = (Element) iterator.next();
-						if (arrayElement.getChildren().size() == 0) {
-							//should be empty...
-						}
-					}
-					else if (value.equals(PrelinkConstants.kPrelinkInfoDictionaryKey)) {
-						Element arrayElement = (Element) iterator.next();
-						process(arrayElement.getChildren(), list, monitor);
-					}
+				if (element.getName().equals(TAG_DICT)) {
+					// top level is <dict> entry
+					processTopDict(monitor, list, element);
+				}
+				else if (element.getName().equals(TAG_KEY)) {
+					processKey(monitor, list, iterator, element);
 				}
 			}
 		}
 
 		return list;
+	}
+	
+	private void processTopDict(TaskMonitor monitor, List<PrelinkMap> list,
+		Element dictRootElement) {
+		Iterator<?> iterator = dictRootElement.getChildren().iterator();
+		while (iterator.hasNext()) {
+			if (monitor.isCancelled()) {
+				break;
+			}
+			Element element = (Element) iterator.next();
+			if (element.getName().equals(TAG_KEY)) {
+				processKey(monitor, list, iterator, element);
+			}
+		}
+	}
+
+	private void processKey(TaskMonitor monitor, List<PrelinkMap> list, Iterator<?> iterator,
+			Element element) {
+		String value = element.getValue();
+		if (value.equals(PrelinkConstants.kPrelinkPersonalitiesKey)) {
+			Element arrayElement = (Element) iterator.next();
+			if (arrayElement.getChildren().size() == 0) {
+				//should be empty...
+			}
+		}
+		else if (value.equals(PrelinkConstants.kPrelinkInfoDictionaryKey)) {
+			Element arrayElement = (Element) iterator.next();
+			process(arrayElement.getChildren(), list, monitor);
+		}
 	}
 
 	private void process(List<?> children, List<PrelinkMap> list, TaskMonitor monitor) {
@@ -250,6 +273,15 @@ public class PrelinkParser {
 					if (trimmed.endsWith("</4.2</shoneOS<")) {//this is a wank-around the malformed XML found in 4.2.x firmwares
 						trimmed = trimmed.substring(0, trimmed.length() - 15) + "</array></dict>";
 					}
+					
+					int doctypeIndex = trimmed.indexOf("<!DOCTYPE");
+					if (doctypeIndex >=0) {
+						int endOfDoctype = trimmed.indexOf('>', doctypeIndex);
+						if (endOfDoctype >=0) {
+							trimmed = trimmed.substring(0,doctypeIndex) + trimmed.substring(endOfDoctype+1);
+						}
+					}
+					// <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 
 					debug(bytes);
 

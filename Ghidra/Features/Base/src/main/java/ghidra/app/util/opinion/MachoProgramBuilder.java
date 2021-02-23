@@ -100,6 +100,7 @@ public class MachoProgramBuilder {
 		MachoProgramBuilder machoProgramBuilder =
 			new MachoProgramBuilder(program, provider, fileBytes, log, monitor);
 		machoProgramBuilder.build();
+		machoProgramBuilder.doRelocations();
 	}
 
 	protected void build() throws Exception {
@@ -122,7 +123,10 @@ public class MachoProgramBuilder {
 		renameObjMsgSendRtpSymbol();
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
-		processDyldInfo();
+	}
+
+	protected void doRelocations() throws Exception {
+		processDyldInfo(true);
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
 		processProgramVars();
@@ -429,6 +433,19 @@ public class MachoProgramBuilder {
 	}
 
 	/**
+	 * Gets the NList symbol from the symbol table
+	 * @param index ordinal entry of the symbol in symbol table
+	 * @return The {@link NList}. Null if no symbols parsed
+	 */
+	public NList getSymbol(int ordinal) {
+		List<SymbolTableCommand> commands = machoHeader.getLoadCommands(SymbolTableCommand.class);
+		for (SymbolTableCommand symbolTableCommand : commands) {
+			return symbolTableCommand.getSymbolAt(ordinal);
+		}
+		return null;
+	}
+
+	/**
 	 * The indirect symbols need to be applied across the IMPORT segment. The
 	 * individual section do not really matter except the number of bytes
 	 * between each symbol varies based on section.
@@ -488,8 +505,8 @@ public class MachoProgramBuilder {
 					String name = generateValidName(symbol.getString());
 					if (name != null && name.length() > 0) {
 						try {
-							program.getSymbolTable().createLabel(startAddr, name, namespace,
-								SourceType.IMPORTED);
+							program.getSymbolTable()
+									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
 						}
 						catch (Exception e) {
 							log.appendMsg("Unable to create indirect symbol " + name);
@@ -570,8 +587,9 @@ public class MachoProgramBuilder {
 			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
 		}
 		else {
-			program.getSymbolTable().createLabel(address,
-				ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
+			program.getSymbolTable()
+					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
+						SourceType.IMPORTED);
 		}
 	}
 
@@ -597,8 +615,8 @@ public class MachoProgramBuilder {
 					continue;
 				}
 				if (symbol.isTypeUndefined()) {
-					List<Symbol> globalSymbols = program.getSymbolTable().getLabelOrFunctionSymbols(
-						symbol.getString(), null);
+					List<Symbol> globalSymbols = program.getSymbolTable()
+							.getLabelOrFunctionSymbols(symbol.getString(), null);
 					if (globalSymbols.isEmpty()) {//IF IT DOES NOT ALREADY EXIST...
 						undefinedSymbols.add(symbol);
 					}
@@ -688,7 +706,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processDyldInfo() {
+	protected void processDyldInfo(boolean doClassic) {
 		List<DyldInfoCommand> commands = machoHeader.getLoadCommands(DyldInfoCommand.class);
 		for (DyldInfoCommand command : commands) {
 			if (command.getBindSize() > 0) {
@@ -710,6 +728,10 @@ public class MachoProgramBuilder {
 			//        log.appendException(e);
 			//    }
 			//}
+		}
+
+		if (!doClassic) {
+			return;
 		}
 
 		//then we are use the old school binding technique.
@@ -854,7 +876,7 @@ public class MachoProgramBuilder {
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
 	 * @return The {@link Address} of {@link MachHeader} in memory
 	 */
-	private Address setupHeaderAddr(Collection<SegmentCommand> segments)
+	protected Address setupHeaderAddr(Collection<SegmentCommand> segments)
 			throws AddressOverflowException {
 		Address headerAddr = null;
 		long lowestFileOffset = Long.MAX_VALUE;
@@ -876,7 +898,7 @@ public class MachoProgramBuilder {
 		return headerBlock.getStart();
 	}
 
-	private void markupSections() throws Exception {
+	protected void markupSections() throws Exception {
 
 		monitor.setMessage("Processing section markup...");
 
@@ -949,9 +971,9 @@ public class MachoProgramBuilder {
 	/**
 	 * See crt.c from opensource.apple.com
 	 */
-	private void processProgramVars() {
-		if (program.getLanguage().getProcessor() == Processor.findOrPossiblyCreateProcessor(
-			"PowerPC")) {
+	protected void processProgramVars() {
+		if (program.getLanguage().getProcessor() == Processor
+				.findOrPossiblyCreateProcessor("PowerPC")) {
 			return;
 		}
 
@@ -1023,7 +1045,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void loadSectionRelocations() {
+	protected void loadSectionRelocations() {
 
 		monitor.setMessage("Processing relocation table...");
 
@@ -1084,22 +1106,24 @@ public class MachoProgramBuilder {
 					}
 				}
 
-				program.getRelocationTable().add(address, relocationInfo.getType(),
-					new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
-						relocationInfo.isPcRelocated() ? 1 : 0, relocationInfo.isExternal() ? 1 : 0,
-						relocationInfo.isScattered() ? 1 : 0 },
-					origBytes, relocation.getTargetDescription());
+				program.getRelocationTable()
+						.add(address, relocationInfo.getType(),
+							new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
+								relocationInfo.isPcRelocated() ? 1 : 0,
+								relocationInfo.isExternal() ? 1 : 0,
+								relocationInfo.isScattered() ? 1 : 0 },
+							origBytes, relocation.getTargetDescription());
 			}
 		}
 	}
 
 	private void handleRelocationError(Address address, String message) {
-		program.getBookmarkManager().setBookmark(address, BookmarkType.ERROR, "Relocations",
-			message);
+		program.getBookmarkManager()
+				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
 		log.appendMsg(message);
 	}
 
-	private void loadExternalRelocations() {
+	protected void loadExternalRelocations() {
 
 		monitor.setMessage("Processing external relocations...");
 
@@ -1120,7 +1144,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void loadLocalRelocations() {
+	protected void loadLocalRelocations() {
 
 		monitor.setMessage("Processing local relocations...");
 
@@ -1182,8 +1206,9 @@ public class MachoProgramBuilder {
 
 		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
 
-		program.getRelocationTable().add(relocationAddress, relocation.getType(),
-			relocation.toValues(), originalRelocationBytes, null);
+		program.getRelocationTable()
+				.add(relocationAddress, relocation.getType(), relocation.toValues(),
+					originalRelocationBytes, null);
 	}
 
 	private void addLibrary(String library) {
@@ -1226,7 +1251,11 @@ public class MachoProgramBuilder {
 				length = listing.getDataAt(address).getLength();
 			}
 			catch (Exception e) {
-				log.appendException(e);
+				// don't worry about exceptions
+				// may have already been created, by relocation, or chain pointers
+				if (!(datatype instanceof Pointer)) {
+					log.appendException(e);
+				}
 				return;
 			}
 			if (datatype instanceof Pointer) {
@@ -1298,8 +1327,9 @@ public class MachoProgramBuilder {
 
 	private void markAsThumb(Address address)
 			throws ContextChangeException, AddressOverflowException {
-		if (!program.getLanguage().getProcessor().equals(
-			Processor.findOrPossiblyCreateProcessor("ARM"))) {
+		if (!program.getLanguage()
+				.getProcessor()
+				.equals(Processor.findOrPossiblyCreateProcessor("ARM"))) {
 			return;
 		}
 		if ((address.getOffset() & 1) == 1) {
@@ -1327,8 +1357,9 @@ public class MachoProgramBuilder {
 				try {
 					MemoryBlock memoryBlock = memory.getBlock(reference.getToAddress());
 					Namespace namespace = createNamespace(memoryBlock.getName());
-					program.getSymbolTable().createLabel(reference.getToAddress(),
-						fromSymbol.getName(), namespace, SourceType.IMPORTED);
+					program.getSymbolTable()
+							.createLabel(reference.getToAddress(), fromSymbol.getName(), namespace,
+								SourceType.IMPORTED);
 				}
 				catch (Exception e) {
 					//log.appendMsg("Unable to create lazy pointer symbol " + fromSymbol.getName() + " at " + reference.getToAddress());
@@ -1344,8 +1375,9 @@ public class MachoProgramBuilder {
 
 	private Namespace createNamespace(String namespaceName) {
 		try {
-			return program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-				namespaceName, SourceType.IMPORTED);
+			return program.getSymbolTable()
+					.createNameSpace(program.getGlobalNamespace(), namespaceName,
+						SourceType.IMPORTED);
 		}
 		catch (DuplicateNameException | InvalidInputException e) {
 			Namespace namespace =

@@ -32,43 +32,47 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a dyld_cache_slide_info2 structure.
+ * Represents a dyld_cache_slide_info3 structure.
  * 
  * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
  */
-public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
+public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 
-	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE = 0x4000;
-	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA = 0x8000;
+	private static final int DYLD_CACHE_SLIDE4_PAGE_NO_REBASE = 0xFFFF;
+	private static final int DYLD_CACHE_SLIDE4_PAGE_INDEX = 0x7FFF;
+	private static final int DYLD_CACHE_SLIDE4_PAGE_USE_EXTRA = 0x8000;
+	private static final int DYLD_CACHE_SLIDE4_PAGE_EXTRA_END = 0x8000;
 
-	private int page_size;
+	private static final int HEADERSIZE4 = 40;
+	private int page_size;          // currently 4096 (may also be 16384)
 	private int page_starts_offset;
 	private int page_starts_count;
 	private int page_extras_offset;
 	private int page_extras_count;
-	private long delta_mask;
-	private long value_add;
-	private short page_starts_entries[];
-	private short page_extras_entries[];
+	private long delta_mask;         // which (contiguous) set of bits contains the delta to the next rebase location (0xC0000000)
+	private long value_add;          // base address of cache
 
-	public long getPageSize() {
-		return ((long) page_size) & 0xffffffff;
+	private short page_starts[];
+	private short page_extras[];
+
+	public int getPageSize() {
+		return page_size;
 	}
 
-	public long getPageStartsOffset() {
-		return ((long) page_starts_offset) & 0xffffffff;
+	public int getPageStartsOffset() {
+		return page_starts_offset;
 	}
 
-	public long getPageStartsCount() {
-		return ((long) page_starts_count) & 0xffffffff;
+	public int getPageStartsCount() {
+		return page_starts_count;
 	}
 
-	public long getPageExtrasOffset() {
-		return ((long) page_extras_offset) & 0xffffffff;
+	public int getPageExtrasOffset() {
+		return page_extras_offset;
 	}
 
-	public long getPageExtrasCount() {
-		return ((long) page_extras_count) & 0xffffffff;
+	public int getPageExtrasCount() {
+		return page_extras_count;
 	}
 
 	public long getDeltaMask() {
@@ -80,20 +84,20 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	}
 
 	public short[] getPageStarts() {
-		return page_starts_entries;
+		return page_starts;
 	}
 
 	public short[] getPageExtras() {
-		return page_extras_entries;
+		return page_extras;
 	}
 
 	/**
-	 * Create a new {@link DyldCacheSlideInfo2}.
+	 * Create a new {@link DyldCacheSlideInfo3}.
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 2
-	 * @throws IOException if there was an IO-related problem creating the DYLD slide info 2
+	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 3
+	 * @throws IOException if there was an IO-related problem creating the DYLD slide info 3
 	 */
-	public DyldCacheSlideInfo2(BinaryReader reader) throws IOException {
+	public DyldCacheSlideInfo4(BinaryReader reader) throws IOException {
 		super(reader);
 		page_size = reader.readNextInt();
 		page_starts_offset = reader.readNextInt();
@@ -102,13 +106,15 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		page_extras_count = reader.readNextInt();
 		delta_mask = reader.readNextLong();
 		value_add = reader.readNextLong();
-		page_starts_entries = reader.readNextShortArray(page_starts_count);
-		page_extras_entries = reader.readNextShortArray(page_extras_count);
+		reader.setPointerIndex(page_starts_offset);
+		page_starts = reader.readNextShortArray(page_starts_count);
+		reader.setPointerIndex(page_extras_offset);
+		page_extras = reader.readNextShortArray(page_extras_count);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType("dyld_cache_slide_info2", 0);
+		StructureDataType struct = new StructureDataType("dyld_cache_slide_info4", 0);
 		struct.add(DWORD, "version", "");
 		struct.add(DWORD, "page_size", "");
 		struct.add(DWORD, "page_starts_offset", "");
@@ -117,6 +123,13 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		struct.add(DWORD, "page_extras_count", "");
 		struct.add(QWORD, "delta_mask", "");
 		struct.add(QWORD, "value_add", "");
+
+		if (page_starts_offset == HEADERSIZE4) {
+			struct.add(new ArrayDataType(WORD, page_starts_count, 1), "page_starts", "");
+		}
+		if (page_extras_offset == (HEADERSIZE4 + page_starts_count * 2)) {
+			struct.add(new ArrayDataType(WORD, page_extras_count, 1), "page_extras", "");
+		}
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}
@@ -125,7 +138,6 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	public void fixPageChains(Program program, DyldCacheHeader dyldCacheHeader,
 			boolean addRelocations, MessageLog log, TaskMonitor monitor)
 			throws MemoryAccessException, CancelledException {
-
 		long fixedAddressCount = 0;
 
 		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
@@ -141,7 +153,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		short[] pageEntries = getPageStarts();
 		short[] extraEntries = getPageExtras();
 
-		monitor.setMessage("Fixing V2 chained data page pointers...");
+		monitor.setMessage("Fixing V4 chained data page pointers...");
 
 		monitor.setMaximum(pageStartsCount);
 		for (int index = 0; index < pageStartsCount; index++) {
@@ -152,32 +164,32 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 			monitor.setProgress(index);
 
 			int pageEntry = pageEntries[index] & 0xffff;
-			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE) {
+			if (pageEntry == DYLD_CACHE_SLIDE4_PAGE_NO_REBASE) {
 				continue;
 			}
 
 			List<Address> unchainedLocList;
 
-			if ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) != 0) {
+			if ((pageEntry & DYLD_CACHE_SLIDE4_PAGE_USE_EXTRA) != 0) {
 				// go into extras and process list of chain entries for the same page
 				int extraIndex = (pageEntry & CHAIN_OFFSET_MASK);
-				unchainedLocList = new ArrayList<Address>(1024);
+				unchainedLocList = new ArrayList<>(1024);
 				do {
 					pageEntry = extraEntries[extraIndex] & 0xffff;
 					long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
 
 					List<Address> subLocList;
-					subLocList = processPointerChain2(program, page, pageOffset, deltaMask,
+					subLocList = processPointerChain4(program, page, pageOffset, deltaMask,
 						deltaShift, valueAdd, addRelocations, monitor);
 					unchainedLocList.addAll(subLocList);
 					extraIndex++;
 				}
-				while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
+				while ((pageEntry & DYLD_CACHE_SLIDE4_PAGE_USE_EXTRA) == 0);
 			}
 			else {
 				long pageOffset = pageEntry * BYTES_PER_CHAIN_OFFSET;
 
-				unchainedLocList = processPointerChain2(program, page, pageOffset, deltaMask,
+				unchainedLocList = processPointerChain4(program, page, pageOffset, deltaMask,
 					deltaShift, valueAdd, addRelocations, monitor);
 			}
 
@@ -202,7 +214,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	 * @throws MemoryAccessException IO problem reading file
 	 * @throws CancelledException user cancels
 	 */
-	private List<Address> processPointerChain2(Program program, long page, long nextOff,
+	private List<Address> processPointerChain4(Program program, long page, long nextOff,
 			long deltaMask, long deltaShift, long valueAdd, boolean addRelocations,
 			TaskMonitor monitor) throws MemoryAccessException, CancelledException {
 
@@ -210,30 +222,38 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		//        currently image is kept at it's initial location with no ASLR.
 		Address chainStart = program.getLanguage().getDefaultSpace().getAddress(page);
 		Memory memory = program.getMemory();
-		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
+		List<Address> unchainedLocList = new ArrayList<Address>(1024);
 
-		long valueMask = 0xffffffffffffffffL >>> (64 - deltaShift);
+		byte origBytes[] = new byte[4];
+
+		int valueMask = 0xffffffff >>> (32 - deltaShift);
 
 		long delta = -1;
 		while (delta != 0) {
 			monitor.checkCanceled();
 
 			Address chainLoc = chainStart.add(nextOff);
-			long chainValue = memory.getLong(chainLoc);
+			int chainValue = memory.getInt(chainLoc);
 
 			delta = (chainValue & deltaMask) >> deltaShift;
 			chainValue = chainValue & valueMask;
-			if (chainValue != 0) {
+			if ((chainValue & 0xFFFF8000) == 0) {
+				// small positive non-pointer, use as-is
+			}
+			else if ((chainValue & 0x3FFF8000) == 0x3FFF8000) {
+				chainValue |= 0xC0000000;
+			}
+			else {
 				chainValue += valueAdd;
 				// chainValue += slideAmount - if we were sliding
 			}
+
 			if (addRelocations) {
-				addRelocationTableEntry(program, chainLoc, 2, chainValue, origBytes, null);
+				addRelocationTableEntry(program, chainLoc, 4, chainValue, origBytes, null);
 			}
 
-			memory.setLong(chainLoc, chainValue);
+			memory.setInt(chainLoc, chainValue);
 
 			// delay creating data until after memory has been changed
 			unchainedLocList.add(chainLoc);
