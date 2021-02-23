@@ -243,15 +243,12 @@ public class GnuDemanglerParser {
 	 * Pattern: text for|to text
 	 * 
 	 * Parts:
-	 * 			-required text (capture group 2)
-	 * 					--note: this uses '++', a possessive quantifier, to help keep the 
-	 * 					  backtracking to a minimum
-	 * 			-a space
-	 * 			-'for' or 'to' (capture group 3)
-	 * 			-a space
+	 * 			-required text (capture group 2) -+
+	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
+	 * 			-a space                         -+
 	 * 			-optional text (capture group 4)
 	 * 	
-	 * Note:    capture group 1 is the combination of groups 2 and 3
+	 * Note:    capture group 1 is the combination of groups 2 and 3 with trailing space
 	 * 
 	 * Examples:
 	 *		construction vtable for
