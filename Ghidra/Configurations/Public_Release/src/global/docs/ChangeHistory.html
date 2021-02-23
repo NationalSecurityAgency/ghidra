@@ -6,14 +6,60 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.2.3 Change History (March 2021)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Analysis</I>. Added check for vftable entries in <code>.NEP</code> section and relaxed the requirement that the code must have a return. (GP-649)</li>
+    <li><I>Analysis</I>. Corrected flaw in RTTI analyzer determination of size of vftables. (GP-688)</li>
+    <li><I>Basic Infrastructure</I>. Updated TLS protocol preference to use the most preferred/recent version available to both sides of an SSL connection (e.g., TLSv1.3) instead of forcing use of TLSv1.2. (GP-622)</li>
+    <li><I>Build</I>. Corrected build issues which had prevented users from building Ghidra on an Apple M1 (OS X, AARCH64 architecture). (GP-600, Issue #2653)</li>
+    <li><I>Demangler</I>. Increased  Gnu Demangler parsing performance by changing some regular expressions. (GP-705)</li>
+    <li><I>Eclipse Integration</I>. Updated SleighEditor to support new endian tag on <B>define token</B> definitions. (GP-721)</li>
+    <li><I>GUI</I>. Updated the Choose Data Type dialog to apply data types in the same manner as dragging types from the Data Types window.  This provides users more control when choosing how to overwrite existing types. (GP-521)</li>
+    <li><I>Importer:ELF</I>. Added support for ELF relocation <code>R_X86_64_IRELATIVE</code>. (GP-651, Issue #1189)</li>
+    <li><I>Importer:ELF</I>. Sped up loading of ELF files with large symbol tables. (GP-697)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. The RTTI analyzer now runs prior to Reference analysis so that references into vftables are not turned into code or data before the vftables are created. (GP-517)</li>
+    <li><I>API</I>. <code>Funtion.getCalledFunctions(TaskMonitor)</code> and <code>Function.getCallingFunctions(TaskMonitor)</code> now support passing <code>null</code> for the task monitor parameter, which previously would have thrown an exception. (GP-589, Issue #2643)</li>
+    <li><I>Data Types</I>. Corrected segmented 32-bit pointer datatype address generation for 16:16 x86 far pointers. (GP-534, Issue #2548)</li>
+    <li><I>Decompiler</I>. Fixed Decompiler issue where, when a function name extends beyond the line limit, an end-of-line comment could wrap around to additional lines without including additional <code>//</code> comment indicators. (GP-473)</li>
+    <li><I>Decompiler</I>. Corrected an exception that could occur when attempting to edit function signature from the Decompiler. (GP-597, Issue #2601)</li>
+    <li><I>Eclipse Integration</I>. When installing the SleighEditor into Eclipse, the plugin will now show up under the Ghidra category.  Previously the <B>Group Items by Category</B> option had to be turned off before the SleighEditor would appear as a visible entry. (GP-564)</li>
+    <li><I>Eclipse Integration</I>. Fixed an issue with Eclipse PyDev breakpoints not catching. (GP-668, Issue #2713)</li>
+    <li><I>Eclipse Integration</I>. Fixed an Eclipse GhidraDev exception that occurred when creating a new Ghidra scripting project if a <B>~/ghidra_scripts</B> directory did not exist. (GP-669)</li>
+    <li><I>Emulator</I>. Replaced Java floating point emulation to fix multiple rounding issues. (GP-357, Issue #2414)</li>
+    <li><I>Graphing</I>. Fixed issue with graph filters not updating satellite view when changing edge filters. (GP-557)</li>
+    <li><I>Graphing</I>. Fixed Function Graph keybindings that did not work when docked in the main Code Browser window. (GP-586, Issue #2641)</li>
+    <li><I>GUI</I>. Fixed NPE due to using <B>Go To</B> action when there was no open program in the Listing. (GP-66)</li>
+    <li><I>GUI</I>. Fixed bug in Reference Code Viewer options that caused an exception. (GP-620, Issue #2672)</li>
+    <li><I>Importer</I>. Fixed exception caused when importing previously exported XML data where the bookmark override option was turned off. (GP-667)</li>
+    <li><I>Importer:ELF</I>. Fixed a NullPointerException caused by importing an ELF with an uninitialized <code>.got</code> section. (GP-360, Issue #2416)</li>
+    <li><I>Importer:ELF</I>. Added Support for ELF <code>R_ARM_MOVW_ABS_NC</code> and <code>R_ARM_MOVT_ABS ELF</code> Relocations for ARM. (GP-555, Issue #2510)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF processing of <code>.init_array</code> and <code>.fini_array</code> which was incorrectly overadjusting entries for an image base change. (GP-699)</li>
+    <li><I>Importer:Mach-O</I>. Corrected Mach-O fat-binary library import issue and resolved error related to unnamed Mach-O segment. (GP-652, Issue #2702)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an issue with DYLD Load Command data structures being created in the wrong locations. (GP-689, Issue #2624)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an exception that occurred when importing Mach-O files that define zero <code>LC_BUILD_VERSION</code> tool entries. (GP-702, Issue #2192)</li>
+    <li><I>PDB</I>. Fixed createPdbXmlFiles.bat to permit spaces in the path name of Ghidra installation folder and the batch argument name. (GP-575, Issue #2167)</li>
+    <li><I>Processors</I>. Added missing <code>RFE</code> instruction in MIPS up to version R3000. (GP-33, Issue #1766)</li>
+    <li><I>Processors</I>. ARM instruction <code>VMUL</code> now decodes correctly. (GP-627, Issue #2677)</li>
+    <li><I>Processors</I>. Added missing <code>CFINV</code> instruction to AARCH64 processor specification and added definitions for locals in neon instructions. (GP-655, Issue #2710)</li>
+    <li><I>Scripting</I>. Fixed analyzeHeadless <code><B>-scriptPath</B></code> option that didn't work for Python and other non-Java scripts located in non-default directories. (GP-528, Issue #2561)</li>
+    <li><I>Scripting</I>. Fixed concurrency issue with management of scripting bundle paths. (GP-576)</li>
+    <li><I>Scripting</I>. Corrected handling for Ghidra Script files which are symlinks that were broken in Ghidra 9.2. (GP-650, Issue #2698)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.2.2 Change History (December 2020)</H1>
 <blockquote><p><u>Bugs</u></p>
 <ul>
     <li><I>Graphing</I>. Fixed issue with Graph filters not working and satellite view sometimes not matching graph. (GP-526)</li>
-    <li><I>Importer:MachO</I>. MachO DYLD cache incorrect offset use has been fixed. (GP-550, Issue ##2560)</li>
-    <li><I>Listing</I>. Fixed issue where Edit Label action (L key) did not work on primary function symbols. (GP-537)</li>
+    <li><I>Importer:Mach-O</I>. Mach-O DYLD cache incorrect offset use has been fixed. (GP-550, Issue #2560)</li>
+    <li><I>Listing</I>. Fixed issue where <B>Edit Label</B> action (L key) did not work on primary function symbols. (GP-537)</li>
     <li><I>Multi-User</I>. Corrected Ghidra Server build issue for version 9.2.1 which had an improperly generated <B>classpath.frag</B> file.  Issue caused server to fail startup with a ClassNotFoundException. (GP-542)</li>
-    <li><I>Processors</I>. The V850 JMP instruction has been corrected not to use the PC in the address calculation (GP-548, Issue #2570)</li>
+    <li><I>Processors</I>. The V850 <code>JMP</code> instruction has been corrected not to use the PC in the address calculation. (GP-548, Issue #2570)</li>
     <li><I>Processors</I>. Removed erroneous VST4 variant, most likely from a copy/paste error.  This fixes the ARM Thumb BL instruction disassembly with a negative offset. (GP-549, Issue #2559)</li>
 </ul>
 </blockquote>
@@ -24,6 +70,7 @@
     <li><I>Analysis</I>. Updated RTTI analyzer to find <code>type_info</code> vftable when it cannot be found with its mangled name. This will enable many more Windows programs to have their RTTI structures created that were unable to be parsed in previous Ghidra versions. (GP-141)</li>
     <li><I>API</I>. Relaxed memory block naming restrictions and restored ability to have spaces in memory block names.  However, if a memory block is flagged as an overlay, the associated overlay space name may be modified to ensure validity and uniqueness.  The DuplicateNameException has been removed from all memory block API methods since this was entirely an overlay space concern.  Memory block GUI has also been changed eliminate the duplicate block name restriction. (GP-420, Issue #2465)</li>
     <li><I>Build</I>. Eliminated the need for installation of <B>bison</B> and <B>flex</B> when performing source-based <B>gradle</B> build of Ghidra or the Decompiler module.  The generated files are now included with source files and maintained in source control.  A separate <code><B>gradle Decompiler:generateParsers</B></code> task, which still requires <B>bison</B> and <B>flex</B>, must be used, explicitly, when changes are made to lex/yacc source files. (GP-467)</li>
+    <li><I>Graphing</I>. Fixed issue with exporting graphs to DOT format due to invalid vertex IDs. (GP-280)</li>
     <li><I>Graphing</I>. Improved graphing where it did not navigate when clicking on external function nodes. Now it will navigate to the <B>fake</B> function location in the program, which is the location of the pointer to the external function. (GP-493)</li>
     <li><I>Listing:Symbols</I>. Removed restriction for naming labels that resemble default label names. (GT-3185, Issue #1057)</li>
     <li><I>PDB</I>. Crafted PDB type ID records <code>0x1608</code> and <code>0x1609</code> with presumed <B>class</B> and <B>struct</B> types and follow-on application of these types. Also fixed up some fall-back data type logic and improved some warning messages to reflect the <B>cause</B> of the conditions. (GP-474, Issue #2523)</li>
@@ -37,7 +84,7 @@
     <li><I>Decompiler</I>. Fixed issue with the Auto Create/Fill Structure command that caused it to silently miss some pointer accesses. (GP-344)</li>
     <li><I>Decompiler</I>. Jump table recovery now takes into account encoded bits, like ARM/THUMB mode transition, that may be present in address tables. (GP-387, Issue #2420)</li>
     <li><I>Decompiler</I>. Fixed a bug in the Decompiler <B>renaming</B> action when applied to function references. (GP-477, Issue #2415)</li>
-    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting longlong and double return values.  Endianess ordering of r0/r1 was incorrect. (GP-512, Issue #2547)</li>
+    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting <code>longlong</code> and <code>double</code> return values.  Endianess ordering of <code>r0</code>/<code>r1</code> was incorrect. (GP-512, Issue #2547)</li>
     <li><I>Graphing</I>. Fixed the Function Graph's <B>drag-to-select-nodes</B> feature. (GP-430)</li>
     <li><I>Graphing</I>. Fixed issue where the graph in the satellite view is sometimes truncated. (GP-469)</li>
     <li><I>Graphing</I>. Fixed a stack trace issue caused by reusing a graph display window to show a graph that is larger than is allowed. (GP-492)</li>
@@ -126,7 +173,7 @@
     <li><I>Importer:ELF</I>. Added support for processing Android packed ELF Relocation Tables. (GT-3320, Issue #1192)</li>
     <li><I>Importer:ELF</I>. Added ELF import opinion for ARM BE8. (GT-3642, Issue #1187)</li>
     <li><I>Importer:ELF</I>. Added support for ELF RELR relocations, such as those produced for Android. (GP-348)</li>
-    <li><I>Importer:MachO</I>. DYLD Loader can now load x86_64 DYLD from macOS. (GT-3611, Issue #1566)</li>
+    <li><I>Importer:Mach-O</I>. DYLD Loader can now load x86_64 DYLD from macOS. (GT-3611, Issue #1566)</li>
     <li><I>Importer:PE</I>. Improved parsing of Microsoft ordinal map files produced with <code>DUMPBIN /EXPORTS</code> (see <B>Ghidra/Features/Base/data/symbols/README.txt</B>). (GT-3235)</li>
     <li><I>Jython</I>. Upgraded Jython to version 2.7.2. (GP-109)</li>
     <li><I>Listing</I>. In the PCode field of the Listing, accesses of varnodes in the <code>unique</code> space are now always shown with the size of the access.  Fixed bug which would cause the PCode emulator to reject valid pcode in rare instances. (GP-196)</li>
@@ -282,8 +329,8 @@
     <li><I>Disassembly</I>. Corrected potential infinite loop with disassembler caused by branch to self with invalid delay slot instruction. (GT-3511, Issue #1486)</li>
     <li><I>GUI</I>. Corrected processor manual display for Microsoft Windows users, which was not displaying processor manual and was, instead, rendering a blank page in web browser. (GT-3444)</li>
     <li><I>GUI:Bitfield Editor</I>. Added field comment support to composite bitfield editor. (GT-3410)</li>
-    <li><I>Importer:MachO</I>. A MachO loader regression, in Ghidra 9.1.1, when laying down symbols at the correct location, has been fixed. (GT-3487, Issue #1446)</li>
-    <li><I>Multi-User:Ghidra Server</I>. Corrected Ghidra Server remote interface errors that occur when running with Java 11.0.6 (and later) release, which would throw RemoteException <code>"Method is not Remote"</code> errors. (GT-3521, Issue #1440)</li>
+    <li><I>Importer:Mach-O</I>. A Mach-O loader regression, in Ghidra 9.1.1, when laying down symbols at the correct location, has been fixed. (GT-3487, Issue #1446)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Corrected Ghidra Server remote interface errors that occur when running with Java 11.0.6 (and later) release, which would throw RemoteException <code>Method is not Remote</code> errors. (GT-3521, Issue #1440)</li>
     <li><I>PDB</I>. Corrected PDB XML generation for zero-length classes and structures and resolved various datatype dependency issues encountered during PDB Analysis. Changed line numbers from hex to decimal. (GT-3462, Issue #1410)</li>
     <li><I>Processors</I>. Corrected mnemonic for ARM thumb <code>RSB.w</code> instruction. (GT-3420, Issue #1365)</li>
     <li><I>Processors</I>. Corrected issue in M68000 with some move instructions not creating correct array assignments. (GT-3429, Issue #1394)</li>
@@ -294,7 +341,7 @@
 <H1 align="center">Ghidra 9.1.1 Change History (December 2019)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
-    <li><I>Importer:MachO</I>. Improved import/load time of DYLD shared cache files. (GT-3261)</li>
+    <li><I>Importer:Mach-O</I>. Improved import/load time of DYLD shared cache files. (GT-3261)</li>
     <li><I>Program API</I>. Cached the addresses that correspond to executable memory to improve analysis performance. (GT-3260)</li>
 </ul>
 </blockquote>
@@ -331,7 +378,7 @@
     <li><I>Eclipse Integration</I>. Added new GhidraSleighEditor Eclipse plugin in the installation directory under Extensions/Eclipse. (GT-113)</li>
     <li><I>GUI</I>. Added method for turning off table sorting by control-clicking the only sorted table column. (GT-2763, Issue #87)</li>
     <li><I>GUI</I>. Hovering on an address will now show where the byte at that address came from in the imported file. (GT-3016, Issue #154)</li>
-    <li><I>Importer:MachO</I>. Added new importer/loader for DYLD-shared cache files. (GT-2343)</li>
+    <li><I>Importer:Mach-O</I>. Added new importer/loader for DYLD-shared cache files. (GT-2343)</li>
     <li><I>Memory</I>. Added new API to preserve imported program's original bytes and how they map to memory blocks. (GT-2845)</li>
     <li><I>Processors</I>. Implemented Intel MCS-96 processor module. (GT-2350)</li>
     <li><I>Processors</I>. Added SH1/2/2a sleigh processor specification. (GT-3029, Issue #715)</li>
@@ -488,7 +535,7 @@
     <li><I>Listing</I>. Cursor in the listing now stays in the proper column after editing a field. (GT-3045, Issue #702)</li>
     <li><I>Listing</I>. Fixed a problem with register highlighting that could occur on certain register/sub-register combinations. (GT-3071, Issue #810)</li>
     <li><I>Multi-User</I>. Corrected terminate checkout from viewed checkout list which was always terminating first row range based upon number of selected rows and not the actual selected rows. (GT-2903)</li>
-    <li><I>Multi-user</I>. Corrected ability for user to cancel checkin/checkout to Ghidra Server. (GT-3208)</li>
+    <li><I>Multi-User</I>. Corrected ability for user to cancel checkin/checkout to Ghidra Server. (GT-3208)</li>
     <li><I>Multi-User:Ghidra Server</I>. Added proper Ghidra Server interface binding with new <code><B>-i</B></code> option.  Corrected <code><B>-ip</B></code> option to strictly convey remote access hostname to clients.  The updated server will only accept connections from Ghidra 9.1 and later clients due to the registry port now employing TLS. (GT-2685, Issue #101, #645)</li>
     <li><I>Multi-User:Ghidra Server</I>. Fixed argument-passing bug in svrAdmin script. (GT-3082, Issue #907)</li>
     <li><I>Multi-User:Merge</I>. Corrected merge problem affecting modified Function Definition datatypes which could result in a NullPointerException. (GT-2922)</li>
@@ -518,7 +565,7 @@
     <li><I>Program API</I>. Corrected parameter storage which failed to properly refresh after undo/redo. (GT-3130, Issue #960)</li>
     <li><I>Program API</I>. Corrected function parameter ordinal numbering when more than one auto-parameter is present. (GT-3214)</li>
     <li><I>Project Manager</I>. Fixed a problem with creating Ghidra projects in Windows root directories (e.g., Z:\). (GT-2585)</li>
-    <li><I>Project Manager</I>. Fixed a path traversal vulnerability that could occur when restoring a malicious project archive. (GT-3001, Issue #789)</li>
+    <li><I>Project Manager</I>. Fixed a path-traversal vulnerability that could occur when restoring a malicious project archive. (GT-3001, Issue #789)</li>
     <li><I>Scripting</I>. <code>GhidraScript.askDomainFile()</code> now correctly throws a CancelledException when the cancel button is clicked. (GT-2841)</li>
     <li><I>Scripting</I>. Removed deprecated scripting methods older than 5 releases. (GT-2949)</li>
     <li><I>Security</I>. Removed use of nonsecure XMLEncoder/XMLDecoder from Ghidra code base. (GT-3198, Issue #1090)</li>
@@ -531,128 +578,123 @@
 <H1 align="center">Ghidra 9.0.4 Change History (May 2019)</H1>
 <blockquote><p><u>Bugs</u></p>
 <ul>
-    <li><I>Multi-User:Ghidra Server</I>. Corrected severe script error in svrAdmin.bat introduced with 9.0.3 build.</li>
-    <li><I>GUI</I>. Restored the default 'p' key binding for creating pointers within the listing display.</li>
+    <li><I>Multi-User:Ghidra Server</I>. Corrected severe script error in svrAdmin.bat introduced with 9.0.3 build. (GT-2874)</li>
+    <li><I>GUI</I>. Restored the default 'p' key binding for creating pointers within the listing display. (GT-2854)</li>
 </ul>
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.3 Change History (April 2019)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
-    <li><I>GUI</I>. Function tags are now viewable from Functions Window table using new column.</li>
+    <li><I>GUI</I>. Function tags are now viewable from Functions Window table using new column. (GT-2114)</li>
 </ul>
 </blockquote>
 
 <blockquote><p><u>Improvements</u></p>
 <ul>
-    <li><I>Decompiler</I>. Improved modeling of CFG on Windows 10. (Issue #340)</li>
-    <li><I>Patcher</I>. Renamed patch directory to /Ghidra/patch and added README.txt that explains how the patch directory is used.</li>
-    <li><I>Search</I>. Updated the Decompiler Data Type Finder to find references to inside of nested array access in a line of Decompiler C output. (Issue #416)</li>
-    <li><I>Sleigh</I>. Improved error reporting for SLEIGH compiler. (Issue #364)</li>
+    <li><I>Decompiler</I>. Improved modeling of CFG on Windows 10. (GT-2755, Issue #340)</li>
+    <li><I>Patcher</I>. Renamed patch directory to <install dir>/Ghidra/patch and added README.txt that explains how the patch directory is used. (GT-2734)</li>
+    <li><I>Search</I>. Updated the Decompiler Data Type Finder to find references inside of nested array access in a line of Decompiler C output. (GT-2756, Issue #416)</li>
+    <li><I>Sleigh</I>. Improved error reporting for SLEIGH compiler. (GT-2820, Issue #364)</li>
 </ul>
 </blockquote>
 
 <blockquote><p><u>Bugs</u></p>
 <ul>
-    <li><I>Analysis</I>. Code that checks for thunks no longer throws an exception if the PC is not set for the processor.</li>
-    <li><I>Analysis</I>. Made a fix to enable Apply button when changing tool options. (Issue #40)</li>
-    <li><I>Data Types</I>. Fixed concurrent modification exception when replacing one datatype for another that results in some other datatype being renamed. </li>
-    <li><I>Decompiler</I>. Fixed dynamic variables and equates in 16-bit x86 programs. (Issue #336)</li>
-    <li><I>Decompiler:Java</I>. Fixed DEX decompilation regression issue. (Issue #350)</li>
-    <li><I>Eclipse Integration</I>. Fixed exception in Eclipse GhidraDev plugin that occurred when performing certain actions on a Ghidra project that was imported from a previously exported Archive File. (Issues #283, #383)</li>
+    <li><I>Analysis</I>. Code that checks for thunks no longer throws an exception if the PC is not set for the processor. (GT-2730)</li>
+    <li><I>Analysis</I>. Made a fix to enable Apply button when changing tool options. (GT-2801, Issue #40)</li>
+    <li><I>Data Types</I>. Fixed concurrent modification exception when replacing one datatype for another that results in some other datatype being renamed. (GT-2736)</li>
+    <li><I>Decompiler</I>. Fixed dynamic variables and equates in 16-bit x86 programs. (GT-2745, Issue #336)</li>
+    <li><I>Decompiler:Java</I>. Fixed DEX decompilation regression issue. (Issue #350, GT-2743)</li>
+    <li><I>Eclipse Integration</I>. Fixed exception in Eclipse GhidraDev plugin that occurred when performing certain actions on a Ghidra project that was imported from a previously exported Archive File. (GT-2721, Issues #283, #383)</li>
     <li><I>GUI</I>. Improved documentation on how to deal with HiDPI monitor issues in Linux. In the <I>&lt;ghidra_installation&gt;</I>/support/launch.properties file, change VMARGS=-Dsun.java2d.xrender from false to true.</li> 
-    <li><I>Importer</I>. Fixed an exception that occurred when batch importing APK files. (Issue #426)</li>
-    <li><I>Multi-User:Ghidra Server</I>. Restored ability to execute svrAdmin script in development mode. </li>
-    <li><I>Processors</I>. The 6502 Zero page indexed addressing has been corrected to only access the Zero page. (Issue #201)</li>
-    <li><I>Processors</I>. The 68000 BCD arithmetic instructions now have pcode semantics that allow disassembly to continue. (Issue #227)</li>
-    <li><I>Search</I>. Fixed NullPointerException in Decompiler Data Type Reference Finder. (Issue #407)</li>
+    <li><I>Importer</I>. Fixed an exception that occurred when batch importing APK files. (GT-2767, Issue #426)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Restored ability to execute svrAdmin script in development mode. (GT-2740) </li>
+    <li><I>Processors</I>. The 6502 Zero page indexed addressing has been corrected to only access the Zero page. (GT-2759, Issue #201)</li>
+    <li><I>Processors</I>. The M68000 BCD arithmetic instructions now have pcode semantics that allow disassembly to continue. (GT-2807, Issue #227)</li>
+    <li><I>Search</I>. Fixed NullPointerException in Decompiler Data Type Reference Finder. (GT-2754. Issue #407)</li>
 </ul>
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.2 Change History (April 2019)</H1>
 <blockquote><p><u>Bugs</u></p>
 <ul>
-    <li><I>Analysis</I>. Constant reference analysis boundary controls for speculative references has been fixed. Speculative references are references created from computed constants passed as parameters, stored to a location, or from indexed offsets from a register. (Issue #228)</li>
-    <li><I>Decompiler</I>. Fixed rendering bug in the Decompiler when the "Find" dialog is closed. (Issue #282) </li>
-    <li><I>Decompiler</I>. Fixed decompiler handling of Function Definition data types. (Issue #247) </li>
-    <li><I>Decompiler</I>. Fixed "Free Varnode" exception in RuleConditionalMove. (Issue #294) </li>
-    <li><I>Diff</I>. Fixed exceptions that can occur in the Diff View for programs with overlays. </li>
-    <li><I>Documentation</I>. Corrected the spelling of "listener" throughout the source code. (Issue #235) </li>
-    <li><I>Exporter</I>. Exporting a selection as Intel Hex will now allow a selection of any length. Previously this was restricted to multiples of 16 bytes. (Issue #260) </li>
-    <li><I>GUI</I>. Fixed exception that occurs after disabling MyProgramChangesDisplayPlugin. </li>
-    <li><I>GUI</I>. Updated the "Open Program" dialog to disallow file drop operations. (Issue #252)
-    <li><I>Multi-User:Ghidra Server</I>. Corrected bug introduced into ghidraSvr.bat which could prevent Ghidra Server startup (Issue #279) </li>
-    <li><I>Processors</I>. The ARM Thumb CMP.W and LSL instructions have been changed to correctly decode. There are still issues to work out with Unpredictable execution when Rd is the PC. (Issue #280) </li>
-    <li><I>Scripting</I>. MultiInstructionMemReference script has been corrected to consider input and output registers when placing a reference on an instruction.</li>
+    <li><I>Analysis</I>. Constant reference analysis boundary controls for speculative references has been fixed. Speculative references are references created from computed constants passed as parameters, stored to a location, or from indexed offsets from a register. (GT-2723, Issue #228)</li>
+    <li><I>Decompiler</I>. Fixed Decompiler handling of Function Definition data types. (GT-2704, Issue #247)</li>
+    <li><I>Decompiler</I>. Fixed rendering bug in the Decompiler when the "Find" dialog is closed. (GT-2716, Issue #282)</li>
+    <li><I>Decompiler</I>. Fixed "Free Varnode" exception in RuleConditionalMove. (GT-2726, Issue #294)</li>
+    <li><I>Diff</I>. Fixed exceptions that can occur in the Diff View for programs with overlays. (GT-2706)</li>
+    <li><I>Documentation</I>. Corrected the spelling of "listener" throughout the source code. (GT-2702, Issue #235)</li>
+    <li><I>Exporter</I>. Exporting a selection as Intel Hex will now allow a selection of any length. Previously this was restricted to multiples of 16 bytes. (GT-2703, Issue #260)</li>
+    <li><I>GUI</I>. Fixed exception that occurs after disabling MyProgramChangesDisplayPlugin. (GT-2712)</li>
+    <li><I>GUI</I>. Updated the "Open Program" dialog to disallow file drop operations. (GT-2705, Issue #252)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Corrected bug introduced into ghidraSvr.bat which could prevent Ghidra Server startup. (GT-2717, Issue #279)</li>
+    <li><I>Processors</I>. The ARM Thumb CMP.W and LSL instructions have been changed to correctly decode. There are still issues to work out with Unpredictable execution when Rd is the PC. (GT-2722, Issue #280)</li>
+    <li><I>Scripting</I>. MultiInstructionMemReference script has been corrected to consider input and output registers when placing a reference on an instruction. (GT-2723)</li>
 </ul>
 </blockquote>
 
 <blockquote><p><u>Security</u></p>
 <ul>
-    <li><I>Basic Infrastructure</I>. Added a property to support/launch.properties to prevent log4j from using jansi.dll on Windows. (Issue #286) </li>
+    <li><I>Basic Infrastructure</I>. Added a property to support/launch.properties to prevent log4j from using jansi.dll on Windows. (GT-2725, Issue #286)</li>
 </ul>
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.1 Change History (March 2019)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
-    <li><I>Scripting</I>. Created a script to show all equates within the current selection. (Issue #111)</li>
+    <li><I>Scripting</I>. Created ShowEquatesInSelectionScript to show all equates within the current selection. (GT-2651, Issue #111)</li>
 </ul>
 </blockquote>
 
 <blockquote><p><u>Improvements</u></p>
 <ul>
-    <li><I>Basic Infrastructure</I>. Updated commons-compress library to version 1.18. (Issue #171)</li>
-    <li><I>Eclipse Integration</I>. Ghidra now connects to the Eclipse GhidraDev plugin on 127.0.0.1 rather than localhost.</li>
-    <li><I>GUI</I>. Turned on font anti-aliasing by default for Linux. (Issue #212)</li>
-    <li><I>GUI</I>. Fixed Options Dialog slow scrolling speed. (Issue #27)</li>
-    <li><I>Importer:ELF</I>. Corrected bug in ELF loader which can improperly process the GOT, PLT and relocations 
-    when multiple symbol tables exist within the ELF binary. (Issue #52)</li>
-    <li><I>Multi-User:Ghidra Server</I>. Corrected the Ghidra Server service wrapper (YAJSW) configuration for 
-    Mac OS X to prevent a startup timeout condition which could occur.</li>
-    <li><I>Processors</I>. Added ARM/Thumb SRS instruction decodes for undefined modes. (Issue #216)</li>
+    <li><I>Basic Infrastructure</I>. Updated commons-compress library to version 1.18. (GT-2657, Issue #171)</li>
+    <li><I>Eclipse Integration</I>. Ghidra now connects to the Eclipse GhidraDev plugin on 127.0.0.1 rather than localhost. (GT-2691)</li>
+    <li><I>GUI</I>. Turned on font anti-aliasing by default for Linux. (GT-2674, Issue #212)</li>
+    <li><I>GUI</I>. Fixed Options Dialog slow scrolling speed. (GT-2679, Issue #27)</li>
+    <li><I>Importer:ELF</I>. Corrected bug in ELF loader which can improperly process the GOT, PLT and relocations when multiple symbol tables exist within the ELF binary. (GT-2646, Issue #52)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Corrected the Ghidra Server service wrapper (YAJSW) configuration for Mac OS X to prevent a startup timeout condition which could occur. (GT-2637)</li>
+    <li><I>Processors</I>. Added ARM/Thumb SRS instruction decodes for undefined modes. (GT-2676, Issue #216)</li>
 </ul>
 </blockquote>
 
 <blockquote><p><u>Bugs</u></p>
 <ul>
-    <li><I>API</I>. Fixed equals method on Varnode class. (Issue #97)</li>
-    <li><I>API</I>. Fixed a bug in MaskImpl.comlementMask(). (Issue #187)</li>
-    <li><I>Basic Infrastructure</I>. Fixed special character handling in idaxml.py. (Issue #75)</li>
-    <li><I>Basic Infrastructure</I>. Ghidra now forces the locale to en_US by default. Only the en_US is currently supported. 
-    This fixes certain unexpected exceptions. (Issue #209)</li>
-    <li><I>Diff</I>. Fixed exceptions occasionally encountered when starting a Diff session. (Issue #211)</li>
-    <li><I>Documentation</I>. Fixed javadoc search box redirecting to broken links. (Issue #129)</li>
-    <li><I>Function Graph</I>. Fixed Function Graph exception when generating tooltip. (Issue #65)</li>
-    <li><I>GUI</I>. Updated window placement to keep windows on screen. (Issue #41)</li>
-    <li><I>GUI</I>. Add/Edit References dialog now restricts users to creating refs in valid memory address spaces.</li>
-    <li><I>GUI</I>. Fixed exception when exiting Ghidra while a table is being edited. (Issue #51)</li>
-    <li><I>GUI</I>. Fixed some touchpad scrolling issues. (Issue #2)</li>
-    <li><I>GUI</I>. Fixed stack trace in the Data Type Manager's tooltip generation. (Issue #133)</li>
-    <li><I>GUI</I>. User key binding settings for the Recently Used and Define Pointer actions no longer lost after re-launching tool. (Issue #152)</li>
-    <li><I>GUI</I>. Toolbar buttons now respond to fast clicking.</li>
-    <li><I>Importer:MachO</I>. The MachoLoader can now find import libraries found in Universal Binary files. (Issue #136)</li>
-    <li><I>Importer:PE</I>. The PeLoader now correctly parses the GuardCFFunctionTable when entries are more than 4 bytes each. (Issue #220)</li>
-    <li><I>Multi-User:Ghidra Server</I>. Removed support for native OS authentication from Ghidra Server (removed modes -a2 and -a3) 
-    due to incompatibility with newer OS releases including Windows 10 and Windows Server 2016. Re-introduction of this will be 
-    considered for a future release.</li>
-    <li><I>PDB</I>. Corrected NPE error when processing PDB files. (Issues #138, #188)</li>
-    <li><I>Processors</I>. Added missing PowerPC VLE conditional branch instructions: e_bdnz and e_bdz. (Issue #103)</li>
-    <li><I>Processors</I>. Fixed instruction semantics for several instructions and added Control Flow Enforcement, NOP variants, CMP variants, UD1, and 
-    prefixed call instructions to X86 processor specification. (Issues #22, #53, #158, #157)</li>
-    <li><I>Processors</I>. The 68000 MOVE instruction now correctly sets the CF and VF flags. (Issue #163)</li>
-    <li><I>Processors</I>. Added four missing MOVEM instruction variants to the 68000 processor. (Issue  #219)</li>
-    <li><I>Processors</I>. An incorrect usage of X instead of Y in indexed mode for the 6502 has been corrected.(Issue #201)</li>
-    <li><I>Processors</I>. Added support for ARM Thumb half BL instruction on processor variants prior to v6. (Issue #39)</li>
-    <li><I>Scripting</I>. Fixed a bug in ImportSymbolsScript.py that prevented it from running. (Issue #170)</li>
+    <li><I>API</I>. Fixed equals method on Varnode class. (GT-2648, Issue #97)</li>
+    <li><I>API</I>. Fixed a bug in MaskImpl.complementMask(). (GT-2694, Issue #187)</li>
+    <li><I>Basic Infrastructure</I>. Fixed special character handling in idaxml.py. (GT-2669, Issue #75)</li>
+    <li><I>Basic Infrastructure</I>. Ghidra now forces the locale to en_US by default. Only the en_US is currently supported. This fixes certain unexpected exceptions. (GT-2680, Issue #209)</li>
+    <li><I>Diff</I>. Fixed exception occasionally encountered when starting a Diff session. (GT-2672, Issue #211)</li>
+    <li><I>Documentation</I>. Fixed javadoc search box redirecting to broken links. (GT-2655, Issue #129)</li>
+    <li><I>Function Graph</I>. Fixed Function Graph exception when generating tooltip. (GT-2650, Issue #65)</li>
+    <li><I>GUI</I>. Updated window placement to keep windows on screen. (GT-1516, Issue #41)</li>
+    <li><I>GUI</I>. Add/Edit References dialog now restricts users to creating refs in valid memory address spaces. (GT-2638)</li>
+    <li><I>GUI</I>. Fixed exception when exiting Ghidra while a table is being edited. (GT-2642, Issue #51)</li>
+    <li><I>GUI</I>. Fixed some touchpad scrolling issues. (GT-2647, Issue #2)</li>
+    <li><I>GUI</I>. Fixed stack trace in the Data Type Manager's tooltip generation. (GT-2656, Issue #133)</li>
+    <li><I>GUI</I>. User key binding settings for the Recently Used and Define Pointer actions no longer lost after re-launching tool. (GT-2659, Issue #152)</li>
+    <li><I>GUI</I>. Toolbar buttons now respond to fast clicking. (GT-2689)</li>
+    <li><I>Importer:Mach-O</I>. The Mach-O loader can now find import libraries found in Universal Binary files. (GT-2663, Issue #136)</li>
+    <li><I>Importer:PE</I>. The PeLoader now correctly parses the GuardCFFunctionTable when table entries are more than 4 bytes each. (GT-2671, Issue #220)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Removed support for native OS authentication from Ghidra Server (removed modes -a2 and -a3) due to incompatibility with newer OS releases including Windows 10 and Windows Server 2016. Re-introduction of this will be considered for a future release. (GT-2653)</li>
+    <li><I>PDB</I>. Corrected NPE error when processing PDB files. (GT-2673, Issues #138, #188)</li>
+    <li><I>Processors</I>. Added missing PowerPC VLE conditional branch instructions: e_bdnz and e_bdz. (GT-2652, Issue #103)</li>
+    <li><I>Processors</I>. Fixed instruction semantics for several instructions and added Control Flow Enforcement, NOP variants, CMP variants, UD1, and prefixed call instructions to X86 processor specification. (GT-2660, Issues #22, #53, #158, #157)</li>
+    <li><I>Processors</I>. The M68000 MOVE instruction now correctly sets the CF and VF flags. (GT-2661, Issue #163)</li>
+    <li><I>Processors</I>. Added four missing MOVEM instruction variants to the M68000 processor. (GT-2675, Issue  #219)</li>
+    <li><I>Processors</I>. An incorrect usage of X instead of Y in indexed mode for the 6502 has been corrected. (GT-2677, Issue #201)</li>
+    <li><I>Processors</I>. PPC VLE now disassembles base PPC instructions that are valid in VLE mode. (GT-2681, Issue #127)</li>
+    <li><I>Processors</I>. Added support for ARM Thumb half BL instruction on processor variants prior to v6. (GT-2684, Issue #39)</li>
+    <li><I>Scripting</I>. Fixed a bug in ImportSymbolsScript.py that prevented it from running. (GT-2668, Issue #170)</li>
 </ul>
 </blockquote>
 
 <blockquote><p><u>Security</u></p>
 <ul>
-    <li><I>Basic Infrastructure</I>. Running Ghidra in debug mode no longer opens remotely accessible ports by default. (Issue #6)</li>
-    <li><I>GUI</I>. The Defined Strings plugin no longer renders HTML in its table. (Issue #45)</li>
-    <li><I>Project Manager</I>. Fixed an XXE vulnerability affecting projects and many other saved components. (Issue #71)</li>
+    <li><I>Basic Infrastructure</I>. Running Ghidra in debug mode no longer opens remotely accessible ports by default. (GT-2641, Issue #6)</li>
+    <li><I>GUI</I>. The Defined Strings plugin no longer renders HTML in its table. (GT-2686, Issue #45)</li>
+    <li><I>Project Manager</I>. Fixed an XXE vulnerability affecting projects and many other saved components. (GT-2643, Issue #71)</li>
 </ul>
 </blockquote>
 
