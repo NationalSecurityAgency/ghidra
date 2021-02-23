@@ -93,7 +93,7 @@ public class Section implements StructConverter {
 		long index = reader.getPointerIndex();
 		reader.setPointerIndex(reloff);
 		for (int i = 0; i < nrelocs; ++i) {
-			relocations.add(RelocationFactory.readRelocation(reader, is32bit));
+			relocations.add(RelocationInfo.createRelocationInfo(reader));
 		}
 		reader.setPointerIndex(index);
 	}

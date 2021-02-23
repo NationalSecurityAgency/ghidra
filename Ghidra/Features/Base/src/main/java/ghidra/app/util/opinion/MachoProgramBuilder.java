@@ -24,6 +24,7 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
+import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.importer.MessageLog;
@@ -40,10 +41,9 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.DataConverter;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.NumericUtilities;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -108,13 +108,6 @@ public class MachoProgramBuilder {
 		monitor.setCancelEnabled(false);
 		machoHeader = MachHeader.createMachHeader(MessageLogContinuesFactory.create(log), provider);
 		machoHeader.parse();
-		Address headerAddr = null;
-		for (SegmentCommand segment : machoHeader.getAllSegments()) {
-			if (segment.getFileOffset() == 0 && segment.getFileSize() > 0) {
-				headerAddr = space.getAddress(segment.getVMaddress());
-				break;
-			}
-		}
 		monitor.setCancelEnabled(true);
 
 		setImageBase();
@@ -130,7 +123,7 @@ public class MachoProgramBuilder {
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
 		processDyldInfo();
-		markupHeaders(machoHeader, headerAddr);
+		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
 		processProgramVars();
 		loadSectionRelocations();
@@ -490,8 +483,8 @@ public class MachoProgramBuilder {
 					String name = generateValidName(symbol.getString());
 					if (name != null && name.length() > 0) {
 						try {
-							program.getSymbolTable().createLabel(startAddr, name, namespace,
-								SourceType.IMPORTED);
+							program.getSymbolTable()
+									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
 						}
 						catch (Exception e) {
 							log.appendMsg("Unable to create indirect symbol " + name);
@@ -572,8 +565,9 @@ public class MachoProgramBuilder {
 			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
 		}
 		else {
-			program.getSymbolTable().createLabel(address,
-				ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
+			program.getSymbolTable()
+					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
+						SourceType.IMPORTED);
 		}
 	}
 
@@ -599,8 +593,8 @@ public class MachoProgramBuilder {
 					continue;
 				}
 				if (symbol.isTypeUndefined()) {
-					List<Symbol> globalSymbols = program.getSymbolTable().getLabelOrFunctionSymbols(
-						symbol.getString(), null);
+					List<Symbol> globalSymbols = program.getSymbolTable()
+							.getLabelOrFunctionSymbols(symbol.getString(), null);
 					if (globalSymbols.isEmpty()) {//IF IT DOES NOT ALREADY EXIST...
 						undefinedSymbols.add(symbol);
 					}
@@ -824,12 +818,58 @@ public class MachoProgramBuilder {
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
+				else if (loadCommand instanceof LinkerOptionCommand) {
+					LinkerOptionCommand linkerOptionCommand = (LinkerOptionCommand) loadCommand;
+					List<String> linkerOptions = linkerOptionCommand.getLinkerOptions();
+					int offset = linkerOptionCommand.toDataType().getLength();
+					for (int i = 0; i < linkerOptions.size(); i++) {
+						Address addr = loadCommandAddr.add(offset);
+						int len = linkerOptions.get(i).length() + 1;
+						if (i == linkerOptions.size() - 1) {
+							len = (int) (NumericUtilities.getUnsignedAlignedValue(
+								addr.add(len).getOffset(), 4) - addr.getOffset());
+						}
+						DataUtilities.createData(program, addr, StructConverter.STRING, len, false,
+							DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						offset += len;
+					}
+				}
 			}
 		}
 		catch (CodeUnitInsertionException e) {
 			log.appendMsg("Error laying down header structures " + e);
 		}
 
+	}
+
+	/**
+	 * Sets up the {@link MachHeader} in memory and returns its address.  If the header was not 
+	 * intended to reside in memory (like for Mach-O object files}, then this method will create an 
+	 * area in the "OTHER" address space for the header to live in.
+	 * 
+	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
+	 * @return The {@link Address} of {@link MachHeader} in memory
+	 */
+	private Address setupHeaderAddr(Collection<SegmentCommand> segments)
+			throws AddressOverflowException {
+		Address headerAddr = null;
+		long lowestFileOffset = Long.MAX_VALUE;
+
+		// Check to see if the header resides in an existing segment.  If it does, we know its
+		// address and we are done.  Keep track of the lowest file offset of later use.
+		for (SegmentCommand segment : segments) {
+			if (segment.getFileOffset() == 0 && segment.getFileSize() > 0) {
+				return space.getAddress(segment.getVMaddress());
+			}
+			lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
+		}
+
+		// The header did not live in a defined segment.  Create a memory region in the OTHER space 
+		// and copy the header there.
+		headerAddr = AddressSpace.OTHER_SPACE.getAddress(0);
+		MemoryBlock headerBlock = MemoryBlockUtils.createInitializedBlock(program, true, "HEADER",
+			headerAddr, fileBytes, 0, lowestFileOffset, "Header", "", false, false, false, log);
+		return headerBlock.getStart();
 	}
 
 	private void markupSections() throws Exception {
@@ -906,8 +946,8 @@ public class MachoProgramBuilder {
 	 * See crt.c from opensource.apple.com
 	 */
 	private void processProgramVars() {
-		if (program.getLanguage().getProcessor() == Processor.findOrPossiblyCreateProcessor(
-			"PowerPC")) {
+		if (program.getLanguage().getProcessor() == Processor
+				.findOrPossiblyCreateProcessor("PowerPC")) {
 			return;
 		}
 
@@ -983,38 +1023,78 @@ public class MachoProgramBuilder {
 
 		monitor.setMessage("Processing relocation table...");
 
+		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
+
 		List<Section> sections = machoHeader.getAllSections();
 		for (Section section : sections) {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			List<RelocationInfo> relocations = section.getRelocations();
-			for (RelocationInfo relocation : relocations) {
+			
+			MemoryBlock sectionMemoryBlock = getMemoryBlock(section);
+			if (sectionMemoryBlock == null) {
+				if (section.getNumberOfRelocations() > 0) {
+					log.appendMsg("Unable to process relocations for " + section.getSectionName() +
+						". No memory block was created.");
+				}
+				continue;
+			}
+
+			Iterator<RelocationInfo> iter = section.getRelocations().iterator();
+			while (iter.hasNext()) {
 				if (monitor.isCancelled()) {
 					return;
 				}
-				boolean handled = false;
-				try {
-					if (machoHeader.getCpuType() == CpuTypes.CPU_TYPE_X86 ||
-						machoHeader.getCpuType() == CpuTypes.CPU_TYPE_X86_64) {
 
-						processSectionRelocation_x86(section, relocation);
-						handled = true;
-					}
-					else if (machoHeader.getCpuType() == CpuTypes.CPU_TYPE_POWERPC) {
-						//PPC RELOCATIONS ARE GOOD TO GO, AS IS
-						handled = true;
-					}
-					else if (machoHeader.getCpuType() == CpuTypes.CPU_TYPE_ARM) {//TODO
+				RelocationInfo relocationInfo = iter.next();
+				Address address = sectionMemoryBlock.getStart().add(relocationInfo.getAddress());
+				byte[] origBytes = getOriginalRelocationBytes(relocationInfo, address);
+				MachoRelocation relocation = null;
 
+				if (handler == null) {
+					handleRelocationError(address, String.format(
+						"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
+						machoHeader.getCpuType(), address, relocationInfo.getType()));
+				}
+				else {
+					try {
+						relocation = handler.isPairedRelocation(relocationInfo)
+								? new MachoRelocation(program, machoHeader, address, relocationInfo,
+									iter.next())
+								: new MachoRelocation(program, machoHeader, address,
+									relocationInfo);
+						handler.relocate(relocation);
+					}
+					catch (MemoryAccessException e) {
+						handleRelocationError(address, String.format(
+							"Error accessing memory at address %s.  Relocation failed.", address));
+					}
+					catch (NotFoundException e) {
+						handleRelocationError(address,
+							String.format("Relocation type 0x%x at address %s is not supported: %s",
+								relocationInfo.getType(), address, e.getMessage()));
+					}
+					catch (AddressOutOfBoundsException e) {
+						handleRelocationError(address,
+							String.format("Error computing relocation at address %s.", address));
 					}
 				}
-				catch (Exception e) {
-					log.appendMsg("Error loading section relocations: " + e.getMessage());
-				}
-				addToRelocationTable(section, relocation, handled);
+
+				program.getRelocationTable()
+						.add(address, relocationInfo.getType(),
+							new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
+								relocationInfo.isPcRelocated() ? 1 : 0,
+								relocationInfo.isExternal() ? 1 : 0,
+								relocationInfo.isScattered() ? 1 : 0},
+							origBytes, relocation.getTargetDescription());
 			}
 		}
+	}
+
+	private void handleRelocationError(Address address, String message) {
+		program.getBookmarkManager()
+				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
+		log.appendMsg(message);
 	}
 
 	private void loadExternalRelocations() {
@@ -1033,7 +1113,7 @@ public class MachoProgramBuilder {
 				if (monitor.isCancelled()) {
 					break;
 				}
-				loadRelocation(RelocationFactory.EXTERNAL, reloc);
+				loadRelocation(reloc);
 			}
 		}
 	}
@@ -1054,7 +1134,7 @@ public class MachoProgramBuilder {
 				if (monitor.isCancelled()) {
 					return;
 				}
-				loadRelocation(RelocationFactory.LOCAL, reloc);
+				loadRelocation(reloc);
 			}
 		}
 	}
@@ -1086,7 +1166,7 @@ public class MachoProgramBuilder {
 		return space.getAddress(relocBase);
 	}
 
-	private void loadRelocation(int relocationType, RelocationInfo relocation) {
+	private void loadRelocation(RelocationInfo relocation) {
 
 		Address baseAddr = getRelocationBaseAddress();
 
@@ -1100,8 +1180,9 @@ public class MachoProgramBuilder {
 
 		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
 
-		program.getRelocationTable().add(relocationAddress, relocationType, relocation.toValues(),
-			originalRelocationBytes, null);
+		program.getRelocationTable()
+				.add(relocationAddress, relocation.getType(), relocation.toValues(),
+					originalRelocationBytes, null);
 	}
 
 	private void addLibrary(String library) {
@@ -1216,8 +1297,9 @@ public class MachoProgramBuilder {
 
 	private void markAsThumb(Address address)
 			throws ContextChangeException, AddressOverflowException {
-		if (!program.getLanguage().getProcessor().equals(
-			Processor.findOrPossiblyCreateProcessor("ARM"))) {
+		if (!program.getLanguage()
+				.getProcessor()
+				.equals(Processor.findOrPossiblyCreateProcessor("ARM"))) {
 			return;
 		}
 		if ((address.getOffset() & 1) == 1) {
@@ -1245,8 +1327,9 @@ public class MachoProgramBuilder {
 				try {
 					MemoryBlock memoryBlock = memory.getBlock(reference.getToAddress());
 					Namespace namespace = createNamespace(memoryBlock.getName());
-					program.getSymbolTable().createLabel(reference.getToAddress(),
-						fromSymbol.getName(), namespace, SourceType.IMPORTED);
+					program.getSymbolTable()
+							.createLabel(reference.getToAddress(), fromSymbol.getName(), namespace,
+								SourceType.IMPORTED);
 				}
 				catch (Exception e) {
 					//log.appendMsg("Unable to create lazy pointer symbol " + fromSymbol.getName() + " at " + reference.getToAddress());
@@ -1262,8 +1345,9 @@ public class MachoProgramBuilder {
 
 	private Namespace createNamespace(String namespaceName) {
 		try {
-			return program.getSymbolTable().createNameSpace(program.getGlobalNamespace(),
-				namespaceName, SourceType.IMPORTED);
+			return program.getSymbolTable()
+					.createNameSpace(program.getGlobalNamespace(), namespaceName,
+						SourceType.IMPORTED);
 		}
 		catch (DuplicateNameException | InvalidInputException e) {
 			Namespace namespace =
@@ -1323,101 +1407,10 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processSectionRelocation_x86(Section relocationSection,
-			RelocationInfo relocation) {
-
-		DataConverter dc = getDataConverter();
-
-		MemoryBlock memoryBlock = getMemoryBlock(relocationSection);
-
-		Address relocationAddress = memoryBlock.getStart().add(relocation.getAddress());
-
-		int relocationSize = (int) Math.pow(2, Math.min(2, relocation.getLength()));
-
-		Address destinationAddress = memoryBlock.getStart().getNewAddress(0);
-
-		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
-
-		if (relocation instanceof ScatteredRelocationInfo) {
-			Address relocationBase = getRelocationBaseAddress();
-			relocationAddress = relocationBase.add(relocation.getAddress());
-		}
-		else {
-			if (relocation.isExternal()) {
-				int symbolIndex = relocation.getSymbolIndex();
-				NList nList = machoHeader.getFirstLoadCommand(SymbolTableCommand.class).getSymbolAt(
-					symbolIndex);
-				Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program, nList.getString(),
-					err -> log.appendMsg("Macho", err));
-				if (relocation.isPcRelocated()) {
-
-					destinationAddress = symbol.getAddress().subtractWrap(
-						relocationAddress.getOffset()).subtractWrap(4);
-					/** for x86_64 relocations, the original code contains the offset into the symbol.
-					 *   usually it is just 00 00 00 00, but in some cases there is a value there which
-					 *   tells us to offset.  _foo+4 would be 04 00 00 00.  confirmed in x86_64/reloc.h for Mach-O.
-					 */
-					if (machoHeader.getCpuType() == CpuTypes.CPU_TYPE_X86_64) {
-						destinationAddress =
-							destinationAddress.add(dc.getInt(originalRelocationBytes));
-					}
-				}
-				else {
-					destinationAddress = symbol.getAddress();
-				}
-			}
-			else {
-				int originalRelocationValue = dc.getInt(originalRelocationBytes);
-				int sectionIndex = relocation.getSymbolIndex();
-				Section section = machoHeader.getAllSections().get(sectionIndex - 1);
-				long difference = originalRelocationValue - section.getAddress();
-				destinationAddress = space.getAddress(section.getAddress() + difference);
-			}
-		}
-
-		byte[] destinationBytes = new byte[originalRelocationBytes.length];
-		try {
-			dc.getBytes((int) destinationAddress.getOffset(), destinationBytes);// TODO
-																				// just
-																				// truncate
-																				// to
-																				// INT??
-
-			memory.setBytes(relocationAddress, destinationBytes, 0, relocationSize);
-		}
-		catch (Exception e) {
-			log.appendMsg(
-				"Unable to process relocation at " + relocationAddress + ": " + e.getMessage());
-		}
-	}
-
-	private DataConverter getDataConverter() {
-		DataConverter dc = DataConverter.getInstance(program.getLanguage().isBigEndian());
-		return dc;
-	}
-
-	private void addToRelocationTable(Section relocationSection, RelocationInfo relocation,
-			boolean handled) {
-		MemoryBlock memoryBlock = getMemoryBlock(relocationSection);
-
-		Address relocationAddress = memoryBlock.getStart().add(relocation.getAddress());
-
-		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
-
-		program.getRelocationTable().add(relocationAddress, RelocationFactory.SECTION,
-			relocation.toValues(), originalRelocationBytes, null);
-
-		if (!handled) {
-			BookmarkManager bookmarkManager = program.getBookmarkManager();
-			bookmarkManager.setBookmark(relocationAddress, BookmarkType.ERROR, "Relocations",
-				"Unhandled relocation");
-		}
-	}
-
 	private byte[] getOriginalRelocationBytes(RelocationInfo relocation,
 			Address relocationAddress) {
 
-		int relocationSize = (int) Math.pow(2, Math.min(2, relocation.getLength()));
+		int relocationSize = (int) Math.pow(2, relocation.getLength());
 		byte[] originalRelocationBytes = new byte[relocationSize];
 		try {
 			memory.getBytes(relocationAddress, originalRelocationBytes);
