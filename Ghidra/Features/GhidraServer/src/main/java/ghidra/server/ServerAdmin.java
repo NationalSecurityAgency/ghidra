@@ -80,14 +80,13 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * @param args command line arguments
 	 */
 	public void execute(String[] args) {
-		File serverDir = null;
 
 		int ix = 0;
 
 		String configFilePath = args.length != 0 && !args[0].startsWith("-") ? args[ix++]
 				: System.getProperty(CONFIG_FILE_PROPERTY);
 
-		serverDir = getServerDirFromConfig(configFilePath);
+		File serverDir = getServerDirFromConfig(configFilePath);
 		if (serverDir == null || (args.length - ix) == 0) {
 			displayUsage("");
 			System.exit(-1);
@@ -102,9 +101,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.exit(-1);
 		}
 
-		if (propertyUsed) {
-			System.out.println("Using server directory: " + serverDir);
-		}
+		System.out.println("Using server directory: " + serverDir);
 
 		File userFile = new File(serverDir, UserManager.USER_PASSWORD_FILE);
 		if (!serverDir.isDirectory() || !userFile.isFile()) {
@@ -421,6 +418,8 @@ public class ServerAdmin implements GhidraLaunchable {
 	}
 
 	private File getServerDirFromConfig(String configFilePath) {
+		System.out.println("Using config file: " + configFilePath);
+
 		if (configFilePath == null) {
 			return null;
 		}
@@ -453,6 +452,7 @@ public class ServerAdmin implements GhidraLaunchable {
 
 		String p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
 		if (p == null) {
+			System.out.println("Failed to find property: " + SERVER_DIR_CONFIG_PROPERTY);
 			return null;
 		}
 		File dir = new File(p);
@@ -478,8 +478,8 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 		String invocationName = System.getProperty(INVOCATION_NAME_PROPERTY);
 		System.err.println("Usage: " +
-			(invocationName != null ? invocationName : "java " + UserAdmin.class.getName()) +
-			(propertyUsed ? "" : " <serverPath>") + " [<command>] [<command>] ...");
+			(invocationName != null ? invocationName : "java " + ServerAdmin.class.getName()) +
+			(invocationName != null ? "" : " <configPath>") + " [<command>] [<command>] ...");
 		System.err.println("\nSupported commands:");
 		System.err.println("  -add <sid> [--p]");
 		System.err.println(

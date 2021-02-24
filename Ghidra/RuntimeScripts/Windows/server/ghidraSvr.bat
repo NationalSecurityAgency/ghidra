@@ -104,7 +104,6 @@ set ERROR=ERROR: JAVA_HOME is not set and no 'java' command could be found in yo
 goto reportError
 
 :findJavaFromJavaHome
-set "JAVA_HOME=%JAVA_HOME:"=%"
 set "JAVA=%JAVA_HOME%\bin\java.exe"
 
 if exist "%JAVA%" goto lab2

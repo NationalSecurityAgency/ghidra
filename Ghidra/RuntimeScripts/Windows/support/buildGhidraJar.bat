@@ -18,6 +18,6 @@ exit /B 1
 
 :continue
 
-set APP_VMARGS=-DGhidraJarBuilder.Name=%0
+set APP_VMARGS=-DGhidraJarBuilder.Name=%~n0
 
 call "%~dp0launch.bat" %LAUNCH_MODE% Ghidra "" "%APP_VMARGS%" ghidra.util.GhidraJarBuilder -main ghidra.JarRun %*
