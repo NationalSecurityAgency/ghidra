@@ -3,7 +3,7 @@ Automatic-Module-Name: ghidra.xtext.sleigh
 Bundle-ManifestVersion: 2
 Bundle-Name: ghidra.xtext.sleigh
 Bundle-Vendor: Ghidra
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.0.1.qualifier
 Bundle-SymbolicName: ghidra.xtext.sleigh; singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.xtext,
