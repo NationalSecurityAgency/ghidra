@@ -204,7 +204,7 @@ public class DockingWindowsLookAndFeelUtils {
 			case NIMBUS_LOOK_AND_FEEL:
 				// fix scroll bar grabber disappearing.  See https://bugs.openjdk.java.net/browse/JDK-8134828
 				// This fix looks like it should not cause harm even if the bug is fixed on the jdk side.
-				UIDefaults defaults = lookAndFeel.getDefaults();
+				UIDefaults defaults = UIManager.getDefaults();
 				defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
 
 				// (see NimbusDefaults for key values that can be changed here)
@@ -277,8 +277,7 @@ public class DockingWindowsLookAndFeelUtils {
 
 	/** Allows you to globally set the font size (don't use this method!) */
 	private static void setGlobalFontSizeOverride(int fontSize) {
-		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-		UIDefaults defaults = lookAndFeel.getDefaults();
+		UIDefaults defaults = UIManager.getDefaults();
 
 		Set<Entry<Object, Object>> set = defaults.entrySet();
 		Iterator<Entry<Object, Object>> iterator = set.iterator();

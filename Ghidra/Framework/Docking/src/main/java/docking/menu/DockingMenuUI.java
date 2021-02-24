@@ -22,9 +22,8 @@ import javax.swing.plaf.MenuItemUI;
 
 public class DockingMenuUI extends DockingMenuItemUI {
 	public static ComponentUI createUI(JComponent c) {
-		LookAndFeel underlying = UIManager.getLookAndFeel();
 		DockingMenuUI result = new DockingMenuUI();
-		result.ui = (MenuItemUI) underlying.getDefaults().getUI(c);
+		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
 	}
 }
