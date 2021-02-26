@@ -98,8 +98,9 @@ aligndef :
 ;
 
 tokendef :
-	'define' 'token' ID '(' size=integerValue ')' fields=tokenprop ';' // {}
+	'define' 'token' ID '(' size=integerValue ')' ( 'endian' '=' (is_big?='big' | is_little?='little' ))?  fields=tokenprop ';' // {}
 ;
+
 //
 tokenprop:
 	 tokens+=(
