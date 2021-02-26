@@ -137,7 +137,7 @@ public class GraphAST extends GhidraScript {
 		else if (vn.isUnique()) {
 			colorattrib = "Black";
 		}
-		else if (vn.isPersistant()) {
+		else if (vn.isPersistent()) {
 			colorattrib = "DarkOrange";
 		}
 		else if (vn.isAddrTied()) {
