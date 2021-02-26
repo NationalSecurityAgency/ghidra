@@ -58,9 +58,8 @@ public class DockingMenuItemUI extends MenuItemUI {
 	protected MenuItemUI ui;
 
 	public static ComponentUI createUI(JComponent c) {
-		LookAndFeel underlying = UIManager.getLookAndFeel();
 		DockingMenuItemUI result = new DockingMenuItemUI();
-		result.ui = (MenuItemUI) underlying.getDefaults().getUI(c);
+		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
 	}
 
