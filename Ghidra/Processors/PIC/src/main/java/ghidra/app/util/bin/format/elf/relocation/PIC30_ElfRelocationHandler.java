@@ -155,25 +155,15 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 		if (elf.e_machine() == ElfConstants.EM_DSPIC30F) {
 			switch (type) {
 			case R_PIC30_16: // 2
-			case R_PIC30_FILE_REG_WORD: // 6
-				newValue = (symbolValue + addend + oldShortValue);
+				newValue = (symbolValue + addend + oldShortValue) & 0xffff;
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
 			case R_PIC30_32: // 3
 				newValue = symbolValue + addend + oldValue;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case R_PIC30_FILE_REG_BYTE: // 4 short
-			case R_PIC30_FILE_REG: // 5 short
-				int reloc = symbolValue;
-				reloc += addend;
-				reloc += oldShortValue;
-				reloc &= 0x1fff;
-				newValue = reloc | (oldShortValue & ~0x1fff);
-				memory.setShort(relocationAddress, (short) newValue);
-				break;
 			case R_PIC30_FILE_REG_WORD_WITH_DST: // 7
-				reloc = symbolValue >> 1;
+				int reloc = symbolValue >> 1;
 				reloc += addend;
 				reloc += oldValue >> 4;
 				reloc &= 0x7fff;
