@@ -30,7 +30,7 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	protected static class DbgI386X86_64RegisterMapper extends LargestSubDebuggerRegisterMapper {
 		public DbgI386X86_64RegisterMapper(CompilerSpec cSpec,
-				TargetRegisterContainer<?> targetRegContainer) {
+				TargetRegisterContainer targetRegContainer) {
 			super(cSpec, targetRegContainer, false);
 		}
 
@@ -52,19 +52,19 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 
 		@Override
-		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory<?> memory) {
+		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
 			return new DefaultDebuggerMemoryMapper(language, memory.getModel());
 		}
 
 		@Override
 		protected DebuggerRegisterMapper createRegisterMapper(
-				TargetRegisterContainer<?> registers) {
+				TargetRegisterContainer registers) {
 			return new DefaultDebuggerRegisterMapper(cSpec, registers, false);
 		}
 	}
 
 	protected static class DbgI386X86_64WindowsOffer extends AbstractDebuggerMappingOffer {
-		public DbgI386X86_64WindowsOffer(TargetProcess<?> process) {
+		public DbgI386X86_64WindowsOffer(TargetProcess process) {
 			super(process, 100, "Dbgeng on Windows x64", LANG_ID_X86_64, COMP_ID_VS, Set.of());
 		}
 
@@ -74,7 +74,7 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 				return new DbgTargetTraceMapper(target, langID, csID, extraRegNames) {
 					@Override
 					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer<?> registers) {
+							TargetRegisterContainer registers) {
 						return new DbgI386X86_64RegisterMapper(cSpec, registers);
 					}
 				};
@@ -90,14 +90,14 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		if (!(target instanceof TargetProcess)) {
 			return CompletableFuture.completedFuture(Set.of());
 		}
-		TargetProcess<?> process = (TargetProcess<?>) target;
-		CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.tclass, target);
+		TargetProcess process = (TargetProcess) target;
+		CompletableFuture<? extends TargetEnvironment> futureEnv =
+			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
 		return futureEnv.thenApply(env -> offersForEnv(env, process));
 	}
 
-	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment<?> env,
-			TargetProcess<?> process) {
+	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env,
+			TargetProcess process) {
 		if (env == null || !env.getDebugger().toLowerCase().contains("dbg")) {
 			return Set.of();
 		}

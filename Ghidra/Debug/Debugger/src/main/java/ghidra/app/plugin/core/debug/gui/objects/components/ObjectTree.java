@@ -40,9 +40,7 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.util.*;
@@ -250,7 +248,7 @@ public class ObjectTree implements ObjectPane {
 
 	@Override
 	public void signalUpdate(ObjectContainer container) {
-		AtomicReference<TargetAccessConditioned<?>> access = new AtomicReference<>();
+		AtomicReference<TargetAccessConditioned> access = new AtomicReference<>();
 		TargetObject targetObject = container.getTargetObject();
 		if (targetObject == null) {
 			return;
@@ -260,10 +258,9 @@ public class ObjectTree implements ObjectPane {
 					.handle(seq::next);
 		}, access).then(seq -> {
 			boolean accessible = true;
-			TargetAccessConditioned<?> conditioned = access.get();
+			TargetAccessConditioned conditioned = access.get();
 			if (conditioned != null) {
-				TargetAccessibility accessibility = conditioned.getAccessibility();
-				accessible = accessibility.equals(TargetAccessibility.ACCESSIBLE);
+				accessible = conditioned.isAccessible();
 			}
 			if (accessible) {
 				Swing.runIfSwingOrRunLater(() -> {
@@ -355,7 +352,7 @@ public class ObjectTree implements ObjectPane {
 	}
 
 	@Override
-	public void setFocus(TargetFocusScope<?> object, TargetObjectRef focused) {
+	public void setFocus(TargetFocusScope object, TargetObject focused) {
 		Swing.runIfSwingOrRunLater(() -> {
 			List<String> path = focused.getPath();
 			tree.setSelectedNodeByNamePath(addRootNameToPath(path));

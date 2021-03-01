@@ -18,7 +18,7 @@ package ghidra.dbg.model;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.attributes.TargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -27,9 +27,7 @@ import ghidra.program.model.address.Address;
 
 public class TestTargetBreakpoint
 		extends DefaultTestTargetObject<TestTargetBreakpoint, TestTargetBreakpointContainer>
-		implements TargetBreakpointSpec<TestTargetBreakpoint>,
-		TargetBreakpointLocation<TestTargetBreakpoint>,
-		TargetDeletable<TestTargetBreakpoint> {
+		implements TargetBreakpointSpec, TargetBreakpointLocation, TargetDeletable {
 
 	public TestTargetBreakpoint(TestTargetBreakpointContainer parent, int num, Address address,
 			int length, Set<TargetBreakpointKind> kinds) {
@@ -38,7 +36,7 @@ public class TestTargetBreakpoint
 		changeAttributes(List.of(), Map.of(
 			SPEC_ATTRIBUTE_NAME, this,
 			ADDRESS_ATTRIBUTE_NAME, address,
-			AFFECTS_ATTRIBUTE_NAME, TargetObjectRefList.of(parent.getImplParent()),
+			AFFECTS_ATTRIBUTE_NAME, TargetObjectList.of(parent.getParent()),
 			ENABLED_ATTRIBUTE_NAME, true,
 			EXPRESSION_ATTRIBUTE_NAME, address.toString(),
 			KINDS_ATTRIBUTE_NAME, TargetBreakpointKindSet.copyOf(kinds),

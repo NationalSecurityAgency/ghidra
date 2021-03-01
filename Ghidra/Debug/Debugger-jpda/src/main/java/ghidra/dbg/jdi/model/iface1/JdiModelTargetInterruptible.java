@@ -27,8 +27,7 @@ import ghidra.dbg.target.TargetInterruptible;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetInterruptible<T extends TargetInterruptible<T>>
-		extends JdiModelTargetObject, TargetInterruptible<T> {
+public interface JdiModelTargetInterruptible extends JdiModelTargetObject, TargetInterruptible {
 
 	@Override
 	public CompletableFuture<Void> interrupt();

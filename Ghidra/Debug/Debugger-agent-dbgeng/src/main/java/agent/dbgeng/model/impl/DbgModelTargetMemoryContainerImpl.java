@@ -29,17 +29,20 @@ import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "Memory", elements = { //
-	@TargetElementType(type = DbgModelTargetMemoryRegionImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Memory",
+	elements = {
+		@TargetElementType(type = DbgModelTargetMemoryRegionImpl.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetMemoryContainer {
 
@@ -256,12 +259,11 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void onRunning() {
 		invalidateMemoryCaches();
-		setAccessibility(TargetAccessibility.INACCESSIBLE);
+		setAccessible(false);
 	}
 
 	@Override
 	protected void update() {
 		requestElements(true);
 	}
-
 }

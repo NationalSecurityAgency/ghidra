@@ -21,11 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.*;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.agent.AbstractTargetObject;
 import ghidra.dbg.agent.DefaultTargetModelRoot;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
@@ -41,16 +37,10 @@ import ghidra.util.Msg;
 	attributes = {
 		@TargetAttributeType(type = Void.class)
 	})
-public class GdbModelTargetSession extends DefaultTargetModelRoot implements // 
-		TargetAccessConditioned<GdbModelTargetSession>,
-		TargetAttacher<GdbModelTargetSession>,
-		TargetFocusScope<GdbModelTargetSession>,
-		TargetInterpreter<GdbModelTargetSession>,
-		TargetInterruptible<GdbModelTargetSession>,
-		TargetCmdLineLauncher<GdbModelTargetSession>,
-		TargetEventScope<GdbModelTargetSession>,
-		GdbConsoleOutputListener,
-		GdbEventsListenerAdapter {
+public class GdbModelTargetSession extends DefaultTargetModelRoot implements
+		TargetAccessConditioned, TargetAttacher, TargetFocusScope, TargetInterpreter,
+		TargetInterruptible, TargetCmdLineLauncher, TargetEventScope,
+		GdbConsoleOutputListener, GdbEventsListenerAdapter {
 	protected static final String GDB_PROMPT = "(gdb)";
 
 	protected final GdbModelImpl impl;
@@ -60,7 +50,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 	protected final GdbModelTargetAvailableContainer available;
 	protected final GdbModelTargetBreakpointContainer breakpoints;
 
-	private TargetAccessibility accessibility = TargetAccessibility.ACCESSIBLE;
+	private boolean accessible = true;
 	protected GdbModelSelectableObject focus;
 
 	protected String debugger = "gdb"; // Used by GdbModelTargetEnvironment
@@ -77,7 +67,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 			inferiors.getName(), inferiors, //
 			available.getName(), available, //
 			breakpoints.getName(), breakpoints, //
-			ACCESSIBLE_ATTRIBUTE_NAME, accessibility == TargetAccessibility.ACCESSIBLE, //
+			ACCESSIBLE_ATTRIBUTE_NAME, accessible, //
 			PROMPT_ATTRIBUTE_NAME, GDB_PROMPT, //
 			DISPLAY_ATTRIBUTE_NAME, display, //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
@@ -167,22 +157,22 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 		setFocus(f);
 	}
 
-	public void setAccessibility(TargetAccessibility accessibility) {
+	public void setAccessible(boolean accessible) {
 		synchronized (attributes) {
-			if (this.accessibility == accessibility) {
+			if (this.accessible == accessible) {
 				return;
 			}
-			this.accessibility = accessibility;
+			this.accessible = accessible;
 			changeAttributes(List.of(), Map.of( //
-				ACCESSIBLE_ATTRIBUTE_NAME, accessibility == TargetAccessibility.ACCESSIBLE //
+				ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
 		}
-		listeners.fire(TargetAccessibilityListener.class).accessibilityChanged(this, accessibility);
+		listeners.fire(TargetAccessibilityListener.class).accessibilityChanged(this, accessible);
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
 
 	@Override
@@ -194,17 +184,10 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 	}
 
 	@Override
-	public CompletableFuture<Void> attach(TypedTargetObjectRef<? extends TargetAttachable<?>> ref) {
-		getModel().assertMine(TargetObjectRef.class, ref);
-		List<String> tPath = ref.getPath();
-		return impl.fetchModelObject(tPath).thenCompose(obj -> {
-			GdbModelTargetAttachable attachable = (GdbModelTargetAttachable) DebuggerObjectModel
-					.requireIface(TargetAttachable.class, obj, tPath);
-			// TODO: Find first unused inferior?
-			return impl.gdb.addInferior().thenCompose(inf -> {
-				return inf.attach(attachable.pid).thenApply(__ -> null);
-			});
-		});
+	public CompletableFuture<Void> attach(TargetAttachable attachable) {
+		GdbModelTargetAttachable mine =
+			getModel().assertMine(GdbModelTargetAttachable.class, attachable);
+		return attach(mine.pid);
 	}
 
 	@Override
@@ -237,31 +220,24 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements //
 	}
 
 	@Override
-	public CompletableFuture<Void> requestFocus(TargetObjectRef ref) {
-		impl.assertMine(TargetObjectRef.class, ref);
+	public CompletableFuture<Void> requestFocus(TargetObject obj) {
+		impl.assertMine(TargetObject.class, obj);
 		/**
 		 * Yes, this is pointless, since I'm the root, but do it right (TM), since this may change
 		 * or be used as an example for other implementations.
 		 */
-		if (!PathUtils.isAncestor(this.getPath(), ref.getPath())) {
+		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
 		}
-		return ref.fetch().thenCompose(obj -> {
-			TargetObject cur = obj;
-			while (cur != null) {
-				if (cur instanceof GdbModelSelectableObject) {
-					GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
-					return sel.select();
-				}
-				if (cur instanceof AbstractTargetObject) {
-					AbstractTargetObject<?> def = (AbstractTargetObject<?>) cur;
-					cur = def.getImplParent();
-					continue;
-				}
-				throw new AssertionError();
+		TargetObject cur = obj;
+		while (cur != null) {
+			if (cur instanceof GdbModelSelectableObject) {
+				GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
+				return sel.select();
 			}
-			return AsyncUtils.NIL;
-		});
+			cur = cur.getParent();
+		}
+		return AsyncUtils.NIL;
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {

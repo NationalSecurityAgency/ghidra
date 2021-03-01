@@ -36,15 +36,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  *           {@link TargetExecutionStateful} are assumed started by virtue of their creation.
  */
 @DebuggerTargetObjectIface("Environment")
-public interface TargetEnvironment<T extends TargetEnvironment<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetEnvironment<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetEnvironment.class;
+public interface TargetEnvironment extends TargetObject {
 
 	String ARCH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "arch";
 	String DEBUGGER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "debugger";

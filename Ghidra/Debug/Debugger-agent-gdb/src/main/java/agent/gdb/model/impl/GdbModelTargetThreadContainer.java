@@ -27,9 +27,12 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "ThreadContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ThreadContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetThreadContainer
 		extends DefaultTargetObject<GdbModelTargetThread, GdbModelTargetInferior> {
 	public static final String NAME = "Threads";

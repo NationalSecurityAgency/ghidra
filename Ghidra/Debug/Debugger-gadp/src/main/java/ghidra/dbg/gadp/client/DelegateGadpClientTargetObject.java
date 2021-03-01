@@ -30,7 +30,6 @@ import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.EventNotification.EvtCase;
 import ghidra.dbg.memory.CachedMemory;
 import ghidra.dbg.target.TargetAccessConditioned;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.target.TargetObject;
@@ -209,11 +208,6 @@ public class DelegateGadpClientTargetObject
 	@Override
 	public Collection<? extends Class<? extends TargetObject>> getInterfaces() {
 		return ifaces;
-	}
-
-	@Override
-	public CompletableFuture<? extends TargetObject> fetch() {
-		return CompletableFuture.completedFuture(getProxy());
 	}
 
 	@Override

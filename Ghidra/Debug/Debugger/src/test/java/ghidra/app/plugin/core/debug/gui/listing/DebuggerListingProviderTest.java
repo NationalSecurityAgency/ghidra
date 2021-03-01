@@ -41,7 +41,6 @@ import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -1015,11 +1014,11 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		});
 
 		// Verify that setting the memory inaccessible disables the action
-		mb.testProcess1.memory.setAccessibility(TargetAccessibility.INACCESSIBLE);
+		mb.testProcess1.memory.setAccessible(false);
 		waitForPass(() -> assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled()));
 
 		// Verify that setting it accessible re-enables it (assuming we still have selection)
-		mb.testProcess1.memory.setAccessibility(TargetAccessibility.ACCESSIBLE);
+		mb.testProcess1.memory.setAccessible(true);
 		waitForPass(() -> assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled()));
 
 		// Verify that moving into the past disables the action

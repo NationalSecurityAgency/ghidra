@@ -28,10 +28,10 @@ import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.util.PathUtils;
 
 public interface DbgModelTargetThread extends //
-		TargetThread<DbgModelTargetThread>, //
-		DbgModelTargetAccessConditioned<DbgModelTargetThread>, //
-		DbgModelTargetExecutionStateful<DbgModelTargetThread>, //
-		DbgModelTargetSteppable<DbgModelTargetThread>, //
+		TargetThread, //
+		DbgModelTargetAccessConditioned, //
+		DbgModelTargetExecutionStateful, //
+		DbgModelTargetSteppable, //
 		DbgEventsListenerAdapter, //
 		DbgModelSelectableObject {
 

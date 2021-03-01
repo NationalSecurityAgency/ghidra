@@ -17,21 +17,18 @@ package ghidra.dbg.gadp.client;
 
 import java.util.List;
 
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetEventScope;
 import ghidra.dbg.target.TargetThread;
 
-public interface GadpClientTargetEventScope
-		extends GadpClientTargetObject, TargetEventScope<GadpClientTargetEventScope> {
+public interface GadpClientTargetEventScope extends GadpClientTargetObject, TargetEventScope {
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.TARGET_EVENT)
 	default void handleDebuggerEvent(Gadp.EventNotification notification) {
 		Gadp.TargetEvent evt = notification.getTargetEvent();
 		Gadp.Path threadPath = evt.getEventThread();
-		TypedTargetObjectRef<? extends TargetThread<?>> thread =
-			threadPath == null || threadPath.getECount() == 0 ? null
-					: getModel().getProxy(threadPath.getEList(), true).as(TargetThread.tclass);
+		TargetThread thread = threadPath == null || threadPath.getECount() == 0 ? null
+				: getModel().getProxy(threadPath.getEList(), true).as(TargetThread.class);
 		TargetEventType type = GadpValueUtils.getTargetEventType(evt.getType());
 		String description = evt.getDescription();
 		List<Object> parameters =

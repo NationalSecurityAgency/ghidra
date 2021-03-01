@@ -28,8 +28,7 @@ import ghidra.dbg.target.TargetMemory;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 
-public interface GadpClientTargetMemory
-		extends GadpClientTargetObject, TargetMemory<GadpClientTargetMemory> {
+public interface GadpClientTargetMemory extends GadpClientTargetObject, TargetMemory {
 
 	@Internal
 	default MemoryReader getRawReader(AddressSpace space) {

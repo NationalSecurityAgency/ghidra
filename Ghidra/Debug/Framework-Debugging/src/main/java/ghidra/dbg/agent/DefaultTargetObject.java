@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -403,9 +402,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	}
 
 	protected Map<String, Object> combineAttributes(
-			Collection<? extends TargetObjectRef> canonicalObjects, Map<String, ?> linksAndValues) {
+			Collection<? extends TargetObject> canonicalObjects, Map<String, ?> linksAndValues) {
 		Map<String, Object> asMap = new LinkedHashMap<>();
-		for (TargetObjectRef ca : canonicalObjects) {
+		for (TargetObject ca : canonicalObjects) {
 			if (!PathUtils.parent(ca.getPath()).equals(getPath())) {
 				Msg.error(this, "Link found in canonical attributes: " + ca);
 			}
@@ -413,13 +412,13 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		for (Map.Entry<String, ?> ent : linksAndValues.entrySet()) {
 			Object av = ent.getValue();
-			if (av instanceof TargetObjectRef) {
-				TargetObjectRef link = (TargetObjectRef) av;
+			/*if (av instanceof TargetObject) {
+				TargetObject link = (TargetObject) av;
 				if (!PathUtils.isLink(getPath(), ent.getKey(), link.getPath())) {
 					//Msg.error(this, "Canonical attribute found in links: " + ent);
 				}
-			}
-			asMap.put(ent.getKey(), ent.getValue());
+			}*/
+			asMap.put(ent.getKey(), av);
 		}
 		return asMap;
 	}

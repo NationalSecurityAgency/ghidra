@@ -29,8 +29,8 @@ import ghidra.dbg.target.TargetExecutionStateful;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetExecutionStateful<T extends TargetExecutionStateful<T>>
-		extends DbgModelTargetObject, TargetExecutionStateful<T> {
+public interface DbgModelTargetExecutionStateful
+		extends DbgModelTargetObject, TargetExecutionStateful {
 
 	public default TargetExecutionState convertState(DbgState state) {
 		switch (state) {

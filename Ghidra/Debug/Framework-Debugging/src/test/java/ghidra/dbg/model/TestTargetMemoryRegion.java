@@ -24,7 +24,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetMemoryRegion
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetMemory>
-		implements TargetMemoryRegion<TestTargetMemoryRegion> {
+		implements TargetMemoryRegion {
 
 	public TestTargetMemoryRegion(TestTargetMemory parent, String name, AddressRange range,
 			String flags) {

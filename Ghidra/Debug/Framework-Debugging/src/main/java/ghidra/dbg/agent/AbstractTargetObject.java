@@ -20,8 +20,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.agent.AbstractTargetObject.ProxyFactory;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TypedTargetObject;
+import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
@@ -55,7 +56,6 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 	protected final AbstractDebuggerObjectModel model;
 	protected final SpiTargetObject proxy;
 	protected final P parent;
-	protected final CompletableFuture<P> completedParent;
 	protected final List<String> path;
 	protected final int hash;
 	protected final String typeHint;
@@ -63,7 +63,7 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 
 	protected boolean valid = true;
 
-	// TODO: Remove both of these, and just do invocations on model's listeners
+	// TODO: Remove these, and just do invocations on model's listeners?
 	protected final ListenerSet<TargetObjectListener> listeners;
 
 	public <I> AbstractTargetObject(ProxyFactory<I> proxyFactory, I proxyInfo,
@@ -73,7 +73,6 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 		this.model = model;
 		listeners.addChained(model.listeners);
 		this.parent = parent;
-		this.completedParent = CompletableFuture.completedFuture(parent);
 		if (parent == null) {
 			this.path = key == null ? List.of() : List.of(key);
 		}
@@ -126,7 +125,7 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 	}
 
 	@Override
-	public <T extends TypedTargetObject<T>> T as(Class<T> iface) {
+	public <T extends TargetObject> T as(Class<T> iface) {
 		return DebuggerObjectModel.requireIface(iface, getProxy(), path);
 	}
 
@@ -236,22 +235,6 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 	@Override
 	public List<String> getPath() {
 		return path;
-	}
-
-	@Override
-	public CompletableFuture<? extends P> fetchParent() {
-		return completedParent;
-	}
-
-	/**
-	 * Get the parent immediately
-	 * 
-	 * Since the parent is fixed and known to the implementation, it can be retrieved immediately.
-	 * 
-	 * @return the parent
-	 */
-	public P getImplParent() {
-		return parent;
 	}
 
 	protected void doInvalidate(TargetObject branch, String reason) {

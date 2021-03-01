@@ -26,17 +26,9 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * the object should just implement it.
  */
 @DebuggerTargetObjectIface("Thread")
-public interface TargetThread<T extends TargetThread<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetThread<Cls> {
-		}
-	}
+public interface TargetThread extends TargetObject {
 
 	String TID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "tid";
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetThread.class;
 
 	@TargetAttributeType(name = TID_ATTRIBUTE_NAME, hidden = true)
 	public default Integer getTid() {

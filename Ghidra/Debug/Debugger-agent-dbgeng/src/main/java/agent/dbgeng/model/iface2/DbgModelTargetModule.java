@@ -23,9 +23,7 @@ import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.*;
 
-public interface DbgModelTargetModule extends //
-		DbgModelTargetObject, //
-		TargetModule<DbgModelTargetModule> {
+public interface DbgModelTargetModule extends DbgModelTargetObject, TargetModule {
 
 	DbgModule getDbgModule();
 

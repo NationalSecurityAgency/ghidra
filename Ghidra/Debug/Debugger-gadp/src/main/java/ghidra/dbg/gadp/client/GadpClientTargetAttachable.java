@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetAttachable;
 
-public interface GadpClientTargetAttachable
-		extends GadpClientTargetObject, TargetAttachable<GadpClientTargetAttachable> {
+public interface GadpClientTargetAttachable extends GadpClientTargetObject, TargetAttachable {
 	// Nothing to add
 }

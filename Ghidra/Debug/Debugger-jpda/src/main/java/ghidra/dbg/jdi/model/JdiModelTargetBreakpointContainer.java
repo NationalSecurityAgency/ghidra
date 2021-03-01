@@ -31,13 +31,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "BreakpointContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetBreakpointSpec.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "BreakpointContainer",
+	elements = { //
+		@TargetElementType(type = JdiModelTargetBreakpointSpec.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl implements
-		TargetBreakpointContainer<JdiModelTargetBreakpointContainer>, JdiEventsListenerAdapter {
+		TargetBreakpointContainer, JdiEventsListenerAdapter {
 
 	protected static final TargetBreakpointKindSet SUPPORTED_KINDS =
 		TargetBreakpointKindSet.of(TargetBreakpointKind.values());

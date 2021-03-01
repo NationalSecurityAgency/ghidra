@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.TargetObject;
 
 public class TestTargetThreadContainer
 		extends DefaultTestTargetObject<TestTargetThread, TestTargetProcess> {
@@ -36,7 +36,7 @@ public class TestTargetThreadContainer
 
 	public void removeThreads(TestTargetThread[] threads) {
 		List<String> indices =
-			Stream.of(threads).map(TargetObjectRef::getIndex).collect(Collectors.toList());
+			Stream.of(threads).map(TargetObject::getIndex).collect(Collectors.toList());
 		changeElements(indices, List.of(), Map.of(), "Test Threads Removed");
 	}
 }

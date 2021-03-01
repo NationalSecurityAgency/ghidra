@@ -18,8 +18,7 @@ package ghidra.dbg.jdi.model.iface1;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetEnvironment;
 
-public interface JdiModelTargetEnvironment<T extends TargetEnvironment<T>>
-		extends JdiModelTargetObject, TargetEnvironment<T> {
+public interface JdiModelTargetEnvironment extends JdiModelTargetObject, TargetEnvironment {
 
 	public void refreshInternal();
 

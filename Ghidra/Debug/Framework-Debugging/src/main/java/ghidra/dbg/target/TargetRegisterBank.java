@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.util.Msg;
@@ -34,15 +33,7 @@ import ghidra.util.Msg;
  * allows reflection of the registers' names and structures.
  */
 @DebuggerTargetObjectIface("RegisterBank")
-public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetRegisterBank<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetRegisterBank.class;
+public interface TargetRegisterBank extends TargetObject {
 
 	String DESCRIPTIONS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "descriptions";
 
@@ -53,8 +44,8 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 	 */
 	@TargetAttributeType(name = DESCRIPTIONS_ATTRIBUTE_NAME)
 	@SuppressWarnings("unchecked")
-	public default TypedTargetObjectRef<? extends TargetRegisterContainer<?>> getDescriptions() {
-		return getTypedRefAttributeNowByName(DESCRIPTIONS_ATTRIBUTE_NAME,
+	public default TargetRegisterContainer getDescriptions() {
+		return getTypedAttributeNowByName(DESCRIPTIONS_ATTRIBUTE_NAME,
 			TargetRegisterContainer.class, null);
 	}
 
@@ -74,7 +65,7 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 	 * @return a future which completes with a name-value map of the values read
 	 */
 	public default CompletableFuture<? extends Map<String, byte[]>> readRegisters(
-			Collection<TargetRegister<?>> registers) {
+			Collection<TargetRegister> registers) {
 		return readRegistersNamed(
 			registers.stream().map(TargetRegister::getIndex).collect(Collectors.toSet()));
 	}
@@ -94,9 +85,9 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 	 * @param values the register-value map to write
 	 * @return a future which completes upon successfully writing all given registers
 	 */
-	public default CompletableFuture<Void> writeRegisters(Map<TargetRegister<?>, byte[]> values) {
+	public default CompletableFuture<Void> writeRegisters(Map<TargetRegister, byte[]> values) {
 		Map<String, byte[]> named = new LinkedHashMap<>();
-		for (Entry<TargetRegister<?>, byte[]> ent : values.entrySet()) {
+		for (Entry<TargetRegister, byte[]> ent : values.entrySet()) {
 			named.put(ent.getKey().getIndex(), ent.getValue());
 		}
 		return writeRegistersNamed(named);
@@ -140,7 +131,7 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 	 * @param register the register to read
 	 * @return a future which completes with the value read
 	 */
-	public default CompletableFuture<byte[]> readRegister(TargetRegister<?> register) {
+	public default CompletableFuture<byte[]> readRegister(TargetRegister register) {
 		return readRegister(register.getIndex());
 	}
 
@@ -152,7 +143,7 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 	 * @param value the value to write
 	 * @return a future which completes upon successfully writing the register
 	 */
-	public default CompletableFuture<Void> writeRegister(TargetRegister<?> register, byte[] value) {
+	public default CompletableFuture<Void> writeRegister(TargetRegister register, byte[] value) {
 		return writeRegistersNamed(Map.of(register.getIndex(), value));
 	}
 
@@ -221,7 +212,7 @@ public interface TargetRegisterBank<T extends TargetRegisterBank<T>> extends Typ
 		 * @param bank this register bank object
 		 * @param updates a name-value map of updated registers
 		 */
-		default void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
+		default void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
 		}
 	}
 }

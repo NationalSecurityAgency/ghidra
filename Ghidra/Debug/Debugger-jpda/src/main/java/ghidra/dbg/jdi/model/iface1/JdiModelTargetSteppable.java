@@ -27,8 +27,7 @@ import ghidra.dbg.target.TargetSteppable;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetSteppable<T extends TargetSteppable<T>>
-		extends JdiModelTargetObject, TargetSteppable<T> {
+public interface JdiModelTargetSteppable extends JdiModelTargetObject, TargetSteppable {
 
 	@Override
 	CompletableFuture<Void> step(TargetStepKind kind);

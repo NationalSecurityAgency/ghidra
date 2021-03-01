@@ -21,13 +21,12 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetModelRoot;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 
 public class TestTargetSession extends DefaultTargetModelRoot
-		implements TestTargetObject, TargetFocusScope<TestTargetSession>,
-		TargetEventScope<TestTargetSession>, TargetLauncher<TestTargetSession> {
+		implements TestTargetObject, TargetFocusScope, TargetEventScope, TargetLauncher {
+
 	public final TestTargetEnvironment environment;
 	public final TestTargetProcessContainer processes;
 	public final TestTargetInterpreter interpreter;
@@ -58,7 +57,7 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	}
 
 	@Override
-	public CompletableFuture<Void> requestFocus(TargetObjectRef obj) {
+	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return getModel().future(null).thenAccept(__ -> {
 			changeAttributes(List.of(), List.of(), Map.of(
 				FOCUS_ATTRIBUTE_NAME, obj //

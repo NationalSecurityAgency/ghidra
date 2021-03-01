@@ -19,11 +19,11 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class TestTargetRegisterBankInThread extends
-		AbstractTestTargetRegisterBank<TestTargetRegisterBankInThread, TestTargetThread> {
+		AbstractTestTargetRegisterBank<TestTargetThread> {
 
 	public TestTargetRegisterBankInThread(TestTargetThread parent) {
 		super(parent, "RegisterBank", "RegisterBank",
-			parent.getImplParent().getImplParent().regs);
+			parent.getParent().getParent().regs);
 	}
 
 	@Override

@@ -25,14 +25,17 @@ import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "RegisterDescriptor", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "RegisterDescriptor",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetRegister
 		extends DefaultTargetObject<TargetObject, GdbModelTargetRegisterContainer>
-		implements TargetRegister<GdbModelTargetRegister> {
+		implements TargetRegister {
 
 	protected static String indexRegister(GdbRegister register) {
 		String name = register.getName();

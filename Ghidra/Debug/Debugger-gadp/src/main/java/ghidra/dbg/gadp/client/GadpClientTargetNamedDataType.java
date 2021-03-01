@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetNamedDataType;
 
-public interface GadpClientTargetNamedDataType
-		extends GadpClientTargetObject, TargetNamedDataType<GadpClientTargetNamedDataType> {
+public interface GadpClientTargetNamedDataType extends GadpClientTargetObject, TargetNamedDataType {
 	// Nothing to add
 }

@@ -22,8 +22,6 @@ import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbManager.ExecSuffix;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerModelNoSuchPathException;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.*;
@@ -40,18 +38,10 @@ import ghidra.util.Msg;
 	attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetInferior
-		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer> implements //
-		TargetProcess<GdbModelTargetInferior>,  //
-		TargetAggregate, //
-		TargetExecutionStateful<GdbModelTargetInferior>, //
-		TargetAttacher<GdbModelTargetInferior>, //
-		TargetDeletable<GdbModelTargetInferior>, //
-		TargetDetachable<GdbModelTargetInferior>, //
-		TargetKillable<GdbModelTargetInferior>, //
-		TargetCmdLineLauncher<GdbModelTargetInferior>, //
-		TargetResumable<GdbModelTargetInferior>, //
-		TargetSteppable<GdbModelTargetInferior>, //
-		GdbModelSelectableObject {
+		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer>
+		implements TargetProcess, TargetAggregate, TargetExecutionStateful, TargetAttacher,
+		TargetDeletable, TargetDetachable, TargetKillable, TargetCmdLineLauncher, TargetResumable,
+		TargetSteppable, GdbModelSelectableObject {
 
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
 
@@ -186,16 +176,17 @@ public class GdbModelTargetInferior
 	}
 
 	@Override
-	public CompletableFuture<Void> attach(TypedTargetObjectRef<? extends TargetAttachable<?>> ref) {
-		impl.assertMine(TargetObjectRef.class, ref);
+	public CompletableFuture<Void> attach(TargetAttachable attachable) {
+		impl.assertMine(TargetObject.class, attachable);
 		// NOTE: These can change at any time. Just use the path to derive the target PID
-		if (!Objects.equals(PathUtils.parent(ref.getPath()), impl.session.available.getPath())) {
+		if (!Objects.equals(PathUtils.parent(attachable.getPath()),
+			impl.session.available.getPath())) {
 			throw new DebuggerModelTypeException(
 				"Target of attach must be a child of " + impl.session.available.getPath());
 		}
 		long pid;
 		try {
-			pid = Long.parseLong(ref.getIndex());
+			pid = Long.parseLong(attachable.getIndex());
 		}
 		catch (IllegalArgumentException e) {
 			throw new DebuggerModelNoSuchPathException("Badly-formatted PID", e);

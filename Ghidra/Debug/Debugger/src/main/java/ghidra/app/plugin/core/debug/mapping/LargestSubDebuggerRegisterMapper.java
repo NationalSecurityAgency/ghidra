@@ -31,7 +31,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	protected Map<Register, TreeSet<Register>> present = new HashMap<>();
 
 	public LargestSubDebuggerRegisterMapper(CompilerSpec cSpec,
-			TargetRegisterContainer<?> targetRegContainer, boolean caseSensitive) {
+			TargetRegisterContainer targetRegContainer, boolean caseSensitive) {
 		super(cSpec, targetRegContainer, caseSensitive);
 
 		for (Register lReg : cSpec.getLanguage().getRegisters()) {
@@ -45,7 +45,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	protected synchronized Register considerRegister(TargetRegister<?> tReg) {
+	protected synchronized Register considerRegister(TargetRegister tReg) {
 		Register lReg = super.considerRegister(tReg);
 		if (lReg == null) {
 			return null;
@@ -58,7 +58,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	protected synchronized Register removeRegister(TargetRegister<?> tReg) {
+	protected synchronized Register removeRegister(TargetRegister tReg) {
 		Register lReg = super.removeRegister(tReg);
 		//synchronized (present) {
 		if (lReg == null) {
@@ -95,7 +95,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 		}
 		Register lReg = subs.last(); // largest
 		RegisterValue subValue = registerValue.getRegisterValue(lReg);
-		TargetRegister<?> tReg = targetRegs.get(normalizeName(lReg.getName()));
+		TargetRegister tReg = targetRegs.get(normalizeName(lReg.getName()));
 		if (tReg == null) {
 			return null;
 		}
@@ -104,7 +104,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	public synchronized TargetRegister<?> traceToTarget(Register lbReg) {
+	public synchronized TargetRegister traceToTarget(Register lbReg) {
 		TreeSet<Register> subs = present.get(lbReg);
 		if (subs == null) { // Not a base reg, or not known
 			return null;
@@ -158,12 +158,12 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	public RegisterValue targetToTrace(TargetRegister<?> tReg, byte[] value) {
+	public RegisterValue targetToTrace(TargetRegister tReg, byte[] value) {
 		return targetToTrace(tReg.getIndex(), value);
 	}
 
 	@Override
-	public synchronized Register targetToTrace(TargetRegister<?> tReg) {
+	public synchronized Register targetToTrace(TargetRegister tReg) {
 		Register lReg = languageRegs.get(normalizeName(tReg.getIndex()));
 		if (lReg == null) {
 			return null;

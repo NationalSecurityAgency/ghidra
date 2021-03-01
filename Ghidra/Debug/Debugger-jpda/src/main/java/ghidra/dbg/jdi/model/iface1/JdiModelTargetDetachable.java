@@ -27,8 +27,7 @@ import ghidra.dbg.target.TargetDetachable;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetDetachable<T extends TargetDetachable<T>>
-		extends JdiModelTargetObject, TargetDetachable<T> {
+public interface JdiModelTargetDetachable extends JdiModelTargetObject, TargetDetachable {
 
 	@Override
 	public CompletableFuture<Void> detach();

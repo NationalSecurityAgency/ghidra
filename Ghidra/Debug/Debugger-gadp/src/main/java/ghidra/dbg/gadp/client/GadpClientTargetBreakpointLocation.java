@@ -18,7 +18,6 @@ package ghidra.dbg.gadp.client;
 import ghidra.dbg.target.TargetBreakpointLocation;
 
 public interface GadpClientTargetBreakpointLocation
-		extends GadpClientTargetObject,
-		TargetBreakpointLocation<GadpClientTargetBreakpointLocation> {
-
+		extends GadpClientTargetObject, TargetBreakpointLocation {
+	// Nothing to add
 }

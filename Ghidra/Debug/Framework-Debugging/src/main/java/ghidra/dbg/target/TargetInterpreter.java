@@ -26,16 +26,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * A command interpreter, usually that of a native debugger
  */
 @DebuggerTargetObjectIface("Interpreter")
-public interface TargetInterpreter<T extends TargetInterpreter<T>> extends TypedTargetObject<T> {
-
-	enum Private {
-		;
-		private abstract class Cls implements TargetInterpreter<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetInterpreter.class;
+public interface TargetInterpreter extends TargetObject {
 
 	String PROMPT_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "prompt";
 
@@ -104,7 +95,7 @@ public interface TargetInterpreter<T extends TargetInterpreter<T>> extends Typed
 		 * @param interpreter the interpreter whose prompt changed
 		 * @param prompt the new prompt
 		 */
-		default void promptChanged(TargetInterpreter<?> interpreter, String prompt) {
+		default void promptChanged(TargetInterpreter interpreter, String prompt) {
 		}
 	}
 }

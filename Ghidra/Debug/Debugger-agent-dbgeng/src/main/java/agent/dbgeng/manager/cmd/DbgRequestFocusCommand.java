@@ -17,29 +17,29 @@ package agent.dbgeng.manager.cmd;
 
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
-import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.TargetObject;
 
 public class DbgRequestFocusCommand extends AbstractDbgCommand<Void> {
 
-	private DbgModelTargetFocusScope<?> scope;
-	private TargetObjectRef ref;
+	private DbgModelTargetFocusScope scope;
+	private TargetObject obj;
 
 	/**
 	 * Set focus for the current ref
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param scope in most cases the root object (must be an ancestor for the ref)
-	 * @param ref the desired focus
+	 * @param obj the desired focus
 	 */
-	public DbgRequestFocusCommand(DbgManagerImpl manager, DbgModelTargetFocusScope<?> scope,
-			TargetObjectRef ref) {
+	public DbgRequestFocusCommand(DbgManagerImpl manager, DbgModelTargetFocusScope scope,
+			TargetObject obj) {
 		super(manager);
 		this.scope = scope;
-		this.ref = ref;
+		this.obj = obj;
 	}
 
 	@Override
 	public void invoke() {
-		scope.doRequestFocus(ref);
+		scope.doRequestFocus(obj);
 	}
 }

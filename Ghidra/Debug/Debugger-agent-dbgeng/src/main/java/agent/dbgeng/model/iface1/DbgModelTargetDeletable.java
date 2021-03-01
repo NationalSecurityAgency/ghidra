@@ -27,8 +27,7 @@ import ghidra.dbg.target.TargetDeletable;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetDeletable<T extends TargetDeletable<T>>
-		extends DbgModelTargetObject, TargetDeletable<T> {
+public interface DbgModelTargetDeletable extends DbgModelTargetObject, TargetDeletable {
 
 	@Override
 	public CompletableFuture<Void> delete();

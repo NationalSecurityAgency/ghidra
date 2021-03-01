@@ -27,9 +27,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.target.TargetFocusScope;
-import ghidra.dbg.target.TargetInterpreter;
+import ghidra.dbg.target.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -38,28 +36,27 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 
-@PluginInfo( //
-		shortDescription = "Debugger objects manager", //
-		description = "GUI to manage connections to external debuggers and trace recording", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { //
-			ProgramActivatedPluginEvent.class, // for default launch executable path
-			ProgramOpenedPluginEvent.class, //
-			ProgramSelectionPluginEvent.class, // 
-			TraceActivatedPluginEvent.class, //
-			TraceOpenedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-			ModelActivatedPluginEvent.class, //
-		}, //
-		servicesProvided = { ObjectUpdateService.class }, //
-		servicesRequired = { //
-			DebuggerTraceManagerService.class, //
-			DebuggerModelService.class, //
-			DebuggerInterpreterService.class, //
-		} //
-)
+@PluginInfo(
+	shortDescription = "Debugger objects manager",
+	description = "GUI to manage connections to external debuggers and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramActivatedPluginEvent.class, // for default launch executable path
+		ProgramOpenedPluginEvent.class,
+		ProgramSelectionPluginEvent.class,
+		TraceActivatedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+		ModelActivatedPluginEvent.class,
+	},
+	servicesProvided = { ObjectUpdateService.class },
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+		DebuggerModelService.class,
+		DebuggerInterpreterService.class,
+	})
 public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		implements ObjectUpdateService, CollectionChangeListener<DebuggerObjectModel> {
 
@@ -161,7 +158,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		SwingUtilities.invokeLater(r);
 	}
 
-	public void showConsole(TargetInterpreter<?> interpreter) {
+	public void showConsole(TargetInterpreter interpreter) {
 		Swing.runIfSwingOrRunLater(() -> {
 			interpreterService.showConsole(interpreter);
 		});
@@ -241,7 +238,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		System.err.println("modelModified " + model);
 	}
 
-	public void setFocus(TargetFocusScope<?> object, TargetObjectRef focused) {
+	public void setFocus(TargetFocusScope object, TargetObject focused) {
 		for (DebuggerObjectsProvider p : providers) {
 			p.setFocus(object, focused);
 		}

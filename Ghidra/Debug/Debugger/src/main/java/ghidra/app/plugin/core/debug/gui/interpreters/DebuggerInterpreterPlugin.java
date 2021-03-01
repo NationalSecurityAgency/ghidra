@@ -57,7 +57,7 @@ public class DebuggerInterpreterPlugin extends AbstractDebuggerPlugin
 	}
 
 	@Override
-	public DebuggerInterpreterConnection showConsole(TargetConsole<?> targetConsole) {
+	public DebuggerInterpreterConnection showConsole(TargetConsole targetConsole) {
 		DebuggerInterpreterConnection conn;
 		synchronized (connections) {
 			conn = connections.computeIfAbsent(targetConsole, c -> createConnection(targetConsole));
@@ -67,7 +67,7 @@ public class DebuggerInterpreterPlugin extends AbstractDebuggerPlugin
 	}
 
 	@Override
-	public DebuggerInterpreterConnection showConsole(TargetInterpreter<?> targetInterpreter) {
+	public DebuggerInterpreterConnection showConsole(TargetInterpreter targetInterpreter) {
 		DebuggerInterpreterConnection conn;
 		synchronized (connections) {
 			conn = connections.computeIfAbsent(targetInterpreter,
@@ -101,7 +101,7 @@ public class DebuggerInterpreterPlugin extends AbstractDebuggerPlugin
 		connection.runInBackground();
 	}
 
-	protected DebuggerInterpreterConnection createConnection(TargetConsole<?> targetConsole) {
+	protected DebuggerInterpreterConnection createConnection(TargetConsole targetConsole) {
 		DebuggerWrappedConsoleConnection conn =
 			new DebuggerWrappedConsoleConnection(this, targetConsole);
 		createConsole(conn);
@@ -109,7 +109,7 @@ public class DebuggerInterpreterPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected DebuggerInterpreterConnection createConnection(
-			TargetInterpreter<?> targetInterpreter) {
+			TargetInterpreter targetInterpreter) {
 		DebuggerWrappedInterpreterConnection conn =
 			new DebuggerWrappedInterpreterConnection(this, targetInterpreter);
 		createConsole(conn);

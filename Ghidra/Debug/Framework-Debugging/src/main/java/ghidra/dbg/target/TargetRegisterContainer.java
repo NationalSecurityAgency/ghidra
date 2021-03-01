@@ -25,18 +25,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * A container of register descriptions
  */
 @DebuggerTargetObjectIface("RegisterContainer")
-public interface TargetRegisterContainer<T extends TargetRegisterContainer<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetRegisterContainer<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetRegisterContainer.class;
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<TargetRegisterContainer<?>> wclass = (Class) TargetRegisterContainer.class;
+public interface TargetRegisterContainer extends TargetObject {
 
 	/**
 	 * Get the register descriptions in this container
@@ -51,7 +40,7 @@ public interface TargetRegisterContainer<T extends TargetRegisterContainer<T>>
 	 *           Overriding that behavior is not yet supported.
 	 * @return the register descriptions
 	 */
-	default CompletableFuture<? extends Collection<? extends TargetRegister<?>>> getRegisters() {
-		return DebugModelConventions.collectSuccessors(this, TargetRegister.tclass);
+	default CompletableFuture<? extends Collection<? extends TargetRegister>> getRegisters() {
+		return DebugModelConventions.collectSuccessors(this, TargetRegister.class);
 	}
 }

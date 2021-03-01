@@ -28,8 +28,7 @@ import ghidra.dbg.target.TargetKillable;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetKillable<T extends TargetKillable<T>>
-		extends DbgModelTargetObject, TargetKillable<T> {
+public interface DbgModelTargetKillable extends DbgModelTargetObject, TargetKillable {
 
 	@Override
 	public default CompletableFuture<Void> kill() {

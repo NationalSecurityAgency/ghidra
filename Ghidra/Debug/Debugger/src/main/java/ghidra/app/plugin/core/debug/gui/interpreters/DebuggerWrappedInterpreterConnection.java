@@ -21,10 +21,10 @@ import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.dbg.target.TargetInterpreter;
 
 public class DebuggerWrappedInterpreterConnection
-		extends AbstractDebuggerWrappedConsoleConnection<TargetInterpreter<?>> {
+		extends AbstractDebuggerWrappedConsoleConnection<TargetInterpreter> {
 
 	public DebuggerWrappedInterpreterConnection(DebuggerInterpreterPlugin plugin,
-			TargetInterpreter<?> interpreter) {
+			TargetInterpreter interpreter) {
 		super(plugin, interpreter);
 	}
 

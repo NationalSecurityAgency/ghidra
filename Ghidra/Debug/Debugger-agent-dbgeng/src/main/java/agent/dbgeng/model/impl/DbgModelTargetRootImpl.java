@@ -32,26 +32,26 @@ import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(
 	name = "Debugger",
-	elements = { //
-		@TargetElementType(type = Void.class) //
+	elements = {
+		@TargetElementType(type = Void.class)
 	},
-	attributes = { //
+	attributes = {
 		@TargetAttributeType(
 			name = "Available",
 			type = DbgModelTargetAvailableContainerImpl.class,
 			required = true,
-			fixed = true), //
+			fixed = true),
 		@TargetAttributeType(
 			name = "Connectors",
 			type = DbgModelTargetConnectorContainerImpl.class,
 			required = true,
-			fixed = true), //
+			fixed = true),
 		@TargetAttributeType(
 			name = "Sessions",
 			type = DbgModelTargetSessionContainerImpl.class,
 			required = true,
-			fixed = true), //
-		@TargetAttributeType(type = Void.class) //
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
 	})
 public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 		implements DbgModelTargetRoot {
@@ -152,8 +152,8 @@ public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
 
 }

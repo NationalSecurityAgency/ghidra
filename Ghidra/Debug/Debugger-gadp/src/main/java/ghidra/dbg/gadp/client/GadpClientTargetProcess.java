@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetProcess;
 
-public interface GadpClientTargetProcess
-		extends GadpClientTargetObject, TargetProcess<GadpClientTargetProcess> {
+public interface GadpClientTargetProcess extends GadpClientTargetObject, TargetProcess {
 	// Nothing to add
 }

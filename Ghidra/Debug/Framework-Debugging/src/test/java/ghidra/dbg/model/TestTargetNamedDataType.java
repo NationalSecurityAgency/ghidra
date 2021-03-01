@@ -21,9 +21,9 @@ import java.util.Map;
 import ghidra.dbg.target.TargetNamedDataType;
 import ghidra.dbg.util.PathUtils;
 
-public abstract class TestTargetNamedDataType<T extends TestTargetNamedDataType<T, M>, M extends TestTargetDataTypeMember>
+public abstract class TestTargetNamedDataType<M extends TestTargetDataTypeMember>
 		extends DefaultTestTargetObject<M, TestTargetDataTypeNamespace>
-		implements TargetNamedDataType<T> {
+		implements TargetNamedDataType {
 
 	public TestTargetNamedDataType(TestTargetDataTypeNamespace parent, String name,
 			NamedDataTypeKind kind, String typeHint) {

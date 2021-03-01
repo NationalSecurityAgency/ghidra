@@ -20,7 +20,7 @@ import java.util.List;
 import ghidra.dbg.attributes.TargetDataType;
 
 public class TestTargetTypedefDataType
-		extends TestTargetNamedDataType<TestTargetTypedefDataType, TestTargetTypedefDef> {
+		extends TestTargetNamedDataType<TestTargetTypedefDef> {
 	public TestTargetTypedefDataType(TestTargetDataTypeNamespace parent, String name,
 			TargetDataType dataType) {
 		super(parent, name, NamedDataTypeKind.TYPEDEF, "TypedefType");

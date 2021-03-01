@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetMethod;
 
-public interface GadpClientTargetMethod
-		extends GadpClientTargetObject, TargetMethod<GadpClientTargetMethod> {
+public interface GadpClientTargetMethod extends GadpClientTargetObject, TargetMethod {
 	@Override
 	default CompletableFuture<Object> invoke(Map<String, ?> arguments) {
 		getDelegate().assertValid();

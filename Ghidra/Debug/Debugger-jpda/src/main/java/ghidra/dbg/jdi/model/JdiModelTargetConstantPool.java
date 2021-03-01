@@ -24,14 +24,18 @@ import ghidra.dbg.target.TargetSection;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 
-@TargetObjectSchemaInfo(name = "ConstantPool", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ConstantPool",
+	elements = { //
+		@TargetElementType(type = Void.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl implements //
 		//TargetMemory<JdiModelTargetSection>,  
-		TargetMemoryRegion<JdiModelTargetConstantPool>, TargetSection<JdiModelTargetConstantPool> {
+		TargetMemoryRegion, TargetSection {
 
 	private AddressRange range;
 	private byte[] pool;

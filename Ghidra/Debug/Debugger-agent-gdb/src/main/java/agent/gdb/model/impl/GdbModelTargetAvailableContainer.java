@@ -26,9 +26,12 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "AvailableContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "AvailableContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetAvailableContainer
 		extends DefaultTargetObject<GdbModelTargetAttachable, GdbModelTargetSession> {
 	public static final String NAME = "Available";

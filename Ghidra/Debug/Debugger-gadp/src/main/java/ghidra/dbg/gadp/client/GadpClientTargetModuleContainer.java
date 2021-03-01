@@ -18,6 +18,6 @@ package ghidra.dbg.gadp.client;
 import ghidra.dbg.target.TargetModuleContainer;
 
 public interface GadpClientTargetModuleContainer
-		extends GadpClientTargetObject, TargetModuleContainer<GadpClientTargetModuleContainer> {
+		extends GadpClientTargetObject, TargetModuleContainer {
 	// Nothing to add
 }

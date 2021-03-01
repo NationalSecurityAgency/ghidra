@@ -336,8 +336,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			getModel().fetchModelValue(objPath).handle(seq::next);
 		}, TypeSpec.cls(Object.class)).then((obj, seq) -> {
 			if (obj instanceof DbgModelTargetExecutionStateful) {
-				DbgModelTargetExecutionStateful<?> stateful =
-					(DbgModelTargetExecutionStateful<?>) obj;
+				DbgModelTargetExecutionStateful stateful =
+					(DbgModelTargetExecutionStateful) obj;
 				TargetExecutionState execState = stateful.convertState(state);
 				stateful.setExecutionState(execState, reason);
 			}
@@ -379,7 +379,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 					}
 
 					listeners.fire(TargetBreakpointListener.class)
-							.breakpointHit((TargetBreakpointContainer<?>) bpt.getParent(),
+							.breakpointHit((TargetBreakpointContainer) bpt.getParent(),
 								getParentProcess(), null, bpt, bpt);
 					bpt.breakpointHit();
 				});
@@ -492,13 +492,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
 
 	@Override
-	public void setAccessibility(TargetAccessibility accessibility) {
-		this.accessibility = accessibility;
+	public void setAccessible(boolean accessible) {
+		this.accessible = accessible;
 	}
-
 }

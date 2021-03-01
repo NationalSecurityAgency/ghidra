@@ -23,8 +23,8 @@ import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.program.model.address.Address;
 
-public abstract class AbstractTestTargetRegisterBank<T extends AbstractTestTargetRegisterBank<T, P>, P extends TestTargetObject>
-		extends DefaultTestTargetObject<TestTargetObject, P> implements TargetRegisterBank<T> {
+public abstract class AbstractTestTargetRegisterBank<P extends TestTargetObject>
+		extends DefaultTestTargetObject<TestTargetObject, P> implements TargetRegisterBank {
 
 	protected final TestTargetRegisterContainer regs;
 	public final Map<String, byte[]> regVals = new HashMap<>();
@@ -85,7 +85,7 @@ public abstract class AbstractTestTargetRegisterBank<T extends AbstractTestTarge
 		return future;
 	}
 
-	public void setFromBank(T bank) {
+	public void setFromBank(AbstractTestTargetRegisterBank<?> bank) {
 		//Map<String, byte[]> updates = new HashMap<>();
 		//updates.putAll(bank.regVals);
 		regVals.putAll(bank.regVals);

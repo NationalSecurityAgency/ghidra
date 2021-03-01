@@ -15,9 +15,7 @@
  */
 package ghidra.dbg.target;
 
-import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.PathUtils;
 
@@ -30,16 +28,7 @@ import ghidra.dbg.util.PathUtils;
  * descriptions typically apply to the entire platform, and so can be presented just once.
  */
 @DebuggerTargetObjectIface("Register")
-public interface TargetRegister<T extends TargetRegister<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetRegister<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetRegister.class;
-	TypeSpec<TargetRegister<?>> TYPE = TypeSpec.auto();
+public interface TargetRegister extends TargetObject {
 
 	String CONTAINER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "container";
 	String LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
@@ -55,10 +44,14 @@ public interface TargetRegister<T extends TargetRegister<T>> extends TypedTarget
 	 * 
 	 * @return a reference to the container
 	 */
-	@TargetAttributeType(name = CONTAINER_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
-	default TypedTargetObjectRef<? extends TargetRegisterContainer<?>> getContainer() {
-		return getTypedRefAttributeNowByName(CONTAINER_ATTRIBUTE_NAME,
-			TargetRegisterContainer.tclass, null);
+	@TargetAttributeType(
+		name = CONTAINER_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
+	default TargetRegisterContainer getContainer() {
+		return getTypedAttributeNowByName(CONTAINER_ATTRIBUTE_NAME, TargetRegisterContainer.class,
+			null);
 	}
 
 	/**
@@ -66,7 +59,11 @@ public interface TargetRegister<T extends TargetRegister<T>> extends TypedTarget
 	 * 
 	 * @return the length of the register
 	 */
-	@TargetAttributeType(name = LENGTH_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = LENGTH_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	default int getBitLength() {
 		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}

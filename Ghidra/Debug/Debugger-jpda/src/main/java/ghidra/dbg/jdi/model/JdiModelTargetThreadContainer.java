@@ -30,14 +30,17 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "ThreadContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetThread.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
-public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl implements //		 
-		JdiModelTargetEventScope<JdiModelTargetThreadContainer>, //
-		JdiEventsListenerAdapter {
+@TargetObjectSchemaInfo(
+	name = "ThreadContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetThread.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
+public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl
+		implements JdiModelTargetEventScope, JdiEventsListenerAdapter {
 
 	private List<ThreadReference> threads;
 

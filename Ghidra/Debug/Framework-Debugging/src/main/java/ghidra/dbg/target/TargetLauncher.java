@@ -31,15 +31,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * The targets this launcher creates ought to appear in its successors.
  */
 @DebuggerTargetObjectIface("Launcher")
-public interface TargetLauncher<T extends TargetLauncher<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetLauncher<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetLauncher.class;
+public interface TargetLauncher extends TargetObject {
 
 	/**
 	 * An interface which provides default implementations for command-line launchers
@@ -53,7 +45,7 @@ public interface TargetLauncher<T extends TargetLauncher<T>> extends TypedTarget
 	 * For the sake of parameter marshalling, the implementation must still set
 	 * {@link TargetMethod#PARAMETERS_ATTRIBUTE_NAME} explicitly, usually in its constructor.
 	 */
-	interface TargetCmdLineLauncher<T extends TargetLauncher<T>> extends TargetLauncher<T> {
+	interface TargetCmdLineLauncher extends TargetLauncher {
 		String CMDLINE_ARGS_NAME = "args";
 
 		/**
@@ -131,7 +123,10 @@ public interface TargetLauncher<T extends TargetLauncher<T>> extends TypedTarget
 		}
 	}
 
-	@TargetAttributeType(name = TargetMethod.PARAMETERS_ATTRIBUTE_NAME, required = true, hidden = true)
+	@TargetAttributeType(
+		name = TargetMethod.PARAMETERS_ATTRIBUTE_NAME,
+		required = true,
+		hidden = true)
 	default public TargetParameterMap getParameters() {
 		return TargetMethod.getParameters(this);
 	}

@@ -27,12 +27,15 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "SymbolContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "SymbolContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetSymbolContainer
 		extends DefaultTargetObject<GdbModelTargetSymbol, GdbModelTargetModule>
-		implements TargetSymbolNamespace<GdbModelTargetSymbolContainer> {
+		implements TargetSymbolNamespace {
 	public static final String NAME = "Symbols";
 
 	protected final GdbModelImpl impl;

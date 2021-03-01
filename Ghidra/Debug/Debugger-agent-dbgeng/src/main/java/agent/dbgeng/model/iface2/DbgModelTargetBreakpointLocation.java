@@ -15,17 +15,17 @@
  */
 package agent.dbgeng.model.iface2;
 
-import ghidra.dbg.attributes.TargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.program.model.address.Address;
 
 public interface DbgModelTargetBreakpointLocation
-		extends DbgModelTargetObject, TargetBreakpointLocation<DbgModelTargetBreakpointLocation> {
+		extends DbgModelTargetObject, TargetBreakpointLocation {
 
 	@Override
 	public Address getAddress();
 
 	@Override
-	public TargetObjectRefList<?> getAffects();
+	public TargetObjectList<?> getAffects();
 
 }

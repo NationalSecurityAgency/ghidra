@@ -23,7 +23,6 @@ import ghidra.dbg.target.TargetMethod;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetMethod<T extends TargetMethod<T>>
-		extends DbgModelTargetObject, TargetMethod<T> {
+public interface DbgModelTargetMethod extends DbgModelTargetObject, TargetMethod {
 
 }

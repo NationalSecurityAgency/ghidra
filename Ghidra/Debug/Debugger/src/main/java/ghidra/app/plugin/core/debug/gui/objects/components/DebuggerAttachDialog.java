@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_GENERAL;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.tableRowActivationAction;
 
 import java.awt.BorderLayout;
 import java.util.List;
@@ -34,7 +35,6 @@ import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsPlugin;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.*;
 import ghidra.util.MessageType;
 import ghidra.util.Msg;
@@ -64,10 +64,10 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 	protected RefreshAction actionRefresh;
 	protected JButton attachButton;
 
-	private final RowObjectTableModel<TargetAttachable<? extends Object>> processes =
+	private final RowObjectTableModel<TargetAttachable> processes =
 		new DefaultEnumeratedColumnTableModel<>("Attachables",
 			AttachableProcessesTableColumns.class);
-	protected TargetAttacher<? extends Object> attacher;
+	protected TargetAttacher attacher;
 	private GTable processTable;
 
 	public DebuggerAttachDialog(DebuggerObjectsProvider provider) {
@@ -90,7 +90,7 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		panel.add(new JScrollPane(processTable));
 		processTable.setAutoLookupColumn(AttachableProcessesTableColumns.NAME.ordinal());
 
-		GhidraTableFilterPanel<TargetAttachable<? extends Object>> filterPanel =
+		GhidraTableFilterPanel<TargetAttachable> filterPanel =
 			new GhidraTableFilterPanel<>(processTable, processes);
 		panel.add(filterPanel, BorderLayout.SOUTH);
 
@@ -115,8 +115,7 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 	}
 
 	protected void attach() {
-		TargetAttachable<? extends Object> proc =
-			processes.getRowObject(processTable.getSelectedRow());
+		TargetAttachable proc = processes.getRowObject(processTable.getSelectedRow());
 		if (proc == null) {
 			return;
 		}
@@ -131,7 +130,7 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		});
 	}
 
-	public long getPid(TargetAttachable<? extends Object> proc) {
+	public long getPid(TargetAttachable proc) {
 		String name = proc.getName();
 		name = name.substring(1, name.length() - 1);
 		long pid = Long.parseLong(name, 16);
@@ -148,14 +147,13 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		}, available).then(seq -> {
 			available.get()
 					.fetchElements()
-					.thenCompose(DebugModelConventions::fetchAll)
 					.handle(seq::next);
 		}, procs).then(seq -> {
-			List<TargetAttachable<? extends Object>> modelData = processes.getModelData();
+			List<TargetAttachable> modelData = processes.getModelData();
 			modelData.clear();
 			for (Object p : procs.get().values()) {
 				if (p instanceof TargetAttachable) {
-					modelData.add((TargetAttachable<? extends Object>) p);
+					modelData.add((TargetAttachable) p);
 				}
 			}
 			processes.fireTableDataChanged(); // This may not be most efficient.
@@ -168,7 +166,7 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		});
 	}
 
-	public void setAttacher(TargetAttacher<?> attacher) {
+	public void setAttacher(TargetAttacher attacher) {
 		this.attacher = attacher;
 	}
 

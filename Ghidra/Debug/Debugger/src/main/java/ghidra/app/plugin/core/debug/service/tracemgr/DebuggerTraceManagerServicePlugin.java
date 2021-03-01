@@ -36,9 +36,7 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.async.AsyncReference;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.target.TargetStackFrame;
-import ghidra.dbg.target.TargetThread;
+import ghidra.dbg.target.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.main.DataTreeDialog;
@@ -63,27 +61,26 @@ import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
-@PluginInfo( //
-	shortDescription = "Debugger Trace View Management Plugin", //
-	description = "Manages UI Components, Wrappers, Focus, etc.", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsProduced = { //
-		TraceActivatedPluginEvent.class, //
-	}, //
-	eventsConsumed = { //
-		TraceActivatedPluginEvent.class, //
-		TraceClosedPluginEvent.class, //
-		ModelObjectFocusedPluginEvent.class, //
-		TraceRecorderAdvancedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-	}, //
-	servicesProvided = { //
-		DebuggerTraceManagerService.class, //
-	} //
-)
+@PluginInfo(
+	shortDescription = "Debugger Trace View Management Plugin",
+	description = "Manages UI Components, Wrappers, Focus, etc.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsProduced = {
+		TraceActivatedPluginEvent.class,
+	},
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+		ModelObjectFocusedPluginEvent.class,
+		TraceRecorderAdvancedPluginEvent.class,
+	},
+	servicesRequired = {
+	},
+	servicesProvided = {
+		DebuggerTraceManagerService.class,
+	})
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER =
@@ -163,7 +160,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private final ForRecordersListener forRecordersListener = new ForRecordersListener();
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-	protected TargetObjectRef curRef;
+	protected TargetObject curObj;
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> autoActivatePresent = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
@@ -396,11 +393,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return false;
 	}
 
-	protected TraceThread threadFromTargetFocus(TraceRecorder recorder, TargetObjectRef focus) {
+	protected TraceThread threadFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
 		return focus == null ? null : recorder.getTraceThreadForSuccessor(focus);
 	}
 
-	protected TraceStackFrame frameFromTargetFocus(TraceRecorder recorder, TargetObjectRef focus) {
+	protected TraceStackFrame frameFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
 		return focus == null ? null : recorder.getTraceStackFrameForSuccessor(focus);
 	}
 
@@ -422,7 +419,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		// Note: override recorder with that known to service
 		TraceRecorder recorder = computeRecorder(trace);
-		TargetObjectRef focus = recorder == null ? null : recorder.getFocus();
+		TargetObject focus = recorder == null ? null : recorder.getFocus();
 		TraceThread thread = coordinates.getThread();
 		if (thread == null) {
 			if (supportsFocus(recorder)) {
@@ -528,8 +525,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		tool.contextChanged(null);
 	}
 
-	protected boolean doModelObjectFocused(TargetObjectRef ref, boolean requirePresent) {
-		curRef = ref;
+	protected boolean doModelObjectFocused(TargetObject obj, boolean requirePresent) {
+		curObj = obj;
 		if (!synchronizeFocus.get()) {
 			return false;
 		}
@@ -547,7 +544,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		 * switch.
 		 */
 
-		TraceRecorder recorder = modelService.getRecorderForSuccessor(ref);
+		TraceRecorder recorder = modelService.getRecorderForSuccessor(obj);
 		if (recorder == null) {
 			return false;
 		}
@@ -557,10 +554,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return false;
 			}
 		}
-		TraceThread thread = threadFromTargetFocus(recorder, ref);
+		TraceThread thread = threadFromTargetFocus(recorder, obj);
 		long snap = recorder.getSnap();
 		String ticks = "";
-		TraceStackFrame traceFrame = frameFromTargetFocus(recorder, ref);
+		TraceStackFrame traceFrame = frameFromTargetFocus(recorder, obj);
 		Integer frame = traceFrame == null ? null : traceFrame.getLevel();
 		activateNoFocus(DebuggerCoordinates.all(trace, recorder, thread, null, snap, ticks, frame));
 		return true;
@@ -613,7 +610,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		else if (event instanceof ModelObjectFocusedPluginEvent) {
 			ModelObjectFocusedPluginEvent ev = (ModelObjectFocusedPluginEvent) event;
-			doModelObjectFocused(ev.getFocusRef(), true);
+			doModelObjectFocused(ev.getFocus(), true);
 		}
 		else if (event instanceof TraceRecorderAdvancedPluginEvent) {
 			TraceRecorderAdvancedPluginEvent ev = (TraceRecorderAdvancedPluginEvent) event;
@@ -930,21 +927,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		fireLocationEvent(resolved);
 	}
 
-	protected static TargetObjectRef translateToFocus(DebuggerCoordinates prev,
+	protected static TargetObject translateToFocus(DebuggerCoordinates prev,
 			DebuggerCoordinates resolved) {
 		if (!resolved.isAliveAndPresent()) {
 			return null;
 		}
 		TraceRecorder recorder = resolved.getRecorder();
 		if (!Objects.equals(prev.getFrame(), resolved.getFrame())) {
-			TargetStackFrame<?> frame =
+			TargetStackFrame frame =
 				recorder.getTargetStackFrame(resolved.getThread(), resolved.getFrame());
 			if (frame != null) {
 				return frame;
 			}
 		}
 		if (!Objects.equals(prev.getThread(), resolved.getThread())) {
-			TargetThread<?> thread = recorder.getTargetThread(resolved.getThread());
+			TargetThread thread = recorder.getTargetThread(resolved.getThread());
 			if (thread != null) {
 				return thread;
 			}
@@ -971,7 +968,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return;
 		}
 		TraceRecorder recorder = resolved.getRecorder();
-		TargetObjectRef focus = translateToFocus(prev, resolved);
+		TargetObject focus = translateToFocus(prev, resolved);
 		if (focus == null) {
 			return;
 		}

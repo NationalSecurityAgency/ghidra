@@ -34,7 +34,6 @@ import org.junit.Test;
 import generic.Unique;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
@@ -402,7 +401,7 @@ public class GadpClientTest {
 			TargetObject parent = waitOn(fetchParent);
 			parent.addListener(elemL);
 
-			CompletableFuture<? extends Map<String, ? extends TargetObjectRef>> fetchElements =
+			CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements =
 				parent.fetchElements();
 			srv.handleResyncElements(parentPath, false, Map.of());
 			assertEquals(Map.of(), waitOn(fetchElements));
@@ -413,9 +412,9 @@ public class GadpClientTest {
 			waitOn(elemL.count.waitValue(1));
 			ElementsChangedInvocation changed = Unique.assertOne(elemL.invocations);
 			assertEquals(parent, changed.parent);
-			TargetObjectRef childRef = Unique.assertOne(changed.added.values());
-			assertTrue(childRef instanceof GadpClientTargetObject);
-			assertEquals(elem0Path, childRef.getPath());
+			TargetObject child = Unique.assertOne(changed.added.values());
+			assertTrue(child instanceof GadpClientTargetObject);
+			assertEquals(elem0Path, child.getPath());
 		}
 		assertEquals(1, elemL.count.get().intValue()); // After connection is closed
 	}

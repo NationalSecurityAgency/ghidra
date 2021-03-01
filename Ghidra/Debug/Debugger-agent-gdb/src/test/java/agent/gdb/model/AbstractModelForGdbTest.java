@@ -17,6 +17,7 @@ package agent.gdb.model;
 
 import static ghidra.dbg.testutil.DummyProc.run;
 import static ghidra.dbg.testutil.DummyProc.which;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -33,11 +34,9 @@ import agent.gdb.model.impl.GdbModelTargetInferior;
 import agent.gdb.model.impl.GdbModelTargetStackFrame;
 import ghidra.async.AsyncReference;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebugModelConventions.AllRequiredAccess;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.error.DebuggerModelNoSuchPathException;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.*;
@@ -185,12 +184,12 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access...");
 			waitAcc(access);
 			Msg.debug(this, "Getting Inferiors (before launch)...");
-			Map<String, ? extends TargetObjectRef> inferiors =
+			Map<String, ? extends TargetObject> inferiors =
 				waitOn(model.fetchObjectElements(List.of("Inferiors")));
 			Msg.debug(this, "Inferiors before: " + inferiors);
 			assertEquals(1, inferiors.size());
 			Msg.debug(this, "Finding TargetLauncher...");
-			TargetLauncher<?> launcher = suitable(TargetLauncher.tclass, root);
+			TargetLauncher launcher = suitable(TargetLauncher.class, root);
 			Msg.debug(this, "Launching...");
 			waitOn(launcher.launch(
 				Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, "/bin/echo Hello, World!")));
@@ -221,8 +220,8 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for inferior access...");
 			waitAcc(infAccess);
 			Msg.debug(this, "Reflecting parameters");
-			TargetLauncher<?> launcher = inferior.as(TargetLauncher.tclass);
-			for (ParameterDescription<?> param : launcher.getParameters().values()) {
+			TargetLauncher launcher = inferior.as(TargetLauncher.class);
+			for (ParameterDescription param : launcher.getParameters().values()) {
 				Msg.info(this, "  Parameter: " + param);
 			}
 			waitOn(launcher.launch(Map.of("args", "/bin/echo Hello, World!")));
@@ -230,7 +229,7 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(rootAccess);
 			Msg.debug(this, "Getting Inferiors (after launch)...");
-			Map<String, ? extends TargetObjectRef> inferiors =
+			Map<String, ? extends TargetObject> inferiors =
 				waitOn(model.fetchObjectElements(List.of("Inferiors")));
 			Msg.debug(this, "Inferiors after: " + inferiors);
 			assertEquals(1, inferiors.size());
@@ -260,7 +259,7 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(rootAccess);
 			Msg.debug(this, "Getting Inferiors (after launch)...");
-			Map<String, ? extends TargetObjectRef> inferiors =
+			Map<String, ? extends TargetObject> inferiors =
 				waitOn(model.fetchObjectElements(List.of("Inferiors")));
 			Msg.debug(this, "Inferiors after: " + inferiors);
 			assertEquals(1, inferiors.size());
@@ -278,7 +277,7 @@ public abstract class AbstractModelForGdbTest
 			AllRequiredAccess access = access(root);
 			Msg.debug(this, "Waiting for session access...");
 			waitAcc(access);
-			Map<String, ? extends TargetObjectRef> available =
+			Map<String, ? extends TargetObject> available =
 				waitOn(model.fetchObjectElements(List.of("Available")));
 			assertTrue(available.containsKey(Long.toString(dd.pid)));
 		}
@@ -296,16 +295,16 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access...");
 			waitAcc(access);
 			Msg.debug(this, "Getting Inferiors (before attach)...");
-			Map<String, ? extends TargetObjectRef> inferiors =
+			Map<String, ? extends TargetObject> inferiors =
 				waitOn(model.fetchObjectElements(List.of("Inferiors")));
 			Msg.debug(this, "Inferiors before: " + inferiors);
 			assertEquals(1, inferiors.size());
 			Msg.debug(this, "Finding TargetAttacher...");
-			TargetAttacher<?> attacher = suitable(TargetAttacher.tclass, root);
+			TargetAttacher attacher = suitable(TargetAttacher.class, root);
 			Msg.debug(this, "  Got TargetAttacher: " + attacher);
-			TargetAttachable<?> attachable =
+			TargetAttachable attachable =
 				waitOn(model.fetchModelObject("Available", "[" + dd.pid + "]"))
-						.as(TargetAttachable.tclass);
+						.as(TargetAttachable.class);
 			Msg.debug(this, "  Got Attachable: " + attachable);
 			Msg.debug(this, "Attaching...");
 			waitOn(attacher.attach(attachable));
@@ -316,8 +315,7 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Inferiors after: " + inferiors);
 			assertEquals(2, inferiors.size());
 			Msg.debug(this, "Killing...");
-			TargetKillable<?> killable =
-				waitOn(inferiors.get("2").as(TargetKillable.tclass).fetch());
+			TargetKillable killable = inferiors.get("2").as(TargetKillable.class);
 			waitOn(killable.kill());
 		}
 	}
@@ -335,7 +333,7 @@ public abstract class AbstractModelForGdbTest
 			waitAcc(access);
 			Msg.debug(this, "Getting Inferior 1...");
 			TargetObject inferior = waitOn(model.fetchModelObject(List.of("Inferiors", "[1]")));
-			TargetAttacher<?> attacher = inferior.as(TargetAttacher.tclass);
+			TargetAttacher attacher = inferior.as(TargetAttacher.class);
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(access);
 			Msg.debug(this, "Attaching...");
@@ -343,13 +341,13 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access (again, again)...");
 			waitAcc(access);
 			Msg.debug(this, "Getting Inferiors (after attach)...");
-			Map<String, ? extends TargetObjectRef> inferiors =
+			Map<String, ? extends TargetObject> inferiors =
 				waitOn(model.fetchObjectElements(List.of("Inferiors")));
 			Msg.debug(this, "Inferiors after: " + inferiors);
 			assertEquals(1, inferiors.size());
 			Msg.debug(this, "Killing...");
-			TargetObject attached = waitOn(inferiors.get("1").fetch());
-			TargetKillable<?> killable = attached.as(TargetKillable.tclass);
+			TargetObject attached = inferiors.get("1");
+			TargetKillable killable = attached.as(TargetKillable.class);
 			waitOn(killable.kill());
 		}
 	}
@@ -392,9 +390,8 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Getting Inferior 1...");
 			TargetObject inferior = waitOn(model.fetchModelObject("Inferiors", "[1]"));
 			Msg.debug(this, "Attaching to bogus path...");
-			TargetAttacher<?> attacher = inferior.as(TargetAttacher.tclass);
-			waitOn(attacher.attach(model.createRef("Available", "Process -1")
-					.as(TargetAttachable.tclass)));
+			TargetAttacher attacher = inferior.as(TargetAttacher.class);
+			TODO();
 		}
 	}
 
@@ -412,8 +409,9 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Getting Inferior 1...");
 			TargetObject inferior = waitOn(model.fetchModelObject("Inferiors", "[1]"));
 			Msg.debug(this, "Attaching to bogus path...");
-			TargetAttacher<?> attacher = inferior.as(TargetAttacher.tclass);
-			waitOn(attacher.attach(model.createRef("Available").as(TargetAttachable.tclass)));
+			TargetAttacher attacher = inferior.as(TargetAttacher.class);
+			// NOTE: Technically, the "as" call is causing it here.
+			waitOn(attacher.attach(model.getModelObject("Available").as(TargetAttachable.class)));
 			fail("Exception expected");
 		}
 	}
@@ -524,7 +522,7 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access...");
 			waitAcc(access);
 			Msg.debug(this, "Finding breakpoint container...");
-			TargetBreakpointContainer<?> breaks = suitable(TargetBreakpointContainer.tclass, root);
+			TargetBreakpointContainer breaks = suitable(TargetBreakpointContainer.class, root);
 			Msg.debug(this, "Got: " + breaks);
 			TargetBreakpointKindSet kinds = breaks.getSupportedBreakpointKinds();
 			Msg.debug(this, "Supports: " + kinds);
@@ -547,22 +545,21 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Setting file to " + specimen + "...");
 			cli(root, "file " + specimen);
 			Msg.debug(this, "Finding breakpoint container...");
-			TargetBreakpointContainer<?> breaks = suitable(TargetBreakpointContainer.tclass, root);
+			TargetBreakpointContainer breaks = suitable(TargetBreakpointContainer.class, root);
 			Msg.debug(this, "Placing breakpoint...");
 			waitOn(breaks.placeBreakpoint("func", Set.of(TargetBreakpointKind.SOFTWARE)));
 			Msg.debug(this, "Getting breakpoint specs...");
-			Map<String, ? extends TargetObjectRef> specs = waitOn(breaks.fetchElements());
+			Map<String, ? extends TargetObject> specs = waitOn(breaks.fetchElements());
 			Msg.debug(this, "Got specs: " + specs);
 			assertEquals(1, specs.size());
-			TargetBreakpointSpec<?> spec =
-				waitOn(specs.get("1").as(TargetBreakpointSpec.tclass).fetch());
-			Collection<? extends TargetBreakpointLocation<?>> ls = waitOn(spec.getLocations());
+			TargetBreakpointSpec spec = specs.get("1").as(TargetBreakpointSpec.class);
+			Collection<? extends TargetBreakpointLocation> ls = waitOn(spec.getLocations());
 			Msg.debug(this, "Got locations: " + ls);
 			assertEquals(1, ls.size());
-			TargetBreakpointLocation<?> loc = ls.iterator().next();
+			TargetBreakpointLocation loc = ls.iterator().next();
 			Address addr = loc.getAddress();
 			Msg.debug(this, "Got address: " + addr);
-			TargetObjectRefList<?> list = loc.getAffects();
+			TargetObjectList<?> list = loc.getAffects();
 			Msg.debug(this, "Got affects: " + list);
 			assertEquals(1, list.size());
 		}
@@ -583,24 +580,23 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Setting file to " + specimen + "...");
 			cli(root, "file " + specimen);
 			Msg.debug(this, "Finding breakpoint container...");
-			TargetBreakpointContainer<?> breaks = suitable(TargetBreakpointContainer.tclass, root);
+			TargetBreakpointContainer breaks = suitable(TargetBreakpointContainer.class, root);
 			Msg.debug(this, "Placing breakpoint...");
 			waitOn(breaks.placeBreakpoint("int_var",
 				Set.of(TargetBreakpointKind.READ, TargetBreakpointKind.WRITE)));
 			Msg.debug(this, "Getting breakpoint specs...");
-			Map<String, ? extends TargetObjectRef> specs = waitOn(breaks.fetchElements());
+			Map<String, ? extends TargetObject> specs = waitOn(breaks.fetchElements());
 			Msg.debug(this, "Got specs: " + specs);
 			assertEquals(1, specs.size());
-			TargetBreakpointSpec<?> spec =
-				waitOn(specs.get("1").as(TargetBreakpointSpec.tclass).fetch());
-			Collection<? extends TargetBreakpointLocation<?>> ls = waitOn(spec.getLocations());
+			TargetBreakpointSpec spec = specs.get("1").as(TargetBreakpointSpec.class);
+			Collection<? extends TargetBreakpointLocation> ls = waitOn(spec.getLocations());
 			Msg.debug(this, "Got locations: " + ls);
 			assertEquals(1, ls.size());
-			TargetBreakpointLocation<?> loc = ls.iterator().next();
+			TargetBreakpointLocation loc = ls.iterator().next();
 			Address addr = loc.getAddress();
 			Msg.debug(this, "Got address: " + addr);
 			assertNotNull(addr);
-			TargetObjectRefList<?> list = loc.getAffects();
+			TargetObjectList<?> list = loc.getAffects();
 			Msg.debug(this, "Got affects: " + list);
 			assertEquals(1, list.size());
 		}
@@ -611,7 +607,7 @@ public abstract class AbstractModelForGdbTest
 		try (ModelHost m = modelHost()) {
 			DebuggerObjectModel model = m.getModel();
 			Set<Address> locAddresses = new HashSet<>();
-			Set<TargetObjectRef> locAffecteds = new HashSet<>();
+			Set<TargetObject> locAffecteds = new HashSet<>();
 
 			init(m);
 			Msg.debug(this, "Getting root object");
@@ -628,33 +624,32 @@ public abstract class AbstractModelForGdbTest
 			waitAcc(access);
 			Msg.debug(this, "Setting to stay attached to forks");
 			cli(root, "set detach-on-fork off");
-			TargetBreakpointContainer<?> breaks =
-				suitable(TargetBreakpointContainer.tclass, inferior);
+			TargetBreakpointContainer breaks =
+				suitable(TargetBreakpointContainer.class, inferior);
 			Msg.debug(this, "Setting break on func");
 			waitOn(breaks.placeBreakpoint("func", Set.of(TargetBreakpointKind.SOFTWARE)));
 			Msg.debug(this, "Resuming execution (first time)");
 			resume(inferior);
 			Msg.debug(this, "Waiting for session access...");
 			waitAcc(access);
-			Map<String, ? extends TargetObjectRef> inferiors =
+			Map<String, ? extends TargetObject> inferiors =
 				waitOn(model.fetchObjectElements("Inferiors"));
 			Msg.debug(this, "After first break, inferiors are: " + inferiors);
 			assertEquals(2, inferiors.size());
 			// NOTE: Breakpoint 1 was the temporary one on 'main'
-			Map<String, ? extends TargetObjectRef> ls =
+			Map<String, ? extends TargetObject> ls =
 				waitOn(model.fetchObjectElements("Breakpoints", "[2]"));
 			Msg.debug(this, "Locations: " + ls);
 			assertEquals(2, ls.size());
-			for (TargetObjectRef ref : ls.values()) {
-				TargetBreakpointLocation<?> loc =
-					waitOn(ref.as(TargetBreakpointLocation.tclass).fetch());
+			for (TargetObject obj : ls.values()) {
+				TargetBreakpointLocation loc = obj.as(TargetBreakpointLocation.class);
 				locAddresses.add(loc.getAddress());
 				locAffecteds.addAll(loc.getAffects());
 			}
 			Msg.debug(this, "Addresses: " + locAddresses + ", affected: " + locAffecteds);
 			assertEquals(1, locAddresses.size());
 			assertEquals(Set.of(List.of("Inferiors", "[1]"), List.of("Inferiors", "[2]")),
-				locAffecteds.stream().map(TargetObjectRef::getPath).collect(Collectors.toSet()));
+				locAffecteds.stream().map(TargetObject::getPath).collect(Collectors.toSet()));
 		}
 	}
 
@@ -663,16 +658,16 @@ public abstract class AbstractModelForGdbTest
 	public void testExpForkWithListeners() throws Throwable {
 		ElementTrackingListener<TargetObject> infListener =
 			new ElementTrackingListener<>(TargetObject.class);
-		ElementTrackingListener<? extends TargetBreakpointSpec<?>> bkListener =
-			new ElementTrackingListener<>(TargetBreakpointSpec.tclass);
-		ElementTrackingListener<? extends TargetBreakpointLocation<?>> blListener =
-			new ElementTrackingListener<>(TargetBreakpointLocation.tclass);
+		ElementTrackingListener<? extends TargetBreakpointSpec> bkListener =
+			new ElementTrackingListener<>(TargetBreakpointSpec.class);
+		ElementTrackingListener<? extends TargetBreakpointLocation> blListener =
+			new ElementTrackingListener<>(TargetBreakpointLocation.class);
 		EventSequenceListener evtListener = new EventSequenceListener();
 
 		try (ModelHost m = modelHost()) {
 			DebuggerObjectModel model = m.getModel();
 			Set<Address> ebAddresses = new HashSet<>();
-			Set<TargetObjectRef> ebAffecteds = new HashSet<>();
+			Set<TargetObject> ebAffecteds = new HashSet<>();
 
 			init(m);
 			Msg.debug(this, "Getting root object");
@@ -687,8 +682,7 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Installing listener for inferiors");
 			infCont.addListener(infListener);
 			Msg.debug(this, "Getting inferiors");
-			Map<String, ? extends TargetObject> inferiors = waitOn(infCont.fetchElements()
-					.thenCompose(DebugModelConventions::fetchAll));
+			Map<String, ? extends TargetObject> inferiors = waitOn(infCont.fetchElements());
 			infListener.putAll(inferiors);
 			Msg.debug(this, "Launching...");
 			launch(infListener.elements.get("1"),
@@ -697,24 +691,22 @@ public abstract class AbstractModelForGdbTest
 			waitAcc(access);
 			Msg.debug(this, "Setting to stay attached to forks");
 			cli(root, "set detach-on-fork off");
-			TargetBreakpointContainer<?> bkCont =
-				suitable(TargetBreakpointContainer.tclass, infCont);
+			TargetBreakpointContainer bkCont =
+				suitable(TargetBreakpointContainer.class, infCont);
 			Msg.debug(this, "Installing listener for breakpoints");
 			bkCont.addListener(bkListener);
 			Msg.debug(this, "Getting breakpoints");
-			Map<String, ? extends TargetObject> bkElems = waitOn(bkCont.fetchElements()
-					.thenCompose(DebugModelConventions::fetchAll));
+			Map<String, ? extends TargetObject> bkElems = waitOn(bkCont.fetchElements());
 			bkListener.putAll(bkElems);
 			Msg.debug(this, "Setting break on func");
 			waitOn(bkCont.placeBreakpoint("func", Set.of(TargetBreakpointKind.SOFTWARE)));
 			Msg.debug(this, "Breakpoint elements: " + bkListener.elements);
-			TargetBreakpointSpec<?> bk2 =
+			TargetBreakpointSpec bk2 =
 				waitOn(bkListener.refElement("2").waitUntil(t -> t != null));
 			Msg.debug(this, "Installing listener on Breakpoint 2");
 			bk2.addListener(blListener);
 			Msg.debug(this, "Getting locations for 2");
-			Map<String, ? extends TargetObject> bk2ls = waitOn(bk2.fetchElements()
-					.thenCompose(DebugModelConventions::fetchAll));
+			Map<String, ? extends TargetObject> bk2ls = waitOn(bk2.fetchElements());
 			blListener.putAll(bk2ls);
 			Msg.debug(this, "Resuming execution (first time)");
 			resume(infListener.elements.get("1"));
@@ -727,14 +719,14 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Locations: " + blListener.elements);
 			assertEquals(2, blListener.elements.size());
 			for (TargetObject obj : blListener.elements.values()) {
-				TargetBreakpointLocation<?> eb = obj.as(TargetBreakpointLocation.tclass);
+				TargetBreakpointLocation eb = obj.as(TargetBreakpointLocation.class);
 				ebAddresses.add(eb.getAddress());
 				ebAffecteds.addAll(eb.getAffects());
 			}
 			Msg.debug(this, "Addresses: " + ebAddresses + ", affected: " + ebAffecteds);
 			assertEquals(1, ebAddresses.size());
 			assertEquals(Set.of(List.of("Inferiors", "[1]"), List.of("Inferiors", "[2]")),
-				ebAffecteds.stream().map(TargetObjectRef::getPath).collect(Collectors.toSet()));
+				ebAffecteds.stream().map(TargetObject::getPath).collect(Collectors.toSet()));
 
 			// Getting more precise than this could become fragile, as library paths vary
 			TargetEventType lastType = null;
@@ -779,7 +771,7 @@ public abstract class AbstractModelForGdbTest
 				Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, which("expCloneExit")));
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(access);
-			TargetBreakpointContainer<?> breaks =
+			TargetBreakpointContainer breaks =
 				suitable(TargetBreakpointContainer.class, inferior);
 			Msg.debug(this, "Setting break on work");
 			waitOn(breaks.placeBreakpoint("work", Set.of(TargetBreakpointKind.SOFTWARE)));
@@ -787,7 +779,7 @@ public abstract class AbstractModelForGdbTest
 			resume(inferior);
 			Msg.debug(this, "Waiting for session access...");
 			waitAcc(access);
-			Map<String, ? extends TargetObjectRef> threads =
+			Map<String, ? extends TargetObject> threads =
 				waitOn(model.fetchObjectElements("Inferiors", "[1]", "Threads"));
 			Msg.debug(this, "After first break, threads are: " + threads);
 			assertEquals(2, threads.size());
@@ -816,11 +808,11 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(access);
 			Msg.debug(this, "Getting symbol to overwrite");
-			TargetSymbol<?> overwrite = waitOn(inferior.fetchSuccessor(
-				"Modules", "[" + expPrint + "]", "Symbols", "[overwrite]")).as(TargetSymbol.tclass);
+			TargetSymbol overwrite = waitOn(inferior.fetchSuccessor(
+				"Modules", "[" + expPrint + "]", "Symbols", "[overwrite]")).as(TargetSymbol.class);
 			Msg.debug(this, "Symbol 'overwrite' is at addr: " + overwrite.getValue());
 			Msg.debug(this, "Getting Memory");
-			TargetMemory<?> memory = (TargetMemory<?>) waitOn(inferior.fetchSuccessor("Memory"));
+			TargetMemory memory = (TargetMemory) waitOn(inferior.fetchSuccessor("Memory"));
 			Msg.debug(this, "Writing");
 			waitOn(memory.writeMemory(overwrite.getValue(), toWrite.getBytes()));
 			Msg.debug(this, "Getting thread (for stepping)");
@@ -864,7 +856,7 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(access);
 			Msg.debug(this, "Finding breakpoint container...");
-			TargetBreakpointContainer<?> breaks = suitable(TargetBreakpointContainer.tclass, root);
+			TargetBreakpointContainer breaks = suitable(TargetBreakpointContainer.class, root);
 			Msg.debug(this, "Placing breakpoint...");
 			waitOn(breaks.placeBreakpoint("write", Set.of(TargetBreakpointKind.SOFTWARE)));
 			Msg.debug(this, "Resuming...");
@@ -872,11 +864,10 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Waiting for session access (after resume)...");
 			waitAcc(access);
 			Map<String, ? extends TargetObject> frames =
-				waitOn(inferior.fetchSubElements("Threads", "[1]", "Stack")
-						.thenCompose(DebugModelConventions::fetchAll));
+				waitOn(inferior.fetchSubElements("Threads", "[1]", "Stack"));
 			Msg.debug(this, "Got stack:");
 			for (Map.Entry<String, ? extends TargetObject> ent : frames.entrySet()) {
-				TargetStackFrame<?> frame = ent.getValue().as(TargetStackFrame.tclass);
+				TargetStackFrame frame = ent.getValue().as(TargetStackFrame.class);
 				Msg.debug(this, ent.getKey() + ": " + frame.getProgramCounter());
 			}
 			assertEquals("write", frames.get("0")
@@ -892,7 +883,7 @@ public abstract class AbstractModelForGdbTest
 	public void testRegisters() throws Throwable {
 		try (ModelHost m = modelHost()) {
 			DebuggerObjectModel model = m.getModel();
-			Set<TargetRegister<?>> descs = new LinkedHashSet<>();
+			Set<TargetRegister> descs = new LinkedHashSet<>();
 
 			init(m);
 			Msg.debug(this, "Getting root object");
@@ -906,16 +897,15 @@ public abstract class AbstractModelForGdbTest
 			launch(inferior, Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, "echo Hello, World!"));
 			Msg.debug(this, "Waiting for session access (again)...");
 			waitAcc(access);
-			TargetRegisterBank<?> bank =
+			TargetRegisterBank bank =
 				waitOn(inferior.fetchSuccessor("Threads", "[1]", "Stack", "[0]"))
-						.as(TargetRegisterBank.tclass);
+						.as(TargetRegisterBank.class);
 			Msg.debug(this, "Got bank: " + bank);
-			Msg.debug(this, "Descriptions ref: " + bank.getDescriptions());
-			TargetRegisterContainer<?> cont = waitOn(bank.getDescriptions().fetch());
+			TargetRegisterContainer cont = bank.getDescriptions();
 			Msg.debug(this, "Register descriptions: " + cont);
 			descs.addAll(waitOn(cont.getRegisters()));
 			Msg.debug(this, "Elements: ");
-			for (TargetRegister<?> reg : descs) {
+			for (TargetRegister reg : descs) {
 				Msg.debug(this, "  " + reg.getIndex() + ": " + reg.getBitLength());
 			}
 			Map<String, byte[]> data = waitOn(bank.readRegisters(descs));
@@ -941,12 +931,12 @@ public abstract class AbstractModelForGdbTest
 		try (ModelHost m = modelHost()) {
 			DebuggerObjectModel model = m.getModel();
 
-			AsyncReference<TargetObjectRef, Void> focus = new AsyncReference<>();
+			AsyncReference<TargetObject, Void> focus = new AsyncReference<>();
 			AsyncReference<Integer, Void> inferiorCount = new AsyncReference<>();
 
 			TargetFocusScopeListener focusListener = new TargetFocusScopeListener() {
 				@Override
-				public void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+				public void focusChanged(TargetFocusScope object, TargetObject focused) {
 					focus.set(focused, null);
 				}
 			};
@@ -965,7 +955,7 @@ public abstract class AbstractModelForGdbTest
 			TargetObjectListener infListener = new TargetObjectListener() {
 				@Override
 				public void elementsChanged(TargetObject parent, Collection<String> removed,
-						Map<String, ? extends TargetObjectRef> added) {
+						Map<String, ? extends TargetObject> added) {
 					inferiorCount.set(infCont.getCachedElements().size(), null);
 				}
 			};
@@ -974,9 +964,9 @@ public abstract class AbstractModelForGdbTest
 			Msg.debug(this, "Creating another inferior");
 			cli(root, "add-inferior");
 			waitOn(inferiorCount.waitValue(2));
-			assertEquals(model.createRef("Inferiors", "[1]"), getFocus(root));
-			focus(root, model.createRef("Inferiors", "[2]"));
-			assertEquals(model.createRef("Inferiors", "[2]"), getFocus(root));
+			assertSame(model.getModelObject("Inferiors", "[1]"), getFocus(root));
+			focus(root, model.getModelObject("Inferiors", "[2]"));
+			assertSame(model.getModelObject("Inferiors", "[2]"), getFocus(root));
 		}
 	}
 
@@ -985,12 +975,12 @@ public abstract class AbstractModelForGdbTest
 		try (ModelHost m = modelHost()) {
 			DebuggerObjectModel model = m.getModel();
 
-			Deque<TargetObjectRef> focusSeq = new LinkedList<>();
+			Deque<TargetObject> focusSeq = new LinkedList<>();
 			AsyncReference<Integer, Void> focusSeqSize = new AsyncReference<>();
 
 			TargetFocusScopeListener focusListener = new TargetFocusScopeListener() {
 				@Override
-				public void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+				public void focusChanged(TargetFocusScope object, TargetObject focused) {
 					Msg.debug(this, "Focused: " + focused);
 					if (focused instanceof TargetProcess) {
 						return;
@@ -1016,7 +1006,7 @@ public abstract class AbstractModelForGdbTest
 			launch(inferior,
 				Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, "/bin/echo Hello, World!"));
 			waitOn(focusSeqSize.waitValue(1));
-			assertEquals(model.createRef(PathUtils.parse("Inferiors[1].Threads[1].Stack[0]")),
+			assertEquals(model.getModelObject(PathUtils.parse("Inferiors[1].Threads[1].Stack[0]")),
 				focusSeq.peekLast());
 		}
 	}

@@ -30,11 +30,15 @@ import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "ModuleContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetModuleImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ModuleContainer",
+	elements = { //
+		@TargetElementType(type = DbgModelTargetModuleImpl.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleContainer {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
@@ -97,7 +101,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<? extends TargetModule<?>> addSyntheticModule(String name) {
+	public CompletableFuture<? extends TargetModule> addSyntheticModule(String name) {
 		throw new UnsupportedOperationException("Dbgeng Does not support synthetic modules");
 	}
 

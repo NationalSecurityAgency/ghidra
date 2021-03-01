@@ -25,7 +25,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetProcess extends
 		DefaultTestTargetObject<TestTargetProcessContainer, TestTargetObject>
-		implements TargetProcess<TestTargetProcess>, TargetAggregate {
+		implements TargetProcess, TargetAggregate {
 	public final TestTargetBreakpointContainer breaks;
 	public final TestTargetMemory memory;
 	public final TestTargetModuleContainer modules;

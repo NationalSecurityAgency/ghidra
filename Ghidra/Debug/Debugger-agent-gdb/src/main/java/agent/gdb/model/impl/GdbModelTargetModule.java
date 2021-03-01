@@ -29,14 +29,17 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Module", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Module",
+	elements = { //
+		@TargetElementType(type = Void.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	})
 public class GdbModelTargetModule
 		extends DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer>
-		implements TargetModule<GdbModelTargetModule> {
+		implements TargetModule {
 
 	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 	public static final String VISIBLE_MODULE_NAME_ATTRIBUTE_NAME = "module name";

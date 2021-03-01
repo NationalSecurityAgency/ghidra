@@ -22,7 +22,7 @@ import agent.dbgeng.model.iface1.DbgModelTargetEventScope;
 
 public interface DbgModelTargetProcessContainer extends //
 		//DbgModelTargetObject, 		
-		DbgModelTargetEventScope<DbgModelTargetProcessContainer>, //
+		DbgModelTargetEventScope, //
 		DbgEventsListenerAdapter {
 
 	public DbgModelTargetProcess getTargetProcess(DebugProcessId id);

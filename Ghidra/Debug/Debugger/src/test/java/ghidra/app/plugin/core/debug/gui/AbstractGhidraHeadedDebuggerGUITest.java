@@ -84,13 +84,13 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		}
 
 		@Override
-		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory<?> memory) {
+		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
 			return new DefaultDebuggerMemoryMapper(language, memory.getModel());
 		}
 
 		@Override
 		protected DebuggerRegisterMapper createRegisterMapper(
-				TargetRegisterContainer<?> registers) {
+				TargetRegisterContainer registers) {
 			return new DefaultDebuggerRegisterMapper(cSpec, registers, true);
 		}
 	}
@@ -208,7 +208,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		}
 	}
 
-	protected static TargetBreakpointContainer<?> getBreakpointContainer(TraceRecorder r) {
+	protected static TargetBreakpointContainer getBreakpointContainer(TraceRecorder r) {
 		return waitFor(() -> Unique.assertAtMostOne(r.collectBreakpointContainers(null)),
 			"No container");
 	}
@@ -537,7 +537,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		programManager.openProgram(program);
 	}
 
-	protected void setRegistersAndWaitForRecord(AbstractTestTargetRegisterBank<?, ?> bank,
+	protected void setRegistersAndWaitForRecord(AbstractTestTargetRegisterBank<?> bank,
 			Map<String, byte[]> values, long timeoutMillis) throws Exception {
 		TraceThread traceThread = modelService.getTraceThread(bank.getThread());
 		assertNotNull(traceThread);

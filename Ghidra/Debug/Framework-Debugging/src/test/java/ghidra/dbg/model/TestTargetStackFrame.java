@@ -17,8 +17,7 @@ package ghidra.dbg.model;
 
 import ghidra.dbg.target.TargetStackFrame;
 
-public interface TestTargetStackFrame<T extends TestTargetStackFrame<T>>
-		extends TestTargetObject, TargetStackFrame<T> {
+public interface TestTargetStackFrame extends TestTargetObject, TargetStackFrame {
 
-	void setFromFrame(T that);
+	void setFromFrame(TestTargetStackFrame that);
 }

@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.sequence;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -44,7 +44,7 @@ import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import ghidra.async.*;
 import ghidra.async.seq.AsyncSequenceHandlerForRunner;
 import ghidra.comm.util.BitmaskSet;
-import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
@@ -1400,9 +1400,9 @@ public class DbgManagerImpl implements DbgManager {
 		return execute(new DbgSessionSelectCommand(this, session));
 	}
 
-	public CompletableFuture<Void> requestFocus(DbgModelTargetFocusScope<?> scope,
-			TargetObjectRef ref) {
-		return execute(new DbgRequestFocusCommand(this, scope, ref));
+	public CompletableFuture<Void> requestFocus(DbgModelTargetFocusScope scope,
+			TargetObject obj) {
+		return execute(new DbgRequestFocusCommand(this, scope, obj));
 	}
 
 	@Override

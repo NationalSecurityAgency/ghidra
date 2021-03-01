@@ -28,8 +28,7 @@ import ghidra.dbg.target.TargetResumable;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetResumable<T extends TargetResumable<T>>
-		extends DbgModelTargetObject, TargetResumable<T> {
+public interface DbgModelTargetResumable extends DbgModelTargetObject, TargetResumable {
 
 	@Override
 	public default CompletableFuture<Void> resume() {

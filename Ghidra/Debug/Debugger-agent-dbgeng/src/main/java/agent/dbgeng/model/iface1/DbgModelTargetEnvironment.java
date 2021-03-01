@@ -18,8 +18,7 @@ package agent.dbgeng.model.iface1;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import ghidra.dbg.target.TargetEnvironment;
 
-public interface DbgModelTargetEnvironment<T extends TargetEnvironment<T>>
-		extends DbgModelTargetObject, TargetEnvironment<T> {
+public interface DbgModelTargetEnvironment extends DbgModelTargetObject, TargetEnvironment {
 
 	public void refreshInternal();
 

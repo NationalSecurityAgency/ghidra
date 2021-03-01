@@ -16,8 +16,7 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TargetObjectRefList;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.Address;
 
@@ -29,16 +28,7 @@ import ghidra.program.model.address.Address;
  * breakpoint objects should implement both the specification and location interfaces.
  */
 @DebuggerTargetObjectIface("BreakpointLocation")
-public interface TargetBreakpointLocation<T extends TargetBreakpointLocation<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetBreakpointLocation<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetBreakpointLocation.class;
+public interface TargetBreakpointLocation extends TargetObject {
 
 	String ADDRESS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "address";
 	String AFFECTS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "affects";
@@ -67,9 +57,9 @@ public interface TargetBreakpointLocation<T extends TargetBreakpointLocation<T>>
 	 * @return the list of affected objects' references
 	 */
 	@TargetAttributeType(name = AFFECTS_ATTRIBUTE_NAME, hidden = true)
-	public default TargetObjectRefList<?> getAffects() {
-		return getTypedAttributeNowByName(AFFECTS_ATTRIBUTE_NAME, TargetObjectRefList.class,
-			TargetObjectRefList.of());
+	public default TargetObjectList<?> getAffects() {
+		return getTypedAttributeNowByName(AFFECTS_ATTRIBUTE_NAME, TargetObjectList.class,
+			TargetObjectList.of());
 	}
 
 	/**
@@ -102,8 +92,7 @@ public interface TargetBreakpointLocation<T extends TargetBreakpointLocation<T>>
 	 * @return the reference to the specification
 	 */
 	@TargetAttributeType(name = SPEC_ATTRIBUTE_NAME, required = true, hidden = true)
-	public default TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> getSpecification() {
-		return getTypedRefAttributeNowByName(SPEC_ATTRIBUTE_NAME, TargetBreakpointSpec.tclass,
-			null);
+	public default TargetBreakpointSpec getSpecification() {
+		return getTypedAttributeNowByName(SPEC_ATTRIBUTE_NAME, TargetBreakpointSpec.class, null);
 	}
 }

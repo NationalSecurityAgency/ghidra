@@ -29,18 +29,18 @@ import ghidra.dbg.util.PathUtils;
 
 public interface DbgModelTargetProcess extends //
 		TargetAggregate, //
-		TargetProcess<DbgModelTargetProcess>, //
-		DbgModelTargetExecutionStateful<DbgModelTargetProcess>, //
-		DbgModelTargetAccessConditioned<DbgModelTargetProcess>, //
-		DbgModelTargetAttacher<DbgModelTargetProcess>, //
-		DbgModelTargetAttachable<DbgModelTargetProcess>, //
-		DbgModelTargetLauncher<DbgModelTargetProcess>, //
-		DbgModelTargetDeletable<DbgModelTargetProcess>, //
-		DbgModelTargetDetachable<DbgModelTargetProcess>, //
-		DbgModelTargetKillable<DbgModelTargetProcess>, //
-		DbgModelTargetResumable<DbgModelTargetProcess>, //
-		DbgModelTargetSteppable<DbgModelTargetProcess>, //
-		DbgModelTargetInterruptible<DbgModelTargetProcess>, // 
+		TargetProcess, //
+		DbgModelTargetExecutionStateful, //
+		DbgModelTargetAccessConditioned, //
+		DbgModelTargetAttacher, //
+		DbgModelTargetAttachable, //
+		DbgModelTargetLauncher, //
+		DbgModelTargetDeletable, //
+		DbgModelTargetDetachable, //
+		DbgModelTargetKillable, //
+		DbgModelTargetResumable, //
+		DbgModelTargetSteppable, //
+		DbgModelTargetInterruptible, // 
 		DbgEventsListenerAdapter, //
 		DbgModelSelectableObject {
 

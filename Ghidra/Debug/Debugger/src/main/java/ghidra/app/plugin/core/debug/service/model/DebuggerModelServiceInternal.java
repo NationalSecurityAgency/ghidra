@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
@@ -96,7 +95,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * 
 	 * @param focused the focused object
 	 */
-	default void fireFocusEvent(TargetObjectRef focused) {
+	default void fireFocusEvent(TargetObject focused) {
 		Swing.runIfSwingOrRunLater(
 			() -> firePluginEvent(new ModelObjectFocusedPluginEvent(getName(), focused)));
 	}

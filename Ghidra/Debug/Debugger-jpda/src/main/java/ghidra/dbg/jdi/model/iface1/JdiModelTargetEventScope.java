@@ -23,7 +23,6 @@ import ghidra.dbg.target.TargetEventScope;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetEventScope<T extends TargetEventScope<T>>
-		extends JdiModelTargetObject, TargetEventScope<T> {
+public interface JdiModelTargetEventScope extends JdiModelTargetObject, TargetEventScope {
 
 }

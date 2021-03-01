@@ -18,7 +18,6 @@ package ghidra.dbg.util;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,10 +31,10 @@ import ghidra.util.Msg;
 
 public class TargetDataTypeConverter {
 	protected static class ConvertedMember {
-		protected final TargetDataTypeMember<?> member;
+		protected final TargetDataTypeMember member;
 		protected final DataType type;
 
-		public ConvertedMember(TargetDataTypeMember<?> member, DataType type) {
+		public ConvertedMember(TargetDataTypeMember member, DataType type) {
 			this.member = member;
 			this.type = type;
 		}
@@ -147,12 +146,12 @@ public class TargetDataTypeConverter {
 			extends TwoPhased<T> {
 
 		protected final T type;
-		protected final TargetNamedDataType<?> tNamed;
+		protected final TargetNamedDataType tNamed;
 
 		protected final Map<String, ConvertedMember> subs =
 			new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
 
-		public TwoPhasedComposite(T type, TargetNamedDataType<?> tNamed) {
+		public TwoPhasedComposite(T type, TargetNamedDataType tNamed) {
 			this.type = type;
 			this.tNamed = tNamed;
 		}
@@ -168,10 +167,10 @@ public class TargetDataTypeConverter {
 			}
 		}
 
-		private void procMembers(Collection<? extends TargetDataTypeMember<?>> members) {
+		private void procMembers(Collection<? extends TargetDataTypeMember> members) {
 			// TODO: Figure out attributes 
 			AsyncFence fence = new AsyncFence();
-			for (TargetDataTypeMember<?> f : members) {
+			for (TargetDataTypeMember f : members) {
 				TwoPhased<? extends DataType> dep = convertTwoPhased(f.getDataType());
 				deps.add(dep);
 				fence.include(dep.two.thenAccept(tField -> {
@@ -267,9 +266,9 @@ public class TargetDataTypeConverter {
 	}
 
 	protected TwoPhased<? extends DataType> doConvertTargetDataType(TargetDataType type) {
-		if (type instanceof TargetNamedDataTypeRef<?>) {
-			TargetNamedDataTypeRef<?> ref = (TargetNamedDataTypeRef<?>) type;
-			return convertTargetNamedDataTypeRef(ref);
+		if (type instanceof TargetNamedDataType) {
+			TargetNamedDataType tNamed = (TargetNamedDataType) type;
+			return convertTargetNamedDataType(tNamed);
 		}
 		if (type instanceof TargetArrayDataType) {
 			TargetArrayDataType tArray = (TargetArrayDataType) type;
@@ -290,36 +289,8 @@ public class TargetDataTypeConverter {
 		throw new AssertionError("Do not know how to convert " + type);
 	}
 
-	protected TwoPhased<? extends DataType> convertTargetNamedDataTypeRef(
-			TargetNamedDataTypeRef<?> ref) {
-		return new TwoPhased<>() {
-			final Consumer<TargetNamedDataType<?>> PROC_REF = this::procRef;
-
-			@Override
-			protected void doStart() {
-				chainExc(ref.fetch().thenAccept(PROC_REF));
-			}
-
-			private void procRef(TargetNamedDataType<?> type) {
-				TwoPhased<? extends DataType> dep = convertNamedDataType(type);
-				dep.start();
-				deps.add(dep);
-				chainExc(dep.one.thenAccept(this::procOne));
-				chainExc(dep.two.thenAccept(this::procTwo));
-			}
-
-			private void procOne(DataType type) {
-				completeOne(type);
-			}
-
-			private void procTwo(DataType type) {
-				completeTwo();
-			}
-		};
-	}
-
-	protected TwoPhased<? extends DataType> convertNamedDataType(
-			TargetNamedDataType<?> type) {
+	protected TwoPhased<? extends DataType> convertTargetNamedDataType(
+			TargetNamedDataType type) {
 		/**
 		 * NOTE: Convention is named data types are each indexed (in the parent namespace) with its
 		 * defining keyword (or something close), e.g., "struct myStruct", not just "myStruct".
@@ -346,7 +317,7 @@ public class TargetDataTypeConverter {
 	}
 
 	protected TwoPhased<EnumDataType> convertTargetEnumDataType(String name,
-			TargetNamedDataType<?> tEnum) {
+			TargetNamedDataType tEnum) {
 		return new TwoPhased<>() {
 			final EnumDataType type =
 				new EnumDataType(CategoryPath.ROOT, name, tEnum.getTypedAttributeNowByName(
@@ -358,8 +329,8 @@ public class TargetDataTypeConverter {
 				chainExc(tEnum.getMembers().thenAccept(this::procMembers));
 			}
 
-			private void procMembers(Collection<? extends TargetDataTypeMember<?>> members) {
-				for (TargetDataTypeMember<?> c : members) {
+			private void procMembers(Collection<? extends TargetDataTypeMember> members) {
+				for (TargetDataTypeMember c : members) {
 					type.add(c.getMemberName(), c.getPosition());
 				}
 				completeTwo();
@@ -368,7 +339,7 @@ public class TargetDataTypeConverter {
 	}
 
 	protected TwoPhased<FunctionDefinitionDataType> convertTargetFunctionDataType(String name,
-			TargetNamedDataType<?> tFunction) {
+			TargetNamedDataType tFunction) {
 		return new TwoPhased<>() {
 			final Map<String, ParameterDefinitionImpl> args =
 				new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
@@ -381,9 +352,9 @@ public class TargetDataTypeConverter {
 				chainExc(tFunction.getMembers().thenAccept(this::procMembers));
 			}
 
-			private void procMembers(Collection<? extends TargetDataTypeMember<?>> members) {
+			private void procMembers(Collection<? extends TargetDataTypeMember> members) {
 				AsyncFence fence = new AsyncFence();
-				for (TargetDataTypeMember<?> p : members) {
+				for (TargetDataTypeMember p : members) {
 					TwoPhased<? extends DataType> dep = convertTwoPhased(p.getDataType());
 					deps.add(dep);
 					fence.include(dep.two.thenAccept(t -> {
@@ -407,24 +378,24 @@ public class TargetDataTypeConverter {
 	}
 
 	protected TwoPhased<StructureDataType> convertTargetStructDataType(String name,
-			TargetNamedDataType<?> tStruct) {
+			TargetNamedDataType tStruct) {
 		return new TwoPhasedComposite<>(new StructureDataType(name, 0, dtm), tStruct);
 	}
 
 	protected TwoPhased<UnionDataType> convertTargetUnionDataType(String name,
-			TargetNamedDataType<?> tUnion) {
+			TargetNamedDataType tUnion) {
 		return new TwoPhasedComposite<>(new UnionDataType(CategoryPath.ROOT, name, dtm), tUnion);
 	}
 
 	protected TwoPhased<TypedefDataType> convertTargetTypedefDataType(String name,
-			TargetNamedDataType<?> tTypedef) {
+			TargetNamedDataType tTypedef) {
 		return new TwoPhased<>() {
 			@Override
 			protected void doStart() {
 				chainExc(tTypedef.getMembers().thenAccept(this::procMembers));
 			}
 
-			private void procMembers(Collection<? extends TargetDataTypeMember<?>> members) {
+			private void procMembers(Collection<? extends TargetDataTypeMember> members) {
 				if (members.isEmpty()) {
 					Msg.warn(this, "Typedef did not provide definition. Defaulting.");
 					procDef(DataType.DEFAULT);
@@ -434,7 +405,7 @@ public class TargetDataTypeConverter {
 				if (members.size() != 1) {
 					Msg.warn(this, "Typedef provided multiple definitions. Taking first.");
 				}
-				TargetDataTypeMember<?> d = members.iterator().next();
+				TargetDataTypeMember d = members.iterator().next();
 				TwoPhased<? extends DataType> dep = convertTwoPhased(d.getDataType());
 				deps.add(dep);
 				chainExc(dep.one.thenAccept(this::procDef));

@@ -25,12 +25,12 @@ import ghidra.dbg.target.TargetAccessConditioned;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetAccessConditioned<T extends TargetAccessConditioned<T>>
-		extends DbgModelTargetObject, TargetAccessConditioned<T> {
+public interface DbgModelTargetAccessConditioned
+		extends DbgModelTargetObject, TargetAccessConditioned {
 
 	@Override
-	public TargetAccessibility getAccessibility();
+	public boolean isAccessible();
 
-	public void setAccessibility(TargetAccessibility accessibility);
+	public void setAccessible(boolean accessible);
 
 }

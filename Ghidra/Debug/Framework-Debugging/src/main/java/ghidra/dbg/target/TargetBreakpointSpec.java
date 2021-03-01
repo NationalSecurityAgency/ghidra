@@ -21,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.TargetAttributeType;
 
@@ -39,16 +37,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * the specification need not have any children.
  */
 @DebuggerTargetObjectIface("BreakpointSpec")
-public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetBreakpointSpec<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetBreakpointSpec.class;
+public interface TargetBreakpointSpec extends TargetObject {
 
 	public enum TargetBreakpointKind {
 		READ, WRITE, EXECUTE, SOFTWARE;
@@ -70,9 +59,9 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 	 * @return a reference to the container
 	 */
 	@TargetAttributeType(name = CONTAINER_ATTRIBUTE_NAME, required = true, hidden = true)
-	public default TypedTargetObjectRef<? extends TargetBreakpointContainer<?>> getContainer() {
-		return getTypedRefAttributeNowByName(CONTAINER_ATTRIBUTE_NAME,
-			TargetBreakpointContainer.tclass, null);
+	public default TargetBreakpointContainer getContainer() {
+		return getTypedAttributeNowByName(CONTAINER_ATTRIBUTE_NAME, TargetBreakpointContainer.class,
+			null);
 	}
 
 	/**
@@ -139,9 +128,8 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 		 * @param frame the innermost stack frame, if available, of the trapped object
 		 * @param breakpoint the effective breakpoint that actually trapped execution
 		 */
-		void breakpointHit(TargetBreakpointSpec<?> spec, TargetObjectRef trapped,
-				TypedTargetObjectRef<? extends TargetStackFrame<?>> frame,
-				TypedTargetObjectRef<? extends TargetBreakpointLocation<?>> breakpoint);
+		void breakpointHit(TargetBreakpointSpec spec, TargetObject trapped, TargetStackFrame frame,
+				TargetBreakpointLocation breakpoint);
 	}
 
 	/**
@@ -175,17 +163,17 @@ public interface TargetBreakpointSpec<T extends TargetBreakpointSpec<T>>
 	 * @return the effective breakpoints
 	 */
 	public default CompletableFuture< //
-			? extends Collection<? extends TargetBreakpointLocation<?>>> getLocations() {
-		if (this instanceof TargetBreakpointLocation<?>) {
-			return CompletableFuture.completedFuture(List.of((TargetBreakpointLocation<?>) this));
+			? extends Collection<? extends TargetBreakpointLocation>> getLocations() {
+		if (this instanceof TargetBreakpointLocation) {
+			return CompletableFuture.completedFuture(List.of((TargetBreakpointLocation) this));
 		}
-		return DebugModelConventions.collectSuccessors(this, TargetBreakpointLocation.tclass);
+		return DebugModelConventions.collectSuccessors(this, TargetBreakpointLocation.class);
 	}
 
 	// TODO: Make hit count part of the common interface?
 
 	public interface TargetBreakpointSpecListener extends TargetObjectListener {
-		default void breakpointToggled(TargetBreakpointSpec<?> spec, boolean enabled) {
+		default void breakpointToggled(TargetBreakpointSpec spec, boolean enabled) {
 		}
 	}
 }

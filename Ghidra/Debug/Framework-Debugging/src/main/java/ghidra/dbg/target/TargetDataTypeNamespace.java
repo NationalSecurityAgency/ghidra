@@ -30,16 +30,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * entire target (or worse, the entire session) as a single namespace.
  */
 @DebuggerTargetObjectIface("DataTypeNamespace")
-public interface TargetDataTypeNamespace<T extends TargetDataTypeNamespace<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetDataTypeNamespace<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetDataTypeNamespace.class;
+public interface TargetDataTypeNamespace extends TargetObject {
 
 	/**
 	 * Get the types in this namespace
@@ -52,7 +43,7 @@ public interface TargetDataTypeNamespace<T extends TargetDataTypeNamespace<T>>
 	 *           that behavior is not yet supported.
 	 * @return the types
 	 */
-	default CompletableFuture<? extends Collection<? extends TargetNamedDataType<?>>> getTypes() {
-		return DebugModelConventions.collectSuccessors(this, TargetNamedDataType.tclass);
+	default CompletableFuture<? extends Collection<? extends TargetNamedDataType>> getTypes() {
+		return DebugModelConventions.collectSuccessors(this, TargetNamedDataType.class);
 	}
 }

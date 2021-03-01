@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
@@ -28,15 +27,7 @@ import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
  * An object which is capable of attaching to a {@link TargetAttachable}
  */
 @DebuggerTargetObjectIface("Attacher")
-public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetAttacher<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetAttacher.class;
+public interface TargetAttacher extends TargetObject {
 
 	public interface TargetAttachKindSet extends Set<TargetAttachKind> {
 
@@ -94,14 +85,17 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 	 * 
 	 * @return the set of supported attach operations
 	 */
-	@TargetAttributeType(name = SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, required = true, hidden = true)
+	@TargetAttributeType(
+		name = SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME,
+		required = true,
+		hidden = true)
 	public default TargetAttachKindSet getSupportedAttachKinds() {
 		return getTypedAttributeNowByName(SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME,
 			TargetAttachKindSet.class, TargetAttachKindSet.of());
 	}
 
 	/**
-	 * Attach to the given {@link TargetAttachable} or reference
+	 * Attach to the given {@link TargetAttachable}
 	 * 
 	 * <p>
 	 * This is mostly applicable to user-space contexts, in which case, this usually means to attach
@@ -110,17 +104,17 @@ public interface TargetAttacher<T extends TargetAttacher<T>> extends TypedTarget
 	 * @param attachable the object or reference to attach to
 	 * @return a future which completes when the command is confirmed
 	 */
-	public CompletableFuture<Void> attach(TypedTargetObjectRef<? extends TargetAttachable<?>> ref);
+	public CompletableFuture<Void> attach(TargetAttachable attachable);
 
 	/**
 	 * Attach to the given id
 	 * 
 	 * <p>
 	 * This is mostly applicable to user-space contexts, in which case, this usually means to attach
-	 * to a process using its pid.
+	 * to a process using its OS-assigned process id.
 	 * 
-	 * @param id the identifier for and object to attach to
+	 * @param pid the identifier for and object to attach to
 	 * @return a future which completes when the command is confirmed
 	 */
-	public CompletableFuture<Void> attach(long id);
+	public CompletableFuture<Void> attach(long pid);
 }

@@ -23,7 +23,7 @@ import agent.dbgeng.model.iface1.DbgModelTargetInterruptible;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 
 public class DbgModel2TargetSystemMarkerImpl extends DbgModel2TargetObjectImpl
-		implements DbgModelTargetInterruptible<DbgModel2TargetSystemMarkerImpl> {
+		implements DbgModelTargetInterruptible {
 
 	// NB: this is an invisible marker whose only purpose if to enable an
 	//  interrupt when connecting in kernel-mode to a running target

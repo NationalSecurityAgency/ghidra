@@ -32,18 +32,9 @@ import ghidra.dbg.util.CollectionUtils.AbstractNMap;
  * TODO: Should parameters and return type be something incorporated into Schemas?
  */
 @DebuggerTargetObjectIface("Method")
-public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObject<T> {
+public interface TargetMethod extends TargetObject {
 	String PARAMETERS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "parameters";
 	String RETURN_TYPE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "return_type";
-
-	enum Private {
-		;
-		private abstract class Cls implements TargetMethod<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetMethod.class;
 
 	/**
 	 * A description of a method parameter
@@ -308,7 +299,11 @@ public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObje
 	 * 
 	 * @return the name-description map of parameters
 	 */
-	@TargetAttributeType(name = PARAMETERS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = PARAMETERS_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	default public TargetParameterMap getParameters() {
 		return getParameters(this);
 	}
@@ -323,7 +318,11 @@ public interface TargetMethod<T extends TargetMethod<T>> extends TypedTargetObje
 	 * 
 	 * @return the return type
 	 */
-	@TargetAttributeType(name = RETURN_TYPE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = RETURN_TYPE_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	default public Class<?> getReturnType() {
 		return getTypedAttributeNowByName(RETURN_TYPE_ATTRIBUTE_NAME, Class.class,
 			Object.class);

@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 
 public class DummyTargetObject implements TargetObject {
@@ -102,6 +101,11 @@ public class DummyTargetObject implements TargetObject {
 		return hash;
 	}
 
+	@Override
+	public TargetObject getParent() {
+		return parent;
+	}
+
 	public void addObject(TargetObject obj) {
 		String name = obj.getName();
 		if (name.contains("[")) {
@@ -138,11 +142,6 @@ public class DummyTargetObject implements TargetObject {
 	}
 
 	@Override
-	public CompletableFuture<? extends TargetObject> fetchParent() {
-		return CompletableFuture.completedFuture(parent);
-	}
-
-	@Override
 	public Object getProtocolID() {
 		return path;
 	}
@@ -169,7 +168,7 @@ public class DummyTargetObject implements TargetObject {
 	}
 
 	@Override
-	public Map<String, ? extends TargetObjectRef> getCachedElements() {
+	public Map<String, ? extends TargetObject> getCachedElements() {
 		return elements;
 	}
 

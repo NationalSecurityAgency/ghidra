@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetKillable;
 
-public interface GadpClientTargetKillable
-		extends GadpClientTargetObject, TargetKillable<GadpClientTargetKillable> {
+public interface GadpClientTargetKillable extends GadpClientTargetObject, TargetKillable {
 	@Override
 	default CompletableFuture<Void> kill() {
 		getDelegate().assertValid();

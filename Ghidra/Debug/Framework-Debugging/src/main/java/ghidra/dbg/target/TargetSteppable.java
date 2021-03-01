@@ -15,8 +15,6 @@
  */
 package ghidra.dbg.target;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -26,21 +24,12 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
-import ghidra.lifecycle.Experimental;
 
 /**
  * A target whose execution can be single stepped
  */
 @DebuggerTargetObjectIface("Steppable")
-public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetSteppable<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetSteppable.class;
+public interface TargetSteppable extends TargetObject {
 
 	public interface TargetStepKindSet extends Set<TargetStepKind> {
 
@@ -74,26 +63,6 @@ public interface TargetSteppable<T extends TargetSteppable<T>> extends TypedTarg
 		public static TargetStepKindSet copyOf(Set<TargetStepKind> set) {
 			return new ImmutableTargetStepKindSet(set);
 		}
-	}
-
-	/**
-	 * Produce a client-side implementation using other target objects
-	 * 
-	 * <p>
-	 * TODO: While this is an interesting idea, I hesitate to pursue it, because it is likely
-	 * inefficient. For socket-based clients, there will be a lot of messages exchanged.
-	 * 
-	 * @param resumable the interface for resuming the target
-	 * @param breakpoints the interface for placing breakpoints on the target
-	 * @param registers the interface for reading the target's registers
-	 * @param memory the interface for reading the target's memory
-	 * @return the implementation
-	 */
-	@Experimental
-	public static TargetSteppable<?> synthesize(TargetResumable<?> resumable,
-			TargetBreakpointContainer<?> breakpoints, TargetRegisterBank<?> registers,
-			TargetMemory<?> memory) {
-		return TODO();
 	}
 
 	enum TargetStepKind {

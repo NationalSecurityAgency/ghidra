@@ -25,7 +25,7 @@ import ghidra.dbg.util.PathUtils;
 
 public class TestTargetThread
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetThreadContainer>
-		implements TargetThread<TestTargetThread>, TargetExecutionStateful<TestTargetThread> {
+		implements TargetThread, TargetExecutionStateful {
 	public TestTargetThread(TestTargetThreadContainer parent, int tid) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(tid)), "Thread");
 		changeAttributes(List.of(), List.of(), Map.of(

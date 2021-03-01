@@ -29,7 +29,6 @@ import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.async.AsyncFence;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginTool;
 
@@ -71,10 +70,8 @@ public abstract class DisplayAsAction extends DockingAction {
 			AsyncFence fence = new AsyncFence();
 			TargetObject to = container.getTargetObject();
 			fence.include(to.fetchElements()
-					.thenCompose(DebugModelConventions::fetchAll)
 					.thenAccept(elements::set));
 			fence.include(to.fetchAttributes()
-					.thenCompose(attrs -> DebugModelConventions.fetchObjAttrs(to, attrs))
 					.thenAccept(attributes::set));
 			fence.ready().handle(seq::next);
 		}).then(seq -> {

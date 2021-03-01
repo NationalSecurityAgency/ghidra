@@ -25,7 +25,6 @@ import ghidra.dbg.target.TargetAttachable;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetAttachable<T extends TargetAttachable<T>>
-		extends DbgModelTargetObject, TargetAttachable<T> {
+public interface DbgModelTargetAttachable extends DbgModelTargetObject, TargetAttachable {
 
 }

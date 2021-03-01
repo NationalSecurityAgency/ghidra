@@ -23,7 +23,6 @@ import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.gadp.impl.WrappedDbgModel;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import agent.dbgmodel.model.impl.*;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 
@@ -53,7 +52,7 @@ public class DbgListElementsCommand extends AbstractDbgCommand<List<TargetObject
 		synchronized (access) {
 			updatedElements = new ArrayList<>();
 			List<ModelObject> list = access.getElements(path);
-			Map<String, ? extends TargetObjectRef> existingElements =
+			Map<String, ? extends TargetObject> existingElements =
 				targetObject.getCachedElements();
 
 			for (ModelObject obj : list) {

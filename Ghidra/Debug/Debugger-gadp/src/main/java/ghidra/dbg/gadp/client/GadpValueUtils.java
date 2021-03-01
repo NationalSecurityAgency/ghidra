@@ -25,7 +25,7 @@ import com.google.protobuf.ByteString;
 
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.attributes.*;
-import ghidra.dbg.attributes.TargetObjectRefList.DefaultTargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList.DefaultTargetObjectList;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.ModelObjectDelta;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
@@ -49,10 +49,10 @@ import ghidra.util.Msg;
 public enum GadpValueUtils {
 	;
 
-	public static TargetObjectRefList<?> getRefList(DebuggerObjectModel model, Gadp.PathList list) {
-		TargetObjectRefList<TargetObjectRef> result = new DefaultTargetObjectRefList<>();
+	public static TargetObjectList<?> getObjList(DebuggerObjectModel model, Gadp.PathList list) {
+		TargetObjectList<TargetObject> result = new DefaultTargetObjectList<>();
 		for (Gadp.Path path : list.getPathList()) {
-			result.add(model.createRef(path.getEList()));
+			result.add(model.getModelObject(path.getEList()));
 		}
 		return result;
 	}
@@ -330,11 +330,11 @@ public enum GadpValueUtils {
 		return Gadp.Path.newBuilder().addAllE(path).build();
 	}
 
-	public static Gadp.Path makePath(TargetObjectRef ref) {
-		return makePath(ref.getPath());
+	public static Gadp.Path makePath(TargetObject obj) {
+		return makePath(obj.getPath());
 	}
 
-	public static Gadp.PathList makePathList(TargetObjectRefList<?> list) {
+	public static Gadp.PathList makePathList(TargetObjectList<?> list) {
 		return Gadp.PathList.newBuilder()
 				.addAllPath(list.stream().map(p -> makePath(p)).collect(Collectors.toList()))
 				.build();
@@ -436,9 +436,9 @@ public enum GadpValueUtils {
 			case VT_UPDATE_MODE:
 				return TargetUpdateMode.class;
 			case VT_PATH:
-				return TargetObjectRef.class;
+				return TargetObject.class;
 			case VT_PATH_LIST:
-				return TargetObjectRefList.class;
+				return TargetObjectList.class;
 			case VT_TYPE:
 				return Class.class;
 			case UNRECOGNIZED:
@@ -525,10 +525,10 @@ public enum GadpValueUtils {
 		if (type == TargetUpdateMode.class) {
 			return Gadp.ValueType.VT_UPDATE_MODE;
 		}
-		if (type == TargetObjectRef.class) {
+		if (type == TargetObject.class) {
 			return Gadp.ValueType.VT_PATH;
 		}
-		if (type == TargetObjectRefList.class) {
+		if (type == TargetObjectList.class) {
 			return Gadp.ValueType.VT_PATH_LIST;
 		}
 		if (type == Class.class) {
@@ -624,11 +624,11 @@ public enum GadpValueUtils {
 			b.setObjectStub(Gadp.ModelObjectStub.getDefaultInstance());
 			// NOTE: Never produce info. That is a special case for object retrieval.
 		}
-		else if (value instanceof TargetObjectRef) {
-			b.setPathValue(makePath((TargetObjectRef) value));
+		else if (value instanceof TargetObject) {
+			b.setPathValue(makePath((TargetObject) value));
 		}
-		else if (value instanceof TargetObjectRefList) {
-			b.setPathListValue(makePathList((TargetObjectRefList<?>) value));
+		else if (value instanceof TargetObjectList) {
+			b.setPathListValue(makePathList((TargetObjectList<?>) value));
 		}
 		else if (value instanceof Class) {
 			b.setTypeValue(makeValueType((Class<?>) value));
@@ -712,7 +712,7 @@ public enum GadpValueUtils {
 			case PATH_VALUE:
 				return model.getModelObject(value.getPathValue().getEList());
 			case PATH_LIST_VALUE:
-				return getRefList(model, value.getPathListValue());
+				return getObjList(model, value.getPathListValue());
 			case OBJECT_STUB:
 				return model.getModelObject(path);
 			case TYPE_VALUE:

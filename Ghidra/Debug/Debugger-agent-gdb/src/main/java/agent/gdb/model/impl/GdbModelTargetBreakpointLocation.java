@@ -25,22 +25,25 @@ import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import generic.Unique;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.attributes.TargetObjectRefList;
-import ghidra.dbg.attributes.TargetObjectRefList.DefaultTargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList;
+import ghidra.dbg.attributes.TargetObjectList.DefaultTargetObjectList;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
-@TargetObjectSchemaInfo(name = "BreakpointLocation", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "BreakpointLocation",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetBreakpointLocation
 		extends DefaultTargetObject<TargetObject, GdbModelTargetBreakpointSpec>
-		implements TargetBreakpointLocation<GdbModelTargetBreakpointLocation> {
+		implements TargetBreakpointLocation {
 	protected static String indexLocation(GdbBreakpointLocation loc) {
 		return PathUtils.makeIndex(loc.getSub());
 	}
@@ -54,7 +57,7 @@ public class GdbModelTargetBreakpointLocation
 
 	protected Address address;
 	protected Integer length;
-	protected final TargetObjectRefList<GdbModelTargetInferior> affects;
+	protected final TargetObjectList<GdbModelTargetInferior> affects;
 	protected String display;
 
 	public GdbModelTargetBreakpointLocation(GdbModelTargetBreakpointSpec spec,
@@ -133,15 +136,15 @@ public class GdbModelTargetBreakpointLocation
 		return length;
 	}
 
-	protected TargetObjectRefList<GdbModelTargetInferior> doGetAffects() {
+	protected TargetObjectList<GdbModelTargetInferior> doGetAffects() {
 		return loc.getInferiorIds()
 				.stream()
 				.map(impl.session.inferiors::getTargetInferior)
-				.collect(Collectors.toCollection(DefaultTargetObjectRefList::new));
+				.collect(Collectors.toCollection(DefaultTargetObjectList::new));
 	}
 
 	@Override
-	public TargetObjectRefList<GdbModelTargetInferior> getAffects() {
+	public TargetObjectList<GdbModelTargetInferior> getAffects() {
 		return affects;
 	}
 

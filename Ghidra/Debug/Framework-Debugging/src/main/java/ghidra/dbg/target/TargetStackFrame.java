@@ -23,15 +23,7 @@ import ghidra.program.model.address.Address;
  * One frame (call record) of an execution stack
  */
 @DebuggerTargetObjectIface("StackFrame")
-public interface TargetStackFrame<T extends TargetStackFrame<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetStackFrame<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetStackFrame.class;
+public interface TargetStackFrame extends TargetObject {
 
 	String PC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pc";
 

@@ -15,7 +15,6 @@
  */
 package ghidra.dbg.target;
 
-import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.AddressRange;
@@ -28,16 +27,7 @@ import ghidra.program.model.address.AddressRange;
  * presented as successors to the module.
  */
 @DebuggerTargetObjectIface("Module")
-public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetModule<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetModule.class;
-	TypeSpec<TargetModule<?>> TYPE = TypeSpec.auto();
+public interface TargetModule extends TargetObject {
 
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
 	String MODULE_NAME_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module_name";

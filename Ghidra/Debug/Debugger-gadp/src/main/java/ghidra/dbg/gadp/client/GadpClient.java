@@ -34,7 +34,6 @@ import ghidra.async.*;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.agent.AbstractTargetObject.ProxyFactory;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.*;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.error.*;
@@ -573,17 +572,6 @@ public class GadpClient extends AbstractDebuggerObjectModel
 	@Override
 	public AddressFactory getAddressFactory() {
 		return factory;
-	}
-
-	@Override
-	public TargetObjectRef createRef(List<String> path) {
-		synchronized (lock) {
-			GadpClientTargetObject proxy = modelProxies.get(path);
-			if (proxy != null) {
-				return proxy;
-			}
-		}
-		return super.createRef(path);
 	}
 
 	@Override

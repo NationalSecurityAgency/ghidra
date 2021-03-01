@@ -40,7 +40,7 @@ import ghidra.util.Msg;
 	canonicalContainer = true)
 public class GdbModelTargetModuleContainer
 		extends DefaultTargetObject<GdbModelTargetModule, GdbModelTargetInferior>
-		implements TargetModuleContainer<GdbModelTargetModuleContainer> {
+		implements TargetModuleContainer {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
 	public static final String NAME = "Modules";
 
@@ -78,7 +78,7 @@ public class GdbModelTargetModuleContainer
 	}
 
 	@Override
-	public CompletableFuture<? extends TargetModule<?>> addSyntheticModule(String name) {
+	public CompletableFuture<? extends TargetModule> addSyntheticModule(String name) {
 		throw new DebuggerUserException("GDB Does not support synthetic modules");
 	}
 

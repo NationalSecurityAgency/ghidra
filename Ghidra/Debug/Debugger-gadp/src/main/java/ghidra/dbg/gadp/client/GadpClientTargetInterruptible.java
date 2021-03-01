@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetInterruptible;
 
-public interface GadpClientTargetInterruptible
-		extends GadpClientTargetObject, TargetInterruptible<GadpClientTargetInterruptible> {
+public interface GadpClientTargetInterruptible extends GadpClientTargetObject, TargetInterruptible {
 	@Override
 	default CompletableFuture<Void> interrupt() {
 		getDelegate().assertValid();

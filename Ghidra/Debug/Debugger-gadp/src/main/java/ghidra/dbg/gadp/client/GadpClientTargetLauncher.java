@@ -23,8 +23,7 @@ import ghidra.dbg.target.TargetLauncher;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 
-public interface GadpClientTargetLauncher
-		extends GadpClientTargetObject, TargetLauncher<GadpClientTargetLauncher> {
+public interface GadpClientTargetLauncher extends GadpClientTargetObject, TargetLauncher {
 	@Override
 	default CompletableFuture<Void> launch(Map<String, ?> arguments) {
 		getDelegate().assertValid();

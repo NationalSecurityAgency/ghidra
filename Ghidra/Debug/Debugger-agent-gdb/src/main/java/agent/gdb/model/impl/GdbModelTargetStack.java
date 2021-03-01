@@ -30,12 +30,15 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "Stack", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Stack",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetStack
 		extends DefaultTargetObject<GdbModelTargetStackFrame, GdbModelTargetThread>
-		implements TargetStack<GdbModelTargetStack> {
+		implements TargetStack {
 	public static final String NAME = "Stack";
 
 	protected final GdbModelImpl impl;

@@ -31,14 +31,16 @@ import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "StackFrame", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "StackFrame",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, GdbModelTargetStack>
-		implements TargetStackFrame<GdbModelTargetStackFrame>,
-		TargetRegisterBank<GdbModelTargetStackFrame>, GdbModelSelectableObject {
+		implements TargetStackFrame, TargetRegisterBank, GdbModelSelectableObject {
 	public static final String FUNC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "function";
 	public static final String FROM_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "from"; // TODO
 
@@ -87,7 +89,10 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		setFrame(frame);
 	}
 
-	@TargetAttributeType(name = GdbModelTargetStackFrameRegisterContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetStackFrameRegisterContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetStackFrameRegisterContainer getRegisters() {
 		return registers;
 	}

@@ -23,11 +23,14 @@ import agent.dbgeng.model.iface2.DbgModelTargetModuleSection;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "Section", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Section",
+	elements = { //
+		@TargetElementType(type = Void.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	})
 public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleSection {
 	protected static final String OBJFILE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "objfile";
@@ -45,7 +48,7 @@ public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 		range = new AddressRangeImpl(min, max);
 
 		changeAttributes(List.of(), List.of(), Map.of( //
-			MODULE_ATTRIBUTE_NAME, sections.getImplParent(), //
+			MODULE_ATTRIBUTE_NAME, sections.getParent(), //
 			RANGE_ATTRIBUTE_NAME, range, //
 			DISPLAY_ATTRIBUTE_NAME, section.getName(), //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //

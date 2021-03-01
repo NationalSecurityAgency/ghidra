@@ -25,7 +25,6 @@ import agent.dbgeng.model.AbstractDbgModel;
 import ghidra.dbg.agent.InvalidatableTargetObjectIf;
 import ghidra.dbg.agent.SpiTargetObject;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -60,8 +59,6 @@ public interface DbgModelTargetObject extends SpiTargetObject, InvalidatableTarg
 
 	@Override
 	public CompletableFuture<? extends Map<String, ?>> fetchAttributes();
-
-	public TargetObject getImplParent();
 
 	public Delta<?, ?> changeAttributes(List<String> remove, Map<String, ?> add, String reason);
 

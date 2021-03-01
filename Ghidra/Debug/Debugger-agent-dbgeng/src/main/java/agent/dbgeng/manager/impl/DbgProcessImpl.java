@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.sequence;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -32,7 +32,6 @@ import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.cmd.*;
 import ghidra.async.TypeSpec;
 import ghidra.comm.util.BitmaskSet;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetAttachable;
 import ghidra.util.Msg;
 
@@ -267,8 +266,7 @@ public class DbgProcessImpl implements DbgProcess {
 	}
 
 	@Override
-	public CompletableFuture<Set<DbgThread>> reattach(
-			TypedTargetObjectRef<? extends TargetAttachable<?>> ref) {
+	public CompletableFuture<Set<DbgThread>> reattach(TargetAttachable attachable) {
 		return sequence(TypeSpec.cls(DbgThread.class).set()).then((seq) -> {
 			select().handle(seq::next);
 		}).then((seq) -> {

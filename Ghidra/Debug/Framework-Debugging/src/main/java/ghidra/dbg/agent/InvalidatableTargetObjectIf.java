@@ -17,7 +17,6 @@ package ghidra.dbg.agent;
 
 import java.util.*;
 
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 
 /**
@@ -42,7 +41,7 @@ import ghidra.dbg.target.TargetObject;
  * delegate derives from {@link AbstractTargetObject}, the proxy must include this interface, and
  * the call need only be forwarded to the delegate.
  */
-public interface InvalidatableTargetObjectIf extends TargetObjectRef {
+public interface InvalidatableTargetObjectIf extends TargetObject {
 
 	/**
 	 * Invalidate this subtree

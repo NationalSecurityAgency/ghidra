@@ -19,7 +19,7 @@ import agent.dbgeng.manager.impl.DbgRegister;
 import ghidra.dbg.target.TargetRegisterContainer;
 
 public interface DbgModelTargetRegisterContainer
-		extends DbgModelTargetObject, TargetRegisterContainer<DbgModelTargetRegisterContainer> {
+		extends DbgModelTargetObject, TargetRegisterContainer {
 
 	public DbgModelTargetRegister getTargetRegister(DbgRegister register);
 

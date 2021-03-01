@@ -27,7 +27,7 @@ import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 
 public class TestMimickJavaLauncher
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetObject>
-		implements TargetLauncher<TestMimickJavaLauncher> {
+		implements TargetLauncher {
 
 	public TestMimickJavaLauncher(TestTargetObject parent) {
 		super(parent, "Java Launcher", "Launcher");

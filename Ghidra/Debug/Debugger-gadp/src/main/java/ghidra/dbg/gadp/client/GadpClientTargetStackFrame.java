@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetStackFrame;
 
-public interface GadpClientTargetStackFrame
-		extends GadpClientTargetObject, TargetStackFrame<GadpClientTargetStackFrame> {
+public interface GadpClientTargetStackFrame extends GadpClientTargetObject, TargetStackFrame {
 	// Nothing to add
 }

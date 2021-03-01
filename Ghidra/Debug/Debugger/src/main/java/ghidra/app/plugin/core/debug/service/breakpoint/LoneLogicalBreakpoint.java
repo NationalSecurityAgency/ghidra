@@ -176,45 +176,48 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public CompletableFuture<Void> planEnable(BreakpointActionSet actions, Trace trace) {
+	public void planEnable(BreakpointActionSet actions, Trace trace) {
 		if (trace != null && trace != breaks.getTrace()) {
-			return AsyncUtils.NIL;
+			return;
 		}
-		return breaks.planEnable(actions, length, kinds);
+		breaks.planEnable(actions, length, kinds);
 	}
 
 	@Override
 	public CompletableFuture<Void> enable() {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		return planEnable(actions, null).thenCompose(__ -> actions.execute());
+		planEnable(actions, null);
+		return actions.execute();
 	}
 
 	@Override
-	public CompletableFuture<Void> planDisable(BreakpointActionSet actions, Trace trace) {
+	public void planDisable(BreakpointActionSet actions, Trace trace) {
 		if (trace != null && trace != breaks.getTrace()) {
-			return AsyncUtils.NIL;
+			return;
 		}
-		return breaks.planDisable(actions, length, kinds);
+		breaks.planDisable(actions, length, kinds);
 	}
 
 	@Override
 	public CompletableFuture<Void> disable() {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		return planDisable(actions, null).thenCompose(__ -> actions.execute());
+		planDisable(actions, null);
+		return actions.execute();
 	}
 
 	@Override
-	public CompletableFuture<Void> planDelete(BreakpointActionSet actions, Trace trace) {
+	public void planDelete(BreakpointActionSet actions, Trace trace) {
 		if (trace != null && trace != breaks.getTrace()) {
-			return AsyncUtils.NIL;
+			return;
 		}
-		return breaks.planDelete(actions, length, kinds);
+		breaks.planDelete(actions, length, kinds);
 	}
 
 	@Override
 	public CompletableFuture<Void> delete() {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		return planDelete(actions, null).thenCompose(__ -> actions.execute());
+		planDelete(actions, null);
+		return actions.execute();
 	}
 
 	@Override

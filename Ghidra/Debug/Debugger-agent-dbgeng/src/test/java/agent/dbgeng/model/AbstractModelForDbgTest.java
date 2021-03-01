@@ -16,6 +16,7 @@
 package agent.dbgeng.model;
 
 import static agent.dbgeng.testutil.DummyProc.runProc;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -33,12 +34,10 @@ import ghidra.async.*;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebugModelConventions.AllRequiredAccess;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.error.DebuggerModelNoSuchPathException;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetConsole.Channel;
@@ -139,7 +138,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				model.fetchModelObject("Doesn't exist").handle(seq::next);
 			}, TypeSpec.cls(TargetObject.class)).then((obj, seq) -> {
@@ -156,7 +155,7 @@ public abstract class AbstractModelForDbgTest
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
-			AtomicReference<DbgModelTargetLauncher<?>> launcher = new AtomicReference<>();
+			AtomicReference<DbgModelTargetLauncher> launcher = new AtomicReference<>();
 			TypeSpec<Map<String, ? extends TargetObject>> t = TypeSpec.auto();
 
 			waitOn(AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
@@ -169,7 +168,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
@@ -179,11 +178,10 @@ public abstract class AbstractModelForDbgTest
 				launcher.get().launch("notepad", "junk.txt").handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Processes (after launch)...");
 				model.fetchObjectElements(List.of("Sessions", "[0]"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, t).then((children, seq) -> {
 				Msg.debug(this, "Processes after: " + children);
@@ -201,7 +199,7 @@ public abstract class AbstractModelForDbgTest
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<TargetObject> session = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> rootAccess = new AtomicReference<>();
-			AtomicReference<DbgModelTargetLauncher<?>> launcher = new AtomicReference<>();
+			AtomicReference<DbgModelTargetLauncher> launcher = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> launcherAccess = new AtomicReference<>();
 			TypeSpec<Map<String, ? extends TargetObject>> t = TypeSpec.auto();
 
@@ -215,7 +213,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, rootAccess).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				rootAccess.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				rootAccess.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				model.fetchModelObject(List.of("Sessions", "[0]")).handle(seq::next);
 			}, session).then(seq -> {
@@ -224,22 +222,21 @@ public abstract class AbstractModelForDbgTest
 					session.get()).handle(seq::next);
 			}, TypeSpec.cls(TargetObject.class)).then((obj, seq) -> {
 				assertTrue(obj.getInterfaceNames().contains("Launcher"));
-				launcher.set((DbgModelTargetLauncher<?>) obj);
+				launcher.set((DbgModelTargetLauncher) obj);
 				Msg.debug(this, "Tracking process access...");
 				DebugModelConventions.trackAccessibility(obj).handle(seq::next);
 			}, launcherAccess).then(seq -> {
 				Msg.debug(this, "Waiting for process access...");
-				launcherAccess.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				launcherAccess.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Launching...");
 				launcher.get().launch("notepad", "junk.txt").handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again)...");
-				rootAccess.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				rootAccess.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Processes (after launch)...");
 				model.fetchObjectElements(List.of("Sessions", "[0]", "Processes"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, t).then((elements, seq) -> {
 				Msg.debug(this, "Processes after: " + elements);
@@ -267,10 +264,9 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				model.fetchObjectElements(List.of("Sessions", "[0]", "Available"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, DebuggerObjectModel.ELEMENT_MAP_TYPE).then((available, seq) -> {
 				assertTrue(available.containsKey(Long.toString(np.pid)));
@@ -298,7 +294,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
@@ -306,16 +302,11 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, proc).then(seq -> {
 				Msg.debug(this, "Attaching to bogus path...");
-				TargetAttacher<?> attacher = proc.get().as(TargetAttacher.tclass);
-				attacher.attach(
-					model.createRef("Sessions", "[0]", "Available", "[" + np.pid + "]")
-							.as(
-								TargetAttachable.tclass))
-						.handle(
-							seq::nextIgnore);
+				TargetAttacher attacher = proc.get().as(TargetAttacher.class);
+				TODO();
+				seq.next(null, null);
 			}).then(seq -> {
 				model.fetchObjectElements(List.of("Sessions", "[0]", "Processes"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 				// NB: listProcesses will fail if no process is being debugged
 			}, DebuggerObjectModel.ELEMENT_MAP_TYPE).then((processes, seq) -> {
@@ -332,8 +323,8 @@ public abstract class AbstractModelForDbgTest
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
-			AtomicReference<TargetAttacher<?>> attacher = new AtomicReference<>();
-			AtomicReference<TargetAttachable<?>> attachable = new AtomicReference<>();
+			AtomicReference<TargetAttacher> attacher = new AtomicReference<>();
+			AtomicReference<TargetAttachable> attachable = new AtomicReference<>();
 			TypeSpec<Map<String, ? extends TargetObject>> t = TypeSpec.auto();
 
 			waitOn(AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
@@ -346,7 +337,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 //				Msg.debug(this, "Getting Processes (before attach)...");
 //				model.getObjectElements(List.of("Sessions", "[0]", "Processes")).handle(seq::next);
@@ -366,7 +357,7 @@ public abstract class AbstractModelForDbgTest
 						.thenAccept(o -> {
 							Msg.debug(this, "  Got Attachable: " + o);
 							assertTrue(o.getInterfaceNames().contains("Attachable"));
-							attachable.set((TargetAttachable<?>) o);
+							attachable.set((TargetAttachable) o);
 						}));
 				fence.ready().handle(seq::next);
 			}).then(seq -> {
@@ -374,11 +365,10 @@ public abstract class AbstractModelForDbgTest
 				attacher.get().attach(attachable.get()).handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Processes (after attach)...");
 				model.fetchObjectElements(List.of("Sessions", "[0]", "Processes"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, t).then((elements, seq) -> {
 				Msg.debug(this, "Processes after: " + elements);
@@ -386,7 +376,7 @@ public abstract class AbstractModelForDbgTest
 				Msg.debug(this, "Killing...");
 				TargetObject attached = elements.get("0");
 				assertTrue(attached.getInterfaceNames().contains("Killable"));
-				TargetKillable<?> killable = (TargetKillable<?>) attached;
+				TargetKillable killable = (TargetKillable) attached;
 				killable.kill().handle(seq::next);
 			}).finish());
 		}
@@ -412,7 +402,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
@@ -420,17 +410,15 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Attaching...");
-				TargetAttacher<?> attacher = obj.get().as(TargetAttacher.tclass);
-				attacher.attach(model.createRef("Sessions", "[0]", "Available", "[" + np.pid + "]")
-						.as(TargetAttachable.tclass))
+				TargetAttacher attacher = obj.get().as(TargetAttacher.class);
+				attacher.attach(np.pid)
 						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again, again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Processes (after attach)...");
 				model.fetchObjectElements(List.of("Sessions", "[0]", "Processes"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, t).then((elements, seq) -> {
 				Msg.debug(this, "Processes after: " + elements);
@@ -438,7 +426,7 @@ public abstract class AbstractModelForDbgTest
 				Msg.debug(this, "Killing...");
 				TargetObject attached = elements.get("0");
 				assertTrue(attached.getInterfaceNames().contains("Killable"));
-				TargetKillable<?> killable = (TargetKillable<?>) attached;
+				TargetKillable killable = (TargetKillable) attached;
 				killable.kill().handle(seq::next);
 			}).finish());
 		}
@@ -464,7 +452,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
@@ -472,29 +460,25 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Attaching...");
-				TargetAttacher<?> attacher = obj.get().as(TargetAttacher.tclass);
-				attacher.attach(
-					model.createRef("Sessions", "[0]", "Available", "[" + np.pid + "]")
-							.as(
-								TargetAttachable.tclass))
+				TargetAttacher attacher = obj.get().as(TargetAttacher.class);
+				attacher.attach(np.pid)
 						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again, again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Process 1...");
 				model.fetchModelObject("Sessions", "[0]", "Processes", "[0]").handle(seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Resuming...");
-				TargetResumable<?> resumable = obj.get().as(TargetResumable.tclass);
+				TargetResumable resumable = obj.get().as(TargetResumable.class);
 				resumable.resume().handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (after resume)...");
-				access.get().waitValue(TargetAccessibility.INACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Processes (after attach)...");
 				model.fetchObjectElements(List.of("Sessions", "[0]", "Processes"))
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, t).then((elements, seq) -> {
 				Msg.debug(this, "Processes after: " + elements);
@@ -502,7 +486,7 @@ public abstract class AbstractModelForDbgTest
 				Msg.debug(this, "Killing...");
 				TargetObject attached = elements.get("0");
 				assertTrue(attached.getInterfaceNames().contains("Killable"));
-				TargetKillable<?> killable = (TargetKillable<?>) attached;
+				TargetKillable killable = (TargetKillable) attached;
 				killable.kill().handle(seq::nextIgnore);
 			}).finish());
 		}
@@ -526,29 +510,29 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
 						.handle(seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Launching...");
-				TargetLauncher<?> launcher = obj.get().as(TargetLauncher.tclass);
+				TargetLauncher launcher = obj.get().as(TargetLauncher.class);
 				launcher.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, "notepad junk.txt"))
 						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Process 1...");
 				model.fetchModelObject("Sessions", "[0]", "Processes", "[0]").handle(seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Resuming...");
-				TargetResumable<?> resumable = obj.get().as(TargetResumable.tclass);
+				TargetResumable resumable = obj.get().as(TargetResumable.class);
 				resumable.resume().handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (after resume)...");
-				access.get().waitValue(TargetAccessibility.INACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).finish());
 		}
 	}
@@ -572,7 +556,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
@@ -580,10 +564,9 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, proc).then(seq -> {
 				Msg.debug(this, "Attaching to bogus path...");
-				TargetAttacher<?> attacher = proc.get().as(TargetAttacher.tclass);
-				attacher.attach(model.createRef("Sessions", "[0]", "Available", "Process -1")
-						.as(TargetAttachable.tclass))
-						.handle(seq::nextIgnore);
+				TargetAttacher attacher = proc.get().as(TargetAttacher.class);
+				TODO();
+				seq.next(null, null);
 			}).finish());
 		}
 	}
@@ -607,7 +590,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
@@ -615,11 +598,9 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, proc).then(seq -> {
 				Msg.debug(this, "Attaching to bogus path...");
-				TargetAttacher<?> attacher = proc.get().as(TargetAttacher.tclass);
-				attacher.attach(model.createRef("Sessions", "[0]", "Available")
-						.as(
-							TargetAttachable.tclass))
-						.handle(seq::nextIgnore);
+				TargetAttacher attacher = proc.get().as(TargetAttacher.class);
+				TODO();
+				seq.next(null, null);
 			}).finish());
 			fail("Exception expected");
 		}
@@ -662,10 +643,10 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Running command...");
-				TargetInterpreter<?> interpreter = root.get().as(TargetInterpreter.tclass);
+				TargetInterpreter interpreter = root.get().as(TargetInterpreter.class);
 				interpreter.execute(".echo xyzzy").handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for expected output...");
@@ -705,10 +686,10 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Running command with capture...");
-				TargetInterpreter<?> interpreter = root.get().as(TargetInterpreter.tclass);
+				TargetInterpreter interpreter = root.get().as(TargetInterpreter.class);
 				interpreter.executeCapture(".echo xyzzy").handle(seq::next);
 			}, TypeSpec.STRING).then((out, seq) -> {
 				Msg.debug(this, "Captured: " + out);
@@ -725,7 +706,7 @@ public abstract class AbstractModelForDbgTest
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
-			AtomicReference<TargetBreakpointContainer<?>> breaks = new AtomicReference<>();
+			AtomicReference<TargetBreakpointContainer> breaks = new AtomicReference<>();
 
 			waitOn(AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				m.init().handle(seq::next);
@@ -737,7 +718,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding breakpoint container...");
 				DebugModelConventions.findSuitable(TargetBreakpointContainer.class, root.get())
@@ -752,7 +733,7 @@ public abstract class AbstractModelForDbgTest
 		}
 	}
 
-	public static final TypeSpec<Collection<? extends TargetBreakpointLocation<?>>> BL_COL_SPEC =
+	public static final TypeSpec<Collection<? extends TargetBreakpointLocation>> BL_COL_SPEC =
 		null;
 
 	@Test
@@ -762,9 +743,9 @@ public abstract class AbstractModelForDbgTest
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
-			AtomicReference<DbgModelTargetLauncher<?>> launcher = new AtomicReference<>();
-			AtomicReference<TargetBreakpointContainer<?>> breaks = new AtomicReference<>();
-			AtomicReference<TargetBreakpointLocation<?>> eff = new AtomicReference<>();
+			AtomicReference<DbgModelTargetLauncher> launcher = new AtomicReference<>();
+			AtomicReference<TargetBreakpointContainer> breaks = new AtomicReference<>();
+			AtomicReference<TargetBreakpointLocation> loc = new AtomicReference<>();
 
 			waitOn(AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				m.init().handle(seq::next);
@@ -776,7 +757,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
@@ -801,20 +782,19 @@ public abstract class AbstractModelForDbgTest
 				Msg.debug(this, "Getting breakpoint specs...");
 				breaks.get()
 						.fetchElements()
-						.thenCompose(DebugModelConventions::fetchAll)
 						.handle(seq::next);
 			}, DebuggerObjectModel.ELEMENT_MAP_TYPE).then((specs, seq) -> {
 				Msg.debug(this, "Got specs: " + specs);
 				assertEquals(1, specs.size());
-				TargetBreakpointSpec<?> spec = specs.get("0").as(TargetBreakpointSpec.tclass);
+				TargetBreakpointSpec spec = specs.get("0").as(TargetBreakpointSpec.class);
 				spec.getLocations().handle(seq::next);
 			}, BL_COL_SPEC).then((es, seq) -> {
 				Msg.debug(this, "Got effectives: " + es);
 				assertEquals(1, es.size());
-				eff.set(es.iterator().next());
-				Address addr = eff.get().getAddress();
+				loc.set(es.iterator().next());
+				Address addr = loc.get().getAddress();
 				Msg.debug(this, "Got address: " + addr);
-				TargetObjectRefList<?> list = eff.get().getAffects();
+				TargetObjectList<?> list = loc.get().getAffects();
 				Msg.debug(this, "Got affects: " + list);
 				assertEquals(1, list.size());
 				seq.exit();
@@ -829,8 +809,8 @@ public abstract class AbstractModelForDbgTest
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
-			AtomicReference<TargetBreakpointContainer<?>> breaks = new AtomicReference<>();
-			AtomicReference<DbgModelTargetLauncher<?>> launcher = new AtomicReference<>();
+			AtomicReference<TargetBreakpointContainer> breaks = new AtomicReference<>();
+			AtomicReference<TargetLauncher> launcher = new AtomicReference<>();
 			AtomicReference<TargetObject> obj = new AtomicReference<>();
 			waitOn(AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				m.init().handle(seq::next);
@@ -842,18 +822,20 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.findSuitable(TargetLauncher.class, root.get())
 						.handle(
 							seq::next);
 			}, launcher).then(seq -> {
 				Msg.debug(this, "Launching...");
-				launcher.get().launch("notepad", "junk.txt").handle(seq::nextIgnore);
+				launcher.get()
+						.launch(Map.of("args", List.of("notepad", "junk.txt")))
+						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding breakpoint container...");
 				DebugModelConventions.findSuitable(TargetBreakpointContainer.class, root.get())
@@ -869,20 +851,17 @@ public abstract class AbstractModelForDbgTest
 				model.fetchModelObject("Sessions", "[0]", "Processes", "[0]").handle(seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Resuming...");
-				TargetResumable<?> resumable = obj.get().as(TargetResumable.tclass);
+				TargetResumable resumable = obj.get().as(TargetResumable.class);
 				resumable.resume().handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (after resume)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
-				obj.get()
-						.fetchSubElements("Threads", "[0]", "Stack")
-						.thenCompose(DebugModelConventions::fetchAll)
-						.handle(seq::next);
+				obj.get().fetchSubElements("Threads", "[0]", "Stack").handle(seq::next);
 			}, DebuggerObjectModel.ELEMENT_MAP_TYPE).then((frames, seq) -> {
 				Msg.debug(this, "Got stack:");
 				for (Map.Entry<String, ? extends TargetObject> ent : frames.entrySet()) {
-					TargetStackFrame<?> frame = ent.getValue().as(TargetStackFrame.tclass);
+					TargetStackFrame frame = ent.getValue().as(TargetStackFrame.class);
 					Msg.debug(this, ent.getKey() + ": " + frame.getProgramCounter());
 				}
 				long offset = frames.get("0")
@@ -904,10 +883,10 @@ public abstract class AbstractModelForDbgTest
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
-			AtomicReference<DbgModelTargetLauncher<?>> launcher = new AtomicReference<>();
+			AtomicReference<TargetLauncher> launcher = new AtomicReference<>();
 			AtomicReference<TargetObject> proc = new AtomicReference<>();
-			AtomicReference<TargetRegisterBank<?>> bank = new AtomicReference<>();
-			Set<TargetRegister<?>> descs = new LinkedHashSet<>();
+			AtomicReference<TargetRegisterBank> bank = new AtomicReference<>();
+			Set<TargetRegister> descs = new LinkedHashSet<>();
 
 			waitOn(AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				m.init().handle(seq::next);
@@ -919,7 +898,7 @@ public abstract class AbstractModelForDbgTest
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
@@ -927,10 +906,12 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, launcher).then(seq -> {
 				Msg.debug(this, "Launching...");
-				launcher.get().launch("notepad", "junk.txt").handle(seq::nextIgnore);
+				launcher.get()
+						.launch(Map.of("args", List.of("notepad", "junk.txt")))
+						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Getting Process 1...");
 				model.fetchModelObject(List.of("Sessions", "[0]", "Processes", "[0]"))
@@ -938,18 +919,17 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, proc).then(seq -> {
 				proc.get().fetchSuccessor("Threads", "[0]", "Stack", "[0]").thenAccept(top -> {
-					bank.set(top.as(TargetRegisterBank.tclass));
+					bank.set(top.as(TargetRegisterBank.class));
 				}).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Got bank: " + bank.get());
 				Msg.debug(this, "Descriptions ref: " + bank.get().getDescriptions());
-				bank.get().getDescriptions().fetch().handle(seq::next);
-			}, TypeSpec.cls(TargetRegisterContainer.wclass)).then((cont, seq) -> {
+				TargetRegisterContainer cont = bank.get().getDescriptions();
 				Msg.debug(this, "Register descriptions: " + cont);
 				cont.getRegisters().thenAccept(descs::addAll).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Elements: ");
-				for (TargetRegister<?> reg : descs) {
+				for (TargetRegister reg : descs) {
 					Msg.debug(this, "  " + reg.getIndex() + ": " + reg.getBitLength());
 				}
 				bank.get().readRegisters(descs).handle(seq::next);
@@ -982,7 +962,7 @@ public abstract class AbstractModelForDbgTest
 			DebuggerObjectModel model = m.getModel();
 
 			AtomicReference<TargetObject> root = new AtomicReference<>();
-			AtomicReference<TargetFocusScope<?>> scope = new AtomicReference<>();
+			AtomicReference<TargetFocusScope> scope = new AtomicReference<>();
 			AtomicReference<AllRequiredAccess> access = new AtomicReference<>();
 			AtomicReference<TargetObject> processes = new AtomicReference<>();
 			AtomicReference<TargetObject> obj1 = new AtomicReference<>();
@@ -993,13 +973,13 @@ public abstract class AbstractModelForDbgTest
 			TargetObjectListener procListener = new TargetObjectListener() {
 				@Override
 				public void elementsChanged(TargetObject parent, Collection<String> removed,
-						Map<String, ? extends TargetObjectRef> added) {
+						Map<String, ? extends TargetObject> added) {
 					processCount.set(processes.get().getCachedElements().size(), null);
 				}
 			};
 			TargetFocusScopeListener focusListener = new TargetFocusScopeListener() {
 				@Override
-				public void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+				public void focusChanged(TargetFocusScope object, TargetObject focused) {
 					// Truncate the path to the parent process
 					focusProcPath.set(focused.getPath().subList(0, 2), null);
 				}
@@ -1011,13 +991,13 @@ public abstract class AbstractModelForDbgTest
 				Msg.debug(this, "Getting session root object");
 				model.fetchModelObject("Sessions", "[0]").handle(seq::next);
 			}, root).then(seq -> {
-				scope.set(root.get().as(TargetFocusScope.tclass));
+				scope.set(root.get().as(TargetFocusScope.class));
 				scope.get().addListener(focusListener);
 				Msg.debug(this, "Tracking session access...");
 				DebugModelConventions.trackAccessibility(root.get()).handle(seq::next);
 			}, access).then(seq -> {
 				Msg.debug(this, "Waiting for session access...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
 				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
@@ -1025,12 +1005,8 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, obj1).then(seq -> {
 				Msg.debug(this, "Attaching...");
-				TargetAttacher<?> attacher = obj1.get().as(TargetAttacher.tclass);
-				attacher.attach(
-					model.createRef("Sessions", "[0]", "Available", "[" + np.pid + "]")
-							.as(
-								TargetAttachable.tclass))
-						.handle(seq::nextIgnore);
+				TargetAttacher attacher = obj1.get().as(TargetAttacher.class);
+				attacher.attach(np.pid).handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Getting processes container");
 				model.fetchModelObject("Sessions", "[0]", "Processes").handle(seq::next);
@@ -1042,12 +1018,12 @@ public abstract class AbstractModelForDbgTest
 							seq::next);
 			}, obj2).then(seq -> {
 				Msg.debug(this, "Creating another process");
-				TargetLauncher<?> launcher = obj2.get().as(TargetLauncher.tclass);
+				TargetLauncher launcher = obj2.get().as(TargetLauncher.class);
 				launcher.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, "notepad junk.txt"))
 						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Waiting for session access (again)...");
-				access.get().waitValue(TargetAccessibility.ACCESSIBLE).handle(seq::next);
+				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				assertTrue(PathUtils.isAncestor(List.of("Sessions", "[0]", "Processes", "[1]"),
 					scope.get().getFocus().getPath()));
@@ -1056,9 +1032,9 @@ public abstract class AbstractModelForDbgTest
 
 				Msg.debug(this, "Requesting focus on process 0");
 				AsyncFence fence = new AsyncFence();
-				TargetObjectRef i2 = model.createRef("Sessions", "[0]", "Processes", "[0]");
-				fence.include(focusProcPath.waitValue(i2.getPath()));
-				fence.include(scope.get().requestFocus(i2));
+				TargetObject p2 = model.getModelObject("Sessions", "[0]", "Processes", "[0]");
+				fence.include(focusProcPath.waitValue(p2.getPath()));
+				fence.include(scope.get().requestFocus(p2));
 				fence.ready().handle(seq::next);
 			}).then(seq -> {
 				assertTrue(PathUtils.isAncestor(List.of("Sessions", "[0]", "Processes", "[0]"),

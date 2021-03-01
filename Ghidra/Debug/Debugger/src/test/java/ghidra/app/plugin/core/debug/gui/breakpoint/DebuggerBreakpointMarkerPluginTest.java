@@ -100,7 +100,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected void addLiveMemoryAndBreakpoint(TraceRecorder recorder)
 			throws InterruptedException, ExecutionException, TimeoutException {
 		mb.testProcess1.addRegion("bin:.text", mb.rng(0x55550000, 0x55550fff), "rx");
-		TargetBreakpointContainer<?> cont = getBreakpointContainer(recorder);
+		TargetBreakpointContainer cont = getBreakpointContainer(recorder);
 		cont.placeBreakpoint(mb.addr(0x55550123), Set.of(TargetBreakpointKind.SOFTWARE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}

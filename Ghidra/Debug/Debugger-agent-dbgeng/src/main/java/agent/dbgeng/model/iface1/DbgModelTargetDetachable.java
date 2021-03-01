@@ -28,8 +28,7 @@ import ghidra.dbg.target.TargetDetachable;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetDetachable<T extends TargetDetachable<T>>
-		extends DbgModelTargetObject, TargetDetachable<T> {
+public interface DbgModelTargetDetachable extends DbgModelTargetObject, TargetDetachable {
 
 	@Override
 	public default CompletableFuture<Void> detach() {

@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetRegister;
 
-public interface GadpClientTargetRegister
-		extends GadpClientTargetObject, TargetRegister<GadpClientTargetRegister> {
+public interface GadpClientTargetRegister extends GadpClientTargetObject, TargetRegister {
 	// Nothing to add
 }

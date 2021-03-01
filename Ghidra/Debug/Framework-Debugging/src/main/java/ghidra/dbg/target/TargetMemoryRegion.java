@@ -16,21 +16,11 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.AddressRange;
 
 @DebuggerTargetObjectIface("MemoryRegion")
-public interface TargetMemoryRegion<T extends TargetMemoryRegion<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetMemoryRegion<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetMemoryRegion.class;
-
+public interface TargetMemoryRegion extends TargetObject {
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
 	String READABLE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "readable";
 	String WRITABLE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "writable";
@@ -94,7 +84,7 @@ public interface TargetMemoryRegion<T extends TargetMemoryRegion<T>> extends Typ
 	 * @return a reference to the memory
 	 */
 	@TargetAttributeType(name = MEMORY_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
-	public default TypedTargetObjectRef<? extends TargetMemory<?>> getMemory() {
-		return getTypedRefAttributeNowByName(MEMORY_ATTRIBUTE_NAME, TargetMemory.tclass, null);
+	public default TargetMemory getMemory() {
+		return getTypedAttributeNowByName(MEMORY_ATTRIBUTE_NAME, TargetMemory.class, null);
 	}
 }

@@ -27,13 +27,23 @@ import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Session", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = DbgModelTargetSessionAttributesImpl.class, fixed = true), //
-	@TargetAttributeType(name = "Processes", type = DbgModelTargetProcessContainerImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Session",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(
+			name = "Attributes",
+			type = DbgModelTargetSessionAttributesImpl.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Processes",
+			type = DbgModelTargetProcessContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
+	})
 public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSession {
 
@@ -87,8 +97,8 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
 
 	@Override

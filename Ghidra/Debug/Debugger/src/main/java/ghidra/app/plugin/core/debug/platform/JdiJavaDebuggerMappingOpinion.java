@@ -39,19 +39,19 @@ public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 
 		@Override
-		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory<?> memory) {
+		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
 			return new DefaultDebuggerMemoryMapper(language, memory.getModel());
 		}
 
 		@Override
 		protected DebuggerRegisterMapper createRegisterMapper(
-				TargetRegisterContainer<?> registers) {
+				TargetRegisterContainer registers) {
 			return new DefaultDebuggerRegisterMapper(cSpec, registers, false);
 		}
 	}
 
 	protected static class JavaDebuggerMappingOffer extends AbstractDebuggerMappingOffer {
-		public JavaDebuggerMappingOffer(TargetProcess<?> process) {
+		public JavaDebuggerMappingOffer(TargetProcess process) {
 			super(process, 100, "Java Virtual Machine", LANG_ID_JAVA, COMP_ID_VS, Set.of());
 		}
 
@@ -71,9 +71,9 @@ public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		if (!(target instanceof TargetProcess)) {
 			return CompletableFuture.completedFuture(Set.of());
 		}
-		TargetProcess<?> process = (TargetProcess<?>) target;
-		CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.tclass, target);
+		TargetProcess process = (TargetProcess) target;
+		CompletableFuture<? extends TargetEnvironment> futureEnv =
+			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
 		return futureEnv.thenApply(env -> offersForEnv(env, process));
 	}
 
@@ -81,8 +81,8 @@ public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		return JVM_NAMES.stream().anyMatch(name::contains);
 	}
 
-	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment<?> env,
-			TargetProcess<?> process) {
+	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env,
+			TargetProcess process) {
 		if (!env.getDebugger().contains("Java Debug Interface")) {
 			return Set.of();
 		}

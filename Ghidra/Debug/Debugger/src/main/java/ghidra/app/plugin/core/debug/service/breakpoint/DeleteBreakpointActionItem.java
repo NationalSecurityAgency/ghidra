@@ -22,9 +22,9 @@ import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.TargetDeletable;
 
 public class DeleteBreakpointActionItem implements BreakpointActionItem {
-	private final TargetBreakpointSpec<?> spec;
+	private final TargetBreakpointSpec spec;
 
-	public DeleteBreakpointActionItem(TargetBreakpointSpec<?> spec) {
+	public DeleteBreakpointActionItem(TargetBreakpointSpec spec) {
 		this.spec = spec;
 	}
 
@@ -47,11 +47,11 @@ public class DeleteBreakpointActionItem implements BreakpointActionItem {
 
 	@Override
 	public CompletableFuture<Void> execute() {
-		if (!(spec instanceof TargetDeletable<?>)) {
+		if (!(spec instanceof TargetDeletable)) {
 			return CompletableFuture
 					.failedFuture(new IllegalArgumentException("spec is not Deletable"));
 		}
-		TargetDeletable<?> del = (TargetDeletable<?>) spec;
+		TargetDeletable del = (TargetDeletable) spec;
 		return del.delete();
 	}
 }

@@ -30,7 +30,6 @@ import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.async.AsyncReference;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.*;
@@ -291,7 +290,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	}
 
 	protected void addTargetAccessBreakpoint(TraceRecorder r) throws Exception {
-		TargetBreakpointContainer<?> cont = getBreakpointContainer(r);
+		TargetBreakpointContainer cont = getBreakpointContainer(r);
 		cont.placeBreakpoint(mb.testModel.getAddress("ram", 0x56550123),
 			Set.of(TargetBreakpointKind.READ, TargetBreakpointKind.WRITE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -302,24 +301,24 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		TraceMemoryRegion textRegion =
 			waitFor(() -> r.getTraceMemoryRegion(region), "Recorder missed region: " + region);
 		long offset = textRegion.getMinAddress().getOffset() + 0x0123;
-		TargetBreakpointContainer<?> cont = getBreakpointContainer(r);
+		TargetBreakpointContainer cont = getBreakpointContainer(r);
 		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SOFTWARE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	protected void removeTargetSoftwareBreakpoint(TraceRecorder r) throws Exception {
-		TargetBreakpointContainer<?> cont = getBreakpointContainer(r);
-		cont.fetchElements().thenCompose(DebugModelConventions::fetchAll).thenAccept(elements -> {
+		TargetBreakpointContainer cont = getBreakpointContainer(r);
+		cont.fetchElements().thenAccept(elements -> {
 			for (TargetObject obj : elements.values()) {
-				if (!(obj instanceof TargetBreakpointSpec<?>) ||
-					!(obj instanceof TargetDeletable<?>)) {
+				if (!(obj instanceof TargetBreakpointSpec) ||
+					!(obj instanceof TargetDeletable)) {
 					continue;
 				}
-				TargetBreakpointSpec<?> spec = (TargetBreakpointSpec<?>) obj;
+				TargetBreakpointSpec spec = (TargetBreakpointSpec) obj;
 				if (!spec.getKinds().contains(TargetBreakpointKind.SOFTWARE)) {
 					continue;
 				}
-				TargetDeletable<?> del = (TargetDeletable<?>) obj;
+				TargetDeletable del = (TargetDeletable) obj;
 				del.delete();
 				return;
 			}

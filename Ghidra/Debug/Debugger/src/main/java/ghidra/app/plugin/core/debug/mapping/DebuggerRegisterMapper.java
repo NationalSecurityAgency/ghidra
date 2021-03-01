@@ -44,7 +44,7 @@ public interface DebuggerRegisterMapper {
 	 * @param name the name of the register as a string
 	 * @return the register description (name) on target
 	 */
-	TargetRegister<?> getTargetRegister(String name);
+	TargetRegister getTargetRegister(String name);
 
 	/**
 	 * Get a trace register (name) by string
@@ -68,7 +68,7 @@ public interface DebuggerRegisterMapper {
 		if (!lReg.isBaseRegister()) {
 			throw new IllegalArgumentException();
 		}
-		TargetRegister<?> tReg = traceToTarget(lReg);
+		TargetRegister tReg = traceToTarget(lReg);
 		if (tReg == null) {
 			return null;
 		}
@@ -82,7 +82,7 @@ public interface DebuggerRegisterMapper {
 	 * @param register the trace register
 	 * @return the target register
 	 */
-	TargetRegister<?> traceToTarget(Register register);
+	TargetRegister traceToTarget(Register register);
 
 	/**
 	 * Convert a target register name and byte array value into a trace register value
@@ -92,7 +92,7 @@ public interface DebuggerRegisterMapper {
 	 * @return the converted register value suitable for trace storage
 	 */
 	default RegisterValue targetToTrace(String tRegName, byte[] value) {
-		TargetRegister<?> tReg = getTargetRegister(tRegName);
+		TargetRegister tReg = getTargetRegister(tRegName);
 		if (tReg == null) {
 			return null;
 		}
@@ -106,7 +106,7 @@ public interface DebuggerRegisterMapper {
 	 * @param value the value of the target register
 	 * @return the converted register value suitable for trace storage
 	 */
-	default RegisterValue targetToTrace(TargetRegister<?> tReg, byte[] value) {
+	default RegisterValue targetToTrace(TargetRegister tReg, byte[] value) {
 		if (value == null) {
 			return null;
 		}
@@ -124,7 +124,7 @@ public interface DebuggerRegisterMapper {
 	 * @param tReg the target register name
 	 * @return the trace register name (as defined by the Ghidra language)
 	 */
-	Register targetToTrace(TargetRegister<?> tReg);
+	Register targetToTrace(TargetRegister tReg);
 
 	/**
 	 * Get suggested type information for a given trace register
@@ -152,7 +152,7 @@ public interface DebuggerRegisterMapper {
 	 * 
 	 * @param register the new register
 	 */
-	void targetRegisterAdded(TargetRegister<?> register);
+	void targetRegisterAdded(TargetRegister register);
 
 	/**
 	 * The recorder is informing this mapper of a removed target register
@@ -168,5 +168,5 @@ public interface DebuggerRegisterMapper {
 	 * 
 	 * @param register the old register
 	 */
-	void targetRegisterRemoved(TargetRegister<?> register);
+	void targetRegisterRemoved(TargetRegister register);
 }

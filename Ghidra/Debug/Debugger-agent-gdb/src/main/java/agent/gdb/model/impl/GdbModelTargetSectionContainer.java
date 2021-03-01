@@ -26,9 +26,12 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "SectionContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "SectionContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetSectionContainer
 		extends DefaultTargetObject<GdbModelTargetSection, GdbModelTargetModule> {
 	public static final String NAME = "Sections";

@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetSteppable;
 
-public interface GadpClientTargetSteppable
-		extends GadpClientTargetObject, TargetSteppable<GadpClientTargetSteppable> {
+public interface GadpClientTargetSteppable extends GadpClientTargetObject, TargetSteppable {
 	@Override
 	default CompletableFuture<Void> step(TargetStepKind kind) {
 		getDelegate().assertValid();

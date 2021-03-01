@@ -29,15 +29,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * register bank. Otherwise, the same object presenting this stack should present the register bank.
  */
 @DebuggerTargetObjectIface("Stack")
-public interface TargetStack<T extends TargetStack<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetStack<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetStack.class;
+public interface TargetStack extends TargetObject {
 
 	/**
 	 * Get the frames in this stack
@@ -50,7 +42,7 @@ public interface TargetStack<T extends TargetStack<T>> extends TypedTargetObject
 	 *           that behavior is not yet supported.
 	 * @return the stack frames
 	 */
-	default CompletableFuture<? extends Collection<? extends TargetStackFrame<?>>> getFrames() {
-		return DebugModelConventions.collectSuccessors(this, TargetStackFrame.tclass);
+	default CompletableFuture<? extends Collection<? extends TargetStackFrame>> getFrames() {
+		return DebugModelConventions.collectSuccessors(this, TargetStackFrame.class);
 	}
 }

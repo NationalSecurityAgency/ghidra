@@ -22,11 +22,11 @@ import ghidra.dbg.target.TargetInterpreter;
 import ghidra.framework.plugintool.ServiceInfo;
 
 @ServiceInfo( //
-		defaultProvider = DebuggerInterpreterPlugin.class, //
-		description = "Service for managing debugger interpreter panels" //
+	defaultProvider = DebuggerInterpreterPlugin.class, //
+	description = "Service for managing debugger interpreter panels" //
 )
 public interface DebuggerInterpreterService {
-	DebuggerInterpreterConnection showConsole(TargetConsole<?> console);
+	DebuggerInterpreterConnection showConsole(TargetConsole console);
 
-	DebuggerInterpreterConnection showConsole(TargetInterpreter<?> interpreter);
+	DebuggerInterpreterConnection showConsole(TargetInterpreter interpreter);
 }

@@ -58,7 +58,7 @@ public class OpenWinDbgTraceAction extends ImportExportAsAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		this.context = context;
-		return provider.isInstance(context, TargetLauncher.tclass);
+		return provider.isInstance(context, TargetLauncher.class);
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public class OpenWinDbgTraceAction extends ImportExportAsAction {
 				String[] args = new String[2];
 				args[0] = ".opendump";
 				args[1] = f.getAbsolutePath();
-				AtomicReference<TargetLauncher<?>> launcher = new AtomicReference<>();
+				AtomicReference<TargetLauncher> launcher = new AtomicReference<>();
 				AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 					TargetObject obj = provider.getObjectFromContext(context);
 					DebugModelConventions.findSuitable(TargetLauncher.class, obj).handle(seq::next);

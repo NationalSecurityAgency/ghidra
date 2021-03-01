@@ -23,15 +23,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * A target which can be detached from the debugger
  */
 @DebuggerTargetObjectIface("Detachable")
-public interface TargetDetachable<T extends TargetDetachable<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetDetachable<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetDetachable.class;
+public interface TargetDetachable extends TargetObject {
 
 	/**
 	 * Detach from this target

@@ -23,7 +23,7 @@ import ghidra.program.model.address.Address;
 
 public class TestTargetStackFrameHasRegisterBank
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetStack>
-		implements TestTargetStackFrame<TestTargetStackFrameHasRegisterBank> {
+		implements TestTargetStackFrame {
 	protected final TestTargetRegisterBankInFrame bank;
 	protected Address pc;
 
@@ -37,7 +37,8 @@ public class TestTargetStackFrameHasRegisterBank
 	}
 
 	@Override
-	public void setFromFrame(TestTargetStackFrameHasRegisterBank that) {
+	public void setFromFrame(TestTargetStackFrame frame) {
+		TestTargetStackFrameHasRegisterBank that = (TestTargetStackFrameHasRegisterBank) frame;
 		this.pc = that.pc;
 		changeAttributes(List.of(), Map.of(
 			PC_ATTRIBUTE_NAME, this.pc //

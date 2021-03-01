@@ -29,18 +29,34 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "Connector", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Description", type = String.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Default Arguments", type = Object.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Transport", type = Object.class, required = true, fixed = true), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Connector",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(
+			name = "Description",
+			type = String.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Default Arguments",
+			type = Object.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Transport",
+			type = Object.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetConnector extends JdiModelTargetObjectImpl
 		implements JdiModelSelectableObject,
 		// TODO: Make a JidModelTargetLaunchingConnector and JdiModelTargetAttachingConnector
-		JdiModelTargetLauncher<JdiModelTargetConnector> {
+		JdiModelTargetLauncher {
 
 	protected final JdiModelTargetConnectorContainer connectors;
 	protected final Connector cx;

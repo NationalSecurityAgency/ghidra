@@ -26,14 +26,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
-@TargetObjectSchemaInfo(name = "Symbol", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Symbol",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetSymbol
 		extends DefaultTargetObject<TargetObject, GdbModelTargetSymbolContainer>
-		implements TargetSymbol<GdbModelTargetSymbol> {
+		implements TargetSymbol {
 	protected static String indexSymbol(GdbMinimalSymbol symbol) {
 		return symbol.getName();
 	}

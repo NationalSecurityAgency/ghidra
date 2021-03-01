@@ -25,7 +25,6 @@ import ghidra.dbg.target.TargetConsole;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetConsole<T extends TargetConsole<T>>
-		extends JdiModelTargetObject, TargetConsole<T> {
+public interface JdiModelTargetConsole extends JdiModelTargetObject, TargetConsole {
 
 }

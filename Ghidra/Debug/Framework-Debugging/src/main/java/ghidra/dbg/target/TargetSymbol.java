@@ -17,10 +17,8 @@ package ghidra.dbg.target;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetDataType;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 import ghidra.program.model.address.Address;
@@ -33,16 +31,7 @@ import ghidra.program.model.data.DataTypeManager;
  * @see TargetSymbolNamespace
  */
 @DebuggerTargetObjectIface("Symbol")
-public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetSymbol<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetSymbol.class;
-	TypeSpec<TargetSymbol<?>> TYPE = TypeSpec.auto();
+public interface TargetSymbol extends TargetObject {
 
 	String DATA_TYPE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "data_type";
 	String SIZE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "size";
@@ -135,7 +124,10 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	 * 
 	 * @return the size of the symbol, or 0 if unspecified
 	 */
-	@TargetAttributeType(name = SIZE_ATTRIBUTE_NAME, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = SIZE_ATTRIBUTE_NAME,
+		fixed = true,
+		hidden = true)
 	public default long getSize() {
 		return getTypedAttributeNowByName(SIZE_ATTRIBUTE_NAME, Long.class, 0L);
 	}
@@ -150,9 +142,13 @@ public interface TargetSymbol<T extends TargetSymbol<T>> extends TypedTargetObje
 	 * 
 	 * @return a reference to the namespace
 	 */
-	@TargetAttributeType(name = NAMESPACE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
-	public default TypedTargetObjectRef<? extends TargetSymbolNamespace<?>> getNamespace() {
-		return getTypedRefAttributeNowByName(NAMESPACE_ATTRIBUTE_NAME, TargetSymbolNamespace.tclass,
+	@TargetAttributeType(
+		name = NAMESPACE_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
+	public default TargetSymbolNamespace getNamespace() {
+		return getTypedAttributeNowByName(NAMESPACE_ATTRIBUTE_NAME, TargetSymbolNamespace.class,
 			null);
 	}
 }

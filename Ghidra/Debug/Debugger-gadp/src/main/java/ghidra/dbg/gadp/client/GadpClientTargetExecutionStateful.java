@@ -20,7 +20,7 @@ import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.util.ValueUtils;
 
 public interface GadpClientTargetExecutionStateful
-		extends GadpClientTargetObject, TargetExecutionStateful<GadpClientTargetExecutionStateful> {
+		extends GadpClientTargetObject, TargetExecutionStateful {
 
 	default TargetExecutionState stateFromObj(Object obj) {
 		return ValueUtils.expectType(obj, TargetExecutionState.class, this,

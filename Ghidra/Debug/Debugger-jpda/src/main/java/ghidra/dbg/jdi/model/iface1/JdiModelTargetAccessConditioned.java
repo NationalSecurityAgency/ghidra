@@ -25,10 +25,10 @@ import ghidra.dbg.target.TargetAccessConditioned;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetAccessConditioned<T extends TargetAccessConditioned<T>>
-		extends JdiModelTargetObject, TargetAccessConditioned<T> {
+public interface JdiModelTargetAccessConditioned
+		extends JdiModelTargetObject, TargetAccessConditioned {
 
 	@Override
-	public TargetAccessibility getAccessibility();
+	public boolean isAccessible();
 
 }

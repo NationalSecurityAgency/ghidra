@@ -34,25 +34,37 @@ import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Thread", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
-	@TargetAttributeType(name = "Registers", type = JdiModelTargetRegisterContainer.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Stack", type = JdiModelTargetStack.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Status", type = Integer.class), //
-	@TargetAttributeType(name = "UID", type = Long.class, fixed = true), //
-	@TargetAttributeType(type = Object.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Thread",
+	elements = { //
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
+		@TargetAttributeType(
+			name = "Registers",
+			type = JdiModelTargetRegisterContainer.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Stack",
+			type = JdiModelTargetStack.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(name = "Status", type = Integer.class),
+		@TargetAttributeType(name = "UID", type = Long.class, fixed = true),
+		@TargetAttributeType(type = Object.class) //
+	},
+	canonicalContainer = true)
 public class JdiModelTargetThread extends JdiModelTargetObjectReference implements //
-		TargetThread<JdiModelTargetThread>, //
-		JdiModelTargetAccessConditioned<JdiModelTargetThread>, //
-		JdiModelTargetExecutionStateful<JdiModelTargetThread>, //
-		JdiModelTargetInterruptible<JdiModelTargetThread>, //
-		JdiModelTargetKillable<JdiModelTargetThread>, //
-		JdiModelTargetResumable<JdiModelTargetThread>, //
-		JdiModelTargetSteppable<JdiModelTargetThread>, //
-		//TargetSuspendable<JdiModelTargetThread>,
+		TargetThread, //
+		JdiModelTargetAccessConditioned, //
+		JdiModelTargetExecutionStateful, //
+		JdiModelTargetInterruptible, //
+		JdiModelTargetKillable, //
+		JdiModelTargetResumable, //
+		JdiModelTargetSteppable, //
+		// TargetSuspendable,
 		JdiEventsListenerAdapter, //
 		JdiModelSelectableObject {
 
@@ -177,6 +189,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		return CompletableFuture.completedFuture(null);
 	}
 
+	@Override
 	public CompletableFuture<Void> init() {
 		AsyncFence fence = new AsyncFence();
 		//fence.include(requestAttributes(true));
@@ -264,7 +277,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	@Override
 	public void threadSelected(ThreadReference eventThread, StackFrame frame, JdiCause cause) {
 		if (eventThread.equals(thread) && frame == null) {
-			AtomicReference<JdiModelTargetFocusScope<?>> scope = new AtomicReference<>();
+			AtomicReference<JdiModelTargetFocusScope> scope = new AtomicReference<>();
 			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				DebugModelConventions.findSuitable(JdiModelTargetFocusScope.class, this)
 						.handle(seq::next);
@@ -400,9 +413,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return thread.isSuspended() ? TargetAccessibility.ACCESSIBLE
-				: TargetAccessibility.INACCESSIBLE;
+	public boolean isAccessible() {
+		return thread.isSuspended();
 	}
-
 }

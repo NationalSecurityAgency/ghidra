@@ -18,7 +18,6 @@ package ghidra.dbg.target;
 import java.util.List;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
@@ -28,15 +27,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * Most often, this interface is supported by the (root) session.
  */
 @DebuggerTargetObjectIface("EventScope")
-public interface TargetEventScope<T extends TargetEventScope<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetEventScope<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetEventScope.class;
+public interface TargetEventScope extends TargetObject {
 
 	String EVENT_PROCESS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "event_process";
 	String EVENT_THREAD_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "event_thread";
@@ -182,8 +173,7 @@ public interface TargetEventScope<T extends TargetEventScope<T>> extends TypedTa
 		 * @param description a human-readable description of the event
 		 * @param parameters extra parameters for the event. TODO: Specify these for each type
 		 */
-		default void event(TargetEventScope<?> object,
-				TypedTargetObjectRef<? extends TargetThread<?>> eventThread, TargetEventType type,
+		default void event(TargetEventScope object, TargetThread eventThread, TargetEventType type,
 				String description, List<Object> parameters) {
 		}
 	}

@@ -22,19 +22,19 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
-public class TestTargetStackFrameIsRegisterBank extends
-		AbstractTestTargetRegisterBank<TestTargetStackFrameIsRegisterBank, TestTargetStack>
-		implements TestTargetStackFrame<TestTargetStackFrameIsRegisterBank> {
+public class TestTargetStackFrameIsRegisterBank
+		extends AbstractTestTargetRegisterBank<TestTargetStack> implements TestTargetStackFrame {
 
 	protected Address pc;
 
 	public TestTargetStackFrameIsRegisterBank(TestTargetStack parent, int level) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(level)), "Frame",
-			parent.getImplParent().getImplParent().getImplParent().regs);
+			parent.getParent().getParent().getParent().regs);
 	}
 
 	@Override
-	public void setFromFrame(TestTargetStackFrameIsRegisterBank that) {
+	public void setFromFrame(TestTargetStackFrame frame) {
+		TestTargetStackFrameIsRegisterBank that = (TestTargetStackFrameIsRegisterBank) frame;
 		this.pc = that.pc;
 		changeAttributes(List.of(), Map.of(
 			PC_ATTRIBUTE_NAME, this.pc //
@@ -44,7 +44,7 @@ public class TestTargetStackFrameIsRegisterBank extends
 
 	@Override
 	public TestTargetThread getThread() {
-		return parent.getImplParent();
+		return parent.getParent();
 	}
 
 	public void setPC(Address address) {

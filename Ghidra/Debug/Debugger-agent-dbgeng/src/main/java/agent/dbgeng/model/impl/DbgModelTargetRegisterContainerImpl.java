@@ -26,22 +26,24 @@ import agent.dbgeng.manager.impl.DbgRegisterSet;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.ConversionUtils;
 
-@TargetObjectSchemaInfo(name = "RegisterContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetRegisterImpl.class) //
-}, attributes = { //
-	@TargetAttributeType( // 
-		name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, //
-		type=DbgModelTargetRegisterContainerImpl.class),
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "RegisterContainer",
+	elements = {
+		@TargetElementType(type = DbgModelTargetRegisterImpl.class)
+	},
+	attributes = {
+		@TargetAttributeType(
+			name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME,
+			type = DbgModelTargetRegisterContainerImpl.class),
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetRegisterContainerAndBank {
 
@@ -139,7 +141,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 		}, TypeSpec.cls(DbgRegisterSet.class)).then((regs, seq) -> {
 			fetchElements().handle(seq::nextIgnore);
 		}).then(seq -> {
-			Map<String, ? extends TargetObjectRef> regs = getCachedElements();
+			Map<String, ? extends TargetObject> regs = getCachedElements();
 			Map<DbgRegister, BigInteger> toWrite = new LinkedHashMap<>();
 			for (Map.Entry<String, byte[]> ent : values.entrySet()) {
 				String regname = ent.getKey();
@@ -168,12 +170,12 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 	public void onRunning() {
 		// NB: We don't want to do this apparently
 		//invalidateRegisterCaches();
-		setAccessibility(TargetAccessibility.INACCESSIBLE);
+		setAccessible(false);
 	}
 
 	@Override
 	public void onStopped() {
-		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		setAccessible(true);
 		if (thread.equals(getManager().getEventThread())) {
 			readRegistersNamed(getCachedElements().keySet());
 		}

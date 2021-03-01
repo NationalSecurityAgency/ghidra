@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
@@ -31,15 +30,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * this at the root, but that need not always be the case.
  */
 @DebuggerTargetObjectIface("FocusScope")
-public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetFocusScope<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetFocusScope.class;
+public interface TargetFocusScope extends TargetObject {
 
 	String FOCUS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "focus";
 
@@ -54,7 +45,7 @@ public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTa
 	 * @param obj the object to receive focus
 	 * @return a future which completes upon successfully changing focus.
 	 */
-	CompletableFuture<Void> requestFocus(TargetObjectRef obj);
+	CompletableFuture<Void> requestFocus(TargetObject obj);
 
 	/**
 	 * Get the focused object in this scope
@@ -62,8 +53,8 @@ public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTa
 	 * @return a reference to the focused object or {@code null} if no object is focused.
 	 */
 	@TargetAttributeType(name = FOCUS_ATTRIBUTE_NAME, required = true, hidden = true)
-	default TargetObjectRef getFocus() {
-		return getTypedAttributeNowByName(FOCUS_ATTRIBUTE_NAME, TargetObjectRef.class, null);
+	default TargetObject getFocus() {
+		return getTypedAttributeNowByName(FOCUS_ATTRIBUTE_NAME, TargetObject.class, null);
 	}
 
 	public interface TargetFocusScopeListener extends TargetObjectListener {
@@ -91,7 +82,7 @@ public interface TargetFocusScope<T extends TargetFocusScope<T>> extends TypedTa
 		 * @param object this scope
 		 * @param focused the object receiving focus
 		 */
-		default void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+		default void focusChanged(TargetFocusScope object, TargetObject focused) {
 		}
 	}
 }

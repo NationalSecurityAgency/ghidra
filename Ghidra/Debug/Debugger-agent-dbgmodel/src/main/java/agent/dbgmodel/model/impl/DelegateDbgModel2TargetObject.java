@@ -19,7 +19,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
@@ -27,16 +26,14 @@ import agent.dbgeng.model.iface1.*;
 import agent.dbgeng.model.iface2.*;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
-import ghidra.async.AsyncUtils;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
 
 public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl implements //
-		DbgModelTargetAccessConditioned<DelegateDbgModel2TargetObject>, //
-		DbgModelTargetExecutionStateful<DelegateDbgModel2TargetObject>, //
+		DbgModelTargetAccessConditioned, //
+		DbgModelTargetExecutionStateful, //
 		DbgModel2TargetProxy, DbgModelTargetBptHelper {
 	// Probably don-t need any of the handler-map or annotation stuff
 
@@ -198,7 +195,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	}
 
 	public DelegateDbgModel2TargetObject clone(String key, ModelObject modelObject) {
-		DbgModelTargetObject p = (DbgModelTargetObject) getImplParent();
+		DbgModelTargetObject p = (DbgModelTargetObject) getParent();
 		List<Class<? extends TargetObject>> mixins = new ArrayList<>();
 		Class<? extends DbgModelTargetObject> mixin = lookupWrapperType(key, p.getName());
 		if (mixin != null) {
@@ -210,24 +207,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public CompletableFuture<? extends DelegateDbgModel2TargetObject> fetch() {
-		return (CompletableFuture) CompletableFuture.completedFuture(proxy);
-	}
-
-	@Override
 	public DbgModelTargetObject getProxy() {
 		return (DbgModelTargetObject) proxy;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public CompletableFuture<? extends DelegateDbgModel2TargetObject> fetchParent() {
-		TargetObjectRef p = getParent();
-		if (p == null) {
-			return AsyncUtils.nil();
-		}
-		return (CompletableFuture<? extends DelegateDbgModel2TargetObject>) p.fetch();
 	}
 
 	protected static String getHintForObject(ModelObject obj) {
@@ -309,35 +290,34 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 	public void onRunning() {
 		invalidate();
-		setAccessibility(TargetAccessibility.INACCESSIBLE);
+		setAccessible(false);
 	}
 
 	public void onStopped() {
-		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		setAccessible(true);
 		update();
 	}
 
 	public void onExit() {
-		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		setAccessible(true);
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
 
 	@Override
-	public void setAccessibility(TargetAccessibility accessibility) {
+	public void setAccessible(boolean accessible) {
 		synchronized (attributes) {
-			if (this.accessibility == accessibility) {
+			if (this.accessible == accessible) {
 				return;
 			}
-			this.accessibility = accessibility;
+			this.accessible = accessible;
 		}
 		if (proxy instanceof TargetAccessConditioned) {
 			changeAttributes(List.of(), List.of(), Map.of( //
-				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME,
-				accessibility == TargetAccessibility.ACCESSIBLE //
+				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
 		}
 	}

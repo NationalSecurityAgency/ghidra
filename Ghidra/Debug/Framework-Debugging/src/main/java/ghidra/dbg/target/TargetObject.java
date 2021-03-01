@@ -16,22 +16,21 @@
 package ghidra.dbg.target;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.*;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.dbg.util.PathUtils.PathComparator;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.dbg.util.ValueUtils;
 import ghidra.lifecycle.Internal;
-import ghidra.util.Msg;
 
 /**
  * A handle to a target object in a debugger
@@ -158,7 +157,7 @@ import ghidra.util.Msg;
  * future will complete with that object, or complete exceptionally. Specifying this in every
  * instance is just pedantic.
  */
-public interface TargetObject extends TargetObjectRef {
+public interface TargetObject extends Comparable<TargetObject> {
 
 	Set<Class<? extends TargetObject>> ALL_INTERFACES = Set.of(TargetAccessConditioned.class,
 		TargetAggregate.class, TargetAttachable.class, TargetAttacher.class,
@@ -304,6 +303,184 @@ public interface TargetObject extends TargetObjectRef {
 	}
 
 	/**
+	 * Check for target object equality
+	 * 
+	 * <p>
+	 * Because interfaces cannot provide default implementations of {@link #equals(Object)}, this
+	 * methods provides a means of quickly implementing it within a class. Because everything that
+	 * constitutes target object equality is contained in the reference (model, path), there should
+	 * never be a need to perform more comparison than is provided here.
+	 * 
+	 * @param obj the other object
+	 * @return true if they are equal
+	 */
+	default boolean doEquals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof TargetObject)) {
+			return false;
+		}
+		TargetObject that = (TargetObject) obj;
+		return this.getModel() == that.getModel() &&
+			Objects.equals(this.getPath(), that.getPath());
+	}
+
+	/**
+	 * Pre-compute this object's hash code
+	 * 
+	 * <p>
+	 * Because interfaces cannot provide default implementations of {@link #hashCode()}, this method
+	 * provides a means of quickly implementing it within a class. Because everything that
+	 * constitutes target object equality is <em>immutable</em> and contained in the reference
+	 * (model, path), this hash should be pre-computed a construction. There should never be a need
+	 * to incorporate more fields into the hash than is incorporated here.
+	 * 
+	 * @return the hash
+	 */
+	default int computeHashCode() {
+		return System.identityHashCode(getModel()) * 31 + Objects.hash(getPath().toArray());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * A friendly reminder to override
+	 * 
+	 * @see #doEquals(Object)
+	 */
+	@Override
+	boolean equals(Object obj);
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * A friendly reminder to override
+	 * 
+	 * @see #computeHashCode()
+	 */
+	@Override
+	int hashCode();
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * Along with {@link #doEquals(Object)} and {@link #computeHashCode()}, these obey the Rule of
+	 * Three, comparing first the objects' models (by name, then identity), then their paths. Like
+	 * the other methods, this incorporates everything that constitutes a unique target object.
+	 * There should never be a need to override or otherwise extend this.
+	 */
+	@Override
+	default int compareTo(TargetObject that) {
+		if (this == that) {
+			return 0;
+		}
+		DebuggerObjectModel thisModel = this.getModel();
+		DebuggerObjectModel thatModel = that.getModel();
+		if (thisModel != thatModel) {
+			if (thisModel == null) {
+				return -1;
+			}
+			if (thatModel == null) {
+				return 1;
+			}
+			int result = thisModel.toString().compareTo(thatModel.toString());
+			if (result == 0) {
+				return Integer.compare(
+					System.identityHashCode(thisModel),
+					System.identityHashCode(thatModel));
+			}
+			return result;
+		}
+		return PathComparator.KEYED.compare(this.getPath(), that.getPath());
+	}
+
+	/**
+	 * Get the model to which this object belongs
+	 * 
+	 * @return the model
+	 */
+	public DebuggerObjectModel getModel();
+
+	/**
+	 * Get the path (i.e., list of names from root to this object).
+	 * 
+	 * <p>
+	 * Every object must have a unique path. Parts of the path which are indices, i.e., which
+	 * navigate the elements, are enclosed in brackets @{code []}. Parts which navigate attributes
+	 * are simply the attribute name.
+	 * 
+	 * <p>
+	 * More than just a location, the path provides a hint to the object's scope of applicability.
+	 * For example, a {@link TargetMemory} attribute of a process is assumed accessible to every
+	 * thread of that process, since those threads are descendants.
+	 * 
+	 * @implNote it would be wise to cache the result of this computation. If the object has a
+	 *           strict location, then the implementation should just return it directly.
+	 * 
+	 * @return the canonical path of the object
+	 */
+	public List<String> getPath();
+
+	/**
+	 * Get the path joined by the given separator
+	 * 
+	 * <p>
+	 * Note that no check is applied to guarantee the path separator does not appear in an element
+	 * name.
+	 * 
+	 * @see #getPath()
+	 * @param sep the path separator
+	 * @return the joined path
+	 */
+	public default String getJoinedPath(String sep) {
+		return PathUtils.toString(getPath(), sep);
+	}
+
+	/**
+	 * Get the key for this object
+	 * 
+	 * <p>
+	 * The object's key should be that assigned by the actual debugger, if applicable. If this is an
+	 * element, the key should include the brackets {@code []}. If it is an attribute, it should
+	 * simply be the name.
+	 * 
+	 * @return the key, or {@code null} if this is the root
+	 */
+	public default String getName() {
+		return PathUtils.getKey(getPath());
+	}
+
+	/**
+	 * Get the index for this object
+	 * 
+	 * @return they index, or {@code null} if this is the root
+	 * @throws IllegalArgumentException if this object is not an element of its parent
+	 */
+	public default String getIndex() {
+		return PathUtils.getIndex(getPath());
+	}
+
+	/**
+	 * Check if this is the root target debug object
+	 * 
+	 * @return true if root, false otherwise
+	 */
+	public default boolean isRoot() {
+		return getPath().isEmpty();
+	}
+
+	/**
+	 * Get a reference to the parent of this reference
+	 * 
+	 * @return the parent reference, or {@code null} if this refers to the root
+	 */
+	public TargetObject getParent();
+
+	/**
 	 * Get an informal name identify the type of this object.
 	 * 
 	 * <p>
@@ -363,20 +540,65 @@ public interface TargetObject extends TargetObjectRef {
 	public boolean isValid();
 
 	/**
-	 * Fetch the canonical parent of this object
+	 * Fetch all the attributes of this object
 	 * 
 	 * <p>
-	 * Note that if this is the root, a future is still returned, but it will complete with
-	 * {@code null}.
+	 * Attributes are usually keyed by a string, and the types are typically not uniform. Some
+	 * attributes are primitives, while others are other target objects.
 	 * 
-	 * @return a future which completes with the parent object
+	 * <p>
+	 * Note, for objects, {@link TargetObject#getCachedAttributes()} should be sufficient to get an
+	 * up-to-date view of the attributes, since the model should be pushing attribute updates to the
+	 * object automatically. {@code fetchAttributes} should only be invoked on references, or in the
+	 * rare case the client needs to ensure the attributes are fresh.
+	 * 
+	 * @param refresh true to invalidate all caches involved in handling this request
+	 * @return a future which completes with a name-value map of attributes
 	 */
-	default CompletableFuture<? extends TargetObject> fetchParent() {
-		TargetObjectRef parent = getParent();
-		if (parent == null) {
-			return AsyncUtils.nil();
+	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes(boolean refresh) {
+		return getModel().fetchObjectAttributes(getPath(), refresh);
+	}
+
+	/**
+	 * Fetch all attributes of this object, without refreshing
+	 * 
+	 * @see #fetchAttributes(boolean)
+	 */
+	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes() {
+		return fetchAttributes(false);
+	}
+
+	/**
+	 * Fetch an attribute by name
+	 * 
+	 * @see #fetchAttributes()
+	 * @see PathUtils#isInvocation(String)
+	 * @implNote for attributes representing method invocations, the name will not likely be in the
+	 *           map given by {@link #fetchAttributes()}. It will be generated upon request. The
+	 *           implementation should cache the generated attribute until the attribute cache is
+	 *           refreshed. TODO: Even if the method is likely to return a different value on its
+	 *           next invocation? Yes, I think so. The user should manually refresh in those cases.
+	 * @return a future which completes with the attribute or with {@code null} if the attribute
+	 *         does not exist
+	 */
+	public default CompletableFuture<?> fetchAttribute(String name) {
+		if (!PathUtils.isInvocation(name)) {
+			return fetchAttributes().thenApply(m -> m.get(name));
 		}
-		return parent.fetch();
+		Map<String, ?> cached = getCachedAttributes();
+		if (cached.containsKey(name)) {
+			return CompletableFuture.completedFuture(cached.get(name));
+		}
+		// TODO: Make a type for the invocation and parse arguments better?
+		Entry<String, String> invocation = PathUtils.parseInvocation(name);
+		return fetchAttribute(invocation.getKey()).thenCompose(obj -> {
+			if (!(obj instanceof TargetMethod)) {
+				throw new DebuggerModelTypeException(invocation.getKey() + " is not a method");
+			}
+			TargetMethod method = (TargetMethod) obj;
+			// Just blindly invoke and let it sort it out
+			return method.invoke(Map.of("arg", invocation.getValue()));
+		});
 	}
 
 	/**
@@ -396,7 +618,246 @@ public interface TargetObject extends TargetObjectRef {
 	 * 
 	 * @return the map of indices to element references
 	 */
-	public Map<String, ? extends TargetObjectRef> getCachedElements();
+	public Map<String, ? extends TargetObject> getCachedElements();
+
+	/**
+	 * Fetch all the elements of this object
+	 * 
+	 * <p>
+	 * Elements are usually keyed numerically, but allows strings for flexibility. They values are
+	 * target objects, uniform in type, and should generally share the same attributes. The keys
+	 * must not contain the brackets {@code []}. Implementations should ensure that the elements are
+	 * presented in order by key -- not necessarily lexicographically. To ensure clients can easily
+	 * maintain correct sorting, the recommendation is to present the keys as follows: Keys should
+	 * be the numeric value encoded as strings in base 10 or base 16 as appropriate, using the least
+	 * number of digits needed. While rarely used, a comma-separated list of indices may be
+	 * presented. Key comparators should separate the indices, attempt to convert each to a number,
+	 * and then sort using the left-most indices first. Indices which cannot be converted to numbers
+	 * should be sorted lexicographically. It is the implementation's responsibility to ensure all
+	 * indices follow a consistent scheme.
+	 * 
+	 * @param refresh true to invalidate all caches involved in handling this request
+	 * @return a future which completes with a index-value map of elements
+	 */
+	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements(
+			boolean refresh) {
+		return getModel().fetchObjectElements(getPath(), refresh);
+	}
+
+	/**
+	 * Fetch all elements of this object, without refreshing
+	 * 
+	 * @see #fetchElements(boolean)
+	 */
+	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements() {
+		return fetchElements(false);
+	}
+
+	/**
+	 * Fetch an element by its index
+	 * 
+	 * @return a future which completes with the element or with {@code null} if it does not exist
+	 */
+	public default CompletableFuture<? extends TargetObject> fetchElement(String index) {
+		return getModel().fetchModelObject(PathUtils.index(getPath(), index));
+	}
+
+	/**
+	 * Fetch all children (elements and attributes) of this object
+	 * 
+	 * <p>
+	 * Note that keys for element indices here must contain the brackets {@code []} to distinguish
+	 * them from attribute names.
+	 * 
+	 * @see #fetchElements()
+	 * @see #fetchAttributes()
+	 * 
+	 * @param refresh true to invalidate all caches involved in handling this request
+	 * @return a future which completes with a name-value map of children
+	 */
+	public default CompletableFuture<? extends Map<String, ?>> fetchChildren(boolean refresh) {
+		AsyncFence fence = new AsyncFence();
+		Map<String, Object> children = new TreeMap<>(TargetObjectKeyComparator.CHILD);
+		fence.include(fetchElements(refresh).thenAccept(elements -> {
+			for (Map.Entry<String, ?> ent : elements.entrySet()) {
+				children.put(PathUtils.makeKey(ent.getKey()), ent.getValue());
+			}
+		}));
+		fence.include(fetchAttributes(refresh).thenAccept(children::putAll));
+		return fence.ready().thenApply(__ -> children);
+	}
+
+	/**
+	 * Fetch all children of this object, without refreshing
+	 * 
+	 * @see #fetchChildren(boolean)
+	 */
+	public default CompletableFuture<? extends Map<String, ?>> fetchChildren() {
+		return fetchChildren(false);
+	}
+
+	/**
+	 * Fetch a child (element or attribute) by key (index or name, respectively)
+	 * 
+	 * <p>
+	 * Indices are distinguished from names by the presence or absence of brackets {@code []}. If
+	 * the key is a bracket-enclosed index, this will retrieve a child, otherwise, it will retrieve
+	 * an attribute.
+	 * 
+	 * @see #fetchAttribute(String)
+	 * @see #fetchElement(String)
+	 * @return a future which completes with the child
+	 */
+	public default CompletableFuture<?> fetchChild(String key) {
+		if (PathUtils.isIndex(key)) {
+			return fetchElement(PathUtils.parseIndex(key));
+		}
+		return fetchAttribute(key);
+	}
+
+	/**
+	 * Fetch the children (elements and attributes) of this object which support the requested
+	 * interface
+	 * 
+	 * <p>
+	 * If no children support the given interface, the result is the empty set.
+	 * 
+	 * @param <T> the requested interface
+	 * @param iface the class of the requested interface
+	 * @return a future which completes with a name-value map of children supporting the given
+	 *         interface
+	 */
+	public default <T extends TargetObject> //
+	CompletableFuture<? extends Map<String, ? extends T>> fetchChildrenSupporting(
+			Class<T> iface) {
+		return fetchChildren().thenApply(m -> m.entrySet()
+				.stream()
+				.filter(e -> iface.isAssignableFrom(e.getValue().getClass()))
+				.collect(Collectors.toMap(Entry::getKey, e -> iface.cast(e.getValue()))));
+	}
+
+	/**
+	 * Fetch the value at the given sub-path from this object
+	 * 
+	 * <p>
+	 * Extend this reference's path with the given sub-path and request that value from the same
+	 * model.
+	 * 
+	 * @param sub the sub-path to the value
+	 * @return a future which completes with the value or with {@code null} if the path does not
+	 *         exist
+	 */
+	public default CompletableFuture<?> fetchValue(List<String> sub) {
+		return getModel().fetchModelObject(PathUtils.extend(getPath(), sub));
+	}
+
+	/**
+	 * @see #fetchValue(List)
+	 */
+	public default CompletableFuture<?> fetchValue(String... sub) {
+		return fetchValue(List.of(sub));
+	}
+
+	/**
+	 * Fetch the successor object at the given sub-path from this object
+	 * 
+	 * <p>
+	 * Extend this reference's path with the given sub-path and request that object from the same
+	 * model.
+	 * 
+	 * @param sub the sub-path to the successor
+	 * @return a future which completes with the object or with {@code null} if it does not exist
+	 */
+	public default CompletableFuture<? extends TargetObject> fetchSuccessor(List<String> sub) {
+		return getModel().fetchModelObject(PathUtils.extend(getPath(), sub));
+	}
+
+	/**
+	 * @see #fetchSuccessor(List)
+	 */
+	public default CompletableFuture<? extends TargetObject> fetchSuccessor(String... sub) {
+		return fetchSuccessor(List.of(sub));
+	}
+
+	/**
+	 * Get a reference to a successor of this object
+	 * 
+	 * <p>
+	 * Extend this reference's path with the given sub-path, creating a new reference in the same
+	 * model. This is mere path manipulation. The referenced object may not exist.
+	 * 
+	 * @param sub the sub-path to the successor
+	 * @return a reference to the successor
+	 */
+	public default TargetObject getSuccessor(List<String> sub) {
+		return getModel().getModelObject(PathUtils.extend(getPath(), sub));
+	}
+
+	/**
+	 * @see #getSuccessor(List)
+	 */
+	public default TargetObject getSuccessor(String... sub) {
+		return getSuccessor(List.of(sub));
+	}
+
+	/**
+	 * Fetch the attributes of the model at the given sub-path from this object
+	 * 
+	 * @param sub the sub-path to the successor whose attributes to list
+	 * @return a future map of attributes
+	 */
+	public default CompletableFuture<? extends Map<String, ?>> fetchSubAttributes(
+			List<String> sub) {
+		return getModel().fetchObjectAttributes(PathUtils.extend(getPath(), sub));
+	}
+
+	/**
+	 * @see #fetchSubAttributes(List)
+	 */
+	public default CompletableFuture<? extends Map<String, ?>> fetchSubAttributes(
+			String... sub) {
+		return fetchSubAttributes(List.of(sub));
+	}
+
+	/**
+	 * Fetch the attribute of a successor object, using a sub-path from this object
+	 * 
+	 * <p>
+	 * Extends this object's path with the given sub-path and request that attribute from the same
+	 * model.
+	 * 
+	 * @param sub the sub-path to the attribute
+	 * @return a future which completes with the value or with {@code null} if it does not exist
+	 */
+	public default CompletableFuture<?> fetchSubAttribute(List<String> sub) {
+		return getModel().fetchObjectAttribute(PathUtils.extend(getPath(), sub));
+	}
+
+	/**
+	 * @see #fetchSubAttribute(List)
+	 */
+	public default CompletableFuture<?> fetchSubAttribute(String... sub) {
+		return fetchSubAttribute(List.of(sub));
+	}
+
+	/**
+	 * Fetch the elements of the model at the given sub-path from this object
+	 * 
+	 * @param sub the sub-path to the successor whose elements to list
+	 * @return a future map of elements
+	 */
+	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchSubElements(
+			List<String> sub) {
+		return getModel().fetchObjectElements(PathUtils.extend(getPath(), sub));
+	}
+
+	/**
+	 * @see #fetchSubElements(List)
+	 */
+	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchSubElements(
+			String... sub) {
+		return fetchSubElements(List.of(sub));
+	}
 
 	/**
 	 * Get a description of the object, suitable for display in the UI.
@@ -524,11 +985,6 @@ public interface TargetObject extends TargetObjectRef {
 		return getCachedAttribute(VALUE_ATTRIBUTE_NAME);
 	}
 
-	@Override
-	default CompletableFuture<? extends TargetObject> fetch() {
-		return CompletableFuture.completedFuture(this);
-	}
-
 	/**
 	 * Refresh the children of this object
 	 * 
@@ -575,8 +1031,7 @@ public interface TargetObject extends TargetObjectRef {
 	 * @return the same object, cast to the interface
 	 * @throws DebuggerModelTypeException if the interface is not supported by this object
 	 */
-	@Override
-	public default <T extends TypedTargetObject<T>> T as(Class<T> iface) {
+	public default <T extends TargetObject> T as(Class<T> iface) {
 		return DebuggerObjectModel.requireIface(iface, this, getPath());
 	}
 
@@ -609,14 +1064,6 @@ public interface TargetObject extends TargetObjectRef {
 		return getCachedAttributes().get(name);
 	}
 
-	@Override
-	default CompletableFuture<?> fetchAttribute(String name) {
-		if (PathUtils.isInvocation(name) && getCachedAttributes().containsKey(name)) {
-			return CompletableFuture.completedFuture(getCachedAttributes().get(name));
-		}
-		return TargetObjectRef.super.fetchAttribute(name);
-	}
-
 	/**
 	 * Cast the named attribute to the given type, if possible
 	 * 
@@ -635,26 +1082,6 @@ public interface TargetObject extends TargetObjectRef {
 		TargetObjectSchema schema = getSchema();
 		boolean required = schema == null ? false : schema.getAttributeSchema(name).isRequired();
 		return ValueUtils.expectType(obj, cls, this, name, fallback, required);
-	}
-
-	/**
-	 * Cast the named object-reference attribute to the given type, if possible
-	 * 
-	 * <p>
-	 * In addition to casting the attribute to an object reference, if possible, this wraps that
-	 * reference in {@link TypedTargetObjectRef}, which if fetched, casts the object to the required
-	 * type, if possible.
-	 * 
-	 * @param <T> the expected type of the object
-	 * @param name the name of the attribute
-	 * @param cls the class giving the expected type
-	 * @param fallback the fallback object
-	 * @return the typed object reference
-	 */
-	public default <T extends TypedTargetObject<T>> TypedTargetObjectRef<T> getTypedRefAttributeNowByName(
-			String name, Class<T> cls, T fallback) {
-		TargetObjectRef ref = getTypedAttributeNowByName(name, TargetObjectRef.class, null);
-		return ref == null ? fallback : TypedTargetObjectRef.casting(cls, ref);
 	}
 
 	/**
@@ -765,7 +1192,7 @@ public interface TargetObject extends TargetObjectRef {
 		 * @param added a map of indices to new children references
 		 */
 		default void elementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObjectRef> added) {
+				Map<String, ? extends TargetObject> added) {
 		}
 
 		/**
@@ -804,105 +1231,5 @@ public interface TargetObject extends TargetObjectRef {
 		 */
 		default void invalidateCacheRequested(TargetObject object) {
 		}
-	}
-
-	/**
-	 * An adapter which automatically gets new children from the model
-	 * 
-	 * @deprecated {@link TargetObjectRef} is being deprecated, so this is no longer necessary. Just
-	 *             cast refs to {@link TargetObject}
-	 */
-	@Deprecated(forRemoval = true)
-	public interface TargetObjectFetchingListener extends TargetObjectListener {
-		@Override
-		default void elementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObjectRef> added) {
-			AsyncFence fence = new AsyncFence();
-			Map<String, TargetObject> objects = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
-			for (Map.Entry<String, ? extends TargetObjectRef> ent : added.entrySet()) {
-				fence.include(ent.getValue().fetch().thenAccept(o -> {
-					synchronized (objects) {
-						objects.put(ent.getKey(), o);
-					}
-				}).exceptionally(e -> {
-					Msg.error(this, "Could not retrieve an object just added: " + ent.getValue());
-					return null;
-				}));
-			}
-			fence.ready().thenAccept(__ -> {
-				elementsChangedObjects(parent, removed, objects);
-			}).exceptionally(e -> {
-				Msg.error(this, "Error in callback to elementsChangedObjects: ", e);
-				return null;
-			});
-		}
-
-		@Override
-		default void attributesChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ?> added) {
-			AsyncFence fence = new AsyncFence();
-			Map<String, Object> attributes = new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
-			for (Map.Entry<String, ?> ent : added.entrySet()) {
-				Object val = ent.getValue();
-				if (!(val instanceof TargetObjectRef)) {
-					attributes.put(ent.getKey(), val);
-					continue;
-				}
-				// NOTE: if it's the actual object, it should already be completed.
-				TargetObjectRef ref = (TargetObjectRef) val;
-				if (PathUtils.isLink(parent.getPath(), ent.getKey(), ref.getPath())) {
-					attributes.put(ent.getKey(), val);
-					continue;
-				}
-				fence.include(ref.fetch().thenAccept(o -> {
-					synchronized (attributes) {
-						attributes.put(ent.getKey(), o);
-					}
-				}).exceptionally(e -> {
-					Msg.error(this, "Could not retrieve an object just added: " + ent.getValue());
-					return null;
-				}));
-			}
-			fence.ready().thenAccept(__ -> {
-				attributesChangedObjects(parent, removed, attributes);
-			}).exceptionally(e -> {
-				Msg.error(this, "Error in callback to attributesChangedObjects: ", e);
-				return null;
-			});
-		}
-
-		/**
-		 * The object's children changed
-		 * 
-		 * <p>
-		 * In this adapter, the map contains the actual objects. In the case of client proxies, it
-		 * is the protocol implementation's responsibility to ensure that object attributes are kept
-		 * up to date.
-		 * 
-		 * @param parent the object whose children changed
-		 * @param removed the list of removed children
-		 * @param added a map of indices to new children
-		 * @see #elementsChanged(TargetObject, List, Map)
-		 */
-		default void elementsChangedObjects(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObject> added) {
-		};
-
-		/**
-		 * The object's attributes changed
-		 * 
-		 * <p>
-		 * In this adapter, where an attribute has an object value, the map contains the retrieved
-		 * object. In the case of client proxies, it is the protocol implementation's responsibility
-		 * to ensure that object attributes are kept up to date.
-		 * 
-		 * @param parent the object whose attributes changed
-		 * @param removed the list of removed attributes
-		 * @param added a map of names to new/changed attributes
-		 * @see #attributesChanged(TargetObject, List, Map)
-		 */
-		default void attributesChangedObjects(TargetObject parent, Collection<String> removed,
-				Map<String, ?> added) {
-		};
 	}
 }

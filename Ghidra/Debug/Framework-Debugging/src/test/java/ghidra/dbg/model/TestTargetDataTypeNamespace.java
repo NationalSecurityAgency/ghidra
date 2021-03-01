@@ -21,8 +21,8 @@ import ghidra.dbg.attributes.TargetDataType;
 import ghidra.dbg.target.TargetDataTypeNamespace;
 
 public class TestTargetDataTypeNamespace
-		extends DefaultTestTargetObject<TestTargetNamedDataType<?, ?>, TestTargetObject>
-		implements TargetDataTypeNamespace<TestTargetDataTypeNamespace> {
+		extends DefaultTestTargetObject<TestTargetNamedDataType<?>, TestTargetObject>
+		implements TargetDataTypeNamespace {
 
 	public TestTargetDataTypeNamespace(TestTargetObject parent) {
 		super(parent, "Types", "DataTypeNamespace");

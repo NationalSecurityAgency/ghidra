@@ -24,7 +24,7 @@ import ghidra.program.model.lang.Register;
 
 public class TestTargetRegisterContainer
 		extends DefaultTestTargetObject<TestTargetRegister, TestTargetProcess>
-		implements TargetRegisterContainer<TestTargetRegisterContainer> {
+		implements TargetRegisterContainer {
 
 	public TestTargetRegisterContainer(TestTargetProcess parent) {
 		super(parent, "Registers", "RegisterContainer");

@@ -23,12 +23,12 @@ import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.program.model.address.*;
 
 public class PlaceBreakpointActionItem implements BreakpointActionItem {
-	private final TargetBreakpointContainer<?> container;
+	private final TargetBreakpointContainer container;
 	private final Address address;
 	private final long length;
 	private final Set<TargetBreakpointKind> kinds;
 
-	public PlaceBreakpointActionItem(TargetBreakpointContainer<?> container, Address address,
+	public PlaceBreakpointActionItem(TargetBreakpointContainer container, Address address,
 			long length, Collection<TargetBreakpointKind> kinds) {
 		this.container = Objects.requireNonNull(container);
 		this.address = Objects.requireNonNull(address);

@@ -21,16 +21,16 @@ import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableCo
 import ghidra.dbg.target.TargetAttachable;
 
 public enum AttachableProcessesTableColumns
-	implements EnumeratedTableColumn<AttachableProcessesTableColumns, TargetAttachable<?>> {
+	implements EnumeratedTableColumn<AttachableProcessesTableColumns, TargetAttachable> {
 	ID("ID", String.class, TargetAttachable::getName),
 	NAME("Name", String.class, TargetAttachable::getTypeHint);
 
 	private final String header;
-	private final Function<TargetAttachable<?>, ?> func;
+	private final Function<TargetAttachable, ?> func;
 	private Class<?> cls;
 
 	<T> AttachableProcessesTableColumns(String header, Class<T> cls,
-			Function<TargetAttachable<?>, T> func) {
+			Function<TargetAttachable, T> func) {
 		this.header = header;
 		this.cls = cls;
 		this.func = func;
@@ -42,7 +42,7 @@ public enum AttachableProcessesTableColumns
 	}
 
 	@Override
-	public Object getValueOf(TargetAttachable<?> proc) {
+	public Object getValueOf(TargetAttachable proc) {
 		return func.apply(proc);
 	}
 

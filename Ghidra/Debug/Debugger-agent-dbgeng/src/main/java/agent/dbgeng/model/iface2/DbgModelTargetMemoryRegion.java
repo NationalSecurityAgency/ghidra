@@ -18,8 +18,7 @@ package agent.dbgeng.model.iface2;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.program.model.address.AddressRange;
 
-public interface DbgModelTargetMemoryRegion
-		extends DbgModelTargetObject, TargetMemoryRegion<DbgModelTargetMemoryRegion> {
+public interface DbgModelTargetMemoryRegion extends DbgModelTargetObject, TargetMemoryRegion {
 
 	@Override
 	public AddressRange getRange();

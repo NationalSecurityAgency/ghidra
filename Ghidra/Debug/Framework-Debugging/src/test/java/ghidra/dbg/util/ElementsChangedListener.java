@@ -18,7 +18,6 @@ package ghidra.dbg.util;
 import java.util.Collection;
 import java.util.Map;
 
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.util.ElementsChangedListener.ElementsChangedInvocation;
@@ -28,10 +27,10 @@ public class ElementsChangedListener extends AbstractInvocationListener<Elements
 	public static class ElementsChangedInvocation {
 		public final TargetObject parent;
 		public final Collection<String> removed;
-		public final Map<String, ? extends TargetObjectRef> added;
+		public final Map<String, ? extends TargetObject> added;
 
 		public ElementsChangedInvocation(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObjectRef> added) {
+				Map<String, ? extends TargetObject> added) {
 			this.parent = parent;
 			this.removed = removed;
 			this.added = added;
@@ -40,7 +39,7 @@ public class ElementsChangedListener extends AbstractInvocationListener<Elements
 
 	@Override
 	public void elementsChanged(TargetObject parent, Collection<String> removed,
-			Map<String, ? extends TargetObjectRef> added) {
+			Map<String, ? extends TargetObject> added) {
 		record(new ElementsChangedInvocation(parent, removed, added));
 	}
 }

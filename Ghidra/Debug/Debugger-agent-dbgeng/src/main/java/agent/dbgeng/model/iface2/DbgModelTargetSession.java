@@ -30,12 +30,12 @@ import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
 import ghidra.dbg.util.PathUtils;
 
 public interface DbgModelTargetSession extends //
-		DbgModelTargetAccessConditioned<DbgModelTargetSession>, //
-		//DbgModelTargetFocusScope<DbgModelTargetSession>, //
-		DbgModelTargetExecutionStateful<DbgModelTargetSession>, //
-		DbgModelTargetInterpreter<DbgModelTargetSession>, //
-		DbgModelTargetInterruptible<DbgModelTargetSession>, //
-		DbgModelTargetResumable<DbgModelTargetSession>, //
+		DbgModelTargetAccessConditioned, //
+		//DbgModelTargetFocusScope, //
+		DbgModelTargetExecutionStateful, //
+		DbgModelTargetInterpreter, //
+		DbgModelTargetInterruptible, //
+		DbgModelTargetResumable, //
 		DbgEventsListenerAdapter, //
 		DbgModelSelectableObject, //
 		TargetFocusScopeListener, //

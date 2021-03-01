@@ -23,16 +23,19 @@ import java.util.stream.Collectors;
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "ProcessContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetProcessImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ProcessContainer",
+	elements = { //
+		@TargetElementType(type = DbgModelTargetProcessImpl.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcessContainer {
 
@@ -47,8 +50,8 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public void processAdded(DbgProcess proc, DbgCause cause) {
-		DbgModelTargetSession session = (DbgModelTargetSession) getImplParent();
-		session.setAccessibility(TargetAccessibility.ACCESSIBLE);
+		DbgModelTargetSession session = (DbgModelTargetSession) getParent();
+		session.setAccessible(true);
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
 		process.processStarted(proc.getPid());

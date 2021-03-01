@@ -89,7 +89,7 @@ public class AnnotatedTargetObjectSchemaTest {
 	@TargetObjectSchemaInfo(name = "Process")
 	static class TestAnnotatedTargetProcessStub
 			extends DefaultTargetObject<TargetObject, TargetObject>
-			implements TargetProcess<TestAnnotatedTargetProcessStub> {
+			implements TargetProcess {
 		public TestAnnotatedTargetProcessStub(AbstractDebuggerObjectModel model,
 				TargetObject parent, String key, String typeHint) {
 			super(model, parent, key, typeHint);
@@ -149,9 +149,9 @@ public class AnnotatedTargetObjectSchemaTest {
 	}
 
 	@TargetObjectSchemaInfo(name = "Process")
-	static class TestAnnotatedTargetProcessParam<T>
+	static class TestAnnotatedTargetProcessParam
 			extends DefaultTargetObject<TargetObject, TargetObject>
-			implements TargetProcess<TestAnnotatedTargetProcessParam<T>> {
+			implements TargetProcess {
 		public TestAnnotatedTargetProcessParam(AbstractDebuggerObjectModel model,
 				TargetObject parent, String key, String typeHint) {
 			super(model, parent, key, typeHint);
@@ -171,7 +171,7 @@ public class AnnotatedTargetObjectSchemaTest {
 		}
 
 		@TargetAttributeType
-		public TestAnnotatedTargetProcessParam<?> getSomeObjectAttribute() {
+		public TestAnnotatedTargetProcessParam getSomeObjectAttribute() {
 			return null; // Doesn't matter
 		}
 	}
@@ -268,7 +268,7 @@ public class AnnotatedTargetObjectSchemaTest {
 	}
 
 	@TargetObjectSchemaInfo
-	static class TestAnnotatedTargetRootWithAnnotatedAttrsNonUnique<T extends Dummy & TargetProcess<T> & TargetInterpreter<T>>
+	static class TestAnnotatedTargetRootWithAnnotatedAttrsNonUnique<T extends Dummy & TargetProcess & TargetInterpreter>
 			extends DefaultTargetModelRoot {
 
 		public TestAnnotatedTargetRootWithAnnotatedAttrsNonUnique(AbstractDebuggerObjectModel model,
@@ -289,7 +289,7 @@ public class AnnotatedTargetObjectSchemaTest {
 	}
 
 	@TargetObjectSchemaInfo
-	static class TestAnnotatedTargetRootWithElemsNonUnique<T extends Dummy & TargetProcess<T> & TargetInterpreter<T>>
+	static class TestAnnotatedTargetRootWithElemsNonUnique<T extends Dummy & TargetProcess & TargetInterpreter>
 			extends DefaultTargetModelRoot {
 
 		public TestAnnotatedTargetRootWithElemsNonUnique(AbstractDebuggerObjectModel model,

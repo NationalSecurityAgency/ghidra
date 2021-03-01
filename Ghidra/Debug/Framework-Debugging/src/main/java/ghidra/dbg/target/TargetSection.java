@@ -16,7 +16,6 @@
 package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
@@ -33,15 +32,7 @@ import ghidra.program.model.address.AddressRange;
  * TODO: Present all sections, but include isAllocated?
  */
 @DebuggerTargetObjectIface("Section")
-public interface TargetSection<T extends TargetSection<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetSection<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetSection.class;
+public interface TargetSection extends TargetObject {
 
 	String MODULE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module";
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
@@ -52,9 +43,8 @@ public interface TargetSection<T extends TargetSection<T>> extends TypedTargetOb
 	 * @return the owning module
 	 */
 	@TargetAttributeType(name = MODULE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
-	@SuppressWarnings("unchecked")
-	public default TypedTargetObjectRef<? extends TargetModule<?>> getModule() {
-		return getTypedRefAttributeNowByName(MODULE_ATTRIBUTE_NAME, TargetModule.class, null);
+	public default TargetModule getModule() {
+		return getTypedAttributeNowByName(MODULE_ATTRIBUTE_NAME, TargetModule.class, null);
 	}
 
 	// TODO: Should there be a getSectionName(), like getModuleName()

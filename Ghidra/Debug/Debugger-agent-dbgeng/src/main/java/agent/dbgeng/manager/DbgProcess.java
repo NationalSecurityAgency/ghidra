@@ -23,7 +23,6 @@ import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.impl.DbgSectionImpl;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetAttachable;
 
 public interface DbgProcess extends DbgMemoryOperations {
@@ -165,8 +164,7 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 * @param ref the target process
 	 * @return a future that completes with a set of handles to all threads of the attached process
 	 */
-	CompletableFuture<Set<DbgThread>> reattach(
-			TypedTargetObjectRef<? extends TargetAttachable<?>> ref);
+	CompletableFuture<Set<DbgThread>> reattach(TargetAttachable attachable);
 
 	/**
 	 * Execute an arbitrary kd command, capturing its console output
@@ -187,8 +185,8 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 * Step the process
 	 * 
 	 * Note that the command can complete before the process has finished stepping. The command
-	 * completes as soon as the process is running. A separate stop event is emitted when the step is
-	 * completed.
+	 * completes as soon as the process is running. A separate stop event is emitted when the step
+	 * is completed.
 	 * 
 	 * @param suffix specifies how far to step, or on what conditions stepping ends.
 	 * 
@@ -200,8 +198,8 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 * Step the process
 	 * 
 	 * Note that the command can complete before the process has finished stepping. The command
-	 * completes as soon as the process is running. A separate stop event is emitted when the step is
-	 * completed.
+	 * completes as soon as the process is running. A separate stop event is emitted when the step
+	 * is completed.
 	 * 
 	 * @param args specifies how far to step, or on what conditions stepping ends.
 	 * 

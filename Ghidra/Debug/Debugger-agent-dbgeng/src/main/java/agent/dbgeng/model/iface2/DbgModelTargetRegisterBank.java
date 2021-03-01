@@ -30,8 +30,7 @@ import ghidra.dbg.util.ConversionUtils;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
-public interface DbgModelTargetRegisterBank
-		extends DbgModelTargetObject, TargetRegisterBank<DbgModelTargetRegisterBank> {
+public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, TargetRegisterBank {
 
 	public DbgModelTargetRegister getTargetRegister(DbgRegister register);
 

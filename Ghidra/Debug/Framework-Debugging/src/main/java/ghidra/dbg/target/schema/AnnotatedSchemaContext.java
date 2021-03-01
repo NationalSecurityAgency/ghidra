@@ -25,8 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema.MinimalSchemaContext;
@@ -62,7 +60,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 		return bounds.filter(base::isAssignableFrom).map(c -> c.asSubclass(base));
 	}
 
-	static Stream<Class<?>> resolveUpperBounds(Class<? extends TargetObjectRef> cls, Type type) {
+	static Stream<Class<?>> resolveUpperBounds(Class<? extends TargetObject> cls, Type type) {
 		if (type == null) {
 			return Stream.empty();
 		}
@@ -100,7 +98,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	}
 
 	static Set<Class<? extends TargetObject>> getBoundsOfFetchElements(
-			Class<? extends TargetObjectRef> cls) {
+			Class<? extends TargetObject> cls) {
 		try {
 			Method method = cls.getMethod("fetchElements", new Class<?>[] { boolean.class });
 			Type ret = method.getGenericReturnType();
@@ -125,20 +123,9 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 		if (TargetObject.class.isAssignableFrom(retCls)) {
 			return Set.of(retCls.asSubclass(TargetObject.class));
 		}
-		Type ret = getter.getGenericReturnType();
-		Map<TypeVariable<?>, Type> argsTtor =
-			TypeUtils.getTypeArguments(ret, TypedTargetObjectRef.class);
-		if (argsTtor != null) {
-			Type typeTtorT = argsTtor.get(TypedTargetObjectRef.class.getTypeParameters()[0]);
-
-			return filterBounds(TargetObject.class, resolveUpperBounds(cls, typeTtorT))
-					.collect(Collectors.toSet());
-		}
-		if (TargetObjectRef.class.isAssignableFrom(retCls)) {
-			return Set.of(TargetObject.class);
-		}
+		// NB. Caller does check for primitive
 		throw new IllegalArgumentException("Getter " + getter +
-			" for attribute must return primitive or subclass of " + TargetObjectRef.class);
+			" for attribute must return primitive or subclass of " + TargetObject.class);
 	}
 
 	protected final Map<Class<? extends TargetObject>, SchemaName> namesByClass =

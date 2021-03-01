@@ -21,16 +21,16 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface1.DbgModelTargetBptHelper;
-import ghidra.dbg.attributes.TargetObjectRefList;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.program.model.address.*;
 
 public interface DbgModelTargetBreakpointSpec extends //
 		DbgModelTargetObject, //
-		TargetBreakpointSpec<DbgModelTargetBreakpointSpec>, //
-		TargetBreakpointLocation<DbgModelTargetBreakpointSpec>, //
-		TargetDeletable<DbgModelTargetBreakpointSpec>, //
+		TargetBreakpointSpec, //
+		TargetBreakpointLocation, //
+		TargetDeletable, //
 		DbgModelTargetBptHelper {
 
 	String BPT_ACCESS_ATTRIBUTE_NAME = "Access";
@@ -129,9 +129,9 @@ public interface DbgModelTargetBreakpointSpec extends //
 		return getModel().getAddress("ram", info.addrAsLong());
 	}
 
-	public default TargetObjectRefList<?> doGetAffects() {
+	public default TargetObjectList<?> doGetAffects() {
 		DbgModelTargetProcess process = getParentProcess();
-		return TargetObjectRefList.of(process);
+		return TargetObjectList.of(process);
 	}
 
 	public default void updateInfo(DbgBreakpointInfo oldInfo, DbgBreakpointInfo newInfo,

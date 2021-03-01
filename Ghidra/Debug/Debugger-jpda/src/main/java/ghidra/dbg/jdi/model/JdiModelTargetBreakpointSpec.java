@@ -28,18 +28,20 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.datastruct.ListenerSet;
 
-@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = { //
-	@TargetAttributeType( //
+@TargetObjectSchemaInfo(
+	name = "BreakpointSpec",
+	attributes = { //
+		@TargetAttributeType( //
 			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, //
 			type = JdiModelTargetBreakpointContainer.class), //
-	@TargetAttributeType( //
+		@TargetAttributeType( //
 			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
 			type = JdiModelTargetBreakpointSpec.class), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
-public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl implements //
-		TargetBreakpointSpec<JdiModelTargetBreakpointSpec>, //
-		JdiModelTargetDeletable<JdiModelTargetBreakpointSpec> {
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
+public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
+		implements TargetBreakpointSpec, JdiModelTargetDeletable {
 
 	protected JdiBreakpointInfo info;
 	protected TargetBreakpointKindSet kinds;

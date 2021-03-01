@@ -21,13 +21,11 @@ import agent.dbgeng.model.iface1.DbgModelTargetEventScope;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
 
-public interface DbgModelTargetModuleContainer extends //
-		//DbgModelTargetObject, 
-		DbgModelTargetEventScope<DbgModelTargetModuleContainer>, //
-		TargetModuleContainer<DbgModelTargetModuleContainer> {
+public interface DbgModelTargetModuleContainer
+		extends /*DbgModelTargetObject,*/ DbgModelTargetEventScope, TargetModuleContainer {
 
 	@Override
-	public CompletableFuture<? extends TargetModule<?>> addSyntheticModule(String name);
+	public CompletableFuture<? extends TargetModule> addSyntheticModule(String name);
 
 	public CompletableFuture<DbgModelTargetModule> getTargetModule(String name);
 

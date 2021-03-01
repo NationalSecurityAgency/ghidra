@@ -20,11 +20,11 @@ import agent.dbgeng.model.iface1.*;
 
 public interface DbgModelTargetRoot extends //
 		///DbgModelTargetObject,
-		DbgModelTargetAccessConditioned<DbgModelTargetRoot>, //
-		DbgModelTargetAttacher<DbgModelTargetRoot>, //
-		DbgModelTargetEventScope<DbgModelTargetRoot>, //
-		DbgModelTargetLauncher<DbgModelTargetRoot>, //
-		DbgModelTargetFocusScope<DbgModelTargetRoot>, //
+		DbgModelTargetAccessConditioned, //
+		DbgModelTargetAttacher, //
+		DbgModelTargetEventScope, //
+		DbgModelTargetLauncher, //
+		DbgModelTargetFocusScope, //
 		DbgEventsListenerAdapter {
 
 	void setDefaultConnector(DbgModelTargetConnector defaultConnector);

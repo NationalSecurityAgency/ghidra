@@ -18,8 +18,6 @@ package ghidra.dbg.gadp.client;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.Path;
@@ -29,8 +27,8 @@ import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.datastruct.ListenerSet;
 
-public interface GadpClientTargetBreakpointContainer extends GadpClientTargetObject,
-		TargetBreakpointContainer<GadpClientTargetBreakpointContainer> {
+public interface GadpClientTargetBreakpointContainer
+		extends GadpClientTargetObject, TargetBreakpointContainer {
 
 	@Override
 	default CompletableFuture<Void> placeBreakpoint(AddressRange range,
@@ -63,18 +61,16 @@ public interface GadpClientTargetBreakpointContainer extends GadpClientTargetObj
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.BREAK_HIT_EVENT)
 	default void handleBreakHitEvent(Gadp.EventNotification notification) {
 		Gadp.BreakHitEvent evt = notification.getBreakHitEvent();
-		TargetObjectRef trapped = getModel().getProxy(evt.getTrapped().getEList(), true);
+		TargetObject trapped = getModel().getProxy(evt.getTrapped().getEList(), true);
 		Path framePath = evt.getFrame();
-		TypedTargetObjectRef<? extends TargetStackFrame<?>> frame =
-			framePath == null || framePath.getECount() == 0 ? null
-					: getModel().getProxy(framePath.getEList(), true).as(TargetStackFrame.tclass);
+		TargetStackFrame frame = framePath == null || framePath.getECount() == 0 ? null
+				: getModel().getProxy(framePath.getEList(), true).as(TargetStackFrame.class);
 		Path specPath = evt.getSpec();
-		TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> spec = specPath == null ? null
-				: getModel().getProxy(specPath.getEList(), true).as(TargetBreakpointSpec.tclass);
+		TargetBreakpointSpec spec = specPath == null ? null
+				: getModel().getProxy(specPath.getEList(), true).as(TargetBreakpointSpec.class);
 		Path bptPath = evt.getEffective();
-		TypedTargetObjectRef<? extends TargetBreakpointLocation<?>> breakpoint = bptPath == null
-				? null
-				: getModel().getProxy(bptPath.getEList(), true).as(TargetBreakpointLocation.tclass);
+		TargetBreakpointLocation breakpoint = bptPath == null ? null
+				: getModel().getProxy(bptPath.getEList(), true).as(TargetBreakpointLocation.class);
 		getDelegate().getListeners()
 				.fire(TargetBreakpointListener.class)
 				.breakpointHit(this, trapped, frame, spec, breakpoint);

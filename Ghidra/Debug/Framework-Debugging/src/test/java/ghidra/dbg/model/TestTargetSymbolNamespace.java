@@ -23,7 +23,7 @@ import ghidra.program.model.address.Address;
 
 public class TestTargetSymbolNamespace
 		extends DefaultTestTargetObject<TestTargetSymbol, TestTargetObject>
-		implements TargetSymbolNamespace<TestTargetSymbolNamespace> {
+		implements TargetSymbolNamespace {
 
 	public TestTargetSymbolNamespace(TestTargetObject parent) {
 		super(parent, "Symbols", "SymbolNamespace");

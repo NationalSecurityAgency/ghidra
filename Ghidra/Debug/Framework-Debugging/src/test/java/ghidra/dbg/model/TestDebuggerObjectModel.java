@@ -18,7 +18,6 @@ package ghidra.dbg.model;
 import java.util.concurrent.*;
 
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.*;
 
@@ -84,7 +83,7 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 		return CompletableFuture.supplyAsync(() -> t, getClientExecutor());
 	}
 
-	public CompletableFuture<Void> requestFocus(TargetObjectRef obj) {
+	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return session.requestFocus(obj);
 	}
 

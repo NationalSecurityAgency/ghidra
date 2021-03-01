@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptySet;
@@ -31,20 +29,11 @@ import ghidra.program.model.address.*;
  * A container for breakpoint specifications and/or locations
  * 
  * <p>
- * This interface provides for the placment (creation) of breakpoints and as a listening point for
+ * This interface provides for the placement (creation) of breakpoints and as a listening point for
  * breakpoint events. Typically, it is implemented by an object whose elements are breakpoints.
  */
 @DebuggerTargetObjectIface("BreakpointContainer")
-public interface TargetBreakpointContainer<T extends TargetBreakpointContainer<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetBreakpointContainer<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetBreakpointContainer.class;
+public interface TargetBreakpointContainer extends TargetObject {
 
 	String SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "supported_breakpoint_kinds";
 
@@ -91,7 +80,10 @@ public interface TargetBreakpointContainer<T extends TargetBreakpointContainer<T
 	 * 
 	 * @return the set of supported kinds
 	 */
-	@TargetAttributeType(name = SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME, required = true, hidden = true)
+	@TargetAttributeType(
+		name = SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME,
+		required = true,
+		hidden = true)
 	public default TargetBreakpointKindSet getSupportedBreakpointKinds() {
 		return getTypedAttributeNowByName(SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME,
 			TargetBreakpointKindSet.class, TargetBreakpointKindSet.of());
@@ -157,10 +149,9 @@ public interface TargetBreakpointContainer<T extends TargetBreakpointContainer<T
 		 * @param spec the breakpoint specification
 		 * @param breakpoint the breakpoint location that actually trapped execution
 		 */
-		default void breakpointHit(TargetBreakpointContainer<?> container, TargetObjectRef trapped,
-				TypedTargetObjectRef<? extends TargetStackFrame<?>> frame,
-				TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> spec,
-				TypedTargetObjectRef<? extends TargetBreakpointLocation<?>> breakpoint) {
+		default void breakpointHit(TargetBreakpointContainer container, TargetObject trapped,
+				TargetStackFrame frame, TargetBreakpointSpec spec,
+				TargetBreakpointLocation breakpoint) {
 		}
 	}
 }

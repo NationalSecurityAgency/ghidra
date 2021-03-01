@@ -28,7 +28,6 @@ import org.junit.Test;
 import generic.Unique;
 import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.DebuggerModelListener;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetRegisterBank.TargetRegisterBankListener;
@@ -48,8 +47,8 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		}
 	}
 
-	public static class FakeTargetRegisterBank<T extends FakeTargetRegisterBank<T>>
-			extends FakeTargetObject implements TargetRegisterBank<T> {
+	public static class FakeTargetRegisterBank extends FakeTargetObject
+			implements TargetRegisterBank {
 
 		public FakeTargetRegisterBank(AbstractDebuggerObjectModel model, TargetObject parent,
 				String name) {
@@ -262,9 +261,9 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		@Override
 		public void elementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObjectRef> added) {
-			for (TargetObjectRef elem : added.values()) {
-				record.add(new ImmutablePair<>("addedElem", (TargetObject) elem));
+				Map<String, ? extends TargetObject> added) {
+			for (TargetObject elem : added.values()) {
+				record.add(new ImmutablePair<>("addedElem", elem));
 			}
 		}
 
@@ -279,7 +278,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		}
 
 		@Override
-		public void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
+		public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
 			record.add(new ImmutablePair<>("registersUpdated", bank));
 		}
 	}
@@ -291,7 +290,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		waitOn(model.clientExecutor);
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
-		FakeTargetRegisterBank<?> fakeA1rb = new FakeTargetRegisterBank<>(model, fakeA, "[1]");
+		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
 		fakeA1rb.listeners.fire(TargetRegisterBankListener.class)
 				.registersUpdated(fakeA1rb, Map.of());
 		fakeA.setElements(List.of(fakeA1rb), "Init");
@@ -312,7 +311,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 	public void testAddListenerWithReplay() throws Throwable {
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
-		FakeTargetRegisterBank<?> fakeA1rb = new FakeTargetRegisterBank<>(model, fakeA, "[1]");
+		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
 		fakeA1rb.listeners.fire(TargetRegisterBankListener.class)
 				.registersUpdated(fakeA1rb, Map.of());
 		fakeA.setElements(List.of(fakeA1rb), "Init");

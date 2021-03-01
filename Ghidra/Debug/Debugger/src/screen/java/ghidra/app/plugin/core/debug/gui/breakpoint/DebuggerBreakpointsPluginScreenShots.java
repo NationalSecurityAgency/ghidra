@@ -131,13 +131,13 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
 		}
 
-		TargetBreakpointContainer<?> bc1 =
+		TargetBreakpointContainer bc1 =
 			waitFor(() -> Unique.assertAtMostOne(recorder1.collectBreakpointContainers(null)),
 				"No container");
 		waitOn(bc1.placeBreakpoint(mb.addr(0x00401234), Set.of(TargetBreakpointKind.SOFTWARE)));
 		waitOn(bc1.placeBreakpoint(mb.rng(0x00604321, 0x00604324),
 			Set.of(TargetBreakpointKind.WRITE)));
-		TargetBreakpointContainer<?> bc3 =
+		TargetBreakpointContainer bc3 =
 			waitFor(() -> Unique.assertAtMostOne(recorder3.collectBreakpointContainers(null)),
 				"No container");
 		waitOn(bc3.placeBreakpoint(mb.addr(0x7fac1234), Set.of(TargetBreakpointKind.SOFTWARE)));

@@ -20,7 +20,6 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetObject;
 
@@ -46,7 +45,7 @@ public interface ObjectPane {
 
 	public String getName();
 
-	public void setFocus(TargetFocusScope<?> object, TargetObjectRef focused);
+	public void setFocus(TargetFocusScope object, TargetObject focused);
 
 	public void setRoot(ObjectContainer root, TargetObject targetObject);
 

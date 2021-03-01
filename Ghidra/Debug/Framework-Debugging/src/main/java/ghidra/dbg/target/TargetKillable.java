@@ -23,15 +23,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * A target which can be killed (terminated)
  */
 @DebuggerTargetObjectIface("Killable")
-public interface TargetKillable<T extends TargetKillable<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetKillable<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetKillable.class;
+public interface TargetKillable extends TargetObject {
 
 	/**
 	 * Kill this target

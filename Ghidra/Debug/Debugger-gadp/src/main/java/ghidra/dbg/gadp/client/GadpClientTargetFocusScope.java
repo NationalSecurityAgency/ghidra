@@ -17,21 +17,20 @@ package ghidra.dbg.gadp.client;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetFocusScope;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.ValueUtils;
 
-public interface GadpClientTargetFocusScope
-		extends GadpClientTargetObject, TargetFocusScope<GadpClientTargetFocusScope> {
+public interface GadpClientTargetFocusScope extends GadpClientTargetObject, TargetFocusScope {
 
 	@Override
-	default CompletableFuture<Void> requestFocus(TargetObjectRef obj) {
+	default CompletableFuture<Void> requestFocus(TargetObject obj) {
 		getDelegate().assertValid();
-		getModel().assertMine(TargetObjectRef.class, obj);
+		getModel().assertMine(TargetObject.class, obj);
 		// The server should detect this error, but we can detect it here without sending a request
 		if (!PathUtils.isAncestor(getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
@@ -43,8 +42,8 @@ public interface GadpClientTargetFocusScope
 				.thenApply(__ -> null);
 	}
 
-	default TargetObjectRef refFromObj(Object obj) {
-		return ValueUtils.expectType(obj, TargetObjectRef.class, this, FOCUS_ATTRIBUTE_NAME, this,
+	default TargetObject focusFromObj(Object obj) {
+		return ValueUtils.expectType(obj, TargetObject.class, this, FOCUS_ATTRIBUTE_NAME, this,
 			true);
 	}
 
@@ -52,6 +51,6 @@ public interface GadpClientTargetFocusScope
 	default void handleFocusChanged(Object focus) {
 		getDelegate().getListeners()
 				.fire(TargetFocusScopeListener.class)
-				.focusChanged(this, refFromObj(focus));
+				.focusChanged(this, focusFromObj(focus));
 	}
 }

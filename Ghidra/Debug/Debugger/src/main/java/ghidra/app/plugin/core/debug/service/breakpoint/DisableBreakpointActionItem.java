@@ -21,9 +21,9 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.target.TargetBreakpointSpec;
 
 public class DisableBreakpointActionItem implements BreakpointActionItem {
-	private final TargetBreakpointSpec<?> spec;
+	private final TargetBreakpointSpec spec;
 
-	public DisableBreakpointActionItem(TargetBreakpointSpec<?> spec) {
+	public DisableBreakpointActionItem(TargetBreakpointSpec spec) {
 		this.spec = spec;
 	}
 

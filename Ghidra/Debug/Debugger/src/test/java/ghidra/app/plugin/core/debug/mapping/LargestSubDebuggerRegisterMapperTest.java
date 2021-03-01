@@ -47,12 +47,12 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 
 		@Override
 		protected DebuggerRegisterMapper createRegisterMapper(
-				TargetRegisterContainer<?> registers) {
+				TargetRegisterContainer registers) {
 			return new LargestSubDebuggerRegisterMapper(cSpec, registers, false);
 		}
 
 		@Override
-		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory<?> memory) {
+		protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
 			return new DefaultDebuggerMemoryMapper(language, memory.getModel());
 		}
 	}
@@ -132,7 +132,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 			Objects.requireNonNull(mb.testProcess1.regs.getCachedElements().get("RAX"));
 		Register lRAX = Objects.requireNonNull(getSLEIGH_X86_64_LANGUAGE().getRegister("RAX"));
 
-		TargetRegister<?> tReg = waitForValue(() -> rm.traceToTarget(lRAX));
+		TargetRegister tReg = waitForValue(() -> rm.traceToTarget(lRAX));
 		assertEquals(tRAX, tReg);
 	}
 
@@ -213,7 +213,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 			Objects.requireNonNull(mb.testProcess1.regs.getCachedElements().get("EAX"));
 		Register lRAX = Objects.requireNonNull(getSLEIGH_X86_64_LANGUAGE().getRegister("RAX"));
 
-		TargetRegister<?> tReg = waitForValue(() -> rm.traceToTarget(lRAX));
+		TargetRegister tReg = waitForValue(() -> rm.traceToTarget(lRAX));
 		assertEquals(tEAX, tReg);
 	}
 

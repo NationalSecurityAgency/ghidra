@@ -17,7 +17,7 @@ package ghidra.dbg.error;
 
 import java.util.List;
 
-import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 
 /**
@@ -33,7 +33,7 @@ public class DebuggerModelTypeException extends DebuggerRuntimeException {
 			got.getClass().getSimpleName() + ")");
 	}
 
-	public static DebuggerModelTypeException linkForbidden(TargetObjectRef got, List<String> path) {
+	public static DebuggerModelTypeException linkForbidden(TargetObject got, List<String> path) {
 		return new DebuggerModelTypeException("Path " + PathUtils.toString(path) +
 			" is a link to " + PathUtils.toString(got.getPath()) +
 			", but following links was forbidden");

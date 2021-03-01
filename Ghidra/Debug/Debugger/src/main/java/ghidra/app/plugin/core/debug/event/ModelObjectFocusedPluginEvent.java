@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.event;
 
-import ghidra.dbg.attributes.TargetObjectRef;
+import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginEvent;
 
 /**
@@ -24,7 +24,7 @@ import ghidra.framework.plugintool.PluginEvent;
 public class ModelObjectFocusedPluginEvent extends PluginEvent {
 	static final String NAME = "Object Focused";
 
-	private final TargetObjectRef focusRef;
+	private final TargetObject focus;
 
 	/**
 	 * Construct a new plugin event.
@@ -32,9 +32,9 @@ public class ModelObjectFocusedPluginEvent extends PluginEvent {
 	 * @param source name of the plugin that created this event
 	 * @param focusRef the object (ref) associated with this event
 	 */
-	public ModelObjectFocusedPluginEvent(String source, TargetObjectRef focusRef) {
+	public ModelObjectFocusedPluginEvent(String source, TargetObject focus) {
 		super(source, NAME);
-		this.focusRef = focusRef;
+		this.focus = focus;
 	}
 
 	/**
@@ -42,7 +42,7 @@ public class ModelObjectFocusedPluginEvent extends PluginEvent {
 	 * 
 	 * @return the focused object ref
 	 */
-	public TargetObjectRef getFocusRef() {
-		return focusRef;
+	public TargetObject getFocus() {
+		return focus;
 	}
 }

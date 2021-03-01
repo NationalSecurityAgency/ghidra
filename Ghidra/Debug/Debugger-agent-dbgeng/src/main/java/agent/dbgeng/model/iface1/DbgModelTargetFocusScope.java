@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AbstractTargetObject;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetObject;
@@ -33,8 +32,7 @@ import ghidra.dbg.util.PathUtils;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetFocusScope<T extends TargetFocusScope<T>>
-		extends DbgModelTargetObject, TargetFocusScope<T> {
+public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFocusScope {
 
 	@Override
 	public DbgModelSelectableObject getFocus();
@@ -45,38 +43,36 @@ public interface DbgModelTargetFocusScope<T extends TargetFocusScope<T>>
 	// NB: requestFocus request change in active object - propagates down to manager
 	//  (but, of course, may then cause change in state)
 	@Override
-	public default CompletableFuture<Void> requestFocus(TargetObjectRef ref) {
-		return getManager().requestFocus(this, ref);
+	public default CompletableFuture<Void> requestFocus(TargetObject obj) {
+		return getManager().requestFocus(this, obj);
 	}
 
-	public default CompletableFuture<Void> doRequestFocus(TargetObjectRef ref) {
+	public default CompletableFuture<Void> doRequestFocus(TargetObject obj) {
 		if (getManager().isWaiting()) {
 			return CompletableFuture.completedFuture(null);
 		}
-		getModel().assertMine(TargetObjectRef.class, ref);
-		if (ref.equals(getFocus())) {
+		getModel().assertMine(TargetObject.class, obj);
+		if (obj.equals(getFocus())) {
 			return CompletableFuture.completedFuture(null);
 		}
-		if (!PathUtils.isAncestor(this.getPath(), ref.getPath())) {
+		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
 		}
-		return ref.fetch().thenCompose(obj -> {
-			TargetObject cur = obj;
-			while (cur != null) {
-				if (cur instanceof DbgModelSelectableObject) {
-					DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
-					setFocus(sel);
-					return sel.select();
-				}
-				if (cur instanceof AbstractTargetObject) {
-					AbstractTargetObject<?> def = (AbstractTargetObject<?>) cur;
-					cur = def.getImplParent();
-					continue;
-				}
-				throw new AssertionError();
+		TargetObject cur = obj;
+		while (cur != null) {
+			if (cur instanceof DbgModelSelectableObject) {
+				DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
+				setFocus(sel);
+				return sel.select();
 			}
-			return AsyncUtils.NIL;
-		});
+			if (cur instanceof AbstractTargetObject) {
+				AbstractTargetObject<?> def = (AbstractTargetObject<?>) cur;
+				cur = def.getParent();
+				continue;
+			}
+			throw new AssertionError();
+		}
+		return AsyncUtils.NIL;
 	}
 
 }

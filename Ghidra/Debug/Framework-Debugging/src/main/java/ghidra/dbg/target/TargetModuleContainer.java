@@ -34,21 +34,15 @@ import ghidra.lifecycle.Experimental;
  * native debugger.
  */
 @DebuggerTargetObjectIface("ModuleContainer")
-public interface TargetModuleContainer<T extends TargetModuleContainer<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetModuleContainer<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetModuleContainer.class;
+public interface TargetModuleContainer extends TargetObject {
 
 	String SUPPORTS_SYNTHETIC_MODULES_ATTRIBUTE_NAME =
 		PREFIX_INVISIBLE + "supports_synthetic_modules";
 
-	@TargetAttributeType(name = SUPPORTS_SYNTHETIC_MODULES_ATTRIBUTE_NAME, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = SUPPORTS_SYNTHETIC_MODULES_ATTRIBUTE_NAME,
+		fixed = true,
+		hidden = true)
 	@Experimental
 	public default boolean supportsSyntheticModules() {
 		return getTypedAttributeNowByName(SUPPORTS_SYNTHETIC_MODULES_ATTRIBUTE_NAME, Boolean.class,
@@ -56,7 +50,7 @@ public interface TargetModuleContainer<T extends TargetModuleContainer<T>>
 	}
 
 	@Experimental
-	public default CompletableFuture<? extends TargetModule<?>> addSyntheticModule(String name) {
+	public default CompletableFuture<? extends TargetModule> addSyntheticModule(String name) {
 		throw new UnsupportedOperationException();
 	}
 }

@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
@@ -118,7 +117,8 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		if (breaks == null) {
 			return AsyncUtils.NIL;
 		}
-		return breaks.planEnable(actions, length, kinds).thenCompose(__ -> actions.execute());
+		breaks.planEnable(actions, length, kinds);
+		return actions.execute();
 	}
 
 	@Override
@@ -128,7 +128,8 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		if (breaks == null) {
 			return AsyncUtils.NIL;
 		}
-		return breaks.planDisable(actions, length, kinds).thenCompose(__ -> actions.execute());
+		breaks.planDisable(actions, length, kinds);
+		return actions.execute();
 	}
 
 	@Override
@@ -138,78 +139,79 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		if (breaks == null) {
 			return AsyncUtils.NIL;
 		}
-		return breaks.planDelete(actions, length, kinds).thenCompose(__ -> actions.execute());
+		breaks.planDelete(actions, length, kinds);
+		return actions.execute();
 	}
 
 	@Override
-	public CompletableFuture<Void> planEnable(BreakpointActionSet actions, Trace trace) {
+	public void planEnable(BreakpointActionSet actions, Trace trace) {
 		if (trace != null) {
 			TraceBreakpointSet breaks = traceBreaks.get(trace);
 			if (breaks == null) {
-				return AsyncUtils.NIL;
+				return;
 			}
-			return breaks.planEnable(actions, length, kinds);
+			breaks.planEnable(actions, length, kinds);
+			return;
 		}
-		AsyncFence fence = new AsyncFence();
 		for (TraceBreakpointSet breaks : traceBreaks.values()) {
-			fence.include(breaks.planEnable(actions, length, kinds));
+			breaks.planEnable(actions, length, kinds);
 		}
-		return fence.ready();
 	}
 
 	@Override
 	public CompletableFuture<Void> enable() {
 		progBreak.enable();
 		BreakpointActionSet actions = new BreakpointActionSet();
-		return planEnable(actions, null).thenCompose(__ -> actions.execute());
+		planEnable(actions, null);
+		return actions.execute();
 		// NOTE: Recorder will cause appropriate updates
 	}
 
 	@Override
-	public CompletableFuture<Void> planDisable(BreakpointActionSet actions, Trace trace) {
+	public void planDisable(BreakpointActionSet actions, Trace trace) {
 		if (trace != null) {
 			TraceBreakpointSet breaks = traceBreaks.get(trace);
 			if (breaks == null) {
-				return AsyncUtils.NIL;
+				return;
 			}
-			return breaks.planDisable(actions, length, kinds);
+			breaks.planDisable(actions, length, kinds);
+			return;
 		}
-		AsyncFence fence = new AsyncFence();
 		for (TraceBreakpointSet breaks : traceBreaks.values()) {
-			fence.include(breaks.planDisable(actions, length, kinds));
+			breaks.planDisable(actions, length, kinds);
 		}
-		return fence.ready();
 	}
 
 	@Override
 	public CompletableFuture<Void> disable() {
 		progBreak.disable(); // Will generate disabled breakpoint if absent
 		BreakpointActionSet actions = new BreakpointActionSet();
-		return planDisable(actions, null).thenCompose(__ -> actions.execute());
+		planDisable(actions, null);
+		return actions.execute();
 		// NOTE: Recorder will cause appropriate updates
 	}
 
 	@Override
-	public CompletableFuture<Void> planDelete(BreakpointActionSet actions, Trace trace) {
+	public void planDelete(BreakpointActionSet actions, Trace trace) {
 		if (trace != null) {
 			TraceBreakpointSet breaks = traceBreaks.get(trace);
 			if (breaks == null) {
-				return AsyncUtils.NIL;
+				return;
 			}
-			return breaks.planDelete(actions, length, kinds);
+			breaks.planDelete(actions, length, kinds);
+			return;
 		}
-		AsyncFence fence = new AsyncFence();
 		for (TraceBreakpointSet breaks : traceBreaks.values()) {
-			fence.include(breaks.planDelete(actions, length, kinds));
+			breaks.planDelete(actions, length, kinds);
 		}
-		return fence.ready();
 	}
 
 	@Override
 	public CompletableFuture<Void> delete() {
 		progBreak.deleteFromProgram();
 		BreakpointActionSet actions = new BreakpointActionSet();
-		return planDelete(actions, null).thenCompose(__ -> actions.execute());
+		planDelete(actions, null);
+		return actions.execute();
 		// NOTE: Recorder will cause appropriate updates
 	}
 

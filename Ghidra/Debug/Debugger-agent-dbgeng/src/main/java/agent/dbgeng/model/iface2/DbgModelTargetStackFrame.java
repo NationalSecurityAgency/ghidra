@@ -23,7 +23,6 @@ import agent.dbgeng.manager.DbgStackFrame;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgThreadImpl;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.program.model.address.Address;
@@ -31,7 +30,7 @@ import ghidra.program.model.address.AddressSpace;
 
 public interface DbgModelTargetStackFrame extends //
 		//DbgModelTargetObject,
-		TargetStackFrame<DbgModelTargetStackFrame>, //
+		TargetStackFrame, //
 		DbgEventsListenerAdapter, //
 		DbgModelSelectableObject {
 
@@ -90,7 +89,7 @@ public interface DbgModelTargetStackFrame extends //
 
 	public void setFrame(DbgStackFrame frame);
 
-	public TargetObjectRef getThread();
+	public TargetObject getThread();
 
 	public Address getPC();
 

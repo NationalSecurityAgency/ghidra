@@ -26,14 +26,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "Section", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Section",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetSection
 		extends DefaultTargetObject<TargetObject, GdbModelTargetSectionContainer>
-		implements TargetSection<GdbModelTargetSection> {
+		implements TargetSection {
 
 	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 

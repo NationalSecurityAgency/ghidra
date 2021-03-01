@@ -32,8 +32,7 @@ import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetLauncher<T extends TargetCmdLineLauncher<T>>
-		extends DbgModelTargetObject, TargetCmdLineLauncher<T> {
+public interface DbgModelTargetLauncher extends DbgModelTargetObject, TargetCmdLineLauncher {
 
 	@Override
 	public default CompletableFuture<Void> launch(List<String> args) {

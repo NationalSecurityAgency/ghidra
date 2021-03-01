@@ -18,8 +18,7 @@ package agent.dbgeng.model.iface2;
 import ghidra.dbg.target.TargetSymbol;
 import ghidra.program.model.address.Address;
 
-public interface DbgModelTargetSymbol
-		extends DbgModelTargetObject, TargetSymbol<DbgModelTargetSymbol> {
+public interface DbgModelTargetSymbol extends DbgModelTargetObject, TargetSymbol {
 
 	@Override
 	public boolean isConstant();

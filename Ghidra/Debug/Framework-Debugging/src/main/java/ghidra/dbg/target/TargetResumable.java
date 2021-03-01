@@ -23,15 +23,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * A target which can be resumed, i.e., continued
  */
 @DebuggerTargetObjectIface("Resumable")
-public interface TargetResumable<T extends TargetResumable<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetResumable<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetResumable.class;
+public interface TargetResumable extends TargetObject {
 
 	/**
 	 * Resume execution of this object

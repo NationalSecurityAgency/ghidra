@@ -25,7 +25,6 @@ import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.ServiceInfo;
@@ -33,10 +32,9 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.datastruct.CollectionChangeListener;
 
-@ServiceInfo( //
-		defaultProvider = DebuggerModelServiceProxyPlugin.class, //
-		description = "Service for managing debug sessions and connections" //
-)
+@ServiceInfo(
+	defaultProvider = DebuggerModelServiceProxyPlugin.class,
+	description = "Service for managing debug sessions and connections")
 public interface DebuggerModelService {
 	/**
 	 * Get the set of model factories found on the classpath
@@ -166,12 +164,12 @@ public interface DebuggerModelService {
 	TraceRecorder getRecorder(TargetObject target);
 
 	/**
-	 * Get the recorder which is recording the nearest ancestor for the given object ref
+	 * Get the recorder which is recording the nearest ancestor for the given object
 	 * 
-	 * @param ref the object ref
+	 * @param obj the object
 	 * @return the recorder, or null
 	 */
-	TraceRecorder getRecorderForSuccessor(TargetObjectRef ref);
+	TraceRecorder getRecorderForSuccessor(TargetObject obj);
 
 	/**
 	 * Get the recorder whose destination is the given trace
@@ -215,7 +213,7 @@ public interface DebuggerModelService {
 	 * @param thread the destination trace thread
 	 * @return the source model "thread"
 	 */
-	TargetThread<?> getTargetThread(TraceThread thread);
+	TargetThread getTargetThread(TraceThread thread);
 
 	/**
 	 * Get the destination trace thread, if applicable, for a given source thread
@@ -226,7 +224,7 @@ public interface DebuggerModelService {
 	 * @param thread the source model "thread"
 	 * @return the destination trace thread
 	 */
-	TraceThread getTraceThread(TargetThread<?> thread);
+	TraceThread getTraceThread(TargetThread thread);
 
 	/**
 	 * Get the destination trace thread, if applicable, for a given source thread
@@ -239,7 +237,7 @@ public interface DebuggerModelService {
 	 * @param thread the source model thread
 	 * @return the destination trace thread
 	 */
-	TraceThread getTraceThread(TargetObject target, TargetThread<?> thread);
+	TraceThread getTraceThread(TargetObject target, TargetThread thread);
 
 	/**
 	 * Signal to plugins that the user's focus has changed to another model
@@ -267,7 +265,7 @@ public interface DebuggerModelService {
 	 * @param target a source model object being actively traced
 	 * @return the last focused object being traced by the same recorder
 	 */
-	TargetObjectRef getTargetFocus(TargetObject target);
+	TargetObject getTargetFocus(TargetObject target);
 
 	/**
 	 * Listen for changes in available model factories

@@ -32,7 +32,6 @@ import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.service.breakpoint.LogicalBreakpointInternal.ProgramBreakpoint;
 import ghidra.app.services.*;
-import ghidra.async.AsyncFence;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.*;
@@ -54,25 +53,25 @@ import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
 @PluginInfo( //
-		shortDescription = "Debugger logical breakpoints service plugin", //
-		description = "Aggregates breakpoints from open programs and live traces", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { //
-			ProgramOpenedPluginEvent.class, //
-			ProgramClosedPluginEvent.class, //
-			TraceOpenedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-			DebuggerTraceManagerService.class, //
-			DebuggerModelService.class, //
-			DebuggerStaticMappingService.class, //
-		}, //
-		servicesProvided = { //
-			DebuggerLogicalBreakpointService.class, //
-		} //
+	shortDescription = "Debugger logical breakpoints service plugin", //
+	description = "Aggregates breakpoints from open programs and live traces", //
+	category = PluginCategoryNames.DEBUGGER, //
+	packageName = DebuggerPluginPackage.NAME, //
+	status = PluginStatus.RELEASED, //
+	eventsConsumed = { //
+		ProgramOpenedPluginEvent.class, //
+		ProgramClosedPluginEvent.class, //
+		TraceOpenedPluginEvent.class, //
+		TraceClosedPluginEvent.class, //
+	}, //
+	servicesRequired = { //
+		DebuggerTraceManagerService.class, //
+		DebuggerModelService.class, //
+		DebuggerStaticMappingService.class, //
+	}, //
+	servicesProvided = { //
+		DebuggerLogicalBreakpointService.class, //
+	} //
 )
 public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		implements DebuggerLogicalBreakpointService {
@@ -1022,7 +1021,6 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	@Override
 	public CompletableFuture<Void> enableAll(Collection<LogicalBreakpoint> col, Trace trace) {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		AsyncFence fence = new AsyncFence();
 		for (LogicalBreakpoint lb : col) {
 			if (trace == null) {
 				lb.enableForProgram();
@@ -1031,15 +1029,14 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				continue;
 			}
 			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
-			fence.include(lbi.planEnable(actions, trace));
+			lbi.planEnable(actions, trace);
 		}
-		return fence.ready().thenCompose(__ -> actions.execute());
+		return actions.execute();
 	}
 
 	@Override
 	public CompletableFuture<Void> disableAll(Collection<LogicalBreakpoint> col, Trace trace) {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		AsyncFence fence = new AsyncFence();
 		for (LogicalBreakpoint lb : col) {
 			if (trace == null) {
 				lb.disableForProgram();
@@ -1048,15 +1045,14 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				continue;
 			}
 			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
-			fence.include(lbi.planDisable(actions, trace));
+			lbi.planDisable(actions, trace);
 		}
-		return fence.ready().thenCompose(__ -> actions.execute());
+		return actions.execute();
 	}
 
 	@Override
 	public CompletableFuture<Void> deleteAll(Collection<LogicalBreakpoint> col, Trace trace) {
 		BreakpointActionSet actions = new BreakpointActionSet();
-		AsyncFence fence = new AsyncFence();
 		for (LogicalBreakpoint lb : col) {
 			if (trace == null) {
 				lb.deleteForProgram();
@@ -1065,9 +1061,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				continue;
 			}
 			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
-			fence.include(lbi.planDelete(actions, trace));
+			lbi.planDelete(actions, trace);
 		}
-		return fence.ready().thenCompose(__ -> actions.execute());
+		return actions.execute();
 	}
 
 	@Override

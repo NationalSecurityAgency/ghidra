@@ -22,7 +22,6 @@ import org.junit.*;
 
 import generic.Unique;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.jdi.JdiExperimentsTest;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
@@ -45,8 +44,8 @@ public class JdiModelTest implements DebuggerModelTestUtils {
 
 	@Test
 	public void testConnectorParameterReflection() throws Throwable {
-		for (TargetObjectRef connRef : waitOn(model.fetchObjectElements("Connectors")).values()) {
-			TargetLauncher<?> launcher = waitOn(connRef.as(TargetLauncher.tclass).fetch());
+		for (TargetObject conn : waitOn(model.fetchObjectElements("Connectors")).values()) {
+			TargetLauncher launcher = conn.as(TargetLauncher.class);
 			Msg.info(this, "Launcher: " + launcher);
 			for (ParameterDescription<?> desc : launcher.getParameters().values()) {
 				Msg.info(this, "  " + desc);
@@ -57,7 +56,7 @@ public class JdiModelTest implements DebuggerModelTestUtils {
 	@Test
 	@Ignore("TODO") // Not important
 	public void testCommandLineLauncher() throws Throwable {
-		TargetLauncher<?> launcher = (TargetLauncher<?>) waitOn(
+		TargetLauncher launcher = (TargetLauncher) waitOn(
 			model.fetchModelObject(PathUtils.parse("Connectors[com.sun.jdi.CommandLineLaunch]")));
 		Map<String, Object> parameters = new HashMap<>();
 		parameters.put("main", JdiExperimentsTest.HelloWorld.class.getName());
@@ -65,9 +64,8 @@ public class JdiModelTest implements DebuggerModelTestUtils {
 		parameters.put("vmexec", "java");
 		waitOn(launcher.launch(parameters));
 
-		TargetObjectRef vmRef =
+		TargetObject vm =
 			Unique.assertOne(waitOn(model.fetchObjectElements("VirtualMachines")).values());
-		TargetObject vm = waitOn(vmRef.fetch());
-		waitOn(((TargetKillable<?>) vm).kill());
+		waitOn(vm.as(TargetKillable.class).kill());
 	}
 }

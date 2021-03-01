@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 
-public interface GadpClientTargetMemoryRegion
-		extends GadpClientTargetObject, TargetMemoryRegion<GadpClientTargetMemoryRegion> {
+public interface GadpClientTargetMemoryRegion extends GadpClientTargetObject, TargetMemoryRegion {
 	// Nothing to add
 }

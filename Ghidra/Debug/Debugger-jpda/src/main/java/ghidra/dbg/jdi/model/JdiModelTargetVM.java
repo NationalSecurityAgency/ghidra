@@ -45,28 +45,46 @@ import ghidra.lifecycle.Internal;
  * TODO: Implementing {@link TargetLauncher} here doesn't seem right. While it's convenient from a
  * UI perspective, it doesn't make sense semantically.
  */
-@TargetObjectSchemaInfo(name = "VM", elements = { //
-//	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
-	@TargetAttributeType(name = "Breakpoints", type = JdiModelTargetBreakpointContainer.class, fixed = true), //
-	@TargetAttributeType(name = "Classes", type = JdiModelTargetClassContainer.class, fixed = true), //
-	@TargetAttributeType(name = "Modules", type = JdiModelTargetModuleContainer.class, fixed = true), //
-	@TargetAttributeType(name = "Threads", type = JdiModelTargetThreadContainer.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "ThreadGroups", type = JdiModelTargetThreadGroupContainer.class, fixed = true), //
-	@TargetAttributeType(type = Object.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "VM", elements = {
+//	@TargetElementType(type = Void.class) 
+},
+	attributes = {
+		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
+		@TargetAttributeType(
+			name = "Breakpoints",
+			type = JdiModelTargetBreakpointContainer.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Classes",
+			type = JdiModelTargetClassContainer.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Modules",
+			type = JdiModelTargetModuleContainer.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Threads",
+			type = JdiModelTargetThreadContainer.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "ThreadGroups",
+			type = JdiModelTargetThreadGroupContainer.class,
+			fixed = true),
+		@TargetAttributeType(type = Object.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
-		TargetProcess<JdiModelTargetVM>, //
+		TargetProcess, //
 		TargetAggregate, //
-		JdiModelTargetEnvironment<JdiModelTargetVM>, //
-		JdiModelTargetAccessConditioned<JdiModelTargetVM>, //
-		JdiModelTargetExecutionStateful<JdiModelTargetVM>, //
-		JdiModelTargetLauncher<JdiModelTargetVM>, //
-		JdiModelTargetDeletable<JdiModelTargetVM>, //
-		JdiModelTargetKillable<JdiModelTargetVM>, //
-		JdiModelTargetResumable<JdiModelTargetVM>, //
-		JdiModelTargetInterruptible<JdiModelTargetVM>, //
+		JdiModelTargetEnvironment, //
+		JdiModelTargetAccessConditioned, //
+		JdiModelTargetExecutionStateful, //
+		JdiModelTargetLauncher, //
+		JdiModelTargetDeletable, //
+		JdiModelTargetKillable, //
+		JdiModelTargetResumable, //
+		JdiModelTargetInterruptible, //
 		JdiEventsListenerAdapter, //
 		JdiModelSelectableObject {
 
@@ -139,7 +157,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 			threads //
 		), Map.of( //
 			STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE, //
-			ACCESSIBLE_ATTRIBUTE_NAME, getAccessibility() == TargetAccessibility.ACCESSIBLE, //
+			ACCESSIBLE_ATTRIBUTE_NAME, isAccessible(), //
 			DISPLAY_ATTRIBUTE_NAME, updateDisplay(), //
 			ARCH_ATTRIBUTE_NAME, vm.name(), //
 			DEBUGGER_ATTRIBUTE_NAME, vm.description(), //
@@ -306,7 +324,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	@Override
 	public void vmSelected(VirtualMachine eventVM, JdiCause cause) {
 		if (eventVM.equals(vm)) {
-			AtomicReference<JdiModelTargetFocusScope<?>> scope = new AtomicReference<>();
+			AtomicReference<JdiModelTargetFocusScope> scope = new AtomicReference<>();
 			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				DebugModelConventions.findSuitable(JdiModelTargetFocusScope.class, this)
 						.handle(seq::next);
@@ -435,12 +453,13 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
+	public boolean isAccessible() {
 		for (JdiModelTargetThread thread : threads.threadsById.values()) {
-			if (thread.getAccessibility() == TargetAccessibility.ACCESSIBLE)
-				return TargetAccessibility.ACCESSIBLE;
+			if (thread.isAccessible()) {
+				return true;
+			}
 		}
-		return TargetAccessibility.INACCESSIBLE;
+		return false;
 	}
 
 }

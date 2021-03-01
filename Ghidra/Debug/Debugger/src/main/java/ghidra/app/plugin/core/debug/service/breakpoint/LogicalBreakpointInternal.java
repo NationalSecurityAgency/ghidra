@@ -16,14 +16,11 @@
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Collections2;
 
 import ghidra.app.services.LogicalBreakpoint;
 import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.program.model.address.Address;
@@ -348,6 +345,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		/**
 		 * Plan to enable a logical breakpoint within the trace.
 		 * 
+		 * <p>
 		 * This method prefers to use the existing breakpoint specifications which result in
 		 * breakpoints at this address. In other words, it favors what the user has already done to
 		 * effect a breakpoint at this logical breakpoint's address. If there is no such existing
@@ -355,6 +353,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		 * container, usually resulting in a new spec, which should effect exactly the one specified
 		 * address.
 		 * 
+		 * <p>
 		 * This method must convert applicable addresses to the target space. If the address cannot
 		 * be mapped, it's usually because this logical breakpoint does not apply to the given
 		 * trace's target. E.g., the trace may not have a live target, or the logical breakpoint may
@@ -364,85 +363,69 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		 * @param kind the kind of breakpoint
 		 * @return a future which completes when the plan is ready
 		 */
-		public CompletableFuture<Void> planEnable(BreakpointActionSet actions, long length,
+		public void planEnable(BreakpointActionSet actions, long length,
 				Collection<TraceBreakpointKind> kinds) {
 			if (breakpoints.isEmpty()) {
 				Set<TargetBreakpointKind> tKinds =
 					TraceRecorder.traceToTargetBreakpointKinds(kinds);
 
-				for (TargetBreakpointContainer<?> cont : recorder
+				for (TargetBreakpointContainer cont : recorder
 						.collectBreakpointContainers(null)) {
 					LinkedHashSet<TargetBreakpointKind> supKinds = new LinkedHashSet<>(tKinds);
 					supKinds.retainAll(cont.getSupportedBreakpointKinds());
 					actions.add(new PlaceBreakpointActionItem(cont, computeTargetAddress(), length,
 						supKinds));
 				}
-				return AsyncUtils.NIL;
+				return;
 			}
-			AsyncFence fence = new AsyncFence();
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				TargetBreakpointLocation<?> eb = recorder.getTargetBreakpoint(bpt.obj);
-				if (eb == null) {
+				TargetBreakpointLocation loc = recorder.getTargetBreakpoint(bpt.obj);
+				if (loc == null) {
 					continue;
 				}
-				fence.include(eb.getSpecification().fetch().thenAccept(spec -> {
-					synchronized (actions) {
-						actions.add(new EnableBreakpointActionItem(spec));
-					}
-				}));
+				actions.add(new EnableBreakpointActionItem(loc.getSpecification()));
 			}
-			return fence.ready();
 		}
 
-		public CompletableFuture<Void> planDisable(BreakpointActionSet actions, long length,
+		public void planDisable(BreakpointActionSet actions, long length,
 				Collection<TraceBreakpointKind> kinds) {
 			Set<TargetBreakpointKind> tKinds = TraceRecorder.traceToTargetBreakpointKinds(kinds);
-			AsyncFence fence = new AsyncFence();
 			Address targetAddr = computeTargetAddress();
-			for (TargetBreakpointLocation<?> eb : recorder.collectBreakpoints(null)) {
-				if (!targetAddr.equals(eb.getAddress())) {
+			for (TargetBreakpointLocation loc : recorder.collectBreakpoints(null)) {
+				if (!targetAddr.equals(loc.getAddress())) {
 					continue;
 				}
-				if (length != eb.getLength().longValue()) {
+				if (length != loc.getLength().longValue()) {
 					continue;
 				}
-				fence.include(eb.getSpecification().fetch().thenAccept(spec -> {
-					if (!Objects.equals(spec.getKinds(), tKinds)) {
-						return;
-					}
-					synchronized (actions) {
-						actions.add(new DisableBreakpointActionItem(spec));
-					}
-				}));
+				TargetBreakpointSpec spec = loc.getSpecification();
+				if (!Objects.equals(spec.getKinds(), tKinds)) {
+					continue;
+				}
+				actions.add(new DisableBreakpointActionItem(spec));
 			}
-			return fence.ready();
 		}
 
-		public CompletableFuture<Void> planDelete(BreakpointActionSet actions, long length,
+		public void planDelete(BreakpointActionSet actions, long length,
 				Set<TraceBreakpointKind> kinds) {
 			Set<TargetBreakpointKind> tKinds = TraceRecorder.traceToTargetBreakpointKinds(kinds);
-			AsyncFence fence = new AsyncFence();
 			Address targetAddr = computeTargetAddress();
-			for (TargetBreakpointLocation<?> eb : recorder.collectBreakpoints(null)) {
-				if (!targetAddr.equals(eb.getAddress())) {
+			for (TargetBreakpointLocation loc : recorder.collectBreakpoints(null)) {
+				if (!targetAddr.equals(loc.getAddress())) {
 					continue;
 				}
-				if (length != eb.getLength().longValue()) {
+				if (length != loc.getLength().longValue()) {
 					continue;
 				}
-				fence.include(eb.getSpecification().fetch().thenAccept(spec -> {
-					if (!Objects.equals(spec.getKinds(), tKinds)) {
-						return;
-					}
-					if (!(spec instanceof TargetDeletable<?>)) {
-						return;
-					}
-					synchronized (actions) {
-						actions.add(new DeleteBreakpointActionItem(spec));
-					}
-				}));
+				TargetBreakpointSpec spec = loc.getSpecification();
+				if (!Objects.equals(spec.getKinds(), tKinds)) {
+					continue;
+				}
+				if (!(spec instanceof TargetDeletable)) {
+					continue;
+				}
+				actions.add(new DeleteBreakpointActionItem(spec));
 			}
-			return fence.ready();
 		}
 	}
 
@@ -484,7 +467,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * @param trace a trace, if actions should be limited to the given trace
 	 * @return a future which completes when the actions are populated
 	 */
-	CompletableFuture<Void> planEnable(BreakpointActionSet actions, Trace trace);
+	void planEnable(BreakpointActionSet actions, Trace trace);
 
 	/**
 	 * Collect actions to disable a logical breakpoint.
@@ -493,7 +476,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * @param trace a trace, if actions should be limited to the given trace
 	 * @return a future which completes when the actions are populated
 	 */
-	CompletableFuture<Void> planDisable(BreakpointActionSet actions, Trace trace);
+	void planDisable(BreakpointActionSet actions, Trace trace);
 
 	/**
 	 * Collect actions to delete a logical breakpoint.
@@ -502,5 +485,5 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * @param trace a trace, if actions should be limited to the given trace
 	 * @return a future which completes when the actions are populated
 	 */
-	CompletableFuture<Void> planDelete(BreakpointActionSet actions, Trace trace);
+	void planDelete(BreakpointActionSet actions, Trace trace);
 }

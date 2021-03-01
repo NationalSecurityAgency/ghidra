@@ -30,16 +30,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Process", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "state", type = TargetExecutionState.class, hidden = true), //
-	@TargetAttributeType(type = Void.class) //
-})
-public class JdiModelTargetProcess extends JdiModelTargetObjectImpl implements //
-		JdiModelTargetConsole<JdiModelTargetProcess>, //
-		JdiConsoleOutputListener, //
-		JdiModelSelectableObject {
+@TargetObjectSchemaInfo(
+	name = "Process",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "state", type = TargetExecutionState.class, hidden = true),
+		@TargetAttributeType(type = Void.class)
+	})
+public class JdiModelTargetProcess extends JdiModelTargetObjectImpl
+		implements JdiModelTargetConsole, JdiConsoleOutputListener, JdiModelSelectableObject {
 
 	public static String getUniqueId(Process obj) {
 		return Long.toHexString(obj.pid());

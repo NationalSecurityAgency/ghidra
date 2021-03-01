@@ -20,7 +20,6 @@ import java.util.concurrent.*;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelListener;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
@@ -101,14 +100,14 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 			return;
 		}
 		for (Object val : object.getCachedAttributes().values()) {
-			if (!(val instanceof TargetObjectRef)) {
+			if (!(val instanceof TargetObject)) {
 				continue;
 			}
 			assert val instanceof SpiTargetObject;
 			replayAddEvents(listener, (SpiTargetObject) val, visited);
 		}
 		listener.attributesChanged(object, List.of(), object.getCachedAttributes());
-		for (TargetObjectRef elem : object.getCachedElements().values()) {
+		for (TargetObject elem : object.getCachedElements().values()) {
 			assert elem instanceof SpiTargetObject;
 			replayAddEvents(listener, (SpiTargetObject) elem, visited);
 		}
@@ -175,7 +174,7 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		if (existing == null) {
 			return;
 		}
-		TargetObjectRef parent = existing.getParent();
+		TargetObject parent = existing.getParent();
 		if (parent == null) {
 			assert existing == root;
 			throw new IllegalStateException("Cannot replace the root");

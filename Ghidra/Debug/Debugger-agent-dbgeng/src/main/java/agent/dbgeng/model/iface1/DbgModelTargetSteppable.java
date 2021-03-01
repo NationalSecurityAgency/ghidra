@@ -30,8 +30,7 @@ import ghidra.dbg.target.TargetSteppable;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetSteppable<T extends TargetSteppable<T>>
-		extends DbgModelTargetObject, TargetSteppable<T> {
+public interface DbgModelTargetSteppable extends DbgModelTargetObject, TargetSteppable {
 
 	default ExecSuffix convertToDbg(TargetStepKind kind) {
 		switch (kind) {
@@ -77,6 +76,7 @@ public interface DbgModelTargetSteppable<T extends TargetSteppable<T>>
 		}
 	}
 
+	@Override
 	default CompletableFuture<Void> step(Map<String, ?> args) {
 		DbgThread thread = getManager().getCurrentThread();
 		return thread.step(args);

@@ -22,7 +22,7 @@ import agent.dbgeng.model.iface1.DbgModelTargetEventScope;
 
 public interface DbgModelTargetThreadContainer extends //
 		//DbgModelTargetObject, 		
-		DbgModelTargetEventScope<DbgModelTargetThreadContainer>, //
+		DbgModelTargetEventScope, //
 		DbgEventsListenerAdapter {
 
 	public void threadCreated(DbgThread thread);

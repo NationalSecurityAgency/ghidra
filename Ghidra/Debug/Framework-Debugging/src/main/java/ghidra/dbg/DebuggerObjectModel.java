@@ -22,7 +22,6 @@ import java.util.concurrent.RejectedExecutionException;
 
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
@@ -228,31 +227,12 @@ public interface DebuggerObjectModel {
 	 * @return the object, cast to the desired typed
 	 * @throws IllegalArgumentException if -ref- does not belong to this model
 	 */
-	default <T extends TargetObjectRef> T assertMine(Class<T> cls, TargetObjectRef ref) {
+	default <T extends TargetObject> T assertMine(Class<T> cls, TargetObject ref) {
 		if (ref.getModel() != this) {
 			throw new IllegalArgumentException(
 				"TargetObject (or ref)" + ref + " does not belong to this model");
 		}
 		return cls.cast(ref);
-	}
-
-	/**
-	 * Create a reference to the given path in this model
-	 * 
-	 * <p>
-	 * Note that the path is not checked until the object is fetched. Thus, it is possible for a
-	 * reference to refer to a non-existent object.
-	 * 
-	 * @param path the path of the object
-	 * @return a reference to the object
-	 */
-	public TargetObjectRef createRef(List<String> path);
-
-	/**
-	 * @see #createRef(List)
-	 */
-	public default TargetObjectRef createRef(String... path) {
-		return createRef(List.of(path));
 	}
 
 	/**
@@ -298,7 +278,7 @@ public interface DebuggerObjectModel {
 	 * @param refresh true to invalidate caches involved in handling this request
 	 * @return a future map of elements
 	 */
-	public CompletableFuture<? extends Map<String, ? extends TargetObjectRef>> fetchObjectElements(
+	public CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
 			List<String> path, boolean refresh);
 
 	/**
@@ -306,7 +286,7 @@ public interface DebuggerObjectModel {
 	 * 
 	 * @see #fetchObjectElements(List, boolean)
 	 */
-	public default CompletableFuture<? extends Map<String, ? extends TargetObjectRef>> fetchObjectElements(
+	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
 			List<String> path) {
 		return fetchObjectElements(path, false);
 	}
@@ -314,7 +294,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * @see #fetchObjectElements(List)
 	 */
-	public default CompletableFuture<? extends Map<String, ? extends TargetObjectRef>> fetchObjectElements(
+	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
 			String... path) {
 		return fetchObjectElements(List.of(path));
 	}
@@ -434,18 +414,14 @@ public interface DebuggerObjectModel {
 	 */
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path,
 			boolean refresh) {
-		return fetchModelValue(path, refresh).thenCompose(v -> {
+		return fetchModelValue(path, refresh).thenApply(v -> {
 			if (v == null) {
-				return AsyncUtils.nil();
+				return null;
 			}
-			if (!(v instanceof TargetObjectRef)) {
-				throw DebuggerModelTypeException.typeRequired(v, path, TargetObjectRef.class);
-			}
-			TargetObjectRef ref = (TargetObjectRef) v;
-			if (path.equals(ref.getPath()) && !(v instanceof TargetObject)) {
+			if (!(v instanceof TargetObject)) {
 				throw DebuggerModelTypeException.typeRequired(v, path, TargetObject.class);
 			}
-			return ref.fetch();
+			return (TargetObject) v;
 		});
 	}
 
@@ -477,6 +453,10 @@ public interface DebuggerObjectModel {
 	 */
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(String... path) {
 		return fetchModelObject(List.of(path));
+	}
+
+	public default TargetObject getModelObject(String... path) {
+		return getModelObject(List.of(path));
 	}
 
 	/**

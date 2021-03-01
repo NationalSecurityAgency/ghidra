@@ -19,16 +19,16 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class TestTargetRegisterBankInFrame extends
-		AbstractTestTargetRegisterBank<TestTargetRegisterBankInFrame, TestTargetStackFrameHasRegisterBank> {
+		AbstractTestTargetRegisterBank<TestTargetStackFrameHasRegisterBank> {
 
 	public TestTargetRegisterBankInFrame(TestTargetStackFrameHasRegisterBank parent) {
 		super(parent, "RegisterBank", "RegisterBank",
-			parent.getImplParent().getImplParent().getImplParent().getImplParent().regs);
+			parent.getParent().getParent().getParent().getParent().regs);
 	}
 
 	@Override
 	public TestTargetThread getThread() {
-		return parent.getImplParent().getImplParent();
+		return parent.getParent().getParent();
 	}
 
 	@Override

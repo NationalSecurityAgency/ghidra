@@ -16,14 +16,11 @@
 package ghidra.dbg.target;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.attributes.TargetNamedDataTypeRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
+import ghidra.dbg.attributes.TargetDataType;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 
@@ -47,18 +44,7 @@ import ghidra.dbg.util.TargetDataTypeConverter;
  * @param <T> the type of this object
  */
 @DebuggerTargetObjectIface("DataType")
-public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
-		extends TypedTargetObject<T>, TargetNamedDataTypeRef<T> {
-	TypeSpec<Map<String, ? extends TargetDataTypeMember<?>>> MEMBER_MAP_TYPE = TypeSpec.auto();
-
-	enum Private {
-		;
-		private abstract class Cls implements TargetNamedDataType<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetNamedDataType.class;
+public interface TargetNamedDataType extends TargetObject, TargetDataType {
 
 	enum NamedDataTypeKind {
 		ENUM, FUNCTION, STRUCT, TYPEDEF, UNION;
@@ -82,8 +68,8 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 	 *           that behavior is not yet supported.
 	 * @return the members
 	 */
-	default CompletableFuture<? extends Collection<? extends TargetDataTypeMember<?>>> getMembers() {
-		return DebugModelConventions.collectSuccessors(this, TargetDataTypeMember.tclass);
+	default CompletableFuture<? extends Collection<? extends TargetDataTypeMember>> getMembers() {
+		return DebugModelConventions.collectSuccessors(this, TargetDataTypeMember.class);
 	}
 
 	/**
@@ -96,10 +82,14 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 	 * 
 	 * @return a reference to the namespace
 	 */
-	@TargetAttributeType(name = NAMESPACE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
-	default TypedTargetObjectRef<? extends TargetDataTypeNamespace<?>> getNamespace() {
-		return getTypedRefAttributeNowByName(NAMESPACE_ATTRIBUTE_NAME,
-			TargetDataTypeNamespace.tclass, null);
+	@TargetAttributeType(
+		name = NAMESPACE_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
+	default TargetDataTypeNamespace getNamespace() {
+		return getTypedAttributeNowByName(NAMESPACE_ATTRIBUTE_NAME, TargetDataTypeNamespace.class,
+			null);
 	}
 
 	/**
@@ -107,13 +97,20 @@ public interface TargetNamedDataType<T extends TargetNamedDataType<T>>
 	 * 
 	 * @return the kind
 	 */
-	@TargetAttributeType(name = NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	default NamedDataTypeKind getTypeKind() {
 		return getTypedAttributeNowByName(NAMED_DATA_TYPE_KIND_ATTRIBUTE_NAME,
 			NamedDataTypeKind.class, null);
 	}
 
-	@TargetAttributeType(name = ENUM_BYTE_LENGTH_ATTRIBUTE_NAME, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = ENUM_BYTE_LENGTH_ATTRIBUTE_NAME,
+		fixed = true,
+		hidden = true)
 	default Integer getEnumByteLength() {
 		return getTypedAttributeNowByName(ENUM_BYTE_LENGTH_ATTRIBUTE_NAME, Integer.class, null);
 	}

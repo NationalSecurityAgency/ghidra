@@ -32,16 +32,7 @@ import ghidra.dbg.util.TargetDataTypeConverter;
  * {@link TargetDataTypeConverter}.
  */
 @DebuggerTargetObjectIface("TypeMember")
-public interface TargetDataTypeMember<T extends TargetDataTypeMember<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetDataTypeMember<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetDataTypeMember.class;
+public interface TargetDataTypeMember extends TargetObject {
 
 	String POSITION_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "position";
 	String MEMBER_NAME_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "member_name";

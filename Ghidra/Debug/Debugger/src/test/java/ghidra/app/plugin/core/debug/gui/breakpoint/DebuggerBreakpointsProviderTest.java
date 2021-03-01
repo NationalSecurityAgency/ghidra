@@ -84,7 +84,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected void addLiveBreakpoint(TraceRecorder recorder, long offset) throws Exception {
-		TargetBreakpointContainer<?> cont = getBreakpointContainer(recorder);
+		TargetBreakpointContainer cont = getBreakpointContainer(recorder);
 		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SOFTWARE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}

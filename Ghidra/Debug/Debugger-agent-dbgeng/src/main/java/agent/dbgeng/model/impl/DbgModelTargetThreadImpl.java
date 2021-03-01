@@ -33,14 +33,25 @@ import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Thread", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Registers", type = DbgModelTargetRegisterContainerImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Stack", type = DbgModelTargetStackImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = TargetEnvironment.ARCH_ATTRIBUTE_NAME, type = String.class), //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Thread",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(
+			name = "Registers",
+			type = DbgModelTargetRegisterContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Stack",
+			type = DbgModelTargetStackImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(name = TargetEnvironment.ARCH_ATTRIBUTE_NAME, type = String.class),
+		@TargetAttributeType(type = Void.class)
+	})
 public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetThread {
 
@@ -107,7 +118,7 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void threadSelected(DbgThread eventThread, DbgStackFrame frame, DbgCause cause) {
 		if (eventThread.equals(thread)) {
-			AtomicReference<DbgModelTargetFocusScope<?>> scope = new AtomicReference<>();
+			AtomicReference<DbgModelTargetFocusScope> scope = new AtomicReference<>();
 			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				DebugModelConventions.findSuitable(DbgModelTargetFocusScope.class, this)
 						.handle(seq::next);
@@ -170,8 +181,8 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
 
 	@Override

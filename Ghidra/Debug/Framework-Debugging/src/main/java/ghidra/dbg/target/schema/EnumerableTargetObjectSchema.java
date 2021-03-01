@@ -18,8 +18,7 @@ package ghidra.dbg.target.schema;
 import java.util.*;
 
 import ghidra.dbg.attributes.TargetDataType;
-import ghidra.dbg.attributes.TargetObjectRefList;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -84,12 +83,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	ADDRESS("ADDRESS", Address.class),
 	RANGE("RANGE", AddressRange.class),
 	DATA_TYPE("DATA_TYPE", TargetDataType.class),
-	LIST_OBJECT("LIST_OBJECT", TargetObjectRefList.class),
+	LIST_OBJECT("LIST_OBJECT", TargetObjectList.class),
 	MAP_PARAMETERS("MAP_PARAMETERS", TargetParameterMap.class),
 	SET_ATTACH_KIND("SET_ATTACH_KIND", TargetAttachKindSet.class), // TODO: Limited built-in generics
 	SET_BREAKPOINT_KIND("SET_BREAKPOINT_KIND", TargetBreakpointKindSet.class),
 	SET_STEP_KIND("SET_STEP_KIND", TargetStepKindSet.class),
-	ACCESSIBILITY("ACCESSIBILITY", TargetAccessibility.class),
 	EXECUTION_STATE("EXECUTION_STATE", TargetExecutionState.class),
 	UPDATE_MODE("UPDATE_MODE", TargetUpdateMode.class);
 

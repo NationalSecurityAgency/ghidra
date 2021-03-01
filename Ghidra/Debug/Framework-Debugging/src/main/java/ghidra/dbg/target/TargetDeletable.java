@@ -23,15 +23,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * An object which can be removed by the user
  */
 @DebuggerTargetObjectIface("Deletable")
-public interface TargetDeletable<T extends TargetDeletable<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetDeletable<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetDeletable.class;
+public interface TargetDeletable extends TargetObject {
 
 	/**
 	 * Remove the object

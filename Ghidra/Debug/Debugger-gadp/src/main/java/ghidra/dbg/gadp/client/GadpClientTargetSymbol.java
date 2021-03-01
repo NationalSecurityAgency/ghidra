@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetSymbol;
 
-public interface GadpClientTargetSymbol
-		extends GadpClientTargetObject, TargetSymbol<GadpClientTargetSymbol> {
+public interface GadpClientTargetSymbol extends GadpClientTargetObject, TargetSymbol {
 	// Nothing to add
 }

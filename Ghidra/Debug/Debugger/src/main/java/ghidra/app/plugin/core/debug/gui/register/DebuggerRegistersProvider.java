@@ -737,7 +737,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (recorder.getSnap() != current.getSnap()) {
 			return false;
 		}
-		TargetRegisterBank<?> targetRegs =
+		TargetRegisterBank targetRegs =
 			recorder.getTargetRegisterBank(current.getThread(), current.getFrame());
 		if (targetRegs == null) {
 			return false;
@@ -941,7 +941,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			viewKnown.addAll(collectCommonRegisters(trace.getBaseCompilerSpec()));
 			return viewKnown;
 		}
-		TargetThread<?> targetThread = recorder.getTargetThread(thread);
+		TargetThread targetThread = recorder.getTargetThread(thread);
 		if (targetThread == null || !recorder.isRegisterBankAccessible(thread, 0)) {
 			return viewKnown;
 		}
@@ -1114,7 +1114,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		TraceThread traceThread = current.getThread();
-		TargetThread<?> targetThread = recorder.getTargetThread(traceThread);
+		TargetThread targetThread = recorder.getTargetThread(traceThread);
 		if (targetThread == null ||
 			!recorder.isRegisterBankAccessible(traceThread, current.getFrame())) {
 			return AsyncUtils.NIL;
@@ -1126,7 +1126,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		toRead.retainAll(regMapper.getRegistersOnTarget());
-		TargetRegisterBank<?> bank =
+		TargetRegisterBank bank =
 			recorder.getTargetRegisterBank(traceThread, current.getFrame());
 		if (!bank.isValid()) {
 			return AsyncUtils.NIL;

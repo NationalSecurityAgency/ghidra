@@ -53,8 +53,6 @@ public interface JdiModelTargetObject extends TargetObject, InvalidatableTargetO
 	@Override
 	public CompletableFuture<? extends Map<String, ?>> fetchAttributes();
 
-	public TargetObject getImplParent();
-
 	public Delta<?, ?> changeAttributes(List<String> remove, Map<String, ?> add, String reason);
 
 	public ListenerSet<TargetObjectListener> getListeners();

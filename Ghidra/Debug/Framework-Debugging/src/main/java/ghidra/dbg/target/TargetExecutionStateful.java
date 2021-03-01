@@ -22,16 +22,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * An object which has an execution life cycle
  */
 @DebuggerTargetObjectIface("ExecutionStateful")
-public interface TargetExecutionStateful<T extends TargetExecutionStateful<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetExecutionStateful<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetExecutionStateful.class;
+public interface TargetExecutionStateful extends TargetObject {
 
 	String STATE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "state";
 
@@ -192,7 +183,7 @@ public interface TargetExecutionStateful<T extends TargetExecutionStateful<T>>
 		 * @param object the object
 		 * @param state the new state
 		 */
-		default void executionStateChanged(TargetExecutionStateful<?> object,
+		default void executionStateChanged(TargetExecutionStateful object,
 				TargetExecutionState state) {
 		}
 	}

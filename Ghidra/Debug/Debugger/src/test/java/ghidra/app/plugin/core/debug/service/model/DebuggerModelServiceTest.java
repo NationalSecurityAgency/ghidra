@@ -489,8 +489,8 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 			focusEvents.take().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		ModelObjectFocusedPluginEvent evt2 =
 			focusEvents.take().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		assertEquals(mb.testThread1, evt1.getFocusRef());
-		assertEquals(mb.testThread2, evt2.getFocusRef());
+		assertEquals(mb.testThread1, evt1.getFocus());
+		assertEquals(mb.testThread2, evt2.getFocus());
 	}
 
 	@Test

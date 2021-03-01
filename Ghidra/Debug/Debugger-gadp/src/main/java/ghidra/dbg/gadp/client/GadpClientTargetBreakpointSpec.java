@@ -24,7 +24,7 @@ import ghidra.dbg.util.ValueUtils;
 import ghidra.util.datastruct.ListenerSet;
 
 public interface GadpClientTargetBreakpointSpec
-		extends GadpClientTargetObject, TargetBreakpointSpec<GadpClientTargetBreakpointSpec> {
+		extends GadpClientTargetObject, TargetBreakpointSpec {
 
 	@Override
 	default CompletableFuture<Void> toggle(boolean enabled) {

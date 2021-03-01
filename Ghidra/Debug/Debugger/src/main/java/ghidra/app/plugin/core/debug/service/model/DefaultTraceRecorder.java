@@ -35,11 +35,10 @@ import ghidra.async.AsyncLazyMap.KeyedFuture;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebugModelConventions.AllRequiredAccess;
 import ghidra.dbg.DebugModelConventions.SubTreeListenerAdapter;
-import ghidra.dbg.attributes.*;
+import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointSpecListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventScopeListener;
@@ -146,9 +145,9 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected final AsyncLazyMap<TargetRegisterBank<?>, AllRequiredAccess> accessibilityByRegBank =
+	protected final AsyncLazyMap<TargetRegisterBank, AllRequiredAccess> accessibilityByRegBank =
 		new AsyncLazyMap<>(new HashMap<>(), this::fetchRegAccessibility) {
-			public AllRequiredAccess remove(TargetRegisterBank<?> key) {
+			public AllRequiredAccess remove(TargetRegisterBank key) {
 				AllRequiredAccess acc = super.remove(key);
 				if (acc != null) {
 					acc.removeChangeListener(listenerRegAccChanged);
@@ -156,10 +155,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				return acc;
 			}
 		};
-	protected final Map<TargetMemoryRegion<?>, TargetMemory<?>> byRegion = new HashMap<>();
-	protected final AsyncLazyMap<TargetMemory<?>, AllRequiredAccess> accessibilityByMemory =
+	protected final Map<TargetMemoryRegion, TargetMemory> byRegion = new HashMap<>();
+	protected final AsyncLazyMap<TargetMemory, AllRequiredAccess> accessibilityByMemory =
 		new AsyncLazyMap<>(new HashMap<>(), this::fetchMemAccessibility) {
-			public AllRequiredAccess remove(TargetMemory<?> key) {
+			public AllRequiredAccess remove(TargetMemory key) {
 				AllRequiredAccess acc = super.remove(key);
 				if (acc != null) {
 					acc.removeChangeListener(processMemory.memAccListeners.fire);
@@ -169,14 +168,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		};
 
 	protected CompletableFuture<AllRequiredAccess> fetchRegAccessibility(
-			TargetRegisterBank<?> bank) {
+			TargetRegisterBank bank) {
 		return DebugModelConventions.trackAccessibility(bank).thenApply(acc -> {
 			acc.addChangeListener(listenerRegAccChanged);
 			return acc;
 		});
 	}
 
-	protected CompletableFuture<AllRequiredAccess> fetchMemAccessibility(TargetMemory<?> mem) {
+	protected CompletableFuture<AllRequiredAccess> fetchMemAccessibility(TargetMemory mem) {
 		return DebugModelConventions.trackAccessibility(mem).thenApply(acc -> {
 			acc.addChangeListener(processMemory.memAccListeners.fire);
 			return acc;
@@ -189,17 +188,17 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	 * @param pred an additional predicate applied via "AND" with accessibility
 	 * @return the computed set
 	 */
-	protected AddressSet getAccessibleMemory(Predicate<TargetMemory<?>> pred) {
+	protected AddressSet getAccessibleMemory(Predicate<TargetMemory> pred) {
 		synchronized (accessibilityByMemory) {
 			// TODO: Might accomplish by using listeners and tracking the accessible set
 			AddressSet accessible = new AddressSet();
-			for (Entry<TargetMemoryRegion<?>, TargetMemory<?>> ent : byRegion.entrySet()) {
-				TargetMemory<?> mem = ent.getValue();
+			for (Entry<TargetMemoryRegion, TargetMemory> ent : byRegion.entrySet()) {
+				TargetMemory mem = ent.getValue();
 				if (!pred.test(mem)) {
 					continue;
 				}
 				AllRequiredAccess acc = accessibilityByMemory.getCompletedMap().get(mem);
-				if (acc == null || acc.getAllAccessibility() != TargetAccessibility.ACCESSIBLE) {
+				if (acc == null || !acc.getAllAccessibility()) {
 					continue;
 				}
 				accessible.add(memMapper.targetToTrace(ent.getKey().getRange()));
@@ -211,10 +210,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	protected class ComposedMemory {
 		protected final ComposedMemory chain;
 
-		protected final NavigableMap<Address, TargetMemoryRegion<?>> byMin = new TreeMap<>();
+		protected final NavigableMap<Address, TargetMemoryRegion> byMin = new TreeMap<>();
 
 		@SuppressWarnings({ "rawtypes", "unchecked" })
-		protected final ListenerSet<TriConsumer<TargetAccessibility, TargetAccessibility, Void>> memAccListeners =
+		protected final ListenerSet<TriConsumer<Boolean, Boolean, Void>> memAccListeners =
 			new ListenerSet(TriConsumer.class);
 
 		public ComposedMemory() {
@@ -225,9 +224,9 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			this.chain = chain;
 		}
 
-		protected void addRegion(TargetMemoryRegion<?> region, TargetMemory<?> memory) {
+		protected void addRegion(TargetMemoryRegion region, TargetMemory memory) {
 			synchronized (accessibilityByMemory) {
-				TargetMemory<?> old = byRegion.put(region, memory);
+				TargetMemory old = byRegion.put(region, memory);
 				assert old == null;
 				byMin.put(region.getRange().getMinAddress(), region);
 				accessibilityByMemory.get(memory).exceptionally(e -> {
@@ -239,12 +238,12 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		protected boolean removeRegion(TargetObject invalid) {
-			if (!(invalid instanceof TargetMemoryRegion<?>)) {
+			if (!(invalid instanceof TargetMemoryRegion)) {
 				return false;
 			}
 			synchronized (accessibilityByMemory) {
-				TargetMemoryRegion<?> invRegion = (TargetMemoryRegion<?>) invalid;
-				TargetMemory<?> old = byRegion.remove(invRegion);
+				TargetMemoryRegion invRegion = (TargetMemoryRegion) invalid;
+				TargetMemory old = byRegion.remove(invRegion);
 				assert old != null;
 				byMin.remove(invRegion.getRange().getMinAddress());
 				if (!old.isValid() || !byRegion.containsValue(old)) {
@@ -254,9 +253,9 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		protected AllRequiredAccess findChainedMemoryAccess(TargetMemoryRegion<?> region) {
+		protected AllRequiredAccess findChainedMemoryAccess(TargetMemoryRegion region) {
 			synchronized (accessibilityByMemory) {
-				TargetMemory<?> mem = byRegion.get(region);
+				TargetMemory mem = byRegion.get(region);
 				if (mem != null) {
 					return accessibilityByMemory.getCompletedMap().get(mem);
 				}
@@ -264,10 +263,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		protected Entry<Address, TargetMemoryRegion<?>> findChainedFloor(Address address) {
+		protected Entry<Address, TargetMemoryRegion> findChainedFloor(Address address) {
 			synchronized (accessibilityByMemory) {
-				Entry<Address, TargetMemoryRegion<?>> myFloor = byMin.floorEntry(address);
-				Entry<Address, TargetMemoryRegion<?>> byChain =
+				Entry<Address, TargetMemoryRegion> myFloor = byMin.floorEntry(address);
+				Entry<Address, TargetMemoryRegion> byChain =
 					chain == null ? null : chain.findChainedFloor(address);
 				if (byChain == null) {
 					return myFloor;
@@ -292,12 +291,12 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		protected AddressRange alignWithLimit(Address address, int length,
-				TargetMemoryRegion<?> limit) {
+				TargetMemoryRegion limit) {
 			return align(address, length).intersect(limit.getRange());
 		}
 
 		protected AddressRange alignAndLimitToFloor(Address address, int length) {
-			Entry<Address, TargetMemoryRegion<?>> floor = findChainedFloor(address);
+			Entry<Address, TargetMemoryRegion> floor = findChainedFloor(address);
 			if (floor == null) {
 				return null;
 			}
@@ -305,7 +304,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		protected AddressRange alignWithOptionalLimit(Address address, int length,
-				TargetMemoryRegion<?> limit) {
+				TargetMemoryRegion limit) {
 			if (limit == null) {
 				return alignAndLimitToFloor(address, length);
 			}
@@ -314,7 +313,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 		protected CompletableFuture<byte[]> readMemory(Address address, int length) {
 			synchronized (accessibilityByMemory) {
-				Entry<Address, TargetMemoryRegion<?>> floor = findChainedFloor(address);
+				Entry<Address, TargetMemoryRegion> floor = findChainedFloor(address);
 				if (floor == null) {
 					throw new IllegalArgumentException(
 						"address " + address + " is not in any known region");
@@ -329,7 +328,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				if (!floor.getValue().getRange().contains(max)) {
 					throw new IllegalArgumentException("read extends beyond a single region");
 				}
-				TargetMemory<?> mem = byRegion.get(floor.getValue());
+				TargetMemory mem = byRegion.get(floor.getValue());
 				if (mem != null) {
 					return mem.readMemory(address, length);
 				}
@@ -339,7 +338,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 		protected CompletableFuture<Void> writeMemory(Address address, byte[] data) {
 			synchronized (accessibilityByMemory) {
-				Entry<Address, TargetMemoryRegion<?>> floor = findChainedFloor(address);
+				Entry<Address, TargetMemoryRegion> floor = findChainedFloor(address);
 				if (floor == null) {
 					throw new IllegalArgumentException(
 						"address " + address + " is not in any known region");
@@ -354,7 +353,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				if (!floor.getValue().getRange().contains(max)) {
 					throw new IllegalArgumentException("read extends beyond a single region");
 				}
-				TargetMemory<?> mem = byRegion.get(floor.getValue());
+				TargetMemory mem = byRegion.get(floor.getValue());
 				if (mem != null) {
 					return mem.writeMemory(address, data);
 				}
@@ -364,37 +363,30 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	protected static class ThreadMap {
-		protected final NavigableSet<Integer> observedThreadPathLengths = new TreeSet<>();
-		protected final Map<TargetThread<?>, ThreadRecorder> byTargetThread = new HashMap<>();
+		protected final Map<TargetThread, ThreadRecorder> byTargetThread = new HashMap<>();
 		protected final Map<TraceThread, ThreadRecorder> byTraceThread = new HashMap<>();
 
 		public void put(ThreadRecorder rec) {
-			observedThreadPathLengths.add(rec.targetThread.getPath().size());
 			byTargetThread.put(rec.targetThread, rec);
 			byTraceThread.put(rec.traceThread, rec);
 		}
 
-		public ThreadRecorder getForSuccessor(TargetObjectRef successor) {
-			List<String> path = successor.getPath();
-			for (int l : observedThreadPathLengths.descendingSet()) {
-				if (l > path.size()) {
-					continue;
-				}
-				path = List.copyOf(path.subList(0, l));
-				TargetObjectRef maybeThread = successor.getModel().createRef(path);
-				ThreadRecorder rec = byTargetThread.get(maybeThread);
+		public ThreadRecorder getForSuccessor(TargetObject successor) {
+			while (successor != null) {
+				ThreadRecorder rec = byTargetThread.get(successor);
 				if (rec != null) {
 					return rec;
 				}
+				successor = successor.getParent();
 			}
 			return null;
 		}
 
-		public ThreadRecorder get(TargetThread<?> thread) {
+		public ThreadRecorder get(TargetThread thread) {
 			return byTargetThread.get(thread);
 		}
 
-		public ThreadRecorder get(TargetObjectRef maybeThread) {
+		public ThreadRecorder get(TargetObject maybeThread) {
 			return byTargetThread.get(maybeThread);
 		}
 
@@ -438,43 +430,43 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected static String nameBreakpoint(TargetBreakpointLocation<?> bpt) {
+	protected static String nameBreakpoint(TargetBreakpointLocation bpt) {
 		if (bpt instanceof TargetBreakpointSpec) {
 			return bpt.getIndex();
 		}
 		return bpt.getSpecification().getIndex() + "." + bpt.getIndex();
 	}
 
-	protected static int getFrameLevel(TargetStackFrame<?> frame) {
+	protected static int getFrameLevel(TargetStackFrame frame) {
 		// TODO: A fair assumption? frames are elements with numeric base-10 indices
 		return Integer.decode(frame.getIndex());
 	}
 
 	protected class ThreadRecorder {
-		protected final TargetThread<?> targetThread;
+		protected final TargetThread targetThread;
 		protected final TraceThread traceThread;
 		protected DebuggerRegisterMapper regMapper;
-		protected TargetRegister<?> pcReg;
-		protected TargetRegister<?> spReg;
-		protected Map<Integer, TargetRegisterBank<?>> regs = new HashMap<>();
-		protected NavigableMap<Integer, TargetStackFrame<?>> stack =
+		protected TargetRegister pcReg;
+		protected TargetRegister spReg;
+		protected Map<Integer, TargetRegisterBank> regs = new HashMap<>();
+		protected NavigableMap<Integer, TargetStackFrame> stack =
 			Collections.synchronizedNavigableMap(new TreeMap<>());
 		protected final ComposedMemory threadMemory = new ComposedMemory(processMemory);
-		protected TargetBreakpointContainer<?> threadBreakpointContainer;
+		protected TargetBreakpointContainer threadBreakpointContainer;
 		protected TargetExecutionState state = TargetExecutionState.ALIVE;
 
-		protected ThreadRecorder(TargetThread<?> targetThread, TraceThread traceThread) {
+		protected ThreadRecorder(TargetThread targetThread, TraceThread traceThread) {
 			this.targetThread = targetThread;
 			this.traceThread = traceThread;
 
-			if (targetThread instanceof TargetExecutionStateful<?>) {
-				TargetExecutionStateful<?> stateful = (TargetExecutionStateful<?>) targetThread;
+			if (targetThread instanceof TargetExecutionStateful) {
+				TargetExecutionStateful stateful = (TargetExecutionStateful) targetThread;
 				state = stateful.getExecutionState();
 			}
 		}
 
 		protected synchronized CompletableFuture<Void> initRegMapper(
-				TargetRegisterContainer<?> registers) {
+				TargetRegisterContainer registers) {
 			/**
 			 * TODO: At the moment, this assumes the recorded thread has one register container, or
 			 * at least that all register banks in the thread use the same register container
@@ -510,7 +502,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 								"Mapper's extra register '" + rn + "' is not in the language!");
 							continue;
 						}
-						TargetRegister<?> targetReg = regMapper.traceToTarget(traceReg);
+						TargetRegister targetReg = regMapper.traceToTarget(traceReg);
 						if (targetReg == null) {
 							Msg.error(this,
 								"Mapper's extra register '" + traceReg + "' is not mappable!");
@@ -526,7 +518,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			});
 		}
 
-		protected void regMapperAmended(DebuggerRegisterMapper rm, TargetRegister<?> reg,
+		protected void regMapperAmended(DebuggerRegisterMapper rm, TargetRegister reg,
 				boolean removed) {
 			boolean doUpdateRegs = false;
 			String name = reg.getIndex();
@@ -534,13 +526,13 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				if (regMapper != rm) {
 					return;
 				}
-				TargetRegister<?> newPcReg =
+				TargetRegister newPcReg =
 					regMapper.traceToTarget(trace.getBaseLanguage().getProgramCounter());
 				if (pcReg != newPcReg) {
 					pcReg = newPcReg;
 					doUpdateRegs |= pcReg != null;
 				}
-				TargetRegister<?> newSpReg =
+				TargetRegister newSpReg =
 					regMapper.traceToTarget(trace.getBaseCompilerSpec().getStackPointer());
 				if (spReg != newSpReg) {
 					spReg = newSpReg;
@@ -559,7 +551,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			if (removed) {
 				return;
 			}
-			TargetRegisterBank<?> bank = regs.get(0);
+			TargetRegisterBank bank = regs.get(0);
 			if (bank != null) {
 				byte[] cachedVal = bank.getCachedRegisters().get(name);
 				if (cachedVal != null) {
@@ -573,9 +565,9 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			// listenerForRecord.retroOfferRegMapperDependents();
 		}
 
-		protected int getSuccessorFrameLevel(TargetObjectRef successor) {
+		protected int getSuccessorFrameLevel(TargetObject successor) {
 			NavigableSet<Integer> observedPathLengths = new TreeSet<>();
-			for (TargetStackFrame<?> frame : stack.values()) {
+			for (TargetStackFrame frame : stack.values()) {
 				observedPathLengths.add(frame.getPath().size());
 			}
 			List<String> path = successor.getPath();
@@ -588,7 +580,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					continue;
 				}
 				int index = Integer.decode(PathUtils.getIndex(sub));
-				TargetStackFrame<?> frame = stack.get(index);
+				TargetStackFrame frame = stack.get(index);
 				if (frame == null || !Objects.equals(sub, frame.getPath())) {
 					continue;
 				}
@@ -597,17 +589,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return 0;
 		}
 
-		CompletableFuture<Void> doFetchAndInitRegMapper(TargetRegisterBank<?> bank) {
+		CompletableFuture<Void> doFetchAndInitRegMapper(TargetRegisterBank bank) {
 			int frameLevel = getSuccessorFrameLevel(bank);
-			TypedTargetObjectRef<? extends TargetRegisterContainer<?>> descsRef =
-				bank.getDescriptions();
-			if (descsRef == null) {
+			TargetRegisterContainer descs = bank.getDescriptions();
+			if (descs == null) {
 				Msg.error(this, "Cannot create mapper, yet: Descriptions is null.");
 				return AsyncUtils.NIL;
 			}
-			return descsRef.fetch().thenCompose(descs -> {
-				return initRegMapper(descs);
-			}).thenAccept(__ -> {
+			return initRegMapper(descs).thenAccept(__ -> {
 				if (frameLevel == 0) {
 					recordRegisterValues(bank, bank.getCachedRegisters());
 					updateRegsMem(null);
@@ -619,14 +608,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			});
 		}
 
-		protected void offerRegisters(TargetRegisterBank<?> newRegs) {
+		protected void offerRegisters(TargetRegisterBank newRegs) {
 			int frameLevel = getSuccessorFrameLevel(newRegs);
 			if (regs.isEmpty()) {
 				// TODO: Technically, each frame may need its own mapper....
 				doFetchAndInitRegMapper(newRegs);
 			}
 
-			TargetRegisterBank<?> oldRegs = regs.put(frameLevel, newRegs);
+			TargetRegisterBank oldRegs = regs.put(frameLevel, newRegs);
 			if (oldRegs == newRegs) {
 				return;
 			}
@@ -643,24 +632,23 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		protected void offerStackFrame(TargetStackFrame<?> frame) {
+		protected void offerStackFrame(TargetStackFrame frame) {
 			stack.put(getFrameLevel(frame), frame);
 			recordFrame(frame);
 		}
 
-		protected void offerThreadRegion(TargetMemoryRegion<?> region) {
-			region.getMemory().fetch().thenCompose(mem -> {
-				threadMemory.addRegion(region, mem);
-				initMemMapper(mem);
-				// TODO: Add region to trace memory manager (when allowed for threads)
-				return updateRegsMem(region);
-			}).exceptionally(ex -> {
+		protected void offerThreadRegion(TargetMemoryRegion region) {
+			TargetMemory mem = region.getMemory();
+			threadMemory.addRegion(region, mem);
+			initMemMapper(mem);
+			// TODO: Add region to trace memory manager (when allowed for threads)
+			updateRegsMem(region).exceptionally(ex -> {
 				Msg.error(this, "Could not add thread memory region", ex);
 				return null;
 			});
 		}
 
-		protected void offerThreadBreakpointContainer(TargetBreakpointContainer<?> bc) {
+		protected void offerThreadBreakpointContainer(TargetBreakpointContainer bc) {
 			if (threadBreakpointContainer != null) {
 				Msg.warn(this, "Thread already has a breakpoint container");
 			}
@@ -702,7 +690,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		protected boolean checkRegistersRemoved(TargetObject invalid) {
 			synchronized (accessibilityByRegBank) {
 				if (regs.values().remove(invalid)) {
-					accessibilityByRegBank.remove((TargetRegisterBank<?>) invalid);
+					accessibilityByRegBank.remove((TargetRegisterBank) invalid);
 					return true;
 				}
 				return false;
@@ -718,7 +706,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		protected Address pcFromStack() {
-			TargetStackFrame<?> frame = stack.get(0);
+			TargetStackFrame frame = stack.get(0);
 			if (frame == null) {
 				return null;
 			}
@@ -750,8 +738,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return true;
 		}
 
-		protected CompletableFuture<?> readAlignedConditionally(String name, Address targetAddress,
-				TargetMemoryRegion<?> limit) {
+		protected CompletableFuture readAlignedConditionally(String name, Address targetAddress,
+				TargetMemoryRegion limit) {
 			if (targetAddress == null) {
 				return AsyncUtils.NIL;
 			}
@@ -778,7 +766,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					});
 		}
 
-		Address registerValueToTargetAddress(TargetRegister<?> reg, byte[] value) {
+		Address registerValueToTargetAddress(TargetRegister reg, byte[] value) {
 			/**
 			 * TODO: This goes around the horn and back just to select a default address space. We
 			 * should really just go directly to target address space.
@@ -793,11 +781,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return memMapper.traceToTarget(traceAddress);
 		}
 
-		protected CompletableFuture<Void> updateRegsMem(TargetMemoryRegion<?> limit) {
-			TargetRegisterBank<?> bank;
-			TargetRegister<?> pc;
-			TargetRegister<?> sp;
-			Set<TargetRegister<?>> toRead = new LinkedHashSet<>();
+		protected CompletableFuture<Void> updateRegsMem(TargetMemoryRegion limit) {
+			TargetRegisterBank bank;
+			TargetRegister pc;
+			TargetRegister sp;
+			Set<TargetRegister> toRead = new LinkedHashSet<>();
 			synchronized (DefaultTraceRecorder.this) {
 				if (regMapper == null) {
 					return AsyncUtils.NIL;
@@ -867,7 +855,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		public void recordRegisterValues(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
+		public void recordRegisterValues(TargetRegisterBank bank, Map<String, byte[]> updates) {
 			synchronized (DefaultTraceRecorder.this) {
 				if (regMapper == null) {
 					return;
@@ -898,7 +886,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		public void recordFrame(TargetStackFrame<?> frame) {
+		public void recordFrame(TargetStackFrame frame) {
 			recordFrame(frame, frame.getProgramCounter());
 		}
 
@@ -907,7 +895,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			traceFrame.setProgramCounter(pc);
 		}
 
-		public void recordFrame(TargetStackFrame<?> frame, Address pc) {
+		public void recordFrame(TargetStackFrame frame, Address pc) {
 			synchronized (DefaultTraceRecorder.this) {
 				if (memMapper == null) {
 					return;
@@ -936,7 +924,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					TraceStack traceStack =
 						stackManager.getStack(traceThread, snapshot.getKey(), true);
 					traceStack.setDepth(stackDepth(), false);
-					for (Map.Entry<Integer, TargetStackFrame<?>> ent : stack.entrySet()) {
+					for (Map.Entry<Integer, TargetStackFrame> ent : stack.entrySet()) {
 						Address tracePc =
 							memMapper.targetToTrace(ent.getValue().getProgramCounter());
 						doRecordFrame(traceStack, ent.getKey(), tracePc);
@@ -956,7 +944,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		public void onThreadBreakpointContainers(
-				Consumer<? super TargetBreakpointContainer<?>> action) {
+				Consumer<? super TargetBreakpointContainer> action) {
 			if (threadBreakpointContainer == null) {
 				return;
 			}
@@ -965,20 +953,20 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	protected class EffectiveBreakpointResolver {
-		private final TargetBreakpointLocation<?> bpt;
-		private TargetBreakpointSpec<?> spec;
+		private final TargetBreakpointLocation bpt;
+		private TargetBreakpointSpec spec;
 		private boolean affectsProcess = false;
 		private final Set<TraceThread> threadsAffected = new LinkedHashSet<>();
 
-		public EffectiveBreakpointResolver(TargetBreakpointLocation<?> bpt) {
+		public EffectiveBreakpointResolver(TargetBreakpointLocation bpt) {
 			this.bpt = bpt;
 		}
 
 		public CompletableFuture<Void> resolve() {
 			AsyncFence fence = new AsyncFence();
-			fence.include(bpt.getSpecification().fetch().thenAccept(s -> this.spec = s));
+			this.spec = bpt.getSpecification();
 
-			for (TargetObjectRef ref : bpt.getAffects()) {
+			for (TargetObject ref : bpt.getAffects()) {
 				if (ref.equals(target)) {
 					affectsProcess = true;
 				}
@@ -990,7 +978,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		// TODO: If affects is empty/null, also try to default to the containing process
-		private CompletableFuture<Void> resolveThread(TargetObjectRef ref) {
+		private CompletableFuture<Void> resolveThread(TargetObject ref) {
 			return DebugModelConventions.findThread(ref).thenAccept(thread -> {
 				if (thread == null) {
 					Msg.error(this,
@@ -1045,11 +1033,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			TargetBreakpointSpecListener, TargetEventScopeListener, TargetExecutionStateListener,
 			TargetFocusScopeListener, TargetRegisterBankListener, TargetMemoryListener {
 
-		//protected final Map<String, TargetModule<?>> modulesByName = new HashMap<>();
-		protected final Set<TargetBreakpointLocation<?>> breakpoints = new HashSet<>();
+		//protected final Map<String, TargetModule> modulesByName = new HashMap<>();
+		protected final Set<TargetBreakpointLocation> breakpoints = new HashSet<>();
 
 		@Override
-		protected boolean checkDescend(TargetObjectRef ref) {
+		protected boolean checkDescend(TargetObject ref) {
 			// NOTE, cannot return false on match, since it could be a prefix of another
 			if (HARDCODED_MATCHER.successorCouldMatch(ref.getPath())) {
 				return true;
@@ -1065,10 +1053,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					if (obj.isRoot()) {
 						return Result.FOUND;
 					}
-					if (obj instanceof TargetThread<?>) {
+					if (obj instanceof TargetThread) {
 						return Result.FOUND;
 					}
-					if (obj instanceof TargetProcess<?>) {
+					if (obj instanceof TargetProcess) {
 						return Result.FOUND;
 					}
 					return Result.CONTINUE;
@@ -1086,37 +1074,37 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			if (!valid) {
 				return;
 			}
-			if (added instanceof TargetThread<?>) {
-				getOrCreateThreadRecorder((TargetThread<?>) added);
+			if (added instanceof TargetThread) {
+				getOrCreateThreadRecorder((TargetThread) added);
 			}
-			if (added instanceof TargetStack<?>) {
+			if (added instanceof TargetStack) {
 				// Actually, this may not matter
 			}
 			// Do stack frame first, since bank would be it or child.
 			// Need frames indexed first to determine level of bank
-			if (added instanceof TargetStackFrame<?>) {
+			if (added instanceof TargetStackFrame) {
 				ThreadRecorder rec = threadMap.getForSuccessor(added);
 				if (rec == null) {
 					Msg.error(this, "Frame without thread?: " + added);
 				}
 				else {
-					rec.offerStackFrame((TargetStackFrame<?>) added);
+					rec.offerStackFrame((TargetStackFrame) added);
 				}
 			}
-			if (added instanceof TargetRegisterBank<?>) {
+			if (added instanceof TargetRegisterBank) {
 				ThreadRecorder rec = threadMap.getForSuccessor(added);
 				if (rec == null) {
 					Msg.error(this, "Bank without thread?: " + added);
 				}
 				else {
-					rec.offerRegisters((TargetRegisterBank<?>) added);
+					rec.offerRegisters((TargetRegisterBank) added);
 				}
 			}
-			if (added instanceof TargetRegisterContainer<?>) {
+			if (added instanceof TargetRegisterContainer) {
 				// These are picked up when a bank is added with these descriptions
 			}
-			if (added instanceof TargetRegister<?>) {
-				TargetRegister<?> reg = (TargetRegister<?>) added;
+			if (added instanceof TargetRegister) {
+				TargetRegister reg = (TargetRegister) added;
 				regMappers.get(reg.getContainer()).thenAccept(rm -> {
 					rm.targetRegisterAdded(reg);
 					for (ThreadRecorder rec : threadMap.byTargetThread.values()) {
@@ -1124,18 +1112,18 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					}
 				});
 			}
-			if (added instanceof TargetMemory<?>) {
-				initMemMapper((TargetMemory<?>) added);
+			if (added instanceof TargetMemory) {
+				initMemMapper((TargetMemory) added);
 			}
-			if (added instanceof TargetMemoryRegion<?>) {
-				TargetMemoryRegion<?> region = (TargetMemoryRegion<?>) added;
+			if (added instanceof TargetMemoryRegion) {
+				TargetMemoryRegion region = (TargetMemoryRegion) added;
 				findThreadOrProcess(added).thenAccept(obj -> {
 					if (obj == target) {
 						offerProcessRegion(region);
 						return;
 					}
 					if (obj instanceof TargetThread) {
-						ThreadRecorder rec = getOrCreateThreadRecorder((TargetThread<?>) obj);
+						ThreadRecorder rec = getOrCreateThreadRecorder((TargetThread) obj);
 						rec.offerThreadRegion(region);
 					}
 				}).exceptionally(ex -> {
@@ -1143,22 +1131,16 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					return null;
 				});
 			}
-			if (added instanceof TargetModule<?>) {
-				TargetModule<?> module = (TargetModule<?>) added;
+			if (added instanceof TargetModule) {
+				TargetModule module = (TargetModule) added;
 				offerProcessModule(module);
 			}
-			if (added instanceof TargetSection<?>) {
-				TargetSection<?> section = (TargetSection<?>) added;
-				section.getModule().fetch().thenAccept(module -> {
-					offerProcessModuleSection(module, section);
-					// I hope this should never be a per-thread thing
-				}).exceptionally(ex -> {
-					Msg.error(this, "Error recording module section", ex);
-					return null;
-				});
+			if (added instanceof TargetSection) {
+				TargetSection section = (TargetSection) added;
+				offerProcessModuleSection(section.getModule(), section);
 			}
-			if (added instanceof TargetBreakpointContainer<?>) {
-				TargetBreakpointContainer<?> breaks = (TargetBreakpointContainer<?>) added;
+			if (added instanceof TargetBreakpointContainer) {
+				TargetBreakpointContainer breaks = (TargetBreakpointContainer) added;
 				findThreadOrProcess(added).thenAccept(obj -> {
 					if (obj == target) {
 						offerProcessBreakpointContainer(breaks);
@@ -1167,18 +1149,18 @@ public class DefaultTraceRecorder implements TraceRecorder {
 					if (obj.isRoot()) {
 						return;
 					}
-					ThreadRecorder rec = getOrCreateThreadRecorder((TargetThread<?>) obj);
+					ThreadRecorder rec = getOrCreateThreadRecorder((TargetThread) obj);
 					rec.offerThreadBreakpointContainer(breaks);
 				}).exceptionally(ex -> {
 					Msg.error(this, "Error recording breakpoint container", ex);
 					return null;
 				});
 			}
-			if (added instanceof TargetBreakpointSpec<?>) {
+			if (added instanceof TargetBreakpointSpec) {
 				// I don't think this matters. UI for live recording only.
 			}
-			if (added instanceof TargetBreakpointLocation<?>) {
-				TargetBreakpointLocation<?> bpt = (TargetBreakpointLocation<?>) added;
+			if (added instanceof TargetBreakpointLocation) {
+				TargetBreakpointLocation bpt = (TargetBreakpointLocation) added;
 				breakpoints.add(bpt);
 				offerEffectiveBreakpoint(bpt);
 			}
@@ -1193,37 +1175,35 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				stopRecording();
 				return;
 			}
-			if (removed instanceof TargetRegisterContainer<?>) {
-				regMappers.remove((TargetRegisterContainer<?>) removed);
+			if (removed instanceof TargetRegisterContainer) {
+				regMappers.remove((TargetRegisterContainer) removed);
 			}
-			if (removed instanceof TargetRegister<?>) {
-				TargetRegister<?> reg = (TargetRegister<?>) removed;
-				reg.getContainer().fetch().thenAccept(cont -> {
-					DebuggerRegisterMapper rm = regMappers.getCompletedMap().get(cont);
-					if (rm == null) {
-						return;
-					}
-					rm.targetRegisterRemoved(reg);
-					for (ThreadRecorder rec : threadMap.byTargetThread.values()) {
-						rec.regMapperAmended(rm, reg, true);
-					}
-				});
+			if (removed instanceof TargetRegister) {
+				TargetRegister reg = (TargetRegister) removed;
+				DebuggerRegisterMapper rm = regMappers.getCompletedMap().get(reg.getContainer());
+				if (rm == null) {
+					return;
+				}
+				rm.targetRegisterRemoved(reg);
+				for (ThreadRecorder rec : threadMap.byTargetThread.values()) {
+					rec.regMapperAmended(rm, reg, true);
+				}
 			}
-			if (removed instanceof TargetMemoryRegion<?>) {
-				TargetMemoryRegion<?> region = (TargetMemoryRegion<?>) removed;
+			if (removed instanceof TargetMemoryRegion) {
+				TargetMemoryRegion region = (TargetMemoryRegion) removed;
 				if (processMemory.removeRegion(region)) {
 					removeProcessRegion(region);
 					return;
 				}
 				// Allow removal notice to fall through to thread recorders
 			}
-			if (removed instanceof TargetModule<?>) {
-				TargetModule<?> module = (TargetModule<?>) removed;
+			if (removed instanceof TargetModule) {
+				TargetModule module = (TargetModule) removed;
 				removeProcessModule(module);
 				return;
 			}
-			if (removed instanceof TargetBreakpointLocation<?>) {
-				TargetBreakpointLocation<?> bpt = (TargetBreakpointLocation<?>) removed;
+			if (removed instanceof TargetBreakpointLocation) {
+				TargetBreakpointLocation bpt = (TargetBreakpointLocation) removed;
 				breakpoints.remove(bpt);
 				removeEffectiveBreakpoint(bpt);
 				return;
@@ -1239,13 +1219,13 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		protected boolean successor(TargetObjectRef ref) {
+		protected boolean successor(TargetObject ref) {
 			return PathUtils.isAncestor(target.getPath(), ref.getPath());
 		}
 
 		protected boolean anyRef(Collection<Object> parameters) {
 			for (Object p : parameters) {
-				if (!(p instanceof TargetObjectRef)) {
+				if (!(p instanceof TargetObject)) {
 					continue;
 				}
 				return true;
@@ -1255,10 +1235,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 		protected boolean anySuccessor(Collection<Object> parameters) {
 			for (Object p : parameters) {
-				if (!(p instanceof TargetObjectRef)) {
+				if (!(p instanceof TargetObject)) {
 					continue;
 				}
-				TargetObjectRef ref = (TargetObjectRef) p;
+				TargetObject ref = (TargetObject) p;
 				if (!successor(ref)) {
 					continue;
 				}
@@ -1267,7 +1247,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return false;
 		}
 
-		protected boolean eventApplies(TargetObjectRef eventThread, TargetEventType type,
+		protected boolean eventApplies(TargetObject eventThread, TargetEventType type,
 				List<Object> parameters) {
 			if (type == TargetEventType.RUNNING) {
 				return false;
@@ -1287,8 +1267,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		@Override
-		public void event(TargetEventScope<?> object,
-				TypedTargetObjectRef<? extends TargetThread<?>> eventThread, TargetEventType type,
+		public void event(TargetEventScope object, TargetThread eventThread, TargetEventType type,
 				String description, List<Object> parameters) {
 			if (!valid) {
 				return;
@@ -1316,27 +1295,25 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 			else if (type == TargetEventType.MODULE_LOADED) {
 				Object p0 = parameters.get(0);
-				if (!(p0 instanceof TargetObjectRef)) {
+				if (!(p0 instanceof TargetObject)) {
 					return;
 				}
-				TargetObjectRef ref = (TargetObjectRef) p0;
-				ref.fetch().thenAccept(obj -> {
-					if (!(obj instanceof TargetModule<?>)) {
-						return;
-					}
-					TargetModule<?> mod = (TargetModule<?>) obj;
-					TraceModule traceModule = getTraceModule(mod);
-					if (traceModule == null) {
-						return;
-					}
-					try (UndoableTransaction tid =
-						UndoableTransaction.start(trace, "Adjust module load", true)) {
-						traceModule.setLoadedSnap(snapshot.getKey());
-					}
-					catch (DuplicateNameException e) {
-						Msg.error(this, "Could not set module loaded snap", e);
-					}
-				});
+				TargetObject obj = (TargetObject) p0;
+				if (!(obj instanceof TargetModule)) {
+					return;
+				}
+				TargetModule mod = (TargetModule) obj;
+				TraceModule traceModule = getTraceModule(mod);
+				if (traceModule == null) {
+					return;
+				}
+				try (UndoableTransaction tid =
+					UndoableTransaction.start(trace, "Adjust module load", true)) {
+					traceModule.setLoadedSnap(snapshot.getKey());
+				}
+				catch (DuplicateNameException e) {
+					Msg.error(this, "Could not set module loaded snap", e);
+				}
 			}
 		}
 
@@ -1348,36 +1325,36 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				return;
 			}
 			// Dispatch attribute changes which don't have "built-in" events.
-			if (parent instanceof TargetBreakpointLocation<?>) {
+			if (parent instanceof TargetBreakpointLocation) {
 				if (added.containsKey(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME)) {
-					breakpointLengthChanged((TargetBreakpointLocation<?>) parent,
+					breakpointLengthChanged((TargetBreakpointLocation) parent,
 						(Integer) added.get(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME));
 				}
 			}
-			if (parent instanceof TargetStackFrame<?>) {
+			if (parent instanceof TargetStackFrame) {
 				if (added.containsKey(TargetStackFrame.PC_ATTRIBUTE_NAME)) {
-					framePcUpdated((TargetStackFrame<?>) parent);
+					framePcUpdated((TargetStackFrame) parent);
 				}
 			}
-			if (parent instanceof TargetRegisterBank<?>) {
+			if (parent instanceof TargetRegisterBank) {
 				if (added.containsKey(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME)) {
 					ThreadRecorder rec = threadMap.getForSuccessor(parent);
 					if (rec != null) {
-						rec.doFetchAndInitRegMapper((TargetRegisterBank<?>) parent);
+						rec.doFetchAndInitRegMapper((TargetRegisterBank) parent);
 					}
 				}
 			}
 			// This should be fixed at construction.
-			/*if (parent instanceof TargetModule<?>) {
+			/*if (parent instanceof TargetModule) {
 				if (added.containsKey(TargetModule.BASE_ATTRIBUTE_NAME)) {
-					moduleBaseUpdated((TargetModule<?>) parent,
+					moduleBaseUpdated((TargetModule) parent,
 						(Address) added.get(TargetModule.BASE_ATTRIBUTE_NAME));
 				}
 			}*/
 		}
 
 		@Override
-		public void executionStateChanged(TargetExecutionStateful<?> stateful,
+		public void executionStateChanged(TargetExecutionStateful stateful,
 				TargetExecutionState state) {
 			if (!valid) {
 				return;
@@ -1391,7 +1368,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				ThreadRecorder rec = null;
 				synchronized (threadMap) {
 					if (threadOrProcess instanceof TargetThread) {
-						rec = threadMap.get((TargetThread<?>) threadOrProcess);
+						rec = threadMap.get((TargetThread) threadOrProcess);
 					}
 				}
 				if (rec != null) {
@@ -1401,7 +1378,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			});
 		}
 
-		protected ThreadRecorder getOrCreateThreadRecorder(TargetThread<?> thread) {
+		protected ThreadRecorder getOrCreateThreadRecorder(TargetThread thread) {
 			synchronized (threadMap) {
 				ThreadRecorder rec = threadMap.get(thread);
 				if (rec != null) {
@@ -1425,7 +1402,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		@Override
-		public void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
+		public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
 			if (!valid) {
 				return;
 			}
@@ -1437,7 +1414,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		@Override
-		public void memoryUpdated(TargetMemory<?> memory, Address address, byte[] data) {
+		public void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
 			if (!valid) {
 				return;
 			}
@@ -1457,7 +1434,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		@Override
-		public void memoryReadError(TargetMemory<?> memory, AddressRange range,
+		public void memoryReadError(TargetMemory memory, AddressRange range,
 				DebuggerMemoryAccessException e) {
 			if (!valid) {
 				return;
@@ -1472,14 +1449,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		@Override
-		public void breakpointToggled(TargetBreakpointSpec<?> spec, boolean enabled) {
+		public void breakpointToggled(TargetBreakpointSpec spec, boolean enabled) {
 			if (!valid) {
 				return;
 			}
 			spec.getLocations().thenAccept(bpts -> {
 				try (PermanentTransaction tid =
 					PermanentTransaction.start(trace, "Breakpoint toggled")) {
-					for (TargetBreakpointLocation<?> eb : bpts) {
+					for (TargetBreakpointLocation eb : bpts) {
 						TraceBreakpoint traceBpt = getTraceBreakpoint(eb);
 						if (traceBpt == null) {
 							String path = PathUtils.toString(eb.getPath());
@@ -1496,7 +1473,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			});
 		}
 
-		protected void breakpointLengthChanged(TargetBreakpointLocation<?> bpt, int length) {
+		protected void breakpointLengthChanged(TargetBreakpointLocation bpt, int length) {
 			Address traceAddr = memMapper.targetToTrace(bpt.getAddress());
 			String path = PathUtils.toString(bpt.getPath());
 			for (TraceBreakpoint traceBpt : breakpointManager.getBreakpointsByPath(path)) {
@@ -1524,19 +1501,19 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		protected void framePcUpdated(TargetStackFrame<?> frame) {
+		protected void framePcUpdated(TargetStackFrame frame) {
 			ThreadRecorder rec = threadMap.getForSuccessor(frame);
 			// Yes, entire stack, otherwise, the stack seems to be just one deep.
 			rec.recordStack();
 		}
 
-		protected void stackUpdated(TargetStack<?> stack) {
+		protected void stackUpdated(TargetStack stack) {
 			ThreadRecorder rec = threadMap.getForSuccessor(stack);
 			rec.recordStack();
 		}
 
 		@Override
-		public void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+		public void focusChanged(TargetFocusScope object, TargetObject focused) {
 			if (!valid) {
 				return;
 			}
@@ -1551,7 +1528,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				copy = List.copyOf(threadMap.byTargetThread.values());
 			}
 			for (ThreadRecorder rec : copy) {
-				TargetRegisterBank<?> bank = rec.regs.get(0);
+				TargetRegisterBank bank = rec.regs.get(0);
 				if (bank != null) {
 					rec.recordRegisterValues(bank, bank.getCachedRegisters());
 					rec.updateRegsMem(null);
@@ -1566,53 +1543,51 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 			synchronized (DefaultTraceRecorder.this) {
 				for (TargetObject obj : copy) {
-					if (obj instanceof TargetModule<?>) {
-						offerProcessModule((TargetModule<?>) obj);
+					if (obj instanceof TargetModule) {
+						offerProcessModule((TargetModule) obj);
 					}
-					if (obj instanceof TargetSection<?>) {
-						TargetSection<?> section = (TargetSection<?>) obj;
-						section.getModule().fetch().thenAccept(module -> {
-							offerProcessModuleSection(module, section);
-						});
+					if (obj instanceof TargetSection) {
+						TargetSection section = (TargetSection) obj;
+						offerProcessModuleSection(section.getModule(), section);
 					}
-					if (obj instanceof TargetBreakpointLocation<?>) {
-						offerEffectiveBreakpoint((TargetBreakpointLocation<?>) obj);
+					if (obj instanceof TargetBreakpointLocation) {
+						offerEffectiveBreakpoint((TargetBreakpointLocation) obj);
 					}
-					if (obj instanceof TargetStack<?>) {
-						stackUpdated((TargetStack<?>) obj);
+					if (obj instanceof TargetStack) {
+						stackUpdated((TargetStack) obj);
 					}
 				}
 			}
 		}
 
-		public TargetMemoryRegion<?> getTargetMemoryRegion(TraceMemoryRegion region) {
+		public TargetMemoryRegion getTargetMemoryRegion(TraceMemoryRegion region) {
 			synchronized (objects) {
-				return (TargetMemoryRegion<?>) objects.get(PathUtils.parse(region.getPath()));
+				return (TargetMemoryRegion) objects.get(PathUtils.parse(region.getPath()));
 			}
 		}
 
-		public TargetModule<?> getTargetModule(TraceModule module) {
+		public TargetModule getTargetModule(TraceModule module) {
 			synchronized (objects) {
-				return (TargetModule<?>) objects.get(PathUtils.parse(module.getPath()));
+				return (TargetModule) objects.get(PathUtils.parse(module.getPath()));
 			}
 		}
 
-		public TargetSection<?> getTargetSection(TraceSection section) {
+		public TargetSection getTargetSection(TraceSection section) {
 			synchronized (objects) {
-				return (TargetSection<?>) objects.get(PathUtils.parse(section.getPath()));
+				return (TargetSection) objects.get(PathUtils.parse(section.getPath()));
 			}
 		}
 
-		public TargetBreakpointLocation<?> getTargetBreakpoint(TraceBreakpoint bpt) {
+		public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {
 			synchronized (objects) {
-				return (TargetBreakpointLocation<?>) objects.get(PathUtils.parse(bpt.getPath()));
+				return (TargetBreakpointLocation) objects.get(PathUtils.parse(bpt.getPath()));
 			}
 		}
 
-		public List<TargetBreakpointLocation<?>> collectBreakpoints(TargetThread<?> thread) {
+		public List<TargetBreakpointLocation> collectBreakpoints(TargetThread thread) {
 			synchronized (objects) {
 				return breakpoints.stream().filter(bpt -> {
-					TargetObjectRefList<?> affects = bpt.getAffects();
+					TargetObjectList affects = bpt.getAffects();
 					// N.B. in case thread is null (process), affects.contains(thread) is always false
 					return affects.isEmpty() || affects.contains(thread) ||
 						affects.contains(target);
@@ -1621,10 +1596,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 
 		protected void onProcessBreakpointContainers(
-				Consumer<? super TargetBreakpointContainer<?>> action) {
+				Consumer<? super TargetBreakpointContainer> action) {
 			synchronized (objects) {
 				if (processBreakpointContainer == null) {
-					for (TargetThread<?> thread : threadsView) {
+					for (TargetThread thread : threadsView) {
 						onThreadBreakpointContainers(thread, action);
 					}
 				}
@@ -1634,15 +1609,15 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 		}
 
-		protected void onThreadBreakpointContainers(TargetThread<?> thread,
-				Consumer<? super TargetBreakpointContainer<?>> action) {
+		protected void onThreadBreakpointContainers(TargetThread thread,
+				Consumer<? super TargetBreakpointContainer> action) {
 			synchronized (objects) {
 				getOrCreateThreadRecorder(thread).onThreadBreakpointContainers(action);
 			}
 		}
 
-		protected void onBreakpointContainers(TargetThread<?> thread,
-				Consumer<? super TargetBreakpointContainer<?>> action) {
+		protected void onBreakpointContainers(TargetThread thread,
+				Consumer<? super TargetBreakpointContainer> action) {
 			if (thread == null) {
 				onProcessBreakpointContainers(action);
 			}
@@ -1657,7 +1632,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	protected final Trace trace;
 	protected final TargetObject target;
 	protected final ComposedMemory processMemory = new ComposedMemory();
-	protected TargetBreakpointContainer<?> processBreakpointContainer;
+	protected TargetBreakpointContainer processBreakpointContainer;
 
 	protected final TraceBreakpointManager breakpointManager;
 	protected final TraceCodeManager codeManager;
@@ -1672,26 +1647,26 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	protected final AbstractDebuggerTargetTraceMapper mapper;
 	protected DebuggerMemoryMapper memMapper;
-	protected AsyncLazyMap<TypedTargetObjectRef<? extends TargetRegisterContainer<?>>, DebuggerRegisterMapper> regMappers;
+	protected AsyncLazyMap<TargetRegisterContainer, DebuggerRegisterMapper> regMappers;
 	protected final TargetDataTypeConverter typeConverter;
-	protected Collection<TargetRegister<?>> extraRegs;
+	protected Collection<TargetRegister> extraRegs;
 	// TODO: Support automatic recording of user-specified extra registers...
 	// NOTE: Probably via watches, once we have those
 	// TODO: Probably move all the auto-reads into watches
 
 	protected final ListenerSet<TraceRecorderListener> listeners =
 		new ListenerSet<>(TraceRecorderListener.class);
-	protected final TriConsumer<TargetAccessibility, TargetAccessibility, Void> listenerRegAccChanged =
+	protected final TriConsumer<Boolean, Boolean, Void> listenerRegAccChanged =
 		this::registerAccessibilityChanged;
-	protected final TriConsumer<TargetAccessibility, TargetAccessibility, Void> listenerProcMemAccChanged =
+	protected final TriConsumer<Boolean, Boolean, Void> listenerProcMemAccChanged =
 		this::processMemoryAccessibilityChanged;
 
 	private final ListenerForRecord listenerForRecord;
 
 	protected final ThreadMap threadMap = new ThreadMap();
-	protected final Set<TargetThread<?>> threadsView =
+	protected final Set<TargetThread> threadsView =
 		Collections.unmodifiableSet(threadMap.byTargetThread.keySet());
-	protected final BiMap<TargetBreakpointLocation<?>, TraceBreakpoint> processBreakpointsMap =
+	protected final BiMap<TargetBreakpointLocation, TraceBreakpoint> processBreakpointsMap =
 		HashBiMap.create();
 
 	protected final AsyncLazyValue<Void> lazyInit = new AsyncLazyValue<>(this::doInit);
@@ -1699,8 +1674,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	protected TraceSnapshot snapshot = null;
 	private boolean valid = true;
 
-	protected TargetFocusScope<?> focusScope;
-	protected TargetObjectRef curFocus;
+	protected TargetFocusScope focusScope;
+	protected TargetObject curFocus;
 
 	public DefaultTraceRecorder(DebuggerModelServicePlugin plugin, Trace trace, TargetObject target,
 			AbstractDebuggerTargetTraceMapper mapper) {
@@ -1721,8 +1696,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		this.timeManager = trace.getTimeManager();
 
 		this.mapper = mapper;
-		this.regMappers = new AsyncLazyMap<>(new HashMap<>(),
-			ref -> ref.fetch().thenCompose(mapper::offerRegisters));
+		this.regMappers =
+			new AsyncLazyMap<>(new HashMap<>(), descs -> mapper.offerRegisters(descs));
 		this.typeConverter = new TargetDataTypeConverter(trace.getDataTypeManager());
 
 		this.listenerForRecord = new ListenerForRecord();
@@ -1732,13 +1707,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		trace.addConsumer(this);
 	}
 
-	protected void registerAccessibilityChanged(TargetAccessibility old, TargetAccessibility acc,
-			Void __) {
+	protected void registerAccessibilityChanged(boolean old, boolean acc, Void __) {
 		listeners.fire.registerAccessibilityChanged(this);
 	}
 
-	protected void processMemoryAccessibilityChanged(TargetAccessibility old,
-			TargetAccessibility acc, Void __) {
+	protected void processMemoryAccessibilityChanged(boolean old, boolean acc, Void __) {
 		listeners.fire.processMemoryAccessibilityChanged(this);
 	}
 
@@ -1751,8 +1724,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		createSnapshot("Started recording " + PathUtils.toString(target.getPath()) + " in " +
 			target.getModel(), null, null);
 		AsyncFence fence = new AsyncFence();
-		CompletableFuture<? extends TargetBreakpointContainer<?>> futureBreaks =
-			DebugModelConventions.findSuitable(TargetBreakpointContainer.tclass, target);
+		CompletableFuture<? extends TargetBreakpointContainer> futureBreaks =
+			DebugModelConventions.findSuitable(TargetBreakpointContainer.class, target);
 		fence.include(futureBreaks.thenAccept(breaks -> {
 			if (breaks != null && !PathUtils.isAncestor(target.getPath(), breaks.getPath())) {
 				offerProcessBreakpointContainer(breaks); // instead of objectAdded
@@ -1763,8 +1736,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return null;
 		}));
 
-		CompletableFuture<? extends TargetEventScope<?>> futureEvents =
-			DebugModelConventions.findSuitable(TargetEventScope.tclass, target);
+		CompletableFuture<? extends TargetEventScope> futureEvents =
+			DebugModelConventions.findSuitable(TargetEventScope.class, target);
 		fence.include(futureEvents.thenAccept(events -> {
 			if (events != null && !PathUtils.isAncestor(target.getPath(), events.getPath())) {
 				// Don't descend. Scope may be the entire session.
@@ -1775,8 +1748,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return null;
 		}));
 
-		CompletableFuture<? extends TargetFocusScope<?>> futureFocus =
-			DebugModelConventions.findSuitable(TargetFocusScope.tclass, target);
+		CompletableFuture<? extends TargetFocusScope> futureFocus =
+			DebugModelConventions.findSuitable(TargetFocusScope.class, target);
 		fence.include(futureFocus.thenAccept(focus -> {
 			if (focus != null && !PathUtils.isAncestor(target.getPath(), focus.getPath())) {
 				// Don't descend. Scope may be the entire session.
@@ -1818,7 +1791,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	// TODO: This could probably be discovered by the offer and passed in at construction
-	protected synchronized CompletableFuture<Void> initMemMapper(TargetMemory<?> memory) {
+	protected synchronized CompletableFuture<Void> initMemMapper(TargetMemory memory) {
 		/**
 		 * TODO: At the moment, there's no real dependency on the memory. When there is, see that
 		 * additional memories can be incorporated into the mapper, and stale ones removed.
@@ -1838,7 +1811,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		});
 	}
 
-	protected Collection<TraceMemoryFlag> getTraceFlags(TargetMemoryRegion<?> region) {
+	protected Collection<TraceMemoryFlag> getTraceFlags(TargetMemoryRegion region) {
 		Collection<TraceMemoryFlag> flags = new HashSet<>();
 		if (region.isReadable()) {
 			flags.add(TraceMemoryFlag.READ);
@@ -1853,39 +1826,38 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return flags;
 	}
 
-	protected void offerProcessRegion(TargetMemoryRegion<?> region) {
-		region.getMemory().fetch().thenCompose(mem -> {
-			processMemory.addRegion(region, mem);
-			initMemMapper(mem);
-			synchronized (this) {
-				try (PermanentTransaction tid =
-					PermanentTransaction.start(trace, "Memory region added")) {
-					String path = PathUtils.toString(region.getPath());
-					TraceMemoryRegion traceRegion =
-						memoryManager.getLiveRegionByPath(snapshot.getKey(), path);
-					if (traceRegion != null) {
-						Msg.warn(this, "Region " + path + " already recorded");
-						return AsyncUtils.NIL;
-					}
-					traceRegion = memoryManager.addRegion(path, Range.atLeast(snapshot.getKey()),
-						memMapper.targetToTrace(region.getRange()), getTraceFlags(region));
-					traceRegion.setName(region.getName());
+	protected void offerProcessRegion(TargetMemoryRegion region) {
+		TargetMemory mem = region.getMemory();
+		processMemory.addRegion(region, mem);
+		initMemMapper(mem);
+		synchronized (this) {
+			try (PermanentTransaction tid =
+				PermanentTransaction.start(trace, "Memory region added")) {
+				String path = PathUtils.toString(region.getPath());
+				TraceMemoryRegion traceRegion =
+					memoryManager.getLiveRegionByPath(snapshot.getKey(), path);
+				if (traceRegion != null) {
+					Msg.warn(this, "Region " + path + " already recorded");
+					return;
 				}
-				catch (TraceOverlappedRegionException e) {
-					Msg.error(this, "Failed to create region due to overlap", e);
-				}
-				catch (DuplicateNameException e) {
-					throw new AssertionError(e); // Just checked for existing
-				}
+				traceRegion = memoryManager.addRegion(path, Range.atLeast(snapshot.getKey()),
+					memMapper.targetToTrace(region.getRange()), getTraceFlags(region));
+				traceRegion.setName(region.getName());
 			}
-			return updateAllThreadsRegsMem(region);
-		}).exceptionally(ex -> {
+			catch (TraceOverlappedRegionException e) {
+				Msg.error(this, "Failed to create region due to overlap", e);
+			}
+			catch (DuplicateNameException e) {
+				throw new AssertionError(e); // Just checked for existing
+			}
+		}
+		updateAllThreadsRegsMem(region).exceptionally(ex -> {
 			Msg.error(this, "Could not add process memory region", ex);
 			return null;
 		});
 	}
 
-	protected synchronized void removeProcessRegion(TargetMemoryRegion<?> region) {
+	protected synchronized void removeProcessRegion(TargetMemoryRegion region) {
 		// Already removed from processMemory. That's how we knew to go here.
 		try (PermanentTransaction tid =
 			PermanentTransaction.start(trace, "Memory region removed")) {
@@ -1903,7 +1875,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected void recordBreakpoint(TargetBreakpointSpec<?> spec, TargetBreakpointLocation<?> bpt,
+	protected void recordBreakpoint(TargetBreakpointSpec spec, TargetBreakpointLocation bpt,
 			Set<TraceThread> traceThreads) {
 		synchronized (this) {
 			if (memMapper == null) {
@@ -1928,21 +1900,21 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected void offerProcessBreakpointContainer(TargetBreakpointContainer<?> bc) {
+	protected void offerProcessBreakpointContainer(TargetBreakpointContainer bc) {
 		if (processBreakpointContainer != null) {
 			Msg.warn(this, "Already have a breakpoint container for this process");
 		}
 		processBreakpointContainer = bc;
 	}
 
-	protected void offerFocusScope(TargetFocusScope<?> scope) {
+	protected void offerFocusScope(TargetFocusScope scope) {
 		if (this.focusScope != null) {
 			Msg.warn(this, "Already have a focus scope: " + this.focusScope);
 		}
 		this.focusScope = scope;
 	}
 
-	protected synchronized TraceModule offerProcessModule(TargetModule<?> module) {
+	protected synchronized TraceModule offerProcessModule(TargetModule module) {
 		if (memMapper == null) {
 			return null;
 		}
@@ -1966,8 +1938,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected synchronized TraceSection offerProcessModuleSection(TargetModule<?> module,
-			TargetSection<?> section) {
+	protected synchronized TraceSection offerProcessModuleSection(TargetModule module,
+			TargetSection section) {
 		if (memMapper == null) {
 			return null;
 		}
@@ -1990,7 +1962,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected synchronized void removeProcessModule(TargetModule<?> module) {
+	protected synchronized void removeProcessModule(TargetModule module) {
 		String path = PathUtils.toString(module.getPath());
 		long snap = snapshot.getKey();
 		TraceThread eventThread = snapshot.getEventThread();
@@ -2016,7 +1988,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	// NB: No removeProcessModuleSection, because sections should be immutable
 	// They are removed when the module is removed
 
-	protected void offerEffectiveBreakpoint(TargetBreakpointLocation<?> bpt) {
+	protected void offerEffectiveBreakpoint(TargetBreakpointLocation bpt) {
 		synchronized (this) {
 			if (memMapper == null) {
 				return;
@@ -2033,7 +2005,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		});
 	}
 
-	protected void removeEffectiveBreakpoint(TargetBreakpointLocation<?> bpt) {
+	protected void removeEffectiveBreakpoint(TargetBreakpointLocation bpt) {
 		String path = PathUtils.toString(bpt.getPath());
 		long snap = snapshot.getKey();
 		try (PermanentTransaction tid = PermanentTransaction.start(trace, "Breakpoint deleted")) {
@@ -2056,7 +2028,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	protected CompletableFuture<Void> updateAllThreadsRegsMem(TargetMemoryRegion<?> limit) {
+	protected CompletableFuture<Void> updateAllThreadsRegsMem(TargetMemoryRegion limit) {
 		AsyncFence fence = new AsyncFence();
 		for (ThreadRecorder rec : threadMap.recorders()) {
 			fence.include(rec.updateRegsMem(limit));
@@ -2115,25 +2087,25 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetBreakpointLocation<?> getTargetBreakpoint(TraceBreakpoint bpt) {
+	public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {
 		return listenerForRecord.getTargetBreakpoint(bpt);
 	}
 
 	@Override
-	public TraceBreakpoint getTraceBreakpoint(TargetBreakpointLocation<?> bpt) {
+	public TraceBreakpoint getTraceBreakpoint(TargetBreakpointLocation bpt) {
 		String path = PathUtils.toString(bpt.getPath());
 		return breakpointManager.getPlacedBreakpointByPath(snapshot.getKey(), path);
 	}
 
 	@Override
-	public List<TargetBreakpointContainer<?>> collectBreakpointContainers(TargetThread<?> thread) {
-		List<TargetBreakpointContainer<?>> result = new ArrayList<>();
+	public List<TargetBreakpointContainer> collectBreakpointContainers(TargetThread thread) {
+		List<TargetBreakpointContainer> result = new ArrayList<>();
 		listenerForRecord.onBreakpointContainers(thread, result::add);
 		return result;
 	}
 
 	@Override
-	public List<TargetBreakpointLocation<?>> collectBreakpoints(TargetThread<?> thread) {
+	public List<TargetBreakpointLocation> collectBreakpoints(TargetThread thread) {
 		return listenerForRecord.collectBreakpoints(thread);
 	}
 
@@ -2147,46 +2119,46 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetMemoryRegion<?> getTargetMemoryRegion(TraceMemoryRegion region) {
+	public TargetMemoryRegion getTargetMemoryRegion(TraceMemoryRegion region) {
 		return listenerForRecord.getTargetMemoryRegion(region);
 	}
 
 	@Override
-	public TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion<?> region) {
+	public TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion region) {
 		String path = PathUtils.toString(region.getPath());
 		return memoryManager.getLiveRegionByPath(snapshot.getKey(), path);
 	}
 
 	@Override
-	public TargetModule<?> getTargetModule(TraceModule module) {
+	public TargetModule getTargetModule(TraceModule module) {
 		return listenerForRecord.getTargetModule(module);
 	}
 
 	@Override
-	public TraceModule getTraceModule(TargetModule<?> module) {
+	public TraceModule getTraceModule(TargetModule module) {
 		String path = PathUtils.toString(module.getPath());
 		return moduleManager.getLoadedModuleByPath(snapshot.getKey(), path);
 	}
 
 	@Override
-	public TargetSection<?> getTargetSection(TraceSection section) {
+	public TargetSection getTargetSection(TraceSection section) {
 		return listenerForRecord.getTargetSection(section);
 	}
 
 	@Override
-	public TraceSection getTraceSection(TargetSection<?> section) {
+	public TraceSection getTraceSection(TargetSection section) {
 		String path = PathUtils.toString(section.getPath());
 		return moduleManager.getLoadedSectionByPath(snapshot.getKey(), path);
 	}
 
 	@Override
-	public TargetThread<?> getTargetThread(TraceThread thread) {
+	public TargetThread getTargetThread(TraceThread thread) {
 		ThreadRecorder rec = threadMap.get(thread);
 		return rec == null ? null : rec.targetThread;
 	}
 
 	@Override
-	public TargetExecutionState getTargetThreadState(TargetThread<?> thread) {
+	public TargetExecutionState getTargetThreadState(TargetThread thread) {
 		ThreadRecorder rec = threadMap.get(thread);
 		return rec == null ? null : rec.state;
 	}
@@ -2198,7 +2170,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public boolean isRegisterBankAccessible(TargetRegisterBank<?> bank) {
+	public boolean isRegisterBankAccessible(TargetRegisterBank bank) {
 		if (bank == null) {
 			return false;
 		}
@@ -2211,7 +2183,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			if (acc == null) {
 				return false;
 			}
-			return acc.get() == TargetAccessibility.ACCESSIBLE;
+			return acc.get();
 		}
 	}
 
@@ -2221,24 +2193,24 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank<?> getTargetRegisterBank(TraceThread thread, int frameLevel) {
+	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
 		ThreadRecorder rec = threadMap.get(thread);
 		return rec == null ? null : rec.regs.get(frameLevel);
 	}
 
 	@Override
-	public Set<TargetThread<?>> getLiveTargetThreads() {
+	public Set<TargetThread> getLiveTargetThreads() {
 		return threadsView;
 	}
 
 	@Override
-	public TraceThread getTraceThread(TargetThread<?> thread) {
+	public TraceThread getTraceThread(TargetThread thread) {
 		ThreadRecorder rec = threadMap.byTargetThread.get(thread);
 		return rec == null ? null : rec.traceThread;
 	}
 
 	@Override
-	public TraceThread getTraceThreadForSuccessor(TargetObjectRef successor) {
+	public TraceThread getTraceThreadForSuccessor(TargetObject successor) {
 		ThreadRecorder rec = threadMap.getForSuccessor(successor);
 		return rec == null ? null : rec.traceThread;
 	}
@@ -2252,7 +2224,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TraceStackFrame getTraceStackFrame(TargetStackFrame<?> frame) {
+	public TraceStackFrame getTraceStackFrame(TargetStackFrame frame) {
 		ThreadRecorder rec = threadMap.getForSuccessor(frame);
 		if (rec == null) {
 			return null;
@@ -2265,7 +2237,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TraceStackFrame getTraceStackFrameForSuccessor(TargetObjectRef successor) {
+	public TraceStackFrame getTraceStackFrameForSuccessor(TargetObject successor) {
 		ThreadRecorder rec = threadMap.getForSuccessor(successor);
 		if (rec == null) {
 			return null;
@@ -2275,7 +2247,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetStackFrame<?> getTargetStackFrame(TraceThread thread, int frameLevel) {
+	public TargetStackFrame getTargetStackFrame(TraceThread thread, int frameLevel) {
 		ThreadRecorder rec = threadMap.get(thread);
 		if (rec == null) {
 			return null;
@@ -2332,10 +2304,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		if (registers.isEmpty()) {
 			return AsyncUtils.NIL;
 		}
-		List<TargetRegister<?>> tRegs =
+		List<TargetRegister> tRegs =
 			registers.stream().map(regMapper::traceToTarget).collect(Collectors.toList());
 
-		TargetRegisterBank<?> bank = getTargetRegisterBank(thread, frameLevel);
+		TargetRegisterBank bank = getTargetRegisterBank(thread, frameLevel);
 		if (bank == null) {
 			throw new IllegalArgumentException(
 				"Given thread and frame level does not have a live register bank");
@@ -2365,7 +2337,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			return regMapper.traceToTarget(ent.getValue());
 		}).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-		TargetRegisterBank<?> bank = getTargetRegisterBank(thread, frameLevel);
+		TargetRegisterBank bank = getTargetRegisterBank(thread, frameLevel);
 		if (bank == null) {
 			throw new IllegalArgumentException(
 				"Given thread and frame level does not have a live register bank");
@@ -2422,7 +2394,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Void> captureDataTypes(TargetDataTypeNamespace<?> namespace,
+	public CompletableFuture<Void> captureDataTypes(TargetDataTypeNamespace namespace,
 			TaskMonitor monitor) {
 		if (!valid) {
 			return AsyncUtils.NIL;
@@ -2433,7 +2405,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			monitor.initialize(types.size());
 			AsyncFence fence = new AsyncFence();
 			List<DataType> converted = new ArrayList<>();
-			for (TargetNamedDataType<?> type : types) {
+			for (TargetNamedDataType type : types) {
 				if (monitor.isCancelled()) {
 					fence.ready().cancel(false);
 					return AsyncUtils.nil();
@@ -2459,17 +2431,17 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	@Override
 	public CompletableFuture<Void> captureDataTypes(TraceModule module, TaskMonitor monitor) {
-		TargetModule<?> targetModule = getTargetModule(module);
+		TargetModule targetModule = getTargetModule(module);
 		if (targetModule == null) {
 			Msg.error(this, "Module " + module + " is not loaded");
 			return AsyncUtils.NIL;
 		}
-		CompletableFuture<? extends Map<String, ? extends TargetDataTypeNamespace<?>>> future =
-			targetModule.fetchChildrenSupporting(TargetDataTypeNamespace.tclass);
+		CompletableFuture<? extends Map<String, ? extends TargetDataTypeNamespace>> future =
+			targetModule.fetchChildrenSupporting(TargetDataTypeNamespace.class);
 		// NOTE: I should expect exactly one namespace...
 		return future.thenCompose(namespaces -> {
 			AsyncFence fence = new AsyncFence();
-			for (TargetDataTypeNamespace<?> ns : namespaces.values()) {
+			for (TargetDataTypeNamespace ns : namespaces.values()) {
 				fence.include(captureDataTypes(ns, monitor));
 			}
 			return fence.ready();
@@ -2502,7 +2474,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Void> captureSymbols(TargetSymbolNamespace<?> namespace,
+	public CompletableFuture<Void> captureSymbols(TargetSymbolNamespace namespace,
 			TaskMonitor monitor) {
 		if (!valid) {
 			return AsyncUtils.NIL;
@@ -2515,7 +2487,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 				TraceNamespaceSymbol ns = createNamespaceIfAbsent(path);
 				monitor.setMessage("Capturing symbols for " + path);
 				monitor.initialize(symbols.size());
-				for (TargetSymbol<?> sym : symbols) {
+				for (TargetSymbol sym : symbols) {
 					if (monitor.isCancelled()) {
 						return;
 					}
@@ -2559,17 +2531,17 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	@Override
 	public CompletableFuture<Void> captureSymbols(TraceModule module, TaskMonitor monitor) {
-		TargetModule<?> targetModule = getTargetModule(module);
+		TargetModule targetModule = getTargetModule(module);
 		if (targetModule == null) {
 			Msg.error(this, "Module " + module + " is not loaded");
 			return AsyncUtils.NIL;
 		}
-		CompletableFuture<? extends Map<String, ? extends TargetSymbolNamespace<?>>> future =
-			targetModule.fetchChildrenSupporting(TargetSymbolNamespace.tclass);
+		CompletableFuture<? extends Map<String, ? extends TargetSymbolNamespace>> future =
+			targetModule.fetchChildrenSupporting(TargetSymbolNamespace.class);
 		// NOTE: I should expect exactly one namespace...
 		return future.thenCompose(namespaces -> {
 			AsyncFence fence = new AsyncFence();
-			for (TargetSymbolNamespace<?> ns : namespaces.values()) {
+			for (TargetSymbolNamespace ns : namespaces.values()) {
 				fence.include(captureSymbols(ns, monitor));
 			}
 			return fence.ready();
@@ -2582,12 +2554,12 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetObjectRef getFocus() {
+	public TargetObject getFocus() {
 		if (curFocus == null) {
 			if (focusScope == null) {
 				return null;
 			}
-			TargetObjectRef focus = focusScope.getFocus();
+			TargetObject focus = focusScope.getFocus();
 			if (focus == null || !PathUtils.isAncestor(target.getPath(), focus.getPath())) {
 				return null;
 			}
@@ -2597,7 +2569,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Boolean> requestFocus(TargetObjectRef focus) {
+	public CompletableFuture<Boolean> requestFocus(TargetObject focus) {
 		if (!isSupportsFocus()) {
 			return CompletableFuture
 					.failedFuture(new IllegalArgumentException("Target does not support focus"));

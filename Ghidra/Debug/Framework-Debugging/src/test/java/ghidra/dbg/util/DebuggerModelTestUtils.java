@@ -21,9 +21,7 @@ import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebugModelConventions.AllRequiredAccess;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 
 public interface DebuggerModelTestUtils extends AsyncTestUtils {
@@ -42,41 +40,41 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 	}
 
 	default void waitAcc(AllRequiredAccess access) throws Throwable {
-		waitOn(access.waitValue(TargetAccessibility.ACCESSIBLE));
+		waitOn(access.waitValue(true));
 	}
 
 	default void cli(TargetObject interpreter, String cmd) throws Throwable {
-		TargetInterpreter<?> as = interpreter.as(TargetInterpreter.tclass);
+		TargetInterpreter as = interpreter.as(TargetInterpreter.class);
 		waitOn(as.execute(cmd));
 	}
 
 	default String captureCli(TargetObject interpreter, String cmd) throws Throwable {
-		TargetInterpreter<?> as = interpreter.as(TargetInterpreter.tclass);
+		TargetInterpreter as = interpreter.as(TargetInterpreter.class);
 		return waitOn(as.executeCapture(cmd));
 	}
 
 	default void launch(TargetObject launcher, Map<String, ?> args) throws Throwable {
-		TargetLauncher<?> as = launcher.as(TargetLauncher.tclass);
+		TargetLauncher as = launcher.as(TargetLauncher.class);
 		waitOn(as.launch(args));
 	}
 
 	default void resume(TargetObject resumable) throws Throwable {
-		TargetResumable<?> as = resumable.as(TargetResumable.tclass);
+		TargetResumable as = resumable.as(TargetResumable.class);
 		waitOn(as.resume());
 	}
 
 	default void step(TargetObject steppable, TargetStepKind kind) throws Throwable {
-		TargetSteppable<?> as = steppable.as(TargetSteppable.tclass);
+		TargetSteppable as = steppable.as(TargetSteppable.class);
 		waitOn(as.step(kind));
 	}
 
-	default TargetObjectRef getFocus(TargetObject scope) {
-		TargetFocusScope<?> as = scope.as(TargetFocusScope.tclass);
+	default TargetObject getFocus(TargetObject scope) {
+		TargetFocusScope as = scope.as(TargetFocusScope.class);
 		return as.getFocus();
 	}
 
-	default void focus(TargetObject scope, TargetObjectRef focus) throws Throwable {
-		TargetFocusScope<?> as = scope.as(TargetFocusScope.tclass);
+	default void focus(TargetObject scope, TargetObject focus) throws Throwable {
+		TargetFocusScope as = scope.as(TargetFocusScope.class);
 		waitOn(as.requestFocus(focus));
 	}
 

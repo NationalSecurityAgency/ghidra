@@ -31,7 +31,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetBreakpointContainer
 		extends DefaultTestTargetObject<TestTargetBreakpoint, TestTargetProcess>
-		implements TargetBreakpointContainer<TestTargetBreakpointContainer> {
+		implements TargetBreakpointContainer {
 
 	protected static final TargetBreakpointKindSet ALL_KINDS =
 		TargetBreakpointKindSet.of(TargetBreakpointKind.values());

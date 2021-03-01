@@ -37,17 +37,8 @@ import ghidra.lifecycle.Experimental;
  */
 @Experimental
 @DebuggerTargetObjectIface("Console")
-public interface TargetConsole<T extends TargetConsole<T>> extends TypedTargetObject<T> {
+public interface TargetConsole extends TargetObject {
 	Charset CHARSET = Charset.forName("utf-8");
-
-	enum Private {
-		;
-		private abstract class Cls implements TargetConsole<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetConsole.class;
 
 	/**
 	 * For console output notifications, indicates whether it is normal or error output

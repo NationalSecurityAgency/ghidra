@@ -26,7 +26,6 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
 import ghidra.dbg.error.DebuggerUserException;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.AnnotatedSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -102,11 +101,11 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 			}
 			case RUNNING: {
 				session.invalidateMemoryAndRegisterCaches();
-				session.setAccessibility(TargetAccessibility.INACCESSIBLE);
+				session.setAccessible(false);
 				break;
 			}
 			case STOPPED: {
-				session.setAccessibility(TargetAccessibility.ACCESSIBLE);
+				session.setAccessible(true);
 				break;
 			}
 			case EXIT: {

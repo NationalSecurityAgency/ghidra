@@ -26,14 +26,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "MemoryRegion", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "MemoryRegion",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetMemoryRegion
 		extends DefaultTargetObject<TargetObject, GdbModelTargetProcessMemory>
-		implements TargetMemoryRegion<GdbModelTargetMemoryRegion> {
+		implements TargetMemoryRegion {
 	protected static final String OBJFILE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "objfile";
 	protected static final String OFFSET_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "offset";
 
@@ -121,7 +124,11 @@ public class GdbModelTargetMemoryRegion
 		return true; // TODO
 	}
 
-	@TargetAttributeType(name = OBJFILE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = OBJFILE_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	public String getObjfile() {
 		return objfile;
 	}

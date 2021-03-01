@@ -28,11 +28,11 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 
 @DebuggerBotInfo( //
-		description = "Show debugger interpreters", //
-		details = "Listens for new debuggers supporting the interpreter interface," +
-			" and when found, displays that interpeter.", //
-		help = @HelpInfo(anchor = "show_interpreter"), //
-		enabledByDefault = true //
+	description = "Show debugger interpreters", //
+	details = "Listens for new debuggers supporting the interpreter interface," +
+		" and when found, displays that interpeter.", //
+	help = @HelpInfo(anchor = "show_interpreter"), //
+	enabledByDefault = true //
 )
 public class ShowInterpreterDebuggerBot implements DebuggerBot {
 	private DebuggerWorkflowServicePlugin plugin;
@@ -57,8 +57,8 @@ public class ShowInterpreterDebuggerBot implements DebuggerBot {
 	@Override
 	public void modelAdded(DebuggerObjectModel model) {
 		model.fetchModelRoot().thenCompose(root -> {
-			CompletableFuture<? extends TargetInterpreter<?>> fi =
-				DebugModelConventions.findSuitable(TargetInterpreter.tclass, root);
+			CompletableFuture<? extends TargetInterpreter> fi =
+				DebugModelConventions.findSuitable(TargetInterpreter.class, root);
 			return fi;
 		}).thenAccept(interpreter -> {
 			if (interpreter == null) {

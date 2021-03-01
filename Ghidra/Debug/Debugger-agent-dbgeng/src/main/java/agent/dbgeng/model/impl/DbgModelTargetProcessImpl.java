@@ -28,22 +28,38 @@ import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Process", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Debug", type = DbgModelTargetDebugContainerImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Memory", type = DbgModelTargetMemoryContainerImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Modules", type = DbgModelTargetModuleContainerImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Threads", type = DbgModelTargetThreadContainerImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Process",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(
+			name = "Debug",
+			type = DbgModelTargetDebugContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Memory",
+			type = DbgModelTargetMemoryContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Modules",
+			type = DbgModelTargetModuleContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Threads",
+			type = DbgModelTargetThreadContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
+	})
 public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcess {
 
@@ -113,7 +129,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void processSelected(DbgProcess eventProcess, DbgCause cause) {
 		if (eventProcess.equals(process)) {
-			AtomicReference<DbgModelTargetFocusScope<?>> scope = new AtomicReference<>();
+			AtomicReference<DbgModelTargetFocusScope> scope = new AtomicReference<>();
 			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 				DebugModelConventions.findSuitable(DbgModelTargetFocusScope.class, this)
 						.handle(seq::next);
@@ -146,25 +162,16 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> attach(TypedTargetObjectRef<? extends TargetAttachable<?>> ref) {
-		getModel().assertMine(TargetObjectRef.class, ref);
+	public CompletableFuture<Void> attach(TargetAttachable attachable) {
+		getModel().assertMine(TargetObject.class, attachable);
 		// NOTE: Get the object and type check it myself.
 		// The typed ref could have been unsafely cast
-		List<String> tPath = ref.getPath();
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getModel().fetchModelObject(tPath).handle(seq::next);
-		}, TypeSpec.cls(TargetObject.class)).then((obj, seq) -> {
-			TargetAttachable<?> attachable =
-				DebuggerObjectModel.requireIface(TargetAttachable.class, obj, tPath);
-			process.reattach(attachable);
-		}).finish();
+		return process.reattach(attachable).thenApply(set -> null);
 	}
 
 	@Override
 	public CompletableFuture<Void> attach(long pid) {
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			process.attach(pid).handle(seq::nextIgnore);
-		}).finish();
+		return process.attach(pid).thenApply(set -> null);
 	}
 
 	@Override
@@ -218,7 +225,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void onExit() {
 		super.onExit();
-		DbgModelTargetProcessContainer processes = (DbgModelTargetProcessContainer) getImplParent();
+		DbgModelTargetProcessContainer processes = (DbgModelTargetProcessContainer) getParent();
 		processes.processRemoved(process.getId(), DbgCause.Causes.UNCLAIMED);
 	}
 
@@ -244,8 +251,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public TargetAccessibility getAccessibility() {
-		return accessibility;
+	public boolean isAccessible() {
+		return accessible;
 	}
-
 }

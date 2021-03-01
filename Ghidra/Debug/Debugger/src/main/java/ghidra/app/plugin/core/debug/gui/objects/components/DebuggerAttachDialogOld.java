@@ -34,7 +34,7 @@ import ghidra.util.Msg;
 
 public class DebuggerAttachDialogOld extends DialogComponentProvider {
 	protected DebuggerObjectsProvider provider;
-	protected TargetAttacher<?> attacher;
+	protected TargetAttacher attacher;
 
 	protected JTextField pidField;
 
@@ -89,7 +89,7 @@ public class DebuggerAttachDialogOld extends DialogComponentProvider {
 		});
 	}
 
-	public void setLauncher(TargetAttacher<?> attacher) {
+	public void setLauncher(TargetAttacher attacher) {
 		this.attacher = attacher;
 	}
 

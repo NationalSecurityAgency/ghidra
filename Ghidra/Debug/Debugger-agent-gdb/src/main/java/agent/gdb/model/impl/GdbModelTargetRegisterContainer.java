@@ -29,12 +29,15 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "RegisterContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "RegisterContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetRegisterContainer
 		extends DefaultTargetObject<GdbModelTargetRegister, GdbModelTargetInferior>
-		implements TargetRegisterContainer<GdbModelTargetRegisterContainer> {
+		implements TargetRegisterContainer {
 	public static final String NAME = "Registers";
 
 	protected final GdbModelImpl impl;

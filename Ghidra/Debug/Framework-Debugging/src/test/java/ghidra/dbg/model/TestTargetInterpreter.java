@@ -23,7 +23,7 @@ import ghidra.dbg.target.TargetInterpreter;
 
 public class TestTargetInterpreter
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetSession>
-		implements TargetInterpreter<TestTargetInterpreter> {
+		implements TargetInterpreter {
 
 	public class ExecuteCall<T> extends CompletableFuture<T> {
 		public final String cmd;

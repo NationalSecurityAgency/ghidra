@@ -17,7 +17,6 @@ package ghidra.dbg.gadp.client;
 
 import ghidra.dbg.target.TargetThread;
 
-public interface GadpClientTargetThread
-		extends GadpClientTargetObject, TargetThread<GadpClientTargetThread> {
+public interface GadpClientTargetThread extends GadpClientTargetObject, TargetThread {
 	// Nothing to add
 }

@@ -20,10 +20,8 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.Map;
 
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -41,14 +39,13 @@ public interface AllTargetObjectListenerAdapter
 		TargetExecutionStateListener, TargetFocusScopeListener, TargetInterpreterListener,
 		TargetMemoryListener, TargetRegisterBankListener {
 	@Override
-	default void accessibilityChanged(TargetAccessConditioned<?> object,
-			TargetAccessibility accessibility) {
+	default void accessibilityChanged(TargetAccessConditioned object, boolean accessible) {
 		//fail();
 	}
 
 	@Override
 	default void elementsChanged(TargetObject parent, Collection<String> removed,
-			Map<String, ? extends TargetObjectRef> added) {
+			Map<String, ? extends TargetObject> added) {
 		//fail();
 	}
 
@@ -69,34 +66,34 @@ public interface AllTargetObjectListenerAdapter
 	}
 
 	@Override
-	default void executionStateChanged(TargetExecutionStateful<?> object,
+	default void executionStateChanged(TargetExecutionStateful object,
 			TargetExecutionState state) {
 		//fail();
 	}
 
 	@Override
-	default void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+	default void focusChanged(TargetFocusScope object, TargetObject focused) {
 		//fail();
 	}
 
 	@Override
-	default void memoryUpdated(TargetMemory<?> memory, Address address, byte[] data) {
+	default void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
 		//fail();
 	}
 
 	@Override
-	default void memoryReadError(TargetMemory<?> memory, AddressRange range,
+	default void memoryReadError(TargetMemory memory, AddressRange range,
 			DebuggerMemoryAccessException e) {
 		fail();
 	}
 
 	@Override
-	default void promptChanged(TargetInterpreter<?> interpreter, String prompt) {
+	default void promptChanged(TargetInterpreter interpreter, String prompt) {
 		//fail();
 	}
 
 	@Override
-	default void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
+	default void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
 		//fail();
 	}
 }

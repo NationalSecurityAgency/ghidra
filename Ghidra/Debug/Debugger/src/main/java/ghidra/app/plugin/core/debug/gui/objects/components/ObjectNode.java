@@ -136,7 +136,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	public Icon getIcon(boolean expanded) {
 		TargetObject targetObject = container.getTargetObject();
 		if (targetObject instanceof TargetExecutionStateful) {
-			TargetExecutionStateful<?> stateful = (TargetExecutionStateful<?>) targetObject;
+			TargetExecutionStateful stateful = (TargetExecutionStateful) targetObject;
 			if (stateful.getExecutionState().equals(TargetExecutionState.RUNNING)) {
 				return ICON_RUNNING;
 			}

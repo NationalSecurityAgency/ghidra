@@ -18,6 +18,6 @@ package ghidra.dbg.gadp.client;
 import ghidra.dbg.target.TargetSymbolNamespace;
 
 public interface GadpClientTargetSymbolNamespace
-		extends GadpClientTargetObject, TargetSymbolNamespace<GadpClientTargetSymbolNamespace> {
+		extends GadpClientTargetObject, TargetSymbolNamespace {
 	// Nothing to add
 }

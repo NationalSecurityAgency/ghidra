@@ -29,13 +29,13 @@ public class GdbTargetTraceMapper extends AbstractDebuggerTargetTraceMapper {
 	}
 
 	@Override
-	protected DebuggerMemoryMapper createMemoryMapper(TargetMemory<?> memory) {
+	protected DebuggerMemoryMapper createMemoryMapper(TargetMemory memory) {
 		return new DefaultDebuggerMemoryMapper(language, memory.getModel());
 	}
 
 	@Override
 	protected DebuggerRegisterMapper createRegisterMapper(
-			TargetRegisterContainer<?> registers) {
+			TargetRegisterContainer registers) {
 		return new DefaultDebuggerRegisterMapper(cSpec, registers, false);
 	}
 }

@@ -35,14 +35,14 @@ public class GdbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
 	protected static class GdbArmLELinuxOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbArmLELinuxOffer(TargetProcess<?> process) {
+		public GdbArmLELinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux arm", LANG_ID_ARM_LE_V8, COMP_ID_DEFAULT,
 				Set.of("cpsr"));
 		}
 	}
 
 	protected static class GdbAArch64LELinuxOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbAArch64LELinuxOffer(TargetProcess<?> process) {
+		public GdbAArch64LELinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux aarch64", LANG_ID_AARCH64_LE_V8A, COMP_ID_DEFAULT,
 				Set.of("cpsr"));
 		}
@@ -50,17 +50,17 @@ public class GdbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	@Override
 	public CompletableFuture<Set<DebuggerMappingOffer>> getOffers(TargetObject target) {
-		if (!(target instanceof TargetProcess<?>)) {
+		if (!(target instanceof TargetProcess)) {
 			return CompletableFuture.completedFuture(Set.of());
 		}
-		TargetProcess<?> process = (TargetProcess<?>) target;
-		CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.tclass, target);
+		TargetProcess process = (TargetProcess) target;
+		CompletableFuture<? extends TargetEnvironment> futureEnv =
+			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
 		return futureEnv.thenApply(env -> offersForEnv(env, process));
 	}
 
-	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment<?> env,
-			TargetProcess<?> process) {
+	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env,
+			TargetProcess process) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}

@@ -26,8 +26,6 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSetBreakpointAction;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
 import ghidra.dbg.target.TargetBreakpointContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.util.MessageType;
@@ -36,7 +34,7 @@ import ghidra.util.layout.PairLayout;
 
 public class DebuggerBreakpointDialog extends DialogComponentProvider {
 	protected DebuggerObjectsProvider provider;
-	protected TargetBreakpointContainer<?> container;
+	protected TargetBreakpointContainer container;
 
 	protected JTextField expressionField;
 
@@ -78,20 +76,18 @@ public class DebuggerBreakpointDialog extends DialogComponentProvider {
 	protected void addBreakpoint(ActionEvent evt) {
 		String expression = expressionField.getText();
 
-		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			setStatusText("Adding");
-			Set<TargetBreakpointKind> kinds = new HashSet<>();
-			kinds.add(TargetBreakpointKind.SOFTWARE);
-			container.placeBreakpoint(expression, kinds);
-			close();
-		}).finish().exceptionally(e -> {
+		setStatusText("Adding");
+		Set<TargetBreakpointKind> kinds = new HashSet<>();
+		kinds.add(TargetBreakpointKind.SOFTWARE);
+		container.placeBreakpoint(expression, kinds).exceptionally(e -> {
 			Msg.showError(this, getComponent(), "Could not set breakpoint", e);
 			setStatusText("Could not set breakpoint: " + e.getMessage(), MessageType.ERROR);
 			return null;
 		});
+		close();
 	}
 
-	public void setContainer(TargetBreakpointContainer<?> container) {
+	public void setContainer(TargetBreakpointContainer container) {
 		this.container = container;
 	}
 

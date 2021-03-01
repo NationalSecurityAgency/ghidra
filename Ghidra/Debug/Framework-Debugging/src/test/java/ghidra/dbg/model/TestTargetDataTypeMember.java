@@ -22,8 +22,8 @@ import ghidra.dbg.attributes.TargetDataType;
 import ghidra.dbg.target.TargetDataTypeMember;
 
 public class TestTargetDataTypeMember
-		extends DefaultTestTargetObject<TestTargetObject, TestTargetNamedDataType<?, ?>>
-		implements TargetDataTypeMember<TestTargetDataTypeMember> {
+		extends DefaultTestTargetObject<TestTargetObject, TestTargetNamedDataType<?>>
+		implements TargetDataTypeMember {
 
 	public TestTargetDataTypeMember(TestTargetTypedefDataType parent, String key, int position,
 			long offset,

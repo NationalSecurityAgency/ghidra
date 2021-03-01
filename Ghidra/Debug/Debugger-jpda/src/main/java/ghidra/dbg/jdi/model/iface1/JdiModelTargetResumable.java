@@ -27,8 +27,7 @@ import ghidra.dbg.target.TargetResumable;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetResumable<T extends TargetResumable<T>>
-		extends JdiModelTargetObject, TargetResumable<T> {
+public interface JdiModelTargetResumable extends JdiModelTargetObject, TargetResumable {
 
 	@Override
 	public CompletableFuture<Void> resume();

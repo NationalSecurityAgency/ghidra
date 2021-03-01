@@ -24,16 +24,7 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
  * A target that can be interrupted
  */
 @DebuggerTargetObjectIface("Interruptible")
-public interface TargetInterruptible<T extends TargetInterruptible<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetInterruptible<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetInterruptible.class;
+public interface TargetInterruptible extends TargetObject {
 
 	/**
 	 * Interrupt the target object

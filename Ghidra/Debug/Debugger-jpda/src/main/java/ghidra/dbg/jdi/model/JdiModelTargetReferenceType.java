@@ -27,14 +27,16 @@ import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 
-@TargetObjectSchemaInfo(name = "ReferenceType", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
-	@TargetAttributeType(type = Object.class) //
-})
-public class JdiModelTargetReferenceType extends JdiModelTargetType implements //
-		TargetModule<JdiModelTargetReferenceType> {
+@TargetObjectSchemaInfo(
+	name = "ReferenceType",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
+		@TargetAttributeType(type = Object.class)
+	})
+public class JdiModelTargetReferenceType extends JdiModelTargetType implements TargetModule {
 
 	protected final ReferenceType reftype;
 	private long maxInstances = 100;

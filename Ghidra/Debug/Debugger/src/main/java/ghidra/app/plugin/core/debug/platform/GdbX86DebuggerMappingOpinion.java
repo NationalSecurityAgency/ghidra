@@ -32,7 +32,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	protected static class GdbI386X86_64RegisterMapper extends DefaultDebuggerRegisterMapper {
 		public GdbI386X86_64RegisterMapper(CompilerSpec cSpec,
-				TargetRegisterContainer<?> targetRegContainer) {
+				TargetRegisterContainer targetRegContainer) {
 			super(cSpec, targetRegContainer, false);
 		}
 
@@ -47,7 +47,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	protected static class GdbI386LinuxOffer extends AbstractDebuggerMappingOffer {
-		public GdbI386LinuxOffer(TargetProcess<?> process) {
+		public GdbI386LinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux i386", LANG_ID_X86, COMP_ID_GCC, Set.of());
 		}
 
@@ -63,14 +63,14 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	protected static class GdbI386WindowsOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbI386WindowsOffer(TargetProcess<?> process) {
+		public GdbI386WindowsOffer(TargetProcess process) {
 			super(process, 100, "GDB on Cygwin/MSYS (Windows) i386", LANG_ID_X86, COMP_ID_VS,
 				Set.of());
 		}
 	}
 
 	protected static class GdbI386X86_64LinuxOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbI386X86_64LinuxOffer(TargetProcess<?> process) {
+		public GdbI386X86_64LinuxOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux x86_64", LANG_ID_X86_64, COMP_ID_GCC, Set.of());
 		}
 
@@ -80,7 +80,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 				return new GdbTargetTraceMapper(target, langID, csID, extraRegNames) {
 					@Override
 					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer<?> registers) {
+							TargetRegisterContainer registers) {
 						return new GdbI386X86_64RegisterMapper(cSpec, registers);
 					}
 				};
@@ -92,7 +92,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	protected static class GdbI386X86_64WindowsOffer extends AbstractGdbDebuggerMappingOffer {
-		public GdbI386X86_64WindowsOffer(TargetProcess<?> process) {
+		public GdbI386X86_64WindowsOffer(TargetProcess process) {
 			super(process, 100, "GDB on Cygwin/MSYS2 (Windows) x64", LANG_ID_X86_64, COMP_ID_VS,
 				Set.of());
 		}
@@ -103,7 +103,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 				return new GdbTargetTraceMapper(target, langID, csID, extraRegNames) {
 					@Override
 					protected DebuggerRegisterMapper createRegisterMapper(
-							TargetRegisterContainer<?> registers) {
+							TargetRegisterContainer registers) {
 						return new GdbI386X86_64RegisterMapper(cSpec, registers);
 					}
 				};
@@ -116,17 +116,17 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	@Override
 	public CompletableFuture<Set<DebuggerMappingOffer>> getOffers(TargetObject target) {
-		if (!(target instanceof TargetProcess<?>)) {
+		if (!(target instanceof TargetProcess)) {
 			return CompletableFuture.completedFuture(Set.of());
 		}
-		TargetProcess<?> process = (TargetProcess<?>) target;
-		CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.tclass, target);
+		TargetProcess process = (TargetProcess) target;
+		CompletableFuture<? extends TargetEnvironment> futureEnv =
+			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
 		return futureEnv.thenApply(env -> offersForEnv(env, process));
 	}
 
-	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment<?> env,
-			TargetProcess<?> process) {
+	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env,
+			TargetProcess process) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}

@@ -55,20 +55,20 @@ public abstract class AbstractDebuggerTargetTraceMapper implements DebuggerTarge
 	 * @param memory the target memory
 	 * @return the mapper
 	 */
-	protected abstract DebuggerMemoryMapper createMemoryMapper(TargetMemory<?> memory);
+	protected abstract DebuggerMemoryMapper createMemoryMapper(TargetMemory memory);
 
 	protected abstract DebuggerRegisterMapper createRegisterMapper(
-			TargetRegisterContainer<?> registers);
+			TargetRegisterContainer registers);
 
 	// TODO: Make this synchronous, or remove it
-	public CompletableFuture<DebuggerMemoryMapper> offerMemory(TargetMemory<?> memory) {
+	public CompletableFuture<DebuggerMemoryMapper> offerMemory(TargetMemory memory) {
 		DebuggerMemoryMapper mm = createMemoryMapper(memory);
 		return CompletableFuture.completedFuture(mm);
 	}
 
 	// TODO: Make this synchronous, or remove it
 	public CompletableFuture<DebuggerRegisterMapper> offerRegisters(
-			TargetRegisterContainer<?> registers) {
+			TargetRegisterContainer registers) {
 		DebuggerRegisterMapper rm = createRegisterMapper(registers);
 		return CompletableFuture.completedFuture(rm);
 	}

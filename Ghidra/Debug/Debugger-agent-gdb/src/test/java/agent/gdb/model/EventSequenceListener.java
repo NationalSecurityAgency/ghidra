@@ -17,7 +17,6 @@ package agent.gdb.model;
 
 import java.util.*;
 
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.target.TargetEventScope;
 import ghidra.dbg.target.TargetEventScope.TargetEventScopeListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
@@ -25,14 +24,13 @@ import ghidra.dbg.target.TargetThread;
 
 public class EventSequenceListener implements TargetEventScopeListener {
 	public static class EventRecord {
-		public final TargetEventScope<?> object;
-		public final TypedTargetObjectRef<? extends TargetThread<?>> eventThread;
+		public final TargetEventScope object;
+		public final TargetThread eventThread;
 		public final TargetEventType type;
 		public final String description;
 		public final List<Object> parameters;
 
-		public EventRecord(TargetEventScope<?> object,
-				TypedTargetObjectRef<? extends TargetThread<?>> eventThread, TargetEventType type,
+		public EventRecord(TargetEventScope object, TargetThread eventThread, TargetEventType type,
 				String description, List<Object> parameters) {
 			this.object = object;
 			this.eventThread = eventThread;
@@ -80,8 +78,7 @@ public class EventSequenceListener implements TargetEventScopeListener {
 	public final List<EventRecord> events = new ArrayList<>();
 
 	@Override
-	public void event(TargetEventScope<?> object,
-			TypedTargetObjectRef<? extends TargetThread<?>> eventThread, TargetEventType type,
+	public void event(TargetEventScope object, TargetThread eventThread, TargetEventType type,
 			String description, List<Object> parameters) {
 		events.add(new EventRecord(object, eventThread, type, description, parameters));
 	}

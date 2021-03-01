@@ -23,7 +23,6 @@ import ghidra.dbg.target.TargetMethod;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetMethod<T extends TargetMethod<T>>
-		extends JdiModelTargetObject, TargetMethod<T> {
+public interface JdiModelTargetMethod extends JdiModelTargetObject, TargetMethod {
 
 }

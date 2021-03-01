@@ -38,8 +38,8 @@ public class DebugModelConventionsTest {
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TargetBreakpointContainer<?> bpts = DebugModelConventions
-				.findSuitable(TargetBreakpointContainer.tclass, mb.testProcess1)
+		TargetBreakpointContainer bpts = DebugModelConventions
+				.findSuitable(TargetBreakpointContainer.class, mb.testProcess1)
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		assertEquals(mb.testProcess1.breaks, bpts);
 	}
@@ -49,8 +49,8 @@ public class DebugModelConventionsTest {
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TargetBreakpointContainer<?> bpts = DebugModelConventions
-				.findSuitable(TargetBreakpointContainer.tclass, mb.testProcess1.threads)
+		TargetBreakpointContainer bpts = DebugModelConventions
+				.findSuitable(TargetBreakpointContainer.class, mb.testProcess1.threads)
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		assertEquals(mb.testProcess1.breaks, bpts);
 	}
@@ -60,8 +60,8 @@ public class DebugModelConventionsTest {
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TargetEnvironment<?> env = DebugModelConventions
-				.findSuitable(TargetEnvironment.tclass, mb.testProcess1)
+		TargetEnvironment env = DebugModelConventions
+				.findSuitable(TargetEnvironment.class, mb.testProcess1)
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		assertEquals(mb.testModel.session.environment, env);
 	}
@@ -71,8 +71,8 @@ public class DebugModelConventionsTest {
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TargetFocusScope<?> scope = DebugModelConventions
-				.findSuitable(TargetFocusScope.tclass, mb.testThread1)
+		TargetFocusScope scope = DebugModelConventions
+				.findSuitable(TargetFocusScope.class, mb.testThread1)
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		assertEquals(mb.testModel.session, scope);
 	}

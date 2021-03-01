@@ -15,8 +15,7 @@
  */
 package ghidra.dbg.error;
 
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 
 /**
@@ -38,7 +37,7 @@ public class DebuggerModelAccessException extends DebuggerRuntimeException {
 		super(message);
 	}
 
-	public DebuggerModelAccessException(TargetObjectRef ref) {
-		super("Model path " + PathUtils.toString(ref.getPath()) + " is not accessible");
+	public DebuggerModelAccessException(TargetObject object) {
+		super("Model path " + PathUtils.toString(object.getPath()) + " is not accessible");
 	}
 }

@@ -18,8 +18,7 @@ package agent.dbgeng.model.iface2;
 import ghidra.dbg.target.TargetSection;
 import ghidra.program.model.address.AddressRange;
 
-public interface DbgModelTargetModuleSection
-		extends DbgModelTargetObject, TargetSection<DbgModelTargetModuleSection> {
+public interface DbgModelTargetModuleSection extends DbgModelTargetObject, TargetSection {
 
 	@Override
 	public AddressRange getRange();

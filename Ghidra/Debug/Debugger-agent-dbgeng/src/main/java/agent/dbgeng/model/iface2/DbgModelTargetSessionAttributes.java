@@ -20,7 +20,7 @@ import agent.dbgeng.model.iface1.DbgModelTargetEnvironment;
 
 public interface DbgModelTargetSessionAttributes extends
 		//DbgModelTargetObject,
-		DbgModelTargetEnvironment<DbgModelTargetSessionAttributes>, //
+		DbgModelTargetEnvironment, //
 		DbgEventsListenerAdapter {
 
 }

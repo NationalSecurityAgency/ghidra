@@ -32,7 +32,6 @@ import agent.dbgmodel.jna.dbgmodel.DbgModelNative.TypeKind;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -49,7 +48,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	protected final Map<String, TargetObject> elementsByKey = new WeakValueHashMap<>();
 
 	protected DbgModelSelectableObject focus;
-	public TargetAccessibility accessibility = TargetAccessibility.ACCESSIBLE;
+	public boolean accessible = true;
 
 	private ModelObject modelObject = null;
 	protected Map<String, Object> intrinsics = new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
@@ -214,11 +213,10 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			DelegateDbgModel2TargetObject delegate = (DelegateDbgModel2TargetObject) this;
 			TargetObject proxy = delegate.getProxy();
 			if (proxy instanceof TargetAccessConditioned) {
-				attrs.put(TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME,
-					accessibility == TargetAccessibility.ACCESSIBLE);
+				attrs.put(TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible);
 			}
 			if (proxy instanceof TargetExecutionStateful) {
-				TargetExecutionStateful<?> stateful = (TargetExecutionStateful<?>) proxy;
+				TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
 				TargetExecutionState state = stateful.getExecutionState();
 				attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
 			}
@@ -269,12 +267,12 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
 			}
 			if (proxy instanceof TargetRegister) {
-				DbgModelTargetObject bank = (DbgModelTargetObject) getImplParent();
-				TargetObject container = bank.getImplParent();
+				DbgModelTargetObject bank = (DbgModelTargetObject) getParent();
+				TargetObject container = bank.getParent();
 				attrs.put(TargetRegister.CONTAINER_ATTRIBUTE_NAME, container);
 			}
 			if (proxy instanceof TargetRegisterBank) {
-				attrs.put(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, getImplParent());
+				attrs.put(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, getParent());
 			}
 			if (proxy instanceof TargetStackFrame) {
 				DbgModelTargetStackFrame frame = (DbgModelTargetStackFrame) proxy;
@@ -358,7 +356,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		}
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test.getProxy() instanceof DbgModelTargetSession)) {
-			test = (DbgModelTargetObject) test.getImplParent();
+			test = (DbgModelTargetObject) test.getParent();
 		}
 		return test == null ? null : (DbgModelTargetSession) test.getProxy();
 	}
@@ -367,7 +365,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public DbgModelTargetProcess getParentProcess() {
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test.getProxy() instanceof TargetProcess)) {
-			test = (DbgModelTargetObject) test.getImplParent();
+			test = (DbgModelTargetObject) test.getParent();
 		}
 		return test == null ? null : (DbgModelTargetProcess) test.getProxy();
 	}
@@ -376,7 +374,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public DbgModelTargetThread getParentThread() {
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test.getProxy() instanceof TargetThread)) {
-			test = (DbgModelTargetObject) test.getImplParent();
+			test = (DbgModelTargetObject) test.getParent();
 		}
 		return test == null ? null : (DbgModelTargetThread) test.getProxy();
 	}

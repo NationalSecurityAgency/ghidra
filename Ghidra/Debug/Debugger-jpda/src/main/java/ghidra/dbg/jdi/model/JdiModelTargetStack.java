@@ -26,13 +26,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "Stack", elements = { //
-	@TargetElementType(type = JdiModelTargetStackFrame.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Stack",
+	elements = {
+		@TargetElementType(type = JdiModelTargetStackFrame.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetStack extends JdiModelTargetObjectImpl
-		implements TargetStack<JdiModelTargetStack> {
+		implements TargetStack {
 
 	protected final JdiModelTargetThread thread;
 

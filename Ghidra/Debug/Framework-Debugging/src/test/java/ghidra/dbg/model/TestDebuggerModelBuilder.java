@@ -27,14 +27,14 @@ public class TestDebuggerModelBuilder {
 	public TestTargetProcess testProcess1;
 	public TestTargetThread testThread1;
 	public TestTargetThread testThread2;
-	public AbstractTestTargetRegisterBank<?, ?> testBank1;
-	public AbstractTestTargetRegisterBank<?, ?> testBank2;
+	public AbstractTestTargetRegisterBank<?> testBank1;
+	public AbstractTestTargetRegisterBank<?> testBank2;
 
 	public TestTargetProcess testProcess3;
 	public TestTargetThread testThread3;
 	public TestTargetThread testThread4;
-	public AbstractTestTargetRegisterBank<?, ?> testBank3;
-	public AbstractTestTargetRegisterBank<?, ?> testBank4;
+	public AbstractTestTargetRegisterBank<?> testBank3;
+	public AbstractTestTargetRegisterBank<?> testBank4;
 
 	public TestTargetRegister testRegisterPC;
 	public TestTargetRegister testRegisterSP;
@@ -74,7 +74,7 @@ public class TestDebuggerModelBuilder {
 	 * @param func a function which creates one bank for a given thread
 	 */
 	public void applyThreadRegisterBankConvention(
-			Function<TestTargetThread, AbstractTestTargetRegisterBank<?, ?>> func) {
+			Function<TestTargetThread, AbstractTestTargetRegisterBank<?>> func) {
 		testBank1 = func.apply(testThread1);
 		testBank2 = func.apply(testThread2);
 		testBank3 = func.apply(testThread3);

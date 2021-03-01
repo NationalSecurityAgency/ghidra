@@ -16,14 +16,11 @@
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
+import ghidra.util.Msg;
 
 public class ObjectElementRow {
 
@@ -31,18 +28,14 @@ public class ObjectElementRow {
 	private TargetObject to;
 	private String currentKey;
 
-	public ObjectElementRow(TargetObjectRef ref, DebuggerObjectsProvider provider) {
-		AtomicReference<TargetObject> targetObject = new AtomicReference<>();
-		AtomicReference<Map<String, ?>> attributes = new AtomicReference<>();
-		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			ref.fetch().handle(seq::next);
-		}, targetObject).then(seq -> {
-			to = targetObject.get();
-			to.fetchAttributes(true).handle(seq::next);
-			//to.getAttributes().thenAccept(v -> map = v);
-		}, attributes).then(seq -> {
-			map = attributes.get();
-		}).finish();
+	public ObjectElementRow(TargetObject ref, DebuggerObjectsProvider provider) {
+		this.to = ref;
+		to.fetchAttributes(true).thenAccept(attributes -> {
+			map = attributes;
+		}).exceptionally(ex -> {
+			Msg.error(this, "Failed to fetch attributes");
+			return null;
+		});
 	}
 
 	public void setAttributes(Map<String, ?> attributes) {

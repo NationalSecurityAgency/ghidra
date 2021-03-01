@@ -25,9 +25,12 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 // NB. The canonical container, but of no recognized interface
-@TargetObjectSchemaInfo(name = "RegisterValueContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "RegisterValueContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetStackFrameRegisterContainer
 		extends DefaultTargetObject<GdbModelTargetStackFrameRegister, GdbModelTargetStackFrame> {
 	public static final String NAME = "Registers";

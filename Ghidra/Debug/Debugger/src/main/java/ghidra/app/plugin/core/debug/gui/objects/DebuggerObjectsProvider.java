@@ -47,14 +47,12 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.*;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.target.TargetObject.TargetObjectFetchingListener;
+import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.options.AutoOptions;
@@ -73,7 +71,7 @@ import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
 
 public class DebuggerObjectsProvider extends ComponentProviderAdapter implements //AllTargetObjectListenerAdapter,
-		TargetObjectFetchingListener, //
+		TargetObjectListener, //
 		DebuggerModelListener, //
 		ObjectContainerListener {
 
@@ -113,70 +111,70 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public static final String OPTION_NAME_DEFAULT_BACKGROUND_COLOR = "Object Colors.Background";
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
-			description = "The default foreground color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
+		description = "The default foreground color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
-			description = "The default background color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
+		description = "The default background color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultBackgroundColor = Color.WHITE;
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
-			description = "The foreground color for items normally not visible (toggleable)", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
+		description = "The foreground color for items normally not visible (toggleable)", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color invisibleForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
-			description = "The foreground color for modified items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
+		description = "The foreground color for modified items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color modifiedForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
-			description = "The foreground color for subscribed items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
+		description = "The foreground color for subscribed items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color subscribedForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
-			description = "The foreground color for items in error", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
+		description = "The foreground color for items in error", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color errorForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
-			description = "The foreground color for intrinsic items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
+		description = "The foreground color for intrinsic items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color intrinsicForegroundColor = Color.BLUE;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
-			description = "The foreground color for target object items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
+		description = "The foreground color for target object items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color targetForegroundColor = Color.MAGENTA;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
-			description = "The foreground color for property accessor items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
+		description = "The foreground color for property accessor items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color accessorForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
-			description = "The foreground color for links to items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
+		description = "The foreground color for links to items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color linkForegroundColor = Color.GREEN;
 
 	@AutoOptionDefined( //
-			name = "Default Extended Step", //
-			description = "The default string for the extended step command" //
+		name = "Default Extended Step", //
+		description = "The default string for the extended step command" //
 	//help = @HelpInfo(anchor = "colors") //
 	)
 	String extendedStep = "";
@@ -191,7 +189,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	private ObjectPane pane;
 	protected ObjectContainer root;
 	private Map<String, ObjectContainer> targetMap;
-	private Set<TargetObjectRef> refSet;
+	private Set<TargetObject> refSet;
 
 	public Program currentProgram; // For quick launch
 	protected Map<Long, Trace> traces = new HashMap<>();
@@ -253,7 +251,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		setIcon(asTree ? ObjectTree.ICON_TREE : ObjectTable.ICON_TABLE);
 
 		targetMap = new LinkedMap<String, ObjectContainer>();
-		refSet = new HashSet<TargetObjectRef>();
+		refSet = new HashSet<>();
 		getRoot().propagateProvider(this);
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
@@ -606,8 +604,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		Map<String, Object> map = container.getAttributeMap();
 		List<ObjectAttributeRow> list = new ArrayList<>();
 		for (Object val : map.values()) {
-			if (val instanceof TargetObjectRef) {
-				TargetObjectRef ref = (TargetObjectRef) val;
+			if (val instanceof TargetObject) {
+				TargetObject ref = (TargetObject) val;
 				list.add(new ObjectAttributeRow(ref, container.getProvider()));
 			}
 		}
@@ -618,11 +616,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	private ObjectTable<ObjectElementRow> buildTableFromElements(ObjectContainer container) {
 		TargetObject targetObject = container.getTargetObject();
 		String name = targetObject.getName();
-		Map<String, TargetObjectRef> map = container.getElementMap();
+		Map<String, TargetObject> map = container.getElementMap();
 		List<ObjectElementRow> list = new ArrayList<>();
 		for (Object obj : map.values()) {
-			if (obj instanceof TargetObjectRef) {
-				TargetObjectRef ref = (TargetObjectRef) obj;
+			if (obj instanceof TargetObject) {
+				TargetObject ref = (TargetObject) obj;
 				list.add(new ObjectElementRow(ref, container.getProvider()));
 			}
 		}
@@ -634,17 +632,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		ObjectTable<ObjectElementRow> table =
 			new ObjectTable<ObjectElementRow>(container, ObjectElementRow.class, model);
 		for (Object obj : map.values()) {
-			if (obj instanceof TargetObjectRef) {
-				TargetObjectRef ref = (TargetObjectRef) obj;
-				AtomicReference<TargetObject> to = new AtomicReference<>();
-				AtomicReference<Map<String, ?>> attrs = new AtomicReference<>();
-				AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-					ref.fetch().handle(seq::next);
-				}, to).then(seq -> {
-					to.get().fetchAttributes(true).handle(seq::next);
-				}, attrs).then(seq -> {
+			if (obj instanceof TargetObject) {
+				TargetObject ref = (TargetObject) obj;
+				ref.fetchAttributes(true).thenAccept(attrs -> {
 					table.setColumns();
-				}).finish();
+					// TODO: What with attrs?
+				}).exceptionally(ex -> {
+					Msg.error(this, "Failed to fetch attributes", ex);
+					return null;
+				});
 			}
 		}
 		return table;
@@ -666,7 +662,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			targetMap.put(key, container);
 			refSet.add(targetObject);
 			if (targetObject instanceof TargetInterpreter) {
-				TargetInterpreter<?> interpreter = (TargetInterpreter<?>) targetObject;
+				TargetInterpreter interpreter = (TargetInterpreter) targetObject;
 				getPlugin().showConsole(interpreter);
 				DebugModelConventions.findSuitable(TargetFocusScope.class, targetObject)
 						.thenAccept(f -> {
@@ -727,13 +723,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	static ObjectContainer buildContainerFromObject(TargetObject parent, String key, Object val,
 			boolean usingAttributes) {
 		String xkey = usingAttributes ? key : "[" + key + "]";
-		if (val instanceof TargetObjectRef) {
-			TargetObjectRef ref = (TargetObjectRef) val;
+		if (val instanceof TargetObject) {
+			TargetObject ref = (TargetObject) val;
 			List<String> path = ref.getPath();
 			boolean isLink = PathUtils.isLink(parent.getPath(), xkey, path);
 			boolean isMethod = false;
 			if (ref instanceof TargetObject) {
-				TargetObject to = (TargetObject) ref;
+				TargetObject to = ref;
 				isMethod = to instanceof TargetMethod;
 			}
 			if (!(val instanceof DummyTargetObject) && !isMethod) {
@@ -833,9 +829,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		return result != null;
 	}
 
-	public TargetObjectRef getAncestor(ActionContext context, Class<? extends TargetObject> clazz) {
+	public TargetObject getAncestor(ActionContext context, Class<? extends TargetObject> clazz) {
 		TargetObject object = this.getObjectFromContext(context);
-		TargetObjectRef ref = object;
+		TargetObject ref = object;
 		while (ref != null) {
 			if (clazz.isInstance(ref)) {
 				return ref;
@@ -846,7 +842,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	public boolean descendsFrom(ActionContext context, Class<? extends TargetObject> clazz) {
-		TargetObjectRef ref = getAncestor(context, clazz);
+		TargetObject ref = getAncestor(context, clazz);
 		return ref != null;
 	}
 
@@ -939,8 +935,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractLaunchAction.ICON)
 			.helpLocation(AbstractLaunchAction.help(plugin))
-			.enabledWhen(ctx -> isInstance(ctx, TargetLauncher.tclass))
-			.popupWhen(ctx -> isInstance(ctx, TargetLauncher.tclass))
+			.enabledWhen(ctx -> isInstance(ctx, TargetLauncher.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetLauncher.class))
 			.onAction(ctx -> performLaunch(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -955,7 +951,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractAttachAction.ICON)
 			.helpLocation(AbstractAttachAction.help(plugin))
-			.enabledWhen(ctx -> isInstance(ctx, TargetAttachable.tclass))
+			.enabledWhen(ctx -> isInstance(ctx, TargetAttachable.class))
 			.onAction(ctx -> performAttach(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
@@ -968,7 +964,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.menuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.menuIcon(AbstractDetachAction.ICON)
 			.helpLocation(AbstractAttachAction.help(plugin))
-			.enabledWhen(ctx -> isInstance(ctx, TargetAttachable.tclass) && isStopped(ctx))
+			.enabledWhen(ctx -> isInstance(ctx, TargetAttachable.class) && isStopped(ctx))
 			.onAction(ctx -> performReattach(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
@@ -983,8 +979,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuPath("&Attach")
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractAttachAction.ICON)
-			.enabledWhen(ctx -> isInstance(ctx, TargetAttachable.tclass) || isInstance(ctx, TargetAttacher.tclass))
-			.popupWhen(ctx -> isInstance(ctx, TargetAttachable.tclass)  || isInstance(ctx, TargetAttacher.tclass))
+			.enabledWhen(ctx -> isInstance(ctx, TargetAttachable.class) || isInstance(ctx, TargetAttacher.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetAttachable.class)  || isInstance(ctx, TargetAttacher.class))
 			.onAction(ctx -> performAttach(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1001,8 +997,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractDetachAction.ICON)
 			.helpLocation(AbstractDetachAction.help(plugin))
-			.popupWhen(ctx -> isInstance(ctx, TargetDetachable.tclass) && isStopped(ctx))
-			.enabledWhen(ctx -> isInstance(ctx, TargetDetachable.tclass) && isStopped(ctx))
+			.popupWhen(ctx -> isInstance(ctx, TargetDetachable.class) && isStopped(ctx))
+			.enabledWhen(ctx -> isInstance(ctx, TargetDetachable.class) && isStopped(ctx))
 			.onAction(ctx -> performDetach(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1018,8 +1014,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractKillAction.ICON)
 			.helpLocation(AbstractKillAction.help(plugin))
-			.enabledWhen(ctx -> isInstance(ctx, TargetKillable.tclass) && isStopped(ctx))
-			.popupWhen(ctx -> isInstance(ctx, TargetKillable.tclass) && isStopped(ctx))
+			.enabledWhen(ctx -> isInstance(ctx, TargetKillable.class) && isStopped(ctx))
+			.popupWhen(ctx -> isInstance(ctx, TargetKillable.class) && isStopped(ctx))
 			.onAction(ctx -> performKill(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1035,8 +1031,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractRecordAction.ICON)
 			.helpLocation(new HelpLocation(plugin.getName(), "record"))
-			.enabledWhen(ctx -> isInstance(ctx, TargetProcess.tclass))
-			.popupWhen(ctx -> isInstance(ctx, TargetProcess.tclass))
+			.enabledWhen(ctx -> isInstance(ctx, TargetProcess.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetProcess.class))
 			.onAction(ctx -> performStartRecording(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
@@ -1052,9 +1048,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuIcon(AbstractResumeAction.ICON)
 			.helpLocation(AbstractResumeAction.help(plugin))
 			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetResumable.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetResumable.class) && isStopped(ctx))
 			.popupWhen(ctx -> 
-				isInstance(ctx, TargetResumable.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetResumable.class) && isStopped(ctx))
 			.onAction(ctx -> performResume(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1070,9 +1066,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuIcon(AbstractInterruptAction.ICON)
 			.helpLocation(AbstractInterruptAction.help(plugin))
 			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetInterruptible.tclass) && (!isStopped(ctx) || ignoreState))
+				isInstance(ctx, TargetInterruptible.class) && (!isStopped(ctx) || ignoreState))
 			.popupWhen(ctx -> 
-				isInstance(ctx, TargetInterruptible.tclass) && (!isStopped(ctx) || ignoreState))
+				isInstance(ctx, TargetInterruptible.class) && (!isStopped(ctx) || ignoreState))
 			.onAction(ctx -> performInterrupt(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1088,9 +1084,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuIcon(AbstractStepIntoAction.ICON)
 			.helpLocation(AbstractStepIntoAction.help(plugin))
 			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.popupWhen(ctx -> 
-				isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.onAction(ctx -> performStepInto(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1107,9 +1103,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.helpLocation(AbstractStepOverAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
 			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.popupWhen(ctx -> 
-				isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.onAction(ctx -> performStepOver(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1126,9 +1122,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		.helpLocation(AbstractStepFinishAction.help(plugin))
 		//.withContext(ObjectActionContext.class)
 		.enabledWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 		.popupWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 		.onAction(ctx -> performStepFinish(ctx))
 		.enabled(false)
 		.buildAndInstallLocal(this);
@@ -1145,9 +1141,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		.helpLocation(AbstractStepFinishAction.help(plugin))
 		//.withContext(ObjectActionContext.class)
 		.enabledWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 		.popupWhen(ctx -> 
-			isInstance(ctx, TargetSteppable.tclass) && isStopped(ctx))
+			isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 		.onAction(ctx -> performStepLast(ctx))
 		.enabled(false)
 		.buildAndInstallLocal(this);
@@ -1164,9 +1160,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.helpLocation(AbstractSetBreakpointAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
 			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetBreakpointContainer.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetBreakpointContainer.class) && isStopped(ctx))
 			.popupWhen(ctx -> 
-				isInstance(ctx, TargetBreakpointContainer.tclass) && isStopped(ctx))
+				isInstance(ctx, TargetBreakpointContainer.class) && isStopped(ctx))
 			.onAction(ctx -> performSetBreakpoint(ctx))
 			.enabled(false) 
 			.buildAndInstallLocal(this); 
@@ -1182,8 +1178,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.popupMenuIcon(AbstractConsoleAction.ICON)
 			.helpLocation(AbstractConsoleAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
-			.enabledWhen(ctx -> isInstance(ctx, TargetInterpreter.tclass))
-			.popupWhen(ctx -> isInstance(ctx, TargetInterpreter.tclass))
+			.enabledWhen(ctx -> isInstance(ctx, TargetInterpreter.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetInterpreter.class))
 			.onAction(ctx -> initiateConsole(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1283,8 +1279,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			obj = root.getTargetObject();
 		}
 		// TODO: A generic or pluggable way of deriving the launch arguments 
-		CompletableFuture<? extends TargetLauncher<?>> fl =
-			DebugModelConventions.findSuitable(TargetLauncher.tclass, obj);
+		CompletableFuture<? extends TargetLauncher> fl =
+			DebugModelConventions.findSuitable(TargetLauncher.class, obj);
 		fl.thenCompose(launcher -> {
 			return launcher.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
 				currentProgram.getExecutablePath()));
@@ -1299,8 +1295,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		if (obj == null) {
 			obj = root.getTargetObject();
 		}
-		CompletableFuture<? extends TargetLauncher<?>> fl =
-			DebugModelConventions.findSuitable(TargetLauncher.tclass, obj);
+		CompletableFuture<? extends TargetLauncher> fl =
+			DebugModelConventions.findSuitable(TargetLauncher.class, obj);
 		fl.thenCompose(launcher -> {
 			if (currentProgram != null) {
 				// TODO: A generic or pluggable way of deriving the default arguments
@@ -1327,14 +1323,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 
 	public void performAttach(ActionContext context) {
 		TargetObject obj = getObjectFromContext(context);
-		AtomicReference<TargetAttacher<?>> attacher = new AtomicReference<>();
+		AtomicReference<TargetAttacher> attacher = new AtomicReference<>();
 		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 			DebugModelConventions.findSuitable(TargetAttacher.class, obj).handle(seq::next);
 		}, attacher).then(seq -> {
-			TargetAttacher<?> a = attacher.get();
+			TargetAttacher a = attacher.get();
 			attachDialog.setAttacher(a);
 			if (obj instanceof TargetAttachable) {
-				TargetAttachable<?> attachable = (TargetAttachable<?>) obj;
+				TargetAttachable attachable = (TargetAttachable) obj;
 				long pid = attachDialog.getPid(attachable);
 				a.attach(pid);
 			}
@@ -1347,19 +1343,19 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 
 	public void performReattach(ActionContext context) {
 		TargetObject obj = getObjectFromContext(context);
-		if (!(obj instanceof TargetAttachable<?>)) {
+		if (!(obj instanceof TargetAttachable)) {
 			return;
 		}
 		AtomicReference<TargetObject> parent = new AtomicReference<>();
 		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 			DebugModelConventions.findSuitable(TargetAttacher.class, obj).handle(seq::next);
 		}, parent).then(seq -> {
-			TargetAttacher<?> attacher = parent.get().as(TargetAttacher.tclass);
-			attacher.attach((TargetAttachable<?>) obj).handle(seq::nextIgnore);
+			TargetAttacher attacher = parent.get().as(TargetAttacher.class);
+			attacher.attach((TargetAttachable) obj).handle(seq::nextIgnore);
 		}).finish();
 	}
 
-	public CompletableFuture<Void> startRecording(TargetProcess<?> targetObject, boolean prompt) {
+	public CompletableFuture<Void> startRecording(TargetProcess targetObject, boolean prompt) {
 		CompletableFuture<TraceRecorder> future;
 		if (prompt) {
 			future = modelService.recordTargetPromptOffers(targetObject);
@@ -1396,7 +1392,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 					.exceptionally(DebuggerResources.showError(getComponent(), "Couldn't detach"));
 		}
 		else {
-			TargetDetachable<?> detachable = (TargetDetachable<?>) obj;
+			TargetDetachable detachable = (TargetDetachable) obj;
 			detachable.detach();
 		}
 	}
@@ -1409,7 +1405,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't kill"));
 		}
 		else {
-			TargetKillable<?> killable = (TargetKillable<?>) obj;
+			TargetKillable killable = (TargetKillable) obj;
 			killable.kill();
 		}
 	}
@@ -1418,7 +1414,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		TargetObject obj = getObjectFromContext(context);
 		if (!isLocalOnly()) {
 			DebugModelConventions.findSuitable(TargetProcess.class, obj).thenAccept(process -> {
-				TargetProcess<?> valid = DebugModelConventions.liveProcessOrNull(process);
+				TargetProcess valid = DebugModelConventions.liveProcessOrNull(process);
 				if (valid != null) {
 					startRecording(valid, true).exceptionally(ex -> {
 						Msg.showError(this, null, "Record",
@@ -1429,7 +1425,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't record"));
 		}
 		else {
-			TargetProcess<?> valid = DebugModelConventions.liveProcessOrNull(obj);
+			TargetProcess valid = DebugModelConventions.liveProcessOrNull(obj);
 			if (valid != null) {
 				startRecording(valid, true).exceptionally(ex -> {
 					Msg.showError(this, null, "Record",
@@ -1448,7 +1444,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't resume"));
 		}
 		else {
-			TargetResumable<?> resumable = (TargetResumable<?>) obj;
+			TargetResumable resumable = (TargetResumable) obj;
 			resumable.resume();
 		}
 	}
@@ -1464,7 +1460,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 						DebuggerResources.showError(getComponent(), "Couldn't interrupt"));
 		}
 		else {
-			TargetInterruptible<?> interruptible = (TargetInterruptible<?>) obj;
+			TargetInterruptible interruptible = (TargetInterruptible) obj;
 			interruptible.interrupt();
 		}
 	}
@@ -1477,7 +1473,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
 		}
 		else {
-			TargetSteppable<?> steppable = (TargetSteppable<?>) obj;
+			TargetSteppable steppable = (TargetSteppable) obj;
 			steppable.step();
 		}
 	}
@@ -1490,7 +1486,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
 		}
 		else {
-			TargetSteppable<?> steppable = (TargetSteppable<?>) obj;
+			TargetSteppable steppable = (TargetSteppable) obj;
 			steppable.step(TargetStepKind.OVER);
 		}
 	}
@@ -1503,7 +1499,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
 		}
 		else {
-			TargetSteppable<?> steppable = (TargetSteppable<?>) obj;
+			TargetSteppable steppable = (TargetSteppable) obj;
 			steppable.step(TargetStepKind.FINISH);
 		}
 	}
@@ -1516,7 +1512,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
 		}
 		else {
-			TargetSteppable<?> steppable = (TargetSteppable<?>) obj;
+			TargetSteppable steppable = (TargetSteppable) obj;
 			if (extendedStep.equals("")) {
 				steppable.step(TargetStepKind.EXTENDED);
 			}
@@ -1540,7 +1536,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 						DebuggerResources.showError(getComponent(), "Couldn't set breakpoint"));
 		}
 		else {
-			TargetBreakpointContainer<?> container = (TargetBreakpointContainer<?>) obj;
+			TargetBreakpointContainer container = (TargetBreakpointContainer) obj;
 			breakpointDialog.setContainer(container);
 			tool.showDialog(breakpointDialog);
 		}
@@ -1557,7 +1553,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 						DebuggerResources.showError(getComponent(), "Couldn't launch interpreter"));
 		}
 		else {
-			TargetInterpreter<?> interpreter = (TargetInterpreter<?>) obj;
+			TargetInterpreter interpreter = (TargetInterpreter) obj;
 			getPlugin().showConsole(interpreter);
 		}
 	}
@@ -1571,8 +1567,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			return true;
 		}
 		if (isLocalOnly()) {
-			if (object instanceof TargetExecutionStateful<?>) {
-				TargetExecutionStateful<?> stateful = (TargetExecutionStateful<?>) object;
+			if (object instanceof TargetExecutionStateful) {
+				TargetExecutionStateful stateful = (TargetExecutionStateful) object;
 				TargetExecutionState executionState = stateful.getExecutionState();
 				//System.err.println(stateful + ":" + executionState);
 				return !executionState.equals(TargetExecutionState.RUNNING);
@@ -1588,7 +1584,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			// IGNORE
 		}
 		if (result != null) {
-			TargetExecutionStateful<?> stateful = (TargetExecutionStateful<?>) result;
+			TargetExecutionStateful stateful = (TargetExecutionStateful) result;
 			TargetExecutionState executionState = stateful.getExecutionState();
 			return !executionState.equals(TargetExecutionState.RUNNING);
 		}
@@ -1596,15 +1592,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	@Override
-	public void accessibilityChanged(TargetAccessConditioned<?> object,
-			TargetAccessibility accessibility) {
+	public void accessibilityChanged(TargetAccessConditioned object,
+			boolean accessible) {
 		//this.access = accessibility.equals(TargetAccessibility.ACCESSIBLE);
 		plugin.getTool().contextChanged(this);
 	}
 
 	@Override
 	public void consoleOutput(TargetObject console, Channel channel, String out) {
-		//getPlugin().showConsole((TargetInterpreter<?>) console);
+		//getPlugin().showConsole((TargetInterpreter) console);
 		System.err.println("consoleOutput: " + out);
 	}
 
@@ -1617,19 +1613,19 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	@Override
-	public void executionStateChanged(TargetExecutionStateful<?> object,
+	public void executionStateChanged(TargetExecutionStateful object,
 			TargetExecutionState state) {
 		//this.state = state;
 		plugin.getTool().contextChanged(this);
 	}
 
 	@Override
-	public void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+	public void focusChanged(TargetFocusScope object, TargetObject focused) {
 		plugin.setFocus(object, focused);
 		plugin.getTool().contextChanged(this);
 	}
 
-	public void setFocus(TargetFocusScope<?> object, TargetObjectRef focused) {
+	public void setFocus(TargetFocusScope object, TargetObject focused) {
 		if (focused.getModel() != currentModel) {
 			return;
 		}
@@ -1637,34 +1633,34 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	@Override
-	public void memoryUpdated(TargetMemory<?> memory, Address address, byte[] data) {
+	public void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
 		//System.err.println("memoryUpdated");
 	}
 
 	@Override
-	public void memoryReadError(TargetMemory<?> memory, AddressRange range,
+	public void memoryReadError(TargetMemory memory, AddressRange range,
 			DebuggerMemoryAccessException e) {
 		System.err.println("memoryReadError");
 	}
 
 	@Override
-	public void promptChanged(TargetInterpreter<?> interpreter, String prompt) {
+	public void promptChanged(TargetInterpreter interpreter, String prompt) {
 		System.err.println("promptChanged: " + prompt);
 	}
 
 	@Override
-	public void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
-		Map<String, ? extends TargetObjectRef> cachedElements = bank.getCachedElements();
+	public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
+		Map<String, ? extends TargetObject> cachedElements = bank.getCachedElements();
 		for (String key : cachedElements.keySet()) {
-			TargetObjectRef ref = cachedElements.get(key);
+			TargetObject ref = cachedElements.get(key);
 			if (ref instanceof TargetObject) {
-				displayChanged((TargetObject) ref, "registersUpdated");
+				displayChanged(ref, "registersUpdated");
 			}
 		}
 	}
 
 	@Override
-	public void elementsChangedObjects(TargetObject parent, Collection<String> removed,
+	public void elementsChanged(TargetObject parent, Collection<String> removed,
 			Map<String, ? extends TargetObject> added) {
 		//System.err.println("local EC: " + parent);
 		ObjectContainer container = parent == null ? null : getContainerByPath(parent.getPath());
@@ -1685,7 +1681,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	}
 
 	@Override
-	public void attributesChangedObjects(TargetObject parent, Collection<String> removed,
+	public void attributesChanged(TargetObject parent, Collection<String> removed,
 			Map<String, ?> added) {
 		//System.err.println("local AC: " + parent + ":" + removed + ":" + added);
 		ObjectContainer container = parent == null ? null : getContainerByPath(parent.getPath());

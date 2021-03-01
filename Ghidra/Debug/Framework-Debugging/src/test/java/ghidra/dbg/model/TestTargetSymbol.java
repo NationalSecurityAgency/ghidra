@@ -25,7 +25,7 @@ import ghidra.program.model.address.Address;
 
 public class TestTargetSymbol
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetSymbolNamespace>
-		implements TargetSymbol<TestTargetSymbol> {
+		implements TargetSymbol {
 
 	public TestTargetSymbol(TestTargetSymbolNamespace parent, String name, Address address,
 			long size, TargetDataType dataType) {

@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetResumable;
 
-public interface GadpClientTargetResumable
-		extends GadpClientTargetObject, TargetResumable<GadpClientTargetResumable> {
+public interface GadpClientTargetResumable extends GadpClientTargetObject, TargetResumable {
 	@Override
 	default CompletableFuture<Void> resume() {
 		getDelegate().assertValid();

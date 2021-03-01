@@ -22,8 +22,7 @@ import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetRegisterBank;
 
-public interface GadpClientTargetRegisterBank
-		extends GadpClientTargetObject, TargetRegisterBank<GadpClientTargetRegisterBank> {
+public interface GadpClientTargetRegisterBank extends GadpClientTargetObject, TargetRegisterBank {
 
 	@Override
 	default CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(

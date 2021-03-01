@@ -21,15 +21,6 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * An object, usually process, to which the debugger can attach
  */
 @DebuggerTargetObjectIface("Attachable")
-public interface TargetAttachable<T extends TargetAttachable<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetAttachable<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetAttachable.class;
-
+public interface TargetAttachable extends TargetObject {
 	// These are fairly opaque
 }

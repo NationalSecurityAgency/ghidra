@@ -22,17 +22,20 @@ import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.DbgStackFrame;
 import agent.dbgeng.model.iface2.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "Stack", elements = { //
-	@TargetElementType(type = DbgModelTargetStackFrameImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Stack",
+	elements = {
+		@TargetElementType(type = DbgModelTargetStackFrameImpl.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetStack {
 
@@ -84,12 +87,12 @@ public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 	public void onRunning() {
 		// NB: We don't want to do this apparently
 		//invalidateRegisterCaches();
-		setAccessibility(TargetAccessibility.INACCESSIBLE);
+		setAccessible(false);
 	}
 
 	@Override
 	public void onStopped() {
-		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		setAccessible(true);
 		if (thread.getThread().getId().equals(getManager().getEventThread().getId())) {
 			update();
 		}
@@ -101,6 +104,7 @@ public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 	 * GDB doesn't produce stack change events, but they should only ever happen by running a
 	 * target. Thus, every time we're STOPPED, this method should be called.
 	 */
+	@Override
 	public void update() {
 		requestElements(true).exceptionally(e -> {
 			Msg.error(this, "Could not update stack " + this + " on STOPPED");

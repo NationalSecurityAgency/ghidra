@@ -41,15 +41,7 @@ import ghidra.program.model.address.AddressRange;
  * moment, read and write belong to the memory interface, not the region.
  */
 @DebuggerTargetObjectIface("Memory")
-public interface TargetMemory<T extends TargetMemory<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetMemory<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetMemory.class;
+public interface TargetMemory extends TargetObject {
 
 	/**
 	 * Read memory at the given address
@@ -95,7 +87,7 @@ public interface TargetMemory<T extends TargetMemory<T>> extends TypedTargetObje
 	 * @return the collection of child regions
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public default CompletableFuture<? extends Map<String, ? extends TargetMemoryRegion<?>>> getRegions() {
+	public default CompletableFuture<? extends Map<String, ? extends TargetMemoryRegion>> getRegions() {
 		return fetchChildrenSupporting((Class) TargetMemoryRegion.class);
 	}
 
@@ -118,7 +110,7 @@ public interface TargetMemory<T extends TargetMemory<T>> extends TypedTargetObje
 		 * @param address the starting address of the affected range
 		 * @param data the new data for the affected range
 		 */
-		default void memoryUpdated(TargetMemory<?> memory, Address address, byte[] data) {
+		default void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
 		}
 
 		/**
@@ -128,7 +120,7 @@ public interface TargetMemory<T extends TargetMemory<T>> extends TypedTargetObje
 		 * @param range the range for the read which generated the error
 		 * @param e the error
 		 */
-		default void memoryReadError(TargetMemory<?> memory, AddressRange range,
+		default void memoryReadError(TargetMemory memory, AddressRange range,
 				DebuggerMemoryAccessException e) {
 		}
 	}

@@ -19,8 +19,7 @@ import agent.dbgeng.manager.impl.DbgMinimalSymbol;
 import agent.dbgeng.model.impl.DbgModelTargetSymbolImpl;
 import ghidra.dbg.target.TargetSymbolNamespace;
 
-public interface DbgModelTargetSymbolContainer
-		extends DbgModelTargetObject, TargetSymbolNamespace<DbgModelTargetSymbolContainer> {
+public interface DbgModelTargetSymbolContainer extends DbgModelTargetObject, TargetSymbolNamespace {
 
 	public DbgModelTargetSymbolImpl getTargetSymbol(DbgMinimalSymbol symbol);
 

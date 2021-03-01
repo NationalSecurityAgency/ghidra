@@ -17,7 +17,6 @@ package ghidra.dbg.jdi.model.iface1;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetAttachable;
 import ghidra.dbg.target.TargetAttacher;
@@ -29,12 +28,10 @@ import ghidra.dbg.target.TargetAttacher;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetAttacher<T extends TargetAttacher<T>>
-		extends JdiModelTargetObject, TargetAttacher<T> {
+public interface JdiModelTargetAttacher extends JdiModelTargetObject, TargetAttacher {
 
 	@Override
-	public CompletableFuture<Void> attach(
-			TypedTargetObjectRef<? extends TargetAttachable<?>> ref);
+	public CompletableFuture<Void> attach(TargetAttachable attachable);
 
 	@Override
 	public CompletableFuture<Void> attach(long pid);

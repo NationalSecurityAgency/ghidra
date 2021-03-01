@@ -24,7 +24,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetModule
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetModuleContainer>
-		implements TargetModule<TestTargetModule> {
+		implements TargetModule {
 
 	public final TestTargetSectionContainer sections;
 	public final TestTargetSymbolNamespace symbols;

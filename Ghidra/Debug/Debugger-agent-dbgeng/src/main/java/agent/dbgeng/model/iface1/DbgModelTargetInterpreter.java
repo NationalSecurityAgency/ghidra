@@ -27,8 +27,7 @@ import ghidra.dbg.target.TargetInterpreter;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetInterpreter<T extends TargetInterpreter<T>>
-		extends DbgModelTargetObject, TargetInterpreter<T> {
+public interface DbgModelTargetInterpreter extends DbgModelTargetObject, TargetInterpreter {
 
 	@Override
 	public default CompletableFuture<Void> execute(String cmd) {

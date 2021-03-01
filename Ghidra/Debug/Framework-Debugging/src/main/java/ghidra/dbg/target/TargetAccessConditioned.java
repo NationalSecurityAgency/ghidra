@@ -15,12 +15,8 @@
  */
 package ghidra.dbg.target;
 
-import org.apache.commons.lang3.reflect.TypeLiteral;
-
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.util.ValueUtils;
-import ghidra.lifecycle.Internal;
 
 /**
  * A target object which may not be accessible
@@ -33,53 +29,17 @@ import ghidra.lifecycle.Internal;
  * two objects.
  */
 @DebuggerTargetObjectIface("Access")
-public interface TargetAccessConditioned<T extends TargetAccessConditioned<T>>
-		extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetAccessConditioned<Cls> {
-		}
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetAccessConditioned.class;
-
-	TypeLiteral<TargetAccessConditioned<?>> type = new TypeLiteral<>() {};
+public interface TargetAccessConditioned extends TargetObject {
 	String ACCESSIBLE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "accessible";
 
-	/**
-	 * TODO: I'm seriously considering removing this
-	 */
-	public enum TargetAccessibility {
-		ACCESSIBLE, INACCESSIBLE;
-
-		public static TargetAccessibility fromBool(boolean accessible) {
-			return accessible ? TargetAccessibility.ACCESSIBLE : TargetAccessibility.INACCESSIBLE;
-		}
-	}
-
-	@Internal
-	default TargetAccessibility fromObj(Object obj) {
-		if (obj == null) {
-			return TargetAccessibility.ACCESSIBLE;
-		}
-		return TargetAccessibility
-				.fromBool(
-					ValueUtils.expectBoolean(obj, this, ACCESSIBLE_ATTRIBUTE_NAME, true, true));
-	}
-
 	@TargetAttributeType(name = ACCESSIBLE_ATTRIBUTE_NAME, required = true, hidden = true)
-	public default Boolean isAccessible() {
+	public default boolean isAccessible() {
 		return getTypedAttributeNowByName(ACCESSIBLE_ATTRIBUTE_NAME, Boolean.class, true);
 	}
 
-	public default TargetAccessibility getAccessibility() {
-		return fromObj(getCachedAttributes().get(ACCESSIBLE_ATTRIBUTE_NAME));
-	}
-
 	public interface TargetAccessibilityListener extends TargetObjectListener {
-		default void accessibilityChanged(TargetAccessConditioned<?> object,
-				TargetAccessibility accessibility) {
+		default void accessibilityChanged(TargetAccessConditioned object,
+				boolean accessibe) {
 		}
 	}
 }

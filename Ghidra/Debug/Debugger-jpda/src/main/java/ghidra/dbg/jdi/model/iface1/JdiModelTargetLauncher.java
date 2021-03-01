@@ -32,8 +32,7 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetLauncher<T extends TargetLauncher<T>>
-		extends JdiModelTargetObject, TargetLauncher<T> {
+public interface JdiModelTargetLauncher extends JdiModelTargetObject, TargetLauncher {
 
 	static ParameterDescription<Boolean> createBooleanParameter(BooleanArgument arg) {
 		return ParameterDescription.create(Boolean.class, arg.name(), arg.mustSpecify(),

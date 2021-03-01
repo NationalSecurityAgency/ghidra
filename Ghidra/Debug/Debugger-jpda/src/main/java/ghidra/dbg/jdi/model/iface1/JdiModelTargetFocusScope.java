@@ -16,12 +16,8 @@
 package ghidra.dbg.jdi.model.iface1;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetFocusScope;
@@ -35,8 +31,7 @@ import ghidra.dbg.util.PathUtils;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetFocusScope<T extends TargetFocusScope<T>>
-		extends JdiModelTargetObject, TargetFocusScope<T> {
+public interface JdiModelTargetFocusScope extends JdiModelTargetObject, TargetFocusScope {
 
 	@Override
 	public JdiModelSelectableObject getFocus();
@@ -47,40 +42,23 @@ public interface JdiModelTargetFocusScope<T extends TargetFocusScope<T>>
 	// NB: requestFocus request change in active object - propagates down to manager
 	//  (but, of course, may then cause change in state)
 	@Override
-	public default CompletableFuture<Void> requestFocus(TargetObjectRef ref) {
-		getModel().assertMine(TargetObjectRef.class, ref);
-		if (ref.equals(getFocus())) {
+	public default CompletableFuture<Void> requestFocus(TargetObject obj) {
+		getModel().assertMine(TargetObject.class, obj);
+		if (obj.equals(getFocus())) {
 			return CompletableFuture.completedFuture(null);
 		}
-		if (!PathUtils.isAncestor(this.getPath(), ref.getPath())) {
+		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
 		}
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			ref.fetch().handle(seq::next);
-		}, TypeSpec.cls(TargetObject.class)).then((obj, seq) -> {
-			TargetObject cur = obj;
-			while (cur != null) {
-				if (cur instanceof JdiModelSelectableObject) {
-					JdiModelSelectableObject sel = (JdiModelSelectableObject) cur;
-					sel.select().handle(seq::exit);
-					AtomicReference<JdiModelTargetFocusScope<?>> scope = new AtomicReference<>();
-					AsyncUtils.sequence(TypeSpec.VOID).then(seqx -> {
-						DebugModelConventions.findSuitable(JdiModelTargetFocusScope.class, sel)
-								.handle(seqx::next);
-					}, scope).then(seqx -> {
-						scope.get().setFocus(sel);
-					}).finish();
-					break;
-				}
-				if (cur instanceof JdiModelTargetObject) {
-					JdiModelTargetObject def = (JdiModelTargetObject) cur;
-					cur = def.getImplParent();
-					continue;
-				}
-				throw new AssertionError();
+		TargetObject cur = obj;
+		while (cur != null) {
+			if (cur instanceof JdiModelSelectableObject) {
+				JdiModelSelectableObject sel = (JdiModelSelectableObject) cur;
+				setFocus(sel);
+				return sel.select();
 			}
-			seq.exit();
-		}).finish();
+			cur = cur.getParent();
+		}
+		return AsyncUtils.NIL;
 	}
-
 }

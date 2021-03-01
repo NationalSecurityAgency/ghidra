@@ -22,8 +22,7 @@ import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetInterpreter;
 import ghidra.dbg.util.ValueUtils;
 
-public interface GadpClientTargetInterpreter
-		extends GadpClientTargetObject, TargetInterpreter<GadpClientTargetInterpreter> {
+public interface GadpClientTargetInterpreter extends GadpClientTargetObject, TargetInterpreter {
 
 	@Override
 	default CompletableFuture<Void> execute(String cmd) {

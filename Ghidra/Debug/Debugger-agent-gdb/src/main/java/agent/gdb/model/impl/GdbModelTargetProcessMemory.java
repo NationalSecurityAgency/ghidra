@@ -38,12 +38,15 @@ import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "Memory", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Memory",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetProcessMemory
 		extends DefaultTargetObject<GdbModelTargetMemoryRegion, GdbModelTargetInferior>
-		implements TargetMemory<GdbModelTargetProcessMemory> {
+		implements TargetMemory {
 	public static final String NAME = "Memory";
 
 	protected final GdbModelImpl impl;

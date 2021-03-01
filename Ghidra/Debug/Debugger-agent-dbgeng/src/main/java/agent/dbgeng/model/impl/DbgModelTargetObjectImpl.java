@@ -26,7 +26,6 @@ import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibility;
 import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -34,7 +33,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, TargetObject>
 		implements DbgModelTargetObject {
 
-	protected TargetAccessibility accessibility = TargetAccessibility.ACCESSIBLE;
+	protected boolean accessible = true;
 	protected final DbgStateListener accessListener = this::checkExited;
 	private boolean modified;
 
@@ -61,22 +60,21 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 		getManager().removeStateListener(accessListener);
 	}
 
-	public void setAccessibility(TargetAccessibility accessibility) {
+	public void setAccessible(boolean accessible) {
 		synchronized (attributes) {
-			if (this.accessibility == accessibility) {
+			if (this.accessible == accessible) {
 				return;
 			}
-			this.accessibility = accessibility;
+			this.accessible = accessible;
 		}
-		if (this instanceof DbgModelTargetAccessConditioned<?>) {
+		if (this instanceof DbgModelTargetAccessConditioned) {
 			changeAttributes(List.of(), List.of(), Map.of( //
-				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME,
-				accessibility == TargetAccessibility.ACCESSIBLE //
+				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
-			DbgModelTargetAccessConditioned<?> accessConditioned =
-				(DbgModelTargetAccessConditioned<?>) this;
+			DbgModelTargetAccessConditioned accessConditioned =
+				(DbgModelTargetAccessConditioned) this;
 			listeners.fire(TargetAccessibilityListener.class)
-					.accessibilityChanged(accessConditioned, accessibility);
+					.accessibilityChanged(accessConditioned, accessible);
 		}
 	}
 
@@ -86,16 +84,16 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	}
 
 	public void onRunning() {
-		setAccessibility(TargetAccessibility.INACCESSIBLE);
+		setAccessible(false);
 	}
 
 	public void onStopped() {
-		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		setAccessible(true);
 		update();
 	}
 
 	public void onExit() {
-		setAccessibility(TargetAccessibility.ACCESSIBLE);
+		setAccessible(true);
 	}
 
 	protected void update() {
@@ -139,7 +137,7 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 			}
 		}
 		if (this instanceof DbgModelTargetExecutionStateful) {
-			DbgModelTargetExecutionStateful<?> stateful = (DbgModelTargetExecutionStateful<?>) this;
+			DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) this;
 			stateful.setExecutionState(exec, "Refreshed");
 		}
 	}
@@ -153,7 +151,7 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	public DbgModelTargetSession getParentSession() {
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test instanceof DbgModelTargetSession)) {
-			test = (DbgModelTargetObject) test.getImplParent();
+			test = (DbgModelTargetObject) test.getParent();
 		}
 		return test == null ? null : (DbgModelTargetSession) test;
 	}
@@ -162,7 +160,7 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	public DbgModelTargetProcess getParentProcess() {
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test instanceof TargetProcess)) {
-			test = (DbgModelTargetObject) test.getImplParent();
+			test = (DbgModelTargetObject) test.getParent();
 		}
 		return test == null ? null : (DbgModelTargetProcess) test;
 	}
@@ -171,7 +169,7 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	public DbgModelTargetThread getParentThread() {
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test instanceof TargetThread)) {
-			test = (DbgModelTargetObject) test.getImplParent();
+			test = (DbgModelTargetObject) test.getParent();
 		}
 		return test == null ? null : (DbgModelTargetThread) test;
 	}

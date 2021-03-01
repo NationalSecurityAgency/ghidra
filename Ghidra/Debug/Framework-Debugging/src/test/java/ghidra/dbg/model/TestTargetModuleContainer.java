@@ -22,7 +22,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetModuleContainer
 		extends DefaultTestTargetObject<TestTargetModule, TestTargetProcess>
-		implements TargetModuleContainer<TestTargetModuleContainer> {
+		implements TargetModuleContainer {
 
 	public TestTargetModuleContainer(TestTargetProcess parent) {
 		super(parent, "Modules", "ModuleContainer");

@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.objects.components.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.DebuggerModelTestUtils;
@@ -51,12 +50,8 @@ public class DebuggerObjectsPluginScreenShots extends GhidraScreenShotGenerator
 	// A cheap way to control what buttons are enabled
 	static class ActionyTestTargetObject
 			extends DefaultTestTargetObject<TestTargetObject, TestTargetObject>
-			implements TargetInterpreter<ActionyTestTargetObject>,
-			TargetResumable<ActionyTestTargetObject>,
-			TargetSteppable<ActionyTestTargetObject>,
-			TargetLauncher<ActionyTestTargetObject>,
-			TargetAttacher<ActionyTestTargetObject>,
-			TargetAttachable<ActionyTestTargetObject> {
+			implements TargetInterpreter, TargetResumable, TargetSteppable, TargetLauncher,
+			TargetAttacher, TargetAttachable {
 
 		public ActionyTestTargetObject(TestTargetObject parent, String name, String typeHint) {
 			super(parent, name, typeHint);
@@ -68,8 +63,7 @@ public class DebuggerObjectsPluginScreenShots extends GhidraScreenShotGenerator
 		}
 
 		@Override
-		public CompletableFuture<Void> attach(
-				TypedTargetObjectRef<? extends TargetAttachable<?>> ref) {
+		public CompletableFuture<Void> attach(TargetAttachable attachable) {
 			return TODO();
 		}
 

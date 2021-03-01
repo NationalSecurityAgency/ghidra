@@ -23,8 +23,7 @@ import ghidra.dbg.target.TargetAttachable;
  * The targets this launcher creates ought to appear in its successors.
  * 
  */
-public interface JdiModelTargetAttachable
-		extends JdiModelTargetObject, TargetAttachable<JdiModelTargetAttachable> {
+public interface JdiModelTargetAttachable extends JdiModelTargetObject, TargetAttachable {
 
 	public long getId();
 

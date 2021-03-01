@@ -34,13 +34,15 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "BreakpointContainer", attributes = {
-	@TargetAttributeType(type = Void.class)
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "BreakpointContainer",
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class GdbModelTargetBreakpointContainer
 		extends DefaultTargetObject<GdbModelTargetBreakpointSpec, GdbModelTargetSession>
-		implements TargetBreakpointContainer<GdbModelTargetBreakpointContainer>,
-		GdbEventsListenerAdapter {
+		implements TargetBreakpointContainer, GdbEventsListenerAdapter {
 	public static final String NAME = "Breakpoints";
 
 	protected static final TargetBreakpointKindSet SUPPORTED_KINDS =

@@ -25,14 +25,17 @@ import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "Environment", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Environment",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetEnvironment
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferior>
-		implements TargetEnvironment<GdbModelTargetEnvironment> {
+		implements TargetEnvironment {
 	public static final String NAME = "Environment";
 
 	public static final String VISIBLE_ARCH_ATTRIBUTE_NAME = "arch";

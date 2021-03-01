@@ -29,17 +29,9 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * schemas are introduced.
  */
 @DebuggerTargetObjectIface("Process")
-public interface TargetProcess<T extends TargetProcess<T>> extends TypedTargetObject<T> {
-	enum Private {
-		;
-		private abstract class Cls implements TargetProcess<Cls> {
-		}
-	}
+public interface TargetProcess extends TargetObject {
 
 	String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	Class<Private.Cls> tclass = (Class) TargetProcess.class;
 
 	@TargetAttributeType(name = PID_ATTRIBUTE_NAME, hidden = true)
 	public default Long getPid() {

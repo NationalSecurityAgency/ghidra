@@ -26,13 +26,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 
-@TargetObjectSchemaInfo(name = "TargetSectionContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetSection.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "TargetSectionContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetSection.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
-		implements TargetMemory<JdiModelTargetSectionContainer> {
+		implements TargetMemory {
 
 	protected final JdiModelTargetReferenceType reftype;
 

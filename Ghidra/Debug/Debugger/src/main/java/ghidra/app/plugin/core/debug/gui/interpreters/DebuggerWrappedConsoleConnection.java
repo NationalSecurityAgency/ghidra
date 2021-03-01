@@ -20,10 +20,10 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.target.TargetConsole;
 
 public class DebuggerWrappedConsoleConnection
-		extends AbstractDebuggerWrappedConsoleConnection<TargetConsole<?>> {
+		extends AbstractDebuggerWrappedConsoleConnection<TargetConsole> {
 
 	public DebuggerWrappedConsoleConnection(DebuggerInterpreterPlugin plugin,
-			TargetConsole<?> targetConsole) {
+			TargetConsole targetConsole) {
 		super(plugin, targetConsole);
 	}
 

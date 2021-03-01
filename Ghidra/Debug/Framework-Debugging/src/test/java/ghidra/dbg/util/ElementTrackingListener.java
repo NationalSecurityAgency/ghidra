@@ -22,11 +22,10 @@ import org.apache.commons.lang3.reflect.Typed;
 
 import ghidra.async.AsyncReference;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetObject.TargetObjectFetchingListener;
+import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 
-public class ElementTrackingListener<T extends TargetObject>
-		implements TargetObjectFetchingListener {
+public class ElementTrackingListener<T extends TargetObject> implements TargetObjectListener {
 	public final Class<T> valType;
 	public final Map<String, T> elements = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
 	public final AsyncReference<Integer, Void> size = new AsyncReference<>();
@@ -54,7 +53,7 @@ public class ElementTrackingListener<T extends TargetObject>
 	}
 
 	@Override
-	public synchronized void elementsChangedObjects(TargetObject parent, Collection<String> removed,
+	public synchronized void elementsChanged(TargetObject parent, Collection<String> removed,
 			Map<String, ? extends TargetObject> added) {
 		elements.keySet().removeAll(removed);
 		putAll(added);
@@ -73,7 +72,7 @@ public class ElementTrackingListener<T extends TargetObject>
 	}
 
 	@Override
-	public void attributesChangedObjects(TargetObject parent, Collection<String> removed,
+	public void attributesChanged(TargetObject parent, Collection<String> removed,
 			Map<String, ?> added) {
 		// Don't care
 	}

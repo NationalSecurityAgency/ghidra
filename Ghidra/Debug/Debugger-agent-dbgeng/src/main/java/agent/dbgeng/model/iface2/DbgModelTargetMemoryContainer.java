@@ -21,8 +21,7 @@ import agent.dbgeng.manager.DbgModuleMemory;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.program.model.address.Address;
 
-public interface DbgModelTargetMemoryContainer
-		extends DbgModelTargetObject, TargetMemory<DbgModelTargetMemoryContainer> {
+public interface DbgModelTargetMemoryContainer extends DbgModelTargetObject, TargetMemory {
 
 	public DbgModelTargetMemoryRegion getTargetMemory(DbgModuleMemory region);
 

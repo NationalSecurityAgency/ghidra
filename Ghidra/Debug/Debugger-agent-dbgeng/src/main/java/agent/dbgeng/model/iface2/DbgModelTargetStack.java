@@ -19,7 +19,7 @@ import agent.dbgeng.manager.DbgStackFrame;
 import ghidra.dbg.target.TargetStack;
 
 public interface DbgModelTargetStack
-		extends DbgModelTargetObject, TargetStack<DbgModelTargetStack> {
+		extends DbgModelTargetObject, TargetStack {
 
 	public DbgModelTargetStackFrame getTargetFrame(DbgStackFrame frame);
 

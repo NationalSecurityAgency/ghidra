@@ -24,7 +24,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetSection
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetSectionContainer>
-		implements TargetSection<TestTargetSection> {
+		implements TargetSection {
 
 	public TestTargetSection(TestTargetSectionContainer parent, String name,
 			AddressRange range) {
@@ -32,7 +32,7 @@ public class TestTargetSection
 
 		changeAttributes(List.of(), Map.of(
 			RANGE_ATTRIBUTE_NAME, range,
-			MODULE_ATTRIBUTE_NAME, parent.getImplParent() //
+			MODULE_ATTRIBUTE_NAME, parent.getParent() //
 		), "Initialized");
 	}
 }

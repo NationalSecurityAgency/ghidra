@@ -17,8 +17,7 @@ package agent.dbgeng.model.iface2;
 
 import ghidra.dbg.target.TargetAttachable;
 
-public interface DbgModelTargetAvailable
-		extends DbgModelTargetObject, TargetAttachable<DbgModelTargetAvailable> {
+public interface DbgModelTargetAvailable extends DbgModelTargetObject, TargetAttachable {
 
 	public long getPid();
 

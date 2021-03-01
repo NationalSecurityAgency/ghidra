@@ -18,8 +18,7 @@ package agent.dbgeng.model.iface2;
 import agent.dbgeng.manager.impl.DbgRegister;
 import ghidra.dbg.target.TargetRegister;
 
-public interface DbgModelTargetRegister
-		extends DbgModelTargetObject, TargetRegister<DbgModelTargetRegister> {
+public interface DbgModelTargetRegister extends DbgModelTargetObject, TargetRegister {
 
 	@Override
 	public int getBitLength();

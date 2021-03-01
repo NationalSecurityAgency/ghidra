@@ -17,31 +17,26 @@ package ghidra.dbg.gadp.client;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.gadp.protocol.Gadp;
-import ghidra.dbg.target.TargetAttachable;
-import ghidra.dbg.target.TargetAttacher;
+import ghidra.dbg.target.*;
 
-public interface GadpClientTargetAttacher
-		extends GadpClientTargetObject, TargetAttacher<GadpClientTargetAttacher> {
+public interface GadpClientTargetAttacher extends GadpClientTargetObject, TargetAttacher {
 	@Override
-	default CompletableFuture<Void> attach(
-			TypedTargetObjectRef<? extends TargetAttachable<?>> ref) {
+	default CompletableFuture<Void> attach(TargetAttachable attachable) {
 		getDelegate().assertValid();
-		getModel().assertMine(TargetObjectRef.class, ref);
+		getModel().assertMine(TargetObject.class, attachable);
 		return getModel().sendChecked(Gadp.AttachRequest.newBuilder()
 				.setPath(GadpValueUtils.makePath(getPath()))
-				.setTarget(GadpValueUtils.makePath(ref.getPath())),
+				.setTarget(GadpValueUtils.makePath(attachable.getPath())),
 			Gadp.AttachReply.getDefaultInstance()).thenApply(rep -> null);
 	}
 
 	@Override
-	default CompletableFuture<Void> attach(long id) {
+	default CompletableFuture<Void> attach(long pid) {
 		getDelegate().assertValid();
 		return getModel().sendChecked(Gadp.AttachRequest.newBuilder()
 				.setPath(GadpValueUtils.makePath(getPath()))
-				.setPid(id),
+				.setPid(pid),
 			Gadp.AttachReply.getDefaultInstance()).thenApply(rep -> null);
 	}
 }

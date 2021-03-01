@@ -119,7 +119,7 @@ public class ImportFromFactsAction extends ImportExportAsAction {
 					}
 					DummyTargetObject root = null;
 					for (DummyTargetObject to : objMap.values()) {
-						if (to.fetchParent().get() == null) {
+						if (to.getParent() == null) {
 							root = to;
 							break;
 						}

@@ -27,11 +27,8 @@ import ghidra.async.TypeSpec;
 import ghidra.comm.service.AbstractAsyncClientHandler;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.attributes.TypedTargetObjectRef;
 import ghidra.dbg.error.*;
 import ghidra.dbg.gadp.GadpVersion;
-import ghidra.dbg.gadp.client.GadpClientTargetAttachable;
 import ghidra.dbg.gadp.client.GadpValueUtils;
 import ghidra.dbg.gadp.error.GadpErrorException;
 import ghidra.dbg.gadp.protocol.Gadp;
@@ -123,7 +120,7 @@ public class GadpClientHandler
 
 		@Override
 		public void elementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObjectRef> added) {
+				Map<String, ? extends TargetObject> added) {
 			if (!sock.isOpen()) {
 				return;
 			}
@@ -178,10 +175,9 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void breakpointHit(TargetBreakpointContainer<?> container, TargetObjectRef trapped,
-				TypedTargetObjectRef<? extends TargetStackFrame<?>> frame,
-				TypedTargetObjectRef<? extends TargetBreakpointSpec<?>> spec,
-				TypedTargetObjectRef<? extends TargetBreakpointLocation<?>> breakpoint) {
+		public void breakpointHit(TargetBreakpointContainer container, TargetObject trapped,
+				TargetStackFrame frame, TargetBreakpointSpec spec,
+				TargetBreakpointLocation breakpoint) {
 			if (!sock.isOpen()) {
 				return;
 			}
@@ -213,7 +209,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void memoryReadError(TargetMemory<?> memory, AddressRange range,
+		public void memoryReadError(TargetMemory memory, AddressRange range,
 				DebuggerMemoryAccessException e) {
 			if (!sock.isOpen()) {
 				return;
@@ -229,7 +225,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void memoryUpdated(TargetMemory<?> memory, Address address, byte[] data) {
+		public void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
 			if (!sock.isOpen()) {
 				return;
 			}
@@ -244,7 +240,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void registersUpdated(TargetRegisterBank<?> bank, Map<String, byte[]> updates) {
+		public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
 			if (!sock.isOpen()) {
 				return;
 			}
@@ -258,8 +254,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void event(TargetEventScope<?> object,
-				TypedTargetObjectRef<? extends TargetThread<?>> eventThread, TargetEventType type,
+		public void event(TargetEventScope object, TargetThread eventThread, TargetEventType type,
 				String description, List<Object> parameters) {
 			if (!sock.isOpen()) {
 				return;
@@ -456,7 +451,7 @@ public class GadpClientHandler
 				.build());
 	}
 
-	protected <T extends TargetObjectRef> T isObjectValuedAttribute(TargetObject parent,
+	protected <T extends TargetObject> T isObjectValuedAttribute(TargetObject parent,
 			Map.Entry<String, ?> ent, Class<T> cls) {
 		Object val = ent.getValue();
 		if (!cls.isAssignableFrom(val.getClass())) {
@@ -469,8 +464,8 @@ public class GadpClientHandler
 		return ref;
 	}
 
-	protected <T extends TargetObjectRef> CompletableFuture<Integer> sendDelta(
-			List<String> parentPath, Delta<TargetObjectRef, T> deltaE, Delta<?, ?> deltaA) {
+	protected <T extends TargetObject> CompletableFuture<Integer> sendDelta(
+			List<String> parentPath, Delta<TargetObject, T> deltaE, Delta<?, ?> deltaA) {
 		return channel.write(Gadp.RootMessage.newBuilder()
 				.setEventNotification(Gadp.EventNotification.newBuilder()
 						.setPath(GadpValueUtils.makePath(parentPath))
@@ -482,13 +477,18 @@ public class GadpClientHandler
 				.build());
 	}
 
+	protected TargetObject getObjectChecked(List<String> path) {
+		return DebuggerObjectModel.requireNonNull(model.getModelObject(path), path);
+	}
+
+	protected TargetObject getObjectChecked(Gadp.Path path) {
+		return getObjectChecked(path.getEList());
+	}
+
 	protected CompletableFuture<?> processInvoke(int seqno, Gadp.InvokeRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetMethod<?> method =
-				DebuggerObjectModel.requireIface(TargetMethod.class, obj, path);
-			return method.invoke(GadpValueUtils.getArguments(model, req.getArgumentList()));
-		}).thenCompose(result -> {
+		TargetMethod method = getObjectChecked(req.getPath()).as(TargetMethod.class);
+		Map<String, ?> arguments = GadpValueUtils.getArguments(model, req.getArgumentList());
+		return method.invoke(arguments).thenCompose(result -> {
 			return model.flushEvents().thenApply(__ -> result);
 		}).thenCompose(result -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -513,24 +513,24 @@ public class GadpClientHandler
 		});
 	}
 
+	protected CompletableFuture<Void> performAttach(Gadp.AttachRequest req,
+			TargetAttacher attacher) {
+		switch (req.getSpecCase()) {
+			case TARGET:
+				TargetAttachable attachable =
+					getObjectChecked(req.getTarget()).as(TargetAttachable.class);
+				return attacher.attach(attachable);
+			case PID:
+				return attacher.attach(req.getPid());
+			default:
+				throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
+					"Unrecognized attach specification:" + req);
+		}
+	}
+
 	protected CompletableFuture<?> processAttach(int seqno, Gadp.AttachRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetAttacher<?> attacher =
-				DebuggerObjectModel.requireIface(TargetAttacher.class, obj, path);
-			switch (req.getSpecCase()) {
-				case TARGET:
-					TypedTargetObjectRef<GadpClientTargetAttachable> attachable =
-						model.createRef(req.getTarget().getEList())
-								.as(GadpClientTargetAttachable.class);
-					return attacher.attach(attachable);
-				case PID:
-					return attacher.attach(req.getPid());
-				default:
-					throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
-						"Unrecognized attach specification:" + req);
-			}
-		}).thenCompose(__ -> {
+		TargetAttacher attacher = getObjectChecked(req.getPath()).as(TargetAttacher.class);
+		return performAttach(req, attacher).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -540,23 +540,25 @@ public class GadpClientHandler
 		});
 	}
 
+	protected CompletableFuture<Void> performBreakCreate(Gadp.BreakCreateRequest req,
+			TargetBreakpointContainer breaks) {
+		Set<TargetBreakpointKind> kinds = GadpValueUtils.getBreakKindSet(req.getKinds());
+		switch (req.getSpecCase()) {
+			case EXPRESSION:
+				return breaks.placeBreakpoint(req.getExpression(), kinds);
+			case ADDRESS:
+				AddressRange range = server.getAddressRange(req.getAddress());
+				return breaks.placeBreakpoint(range, kinds);
+			default:
+				throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
+					"Unrecognized breakpoint specification: " + req);
+		}
+	}
+
 	protected CompletableFuture<?> processBreakCreate(int seqno, Gadp.BreakCreateRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetBreakpointContainer<?> breaks =
-				DebuggerObjectModel.requireIface(TargetBreakpointContainer.class, obj, path);
-			Set<TargetBreakpointKind> kinds = GadpValueUtils.getBreakKindSet(req.getKinds());
-			switch (req.getSpecCase()) {
-				case EXPRESSION:
-					return breaks.placeBreakpoint(req.getExpression(), kinds);
-				case ADDRESS:
-					AddressRange range = server.getAddressRange(req.getAddress());
-					return breaks.placeBreakpoint(range, kinds);
-				default:
-					throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
-						"Unrecognized breakpoint specification: " + req);
-			}
-		}).thenCompose(__ -> {
+		TargetBreakpointContainer breaks =
+			getObjectChecked(req.getPath()).as(TargetBreakpointContainer.class);
+		return performBreakCreate(req, breaks).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -567,12 +569,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processBreakToggle(int seqno, Gadp.BreakToggleRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetBreakpointSpec<?> spec =
-				DebuggerObjectModel.requireIface(TargetBreakpointSpec.tclass, obj, path);
-			return spec.toggle(req.getEnabled());
-		}).thenCompose(__ -> {
+		TargetBreakpointSpec spec = getObjectChecked(req.getPath()).as(TargetBreakpointSpec.class);
+		return spec.toggle(req.getEnabled()).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -583,12 +581,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processDelete(int seqno, Gadp.DeleteRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetDeletable<?> del =
-				DebuggerObjectModel.requireIface(TargetDeletable.tclass, obj, path);
-			return del.delete();
-		}).thenCompose(__ -> {
+		TargetDeletable del = getObjectChecked(req.getPath()).as(TargetDeletable.class);
+		return del.delete().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -599,12 +593,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processDetach(int seqno, Gadp.DetachRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetDetachable<?> det =
-				DebuggerObjectModel.requireIface(TargetDetachable.tclass, obj, path);
-			return det.detach();
-		}).thenCompose(__ -> {
+		TargetDetachable det = getObjectChecked(req.getPath()).as(TargetDetachable.class);
+		return det.detach().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -614,16 +604,17 @@ public class GadpClientHandler
 		});
 	}
 
+	protected CompletableFuture<String> performExecute(Gadp.ExecuteRequest req,
+			TargetInterpreter interpreter) {
+		if (req.getCapture()) {
+			return interpreter.executeCapture(req.getCommand());
+		}
+		return interpreter.execute(req.getCommand()).thenApply(__ -> "");
+	}
+
 	protected CompletableFuture<?> processExecute(int seqno, Gadp.ExecuteRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetInterpreter<?> interpreter =
-				DebuggerObjectModel.requireIface(TargetInterpreter.tclass, obj, path);
-			if (req.getCapture()) {
-				return interpreter.executeCapture(req.getCommand());
-			}
-			return interpreter.execute(req.getCommand()).thenApply(__ -> "");
-		}).thenCompose(out -> {
+		TargetInterpreter interpreter = getObjectChecked(req.getPath()).as(TargetInterpreter.class);
+		return performExecute(req, interpreter).thenCompose(out -> {
 			return model.flushEvents().thenApply(__ -> out);
 		}).thenCompose(out -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -634,12 +625,9 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processFocus(int seqno, Gadp.FocusRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetFocusScope<?> scope =
-				DebuggerObjectModel.requireIface(TargetFocusScope.tclass, obj, path);
-			return scope.requestFocus(model.createRef(req.getFocus().getEList()));
-		}).thenCompose(__ -> {
+		TargetFocusScope scope = getObjectChecked(req.getPath()).as(TargetFocusScope.class);
+		TargetObject focus = getObjectChecked(req.getFocus());
+		return scope.requestFocus(focus).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -650,12 +638,9 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processInterrupt(int seqno, Gadp.InterruptRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetInterruptible<?> interruptible =
-				DebuggerObjectModel.requireIface(TargetInterruptible.tclass, obj, path);
-			return interruptible.interrupt();
-		}).thenCompose(__ -> {
+		TargetInterruptible interruptible =
+			getObjectChecked(req.getPath()).as(TargetInterruptible.class);
+		return interruptible.interrupt().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -667,10 +652,9 @@ public class GadpClientHandler
 
 	protected CompletableFuture<?> processCacheInvalidate(int seqno,
 			Gadp.CacheInvalidateRequest req) {
+		TargetObject obj = getObjectChecked(req.getPath());
 		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			return DebuggerObjectModel.requireNonNull(obj, path).invalidateCaches();
-		}).thenCompose(__ -> {
+		return obj.invalidateCaches().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -681,12 +665,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processKill(int seqno, Gadp.KillRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetKillable<?> killable =
-				DebuggerObjectModel.requireIface(TargetKillable.class, obj, path);
-			return killable.kill();
-		}).thenCompose(__ -> {
+		TargetKillable killable = getObjectChecked(req.getPath()).as(TargetKillable.class);
+		return killable.kill().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -697,13 +677,9 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processLaunch(int seqno, Gadp.LaunchRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			Msg.debug(this, "Launching: " + Thread.currentThread());
-			TargetLauncher<?> launcher =
-				DebuggerObjectModel.requireIface(TargetLauncher.class, obj, path);
-			return launcher.launch(GadpValueUtils.getArguments(model, req.getArgumentList()));
-		}).thenCompose(__ -> {
+		TargetLauncher launcher = getObjectChecked(req.getPath()).as(TargetLauncher.class);
+		Map<String, ?> arguments = GadpValueUtils.getArguments(model, req.getArgumentList());
+		return launcher.launch(arguments).thenCompose(__ -> {
 			Msg.debug(this, "Flushing events after launch: " + Thread.currentThread());
 			return model.flushEvents();
 		}).thenCompose(__ -> {
@@ -716,32 +692,27 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processMemoryRead(int seqno, Gadp.MemoryReadRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetMemory<?> memory =
-				DebuggerObjectModel.requireIface(TargetMemory.class, obj, path);
-			AddressRange range = GadpValueUtils.getAddressRange(memory.getModel(), req.getRange());
-			return memory.readMemory(range.getMinAddress(), (int) range.getLength());
-		}).thenCompose(data -> {
+		TargetMemory memory = getObjectChecked(req.getPath()).as(TargetMemory.class);
+		AddressRange range = GadpValueUtils.getAddressRange(memory.getModel(), req.getRange());
+		CompletableFuture<byte[]> read =
+			memory.readMemory(range.getMinAddress(), (int) range.getLength());
+		return read.thenCompose(data -> {
 			return model.flushEvents().thenApply(__ -> data);
 		}).thenCompose(data -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setMemoryReadReply(
-						Gadp.MemoryReadReply.newBuilder().setContent(ByteString.copyFrom(data)))
+						Gadp.MemoryReadReply.newBuilder()
+								.setContent(ByteString.copyFrom(data)))
 					.build());
 		});
 	}
 
 	protected CompletableFuture<?> processMemoryWrite(int seqno, Gadp.MemoryWriteRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetMemory<?> memory =
-				DebuggerObjectModel.requireIface(TargetMemory.class, obj, path);
-			Address start = GadpValueUtils.getAddress(memory.getModel(), req.getStart());
-			// TODO: Spare a copy by specifying a ByteBuffer variant of writeMemory?
-			return memory.writeMemory(start, req.getContent().toByteArray());
-		}).thenCompose(__ -> {
+		TargetMemory memory = getObjectChecked(req.getPath()).as(TargetMemory.class);
+		Address start = GadpValueUtils.getAddress(memory.getModel(), req.getStart());
+		// TODO: Spare a copy by specifying a ByteBuffer variant of writeMemory?
+		return memory.writeMemory(start, req.getContent().toByteArray()).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -752,12 +723,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processRegisterRead(int seqno, Gadp.RegisterReadRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetRegisterBank<?> bank =
-				DebuggerObjectModel.requireIface(TargetRegisterBank.class, obj, path);
-			return bank.readRegistersNamed(req.getNameList());
-		}).thenCompose(data -> {
+		TargetRegisterBank bank = getObjectChecked(req.getPath()).as(TargetRegisterBank.class);
+		return bank.readRegistersNamed(req.getNameList()).thenCompose(data -> {
 			return model.flushEvents().thenApply(__ -> data);
 		}).thenCompose(data -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -769,16 +736,12 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processRegisterWrite(int seqno, Gadp.RegisterWriteRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetRegisterBank<?> bank =
-				DebuggerObjectModel.requireIface(TargetRegisterBank.class, obj, path);
-			Map<String, byte[]> values = new LinkedHashMap<>();
-			for (Gadp.RegisterValue rv : req.getValueList()) {
-				values.put(rv.getName(), rv.getContent().toByteArray());
-			}
-			return bank.writeRegistersNamed(values);
-		}).thenCompose(__ -> {
+		TargetRegisterBank bank = getObjectChecked(req.getPath()).as(TargetRegisterBank.class);
+		Map<String, byte[]> values = new LinkedHashMap<>();
+		for (Gadp.RegisterValue rv : req.getValueList()) {
+			values.put(rv.getName(), rv.getContent().toByteArray());
+		}
+		return bank.writeRegistersNamed(values).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -789,12 +752,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processResume(int seqno, Gadp.ResumeRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetResumable<?> resumable =
-				DebuggerObjectModel.requireIface(TargetResumable.class, obj, path);
-			return resumable.resume();
-		}).thenCompose(__ -> {
+		TargetResumable resumable = getObjectChecked(req.getPath()).as(TargetResumable.class);
+		return resumable.resume().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
@@ -805,12 +764,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processStep(int seqno, Gadp.StepRequest req) {
-		List<String> path = req.getPath().getEList();
-		return model.fetchModelObject(path).thenCompose(obj -> {
-			TargetSteppable<?> steppable =
-				DebuggerObjectModel.requireIface(TargetSteppable.class, obj, path);
-			return steppable.step(GadpValueUtils.getStepKind(req.getKind()));
-		}).thenCompose(__ -> {
+		TargetSteppable steppable = getObjectChecked(req.getPath()).as(TargetSteppable.class);
+		return steppable.step(GadpValueUtils.getStepKind(req.getKind())).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()

@@ -25,14 +25,17 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Attachable", elements = {
-	@TargetElementType(type = Void.class)
-}, attributes = {
-	@TargetAttributeType(type = Void.class)
-})
+@TargetObjectSchemaInfo(
+	name = "Attachable",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	})
 public class GdbModelTargetAttachable
 		extends DefaultTargetObject<TargetObject, GdbModelTargetAvailableContainer>
-		implements TargetAttachable<GdbModelTargetAttachable> {
+		implements TargetAttachable {
 	protected static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
 	// TODO: DESCRIPTION, TYPE, USER?
 

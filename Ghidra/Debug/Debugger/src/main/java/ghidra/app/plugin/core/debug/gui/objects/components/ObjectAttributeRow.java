@@ -16,25 +16,16 @@
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.TargetObject;
 
 public class ObjectAttributeRow {
 
-	private TargetObject to;
+	private final TargetObject to;
 
-	public ObjectAttributeRow(TargetObjectRef ref, DebuggerObjectsProvider provider) {
-		AtomicReference<TargetObject> targetObject = new AtomicReference<>();
-		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			ref.fetch().handle(seq::next);
-		}, targetObject).then(seq -> {
-			to = targetObject.get();
-		}).finish();
+	public ObjectAttributeRow(TargetObject to, DebuggerObjectsProvider provider) {
+		this.to = to;
 	}
 
 	public TargetObject getTargetObject() {

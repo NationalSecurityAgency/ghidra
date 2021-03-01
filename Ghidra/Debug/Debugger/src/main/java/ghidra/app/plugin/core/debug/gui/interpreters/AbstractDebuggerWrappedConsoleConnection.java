@@ -85,7 +85,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		}
 
 		@Override
-		public void promptChanged(TargetInterpreter<?> i, String prompt) {
+		public void promptChanged(TargetInterpreter i, String prompt) {
 			Swing.runLater(() -> guiConsole.setPrompt(prompt));
 		}
 

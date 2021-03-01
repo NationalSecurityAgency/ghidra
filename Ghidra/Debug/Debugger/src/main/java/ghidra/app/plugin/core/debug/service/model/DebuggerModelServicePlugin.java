@@ -39,7 +39,6 @@ import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.services.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
 import ghidra.dbg.target.TargetObject.TargetObjectListener;
@@ -82,7 +81,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected class ListenersForRemovalAndFocus {
 		protected final DebuggerObjectModel model;
 		protected TargetObject root;
-		protected TargetFocusScope<?> focusScope;
+		protected TargetFocusScope focusScope;
 
 		protected TargetObjectListener forRemoval = new TargetObjectListener() {
 			@Override
@@ -102,7 +101,7 @@ public class DebuggerModelServicePlugin extends Plugin
 
 		protected TargetFocusScopeListener forFocus = new TargetFocusScopeListener() {
 			@Override
-			public void focusChanged(TargetFocusScope<?> object, TargetObjectRef focused) {
+			public void focusChanged(TargetFocusScope object, TargetObject focused) {
 				fireFocusEvent(focused);
 				List<DebuggerModelServiceProxyPlugin> copy;
 				synchronized (proxies) {
@@ -127,8 +126,8 @@ public class DebuggerModelServicePlugin extends Plugin
 				if (!r.isValid()) {
 					forRemoval.invalidated(root, root, "Who knows?");
 				}
-				CompletableFuture<? extends TargetFocusScope<?>> findSuitable =
-					DebugModelConventions.findSuitable(TargetFocusScope.tclass, r);
+				CompletableFuture<? extends TargetFocusScope> findSuitable =
+					DebugModelConventions.findSuitable(TargetFocusScope.class, r);
 				return findSuitable;
 			}).thenAccept(fs -> {
 				synchronized (this) {
@@ -142,7 +141,7 @@ public class DebuggerModelServicePlugin extends Plugin
 
 		public void dispose() {
 			TargetObject savedRoot;
-			TargetFocusScope<?> savedFocusScope;
+			TargetFocusScope savedFocusScope;
 			synchronized (this) {
 				savedRoot = root;
 				savedFocusScope = focusScope;
@@ -591,22 +590,14 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public TraceRecorder getRecorderForSuccessor(TargetObjectRef successor) {
+	public TraceRecorder getRecorderForSuccessor(TargetObject successor) {
 		synchronized (recordersByTarget) {
-			NavigableSet<Integer> observedPathLengths = new TreeSet<>();
-			for (TargetObject obj : recordersByTarget.keySet()) {
-				observedPathLengths.add(obj.getPath().size());
-			}
-			List<String> path = successor.getPath();
-			for (int l : observedPathLengths.descendingSet()) {
-				if (l > path.size()) {
-					continue;
-				}
-				List<String> sub = path.subList(0, l);
-				TraceRecorder recorder = recordersByTarget.get(successor.getModel().createRef(sub));
+			while (successor != null) {
+				TraceRecorder recorder = recordersByTarget.get(successor);
 				if (recorder != null) {
 					return recorder;
 				}
+				successor = successor.getParent();
 			}
 			return null;
 		}
@@ -627,7 +618,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public TargetThread<?> getTargetThread(TraceThread thread) {
+	public TargetThread getTargetThread(TraceThread thread) {
 		TraceRecorder recorder = getRecorder(thread.getTrace());
 		if (recorder == null) {
 			return null;
@@ -654,7 +645,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public TraceThread getTraceThread(TargetThread<?> thread) {
+	public TraceThread getTraceThread(TargetThread thread) {
 		synchronized (recordersByTarget) {
 			for (TraceRecorder recorder : recordersByTarget.values()) {
 				// TODO: Consider sorting schemes to find this faster
@@ -668,7 +659,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public TraceThread getTraceThread(TargetObject target, TargetThread<?> thread) {
+	public TraceThread getTraceThread(TargetObject target, TargetThread thread) {
 		TraceRecorder recorder = getRecorder(target);
 		if (recorder == null) {
 			return null;
@@ -677,7 +668,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public TargetObjectRef getTargetFocus(TargetObject target) {
+	public TargetObject getTargetFocus(TargetObject target) {
 		TraceRecorder recorder = getRecorder(target);
 		if (recorder == null) {
 			return null;

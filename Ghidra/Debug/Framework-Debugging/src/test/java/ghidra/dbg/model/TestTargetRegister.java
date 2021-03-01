@@ -25,7 +25,7 @@ import ghidra.program.model.lang.Register;
 
 public class TestTargetRegister
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetRegisterContainer>
-		implements TargetRegister<TestTargetRegister> {
+		implements TargetRegister {
 
 	public static TestTargetRegister fromLanguageRegister(
 			TestTargetRegisterContainer parent, Register register) {

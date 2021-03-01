@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.plugin.core.debug.service.model.DefaultTraceRecorder.ListenerForRecord;
-import ghidra.dbg.attributes.TargetObjectRef;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -207,47 +206,47 @@ public interface TraceRecorder {
 
 	boolean isViewAtPresent(TraceProgramView view);
 
-	TargetBreakpointLocation<?> getTargetBreakpoint(TraceBreakpoint bpt);
+	TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt);
 
-	TraceBreakpoint getTraceBreakpoint(TargetBreakpointLocation<?> bpt);
+	TraceBreakpoint getTraceBreakpoint(TargetBreakpointLocation bpt);
 
-	TargetMemoryRegion<?> getTargetMemoryRegion(TraceMemoryRegion region);
+	TargetMemoryRegion getTargetMemoryRegion(TraceMemoryRegion region);
 
-	TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion<?> region);
+	TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion region);
 
-	TargetModule<?> getTargetModule(TraceModule module);
+	TargetModule getTargetModule(TraceModule module);
 
-	TraceModule getTraceModule(TargetModule<?> module);
+	TraceModule getTraceModule(TargetModule module);
 
-	TargetSection<?> getTargetSection(TraceSection section);
+	TargetSection getTargetSection(TraceSection section);
 
-	TraceSection getTraceSection(TargetSection<?> section);
+	TraceSection getTraceSection(TargetSection section);
 
-	TargetThread<?> getTargetThread(TraceThread thread);
+	TargetThread getTargetThread(TraceThread thread);
 
-	TargetExecutionState getTargetThreadState(TargetThread<?> thread);
+	TargetExecutionState getTargetThreadState(TargetThread thread);
 
 	TargetExecutionState getTargetThreadState(TraceThread thread);
 
-	TargetRegisterBank<?> getTargetRegisterBank(TraceThread thread, int frameLevel);
+	TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel);
 
-	TraceThread getTraceThread(TargetThread<?> thread);
+	TraceThread getTraceThread(TargetThread thread);
 
-	TraceThread getTraceThreadForSuccessor(TargetObjectRef successor);
+	TraceThread getTraceThreadForSuccessor(TargetObject successor);
 
-	TraceStackFrame getTraceStackFrame(TargetStackFrame<?> frame);
+	TraceStackFrame getTraceStackFrame(TargetStackFrame frame);
 
-	TraceStackFrame getTraceStackFrameForSuccessor(TargetObjectRef successor);
+	TraceStackFrame getTraceStackFrameForSuccessor(TargetObject successor);
 
-	TargetStackFrame<?> getTargetStackFrame(TraceThread thread, int frameLevel);
+	TargetStackFrame getTargetStackFrame(TraceThread thread, int frameLevel);
 
-	Set<TargetThread<?>> getLiveTargetThreads();
+	Set<TargetThread> getLiveTargetThreads();
 
 	DebuggerRegisterMapper getRegisterMapper(TraceThread thread);
 
 	DebuggerMemoryMapper getMemoryMapper();
 
-	boolean isRegisterBankAccessible(TargetRegisterBank<?> bank);
+	boolean isRegisterBankAccessible(TargetRegisterBank bank);
 
 	boolean isRegisterBankAccessible(TraceThread thread, int frameLevel);
 
@@ -359,7 +358,7 @@ public interface TraceRecorder {
 	 * @param monitor a monitor for displaying task steps
 	 * @return a future which completes when the types have been captured.
 	 */
-	CompletableFuture<Void> captureDataTypes(TargetDataTypeNamespace<?> namespace,
+	CompletableFuture<Void> captureDataTypes(TargetDataTypeNamespace namespace,
 			TaskMonitor monitor);
 
 	/**
@@ -388,7 +387,7 @@ public interface TraceRecorder {
 	 * @param monitor a monitor for displaying task steps
 	 * @return a future which completes when the symbols have been captured.
 	 */
-	CompletableFuture<Void> captureSymbols(TargetSymbolNamespace<?> namespace, TaskMonitor monitor);
+	CompletableFuture<Void> captureSymbols(TargetSymbolNamespace namespace, TaskMonitor monitor);
 
 	/**
 	 * Collect breakpoint containers pertinent to the target or a given thread
@@ -408,7 +407,7 @@ public interface TraceRecorder {
 	 * @param thread an optional thread, or {@code null} for the process
 	 * @return the list of collected containers, possibly empty
 	 */
-	List<TargetBreakpointContainer<?>> collectBreakpointContainers(TargetThread<?> thread);
+	List<TargetBreakpointContainer> collectBreakpointContainers(TargetThread thread);
 
 	/**
 	 * Collect effective breakpoint pertinent to the target or a given thread
@@ -420,7 +419,7 @@ public interface TraceRecorder {
 	 * @param thread an optional thread, or {@code null} for the process
 	 * @return the list of collected breakpoints, possibly empty
 	 */
-	List<TargetBreakpointLocation<?>> collectBreakpoints(TargetThread<?> thread);
+	List<TargetBreakpointLocation> collectBreakpoints(TargetThread thread);
 
 	/**
 	 * Get the kinds of breakpoints supported by any of the recorded breakpoint containers.
@@ -448,7 +447,7 @@ public interface TraceRecorder {
 	 *          has the appropriate listener installed on the container sub-tree.
 	 * @return the object which last had focus within this container, if applicable
 	 */
-	TargetObjectRef getFocus();
+	TargetObject getFocus();
 
 	/**
 	 * Request focus on a successor of the target
@@ -460,10 +459,10 @@ public interface TraceRecorder {
 	 * callers do not need to worry that it returns a future, unless they'd like to check for
 	 * success.
 	 * 
-	 * @param focus the object ref on which to focus
+	 * @param focus the object on which to focus
 	 * @return a future which completes with true if the operation was successful, false otherwise.
 	 */
-	CompletableFuture<Boolean> requestFocus(TargetObjectRef focus);
+	CompletableFuture<Boolean> requestFocus(TargetObject focus);
 
 	/**
 	 * Get the internal listener on the model used by the recorder

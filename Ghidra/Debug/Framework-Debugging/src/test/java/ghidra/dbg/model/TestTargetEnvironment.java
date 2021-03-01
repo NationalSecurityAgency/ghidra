@@ -22,7 +22,7 @@ import ghidra.dbg.target.TargetEnvironment;
 
 public class TestTargetEnvironment
 		extends DefaultTestTargetObject<TestTargetSession, TestTargetObject>
-		implements TargetEnvironment<TestTargetEnvironment> {
+		implements TargetEnvironment {
 
 	public TestTargetEnvironment(TestTargetSession parent) {
 		super(parent, "Environment", "Environment");
