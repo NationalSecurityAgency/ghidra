@@ -29,8 +29,10 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.dbg.model.TestTargetInterpreter.ExecuteCall;
 import ghidra.dbg.target.TargetConsole.Channel;
+import ghidra.dbg.util.DebuggerModelTestUtils;
 
-public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest
+		implements DebuggerModelTestUtils {
 	private DebuggerInterpreterPlugin interpreterPlugin;
 
 	@Before
@@ -45,8 +47,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		InterpreterComponentProvider interpreter =
 			waitForComponentProvider(InterpreterComponentProvider.class);
 
-		// TODO: Sub-title instead
-		assertEquals("Test Debugger", interpreter.getTitle());
+		assertEquals("Test Debugger", interpreter.getSubTitle());
 		assertTrue(interpreter.isVisible());
 	}
 
@@ -102,17 +103,17 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testDisplayChangeUpdatesTitle() throws Exception {
+	public void testDisplayChangeUpdatesTitle() throws Throwable {
 		createTestModel();
 		interpreterPlugin.showConsole(mb.testModel.session.interpreter);
 		InterpreterComponentProvider interpreter =
 			waitForComponentProvider(InterpreterComponentProvider.class);
 
 		mb.testModel.session.interpreter.setDisplay("Test Debugger X.0");
+		waitOn(mb.testModel.flushEvents());
 		waitForSwing();
 
-		// TODO: Sub-title instead
-		assertEquals("Test Debugger X.0", interpreter.getTitle());
+		assertEquals("Test Debugger X.0", interpreter.getSubTitle());
 	}
 
 	@Test

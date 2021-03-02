@@ -73,7 +73,7 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 	@Override
 	public CompletableFuture<Void> close() {
 		session.invalidateSubtree(session, "Model closed");
-		return super.close().thenCompose(__ -> future(null));
+		return future(null).thenCompose(__ -> super.close());
 	}
 
 	public TestTargetProcess addProcess(int pid) {

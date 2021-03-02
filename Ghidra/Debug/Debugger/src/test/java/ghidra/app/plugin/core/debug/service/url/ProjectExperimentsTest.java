@@ -33,6 +33,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.FileInUseException;
 import ghidra.util.task.ConsoleTaskMonitor;
 
+@Ignore("Not actual tests")
 public class ProjectExperimentsTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 

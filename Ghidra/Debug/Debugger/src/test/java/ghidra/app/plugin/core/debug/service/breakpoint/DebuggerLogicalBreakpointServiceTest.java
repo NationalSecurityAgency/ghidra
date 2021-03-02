@@ -294,7 +294,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		TargetBreakpointContainer<?> cont = getBreakpointContainer(r);
 		cont.placeBreakpoint(mb.testModel.getAddress("ram", 0x56550123),
 			Set.of(TargetBreakpointKind.READ, TargetBreakpointKind.WRITE))
-				.get(DEFAULT_WAIT_DELAY, TimeUnit.MILLISECONDS);
+				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	protected void addTargetSoftwareBreakpoint(TraceRecorder r, TestTargetMemoryRegion region)
