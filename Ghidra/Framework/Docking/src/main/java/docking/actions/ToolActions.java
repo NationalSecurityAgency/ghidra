@@ -91,6 +91,10 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
 		keyBindingsManager.addReservedAction(
 			new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
+		keyBindingsManager.addReservedAction(
+			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY1));
+		keyBindingsManager.addReservedAction(
+			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY2));
 
 		// these are diagnostic
 		if (SystemUtilities.isInDevelopmentMode()) {

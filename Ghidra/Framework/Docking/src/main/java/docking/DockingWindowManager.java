@@ -2172,6 +2172,34 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		objectUnderMouse = null;
 	}
 
+	/**
+	 * Shows a popup menu over the given component.  If this given component is not part of the
+	 * docking windows hierarchy, then no action is taken.
+	 * 
+	 * @param component the component 
+	 */
+	public static void showContextMenu(Component component) {
+
+		DockingWindowManager dwm = getInstance(component);
+		if (dwm == null) {
+			return;
+		}
+
+		DockableComponent dockableComponent = dwm.getDockableComponent(component);
+		if (dockableComponent == null) {
+			return;
+		}
+
+		Rectangle bounds = dockableComponent.getBounds();
+
+		bounds.x = 0;
+		bounds.y = 0;
+		int x = (int) bounds.getCenterX();
+		int y = (int) bounds.getCenterY();
+		PopupMenuContext popupContext = new PopupMenuContext(dockableComponent, new Point(x, y));
+		dockableComponent.showContextMenu(popupContext);
+	}
+
 	public void contextChanged(ComponentProvider provider) {
 
 		if (provider == null) {

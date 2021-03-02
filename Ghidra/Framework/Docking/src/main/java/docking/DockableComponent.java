@@ -67,17 +67,17 @@ public class DockableComponent extends JPanel implements ContainerListener {
 				@Override
 				public void mousePressed(MouseEvent e) {
 					componentSelected((Component) e.getSource());
-					processPopupMouseEvent(e);
+					showContextMenu(e);
 				}
 
 				@Override
 				public void mouseReleased(MouseEvent e) {
-					processPopupMouseEvent(e);
+					showContextMenu(e);
 				}
 
 				@Override
 				public void mouseClicked(MouseEvent e) {
-					processPopupMouseEvent(e);
+					showContextMenu(e);
 				}
 			};
 
@@ -146,24 +146,27 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		return focusedComponent;
 	}
 
-	private void processPopupMouseEvent(final MouseEvent e) {
+	void showContextMenu(PopupMenuContext popupContext) {
+		actionMgr.showPopupMenu(placeholder, popupContext);
+	}
+
+	private void showContextMenu(MouseEvent e) {
 		Component component = e.getComponent();
 		if (component == null) {
-			return;
+			return; // not sure this can happen
 		}
 
 		// get the bounds to see if the clicked point is over the component
-		Rectangle bounds = component.getBounds(); // get bounds to get width and height
-
+		Rectangle bounds = component.getBounds();
 		if (component instanceof JComponent) {
 			((JComponent) component).computeVisibleRect(bounds);
 		}
 
 		Point point = e.getPoint();
 		boolean withinBounds = bounds.contains(point);
-
 		if (e.isPopupTrigger() && withinBounds) {
-			actionMgr.showPopupMenu(placeholder, e);
+			PopupMenuContext popupContext = new PopupMenuContext(e);
+			actionMgr.showPopupMenu(placeholder, popupContext);
 		}
 	}
 
@@ -476,17 +479,11 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		return null;
 	}
 
-	/**
-	 * @see java.awt.event.ContainerListener#componentAdded(java.awt.event.ContainerEvent)
-	 */
 	@Override
 	public void componentAdded(ContainerEvent e) {
 		initializeComponents(e.getChild());
 	}
 
-	/**
-	 * @see java.awt.event.ContainerListener#componentRemoved(java.awt.event.ContainerEvent)
-	 */
 	@Override
 	public void componentRemoved(ContainerEvent e) {
 		deinitializeComponents(e.getChild());
