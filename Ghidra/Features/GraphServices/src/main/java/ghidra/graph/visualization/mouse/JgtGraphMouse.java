@@ -29,12 +29,14 @@ import ghidra.service.graph.AttributedVertex;
 public class JgtGraphMouse extends DefaultGraphMouse<AttributedVertex, AttributedEdge> {
 
 	private DefaultGraphDisplay graphDisplay;
+	private boolean allowEdgeSelection;
 
 	// TODO we should not need the graph display for any mouse plugins, but the API is net yet
 	//      robust enough to communicate fully without it
-	public JgtGraphMouse(DefaultGraphDisplay graphDisplay) {
+	public JgtGraphMouse(DefaultGraphDisplay graphDisplay, boolean allowEdgeSelection) {
 		super(DefaultGraphMouse.builder());
 		this.graphDisplay = graphDisplay;
+		this.allowEdgeSelection = allowEdgeSelection;
 	}
 
 	@Override
@@ -54,13 +56,13 @@ public class JgtGraphMouse extends DefaultGraphMouse<AttributedVertex, Attribute
 		// JUNGRAPHT CHANGE 1,2
 		//
 		// Note: this code can go away when we can turn off the picking square
-		add(new JgtSelectingGraphMousePlugin());
+		add(allowEdgeSelection ? new SelectingGraphMousePlugin() : new VertexSelectingGraphMousePlugin<>());
 		// add(new SelectingGraphMousePlugin<>());
 
 		add(new RegionSelectingGraphMousePlugin<>());
 
 		// the grab/pan feature
-		add(new TranslatingGraphMousePlugin(InputEvent.BUTTON1_DOWN_MASK));
+		add(TranslatingGraphMousePlugin.builder().translatingMask(InputEvent.BUTTON1_DOWN_MASK).build());
 
 		// scaling
 		add(new ScalingGraphMousePlugin());
