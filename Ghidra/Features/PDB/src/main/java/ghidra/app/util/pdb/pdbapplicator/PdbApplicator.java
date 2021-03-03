@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
 import java.util.*;
+
+import java.math.BigInteger;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
@@ -204,7 +205,7 @@ public class PdbApplicator {
 				throw new PdbException("Invalid Restriction");
 		}
 
-		if (program == null) {
+		if (program != null) {
 			Options options = program.getOptions(Program.PROGRAM_INFO);
 			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 		}
