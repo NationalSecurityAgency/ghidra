@@ -111,63 +111,65 @@
     <BLOCKQUOTE>
       <BLOCKQUOTE>
         <UL>
-          <LI><A name="Compact_Hierarchical">
+          <LI><A name="Compact_Hierarchical"/>
           <B>Compact Hierarchical</B> is the <B>TidierTree Layout Algorithm</B>. It builds a tree
           structure and attempts to reduce horizontal space.</LI>
 
-          <LI><A name="Hierarchical">
-          <B>Hierarchical</B> is a basic Tree algorithm. It prioritizes 'important' edges while
-          constructing the tree.</LI>
+          <LI><A name="Hierarchical"/>
+          <B>Hierarchical</B> is a basic Tree algorithm with the root(s) at the top.</LI>
 
-          <LI><A name="Compact Radial">
+          <LI><A name="Compact Radial"/>
           <B>Compact Radial</B> is the <B>TidierTree Layout Algorithm</B> with the root(s) at the
           center and child vertices radiating outwards.</LI>
 
-          <LI><B>Hierarchical MinCross</B> is the <B>Sugiyama Layout Algorithm</B>. It attempts to
-          route edges around vertices in order to reduce crossing.There are four layering
-          algorithms:</LI>
+          <LI><B>Hierarchical MinCross</B> is the <B>Sugiyama Layout Algorithm with optimizations</B>. It attempts to
+          route edges around vertices in order to reduce crossing. There are four layering
+          algorithms (below)</LI>
 
-          <LI style="list-style: none">
+          <LI><B>Vertical Hierarchical MinCross</B> is the <B>Sugiyama Layout Algorithm with optimizations</B>. It attempts to
+            route edges around vertices in order to reduce crossing. If there is a favored EdgeType, an attempt is made to
+            line up those favored edges so they are vertical in the presentation. There are four layering
+            algorithms:</LI>
+
+          <LI style="list-style: none"/>
             <UL>
-              <LI><A name="Hierarchical_MinCross_Top_Down">
-              <B>Top Down</B> - biases the vertices to the top</LI>
+              <LI><A name="Hierarchical_MinCross_Top_Down"/>
+              <B>Top Down</B> - Biases the vertices to the top. Sources on the top row.</LI>
 
-              <LI><A name="Hierarchical_MinCross_Longest_Path">
-              <B>Longest Path</B> - biases the vertices to the bottom</LI>
+              <LI><A name="Hierarchical_MinCross_Longest_Path"/>
+              <B>Longest Path</B> - Biases the vertices to the bottom. Sinks are on the bottom row.</LI>
 
-              <LI><A name="Hierarchical_MinCross_Network_Simplex">
-              <B>Network Simplex</B> - layers after finding an 'optimal tree'</LI>
+              <LI><A name="Hierarchical_MinCross_Network_Simplex"/>
+              <B>Network Simplex</B> - Layers after finding an 'optimal tree' by not considering longer edges.</LI>
 
-              <LI><A name="Hierarchical_MinCross_Coffman_Graham">
-              <B>Coffman Graham</B> - biases the vertices using a scheduling algorithm to minimize
-              length</LI>
+              <LI><A name="Hierarchical_MinCross_Coffman_Graham"/>
+              <B>Coffman Graham</B> - Biases the vertices using a scheduling algorithm to minimize
+              length. Tends to balance the graph around the middle.</LI>
             </UL>
           </LI>
 
-          <LI><A name="Circle">
-          <B>Circle</B> will arrange vertices in a Circle. If there are not too many edges (less
-          than specified in the jungrapht.circle.reduceEdgeCrossingMaxEdges property with a default
-          of 200), it will attempt to reduce edge crossing by rearranging the vertices.</LI>
+          <LI><A name="Circle"/>
+          <B>Circle</B> will arrange vertices in a Circle. </LI>
 
-          <LI><A name="Force_Balanced">
+          <LI><A name="Force_Balanced"/>
           <B>Force Balanced</B> is a <B>Force Directed Layout Algorithm</B> using the the <B>Kamada
-          Kawai</B> approach. It attempts to balance the graph by considering vertices and edge
+          Kawai</B> algorithm. It attempts to balance the graph by considering vertices and edge
           connections.</LI>
 
-          <LI><A name="Force_Directed">
+          <LI><A name="Force_Directed"/>
           <B>Force Directed</B> is a <B>Force Directed Layout Algorithm</B> using the
           <B>Fructermann Reingold</B> approach. It pushes unconnected vertices apart and draws
           connected vertices together.</LI>
 
-          <LI><A name="Radial">
+          <LI><A name="Radial"/>
           <B>Radial</B> is a Tree structure with the root(s) at the center and child vertices
           radiating outwards.</LI>
 
-          <LI><A name="Balloon">
+          <LI><A name="Balloon"/>
           <B>Balloon</B> is a Tree structure with the root(s) at the centers of circles in a radial
           pattern</LI>
 
-          <LI><A name="Gem__Graph_Embedder_">
+          <LI><A name="GEM__Graph_Embedder_"/>
           <B>GEM</B> is a Force Directed layout with locally separated components</LI>
         </UL>
       </BLOCKQUOTE>
