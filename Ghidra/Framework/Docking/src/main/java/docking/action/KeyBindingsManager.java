@@ -17,8 +17,7 @@ package docking.action;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -61,6 +60,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 	public void addReservedAction(DockingActionIf action) {
 		KeyStroke keyBinding = action.getKeyBinding();
+		Objects.requireNonNull(keyBinding);
 		addReservedKeyBinding(action, keyBinding);
 	}
 
