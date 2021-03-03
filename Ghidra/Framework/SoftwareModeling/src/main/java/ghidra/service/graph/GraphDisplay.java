@@ -35,6 +35,52 @@ public interface GraphDisplay {
 	public static final int ALIGN_RIGHT = 2; // aligns graph text to the right
 
 	/**
+	 * values are color names or rgb in hex '0xFF0000' is red
+	 */
+	String SELECTED_VERTEX_COLOR = "selectedVertexColor";
+	/**
+	 * values are color names or rgb in hex '0xFF0000' is red
+	 */
+	String SELECTED_EDGE_COLOR = "selectedEdgeColor";
+	/**
+	 * values are defined as String symbols in LayoutFunction class
+	 *
+	 * KAMADA_KAWAI,FRUCTERMAN_REINGOLD,CIRCLE_MINCROSS,TIDIER_TREE,TIDIER_RADIAL_TREE,
+	 * MIN_CROSS_TOP_DOWN,MIN_CROSS_LONGEST_PATH,MIN_CROSS_NETWORK_SIMPLEX,MIN_CROSS_COFFMAN_GRAHAM,
+	 * EXP_MIN_CROSS_TOP_DOWN,EXP_MIN_CROSS_LONGEST_PATH,EXP_MIN_CROSS_NETWORK_SIMPLEX,
+	 * EXP_MIN_CROSS_COFFMAN_GRAHAM,TREE,RADIAL,BALLOON,GEM
+	 *
+	 * may have no meaning for a different graph visualization library
+	 */
+	String INITIAL_LAYOUT_ALGORITHM = "initialLayoutAlgorithm";
+	/**
+	 * true or false
+	 * may have no meaning for a different graph visualization library
+	 */
+	String DISPLAY_VERTICES_AS_ICONS = "displayVerticesAsIcons";
+	/**
+	 * values are the strings N,NE,E,SE,S,SW,W,NW,AUTO,CNTR
+	 * may have no meaning for a different graph visualization library
+	 */
+	String VERTEX_LABEL_POSITION = "vertexLabelPosition";
+	/**
+	 * true or false, whether edge selection via a mouse click is enabled.
+	 * May not be supported by another graph visualization library
+	 */
+	String ENABLE_EDGE_SELECTION = "enableEdgeSelection";
+	/**
+	 * a comma-separated list of edge type names in priority order
+	 */
+	String EDGE_TYPE_PRIORITY_LIST = "edgeTypePriorityList";
+	/**
+	 * a comma-separated list of edge type names.
+	 * any will be considered a favored edge for the min-cross layout
+	 * algorithms.
+	 * May have no meaning with a different graph visualization library
+	 */
+	String FAVORED_EDGES = "favoredEdges";
+
+	/**
 	 * Sets a {@link GraphDisplayListener} to be notified when the user changes the vertex focus
 	 * or selects one or more nodes in a graph window
 	 * 

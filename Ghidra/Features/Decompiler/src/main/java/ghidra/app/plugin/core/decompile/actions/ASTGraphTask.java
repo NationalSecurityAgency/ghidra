@@ -34,6 +34,8 @@ import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
+import static ghidra.service.graph.GraphDisplay.*;
+
 public class ASTGraphTask extends Task {
 	enum GraphType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
@@ -104,9 +106,10 @@ public class ASTGraphTask extends Task {
 				createControlFlowGraph(graph, monitor);
 			}
 			Map<String, String> properties = new HashMap<>();
-			properties.put("selectedVertexColor", "0xFF1493");
-			properties.put("selectedEdgeColor", "0xFF1493");
-			properties.put("initialLayoutAlgorithm", "Hierarchical MinCross Coffman Graham");
+			properties.put(SELECTED_VERTEX_COLOR, "0xFF1493");
+			properties.put(SELECTED_EDGE_COLOR, "0xFF1493");
+			properties.put(INITIAL_LAYOUT_ALGORITHM, "Hierarchical MinCross Coffman Graham");
+			properties.put(ENABLE_EDGE_SELECTION, "true");
 			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, properties, monitor);
 			ASTGraphDisplayListener displayListener =
 				new ASTGraphDisplayListener(tool, display, hfunction, graphType);

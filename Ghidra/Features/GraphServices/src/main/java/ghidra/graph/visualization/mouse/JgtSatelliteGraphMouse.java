@@ -39,19 +39,21 @@ public class JgtSatelliteGraphMouse
 		//
 		// JUNGRAPHT CHANGE 3
 		//
+		// disable single selection in satellite view by setting masks to 0
 		SelectingGraphMousePlugin<AttributedVertex, AttributedEdge> mySelectingPlugin =
-			new JgtSelectingGraphMousePlugin(singleSelectionMask, addSingleSelectionMask);
+			new JgtSelectingGraphMousePlugin(0, 0);
 		mySelectingPlugin.setLocked(true);
 		selectingPlugin = mySelectingPlugin;
 
 		regionSelectingPlugin =
 			RegionSelectingGraphMousePlugin.builder()
 					.regionSelectionMask(regionSelectionMask)
-					.addRegionSelectionMask(addRegionSelectionMask)
+					.toggleRegionSelectionMask(toggleRegionSelectionMask)
 					.regionSelectionCompleteMask(regionSelectionCompleteMask)
-					.addRegionSelectionCompleteMask(addRegionSelectionCompleteMask)
+					.toggleRegionSelectionCompleteMask(toggleRegionSelectionCompleteMask)
 					.build();
-		translatingPlugin = new SatelliteTranslatingGraphMousePlugin(translatingMask);
+		translatingPlugin = SatelliteTranslatingGraphMousePlugin.builder()
+				.translatingMask(translatingMask).build();
 		add(selectingPlugin);
 		add(regionSelectingPlugin);
 		add(translatingPlugin);

@@ -54,8 +54,10 @@ public class JgtSelectingGraphMousePlugin
 		this.pickFootprintPaintable = dummyPickFootprintPaintable;
 	}
 
-	public JgtSelectingGraphMousePlugin(int singleSelectionMask, int addSingleSelectionMask) {
-		super(singleSelectionMask, addSingleSelectionMask);
+	public JgtSelectingGraphMousePlugin(int singleSelectionMask, int toggleSingleSelectionMask) {
+		super(SelectingGraphMousePlugin.<AttributedVertex, AttributedEdge>builder()
+						.singleSelectionMask(singleSelectionMask)
+						.toggleSingleSelectionMask(toggleSingleSelectionMask));
 
 		//
 		// JUNGRAPHT CHANGE 1
@@ -89,7 +91,6 @@ public class JgtSelectingGraphMousePlugin
 					selectedVertexState.clear();
 				}
 				selectedVertexState.select(vertex);
-				deselectedVertex = null;
 			}
 			else {
 				// If this vertex is still around in mouseReleased, it will be deselected
@@ -99,9 +100,6 @@ public class JgtSelectingGraphMousePlugin
 				//
 				// JUNGRAPHT CHANGE 2 HERE
 				//					
-				if (addToSelection) {
-					deselectedVertex = vertex;
-				}
 			}
 			e.consume();
 			return true;

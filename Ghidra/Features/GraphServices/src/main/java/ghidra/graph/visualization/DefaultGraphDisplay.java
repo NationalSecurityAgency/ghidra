@@ -103,27 +103,32 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final String ACTION_OWNER = "GraphServices";
 
-	/*
-	 	 A handful of properties that can be set via the constructor
-	 */
-	private static final String SELECTED_VERTEX_COLOR = "selectedVertexColor";
-	private static final String SELECTED_EDGE_COLOR = "selectedEdgeColor";
-	private static final String INITIAL_LAYOUT_ALGORITHM = "initialLayoutAlgorithm";
-	private static final String DISPLAY_VERTICES_AS_ICONS = "displayVerticesAsIcons";
-	private static final String VERTEX_LABEL_POSITION = "vertexLabelPosition";
-
 	private static final int MAX_NODES = Integer.getInteger("maxNodes", 10000);
 	private static final Dimension PREFERRED_VIEW_SIZE = new Dimension(1000, 1000);
 	private static final Dimension PREFERRED_LAYOUT_SIZE = new Dimension(3000, 3000);
 
 	private Logger log = Logger.getLogger(DefaultGraphDisplay.class.getName());
 
-	private Map<String, String> displayProperties = new HashMap<>();
+	private Map<String, String> displayProperties;
 	private Set<DockingActionIf> addedActions = new LinkedHashSet<>();
 	private GraphDisplayListener listener = new DummyGraphDisplayListener();
 	private String title;
 
 	private AttributedGraph graph;
+
+	private static String DEFAULT_EDGE_TYPE_PRIORITY_LIST =
+			        "Fall-Through,"+
+					"Conditional-Return,"+
+					"Unconditional-Jump,"+
+					"Conditional-Jump,"+
+					"Unconditional-Call,"+
+					"Conditional-Call,"+
+					"Terminator,"+
+					"Computed,"+
+					"Indirection,"+
+					"Entry";
+
+	private static String DEFAULT_FAVORED_EDGES = "Fall-Through";
 
 	/**
 	 * a unique id for this {@link GraphDisplay}
@@ -219,7 +224,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			viewer.getComponent().add(satelliteViewer.getComponent());
 		}
 		layoutTransitionManager =
-			new LayoutTransitionManager(viewer, this::isRoot);
+			new LayoutTransitionManager(viewer, this::isRoot,
+					getEdgeTypePriorityList(),
+					getFavoredEdgePredicate());
 
 		viewer.getComponent().addComponentListener(new ComponentAdapter() {
 			@Override
@@ -250,6 +257,19 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private Color getSelectedEdgeColor() {
 		String property = displayProperties.getOrDefault(SELECTED_EDGE_COLOR, "0xFF0000");
 		return Colors.getHexColor(property);
+	}
+
+	private List<String> getEdgeTypePriorityList() {
+		return Arrays.asList(displayProperties
+				.getOrDefault(EDGE_TYPE_PRIORITY_LIST, DEFAULT_EDGE_TYPE_PRIORITY_LIST)
+				.split(","));
+	}
+
+	private Predicate<AttributedEdge> getFavoredEdgePredicate() {
+		String[] favoredEdges = displayProperties.getOrDefault(FAVORED_EDGES, DEFAULT_FAVORED_EDGES)
+				.split(",");
+		return attributedEdge -> Arrays.stream(favoredEdges)
+				.anyMatch(s -> s.equals(attributedEdge.getAttribute("EdgeType")));
 	}
 
 	JComponent getComponent() {
@@ -486,7 +506,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 					"Extends the current selection by including the target/source vertices " +
 						"of all edges whose source/target is selected")
 				.keyBinding("ctrl C")
-				.enabledWhen(c -> !isAllSelected(getSourceVerticesFromSelected()) &&
+				.enabledWhen(c -> !isAllSelected(getSourceVerticesFromSelected()) ||
 					!isAllSelected(getTargetVerticesFromSelected()))
 				.onAction(c -> growSelection(getAllComponentVerticesFromSelected()))
 				.buildAndInstallLocal(componentProvider);
@@ -610,6 +630,23 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private void growSelection(Set<AttributedVertex> vertices) {
 		viewer.getSelectedVertexState().select(vertices);
+		selectEdgesConnecting(vertices);
+	}
+
+	// select all the edges that connect the supplied vertices
+	private void selectEdgesConnecting(Collection<AttributedVertex> vertices) {
+		viewer.getSelectedEdgeState().select(
+				graph.edgeSet()
+				.stream()
+				.filter(
+						e -> {
+							AttributedVertex source = graph.getEdgeSource(e);
+							AttributedVertex target = graph.getEdgeTarget(e);
+							return vertices.contains(source)
+									&& vertices.contains(target);
+						})
+				.collect(Collectors.toSet()));
+
 	}
 
 	private boolean isAllSelected(Set<AttributedVertex> vertices) {
@@ -617,8 +654,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private Set<AttributedVertex> getSourceVerticesFromSelected() {
-		Set<AttributedVertex> sources = new HashSet<>();
 		Set<AttributedVertex> selectedVertices = getSelectedVertices();
+		Set<AttributedVertex> sources = new HashSet<>(selectedVertices);
 		for (AttributedVertex v : selectedVertices) {
 			Set<AttributedEdge> edges = graph.incomingEdgesOf(v);
 			edges.forEach(e -> sources.add(graph.getEdgeSource(e)));
@@ -635,8 +672,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private Set<AttributedVertex> getTargetVerticesFromSelected() {
-		Set<AttributedVertex> targets = new HashSet<>();
 		Set<AttributedVertex> selectedVertices = getSelectedVertices();
+		Set<AttributedVertex> targets = new HashSet<>(selectedVertices);
 		for (AttributedVertex v : selectedVertices) {
 			Set<AttributedEdge> edges = graph.outgoingEdgesOf(v);
 			edges.forEach(e -> targets.add(graph.getEdgeTarget(e)));
@@ -674,9 +711,20 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		return upstream;
 	}
 
+	/**
+	 * Gather all source and target vertices until there are no more available.
+	 * @return all the vertices in the component(s) of the selected vertices
+	 */
 	public Set<AttributedVertex> getAllComponentVerticesFromSelected() {
-		Set<AttributedVertex> componentVertices = getAllDownstreamVerticesFromSelected();
-		componentVertices.addAll(getAllUpstreamVerticesFromSelected());
+		Set<AttributedVertex> componentVertices = new HashSet<>(viewer.getSelectedVertices());
+		Set<AttributedVertex> downstream = getAllDownstreamVerticesFromSelected();
+		Set<AttributedVertex> upstream = getAllUpstreamVerticesFromSelected();
+		while (!downstream.isEmpty() || !upstream.isEmpty()) {
+			componentVertices.addAll(downstream);
+			componentVertices.addAll(upstream);
+			downstream = getAllDownstreamVerticesFromSelected();
+			upstream = getAllUpstreamVerticesFromSelected();
+		}
 		return componentVertices;
 	}
 
@@ -974,13 +1022,14 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	/**
 	 * Determines if a vertex is a root.  For our purpose, a root either has no incoming edges
-	 * or has at least one outgoing "favored" edge and no incoming "favored" edge
+	 * or if all edges of a vertex are 'loop' edges
 	 * @param vertex the vertex to test if it is a root
 	 * @return true if the vertex is a root
 	 */
 	private boolean isRoot(AttributedVertex vertex) {
 		Set<AttributedEdge> incomingEdgesOf = graph.incomingEdgesOf(vertex);
-		return incomingEdgesOf.isEmpty();
+		return incomingEdgesOf.isEmpty() ||
+				graph.incomingEdgesOf(vertex).equals(graph.outgoingEdgesOf(vertex));
 	}
 
 	/**
@@ -1249,12 +1298,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		setVertexPreferences(vv);
 
-		// the selectedEdgeState will be controlled by the vertices that are selected.
-		// if both endpoints of an edge are selected, select that edge.
-		vv.setSelectedEdgeState(
-			new VertexEndpointsSelectedEdgeSelectedState<>(vv.getVisualizationModel()::getGraph,
-				vv.getSelectedVertexState()));
-
 		// selected edges will be drawn with a wider stroke
 		renderContext.setEdgeStrokeFunction(
 			e -> isSelected(e) ? new BasicStroke(20.f)
@@ -1278,7 +1321,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		// cause the lightweight (optimized) renderer to use the vertex shapes instead
 		// of using default shapes.
-
 		if (vertexRenderer instanceof LightweightVertexRenderer) {
 			Function<AttributedVertex, Shape> vertexShapeFunction =
 				renderContext.getVertexShapeFunction();
@@ -1301,7 +1343,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			vv.getComponent().removeMouseListener(mouseListener);
 		}
 
-		graphMouse = new JgtGraphMouse(this);
+		graphMouse = new JgtGraphMouse(this,
+				Boolean.parseBoolean(displayProperties.getOrDefault(ENABLE_EDGE_SELECTION,
+						"false")));
 		vv.setGraphMouse(graphMouse);
 
 		return vv;
