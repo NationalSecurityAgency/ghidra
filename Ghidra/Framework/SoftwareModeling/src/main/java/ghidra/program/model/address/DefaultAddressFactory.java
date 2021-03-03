@@ -59,9 +59,9 @@ public class DefaultAddressFactory implements AddressFactory {
 	 */
 	public DefaultAddressFactory(AddressSpace[] addrSpaces, AddressSpace defaultSpace) {
 		memoryAddressSet = new AddressSet();
-		spaces = new ArrayList<AddressSpace>(addrSpaces.length);
-		spaceLookup = new IntObjectHashtable<AddressSpace>();
-		spaceNameTable = new HashMap<String, AddressSpace>();
+		spaces = new ArrayList<>(addrSpaces.length);
+		spaceLookup = new IntObjectHashtable<>();
+		spaceNameTable = new HashMap<>();
 
 		for (AddressSpace space : addrSpaces) {
 			checkReservedSpace(space);
@@ -78,9 +78,6 @@ public class DefaultAddressFactory implements AddressFactory {
 			else if (space.getType() == AddressSpace.TYPE_UNIQUE) {
 				uniqueSpace = space;
 			}
-			else if (space.getType() == AddressSpace.TYPE_STACK) {
-				throw new IllegalArgumentException("Stack space should not be specified");
-			}
 			else if (space.getType() == AddressSpace.TYPE_REGISTER) {
 				if (registerSpace != null || !space.getName().equalsIgnoreCase("register")) {
 					// Ghidra address encoding only handles a single register space
@@ -88,9 +85,6 @@ public class DefaultAddressFactory implements AddressFactory {
 						"Ghidra can only support a single Register space named 'register'");
 				}
 				registerSpace = space;
-			}
-			else if (space.getType() == AddressSpace.TYPE_VARIABLE) {
-				throw new IllegalArgumentException("Variable space must be defined by language");
 			}
 			// build up an address set for all possible "real" addresses
 			if (space.isMemorySpace()) {
@@ -118,17 +112,38 @@ public class DefaultAddressFactory implements AddressFactory {
 	}
 
 	private void checkReservedSpace(AddressSpace space) {
+		checkReservedVariable(space);
+		checkReservedJoin(space);
+		checkReservedExternal(space);
+		checkReservedStack(space);
+	}
+
+	private void checkReservedVariable(AddressSpace space) {
 		if (space.getType() == AddressSpace.TYPE_VARIABLE ||
-			space.getName().equalsIgnoreCase(AddressSpace.VARIABLE_SPACE.getName()) ||
-			space.getName().equals("join")) {
+			space.getName().equalsIgnoreCase(AddressSpace.VARIABLE_SPACE.getName())) {
 			throw new IllegalArgumentException("Variable space should not be specified");
 		}
+	}
+
+	private void checkReservedJoin(AddressSpace space) {
+		if (space.getType() == AddressSpace.TYPE_JOIN || space.getName().equals("join")) {
+			throw new IllegalArgumentException("Join space should not be specified");
+		}
+	}
+
+	private void checkReservedExternal(AddressSpace space) {
 		if (space.getType() == AddressSpace.TYPE_EXTERNAL ||
 			space.getName().equalsIgnoreCase(AddressSpace.EXTERNAL_SPACE.getName())) {
 			throw new IllegalArgumentException("External space should not be specified");
 		}
 	}
-	
+
+	private void checkReservedStack(AddressSpace space) {
+		if (space.getType() == AddressSpace.TYPE_STACK) {
+			throw new IllegalArgumentException("Stack space should not be specified");
+		}
+	}
+
 	/**
 	 * @see ghidra.program.model.address.AddressFactory#getAddress(java.lang.String)
 	 */
@@ -159,7 +174,7 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 		return null;
 	}
-	
+
 	@Override
 	public Address[] getAllAddresses(String addrString) {
 		return getAllAddresses(addrString, true);
@@ -167,8 +182,8 @@ public class DefaultAddressFactory implements AddressFactory {
 
 	@Override
 	public Address[] getAllAddresses(String addrString, boolean caseSensitive) {
-		ArrayList<Address> loadedMemoryList = new ArrayList<Address>();
-		ArrayList<Address> otherList = new ArrayList<Address>();
+		ArrayList<Address> loadedMemoryList = new ArrayList<>();
+		ArrayList<Address> otherList = new ArrayList<>();
 
 		for (AddressSpace space : spaces) {
 			// Only parse against true physical spaces first
@@ -209,7 +224,6 @@ public class DefaultAddressFactory implements AddressFactory {
 	public AddressSpace getDefaultAddressSpace() {
 		return defaultSpace;
 	}
-
 
 	@Override
 	public AddressSpace[] getAddressSpaces() {

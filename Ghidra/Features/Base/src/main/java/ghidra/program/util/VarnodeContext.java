@@ -47,20 +47,20 @@ public class VarnodeContext implements ProcessorContext {
 	protected DisassemblerContextImpl spaceContext;
 
 	// holds temp memory values for computation
-	protected HashMap<Varnode, Varnode> memoryVals = new HashMap<Varnode, Varnode>();
+	protected HashMap<Varnode, Varnode> memoryVals = new HashMap<>();
 
 	// holds temp values for computation
-	private HashMap<Varnode, Varnode> tempVals = new HashMap<Varnode, Varnode>();
-	protected HashMap<Varnode, Varnode> tempUniqueVals = new HashMap<Varnode, Varnode>();
+	private HashMap<Varnode, Varnode> tempVals = new HashMap<>();
+	protected HashMap<Varnode, Varnode> tempUniqueVals = new HashMap<>();
 	protected boolean keepTempUniqueValues = false;
 
-	protected HashSet<Varnode> clearVals = new HashSet<Varnode>();
+	protected HashSet<Varnode> clearVals = new HashSet<>();
 
 	// locations where registers were last set to a constant value
-	protected HashMap<Varnode, Address> lastSet = new HashMap<Varnode, Address>();
+	protected HashMap<Varnode, Address> lastSet = new HashMap<>();
 
 	// all locations where a register was last explicitly set to a value, not just has the value
-	protected HashMap<Varnode, AddressSet> allLastSet = new HashMap<Varnode, AddressSet>();
+	protected HashMap<Varnode, AddressSet> allLastSet = new HashMap<>();
 
 	protected Program program;
 	protected VarnodeTranslator trans;  // translator for varnodes<-->registers
@@ -68,7 +68,7 @@ public class VarnodeContext implements ProcessorContext {
 	protected Varnode[] retVarnodes = null;		// varnodes used to return values
 	protected Varnode stackVarnode = null;    // varnode that represents the stack
 	protected Register stackReg = null;
-	private HashSet<String> validSymbolicStackNames = new HashSet<String>(); // list of stack related register names
+	private HashSet<String> validSymbolicStackNames = new HashSet<>(); // list of stack related register names
 
 	protected static final NotFoundException notFoundExc = new NotFoundException();
 
@@ -88,9 +88,7 @@ public class VarnodeContext implements ProcessorContext {
 		this.program = program;
 
 		// make a copy, because we could be making new spaces.
-		// TODO: This could be a problem if some of the Pcode comes up with Overlay Address Spaces.
-		// TODO: This doesn't get Stack space, or other overlay spaces...
-		this.addrFactory = new OffsetAddressFactory(program.getLanguage().getAddressFactory());
+		this.addrFactory = new OffsetAddressFactory(program.getAddressFactory());
 
 		BAD_ADDRESS = addrFactory.getAddress(getAddressSpace("BAD_ADDRESS_SPACE"), 0);
 
@@ -168,7 +166,7 @@ public class VarnodeContext implements ProcessorContext {
 
 		currentAddress = toAddr;
 
-		this.lastSet = new HashMap<Varnode, Address>();  // clear out any interim last sets...  rely on allLastSet now
+		this.lastSet = new HashMap<>();  // clear out any interim last sets...  rely on allLastSet now
 
 		offsetContext.flowStart(fromAddr, toAddr);
 		spaceContext.flowStart(fromAddr, toAddr);
@@ -755,10 +753,10 @@ public class VarnodeContext implements ProcessorContext {
 		}
 		if (clearContext) {
 			if (!keepTempUniqueValues) {
-				tempUniqueVals = new HashMap<Varnode, Varnode>();
+				tempUniqueVals = new HashMap<>();
 			}
-			tempVals = new HashMap<Varnode, Varnode>();
-			clearVals = new HashSet<Varnode>();
+			tempVals = new HashMap<>();
+			clearVals = new HashSet<>();
 		}
 	}
 
@@ -867,9 +865,6 @@ public class VarnodeContext implements ProcessorContext {
 
 	public Varnode getVarnode(int spaceID, long offset, int size) {
 		AddressSpace space = addrFactory.getAddressSpace(spaceID);
-		if (space == null) {
-			return new Varnode(null, size);
-		}
 		Address target = space.getTruncatedAddress(offset, true);
 		Varnode vt = new Varnode(target, size);
 		return vt;
@@ -1242,8 +1237,7 @@ public class VarnodeContext implements ProcessorContext {
 			throws NotFoundException {
 		// degenerate case, don't need to know the value
 		if (val1.equals(val2)) {
-			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(),
-				val1.getSize());
+			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), val1.getSize());
 		}
 		int spaceID = val1.getSpace();
 		long valbase = 0;
@@ -1442,7 +1436,7 @@ public class VarnodeContext implements ProcessorContext {
 class OffsetAddressFactory extends DefaultAddressFactory {
 
 	OffsetAddressFactory(AddressFactory baseFactory) {
-		super(baseFactory.getAllAddressSpaces());
+		super(filterSpaces(baseFactory.getAllAddressSpaces()));
 	}
 
 	private int getNextUniqueID() {
@@ -1471,4 +1465,18 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 		int type = AddressSpace.ID_TYPE_MASK & spaceID;
 		return (type == AddressSpace.TYPE_SYMBOL);
 	}
+
+	private static AddressSpace[] filterSpaces(AddressSpace[] allSpaces) {
+		List<AddressSpace> spaces = new ArrayList<>();
+		for (AddressSpace space : allSpaces) {
+			int type = space.getType();
+			if (type == AddressSpace.TYPE_VARIABLE || type == AddressSpace.TYPE_STACK ||
+				type == AddressSpace.TYPE_EXTERNAL || type == AddressSpace.TYPE_JOIN) {
+				continue;
+			}
+			spaces.add(space);
+		}
+		return spaces.toArray(new AddressSpace[0]);
+	}
+
 }
