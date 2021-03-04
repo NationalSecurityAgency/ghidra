@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.agent.AbstractTargetObject;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetObject;
@@ -65,8 +64,8 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 				setFocus(sel);
 				return sel.select();
 			}
-			if (cur instanceof AbstractTargetObject) {
-				AbstractTargetObject<?> def = (AbstractTargetObject<?>) cur;
+			if (cur instanceof DbgModelTargetObject) {
+				DbgModelTargetObject def = (DbgModelTargetObject) cur;
 				cur = def.getParent();
 				continue;
 			}
