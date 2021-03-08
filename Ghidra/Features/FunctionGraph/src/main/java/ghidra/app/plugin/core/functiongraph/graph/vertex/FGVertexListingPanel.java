@@ -141,6 +141,7 @@ public class FGVertexListingPanel extends ListingPanel {
 
 		@Override
 		public Dimension getPreferredSize() {
+
 			Dimension preferredSize = super.getPreferredSize();
 			if (preferredSize.equals(lastParentPreferredSize) && preferredSizeCache != null) {
 				return preferredSizeCache;
@@ -164,8 +165,8 @@ public class FGVertexListingPanel extends ListingPanel {
 
 		private List<Layout> getAllLayouts(LayoutModel layoutModel) {
 			List<Layout> list = new ArrayList<>();
-			Layout layout = layoutModel.getLayout(BigInteger.ZERO);
-			BigInteger index = BigInteger.ONE;
+			BigInteger index = BigInteger.ZERO;
+			Layout layout = layoutModel.getLayout(index);
 			while (layout != null) {
 				list.add(layout);
 				index = layoutModel.getIndexAfter(index);
