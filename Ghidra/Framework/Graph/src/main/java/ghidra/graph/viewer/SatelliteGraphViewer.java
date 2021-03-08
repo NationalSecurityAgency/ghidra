@@ -21,6 +21,7 @@ import edu.uci.ics.jung.visualization.control.SatelliteVisualizationViewer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import ghidra.graph.viewer.event.mouse.VisualGraphPluggableGraphMouse;
 import ghidra.graph.viewer.event.mouse.VisualGraphSatelliteGraphMouse;
+import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.graph.viewer.renderer.VisualGraphRenderer;
 import ghidra.graph.viewer.renderer.VisualVertexSatelliteRenderer;
 
@@ -36,6 +37,7 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 
 	protected GraphViewer<V, E> graphViewer;
 	private boolean docked;
+	private VisualGraphOptions options;
 
 	public SatelliteGraphViewer(GraphViewer<V, E> master, Dimension preferredSize) {
 		super(master, preferredSize);
@@ -73,6 +75,15 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 		return new VisualVertexSatelliteRenderer<>();
 	}
 
+	public void setGraphOptions(VisualGraphOptions options) {
+		this.options = options;
+		optionsChanged();
+	}
+
+	public void optionsChanged() {
+		setBackground(options.getGraphBackgroundColor());
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public VisualGraphPluggableGraphMouse<V, E> getGraphMouse() {
@@ -87,5 +98,4 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 		}
 		super.setGraphMouse(graphMouse);
 	}
-
 }

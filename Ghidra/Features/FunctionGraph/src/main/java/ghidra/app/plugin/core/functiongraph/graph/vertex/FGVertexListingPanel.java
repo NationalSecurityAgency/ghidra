@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph.graph.vertex;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 import docking.widgets.fieldpanel.*;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
+import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.program.model.address.AddressSetView;
@@ -65,6 +67,10 @@ public class FGVertexListingPanel extends ListingPanel {
 		setProgram(program);
 		ListingModel model = getListingModel();
 		model.addListener(listener);
+
+		FunctionGraphOptions options = controller.getFunctionGraphOptions();
+		Color color = options.getDefaultVertexBackgroundColor();
+		setTextBackgroundColor(color);
 
 		FGColorProvider colorProvider = controller.getColorProvider();
 		if (!colorProvider.isUsingCustomColors()) {

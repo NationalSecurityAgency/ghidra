@@ -578,6 +578,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		}
 	}
 
+	public void optionsChanged() {
+		controller.optionsChanged();
+	}
+
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (!isVisible()) {

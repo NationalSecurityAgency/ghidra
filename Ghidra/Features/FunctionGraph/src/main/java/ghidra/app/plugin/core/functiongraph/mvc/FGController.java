@@ -332,7 +332,8 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	private boolean shouldSaveVertexChanges() {
-		return functionGraphOptions.getNavigationHistoryChoice() == NavigationHistoryChoices.VERTEX_CHANGES;
+		return functionGraphOptions
+				.getNavigationHistoryChoice() == NavigationHistoryChoices.VERTEX_CHANGES;
 	}
 
 	@Override
@@ -632,6 +633,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		view.setStatusMessage("Graphing function for address: " + location.getAddress());
 		viewSettings = new PendingFunctionGraphViewSettings(viewSettings, perspective);
 		viewSettings.setLocation(location);
+	}
+
+	public void optionsChanged() {
+		view.optionsChanged();
 	}
 
 	public void refreshDisplayWithoutRebuilding() {

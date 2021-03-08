@@ -98,7 +98,7 @@ public interface FGVertex extends VisualVertex {
 	 * grouped, but that it has been part of a group and can be put back into its group form 
 	 * again.
 	 * 
-	 * @param groupMember True if this vertex is a associate with a group
+	 * @param groupInfo True if this vertex is a associate with a group
 	 */
 	public void updateGroupAssociationStatus(GroupHistoryInfo groupInfo);
 
@@ -190,8 +190,8 @@ public interface FGVertex extends VisualVertex {
 	public void refreshDisplay();
 
 	/**
-	 * Refresh the vertex's display information if the given address is the entry point
-	 * of the vertex.
+	 * Refresh the vertex's display information if the given address is the vertex entry point
+	 * @param address the addresses
 	 */
 	public void refreshDisplayForAddress(Address address);
 
