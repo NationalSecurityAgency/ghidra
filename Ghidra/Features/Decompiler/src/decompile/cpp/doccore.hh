@@ -27,7 +27,7 @@
   implement these models provides the quickest inroad into 
   obtaining an overall understanding of the code.
 
-  We list all these fundemental classes here, loosely grouped
+  We list all these fundamental classes here, loosely grouped
   as follows.  There is one set of classes that describe the
   \e Syntax \e Trees, which are built up from the original p-code,
   and transformed during the decompiler's simplification process.
@@ -43,18 +43,18 @@
     - AddrSpace
          - A place within the reverse engineering model where data
            can be stored.  The typical address spaces are \b ram,
-	   modeling the main databus of a processor, and \b register,
-	   modeling a processors on board registers. Data is stored a
-	   byte at a time at \b offsets within the AddrSpace.
+           modeling the main databus of a processor, and \b register,
+           modeling a processor's on board registers. Data is stored a
+           byte at a time at \b offsets within the AddrSpace.
          .
     - Address
          - An AddrSpace and an offset within the space forms the
-	   Address of the byte at that offset.
+           Address of the byte at that offset.
          .
     - Varnode
          - A contiguous set of bytes, given by an Address and a size,
-	   encoding a single value in the model.  In terms of SSA
-	   syntax tree, a Varnode is also a node in the tree.
+           encoding a single value in the model.  In terms of SSA
+           syntax tree, a Varnode is also a node in the tree.
          .
     - SeqNum
          - A \e sequence \e number that extends Address for distinguishing PcodeOps
@@ -161,14 +161,14 @@
   and local scope.
 
   \code
-    string &       getName();           // get name of function
-    Address &      getAddress();        // get Address of function's entry point
-    int4           numCalls();          // number of subfunctions called by this function
+    string &       getName();            // get name of function
+    Address &      getAddress();         // get Address of function's entry point
+    int4           numCalls();           // number of subfunctions called by this function
     FuncCallSpecs *getCallSpecs(int4 i); // get specs for one of the subfunctions
-    BlockGraph &   getBasicBlocks();    // get the collection of basic blocks
+    BlockGraph &   getBasicBlocks();     // get the collection of basic blocks
 
     iterator       beginLoc(Address &);                     // Search for Varnodes in tree
-    iterator       beginLoc(int4,Address &);                 // based on the Varnode's address
+    iterator       beginLoc(int4,Address &);                // based on the Varnode's address
     iterator       beginLoc(int4,Address &,Address &,uintm);
     iterator       beginDef(uint4,Address &);               // Search for Varnode based on the
                                                             // address of its defining operation
@@ -221,14 +221,14 @@
   array, and structure qualifiers.
   
   \code
-    class TypePointer : public Datatype  {  // pointer to (some other type)
-      Datatype *getBase();                  // get Datatype being pointed to
+    class TypePointer : public Datatype  {    // pointer to (some other type)
+      Datatype *getBase();                    // get Datatype being pointed to
     };
-    class TypeArray : public Datatype {     // array of (some other type)
-      Datatype *getBase();                  // get Datatype of array element
+    class TypeArray : public Datatype {       // array of (some other type)
+      Datatype *getBase();                    // get Datatype of array element
     };
-    class TypeStruct : public Datatype {    // structure with fields of (some other types)
-      TypeField *getField(int4,int4,int4 *);   // get Datatype of a field
+    class TypeStruct : public Datatype {      // structure with fields of (some other types)
+      TypeField *getField(int4,int4,int4 *);  // get Datatype of a field
     };
   \endcode
 
@@ -237,12 +237,12 @@
   This is a container for Datatypes.
 
   \code
-    Datatype *findByName(string &);                 // find a Datatype by name
-    Datatype *getTypeVoid();                        // retrieve common types
+    Datatype *findByName(string &);                   // find a Datatype by name
+    Datatype *getTypeVoid();                          // retrieve common types
     Datatype *getTypeChar();
     Datatype *getBase(int4 size,type_metatype);
-    Datatype *getTypePointer(int4,Datatype *,uint4);   // get a pointer to another type
-    Datatype *getTypeArray(int4,Datatype *);         // get an array of another type
+    Datatype *getTypePointer(int4,Datatype *,uint4);  // get a pointer to another type
+    Datatype *getTypeArray(int4,Datatype *);          // get an array of another type
   \endcode
 
   \section classhighvariable HighVariable
@@ -257,7 +257,7 @@
   \code
     int4       numInstances();      // get number of different Varnodes associated
                                     // with this variable.
-    Varnode *  getInstance(int4);    // get (one of the) Varnodes associated with
+    Varnode *  getInstance(int4);   // get (one of the) Varnodes associated with
                                     // this variable.
     Datatype * getType();           // get Datatype of this variable
     Symbol *   getSymbol();         // get Symbol associated with this variable
@@ -274,11 +274,11 @@
   lives in a scope, has a name, and has a Datatype.
 
   \code
-    string &      getName();        // get the name of the symbol
-    Datatype *    getType();        // get the Datatype of the symbol
-    Scope *       getScope();       // get the scope containing the symbol
+    string &      getName();          // get the name of the symbol
+    Datatype *    getType();          // get the Datatype of the symbol
+    Scope *       getScope();         // get the scope containing the symbol
     SymbolEntry * getFirstWholeMap(); // get the (first) SymbolEntry associated
-                                    // with this symbol
+                                      // with this symbol
   \endcode
 
   \section classsymbolentry SymbolEntry
@@ -300,16 +300,16 @@
   This is a container for symbols.
 
   \code
-  SymbolEntry *findAddr(Address &,Address &);          // find a Symbol by address
+  SymbolEntry *findAddr(Address &,Address &);           // find a Symbol by address
   SymbolEntry *findContainer(Address &,int4,Address &); // find containing symbol
-  Funcdata *   findFunction(Address &);                // find a function by entry address
-  Symbol *     findByName(string &);                   // find a Symbol by name
-  SymbolEntry *queryByAddr(Address &,Address &);       // search for symbols across multiple scopes
+  Funcdata *   findFunction(Address &);                 // find a function by entry address
+  Symbol *     findByName(string &);                    // find a Symbol by name
+  SymbolEntry *queryByAddr(Address &,Address &);        // search for symbols across multiple scopes
   SymbolEntry *queryContainer(Address &,int4,Address &);
   Funcdata *   queryFunction(Address &);
   Scope *      discoverScope(Address &,int4,Address &); // discover scope of an address
-  string &     getName();                              // get name of scope
-  Scope *      getParent();                            // get parent scope
+  string &     getName();                               // get name of scope
+  Scope *      getParent();                             // get parent scope
   \endcode
 
   \section classdatabase Database
