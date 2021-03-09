@@ -75,11 +75,18 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 		return new VisualVertexSatelliteRenderer<>();
 	}
 
+	/**
+	 * The options for this viewer
+	 * @param options the options
+	 */
 	public void setGraphOptions(VisualGraphOptions options) {
 		this.options = options;
 		optionsChanged();
 	}
 
+	/**
+	 * Called to signal that the options used by this viewer have changed
+	 */
 	public void optionsChanged() {
 		setBackground(options.getGraphBackgroundColor());
 	}

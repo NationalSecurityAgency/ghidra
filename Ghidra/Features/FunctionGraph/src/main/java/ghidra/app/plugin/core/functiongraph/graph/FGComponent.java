@@ -224,8 +224,10 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		Color bgColor = options.getGraphBackgroundColor();
 		if (bgColor.equals(VisualGraphOptions.DEFAULT_GRAPH_BACKGROUND_COLOR)) {
 
-			// Give user notice when seeing the graph for a non-function.  Don't do this if the
-			// user has manually set the background color (this would require another option).
+			// Give user notice when seeing the graph for a non-function (such as an undefined 
+			// function), as this is typical for Ghidra UI widgets.   
+			// Don't do this if the user has manually set the background color (this would require 
+			// another option).
 			Function function = functionGraphData.getFunction();
 			if (function instanceof UndefinedFunction) {
 				viewer.setBackground(UNDEFINED_FUNCTION_COLOR);
