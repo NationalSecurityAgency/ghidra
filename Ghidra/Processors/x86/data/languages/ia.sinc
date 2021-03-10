@@ -5712,10 +5712,10 @@ define pcodeop movmskps;
 
 :MOVUPS       XmmReg2, XmmReg1 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,32] = XmmReg2[0,32];
-    XmmReg1[32,32] = XmmReg2[32,32];
-    XmmReg1[64,32] = XmmReg2[64,32];
-    XmmReg1[96,32] = XmmReg2[96,32];
+    XmmReg2[0,32] = XmmReg1[0,32];
+    XmmReg2[32,32] = XmmReg1[32,32];
+    XmmReg2[64,32] = XmmReg1[64,32];
+    XmmReg2[96,32] = XmmReg1[96,32];
 }
 
 :MULPD        XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x59; m128 & XmmReg ...
