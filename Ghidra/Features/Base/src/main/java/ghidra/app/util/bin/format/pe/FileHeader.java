@@ -22,6 +22,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
 import ghidra.program.model.data.*;
@@ -45,7 +46,7 @@ import ghidra.util.exception.DuplicateNameException;
  *     WORD    Characteristics;						// MANDATORY
  * } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
  * </pre>
- * 
+ *
  */
 public class FileHeader implements StructConverter {
 	/**
@@ -55,128 +56,131 @@ public class FileHeader implements StructConverter {
 	/**
 	 * The size of the <code>IMAGE_FILE_HEADER</code> in bytes.
 	 */
-    public final static int IMAGE_SIZEOF_FILE_HEADER = 20;
+	public final static int IMAGE_SIZEOF_FILE_HEADER = 20;
 
 	/**
 	 * Relocation info stripped from file.
 	 */
-    public final static int IMAGE_FILE_RELOCS_STRIPPED           = 0x0001;
-    /**
-     * File is executable (no unresolved externel references).
-     */
-    public final static int IMAGE_FILE_EXECUTABLE_IMAGE          = 0x0002;
-    /**
-     * Line nunbers stripped from file.
-     */
-    public final static int IMAGE_FILE_LINE_NUMS_STRIPPED        = 0x0004;
-    /**
-     * Local symbols stripped from file.
-     */
-    public final static int IMAGE_FILE_LOCAL_SYMS_STRIPPED       = 0x0008;
-    /**
-     * Agressively trim working set
-     */
-    public final static int IMAGE_FILE_AGGRESIVE_WS_TRIM         = 0x0010;
-    /**
-     * App can handle &gt;2gb addresses
-     */
-    public final static int IMAGE_FILE_LARGE_ADDRESS_AWARE       = 0x0020;
-    /**
-     * Bytes of machine word are reversed.
-     */
-    public final static int IMAGE_FILE_BYTES_REVERSED_LO         = 0x0080;
-    /**
-     * 32 bit word machine.
-     */
-    public final static int IMAGE_FILE_32BIT_MACHINE             = 0x0100;
-    /**
-     * Debugging info stripped from file in .DBG file
-     */
-    public final static int IMAGE_FILE_DEBUG_STRIPPED            = 0x0200;
-    /**
-     * If Image is on removable media, copy and run from the swap file.
-     */
-    public final static int IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP   = 0x0400;
-    /**
-     * If Image is on Net, copy and run from the swap file.
-     */
-    public final static int IMAGE_FILE_NET_RUN_FROM_SWAP         = 0x0800;
-    /**
-     * System File.
-     */
-    public final static int IMAGE_FILE_SYSTEM                    = 0x1000;
-    /**
-     * File is a DLL.
-     */
-    public final static int IMAGE_FILE_DLL                       = 0x2000;
-    /**
-     * File should only be run on a UP machine
-     */
-    public final static int IMAGE_FILE_UP_SYSTEM_ONLY            = 0x4000;
-    /**
-     * Bytes of machine word are reversed.
-     */
-    public final static int IMAGE_FILE_BYTES_REVERSED_HI         = 0x8000;
+	public final static int IMAGE_FILE_RELOCS_STRIPPED = 0x0001;
+	/**
+	 * File is executable (no unresolved externel references).
+	 */
+	public final static int IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002;
+	/**
+	 * Line nunbers stripped from file.
+	 */
+	public final static int IMAGE_FILE_LINE_NUMS_STRIPPED = 0x0004;
+	/**
+	 * Local symbols stripped from file.
+	 */
+	public final static int IMAGE_FILE_LOCAL_SYMS_STRIPPED = 0x0008;
+	/**
+	 * Agressively trim working set
+	 */
+	public final static int IMAGE_FILE_AGGRESIVE_WS_TRIM = 0x0010;
+	/**
+	 * App can handle &gt;2gb addresses
+	 */
+	public final static int IMAGE_FILE_LARGE_ADDRESS_AWARE = 0x0020;
+	/**
+	 * Bytes of machine word are reversed.
+	 */
+	public final static int IMAGE_FILE_BYTES_REVERSED_LO = 0x0080;
+	/**
+	 * 32 bit word machine.
+	 */
+	public final static int IMAGE_FILE_32BIT_MACHINE = 0x0100;
+	/**
+	 * Debugging info stripped from file in .DBG file
+	 */
+	public final static int IMAGE_FILE_DEBUG_STRIPPED = 0x0200;
+	/**
+	 * If Image is on removable media, copy and run from the swap file.
+	 */
+	public final static int IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP = 0x0400;
+	/**
+	 * If Image is on Net, copy and run from the swap file.
+	 */
+	public final static int IMAGE_FILE_NET_RUN_FROM_SWAP = 0x0800;
+	/**
+	 * System File.
+	 */
+	public final static int IMAGE_FILE_SYSTEM = 0x1000;
+	/**
+	 * File is a DLL.
+	 */
+	public final static int IMAGE_FILE_DLL = 0x2000;
+	/**
+	 * File should only be run on a UP machine.
+	 */
+	public final static int IMAGE_FILE_UP_SYSTEM_ONLY = 0x4000;
+	/**
+	 * Bytes of machine word are reversed.
+	 */
+	public final static int IMAGE_FILE_BYTES_REVERSED_HI = 0x8000;
 
-     public final static String [] CHARACTERISTICS = {
-            "Relocation info stripped from file",
-            "File is executable  (i.e. no unresolved externel references)",
-            "Line nunbers stripped from file",
-            "Local symbols stripped from file",
-            "Agressively trim working set",
-            "App can handle >2gb addresses",
-            "Bytes of machine word are reversed",
-            "32 bit word machine",
-            "Debugging info stripped from file in .DBG file",
-            "If Image is on removable media, copy and run from the swap file",
-            "If Image is on Net, copy and run from the swap file",
-            "System file",
-            "File is a DLL",
-            "File should only be run on a UP machine",
-            "Bytes of machine word are reversed"
-	};
+	/**
+	 * Magic value in LordPE's Symbol Table pointer field.
+	 */
+	private final static int LORDPE_SYMBOL_TABLE = 0x726F4C5B;
+	/**
+	 * Magic value in LordPE's Number of Symbols field.
+	 */
+	private final static int LORDPE_NUMBER_OF_SYMBOLS = 0x5D455064;
 
-    private short machine;
-    private short numberOfSections;
-    private int   timeDateStamp;
-    private int   pointerToSymbolTable;
-    private int   numberOfSymbols;
-    private short sizeOfOptionalHeader; 	// delta between start of OptionalHeader and start of section table
-    private short characteristics;
+	public final static String[] CHARACTERISTICS = { "Relocation info stripped from file",
+		"File is executable  (i.e. no unresolved externel references)",
+		"Line nunbers stripped from file", "Local symbols stripped from file",
+		"Agressively trim working set", "App can handle >2gb addresses",
+		"Bytes of machine word are reversed", "32 bit word machine",
+		"Debugging info stripped from file in .DBG file",
+		"If Image is on removable media, copy and run from the swap file",
+		"If Image is on Net, copy and run from the swap file", "System file", "File is a DLL",
+		"File should only be run on a UP machine", "Bytes of machine word are reversed" };
 
-    private SectionHeader [] sectionHeaders;
-    private List<DebugCOFFSymbol>symbols = new ArrayList<>();
+	private short machine;
+	private short numberOfSections;
+	private int timeDateStamp;
+	private int pointerToSymbolTable;
+	private int numberOfSymbols;
+	private short sizeOfOptionalHeader; 	// delta between start of OptionalHeader and start of section table
+	private short characteristics;
 
-    private FactoryBundledWithBinaryReader reader;
-    private int startIndex;
-    private NTHeader ntHeader;
+	private SectionHeader[] sectionHeaders;
+	private List<DebugCOFFSymbol> symbols = new ArrayList<>();
+	private List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = new ArrayList<>();
 
-    static FileHeader createFileHeader(
-            FactoryBundledWithBinaryReader reader, int startIndex,
-            NTHeader ntHeader) throws IOException {
-        FileHeader fileHeader = (FileHeader) reader.getFactory().create(FileHeader.class);
-        fileHeader.initFileHeader(reader, startIndex, ntHeader);
-        return fileHeader;
-    }
+	private FactoryBundledWithBinaryReader reader;
+	private int startIndex;
+	private NTHeader ntHeader;
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public FileHeader() {}
+	static FileHeader createFileHeader(FactoryBundledWithBinaryReader reader, int startIndex,
+			NTHeader ntHeader) throws IOException {
+		FileHeader fileHeader = (FileHeader) reader.getFactory().create(FileHeader.class);
+		fileHeader.initFileHeader(reader, startIndex, ntHeader);
+		return fileHeader;
+	}
 
-    private void initFileHeader(FactoryBundledWithBinaryReader reader, int startIndex, NTHeader ntHeader) throws IOException {
-        this.reader = reader;
-        this.startIndex = startIndex;
-        this.ntHeader = ntHeader;
+	/**
+	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 */
+	public FileHeader() {
+	}
 
-        parse();
-    }
-    
+	private void initFileHeader(FactoryBundledWithBinaryReader reader, int startIndex,
+			NTHeader ntHeader) throws IOException {
+		this.reader = reader;
+		this.startIndex = startIndex;
+		this.ntHeader = ntHeader;
+
+		parse();
+	}
+
 	/**
 	 * Returns the architecture type of the computer.
 	 * @return the architecture type of the computer
 	 */
-    public short getMachine() {
+	public short getMachine() {
 		return machine;
 	}
 
@@ -184,36 +188,40 @@ public class FileHeader implements StructConverter {
 	 * Returns a string representation of the architecture type of the computer.
 	 * @return a string representation of the architecture type of the computer
 	 */
-    public String getMachineName() {
-    	return MachineName.getName(machine);
-    }
-    
+	public String getMachineName() {
+		return MachineName.getName(machine);
+	}
+
 	/**
-	 * Returns the number of sections. 
+	 * Returns the number of sections.
 	 * Sections equate to Ghidra memory blocks.
 	 * @return the number of sections
 	 */
-    public int getNumberOfSections() {
-        return numberOfSections;
-    }
+	public int getNumberOfSections() {
+		return numberOfSections;
+	}
 
 	/**
 	 * Returns the array of section headers.
 	 * @return the array of section headers
 	 */
-    public SectionHeader [] getSectionHeaders() {
-    	if (sectionHeaders == null) {
-    		return new SectionHeader[0];
-    	}
-        return sectionHeaders;
-    }
+	public SectionHeader[] getSectionHeaders() {
+		if (sectionHeaders == null) {
+			return new SectionHeader[0];
+		}
+		return sectionHeaders;
+	}
 
 	/**
 	 * Returns the array of symbols.
 	 * @return the array of symbols
 	 */
-    public List<DebugCOFFSymbol> getSymbols() {
+	public List<DebugCOFFSymbol> getSymbols() {
 		return symbols;
+	}
+
+	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getImageRuntimeFunctionEntries() {
+		return irfes;
 	}
 
 	/**
@@ -221,94 +229,96 @@ public class FileHeader implements StructConverter {
 	 * @param virtualAddr the virtual address
 	 * @return the section header that contains the specified virtual address
 	 */
-    public SectionHeader getSectionHeaderContaining(int virtualAddr) {
-        for (SectionHeader sectionHeader : sectionHeaders) {
-        	int start = sectionHeader.getVirtualAddress();
-        	int   end = sectionHeader.getVirtualAddress()+sectionHeader.getVirtualSize()-1;
-            if (virtualAddr >= start && virtualAddr <= end) {
-                return sectionHeader;
-            }
-        }
-        return null;
-    }
+	public SectionHeader getSectionHeaderContaining(int virtualAddr) {
+		for (SectionHeader sectionHeader : sectionHeaders) {
+			int start = sectionHeader.getVirtualAddress();
+			int end = sectionHeader.getVirtualAddress() + sectionHeader.getVirtualSize() - 1;
+			if (virtualAddr >= start && virtualAddr <= end) {
+				return sectionHeader;
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Returns the section header at the specified position in the array.
 	 * @param index index of section header to return
 	 * @return the section header at the specified position in the array, or null if invalid
 	 */
-    public SectionHeader getSectionHeader(int index) {
+	public SectionHeader getSectionHeader(int index) {
 		if (index >= 0 && index < sectionHeaders.length) {
-    		return sectionHeaders[index];
-    	}
-    	return null;
-    }
+			return sectionHeaders[index];
+		}
+		return null;
+	}
 
 	/**
 	 * Returns the time stamp of the image.
 	 * @return the time stamp of the image
 	 */
-    public int getTimeDateStamp() {
-        return timeDateStamp;
-    }
+	public int getTimeDateStamp() {
+		return timeDateStamp;
+	}
 
 	/**
 	 * Returns the file offset of the COFF symbol table
 	 * @return the file offset of the COFF symbol table
 	 */
-    public int getPointerToSymbolTable() {
-        return pointerToSymbolTable;
-    }
+	public int getPointerToSymbolTable() {
+		return pointerToSymbolTable;
+	}
 
 	/**
 	 * Returns the number of symbols in the COFF symbol table
 	 * @return  the number of symbols in the COFF symbol table
 	 */
-    public int getNumberOfSymbols() {
-        return numberOfSymbols;
-    }
+	public int getNumberOfSymbols() {
+		return numberOfSymbols;
+	}
 
 	/**
 	 * Returns the size of the optional header data
 	 * @return the size of the optional header, in bytes
 	 */
-    public int getSizeOfOptionalHeader() {
+	public int getSizeOfOptionalHeader() {
 		return sizeOfOptionalHeader;
 	}
 
 	/**
-	 * Returns a set of bit flags indicating attributes of the file. 
+	 * Returns a set of bit flags indicating attributes of the file.
 	 * @return a set of bit flags indicating attributes
 	 */
-    public int getCharacteristics() {
-        return characteristics;
-    }
+	public int getCharacteristics() {
+		return characteristics;
+	}
 
 	/**
 	 * Returns the file pointer to the section headers.
 	 * @return the file pointer to the section headers
 	 */
-    public int getPointerToSections() {
-    	short sizeOptHdr = ntHeader.getFileHeader().sizeOfOptionalHeader;
+	public int getPointerToSections() {
+		short sizeOptHdr = ntHeader.getFileHeader().sizeOfOptionalHeader;
 		int ptrToSections = startIndex + IMAGE_SIZEOF_FILE_HEADER + sizeOptHdr;
-    	int testSize = ntHeader.getOptionalHeader().is64bit()
-              ? Constants.IMAGE_SIZEOF_NT_OPTIONAL64_HEADER
-              : Constants.IMAGE_SIZEOF_NT_OPTIONAL32_HEADER;
-    	if (sizeOptHdr != testSize) {
+		int testSize =
+			ntHeader.getOptionalHeader().is64bit() ? Constants.IMAGE_SIZEOF_NT_OPTIONAL64_HEADER
+					: Constants.IMAGE_SIZEOF_NT_OPTIONAL32_HEADER;
+		if (sizeOptHdr != testSize) {
 			Msg.warn(this, "Non-standard optional header size: " + sizeOptHdr + " bytes");
-    	}
+		}
 		return ptrToSections;
-    }
+	}
 
-    void processSections(OptionalHeader optHeader) throws IOException {
-        long oldIndex = reader.getPointerIndex();
+	void processSections(OptionalHeader optHeader) throws IOException {
+		long oldIndex = reader.getPointerIndex();
 
-        int tmpIndex = getPointerToSections();
-        if (numberOfSections < 0) {
-        	Msg.error(this, "Number of sections = "+numberOfSections);
-        } else if (optHeader.getFileAlignment() == 0) {
-        	Msg.error(this, "File alignment == 0: section processing skipped");
-        } else {
+		int tmpIndex = getPointerToSections();
+		if (numberOfSections < 0) {
+			Msg.error(this, "Number of sections = " + numberOfSections);
+		}
+		else if (optHeader.getFileAlignment() == 0) {
+			Msg.error(this, "File alignment == 0: section processing skipped");
+		}
+		else {
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
 				sectionHeaders[i] = SectionHeader.createSectionHeader(reader, tmpIndex);
@@ -330,8 +340,8 @@ public class FileHeader implements StructConverter {
 					optHeader.getSectionAlignment());
 				if (virtualAddress == alignedVirtualAddress) {
 					if (sizeOfRawData > virtualSize) {
-						sectionHeaders[i].setVirtualSize(
-							Math.min(sizeOfRawData, alignedVirtualSize));
+						sectionHeaders[i]
+								.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
 					}
 				}
 				else {
@@ -341,68 +351,101 @@ public class FileHeader implements StructConverter {
 			}
 		}
 
-        reader.setPointerIndex(oldIndex);
-    }
+		reader.setPointerIndex(oldIndex);
+	}
 
-    void processSymbols() throws IOException {
-        if (isLordPE()) {
-            return;
-        }
+	void processImageRuntimeFunctionEntries() throws IOException {
+		FileHeader fh = ntHeader.getFileHeader();
+		SectionHeader[] sections = fh.getSectionHeaders();
 
-        long oldIndex = reader.getPointerIndex();
+		// Look for an exception handler section for an array of
+		// RUNTIME_FUNCTION structures, bail if one isn't found
+		SectionHeader irfeHeader = null;
+		for (SectionHeader header : sections) {
+			if (header.getName().equals(".pdata")) {
+				irfeHeader = header;
+				break;
+			}
+		}
 
-        int tmpIndex = getPointerToSymbolTable();
-    	if (!ntHeader.checkRVA(tmpIndex)) {
-        	Msg.error(this, "Invalid file index "+Integer.toHexString(tmpIndex));
-    		return;	
-    	}
+		if (irfeHeader == null) {
+			return;
+		}
 
-        if ( numberOfSymbols < 0 || numberOfSymbols > reader.length()) {
-        	Msg.error(this, "Invalid symbol count "+Integer.toHexString(numberOfSymbols));
-        	return;
-        }
+		long oldIndex = reader.getPointerIndex();
 
-        int stringTableIndex = tmpIndex + DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL * numberOfSymbols;
-        
-        for (int i = 0; i < numberOfSymbols; ++i) {
-        	if (!ntHeader.checkRVA(tmpIndex)) {
-            	Msg.error(this, "Invalid file index "+Integer.toHexString(tmpIndex));
-        		break;	
-        	}
+		int start = irfeHeader.getPointerToRawData();
+		reader.setPointerIndex(start);
 
-        	DebugCOFFSymbol symbol = DebugCOFFSymbol.createDebugCOFFSymbol(reader, tmpIndex, stringTableIndex);
+		ImageRuntimeFunctionEntries entries =
+			ImageRuntimeFunctionEntries.createImageRuntimeFunctionEntries(reader, start, ntHeader);
+		irfes = entries.getRuntimeFunctionEntries();
 
-            tmpIndex += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
+		reader.setPointerIndex(oldIndex);
+	}
 
-            tmpIndex += (DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL * symbol.getNumberOfAuxSymbols());
+	void processSymbols() throws IOException {
+		if (isLordPE()) {
+			return;
+		}
 
-            int numberOfAuxSymbols = symbol.getNumberOfAuxSymbols();
+		long oldIndex = reader.getPointerIndex();
+
+		int tmpIndex = getPointerToSymbolTable();
+		if (!ntHeader.checkRVA(tmpIndex)) {
+			Msg.error(this, "Invalid file index " + Integer.toHexString(tmpIndex));
+			return;
+		}
+
+		if (numberOfSymbols < 0 || numberOfSymbols > reader.length()) {
+			Msg.error(this, "Invalid symbol count " + Integer.toHexString(numberOfSymbols));
+			return;
+		}
+
+		int stringTableIndex = tmpIndex + DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL * numberOfSymbols;
+
+		for (int i = 0; i < numberOfSymbols; ++i) {
+			if (!ntHeader.checkRVA(tmpIndex)) {
+				Msg.error(this, "Invalid file index " + Integer.toHexString(tmpIndex));
+				break;
+			}
+
+			DebugCOFFSymbol symbol =
+				DebugCOFFSymbol.createDebugCOFFSymbol(reader, tmpIndex, stringTableIndex);
+
+			tmpIndex += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
+
+			tmpIndex +=
+				(DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL * symbol.getNumberOfAuxSymbols());
+
+			int numberOfAuxSymbols = symbol.getNumberOfAuxSymbols();
 			i += numberOfAuxSymbols > 0 ? numberOfAuxSymbols : 0;
 
-            symbols.add( symbol );
-        }
+			symbols.add(symbol);
+		}
 
-        reader.setPointerIndex(oldIndex);
-    }
+		reader.setPointerIndex(oldIndex);
+	}
 
-    public boolean isLordPE() {
-        if (getPointerToSymbolTable() == 0x726F4C5B && getNumberOfSymbols() == 0x5D455064) {
-            return true;
-        }
-        return false;
-    }
+	public boolean isLordPE() {
+		if (getPointerToSymbolTable() == LORDPE_SYMBOL_TABLE &&
+			getNumberOfSymbols() == LORDPE_NUMBER_OF_SYMBOLS) {
+			return true;
+		}
+		return false;
+	}
 
-    private void parse() throws IOException {
-        reader.setPointerIndex(startIndex);
+	private void parse() throws IOException {
+		reader.setPointerIndex(startIndex);
 
-        machine              = reader.readNextShort();
-        numberOfSections     = reader.readNextShort();
-        timeDateStamp        = reader.readNextInt  ();
-        pointerToSymbolTable = reader.readNextInt  ();
-        numberOfSymbols      = reader.readNextInt  ();
-        sizeOfOptionalHeader = reader.readNextShort();
-        characteristics      = reader.readNextShort();
-    }
+		machine = reader.readNextShort();
+		numberOfSections = reader.readNextShort();
+		timeDateStamp = reader.readNextInt();
+		pointerToSymbolTable = reader.readNextInt();
+		numberOfSymbols = reader.readNextInt();
+		sizeOfOptionalHeader = reader.readNextShort();
+		characteristics = reader.readNextShort();
+	}
 
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
@@ -411,22 +454,22 @@ public class FileHeader implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 
-		struct.add(WORD,2,"Machine",getMachineName());
-		struct.add(WORD,2,"NumberOfSections",null);
-		struct.add(DWORD,4,"TimeDateStamp",null);
-		struct.add(DWORD,4,"PointerToSymbolTable",null);
-		struct.add(DWORD,4,"NumberOfSymbols",null);
-		struct.add(WORD,2,"SizeOfOptionalHeader",null);
-		struct.add(WORD,2,"Characteristics",null);
+		struct.add(WORD, 2, "Machine", getMachineName());
+		struct.add(WORD, 2, "NumberOfSections", null);
+		struct.add(DWORD, 4, "TimeDateStamp", null);
+		struct.add(DWORD, 4, "PointerToSymbolTable", null);
+		struct.add(DWORD, 4, "NumberOfSymbols", null);
+		struct.add(WORD, 2, "SizeOfOptionalHeader", null);
+		struct.add(WORD, 2, "Characteristics", null);
 
 		struct.setCategoryPath(new CategoryPath("/PE"));
 
 		return struct;
 	}
 
-	private void setSectionHeaders(SectionHeader [] sectionHeaders) {
+	private void setSectionHeaders(SectionHeader[] sectionHeaders) {
 		this.sectionHeaders = sectionHeaders;
-		numberOfSections = (short)sectionHeaders.length;
+		numberOfSections = (short) sectionHeaders.length;
 	}
 
 	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {
@@ -436,7 +479,7 @@ public class FileHeader implements StructConverter {
 		raf.write(dc.getBytes(pointerToSymbolTable));
 		raf.write(dc.getBytes(numberOfSymbols));
 		raf.write(dc.getBytes(sizeOfOptionalHeader));
-		raf.write(dc.getBytes(characteristics));		
+		raf.write(dc.getBytes(characteristics));
 	}
 
 	/**
@@ -449,61 +492,61 @@ public class FileHeader implements StructConverter {
 	 * @throws RuntimeException if the memory block is uninitialized
 	 */
 	public void addSection(MemoryBlock block, OptionalHeader optionalHeader) {
-		DataDirectory [] directories = optionalHeader.getDataDirectories();
+		DataDirectory[] directories = optionalHeader.getDataDirectories();
 
-		DataDirectory [] dataDirectories = optionalHeader.getDataDirectories();
-
+		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
 
 		SecurityDataDirectory sdd = null;
 		if (dataDirectories.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY) {
-			sdd = (SecurityDataDirectory)dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY];
+			sdd =
+				(SecurityDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY];
 			if (sdd != null && sdd.getSize() > 0) {
-				sdd.updatePointers( PortableExecutable.computeAlignment( (int)block.getSize( ), optionalHeader.getFileAlignment( ) ) );
+				sdd.updatePointers(PortableExecutable.computeAlignment((int) block.getSize(),
+					optionalHeader.getFileAlignment()));
 			}
 		}
 
-
-		int lastPos = computeAlignedNewPosition( optionalHeader, directories );
+		int lastPos = computeAlignedNewPosition(optionalHeader, directories);
 
 		SectionHeader newSection = new SectionHeader(block, optionalHeader, lastPos);
 
-		SectionHeader [] newSectionHeaders = new SectionHeader[sectionHeaders.length + 1];
-		System.arraycopy(sectionHeaders, 0, newSectionHeaders, 0, sectionHeaders.length);		
+		SectionHeader[] newSectionHeaders = new SectionHeader[sectionHeaders.length + 1];
+		System.arraycopy(sectionHeaders, 0, newSectionHeaders, 0, sectionHeaders.length);
 		newSectionHeaders[sectionHeaders.length] = newSection;
 		setSectionHeaders(newSectionHeaders);
 
 		int firstSectionStart = sectionHeaders[0].getPointerToRawData();
-		int lastSectionEnd = sectionHeaders[sectionHeaders.length-1].getPointerToRawData()
-									+sectionHeaders[sectionHeaders.length-1].getSizeOfRawData();
+		int lastSectionEnd = sectionHeaders[sectionHeaders.length - 1].getPointerToRawData() +
+			sectionHeaders[sectionHeaders.length - 1].getSizeOfRawData();
 
-		for (int i = 0 ; i < directories.length ; i++) {
-			if (directories[i] == null ||
-				directories[i].getSize() == 0 || 
+		for (int i = 0; i < directories.length; i++) {
+			if (directories[i] == null || directories[i].getSize() == 0 ||
 				directories[i].isContainedInSection()) {
 				continue;
 			}
 			if (directories[i].getVirtualAddress() < firstSectionStart) {
 				if (i != OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT) {
-					throw new RuntimeException("PE - Unexpected directory before sections: "+i);
+					throw new RuntimeException("PE - Unexpected directory before sections: " + i);
 				}
 			}
 			if (directories[i].getVirtualAddress() > lastSectionEnd) {
 				if (i != OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY) {
-					throw new RuntimeException("PE - Unexpected directory after sections: "+i);
+					throw new RuntimeException("PE - Unexpected directory after sections: " + i);
 				}
 			}
 		}
 
 		int offset = 0;
 
-		
 		if (dataDirectories.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT) {
-			BoundImportDataDirectory bidd = (BoundImportDataDirectory)dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT];
+			BoundImportDataDirectory bidd =
+				(BoundImportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT];
 			if (bidd != null && bidd.getSize() > 0) {
 				bidd.updatePointers(SectionHeader.IMAGE_SIZEOF_SECTION_HEADER);
 				int endptr = bidd.getVirtualAddress() + bidd.getSize() - 1;
 				if (endptr >= sectionHeaders[0].getPointerToRawData()) {
-					int alignedPtr = PortableExecutable.computeAlignment(endptr, optionalHeader.getFileAlignment());
+					int alignedPtr = PortableExecutable.computeAlignment(endptr,
+						optionalHeader.getFileAlignment());
 					offset = alignedPtr - sectionHeaders[0].getPointerToRawData();
 					for (SectionHeader sectionHeader : sectionHeaders) {
 						sectionHeader.updatePointers(offset);
@@ -514,9 +557,9 @@ public class FileHeader implements StructConverter {
 			}
 		}
 
-
 		if (dataDirectories.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG) {
-			DebugDataDirectory ddd = (DebugDataDirectory)dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG];
+			DebugDataDirectory ddd =
+				(DebugDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG];
 			if (ddd != null && ddd.getSize() > 0) {
 				if (ddd.getVirtualAddress() > newSection.getVirtualAddress()) {
 					if (sdd != null && sdd.getSize() > 0) {
@@ -530,12 +573,12 @@ public class FileHeader implements StructConverter {
 		}
 
 		if (block.isExecute()) {
-			optionalHeader.setSizeOfCode(optionalHeader.getSizeOfCode() +
-										newSection.getSizeOfRawData());
+			optionalHeader
+					.setSizeOfCode(optionalHeader.getSizeOfCode() + newSection.getSizeOfRawData());
 		}
 		else {
-			optionalHeader.setSizeOfInitializedData(optionalHeader.getSizeOfInitializedData() +
-													newSection.getSizeOfRawData());
+			optionalHeader.setSizeOfInitializedData(
+				optionalHeader.getSizeOfInitializedData() + newSection.getSizeOfRawData());
 		}
 
 		int soi = newSection.getVirtualAddress() + newSection.getSizeOfRawData();
@@ -543,7 +586,8 @@ public class FileHeader implements StructConverter {
 		optionalHeader.setSizeOfImage(soi);
 	}
 
-	private int computeAlignedNewPosition( OptionalHeader optionalHeader, DataDirectory [] directories ) {
+	private int computeAlignedNewPosition(OptionalHeader optionalHeader,
+			DataDirectory[] directories) {
 		int lastPos = 0;
 		for (SectionHeader sectionHeader : sectionHeaders) {
 			if (sectionHeader.getPointerToRawData() + sectionHeader.getSizeOfRawData() > lastPos) {
@@ -551,14 +595,13 @@ public class FileHeader implements StructConverter {
 			}
 		}
 		for (DataDirectory directorie : directories) {
-			if (directorie == null ||
-				directorie.getSize() == 0) {
+			if (directorie == null || directorie.getSize() == 0) {
 				continue;
 			}
 			if (directorie.rvaToPointer() + directorie.getSize() > lastPos) {
 				lastPos = directorie.rvaToPointer() + directorie.getSize();
 			}
 		}
-		return PortableExecutable.computeAlignment( lastPos, optionalHeader.getFileAlignment( ) );
+		return PortableExecutable.computeAlignment(lastPos, optionalHeader.getFileAlignment());
 	}
 }

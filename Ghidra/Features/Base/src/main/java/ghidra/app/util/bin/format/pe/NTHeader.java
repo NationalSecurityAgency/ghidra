@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * A class to represent the <b><code>IMAGE_NT_HEADERS32</code></b> and
- * IMAGE_NT_HEADERS64 structs as defined in 
+ * IMAGE_NT_HEADERS64 structs as defined in
  * <code>winnt.h</code>.
  * <pre>
  * typedef struct _IMAGE_NT_HEADERS {
@@ -39,8 +39,8 @@ import ghidra.util.task.TaskMonitorAdapter;
  *    IMAGE_OPTIONAL_HEADER32 OptionalHeader;
  * };
  * </pre>
- * 
- * 
+ *
+ *
  */
 public class NTHeader implements StructConverter, OffsetValidator {
 	/**
@@ -82,8 +82,8 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	public NTHeader() {
 	}
 
-	private void initNTHeader(FactoryBundledWithBinaryReader reader, int index, SectionLayout layout,
-			boolean advancedProcess, boolean parseCliHeaders)
+	private void initNTHeader(FactoryBundledWithBinaryReader reader, int index,
+			SectionLayout layout, boolean advancedProcess, boolean parseCliHeaders)
 			throws InvalidNTHeaderException, IOException {
 		this.reader = reader;
 		this.index = index;
@@ -172,9 +172,9 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		//low alignment mode?
 		//
 		if (optionalHeader != null) {
-			if (optionalHeader.getFileAlignment() == optionalHeader.getSectionAlignment()
-					&& optionalHeader.getSectionAlignment() < 800
-					&& optionalHeader.getFileAlignment() > 1) {
+			if (optionalHeader.getFileAlignment() == optionalHeader.getSectionAlignment() &&
+				optionalHeader.getSectionAlignment() < 800 &&
+				optionalHeader.getFileAlignment() > 1) {
 				return rva;
 			}
 		}
@@ -270,6 +270,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 
 		fileHeader.processSections(optionalHeader);
 		fileHeader.processSymbols();
+		fileHeader.processImageRuntimeFunctionEntries();
 
 		if (advancedProcess) {
 			optionalHeader.processDataDirectories(TaskMonitorAdapter.DUMMY_MONITOR);
@@ -278,7 +279,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 
 	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {
 
-		raf.seek( index );
+		raf.seek(index);
 
 		raf.write(dc.getBytes(signature));
 
