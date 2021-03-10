@@ -205,7 +205,33 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForSwing();
 
 		waitForTree();
-		runSwing(() -> jTree.stopEditing());
+
+		// verify that  the tree opens a new node with the default
+		// category name is "New Category"
+		assertEquals(childCount + 1, miscNode.getChildCount());
+		GTreeNode node = miscNode.getChild("New Category");
+		assertNotNull(node);
+	}
+
+	@Test
+	public void testCreateCategory_WhileFiltered() throws Exception {
+		// select a category
+		GTreeNode miscNode = programNode.getChild("MISC");
+		assertNotNull(miscNode);
+		expandNode(miscNode);
+
+		int childCount = miscNode.getChildCount();
+		selectNode(miscNode);
+
+		filterTree(miscNode.getName());
+
+		DockingActionIf action = getAction(plugin, "New Category");
+		assertTrue(action.isEnabledForContext(treeContext));
+
+		// select "New Category" action
+		DataTypeTestUtils.performAction(action, tree, false);
+
+		waitForDialogComponent("Cannot Edit Tree Node");
 
 		// verify that  the tree opens a new node with the default
 		// category name is "New Category"

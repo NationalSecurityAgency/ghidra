@@ -37,7 +37,7 @@ public class VarnodeAST extends Varnode {
 
 	private boolean bInput;
 	private boolean bAddrTied;
-	private boolean bPersistant;
+	private boolean bPersistent;
 	private boolean bUnaffected;
 	private boolean bFree;
 	private int uniqId;					// Unique Id for distinguishing otherwise identical varnodes
@@ -50,7 +50,7 @@ public class VarnodeAST extends Varnode {
 		super(a, sz);
 		bInput = false;
 		bAddrTied = false;
-		bPersistant = false;
+		bPersistent = false;
 		bUnaffected = false;
 		bFree = true;
 		uniqId = id;
@@ -70,8 +70,8 @@ public class VarnodeAST extends Varnode {
 	}
 
 	@Override
-	public boolean isPersistant() {
-		return bPersistant;
+	public boolean isPersistent() {
+		return bPersistent;
 	}
 
 	@Override
@@ -132,8 +132,8 @@ public class VarnodeAST extends Varnode {
 		def = null;
 	}
 
-	public void setPersistant(boolean val) {
-		bPersistant = val;
+	public void setPersistent(boolean val) {
+		bPersistent = val;
 	}
 
 	public void setUnaffected(boolean val) {

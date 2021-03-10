@@ -926,7 +926,7 @@ This is a truncation operator that understands the endianess of the
 data. Input1 indicates the number of least significant bytes of input0
 to be thrown away. Output is then filled with any remaining bytes of
 input0 <emphasis>up to the size of output</emphasis>. If the size of
-output is smaller than the size of input0 plus the constant input1,
+output is smaller than the size of input0 minus the constant input1,
 then the additional most significant bytes of input0 will also be
 truncated.
 </para>

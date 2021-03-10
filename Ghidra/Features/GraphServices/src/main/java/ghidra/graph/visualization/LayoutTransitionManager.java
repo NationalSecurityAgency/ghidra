@@ -38,7 +38,7 @@ import ghidra.service.graph.AttributedVertex;
  */
 class LayoutTransitionManager {
 
-	LayoutFunction layoutFunction = new LayoutFunction();
+	LayoutFunction layoutFunction;
 	/**
 	 * the {@link VisualizationServer} used to display graphs using the requested {@link LayoutAlgorithm}
 	 */
@@ -48,24 +48,6 @@ class LayoutTransitionManager {
 	 * a {@link Predicate} to assist in determining which vertices are root vertices (for Tree layouts)
 	 */
 	Predicate<AttributedVertex> rootPredicate;
-
-	public static final List<String> EDGE_PRIORITY_LIST =
-			List.of(
-					"Fall-Through",
-					"Conditional-Return",
-					"Unconditional-Jump",
-					"Conditional-Jump",
-					"Unconditional-Call",
-					"Conditional-Call",
-					"Terminator",
-					"Computed",
-					"Indirection",
-					"Entry");
-	/**
-	 * a {@link Comparator} to sort edges during layout graph traversal
-	 * The default uses the {@code EDGE_PRIORTITY_LIST }
-	 */
-	Comparator<AttributedEdge> edgeComparator = new EdgeComparator(EDGE_PRIORITY_LIST);
 
 	/**
 	 * a {@link Function} to provide {@link Rectangle} (and thus bounds} for vertices
@@ -81,47 +63,54 @@ class LayoutTransitionManager {
 
 	LayoutPaintable.RadialRings<AttributedVertex> radialLayoutRings;
 
-
 	/**
 	 * Create an instance with passed parameters
 	 * @param visualizationServer displays the graph
 	 * @param rootPredicate selects root vertices
+	 * @param edgeTypePriorityList a {@code List} of EdgeType names in priority order
+	 * @param favoredEdgePredicate q {@code Predicate} that will cause certain EdgeTypes to be favored during layout
 	 */
 	public LayoutTransitionManager(
 			VisualizationServer<AttributedVertex, AttributedEdge> visualizationServer,
-			Predicate<AttributedVertex> rootPredicate) {
+			Predicate<AttributedVertex> rootPredicate,
+			List<String> edgeTypePriorityList,
+			Predicate<AttributedEdge> favoredEdgePredicate) {
 		this.visualizationServer = visualizationServer;
 		this.rootPredicate = rootPredicate;
-
 		this.renderContext = visualizationServer.getRenderContext();
 		this.vertexBoundsFunction = visualizationServer.getRenderContext().getVertexBoundsFunction();
-	}
-
-	public void setEdgeComparator(Comparator<AttributedEdge> edgeComparator) {
-		this.edgeComparator = edgeComparator;
+		this.layoutFunction = new LayoutFunction(new EdgeComparator(edgeTypePriorityList),
+				favoredEdgePredicate);
 	}
 
 	/**
 	 * set the layout in order to configure the requested {@link LayoutAlgorithm}
 	 * @param layoutName the name of the layout algorithm to use
 	 */
-	@SuppressWarnings("unchecked")
 	public void setLayout(String layoutName) {
 		LayoutAlgorithm.Builder<AttributedVertex, ?, ?> builder = layoutFunction.apply(layoutName);
 		LayoutAlgorithm<AttributedVertex> layoutAlgorithm = builder.build();
+		// layout algorithm considers the size of vertices
 		if (layoutAlgorithm instanceof VertexBoundsFunctionConsumer) {
 			((VertexBoundsFunctionConsumer<AttributedVertex>) layoutAlgorithm)
 				.setVertexBoundsFunction(vertexBoundsFunction);
 		}
+		// mincross layouts are 'layered'. put some bounds on the number of
+		// iterations of the level cross function based on the size of the graph
+		// very large graphs do not improve enough to out-weigh the cost of
+		// repeated iterations
 		if (layoutAlgorithm instanceof Layered) {
 			((Layered<AttributedVertex, AttributedEdge>) layoutAlgorithm)
 					.setMaxLevelCrossFunction(g ->
 							Math.max(1, Math.min(10, 500 / g.vertexSet().size())));
 		}
+		// tree layouts need a way to determine which vertices are roots
+		// especially when the graph is not a DAG
 		if (layoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) layoutAlgorithm).setRootPredicate(rootPredicate);
 		}
 		// remove any previously added layout paintables
+		// and apply paintables to these 2 algorithms
 		removePaintable(radialLayoutRings);
 		removePaintable(balloonLayoutRings);
 		if (layoutAlgorithm instanceof BalloonLayoutAlgorithm) {
@@ -138,9 +127,7 @@ class LayoutTransitionManager {
 			visualizationServer.addPreRenderPaintable(radialLayoutRings);
 		}
 
-		if (layoutAlgorithm instanceof EdgeSorting) {
-			((EdgeSorting<AttributedEdge>) layoutAlgorithm).setEdgeComparator(edgeComparator);
-		}
+		// apply the layout algorithm
 		LayoutAlgorithmTransition.apply(visualizationServer,
 				layoutAlgorithm);
 	}
@@ -151,7 +138,10 @@ class LayoutTransitionManager {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * Supplies the {@code LayoutAlgorithm} to be used for the initial @{code Graph} visualization
+	 * @return
+	 */
 	public LayoutAlgorithm<AttributedVertex> getInitialLayoutAlgorithm() {
 		LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
 			layoutFunction.apply(TIDIER_TREE).build();
@@ -159,12 +149,6 @@ class LayoutTransitionManager {
 		if (initialLayoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
 					.setRootPredicate(rootPredicate);
-			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
-					.setVertexBoundsFunction(vertexBoundsFunction);
-		}
-		if (initialLayoutAlgorithm instanceof EdgeSorting) {
-			((EdgeSorting<AttributedEdge>) initialLayoutAlgorithm)
-					.setEdgeComparator(edgeComparator);
 		}
 		if (initialLayoutAlgorithm instanceof VertexBoundsFunctionConsumer) {
 			((VertexBoundsFunctionConsumer<AttributedVertex>) initialLayoutAlgorithm)
@@ -173,6 +157,10 @@ class LayoutTransitionManager {
 		return initialLayoutAlgorithm;
 	}
 
+	/**
+	 * Supplies a {@code String[]} array of the supported layout names
+	 * @return
+	 */
 	public String[] getLayoutNames() {
 		return layoutFunction.getNames();
 	}

@@ -29,7 +29,8 @@ If applicable, please attach any files that caused problems or log files generat
 **Environment (please complete the following information):**
  - OS: [e.g. macOS 10.14.2]
  - Java Version: [e.g. 11.0]
- - Ghidra Version: [e.g. 9.0]
+ - Ghidra Version: [e.g. 9.1.2]
+ - Ghidra Origin: [e.g. official ghidra-sre.org distro, third party distro, locally built] 
 
 **Additional context**
 Add any other context about the problem here.
