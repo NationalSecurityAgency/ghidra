@@ -73,7 +73,6 @@ public class FGView extends VisualGraphView<FGVertex, FGEdge, FunctionGraph> {
 	protected void installGraphViewer() {
 
 		FGComponent newFgComponent = createGraphComponent();
-		newFgComponent.setGraphOptions(controller.getFunctionGraphOptions());
 		setGraphComponent(newFgComponent);
 
 		// we must assign the variable here, as the call to setGraphComponent() will call 

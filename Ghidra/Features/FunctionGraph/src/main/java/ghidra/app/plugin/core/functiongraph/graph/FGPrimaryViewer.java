@@ -33,7 +33,6 @@ public class FGPrimaryViewer extends GraphViewer<FGVertex, FGEdge> {
 		super(layout, size);
 
 		setVertexTooltipProvider(new FGVertexTooltipProvider());
-		setGraphOptions(graphComponent.getFucntionGraphOptions());
 	}
 
 	@Override
