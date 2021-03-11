@@ -71,6 +71,10 @@ public interface StructConverter {
 	 * Reusable 32-bit image base offset datatype. 
 	 */
 	public final static DataType IBO32 = new ImageBaseOffset32DataType();
+	/**
+	 * Reusable 64-bit image base offset datatype. 
+	 */
+	public final static DataType IBO64 = new ImageBaseOffset64DataType();
 
 	/**
 	 * Returns a structure datatype representing the
