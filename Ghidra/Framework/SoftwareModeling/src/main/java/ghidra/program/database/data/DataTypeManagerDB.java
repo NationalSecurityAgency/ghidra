@@ -1695,34 +1695,41 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public void disassociate(DataType dataType) {
-		UniversalID oldDtID = dataType.getUniversalID();
-		SourceArchive sourceArchive = dataType.getSourceArchive();
-		sourceArchive = resolveSourceArchive(sourceArchive);
-		UniversalID id = sourceArchive == null ? DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID
-				: sourceArchive.getSourceArchiveID();
-		if (id.equals(getUniversalID())) {
-			id = DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID;
-		}
-		if (id == DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID) {
-			// Already local data type so no source archive associated.
-			return;
-		}
 
-		// Set the source archive to null indicating no associated archive.
-		dataType.setSourceArchive(null);
+		lock.acquire();
+		try {
+			UniversalID oldDtID = dataType.getUniversalID();
+			SourceArchive sourceArchive = dataType.getSourceArchive();
+			sourceArchive = resolveSourceArchive(sourceArchive);
+			UniversalID id = sourceArchive == null ? DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID
+					: sourceArchive.getSourceArchiveID();
+			if (id.equals(getUniversalID())) {
+				id = DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID;
+			}
+			if (id == DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID) {
+				// Already local data type so no source archive associated.
+				return;
+			}
 
-		// Set the datatype's universal ID to a newly generated universal ID,
-		// since we no longer want the source archive data type's universal ID.
-		if (dataType instanceof DataTypeDB) {
-			DataTypeDB dt = (DataTypeDB) dataType;
-			dt.setUniversalID(UniversalIdGenerator.nextID());
+			// Set the source archive to null indicating no associated archive.
+			dataType.setSourceArchive(null);
+
+			// Set the datatype's universal ID to a newly generated universal ID,
+			// since we no longer want the source archive data type's universal ID.
+			if (dataType instanceof DataTypeDB) {
+				DataTypeDB dt = (DataTypeDB) dataType;
+				dt.setUniversalID(UniversalIdGenerator.nextID());
+			}
+
+			if (oldDtID != null) {
+				idsToDataTypeMap.removeDataType(sourceArchive, oldDtID);
+			}
+
+			dataTypeChanged(dataType);
 		}
-
-		if (oldDtID != null) {
-			idsToDataTypeMap.removeDataType(sourceArchive, oldDtID);
+		finally {
+			lock.release();
 		}
-
-		dataTypeChanged(dataType);
 	}
 
 	private Collection<DataType> filterOutNonSourceSettableDataTypes(
@@ -2694,9 +2701,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		try {
 			creatingDataType++;
-			DBRecord record = functionDefAdapter.createRecord(name, funDef.getComment(), cat.getID(),
-				DEFAULT_DATATYPE_ID, funDef.hasVarArgs(), funDef.getGenericCallingConvention(),
-				sourceArchiveIdValue, universalIdValue, funDef.getLastChangeTime());
+			DBRecord record =
+				functionDefAdapter.createRecord(name, funDef.getComment(), cat.getID(),
+					DEFAULT_DATATYPE_ID, funDef.hasVarArgs(), funDef.getGenericCallingConvention(),
+					sourceArchiveIdValue, universalIdValue, funDef.getLastChangeTime());
 			FunctionDefinitionDB funDefDb =
 				new FunctionDefinitionDB(this, dtCache, functionDefAdapter, paramAdapter, record);
 
@@ -3696,7 +3704,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	@Override
 	public DataType getDataType(SourceArchive sourceArchive, UniversalID datatypeID) {
 		UniversalID sourceID = sourceArchive == null ? null : sourceArchive.getSourceArchiveID();
-		return idsToDataTypeMap.getDataType(sourceID, datatypeID);
+		lock.acquire();
+		try {
+			return idsToDataTypeMap.getDataType(sourceID, datatypeID);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -3829,7 +3843,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			monitor.setProgress(0);
 			monitor.setMaximum(orderedComposites.size());
 			monitor.setMessage("Updating Datatype Sizes...");
-			
+
 			int count = 0;
 			for (CompositeDB c : orderedComposites) {
 				monitor.checkCanceled();
@@ -4162,7 +4176,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			Map<UniversalID, DataType> idMap =
 				map.computeIfAbsent(sourceID, k -> new ConcurrentHashMap<>());
-			final UniversalID sourceArchiveID = sourceID;
+			UniversalID sourceArchiveID = sourceID;
+
+			// note: this call is atomic and has a lock on the 'idMap'.  It may call to a method
+			//       that requires a db lock.  As such, the call to computeIfAbsent() must be 
+			//       made while holding the db lock.
 			return idMap.computeIfAbsent(dataTypeID,
 				k -> findDataTypeForIDs(sourceArchiveID, dataTypeID));
 		}
