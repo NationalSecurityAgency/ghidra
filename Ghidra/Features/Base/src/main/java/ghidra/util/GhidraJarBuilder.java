@@ -562,12 +562,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	private List<ApplicationModule> findAllModules(ApplicationLayout layout) throws IOException {
 		List<ApplicationModule> modules = new ArrayList<>();
 		
-		// Add GPL root directories
-		List<File> rootDirs = new ArrayList<>(rootGhidraDirs);
-		for (File rootDir : rootGhidraDirs) {
-			rootDirs.add(new File(rootDir.getParentFile(), "GPL"));
-		}
-		
 		for (GModule module : layout.getModules().values()) {
 			File moduleDir = module.getModuleRoot().getFile(false).getCanonicalFile();
 			File rootDir = getModuleRootDir(moduleDir);
@@ -578,7 +572,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	}
 	
 	private File getModuleRootDir(File moduleDir) {
-		// Add GPL directories
+		// Look in GPL directories too
 		List<File> rootDirs = new ArrayList<>(rootGhidraDirs);
 		for (File rootDir : rootGhidraDirs) {
 			rootDirs.add(new File(rootDir.getParentFile(), "GPL"));
