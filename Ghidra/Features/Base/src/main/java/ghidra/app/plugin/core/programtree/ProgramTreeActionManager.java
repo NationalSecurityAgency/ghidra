@@ -267,8 +267,8 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		};
 		goToViewAction.setEnabled(false);
 
-		goToViewAction.setPopupMenuData(
-			new MenuData(new String[] { "Go To in View" }, null, "aview"));
+		goToViewAction
+				.setPopupMenuData(new MenuData(new String[] { "Go To in View" }, null, "aview"));
 
 		list.add(goToViewAction);
 
@@ -282,8 +282,8 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		};
 		removeViewAction.setEnabled(false);
 
-		removeViewAction.setPopupMenuData(
-			new MenuData(new String[] { "Remove from View" }, null, "aview"));
+		removeViewAction
+				.setPopupMenuData(new MenuData(new String[] { "Remove from View" }, null, "aview"));
 
 		list.add(removeViewAction);
 
@@ -297,8 +297,8 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			};
 		replaceViewAction.setEnabled(false);
 
-		replaceViewAction.setPopupMenuData(
-			new MenuData(new String[] { "Replace View" }, null, "aview"));
+		replaceViewAction
+				.setPopupMenuData(new MenuData(new String[] { "Replace View" }, null, "aview"));
 
 		list.add(replaceViewAction);
 
@@ -446,8 +446,8 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		collapseAction.setEnabled(false);
 
 // ACTIONS - auto generated
-		collapseAction.setPopupMenuData(
-			new MenuData(new String[] { "Collapse All" }, null, "expand"));
+		collapseAction
+				.setPopupMenuData(new MenuData(new String[] { "Collapse All" }, null, "expand"));
 
 		list.add(collapseAction);
 
@@ -577,8 +577,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				return;
 			}
 
-			for (int i = 0; i < list.size(); i++) {
-				ProgramNode node = list.get(i);
+			for (ProgramNode node : list) {
 				if (tree.getModel().getRoot() != node.getRoot()) {
 					break;
 				}
@@ -979,8 +978,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			ArrayList<ProgramNode> list = tree.getSortedSelection();
 			CompoundCmd compCmd = new CompoundCmd("Merge with Parent");
 			String treeName = tree.getTreeName();
-			for (int i = 0; i < list.size(); i++) {
-				ProgramNode node = list.get(i);
+			for (ProgramNode node : list) {
 				tree.removeSelectionPath(node.getTreePath());
 				ProgramNode parentNode = (ProgramNode) node.getParent();
 				if (node.isModule() && parentNode != null) {
@@ -1036,7 +1034,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				ProgramNode node = (ProgramNode) tree.getLastSelectedPathComponent();
 
 				// if the node has not been yet visited, then when the group is added via the
-				// command below, the new child node in the parent will not be found 
+				// command below, the new child node in the parent will not be found
 				node.visit();
 
 				String name = tree.getNewFolderName();
@@ -1242,14 +1240,15 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	@SuppressWarnings("unchecked")
 	// the cast is safe, since we checked the flavor
 	private boolean isPasteOk(ProgramNode destNode) {
-		Transferable t = null;
+
 		boolean isCutOperation = false;
+		Clipboard systemClipboard = GClipboard.getSystemClipboard();
+		if (!systemClipboard.isDataFlavorAvailable(TreeTransferable.localTreeNodeFlavor)) {
+			return false;
+		}
 
 		try {
-			t = GClipboard.getSystemClipboard().getContents(this);
-			if (t == null) {
-				return false;
-			}
+			// we will put items on the 'tempClipboard' when the cut action is executed
 			Transferable temp = tempClipboard.getContents(this);
 			isCutOperation = (temp != null);
 		}
@@ -1258,26 +1257,16 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			return false;
 		}
 
-		if (!t.isDataFlavorSupported(TreeTransferable.localTreeNodeFlavor)) {
-			return false;
-		}
-
 		try {
-			if (!t.isDataFlavorSupported(TreeTransferable.localTreeNodeFlavor)) {
-				return false;
-			}
 			List<ProgramNode> list =
-				(List<ProgramNode>) t.getTransferData(TreeTransferable.localTreeNodeFlavor);
-
+				(List<ProgramNode>) systemClipboard.getData(TreeTransferable.localTreeNodeFlavor);
 			if (list == null) {
 				// SCR 7990--something bad has happened to the copy buffer
 				return false;
 			}
 
 			boolean pasteEnabled = false;
-			for (int i = 0; i < list.size(); i++) {
-				ProgramNode pasteNode = list.get(i);
-
+			for (ProgramNode pasteNode : list) {
 				boolean pasteAllowed = pasteMgr.isPasteAllowed(destNode, pasteNode, isCutOperation);
 				if (isCutOperation && !pasteAllowed) {
 					// for cut operation all nodes must be able to be pasted at destNode
