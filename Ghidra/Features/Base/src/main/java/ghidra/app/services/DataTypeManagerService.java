@@ -102,6 +102,16 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	public void edit(DataType dt);
 
 	/**
+	 * Pop up an editor dialog for the given data type and offset.
+	 *
+	 * @param dt data type that either a Structure or a Union; built in types cannot be edited
+	 * @param offset offset of the field within dt to edit / focus
+	 * @throws IllegalArgumentException if the given has not been resolved by a DataTypeManager;
+	 *         in other words, if {@link DataType#getDataTypeManager()} returns null.
+	 */
+	public void edit(DataType dt, int offset);
+
+	/**
 	 * Closes the archive for the given {@link DataTypeManager}.  This will ignore request to 
 	 * close the open Program's manager and the built-in manager.  
 	 * 

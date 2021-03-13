@@ -468,6 +468,11 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void edit(DataType dt) {
+		edit(dt, -1);
+	}
+
+	@Override
+	public void edit(DataType dt, int offset) {
 		DataTypeManager dataTypeManager = dt.getDataTypeManager();
 		if (dataTypeManager == null) {
 			throw new IllegalArgumentException(
@@ -479,7 +484,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			throw new IllegalArgumentException(
 				"DataType " + dt.getName() + " has no category path!");
 		}
-		editorManager.edit(dt);
+		editorManager.edit(dt, offset);
 	}
 
 	@Override

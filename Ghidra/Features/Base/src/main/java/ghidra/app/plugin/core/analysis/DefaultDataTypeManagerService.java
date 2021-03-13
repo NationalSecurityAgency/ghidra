@@ -146,6 +146,11 @@ public class DefaultDataTypeManagerService implements DataTypeManagerService {
 	}
 
 	@Override
+	public void edit(DataType dt, int offset) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataTypeManager getBuiltInDataTypesManager() {
 		return builtInDataTypesManager;
 	}
