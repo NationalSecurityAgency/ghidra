@@ -32,6 +32,7 @@ import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.nav.*;
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
@@ -42,6 +43,8 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.util.ServiceListener;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -643,6 +646,19 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			Address address = function.getEntryPoint();
 			service.goTo(navigatable, new ProgramLocation(program, address), program);
 		}
+	}
+
+	@Override
+	public void goToField(DataType dataType, int offset) {
+		DataType baseDataType = DataTypeUtils.getBaseDataType(dataType);
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataTypeManager baseDtDTM = baseDataType.getDataTypeManager();
+		if (baseDtDTM != dataTypeManager) {
+			baseDataType = baseDataType.clone(dataTypeManager);
+		}
+		final DataTypeManagerService service =
+			tool.getService(DataTypeManagerService.class);
+		service.edit(baseDataType, offset);
 	}
 
 	@Override

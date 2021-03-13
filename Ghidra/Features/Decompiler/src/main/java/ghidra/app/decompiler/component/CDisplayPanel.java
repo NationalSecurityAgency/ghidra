@@ -24,6 +24,7 @@ import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.util.viewer.listingpanel.ProgramLocationListener;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -137,6 +138,11 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
 	@Override
 	public void goToFunction(Function function, boolean newWindow) {
+		// stub
+	}
+
+	@Override
+	public void goToField(DataType dataType, int offset) {
 		// stub
 	}
 

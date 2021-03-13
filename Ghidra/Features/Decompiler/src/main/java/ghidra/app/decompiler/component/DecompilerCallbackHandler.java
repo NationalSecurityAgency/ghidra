@@ -16,6 +16,7 @@
 package ghidra.app.decompiler.component;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -47,4 +48,6 @@ public interface DecompilerCallbackHandler {
 	void goToFunction(Function function, boolean newWindow);
 
 	void doWheNotBusy(Callback c);
+
+	void goToField(DataType dataType, int offset);
 }
