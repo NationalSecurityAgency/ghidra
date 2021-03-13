@@ -101,8 +101,9 @@ public class DataTypeEditorManager
 	 * is already being edited then it is brought to the front. Otherwise, a new editor is created
 	 * and displayed.
 	 * @param dataType the data type to edit.
+	 * @param offset Scroll to the field with this offset, if it is non-negative.
 	 */
-	public void edit(DataType dataType) {
+	public void edit(DataType dataType, int offset) {
 
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 		if (dataTypeManager == null) {
@@ -115,27 +116,42 @@ public class DataTypeEditorManager
 			ComponentProvider componentProvider = editor.getComponentProvider();
 			plugin.getTool().showComponentProvider(componentProvider, true);
 			componentProvider.toFront();
-			return;
+		} else {
+			if (dataType instanceof Enum) {
+				editor = new EnumEditorProvider(plugin, (Enum) dataType);
+			}
+			else if (dataType instanceof Union) {
+				editor = new UnionEditorProvider(plugin, (Union) dataType, showUnionNumbersInHex());
+			}
+			else if (dataType instanceof Structure) {
+				editor = new StructureEditorProvider(plugin, (Structure) dataType,
+					showStructureNumbersInHex());
+			}
+			else if (dataType instanceof FunctionDefinition) {
+				editFunctionSignature((FunctionDefinition) dataType);
+			}
+			if (editor == null) {
+				return;
+			}
+			editor.addEditorListener(this);
+			editorList.add(editor);
 		}
+		if (offset >= 0) {
+			if (editor instanceof StructureEditorProvider)
+				((StructureEditorProvider) editor).goToOffset(offset);
+			else
+				throw new IllegalArgumentException("Cannot navigate to an offset with this data type.");
+		}
+	}
 
-		if (dataType instanceof Enum) {
-			editor = new EnumEditorProvider(plugin, (Enum) dataType);
-		}
-		else if (dataType instanceof Union) {
-			editor = new UnionEditorProvider(plugin, (Union) dataType, showUnionNumbersInHex());
-		}
-		else if (dataType instanceof Structure) {
-			editor = new StructureEditorProvider(plugin, (Structure) dataType,
-				showStructureNumbersInHex());
-		}
-		else if (dataType instanceof FunctionDefinition) {
-			editFunctionSignature((FunctionDefinition) dataType);
-		}
-		if (editor == null) {
-			return;
-		}
-		editor.addEditorListener(this);
-		editorList.add(editor);
+	/**
+	 * Displays a data type editor for editing the indicated data type. If the data type is
+	 * is already being edited then it is brought to the front. Otherwise, a new editor is created
+	 * and displayed.
+	 * @param dataType the data type to edit.
+	 */
+	public void edit(DataType dataType) {
+		edit(dataType, -1);
 	}
 
 	private void installEditorActions() {
