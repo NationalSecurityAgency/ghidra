@@ -1148,6 +1148,22 @@ public abstract class CompositeEditorPanel extends JPanel
 		clsm.setLeadSelectionIndex(column);
 	}
 
+	/**
+	 * Select and scroll to the component at the given offset.
+	 * @param offset The offset of the component to scroll to.
+	 */
+	public void selectComponentWithOffset(int offset) {
+		int num = model.getNumComponents();
+		for (int i = 0; i < num; i++) {
+			DataTypeComponent dtc = model.getComponent(i);
+			if (dtc.getOffset() >= offset) {
+				model.setSelection(new int[]{i});
+				scrollToCell(i, 0);
+				return;
+			}
+		}
+	}
+
 	private class ComponentStringCellEditor extends ComponentCellEditor {
 		public ComponentStringCellEditor(JTextField textField) {
 			super(textField);
