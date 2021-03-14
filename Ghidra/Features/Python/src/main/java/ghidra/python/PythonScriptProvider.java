@@ -16,12 +16,15 @@
 package ghidra.python;
 
 import java.io.*;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptProvider;
 
 public class PythonScriptProvider extends GhidraScriptProvider {
+
+	private static final Pattern BLOCK_COMMENT = Pattern.compile("'''");
 
 	@Override
 	public void createNewScript(ResourceFile newScript, String category) throws IOException {
@@ -33,23 +36,28 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 		writer.close();
 	}
 
+	/**
+	 * Returns a Pattern that matches block comment openings.
+	 * In Python this is a triple single quote sequence, "'''".
+	 * @return the Pattern for Python block comment openings
+	 */
+	@Override
+	public Pattern getBlockCommentStart() {
+		return BLOCK_COMMENT;
+	}
+
+	/**
+	 * Returns a Pattern that matches block comment closings.
+	 * In Python this is a triple single quote sequence, "'''".
+	 * @return the Pattern for Python block comment openings
+	 */
+	@Override
+	public Pattern getBlockCommentEnd() {
+		return BLOCK_COMMENT;
+	}
+
 	@Override
 	public String getCommentCharacter() {
-		return "#";
-	}
-
-	@Override
-	protected String getCertifyHeaderStart() {
-		return "## ###";
-	}
-
-	@Override
-	protected String getCertifyHeaderEnd() {
-		return "##";
-	}
-
-	@Override
-	protected String getCertificationBodyPrefix() {
 		return "#";
 	}
 

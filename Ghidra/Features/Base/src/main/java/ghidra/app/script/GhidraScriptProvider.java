@@ -17,6 +17,7 @@ package ghidra.app.script;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -92,6 +93,24 @@ public abstract class GhidraScriptProvider
 	 */
 	public abstract void createNewScript(ResourceFile newScript, String category)
 			throws IOException;
+
+	/**
+	 * Returns a Pattern that matches block comment openings.
+	 * If block comments are not supported by this provider, then this returns null.
+	 * @return the Pattern for block comment openings, null if block comments are not supported
+	 */
+	public Pattern getBlockCommentStart() {
+		return null;
+	}
+
+	/**
+	 * Returns a Pattern that matches block comment closings.
+	 * If block comments are not supported by this provider, then this returns null.
+	 * @return the Pattern for block comment closings, null if block comments are not supported
+	 */
+	public Pattern getBlockCommentEnd() {
+		return null;
+	}
 
 	/**
 	 * Returns the comment character.

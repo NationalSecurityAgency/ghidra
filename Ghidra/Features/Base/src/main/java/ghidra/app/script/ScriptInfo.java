@@ -20,6 +20,8 @@ import static ghidra.util.HTMLUtilities.*;
 import java.io.*;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
@@ -224,6 +226,21 @@ public class ScriptInfo {
 					}
 					else if (line.startsWith(certifyHeaderStart)) {
 						skipCertifyHeader = true;
+						continue;
+					}
+				}
+
+				Pattern blockStart = provider.getBlockCommentStart();
+				Pattern blockEnd = provider.getBlockCommentEnd();
+
+				if (blockStart != null && blockEnd != null) {
+					Matcher startMatcher = blockStart.matcher(line);
+					if (startMatcher.find()) {
+						int last_offset = startMatcher.end();
+						while (line != null && !blockEnd.matcher(line).find(last_offset)) {
+							line = reader.readLine();
+							last_offset = 0;
+						}
 						continue;
 					}
 				}
