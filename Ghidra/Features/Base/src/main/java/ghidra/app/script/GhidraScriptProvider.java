@@ -17,6 +17,7 @@ package ghidra.app.script;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -28,6 +29,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  */
 public abstract class GhidraScriptProvider
 		implements ExtensionPoint, Comparable<GhidraScriptProvider> {
+
+	private static final Pattern BLOCK_COMMENT_START = Pattern.compile("/\\*");
+	private static final Pattern BLOCK_COMMENT_END = Pattern.compile("\\*/");
 
 	@Override
 	public String toString() {
@@ -92,6 +96,25 @@ public abstract class GhidraScriptProvider
 	 */
 	public abstract void createNewScript(ResourceFile newScript, String category)
 			throws IOException;
+
+	/**
+	 * Returns a Pattern that matches block comment openings.
+	 * For example, in Java this would be something matching "/*".
+	 * @return the Pattern for block comment openings
+	 */
+	public Pattern getBlockCommentStart() {
+		return BLOCK_COMMENT_START;
+	}
+
+	/**
+	 * Returns a Pattern that matches block comment closings.
+	 * For example, in Java this would be something matching an asterisk followed by a forward
+	 * slash.
+	 * @return the Pattern for block comment openings
+	 */
+	public Pattern getBlockCommentEnd() {
+		return BLOCK_COMMENT_END;
+	}
 
 	/**
 	 * Returns the comment character.

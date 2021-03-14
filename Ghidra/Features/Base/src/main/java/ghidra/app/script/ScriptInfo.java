@@ -20,6 +20,7 @@ import static ghidra.util.HTMLUtilities.*;
 import java.io.*;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
@@ -46,9 +47,6 @@ public class ScriptInfo {
 	static final String AT_KEYBINDING = "@keybinding";
 	static final String AT_MENUPATH = "@menupath";
 	static final String AT_TOOLBAR = "@toolbar";
-
-	private static final Pattern DOCUMENTATION_START = Pattern.compile("/\\*");
-	private static final Pattern DOCUMENTATION_END = Pattern.compile("\\*/");
 
 	// omit from METADATA to avoid pre-populating in new scripts
 	private static final String AT_IMPORTPACKAGE = "@importpackage";
@@ -197,9 +195,15 @@ public class ScriptInfo {
 					break;
 				}
 
-				if (DOCUMENTATION_START.matcher(line).find()) {
-					while (line != null && !DOCUMENTATION_END.matcher(line).find()) {
+				Pattern blockStart = provider.getBlockCommentStart();
+				Pattern blockEnd = provider.getBlockCommentEnd();
+				Matcher startMatcher = blockStart.matcher(line);
+
+				if (startMatcher.find()) {
+					int last_offset = startMatcher.end();
+					while (line != null && !blockEnd.matcher(line).find(last_offset)) {
 						line = reader.readLine();
+						last_offset = 0;
 					}
 					continue;
 				}

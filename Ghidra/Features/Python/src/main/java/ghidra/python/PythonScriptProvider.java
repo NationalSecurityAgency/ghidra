@@ -21,8 +21,11 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptProvider;
 
 import java.io.*;
+import java.util.regex.Pattern;
 
 public class PythonScriptProvider extends GhidraScriptProvider {
+
+	private static final Pattern BLOCK_COMMENT = Pattern.compile("'''");
 
 	@Override
 	public void createNewScript(ResourceFile newScript, String category) throws IOException {
@@ -32,6 +35,16 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 		writeBody(writer);
 		writer.println("");
 		writer.close();
+	}
+
+	@Override
+	public Pattern getBlockCommentStart() {
+		return BLOCK_COMMENT;
+	}
+
+	@Override
+	public Pattern getBlockCommentEnd() {
+		return BLOCK_COMMENT;
 	}
 
 	@Override
