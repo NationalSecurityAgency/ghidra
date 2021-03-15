@@ -31,18 +31,18 @@ set MAXMEM=128M
 :: '% ~' dereferences the value in param 0
 :: 'd' - drive
 :: 'p' - path (without filename)
-set SCRIPT_DIR=%~dp0
+set "SCRIPT_DIR=%~dp0"
 
 :: Production Environment
-set CONFIG=%SCRIPT_DIR%.\server.conf
+set "CONFIG=%SCRIPT_DIR%.\server.conf"
 
 if exist "%CONFIG%" goto continue
 
 :: Development Environment
-set CONFIG=%SCRIPT_DIR%..\..\Common\server\server.conf
+set "CONFIG=%SCRIPT_DIR%..\..\Common\server\server.conf"
 
 :continue
 
-set VMARGS=-DUserAdmin.invocation="%0" -DUserAdmin.config="%CONFIG%"
+set VMARGS=-DUserAdmin.invocation=%~n0
 
-call "%~dp0\..\support\launch.bat" fg svrAdmin "%MAXMEM%" "%VMARGS%" ghidra.server.ServerAdmin %*
+call "%~dp0\..\support\launch.bat" fg svrAdmin "%MAXMEM%" "%VMARGS%" ghidra.server.ServerAdmin "%CONFIG%" %*
