@@ -641,11 +641,12 @@ class ProgramTreeActionManager implements ClipboardOwner {
 
 		try {
 			Clipboard systemClipboard = GClipboard.getSystemClipboard();
-			Transferable t = systemClipboard.getContents(this);
-			if (t == null) {
+			if (!systemClipboard.isDataFlavorAvailable(TreeTransferable.localTreeNodeFlavor)) {
 				return;
 			}
-			if (!t.isDataFlavorSupported(TreeTransferable.localTreeNodeFlavor)) {
+
+			Object data = systemClipboard.getData(TreeTransferable.localTreeNodeFlavor);
+			if (data == null) {
 				return;
 			}
 
@@ -658,9 +659,8 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	}
 
 	private void doClearSystemClipboard(Clipboard systemClipboard) {
-		// for some reason setting the contents to null for the
-		// system clipboard causes a NullPointerException, so just
-		// set it with an empty transferable.
+		// for some reason setting the contents to null for the system clipboard causes a
+		// NullPointerException, so just set it with an empty transferable.
 		TreeTransferable dummyContents = new TreeTransferable(new ProgramNode[0]);
 		systemClipboard.setContents(dummyContents, (clipboard, contents) -> {
 			// a dummy implementation that will not prevent this plugin from being
