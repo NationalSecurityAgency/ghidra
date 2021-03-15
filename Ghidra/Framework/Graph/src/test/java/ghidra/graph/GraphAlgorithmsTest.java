@@ -46,7 +46,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testGetSources() {
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
-		TestV v3 = vertex(2);
+		TestV v3 = vertex(3);
 
 		g.addVertex(v1);
 		g.addVertex(v2);
@@ -1002,6 +1002,16 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			 							 edge(v6, v8),
 			 							 edge(v8, v9));
 		//@formatter:on
+	}
+
+	@Test
+	public void testDominanceEquality() throws CancelledException {
+		// Regression test for https://github.com/NationalSecurityAgency/ghidra/issues/2836
+		// Make sure that Object.equals() is used, not ==.
+		edge(vertex(1), vertex(2));
+		edge(vertex(1), vertex(3));
+
+		GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
 	}
 
 	@Test
