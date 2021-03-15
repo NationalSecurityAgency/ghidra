@@ -23,7 +23,6 @@ support/distributionCommon.gradle||GHIDRA||||END|
 support/eclipseLauncher.gradle||GHIDRA||||END|
 support/extensionCommon.gradle||GHIDRA||||END|
 support/fetchDependencies.gradle||GHIDRA||||END|
-support/ip.gradle||GHIDRA||||END|
 support/jacoco.excludes.src.txt||GHIDRA||||END|
 support/loadApplicationProperties.gradle||GHIDRA||||END|
 support/settingsUtil.gradle||GHIDRA||||END|
