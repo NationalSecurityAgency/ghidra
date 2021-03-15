@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.DNLArticulatedEd
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.graph.VisualGraph;
+import ghidra.graph.viewer.GraphViewerUtils;
 import ghidra.graph.viewer.layout.*;
 import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 import ghidra.program.model.address.Address;
@@ -52,19 +53,19 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * A layout that uses the decompiler to show code nesting based upon conditional logic.
- * 
+ *
  * <p>Edges returning to the default code flow are painted lighter to de-emphasize them.  This
  * could be made into an option.
- * 
- * <p>Edge routing herein defaults to 'simple routing'; 'complex routing' is a user option.  
+ *
+ * <p>Edge routing herein defaults to 'simple routing'; 'complex routing' is a user option.
  * Simple routing will reduce edge noise as much as possible by combining/overlapping edges that
  * flow towards the bottom of the function (returning code flow).  Also, edges may fall behind
  * vertices for some functions.   Complex routing allows the user to visually follow the flow
  * of an individual edge.  Complex routing will prevent edges from overlapping and will route
- * edges around vertices.    Simple routing is better when the layout of the vertices is 
- * important to the user; complex routing is better when edges/relationships are more 
+ * edges around vertices.    Simple routing is better when the layout of the vertices is
+ * important to the user; complex routing is better when edges/relationships are more
  * important to the user.
- * 
+ *
  * TODO ideas:
  * -paint fallthrough differently for all, or just for those returning to the baseline
  */
@@ -113,7 +114,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 	@Override
 	protected double getCondenseFactor() {
-		// our layout needs more spacing because we have custom edge routing that we want to 
+		// our layout needs more spacing because we have custom edge routing that we want to
 		// stand out
 		return .3;
 	}
@@ -201,7 +202,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 				continue;
 			}
 
-			// 
+			//
 			// Special case: fallthrough--don't label this...not sure how to tell fallthrough.  For
 			//               now assume that any column below or backwards is fallthrough.  However,
 			//               do label fallthrough if it is the only edge.
@@ -231,10 +232,10 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 		Map<FGEdge, List<Point2D>> newEdgeArticulations = new HashMap<>();
 
-		// Condensing Note: we have guilty knowledge that our parent class my condense the 
+		// Condensing Note: we have guilty knowledge that our parent class my condense the
 		// vertices and edges towards the center of the graph after we calculate positions.
 		// To prevent the edges from moving to far behind the vertices, we will compensate a
-		// bit for that effect using this offset value.   The getEdgeOffset() method below is 
+		// bit for that effect using this offset value.   The getEdgeOffset() method below is
 		// updated for the condense factor.
 		int edgeOffset = isCondensedLayout()
 				? (int) (VERTEX_TO_EDGE_ARTICULATION_PADDING * (1 - getCondenseFactor()))
@@ -242,7 +243,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		Vertex2dFactory vertex2dFactory =
 			new Vertex2dFactory(transformer, vertexLayoutLocations, layoutToGridMap, edgeOffset);
 
-		// 
+		//
 		// Route our edges!
 		//
 		for (FGEdge e : edges) {
@@ -262,11 +263,8 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 				DecompilerBlock loop = block.getParentLoop();
 
 				if (loop != null) {
-					Set<FGVertex> vertices = loop.getVertices();
-
-					Column outermostCol = getOutermostCol(layoutToGridMap, vertices);
-					Column loopEndColumn = layoutToGridMap.nextColumn(outermostCol);
-					List<Point2D> articulations = routeLoopEdge(start, end, loopEndColumn);
+					List<Point2D> articulations =
+						routeUpwardLoop(layoutToGridMap, vertex2dFactory, start, end, loop);
 					newEdgeArticulations.put(e, articulations);
 					continue;
 				}
@@ -275,31 +273,31 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			List<Point2D> articulations = new ArrayList<>();
 
 			//
-			// Basic routing: 
+			// Basic routing:
 			// -leave the bottom of the start vertex
 			// -first bend at some constant offset
 			// -move to right or left, to above the end vertex
 			// -second bend above the end vertex at previous constant offset
-			// 
-			// Edges start/end on the vertex center.  If we offset them to avoid 
+			//
+			// Edges start/end on the vertex center.  If we offset them to avoid
 			//    overlapping, then they produce angles when only using two articulations.
 			//    Thus, we create articulations that are behind the vertices to remove
 			//    the angles.  This points will not be seen.
 			//
-			// 
+			//
 			// Complex routing:
 			// -this mode will route edges around vertices
-			// 
+			//
 			// One goal for complex edge routing is to prevent overlapping (simple edge routing
 			// prefers overlapping to reduce lines).  To prevent overlapping we will use different
-			// offset x and y values, depending upon the start and end vertex row and column 
+			// offset x and y values, depending upon the start and end vertex row and column
 			// locations.   Specifically, for a given edge direction there will be a bias:
 			// 		-Edge to the right - leave from the right; arrive to the left
 			//  	-Edge to the left - leave from the left; arrive to the right
 			//  	-Edge straight down - go straight down
 			//
 			// For each of the above offsets, there will be an amplifier based upon row/column
-			// distance from start to end vertex.  This has the effect that larger vertex 
+			// distance from start to end vertex.  This has the effect that larger vertex
 			// distances will have a larger offset/spacing.
 			//
 
@@ -331,14 +329,78 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		return newEdgeArticulations;
 	}
 
+	private List<Point2D> routeUpwardLoop(LayoutLocationMap<FGVertex, FGEdge> layoutToGridMap,
+			Vertex2dFactory vertex2dFactory, Vertex2d start, Vertex2d end, DecompilerBlock loop) {
+		Set<FGVertex> loopVertices = loop.getVertices();
+		FGVertex rightmostLoopVertex =
+			getRightmostVertex(layoutToGridMap, vertex2dFactory, loopVertices);
+
+		int startRow = start.rowIndex;
+		int endRow = end.rowIndex;
+		int startColumn = Math.min(start.columnIndex, end.columnIndex);
+		int endColumn = Math.max(start.columnIndex, end.columnIndex);
+
+		Column rightmostLoopColumn = layoutToGridMap.col(rightmostLoopVertex);
+		endColumn = Math.max(endColumn, rightmostLoopColumn.index);
+
+		// Look for any vertices that are no part of the loop, but are placed inside
+		// of the loop bounds.  This can happen in a graph when the decompiler uses
+		// goto statements.   Use the loop's rightmost vertex to establish the loops
+		// right edge and then use that to check for any stray non-loop vertices.
+		List<Vertex2d> interlopers =
+			getVerticesInBounds(vertex2dFactory, startRow, endRow, startColumn, endColumn);
+
+		// place the right x position to the right of the rightmost vertex, not
+		// extending past the next column
+		FGVertex rightmostVertex = getRightmostVertex(interlopers);
+		Column rightmostColumn = layoutToGridMap.col(rightmostVertex);
+		Column nextColumn = layoutToGridMap.nextColumn(rightmostColumn);
+		Vertex2d rightmostV2d = vertex2dFactory.get(rightmostVertex);
+
+		// the padding used for these two lines is somewhat arbitrary and may be changed
+		double rightSide = rightmostV2d.getRight() + GraphViewerUtils.EXTRA_LAYOUT_COLUMN_SPACING;
+		double x = Math.min(rightSide,
+			nextColumn.x - GraphViewerUtils.EXTRA_LAYOUT_COLUMN_SPACING_CONDENSED);
+
+		List<Point2D> articulations = routeLoopEdge(start, end, x);
+		return articulations;
+	}
+
+	private List<Vertex2d> getVerticesInBounds(Vertex2dFactory vertex2dFactory, int startRow,
+			int endRow, int startColumn, int endColumn) {
+
+		if (startRow > endRow) { // going upwards
+			int temp = endRow;
+			endRow = startRow;
+			startRow = temp;
+		}
+
+		List<Vertex2d> toCheck = new LinkedList<>();
+		for (int row = startRow; row < endRow + 1; row++) {
+
+			for (int col = startColumn; col < endColumn + 1; col++) {
+
+				// assume any other vertex in our column can clip (it will not clip when
+				// the 'spacing' above pushes the edge away from this column, like for
+				// large row delta values)
+				Vertex2d otherVertex = vertex2dFactory.get(row, col);
+				if (otherVertex != null) {
+					toCheck.add(otherVertex);
+				}
+			}
+		}
+
+		return toCheck;
+	}
+
 	private void routeToTheRightGoingUpwards(Vertex2d start, Vertex2d end,
 			Vertex2dFactory vertex2dFactory, List<Point2D> articulations) {
 
 		//
-		// For routing to the right and back up we will leave the start vertex from the right side 
+		// For routing to the right and back up we will leave the start vertex from the right side
 		// and enter the end vertex on the right side.   As the vertices get further apart, we will
-		// space them further in towards the center.  
-		// 
+		// space them further in towards the center.
+		//
 
 		int delta = start.rowIndex - end.rowIndex;
 		int multiplier = EDGE_ENDPOINT_DISTANCE_MULTIPLIER;
@@ -347,11 +409,9 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		}
 		int distanceSpacing = delta * multiplier;
 
-		// Condensing Note: we have guilty knowledge that our parent class my condense the 
-		// vertices and edges towards the center of the graph after we calculate positions.
-		// To prevent the edges from moving to far behind the vertices, we will compensate a
-		// bit for that effect using this offset value.   The getEdgeOffset() method is 
-		// updated for the condense factor.
+		// Condensing is when the graph will pull nodes closer together on the x axis to
+		// reduce whitespace and make the entire graph easier to see.   In this case, update
+		// the offset to avoid running into the moved vertices.
 		int exaggerationFactor = 1;
 		if (isCondensedLayout()) {
 			exaggerationFactor = 2; // determined by trial-and-error; can be made into an option
@@ -369,7 +429,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		y1 = Math.min(y1, startCenterY);
 		articulations.add(new Point2D.Double(x1, y1)); // point is hidden behind the vertex
 
-		// Use the spacing to move the y value towards the top of the vertex.  Just like with 
+		// Use the spacing to move the y value towards the top of the vertex.  Just like with
 		// the x value, restrict the y to the range between the edge and the center.
 		double startRightX = start.getRight();
 		double x2 = startRightX + VERTEX_BORDER_THICKNESS; // start at the end
@@ -434,10 +494,10 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 		//
 		// For routing to the left we will leave the start vertex from just left of center and
-		// enter the end vertex on the top, towards the right.   As the vertices get further apart, 
-		// we will space them further in towards the center of the end vertex.  This will keep 
+		// enter the end vertex on the top, towards the right.   As the vertices get further apart,
+		// we will space them further in towards the center of the end vertex.  This will keep
 		// edges with close endpoints from intersecting edges with distant endpoints.
-		// 
+		//
 
 		int delta = end.rowIndex - start.rowIndex;
 		int multiplier = EDGE_ENDPOINT_DISTANCE_MULTIPLIER;
@@ -499,7 +559,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// enter the end vertex on the left side.   As the vertices get further apart, we will
 		// space them further in towards the center.  This will keep edges with close endpoints
 		// from intersecting edges with distant endpoints.
-		// 
+		//
 
 		int delta = end.rowIndex - start.rowIndex;
 		if (delta < 0) {
@@ -529,7 +589,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		double y1 = start.getY();
 		articulations.add(new Point2D.Double(x1, y1)); // point is hidden behind the vertex
 
-		// Use the spacing to move the y value towards the top of the vertex.  Just like with 
+		// Use the spacing to move the y value towards the top of the vertex.  Just like with
 		// the x value, restrict the y to the range between the edge and the center.
 		double x2 = x1;
 		double y2 = end.getTop() + VERTEX_BORDER_THICKNESS;
@@ -556,19 +616,6 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 	private void routeAroundColumnVertices(Vertex2d start, Vertex2d end,
 			Vertex2dFactory vertex2dFactory, List<Point2D> articulations, double edgeX) {
 
-		Column column = vertex2dFactory.getColumn(edgeX);
-		int columnIndex = 0;
-		if (column != null) {
-			// a null column happens with a negative x value that is outside of any column
-			columnIndex = column.index;
-		}
-
-		routeAroundColumnVertices(start, end, columnIndex, vertex2dFactory, articulations, edgeX);
-	}
-
-	private void routeAroundColumnVertices(Vertex2d start, Vertex2d end, int column,
-			Vertex2dFactory vertex2dFactory, List<Point2D> articulations, double edgeX) {
-
 		if (useSimpleRouting()) {
 			return;
 		}
@@ -582,14 +629,34 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			startRow = end.rowIndex;
 		}
 
+		int startColumn = Math.min(start.columnIndex, end.columnIndex);
+		int endColumn = Math.max(start.columnIndex, end.columnIndex);
+		if (goingDown) {
+			endRow -= 1;
+			endColumn -= 1;
+
+			if (start.columnIndex <= end.columnIndex) {
+				startRow += 1;
+			}
+		}
+		else {
+			// going up we swing out to the right; grab the column that is out to the right
+			Column rightColumn = vertex2dFactory.getColumn(edgeX);
+			endColumn = rightColumn.index;
+		}
+
 		List<Vertex2d> toCheck = new LinkedList<>();
-		for (int row = startRow + 1; row < endRow; row++) {
-			// assume any other vertex in our column can clip (it will not clip when
-			// the 'spacing' above pushes the edge away from this column, like for
-			// large row delta values)
-			Vertex2d otherVertex = vertex2dFactory.get(row, column);
-			if (otherVertex != null) {
-				toCheck.add(otherVertex);
+		for (int row = startRow; row < endRow + 1; row++) {
+
+			for (int col = startColumn; col < endColumn + 1; col++) {
+
+				// assume any other vertex in our column can clip (it will not clip when
+				// the 'spacing' above pushes the edge away from this column, like for
+				// large row delta values)
+				Vertex2d otherVertex = vertex2dFactory.get(row, col);
+				if (otherVertex != null) {
+					toCheck.add(otherVertex);
+				}
 			}
 		}
 
@@ -605,11 +672,9 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			int padding = VERTEX_TO_EDGE_AVOIDANCE_PADDING;
 			int distanceSpacing = padding + delta; // adding the delta makes overlap less likely
 
-			// Condensing Note: we have guilty knowledge that our parent class my condense the 
-			// vertices and edges towards the center of the graph after we calculate positions.
-			// To prevent the edges from moving to far behind the vertices, we will compensate a
-			// bit for that effect using this offset value.   The getEdgeOffset() method is 
-			// updated for the condense factor.
+			// Condensing is when the graph will pull nodes closer together on the x axis to
+			// reduce whitespace and make the entire graph easier to see.   In this case, update
+			// the offset to avoid running into the moved vertices.
 			int vertexToEdgeOffset = otherVertex.getEdgeOffset();
 			int exaggerationFactor = 1;
 			if (isCondensedLayout()) {
@@ -629,20 +694,20 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			// no need to check the 'y' value, as the end vertex is above/below this one
 			if (vertexClipper.isClippingX(otherVertex, edgeX)) {
 
-				/*				 
+				/*
 					 Must route around this vertex - new points:
 					 -p1 - just above the intersection point
 					 -p2 - just past the left edge
 					 -p3 - just past the bottom of the vertex
 					 -p4 - back at the original x value
-					 
+				
 					 	   |
 					   .___|
 					   | .-----.
 					   | |     |
 					   | '-----'
 					   '---.
-					   	   |					   	   
+					   	   |
 				*/
 
 				// p1 - same x; y just above vertex
@@ -650,19 +715,19 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 				double y = vertexClipper.getTopOffset(otherVertex, vertexToEdgeOffset);
 				articulations.add(new Point2D.Double(x, y));
 
-				// Maybe merge points if they are too close together.  Visually, many lines 
-				// moving around intersecting vertices looks busy.  When the intersecting 
+				// Maybe merge points if they are too close together.  Visually, many lines
+				// moving around intersecting vertices looks busy.  When the intersecting
 				// vertices are close together, we remove some of the articulations in order to
 				// smooth out the edges.
 				if (articulations.size() > 2) {
 
-					/*			 	
+					/*
 						The last articulation is the one added before this method was called, which
-						lies just below the intersecting vertex.   The articulation before that is 
-						the one that is the one that is sending the x value straight into the 
+						lies just below the intersecting vertex.   The articulation before that is
+						the one that is the one that is sending the x value straight into the
 						intersecting vertex.  Delete that point as well so that the entire edge is
 						shifted to the outside of the intersecting vertex.  This will get repeated
-						for each vertex that is intersecting.		 			 	  			 	
+						for each vertex that is intersecting.
 					*/
 					Point2D previousArticulation = articulations.get(articulations.size() - 2);
 					int closenessHeight = 50;
@@ -696,14 +761,10 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		return !getLayoutOptions().useEdgeRoutingAroundVertices();
 	}
 
-	private List<Point2D> routeLoopEdge(Vertex2d start, Vertex2d end, Column loopEndColumn) {
+	private List<Point2D> routeLoopEdge(Vertex2d start, Vertex2d end, double x) {
 
 		// going backwards
 		List<Point2D> articulations = new ArrayList<>();
-
-		// loop first point - same y coord as the vertex; x is the middle of the next col
-		int halfWidth = loopEndColumn.getPaddedWidth(isCondensedLayout()) >> 1;
-		double x = loopEndColumn.x + halfWidth; // middle of the column
 
 		int startRow = start.rowIndex;
 		int endRow = end.rowIndex;
@@ -720,7 +781,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		Point2D first = new Point2D.Double(x, y1);
 		articulations.add(first);
 
-		// loop second point - same y coord as destination; 
+		// loop second point - same y coord as destination;
 		// 					   x is the col after the outermost dominated vertex
 
 		Point2D endVertexPoint = end.center;
@@ -739,21 +800,37 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		e.setDefaultAlpha(.25);
 	}
 
-	private Column getOutermostCol(LayoutLocationMap<FGVertex, FGEdge> layoutLocations,
-			Set<FGVertex> vertices) {
+	private FGVertex getRightmostVertex(LayoutLocationMap<FGVertex, FGEdge> layoutLocations,
+			Vertex2dFactory vertex2dFactory, Set<FGVertex> vertices) {
 
-		Column outermost = null;
+		List<Vertex2d> points = new ArrayList<>();
 		for (FGVertex v : vertices) {
-			Column col = layoutLocations.col(v);
-			if (outermost == null) {
-				outermost = col;
+			Vertex2d v2d = vertex2dFactory.get(v);
+			points.add(v2d);
+		}
+
+		FGVertex v = getRightmostVertex(points);
+		return v;
+	}
+
+	private FGVertex getRightmostVertex(Collection<Vertex2d> points) {
+
+		Vertex2d rightmost = null;
+		for (Vertex2d v2d : points) {
+			if (rightmost == null) {
+				rightmost = v2d;
 			}
-			else if (col.x > outermost.x) {
-				outermost = col;
+			else {
+				// the rightmost is that which extends furthest to the right
+				double current = rightmost.getRight();
+				double other = v2d.getRight();
+				if (other > current) {
+					rightmost = v2d;
+				}
 			}
 		}
 
-		return outermost;
+		return rightmost.v;
 	}
 
 	@Override
@@ -840,8 +917,11 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			BlockCopy copy = (BlockCopy) child;
 
 			StringBuilder buffy = new StringBuilder();
-			buffy.append(printDepth(depth, depth + 1)).append(' ').append(ID).append(
-				" plain - ").append(copy.getRef());
+			buffy.append(printDepth(depth, depth + 1))
+					.append(' ')
+					.append(ID)
+					.append(" plain - ")
+					.append(copy.getRef());
 
 			debug(buffy.toString());
 		}
@@ -958,7 +1038,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Encapsulates knowledge of edge direction (up/down, left/right) and uses that knowledge
@@ -1060,7 +1140,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 	}
 
 	/**
-	 * A class that represents 2D information about the contained vertex, such as location, 
+	 * A class that represents 2D information about the contained vertex, such as location,
 	 * bounds, row and column of the layout grid.
 	 */
 	private class Vertex2d {
@@ -1207,8 +1287,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 			int row = startRow;
 
-			for (int i = 0; i < allChildren.size(); i++) {
-				DecompilerBlock block = allChildren.get(i);
+			for (DecompilerBlock block : allChildren) {
 				if (block instanceof DecompilerBlockGraph) {
 					row = ((DecompilerBlockGraph) block).setRows(row);
 				}
@@ -1229,8 +1308,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		String getChildrenString(int depth) {
 			StringBuilder buffy = new StringBuilder();
 			int childCount = 0;
-			for (int i = 0; i < allChildren.size(); i++) {
-				DecompilerBlock block = allChildren.get(i);
+			for (DecompilerBlock block : allChildren) {
 				if (block instanceof DecompilerBlockGraph) {
 
 					String blockName = block.getName();
@@ -1315,8 +1393,8 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		@Override
 		DecompilerBlock getBlock(FGVertex vertex) {
 			//
-			// Note: we currently allow grouping in this layout.  When we search for a vertex, 
-			//       we have to check each vertex inside of the given group *and* each vertex 
+			// Note: we currently allow grouping in this layout.  When we search for a vertex,
+			//       we have to check each vertex inside of the given group *and* each vertex
 			//       inside of the vertex that belongs to this decompiler block.
 			//
 			if (vertex instanceof GroupedFunctionGraphVertex) {
@@ -1447,9 +1525,8 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			// The 'list' structure for children's nesting:
 			// -all nodes are at the same level
 			//
-			for (int i = 0; i < allChildren.size(); i++) {
+			for (DecompilerBlock block : allChildren) {
 				int column = col;
-				DecompilerBlock block = allChildren.get(i);
 				block.setCol(column);
 			}
 
@@ -1477,8 +1554,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			// -each successive condition is another level nested
 			//
 			int column = col;
-			for (int i = 0; i < allChildren.size(); i++) {
-				DecompilerBlock block = allChildren.get(i);
+			for (DecompilerBlock block : allChildren) {
 				block.setCol(column);
 				column++;
 			}
@@ -1515,11 +1591,10 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 			//
 			// The 'do' structure for children's nesting:
-			// -all blocks nested 
+			// -all blocks nested
 			//
 			int column = col + 1;
-			for (int i = 0; i < allChildren.size(); i++) {
-				DecompilerBlock block = allChildren.get(i);
+			for (DecompilerBlock block : allChildren) {
 				block.setCol(column);
 			}
 
