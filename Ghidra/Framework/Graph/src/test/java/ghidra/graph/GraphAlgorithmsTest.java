@@ -46,7 +46,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	public void testGetSources() {
 		TestV v1 = vertex(1);
 		TestV v2 = vertex(2);
-		TestV v3 = vertex(2);
+		TestV v3 = vertex(3);
 
 		g.addVertex(v1);
 		g.addVertex(v2);
