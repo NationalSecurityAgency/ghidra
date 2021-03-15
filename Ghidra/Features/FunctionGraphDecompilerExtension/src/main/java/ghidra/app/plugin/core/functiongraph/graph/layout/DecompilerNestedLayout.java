@@ -412,6 +412,13 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// Condensing is when the graph will pull nodes closer together on the x axis to
 		// reduce whitespace and make the entire graph easier to see.   In this case, update
 		// the offset to avoid running into the moved vertices.
+
+		// Condensing Note: we have guilty knowledge that our parent class my condense the
+		// vertices and edges towards the center of the graph after we calculate positions.
+		// To prevent the edges from moving to far behind the vertices, we will compensate a
+		// bit for that effect using this offset value.   The getEdgeOffset() method is
+		// updated for the condense factor.
+
 		int exaggerationFactor = 1;
 		if (isCondensedLayout()) {
 			exaggerationFactor = 2; // determined by trial-and-error; can be made into an option
@@ -675,6 +682,13 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			// Condensing is when the graph will pull nodes closer together on the x axis to
 			// reduce whitespace and make the entire graph easier to see.   In this case, update
 			// the offset to avoid running into the moved vertices.
+
+			// Condensing Note: we have guilty knowledge that our parent class my condense the
+			// vertices and edges towards the center of the graph after we calculate positions.
+			// To prevent the edges from moving to far behind the vertices, we will compensate a
+			// bit for that effect using this offset value.   The getEdgeOffset() method is
+			// updated for the condense factor.
+
 			int vertexToEdgeOffset = otherVertex.getEdgeOffset();
 			int exaggerationFactor = 1;
 			if (isCondensedLayout()) {
@@ -700,7 +714,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 					 -p2 - just past the left edge
 					 -p3 - just past the bottom of the vertex
 					 -p4 - back at the original x value
-				
+
 					 	   |
 					   .___|
 					   | .-----.
@@ -793,6 +807,10 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 	}
 
 	private void lighten(FGEdge e) {
+
+		if (!getLayoutOptions().useDimmedReturnEdges()) {
+			return;
+		}
 
 		// assumption: edges that move to the left in this layout are return flows that happen
 		//             after the code block has been executed.  We dim those a bit so that they

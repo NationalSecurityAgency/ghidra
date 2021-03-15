@@ -42,7 +42,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private static final String EDGE_COLOR_CONDITIONAL_JUMP_KEY = "Edge Color - Conditional Jump ";
 
 	//@formatter:off
-	private static final String NAVIGATION_HISTORY_KEY = "Navigation History";	
+	private static final String NAVIGATION_HISTORY_KEY = "Navigation History";
 	private static final String NAVIGATION_HISTORY_DESCRIPTION =
 		"Determines how the navigation history will be updated when using the Function Graph. " +
 		"The basic options are:" +
@@ -185,8 +185,8 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerOption(SCROLL_WHEEL_PANS_KEY, getScrollWheelPans(), help,
 			SCROLL_WHEEL_PANS_DESCRIPTION);
 
-		options.registerOption(GRAPH_BACKGROUND_COLOR_KEY, DEFAULT_GRAPH_BACKGROUND_COLOR,
-			help, GRAPH_BACKGROUND_COLOR_DESCRPTION);
+		options.registerOption(GRAPH_BACKGROUND_COLOR_KEY, DEFAULT_GRAPH_BACKGROUND_COLOR, help,
+			GRAPH_BACKGROUND_COLOR_DESCRPTION);
 
 		options.registerOption(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR,
 			help, DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION);
