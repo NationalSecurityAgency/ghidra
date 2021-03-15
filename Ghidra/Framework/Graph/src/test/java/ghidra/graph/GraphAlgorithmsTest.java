@@ -1005,6 +1005,16 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	}
 
 	@Test
+	public void testDominanceEquality() throws CancelledException {
+		// Regression test for https://github.com/NationalSecurityAgency/ghidra/issues/2836
+		// Make sure that Object.equals() is used, not ==.
+		edge(vertex(1), vertex(2));
+		edge(vertex(1), vertex(3));
+
+		GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
+	}
+
+	@Test
 	public void testDepthFirstPostOrder() {
 		//   V1 -> V3 -> V6
 		//    |     |          
