@@ -30,6 +30,7 @@ import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -100,16 +101,24 @@ public class CliTableField extends CliAbstractTable {
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
+		int fieldRowIndex = 0;
 		for (CliAbstractTableRow row : rows) {
 			CliFieldRow fieldRow = (CliFieldRow) row;
+			fieldRowIndex++;
 
-			// Create FieldSig object and bookmark it
+			// Create FieldSig object
 			Address sigAddr = CliAbstractStream.getStreamMarkupAddress(program, isBinary, monitor,
 				log, ntHeader, metadataStream.getBlobStream(), fieldRow.sigIndex);
 
 			CliSigField fieldSig =
 				new CliSigField(metadataStream.getBlobStream().getBlob(fieldRow.sigIndex));
-			metadataStream.getBlobStream().updateBlob(fieldSig, sigAddr, program);
+
+			if (!metadataStream.getBlobStream().updateBlob(fieldSig, sigAddr, program)) {
+				Msg.warn(CliTableField.class,
+					"Couldn't update FieldSig blob " +
+						metadataStream.getStringsStream().getString(fieldRow.nameIndex) +
+						" at Field table index " + fieldRowIndex);
+			}
 		}
 	}
 
