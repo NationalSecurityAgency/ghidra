@@ -270,6 +270,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		sb.append(".*(");
 		String between = "";
 		for (String suffix : suffixes) {
+			suffix = suffix.trim();
+			if (suffix.isEmpty()) {
+				continue;
+			}
 			sb.append(between);
 			sb.append(suffix);
 			between = "|";
