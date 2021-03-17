@@ -293,9 +293,10 @@ public class HeadlessAnalyzer {
 			}
 		}
 
-		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
+		List<String> parsedScriptPaths = parseScriptPaths(options.scriptPaths);
+		GhidraScriptUtil.initialize(new BundleHost(), parsedScriptPaths);
 		try {
-			initializeScriptPaths();
+			showConfiguredScriptPaths();
 			compileScripts();
 
 			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
@@ -400,9 +401,10 @@ public class HeadlessAnalyzer {
 			}
 		}
 
-		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
+		List<String> parsedScriptPaths = parseScriptPaths(options.scriptPaths);
+		GhidraScriptUtil.initialize(new BundleHost(), parsedScriptPaths);
 		try {
-			initializeScriptPaths();
+			showConfiguredScriptPaths();
 			compileScripts();
 
 			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
@@ -668,10 +670,23 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	/**
-	 * Gather paths where scripts may be found.
-	 */
-	private void initializeScriptPaths() {
+	private List<String> parseScriptPaths(List<String> scriptPaths) {
+		List<String> parsedScriptPaths = new ArrayList<>();
+		for (String path : scriptPaths) {
+			ResourceFile pathFile = Path.fromPathString(path);
+			String absPath = pathFile.getAbsolutePath();
+			if (pathFile.exists()) {
+				parsedScriptPaths.add(absPath);
+			}
+			else {
+
+				Msg.warn(this, "REPORT: Could not find -scriptPath entry, skipping: " + absPath);
+			}
+		}
+		return parsedScriptPaths;
+	}
+
+	private void showConfiguredScriptPaths() {
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
 			buf.append("\n    ");
@@ -856,8 +871,8 @@ public class HeadlessAnalyzer {
 					Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
 
 					// Get parent folder to pass to GhidraScript
-					File parentFile = new File(
-						c.getResource(c.getSimpleName() + ".class").toURI()).getParentFile();
+					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
+							.getParentFile();
 
 					currScript = (GhidraScript) c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
