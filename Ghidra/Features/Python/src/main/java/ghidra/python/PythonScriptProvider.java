@@ -37,11 +37,21 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 		writer.close();
 	}
 
+	/**
+	 * Returns a Pattern that matches block comment openings.
+	 * In Python this is a triple single quote sequence, "'''".
+	 * @return the Pattern for Python block comment openings
+	 */
 	@Override
 	public Pattern getBlockCommentStart() {
 		return BLOCK_COMMENT;
 	}
 
+	/**
+	 * Returns a Pattern that matches block comment closings.
+	 * In Python this is a triple single quote sequence, "'''".
+	 * @return the Pattern for Python block comment openings
+	 */
 	@Override
 	public Pattern getBlockCommentEnd() {
 		return BLOCK_COMMENT;

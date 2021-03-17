@@ -17,6 +17,7 @@ package ghidra.app.script;
 
 import java.io.*;
 import java.util.Collections;
+import java.util.regex.Pattern;
 
 import org.osgi.framework.Bundle;
 
@@ -26,6 +27,9 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
+	private static final Pattern BLOCK_COMMENT_START = Pattern.compile("/\\*");
+	private static final Pattern BLOCK_COMMENT_END = Pattern.compile("\\*/");
+
 	private final BundleHost bundleHost;
 
 	/**
@@ -157,6 +161,26 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		writer.println("");
 		writer.println("}");
 		writer.close();
+	}
+
+	/**
+	 * Returns a Pattern that matches block comment openings.
+	 * For Java this is "/*".
+	 * @return the Pattern for Java block comment openings
+	 */
+	@Override
+	public Pattern getBlockCommentStart() {
+		return BLOCK_COMMENT_START;
+	}
+
+	/**
+	 * Returns a Pattern that matches block comment closings.
+	 * In Java this is an asterisk followed by a forward slash.
+	 * @return the Pattern for Java block comment closings
+	 */
+	@Override
+	public Pattern getBlockCommentEnd() {
+		return BLOCK_COMMENT_END;
 	}
 
 	@Override

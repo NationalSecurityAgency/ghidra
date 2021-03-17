@@ -528,6 +528,18 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		return new ResourceFile(tempFile);
 	}
 
+	protected ResourceFile createTempScriptFileWithLines(String... lines) throws IOException {
+		ResourceFile newScript = createTempScriptFile();
+
+		PrintWriter writer = new PrintWriter(newScript.getOutputStream());
+		for (String line : lines) {
+			writer.println(line);
+		}
+		writer.close();
+
+		return newScript;
+	}
+
 	protected String changeEditorContents() {
 		assertNotNull("Editor not opened and initialized", editorTextArea);
 		assertNotNull("Editor not opened and initialized", buffer);

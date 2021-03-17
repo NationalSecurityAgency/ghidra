@@ -30,9 +30,6 @@ import ghidra.util.classfinder.ExtensionPoint;
 public abstract class GhidraScriptProvider
 		implements ExtensionPoint, Comparable<GhidraScriptProvider> {
 
-	private static final Pattern BLOCK_COMMENT_START = Pattern.compile("/\\*");
-	private static final Pattern BLOCK_COMMENT_END = Pattern.compile("\\*/");
-
 	@Override
 	public String toString() {
 		return getDescription();
@@ -99,21 +96,20 @@ public abstract class GhidraScriptProvider
 
 	/**
 	 * Returns a Pattern that matches block comment openings.
-	 * For example, in Java this would be something matching "/*".
-	 * @return the Pattern for block comment openings
+	 * If block comments are not supported by this provider, then this returns null.
+	 * @return the Pattern for block comment openings, null if block comments are not supported
 	 */
 	public Pattern getBlockCommentStart() {
-		return BLOCK_COMMENT_START;
+		return null;
 	}
 
 	/**
 	 * Returns a Pattern that matches block comment closings.
-	 * For example, in Java this would be something matching an asterisk followed by a forward
-	 * slash.
-	 * @return the Pattern for block comment openings
+	 * If block comments are not supported by this provider, then this returns null.
+	 * @return the Pattern for block comment closings, null if block comments are not supported
 	 */
 	public Pattern getBlockCommentEnd() {
-		return BLOCK_COMMENT_END;
+		return null;
 	}
 
 	/**

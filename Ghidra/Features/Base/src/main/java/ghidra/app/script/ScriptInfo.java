@@ -196,16 +196,18 @@ public class ScriptInfo {
 				}
 
 				Pattern blockStart = provider.getBlockCommentStart();
-				Pattern blockEnd = provider.getBlockCommentEnd();
-				Matcher startMatcher = blockStart.matcher(line);
 
-				if (startMatcher.find()) {
-					int last_offset = startMatcher.end();
-					while (line != null && !blockEnd.matcher(line).find(last_offset)) {
-						line = reader.readLine();
-						last_offset = 0;
+				if (blockStart != null) {
+					Matcher startMatcher = blockStart.matcher(line);
+					if (startMatcher.find()) {
+						Pattern blockEnd = provider.getBlockCommentEnd();
+						int last_offset = startMatcher.end();
+						while (line != null && !blockEnd.matcher(line).find(last_offset)) {
+							line = reader.readLine();
+							last_offset = 0;
+						}
+						continue;
 					}
-					continue;
 				}
 
 				String commentPrefix = provider.getCommentCharacter();
