@@ -1,3 +1,6 @@
+/* ###
+ * IP: Public Domain
+ */
 // If extension module does not reside within the Ghidra GPL directory, the Ghidra installation directory 
 // must be specified either by setting the GHIDRA_INSTALL_DIR environment variable or Gradle 
 // project property:

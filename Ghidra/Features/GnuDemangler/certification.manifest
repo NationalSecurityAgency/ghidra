@@ -1,7 +1,4 @@
 ##VERSION: 2.0
 ##MODULE IP: BSD
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 src/test/resources/ghidra/app/util/demangler/gnu_mangled_names.txt||GHIDRA||reviewed||END|
-src/test/resources/ghidra/app/util/demangler/gnu_mangled_names_macho.txt||GHIDRA||reviewed||END|
-src/test/resources/ghidra/app/util/demangler/libMagick.symbols.txt||GHIDRA||reviewed||END|

@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/languages/pa-risc.ldefs||GHIDRA||||END|
 data/languages/pa-risc.opinion||GHIDRA||||END|
 data/languages/pa-risc.sinc||GHIDRA||||END|
