@@ -31,7 +31,14 @@ public class CliTableParam extends CliAbstractTable {
 		public short flags;
 		public short sequence;
 		public int nameIndex;
-		
+
+		private static final int PARAMATTRIBUTES_IN = 0x1;
+		private static final int PARAMATTRIBUTES_OUT = 0x2;
+		private static final int PARAMATTRIBUTES_OPTIONAL = 0x10;
+		private static final int PARAMATTRIBUTES_HASDEFAULT = 0x1000;
+		private static final int PARAMATTRIBUTES_HASFIELDMARSHAL = 0x2000;
+		private static final int PARAMATTRIBUTES_UNUSED = 0xCFE0;
+
 		public CliParamRow(short flags, short sequence, int nameIndex) {
 			super();
 			this.flags = flags;
@@ -46,11 +53,13 @@ public class CliTableParam extends CliAbstractTable {
 				CliEnumParamAttributes.dataType.getName(flags & 0xffff), sequence);
 		}
 	}
-	
-	public CliTableParam(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
+
+	public CliTableParam(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId)
+			throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliParamRow row = new CliParamRow(reader.readNextShort(), reader.readNextShort(), readStringIndex(reader));
+			CliParamRow row = new CliParamRow(reader.readNextShort(), reader.readNextShort(),
+				readStringIndex(reader));
 			rows.add(row);
 			strings.add(row.nameIndex);
 		}
@@ -59,9 +68,9 @@ public class CliTableParam extends CliAbstractTable {
 
 	@Override
 	public StructureDataType getRowDataType() {
-		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "ParamRow",0);
+		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "ParamRow", 0);
 		rowDt.add(CliEnumParamAttributes.dataType, "Flags", "bitmask of type ParamAttributes");
-		rowDt.add( WORD, "Sequence", "constant");
+		rowDt.add(WORD, "Sequence", "constant");
 		rowDt.add(metadataStream.getStringIndexDataType(), "Name", "index into String heap");
 		return rowDt;
 	}
