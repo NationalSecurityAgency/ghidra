@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/build.xml||GHIDRA||||END|
 data/languages/CR16.cspec||GHIDRA||||END|
 data/languages/CR16.ldefs||GHIDRA||||END|

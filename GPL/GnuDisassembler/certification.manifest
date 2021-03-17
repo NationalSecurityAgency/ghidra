@@ -4,10 +4,7 @@
 .project||GHIDRA||||END|
 Module.manifest||Public Domain||||END|
 README.txt||Public Domain||||END|
-build.gradle||Public Domain||||END|
-buildGdis.gradle||Public Domain||||END|
 data/arm_test1.s||Public Domain||||END|
 data/big.elf||Public Domain||||END|
 data/little.elf||Public Domain||||END|
 extension.properties||Public Domain||||END|
-settings.gradle||Public Domain||||END|

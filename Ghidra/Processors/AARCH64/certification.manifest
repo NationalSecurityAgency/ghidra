@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/aarch64-pltThunks.xml||GHIDRA||||END|
 data/languages/AARCH64.cspec||GHIDRA||||END|
 data/languages/AARCH64.dwarf||GHIDRA||||END|

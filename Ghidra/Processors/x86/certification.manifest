@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/languages/adx.sinc||GHIDRA||||END|
 data/languages/avx.sinc||GHIDRA||||END|
 data/languages/avx2.sinc||GHIDRA||||END|
