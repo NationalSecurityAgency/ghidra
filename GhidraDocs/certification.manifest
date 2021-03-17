@@ -75,7 +75,6 @@ GhidraClass/Intermediate/VersionTracking.html||GHIDRA|||This file contains mostl
 GhidraClass/Intermediate/VersionTracking_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraCodingStandards.html||GHIDRA||||END|
 InstallationGuide.html||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 images/B.gif||GHIDRA||||END|
 images/D.gif||GHIDRA||||END|
 images/F.gif||GHIDRA||||END|

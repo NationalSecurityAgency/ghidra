@@ -4,7 +4,6 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 Sleigh.launch||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/charset_info.xml||GHIDRA||||END|
 data/languages/Steps to creation of Format Opinion.txt||GHIDRA||||END|

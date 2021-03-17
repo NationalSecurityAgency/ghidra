@@ -6,7 +6,6 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
 src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
