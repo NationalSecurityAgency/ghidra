@@ -60,9 +60,9 @@ public class DbgModelTargetProcessLaunchConnectorImpl extends DbgModelTargetObje
 	protected Map<String, ParameterDescription<?>> computeParameters() {
 		HashMap<String, ParameterDescription<?>> map =
 			new HashMap<String, ParameterDescription<?>>();
-		ParameterDescription<String> param = ParameterDescription.create(String.class,
-			"CommandLine", true, "", "Cmd", "executable to be launched");
-		map.put("Command line", param);
+		ParameterDescription<String> param = ParameterDescription.create(String.class, "args", true,
+			"", "Cmd", "executable to be launched");
+		map.put("args", param);
 		return map;
 	}
 
