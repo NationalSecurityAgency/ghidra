@@ -204,17 +204,17 @@ def isBashSourceFile(File file) {
  * Gets the ip for a file in the module from its header (or certification.manifest)
  *********************************************************************************/
 def getIp(File projectDir, File file) {
+	String ip = null;
 	if (isCSourceFile(file)) {
-		return getIpForSourceFile(file, " * IP:");
+		ip = getIpForSourceFile(file, " * IP:");
 	}
-	if (isBashSourceFile(file)) {
-		String ip = getIpForSourceFile(file, "#  IP:");
-		// allow transition from certification.manifest entry
-		if (ip != null) {
-			return ip;
-		}
+	else if (isBashSourceFile(file)) {
+		ip = getIpForSourceFile(file, "#  IP:");
 	}
-	return getIpForNonSourceFile(projectDir, file);
+	if (ip == null) {
+		ip = getIpForNonSourceFile(projectDir, file);
+	}
+	return ip;
 }
 
 /*********************************************************************************
