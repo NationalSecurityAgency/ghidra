@@ -59,7 +59,7 @@ define register offset=0x1000 size=$(REGISTER_SIZE)
 	[ spr000 XER    spr002 spr003 spr004 spr005 spr006 spr007 LR     CTR    spr00a spr00b spr00c spr00d spr00e spr00f 
 	  spr010 spr011 spr012 spr013 spr014 spr015 spr016 spr017 spr018 spr019 SRR0   SRR1   spr01c spr01d spr01e spr01f 
 	  spr020 spr021 spr022 spr023 spr024 spr025 spr026 spr027 spr028 spr029 spr02a spr02b spr02c spr02d spr02e spr02f
-	  spr030 spr031 spr032 spr033 spr034 spr035 spr036 spr037 spr038 spr039 spr03a spr03b spr03c spr03d spr03e spr03f
+	  spr030 spr031 spr032 spr033 spr034 spr035 spr036 spr037 spr038 spr039 CSRR0  CSRR1  spr03c spr03d spr03e spr03f
 	  spr040 spr041 spr042 spr043 spr044 spr045 spr046 spr047 spr048 spr049 spr04a spr04b spr04c spr04d spr04e spr04f
 	  spr050 spr051 spr052 spr053 spr054 spr055 spr056 spr057 spr058 spr059 spr05a spr05b spr05c spr05d spr05e spr05f
 	  spr060 spr061 spr062 spr063 spr064 spr065 spr066 spr067 spr068 spr069 spr06a spr06b spr06c spr06d spr06e spr06f
@@ -79,7 +79,7 @@ define register offset=0x1000 size=$(REGISTER_SIZE)
 	  spr140 spr141 spr142 spr143 spr144 spr145 spr146 spr147 spr148 spr149 spr14a spr14b spr14c spr14d spr14e spr14f
 	  spr150 spr151 spr152 spr153 spr154 spr155 spr156 spr157 spr158 spr159 spr15a spr15b spr15c spr15d spr15e spr15f
 	  spr160 spr161 spr162 spr163 spr164 spr165 spr166 spr167 spr168 spr169 spr16a spr16b spr16c spr16d spr16e spr16f
-	  spr170 spr171 spr172 spr173 spr174 spr175 spr176 spr177 spr178 spr179 spr17a spr17b spr17c spr17d spr17e spr17f
+	  spr170 spr171 spr172 spr173 spr174 spr175 spr176 spr177 spr178 spr179 GSRR0  GSRR1  spr17c spr17d spr17e spr17f
 	  spr180 spr181 spr182 spr183 spr184 spr185 spr186 spr187 spr188 spr189 spr18a spr18b spr18c spr18d spr18e spr18f
 	  spr190 spr191 spr192 spr193 spr194 spr195 spr196 spr197 spr198 spr199 spr19a spr19b spr19c spr19d spr19e spr19f
 	  spr1a0 spr1a1 spr1a2 spr1a3 spr1a4 spr1a5 spr1a6 spr1a7 spr1a8 spr1a9 spr1aa spr1ab spr1ac spr1ad spr1ae spr1af
@@ -91,7 +91,7 @@ define register offset=0x1000 size=$(REGISTER_SIZE)
 	  spr200 spr201 spr202 spr203 spr204 spr205 spr206 spr207 spr208 spr209 spr20a spr20b spr20c spr20d spr20e spr20f
 	  spr210 spr211 spr212 spr213 spr214 spr215 spr216 spr217 spr218 spr219 spr21a spr21b spr21c spr21d spr21e spr21f
 	  spr220 spr221 spr222 spr223 spr224 spr225 spr226 spr227 spr228 spr229 spr22a spr22b spr22c spr22d spr22e spr22f
-	  spr230 spr231 spr232 spr233 spr234 spr235 spr236 spr237 spr238 spr239 spr23a spr23b spr23c spr23d spr23e spr23f
+	  spr230 spr231 spr232 spr233 spr234 spr235 spr236 spr237 spr238 spr239 MCSRR0 MCSRR1 spr23c spr23d DSRR0  DSRR1 
 	  spr240 spr241 spr242 spr243 spr244 spr245 spr246 spr247 spr248 spr249 spr24a spr24b spr24c spr24d spr24e spr24f
 	  spr250 spr251 spr252 spr253 spr254 spr255 spr256 spr257 spr258 spr259 spr25a spr25b spr25c spr25d spr25e spr25f
 	  spr260 spr261 spr262 spr263 spr264 spr265 spr266 spr267 spr268 spr269 spr26a spr26b spr26c spr26d spr26e spr26f
@@ -1124,12 +1124,12 @@ attach variables SPRVAL [
 	spr017	spr037	spr057	spr077	spr097	spr0b7	spr0d7	spr0f7	spr117	spr137	spr157	spr177	spr197	spr1b7	spr1d7	spr1f7	spr217	spr237	spr257	spr277	spr297	spr2b7	spr2d7	spr2f7	spr317	spr337	spr357	spr377	spr397	spr3b7	spr3d7	spr3f7
 	spr018	spr038	spr058	spr078	spr098	spr0b8	spr0d8	spr0f8	spr118  spr138	spr158	spr178	spr198	spr1b8	spr1d8	spr1f8	spr218	spr238	spr258	spr278	spr298	spr2b8	spr2d8	spr2f8	spr318	spr338	spr358	spr378	spr398	spr3b8  spr3d8 	spr3f8
     spr019	spr039	spr059	spr079	spr099	spr0b9	spr0d9	spr0f9	spr119	spr139	spr159	spr179	spr199	spr1b9	spr1d9	spr1f9	spr219	spr239	spr259	spr279	spr299	spr2b9	spr2d9	spr2f9	spr319	spr339	spr359	spr379	spr399	spr3b9  spr3d9	spr3f9
-	SRR0 	spr03a	spr05a	spr07a	spr09a	spr0ba	spr0da	spr0fa	spr11a  spr13a	spr15a	spr17a	spr19a	spr1ba	spr1da	spr1fa	spr21a	spr23a	spr25a	spr27a	spr29a	spr2ba	spr2da	spr2fa	spr31a	spr33a	spr35a	spr37a	spr39a	spr3ba	spr3da 	spr3fa
-	SRR1	spr03b	spr05b	spr07b	spr09b	spr0bb	spr0db	spr0fb	spr11b	spr13b	spr15b	spr17b	spr19b	spr1bb	spr1db	spr1fb	spr21b	spr23b	spr25b	spr27b	spr29b	spr2bb	spr2db	spr2fb	spr31b	spr33b	spr35b	spr37b	spr39b	spr3bb	spr3db 	spr3fb
+	SRR0 	CSRR0	spr05a	spr07a	spr09a	spr0ba	spr0da	spr0fa	spr11a  spr13a	spr15a	GSRR0	spr19a	spr1ba	spr1da	spr1fa	spr21a	MCSRR0	spr25a	spr27a	spr29a	spr2ba	spr2da	spr2fa	spr31a	spr33a	spr35a	spr37a	spr39a	spr3ba	spr3da 	spr3fa
+	SRR1	CSRR1	spr05b	spr07b	spr09b	spr0bb	spr0db	spr0fb	spr11b	spr13b	spr15b	GSRR1	spr19b	spr1bb	spr1db	spr1fb	spr21b	MCSRR1	spr25b	spr27b	spr29b	spr2bb	spr2db	spr2fb	spr31b	spr33b	spr35b	spr37b	spr39b	spr3bb	spr3db 	spr3fb
 	spr01c	spr03c	spr05c	spr07c	spr09c	spr0bc	spr0dc	spr0fc	TBLw    spr13c	spr15c	spr17c	spr19c	spr1bc	spr1dc	spr1fc	spr21c	spr23c	spr25c	spr27c	spr29c	spr2bc	spr2dc	spr2fc	spr31c	spr33c	spr35c	spr37c	spr39c	spr3bc	spr3dc	spr3fc
 	spr01d	spr03d	spr05d	spr07d	spr09d	spr0bd	spr0dd	spr0fd	TBUw    spr13d	spr15d	spr17d	spr19d	spr1bd	spr1dd	spr1fd	spr21d	spr23d	spr25d	spr27d	spr29d	spr2bd	spr2dd	spr2fd	spr31d	spr33d	spr35d	spr37d	spr39d	spr3bd	spr3dd	spr3fd
-	spr01e	spr03e	spr05e	spr07e	spr09e  spr0be	spr0de	spr0fe	spr11e	spr13e	spr15e	spr17e	spr19e	spr1be	spr1de	spr1fe	spr21e	spr23e	spr25e	spr27e	spr29e	spr2be	spr2de	spr2fe	spr31e	spr33e	spr35e	spr37e	spr39e	spr3be	spr3de	spr3fe
-	spr01f	spr03f	spr05f	spr07f	spr09f	spr0bf	spr0df	spr0ff	spr11f  spr13f	spr15f	spr17f	spr19f	spr1bf	spr1df	spr1ff	spr21f	spr23f	spr25f	spr27f	spr29f	spr2bf	spr2df	spr2ff	spr31f	spr33f	spr35f	spr37f	spr39f	spr3bf	spr3df	spr3ff
+	spr01e	spr03e	spr05e	spr07e	spr09e  spr0be	spr0de	spr0fe	spr11e	spr13e	spr15e	spr17e	spr19e	spr1be	spr1de	spr1fe	spr21e	DSRR0	spr25e	spr27e	spr29e	spr2be	spr2de	spr2fe	spr31e	spr33e	spr35e	spr37e	spr39e	spr3be	spr3de	spr3fe
+	spr01f	spr03f	spr05f	spr07f	spr09f	spr0bf	spr0df	spr0ff	spr11f  spr13f	spr15f	spr17f	spr19f	spr1bf	spr1df	spr1ff	spr21f	DSRR1	spr25f	spr27f	spr29f	spr2bf	spr2df	spr2ff	spr31f	spr33f	spr35f	spr37f	spr39f	spr3bf	spr3df	spr3ff
 ];
 
 ##
@@ -1470,6 +1470,9 @@ define pcodeop mematom;
 define pcodeop random;
 define pcodeop returnFromInterrupt;
 define pcodeop returnFromCriticalInterrupt;
+define pcodeop returnFromDebugInterrupt;
+define pcodeop returnFromGuestInterrupt;
+define pcodeop returnFromMachineCheckInterrupt;
 define pcodeop syscall;
 define pcodeop slbInvalidateAll;
 define pcodeop slbInvalidateEntry;
