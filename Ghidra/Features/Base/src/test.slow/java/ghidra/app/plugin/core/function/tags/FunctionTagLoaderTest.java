@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.function.tags;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Set;
@@ -117,10 +116,14 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testLoadTags_EmptyFile() throws Exception {
 		// Create file without contents 
 		File xxeFile = createTempFileForTest();
-		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		Set<FunctionTag> expectedTags = new HashSet<>();
-		assertEquals(tags, expectedTags);
+		try {
+			FunctionTagLoader.loadTags(xxeFile);
+			fail("Did not get expected exception");
+		}
+		catch (Exception e) {
+			// good
+		}
 	}
 
 	@Test
@@ -140,10 +143,13 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 		File xxeFile = createTempFileForTest();
 		xxeFile.delete();
 
-		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
-
-		Set<FunctionTag> expectedTags = new HashSet<>();
-		assertEquals(tags, expectedTags);
+		try {
+			FunctionTagLoader.loadTags(xxeFile);
+			fail("Did not get expected exception");
+		}
+		catch (Exception e) {
+			// good
+		}
 	}
 
 	@Test
@@ -151,10 +157,14 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
 		Files.write(xxeFile.toPath(), FUNCTION_TAGS_MALFORMED_XML.getBytes());
-		Set<FunctionTag> tags = FunctionTagLoader.loadTags(xxeFile);
 
-		Set<FunctionTag> expectedTags = new HashSet<>();
-		assertEquals(tags, expectedTags);
+		try {
+			FunctionTagLoader.loadTags(xxeFile);
+			fail("Did not get expected exception");
+		}
+		catch (Exception e) {
+			// good
+		}
 	}
 
 	@Test
@@ -163,7 +173,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	 * located in Base/data/functionTags.xml
 	 * @throws IOException
 	 */
-	public void testLoadTags_XmlDefault() throws IOException {
+	public void testLoadTags_XmlDefault() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
@@ -184,7 +194,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testLoadTags_XmlHasBlankNameValue() throws IOException {
+	public void testLoadTags_XmlHasBlankNameValue() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
@@ -204,7 +214,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testLoadTags_XmlHasCommentValue() throws IOException {
+	public void testLoadTags_XmlHasCommentValue() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
@@ -225,7 +235,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testLoadTags_XmlNoCommentTag() throws IOException {
+	public void testLoadTags_XmlNoCommentTag() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
@@ -252,7 +262,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	 *   
 	 * @throws IOException
 	 */
-	public void testLoadTags_XmlNoNameTag() throws IOException {
+	public void testLoadTags_XmlNoNameTag() throws Exception {
 
 		// Create file with contents
 		File xxeFile = createTempFileForTest();
