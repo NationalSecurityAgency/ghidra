@@ -24,6 +24,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.dnd.GenericDataFlavor;
@@ -303,12 +305,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	private Transferable copyAddress() {
 
 		AddressSetView addressSet = getSelectedAddresses();
-		StringBuilder buffy = new StringBuilder();
 		AddressIterator it = addressSet.getAddresses(true);
-		while (it.hasNext()) {
-			buffy.append(it.next()).append('\n');
-		}
-		return createStringTransferable(buffy.toString());
+		String joined = StringUtils.join((Iterator<Address>) it, "\n");
+		return createStringTransferable(joined);
 	}
 
 	protected Transferable copyCode(TaskMonitor monitor) {
@@ -377,8 +376,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	private boolean pasteLabelsComments(Transferable pasteData, boolean pasteLabels,
 			boolean pasteComments) {
 		try {
-			List<?> list = (List<?>) pasteData.getTransferData(
-				CodeUnitInfoTransferable.localDataTypeFlavor);
+			List<?> list =
+				(List<?>) pasteData.getTransferData(CodeUnitInfoTransferable.localDataTypeFlavor);
 			List<CodeUnitInfo> infos = CollectionUtils.asList(list, CodeUnitInfo.class);
 			Command cmd = new CodeUnitInfoPasteCmd(currentLocation.getAddress(), infos, pasteLabels,
 				pasteComments);
@@ -420,7 +419,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			return pasteOperandField((OperandFieldLocation) currentLocation, labelName);
 		}
 
-		// try pasting onto something that is not a label		
+		// try pasting onto something that is not a label
 		return maybePasteNonLabelString(labelName);
 	}
 
@@ -451,12 +450,12 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			String oldName = symbol.getName();
 			Namespace namespace = symbol.getParentNamespace();
 			Address symbolAddress = symbol.getAddress();
-			RenameLabelCmd cmd = new RenameLabelCmd(symbolAddress, oldName, labelName,
-				namespace, SourceType.USER_DEFINED);
+			RenameLabelCmd cmd = new RenameLabelCmd(symbolAddress, oldName, labelName, namespace,
+				SourceType.USER_DEFINED);
 			return tool.execute(cmd, currentProgram);
 		}
 
-		// try pasting onto something that is not a label		
+		// try pasting onto something that is not a label
 		return maybePasteNonLabelString(labelName);
 	}
 
@@ -646,7 +645,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 //==================================================================================================
 // Unsupported Operations
-//==================================================================================================    
+//==================================================================================================
 
 	@Override
 	public void lostOwnership(Transferable transferable) {

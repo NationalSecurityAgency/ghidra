@@ -441,6 +441,7 @@ public abstract class DemangledObject implements Demangled {
 			namespace = program.getGlobalNamespace();
 		}
 
+		SymbolTable symbolTable = program.getSymbolTable();
 		for (String namespaceName : getNamespaceList(typeNamespace)) {
 
 			// TODO - This is compensating for too long templates.  We should probably genericize
@@ -448,45 +449,43 @@ public abstract class DemangledObject implements Demangled {
 			//        same name is the same class--would that reflect reality?
 			namespaceName = ensureNameLength(namespaceName);
 
-			SymbolTable symbolTable = program.getSymbolTable();
-
-			List<Symbol> symbols = symbolTable.getSymbols(namespaceName, namespace);
-			Symbol namespaceSymbol =
-				symbols.stream().filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
-					s.getSymbolType() == SymbolType.CLASS)).findFirst().orElse(null);
-			if (namespaceSymbol == null) {
-				try {
-					namespace =
-						symbolTable.createNameSpace(namespace, namespaceName, SourceType.IMPORTED);
-				}
-				catch (DuplicateNameException e) {
-					Msg.error(DemangledObject.class,
-						"Failed to create namespace due to name conflict: " +
-							NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName,
-								false));
-					break;
-				}
-				catch (InvalidInputException e) {
-					Msg.error(DemangledObject.class,
-						"Failed to create namespace: " + e.getMessage());
-					break;
-				}
+			try {
+				namespace =
+					symbolTable.getOrCreateNameSpace(namespace, namespaceName, SourceType.IMPORTED);
 			}
-			else if (isPermittedNamespaceSymbol(namespaceSymbol, functionPermitted)) {
-				namespace = (Namespace) namespaceSymbol.getObject();
-			}
-			else {
+			catch (DuplicateNameException e) {
 				Msg.error(DemangledObject.class,
 					"Failed to create namespace due to name conflict: " +
+						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName,
+							false));
+				break;
+			}
+			catch (InvalidInputException e) {
+				Msg.error(DemangledObject.class,
+					"Failed to create namespace: " + e.getMessage());
+				break;
+			}
+
+			Symbol nsSymbol = namespace.getSymbol();
+			if (!isPermittedNamespaceType(nsSymbol.getSymbolType(), functionPermitted)) {
+
+				String allowedTypes = "SymbolType.CLASS, SymbolType.NAMESPACE";
+				if (functionPermitted) {
+					allowedTypes += ", SymbolType.FUNCTION";
+				}
+
+				Msg.error(DemangledObject.class,
+					"Bad namespace type - must be one of: " + allowedTypes +
 						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName, false));
 				break;
 			}
+
 		}
 		return namespace;
 	}
 
-	private static boolean isPermittedNamespaceSymbol(Symbol symbol, boolean functionPermitted) {
-		SymbolType symbolType = symbol.getSymbolType();
+	private static boolean isPermittedNamespaceType(SymbolType symbolType,
+			boolean functionPermitted) {
 		if (symbolType == SymbolType.CLASS || symbolType == SymbolType.NAMESPACE) {
 			return true;
 		}

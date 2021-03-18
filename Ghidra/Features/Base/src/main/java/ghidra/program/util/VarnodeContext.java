@@ -34,8 +34,7 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 
 public class VarnodeContext implements ProcessorContext {
 
@@ -88,7 +87,7 @@ public class VarnodeContext implements ProcessorContext {
 		this.program = program;
 
 		// make a copy, because we could be making new spaces.
-		this.addrFactory = new OffsetAddressFactory(program.getAddressFactory());
+		this.addrFactory = new OffsetAddressFactory(program);
 
 		BAD_ADDRESS = addrFactory.getAddress(getAddressSpace("BAD_ADDRESS_SPACE"), 0);
 
@@ -1435,8 +1434,24 @@ public class VarnodeContext implements ProcessorContext {
 
 class OffsetAddressFactory extends DefaultAddressFactory {
 
-	OffsetAddressFactory(AddressFactory baseFactory) {
-		super(filterSpaces(baseFactory.getAllAddressSpaces()));
+	OffsetAddressFactory(Program program) {
+		// We are only calling super with the address spaces from the language first, and then
+		// following up to explicitly add more spaces due to the treatment of memory address
+		// spaces by DefaultAddressFactory when constructed vs. when added later.
+		// If there is more than one memory address space (e.g., TYPE_RAM, TYPE_CODE, or
+		// TYPE_OTHER), then addresses are output with the space name prefix, which we do not want.
+		super(program.getLanguage().getAddressFactory().getAllAddressSpaces(),
+			program.getLanguage().getAddressFactory().getDefaultAddressSpace());
+		for (AddressSpace space : program.getAddressFactory().getAllAddressSpaces()) {
+			if (space.isLoadedMemorySpace() && getAddressSpace(space.getName()) == null) {
+				try {
+					addAddressSpace(space);
+				}
+				catch (DuplicateNameException e) {
+					throw new AssertException("Duplicate name should not occur.");
+				}
+			}
+		}
 	}
 
 	private int getNextUniqueID() {
@@ -1464,19 +1479,6 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 	public static boolean isSymbolSpace(int spaceID) {
 		int type = AddressSpace.ID_TYPE_MASK & spaceID;
 		return (type == AddressSpace.TYPE_SYMBOL);
-	}
-
-	private static AddressSpace[] filterSpaces(AddressSpace[] allSpaces) {
-		List<AddressSpace> spaces = new ArrayList<>();
-		for (AddressSpace space : allSpaces) {
-			int type = space.getType();
-			if (type == AddressSpace.TYPE_VARIABLE || type == AddressSpace.TYPE_STACK ||
-				type == AddressSpace.TYPE_EXTERNAL || type == AddressSpace.TYPE_JOIN) {
-				continue;
-			}
-			spaces.add(space);
-		}
-		return spaces.toArray(new AddressSpace[0]);
 	}
 
 }

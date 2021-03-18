@@ -25,28 +25,24 @@ import java.util.zip.*;
 import generic.jar.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
-import ghidra.framework.Application;
-import ghidra.framework.HeadlessGhidraApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.framework.plugintool.dialog.ExtensionUtils;
 import ghidra.util.classfinder.ClassFinder;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 import utility.module.ModuleUtilities;
 
 public class GhidraJarBuilder implements GhidraLaunchable {
 
 	private static final String ROOT = "_Root/";
 	private static final String ROOT_GHIDRA = "_Root/Ghidra/";
-	private static final String LIBS_FILE_MODULE_KEY = "Module: ";
 
 	// this is set in the buildGhidraJar batch/script files
-	private static final String GHIDRA_DIR = "Ghidra.Install.Root.Dir";
 	private static final String INVOCATION_NAME_PROPERTY = "GhidraJarBuilder.Name";
-	private static HashMap<String, List<String>> libsMap = new HashMap<>();
 	private List<File> rootGhidraDirs = new ArrayList<>();
 	private List<ApplicationModule> allModules;
 	private Set<ApplicationModule> includedModules = new HashSet<>();
@@ -57,19 +53,18 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	private Pattern extensionPointSuffixPattern;
 	private List<String> extensionPointClasses = new ArrayList<>();
 	private ClassLoader classLoader;
-	private boolean inGradleMode = false;
 	private Set<File> processedJars = new HashSet<>();
 
 	public GhidraJarBuilder() {
 		// Required for GhidraLaunchable
 	}
 
-	public GhidraJarBuilder(List<File> rootDirs) throws IOException {
-		for (File file : rootDirs) {
-			File rgd = file.getCanonicalFile();
+	public GhidraJarBuilder(ApplicationLayout layout) throws IOException {
+		for (ResourceFile file : layout.getApplicationRootDirs()) {
+			File rgd = file.getFile(false).getCanonicalFile();
 			rootGhidraDirs.add(rgd);
 		}
-		allModules = findAllModules();
+		allModules = findAllModules(layout);
 		Collections.sort(allModules);
 		for (ApplicationModule module : allModules) {
 			if (includeByDefault(module)) {
@@ -203,7 +198,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 
 		for (ApplicationModule module : moduleList) {
 			writeModuleClassesAndResources(jar, module);
-			if (!excludeHelp && !inGradleMode) {
+			if (!excludeHelp) {
 				writeModuleHelp(jar, module);
 			}
 		}
@@ -360,16 +355,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 	private void writeModuleClassesAndResources(Jar jar, ApplicationModule module)
 			throws CancelledException, IOException {
 
-		if (inGradleMode) {
-			File gradleBuildFileForModule =
-				new File(module.getModuleDir(), "build/libs/" + module.getName() + ".jar");
-			processJarFile(jar, gradleBuildFileForModule, module);
-			File gradleBuildFileForGPLModule =
-				new File(module.getModuleDir(), "build/data/lib/" + module.getName() + ".jar");
-			processJarFile(jar, gradleBuildFileForGPLModule, module);
-			processExternalLibs(jar, module);
-			return;
-		}
 		// NOTE: This only works in a distribution where the 3rd party jars live in each
 		// module's libs directory
 		File binDir = new File(module.getModuleDir(), "bin/main");
@@ -378,18 +363,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		writeDirRecursively(jar, resourceDir.getAbsolutePath(), resourceDir, null);
 
 		processLibDir(jar, module);
-	}
-
-	private void processExternalLibs(Jar jar, ApplicationModule module)
-			throws CancelledException, IOException {
-		List<String> list = libsMap.get(module.getName());
-		if (list == null) {
-			return;
-		}
-		for (String libPath : list) {
-			File file = new File(libPath);
-			processJarFile(jar, file, module);
-		}
 	}
 
 	private void processLibDir(Jar jar, ApplicationModule module)
@@ -585,15 +558,33 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 		return manifest;
 	}
-
-	private List<ApplicationModule> findAllModules() {
+	
+	private List<ApplicationModule> findAllModules(ApplicationLayout layout) throws IOException {
 		List<ApplicationModule> modules = new ArrayList<>();
-		for (File appRoot : rootGhidraDirs) {
-			findModules(appRoot, appRoot, modules);
-			findModules(appRoot, new File(appRoot, "../GPL"), modules);
-
+		
+		for (GModule module : layout.getModules().values()) {
+			File moduleDir = module.getModuleRoot().getFile(false).getCanonicalFile();
+			File rootDir = getModuleRootDir(moduleDir);
+			modules.add(new ApplicationModule(rootDir, moduleDir));
 		}
+		
 		return modules;
+	}
+	
+	private File getModuleRootDir(File moduleDir) {
+		// Look in GPL directories too
+		List<File> rootDirs = new ArrayList<>(rootGhidraDirs);
+		for (File rootDir : rootGhidraDirs) {
+			rootDirs.add(new File(rootDir.getParentFile(), "GPL"));
+		}
+		
+		// Check each root directory to see if it contains the module
+		for (File rootDir : rootDirs) {
+			if (FileUtilities.isPathContainedWithin(rootDir, moduleDir)) {
+				return rootDir;
+			}
+		}
+		throw new AssertException("Module root directory could not be determined: " + moduleDir);
 	}
 
 	private String getPathFromRoot(String rootPath, File file) {
@@ -602,23 +593,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			throw new AssertException("Attempted to get jar path for file not under root!");
 		}
 		return filePath.substring(rootPath.length() + 1);
-	}
-
-	private void findModules(File rootAppDir, File dir, List<ApplicationModule> modules) {
-		File moduleManifest = new File(dir, "Module.manifest");
-		if (moduleManifest.exists()) {
-			ApplicationModule module = new ApplicationModule(rootAppDir, dir);
-			modules.add(module);
-			return;  // modules can't live in other modules;
-		}
-		File[] listFiles = dir.listFiles();
-		if (listFiles != null) {
-			for (File file : listFiles) {
-				if (file.isDirectory()) {
-					findModules(rootAppDir, file, modules);
-				}
-			}
-		}
 	}
 
 	private void checkExtensionPointClass(String path, InputStream inputStream) {
@@ -931,44 +905,15 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 	}
 
-	private static void parseLibsFile(String libsFilePath) {
-		try {
-			List<String> lines = FileUtilities.getLines(new File(libsFilePath));
-
-			List<String> libPaths = new ArrayList<>();
-			String currentModule = null;
-			for (String line : lines) {
-				if (line.startsWith(LIBS_FILE_MODULE_KEY)) {
-					if (currentModule != null) {
-						libsMap.put(currentModule, libPaths);
-						libPaths = new ArrayList<>();
-					}
-					currentModule = line.substring(LIBS_FILE_MODULE_KEY.length()).trim();
-				}
-				else {
-					libPaths.add(line.trim());
-				}
-			}
-		}
-		catch (IOException e) {
-			System.err.println("Could not read lib paths file: " + libsFilePath);
-			System.exit(0);
-		}
-	}
-
 	private static void usage(String[] args) {
 		for (int i = 0; i < args.length; i++) {
 			System.err.println("arg " + i + ": " + args[i]);
 		}
 		String invocationName = System.getProperty(INVOCATION_NAME_PROPERTY);
-		String property = System.getProperty(GHIDRA_DIR);
 
 		StringBuffer buf = new StringBuffer();
 		buf.append("\nUsage: ");
-		buf.append(invocationName != null ? invocationName : "GhidraJarBuilder ");
-		if (property == null) {
-			buf.append("<Installation Root Directory> [<Installation Root Directory> ...] ");
-		}
+		buf.append(invocationName != null ? invocationName : "GhidraJarBuilder");
 		buf.append(
 			" [-output <output file>] [-srczip <src zip output file>] [-bin <compiled classes dir>] [-main <main-class>]\n");
 		System.err.println(buf.toString());
@@ -992,17 +937,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			usage(args);
 		}
 
-		List<File> ghidraDirs = new ArrayList<>();
 		File outputFile = null;
 		File srczip = null;
 		File extraBinDir = null;
 		String mainClassArg = null;
-		boolean usingGradle = false;
-
-		String property = System.getProperty(GHIDRA_DIR);
-		if (property != null) {
-			ghidraDirs.add(new File(property));
-		}
 
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
@@ -1030,28 +968,14 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				}
 				mainClassArg = args[++i];
 			}
-			else if (arg.equals("-gradle")) {
-				if (i == args.length - 1) {
-					usage(args);
-				}
-				usingGradle = true;
-				parseLibsFile(args[++i]);
-			}
-			else if (arg.startsWith("-")) {
+			else {
 				usage(args);
 			}
-			else {
-				ghidraDirs.add(new File(arg));
-			}
-		}
-		if (ghidraDirs.isEmpty()) {
-			usage(args);
 		}
 		if (outputFile == null) {
 			outputFile = new File("ghidra.jar");
 		}
 
-		System.out.println("Ghidra dirs = " + ghidraDirs);
 		System.out.println("Output file = " + outputFile);
 		if (srczip != null) {
 			System.out.println("Source Zip File = " + srczip);
@@ -1061,12 +985,9 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 
 		try {
-			GhidraJarBuilder builder = new GhidraJarBuilder(ghidraDirs);
+			GhidraJarBuilder builder = new GhidraJarBuilder(layout);
 			if (mainClassArg != null) {
 				builder.setMainClass(mainClassArg);
-			}
-			if (usingGradle) {
-				builder.setGradleMode();
 			}
 			builder.addExcludedFileExtension(".pdf");
 
@@ -1082,10 +1003,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				System.out.println("Exclude " + module.getName());
 			}
 
-			builder.buildJar(outputFile, extraBinDir, TaskMonitorAdapter.DUMMY_MONITOR);
+			builder.buildJar(outputFile, extraBinDir, TaskMonitor.DUMMY);
 
 			if (srczip != null) {
-				builder.buildSrcZip(srczip, TaskMonitorAdapter.DUMMY_MONITOR);
+				builder.buildSrcZip(srczip, TaskMonitor.DUMMY);
 			}
 		}
 		catch (Exception e) {
@@ -1097,10 +1018,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 
 	private static File getApplicationPropertyFile(File ghidraRootDir) {
 		return new File(ghidraRootDir, "application.properties");
-	}
-
-	private void setGradleMode() {
-		inGradleMode = true;
 	}
 
 }
