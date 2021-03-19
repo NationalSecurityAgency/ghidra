@@ -15,13 +15,23 @@
  */
 package ghidra.app.util.exporter;
 
+import ghidra.app.util.opinion.PeLoader;
 import ghidra.util.HelpLocation;
 
-// TODO export labels and other useful analysis information
-public class PeExporter extends AbstractExecutableExporter {
+/**
+ * An {@link Exporter} that can export programs imported with the {@link PeLoader}
+ */
+public class PeExporter extends AbstractLoaderExporter {
 
+	/**
+	 * Creates a new {@link PeExporter}
+	 */
 	public PeExporter() {
 		super("PE", "exe", new HelpLocation("ExporterPlugin", "pe"));
 	}
 
+	@Override
+	protected boolean supportsFileFormat(String fileFormat) {
+		return PeLoader.PE_NAME.equals(fileFormat);
+	}
 }

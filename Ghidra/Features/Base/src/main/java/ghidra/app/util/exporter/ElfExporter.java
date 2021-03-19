@@ -15,13 +15,23 @@
  */
 package ghidra.app.util.exporter;
 
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.util.HelpLocation;
 
-// TODO export labels and other useful analysis information
-public class ElfExporter extends AbstractExecutableExporter {
+/**
+ * An {@link Exporter} that can export programs imported with the {@link ElfLoader}
+ */
+public class ElfExporter extends AbstractLoaderExporter {
 
+	/**
+	 * Create a new {@link ElfExporter}
+	 */
 	public ElfExporter() {
-		super("Elf", "", new HelpLocation("ExporterPlugin", "elf"));
+		super("ELF", "", new HelpLocation("ExporterPlugin", "elf"));
 	}
-
+	
+	@Override
+	protected boolean supportsFileFormat(String fileFormat) {
+		return ElfLoader.ELF_NAME.equals(fileFormat);
+	}
 }
