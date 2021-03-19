@@ -20,6 +20,6 @@ package mdemangler;
  * interface described here is the name I decided to call the failing tests
  * in MDMangBaseTest and used by MDMangBaseTestSuite to exclude failing tests.
  */
-public interface MDMangFailingTests {
+public interface MDMangFailingTestCategory {
 	// Purposefully empty.
 }

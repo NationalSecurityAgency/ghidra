@@ -26,7 +26,7 @@ import ghidra.app.util.demangler.DemangledObject;
  * This class performs extra demangler testing for special cases that do not fit
  * the testing pattern found in MDMangBaseTest and its derived test classes.
  */
-public class MDMangExtraTests extends AbstractGenericTest {
+public class MDMangExtraTest extends AbstractGenericTest {
 
 	@Test
 	//This test checks that we can provide a mangled string for a function namespace.

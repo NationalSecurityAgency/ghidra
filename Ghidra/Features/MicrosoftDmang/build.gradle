@@ -48,10 +48,6 @@ test {
 	if (rootProject.ext.parallelMode) {
 		exclude "*"
 	} else {
-		includes = ['**/MDMangBaseTestSuite.class', '**/MDMangExtraTests.class']
+		includes = ['**/MDMangBaseWorkingTests.class', '**/MDMangExtraTest.class']
 	}
-}
-integrationTest {
-	scanForTestClasses = false
-	excludes = ['**/*']
 }
