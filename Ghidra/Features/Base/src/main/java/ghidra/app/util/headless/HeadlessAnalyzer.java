@@ -671,6 +671,9 @@ public class HeadlessAnalyzer {
 	}
 
 	private List<String> parseScriptPaths(List<String> scriptPaths) {
+		if (scriptPaths == null) {
+			return null;
+		}
 		List<String> parsedScriptPaths = new ArrayList<>();
 		for (String path : scriptPaths) {
 			ResourceFile pathFile = Path.fromPathString(path);
