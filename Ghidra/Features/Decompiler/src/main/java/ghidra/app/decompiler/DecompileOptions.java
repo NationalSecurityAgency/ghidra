@@ -75,21 +75,21 @@ public class DecompileOptions {
 	private final static String IGNOREUNIMPL_OPTIONDESCRIPTION =
 		"If set, instructions which do not have a p-code translation implemented are " +
 			"treated as if they do nothing (like a NOP)";
-	private final static boolean IGNOREUNIMPL_OPTIONDEFAULT = false;
+	private final static boolean IGNOREUNIMPL_OPTIONDEFAULT = false;	// Must match Architecture::resetDefaultsInternal
 	private boolean ignoreunimpl;
 
 	private final static String INFERCONSTPTR_OPTIONSTRING = "Analysis.Infer constant pointers";
 	private final static String INFERCONSTPTR_OPTIONDESCRIPTION =
 		"If set, constants which are not being explicitly used as pointers, but which can be interpreted " +
 			"as a legitimate address, will still be treated as having a pointer datatype";
-	private final static boolean INFERCONSTPTR_OPTIONDEFAULT = true;
+	private final static boolean INFERCONSTPTR_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
 	private boolean inferconstptr;
 
 	private final static String ANALYZEFORLOOPS_OPTIONSTRING = "Analysis.Recover -for- loops";
 	private final static String ANALYZEFORLOOPS_OPTIONDESCRIPTION =
 		"If set, the decompiler attempts to recover for-loop variables, including their initializer, condition, " +
 			"and incrementer statements. Loop variable bounds are displayed as a formal -for- loop header";
-	private final static boolean ANALYZEFORLOOPS_OPTIONDEFAULT = true;
+	private final static boolean ANALYZEFORLOOPS_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
 	private boolean analyzeForLoops;
 
 	private final static String NULLTOKEN_OPTIONSTRING = "Display.Print 'NULL' for null pointers";
@@ -97,7 +97,7 @@ public class DecompileOptions {
 		"If set, any zero valued pointer (null pointer) will " +
 			"be printed using the token 'NULL'. Otherwise, a cast " +
 			"of the number '0' is printed.";
-	private final static boolean NULLTOKEN_OPTIONDEFAULT = false;
+	private final static boolean NULLTOKEN_OPTIONDEFAULT = false;		// Must match PrintC::resetDefaultsPrintC
 	private boolean nullToken;
 
 	private final static String INPLACEOP_OPTIONSTRING =
@@ -105,7 +105,7 @@ public class DecompileOptions {
 	private final static String INPLACEOP_OPTIONDESCRIPTION =
 		"If set the inplace assignment operators will be used " +
 			"for appropriate expressions. '+='   '*='   '&='   '<<=' etc.";
-	private final static boolean INPLACEOP_OPTIONDEFAULT = false;
+	private final static boolean INPLACEOP_OPTIONDEFAULT = false;	// Must match PrintC::resetDefaultsPrintC
 	private boolean inplaceTokens;
 
 	private final static String ALIASBLOCK_OPTIONSTRING = "Analysis.Alias Blocking";
@@ -137,40 +137,40 @@ public class DecompileOptions {
 		}
 	}
 
-	private final static AliasBlockEnum ALIASBLOCK_OPTIONDEFAULT = AliasBlockEnum.Array;
+	private final static AliasBlockEnum ALIASBLOCK_OPTIONDEFAULT = AliasBlockEnum.Array;	// Must match Architecture::resetDefaultsInternal
 	private AliasBlockEnum aliasBlock;
 
 	private final static String CONVENTION_OPTIONSTRING = "Display.Print calling convention name";
 	private final static String CONVENTION_OPTIONDESCRIPTION =
 		"If set, the names of callling conventions (which differ " +
 			"from the default) will be printed as part of the function prototype.";
-	private final static boolean CONVENTION_OPTIONDEFAULT = true;
+	private final static boolean CONVENTION_OPTIONDEFAULT = true;	// Must match PrintC::resetDefaultsPrintC
 	private boolean conventionPrint;
 
 	private final static String NOCAST_OPTIONSTRING = "Display.Disable printing of type casts";
 	private final static String NOCAST_OPTIONDESCRIPTION =
 		"If set, any C style type cast recovered by the decompiler will not be displayed. " +
 			"The resulting C syntax may not parse correctly.";
-	private final static boolean NOCAST_OPTIONDEFAULT = false;
+	private final static boolean NOCAST_OPTIONDEFAULT = false;		// Must match PrintC::resetDefaultsPrintC
 	private boolean noCastPrint;
 
 	private final static String MAXWIDTH_OPTIONSTRING = "Display.Maximum characters in a code line";
 	private final static String MAXWIDTH_OPTIONDESCRIPTION =
 		"Maximum number of characters allowed per line before " + "before line breaks are forced.";
-	private final static int MAXWIDTH_OPTIONDEFAULT = 100;
+	private final static int MAXWIDTH_OPTIONDEFAULT = 100;	// Must match EmitPrettyPrint::resetDefaultsPrettyPrint
 	private int maxwidth;
 
 	private final static String INDENTWIDTH_OPTIONSTRING =
 		"Display.Number of characters per indent level";
 	private final static String INDENTWIDTH_OPTIONDESCRIPTION =
 		"Number of characters indented for each level of control-flow " + "or scope nesting";
-	private final static int INDENTWIDTH_OPTIONDEFAULT = 2;
+	private final static int INDENTWIDTH_OPTIONDEFAULT = 2;	// Must match EmitXml::resetDefaultsInternal
 	private int indentwidth;
 
 	private final static String COMMENTINDENT_OPTIONSTRING = "Display.Comment line indent level";
 	private final static String COMMENTINDENT_OPTIONDESCRIPTION =
 		"Number of characters each line of comments is indented";
-	private final static int COMMENTINDENT_OPTIONDEFAULT = 20;
+	private final static int COMMENTINDENT_OPTIONDEFAULT = 20;	// Must match PrintLanguage::resetDefaultsInternal
 	private int commentindent;
 
 	private final static String COMMENTSTYLE_OPTIONSTRING = "Display.Comment style";
@@ -178,6 +178,7 @@ public class DecompileOptions {
 		"Choice between either the C style comments /* */ or C++ style // ";
 	public static final int SUGGESTED_DECOMPILE_TIMEOUT_SECS = 30;
 	public static final int SUGGESTED_MAX_PAYLOAD_BYTES = 50;
+	public static final int SUGGESTED_MAX_INSTRUCTIONS = 100000;		// Must match Architecture::resetDefaultsInternal
 
 	public enum CommentStyleEnum {
 
@@ -195,47 +196,47 @@ public class DecompileOptions {
 		}
 	}
 
-	private final static CommentStyleEnum COMMENTSTYLE_OPTIONDEFAULT = CommentStyleEnum.CStyle;
+	private final static CommentStyleEnum COMMENTSTYLE_OPTIONDEFAULT = CommentStyleEnum.CStyle;	// Must match PrintC::resetDefaultsPrintC
 	private CommentStyleEnum commentStyle;
 
 	private final static String COMMENTPRE_OPTIONSTRING = "Display.Display PRE comments";
 	private final static String COMMENTPRE_OPTIONDESCRIPTION =
 		"If set, disassembly pre-instruction (PRE) comments are displayed " +
 			"in the decompiler C output";
-	private final static boolean COMMENTPRE_OPTIONDEFAULT = true;
+	private final static boolean COMMENTPRE_OPTIONDEFAULT = true;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentPREInclude;
 
 	private final static String COMMENTPLATE_OPTIONSTRING = "Display.Display PLATE comments";
 	private final static String COMMENTPLATE_OPTIONDESCRIPTION =
 		"If set, disassembly plate comments are displayed " + "in the decompiler C output";
-	private final static boolean COMMENTPLATE_OPTIONDEFAULT = false;
+	private final static boolean COMMENTPLATE_OPTIONDEFAULT = false;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentPLATEInclude;
 
 	private final static String COMMENTPOST_OPTIONSTRING = "Display.Display POST comments";
 	private final static String COMMENTPOST_OPTIONDESCRIPTION =
 		"If set, disassembly post-instruction (POST) comments are displayed " +
 			"in the decompiler C output";
-	private final static boolean COMMENTPOST_OPTIONDEFAULT = false;
+	private final static boolean COMMENTPOST_OPTIONDEFAULT = false;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentPOSTInclude;
 
 	private final static String COMMENTEOL_OPTIONSTRING = "Display.Display EOL comments";
 	private final static String COMMENTEOL_OPTIONDESCRIPTION =
 		"If set, disassembly end-of-line (EOL) comments are displayed " +
 			"in the decompiler C output";
-	private final static boolean COMMENTEOL_OPTIONDEFAULT = false;
+	private final static boolean COMMENTEOL_OPTIONDEFAULT = false;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentEOLInclude;
 
 	private final static String COMMENTWARN_OPTIONSTRING = "Display.Display Warning comments";
 	private final static String COMMENTWARN_OPTIONDESCRIPTION =
 		"If set, warnings generated by the decompiler embedded in the displayed " +
 			"code as comments";
-	private final static boolean COMMENTWARN_OPTIONDEFAULT = true;
+	private final static boolean COMMENTWARN_OPTIONDEFAULT = true;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentWARNInclude;
 
 	private final static String COMMENTHEAD_OPTIONSTRING = "Display.Display Header comment";
 	private final static String COMMENTHEAD_OPTIONDESCRIPTION =
 		"If set, the entry point plate comment is displayed as " + "a function header comment.";
-	private final static boolean COMMENTHEAD_OPTIONDEFAULT = true;
+	private final static boolean COMMENTHEAD_OPTIONDEFAULT = true;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentHeadInclude;
 
 	public enum NamespaceStrategy {
@@ -262,7 +263,7 @@ public class DecompileOptions {
 	private final static String NAMESPACE_OPTIONSTRING = "Display.Display Namespaces";
 	private final static String NAMESPACE_OPTIONDESCRIPTION =
 		"Choose how/if namespace tokens should be displayed along with symbol names";
-	private final static NamespaceStrategy NAMESPACE_OPTIONDEFAULT = NamespaceStrategy.Minimal;
+	private final static NamespaceStrategy NAMESPACE_OPTIONDEFAULT = NamespaceStrategy.Minimal;	// Must match PrintLanguage::resetDefaultsInternal
 	private NamespaceStrategy namespaceStrategy;
 
 	private final static String INTEGERFORMAT_OPTIONSTRING = "Display.Integer format";
@@ -293,7 +294,7 @@ public class DecompileOptions {
 		}
 	}
 
-	private final static IntegerFormatEnum INTEGERFORMAT_OPTIONDEFAULT = IntegerFormatEnum.BestFit;
+	private final static IntegerFormatEnum INTEGERFORMAT_OPTIONDEFAULT = IntegerFormatEnum.BestFit;		// Must match PrintLanguage::resetDefaultsInternal
 	private IntegerFormatEnum integerFormat;
 
 	private final static Color HIGHLIGHT_MIDDLE_MOUSE_DEF = new Color(255, 255, 0, 128);
@@ -354,10 +355,12 @@ public class DecompileOptions {
 	private final static String LINE_NUMBER_MSG = "Display.Display Line Numbers";
 	private final static String DECOMPILE_TIMEOUT = "Decompiler Timeout (seconds)";
 	private final static String PAYLOAD_LIMIT = "Decompiler Max-Payload (MBytes)";
+	private final static String MAX_INSTRUCTIONS = "Max Instructions per Function";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
 	private boolean displayLineNumbers;
 	private int decompileTimeoutSeconds;
 	private int payloadLimitMBytes;
+	private int maxIntructionsPer;
 	private int cachedResultsSize;
 
 	private DecompilerLanguage displayLanguage; // Output language displayed by the decompiler
@@ -405,6 +408,7 @@ public class DecompileOptions {
 		protoEvalModel = "default";
 		decompileTimeoutSeconds = SUGGESTED_DECOMPILE_TIMEOUT_SECS;
 		payloadLimitMBytes = SUGGESTED_MAX_PAYLOAD_BYTES;
+		maxIntructionsPer = SUGGESTED_MAX_INSTRUCTIONS;
 		cachedResultsSize = SUGGESTED_CACHED_RESULTS_SIZE;
 	}
 
@@ -470,6 +474,7 @@ public class DecompileOptions {
 		displayLineNumbers = opt.getBoolean(LINE_NUMBER_MSG, LINE_NUMBER_DEF);
 		decompileTimeoutSeconds = opt.getInt(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS);
 		payloadLimitMBytes = opt.getInt(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES);
+		maxIntructionsPer = opt.getInt(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS);
 		cachedResultsSize = opt.getInt(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE);
 
 		grabFromToolOptions(ownerPlugin);
@@ -649,6 +654,9 @@ public class DecompileOptions {
 		opt.registerOption(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxPayload"),
 			"The maximum size of the decompiler result payload in MBYtes (Suggested value: 50).");
+		opt.registerOption(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxInstruction"),
+			"The maximum number of instructions decompiled in a single function");
 		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG, HIGHLIGHT_CURRENT_VARIABLE_DEF,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
 			"Current variable highlight");
@@ -706,74 +714,76 @@ public class DecompileOptions {
 		// Must set language early so that the object is in place before other option changes
 		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
 
-		if (ignoreunimpl) {	// Must match Architecture::resetDefaultsInternal
+		if (ignoreunimpl != IGNOREUNIMPL_OPTIONDEFAULT) {
 			appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
 		}
-		if (!inferconstptr) {	// Must match Architecture::resetDefaultsInternal
+		if (inferconstptr != INFERCONSTPTR_OPTIONDEFAULT) {
 			appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
 		}
-		if (!analyzeForLoops) {	// Must match Architecture::resetDefaultsInternal
+		if (analyzeForLoops != ANALYZEFORLOOPS_OPTIONDEFAULT) {
 			appendOption(buf, "analyzeforloops", analyzeForLoops ? "on" : "off", "", "");
 		}
-		if (nullToken) {		// Must match PrintC::resetDefaultsPrintC
+		if (nullToken != NULLTOKEN_OPTIONDEFAULT) {
 			appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
 		}
-		if (inplaceTokens) {	// Must match PrintC::resetDefaultsPrintC
+		if (inplaceTokens != INPLACEOP_OPTIONDEFAULT) {
 			appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
 		}
-		if (aliasBlock != AliasBlockEnum.Array) {	// Must match Architecture::resetDefaultsInternal
+		if (aliasBlock != ALIASBLOCK_OPTIONDEFAULT) {
 			appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");
 		}
-		if (!conventionPrint) {	// Must match PrintC::resetDefaultsPrintC
+		if (conventionPrint != CONVENTION_OPTIONDEFAULT) {
 			appendOption(buf, "conventionprinting", conventionPrint ? "on" : "off", "", "");
 		}
-		if (noCastPrint) {		// Must match PrintC::resetDefaultsPrintC
+		if (noCastPrint != NOCAST_OPTIONDEFAULT) {
 			appendOption(buf, "nocastprinting", noCastPrint ? "on" : "off", "", "");
 		}
-		if (maxwidth != 100) {	// Must match EmitPrettyPrint::resetDefaultsPrettyPrint
+		if (maxwidth != MAXWIDTH_OPTIONDEFAULT) {
 			appendOption(buf, "maxlinewidth", Integer.toString(maxwidth), "", "");
 		}
-		if (indentwidth != 2) {	// Must match EmitXml::resetDefaultsInternal
+		if (indentwidth != INDENTWIDTH_OPTIONDEFAULT) {
 			appendOption(buf, "indentincrement", Integer.toString(indentwidth), "", "");
 		}
-		if (commentindent != 20) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentindent != COMMENTINDENT_OPTIONDEFAULT) {
 			appendOption(buf, "commentindent", Integer.toString(commentindent), "", "");
 		}
-		if (commentStyle != CommentStyleEnum.CStyle) {	// Must match PrintC::resetDefaultsPrintC
+		if (commentStyle != COMMENTSTYLE_OPTIONDEFAULT) {
 			String curstyle = CommentStyleEnum.CPPStyle.equals(commentStyle) ? "cplusplus" : "c";
 			appendOption(buf, "commentstyle", curstyle, "", "");
 		}
-		if (commentPLATEInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentPLATEInclude != COMMENTPLATE_OPTIONDEFAULT) {
 			appendOption(buf, "commentinstruction", "header", commentPLATEInclude ? "on" : "off",
 				"");
 		}
-		if (!commentPREInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentPREInclude != COMMENTPRE_OPTIONDEFAULT) {
 			appendOption(buf, "commentinstruction", "user2", commentPREInclude ? "on" : "off", "");
 		}
-		if (commentEOLInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentEOLInclude != COMMENTEOL_OPTIONDEFAULT) {
 			appendOption(buf, "commentinstruction", "user1", commentEOLInclude ? "on" : "off", "");
 		}
-		if (commentPOSTInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentPOSTInclude != COMMENTPOST_OPTIONDEFAULT) {
 			appendOption(buf, "commentinstruction", "user3", commentPOSTInclude ? "on" : "off", "");
 		}
-		if (!commentWARNInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
 			appendOption(buf, "commentinstruction", "warning", commentWARNInclude ? "on" : "off",
 				"");
 		}
-		if (!commentHeadInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentHeadInclude != COMMENTHEAD_OPTIONDEFAULT) {
 			appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
 		}
-		if (!commentWARNInclude) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
 			appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off",
 				"");
 		}
-		if (namespaceStrategy != NamespaceStrategy.Minimal) {	// Must match PrintLanguage::resetDefaultsInternal
+		if (namespaceStrategy != NAMESPACE_OPTIONDEFAULT) {
 			appendOption(buf, "namespacestrategy", namespaceStrategy.getOptionString(), "", "");
 		}
-		if (integerFormat != IntegerFormatEnum.BestFit) {		// Must match PrintLanguage::resetDefaultsInternal
+		if (integerFormat != INTEGERFORMAT_OPTIONDEFAULT) {
 			appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
 		}
-
+		if (maxIntructionsPer != SUGGESTED_MAX_INSTRUCTIONS) {
+			appendOption(buf, "maxinstruction", Integer.toString(maxIntructionsPer), "", "");
+		}
 		appendOption(buf, "protoeval", protoEvalModel, "", "");
 		buf.append("</optionslist>\n");
 		return buf.toString();
@@ -953,6 +963,14 @@ public class DecompileOptions {
 
 	public void setMaxPayloadMBytes(int mbytes) {
 		payloadLimitMBytes = mbytes;
+	}
+
+	public int getMaxInstructions() {
+		return maxIntructionsPer;
+	}
+
+	public void setMaxInstructions(int num) {
+		maxIntructionsPer = num;
 	}
 
 	public CommentStyleEnum getCommentStyle() {
