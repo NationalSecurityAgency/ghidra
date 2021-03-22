@@ -16,6 +16,7 @@
 package ghidra.app.util.exporter;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.List;
 
 import ghidra.app.util.DomainObjectService;
@@ -36,7 +37,7 @@ import utilities.util.FileUtilities;
 /**
  * An {@link Exporter} that can export programs imported with a particular {@link Loader}
  */
-abstract class AbstractLoaderExporter extends Exporter {
+public abstract class AbstractLoaderExporter extends Exporter {
 
 	/**
 	 * Creates a new {@link AbstractLoaderExporter}
@@ -75,8 +76,9 @@ abstract class AbstractLoaderExporter extends Exporter {
 			return false;
 		}
 
-		// Write source program's file bytes to the file 
-		try (OutputStream out = new FileOutputStream(file, false)) {
+		// Write source program's file bytes to a temp file
+		File tempFile = File.createTempFile("ghidra_export_", null);
+		try (OutputStream out = new FileOutputStream(tempFile, false)) {
 			FileBytes[] fileBytes = memory.getAllFileBytes()
 					.stream()
 					.filter(fb -> program.getExecutablePath().endsWith(fb.getFilename()))
@@ -86,9 +88,9 @@ abstract class AbstractLoaderExporter extends Exporter {
 			}
 		}
 		
-		// Undo relocations in the file
+		// Undo relocations in the temp file
 		String error = null;
-		try (RandomAccessFile fout = new RandomAccessFile(file, "rw")) {
+		try (RandomAccessFile fout = new RandomAccessFile(tempFile, "rw")) {
 			Iterable<Relocation> relocs = () -> program.getRelocationTable().getRelocations();
 			for (Relocation reloc : relocs) {
 				AddressSourceInfo info = memory.getAddressSourceInfo(reloc.getAddress());
@@ -109,15 +111,19 @@ abstract class AbstractLoaderExporter extends Exporter {
 			}
 		}
 		
-		// If errors occurred, log them and clean up the corrupted file
+		// If errors occurred, log them and delete the malformed temp file
 		if (error != null) {
 			log.appendMsg(error);
-			if (!file.delete()) {
-				log.appendMsg("Failed to delete corrupted file: " + file);
+			if (!tempFile.delete()) {
+				log.appendMsg("Failed to delete malformed file: " + tempFile);
 			}
 			return false;
 		}
-
+		
+		// Move temp file to desired output file
+		Path from = Paths.get(tempFile.toURI());
+		Path to = Paths.get(file.toURI());
+		Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
 		return true;
 	}
 
@@ -137,7 +143,7 @@ abstract class AbstractLoaderExporter extends Exporter {
 	private static class FileBytesInputStream extends InputStream {
 
 		private final FileBytes fileBytes;
-		private long size;
+		private final long size;
 		private long pos;
 
 		/**
