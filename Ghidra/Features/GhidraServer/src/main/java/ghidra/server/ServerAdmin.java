@@ -417,18 +417,31 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 	}
 
+	/**
+	 * Parse contents of specified configFilePath as server.conf to determine
+	 * repositories root directory.  If configFilePath corresponds to a directory,
+	 * that directory will be treated as the repositories root directory.
+	 * @param configFilePath path to server.conf or repositories root directory
+	 * @return repositories root directory
+	 */
 	private File getServerDirFromConfig(String configFilePath) {
-		System.out.println("Using config file: " + configFilePath);
 
 		if (configFilePath == null) {
 			return null;
 		}
 
 		File configFile = new File(configFilePath);
-
 		if (!configFile.exists()) {
 			System.out.println("Config file not found: " + configFile.getAbsolutePath());
+			return null;
 		}
+
+		if (configFile.isDirectory()) {
+			// If specified path is a directory treat as the server root
+			return configFile;
+		}
+
+		System.out.println("Using config file: " + configFilePath);
 
 		Properties config = new Properties();
 		InputStream in = null;
