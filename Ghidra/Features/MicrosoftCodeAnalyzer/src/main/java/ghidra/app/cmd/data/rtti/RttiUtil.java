@@ -61,11 +61,11 @@ public class RttiUtil {
 	 * @param rttiAddress Address of the RTTI datatype 
 	 * @param typeDescriptorModel the model for the type descriptor structure
 	 * @param rttiSuffix suffix name indicating which type of RTTI structure
-	 * @return the symbol or null.
+	 * @return true if a symbol was created, false otherwise
 	 */
-	static Symbol createSymbolFromDemangledType(Program program, Address rttiAddress,
+	static boolean createSymbolFromDemangledType(Program program, Address rttiAddress,
 			TypeDescriptorModel typeDescriptorModel, String rttiSuffix) {
-
+		
 		rttiSuffix = SymbolUtilities.replaceInvalidChars(rttiSuffix, true);
 
 		// Get or create the namespace for this RTTI's type descriptor.
@@ -94,25 +94,32 @@ public class RttiUtil {
 		// See if the symbol already exists for the RTTI data.
 		Symbol matchingSymbol = symbolTable.getSymbol(rttiSuffix, rttiAddress, classNamespace);
 		if (matchingSymbol != null) {
-			return matchingSymbol;
+			return false;
 		}
 		// Don't create it if a similar symbol already exists at the address of the data.
 		Symbol[] symbols = symbolTable.getSymbols(rttiAddress);
 		for (Symbol symbol : symbols) {
 			String name = symbol.getName();
 			if (name.contains(rttiSuffix)) {
-				return symbol; // Similar symbol already exists.
+				return false; // Similar symbol already exists.
+			}
+			// assume any imported symbol is better than what we would put down
+			// if mangled, it will get demangled later
+			SourceType source = symbol.getSource();
+			if (source == SourceType.IMPORTED) {
+				return false;
 			}
 		}
 		try {
 			// Didn't find the symbol, so create it.
-			return symbolTable.createLabel(rttiAddress, rttiSuffix, classNamespace,
+			symbolTable.createLabel(rttiAddress, rttiSuffix, classNamespace,
 				SourceType.IMPORTED);
+			return true;
 		}
 		catch (InvalidInputException e) {
 			Msg.error(RttiUtil.class,
 				"Unable to create label for " + rttiSuffix + " at " + rttiAddress + ".", e);
-			return null;
+			return false;
 		}
 	}
 

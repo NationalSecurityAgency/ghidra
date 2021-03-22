@@ -302,15 +302,12 @@ public class DisassemblerPlugin extends Plugin {
 	}
 
 	public void setDefaultContext(ListingActionContext context) {
-
 		Program contextProgram = context.getProgram();
 		Register baseContextReg = contextProgram.getLanguage().getContextBaseRegister();
 		if (baseContextReg != null && baseContextReg.hasChildren()) {
-			return;
+			tool.showDialog(new ProcessorStateDialog(contextProgram.getProgramContext()),
+				context.getComponentProvider());
 		}
-
-		tool.showDialog(new ProcessorStateDialog(contextProgram.getProgramContext()),
-			context.getComponentProvider());
 	}
 
 	public boolean hasContextRegisters(Program currentProgram) {
