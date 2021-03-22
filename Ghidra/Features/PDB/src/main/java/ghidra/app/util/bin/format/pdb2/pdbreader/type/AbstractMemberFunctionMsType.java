@@ -91,6 +91,14 @@ public abstract class AbstractMemberFunctionMsType extends AbstractMsType {
 	}
 
 	/**
+	 * Returns if known to be a constructor.
+	 * @return true if constructor.
+	 */
+	public boolean isConstructor() {
+		return functionAttributes.isConstructor();
+	}
+
+	/**
 	 * Returns the number of parameters to the function.
 	 * @return The number of parameters.
 	 */
