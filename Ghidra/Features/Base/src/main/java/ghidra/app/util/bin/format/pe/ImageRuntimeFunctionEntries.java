@@ -155,8 +155,8 @@ public class ImageRuntimeFunctionEntries {
 		unwindInfo.version = (byte) (splitByte & UNWIND_INFO_VERSION_BITMASK);
 		unwindInfo.flags = (byte) (splitByte >> UNWIND_INFO_FLAGS_SHIFT);
 
-		unwindInfo.sizeOfProlog = reader.readNextByte();
-		unwindInfo.countOfUnwindCodes = reader.readNextByte();
+		unwindInfo.sizeOfProlog = reader.readNextUnsignedByte();
+		unwindInfo.countOfUnwindCodes = reader.readNextUnsignedByte();
 
 		splitByte = reader.readNextByte();
 		unwindInfo.frameRegister = (byte) (splitByte & UNWIND_INFO_FRAME_REGISTER_MASK);
@@ -307,8 +307,8 @@ public class ImageRuntimeFunctionEntries {
 
 		byte version;
 		byte flags;
-		byte sizeOfProlog;
-		byte countOfUnwindCodes;
+		int sizeOfProlog;
+		int countOfUnwindCodes;
 		byte frameRegister;
 		byte frameOffset;
 		UNWIND_CODE[] unwindCodes;
