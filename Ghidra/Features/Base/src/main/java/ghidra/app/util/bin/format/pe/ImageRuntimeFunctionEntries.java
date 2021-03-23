@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,8 +155,8 @@ public class ImageRuntimeFunctionEntries {
 		unwindInfo.version = (byte) (splitByte & UNWIND_INFO_VERSION_BITMASK);
 		unwindInfo.flags = (byte) (splitByte >> UNWIND_INFO_FLAGS_SHIFT);
 
-		unwindInfo.sizeOfProlog = reader.readNextByte();
-		unwindInfo.countOfUnwindCodes = reader.readNextByte();
+		unwindInfo.sizeOfProlog = reader.readNextUnsignedByte();
+		unwindInfo.countOfUnwindCodes = reader.readNextUnsignedByte();
 
 		splitByte = reader.readNextByte();
 		unwindInfo.frameRegister = (byte) (splitByte & UNWIND_INFO_FRAME_REGISTER_MASK);
@@ -307,8 +307,8 @@ public class ImageRuntimeFunctionEntries {
 
 		byte version;
 		byte flags;
-		byte sizeOfProlog;
-		byte countOfUnwindCodes;
+		int sizeOfProlog;
+		int countOfUnwindCodes;
 		byte frameRegister;
 		byte frameOffset;
 		UNWIND_CODE[] unwindCodes;
