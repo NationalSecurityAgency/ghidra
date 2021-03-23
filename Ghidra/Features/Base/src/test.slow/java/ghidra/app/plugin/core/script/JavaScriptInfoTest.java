@@ -20,6 +20,8 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
+import javax.swing.KeyStroke;
+
 import org.junit.Test;
 
 import generic.jar.ResourceFile;
@@ -29,12 +31,65 @@ import ghidra.app.script.ScriptInfo;
 public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 
 	@Test
+	public void testDetailedJavaScript() {
+		String descLine1 = "This script exists to check that the info on";
+		String descLine2 = "a script that has extensive documentation is";
+		String descLine3 = "properly parsed and represented.";
+		String author = "Jay Arree XI.";
+		String categoryTop = "Test";
+		String categoryBottom = "ScriptInfo";
+		String keybinding = "ctrl shift COMMA";
+		String menupath = "File.Run.Detailed Script";
+		String importPackage = "detailStuff";
+		ResourceFile scriptFile = null;
+
+		try {
+			//@formatter:off
+			scriptFile = createTempScriptFileWithLines(
+				"/*",
+				" * This is a test block comment. It will be ignored.",
+				" * @category NotTheRealCategory",
+				" */",
+				"//" + descLine1,
+				"//" + descLine2,
+				"//" + descLine3,
+				"//@author " + author,
+				"//@category " + categoryTop + "." + categoryBottom,
+				"//@keybinding " + keybinding,
+				"//@menupath " + menupath,
+				"//@importpackage " + importPackage,
+				"class DetailedScript {",
+				"  // for a blank class, it sure is well documented!",
+				"}");
+			//@formatter:on
+		} catch (IOException e) {
+			fail("couldn't create a test script: " + e.getMessage());
+		}
+
+		ScriptInfo info = GhidraScriptUtil.newScriptInfo(scriptFile);
+
+		String expectedDescription = descLine1 + " \n" + descLine2 + " \n" + descLine3 + " \n";
+		assertEquals(expectedDescription, info.getDescription());
+
+		assertEquals(author, info.getAuthor());
+		assertEquals(KeyStroke.getKeyStroke(keybinding), info.getKeyBinding());
+		assertEquals(menupath.replace(".", "->"), info.getMenuPathAsString());
+		assertEquals(importPackage, info.getImportPackage());
+
+		String[] actualCategory = info.getCategory();
+		assertEquals(2, actualCategory.length);
+		assertEquals(categoryTop, actualCategory[0]);
+		assertEquals(categoryBottom, actualCategory[1]);
+	}
+
+	@Test
 	public void testJavaScriptWithBlockComment() {
 		String description = "Script with a block comment at the top.";
 		String category = "Test";
 		ResourceFile scriptFile = null;
 
 		try {
+			//@formatter:off
 			scriptFile = createTempScriptFileWithLines(
 				"/*",
 				" * This is a test block comment. It will be ignored.",
@@ -45,7 +100,8 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 				"class BlockCommentScript {",
 				"  // just a blank class, nothing to see here",
 				"}");
-		} catch(IOException e) {
+			//@formatter:on
+		} catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -64,13 +120,15 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 		ResourceFile scriptFile = null;
 
 		try {
+			//@formatter:off
 			scriptFile = createTempScriptFileWithLines(
 				"//" + description,
 				"//@category " + category,
 				"class NoBlockCommentScript {",
 				"  // just a blank class, nothing to see here",
 				"}");
-		} catch(IOException e) {
+			//@formatter:on
+		} catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -89,14 +147,16 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 		ResourceFile scriptFile = null;
 
 		try {
+			//@formatter:off
 			scriptFile = createTempScriptFileWithLines(
 				"/* This is a test block comment. It will be ignored. */",
 				"//" + description,
 				"//@category " + category,
-				"class BlockCommentScript {",
+				"class SingleLineBlockCommentScript {",
 				"  // just a blank class, nothing to see here",
 				"}");
-		} catch(IOException e) {
+			//@formatter:on
+		} catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 

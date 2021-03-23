@@ -196,11 +196,11 @@ public class ScriptInfo {
 				}
 
 				Pattern blockStart = provider.getBlockCommentStart();
+				Pattern blockEnd = provider.getBlockCommentEnd();
 
-				if (blockStart != null) {
+				if (blockStart != null && blockEnd != null) {
 					Matcher startMatcher = blockStart.matcher(line);
 					if (startMatcher.find()) {
-						Pattern blockEnd = provider.getBlockCommentEnd();
 						int last_offset = startMatcher.end();
 						while (line != null && !blockEnd.matcher(line).find(last_offset)) {
 							line = reader.readLine();

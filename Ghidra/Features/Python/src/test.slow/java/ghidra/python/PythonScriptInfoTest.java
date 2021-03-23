@@ -24,6 +24,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import javax.swing.KeyStroke;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,12 +53,63 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testDetailedPythonScript() {
+		String descLine1 = "This script exists to check that the info on";
+		String descLine2 = "a script that has extensive documentation is";
+		String descLine3 = "properly parsed and represented.";
+		String author = "Admiral Pie Thawn";
+		String categoryTop = "Test";
+		String categoryBottom = "ScriptInfo";
+		String keybinding = "ctrl shift COMMA";
+		String menupath = "File.Run.Detailed Script";
+		String importPackage = "detailStuff";
+		ResourceFile scriptFile = null;
+
+		try {
+			//@formatter:off
+			scriptFile = createTempPyScriptFileWithLines(
+				"'''",
+				"This is a test block comment. It will be ignored.",
+				"@category NotTheRealCategory",
+				"'''",
+				"#" + descLine1,
+				"#" + descLine2,
+				"#" + descLine3,
+				"#@author " + author,
+				"#@category " + categoryTop + "." + categoryBottom,
+				"#@keybinding " + keybinding,
+				"#@menupath " + menupath,
+				"#@importpackage " + importPackage,
+				"print('for a blank class, it sure is well documented!')");
+			//@formatter:on
+		} catch (IOException e) {
+			fail("couldn't create a test script: " + e.getMessage());
+		}
+
+		ScriptInfo info = GhidraScriptUtil.newScriptInfo(scriptFile);
+
+		String expectedDescription = descLine1 + " \n" + descLine2 + " \n" + descLine3 + " \n";
+		assertEquals(expectedDescription, info.getDescription());
+
+		assertEquals(author, info.getAuthor());
+		assertEquals(KeyStroke.getKeyStroke(keybinding), info.getKeyBinding());
+		assertEquals(menupath.replace(".", "->"), info.getMenuPathAsString());
+		assertEquals(importPackage, info.getImportPackage());
+
+		String[] actualCategory = info.getCategory();
+		assertEquals(2, actualCategory.length);
+		assertEquals(categoryTop, actualCategory[0]);
+		assertEquals(categoryBottom, actualCategory[1]);
+	}
+
+	@Test
 	public void testPythonScriptWithBlockComment() {
 		String description = "Script with a block comment at the top.";
 		String category = "Test";
 		ResourceFile scriptFile = null;
 
 		try {
+			//@formatter:off
 			scriptFile = createTempPyScriptFileWithLines(
 				"'''",
 				"This is a test block comment. It will be ignored.",
@@ -65,7 +118,8 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 				"#" + description,
 				"#@category " + category,
 				"print 'hello!'");
-		} catch(IOException e) {
+			//@formatter:on
+		} catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -84,11 +138,13 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 		ResourceFile scriptFile = null;
 
 		try {
+			//@formatter:off
 			scriptFile = createTempPyScriptFileWithLines(
 				"#" + description,
 				"#@category " + category,
 				"print 'hello!'");
-		} catch(IOException e) {
+			//@formatter:on
+		} catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -107,12 +163,14 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 		ResourceFile scriptFile = null;
 
 		try {
+			//@formatter:off
 			scriptFile = createTempPyScriptFileWithLines(
 				"'''This is a test block comment. It will be ignored.'''",
 				"#" + description,
 				"#@category " + category,
 				"print 'hello!'");
-		} catch(IOException e) {
+			//@formatter:on
+		} catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
