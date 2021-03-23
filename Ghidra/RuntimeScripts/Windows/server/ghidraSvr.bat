@@ -11,7 +11,7 @@ rem  runtime which has been configured into the system PATH ahead of other Java 
 rem  it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME
 rem  below:
 
-rem set JAVA_HOME=
+rem set "JAVA_HOME="
 
 setlocal enabledelayedexpansion
 
@@ -50,7 +50,7 @@ if "%IS_ADMIN%"=="NO" (
 
 rem Find the script directory
 rem %~dsp0 is location of current script under NT
-set _REALPATH=%~dp0
+set "_REALPATH=%~dp0"
 
 set APP_NAME=ghidraSvr
 set APP_LONG_NAME=Ghidra Server
@@ -64,26 +64,26 @@ if exist "%_REALPATH%..\Ghidra\" goto normal
 rem NOTE: If adjusting JAVA command assignment - do not attempt to add parameters (e.g., -d64, -version:1.7, etc.)
 
 rem Development Environment
-set GHIDRA_HOME=%_REALPATH%..\..\..\..
-set WRAPPER_CONF=%_REALPATH%..\..\Common\server\server.conf
-set DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data
-set CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\build\dev-meta\classpath.frag
-set LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main
+set "GHIDRA_HOME=%_REALPATH%..\..\..\.."
+set "WRAPPER_CONF=%_REALPATH%..\..\Common\server\server.conf"
+set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data"
+set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\build\dev-meta\classpath.frag"
+set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main"
 
 goto lab1
 
 :normal
-set GHIDRA_HOME=%_REALPATH%..
-set WRAPPER_CONF=%_REALPATH%server.conf
-set DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\data
-set CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\data\classpath.frag
-set LS_CPATH=%GHIDRA_HOME%\support\LaunchSupport.jar
+set "GHIDRA_HOME=%_REALPATH%.."
+set "WRAPPER_CONF=%_REALPATH%server.conf"
+set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\data"
+set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\data\classpath.frag"
+set "LS_CPATH=%GHIDRA_HOME%\support\LaunchSupport.jar"
 
 :lab1
 
 rem set WRAPPER_HOME to unpacked yajsw location (crazy FOR syntax to set variable from command output)
 for /F "usebackq delims=" %%p in (`dir "%DATA_DIR%" /ad /b ^| findstr "^%WRAPPER_NAME_PREFIX%"`) do set WRAPPER_DIRNAME=%%p
-set WRAPPER_HOME=%DATA_DIR%\%WRAPPER_DIRNAME%
+set "WRAPPER_HOME=%DATA_DIR%\%WRAPPER_DIRNAME%"
 
 if not exist "%WRAPPER_HOME%\" (
 	echo.
@@ -104,8 +104,7 @@ set ERROR=ERROR: JAVA_HOME is not set and no 'java' command could be found in yo
 goto reportError
 
 :findJavaFromJavaHome
-set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA=%JAVA_HOME%\bin\java.exe
+set "JAVA=%JAVA_HOME%\bin\java.exe"
 
 if exist "%JAVA%" goto lab2
 set ERROR=ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
@@ -122,17 +121,9 @@ if "%JAVA_HOME%" == "" (
 )
 
 rem reestablish JAVA path based upon final JAVA_HOME
-set JAVA=%JAVA_HOME%\bin\java.exe
+set "JAVA=%JAVA_HOME%\bin\java.exe"
 
-set OS_NAME=win32
-"%JAVA%" -version 2>&1 | findstr /I " 64-Bit " >NUL
-if errorlevel 0 (
-	set OS_NAME=win64
-)
-
-set OS_DIR=%GHIDRA_HOME%\%MODULE_DIR%\os\%OS_NAME%
-
-:: set DEBUG=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:18888
+:: set DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:18888
 
 if "%OPTION%"=="console" (
 	start "%APP_LONG_NAME%" "%JAVA%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -c "%WRAPPER_CONF%"

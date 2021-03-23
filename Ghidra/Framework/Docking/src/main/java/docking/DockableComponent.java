@@ -151,6 +151,10 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	}
 
 	private void showContextMenu(MouseEvent e) {
+		if (e.isConsumed()) {
+			return;
+		}
+
 		Component component = e.getComponent();
 		if (component == null) {
 			return; // not sure this can happen
@@ -190,7 +194,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	/**
 	 * Returns the component provider attached to this dockable component; null if this object
 	 * has been disposed
-	 * 
+	 *
 	 * @return the provider
 	 */
 	public ComponentProvider getComponentProvider() {
@@ -255,7 +259,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		public synchronized void dragEnter(DropTargetDragEvent dtde) {
 			super.dragEnter(dtde);
 
-			// On Mac, sometimes this component is not showing, 
+			// On Mac, sometimes this component is not showing,
 			// which causes exception in the translate method.
 			if (!isShowing()) {
 				dtde.rejectDrag();
@@ -278,7 +282,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		public synchronized void dragOver(DropTargetDragEvent dtde) {
 			super.dragOver(dtde);
 
-			// On Mac, sometimes this component is not showing, 
+			// On Mac, sometimes this component is not showing,
 			// which causes exception in the translate method.
 			if (!isShowing()) {
 				dtde.rejectDrag();
@@ -457,7 +461,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 
 	private void componentSelected(Component component) {
 		if (!component.isFocusable()) {
-			// In this case, Java will not change focus for us, so we need to tell the DWM to 
+			// In this case, Java will not change focus for us, so we need to tell the DWM to
 			// change the active DockableComponent
 			requestFocus();
 		}

@@ -11,16 +11,16 @@
 setlocal
 
 REM Get parent of current folder
-set SCRIPT_DIR=%~dp0
+set "SCRIPT_DIR=%~dp0"
 
-set GHIDRA_DIR=%SCRIPT_DIR%..\Ghidra
+set "GHIDRA_DIR=%SCRIPT_DIR%..\Ghidra"
 set OS_DIR=os
 
 REM Production Environment
 if exist "%GHIDRA_DIR%" goto continue
 
 REM Development Environment
-set GHIDRA_DIR=%SCRIPT_DIR%..\..\..
+set "GHIDRA_DIR=%SCRIPT_DIR%..\..\.."
 set OS_DIR=build\os
 
 :continue
@@ -35,7 +35,7 @@ if exist "%PROGRAMFILES(X86)%" (
 	set OS_TYPE=win32
 )
 
-set PDB_EXE=%GHIDRA_DIR%\Features\PDB\%OS_DIR%\%OS_TYPE%\pdb.exe
+set "PDB_EXE=%GHIDRA_DIR%\Features\PDB\%OS_DIR%\%OS_TYPE%\pdb.exe"
 
 if not exist "%PDB_EXE%" (
 	echo "%PDB_EXE% not found"

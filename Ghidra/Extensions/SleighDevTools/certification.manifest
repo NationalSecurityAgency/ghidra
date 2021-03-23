@@ -1,14 +1,12 @@
 ##VERSION: 2.0
 .project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/LanguageMap.txt||GHIDRA||||END|
 extension.properties||GHIDRA||||END|
 pcodetest/.gitignore||GHIDRA||||END|
 pcodetest/README.txt||GHIDRA||||END|
 pcodetest/build||GHIDRA||||END|
-pcodetest/build.py||GHIDRA||||END|
 pcodetest/c_src/BIOPS.test||GHIDRA||||END|
 pcodetest/c_src/BIOPS2.test||GHIDRA||||END|
 pcodetest/c_src/BIOPS4.test||GHIDRA||||END|
@@ -28,7 +26,3 @@ pcodetest/c_src/PointerManipulation.test||GHIDRA||||END|
 pcodetest/c_src/StructUnionManipulation.test||GHIDRA||||END|
 pcodetest/c_src/misc.test||GHIDRA||||END|
 pcodetest/c_src/msp430x.ld||GHIDRA||||END|
-pcodetest/defaults.py||GHIDRA||||END|
-pcodetest/pcode_defs.py||GHIDRA||||END|
-pcodetest/pcodetest.py||GHIDRA||||END|
-pcodetest/tpp.py||GHIDRA||||END|

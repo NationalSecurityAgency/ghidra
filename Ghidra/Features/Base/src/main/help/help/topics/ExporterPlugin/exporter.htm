@@ -284,6 +284,20 @@
             </LI>
           </UL>
         </BLOCKQUOTE>
+        
+        <H3><A name="elf"></A>ELF</H3>
+
+        <BLOCKQUOTE>
+          <P>Writes an ELF program that was imported with the ELF loader back to its original file 
+          layout. Any file-backed bytes that were modified by the user in the program database will 
+          be reflected in the new file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          Map is not supported. </I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          restored to their original values, even if the user modifies them.</I></P>
+        </BLOCKQUOTE>
 
         <H3><A name="gzf"></A>Ghidra Zip File (.gzf)</H3>
 
@@ -320,7 +334,7 @@
 
           <UL>
             <LI><B>Address Space</B> - Specifies which address space to export as Intel Hex format
-            only supports one address space. This option will be intialized to the "default"
+            only supports one address space. This option will be initialized to the "default"
             address space.</LI>
             <LI><B>Record Size</B> - Specifies the size (in bytes) of each record in the
             output file. The default 16.</LI>
@@ -329,6 +343,20 @@
             18 bytes selected, you will see only one line of 16 bytes in the output; the remaining
             2 bytes will be dropped.</LI>
           </UL>
+        </BLOCKQUOTE>
+        
+        <H3><A name="pe"></A>PE</H3>
+
+        <BLOCKQUOTE>
+          <P>Writes a PE program that was imported with the PE loader back to its original file 
+          layout. Any file-backed bytes that were modified by the user in the program database will 
+          be reflected in the new file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          Map is not supported. </I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="xml"/><A name="Options_XML"/>XML</H3>

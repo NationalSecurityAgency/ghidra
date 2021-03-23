@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * The Metadata stream is giant and complicated.  It is made up of {@link CliAbstractTable}s.
- * 
+ *
  * @see CliTypeTable
  */
 public class CliStreamMetadata extends CliAbstractStream {
@@ -55,7 +55,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the name of this stream.
-	 * 
+	 *
 	 * @return The name of this stream.
 	 */
 	public static String getName() {
@@ -64,13 +64,13 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Creates a new Metadata stream.
-	 * 
+	 *
 	 * @param header The stream header associated with this stream.
 	 * @param guidStream The GUID stream.
 	 * @param userStringsStream The user strings stream.
 	 * @param stringsStream The strings stream.
 	 * @param blobStream The blob stream.
-	 * @param fileOffset The file offset where this stream starts. 
+	 * @param fileOffset The file offset where this stream starts.
 	 * @param rva The relative virtual address where this stream starts.
 	 * @param reader A reader that is set to the start of the stream.
 	 * @throws IOException if there is a problem reading the stream.
@@ -133,7 +133,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the GUID stream.
-	 * 
+	 *
 	 * @return The GUID stream.  Could be null if one doesn't exist.
 	 */
 	public CliStreamGuid getGuidStream() {
@@ -142,7 +142,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the user strings stream.
-	 * 
+	 *
 	 * @return The user strings stream.  Could be null if one doesn't exist.
 	 */
 	public CliStreamUserStrings getUserStringsStream() {
@@ -151,7 +151,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the strings stream.
-	 * 
+	 *
 	 * @return The strings stream.  Could be null if one doesn't exist.
 	 */
 	public CliStreamStrings getStringsStream() {
@@ -160,7 +160,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the blob stream.
-	 * 
+	 *
 	 * @return The blob stream.  Could be null if one doesn't exist.
 	 */
 	public CliStreamBlob getBlobStream() {
@@ -170,7 +170,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	/**
 	 * Creates a new {@link CliAbstractTable} from the table at the current reader index
 	 * with the given table type.
-	 * 
+	 *
 	 * @param tableType The type of table to create.
 	 * @return A new table with the given type.  Could be null if we don't support the table type.
 	 * @throws IOException if there was an issue reading the new table.
@@ -300,7 +300,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the major version.
-	 * 
+	 *
 	 * @return The major version.
 	 */
 	public short getMajorVersion() {
@@ -309,7 +309,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the minor version.
-	 * 
+	 *
 	 * @return The minor version.
 	 */
 	public short getMinorVersion() {
@@ -318,7 +318,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the sorted field.
-	 * 
+	 *
 	 * @return The sorted field.
 	 */
 	public long getSorted() {
@@ -327,7 +327,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the valid field.
-	 * 
+	 *
 	 * @return The valid field.
 	 */
 	public long getValid() {
@@ -336,7 +336,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the table with the provided table type from the metadata stream.
-	 * 
+	 *
 	 * @param tableType The type of table to get.
 	 * @return The table with the provided table type.  Could be null if it doesn't exist.
 	 */
@@ -360,7 +360,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the table with the provided table type id from the metadata stream.
-	 * 
+	 *
 	 * @param tableId The id of the table type to get.
 	 * @return The table with the provided table id.  Could be null if it doesn't exist.
 	 */
@@ -370,9 +370,9 @@ public class CliStreamMetadata extends CliAbstractStream {
 
 	/**
 	 * Gets the number of rows in the table with the given table type.
-	 * 
+	 *
 	 * @param tableType The type of table to get the number of rows of.
-	 * @return The number of rows in the table with the given table type.  Could be 0 if 
+	 * @return The number of rows in the table with the given table type.  Could be 0 if
 	 *   the table of the given type was not found.
 	 */
 	public int getNumberRowsForTable(CliTypeTable tableType) {
@@ -383,7 +383,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	/**
 	 * Gets the data type of the index into the string stream.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
-	 * 
+	 *
 	 * @return The data type of the index into the string stream.
 	 */
 	public DataType getStringIndexDataType() {
@@ -393,7 +393,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	/**
 	 * Gets the data type of the index into the GUID stream.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
-	 * 
+	 *
 	 * @return The data type of the index into the string stream.
 	 */
 	public DataType getGuidIndexDataType() {
@@ -403,7 +403,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	/**
 	 * Gets the data type of the index into the Blob stream.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
-	 * 
+	 *
 	 * @return The data type of the index into the string stream.
 	 */
 	public DataType getBlobIndexDataType() {
@@ -413,7 +413,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 	/**
 	 * Gets the data type of the index into a metadata table.  Will be either
 	 * {@link DWordDataType} or {@link WordDataType}.
-	 * 
+	 *
 	 * @return The data type of the index into the string stream.
 	 */
 	public DataType getTableIndexDataType(CliTypeTable table) {
@@ -435,7 +435,7 @@ public class CliStreamMetadata extends CliAbstractStream {
 				table.markup(program, isBinary, monitor, log, ntHeader);
 			}
 			catch (Exception e) {
-				Msg.error(this, "Failed to markup " + table + ": " + e.toString());
+				Msg.error(this, "Failed to markup " + table + ": " + e.getMessage());
 			}
 		}
 	}

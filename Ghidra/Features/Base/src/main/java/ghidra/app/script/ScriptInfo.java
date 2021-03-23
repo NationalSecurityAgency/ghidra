@@ -184,6 +184,16 @@ public class ScriptInfo {
 
 		init();
 
+		String commentPrefix = provider.getCommentCharacter();
+
+		// Note that skipping certification header presumes that the header
+		// is intact with an appropriate start and end
+		String certifyHeaderStart = provider.getCertifyHeaderStart();
+		String certifyHeaderEnd = provider.getCertifyHeaderEnd();
+		String certifyHeaderBodyPrefix = provider.getCertificationBodyPrefix();
+		boolean allowCertifyHeader = (certifyHeaderStart != null);
+		boolean skipCertifyHeader = false;
+
 		BufferedReader reader = null;
 		try {
 			StringBuffer buffer = new StringBuffer();
@@ -210,9 +220,34 @@ public class ScriptInfo {
 					}
 				}
 
-				String commentPrefix = provider.getCommentCharacter();
+				if (allowCertifyHeader) {
+					// Skip past certification header if found
+					if (skipCertifyHeader) {
+						String trimLine = line.trim();
+						if (trimLine.startsWith(certifyHeaderEnd)) {
+							allowCertifyHeader = false;
+							skipCertifyHeader = false;
+							continue;
+						}
+						if (certifyHeaderBodyPrefix == null ||
+							trimLine.startsWith(certifyHeaderBodyPrefix)) {
+							continue; // skip certification header body
+						}
+						// broken certification header - unexpected line
+						Msg.error(this,
+							"Script contains invalid certification header: " + getName());
+						allowCertifyHeader = false;
+						skipCertifyHeader = false;
+					}
+					else if (line.startsWith(certifyHeaderStart)) {
+						skipCertifyHeader = true;
+						continue;
+					}
+				}
 
 				if (line.startsWith(commentPrefix)) {
+					allowCertifyHeader = false;
+
 					line = line.substring(commentPrefix.length()).trim();
 
 					if (line.startsWith("@")) {

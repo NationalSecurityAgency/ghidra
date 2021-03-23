@@ -52,7 +52,7 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
-	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
 	 * @param args command line arguments
 	 */
@@ -75,22 +75,18 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * The following properties may be set:
 	 * <pre>
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
-	 *   UserAdmin.serverDir - identifies the server directory instead of passing on command line.
+	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
 	 * @param args command line arguments
 	 */
 	public void execute(String[] args) {
 
-		File serverDir = null;
-
 		int ix = 0;
-		if (args.length != 0 && !args[0].startsWith("-")) {
-			serverDir = new File(args[ix++]);
-		}
-		else {
-			serverDir = getServerDirFromConfig();
-		}
 
+		String configFilePath = args.length != 0 && !args[0].startsWith("-") ? args[ix++]
+				: System.getProperty(CONFIG_FILE_PROPERTY);
+
+		File serverDir = getServerDirFromConfig(configFilePath);
 		if (serverDir == null || (args.length - ix) == 0) {
 			displayUsage("");
 			System.exit(-1);
@@ -105,9 +101,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.exit(-1);
 		}
 
-		if (propertyUsed) {
-			System.out.println("Using server directory: " + serverDir);
-		}
+		System.out.println("Using server directory: " + serverDir);
 
 		File userFile = new File(serverDir, UserManager.USER_PASSWORD_FILE);
 		if (!serverDir.isDirectory() || !userFile.isFile()) {
@@ -423,17 +417,31 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 	}
 
-	private File getServerDirFromConfig() {
-		String p = System.getProperty(CONFIG_FILE_PROPERTY);
-		if (p == null) {
+	/**
+	 * Parse contents of specified configFilePath as server.conf to determine
+	 * repositories root directory.  If configFilePath corresponds to a directory,
+	 * that directory will be treated as the repositories root directory.
+	 * @param configFilePath path to server.conf or repositories root directory
+	 * @return repositories root directory
+	 */
+	private File getServerDirFromConfig(String configFilePath) {
+
+		if (configFilePath == null) {
 			return null;
 		}
-		propertyUsed = true;
-		File configFile = new File(p);
 
+		File configFile = new File(configFilePath);
 		if (!configFile.exists()) {
 			System.out.println("Config file not found: " + configFile.getAbsolutePath());
+			return null;
 		}
+
+		if (configFile.isDirectory()) {
+			// If specified path is a directory treat as the server root
+			return configFile;
+		}
+
+		System.out.println("Using config file: " + configFilePath);
 
 		Properties config = new Properties();
 		InputStream in = null;
@@ -455,8 +463,9 @@ public class ServerAdmin implements GhidraLaunchable {
 			}
 		}
 
-		p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
+		String p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
 		if (p == null) {
+			System.out.println("Failed to find property: " + SERVER_DIR_CONFIG_PROPERTY);
 			return null;
 		}
 		File dir = new File(p);
@@ -482,8 +491,8 @@ public class ServerAdmin implements GhidraLaunchable {
 		}
 		String invocationName = System.getProperty(INVOCATION_NAME_PROPERTY);
 		System.err.println("Usage: " +
-			(invocationName != null ? invocationName : "java " + UserAdmin.class.getName()) +
-			(propertyUsed ? "" : " <serverPath>") + " [<command>] [<command>] ...");
+			(invocationName != null ? invocationName : "java " + ServerAdmin.class.getName()) +
+			(invocationName != null ? "" : " <configPath>") + " [<command>] [<command>] ...");
 		System.err.println("\nSupported commands:");
 		System.err.println("  -add <sid> [--p]");
 		System.err.println(

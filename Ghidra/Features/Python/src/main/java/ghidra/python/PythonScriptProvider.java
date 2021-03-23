@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.python;
 
+import java.io.*;
+import java.util.regex.Pattern;
+
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptProvider;
-
-import java.io.*;
-import java.util.regex.Pattern;
 
 public class PythonScriptProvider extends GhidraScriptProvider {
 
@@ -59,6 +58,21 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public String getCommentCharacter() {
+		return "#";
+	}
+
+	@Override
+	protected String getCertifyHeaderStart() {
+		return "## ###";
+	}
+
+	@Override
+	protected String getCertifyHeaderEnd() {
+		return "##";
+	}
+
+	@Override
+	protected String getCertificationBodyPrefix() {
 		return "#";
 	}
 

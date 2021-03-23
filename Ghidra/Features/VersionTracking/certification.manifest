@@ -4,7 +4,6 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||reviewed||END|
 src/main/docs/VTClasses.png||GHIDRA||reviewed||END|
 src/main/docs/VTGuiImpl.png||GHIDRA||reviewed||END|

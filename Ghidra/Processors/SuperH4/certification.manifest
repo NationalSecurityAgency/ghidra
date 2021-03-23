@@ -1,7 +1,6 @@
 ##VERSION: 2.0
 .project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/build.xml||GHIDRA||||END|
 data/languages/SuperH4.cspec||GHIDRA||||END|
 data/languages/SuperH4.ldefs||GHIDRA||||END|

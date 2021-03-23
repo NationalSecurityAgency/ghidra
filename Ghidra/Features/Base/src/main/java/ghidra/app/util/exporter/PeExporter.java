@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package mdemangler;
+package ghidra.app.util.exporter;
+
+import ghidra.app.util.opinion.PeLoader;
+import ghidra.util.HelpLocation;
 
 /**
- * This class exists for running a test suite with "Categories" annotations.  The
- * interface described here is the name I decided to call the failing tests
- * in MDMangBaseTest and used by MDMangBaseTestSuite to exclude failing tests.
+ * An {@link Exporter} that can export programs imported with the {@link PeLoader}
  */
-public interface MDMangFailingTests {
-	// Purposefully empty.
+public class PeExporter extends AbstractLoaderExporter {
+
+	/**
+	 * Creates a new {@link PeExporter}
+	 */
+	public PeExporter() {
+		super("PE", "exe", new HelpLocation("ExporterPlugin", "pe"));
+	}
+
+	@Override
+	protected boolean supportsFileFormat(String fileFormat) {
+		return PeLoader.PE_NAME.equals(fileFormat);
+	}
 }
