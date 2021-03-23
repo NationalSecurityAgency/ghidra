@@ -123,7 +123,7 @@ if "%JAVA_HOME%" == "" (
 rem reestablish JAVA path based upon final JAVA_HOME
 set "JAVA=%JAVA_HOME%\bin\java.exe"
 
-:: set DEBUG=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:18888
+:: set DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:18888
 
 if "%OPTION%"=="console" (
 	start "%APP_LONG_NAME%" "%JAVA%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -c "%WRAPPER_CONF%"

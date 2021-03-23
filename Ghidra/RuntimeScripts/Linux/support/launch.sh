@@ -151,12 +151,10 @@ if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 	if [ "${MODE}" = "debug-suspend" ]; then
 		SUSPEND=y
 	fi
-	
-	VMARG_LIST+=" -Xdebug"
-	VMARG_LIST+=" -Xnoagent" 
-	VMARG_LIST+=" -Djava.compiler=NONE" 
+	 
 	VMARG_LIST+=" -Dlog4j.configuration=\"${DEBUG_LOG4J}\""  
-	VMARG_LIST+=" -Xrunjdwp:transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
+	VMARG_LIST+=" -agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
+	
 
 elif [ "${MODE}" = "fg" ]; then
 	:

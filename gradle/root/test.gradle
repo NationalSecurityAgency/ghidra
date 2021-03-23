@@ -347,10 +347,18 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Djdk.attach.allowAttachSelf',
 			'-javaagent:' + jmockitPath,			
 			'-DLock.DEBUG=true',
-			'-Xdebug',
-			'-Xnoagent',
-			'-Djava.compiler=NONE',
-			'-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=' + debugPort
+			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
+			
+			
+			// Note: modern remote debug invocation;
+			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
+			
+			// 
+			// We removed these lines, which should not be needed in modern JVMs
+			//  -Xdebug
+			//  -Xnoagent
+			//  -Djava.compiler=NONE
+			//  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
 	}
 }
 
