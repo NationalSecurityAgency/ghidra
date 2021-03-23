@@ -32,6 +32,8 @@ import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.NullSectionProvide
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -44,7 +46,10 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
+	protected static final long BaseAddress = 0x400;
+
 	protected ProgramDB program;
+	protected AddressSpace space;
 	protected DataTypeManagerDB dataMgr;
 	protected DataTypeManager builtInDTM;
 	protected int transactionID;
@@ -62,9 +67,15 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
+		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._X64, this);
+		space = program.getAddressFactory().getDefaultAddressSpace();
+
 		dataMgr = program.getDataTypeManager();
 		startTransaction();
+
+		program.getMemory()
+				.createInitializedBlock("test", addr(BaseAddress), 500, (byte) 0, TaskMonitor.DUMMY,
+					false);
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		DataTypeManagerService dtms = mgr.getDataTypeManagerService();
@@ -111,6 +122,16 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected void importAllDataTypes() throws CancelledException, IOException, DWARFException {
 		dwarfProg.checkPreconditions(monitor);
 		dwarfDTM.importAllDataTypes(monitor);
+	}
+
+	protected void importFunctions() throws CancelledException, IOException, DWARFException {
+		dwarfProg.checkPreconditions(monitor);
+		dwarfDTM.importAllDataTypes(monitor);
+		
+		DWARFImportSummary importSummary = new DWARFImportSummary();
+		DWARFFunctionImporter dfi =
+			new DWARFFunctionImporter(dwarfProg, dwarfDTM, importOptions, importSummary, monitor);
+		dfi.importFunctions();
 	}
 
 	protected DIEAggregate getAggregate(DebugInfoEntry die)
@@ -278,4 +299,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		return arrayType;
 	}
 
+	protected Address addr(long l) {
+		return space.getAddress(l);
+	}
 }

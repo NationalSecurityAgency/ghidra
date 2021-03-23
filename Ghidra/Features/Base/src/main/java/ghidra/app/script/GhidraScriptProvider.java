@@ -148,4 +148,31 @@ public abstract class GhidraScriptProvider
 		return scriptName;
 	}
 
+	/**
+	 * Return the start of certification header line if this file type is 
+	 * subject to certification.
+	 * @return start of certification header or null if not supported
+	 */
+	protected String getCertifyHeaderStart() {
+		return null;
+	}
+
+	/**
+	 * Return the prefix for each certification header bofy line if
+	 * this file is subject to certification
+	 * @return certification heaber body prefix or null if not supported
+	 */
+	protected String getCertificationBodyPrefix() {
+		return null;
+	}
+
+	/**
+	 * Return the end of certification header line if this file type is 
+	 * subject to certification.
+	 * @return end of certification header or null if not supported
+	 */
+	protected String getCertifyHeaderEnd() {
+		return null;
+	}
+
 }
