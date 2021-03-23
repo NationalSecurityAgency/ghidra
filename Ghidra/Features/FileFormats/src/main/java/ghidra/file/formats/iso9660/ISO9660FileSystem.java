@@ -15,9 +15,10 @@
  */
 package ghidra.file.formats.iso9660;
 
+import java.util.*;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -32,14 +33,10 @@ import ghidra.util.task.TaskMonitor;
 public class ISO9660FileSystem extends GFileSystemBase {
 
 	//Possible locations for magic number
-	private static final long SIGNATURE_ADDRESS_0x8001 = 0x8001;
-	private static final long SIGNATURE_ADDRESS_0x8801 = 0x8801;
-	private static final long SIGNATURE_ADDRESS_0x9001 = 0x9001;
+	private static final long[] SIGNATURE_PROBE_OFFSETS = new long[] { 0x8000L, 0x8800L, 0x9000L };
 
-	//Location which the magic number was found
-	private boolean foundAt0x8001 = false;
-	private boolean foundAt0x8801 = false;
-	private boolean foundAt0x9001 = false;
+	//Location where the magic number was found
+	private long signatureOffset;
 
 	//Set true if the root level directory has been processed
 	private boolean lookedAtRoot = false;
@@ -57,34 +54,21 @@ public class ISO9660FileSystem extends GFileSystemBase {
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		int magicLen = ISO9660Constants.MAGIC_BYTES.length;
-		byte[] signatureArray = new byte[magicLen];
-
-		//Check first possible signature location
-		signatureArray = provider.readBytes(SIGNATURE_ADDRESS_0x8001, magicLen);
-		if (Arrays.equals(signatureArray, ISO9660Constants.MAGIC_BYTES)) {
-			//Where to start the reader during mark up
-			foundAt0x8001 = true;
-			return true;
+		for (long probeOffset : SIGNATURE_PROBE_OFFSETS) {
+			if (isMagicSignatureAt(probeOffset + 1)) {
+				// signature is at +1 offset from the start of the volume offset
+				signatureOffset = probeOffset;
+				return true;
+			}
 		}
-
-		//Check second possible signature location
-		signatureArray = provider.readBytes(SIGNATURE_ADDRESS_0x8801, magicLen);
-		if (Arrays.equals(signatureArray, ISO9660Constants.MAGIC_BYTES)) {
-			//Where to start the reader during mark up
-			foundAt0x8801 = true;
-			return true;
-		}
-
-		//Check third possible signature location
-		signatureArray = provider.readBytes(SIGNATURE_ADDRESS_0x9001, magicLen);
-		if (Arrays.equals(signatureArray, ISO9660Constants.MAGIC_BYTES)) {
-			//Where to start the reader during mark up
-			foundAt0x9001 = true;
-			return true;
-		}
-
 		return false;
+	}
+
+	private boolean isMagicSignatureAt(long offset) throws IOException {
+		int magicLen = ISO9660Constants.MAGIC_BYTES.length;
+		long providerLen = provider.length();
+		return (providerLen > offset + magicLen) &&
+			Arrays.equals(provider.readBytes(offset, magicLen), ISO9660Constants.MAGIC_BYTES);
 	}
 
 	@Override
@@ -92,18 +76,7 @@ public class ISO9660FileSystem extends GFileSystemBase {
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		//Set start of pointer index of beginning of primary volume descriptor
-		if (foundAt0x8001) {
-			reader.setPointerIndex(0x8000);
-		}
-		else if (foundAt0x8801) {
-			reader.setPointerIndex(0x8800);
-		}
-		else if (foundAt0x9001) {
-			reader.setPointerIndex(0x9000);
-		}
-		else {
-			throw new IOException("Cannot find index of ISO9660 Header");
-		}
+		reader.setPointerIndex(signatureOffset);
 
 		header = new ISO9660Header(reader);
 		ISO9660VolumeDescriptor pvd = header.getPrimaryVolumeDescriptor();
