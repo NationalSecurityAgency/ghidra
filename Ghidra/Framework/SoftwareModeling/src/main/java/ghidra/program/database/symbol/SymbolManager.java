@@ -2351,13 +2351,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return;
 		}
 
-		if (!(namespace instanceof NamespaceDB)) {
+		Symbol symbol = namespace.getSymbol();
+		if (!(symbol instanceof SymbolDB)) {
+			// unexpected namespace type; all supported types will be db objects
 			throw new IllegalArgumentException(
-				"Namespace is not a valid parent for symbols: " +
-					namespace.getClass());
+				"Namespace is not a valid parent for symbols: " + namespace.getClass());
 		}
 
-		SymbolDB dbSymbol = (SymbolDB) namespace.getSymbol();
+		SymbolDB dbSymbol = (SymbolDB) symbol;
 		if (program != dbSymbol.getProgram()) {
 			throw new IllegalArgumentException(
 				"Namespace symbol is from a different program");

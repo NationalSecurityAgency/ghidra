@@ -583,20 +583,22 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		final int WORD_WRAP = 3;
 		final int MAX_LINES = 4;
 		final int SHOW_REF_ADDR = 5;
-		final int SHOW_SEMICOLON = 6;
+		//final int SHOW_FUNCTION_AUTO = 6;
+		final int SHOW_SEMICOLON = 7;
 		showTool(tool);
 		loadProgram();
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		List<String> names = getOptionNames(options, "EOL Comments Field");
-		assertEquals(8, names.size());
+		assertEquals(9, names.size());
 		assertEquals(EolCommentFieldFactory.ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, names.get(0));
 		assertEquals(EolCommentFieldFactory.ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG, names.get(1));
 		assertEquals(EolCommentFieldFactory.ENABLE_ALWAYS_SHOW_REPEATABLE_MSG, names.get(2));
 		assertEquals(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, names.get(3));
 		assertEquals(EolCommentFieldFactory.MAX_DISPLAY_LINES_MSG, names.get(4));
 		assertEquals(EolCommentFieldFactory.ENABLE_PREPEND_REF_ADDRESS_MSG, names.get(5));
-		assertEquals(EolCommentFieldFactory.ENABLE_SHOW_SEMICOLON_MSG, names.get(6));
-		assertEquals(EolCommentFieldFactory.USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG, names.get(7));
+		assertEquals(EolCommentFieldFactory.SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG, names.get(6));
+		assertEquals(EolCommentFieldFactory.ENABLE_SHOW_SEMICOLON_MSG, names.get(7));
+		assertEquals(EolCommentFieldFactory.USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG, names.get(8));
 
 		Address callAddress = addr("0x1003fcc");
 		Address callRefAddress = addr("0x1006642");
