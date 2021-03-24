@@ -205,21 +205,6 @@ public class ScriptInfo {
 					break;
 				}
 
-				Pattern blockStart = provider.getBlockCommentStart();
-				Pattern blockEnd = provider.getBlockCommentEnd();
-
-				if (blockStart != null && blockEnd != null) {
-					Matcher startMatcher = blockStart.matcher(line);
-					if (startMatcher.find()) {
-						int last_offset = startMatcher.end();
-						while (line != null && !blockEnd.matcher(line).find(last_offset)) {
-							line = reader.readLine();
-							last_offset = 0;
-						}
-						continue;
-					}
-				}
-
 				if (allowCertifyHeader) {
 					// Skip past certification header if found
 					if (skipCertifyHeader) {
@@ -241,6 +226,21 @@ public class ScriptInfo {
 					}
 					else if (line.startsWith(certifyHeaderStart)) {
 						skipCertifyHeader = true;
+						continue;
+					}
+				}
+
+				Pattern blockStart = provider.getBlockCommentStart();
+				Pattern blockEnd = provider.getBlockCommentEnd();
+
+				if (blockStart != null && blockEnd != null) {
+					Matcher startMatcher = blockStart.matcher(line);
+					if (startMatcher.find()) {
+						int last_offset = startMatcher.end();
+						while (line != null && !blockEnd.matcher(line).find(last_offset)) {
+							line = reader.readLine();
+							last_offset = 0;
+						}
 						continue;
 					}
 				}
