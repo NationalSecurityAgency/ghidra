@@ -1,0 +1,30 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Contrived example comparing a signed byte.  The decompiler
+    should not use the 'char' data-type.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+0fb647043c0a0f94c13cf70f94c208d1
+75043c617e1a8b17488d3513000000bf
+0100000031c0e9dd0f0000
+</bytechunk>
+<bytechunk space="ram" offset="0x100030" readonly="true">
+f3c3
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x101008 printf nocode</com>
+  <com>map fun r0x100000 printStruct</com>
+  <com>parse line struct mystruct { int4 val; int1 thebyte; };</com>
+  <com>parse line extern void printStruct(mystruct *ptr);</com>
+  <com>override flow r0x100026 callreturn</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Signed byte #1" min="1" max="1">Var1 = ptr->thebyte</stringmatch>
+<stringmatch name="Signed byte #2" min="1" max="1">Var1 != 10</stringmatch>
+<stringmatch name="Signed byte #3" min="1" max="1">Var1 != -9</stringmatch>
+<stringmatch name="Signed byte #4" min="1" max="1">Var1 &lt; 0x62</stringmatch>
+</decompilertest>
