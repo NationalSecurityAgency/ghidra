@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import java.math.BigDecimal;
+import java.math.*;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,39 +46,43 @@ public class Float10DataTypeTest extends AbstractGTest {
 
 		// Really small values
 
+		MathContext mc = new MathContext(18, RoundingMode.UP);
+
 		bytes = bytes(0, 1, 0x80, 0, 0, 0, 0, 0, 0, 0); // 0x00018000000000000000 = approaches 0
 		value =
 			Float10DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, true), null, 10);
-		Assert.assertEquals("5.04315471466814026E-4932", value.toString());
+		Assert.assertEquals("5.04315471466814026E-4932", ((BigDecimal) value).round(mc).toString());
 
 		bytes = bytes(0x80, 1, 0x80, 0, 0, 0, 0, 0, 0, 0); // 0x00018000000000000000 = approaches 0
 		value =
 			Float10DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, true), null, 10);
-		Assert.assertEquals("-5.04315471466814026E-4932", value.toString());
+		Assert.assertEquals("-5.04315471466814026E-4932",
+			((BigDecimal) value).round(mc).toString());
 
 		// Really big values
 
 		bytes = bytes(0x7f, 0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0); // 0x7ffe8000000000000000 = approaches +infinity
 		value =
 			Float10DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, true), null, 10);
-		Assert.assertEquals("8.92298621517923824E+4931", value.toString());
+		Assert.assertEquals("8.92298621517923824E+4931", ((BigDecimal) value).round(mc).toString());
 
 		bytes = bytes(0xff, 0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0); // 0x7ffe8000000000000000 = approaches -infinity
 		value =
 			Float10DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, true), null, 10);
-		Assert.assertEquals("-8.92298621517923824E+4931", value.toString());
+		Assert.assertEquals("-8.92298621517923824E+4931",
+			((BigDecimal) value).round(mc).toString());
 
 		// Values within the range of Double
 
 		bytes = bytes(0x40, 1, 0x20, 0, 0, 0, 0, 0, 0, 0); // 0x40002000000000000000 = approaches -infinity
 		value =
 			Float10DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, true), null, 10);
-		Assert.assertEquals(BigDecimal.valueOf(4.5), value);
+		Assert.assertEquals(BigDecimal.valueOf(4.5), ((BigDecimal) value).stripTrailingZeros());
 
 		bytes = bytes(0xc0, 1, 0x20, 0, 0, 0, 0, 0, 0, 0); // 0x40002000000000000000 = approaches -infinity
 		value =
 			Float10DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, true), null, 10);
-		Assert.assertEquals(BigDecimal.valueOf(-4.5), value);
+		Assert.assertEquals(BigDecimal.valueOf(-4.5), ((BigDecimal) value).stripTrailingZeros());
 
 	}
 

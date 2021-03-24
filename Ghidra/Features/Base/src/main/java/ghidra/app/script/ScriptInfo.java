@@ -20,7 +20,6 @@ import static ghidra.util.HTMLUtilities.*;
 import java.io.*;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
@@ -46,9 +45,6 @@ public class ScriptInfo {
 	static final String AT_KEYBINDING = "@keybinding";
 	static final String AT_MENUPATH = "@menupath";
 	static final String AT_TOOLBAR = "@toolbar";
-
-	private static final Pattern DOCUMENTATION_START = Pattern.compile("/\\*");
-	private static final Pattern DOCUMENTATION_END = Pattern.compile("\\*/");
 
 	// omit from METADATA to avoid pre-populating in new scripts
 	private static final String AT_IMPORTPACKAGE = "@importpackage";
@@ -186,6 +182,16 @@ public class ScriptInfo {
 
 		init();
 
+		String commentPrefix = provider.getCommentCharacter();
+
+		// Note that skipping certification header presumes that the header
+		// is intact with an appropriate start and end
+		String certifyHeaderStart = provider.getCertifyHeaderStart();
+		String certifyHeaderEnd = provider.getCertifyHeaderEnd();
+		String certifyHeaderBodyPrefix = provider.getCertificationBodyPrefix();
+		boolean allowCertifyHeader = (certifyHeaderStart != null);
+		boolean skipCertifyHeader = false;
+
 		BufferedReader reader = null;
 		try {
 			StringBuffer buffer = new StringBuffer();
@@ -197,16 +203,34 @@ public class ScriptInfo {
 					break;
 				}
 
-				if (DOCUMENTATION_START.matcher(line).find()) {
-					while (line != null && !DOCUMENTATION_END.matcher(line).find()) {
-						line = reader.readLine();
+				if (allowCertifyHeader) {
+					// Skip past certification header if found
+					if (skipCertifyHeader) {
+						String trimLine = line.trim();
+						if (trimLine.startsWith(certifyHeaderEnd)) {
+							allowCertifyHeader = false;
+							skipCertifyHeader = false;
+							continue;
+						}
+						if (certifyHeaderBodyPrefix == null ||
+							trimLine.startsWith(certifyHeaderBodyPrefix)) {
+							continue; // skip certification header body
+						}
+						// broken certification header - unexpected line
+						Msg.error(this,
+							"Script contains invalid certification header: " + getName());
+						allowCertifyHeader = false;
+						skipCertifyHeader = false;
 					}
-					continue;
+					else if (line.startsWith(certifyHeaderStart)) {
+						skipCertifyHeader = true;
+						continue;
+					}
 				}
 
-				String commentPrefix = provider.getCommentCharacter();
-
 				if (line.startsWith(commentPrefix)) {
+					allowCertifyHeader = false;
+
 					line = line.substring(commentPrefix.length()).trim();
 
 					if (line.startsWith("@")) {

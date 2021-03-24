@@ -62,17 +62,17 @@ class BigRefListV0 extends RefList {
 	 * @param address address associated with this list
 	 * @param adapter entry record storage adapter
 	 * @param addrMap address map for encoding/decoding addresses
-	 * @param program 
+	 * @param program associated Program
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
-	 * @throws IOException 
+	 * @throws IOException if database IO error occurs
 	 */
 	BigRefListV0(Address address, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
 			DBObjectCache<RefList> cache, boolean isFrom) throws IOException {
 		super(addrMap.getKey(address, true), address, adapter, addrMap, program, cache, isFrom);
 		record = ToAdapter.TO_REFS_SCHEMA.createRecord(key);
-		table = program.getDBHandle().createTable(BASE_TABLE_NAME + Long.toHexString(key),
-			BIG_REFS_SCHEMA, new int[] { ADDRESS_COL });
+		table = program.getDBHandle()
+				.createTable(getTableName(), BIG_REFS_SCHEMA, new int[] { ADDRESS_COL });
 	}
 
 	/**
@@ -80,9 +80,10 @@ class BigRefListV0 extends RefList {
 	 * @param rec existing refList record
 	 * @param adapter entry record storage adapter
 	 * @param addrMap address map for encoding/decoding addresses
-	 * @param program
+	 * @param program associated Program
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
+	 * @throws IOException if database IO error occurs
 	 */
 	BigRefListV0(DBRecord rec, RecordAdapter adapter, AddressMap addrMap, ProgramDB program,
 			DBObjectCache<RefList> cache, boolean isFrom) throws IOException {
@@ -91,16 +92,20 @@ class BigRefListV0 extends RefList {
 		if (rec.getBinaryData(ToAdapter.REF_DATA_COL) != null) {
 			throw new IllegalArgumentException("Invalid reference record");
 		}
-		String tableName = BASE_TABLE_NAME + Long.toHexString(rec.getKey());
-		table = program.getDBHandle().getTable(tableName);
+		table = program.getDBHandle().getTable(getTableName());
 		if (table == null) {
 			throw new IOException(
-				"BigRefList table not found for " + address + " (" + tableName + ")");
+				"BigRefList table not found for " + address + " (" + getTableName() + ")");
 		}
 		if (!isFrom) {
 			refLevel = rec.getByteValue(ToAdapter.REF_LEVEL_COL);
 		}
 		record = rec;
+	}
+
+	private String getTableName() {
+		String prefix = isFrom ? "From" : "";
+		return prefix + BASE_TABLE_NAME + Long.toHexString(key);
 	}
 
 	@Override

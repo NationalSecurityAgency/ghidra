@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import docking.widgets.EventTrigger;
 import ghidra.app.services.GraphDisplayBroker;
@@ -31,6 +33,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
+
+import static ghidra.service.graph.GraphDisplay.*;
 
 public class ASTGraphTask extends Task {
 	enum GraphType {
@@ -101,7 +105,12 @@ public class ASTGraphTask extends Task {
 			else {
 				createControlFlowGraph(graph, monitor);
 			}
-			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, monitor);
+			Map<String, String> properties = new HashMap<>();
+			properties.put(SELECTED_VERTEX_COLOR, "0xFF1493");
+			properties.put(SELECTED_EDGE_COLOR, "0xFF1493");
+			properties.put(INITIAL_LAYOUT_ALGORITHM, "Hierarchical MinCross Coffman Graham");
+			properties.put(ENABLE_EDGE_SELECTION, "true");
+			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, properties, monitor);
 			ASTGraphDisplayListener displayListener =
 				new ASTGraphDisplayListener(tool, display, hfunction, graphType);
 			display.setGraphDisplayListener(displayListener);
@@ -116,7 +125,7 @@ public class ASTGraphTask extends Task {
 			display.defineVertexAttribute(CODE_ATTRIBUTE);
 			display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
 
-			display.setVertexLabel(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
+			display.setVertexLabelAttribute(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
 				graphType == GraphType.CONTROL_FLOW_GRAPH ? (codeLimitPerBlock + 1) : 1);
 
 			String description =

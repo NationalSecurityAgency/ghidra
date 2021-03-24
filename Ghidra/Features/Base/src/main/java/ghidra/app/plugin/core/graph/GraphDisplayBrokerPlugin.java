@@ -147,10 +147,10 @@ public class GraphDisplayBrokerPlugin extends Plugin
 	}
 
 	@Override
-	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph,
-			TaskMonitor monitor) throws GraphException {
+	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
+											   TaskMonitor monitor) throws GraphException {
 		if (defaultGraphDisplayProvider != null) {
-			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, monitor);
+			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, properties, monitor);
 		}
 		return null;
 	}

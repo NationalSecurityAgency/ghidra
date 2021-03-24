@@ -22,7 +22,7 @@
 /// properly, in which case the union of the two ranges can exist without
 /// destroying data-type information.
 /// \param b is the range to reconcile with \b this
-/// \param \b true if the data-type information can be reconciled
+/// \return \b true if the data-type information can be reconciled
 bool RangeHint::reconcile(const RangeHint *b) const
 
 {
@@ -1342,15 +1342,15 @@ void ScopeLocal::addRecommendName(Symbol *sym)
   SymbolEntry *entry = sym->getFirstWholeMap();
   if (entry == (SymbolEntry *) 0) return;
   if (entry->isDynamic()) {
-    dynRecommend.push_back(DynamicRecommend(entry->getFirstUseAddress(), entry->getHash(), sym->getName(), sym->getId()));
+    dynRecommend.emplace_back(entry->getFirstUseAddress(), entry->getHash(), sym->getName(), sym->getId());
   }
   else {
-    Address usepoint;
+    Address usepoint((AddrSpace *)0,0);
     if (!entry->getUseLimit().empty()) {
       const Range *range = entry->getUseLimit().getFirstRange();
       usepoint = Address(range->getSpace(), range->getFirst());
     }
-    nameRecommend.push_back(NameRecommend(entry->getAddr(),usepoint, entry->getSize(), sym->getName(), sym->getId()));
+    nameRecommend.emplace_back(entry->getAddr(),usepoint, entry->getSize(), sym->getName(), sym->getId());
   }
   if (sym->getCategory() < 0)
     removeSymbol(sym);

@@ -158,6 +158,28 @@
 	</p>
       </dd>
 <dt>
+<a name="AnalysisForLoops"></a><span class="term"><span class="bold"><strong>Recover -for- loops</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this is toggle <span class="emphasis"><em>on</em></span>, the decompiler attempts to pinpoint
+	  variables that control the iteration over specific loops in the function body.
+	  When these <span class="emphasis"><em>loop</em></span> variables are discovered, the loop is
+	  rendered using a standard <span class="bold"><strong>for</strong></span> loop header
+	  that contains an initializer statement, condition, and iterating statement.
+	  </p>
+<div class="informalexample">
+	    <code class="code">for (iVar2 = 10; iVar2 &lt; len; iVar2 = iVar2 + 1) { ...</code>
+	  </div>
+<p>
+	</p>
+	<p>
+	  If the toggle is <span class="emphasis"><em>off</em></span>, the loop is displayed using
+	  <span class="bold"><strong>while</strong></span> syntax, with any initializer and
+	  iterating statements mixed in with the loop body or preceding basic blocks.
+	</p>
+      </dd>
+<dt>
 <a name="AnalysisUnreachable"></a><span class="term"><span class="bold"><strong>Eliminate unreachable code</strong></span></span>
 </dt>
 <dd>

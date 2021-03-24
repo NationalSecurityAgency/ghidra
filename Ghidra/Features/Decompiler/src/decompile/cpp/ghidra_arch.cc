@@ -690,6 +690,18 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   readResponseEnd(sin);
 }
 
+/// \brief Get string data at a specific address
+///
+/// The data is always returned as a sequence of bytes in UTF-8 format. The in-memory form of
+/// the string may be different than UTF-8 but is always translated into UTF-8 by this method.
+/// The caller can inform the in-memory format of the string by specifying a specific string
+/// data-type.  A maximum number of bytes to return is specified.  If this is exceeded, a boolean
+/// reference is set to \b true.
+/// \param buffer will hold the string bytes in UTF-8 format
+/// \param addr is program Address that holds the string data in memory
+/// \param ct is string data-type expected
+/// \param maxBytes is the maximum number of bytes to return
+/// \param isTrunc is the boolean reference indicating whether the data is truncated
 void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes,bool &isTrunc)
 
 {

@@ -87,6 +87,16 @@ public class DIECreator {
 		return this;
 	}
 
+	public DIECreator addBlock(int attribute, int... intBytes) {
+		byte[] bytes = new byte[intBytes.length];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = (byte) intBytes[i];
+		}
+		attributes.put(attribute,
+			new AttrInfo(attribute, DWARFForm.DW_FORM_block1, new DWARFBlobAttribute(bytes)));
+		return this;
+	}
+
 	DWARFAbbreviation createAbbreviation(MockDWARFCompilationUnit cu) {
 		DWARFAttributeSpecification[] attrSpecs =
 			new DWARFAttributeSpecification[attributes.size()];
@@ -121,13 +131,15 @@ public class DIECreator {
 			die.addChild(childDIE);
 		}
 
-		cu.addMockEntry(die);
-
+		if (parent == null) {
+			parent = cu.getCompileUnitDIE();
+		}
 		if (parent != null) {
+			die.setParent(parent);
 			Assert.assertTrue(parent.getCompilationUnit() == cu);
 			parent.addChild(die);
-			die.setParent(parent);
 		}
+		cu.addMockEntry(die);
 
 		return die;
 	}

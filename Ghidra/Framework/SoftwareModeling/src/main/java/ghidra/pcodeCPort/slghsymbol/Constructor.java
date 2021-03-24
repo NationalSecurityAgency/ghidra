@@ -48,6 +48,7 @@ public class Constructor {
 	private int firstwhitespace; // Index of first whitespace piece in -printpiece-
 	private int flowthruindex; // if >=0 then print only a single operand no markup
 	private boolean inerror;
+	private int sourceFileIndex = -1;    //source file index
 
 	public TokenPattern getPattern() {
 		return pattern;
@@ -75,6 +76,22 @@ public class Constructor {
 
 	public int getLineno() {
 		return location == null ? 0 : location.lineno;
+	}
+
+	/**
+	 * Set the source file index
+	 * @param index index
+	 */
+	public void setSourceFileIndex(int index) {
+		sourceFileIndex = index;
+	}
+
+	/**
+	 * Return the source file index
+	 * @return index
+	 */
+	public int getIndex() {
+		return sourceFileIndex;
 	}
 
 	public void addContext(VectorSTL<ContextChange> vec) {
@@ -359,6 +376,8 @@ public class Constructor {
 		s.print(minimumlength);
 		s.append("\"");
 		s.append(" line=\"");
+		s.print(sourceFileIndex);
+		s.append(":");
 		s.print(getLineno());
 		s.append("\">\n");
 		for (int i = 0; i < operands.size(); ++i) {

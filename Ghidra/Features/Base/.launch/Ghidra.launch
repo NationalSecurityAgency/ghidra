@@ -26,7 +26,8 @@
     <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="ghidra.GhidraLauncher"/>
     <listAttribute key="org.eclipse.jdt.launching.MODULEPATH"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="Framework Utility"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ghidra.GhidraRun"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Framework Utility"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions -Djava.system.class.loader=ghidra.GhidraClassLoader -Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Dsun.java2d.pmoffscreen=false -Dsun.java2d.xrender=true -Dsun.java2d.d3d=false -Xdock:name=&quot;Ghidra&quot; -Dvisualvm.display.name=Ghidra -Dpython.console.encoding=UTF-8 -DContinuesInterceptor.disabled=true"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions -Djava.system.class.loader=ghidra.GhidraClassLoader -Xshare:off -Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Dsun.java2d.pmoffscreen=false -Dsun.java2d.xrender=true -Dsun.java2d.d3d=false -Xdock:name=&quot;Ghidra&quot; -Dvisualvm.display.name=Ghidra -Dpython.console.encoding=UTF-8 -DContinuesInterceptor.disabled=true"/>
 </launchConfiguration>

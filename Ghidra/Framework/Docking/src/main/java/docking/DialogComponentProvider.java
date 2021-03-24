@@ -52,11 +52,14 @@ public class DialogComponentProvider
 	private static final String PROGRESS = "Progress";
 	private static final String DEFAULT = "No Progress";
 
-	protected JPanel rootPanel;
+	private static int idCounter;
+
+	private int id = ++idCounter;
 
 	private boolean modal;
 	private String title;
 
+	protected JPanel rootPanel;
 	private JPanel mainPanel;
 	private JComponent workPanel;
 	private JPanel buttonPanel;
@@ -187,6 +190,10 @@ public class DialogComponentProvider
 	/** a callback mechanism for children to do work */
 	protected void doInitialize() {
 		// may be overridden by subclasses
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public JComponent getComponent() {

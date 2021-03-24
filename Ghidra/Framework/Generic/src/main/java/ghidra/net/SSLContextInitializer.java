@@ -36,7 +36,17 @@ import ghidra.util.Msg;
  */
 public class SSLContextInitializer implements ModuleInitializer {
 
-	private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
+	// NOTE: specifying a default protocol of "TLS" will defer the default 
+	// protocol selection to the underlying protocol implementation.
+	// The protocol may be specified as a comma-separated list of protocol
+	// versions where the leftmost takes precendence during the initial 
+	// negotiation.  The Java security policy may be modified to disable
+	// the use of specific protocols via the jdk.tls.disabledAlgorithms
+	// property.  The security property file is located within the
+	// java installation at jre/lib/security/java.security
+
+	// Default list of allowed TLS protocols for outbound connections
+	private static final String DEFAULT_TLS_PROTOCOL = "TLS";
 
 	private static final String PROTOCOL_PROPERTY = "ghidra.net.ssl.protocol";
 
@@ -96,6 +106,9 @@ public class SSLContextInitializer implements ModuleInitializer {
 			if (!(originalVerifier instanceof HttpsHostnameVerifier)) {
 				HttpsURLConnection.setDefaultHostnameVerifier(new HttpsHostnameVerifier());
 			}
+
+			// Establish default HTTPS socket factory
+			HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 
 			return true;
 

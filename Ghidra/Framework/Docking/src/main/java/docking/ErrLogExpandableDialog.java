@@ -55,6 +55,7 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 	protected ReportRootNode root;
 	protected GTree tree;
 	private List<Throwable> errors = new ArrayList<>();
+	private String baseTitle;
 
 	/** This spacer addresses the optical impression that the message panel changes size when showing details */
 	protected Component horizontalSpacer;
@@ -66,6 +67,7 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 	protected ErrLogExpandableDialog(String title, String msg, Throwable throwable) {
 		super(title);
 
+		baseTitle = title;
 		errors.add(throwable);
 
 		popup = new JPopupMenu();
@@ -273,6 +275,11 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 	}
 
 	@Override
+	String getBaseTitle() {
+		return baseTitle;
+	}
+
+	@Override
 	public String getMessage() {
 		return root.getReportText();
 	}
@@ -389,7 +396,7 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 
 		@Override
 		protected List<GTreeNode> generateChildren() {
-			List<GTreeNode> list = new ArrayList<GTreeNode>();
+			List<GTreeNode> list = new ArrayList<>();
 			list.add(new ReportStackTraceNode(exc));
 			Throwable c = exc.getCause();
 			if (c != null) {

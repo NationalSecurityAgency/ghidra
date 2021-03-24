@@ -15,7 +15,9 @@
  */
 package ghidra.graph.visualization;
 
+import java.util.Comparator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.jungrapht.visualization.layout.algorithms.*;
 import org.jungrapht.visualization.layout.algorithms.repulsion.BarnesHutFRRepulsion;
@@ -36,22 +38,38 @@ class LayoutFunction
 
 	static final String KAMADA_KAWAI = "Force Balanced";
 	static final String FRUCTERMAN_REINGOLD = "Force Directed";
-	static final String CIRCLE_MINCROSS = "Circle";
+	static final String CIRCLE = "Circle";
 	static final String TIDIER_TREE = "Compact Hierarchical";
 	static final String TIDIER_RADIAL_TREE = "Compact Radial";
 	static final String MIN_CROSS_TOP_DOWN = "Hierarchical MinCross Top Down";
 	static final String MIN_CROSS_LONGEST_PATH = "Hierarchical MinCross Longest Path";
 	static final String MIN_CROSS_NETWORK_SIMPLEX = "Hierarchical MinCross Network Simplex";
 	static final String MIN_CROSS_COFFMAN_GRAHAM = "Hierarchical MinCross Coffman Graham";
+	static final String EXP_MIN_CROSS_TOP_DOWN = "Experimental Hierarchical MinCross Top Down";
+	static final String EXP_MIN_CROSS_LONGEST_PATH = "Experimental Hierarchical MinCross Longest Path";
+	static final String EXP_MIN_CROSS_NETWORK_SIMPLEX = "Experimental Hierarchical MinCross Network Simplex";
+	static final String EXP_MIN_CROSS_COFFMAN_GRAHAM = "Experimental Hierarchical MinCross Coffman Graham";
 	static final String TREE = "Hierarchical";
 	static final String RADIAL = "Radial";
 	static final String BALLOON = "Balloon";
 	static final String GEM = "Gem (Graph Embedder)";
 
+	Predicate<AttributedEdge> favoredEdgePredicate;
+	Comparator<AttributedEdge> edgeTypeComparator;
+
+	LayoutFunction(Comparator<AttributedEdge> edgeTypeComparator, Predicate<AttributedEdge> favoredEdgePredicate) {
+		this.edgeTypeComparator = edgeTypeComparator;
+		this.favoredEdgePredicate = favoredEdgePredicate;
+	}
+
 	public String[] getNames() {
 		return new String[] { TIDIER_TREE, TREE,
 				TIDIER_RADIAL_TREE, MIN_CROSS_TOP_DOWN, MIN_CROSS_LONGEST_PATH,
-				MIN_CROSS_NETWORK_SIMPLEX, MIN_CROSS_COFFMAN_GRAHAM, CIRCLE_MINCROSS,
+				MIN_CROSS_NETWORK_SIMPLEX, MIN_CROSS_COFFMAN_GRAHAM, CIRCLE,
+				EXP_MIN_CROSS_TOP_DOWN,
+				EXP_MIN_CROSS_LONGEST_PATH,
+				EXP_MIN_CROSS_NETWORK_SIMPLEX,
+				EXP_MIN_CROSS_COFFMAN_GRAHAM,
 				KAMADA_KAWAI, FRUCTERMAN_REINGOLD, RADIAL, BALLOON, GEM
 		};
 	}
@@ -67,27 +85,56 @@ class LayoutFunction
 			case FRUCTERMAN_REINGOLD:
 				return FRLayoutAlgorithm.<AttributedVertex> builder()
 					.repulsionContractBuilder(BarnesHutFRRepulsion.builder());
-			case CIRCLE_MINCROSS:
+			case CIRCLE:
 				return CircleLayoutAlgorithm.<AttributedVertex> builder()
-					.reduceEdgeCrossing(true);
+					.reduceEdgeCrossing(false);
 			case TIDIER_RADIAL_TREE:
 				return TidierRadialTreeLayoutAlgorithm
-						.<AttributedVertex, AttributedEdge> edgeAwareBuilder();
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator);
 			case MIN_CROSS_TOP_DOWN:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
 						.layering(Layering.TOP_DOWN);
 			case MIN_CROSS_LONGEST_PATH:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
 						.layering(Layering.LONGEST_PATH);
 			case MIN_CROSS_NETWORK_SIMPLEX:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
 						.layering(Layering.NETWORK_SIMPLEX);
 			case MIN_CROSS_COFFMAN_GRAHAM:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
+						.layering(Layering.COFFMAN_GRAHAM);
+			case EXP_MIN_CROSS_TOP_DOWN:
+				return EiglspergerLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
+						.favoredEdgePredicate(favoredEdgePredicate)
+						.layering(Layering.TOP_DOWN);
+			case EXP_MIN_CROSS_LONGEST_PATH:
+				return EiglspergerLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
+						.favoredEdgePredicate(favoredEdgePredicate)
+						.layering(Layering.LONGEST_PATH);
+			case EXP_MIN_CROSS_NETWORK_SIMPLEX:
+				return EiglspergerLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
+						.favoredEdgePredicate(favoredEdgePredicate)
+						.layering(Layering.NETWORK_SIMPLEX);
+			case EXP_MIN_CROSS_COFFMAN_GRAHAM:
+				return EiglspergerLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator)
+						.favoredEdgePredicate(favoredEdgePredicate)
 						.layering(Layering.COFFMAN_GRAHAM);
 			case RADIAL:
 				return RadialTreeLayoutAlgorithm
@@ -98,12 +145,14 @@ class LayoutFunction
 						.<AttributedVertex> builder()
 						.verticalVertexSpacing(300);
 			case TREE:
-				return TreeLayoutAlgorithm
-						.builder();
+				return EdgeAwareTreeLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge>edgeAwareBuilder();
 			case TIDIER_TREE:
 			default:
 				return TidierTreeLayoutAlgorithm
-						.<AttributedVertex, AttributedEdge> edgeAwareBuilder();
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.edgeComparator(edgeTypeComparator);
+
 		}
 	}
 }

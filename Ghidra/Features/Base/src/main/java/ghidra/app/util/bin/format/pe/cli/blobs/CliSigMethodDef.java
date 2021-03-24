@@ -85,17 +85,19 @@ public class CliSigMethodDef extends CliAbstractSig {
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(BYTE, "flags", "ORed calling convention and THIS presence"); // TODO: enum
+		struct.add(BYTE, "Flags", "ORed VARARG/GENERIC/HASTHIS/EXPLICITTHIS"); // TODO: enum
 		if (genericParamCount > 0) {
 			struct.add(getDataTypeForBytes(sizeOfGenericCount), "GenParamCount",
 				"Number of generic paramameters for the method");
 		}
 		struct.add(getDataTypeForBytes(sizeOfCount), "Count",
-			"Number of param types to follow RetType");
+			"Number of parameter types to follow RetType");
 		struct.add(retType.getDefinitionDataType(), "RetType", null);
-		for (CliParam param : params) {
-			struct.add(param.getDefinitionDataType(), null, null);
+
+		for (int i = 0; i < params.length; i++) {
+			struct.add(params[i].getDefinitionDataType(), "Param" + i, null);
 		}
+
 		return struct;
 	}
 

@@ -162,6 +162,12 @@ public:
   bool doTrace(void);		///< Trace logical value as far as possible
 };
 
+/// \brief Class for splitting data-flow on \e laned registers
+///
+/// From a root Varnode and a description of its \e lanes, trace data-flow as far as
+/// possible through the function, propagating each lane, using the doTrace() method.  Then
+/// using the apply() method, data-flow can be split, making each lane in every traced
+/// register into an explicit Varnode
 class LaneDivide : public TransformManager {
   /// \brief Description of a large Varnode that needs to be traced (in the worklist)
   class WorkNode {

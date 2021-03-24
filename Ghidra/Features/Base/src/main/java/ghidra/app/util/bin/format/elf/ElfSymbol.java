@@ -103,11 +103,24 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	private String nameAsString;
 
+	/**
+	 * create an ElfSymbol()
+	 * Warning! the routine initSymbolName() must be called on the symbol later
+	 * to initialize the string name.  This is a performance enhancement.
+	 * 
+	 * @param reader to read symbol from
+	 * @param symbolIndex index of the symbol to read
+	 * @param symbolTable symbol table to associate the symbol to
+	 * @param stringTable string table to read symbols from
+	 * @param header else header
+	 * @return newly created ElfSymbol
+	 * 
+	 * @throws IOException if an issue with reading occurs
+	 */
 	public static ElfSymbol createElfSymbol(FactoryBundledWithBinaryReader reader, int symbolIndex,
-			ElfSymbolTable symbolTable, ElfStringTable stringTable, ElfHeader header)
-			throws IOException {
+			ElfSymbolTable symbolTable, ElfHeader header) throws IOException {
 		ElfSymbol elfSymbol = (ElfSymbol) reader.getFactory().create(ElfSymbol.class);
-		elfSymbol.initElfSymbol(reader, symbolIndex, symbolTable, stringTable, header);
+		elfSymbol.initElfSymbol(reader, symbolIndex, symbolTable, header);
 		return elfSymbol;
 	}
 
@@ -115,49 +128,6 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
 	 */
 	public ElfSymbol() {
-	}
-
-	private void initElfSymbol(FactoryBundledWithBinaryReader reader, int symbolIndex,
-			ElfSymbolTable symbolTable, ElfStringTable stringTable, ElfHeader header)
-			throws IOException {
-		this.header = header;
-		this.symbolTable = symbolTable;
-		this.symbolTableIndex = symbolIndex;
-
-		if (header.is32Bit()) {
-			st_name = reader.readNextInt();
-			st_value = reader.readNextInt() & Conv.INT_MASK;
-			st_size = reader.readNextInt() & Conv.INT_MASK;
-			st_info = reader.readNextByte();
-			st_other = reader.readNextByte();
-			st_shndx = reader.readNextShort();
-		}
-		else {
-			st_name = reader.readNextInt();
-			st_info = reader.readNextByte();
-			st_other = reader.readNextByte();
-			st_shndx = reader.readNextShort();
-			st_value = reader.readNextLong();
-			st_size = reader.readNextLong();
-		}
-
-		if (st_name == 0) {
-			if (getType() == STT_SECTION) {
-				ElfSectionHeader[] sections = header.getSections();
-				if (st_shndx < 0 || st_shndx >= sections.length) {
-					//invalid section reference...
-					//this is a bug in objcopy, whereby sections are removed
-					//but the corresponding section symbols are left behind.
-				}
-				else {
-					ElfSectionHeader section = sections[st_shndx];
-					nameAsString = section.getNameAsString();
-				}
-			}
-		}
-		else {
-			nameAsString = stringTable.readString(reader, st_name);
-		}
 	}
 
 	/**
@@ -209,6 +179,69 @@ public class ElfSymbol implements ByteArrayConverter {
 		this.symbolTableIndex = symbolIndex;
 	}
 
+	private void initElfSymbol(FactoryBundledWithBinaryReader reader, int symbolIndex,
+			ElfSymbolTable symbolTable, ElfHeader header) throws IOException {
+		this.header = header;
+		this.symbolTable = symbolTable;
+		this.symbolTableIndex = symbolIndex;
+
+		if (header.is32Bit()) {
+			st_name = reader.readNextInt();
+			st_value = reader.readNextInt() & Conv.INT_MASK;
+			st_size = reader.readNextInt() & Conv.INT_MASK;
+			st_info = reader.readNextByte();
+			st_other = reader.readNextByte();
+			st_shndx = reader.readNextShort();
+		}
+		else {
+			st_name = reader.readNextInt();
+			st_info = reader.readNextByte();
+			st_other = reader.readNextByte();
+			st_shndx = reader.readNextShort();
+			st_value = reader.readNextLong();
+			st_size = reader.readNextLong();
+		}
+
+		if (st_name == 0) {
+			if (getType() == STT_SECTION) {
+				ElfSectionHeader[] sections = header.getSections();
+				if (st_shndx < 0 || st_shndx >= sections.length) {
+					//invalid section reference...
+					//this is a bug in objcopy, whereby sections are removed
+					//but the corresponding section symbols are left behind.
+				}
+				else {
+					ElfSectionHeader section = sections[st_shndx];
+					nameAsString = section.getNameAsString();
+				}
+			}
+		}
+		else {
+			// The string name will be initialized later
+			// in a call to initSymbolName()
+		}
+	}
+
+	/**
+	 * Initialize the string name of the symbol.
+	 * 
+	 * NOTE: This routine MUST be called for each
+	 * ELFSymbol after the elf symbols have been created.
+	 * 
+	 * This is done separately from the initial symbol entry read because
+	 * the string names are in a separate location.  If they are read
+	 * at the same time the reading buffer will jump around and significantly
+	 * degrade reading performance.
+	 * 
+	 * @param reader to read from
+	 * @param stringTable stringTable to initialize symbol name
+	 */
+	public void initSymbolName(FactoryBundledWithBinaryReader reader, ElfStringTable stringTable) {
+		if (nameAsString == null) {
+			nameAsString = stringTable.readString(reader, st_name);
+		}
+	}
+
 	/**
 	 * Get the symbol table containing this symbol
 	 * @return symbol table
@@ -249,27 +282,37 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		ElfSymbol other = (ElfSymbol) obj;
-		if (st_info != other.st_info)
+		if (st_info != other.st_info) {
 			return false;
-		if (st_name != other.st_name)
+		}
+		if (st_name != other.st_name) {
 			return false;
-		if (st_other != other.st_other)
+		}
+		if (st_other != other.st_other) {
 			return false;
-		if (st_shndx != other.st_shndx)
+		}
+		if (st_shndx != other.st_shndx) {
 			return false;
-		if (st_size != other.st_size)
+		}
+		if (st_size != other.st_size) {
 			return false;
-		if (st_value != other.st_value)
+		}
+		if (st_value != other.st_value) {
 			return false;
-		if (symbolTableIndex != other.symbolTableIndex)
+		}
+		if (symbolTableIndex != other.symbolTableIndex) {
 			return false;
+		}
 		return true;
 	}
 

@@ -136,13 +136,13 @@ public class DelayImportDataDirectory extends DataDirectory {
 			createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
 				DelayImportDescriptor.NAME + "_IAT", tmpAddr));
 			markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfIAT(),
-				descriptor.getThunksIAT(), monitor, log);
+				descriptor.getThunksIAT(), true, monitor, log);
 
 			tmpAddr = addr(space, isBinary, descriptor, descriptor.getAddressOfINT());
 			createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
 				DelayImportDescriptor.NAME + "_INT", tmpAddr));
 			markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfINT(),
-				descriptor.getThunksINT(), monitor, log);
+				descriptor.getThunksINT(), false, monitor, log);
 
 			// This table is optional
 			if (descriptor.getAddressOfBoundIAT() != 0) {
@@ -150,7 +150,7 @@ public class DelayImportDataDirectory extends DataDirectory {
 				createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
 					DelayImportDescriptor.NAME + "_Bound_IAT", tmpAddr));
 				markupThunk(program, isBinary, space, descriptor, descriptor.getAddressOfBoundIAT(),
-					descriptor.getThunksBoundIAT(), monitor, log);
+					descriptor.getThunksBoundIAT(), false, monitor, log);
 			}
 
 			// This table is optional
@@ -159,8 +159,8 @@ public class DelayImportDataDirectory extends DataDirectory {
 				createSymbol(program, tmpAddr, SymbolUtilities.getAddressAppendedName(
 					DelayImportDescriptor.NAME + "_Unload_IAT", tmpAddr));
 				markupThunk(program, isBinary, space, descriptor,
-					descriptor.getAddressOfOriginalIAT(), descriptor.getThunksUnloadIAT(), monitor,
-					log);
+					descriptor.getAddressOfOriginalIAT(), descriptor.getThunksUnloadIAT(), false,
+					monitor, log);
 			}
 
 
@@ -224,13 +224,11 @@ public class DelayImportDataDirectory extends DataDirectory {
 						DelayImportDescriptor descriptor,
 						long ptr,
 						List<ThunkData> thunks,
+						boolean isIAT,
 						TaskMonitor monitor,
 						MessageLog log) {
-
-		DataType dt = ntHeader.getOptionalHeader().is64bit() 
-				? (DataType)QWORD 
-				: (DataType)DWORD;
 		
+		boolean is64bit = ntHeader.getOptionalHeader().is64bit();
 		long thunkPtr = va(ptr, isBinary);
 		if (!descriptor.isUsingRVA()) {
 			thunkPtr -= ntHeader.getOptionalHeader().getImageBase();
@@ -240,6 +238,17 @@ public class DelayImportDataDirectory extends DataDirectory {
 			if (monitor.isCancelled()) {
 				return;
 			}
+			DataType dt;
+			if (thunk.isOrdinal() || thunk.getAddressOfData() == 0) {
+				dt = is64bit ? QWORD : DWORD;
+			}
+			else if (isIAT) {
+				dt = is64bit ? Pointer64DataType.dataType : Pointer32DataType.dataType;
+			}
+			else {
+				dt = is64bit ? IBO64 : IBO32;
+			}
+
 			Address thunkAddress = space.getAddress(thunkPtr);
 			PeUtils.createData(program, thunkAddress, dt, log);
 			setEolComment(program, thunkAddress, thunk.getStructName());

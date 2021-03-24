@@ -268,11 +268,11 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processSourceArchiveChanges() throws CancelledException {
 		conflictOption = OPTION_MY;
-		for (int i = 0; i < myArchiveChangeList.size(); i++) {
+		for (Long element : myArchiveChangeList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long id = myArchiveChangeList.get(i).longValue();
+			long id = element.longValue();
 
 			updateSourceArchive(id);
 		}
@@ -318,11 +318,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void processSourceArchiveAdditions() throws CancelledException {
-		for (int i = 0; i < myArchiveAddedList.size(); i++) {
+		for (Long element : myArchiveAddedList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long id = myArchiveAddedList.get(i).longValue();
+			long id = element.longValue();
 
 			UniversalID universalID = new UniversalID(id);
 			SourceArchive mySourceArchive = dtms[MY].getSourceArchive(universalID);
@@ -381,11 +381,11 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processSourceArchiveConflicts() throws CancelledException {
 
-		for (int i = 0; i < archiveConflictList.size(); i++) {
+		for (Long element : archiveConflictList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long sourceArchiveID = archiveConflictList.get(i).longValue();
+			long sourceArchiveID = element.longValue();
 
 			++currentConflictIndex;
 			handleSourceArchiveConflict(sourceArchiveID, currentConflictIndex);
@@ -412,11 +412,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @throws CancelledException if task cancelled
 	 */
 	private void processCategoriesAdded() throws CancelledException {
-		for (int i = 0; i < myCatAddedList.size(); i++) {
+		for (Long element : myCatAddedList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long id = myCatAddedList.get(i).longValue();
+			long id = element.longValue();
 			Category myCat = dtms[MY].getCategory(id);
 			CategoryPath myPath = myCat.getCategoryPath();
 			if (dtms[RESULT].containsCategory(myPath)) {
@@ -432,11 +432,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private void processCategoryConflicts() throws CancelledException {
 
-		for (int i = 0; i < catConflictList.size(); i++) {
+		for (Long element : catConflictList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long id = catConflictList.get(i).longValue();
+			long id = element.longValue();
 
 			++currentConflictIndex;
 			handleCategoryConflict(id, currentConflictIndex);
@@ -460,11 +460,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void processCategoryChanges() throws CancelledException {
-		for (int i = 0; i < myCatChangeList.size(); i++) {
+		for (Long element : myCatChangeList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long id = myCatChangeList.get(i).longValue();
+			long id = element.longValue();
 
 			processCategoryRenamed(id);
 			processCategoryMoved(id);
@@ -473,10 +473,10 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void processCategoriesDeleted() throws CancelledException {
-		for (int i = 0; i < myCatChangeList.size(); i++) {
+		for (Long element : myCatChangeList) {
 			currentMonitor.checkCanceled();
 
-			long id = myCatChangeList.get(i).longValue();
+			long id = element.longValue();
 			processCategoryDeleted(id);
 		}
 	}
@@ -499,8 +499,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		if (fixUpList.size() > 0) {
 			StringBuffer sb = new StringBuffer();
 			sb.append("The following data types are unresolved:\n");
-			for (int i = 0; i < fixUpList.size(); i++) {
-				FixUpInfo info = fixUpList.get(i);
+			for (FixUpInfo info : fixUpList) {
 				DataTypeManager dtm = info.getDataTypeManager();
 				DataType dt = dtm.getDataType(info.id);
 				DataType compDt = dtm.getDataType(info.compID);
@@ -1128,26 +1127,22 @@ public class DataTypeMergeManager implements MergeResolver {
 				fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID, Integer.MAX_VALUE,
 					resolvedDataTypes));
 				fixUpIDSet.add(sourceDtID);
+
+				// substitute datatype to preserve component name for subsequent fixup
+				resultCompDt = Undefined1DataType.dataType;
 			}
 		}
 		try {
-			if (resultCompDt != null) {
-				// There is a matching component data type in the result.
-				try {
-					// If I have compDt, it should now be from result DTM.
-					destStruct.setFlexibleArrayComponent(resultCompDt, flexDtc.getFieldName(),
-						comment);
-				}
-				catch (IllegalArgumentException e) {
-					displayError(destStruct, e);
-					DataType badDt = Undefined1DataType.dataType;
-					comment = "Couldn't add " + resultCompDt.getDisplayName() + " here. " +
-						e.getMessage() + " " + ((comment != null) ? (" " + comment) : "");
-					destStruct.setFlexibleArrayComponent(badDt, flexDtc.getFieldName(), comment);
-				}
+			// Apply resultCompDt as flex array
+			try {
+				destStruct.setFlexibleArrayComponent(resultCompDt, flexDtc.getFieldName(), comment);
 			}
-			else {
-				destStruct.clearFlexibleArrayComponent();
+			catch (IllegalArgumentException e) {
+				displayError(destStruct, e);
+				DataType badDt = Undefined1DataType.dataType;
+				comment = "Couldn't add " + resultCompDt.getDisplayName() + " here. " +
+					e.getMessage() + " " + ((comment != null) ? (" " + comment) : "");
+				destStruct.setFlexibleArrayComponent(badDt, flexDtc.getFieldName(), comment);
 			}
 		}
 		catch (IllegalArgumentException e) {
@@ -1216,7 +1211,9 @@ public class DataTypeMergeManager implements MergeResolver {
 					}
 					else {
 						// must have been deleted in LATEST
-						// put an entry in the fixup list if this is a conflict
+						// put an entry in the fixup list if this is a conflict.
+						// NOTE: This may also be caused by a replaced datatype but 
+						// we have no indication as to what the replacment was
 						deletedInLatest = true;
 					}
 				}
@@ -1599,11 +1596,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private void processDataTypeChanges() throws CancelledException {
 
-		for (int i = 0; i < myDtChangeList.size(); i++) {
+		for (Long element : myDtChangeList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long id = myDtChangeList.get(i).longValue();
+			long id = element.longValue();
 
 			DataType dt = dtms[MY].getDataType(id);
 			if ((dt instanceof Pointer) || (dt instanceof Array) || (dt instanceof BuiltIn)) {
@@ -1681,8 +1678,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private boolean isParent(CategoryPath catPath) {
-		for (int i = 0; i < myDtAddedList.size(); i++) {
-			Long id = myDtAddedList.get(i);
+		for (Long id : myDtAddedList) {
 			DataType dt = dtms[MY].getDataType(id.longValue());
 			if (catPath.equals(dt.getCategoryPath())) {
 				return true;
@@ -2225,10 +2221,10 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void processDataTypesDeleted() throws CancelledException {
-		for (int i = 0; i < myDtChangeList.size(); i++) {
+		for (Long element : myDtChangeList) {
 			currentMonitor.checkCanceled();
 
-			long id = myDtChangeList.get(i).longValue();
+			long id = element.longValue();
 			processDataTypeDeleted(id);
 		}
 	}
@@ -2237,11 +2233,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * 
 	 */
 	private void processDataTypesAdded() throws CancelledException {
-		for (int i = 0; i < myDtAddedList.size(); i++) {
+		for (Long element : myDtAddedList) {
 			currentMonitor.checkCanceled();
 			currentMonitor.setProgress(++progressIndex);
 
-			long myDtKey = myDtAddedList.get(i).longValue();
+			long myDtKey = element.longValue();
 			DataType myDt = dtms[MY].getDataType(myDtKey);
 
 			if (equivalentDataTypeFound(myDtKey, myDt)) {
@@ -3360,7 +3356,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				if (nextOrdinal > maxOrdinal) {
 					break;
 				}
-				struct.getComponent(nextOrdinal);
+				dtc = struct.getComponent(nextOrdinal);
 			}
 			return null;
 		}

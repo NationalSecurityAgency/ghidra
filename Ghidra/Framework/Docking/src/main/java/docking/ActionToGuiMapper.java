@@ -15,7 +15,6 @@
  */
 package docking;
 
-import java.awt.event.MouseEvent;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -134,7 +133,7 @@ public class ActionToGuiMapper {
 		return menuGroupMap;
 	}
 
-	public void showPopupMenu(ComponentPlaceholder componentInfo, MouseEvent e) {
-		popupActionManager.popupMenu(componentInfo, e);
+	public void showPopupMenu(ComponentPlaceholder componentInfo, PopupMenuContext popupContext) {
+		popupActionManager.popupMenu(componentInfo, popupContext);
 	}
 }

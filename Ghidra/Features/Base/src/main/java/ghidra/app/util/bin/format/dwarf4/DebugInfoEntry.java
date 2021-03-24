@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeFactory;
-import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeValue;
+import ghidra.app.util.bin.format.dwarf4.attribs.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 
@@ -33,6 +32,14 @@ import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
  *
  */
 public class DebugInfoEntry {
+
+	/**
+	 * List of common DWARF attributes that are not used currently in Ghidra.  These attributes values will be
+	 * thrown away during reading to save some memory.  There are lots of attributes that Ghidra doesn't
+	 * currently use, but they do not appear frequently enough to consume a significant amount of memory.
+	 */
+	private static final Set<Integer> ATTRIBUTES_TO_SKIP =
+		Set.of(DWARFAttribute.DW_AT_sibling, DWARFAttribute.DW_AT_accessibility);
 
 	private final DWARFCompilationUnit compilationUnit;
 	private final long offset;
@@ -53,7 +60,7 @@ public class DebugInfoEntry {
 	public static DebugInfoEntry read(BinaryReader reader, DWARFCompilationUnit unit,
 			DWARFAttributeFactory attributeFactory) throws IOException {
 		long offset = reader.getPointerIndex();
-		int abbreviationCode = LEB128.decode32u(reader);
+		int abbreviationCode = LEB128.readAsUInt32(reader);
 
 		// Check for terminator DIE
 		if (abbreviationCode == 0) {
@@ -73,6 +80,13 @@ public class DebugInfoEntry {
 			DWARFAttributeSpecification attributeSpec = attributeSpecs[i];
 			result.attributes[i] =
 				attributeFactory.read(reader, unit, attributeSpec.getAttributeForm());
+
+			if (ATTRIBUTES_TO_SKIP.contains(attributeSpec.getAttribute())) {
+				// throw away the object holding the value and replace it with
+				// the static boolean true value object to hold its place in
+				// the list.  This saves a little memory
+				result.attributes[i] = DWARFBooleanAttribute.TRUE;
+			}
 		}
 
 		return result;

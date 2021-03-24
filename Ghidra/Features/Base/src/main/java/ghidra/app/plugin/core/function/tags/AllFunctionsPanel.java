@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.awt.BorderLayout;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -100,13 +99,19 @@ public class AllFunctionsPanel extends JPanel {
 	 * @param tags the selected tags
 	 */
 	public void setSelectedTags(Set<FunctionTag> tags) {
+
+		Set<FunctionTag> currentTags = model.getTags();
+		if (Objects.equals(tags, currentTags)) {
+			return;
+		}
+
 		String tagNames = tags.stream()
 				.map(t -> t.getName())
 				.collect(Collectors.joining(" or "))
 				.toString();
 
 		titleLabel.setText("Functions With Tag: " + tagNames);
-		model.setSelectedTags(tags);
+		model.setTags(tags);
 	}
 
 	/**

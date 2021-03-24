@@ -46,7 +46,8 @@ import generic.test.AbstractGTest;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.archive.Archive;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
@@ -1175,7 +1176,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 		JPanel editorPanel = new JPanel(new BorderLayout());
 		DataTypeSelectionEditor editor =
-			new DataTypeSelectionEditor(tool, -1, AllowedDataTypes.ALL);
+			new DataTypeSelectionEditor(tool, AllowedDataTypes.ALL);
 		editor.setPreferredDataTypeManager(program.getDataTypeManager());
 
 		editorPanel.add(panelUpdateField, BorderLayout.SOUTH);

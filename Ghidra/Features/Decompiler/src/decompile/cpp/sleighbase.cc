@@ -15,7 +15,49 @@
  */
 #include "sleighbase.hh"
 
-const int4 SleighBase::SLA_FORMAT_VERSION = 2;
+const int4 SleighBase::SLA_FORMAT_VERSION = 3;
+
+const uintb SleighBase::MAX_UNIQUE_SIZE = 128;
+
+int4 SourceFileIndexer::index(const string filename){
+	auto it = fileToIndex.find(filename);
+	if (fileToIndex.end() != it){
+		return it->second;
+	}
+	fileToIndex[filename] = leastUnusedIndex;
+	indexToFile[leastUnusedIndex] = filename;
+	return leastUnusedIndex++;
+}
+
+int4 SourceFileIndexer::getIndex(string filename){
+	return fileToIndex[filename];
+}
+
+string SourceFileIndexer::getFilename(int4 index){
+	return indexToFile[index];
+}
+
+void SourceFileIndexer::restoreXml(const Element *el){
+	const List &sourceFiles(el->getChildren());
+	List::const_iterator iter = sourceFiles.begin();
+	for (; iter != sourceFiles.end(); ++iter){
+		string filename = (*iter)->getAttributeValue("name");
+		int4 index = stoi((*iter)->getAttributeValue("index"),NULL,10);
+		fileToIndex[filename] = index;
+		indexToFile[index] = filename;
+	}
+}
+
+void SourceFileIndexer::saveXml(ostream& s) const {
+	s << "<sourcefiles>\n";
+	for (int4 i = 0; i < leastUnusedIndex; ++i){
+		s << ("<sourcefile name=\"");
+		const char *str = indexToFile.at(i).c_str();
+		xml_escape(s,str);
+		s << "\" index=\"" << dec << i << "\"/>\n";
+	}
+	s << "</sourcefiles>\n";
+}
 
 SleighBase::SleighBase(void)
 
@@ -155,7 +197,7 @@ void SleighBase::saveXml(ostream &s) const
   if (numSections != 0)
     a_v_u(s,"numsections",numSections);
   s << ">\n";
-
+  indexer.saveXml(s);
   s << "<spaces";
   a_v(s,"defaultspace",getDefaultCodeSpace()->getName());
   s << ">\n";
@@ -227,10 +269,12 @@ void SleighBase::restoreXml(const Element *el)
   List::const_iterator iter;
   iter = list.begin();
   while((*iter)->getName() == "floatformat") {
-    floatformats.push_back(FloatFormat());
+    floatformats.emplace_back();
     floatformats.back().restoreXml(*iter);
     ++iter;
   }
+  indexer.restoreXml(*iter);
+  iter++;
   restoreXmlSpaces(*iter,this);
   iter++;
   symtab.restoreXml(*iter,this);

@@ -20,6 +20,7 @@ import static ghidra.program.model.data.DataTypeConflictHandler.ConflictResult.*
 import java.util.*;
 
 import ghidra.program.model.data.*;
+import ghidra.util.SystemUtilities;
 
 /**
  * This {@link DataTypeConflictHandler conflict handler} attempts to match
@@ -167,7 +168,8 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 			DataTypeComponent fullDTCAt = (partDTC.getDataType() instanceof BitFieldDataType)
 					? getBitfieldByOffsets(full, partDTC)
 					: full.getComponentAt(partDTC.getOffset());
-			if (fullDTCAt == null || fullDTCAt.getOffset() != partDTC.getOffset()) {
+			if (fullDTCAt == null || fullDTCAt.getOffset() != partDTC.getOffset() ||
+				!SystemUtilities.isEqual(fullDTCAt.getFieldName(), partDTC.getFieldName())) {
 				return false;
 			}
 			DataType partDT = partDTC.getDataType();
@@ -218,7 +220,8 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	 */
 	private ConflictResult doStrictCompare(DataType addedDataType, DataType existingDataType,
 			Set<Long> visitedDataTypes) {
-		if (!addVisited(existingDataType, addedDataType, visitedDataTypes)) {
+		if (addedDataType == existingDataType ||
+			!addVisited(existingDataType, addedDataType, visitedDataTypes)) {
 			return USE_EXISTING;
 		}
 

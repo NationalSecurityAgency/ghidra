@@ -72,6 +72,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 
 	@Override
 	public void close() {
+		super.close();
 		filterPanel.dispose();
 	}
 

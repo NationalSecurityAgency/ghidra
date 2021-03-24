@@ -1,0 +1,32 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Contrived example of reading and writing to a two dimensional array.
+-->
+<bytechunk space="ram" offset="0x400590" readonly="true">
+554889e5897dec8975e8c745fc140000
+00eb758b05b73f2c008b55ec4863ca48
+988b55fc4863d24869f0d00700004889
+d048c1e0024801d04801c04801f04801
+c88b0485601060008945f88b057f3f2c
+008b55e84863ca48988b55fc4863d248
+69f0d00700004889d048c1e0024801d0
+4801c04801f0488d14088b45f8890495
+601060008345fc01837dfc1d7e858b45
+f85dc3
+</bytechunk>
+<symbol space="ram" offset="0x400590" name="array_access"/>
+</binaryimage>
+<script>
+  <com>map addr r0x6c4560 int4 globindex</com>
+  <com>map addr r0x601060 int4 myarray[100][200][10]</com>
+  <com>parse line extern int4 array_access(int4 valin,int4 valout);</com>
+  <com>lo fu array_access</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Three dimension #1" min="1" max="1">iStack16 = myarray\[globindex\]\[iStack12\]\[valin\];</stringmatch>
+<stringmatch name="Three dimension #2" min="1" max="1">myarray\[globindex\]\[iStack12\]\[valout\] = iStack16;</stringmatch>
+<stringmatch name="Three dimension #3" min="0" max="0"> \* </stringmatch>
+</decompilertest>

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +25,8 @@ import javax.swing.plaf.MenuItemUI;
 
 public class DockingCheckboxMenuItemUI extends DockingMenuItemUI {
 	public static ComponentUI createUI(JComponent c) {
-		LookAndFeel underlying = UIManager.getLookAndFeel();
 		DockingCheckboxMenuItemUI result = new DockingCheckboxMenuItemUI();
-		result.ui = (MenuItemUI) underlying.getDefaults().getUI(c);
+		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
 	}
 }

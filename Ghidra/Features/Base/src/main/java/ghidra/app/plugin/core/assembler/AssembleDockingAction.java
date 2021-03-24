@@ -47,6 +47,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -272,6 +273,10 @@ public class AssembleDockingAction extends DockingAction {
 
 		prog = cur.getProgram();
 		addr = cur.getAddress();
+		MemoryBlock block = prog.getMemory().getBlock(addr);
+		if (block == null || !block.isInitialized()) {
+			return;
+		}
 		lang = prog.getLanguage();
 
 		AssemblyRating rating =
@@ -351,11 +356,21 @@ public class AssembleDockingAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		// currently on work on the listing
-		Object obj = context.getContextObject();
-		if (obj instanceof ListingActionContext) {
-			return true;
+		// currently only works on a listing
+		if (!(context instanceof ListingActionContext)) {
+			return false;
 		}
-		return false;
+
+		ListingActionContext lac = (ListingActionContext) context;
+
+		Program program = lac.getProgram();
+		if (program == null) {
+			return false;
+		}
+		MemoryBlock block = program.getMemory().getBlock(lac.getAddress());
+		if (block == null || !block.isInitialized()) {
+			return false;
+		}
+		return true;
 	}
 }

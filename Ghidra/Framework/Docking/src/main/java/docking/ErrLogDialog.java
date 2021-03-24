@@ -43,7 +43,7 @@ import ghidra.util.table.column.GColumnRenderer;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * A dialog that takes error text and displays it with an option details button.  If there is 
+ * A dialog that takes error text and displays it with an option details button.  If there is
  * an {@link ErrorReporter}, then a button is provided to report the error.
  */
 public class ErrLogDialog extends AbstractErrDialog {
@@ -71,6 +71,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 	private static ErrorReporter errorReporter;
 
 	private List<ErrorEntry> errors = new ArrayList<>();
+	private String baseTitle;
 
 	public static ErrLogDialog createExceptionDialog(String title, String message, Throwable t) {
 		return new ErrLogDialog(title, message, t);
@@ -78,6 +79,8 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 	private ErrLogDialog(String title, String message, Throwable throwable) {
 		super(title != null ? title : "Error");
+
+		baseTitle = getTitle();
 
 		ErrorEntry error = new ErrorEntry(message, throwable);
 		errors.add(error);
@@ -146,7 +149,8 @@ public class ErrLogDialog extends AbstractErrDialog {
 		introPanel.add(
 			new GIconLabel(UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT),
 			BorderLayout.WEST);
-		introPanel.add(new GHtmlLabel(HTMLUtilities.toHTML(message)) {
+		String html = HTMLUtilities.toHTML(message);
+		introPanel.add(new GHtmlLabel(html) {
 			@Override
 			public Dimension getPreferredSize() {
 				// rendering HTML the label can expand larger than the screen; keep it reasonable
@@ -246,6 +250,11 @@ public class ErrLogDialog extends AbstractErrDialog {
 		return errors.size();
 	}
 
+	@Override
+	String getBaseTitle() {
+		return baseTitle;
+	}
+
 	private class ErrorDetailsSplitPane extends JSplitPane {
 
 		private final double TOP_PREFERRED_RESIZE_WEIGHT = .80;
@@ -323,7 +332,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 			setLayout(new BorderLayout());
 			model = new ErrEntryTableModel();
 			errorsTable = new GTable(model);
-			tableFilterPanel = new GTableFilterPanel<ErrorEntry>(errorsTable, model);
+			tableFilterPanel = new GTableFilterPanel<>(errorsTable, model);
 
 			errorsTable.getSelectionManager().addListSelectionListener(e -> {
 				if (e.getValueIsAdjusting()) {
@@ -377,6 +386,16 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 			validate();
 			textDetails.scrollToBottom();
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			Dimension size = super.getPreferredSize();
+
+			// Cap preferred width to something reasonable; most displays have more than 1000 width.
+			// Users can still resize as desired
+			size.width = Math.min(size.width, 1000);
+			return size;
 		}
 
 		void setError(ErrorEntry e) {
@@ -458,7 +477,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 		@Override
 		protected TableColumnDescriptor<ErrorEntry> createTableColumnDescriptor() {
-			TableColumnDescriptor<ErrorEntry> descriptor = new TableColumnDescriptor<ErrorEntry>();
+			TableColumnDescriptor<ErrorEntry> descriptor = new TableColumnDescriptor<>();
 			descriptor.addVisibleColumn(new IdColumn(), 1, true);
 			descriptor.addVisibleColumn(new MessageColumn());
 			descriptor.addHiddenColumn(new DetailsColumn());

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +19,11 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.expression.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
+import ghidra.util.xml.SpecXmlUtils;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -40,8 +40,40 @@ public class ContextSymbol extends ValueSymbol {
 	
 	public VarnodeSymbol getVarnode() { return vn; }
 	
-	public int getLow() { return low; }
-	public int getHigh() { return high; }
+	/**
+	 * Get starting bit of context value within its context register.
+	 * @return the starting bit
+	 */
+	public int getLow() {
+		return low;
+	}
+
+	/**
+	 * Get ending bit of context value within its context register.
+	 * @return the ending bit
+	 */
+	public int getHigh() {
+		return high;
+	}
+
+	/**
+	 * Get the starting bit of the context value within the "global" buffer, after
+	 * the values have been packed.
+	 * @return the starting bit
+	 */
+	public int getInternalLow() {
+		return ((ContextField) patval).getStartBit();
+	}
+
+	/**
+	 * Get the ending bit of the context value within the "global" buffer, after
+	 * the values have been packed.
+	 * @return the ending bit
+	 */
+
+	public int getInternalHigh() {
+		return ((ContextField) patval).getEndBit();
+	}
 	public boolean followsFlow() { return flow; }
 	
 	@Override

@@ -23,15 +23,19 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.InvalidInputException;
 
 public class CliSigMethodRef extends CliAbstractSig {
-
+	private long dataOffset;
 	private CliRetType retType;
 	private CliParam params[];
 	private int sizeOfCount;
 	private byte flags;
+	private int genericParamCount;
+	private int sizeOfGenericCount;
+
 	private int sentinelIndex; // SENTINEL is before the parameter index in this field
 
 	private final int METHODREFSIG_FLAGS_DEFAULT = 0x00;
 	private final int METHODREFSIG_FLAGS_VARARG = 0x05;
+	private final int METHODREFSIG_FLAGS_GENERIC = 0x10;
 	private final int METHODREFSIG_FLAGS_HASTHIS = 0x20;
 	private final int METHODREFSIG_FLAGS_EXPLICITTHIS = 0x40;
 
@@ -41,7 +45,15 @@ public class CliSigMethodRef extends CliAbstractSig {
 
 		// Flags is similar to a MethodDef unless vararg is used.
 		BinaryReader reader = getContentsReader();
+		dataOffset = reader.getPointerIndex();
+
 		flags = reader.readNextByte();
+
+		if ((flags & METHODREFSIG_FLAGS_GENERIC) == METHODREFSIG_FLAGS_GENERIC) {
+			long origIndex = reader.getPointerIndex();
+			genericParamCount = decodeCompressedUnsignedInt(reader);
+			sizeOfGenericCount = (int) (reader.getPointerIndex() - origIndex);
+		}
 
 		long origIndex = reader.getPointerIndex();
 		int paramCount = decodeCompressedUnsignedInt(reader);
@@ -80,12 +92,21 @@ public class CliSigMethodRef extends CliAbstractSig {
 	@Override
 	public DataType getContentsDataType() {
 		StructureDataType struct = new StructureDataType(new CategoryPath(PATH), getName(), 0);
-		struct.add(BYTE, "flags", "ORed VARARG and HASTHIS/EXPLICITTHIS");
+		struct.add(BYTE, "Flags", "ORed VARARG/GENERIC/HASTHIS/EXPLICITTHIS");
+		if (genericParamCount > 0) {
+			struct.add(getDataTypeForBytes(sizeOfGenericCount), "GenParamCount",
+				"Number of generic paramameters for the method");
+		}
 		struct.add(getDataTypeForBytes(sizeOfCount), "ParamCount",
-			"Number of param types to follow RetType");
+			"Number of parameter types to follow RetType");
 		struct.add(retType.getDefinitionDataType(), "RetType", null);
 		for (int i = 0; i < params.length; i++) {
-			struct.add(params[i].getDefinitionDataType(), "Type" + i, null);
+			if (sentinelIndex == i) {
+				struct.add(CliTypeCodeDataType.dataType,
+					CliElementType.ELEMENT_TYPE_SENTINEL.toString(), "SENTINEL");
+			}
+
+			struct.add(params[i].getDefinitionDataType(), "Param" + i, null);
 		}
 		return struct;
 	}

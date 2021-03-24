@@ -1,0 +1,35 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   A loop that should not recover as a for-loop as the loop variable is potentially aliased after the iterate statement.
+   Contrived example.
+-->
+<bytechunk space="ram" offset="0x400690" readonly="true">
+554889e54883ec20897decc745f00100
+0000c745f400000000c745f802000000
+c745fc03000000eb298b45f483c00189
+45f4488d45f04889c7e8adffffff8b45
+f489c6bf5d084000b800000000e85efd
+ffff8b45f43945ec7fcf90c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x40085d" readonly="true">
+  56616c203d2025640a00
+</bytechunk>
+<symbol space="ram" offset="0x400690" name="noforloop_alias"/>
+<symbol space="ram" offset="0x400440" name="printf"/>
+<symbol space="ram" offset="0x40067b" name="might_change"/>
+</binaryimage>
+<script>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>parse line extern void noforloop_alias(int4 max);</com>
+  <com>lo fu noforloop_alias</com>
+  <com>map addr s0xffffffffffffffe8 int4 i[4]</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="No for-loop alias #1" min="1" max="1">while \(i\[1\] &lt; max\)</stringmatch>
+<stringmatch name="No for-loop alias #2" min="1" max="1">i\[1\] = i\[1\] \+ 1;</stringmatch>
+<stringmatch name="No for-loop alias #3" min="4" max="4">i\[[0-3]\] = [0-3];</stringmatch>
+<stringmatch name="No for-loop alias #4" min="1" max="1">might_change\(i\);</stringmatch>
+</decompilertest>

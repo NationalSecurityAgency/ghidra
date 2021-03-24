@@ -29,9 +29,16 @@ import ghidra.service.graph.AttributedVertex;
 public class JgtVertexFocusingPlugin<V, E> extends AbstractJgtGraphMousePlugin<V, E> {
 
 	private DefaultGraphDisplay graphDisplay;
+	protected int singleSelectionMask;
 
-	public JgtVertexFocusingPlugin(DefaultGraphDisplay graphDisplay) {
+	public JgtVertexFocusingPlugin(int singleSelectionMask, DefaultGraphDisplay graphDisplay) {
+		this.singleSelectionMask = singleSelectionMask;
 		this.graphDisplay = graphDisplay;
+	}
+
+	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == singleSelectionMask;
 	}
 
 	@Override

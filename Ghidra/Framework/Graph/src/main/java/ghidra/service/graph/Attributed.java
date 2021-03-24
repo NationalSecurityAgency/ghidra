@@ -20,6 +20,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.text.StringEscapeUtils;
 
+import com.google.common.base.Splitter;
+
 public class Attributed {
 	/**
 	 * cache of the html rendering of the vertex attributes
@@ -84,7 +86,7 @@ public class Attributed {
 
 	/**
 	 * Returns the number of attributes defined
-	 * 
+	 *
 	 * @return the number of attributes defined
 	 */
 	public int size() {
@@ -162,7 +164,9 @@ public class Attributed {
 		for (Map.Entry<String, String> entry : entries) {
 			buf.append(entry.getKey());
 			buf.append(":");
-			buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
+			String value = StringEscapeUtils.escapeHtml4(entry.getValue());
+			String split = String.join("<br>", Splitter.on('\n').split(value));
+			buf.append(split);
 			buf.append("<br>");
 		}
 		htmlString = buf.toString();

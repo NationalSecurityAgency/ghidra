@@ -82,7 +82,6 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcPrintCTypes(),"print","C","types");
   status->registerCom(new IfcPrintCXml(),"print","C","xml");
   status->registerCom(new IfcPrintParamMeasures(),"print","parammeasures");
-  status->registerCom(new IfcPrintParamMeasuresXml(),"print","parammeasures","xml");
   status->registerCom(new IfcProduceC(),"produce","C");
   status->registerCom(new IfcProducePrototypes(),"produce","prototypes");
   status->registerCom(new IfcPrintRaw(),"print","raw");
@@ -97,7 +96,6 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcBreakaction(),"break","action");
   status->registerCom(new IfcPrintSpaces(),"print","spaces");
   status->registerCom(new IfcPrintHigh(),"print","high");
-  status->registerCom(new IfcParamIDAnalysis(),"paramid","analysis");
   status->registerCom(new IfcPrintTree(),"print","tree","varnode");
   status->registerCom(new IfcPrintBlocktree(),"print","tree","block");
   status->registerCom(new IfcPrintLocalrange(),"print","localrange");
@@ -148,6 +146,9 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
 #endif
 }
 
+/// Runs over every function in the scope, or any sub-scope , calling
+/// iterationCallback()
+/// \param scope is the given scope
 void IfaceDecompCommand::iterateScopesRecursive(Scope *scope)
 
 {
@@ -161,6 +162,8 @@ void IfaceDecompCommand::iterateScopesRecursive(Scope *scope)
   }
 }
 
+/// Runs over every function in the scope calling iterationCallback().
+/// \param scope is the given scope
 void IfaceDecompCommand::iterateFunctionsAddrOrder(Scope *scope)
 
 {
@@ -176,6 +179,8 @@ void IfaceDecompCommand::iterateFunctionsAddrOrder(Scope *scope)
   }
 }
 
+/// Scopes are traversed depth-first, then within a scope, functions are
+/// traversed in address order.
 void IfaceDecompCommand::iterateFunctionsAddrOrder(void)
 
 {
@@ -184,6 +189,8 @@ void IfaceDecompCommand::iterateFunctionsAddrOrder(void)
   iterateScopesRecursive(dcp->conf->symboltab->getGlobalScope());
 }
 
+/// Traversal is based on the current CallGraph for the program.
+/// Child functions are traversed before their parents.
 void IfaceDecompCommand::iterateFunctionsLeafOrder(void)
 
 {
@@ -233,9 +240,13 @@ void IfaceDecompData::allocateCallGraph(void)
   cgraph = new CallGraph(conf);
 }
 
+/// This is called if a command throws a low-level error.
+/// It clears any analysis on the function, sets the current function
+/// to null, and issues a warning.
+/// \param s is the stream to write the warning to
 void IfaceDecompData::abortFunction(ostream &s)
 
-{				// Clear references to current function
+{
   if (fd == (Funcdata *)0) return;
   s << "Unable to proceed with function: " << fd->getName() << endl;
   conf->clearAnalysis(fd);
@@ -251,14 +262,30 @@ void IfaceDecompData::clearArchitecture(void)
   fd = (Funcdata *)0;
 }
 
+/// \class IfcComment
+/// \brief A comment within a command script: `% A comment in a script`
+///
+/// This commands does nothing but attaches to comment tokens like:
+///   - \#
+///   - %
+///   - //
+///
+/// allowing comment lines in a script file
 void IfcComment::execute(istream &s)
 {
   //Do nothing
 }
 
+/// \class IfcOption
+/// \brief Adjust a decompiler option: `option <optionname> [<param1>] [<param2>] [<param3>]`
+///
+/// Passes command-line parameters to an ArchOption object registered with
+/// the current architecture's OptionDatabase.  Options are looked up by name
+/// and can be configure with up to 3 parameters.  Options generally report success
+/// or failure back to the console.
 void IfcOption::execute(istream &s)
 
-{ // Adjust a generic option
+{
   string optname;
   string p1,p2,p3;
   
@@ -293,6 +320,12 @@ void IfcOption::execute(istream &s)
   }
 }
 
+/// \class IfcParseFile
+/// \brief Parse a file with C declarations: `parse file <filename>`
+///
+/// The file must contain C syntax data-type and function declarations.
+/// Data-types become part of the program, and function declarations,
+/// if the symbol already exists, associate the prototype with the symbol.
 void IfcParseFile::execute(istream &s)
 
 {  
@@ -320,6 +353,16 @@ void IfcParseFile::execute(istream &s)
   fs.close();
 }
 
+/// \class IfcParseLine
+/// \brief Parse a line of C syntax: `parse line ...`
+///
+/// The line can contain a declaration either a data-type or a function prototype:
+///    - `parse line typedef int4 *specialint;`
+///    - `parse line struct mystruct { int4 a; int4 b; }`
+///    - `parse line extern void myfunc(int4 a,int4 b);`
+///
+/// Data-types go straight into the program.  For a prototype, the function symbol
+/// must already exist.
 void IfcParseLine::execute(istream &s)
 
 {  
@@ -339,6 +382,12 @@ void IfcParseLine::execute(istream &s)
   }
 }
 
+/// \class IfcAdjustVma
+/// \brief Change the base address of the load image: `adjust vma 0xabcd0123`
+///
+/// The provided parameter is added to the current base address of the image.
+/// This only affects the address of bytes in the image and so should be done
+/// before functions and other symbols are layed down.
 void IfcAdjustVma::execute(istream &s)
 
 {
@@ -358,32 +407,47 @@ void IfcAdjustVma::execute(istream &s)
 static void jump_callback(Funcdata &orig,Funcdata &fd);
 #endif
 
-static void IfcFollowFlow(ostream &s,IfaceDecompData *dcp,const Address &offset,int4 size)
+/// \brief Generate raw p-code for the current function
+///
+/// Follow flow from the entry point of the function and generate the
+/// raw p-code ops for all instructions, up to \e return instructions.
+/// If a \e size in bytes is provided, it bounds the memory region where flow
+/// can be followed.  Otherwise, a zero \e size allows unbounded flow tracing.
+/// \param s is a output stream for reporting function details or errors
+/// \param size (if non-zero) is the maximum number of bytes to disassemble
+void IfaceDecompData::followFlow(ostream &s,int4 size)
 
 {
 #ifdef OPACTION_DEBUG
-  if (dcp->jumptabledebug)
-    dcp->fd->enableJTCallback(jump_callback);
+  if (jumptabledebug)
+    fd->enableJTCallback(jump_callback);
 #endif
   try {
     if (size==0) {
-      Address baddr(dcp->fd->getAddress().getSpace(),0);
-      Address eaddr(dcp->fd->getAddress().getSpace(),dcp->fd->getAddress().getSpace()->getHighest());
-      dcp->fd->followFlow(baddr,eaddr);
+      Address baddr(fd->getAddress().getSpace(),0);
+      Address eaddr(fd->getAddress().getSpace(),fd->getAddress().getSpace()->getHighest());
+      fd->followFlow(baddr,eaddr);
     }
     else
-      dcp->fd->followFlow(offset,offset+size);
-    s << "Function " << dcp->fd->getName() << ": ";
-    dcp->fd->getAddress().printRaw(s);
+      fd->followFlow(fd->getAddress(),fd->getAddress()+size);
+    s << "Function " << fd->getName() << ": ";
+    fd->getAddress().printRaw(s);
     s << endl;
   } catch(RecovError &err) {
-    s << "Function " << dcp->fd->getName() << ": " << err.explain << endl;
+    s << "Function " << fd->getName() << ": " << err.explain << endl;
   }
 }
 
+/// \class IfcFuncload
+/// \brief Make a specific function current: `load function <functionname>`
+///
+/// The name must be a fully qualified symbol with "::" separating namespaces.
+/// If the symbol represents a function, that function becomes \e current for
+/// the console. If there are bytes for the function, raw p-code and control-flow
+/// are calculated.
 void IfcFuncload::execute(istream &s)
 
-{				// Load a function into memory
+{
   string funcname;
   Address offset;
 
@@ -401,12 +465,19 @@ void IfcFuncload::execute(istream &s)
     throw IfaceExecutionError("Unknown function name: "+funcname);
 
   if (!dcp->fd->hasNoCode())
-    IfcFollowFlow(*status->optr,dcp,dcp->fd->getAddress(),0);
+    dcp->followFlow(*status->optr,0);
 }
 
+/// \class IfcAddrrangeLoad
+/// \brief Create a new function at an address: `load addr <address> [<funcname>]`
+///
+/// A new function is created at the provided address.  If a name is provided, this
+/// becomes the function symbol, otherwise a default name is generated.
+/// The function becomes \e current for the interface, and if bytes are present,
+/// raw p-code and control-flow are generated.
 void IfcAddrrangeLoad::execute(istream &s)
 
-{				// Load address range as function
+{
   int4 size;
   string name;
   Address offset=parse_machaddr(s,size,*dcp->conf->types); // Read required address
@@ -421,15 +492,22 @@ void IfcAddrrangeLoad::execute(istream &s)
   if (name.empty())
     dcp->conf->nameFunction(offset,name); // Pick default name if necessary
   dcp->fd = dcp->conf->symboltab->getGlobalScope()->addFunction( offset,name)->getFunction();
-  IfcFollowFlow(*status->optr,dcp,offset,size);
+  dcp->followFlow(*status->optr,size);
 }
 
+/// \class IfcCleararch
+/// \brief Clear the current architecture/program: `clear architecture`
 void IfcCleararch::execute(istream &s)
 
 {
   dcp->clearArchitecture();
 }
 
+/// \class IfcReadSymbols
+/// \brief Read in symbols from the load image: `read symbols`
+///
+/// If the load image format encodes symbol information.  These are
+/// read in and attached to the appropriate address.
 void IfcReadSymbols::execute(istream &s)
 
 {
@@ -441,6 +519,16 @@ void IfcReadSymbols::execute(istream &s)
   dcp->conf->readLoaderSymbols("::");
 }
 
+/// \class IfcMapaddress
+/// \brief Map a new symbol into the program: `map address <address> <typedeclaration>`
+///
+/// Create a new variable in the current scope
+/// \code
+///    map address r0x1000 int4 globalvar
+/// \endcode
+/// The symbol specified in the type declaration can qualify the namespace using the "::"
+/// specifier.  If there is a current function, the variable is local to the function.
+/// Otherwise the symbol is created relative to the global scope.
 void IfcMapaddress::execute(istream &s)
 
 {
@@ -472,9 +560,16 @@ void IfcMapaddress::execute(istream &s)
 
 }
 
+/// \class IfcMaphash
+/// \brief Add a dynamic symbol to the current function: `map hash <address> <hash> <typedeclaration>`
+///
+/// The command only creates local variables for the current function.
+/// The name and data-type are taken from a C syntax type declaration.  The symbol is
+/// not associated with a particular storage address but with a specific Varnode in the data-flow,
+/// specified by a code address and hash of the local data-flow structure.
 void IfcMaphash::execute(istream &s)
 
-{ // Add a dynamic entry to the current function's symbol table given a known hash and pc address
+{
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function loaded");
   Datatype *ct;
@@ -491,9 +586,18 @@ void IfcMaphash::execute(istream &s)
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
 
+/// \class IfcMapfunction
+/// \brief Create a new function: `map function <address> [<functionname>] [nocode]`
+///
+/// Create a new function symbol at the provided address.
+/// A symbol name can be provided, otherwise a default name is selected.
+/// The new function becomes \e current for the console.
+/// The provided address gives the entry point for the function.  Unless the final keyword
+/// "nocode" is provided, the underlying bytes in the load image are used for any
+/// future disassembly or decompilation.
 void IfcMapfunction::execute(istream &s)
 
-{				// Notate a function start with loading the instructions
+{
   string name;
   int4 size;
   if ((dcp->conf == (Architecture *)0)||(dcp->conf->loader == (LoadImage *)0))
@@ -514,9 +618,17 @@ void IfcMapfunction::execute(istream &s)
     dcp->fd->setNoCode(true);
 }
 
+/// \class IfcMapexternalref
+/// \brief Create an external ref symbol `map externalref <address> <refaddress> [<name>]`
+///
+/// Creates a symbol for a function pointer and associates a specific address as
+/// a value for that symbol.  The first address specified is the address of the symbol,
+/// The second address is the address referred to by the pointer.  Indirect calls
+/// through the function pointer will be converted to direct calls to the referred address.
+/// A symbol name can be provided, otherwise a default one is generated.
 void IfcMapexternalref::execute(istream &s)
 
-{				// Link one address as reference to another address
+{
   int4 size1,size2;
   Address addr1 = parse_machaddr(s,size1,*dcp->conf->types); // Read externalref address
   Address addr2 = parse_machaddr(s,size2,*dcp->conf->types); // Read referred to address
@@ -527,9 +639,15 @@ void IfcMapexternalref::execute(istream &s)
   dcp->conf->symboltab->getGlobalScope()->addExternalRef(addr1,addr2,name);
 }
 
+/// \class IfcMaplabel
+/// \brief Create a code label: `map label <name> <address>`
+///
+/// Label a specific code address.  This creates a LabSymbol which is usually
+/// an internal control-flow target.  The symbol is local to the \e current function
+/// if it exists, otherwise the symbol is added to the global scope.
 void IfcMaplabel::execute(istream &s)
 
-{ // Put a code label at a given address
+{
   string name;
   s >> name;
   if (name.size()==0)
@@ -547,9 +665,14 @@ void IfcMaplabel::execute(istream &s)
   scope->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
 
+/// \class IfcPrintdisasm
+/// \brief Print disassembly of a memory range: `disassemble [<address1> <address2>]`
+///
+/// If no addresses are provided, disassembly for the current function is displayed.
+/// Otherwise disassembly is between the two provided addresses.
 void IfcPrintdisasm::execute(istream &s)
 
-{				// Print disassembly of a function
+{
   Architecture *glb;
   Address addr;
   int4 size;
@@ -580,9 +703,13 @@ void IfcPrintdisasm::execute(istream &s)
   }
 }
 
+/// \class IfcDump
+/// \brief Display bytes in the load image: `dump <address+size>`
+///
+/// The command does a hex listing of the specific memory region.
 void IfcDump::execute(istream &s)
 
-{				// Do hex listing of memory region
+{
   int4 size;
   uint1 *buffer;
   Address offset = parse_machaddr(s,size,*dcp->conf->types);
@@ -592,9 +719,14 @@ void IfcDump::execute(istream &s)
   delete [] buffer;
 }
 
+/// \class IfcDumpbinary
+/// \brief Dump a memory to file: `binary <address+size> <filename>`
+///
+/// Raw bytes from the specified memory region in the load image are written
+/// to a file.
 void IfcDumpbinary::execute(istream &s)
 
-{				// Write part of load image to file
+{
   int4 size;
   uint1 *buffer;
   Address offset = parse_machaddr(s,size,*dcp->conf->types);
@@ -614,10 +746,16 @@ void IfcDumpbinary::execute(istream &s)
   delete [] buffer;
   os.close();
 }
-  
+
+/// \class IfcDecompile
+/// \brief Decompile the current function: `decompile`
+///
+/// Decompilation is started for the current function. Any previous decompilation
+/// analysis on the function is cleared first.  The process respects
+/// any active break points or traces, so decompilation may not complete.
 void IfcDecompile::execute(istream &s)
 
-{				// Do decompilation of current function
+{
   int4 res;
 
   if (dcp->fd == (Funcdata *)0)
@@ -647,10 +785,11 @@ void IfcDecompile::execute(istream &s)
   *status->optr << endl;
 }
 
+/// \class IfcPrintCFlat
+/// \brief Print current function without control-flow: `print C flat`
 void IfcPrintCFlat::execute(istream &s)
 
-{				// Print current decompilation as C
-				// Do not print block structure
+{
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
@@ -660,9 +799,11 @@ void IfcPrintCFlat::execute(istream &s)
   dcp->conf->print->setFlat(false);
 }
 
+/// \class IfcPrintCGlobals
+/// \brief Print declarations for any known global variables: `print C globals`
 void IfcPrintCGlobals::execute(istream &s)
 
-{				// Print all global variable declarations we know
+{
   if (dcp->conf == (Architecture *)0) 
     throw IfaceExecutionError("No load image present");
 
@@ -670,9 +811,11 @@ void IfcPrintCGlobals::execute(istream &s)
   dcp->conf->print->docAllGlobals();
 }
 
+/// \class IfcPrintCTypes
+/// \brief Print any known type definitions: `print C types`
 void IfcPrintCTypes::execute(istream &s)
 
-{				// Print all type definitions
+{
   if (dcp->conf == (Architecture *)0) 
     throw IfaceExecutionError("No load image present");
 
@@ -682,10 +825,11 @@ void IfcPrintCTypes::execute(istream &s)
   }
 }
 
+/// \class IfcPrintCXml
+/// \brief Print the current function with C syntax and XML markup:`print C xml`
 void IfcPrintCXml::execute(istream &s)
 
-{				// Print current decompilation as C
-				// Do not print block structure
+{
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
@@ -695,9 +839,11 @@ void IfcPrintCXml::execute(istream &s)
   dcp->conf->print->setXML(false);
 }
 
+/// \class IfcPrintCStruct
+/// \brief Print the current function using C syntax:`print C`
 void IfcPrintCStruct::execute(istream &s)
 
-{				// Print current decompilation as C
+{
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
@@ -705,6 +851,10 @@ void IfcPrintCStruct::execute(istream &s)
   dcp->conf->print->docFunction(dcp->fd);
 }
 
+/// \class IfcPrintLanguage
+/// \brief Print current output using a specific language: `print language <langname>`
+///
+/// The current function must already be decompiled.
 void IfcPrintLanguage::execute(istream &s)
 
 {
@@ -725,15 +875,22 @@ void IfcPrintLanguage::execute(istream &s)
   dcp->conf->setPrintLanguage(curlangname); // Reset to original language
 }
 
+/// \class IfcPrintRaw
+/// \brief Print the raw p-code for the \e current function: `print raw`
+///
+/// Each p-code op, in its present state, is printed to the console, labeled
+/// with the address of its original instruction and any output and input varnodes.
 void IfcPrintRaw::execute(istream &s)
 
-{				// Print current decompilation as cpui
+{
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
   dcp->fd->printRaw(*status->fileoptr);
 }
 
+/// \class IfcListaction
+/// \brief List all current actions and rules for the decompiler: `list action`
 void IfcListaction::execute(istream &s)
 
 {
@@ -742,6 +899,14 @@ void IfcListaction::execute(istream &s)
   dcp->conf->allacts.getCurrent()->print(*status->fileoptr,0,0);
 }
 
+/// \class IfcListOverride
+/// \brief Display any overrides for the current function: `list override`
+///
+/// Overrides include:
+///   - Forced gotos
+///   - Dead code delays
+///   - Indirect call overrides
+///   - Indirect prototype overrides
 void IfcListOverride::execute(istream &s)
 
 {
@@ -752,6 +917,12 @@ void IfcListOverride::execute(istream &s)
   dcp->fd->getOverride().printRaw(*status->optr,dcp->conf);
 }
 
+/// \class IfcListprototypes
+/// \brief List known prototype models: `list prototypes`
+///
+/// All prototype models are listed with markup indicating the
+/// \e default, the evaluation model for the active function, and
+/// the evaluation model for called functions.
 void IfcListprototypes::execute(istream &s)
 
 {
@@ -772,6 +943,12 @@ void IfcListprototypes::execute(istream &s)
   }
 }
 
+/// \class IfcSetcontextrange
+/// \brief Set a context variable: `set context <name> <value> [<startaddress> <endaddress>]`
+///
+/// The named context variable is set to the provided value.
+/// If a start and end address is provided, the context variable is set over this range,
+/// otherwise the value is set as a default.
 void IfcSetcontextrange::execute(istream &s)
 
 {
@@ -810,6 +987,12 @@ void IfcSetcontextrange::execute(istream &s)
   dcp->conf->context->setVariableRegion(name,addr1,addr2,value);
 }
 
+/// \class IfcSettrackedrange
+/// \brief Set the value of a register: `set track <name> <value> [<startaddress> <endaddress>]`
+///
+/// The value for the register is picked up by the decompiler for functions in the tracked range.
+/// The register is specified by name.  A specific range can be provided, otherwise the value is
+/// treated as a default.
 void IfcSettrackedrange::execute(istream &s)
 
 {
@@ -853,9 +1036,17 @@ void IfcSettrackedrange::execute(istream &s)
   track.back().val = value;
 }
 
+/// \class IfcBreakaction
+/// \brief Set a breakpoint when a Rule or Action executes: `break action <actionname>`
+///
+/// The break point can be on either an Action or Rule.  The name can specify
+/// partial path information to distinguish the Action/Rule.  The breakpoint causes
+/// the decompilation process to stop and return control to the console immediately
+/// \e after the Action or Rule has executed, but only if there was an active transformation
+/// to the function.
 void IfcBreakaction::execute(istream &s)
 
-{				// Set an action breakpoint
+{
   bool res;
   string specify;
 
@@ -872,9 +1063,16 @@ void IfcBreakaction::execute(istream &s)
     throw IfaceExecutionError("Bad action/rule specifier: "+specify);
 }
 
+/// \class IfcBreakstart
+/// \brief Set a break point at the start of an Action: `break start <actionname>`
+///
+/// The break point can be on either an Action or a Rule.  The name can specify
+/// partial path information to distinguish the Action/Rule.  The breakpoint causes
+/// the decompilation process to stop and return control to the console just before
+/// the Action/Rule would have executed.
 void IfcBreakstart::execute(istream &s)
 
-{				// Set a start breakpoint
+{
   bool res;
   string specify;
 
@@ -891,18 +1089,38 @@ void IfcBreakstart::execute(istream &s)
     throw IfaceExecutionError("Bad action/rule specifier: "+specify);
 }
 
+/// \class IfcPrintTree
+/// \brief Print all Varnodes in the \e current function: `print tree varnode`
+///
+/// Information about every Varnode in the data-flow graph for the function is displayed.
 void IfcPrintTree::execute(istream &s)
 
 {
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
   dcp->fd->printVarnodeTree(*status->fileoptr);
 }
 
+/// \class IfcPrintBlocktree
+/// \brief Print a description of the \e current functions control-flow: `print tree block`
+///
+/// The recovered control-flow structure is displayed as a hierarchical list of blocks,
+/// showing the nesting and code ranges covered by the blocks.
 void IfcPrintBlocktree::execute(istream &s)
 
 {
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
   dcp->fd->printBlockTree(*status->fileoptr);
 }
 
+/// \class IfcPrintSpaces
+/// \brief Print all address spaces: `print spaces`
+///
+/// Information about every address space in the architecture/program is written
+/// to the console.
 void IfcPrintSpaces::execute(istream &s)
 
 {
@@ -935,9 +1153,14 @@ void IfcPrintSpaces::execute(istream &s)
   }
 }
 
+/// \class IfcPrintHigh
+/// \brief Display all Varnodes in a HighVariable: `print high <name>`
+///
+/// A HighVariable associated with the current function is specified by name.
+/// Information about every Varnode merged into the variable is displayed.
 void IfcPrintHigh::execute(istream &s)
 
-{				// List varnodes under one high
+{
   string varname;
   HighVariable *high;
 
@@ -953,14 +1176,10 @@ void IfcPrintHigh::execute(istream &s)
   high->printInfo(*status->optr);
 }
 
-void IfcParamIDAnalysis::execute(istream &s)
-{
-  ParamIDAnalysis pidanalysis( dcp->fd, false );
-  pidanalysis.saveXml( *status->optr, true );
-  *status->optr << "\n"; //tmp
-  //dcp->fd->saveXml( *status->optr, true ); //temporary until I write a new one with results.
-}
+/// \class IfcPrintParamMeasures
+/// \brief Perform parameter-id analysis on the \e current function: `print parammeasures`
 void IfcPrintParamMeasures::execute(istream &s)
+
 {
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
@@ -968,28 +1187,16 @@ void IfcPrintParamMeasures::execute(istream &s)
   ParamIDAnalysis pidanalysis( dcp->fd, false );
   pidanalysis.savePretty( *status->fileoptr, true );
   *status->fileoptr << "\n";
-
-//  dcp->conf->print->setOutputStream(status->fileoptr);
-//  dcp->conf->print->docFunction(dcp->fd);
-}
-void IfcPrintParamMeasuresXml::execute(istream &s)
-{
-  if (dcp->fd == (Funcdata *)0)
-    throw IfaceExecutionError("No function selected");
-
-  ParamIDAnalysis pidanalysis( dcp->fd, false );
-  pidanalysis.saveXml( *status->fileoptr, true );
-  *status->fileoptr << "\n";
-
-//  dcp->conf->print->setOutputStream(status->fileoptr);
-//  dcp->conf->print->setXML(true);
-//  dcp->conf->print->docFunction(dcp->fd);
-//  dcp->conf->print->setXML(false);
 }
 
+/// \class IfcRename
+/// \brief Rename a variable: `rename <oldname> <newname>`
+///
+/// Change the name of a symbol.  The provided name is searched for starting
+/// in the scope of the current function.
 void IfcRename::execute(istream &s)
 
-{				// Change the name of a symbol
+{
   string oldname,newname;
   
   s >> ws >> oldname >> ws >> newname >> ws;
@@ -1018,9 +1225,14 @@ void IfcRename::execute(istream &s)
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
 
+/// \class IfcRemove
+/// \brief Remove a symbol by name: `remove <varname>`
+///
+/// The symbol is searched for starting in the current function's scope.
+/// The resulting symbol is removed completely from the symbol table.
 void IfcRemove::execute(istream &s)
 
-{				// Remove a symbol
+{
   string name;
   
   s >> ws >> name;
@@ -1040,9 +1252,15 @@ void IfcRemove::execute(istream &s)
   symList[0]->getScope()->removeSymbol(symList[0]);
 }
 
+/// \class IfcRetype
+/// \brief Change the data-type of a symbol: `retype <varname> <typedeclaration>`
+///
+/// The symbol is searched for by name starting in the current function's scope.
+/// If the type declaration includes a new name for the variable, the
+/// variable is renamed as well.
 void IfcRetype::execute(istream &s)
 
-{				// Change the type of a symbol
+{
   Datatype *ct;
   string name,newname;
 
@@ -1074,27 +1292,66 @@ void IfcRetype::execute(istream &s)
     sym->getScope()->setAttribute(sym,Varnode::namelock);
   }
 }
-  
-static Varnode *iface_read_varnode(IfaceDecompData *dcp,istream &s)
 
-{				// Return varnode identified by input stream
+/// The Varnode is selected from the \e current function.  It is specified as a
+/// storage location with info about its defining p-code in parantheses.
+///   - `%EAX(r0x10000:0x65)`
+///   - `%ECX(i)`
+///   - `r0x10001000:4(:0x96)`
+///   - `u0x00001100:1(:0x102)`
+///   - `#0x1(0x10205:0x27)`
+///
+/// The storage address space is given as the \e short-cut character followed by the
+/// address offset.  For register spaces, the name of the register can be given instead of the
+/// offset.  After the offset, a size can be specified with a ':' followed by the size in bytes.
+/// If size is not provided and there is no register name, a default word size is assigned based
+/// on the address space.
+///
+/// The defining p-code op is specified either as:
+///   - An address and sequence number: `%EAX(r0x10000:0x65)`
+///   - Just a sequence number: `%EAX(:0x65)`  or
+///   - An "i" token for inputs: `%EAX(i)`
+///
+/// For a constant Varnode, the storage offset is the actual value of the constant, and
+/// the p-code address and sequence number must both be present and specify the p-code op
+/// that \e reads the constant.
+/// \param s is the given input stream
+/// \return the Varnode object
+Varnode *IfaceDecompData::readVarnode(istream &s)
+
+{
   uintm uq;
   int4 defsize;
   Varnode *vn = (Varnode *)0;
 
-  if (dcp->fd == (Funcdata *)0)
+  if (fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
   Address pc;
-  Address loc(parse_varnode(s,defsize,pc,uq,*dcp->conf->types));
-  if (pc.isInvalid()&&(uq==~((uintm)0)))
-    vn = dcp->fd->findVarnodeInput(defsize,loc);
+  Address loc(parse_varnode(s,defsize,pc,uq,*conf->types));
+  if (loc.getSpace()->getType() == IPTR_CONSTANT) {
+    if (pc.isInvalid() || (uq == ~((uintm)0)))
+      throw IfaceParseError("Missing p-code sequence number");
+    SeqNum seq(pc,uq);
+    PcodeOp *op = fd->findOp(seq);
+    if (op != (PcodeOp *)0) {
+      for(int4 i=0;i<op->numInput();++i) {
+	Varnode *tmpvn = op->getIn(i);
+	if (tmpvn->getAddr() == loc) {
+	  vn = tmpvn;
+	  break;
+	}
+      }
+    }
+  }
+  else if (pc.isInvalid()&&(uq==~((uintm)0)))
+    vn = fd->findVarnodeInput(defsize,loc);
   else if ((!pc.isInvalid())&&(uq!=~((uintm)0)))
-    vn = dcp->fd->findVarnodeWritten(defsize,loc,pc,uq);
+    vn = fd->findVarnodeWritten(defsize,loc,pc,uq);
   else {
     VarnodeLocSet::const_iterator iter,enditer;
-    iter = dcp->fd->beginLoc(defsize,loc);
-    enditer = dcp->fd->endLoc(defsize,loc);
+    iter = fd->beginLoc(defsize,loc);
+    enditer = fd->endLoc(defsize,loc);
     while(iter != enditer) {
       vn = *iter++;
       if (vn->isFree()) continue;
@@ -1110,23 +1367,37 @@ static Varnode *iface_read_varnode(IfaceDecompData *dcp,istream &s)
   return vn;
 }
 
+/// \class IfcPrintVarnode
+/// \brief Print information about a Varnode: `print varnode <varnode>`
+///
+/// Attributes of the indicated Varnode from the \e current function are printed
+/// to the console.  If the Varnode belongs to a HighVariable, information about
+/// it and all its Varnodes are printed as well.
 void IfcPrintVarnode::execute(istream &s)
 
-{				// Print information about a varnode
+{
   Varnode *vn;
 
-  vn = iface_read_varnode(dcp,s);
+  vn = dcp->readVarnode(s);
   if (vn->isAnnotation()||(!dcp->fd->isHighOn()))
     vn->printInfo(*status->optr);
   else
     vn->getHigh()->printInfo(*status->optr);
 }
-  
+
+/// \class IfcPrintCover
+/// \brief Print cover info about a HighVariable: `print cover high <name>`
+///
+/// A HighVariable is specified by its symbol name in the current function's scope.
+/// Information about the code ranges where the HighVariable is in scope is printed.
 void IfcPrintCover::execute(istream &s)
 
-{				// Print4 coverage information about a high
+{
   HighVariable *high;
   string name;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
 
   s >> ws >> name;
   if (name.size()==0)
@@ -1138,12 +1409,17 @@ void IfcPrintCover::execute(istream &s)
   high->printCover(*status->optr);
 }
 
+/// \class IfcVarnodehighCover
+/// \brief Print cover info about a HighVariable: `print cover varnodehigh <varnode>`
+///
+/// The HighVariable is selected by specifying one of its Varnodes.
+/// Information about the code ranges where the HighVariable is in scope is printed.
 void IfcVarnodehighCover::execute(istream &s)
 
-{				// Print4 coverage information about a varnode's high
+{
   Varnode *vn;
 
-  vn = iface_read_varnode(dcp,s);
+  vn = dcp->readVarnode(s);
   if (vn == (Varnode *)0)
     throw IfaceParseError("Unknown varnode");
   if (vn->getHigh() != (HighVariable *)0)
@@ -1152,6 +1428,12 @@ void IfcVarnodehighCover::execute(istream &s)
     *status->optr << "Unmerged" << endl;
 }
 
+/// \class IfcPrintExtrapop
+/// \brief Print change to stack pointer for called function: `print extrapop [<functionname>]`
+///
+/// For the selected function, the extra amount each called function changes the stack pointer
+/// (over popping the return value) is printed to console.  The function is selected by
+/// name, or if no name is given, the \e current function is selected.
 void IfcPrintExtrapop::execute(istream &s)
 
 {
@@ -1224,17 +1506,28 @@ void IfcPrintExtrapop::execute(istream &s)
   }
 }
 
+/// \class IfcVarnodeCover
+/// \brief Print cover information about a Varnode: `print cover varnode <varnode>`
+///
+/// Information about code ranges where the single Varnode is in scope are printed.
 void IfcVarnodeCover::execute(istream &s)
 
-{				// Print4 coverage information about a varnode
+{
   Varnode *vn;
 
-  vn = iface_read_varnode(dcp,s);
+  vn = dcp->readVarnode(s);
   if (vn == (Varnode *)0)
     throw IfaceParseError("Unknown varnode");
   vn->printCover(*status->optr);
 }
 
+/// \class IfcNameVarnode
+/// \brief Attach a named symbol to a specific Varnode: `name varnode <varnode> <name>`
+///
+/// A new local symbol is created for the \e current function, and
+/// is attached to the specified Varnode. The \e current function must be decompiled
+/// again to see the effects.  The new symbol is \e name-locked with the specified
+/// name, but the data-type of the symbol is allowed to float.
 void IfcNameVarnode::execute(istream &s)
 
 {
@@ -1266,9 +1559,17 @@ void IfcNameVarnode::execute(istream &s)
   *status->fileoptr << " to scope " << scope->getFullName() << endl;
 }
 
+/// \class IfcTypeVarnode
+/// \brief Attach a typed symbol to a specific Varnode: `type varnode <varnode> <typedeclaration>`
+///
+/// A new local symbol is created for the \e current function, and
+/// is attached to the specified Varnode. The \e current function must be decompiled
+/// again to see the effects.  The new symbol is \e type-locked with the data-type specified
+/// in the type declaration.  If a name is specified in the declaration, the symbol
+/// is \e name-locked as well.
 void IfcTypeVarnode::execute(istream &s)
 
-{				// Set the type of a varnode
+{
   int4 size;
   uintm uq;
   Datatype *ct;
@@ -1296,38 +1597,18 @@ void IfcTypeVarnode::execute(istream &s)
   *status->fileoptr << " to scope " << scope->getFullName() << endl;
 }
 
-static Varnode *find_varnode_via_op(istream &s,Funcdata *fd,const TypeFactory &typegrp)
-
-{
-  uintm uq;
-  Address pc(parse_op(s,uq,typegrp));
-  PcodeOp *op = fd->findOp(SeqNum(pc,uq));
-  if (op == (PcodeOp *)0)
-    throw IfaceExecutionError("Unable to find indicated op");
-
-  int4 slot;
-  slot = -2;
-  s >> dec >> slot;
-  if (slot == -2)
-    throw IfaceParseError("Missing op slot number");
-  Varnode *vn;
-  if (slot == -1)
-    vn = op->getOut();
-  else {
-    if (slot >= op->numInput())
-      throw IfaceExecutionError("op slot number is out of range");
-    vn = op->getIn(slot);
-  }
-  return vn;
-}
-
+/// \class IfcForceHex
+/// \brief Mark a constant to be printed in hex format: `force hex <varnode>`
+///
+/// A selected constant Varnode in the \e current function is marked so
+/// that it will be printed in hexadecimal format in decompiler output.
 void IfcForceHex::execute(istream &s)
 
 {
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
-  Varnode *vn = find_varnode_via_op(s,dcp->fd,*dcp->conf->types);
+  Varnode *vn = dcp->readVarnode(s);
   if (!vn->isConstant())
     throw IfaceExecutionError("Can only force hex on a constant");
   type_metatype mt = vn->getType()->getMetatype();
@@ -1342,13 +1623,18 @@ void IfcForceHex::execute(istream &s)
   *status->optr << "Successfully forced hex display" << endl;
 }
 
+/// \class IfcForceDec
+/// \brief Mark a constant to be printed in decimal format: `force dec <varnode>`
+///
+/// A selected constant Varnode in the \e current function is marked so
+/// that it will be printed in decimal format in decompiler output.
 void IfcForceDec::execute(istream &s)
 
 {
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
-  Varnode *vn = find_varnode_via_op(s,dcp->fd,*dcp->conf->types);
+  Varnode *vn = dcp->readVarnode(s);
   if (!vn->isConstant())
     throw IfaceExecutionError("Can only force hex on a constant");
   type_metatype mt = vn->getType()->getMetatype();
@@ -1363,11 +1649,21 @@ void IfcForceDec::execute(istream &s)
   *status->optr << "Successfully forced dec display" << endl;
 }
 
+/// \class IfcForcegoto
+/// \brief Force a branch to be an unstructured \b goto: `force goto <branchaddr> <targetaddr>`
+///
+/// Create an override that forces the decompiler to treat the specified branch
+/// as unstructured. The branch will be modeled as a \b goto statement.
+/// The branch is specified by first providing the address of the branching instruction,
+/// then the destination address.
 void IfcForcegoto::execute(istream &s)
 
 {
   int4 discard;
   
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+
   s >> ws;
   Address target(parse_machaddr(s,discard,*dcp->conf->types));
   s >> ws;
@@ -1375,6 +1671,13 @@ void IfcForcegoto::execute(istream &s)
   dcp->fd->getOverride().insertForceGoto(target,dest);
 }
 
+/// \class IfcProtooverride
+/// \brief Override the prototype of a called function: `override prototype <address> <declaration>`
+///
+/// Force a specified prototype declaration on a called function when decompiling
+/// the current function. The current function must be decompiled again to see the effect.
+/// The called function is indicated by the address of its calling instruction.
+/// The prototype only affects decompilation for the \e current function.
 void IfcProtooverride::execute(istream &s)
 
 {
@@ -1403,6 +1706,20 @@ void IfcProtooverride::execute(istream &s)
   dcp->fd->clear();		// Clear any analysis (this leaves overrides intact)
 }
 
+/// \class IfcJumpOverride
+/// \brief Provide an overriding jump-table for an indirect branch: `override jumptable ...`
+///
+/// The command expects the address of an indirect branch in the \e current function,
+/// followed by the keyword \b table then a list of possible target addresses of the branch.
+/// \code
+///    override jumptable r0x1000 table r0x1020 r0x1030 r0x1043 ...
+/// \endcode
+/// The command can optionally take the keyword \b startval followed by an
+/// integer indicating the value taken by the \e normalized switch variable that
+/// produces the first address in the table.
+/// \code
+///    override jumptable startval 10 table r0x1020 r0x1030 ...
+/// \endcode
 void IfcJumpOverride::execute(istream &s)
 
 {
@@ -1444,6 +1761,15 @@ void IfcJumpOverride::execute(istream &s)
   *status->optr << "Successfully installed jumptable override" << endl;
 }
 
+/// \class IfcFlowOverride
+/// \brief Create a control-flow override: `override flow <address> branch|call|callreturn|return`
+///
+/// Change the nature of the control-flow at the specified address, as indicated by the
+/// final token on the command-line:
+///   - branch     -  Change the CALL or RETURN to a BRANCH
+///   - call       -  Change a BRANCH or RETURN to a CALL
+///   - callreturn -  Change a BRANCH or RETURN to a CALL followed by a RETURN
+///   - return     -  Change a CALLIND or BRANCHIND to a RETURN
 void IfcFlowOverride::execute(istream &s)
 
 {
@@ -1467,6 +1793,13 @@ void IfcFlowOverride::execute(istream &s)
   *status->optr << "Successfully added override" << endl;
 }
 
+/// \class IfcDeadcodedelay
+/// \brief Change when dead code elimination starts: `deadcode delay <name> <delay>`
+///
+/// An address space is selected by name, along with a pass number.
+/// Dead code elimination for Varnodes in that address space is changed to start
+/// during that pass.  If there is a \e current function, the delay is altered only for
+/// that function, otherwise the delay is set globally for all functions.
 void IfcDeadcodedelay::execute(istream &s)
 
 {
@@ -1493,6 +1826,11 @@ void IfcDeadcodedelay::execute(istream &s)
   }
 }
 
+/// \class IfcGlobalAdd
+/// \brief Add a memory range as discoverable global variables: `global add <address+size>`
+///
+/// The decompiler will treat Varnodes stored in the new memory range as persistent
+/// global variables.
 void IfcGlobalAdd::execute(istream &s)
 
 {
@@ -1508,6 +1846,11 @@ void IfcGlobalAdd::execute(istream &s)
   dcp->conf->symboltab->addRange(scope,addr.getSpace(),first,last);
 }
 
+/// \class IfcGlobalRemove
+/// \brief Remove a memory range from discoverable global variables: `global remove <address+size>`
+///
+/// The will no longer treat Varnodes stored in the memory range as persistent global
+/// variables.  The will be treated as local or temporary storage.
 void IfcGlobalRemove::execute(istream &s)
 
 {
@@ -1523,6 +1866,11 @@ void IfcGlobalRemove::execute(istream &s)
   dcp->conf->symboltab->removeRange(scope,addr.getSpace(),first,last);
 }
 
+/// \class IfcGlobalify
+/// \brief Treat all normal memory as discoverable global variables: `global spaces`
+///
+/// This has the drastic effect that the decompiler will treat all registers and stack
+/// locations as global variables.
 void IfcGlobalify::execute(istream &s)
 
 {
@@ -1532,6 +1880,10 @@ void IfcGlobalify::execute(istream &s)
   *status->optr << "Successfully made all registers/memory locations global" << endl;
 }
 
+/// \class IfcGlobalRegisters
+/// \brief Name global registers: `global registers`
+///
+/// Name any global symbol stored in a register with the name of the register.
 void IfcGlobalRegisters::execute(istream &s)
 
 {
@@ -1567,7 +1919,11 @@ void IfcGlobalRegisters::execute(istream &s)
     *status->optr << "Successfully made a global symbol for " << count << " registers" << endl;
 }
 
-static bool nontrivial_use(Varnode *vn)
+/// The use is non-trivial if it can be traced to any p-code operation except
+/// a COPY, CAST, INDIRECT, or MULTIEQUAL.
+/// \param vn is the given Varnode
+/// \return \b true if there is a non-trivial use
+bool IfcPrintInputs::nonTrivialUse(Varnode *vn)
 
 {
   vector<Varnode *> vnlist;
@@ -1601,9 +1957,14 @@ static bool nontrivial_use(Varnode *vn)
   return res;
 }
 
-static int4 check_restore(Varnode *vn)
+/// Look for any value flowing into the Varnode coming from anything
+/// other than an input Varnode with the same storage.  The value can flow through
+/// a COPY, CAST, INDIRECT, or MULTIEQUAL
+/// \param vn is the given Varnode
+/// \return 0 if Varnode is restored, 1 otherwise
+int4 IfcPrintInputs::checkRestore(Varnode *vn)
 
-{ // Return 0 if vn is written to from an input at the same location
+{
   vector<Varnode *> vnlist;
   int4 res = 0;
   vnlist.push_back(vn);
@@ -1658,7 +2019,11 @@ static int4 check_restore(Varnode *vn)
   return res;
 }
 
-static bool find_restore(Varnode *vn,Funcdata *fd)
+/// For the given storage location, check that it is \e restored
+/// from its original input value.
+/// \param vn is the given storage location
+/// \param fd is the function being analyzed
+bool IfcPrintInputs::findRestore(Varnode *vn,Funcdata *fd)
 
 {
   VarnodeLocSet::const_iterator iter,enditer;
@@ -1673,14 +2038,18 @@ static bool find_restore(Varnode *vn,Funcdata *fd)
     if (!vn->isWritten()) continue;
     PcodeOp *op = vn->getDef();
     if (op->code() == CPUI_INDIRECT) continue; // Not a global return address force
-    int4 res = check_restore(vn);
+    int4 res = checkRestore(vn);
     if (res != 0) return false;
     count += 1;
   }
   return (count>0);
 }
 
-static void print_function_inputs(Funcdata *fd,ostream &s)
+/// For each input Varnode, print information about the Varnode,
+/// any explicit symbol it represents, and info about how the value is used.
+/// \param fd is the function
+/// \param s is the output stream to write to
+void IfcPrintInputs::print(Funcdata *fd,ostream &s)
 
 {
   VarnodeDefSet::const_iterator iter,enditer;
@@ -1697,8 +2066,8 @@ static void print_function_inputs(Funcdata *fd,ostream &s)
       if (sym != (Symbol *)0)
 	s << "    " << sym->getName();
     }
-    bool findres = find_restore(vn,fd);
-    bool nontriv = nontrivial_use(vn);
+    bool findres = findRestore(vn,fd);
+    bool nontriv = nonTrivialUse(vn);
     if (findres && !nontriv)
       s << "     restored";
     else if (nontriv)
@@ -1707,15 +2076,21 @@ static void print_function_inputs(Funcdata *fd,ostream &s)
   }
 }
 
+/// \class IfcPrintInputs
+/// \brief Print info about the current function's input Varnodes: `print inputs`
 void IfcPrintInputs::execute(istream &s)
 
 {
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
-  print_function_inputs(dcp->fd,*status->fileoptr);
+  print(dcp->fd,*status->fileoptr);
 }
 
+/// \class IfcPrintInputsAll
+/// \brief Print info about input Varnodes for all functions: `print inputs all`
+///
+/// Each function is decompiled, and info about its input Varnodes are printed.
 void IfcPrintInputsAll::execute(istream &s)
 
 {
@@ -1736,7 +2111,7 @@ void IfcPrintInputsAll::iterationCallback(Funcdata *fd)
     dcp->conf->clearAnalysis(fd); // Clear any old analysis
     dcp->conf->allacts.getCurrent()->reset(*fd);
     dcp->conf->allacts.getCurrent()->perform( *fd );
-    print_function_inputs(fd,*status->fileoptr);
+    IfcPrintInputs::print(fd,*status->fileoptr);
   }
   catch(LowlevelError &err) {
     *status->optr << "Skipping " << fd->getName() << ": " << err.explain << endl;
@@ -1744,6 +2119,11 @@ void IfcPrintInputsAll::iterationCallback(Funcdata *fd)
   dcp->conf->clearAnalysis(fd);
 }
 
+/// \class IfcLockPrototype
+/// \brief Lock in the \e current function's prototype: `prototype lock`
+///
+/// Lock in the existing formal parameter names and data-types for any future
+/// decompilation.  Both input parameters and the return value are locked.
 void IfcLockPrototype::execute(istream &s)
 
 {
@@ -1754,6 +2134,11 @@ void IfcLockPrototype::execute(istream &s)
   dcp->fd->getFuncProto().setOutputLock(true);
 }
 
+/// \class IfcUnlockPrototype
+/// \brief Unlock the \e current function's prototype: `prototype unlock`
+///
+/// Unlock all input parameters and the return value, so future decompilation
+/// is not constrained with their data-type or name.
 void IfcUnlockPrototype::execute(istream &s)
 
 {
@@ -1764,6 +2149,11 @@ void IfcUnlockPrototype::execute(istream &s)
   dcp->fd->getFuncProto().setOutputLock(false);
 }
 
+/// \class IfcPrintLocalrange
+/// \brief Print range of locals on the stack: `print localrange`
+///
+/// Print the memory range(s) on the stack is or could be used for
+///
 void IfcPrintLocalrange::execute(istream &s)
 
 {
@@ -1773,6 +2163,11 @@ void IfcPrintLocalrange::execute(istream &s)
   dcp->fd->printLocalRange( *status->optr );
 }
 
+/// \class IfcPrintMap
+/// \brief Print info about a scope/namespace: `print map <name>`
+///
+/// Prints information about the discoverable memory ranges for the scope,
+/// and prints a description of every symbol in the scope.
 void IfcPrintMap::execute(istream &s)
 
 {
@@ -1797,10 +2192,15 @@ void IfcPrintMap::execute(istream &s)
   scope->printBounds(*status->fileoptr);
   scope->printEntries(*status->fileoptr);
 }
-  
+
+/// \class IfcProduceC
+/// \brief Write decompilation for all functions to a file: `produce C <filename>`
+///
+/// Iterate over all functions in the program.  For each function, decompilation is
+/// performed and output is appended to the file.
 void IfcProduceC::execute(istream &s)
 
-{				// Produce C output of every known function
+{
   string name;
   
   s >> ws >> name;
@@ -1846,9 +2246,13 @@ void IfcProduceC::iterationCallback(Funcdata *fd)
   dcp->conf->clearAnalysis(fd);
 }
 
+/// \class IfcProducePrototypes
+/// \brief Determine the prototype model for all functions: `produce prototypes`
+///
+/// Functions are walked in leaf order.
 void IfcProducePrototypes::execute(istream &s)
 
-{  // Walk callgraph in leaf-first order, calculate prototype
+{
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image");
   if (dcp->cgraph == (CallGraph *)0)
@@ -1905,9 +2309,13 @@ void IfcProducePrototypes::iterationCallback(Funcdata *fd)
   dcp->conf->clearAnalysis(fd);
 }
 
+/// \class IfcContinue
+/// \brief Continue decompilation after a break point: `continue`
+///
+/// This command assumes decompilation has been started and has hit a break point.
 void IfcContinue::execute(istream &s)
 
-{				// Continue decompilation after breakpoint
+{
   int4 res;
 
   if (dcp->conf == (Architecture *)0)
@@ -1934,10 +2342,18 @@ void IfcContinue::execute(istream &s)
   *status->optr << endl;
 }
 
+/// \class IfcGraphDataflow
+/// \brief Write a graph representation of data-flow to a file: `graph dataflow <filename>`
+///
+/// The data-flow graph for the \e current function, in its current state of transform,
+/// is written to the indicated file.
 void IfcGraphDataflow::execute(istream &s)
 
-{				// Dump data-flow graph
+{
   string filename;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
 
   s >> filename;
   if (filename.size()==0)
@@ -1952,10 +2368,18 @@ void IfcGraphDataflow::execute(istream &s)
   thefile.close();
 }
 
+/// \class IfcGraphControlflow
+/// \brief Write a graph representation of control-flow to a file: `graph controlflow <filename>`
+///
+/// The control-flow graph for the \e current function, in its current state of transform,
+/// is written to the indicated file.
 void IfcGraphControlflow::execute(istream &s)
 
-{				// Dump control-flow graph
+{
   string filename;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
 
   s >> filename;
   if (filename.size()==0)
@@ -1970,10 +2394,18 @@ void IfcGraphControlflow::execute(istream &s)
   thefile.close();
 }
 
+/// \class IfcGraphDom
+/// \brief Write the forward dominance graph to a file: `graph dom <filename>`
+///
+/// The dominance tree, associated with the control-flow graph of the \e current function
+/// in its current state of transform, is written to the indicated file.
 void IfcGraphDom::execute(istream &s)
 
-{				// Dump forward dominator graph
+{
   string filename;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
 
   s >> filename;
   if (filename.size()==0)
@@ -1988,6 +2420,13 @@ void IfcGraphDom::execute(istream &s)
   thefile.close();
 }
 
+/// \class IfcCommentInstr
+/// \brief Attach a comment to an address: `comment <address> comment text...`
+///
+/// Add a comment to the database, suitable for integration into decompiler output
+/// for the \e current function.  The command-line takes the address of the
+/// machine instruction which the comment will be attached to and is followed by
+/// the text of the comment.
 void IfcCommentInstr::execute(istream &s)
 
 { // Comment on a particular address within current function
@@ -2012,9 +2451,12 @@ void IfcCommentInstr::execute(istream &s)
 				  dcp->fd->getAddress(),addr,comment);
 }
 
-static void duplicate_hash(Funcdata *fd,ostream &s)
+/// For each duplicate discovered, a message is written to the provided stream.
+/// \param fd is the given function to search
+/// \param s is the stream to write messages to
+void IfcDuplicateHash::check(Funcdata *fd,ostream &s)
 
-{ // Make sure no two varnodes of -fd- have the same hash
+{
   DynamicHash dhash;
 
   VarnodeLocSet::const_iterator iter,enditer;
@@ -2070,9 +2512,14 @@ static void duplicate_hash(Funcdata *fd,ostream &s)
   }
 }
 
+/// \class IfcDuplicateHash
+/// \brief Check for duplicate hashes in functions: `duplicate hash`
+///
+/// All functions in the architecture/program are decompiled, and for each
+/// a check is made for Varnode pairs with identical hash values.
 void IfcDuplicateHash::execute(istream &s)
 
-{ // Make sure no two varnodes in the 
+{
   iterateFunctionsAddrOrder();
 }
 
@@ -2098,7 +2545,7 @@ void IfcDuplicateHash::iterationCallback(Funcdata *fd)
     duration = ((float)(end_time-start_time))/CLOCKS_PER_SEC;
     duration *= 1000.0;
     *status->optr << " time=" << fixed << setprecision(0) << duration << " ms" << endl;
-    duplicate_hash(fd,*status->optr);
+    check(fd,*status->optr);
   }
   catch(LowlevelError &err) {
     *status->optr << "Skipping " << fd->getName() << ": " << err.explain << endl;
@@ -2106,10 +2553,15 @@ void IfcDuplicateHash::iterationCallback(Funcdata *fd)
   dcp->conf->clearAnalysis(fd);
 }
 
-
+/// \class IfcCallGraphBuild
+/// \brief Build the call-graph for the architecture/program: `callgraph build`
+///
+/// Build, or rebuild, the call-graph with nodes for all existing functions.
+/// Functions are to decompiled to recover destinations of indirect calls.
+/// Going forward, the graph is held in memory and is accessible by other commands.
 void IfcCallGraphBuild::execute(istream &s)
 
-{ // Build call graph from existing function starts
+{
   dcp->allocateCallGraph();
 
   dcp->cgraph->buildAllNodes();		// Build a node in the graph for existing symbols
@@ -2130,7 +2582,7 @@ void IfcCallGraphBuild::iterationCallback(Funcdata *fd)
   }
   if (quick) {
     dcp->fd = fd;
-    IfcFollowFlow(*status->optr,dcp,fd->getAddress(),0);
+    dcp->followFlow(*status->optr,0);
   }
   else {
     try {
@@ -2154,9 +2606,15 @@ void IfcCallGraphBuild::iterationCallback(Funcdata *fd)
   dcp->conf->clearAnalysis(fd);
 }
 
+/// \class IfcCallGraphBuildQuick
+/// \brief Build the call-graph using quick analysis: `callgraph build quick`
+///
+/// Build the call-graph for the architecture/program.  For each function, disassembly
+/// is performed to discover call edges, rather then full decompilation.  Some forms
+/// of direct call may not be discovered.
 void IfcCallGraphBuildQuick::execute(istream &s)
 
-{ // Build call graph from existing function starts, do only disassembly
+{
   dcp->allocateCallGraph();
   dcp->cgraph->buildAllNodes();	// Build a node in the graph for existing symbols
   quick = true;
@@ -2164,6 +2622,11 @@ void IfcCallGraphBuildQuick::execute(istream &s)
   *status->optr << "Successfully built callgraph" << endl;
 }
 
+/// \class IfcCallGraphDump
+/// \brief Write the current call-graph to a file: `callgraph dump <filename>`
+///
+/// The existing call-graph object is written to the provided file as an
+/// XML document.
 void IfcCallGraphDump::execute(istream &s)
 
 {
@@ -2185,6 +2648,12 @@ void IfcCallGraphDump::execute(istream &s)
   *status->optr << "Successfully saved callgraph to " << name << endl;
 }
 
+/// \class IfcCallGraphLoad
+/// \brief Load the call-graph from a file: `callgraph load <filename>`
+///
+/// A call-graph is loaded from the provided XML document.  Nodes in the
+/// call-graph are linked to existing functions by symbol name.  This command
+/// reports call-graph nodes that could not be linked.
 void IfcCallGraphLoad::execute(istream &s)
 
 {
@@ -2227,9 +2696,14 @@ void IfcCallGraphLoad::execute(istream &s)
   *status->optr << "Successfully associated functions with callgraph nodes" << endl;
 }
 
+/// \class IfcCallGraphList
+/// \brief List all functions in \e leaf order: `callgraph list`
+///
+/// The existing call-graph is walked, displaying function names to the console.
+/// Child functions are displayed before their parents.
 void IfcCallGraphList::execute(istream &s)
 
-{ // List all functions in leaf-first order
+{
   if (dcp->cgraph == (CallGraph *)0)
     throw IfaceExecutionError("Callgraph not generated");
 
@@ -2242,8 +2716,19 @@ void IfcCallGraphList::iterationCallback(Funcdata *fd)
   *status->optr << fd->getName() << endl;
 }
 
-static void readPcodeSnippet(istream &s,string &name,string &outname,vector<string> &inname,string &pcodestring)
-
+/// \brief Scan a single-line p-code snippet declaration from the given stream
+///
+/// A declarator is scanned first, providing a name to associate with the snippet, as well
+/// as potential names of the formal \e output Varnode and \e input Varnodes.
+/// The body of the snippet is then surrounded by '{' and '}'  The snippet name,
+/// input/output names, and the body are passed back to the caller.
+/// \param s is the given stream to scan
+/// \param name passes back the name of the snippet
+/// \param outname passes back the formal output parameter name, or is empty
+/// \param inname passes back an array of the formal input parameter names
+/// \param pcodestring passes back the snippet body
+void IfcCallFixup::readPcodeSnippet(istream &s,string &name,string &outname,vector<string> &inname,
+				    string &pcodestring)
 {
   char bracket;
   s >> outname;
@@ -2266,6 +2751,16 @@ static void readPcodeSnippet(istream &s,string &name,string &outname,vector<stri
   getline(s,pcodestring,'}');
 }
 
+/// \class IfcCallFixup
+/// \brief Add a new call fix-up to the program: `fixup call ...`
+///
+/// Create a new call fixup-up for the architecture/program, suitable for
+/// replacing called functions.  The fix-up is specified as a function-style declarator,
+/// which also provides the formal name of the fix-up.
+/// A "void" return-type and empty parameter list must be given.
+/// \code
+///   fixup call void myfixup1() { EAX = 0; RBX = RCX + RDX + 1; }
+/// \endcode
 void IfcCallFixup::execute(istream &s)
 
 {
@@ -2284,21 +2779,35 @@ void IfcCallFixup::execute(istream &s)
   payload->printTemplate(*status->optr);
 }
 
+/// \class IfcCallOtherFixup
+/// \brief Add a new callother fix-up to the program: `fixup callother ...`
+///
+/// The new fix-up is suitable for replacing specific user-defined (CALLOTHER)
+/// p-code operations. The declarator provides the name of the fix-up and can also
+/// provide formal input and output parameters.
+/// \code
+///   fixup callother outvar myfixup2(invar1,invar2) { outvar = invar1 + invar2; }
+/// \endcode
 void IfcCallOtherFixup::execute(istream &s)
 
 {
   string useropname,outname,pcodestring;
   vector<string> inname;
 
-  readPcodeSnippet(s,useropname,outname,inname,pcodestring);
+  IfcCallFixup::readPcodeSnippet(s,useropname,outname,inname,pcodestring);
   dcp->conf->userops.manualCallOtherFixup(useropname,outname,inname,pcodestring,dcp->conf);
 
   *status->optr << "Successfully registered callotherfixup" << endl;
 }
 
+/// \class IfcVolatile
+/// \brief Mark a memory range as volatile: `volatile <address+size>`
+///
+/// The memory range provided on the command-line is marked as \e volatile, warning
+/// the decompiler analysis that values in the range my change unexpectedly.
 void IfcVolatile::execute(istream &s)
 
-{ // Mark a range as volatile
+{
   int4 size = 0;
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
@@ -2312,6 +2821,12 @@ void IfcVolatile::execute(istream &s)
   *status->optr << "Successfully marked range as volatile" << endl;
 }
 
+/// \class IfcReadonly
+/// \brief Mark a memory range as read-only: `readonly <address+size>`
+///
+/// The memory range provided on the command-line is marked as \e read-only, which
+/// allows the decompiler to propagate values pulled from the LoadImage for the range
+/// as constants.
 void IfcReadonly::execute(istream &s)
 
 {
@@ -2328,9 +2843,17 @@ void IfcReadonly::execute(istream &s)
   *status->optr << "Successfully marked range as readonly" << endl;
 }
 
+/// \class IfcPreferSplit
+/// \brief Mark a storage location to be split: `prefersplit <address+size> <splitsize>`
+///
+/// The storage location is marked for splitting in any future decompilation.
+/// During decompilation, any Varnode matching the storage location on the command-line
+/// will be generally split into two pieces, where the final command-line parameter
+/// indicates the number of bytes in the first piece.  A Varnode is split only if operations
+/// involving it can also be split.  See PreferSplitManager.
 void IfcPreferSplit::execute(istream &s)
 
-{ // Mark a particular storage location as something we would prefer to split
+{
   int4 size = 0;
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
@@ -2345,7 +2868,7 @@ void IfcPreferSplit::execute(istream &s)
   s >> dec >> split;
   if (split == -1)
     throw IfaceParseError("Bad split offset");
-  dcp->conf->splitrecords.push_back(PreferSplitRecord());
+  dcp->conf->splitrecords.emplace_back();
   PreferSplitRecord &rec( dcp->conf->splitrecords.back() );
 
   rec.storage.space = addr.getSpace();
@@ -2356,9 +2879,14 @@ void IfcPreferSplit::execute(istream &s)
   *status->optr << "Successfully added split record" << endl;
 }
 
+/// \class IfcStructureBlocks
+/// \brief Structure an external control-flow graph: `structure blocks <infile> <outfile>`
+///
+/// The control-flow graph is read in from XML file, structuring is performed, and the
+/// result is written out to a separate XML file.
 void IfcStructureBlocks::execute(istream &s)
 
-{ // Read in a control description file, structure the result and write it out
+{
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
 
@@ -2459,6 +2987,12 @@ void IfcExperimentalRules::execute(istream &s)
 }
 #endif
 
+/// \class IfcPrintActionstats
+/// \brief Print transform statistics for the decompiler engine: `print actionstats`
+///
+/// Counts for each Action and Rule are displayed; showing the number of attempts,
+/// both successful and not, that were made to apply each one.  Counts can accumulate
+/// over multiple decompilations.
 void IfcPrintActionstats::execute(istream &s)
 
 {
@@ -2470,6 +3004,10 @@ void IfcPrintActionstats::execute(istream &s)
   dcp->conf->allacts.getCurrent()->printStatistics(*status->fileoptr);
 }
 
+/// \class IfcResetActionstats
+/// \brief Reset transform statistics for the decompiler engine: `reset actionstats`
+///
+/// Counts for each Action and Rule are reset to zero.
 void IfcResetActionstats::execute(istream &s)
 
 {
@@ -2481,6 +3019,11 @@ void IfcResetActionstats::execute(istream &s)
   dcp->conf->allacts.getCurrent()->resetStats();
 }
 
+/// \class IfcCountPcode
+/// \brief Count p-code in the \e current function: `count pcode`
+///
+/// The count is based on the number of existing p-code operations in
+/// the current function, which may vary depending on the state of it transformation.
 void IfcCountPcode::execute(istream &s)
 
 {
@@ -2501,6 +3044,15 @@ void IfcCountPcode::execute(istream &s)
   *status->optr << "Count - pcode = " << dec << count << endl;
 }
 
+/// \class IfcAnalyzeRange
+/// \brief Run value-set analysis on the \e current function: `analyze range full|partial <varnode>`
+///
+/// The analysis targets a single varnode as specified on the command-line and is based on
+/// the existing data-flow graph for the current function.
+/// The possible values that can reach the varnode at its point of definition, and
+/// at any point it is involved in a LOAD or STORE, are displayed.
+/// The keywords \b full and \b partial choose whether the value-set analysis uses
+/// full or partial widening.
 void IfcAnalyzeRange::execute(istream &s)
 
 {
@@ -2519,7 +3071,7 @@ void IfcAnalyzeRange::execute(istream &s)
   }
   else
     throw IfaceParseError("Must specify \"full\" or \"partial\" widening");
-  Varnode *vn = iface_read_varnode(dcp,s);
+  Varnode *vn = dcp->readVarnode(s);
   vector<Varnode *> sinks;
   vector<PcodeOp *> reads;
   sinks.push_back(vn);
@@ -2713,11 +3265,16 @@ void IfcBreakjump::execute(istream &s)
 
 #endif
 
+/// Execute one command and handle any exceptions.
+/// Error messages are printed to the console.  For low-level errors,
+/// the current function is reset to null
+/// \param status is the console interface
+/// \param dcp is the shared program data
 void execute(IfaceStatus *status,IfaceDecompData *dcp)
 
-{				// Execute and catch exceptions
+{
   try {
-    status->runCommand();	// Try to run one commandline
+    status->runCommand();	// Try to run one command-line
     return;
   }
   catch(IfaceParseError &err) {
@@ -2746,7 +3303,13 @@ void execute(IfaceStatus *status,IfaceDecompData *dcp)
   status->evaluateError();
 }
 
-void mainloop(IfaceStatus *status) {
+/// Execution loops until either the \e done field in the console is set
+/// or if all streams have ended.  This handles popping script states pushed
+/// on by the IfcSource command.
+/// \param status is the console interface
+void mainloop(IfaceStatus *status)
+
+{
   IfaceDecompData *dcp = (IfaceDecompData *)status->getData("decompile");
   for(;;) {
     while(!status->isStreamFinished()) {
@@ -2760,6 +3323,11 @@ void mainloop(IfaceStatus *status) {
   }
 }
 
+/// \class IfcSource
+/// \brief Execute a command script : `source <filename>`
+///
+/// A file is opened as a new streaming source of command-lines.
+/// The stream is pushed onto the stack for the console.
 void IfcSource::execute(istream &s)
 
 {

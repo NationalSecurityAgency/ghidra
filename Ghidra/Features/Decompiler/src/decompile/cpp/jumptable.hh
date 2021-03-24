@@ -73,15 +73,15 @@ class PathMeld {
   vector<Varnode *> commonVn;		///< Varnodes in common with all paths
   vector<RootedOp> opMeld;		///< All the ops for the melded paths
   void internalIntersect(vector<int4> &parentMap);
-  int4 meldOps(const vector<PcodeOp *> &path,int4 cutOff,const vector<int4> &parentMap);
+  int4 meldOps(const vector<PcodeOpNode> &path,int4 cutOff,const vector<int4> &parentMap);
   void truncatePaths(int4 cutPoint);
 public:
   void set(const PathMeld &op2);	///< Copy paths from another container
-  void set(const vector<PcodeOp *> &path,const vector<int4> &slot);	///< Initialize \b this to be a single path
+  void set(const vector<PcodeOpNode> &path);	///< Initialize \b this to be a single path
   void set(PcodeOp *op,Varnode *vn);	///< Initialize \b this container to a single node "path"
   void append(const PathMeld &op2);	///< Append a new set of paths to \b this set of paths
   void clear(void);			///< Clear \b this to be an empty container
-  void meld(vector<PcodeOp *> &path,vector<int4> &slot);	///< Meld a new path into \b this container
+  void meld(vector<PcodeOpNode> &path);	///< Meld a new path into \b this container
   void markPaths(bool val,int4 startVarnode);			///< Mark PcodeOps paths from the given start
   int4 numCommonVarnode(void) const { return commonVn.size(); }	///< Return the number of Varnodes common to all paths
   int4 numOps(void) const { return opMeld.size(); }		///< Return the number of PcodeOps across all paths
@@ -500,7 +500,7 @@ class JumpTable {
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block
-    int4 addressIndex;				/// Index of address targetting the basic-block
+    int4 addressIndex;				///< Index of address targeting the basic-block
     IndexPair(int4 pos,int4 index) { blockPosition = pos; addressIndex = index; }	///< Constructor
     bool operator<(const IndexPair &op2) const;	///< Compare by position then by index
     static bool compareByPosition(const IndexPair &op1,const IndexPair &op2);	///< Compare just by position

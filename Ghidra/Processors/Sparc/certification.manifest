@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/languages/Sparc.opinion||GHIDRA||||END|
 data/languages/SparcV9.ldefs||GHIDRA||||END|
 data/languages/SparcV9.pspec||GHIDRA||||END|

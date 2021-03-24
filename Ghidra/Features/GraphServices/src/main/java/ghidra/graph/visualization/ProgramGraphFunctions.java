@@ -15,7 +15,7 @@
  */
 package ghidra.graph.visualization;
 
-import static org.jungrapht.visualization.VisualizationServer.*;
+import static org.jungrapht.visualization.layout.util.PropertyLoader.*;
 
 import java.awt.*;
 import java.util.Map;
@@ -125,13 +125,14 @@ abstract class ProgramGraphFunctions {
 	/**
 	 * gets a display label from an {@link Attributed} object (vertex)
 	 * @param attributed the attributed object to get a label for
+	 * @param preferredLabelAttribute the attribute to use for the label, if available
 	 * @return the label for the given {@link Attributed}
 	 */
-	public static String getLabel(Attributed attributed) {
+	public static String getLabel(Attributed attributed, String preferredLabelAttribute) {
 		Map<String, String> map = attributed.getAttributeMap();
 		String name = StringEscapeUtils.escapeHtml4(map.get("Name"));
-		if (map.containsKey("Code")) {
-			name = StringEscapeUtils.escapeHtml4(map.get("Code"));
+		if (map.containsKey(preferredLabelAttribute)) {
+			name = StringEscapeUtils.escapeHtml4(map.get(preferredLabelAttribute));
 		}
 		return "<html>" + String.join("<p>", Splitter.on('\n').split(name));
 	}

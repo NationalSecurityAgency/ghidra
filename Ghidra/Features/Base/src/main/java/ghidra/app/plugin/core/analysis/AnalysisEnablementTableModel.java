@@ -35,8 +35,9 @@ import ghidra.util.table.column.GColumnRenderer;
  */
 public class AnalysisEnablementTableModel
 		extends GDynamicColumnTableModel<AnalyzerEnablementState, Object> {
-	private static Color ALT_SELECTED_COLOR = Color.BLUE.brighter();
-	private static Color ALT_NON_SELECTED__COLOR = new Color(255, 255, 175);
+
+	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT = new Color(255, 255, 200);
+	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED = new Color(177, 212, 236);
 
 	private List<AnalyzerEnablementState> analyzerStates;
 	private AnalysisPanel panel;
@@ -100,6 +101,16 @@ public class AnalysisEnablementTableModel
 		return false;
 	}
 
+	private void setToolTip(Component c, String text) {
+		if (c instanceof JComponent) {
+			((JComponent) c).setToolTipText(text);
+		}
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================	
+
 	private class AnalyzerEnabledColumn
 			extends AbstractDynamicTableColumn<AnalyzerEnablementState, Boolean, Object> {
 		EnabledColumnTableCellRenderer renderer = new EnabledColumnTableCellRenderer();
@@ -155,12 +166,22 @@ public class AnalysisEnablementTableModel
 			Component component = booleanRenderer.getTableCellRendererComponent(table, value,
 				isSelected, hasFocus, row, column);
 
-			if (!getRowObject(row).isDefaultEnablement()) {
-				component.setBackground(isSelected ? ALT_SELECTED_COLOR : ALT_NON_SELECTED__COLOR);
-				if (component instanceof JComponent) {
-					((JComponent) component).setToolTipText("This option differs from the default");
-				}
+			AnalyzerEnablementState state = getRowObject(row);
+			if (state.isDefaultEnablement()) {
+				setToolTip(component, null);
+				return component;
 			}
+
+			// not the default enablement
+			if (isSelected) {
+				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
+			}
+			else {
+				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);
+			}
+
+			setToolTip(component, "This option differs from the default");
+
 			return component;
 		}
 
@@ -168,7 +189,6 @@ public class AnalysisEnablementTableModel
 		public String getFilterString(Boolean t, Settings settings) {
 			return "";
 		}
-
 	}
 
 	private class AnalyzerNameTableCellRenderer extends AbstractGColumnRenderer<String> {
@@ -188,14 +208,23 @@ public class AnalysisEnablementTableModel
 				component.setForeground(
 					ColorUtils.deriveForeground(component.getBackground(), ColorUtils.HUE_RED));
 			}
-			if (!((AnalyzerEnablementState) data.getRowObject()).isDefaultEnablement()) {
-				component.setBackground(
-					data.isSelected() ? ALT_SELECTED_COLOR : ALT_NON_SELECTED__COLOR);
-				if (component instanceof JComponent) {
-					((JComponent) component).setToolTipText("This option differs from the default");
-				}
+
+			AnalyzerEnablementState state = (AnalyzerEnablementState) data.getRowObject();
+			if (state.isDefaultEnablement()) {
+				setToolTip(component, null);
+				return component;
 			}
 
+			// not the default enablement			
+			if (data.isSelected()) {
+				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
+				component.setForeground(Color.BLACK);
+			}
+			else {
+				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);
+			}
+
+			setToolTip(component, "This option differs from the default");
 			return component;
 		}
 

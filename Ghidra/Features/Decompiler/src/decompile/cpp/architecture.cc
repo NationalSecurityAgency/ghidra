@@ -64,6 +64,20 @@ ArchitectureCapability *ArchitectureCapability::findCapability(Document *doc)
   return (ArchitectureCapability *)0;
 }
 
+/// Return the ArchitectureCapability object with the matching name
+/// \param name is the name to match
+/// \return the ArchitectureCapability or null if no match is found
+ArchitectureCapability *ArchitectureCapability::getCapability(const string &name)
+
+{
+  for(int4 i=0;i<thelist.size();++i) {
+    ArchitectureCapability *res = thelist[i];
+    if (res->getName() == name)
+      return res;
+  }
+  return (ArchitectureCapability *)0;
+}
+
 /// Modify order that extensions are searched, to effect which gets a chance
 /// to run first.
 /// Right now all we need to do is make sure the raw architecture comes last
@@ -1066,7 +1080,7 @@ void Architecture::parsePreferSplit(const Element *el)
   List::const_iterator iter;
 
   for(iter=list.begin();iter!=list.end();++iter) {
-    splitrecords.push_back(PreferSplitRecord());
+    splitrecords.emplace_back();
     PreferSplitRecord &record( splitrecords.back() );
     record.storage.restoreXml( *iter, this );
     record.splitoffset = record.storage.size/2;
@@ -1301,6 +1315,7 @@ void Architecture::resetDefaultsInternal(void)
   flowoptions = FlowInfo::error_toomanyinstructions;
   max_instructions = 100000;
   infer_pointers = true;
+  analyze_for_loops = true;
   readonlypropagate = false;
   alias_block_level = 2;	// Block structs and arrays by default
 }

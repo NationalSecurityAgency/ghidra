@@ -98,7 +98,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			throw e;
 		}
 		catch (Exception e) {
-			throw new IOException(e.getMessage());
+			throw new IOException(e);
 		}
 	}
 

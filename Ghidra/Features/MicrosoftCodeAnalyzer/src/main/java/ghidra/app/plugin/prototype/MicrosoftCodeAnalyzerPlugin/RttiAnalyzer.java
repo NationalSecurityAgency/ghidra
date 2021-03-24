@@ -58,7 +58,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		setSupportsOneTimeAnalysis();
 		// Set priority of RTTI analyzer to run after Demangler so can see if better 
 		// plate comment or label already exists from Demangler.
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before());
+		setPriority(AnalysisPriority.REFERENCE_ANALYSIS.before());
 		setDefaultEnablement(true);
 		validationOptions = new DataValidationOptions();
 		applyOptions = new DataApplyOptions();
@@ -218,7 +218,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 		int rtti0PointerOffset = Rtti4Model.getRtti0PointerComponentOffset();
 
-		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI0 refernces");
+		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI0 references");
 
 		for (Address rtti0Address : rtti0Locations) {
 			byte[] bytes;

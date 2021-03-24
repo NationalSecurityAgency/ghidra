@@ -104,8 +104,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				return false;
 			}
 			record = rec;
-			address = symbolMgr.getAddressMap().decodeAddress(
-				rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
+			address = symbolMgr.getAddressMap()
+					.decodeAddress(
+						rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 			return true;
 		}
 		return false;
@@ -522,8 +523,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		return source;
 	}
 
-	@Override
-	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
+	public void doSetNameAndNamespace(String newName, Namespace newNamespace, SourceType source,
+			boolean checkForDuplicates)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 
 		lock.acquire();
@@ -563,7 +564,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				if (!namespaceChange && !nameChange) {
 					return;
 				}
-				symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace, getSymbolType());
+
+				if (checkForDuplicates) {
+					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace,
+						getSymbolType());
+				}
 			}
 
 			if (record != null) {
@@ -615,6 +620,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		finally {
 			lock.release();
 		}
+	}
+
+	@Override
+	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
+			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
+
+		doSetNameAndNamespace(newName, newNamespace, source, true);
 	}
 
 	protected List<SymbolDB> getSymbolsDynamicallyRenamedByMyRename() {

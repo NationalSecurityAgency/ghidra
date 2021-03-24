@@ -1,0 +1,70 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+A contrived function with different float and double encodings.
+-->
+<bytechunk space="ram" offset="0x4004c7" readonly="true">
+              554889e5f30f100539
+030000f30f1105550b2000f30f10052d
+030000f30f1105490b2000f30f100521
+030000f30f11053d0b2000f30f100515
+030000f30f1105310b2000f30f100509
+030000660fefc9f30f5ec1f30f11051d
+0b2000660fefc0660fefc9f30f5ec1f3
+0f11050d0b2000f30f1005e1020000f3
+0f1105010b2000f20f1005d9020000f2
+0f1105f90a2000f20f1005d1020000f2
+0f1105f10a2000f20f1005c9020000f2
+0f1105e90a2000f20f1005c1020000f2
+0f1105e10a2000f20f1005b902000066
+0fefc9f20f5ec1f20f1105d10a200066
+0fefc0660fefc9f20f5ec1f20f1105c5
+0a2000f20f100595020000f20f1105bd
+0a2000905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x40080c" readonly="true">
+                        abaaaa3e
+000000406f1283babd3786350000803f
+24d4523600000000555555555555e53f
+0000000000000040fca9f1d24d6250bf
+bbbdd7d9df7cdb3d000000000000f03f
+7e7480d3845aca3e
+</bytechunk>
+<symbol space="ram" offset="0x4004c7" name="establish"/>
+</binaryimage>
+<script>
+  <com>map addr r0x601030 float4 floatv1</com>
+  <com>map addr r0x601034 float4 floatv2</com>
+  <com>map addr r0x601038 float4 floatv3</com>
+  <com>map addr r0x60103c float4 floatv4</com>
+  <com>map addr r0x601040 float4 floatv5</com>
+  <com>map addr r0x601044 float4 floatv6</com>
+  <com>map addr r0x601048 float4 floatv7</com>
+  <com>map addr r0x601050 float8 double1</com>
+  <com>map addr r0x601058 float8 double2</com>
+  <com>map addr r0x601060 float8 double3</com>
+  <com>map addr r0x601068 float8 double4</com>
+  <com>map addr r0x601070 float8 double5</com>
+  <com>map addr r0x601078 float8 double6</com>
+  <com>map addr r0x601080 float8 double7</com>
+  <com>option readonly on</com>
+  <com>lo fu establish</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Float print #1" min="1" max="1">floatv1 = 0.3333333;</stringmatch>
+<stringmatch name="Float print #2" min="1" max="1">floatv2 = 2.0;</stringmatch>
+<stringmatch name="Float print #3" min="1" max="1">floatv3 = -0.001;</stringmatch>
+<stringmatch name="Float print #4" min="1" max="1">floatv4 = 1e-06;</stringmatch>
+<stringmatch name="Float print #5" min="1" max="1">floatv5 = INFINITY;</stringmatch>
+<stringmatch name="Float print #6" min="1" max="1">floatv6 = -NAN;</stringmatch>
+<stringmatch name="Float print #7" min="1" max="1">floatv7 = 3.141592e-06;</stringmatch>
+<stringmatch name="Float print #8" min="1" max="1">double1 = 0.6666666666666666;</stringmatch>
+<stringmatch name="Float print #9" min="1" max="1">double2 = 2.0;</stringmatch>
+<stringmatch name="Float print #10" min="1" max="1">double3 = -0.001;</stringmatch>
+<stringmatch name="Float print #11" min="1" max="1">double4 = 1e-10;</stringmatch>
+<stringmatch name="Float print #12" min="1" max="1">double5 = INFINITY;</stringmatch>
+<stringmatch name="Float print #13" min="1" max="1">double6 = -NAN;</stringmatch>
+<stringmatch name="Float print #14" min="1" max="1">double7 = 3.141592653589793e-06;</stringmatch>
+</decompilertest>

@@ -442,8 +442,8 @@ public class DecompileDebug {
 			Varnode.appendSpaceOffset(stringBuf, addr);
 			stringBuf.append(">\n");
 			for (ContextSymbol sym : ctxsymbols) {
-				int sbit = sym.getLow();
-				int ebit = sym.getHigh();
+				int sbit = sym.getInternalLow();
+				int ebit = sym.getInternalHigh();
 				int word = sbit / (8 * 4);
 				int startbit = sbit - word * (8 * 4);
 				int endbit = ebit - word * (8 * 4);

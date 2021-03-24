@@ -41,8 +41,10 @@ public class FunctionTagLoader {
 	 * 
 	 * @param tagFile tag file
 	 * @return List list of function tags
+	 * @throws IOException if there is an exception reading the file
+	 * @throws SAXException if there is an exception parsing the file
 	 */
-	protected static Set<FunctionTag> loadTags(File tagFile) {
+	protected static Set<FunctionTag> loadTags(File tagFile) throws SAXException, IOException {
 		return loadTags(new ResourceFile(tagFile));
 	}
 
@@ -56,16 +58,17 @@ public class FunctionTagLoader {
 		try {
 			return loadTags(Application.getModuleDataFile(moduleDataFilePath));
 		}
-		catch (FileNotFoundException e) {
+		catch (SAXException | IOException e) {
 			Msg.error(FunctionTagLoader.class,
 				"Error loading function tags file from " + moduleDataFilePath, e);
 		}
 		return new HashSet<>();
 	}
 
-	protected static Set<FunctionTag> loadTags(final ResourceFile tagDataFile) {
-		Set<FunctionTag> tags = new HashSet<>();
+	protected static Set<FunctionTag> loadTags(final ResourceFile tagDataFile)
+			throws SAXException, IOException {
 
+		Set<FunctionTag> tags = new HashSet<>();
 		try {
 			ErrorHandler errHandler = new ErrorHandler() {
 				@Override
@@ -114,10 +117,6 @@ public class FunctionTagLoader {
 		}
 		catch (XmlException e) {
 			Msg.error(FunctionTagLoader.class, "Error parsing function tags from " + tagDataFile,
-				e);
-		}
-		catch (SAXException | IOException e) {
-			Msg.error(FunctionTagLoader.class, "Error loading function tags from " + tagDataFile,
 				e);
 		}
 

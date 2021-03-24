@@ -1247,6 +1247,120 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 	}
 
+//	TODO   See GP-585 for design issue preventing this test from passing
+//	@Test
+	public void testEditStructureWithReplacementAndRemoval() throws Exception {
+
+		mtf.initialize("notepad", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyPrivate(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure s = (Structure) dtm.getDataType("/Category5/Test");
+					DataType dt = dtm.getDataType("/MISC/FooTypedef");
+					s.setFlexibleArrayComponent(dt, "foo", "");
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					TypeDef td = (TypeDef) dtm.getDataType("/BF");
+					//
+					// NOTE: Merge does not handle datatype replacements as one might hope
+					// If latest version has defined data/components based upon a type which has
+					// been replaced in private, the replaced datatype will be treated as removed
+					//
+					dtm.replaceDataType(td, new TypedefDataType("NewBF", IntegerDataType.dataType),
+						true);
+					DataType dt = dtm.getDataType("/MISC/FooTypedef");
+					dtm.remove(dt, TaskMonitor.DUMMY);
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+
+				DataType dt1 = dtm.getDataType("/BF");
+				assertNull(dt1);
+			}
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					TypeDef td = new TypedefDataType("BF", IntegerDataType.dataType);
+
+					Structure struct = new StructureDataType(new CategoryPath("/Category5"), "Test",
+						0, program.getDataTypeManager());
+					struct.add(td);
+					struct.insertBitFieldAt(3, 2, 6, td, 2, "bf1", null);
+					struct.insertBitFieldAt(3, 2, 4, td, 2, "bf2", null);
+					struct.add(new WordDataType());
+					struct.add(new QWordDataType());
+
+					struct.setFlexibleArrayComponent(td, "flex", "my flex");
+
+					dtm.addDataType(struct, null);
+					commit = true;
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+					Assert.fail(e.toString());
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+		});
+
+		executeMerge(DataTypeMergeManager.OPTION_MY);
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		DataType dt = dtm.getDataType("/Category5/Test");
+		assertTrue(dt instanceof Structure);
+		Structure s = (Structure) dt;
+		/** Current Result for /Category5/Test
+		 * 
+				Unaligned
+				Structure Test {
+				   4   int:2(6)   1   bf1   ""
+				   4   int:2(4)   1   bf2   ""
+				   5   word   2   null   ""
+				   7   qword   8   null   ""
+				}
+				Size = 15   Actual Alignment = 1
+		 *	
+		 * See assertion below for preferred result
+		 */
+		//@formatter:off
+		assertEquals("/Category5/Test\n" + 
+			"Unaligned\n" + 
+			"Structure Test {\n" + 
+			"   0   NewBF   4   null   \"\"\n" + 
+			"   4   NewBF:2(6)   1   bf1   \"\"\n" + 
+			"   4   NewBF:2(4)   1   bf2   \"\"\n" + 
+			"   5   word   2   null   \"\"\n" + 
+			"   7   qword   8   null   \"\"\n" + 
+			"   Undefined1[0]   0   foo   \"\"\n" +  // reflects removal of /MISC/FooTypedef
+			"}\n" + 
+			"Size = 15   Actual Alignment = 1\n", s.toString());
+		//@formatter:on
+	}
+
 	@Test
 	public void testEditUnions() throws Exception {
 

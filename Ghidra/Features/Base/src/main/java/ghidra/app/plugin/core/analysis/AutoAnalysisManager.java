@@ -1110,9 +1110,14 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			int answer = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Analyze",
 				"<html>" + HTMLUtilities.escapeHTML(program.getDomainFile().getName()) +
 					" has not been analyzed. Would you like to analyze it now?");
-			boolean analyzed = answer == OptionDialog.OPTION_ONE;
-			GhidraProgramUtilities.setAnalyzedFlag(program, analyzed);
-			return analyzed;
+			//Set to false for now.  ANALYZED is a tri-valued variable:
+			// null means not asked.
+			// false means asked but could still turn true when analysis happens.
+			// true means analysis has started.
+			//Setting false here only works due to this code only being reachable
+			// because of the behavior of GhidraProgramUtilities.shouldAskToAnalyze(program) above.
+			GhidraProgramUtilities.setAnalyzedFlag(program, false);
+			return answer == OptionDialog.OPTION_ONE; //Analyze
 		}
 		return false;
 	}

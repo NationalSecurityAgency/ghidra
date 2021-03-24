@@ -37,10 +37,11 @@ class Funcdata;
 class Comment {
   friend class CommentDatabaseInternal;
   uint4 type;			///< The properties associated with the comment
+  int4 uniq;			///< Sub-identifier for uniqueness
   Address funcaddr;		///< Address of the function containing the comment
   Address addr;			///< Address associated with the comment
-  int4 uniq;			///< Sub-identifier for uniqueness
   string text;			///< The body of the comment
+  mutable bool emitted;		///< \b true if this comment has already been emitted
 public:
   /// \brief Possible properties associated with a comment
   enum comment_type {
@@ -51,9 +52,10 @@ public:
     warning = 16,		///< The comment is auto-generated to alert the user
     warningheader = 32		///< The comment is auto-generated and should be in the header
   };
-  Comment(uint4 tp,const Address &fad,
-	      const Address &ad,int4 uq,const string &txt);	///< Constructor
+  Comment(uint4 tp,const Address &fad,const Address &ad,int4 uq,const string &txt);	///< Constructor
   Comment(void) {} 	///< Constructor for use with restoreXml
+  void setEmitted(bool val) const { emitted = val; }		///< Mark that \b this comment has been emitted
+  bool isEmitted(void) const { return emitted; }		///< Return \b true if \b this comment is already emitted
   uint4 getType(void) const { return type; }			///< Get the properties associated with the comment
   const Address &getFuncAddr(void) const { return funcaddr; }	///< Get the address of the function containing the comment
   const Address &getAddr(void) const { return addr; }		///< Get the address to which the instruction is attached

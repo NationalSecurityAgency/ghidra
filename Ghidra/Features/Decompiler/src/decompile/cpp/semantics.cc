@@ -37,6 +37,7 @@ ConstTpl::ConstTpl(const_type tp,int4 ht,v_field vf)
   type = handle;
   value.handle_index = ht;
   select = vf;
+  value_real = 0;
 }
 
 ConstTpl::ConstTpl(const_type tp,int4 ht,v_field vf,uintb plus)

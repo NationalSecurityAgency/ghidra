@@ -85,7 +85,7 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 
 	protected void dispose() {
 		close(frame);
-		threadedTablePanel.dispose();
+		runSwing(threadedTablePanel::dispose);
 	}
 
 	protected void addItemToModel(long value) {

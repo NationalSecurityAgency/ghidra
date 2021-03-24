@@ -15,33 +15,44 @@
  */
 package ghidra.graph.visualization;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedGraph;
 
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * {@code Comparator} to order {@code AttributedEdge}s based on their position in a
+ * supplied {@code List}.
+ *
+ */
 public class EdgeComparator implements Comparator<AttributedEdge> {
-	private final Set<AttributedEdge> prioritized;
 
-	public EdgeComparator(AttributedGraph graph, String attributeName, String value) {
-		prioritized = graph.edgeSet()
-				.stream()
-				.filter(e -> Objects.equals(e.getAttribute(attributeName), value))
-				.collect(Collectors.toSet());
+	/**
+	 * {@code Map} of EdgeType attribute value to integer priority
+	 */
+	private Map<String, Integer> edgePriorityMap = new HashMap();
+
+	/**
+	 * Create an instance and place the list values into the {@code edgePriorityMap}
+	 * with a one-up counter expressing their relative priority
+	 * @param edgePriorityList
+	 */
+	public EdgeComparator(List<String> edgePriorityList) {
+		edgePriorityList.forEach(s -> edgePriorityMap.put(s, edgePriorityList.indexOf(s)));
 	}
 
+	/**
+	 * {@inheritdoc}
+	 * Compares the {@code AttributedEdge}s using their priority in the supplied {@code edgePriorityMap}
+	 */
 	@Override
 	public int compare(AttributedEdge edgeOne, AttributedEdge edgeTwo) {
-		boolean edgeOnePriority = prioritized.contains(edgeOne);
-		boolean edgeTwoPriority = prioritized.contains(edgeTwo);
-		if (edgeOnePriority && !edgeTwoPriority) {
-			return -1;
-		}
-		else if (!edgeOnePriority && edgeTwoPriority) {
-			return 1;
-		}
-		return 0;
+		return priority(edgeOne).compareTo(priority(edgeTwo));
 	}
 
+	private Integer priority(AttributedEdge e) {
+		return edgePriorityMap.getOrDefault(e.getAttribute("EdgeType"), 0);
+	}
 }

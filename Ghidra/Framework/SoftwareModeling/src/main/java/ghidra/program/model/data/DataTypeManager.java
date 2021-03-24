@@ -242,7 +242,7 @@ public interface DataTypeManager {
 	 * Get the category that has the given path
 	 * 
 	 * @param path the path
-	 * @return the category
+	 * @return the category if defined, otherwise null
 	 */
 	public Category getCategory(CategoryPath path);
 

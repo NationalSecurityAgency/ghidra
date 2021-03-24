@@ -22,6 +22,7 @@ import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphVertexAttributes;
 import ghidra.framework.options.SaveState;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 
 class ToolBasedColorProvider implements FGColorProvider {
@@ -102,6 +103,15 @@ class ToolBasedColorProvider implements FGColorProvider {
 		// The loading/saving of colors is handled automatically by the service, but this is
 		// for the background of the code units stored in the DB.  We still have to let this
 		// vertex know that it has a custom background.
+
+		AddressSetView addresses = vertex.getAddresses();
+		AddressSetView allColorAddress = service.getAllBackgroundColorAddresses();
+		if (!allColorAddress.contains(addresses)) {
+			// sparse colors for the addresses of this node; assume this has not been colored 
+			// from the function graph, but from the service for individual addresses.
+			return;
+		}
+
 		Color savedColor = service.getBackgroundColor(vertex.getVertexAddress());
 		if (savedColor != null) {
 			vertex.restoreColor(savedColor);

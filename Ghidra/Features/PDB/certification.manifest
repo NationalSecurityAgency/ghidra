@@ -1,7 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 src/global/docs/README_PDB.html||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||||END|

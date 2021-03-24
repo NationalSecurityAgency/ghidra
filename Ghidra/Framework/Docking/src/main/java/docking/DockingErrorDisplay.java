@@ -18,6 +18,8 @@ package docking;
 import java.awt.Component;
 import java.awt.Window;
 
+import org.apache.commons.text.WordUtils;
+
 import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
 import ghidra.util.*;
@@ -26,11 +28,11 @@ import ghidra.util.exception.MultipleCauses;
 public class DockingErrorDisplay implements ErrorDisplay {
 
 	/**
-	 * Error dialog used to append exceptions.  
-	 * 
+	 * Error dialog used to append exceptions.
+	 *
 	 * <p>While this dialog is showing all new exceptions will be added to the dialog.  When
-	 * this dialog is closed, this reference will be cleared.   
-	 * 
+	 * this dialog is closed, this reference will be cleared.
+	 *
 	 * <p>Note: all use of this variable <b>must be on the Swing thread</b> to avoid thread
 	 * visibility issues.
 	 */
@@ -62,23 +64,34 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			Component parent, String title, Object message, Throwable throwable) {
 
 		int dialogType = OptionDialog.PLAIN_MESSAGE;
+
 		String messageString = message != null ? message.toString() : null;
-		String rawMessage = HTMLUtilities.fromHTML(messageString);
+		if (messageString != null) {
+			// prevent excessive message degenerate cases
+			int maxChars = 1000;
+			String safeMessage = StringUtilities.trimMiddle(messageString, maxChars);
+
+			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
+			// a reasonable line length based on historical print margins
+			messageString = WordUtils.wrap(safeMessage, 100, null, true);
+		}
+
+		String unformattedMessage = HTMLUtilities.fromHTML(messageString);
 		switch (messageType) {
 			case INFO:
 				dialogType = OptionDialog.INFORMATION_MESSAGE;
 				consoleDisplay.displayInfoMessage(errorLogger, originator, parent, title,
-					rawMessage);
+					unformattedMessage);
 				break;
 			case WARNING:
 			case ALERT:
 				dialogType = OptionDialog.WARNING_MESSAGE;
 				consoleDisplay.displayWarningMessage(errorLogger, originator, parent, title,
-					rawMessage, throwable);
+					unformattedMessage, throwable);
 				break;
 			case ERROR:
 				consoleDisplay.displayErrorMessage(errorLogger, originator, parent, title,
-					rawMessage, throwable);
+					unformattedMessage, throwable);
 				dialogType = OptionDialog.ERROR_MESSAGE;
 				break;
 		}
@@ -93,8 +106,8 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		return component;
 	}
 
-	private void showDialog(final String title, final Throwable throwable,
-			final int dialogType, final String messageString, final Component parent) {
+	private void showDialog(final String title, final Throwable throwable, final int dialogType,
+			final String messageString, final Component parent) {
 
 		Swing.runIfSwingOrRunLater(() -> {
 
@@ -108,8 +121,8 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		});
 	}
 
-	private void showDialogOnSwing(String title, Throwable throwable,
-			int dialogType, String messageString, Component parent) {
+	private void showDialogOnSwing(String title, Throwable throwable, int dialogType,
+			String messageString, Component parent) {
 
 		if (activeDialog != null) {
 			activeDialog.addException(messageString, throwable);

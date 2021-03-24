@@ -26,6 +26,6 @@ set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
 :: store current path
-set filepath=%~dp0
+set "filepath=%~dp0"
 
 call "%filepath%launch.bat" %LAUNCH_MODE% Ghidra-Python "%MAXMEM%" "%VMARG_LIST%" ghidra.python.PythonRun %params%

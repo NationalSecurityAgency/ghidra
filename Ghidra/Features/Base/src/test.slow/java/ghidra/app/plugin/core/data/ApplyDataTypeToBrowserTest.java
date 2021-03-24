@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.data;
 
+import static org.hamcrest.core.StringContains.*;
 import static org.junit.Assert.*;
 
 import javax.swing.*;
@@ -22,9 +23,9 @@ import javax.swing.*;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingDialog;
+import docking.*;
 import docking.action.DockingActionIf;
+import generic.test.TestUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.codebrowser.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -50,7 +51,6 @@ import ghidra.test.TestEnv;
 
 public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String PROGRAM_FILENAME = "WallaceSrc";
-	private static final int TASK_TIMEOUT = 2000;
 	private static final String CYCLE_BYTE_WORD_DWORD_QWORD = "Cycle: byte,word,dword,qword";
 
 	private TestEnv env;
@@ -63,6 +63,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
 	private ArchiveNode programNode;
+	private CodeViewerProvider codeViewerProvider;
 
 	@Before
 	public void setUp() throws Exception {
@@ -94,6 +95,9 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);
+
+		CodeBrowserPlugin codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
+		codeViewerProvider = codeBrowserPlugin.getProvider();
 	}
 
 	private ProgramDB buildWallaceSrcProgram() throws Exception {
@@ -121,24 +125,19 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		executeOnSwingWithoutBlocking(() -> {
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.closeProgram();
-
 		});
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 
-		env.release(program);
 		env.dispose();
 	}
 
 	@Test
 	public void testChooseDataTypeOnDefaultDts() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
-		assertNotNull(chooseDataTypeAction);
-		performAction(chooseDataTypeAction, codeViewerProvider, false);
+		showDataTypeChooser();
 
 		chooseInDialog("_person");
 
@@ -152,12 +151,9 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testChooseDataTypeOnUndefinedDts() throws Exception {
 		createData("004027d2", new Undefined4DataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
-		assertNotNull(chooseDataTypeAction);
-		performAction(chooseDataTypeAction, codeViewerProvider, false);
+		showDataTypeChooser();
 
 		chooseInDialog("_person");
 
@@ -170,80 +166,65 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testChooseDataTypeOnDefinedDts() throws Exception {
+
+		//
+		// Test that apply data on an existing type will offer to clear that type
+		//
+
 		createData("004027d1", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
-		assertNotNull(chooseDataTypeAction);
-		performAction(chooseDataTypeAction, codeViewerProvider, false);
+		showDataTypeChooser();
 
-		DialogComponentProvider dialog =
-			chooseInDialog("_person", "_person doesn't fit within 1 bytes, need 41 bytes");
+		chooseInDialog("_person");
+
+		pressConflictingDataDialog("Yes");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
-		assertEquals(DataType.DEFAULT, data.getDataType());
-		assertEquals(addr("004027d0"), data.getMaxAddress());
-
-		pressButtonByText(dialog, "Cancel");
-		waitForSwing();
+		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
+		assertEquals(dataType, data.getDataType());
+		assertEquals(addr("004027f8"), data.getMaxAddress());
 	}
 
 	@Test
 	public void testChooseDataTypeOnDefinedAndUndefinedDts() throws Exception {
 		createData("004027d1", new ByteDataType());
 		createData("004027d2", new Undefined4DataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
-		assertNotNull(chooseDataTypeAction);
-		performAction(chooseDataTypeAction, codeViewerProvider, false);
-
-		DialogComponentProvider dialog =
-			chooseInDialog("_person", "_person doesn't fit within 1 bytes, need 41 bytes");
+		showDataTypeChooser();
+		chooseInDialog("_person");
+		pressConflictingDataDialog("No");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(DataType.DEFAULT, data.getDataType());
 		assertEquals(addr("004027d0"), data.getMaxAddress());
-
-		pressButtonByText(dialog, "Cancel");
-		waitForSwing();
 	}
 
 	@Test
 	public void testChooseDataTypeWhereDoesNotFit() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027e0");
-		waitForSwing();
+		goTo("004027e0");
 
-		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
-		assertNotNull(chooseDataTypeAction);
-		performAction(chooseDataTypeAction, codeViewerProvider, false);
+		showDataTypeChooser();
+		chooseInDialog("_person");
 
-		DialogComponentProvider dialog =
-			chooseInDialog("_person", "_person doesn't fit within 32 bytes, need 41 bytes");
-
+		assertToolStatus("Not enough room in memory block containing address");
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(DataType.DEFAULT, data.getDataType());
 		assertEquals(addr("004027d0"), data.getMaxAddress());
-
-		pressButtonByText(dialog, "Cancel");
-		waitForSwing();
 	}
 
 	@Test
 	public void testCreateArrayOnDefaultDts() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Define Array");
-		assertNotNull(chooseDataTypeAction);
 		performAction(chooseDataTypeAction, codeViewerProvider, false);
 
 		waitForSwing();
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Create undefined[]", 2000);
-		assertNotNull(dialog);
+		JDialog dialog = waitForJDialog("Create undefined[]");
 		JTextField tf = findComponent(dialog, JTextField.class);
 		triggerText(tf, "48");
 		waitForSwing();
@@ -261,8 +242,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testCreateArrayOnUndefinedDts() throws Exception {
 		createData("004027d2", new Undefined4DataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Define Array");
 		assertNotNull(chooseDataTypeAction);
@@ -270,8 +250,8 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		waitForSwing();
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Create undefined[]", 2000);
-		assertNotNull(dialog);
+		JDialog dialog = waitForJDialog("Create undefined[]");
+
 		JTextField tf = findComponent(dialog, JTextField.class);
 		triggerText(tf, "48");
 
@@ -288,8 +268,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testCreateArrayFailureOnDefinedDts() throws Exception {
 		createData("004027d4", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Define Array");
 		assertNotNull(chooseDataTypeAction);
@@ -297,8 +276,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		waitForSwing();
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Create undefined[]", 2000);
-		assertNotNull(dialog);
+		JDialog dialog = waitForJDialog("Create undefined[]");
 
 		checkStatus((DockingDialog) dialog, "Entering more than 4 will overwrite existing data");
 
@@ -326,8 +304,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		createCode("004027d4", 1);
 
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Define Array");
 		assertNotNull(chooseDataTypeAction);
@@ -335,8 +312,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		waitForSwing();
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Create undefined[]", 2000);
-		assertNotNull(dialog);
+		JDialog dialog = waitForJDialog("Create undefined[]");
 
 		checkStatus((DockingDialog) dialog, " ");
 
@@ -364,8 +340,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		createCode("004027d4", 1);
 
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Define Array");
 		assertNotNull(chooseDataTypeAction);
@@ -373,8 +348,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		waitForSwing();
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Create undefined[]", 2000);
-		assertNotNull(dialog);
+		JDialog dialog = waitForJDialog("Create undefined[]");
 
 		checkStatus((DockingDialog) dialog, " ");
 
@@ -396,8 +370,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testCreateArrayOverwriteOnDefinedDts() throws Exception {
 		createData("004027d4", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Define Array");
 		assertNotNull(chooseDataTypeAction);
@@ -405,8 +378,8 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 		waitForSwing();
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Create undefined[]", 2000);
-		assertNotNull(dialog);
+		JDialog dialog = waitForJDialog("Create undefined[]");
+
 		JTextField tf = findComponent(dialog, JTextField.class);
 		triggerText(tf, "48");
 		waitForSwing();
@@ -417,8 +390,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		pressButtonByText(dialog, "OK");
 		waitForSwing();
 
-		dialog = waitForJDialog(tool.getToolFrame(), "Overwrite Existing Data?", 2000);
-		assertNotNull(dialog);
+		dialog = waitForJDialog("Overwrite Existing Data?");
 
 		pressButtonByText(dialog, "Yes");
 		waitForSwing();
@@ -434,8 +406,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 		plugin.setRecentlyUsed(dataType);
 
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Recently Used");
 		assertNotNull(chooseDataTypeAction);
@@ -455,8 +426,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		plugin.setRecentlyUsed(dataType);
 
 		createData("004027d2", new Undefined4DataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Recently Used");
 		assertNotNull(chooseDataTypeAction);
@@ -476,20 +446,12 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		plugin.setRecentlyUsed(dataType);
 
 		createData("004027d1", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Recently Used");
-		assertNotNull(chooseDataTypeAction);
 		performAction(chooseDataTypeAction, codeViewerProvider, false);
 
-		waitForSwing();
-
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Data Conflict", 2000);
-		assertNotNull(dialog);
-
-		pressButtonByText(dialog, "Yes");
-		waitForSwing();
+		pressConflictingDataDialog("Yes");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(dataType, data.getDataType());
@@ -503,20 +465,13 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		plugin.setRecentlyUsed(dataType);
 
 		createData("004027d1", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Recently Used");
 		assertNotNull(chooseDataTypeAction);
 		performAction(chooseDataTypeAction, codeViewerProvider, false);
 
-		waitForSwing();
-
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Data Conflict", 2000);
-		assertNotNull(dialog);
-
-		pressButtonByText(dialog, "No");
-		waitForSwing();
+		pressConflictingDataDialog("No");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(DataType.DEFAULT, data.getDataType());
@@ -525,21 +480,18 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testFavoriteOnDefaultDts() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
+		goTo("004027d0");
+
+		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
+
+		// Set _person as a favorite
+		runSwing(() -> dataTypeManager.setFavorite(dataType, true), false);
 		waitForSwing();
 
-		final ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
-		final DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
-
-		// Set _person as a favorite.
-		executeOnSwingWithoutBlocking(() -> dataTypeManager.setFavorite(dataType, true));
-		waitForSwing();
-
-		// Choose favorite.
+		// Choose favorite
 		DockingActionIf favoriteAction = getAction(dataPlugin, "Define _person");
-		assertNotNull(favoriteAction);
 		performAction(favoriteAction, codeViewerProvider, true);
-
 		waitForSwing();
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
@@ -550,21 +502,18 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testFavoriteOnUndefinedDts() throws Exception {
 		createData("004027d2", new Undefined4DataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		final ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
-		final DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
+		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		// Set _person as a favorite.
-		executeOnSwingWithoutBlocking(() -> dataTypeManager.setFavorite(dataType, true));
+		// Set _person as a favorite
+		runSwing(() -> dataTypeManager.setFavorite(dataType, true), false);
 		waitForSwing();
 
 		// Choose favorite.
 		DockingActionIf favoriteAction = getAction(dataPlugin, "Define _person");
-		assertNotNull(favoriteAction);
 		performAction(favoriteAction, codeViewerProvider, true);
-
 		waitForSwing();
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
@@ -575,28 +524,20 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testFavoriteOnDefinedDtsAnswerYes() throws Exception {
 		createData("004027d1", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
+		goTo("004027d0");
+
+		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
+
+		// Set _person as a favorite
+		runSwing(() -> dataTypeManager.setFavorite(dataType, true), false);
 		waitForSwing();
 
-		final ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
-		final DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
-
-		// Set _person as a favorite.
-		executeOnSwingWithoutBlocking(() -> dataTypeManager.setFavorite(dataType, true));
-		waitForSwing();
-
-		// Choose favorite.
+		// Choose favorite
 		DockingActionIf favoriteAction = getAction(dataPlugin, "Define _person");
-		assertNotNull(favoriteAction);
 		performAction(favoriteAction, codeViewerProvider, false);
 
-		waitForSwing();
-
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Data Conflict", 2000);
-		assertNotNull(dialog);
-
-		pressButtonByText(dialog, "Yes");
-		waitForSwing();
+		pressConflictingDataDialog("Yes");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(dataType, data.getDataType());
@@ -606,28 +547,20 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testFavoriteOnDefinedDtsAnswerNo() throws Exception {
 		createData("004027d1", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		final ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
-		final DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
+		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		// Set _person as a favorite.
-		executeOnSwingWithoutBlocking(() -> dataTypeManager.setFavorite(dataType, true));
+		// Set _person as a favorite
+		runSwing(() -> dataTypeManager.setFavorite(dataType, true), false);
 		waitForSwing();
 
 		// Choose favorite.
 		DockingActionIf favoriteAction = getAction(dataPlugin, "Define _person");
-		assertNotNull(favoriteAction);
 		performAction(favoriteAction, codeViewerProvider, false);
 
-		waitForSwing();
-
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Data Conflict", 2000);
-		assertNotNull(dialog);
-
-		pressButtonByText(dialog, "No");
-		waitForSwing();
+		pressConflictingDataDialog("No");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(DataType.DEFAULT, data.getDataType());
@@ -636,12 +569,9 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testCycleOnDefaultDts() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
-		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
-		assertNotNull(chooseDataTypeAction);
-		performAction(chooseDataTypeAction, codeViewerProvider, false);
+		showDataTypeChooser();
 
 		chooseInDialog("_person");
 
@@ -655,8 +585,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testCycleOnUndefinedDts() throws Exception {
 		createData("004027d2", new Undefined4DataType());
-		positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
@@ -689,8 +618,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testCycleOnDefinedDts() throws Exception {
 		createData("004027d3", new ByteDataType());
-		positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
@@ -722,13 +650,12 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testDragNDropOnDefaultDts() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		dragNDropDataTypeToCurrentBrowserLocation(codeViewerProvider, dataType);
+		dragNDropDataTypeToCurrentBrowserLocation(dataType);
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(dataType, data.getDataType());
@@ -738,13 +665,12 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testDragNDropOnUndefinedDts() throws Exception {
 		createData("004027d2", new Undefined4DataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		dragNDropDataTypeToCurrentBrowserLocation(codeViewerProvider, dataType);
+		dragNDropDataTypeToCurrentBrowserLocation(dataType);
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(dataType, data.getDataType());
@@ -754,19 +680,14 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testDragNDropYesOnDefinedDts() throws Exception {
 		createData("004027d3", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		dragNDropDataTypeToCurrentBrowserLocation(codeViewerProvider, dataType);
+		dragNDropDataTypeToCurrentBrowserLocation(dataType);
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Data Conflict", 2000);
-		assertNotNull(dialog);
-
-		pressButtonByText(dialog, "Yes");
-		waitForSwing();
+		pressConflictingDataDialog("Yes");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(dataType, data.getDataType());
@@ -776,19 +697,14 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testDragNDropNoOnDefinedDts() throws Exception {
 		createData("004027d3", new ByteDataType());
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027d0");
-		waitForSwing();
+		goTo("004027d0");
 
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		dragNDropDataTypeToCurrentBrowserLocation(codeViewerProvider, dataType);
+		dragNDropDataTypeToCurrentBrowserLocation(dataType);
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Data Conflict", 2000);
-		assertNotNull(dialog);
-
-		pressButtonByText(dialog, "No");
-		waitForSwing();
+		pressConflictingDataDialog("No");
 
 		Data data = program.getListing().getDataAt(addr("004027d0"));
 		assertEquals(DataType.DEFAULT, data.getDataType());
@@ -797,13 +713,12 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testDragNDropWhereDoesNotFit() throws Exception {
-		CodeViewerProvider codeViewerProvider = positionListingCursorAtAddress("004027e0");
-		waitForSwing();
+		goTo("004027e0");
 
 		ProgramDataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataType dataType = dataTypeManager.getDataType(new CategoryPath("/"), "_person");
 
-		dragNDropDataTypeToCurrentBrowserLocation(codeViewerProvider, dataType);
+		dragNDropDataTypeToCurrentBrowserLocation(dataType);
 
 		Data data = program.getListing().getDataAt(addr("004027e0"));
 		assertEquals(DataType.DEFAULT, data.getDataType());
@@ -814,24 +729,36 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 // Private Helper Methods
 //==================================================================================================
 
-	private DialogComponentProvider chooseInDialog(String typeName) {
+	private void assertToolStatus(String expectedMessage) {
 
+		waitForSwing();
+		PluginTool pluginTool = plugin.getTool();
+		DockingWindowManager windowManager = pluginTool.getWindowManager();
+		Object rootNode = TestUtils.invokeInstanceMethod("getRootNode", windowManager);
+		StatusBar statusBar = (StatusBar) TestUtils.getInstanceField("statusBar", rootNode);
+		String actualMessage = runSwing(() -> statusBar.getStatusText());
+		assertThat("The tool's status text was not set", actualMessage,
+			containsString(expectedMessage));
+	}
+
+	private void showDataTypeChooser() {
+		DockingActionIf chooseDataTypeAction = getAction(dataPlugin, "Choose Data Type");
+		performAction(chooseDataTypeAction, codeViewerProvider, false);
+	}
+
+	private void pressConflictingDataDialog(String button) {
+		DialogComponentProvider dialog = waitForDialogComponent("Data Conflict");
+		pressButtonByText(dialog, button);
+		waitForTasks();
+	}
+
+	private DialogComponentProvider chooseInDialog(String typeName) {
 		return chooseInDialog(typeName, null);
 	}
 
-	/**
-	 * Waits for the Data Type Chooser dialog to appear.  Then, enters the given text to 
-	 * select that type. Finally, OK is pressed.   The dialog may or may not go away, 
-	 * depending upon the state of the dialog.
-	 * 
-	 * @param typeName the name of the dt
-	 * @param errorStatus the expected status after pressing OK
-	 */
 	private DialogComponentProvider chooseInDialog(String typeName, String errorStatus) {
 
 		DataTypeSelectionDialog dialog = waitForDialogComponent(DataTypeSelectionDialog.class);
-
-		assertNotNull(dialog);
 		JTextField tf = findComponent(dialog, JTextField.class);
 		triggerText(tf, "_person");
 		waitForSwing();
@@ -861,8 +788,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(expectedText, statusText);
 	}
 
-	private void dragNDropDataTypeToCurrentBrowserLocation(
-			final CodeViewerProvider codeViewerProvider, final DataType dataType) {
+	private void dragNDropDataTypeToCurrentBrowserLocation(final DataType dataType) {
 		executeOnSwingWithoutBlocking(() -> {
 			// Simulate the drag-n-drop of the data type onto the location.
 			ProgramLocation programLocation = codeViewerProvider.getLocation();
@@ -880,12 +806,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void doAction(Plugin pluginForAction, String name, boolean waitForCompletion) {
-		CodeBrowserPlugin codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		assertNotNull(codeBrowserPlugin);
-		CodeViewerProvider connectedProvider =
-			(CodeViewerProvider) getInstanceField("connectedProvider", codeBrowserPlugin);
-		assertNotNull(connectedProvider);
-		CodeViewerActionContext codeViewerContext = new CodeViewerActionContext(connectedProvider);
+		CodeViewerActionContext codeViewerContext = new CodeViewerActionContext(codeViewerProvider);
 
 		DockingActionIf action = getAction(pluginForAction, name);
 		assertNotNull("Action was not found: " + name, action);
@@ -894,28 +815,26 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		}
 
 		try {
-			performAction(action, connectedProvider, waitForCompletion);
+			performAction(action, codeViewerProvider, waitForCompletion);
 		}
 		catch (Throwable t) {
-			t.printStackTrace();
-			Assert.fail("Action '" + name + "' failed: " + t.toString());
+			failWithException("Action '" + name + "' failed: ", t);
 		}
 
 	}
 
-	private CodeViewerProvider positionListingCursorAtAddress(String addressString) {
-		CodeBrowserPlugin codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		assertNotNull(codeBrowserPlugin);
+	private void goTo(String addressString) {
+		CodeBrowserPlugin codeBrowser = env.getPlugin(CodeBrowserPlugin.class);
 		Address address = program.getAddressFactory().getAddress(addressString);
-		codeBrowserPlugin.goToField(address, "Address", 0, 0);
-		assertEquals(addressString, codeBrowserPlugin.getCurrentAddress().toString());
+		codeBrowser.goToField(address, "Address", 0, 0);
+		assertEquals(addressString, codeBrowser.getCurrentAddress().toString());
 		CodeViewerProvider connectedProvider =
-			(CodeViewerProvider) getInstanceField("connectedProvider", codeBrowserPlugin);
+			(CodeViewerProvider) getInstanceField("connectedProvider", codeBrowser);
 		assertNotNull(connectedProvider);
 		ListingPanel listingPanel =
 			(ListingPanel) getInstanceField("listingPanel", connectedProvider);
 		assertNotNull(listingPanel);
-		return connectedProvider;
+		waitForSwing();
 	}
 
 	private void createData(String addressString, DataType dataType) throws Exception {
@@ -928,7 +847,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		finally {
 			program.endTransaction(transactionID, success);
 		}
-		waitForProgram();
+		waitForProgram(program);
 	}
 
 	private void createCode(String addressString, int len) throws Exception {
@@ -945,7 +864,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		finally {
 			program.endTransaction(transactionID, success);
 		}
-		waitForProgram();
+		waitForProgram(program);
 	}
 
 	private Address addr(String addressString) {
@@ -954,11 +873,5 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 
 	private void waitForTree() {
 		waitForTree(tree);
-	}
-
-	private void waitForProgram() throws Exception {
-		program.flushEvents();
-		waitForTasks();
-		waitForSwing();
 	}
 }

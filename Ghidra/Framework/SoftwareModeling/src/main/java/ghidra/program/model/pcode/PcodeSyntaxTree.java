@@ -392,9 +392,9 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	@Override
-	public void setPersistant(Varnode vn, boolean val) {
+	public void setPersistent(Varnode vn, boolean val) {
 		VarnodeAST vnast = (VarnodeAST) vn;
-		vnast.setPersistant(val);
+		vnast.setPersistent(val);
 	}
 
 	@Override

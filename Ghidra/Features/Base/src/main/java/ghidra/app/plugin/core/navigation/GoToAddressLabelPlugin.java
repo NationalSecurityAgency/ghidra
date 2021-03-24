@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.navigation;
 
 import java.awt.event.KeyEvent;
 
+import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.GhidraOptions;
@@ -29,7 +30,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 
@@ -91,11 +92,21 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 			public void actionPerformed(NavigatableActionContext context) {
 				goToDialog.show(context.getNavigatable(), context.getAddress(), tool);
 			}
+
+			@Override
+			protected boolean isEnabledForContext(NavigatableActionContext context) {
+				return context.getProgram() != null;
+			}
+
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				return true;
+			}
 		};
 		action.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, action.getName()));
-		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_NAVIGATION, "Go To..." }, null, "GoTo",
-			MenuData.NO_MNEMONIC, "2")); // second item in the menu
+		action.setMenuBarData(
+			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, "Go To..." }, null, "GoTo",
+				MenuData.NO_MNEMONIC, "2")); // second item in the menu
 
 		action.setKeyBindingData(new KeyBindingData(KeyEvent.VK_G, 0));
 
@@ -144,10 +155,11 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 	 * @param newValue new value of the option
 	 */
 	@Override
-	public void optionsChanged(ToolOptions options, String opName, Object oldValue, Object newValue) {
+	public void optionsChanged(ToolOptions options, String opName, Object oldValue,
+			Object newValue) {
 		if (opName.equals(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES)) {
 			maximumGotoEntries =
-					options.getInt(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES, DEFAULT_MAX_GOTO_ENTRIES);
+				options.getInt(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES, DEFAULT_MAX_GOTO_ENTRIES);
 			if (maximumGotoEntries <= 0) {
 				throw new OptionsVetoException("Search limit must be greater than 0");
 			}
@@ -155,7 +167,7 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 		}
 		else if (opName.equals(GhidraOptions.OPTION_NUMERIC_FORMATTING)) {
 			cStyleInput =
-					options.getBoolean(GhidraOptions.OPTION_NUMERIC_FORMATTING, DEFAULT_C_STYLE);
+				options.getBoolean(GhidraOptions.OPTION_NUMERIC_FORMATTING, DEFAULT_C_STYLE);
 			goToDialog.setCStyleInput(cStyleInput);
 		}
 		else if (opName.equals(GO_TO_MEMORY)) {
@@ -182,20 +194,20 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 		ToolOptions opt = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		// descriptions
 		opt.registerOption(GhidraOptions.OPTION_NUMERIC_FORMATTING, DEFAULT_C_STYLE, null,
-			"Interpret value entered in the Go To dialog as either hex, "
-					+ "octal, or binary number.");
+			"Interpret value entered in the Go To dialog as either hex, " +
+				"octal, or binary number.");
 		opt.registerOption(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES, DEFAULT_MAX_GOTO_ENTRIES, null,
-				"Max number of entries remembered in the go to list.");
+			"Max number of entries remembered in the go to list.");
 		opt.registerOption(GO_TO_MEMORY, DEFAULT_MEMORY, null,
-			"Remember the last successful go to input in the "
-					+ "Go To dialog.  If this option is enabled, then the "
-					+ "Go To dialog will leave the last "
-					+ "successful go to input in the combo box of the Go "
-					+ "To dialog and will select the " + "value for easy paste replacement.");
+			"Remember the last successful go to input in the " +
+				"Go To dialog.  If this option is enabled, then the " +
+				"Go To dialog will leave the last " +
+				"successful go to input in the combo box of the Go " +
+				"To dialog and will select the " + "value for easy paste replacement.");
 
 		// options
 		maximumGotoEntries =
-				opt.getInt(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES, DEFAULT_MAX_GOTO_ENTRIES);
+			opt.getInt(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES, DEFAULT_MAX_GOTO_ENTRIES);
 
 		cStyleInput = opt.getBoolean(GhidraOptions.OPTION_NUMERIC_FORMATTING, DEFAULT_C_STYLE);
 		goToDialog.setCStyleInput(cStyleInput);

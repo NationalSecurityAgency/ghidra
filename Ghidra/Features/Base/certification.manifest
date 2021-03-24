@@ -13,7 +13,6 @@
 .launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
@@ -78,8 +77,6 @@ data/typeinfo/win32/windows_vs12_64.gdt||GHIDRA||||END|
 data/x64_linux_syscall_numbers||GHIDRA||||END|
 data/x86_linux_syscall_numbers||GHIDRA||||END|
 ghidra_scripts/AskScript.properties||GHIDRA||||END|
-ghidra_scripts/RecursiveStringFinder.py||GHIDRA||||END|
-ghidra_scripts/mark_in_out.py||GHIDRA||reviewed||END|
 ghidra_scripts/world.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||||END|

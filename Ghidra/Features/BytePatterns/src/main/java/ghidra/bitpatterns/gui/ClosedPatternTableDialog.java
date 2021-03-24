@@ -124,6 +124,7 @@ public class ClosedPatternTableDialog extends DialogComponentProvider {
 
 	@Override
 	public void close() {
+		super.close();
 		tablePanel.dispose();
 	}
 }

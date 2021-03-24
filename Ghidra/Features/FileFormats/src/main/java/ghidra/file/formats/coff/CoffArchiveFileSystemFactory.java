@@ -30,7 +30,7 @@ import utilities.util.ArrayUtilities;
 public class CoffArchiveFileSystemFactory
 		implements GFileSystemFactoryFull<CoffArchiveFileSystem>, GFileSystemProbeBytesOnly {
 
-	public static final int PROBE_BYTES_REQUIRED = CoffArchiveConstants.MAGIC_LEN_CONST_EXPR;
+	public static final int PROBE_BYTES_REQUIRED = CoffArchiveConstants.MAGIC_LEN;
 
 	@Override
 	public CoffArchiveFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL,

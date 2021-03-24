@@ -299,7 +299,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	@Test
+	// @Test TODO GP-658
 	public void testSelectNodeThatIsDoubleGrouped() {
 		select(a, b, c);
 		collapse();
@@ -332,7 +332,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(vertex instanceof GroupVertex);
 	}
 
-	@Test
+	// @Test TODO GP-658
 	public void testFocusNodeThatIsDoubleGrouped() {
 		select(a, b, c);
 		collapse();
@@ -362,7 +362,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(graphSpy.isFocused(a));
 	}
 
-	@Test
+	// @Test TODO GP-658
 	public void testListenerNotificatinWhenDoubleGroupedNodeFocused() {
 		select(a, b, c);
 		collapse();
@@ -392,7 +392,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(graphSpy.isSelected(a, b, c));
 	}
 
-	@Test
+	// @Test TODO GP-658
 	public void testSelectNotificatinWhenDoubleGroupedNodeFocused() {
 		select(a, b, c);
 		collapse();

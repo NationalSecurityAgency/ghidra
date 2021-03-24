@@ -313,7 +313,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     <LI>
     <a name="scriptPath"><typewriter>-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</typewriter></a>
     <br>Specifies the search path(s) for scripts, including secondary scripts (a script invoked from 
-    another script). A path may start with <typewriter>$GHIDRA_SCRIPT</typewriter>, which corresponds 
+    another script). A path may start with <typewriter>$GHIDRA_HOME</typewriter>, which corresponds 
     to the Ghidra installation directory, or <typewriter>$USER_HOME</typewriter>, which corresponds 
     to the user&apos;s home directory. On Unix systems, these home variables must be escaped using a 
     &apos;<typewriter>\</typewriter>&apos; (backslash) character.
@@ -344,7 +344,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     <LI>
     <a name="propertiesPath"><typewriter>-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;&hellip;]&quot;</typewriter></a>
     <br>Specifies path(s) that contain <typewriter>.properties</typewriter> files used by scripts or 
-    secondary/subscripts. A path may start with <typewriter>$GHIDRA_SCRIPT</typewriter>, which 
+    secondary/subscripts. A path may start with <typewriter>$GHIDRA_HOME</typewriter>, which 
     corresponds to the Ghidra installation directory, or <typewriter>$USER_HOME</typewriter>, which 
     corresponds to the user&apos;s home directory. On Unix systems these home variables must be 
     escaped with a &apos;\&apos; character.

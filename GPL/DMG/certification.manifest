@@ -3,7 +3,6 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Public Domain
 Module.manifest||Public Domain||||END|
-build.gradle||Public Domain||||END|
 data/lib/catacombae_csframework.jar||LGPL 2.1||||END|
 data/lib/catacombae_hfsx.jar||GPL 3||||END|
 data/lib/catacombae_hfsx_dmglib.jar||GPL 3||||END|
@@ -16,4 +15,3 @@ data/os/win64/llio_amd64.dll||GPL 3||||END|
 data/os/win64/llio_i386.dll||GPL 3||||END|
 data/os/win64/llio_ia64.dll||GPL 3||||END|
 data/server_memory.cfg||Public Domain||||END|
-settings.gradle||Public Domain||||END|

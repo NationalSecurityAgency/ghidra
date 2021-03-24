@@ -18,8 +18,7 @@ package ghidra.test.processors.support;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.math.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -255,8 +254,10 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			try {
 				// By default, create test output within a directory at the same level as the
 				// development repositories
-				outputRoot =
-					Application.getApplicationRootDirectory().getParentFile().getParentFile().getCanonicalPath();
+				outputRoot = Application.getApplicationRootDirectory()
+						.getParentFile()
+						.getParentFile()
+						.getCanonicalPath();
 			}
 			catch (IOException e) {
 				throw new RuntimeException(e);
@@ -761,15 +762,17 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 	private static class FloatFormatter extends DumpFormatter {
 		private final FloatFormat ff;
+		private final int maxWidth;
 
 		FloatFormatter(int elementSize, boolean bigEndian) {
 			super(elementSize, bigEndian);
 			ff = FloatFormatFactory.getFloatFormat(elementSize);
+			maxWidth = ff.round(ff.maxValue).negate().toString().length();
 		}
 
 		@Override
 		int getMaxWidth() {
-			return ff.maxValue.negate().toString().length();
+			return maxWidth;
 		}
 
 		@Override
@@ -779,7 +782,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						false)
 					: LittleEndianDataConverter.INSTANCE.getBigInteger(bytes, index, elementSize,
 						false);
-			BigDecimal val = ff.getHostFloat(encoding);
+			BigDecimal val = ff.round(ff.getHostFloat(encoding));
 			return val.toString();
 		}
 	}
@@ -873,7 +876,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		String floatStr = "";
 		if (reg != null && floatRegSet.contains(reg)) {
 			FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(size);
-			BigDecimal hostFloat = floatFormat.getHostFloat(new BigInteger(1, values));
+			BigDecimal hostFloat =
+				floatFormat.round(floatFormat.getHostFloat(new BigInteger(1, values)));
 			floatStr = " (" + hostFloat.toString() + ")";
 		}
 
@@ -1640,8 +1644,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			if (tReg != null && (offset & 1) == 1) {
 				RegisterValue thumbMode = new RegisterValue(tReg, BigInteger.ONE);
 				try {
-					program.getProgramContext().setRegisterValue(functionAddr, functionAddr,
-						thumbMode);
+					program.getProgramContext()
+							.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1654,8 +1658,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			if (isaModeReg != null && (offset & 1) == 1) {
 				RegisterValue thumbMode = new RegisterValue(isaModeReg, BigInteger.ONE);
 				try {
-					program.getProgramContext().setRegisterValue(functionAddr, functionAddr,
-						thumbMode);
+					program.getProgramContext()
+							.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1879,8 +1883,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						GZF_CACHEDIR_NAME + "/" + fileReferencePath + GZF_FILE_EXT; //
 					if (absoluteGzfFilePath.exists()) {
 						program = getGzfProgram(outputDir, gzfCachePath);
-						if (program != null && !MD5Utilities.getMD5Hash(testFile.file).equals(
-							program.getExecutableMD5())) {
+						if (program != null && !MD5Utilities.getMD5Hash(testFile.file)
+								.equals(program.getExecutableMD5())) {
 							// remove obsolete GZF cache file
 							env.release(program);
 							program = null;
@@ -1904,8 +1908,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 								env.getGhidraProject().importProgram(testFile.file, loaderClass);
 						}
 						else {
-							program = env.getGhidraProject().importProgram(testFile.file, language,
-								compilerSpec);
+							program = env.getGhidraProject()
+									.importProgram(testFile.file, language, compilerSpec);
 						}
 						program.addConsumer(this);
 						env.getGhidraProject().close(program);
@@ -1925,8 +1929,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				txId = program.startTransaction("Analyze");
 
 				if (!program.getLanguageID().equals(language.getLanguageID()) ||
-					!program.getCompilerSpec().getCompilerSpecID().equals(
-						compilerSpec.getCompilerSpecID())) {
+					!program.getCompilerSpec()
+							.getCompilerSpecID()
+							.equals(compilerSpec.getCompilerSpecID())) {
 					throw new IOException((usingCachedGZF ? "Cached " : "") +
 						"Program has incorrect language/compiler spec (" + program.getLanguageID() +
 						"/" + program.getCompilerSpec().getCompilerSpecID() + "): " +
@@ -2090,8 +2095,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				nameAndAddr = StringUtilities.pad(nameAndAddr, ' ', -paddedLen);
 				testFileDigest.append(nameAndAddr);
 				testFileDigest.append(" (GroupInfo @ ");
-				testFileDigest.append(
-					testGroup.controlBlock.getInfoStructureAddress().toString(true));
+				testFileDigest
+						.append(testGroup.controlBlock.getInfoStructureAddress().toString(true));
 				testFileDigest.append(")");
 				if (duplicateTests.contains(testGroup.testGroupName)) {
 					testFileDigest.append(" *DUPLICATE*");

@@ -96,6 +96,7 @@ class BasicTaskMonitor implements TaskMonitor {
 	public void initialize(long maxValue) {
 		setMaximum(maxValue);
 		setProgress(0);
+		setIndeterminate(false);
 	}
 
 	@Override

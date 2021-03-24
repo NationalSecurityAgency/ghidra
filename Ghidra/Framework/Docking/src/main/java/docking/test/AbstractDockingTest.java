@@ -2017,7 +2017,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		// ThreadedTableModelUpdateMgr<ROW_OBJECT>
 		Object updateManager = getInstanceField("updateManager", model);
 		SwingUpdateManager sum =
-			(SwingUpdateManager) getInstanceField("updateManager", updateManager);
+			(SwingUpdateManager) getInstanceField("addRemoveUpdater", updateManager);
 		Worker worker = (Worker) getInstanceField("worker", model);
 		String workerState = worker == null ? "<no worker>" : Boolean.toString(worker.isBusy());
 		return "Table model busy state - Swing Update Manager? " + sum.isBusy() + "; worker?" +

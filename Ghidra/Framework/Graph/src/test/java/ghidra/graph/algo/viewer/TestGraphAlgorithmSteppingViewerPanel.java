@@ -151,7 +151,6 @@ public class TestGraphAlgorithmSteppingViewerPanel<V, E extends GEdge<V>> extend
 
 		tvg.setLayout(layout);
 		viewer = new GraphViewer<>(layout, new Dimension(400, 400));
-		viewer.setBackground(Color.WHITE);
 		viewer.setGraphOptions(new VisualGraphOptions());
 
 		Renderer<AlgorithmTestSteppingVertex<V>, AlgorithmTestSteppingEdge<V>> renderer =
