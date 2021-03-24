@@ -1,24 +1,47 @@
 # Due to limitations on variable length matching that preclude opcode matching afterwards, all memory addressing forms of PCLMULQDQ are decoded to PCLMULQDQ, not the macro names.
 # Display is non-standard, but semantics, and de-compilation should be correct.
 
+macro pclmul(src1, src2, dest) {
+    local i:4 = 0:4;
+    local temp:16 = 0;
+
+    <start>
+    if (i > 63:4) goto <end>;
+        if ((src1 & (1 << i)) == 0) goto <skip>;   
+            temp = temp ^ (src2 << i);
+    <skip>
+        i = i+1;
+        goto <start>;
+    <end>
+    dest = temp;
+}
+
 :PCLMULLQLQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & XmmReg1 & XmmReg2; byte=0x00
 {
-	XmmReg1 = zext(XmmReg2[0,64]) * zext(XmmReg1[0,64]);
+    local src1:16 = zext(XmmReg1[0,64]);
+    local src2:16 = zext(XmmReg2[0,64]);
+    pclmul(src1,src2,XmmReg1);
 }
 
 :PCLMULHQLQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & XmmReg1 & XmmReg2; byte=0x01
 {
-	XmmReg1 = zext(XmmReg2[0,64]) * zext(XmmReg1[64,64]);
+    local src1:16 = zext(XmmReg1[64,64]);
+    local src2:16 = zext(XmmReg2[0,64]);
+    pclmul(src1,src2,XmmReg1);
 }
 
 :PCLMULLQHQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & XmmReg1 & XmmReg2; byte=0x10
 {
-	XmmReg1 = zext(XmmReg2[64,64]) * zext(XmmReg1[0,64]);
+    local src1:16 = zext(XmmReg1[0,64]);
+    local src2:16 = zext(XmmReg2[64,64]);
+    pclmul(src1,src2,XmmReg1);
 }
 
 :PCLMULHQHQDQ XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & XmmReg1 & XmmReg2; byte=0x11
 {
-	XmmReg1 = zext(XmmReg2[64,64]) * zext(XmmReg1[64,64]);
+    local src1:16 = zext(XmmReg1[64,64]);
+    local src2:16 = zext(XmmReg2[64,64]);
+    pclmul(src1,src2,XmmReg1);
 }
 
 :PCLMULQDQ XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; xmmmod=3 & XmmReg1 & XmmReg2; imm8 & imm8_4 & imm8_0
@@ -41,7 +64,7 @@
 		
 	<done2>
 	
-	XmmReg1 = src2 * src1;
+    pclmul(src1,src2,XmmReg1); 
 }
 
 :PCLMULQDQ XmmReg, m128, imm8  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; XmmReg ... & m128; imm8 & imm8_4 & imm8_0
@@ -64,31 +87,39 @@
 		
 	<done2>
 	
-	XmmReg = src2 * src1;
+     pclmul(src1,src2,XmmReg);
 }
 
 :VPCLMULLQLQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & XmmReg2; byte=0x00
 {
-	tmp:16 = zext(XmmReg2[0,64]) * zext(vexVVVV_XmmReg[0,64]);
-	YmmReg1 = zext(tmp);
+    local src1:16 = zext(vexVVVV_XmmReg[0,64]);
+    local src2:16 = zext(XmmReg2[0,64]);
+    pclmul(src1,src2,XmmReg1);
+	YmmReg1 = zext(XmmReg1);
 }
 
 :VPCLMULHQLQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & XmmReg2; byte=0x01
 {
-	tmp:16 = zext(XmmReg2[0,64]) * zext(vexVVVV_XmmReg[64,64]);
-	YmmReg1 = zext(tmp);
+    local src1:16 = zext(vexVVVV_XmmReg[64,64]);
+    local src2:16 = zext(XmmReg2[0,64]);
+    pclmul(src1,src2,XmmReg1);
+	YmmReg1 = zext(XmmReg1);
 }
 
 :VPCLMULLQHQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & XmmReg2; byte=0x10
 {
-	tmp:16 = zext(XmmReg2[64,64]) * zext(vexVVVV_XmmReg[0,64]);
-	YmmReg1 = zext(tmp);
+    local src1:16 = zext(vexVVVV_XmmReg[0,64]);
+    local src2:16 = zext(XmmReg2[64,64]);
+    pclmul(src1,src2,XmmReg1);
+	YmmReg1 = zext(XmmReg1);
 }
 
 :VPCLMULHQHQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & XmmReg2; byte=0x11
 {
-	tmp:16 = zext(XmmReg2[64,64]) * zext(vexVVVV_XmmReg[64,64]);
-	YmmReg1 = zext(tmp);
+    local src1:16 = zext(vexVVVV_XmmReg[64,64]);
+    local src2:16 = zext(XmmReg2[64,64]);
+    pclmul(src1,src2,XmmReg1);
+	YmmReg1 = zext(XmmReg1);
 }
 
 :VPCLMULQDQ XmmReg1, vexVVVV_XmmReg, XmmReg2, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x44; xmmmod=3 & (XmmReg1 & YmmReg1) & XmmReg2; imm8 & imm8_4 & imm8_0
@@ -111,8 +142,8 @@
 		
 	<done2>
 	
-	tmp:16 = src2 * src1;
-	YmmReg1 = zext(tmp);
+    pclmul(src1,src2,XmmReg1);
+	YmmReg1 = zext(XmmReg1);
 }
 
 :VPCLMULQDQ XmmReg1, vexVVVV_XmmReg, m128, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0x44; (XmmReg1 & YmmReg1) ... & m128; imm8 & imm8_4 & imm8_0
@@ -136,7 +167,7 @@
 		
 	<done2>
 	
-	tmp:16 = src2 * src1;
-	YmmReg1 = zext(tmp);
+    pclmul(src1,src2,XmmReg1);
+	YmmReg1 = zext(XmmReg1);
 }
 
