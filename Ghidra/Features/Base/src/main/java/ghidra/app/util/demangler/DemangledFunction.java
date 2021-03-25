@@ -461,8 +461,12 @@ public class DemangledFunction extends DemangledObject {
 		// If returnType is null check for constructor or destructor names
 		if (THIS_CALL.equals(function.getCallingConventionName())) {
 			String n = getName();
-			if (n.equals("~" + namespace.getName()) || n.equals(namespace.getName())) {
-				// constructor && destructor
+			if (n.equals(namespace.getName())) {
+				// constructor
+				return DataType.DEFAULT;
+			}
+			if (n.equals("~" + namespace.getName())) {
+				// destructor
 				return VoidDataType.dataType;
 			}
 		}

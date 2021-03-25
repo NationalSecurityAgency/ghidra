@@ -27,6 +27,9 @@
     <li><I>Data Types</I>. Corrected segmented 32-bit pointer datatype address generation for 16:16 x86 far pointers. (GP-534, Issue #2548)</li>
     <li><I>Decompiler</I>. Fixed Decompiler issue where, when a function name extends beyond the line limit, an end-of-line comment could wrap around to additional lines without including additional <code>//</code> comment indicators. (GP-473)</li>
     <li><I>Decompiler</I>. Corrected an exception that could occur when attempting to edit function signature from the Decompiler. (GP-597, Issue #2601)</li>
+    <li><I>Demangler</I>. Changed return type applied to constructors by Demangler from <code>void</code> to <code>Undefined</code>, allowing the Decompiler to determine the type. (GP-790)</li>
+    <li><I>DWARF</I>. Improved handling of empty DWARF compile units. (GP-743)</li>
+    <li><I>DWARF</I>. Improved handling of DWARF function signatures when parameter info contains unsupported location opcodes or failed to resolve datatypes. (GP-794)</li>
     <li><I>Eclipse Integration</I>. When installing the SleighEditor into Eclipse, the plugin will now show up under the Ghidra category.  Previously the <B>Group Items by Category</B> option had to be turned off before the SleighEditor would appear as a visible entry. (GP-564)</li>
     <li><I>Eclipse Integration</I>. Fixed an issue with Eclipse PyDev breakpoints not catching. (GP-668, Issue #2713)</li>
     <li><I>Eclipse Integration</I>. Fixed an Eclipse GhidraDev exception that occurred when creating a new Ghidra scripting project if a <B>~/ghidra_scripts</B> directory did not exist. (GP-669)</li>
@@ -44,6 +47,7 @@
     <li><I>Importer:Mach-O</I>. Fixed an exception that occurred when importing Mach-O files that define zero <code>LC_BUILD_VERSION</code> tool entries. (GP-702, Issue #2192)</li>
     <li><I>PDB</I>. Fixed createPdbXmlFiles.bat to permit spaces in the path name of Ghidra installation folder and the batch argument name. (GP-575, Issue #2167)</li>
     <li><I>PDB</I>. Fixed PDB Universal analyzer to set the run-once flag when finished. (GP-724)</li>
+    <li><I>PDB</I>. Changed return type applied to constructors by PDB Universal from <code>void</code> to <code>Undefined</code>, allowing the Decompiler to determine the type. (GP-791)</li>
     <li><I>Processors</I>. Added missing <code>RFE</code> instruction in MIPS up to version R3000. (GP-33, Issue #1766)</li>
     <li><I>Processors</I>. ARM instruction <code>VMUL</code> now decodes correctly. (GP-627, Issue #2677)</li>
     <li><I>Processors</I>. Added missing <code>CFINV</code> instruction to AARCH64 processor specification and added definitions for locals in neon instructions. (GP-655, Issue #2710)</li>
