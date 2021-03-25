@@ -1653,8 +1653,9 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bf"/s" target00_07  is opcode_08_15=0b10001111 & target00_07  
 {
+    local cond = $(T_FLAG);
     delayslot(1);
-    if ($(T_FLAG)==0) goto target00_07;
+    if (cond==0) goto target00_07;
 }
 @endif
 
@@ -1666,8 +1667,9 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bt"/s" target00_07  is opcode_08_15=0b10001101 & target00_07
 {
+    local cond = $(T_FLAG);
     delayslot(1);
-    if ($(T_FLAG)==1) goto target00_07;
+    if (cond==1) goto target00_07;
 }
 @endif
 
