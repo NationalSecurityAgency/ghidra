@@ -95,6 +95,11 @@ public class FunctionDB extends DatabaseObject implements Function {
 		frame = new FunctionStackFrame(this);
 	}
 
+	@Override
+	public boolean isDeleted() {
+		return isDeleted(manager.lock);
+	}
+
 	public void setValidationEnabled(boolean state) {
 		validateEnabled = state;
 	}
@@ -103,6 +108,12 @@ public class FunctionDB extends DatabaseObject implements Function {
 		thunkedFunction = manager.getThunkedFunction(this);
 		functionSymbol = program.getSymbolTable().getSymbol(key);
 		entryPoint = functionSymbol.getAddress();
+	}
+
+	@Override
+	protected void checkDeleted() {
+		// expose method to function package
+		super.checkDeleted();
 	}
 
 	@Override
@@ -853,8 +864,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private void renumberParameterOrdinals() {
 		int ordinal = autoParams != null ? autoParams.size() : 0;
-		for (int i = 0; i < params.size(); i++) {
-			ParameterDB param = params.get(i);
+		for (ParameterDB param : params) {
 			param.setOrdinal(ordinal++);
 		}
 	}
@@ -1096,21 +1106,18 @@ public class FunctionDB extends DatabaseObject implements Function {
 			loadVariables();
 			ArrayList<Variable> list = new ArrayList<>();
 			if (autoParams != null) {
-				for (int i = 0; i < autoParams.size(); i++) {
-					Parameter p = autoParams.get(i);
+				for (AutoParameterImpl p : autoParams) {
 					if (filter == null || filter.matches(p)) {
 						list.add(p);
 					}
 				}
 			}
-			for (int i = 0; i < params.size(); i++) {
-				Parameter p = params.get(i);
+			for (ParameterDB p : params) {
 				if (filter == null || filter.matches(p)) {
 					list.add(p);
 				}
 			}
-			for (int i = 0; i < locals.size(); i++) {
-				Variable var = locals.get(i);
+			for (VariableDB var : locals) {
 				if (filter == null || filter.matches(var)) {
 					list.add(var);
 				}
@@ -1140,15 +1147,13 @@ public class FunctionDB extends DatabaseObject implements Function {
 			loadVariables();
 			ArrayList<Parameter> list = new ArrayList<>();
 			if (autoParams != null) {
-				for (int i = 0; i < autoParams.size(); i++) {
-					Parameter p = autoParams.get(i);
+				for (AutoParameterImpl p : autoParams) {
 					if (filter == null || filter.matches(p)) {
 						list.add(p);
 					}
 				}
 			}
-			for (int i = 0; i < params.size(); i++) {
-				Parameter p = params.get(i);
+			for (ParameterDB p : params) {
 				if (filter == null || filter.matches(p)) {
 					list.add(p);
 				}
@@ -1176,8 +1181,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 			loadVariables();
 			ArrayList<Variable> list = new ArrayList<>();
-			for (int i = 0; i < locals.size(); i++) {
-				Variable var = locals.get(i);
+			for (VariableDB var : locals) {
 				if (filter == null || filter.matches(var)) {
 					list.add(var);
 				}
@@ -1657,8 +1661,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					}
 					if (ordinal != params.size()) {
 						// shift params to make room for inserted param
-						for (int i = 0; i < params.size(); i++) {
-							ParameterDB param = params.get(i);
+						for (ParameterDB param : params) {
 							int paramOrdinal = param.getOrdinal();
 							if (paramOrdinal >= ordinal) {
 								param.setOrdinal(paramOrdinal + 1);

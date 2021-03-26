@@ -16,7 +16,7 @@
 /*
  *
  */
-package ghidra.program.database.util;
+package ghidra.program.database;
 
 import static org.junit.Assert.*;
 
