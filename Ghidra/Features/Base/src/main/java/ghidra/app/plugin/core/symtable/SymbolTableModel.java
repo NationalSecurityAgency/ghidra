@@ -264,12 +264,13 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 			updateObject(Symbol);
 		}
 		else {
+			// the symbol may be in the table, as it could have passed the filter before the change
 			removeObject(Symbol);
 		}
 	}
 
 	void delete(List<Symbol> rowObjects) {
-		if (rowObjects == null || rowObjects.size() == 0) {
+		if (rowObjects == null || rowObjects.isEmpty()) {
 			return;
 		}
 
@@ -530,7 +531,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 	private class SourceTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<Symbol, SourceType> {
 
-		private GColumnRenderer<SourceType> renderer = new AbstractGColumnRenderer<SourceType>() {
+		private GColumnRenderer<SourceType> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			protected String getText(Object value) {
 				if (value == null) {

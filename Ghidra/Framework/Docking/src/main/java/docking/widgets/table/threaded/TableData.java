@@ -153,12 +153,32 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 		return -1;
 	}
 
-	boolean remove(ROW_OBJECT o) {
+	boolean remove(ROW_OBJECT t) {
 		if (source != null) {
-			source.remove(o);
+			source.remove(t);
 		}
 
-		return data.remove(o);
+		if (sortContext.isUnsorted()) {
+			return data.remove(t); // no sort; cannot binary search
+		}
+
+		Comparator<ROW_OBJECT> comparator = sortContext.getComparator();
+		int index = Collections.binarySearch(data, t, comparator);
+		if (index > 0) {
+			data.remove(index);
+			return true;
+		}
+
+		//
+		// At this point we have one of 2 conditions: the object is not in the list, or the object
+		// does not work with the current sort comparator.
+		//
+		// There are cases where the comparator will not work for the object handed to this method,
+		// such as when some db objects get deleted and the client uses a proxy object to perform
+		// the delete.  To handle these odd cases, we still have to brute-force search.  If this
+		// proves to be a bottleneck, then we can update how we handle item removal.
+		// 
+		return data.remove(t);
 	}
 
 	/**
