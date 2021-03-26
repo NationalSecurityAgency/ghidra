@@ -17,14 +17,12 @@ package ghidra.program.database.symbol;
 
 import static org.junit.Assert.*;
 
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 import org.junit.*;
 
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.function.FunctionDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -52,8 +50,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		super();
 	}
 
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		namespaceManager = program.getNamespaceManager();
@@ -65,14 +63,14 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		addBlock("BlockTwo", addr(0x2000), 0x4000);
 	}
 
-    @After
-    public void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		program.endTransaction(transactionID, true);
 		program.release(this);
 	}
 
-@Test
-    public void testCreateSubNamespace() throws Exception {
+	@Test
+	public void testCreateSubNamespace() throws Exception {
 		GhidraClass gc =
 			symbolMgr.createClass(globalNamespace, "classNamespace", SourceType.USER_DEFINED);
 		AddressSet set = new AddressSet();
@@ -85,9 +83,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AddressSet set2 = new AddressSet();
 		set2.addRange(addr(0x100), addr(0x130));
-		Function f2 =
-			functionMgr.createFunction("TextFunctionNamespace", addr(0x100), set2,
-				SourceType.USER_DEFINED);
+		Function f2 = functionMgr.createFunction("TextFunctionNamespace", addr(0x100), set2,
+			SourceType.USER_DEFINED);
 		f2.setParentNamespace(gc);
 
 		assertTrue(gc.getBody().hasSameAddresses(set.union(set2)));
@@ -99,8 +96,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(f2, namespaceManager.getNamespaceContaining(addr(0x110)));
 	}
 
-@Test
-    public void testGetBody() throws Exception {
+	@Test
+	public void testGetBody() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 		AddressSet set = new AddressSet();
@@ -139,8 +136,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(gcSet.hasSameAddresses(newSet));
 	}
 
-@Test
-    public void testFullName() throws Exception {
+	@Test
+	public void testFullName() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 		AddressSet set = new AddressSet();
@@ -168,8 +165,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("TestNamespaceClass::F3", f3.getName(true));
 	}
 
-@Test
-    public void testRemoveNamespace() throws Exception {
+	@Test
+	public void testRemoveNamespace() throws Exception {
 
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
@@ -206,22 +203,12 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(globalNamespace, namespaceManager.getNamespaceContaining(addr(0x100)));
 		assertEquals(globalNamespace, namespaceManager.getNamespaceContaining(addr(0x255)));
 
-		try {
-			((FunctionDB) f2).checkDeleted();
-			Assert.fail("Function 2 should be marked as deleted!");
-		}
-		catch (ConcurrentModificationException e) {
-		}
-		try {
-			((FunctionDB) f3).checkDeleted();
-			Assert.fail("Function 3 should be marked as deleted!");
-		}
-		catch (ConcurrentModificationException e) {
-		}
+		Assert.assertTrue("Function 2 should be marked as deleted!", f2.isDeleted());
+		Assert.assertTrue("Function 3 should be marked as deleted!", f3.isDeleted());
 	}
 
-@Test
-    public void testMoveNamespace() throws Exception {
+	@Test
+	public void testMoveNamespace() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 		GhidraClass classNamespace2 =
@@ -252,8 +239,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(classNamespace3, f2.getParentNamespace());
 	}
 
-@Test
-    public void testMoveAddressRange() throws Exception {
+	@Test
+	public void testMoveAddressRange() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 
@@ -287,8 +274,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(f2.getBody().hasSameAddresses(set2));
 	}
 
-@Test
-    public void testMoveAddressRange2() throws Exception {
+	@Test
+	public void testMoveAddressRange2() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 
@@ -319,8 +306,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(f2.getBody().hasSameAddresses(set2));
 	}
 
-@Test
-    public void testDeleteAddressRange() throws Exception {
+	@Test
+	public void testDeleteAddressRange() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 
@@ -344,8 +331,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(globalNamespace, namespaceManager.getNamespaceContaining(addr(0)));
 	}
 
-@Test
-    public void testIsOverlappedNamespace() throws Exception {
+	@Test
+	public void testIsOverlappedNamespace() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 
@@ -376,7 +363,6 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Should overlap!");
 		}
 
-
 		set2 = new AddressSet();
 		set.addRange(addr(0x200), addr(0x210));
 		set.addRange(addr(0x55), addr(0xff));
@@ -386,8 +372,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-@Test
-    public void testNamespaceIteratorForOverlaps() throws Exception {
+	@Test
+	public void testNamespaceIteratorForOverlaps() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 
@@ -438,8 +424,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-@Test
-    public void testNamespaceIteratorForOverlaps2() throws Exception {
+	@Test
+	public void testNamespaceIteratorForOverlaps2() throws Exception {
 		GhidraClass classNamespace =
 			symbolMgr.createClass(null, "TestNamespaceClass", SourceType.USER_DEFINED);
 
@@ -497,7 +483,8 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void addBlock(String name, Address addr, int length) throws Exception {
-		program.getMemory().createInitializedBlock(name, addr, length, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+		program.getMemory()
+				.createInitializedBlock(name, addr, length, (byte) 0,
+					TaskMonitorAdapter.DUMMY_MONITOR, false);
 	}
 }

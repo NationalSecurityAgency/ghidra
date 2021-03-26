@@ -38,7 +38,6 @@ import ghidra.app.plugin.core.compositeeditor.CompositeEditorModel;
 import ghidra.app.plugin.core.compositeeditor.DataTypeHelper;
 import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
@@ -1271,11 +1270,8 @@ class StackEditorModel extends CompositeEditorModel {
 		for (int i = comps.length - 1; i >= 0; i--) {
 			DataTypeComponent component = comps[i];
 			DataType compDt = component.getDataType();
-			if (compDt instanceof DatabaseObject) {
-				DatabaseObject dbObj = (DatabaseObject) compDt;
-				if (!dbObj.checkIsValid()) {
-					clearComponent(component.getOrdinal());
-				}
+			if (compDt.isDeleted()) {
+				clearComponent(component.getOrdinal());
 			}
 		}
 	}

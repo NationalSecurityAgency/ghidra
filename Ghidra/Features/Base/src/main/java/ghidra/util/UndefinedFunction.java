@@ -54,22 +54,28 @@ public class UndefinedFunction implements Function {
 		frame = new StackFrameImpl(this);
 	}
 
+	@Override
+	public boolean isDeleted() {
+		return false;
+	}
+
 	/**
-	 * locates the function based on the location given at construction time.
+	 * Identifies a <code>UndefinedFunction</code> based on the location given based upon the current
+	 * listing disassembly at time of construction using a block model.
+	 * @param program program to be searched
+	 * @param address address within body of function
+	 * @param monitor task monitor
+	 * @return function or null if invalid parameters, not found, or cancelled
 	 */
 	public static UndefinedFunction findFunction(Program program, Address address,
 			TaskMonitor monitor) {
-		if (program == null || address == null) {
-			return null;
-		}
-
-		if (monitor.isCancelled()) {
+		if (program == null || address == null || monitor.isCancelled()) {
 			return null;
 		}
 
 		// first try to walk back up to the top of the function
 		UndefinedFunction function = findFunctionUsingSimpleBlockModel(program, address, monitor);
-		if (function != null) {
+		if (function != null || monitor.isCancelled()) {
 			return function;
 		}
 

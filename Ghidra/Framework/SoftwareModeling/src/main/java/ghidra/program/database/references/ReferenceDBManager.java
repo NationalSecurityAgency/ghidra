@@ -25,7 +25,6 @@ import db.*;
 import db.util.ErrorHandler;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalManagerDB;
-import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.symbol.*;
 import ghidra.program.model.address.*;
@@ -638,13 +637,12 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		lock.acquire();
 		try {
 			Function function = var.getFunction();
-			if (!(function instanceof FunctionDB) || function.getProgram() != program ||
-				!((FunctionDB) function).checkIsValid()) {
+			if (function.getProgram() != program || function.isDeleted()) {
 				return NO_REFS;
 			}
 
 			SymbolDB varSymbol = (SymbolDB) var.getSymbol();
-			if (varSymbol != null && !varSymbol.checkIsValid()) {
+			if (varSymbol != null && varSymbol.isDeleted()) {
 				return NO_REFS;
 			}
 

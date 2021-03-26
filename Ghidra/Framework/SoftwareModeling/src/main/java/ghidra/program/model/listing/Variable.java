@@ -109,6 +109,7 @@ public interface Variable extends Comparable<Variable> {
 	/**
 	 * Returns the function that contains this Variable.  May be null if the variable is not in
 	 * a function.
+	 * @return containing function or null
 	 */
 
 	public Function getFunction();
@@ -190,7 +191,7 @@ public interface Variable extends Comparable<Variable> {
 	/** 
 	 * @return true if this is a simple variable consisting of a single register varnode
 	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
-	 * {@link getLastStorageVarnode()} methods.  The register can be obtained using the 
+	 * {@link #getLastStorageVarnode()} methods.  The register can be obtained using the 
 	 * {@link #getRegister()} method.
 	 */
 	public boolean isRegisterVariable();
@@ -262,11 +263,13 @@ public interface Variable extends Comparable<Variable> {
 	/**
 	 * @return the symbol associated with this variable or null if no symbol 
 	 * associated.  Certain dynamic variables such as auto-parameters do not
-	 * have a symbol. 
+	 * have a symbol and will return null. 
 	 */
 	public Symbol getSymbol();
 
 	/**
+	 * Determine is another variable is equivalent to this variable.
+	 * @param variable other variable
 	 * @return true if the specified variable is equivalent to this variable
 	 */
 	public boolean isEquivalent(Variable variable);

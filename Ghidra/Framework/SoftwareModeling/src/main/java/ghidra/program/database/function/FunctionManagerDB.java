@@ -505,7 +505,7 @@ public class FunctionManagerDB implements FunctionManager {
 		try {
 			FunctionDB func = cache.get(key);
 			if (func != null) {
-				func.checkIsValid();
+				func.checkDeleted();
 				func.createClassStructIfNeeded();
 				func.updateParametersAndReturn();
 			}

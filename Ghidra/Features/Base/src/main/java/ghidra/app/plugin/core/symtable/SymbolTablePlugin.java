@@ -250,7 +250,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				case ChangeManager.DOCR_SYMBOL_SCOPE_CHANGED:
 				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
 					symbol = (Symbol) rec.getObject();
-					if (symbol.checkIsValid()) { // symbol may have been removed (e.g., parameter)
+					if (!symbol.isDeleted()) { // symbol may have been removed (e.g., parameter)
 						symProvider.symbolChanged(symbol);
 						refProvider.symbolChanged(symbol);
 					}

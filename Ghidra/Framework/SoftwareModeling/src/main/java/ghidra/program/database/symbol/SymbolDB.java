@@ -83,6 +83,17 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
+	public boolean isDeleted() {
+		return isDeleted(lock);
+	}
+
+	@Override
+	protected void checkDeleted() {
+		// expose method to symbol package
+		super.checkDeleted();
+	}
+
+	@Override
 	public String toString() {
 		return getName();
 	}

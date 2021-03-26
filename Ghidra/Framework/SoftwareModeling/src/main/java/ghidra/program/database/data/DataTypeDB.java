@@ -216,7 +216,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	 */
 	@Override
 	public boolean isDeleted() {
-		return !checkIsValid();
+		return isDeleted(lock);
 	}
 
 	/**

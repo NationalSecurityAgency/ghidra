@@ -568,7 +568,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			SymbolTreeRootNode rootNode = (SymbolTreeRootNode) tree.getModelRoot();
 
 			// the symbol may have been deleted while we are processing bulk changes
-			if (symbol.checkIsValid()) {
+			if (!symbol.isDeleted()) {
 				GTreeNode newNode = rootNode.symbolAdded(symbol);
 				tree.refilterLater(newNode);
 			}
@@ -588,7 +588,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			root.symbolRemoved(symbol, monitor);
 
 			// the symbol may have been deleted while we are processing bulk changes
-			if (symbol.checkIsValid()) {
+			if (!symbol.isDeleted()) {
 				root.symbolAdded(symbol);
 			}
 			tree.refilterLater();

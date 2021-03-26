@@ -711,4 +711,11 @@ public interface Function extends Namespace {
 	 * symbol will be removed. 
 	 */
 	public void promoteLocalUserLabelsToGlobal();
+
+	/**
+	 * Determine if this function object has been deleted.  NOTE: the function could be
+	 * deleted at anytime due to asynchronous activity.  
+	 * @return true if function has been deleted, false if not.
+	 */
+	public boolean isDeleted();
 }

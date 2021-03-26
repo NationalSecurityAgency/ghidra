@@ -26,7 +26,7 @@ import ghidra.util.Lock;
  * been deleted. Instantiating an object will cause it to be added immediately to the associated
  * cache.
  */
-abstract public class DatabaseObject {
+public abstract class DatabaseObject {
 
 	protected long key;
 	private volatile boolean deleted;
@@ -41,7 +41,7 @@ abstract public class DatabaseObject {
 	 * @param key database key to uniquely identify this object
 	 */
 	@SuppressWarnings("unchecked")
-	public DatabaseObject(@SuppressWarnings("rawtypes") DBObjectCache cache, long key) {
+	protected DatabaseObject(@SuppressWarnings("rawtypes") DBObjectCache cache, long key) {
 		this.key = key;
 		this.cache = cache;
 		if (cache != null) {
@@ -62,17 +62,6 @@ abstract public class DatabaseObject {
 	 */
 	void setDeleted() {
 		deleted = true;
-	}
-
-	/**
-	 * Returns true if this object has been deleted. Note: once an object has been deleted, it will
-	 * never be "refreshed". For example, if an object is ever deleted and is resurrected via an
-	 * "undo", you will have get a fresh instance of the object.
-	 * 
-	 * @return true if this object has been deleted.
-	 */
-	public boolean isDeleted() {
-		return deleted;
 	}
 
 	/**
@@ -101,21 +90,28 @@ abstract public class DatabaseObject {
 	}
 
 	/**
-	 * Returns true if object is currently invalid. Calling checkIsValid may successfully refresh
-	 * object making it valid.
+	 * Returns true if object is currently invalid and must be validated prior to further use. 
+	 * An invalid object may result from a cache invalidation which corresponds to wide-spread 
+	 * record changes.  A common situation where this can occur is an undo/redo operation
+	 * against the underlying database.  The methods {@link #checkIsValid()}, {@link #checkDeleted()},
+	 * {@link #validate(Lock)} and {@link #isDeleted(Lock)} are methods which will force
+	 * a re-validation if required.
 	 * 
-	 * @see #checkIsValid()
+	 * @return true if this object is invalid and must be re-validated, else false if object state
+	 * is currently valid which may include a deleted state.
 	 */
-	public boolean isInvalid() {
-		return invalidateCount != getCurrentValidationCount();
+	protected boolean isInvalid() {
+		return !deleted && invalidateCount != getCurrentValidationCount();
 	}
 
 	/**
 	 * Checks if this object has been deleted, in which case any use of the object is not allowed.
+	 * This method should be invoked before any modifications to the object are performed to 
+	 * ensure it still exists and is in a valid state.
 	 * 
 	 * @throws ConcurrentModificationException if the object has been deleted from the database.
 	 */
-	public void checkDeleted() {
+	protected void checkDeleted() {
 		if (!checkIsValid()) {
 			throw new ConcurrentModificationException("Object has been deleted.");
 		}
@@ -125,9 +121,9 @@ abstract public class DatabaseObject {
 	 * Check whether this object is still valid. If the object is invalid, the object will attempt
 	 * to refresh itself. If the refresh fails, the object will be marked as deleted.
 	 * 
-	 * @return true if the object is valid.
+	 * @return true if the object is valid, else false if deleted
 	 */
-	public boolean checkIsValid() {
+	protected boolean checkIsValid() {
 		return checkIsValid(null);
 	}
 
@@ -140,10 +136,7 @@ abstract public class DatabaseObject {
 	 * @param record optional record which may be used to refresh invalid object
 	 * @return true if the object is valid.
 	 */
-	public boolean checkIsValid(DBRecord record) {
-		if (deleted) {
-			return false;
-		}
+	protected boolean checkIsValid(DBRecord record) {
 		if (isInvalid()) {
 			setValid();// prevent checkIsValid recursion during refresh
 			if (!refresh(record)) {
@@ -162,10 +155,10 @@ abstract public class DatabaseObject {
 	 * invalid, then the lock will be used to refresh as needed.
 	 * 
 	 * @param lock the lock that will be used if the object needs to be refreshed.
-	 * @return true if object is valid, else false
+	 * @return true if object is valid, else false if deleted
 	 */
-	public boolean validate(Lock lock) {
-		if (!deleted && !isInvalid()) {
+	protected boolean validate(Lock lock) {
+		if (!isInvalid()) {
 			return true;
 		}
 		lock.acquire();
@@ -175,6 +168,18 @@ abstract public class DatabaseObject {
 		finally {
 			lock.release();
 		}
+	}
+
+	/**
+	 * Returns true if this object has been deleted. Note: once an object has been deleted, it will
+	 * never be "refreshed". For example, if an object is ever deleted and is resurrected via an
+	 * "undo", you will have get a fresh instance of the object.
+	 * 
+	 * @param lock object cache lock object
+	 * @return true if this object has been deleted.
+	 */
+	public boolean isDeleted(Lock lock) {
+		return deleted || !validate(lock);
 	}
 
 	/**
