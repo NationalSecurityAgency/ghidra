@@ -78,8 +78,8 @@
 	<register name="spr037" group="SPR_UNNAMED"/>
   	<register name="spr038" group="SPR_UNNAMED"/>
   	<register name="spr039" group="SPR_UNNAMED"/>
-	<register name="spr03a" rename="CSRR0" group="SPR"/>
-	<register name="spr03b" rename="CSRR1" group="SPR"/>
+  	<register name="SRR0" group="SPR"/>
+	<register name="SRR1" group="SPR"/>
 	<register name="spr03c" group="SPR_UNNAMED"/>
   	<register name="spr03d" group="SPR_UNNAMED"/>
   	<register name="spr03e" group="SPR_UNNAMED"/>
@@ -418,8 +418,8 @@
   	<register name="spr177" group="SPR_UNNAMED"/>
   	<register name="spr178" group="SPR_UNNAMED"/>
   	<register name="spr179" group="SPR_UNNAMED"/>
-  	<register name="spr17a" group="SPR_UNNAMED"/>
-  	<register name="spr17b" group="SPR_UNNAMED"/>
+  	<register name="spr17a" rename="GSRR0" group="SPR"/>
+  	<register name="spr17b" rename="GSRR1" group="SPR"/>
   	<register name="spr17c" group="SPR_UNNAMED"/>
   	<register name="spr17d" group="SPR_UNNAMED"/>
   	<register name="spr17e" group="SPR_UNNAMED"/>

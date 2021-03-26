@@ -1234,9 +1234,8 @@ define pcodeop waitOp;
 # binutils: e500mc.d:   0:      4c 00 00 4e     rfdi
 define pcodeop ReturnFromGuestInterrupt;
 :rfgi is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=102 & BIT_0=0 {
-	MSR = returnFromGuestInterrupt(MSR, GSRR1);
-	local ra = GSRR0 << 1;
-	return[ra];
+	MSR = returnFromGuestInterrupt(MSR, spr17b); #GSRR1
+	return[spr17a]; #GSRR0
 }
 
 # =======================================================================
