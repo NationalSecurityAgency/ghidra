@@ -129,8 +129,8 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 :se_rfmci						is $(ISVLE) & OP16_VLE=11 {
-	MSR = returnFromMachineCheckInterrupt(MSR, MCSRR1);
-	local ra = MCSRR0;
+	MSR = returnFromMachineCheckInterrupt(MSR, spr23b); #MCSRR1
+	local ra = spr23a; #MCSRR0
 	return[ra];
 }
 
@@ -147,14 +147,14 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 :se_rfdi						is $(ISVLE) & OP16_VLE=10 {
-	MSR = returnFromDebugInterrupt(MSR, DSRR1);
-	local ra = DSRR0;
+	MSR = returnFromDebugInterrupt(MSR, spr23f); #DSRR1
+	local ra = spr23e; #DSRR0
 	return[ra];
 }
 
 :se_rfgi						is $(ISVLE) & OP16_VLE=12 {
-	MSR = returnFromGuestInterrupt(MSR, GSRR1);
-	local ra = GSRR0;
+	MSR = returnFromGuestInterrupt(MSR, spr17b);
+	local ra = spr17a;
 	return[ra];
 }
 
@@ -231,8 +231,8 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_ldmvdsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=6
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadReg(DSRR0);
-	loadReg(DSRR1);
+	loadReg(spr23e); #DSRR0
+	loadReg(spr23f); #DSRR1
 }
 
 # e_ldmvgprw 6 (0b0001_10) 0b00000 RA 0b0001_0000 D8
@@ -366,8 +366,8 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_stmvdsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=6
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeReg(DSRR0);
-	storeReg(DSRR1);
+	storeReg(spr23e); #DSRR0
+	storeReg(spr23f); #DSRR1
 }
 
 # e_stmvgprw 6 (0b0001_10) 0b00000 RA 0b0001_0001 D8
