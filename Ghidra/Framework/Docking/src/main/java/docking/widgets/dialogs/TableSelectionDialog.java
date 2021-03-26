@@ -26,15 +26,12 @@ import docking.DialogComponentProvider;
 import docking.widgets.table.*;
 
 /**
- * @param <T> the type
+ * Dialog for displaying table data in a dialog for the purpose of the user selecting one or
+ * more items from the table.
  *
- *
- * @deprecated  This class has been replaced by {@link TableSelectionDialog}.   At the time of
- * writing, both classes are identical.   This version introduced a naming conflict with another
- * API.   Thus, the new version better matches the existing dialog choosing API.
+ * @param <T> The type of row object in the table.
  */
-@Deprecated(forRemoval = true, since = "9.3")
-public class TableChooserDialog<T> extends DialogComponentProvider {
+public class TableSelectionDialog<T> extends DialogComponentProvider {
 
 	private RowObjectTableModel<T> model;
 	private GFilterTable<T> gFilterTable;
@@ -42,15 +39,13 @@ public class TableChooserDialog<T> extends DialogComponentProvider {
 
 	/**
 	 * Create a new Dialog for displaying and choosing table row items
-	 *
+	 * 
 	 * @param title The title for the dialog
 	 * @param model a {@link RowObjectTableModel} that has the tRable data
 	 * @param allowMultipleSelection if true, the dialog allows the user to select more
 	 * than one row; otherwise, only single selection is allowed
-	 * @deprecated see the class header
 	 */
-	@Deprecated(forRemoval = true, since = "9.3")
-	public TableChooserDialog(String title, RowObjectTableModel<T> model,
+	public TableSelectionDialog(String title, RowObjectTableModel<T> model,
 			boolean allowMultipleSelection) {
 		super(title);
 		this.model = model;
@@ -62,9 +57,7 @@ public class TableChooserDialog<T> extends DialogComponentProvider {
 	/**
 	 * Returns the list of selected items or null if the dialog was cancelled.
 	 * @return  the list of selected items or null if the dialog was cancelled.
-	 * @deprecated see the class header
 	 */
-	@Deprecated(forRemoval = true, since = "9.3")
 	public List<T> getSelectionItems() {
 		return selectedItems;
 	}
