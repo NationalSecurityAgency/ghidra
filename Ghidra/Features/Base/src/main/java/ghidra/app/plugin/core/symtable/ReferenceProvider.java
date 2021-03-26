@@ -134,6 +134,10 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		setVisible(true);
 	}
 
+	boolean isBusy() {
+		return referenceKeyModel.isBusy();
+	}
+
 	@Override
 	public void componentHidden() {
 		referenceKeyModel.setProgram(null);
