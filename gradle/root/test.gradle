@@ -345,10 +345,13 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Duser.country=US',
 			'-Duser.language=en',
 			'-Djdk.attach.allowAttachSelf',
-			'-javaagent:' + jmockitPath,			
-			'-DLock.DEBUG=true',
+			'-javaagent:' + jmockitPath,
+			'-noverify',
+			'-XX:TieredStopAtLevel=1',
 			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
 			
+			// Note: this args are used to speed-up the tests, but are not safe for production code
+			// -noverify and -XX:TieredStopAtLevel=1			
 			
 			// Note: modern remote debug invocation;
 			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
