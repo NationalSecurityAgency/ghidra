@@ -299,10 +299,6 @@ public class BookmarkPlugin extends ProgramPlugin
 	@Override
 	public synchronized void domainObjectChanged(DomainObjectChangedEvent ev) {
 
-		if (!provider.isVisible()) {
-			return;
-		}
-
 		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
 			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
 			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
