@@ -588,8 +588,10 @@ public class PcodeDataTypeManager {
 		}
 		else {
 			int sz = type.getLength();
+			boolean isVarLength = false;
 			if (sz <= 0) {
 				sz = size;
+				isVarLength = true;
 			}
 			appendNameIdAttributes(resBuf, origType);
 			if (sz < 16) {
@@ -601,6 +603,9 @@ public class PcodeDataTypeManager {
 				// Build an "opaque" structure with no fields
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
+				if (isVarLength) {
+					SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", isVarLength);
+				}
 				resBuf.append('>');
 			}
 		}
