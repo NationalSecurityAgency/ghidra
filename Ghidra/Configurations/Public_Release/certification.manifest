@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/PDB_SYMBOL_SERVER_URLS.pdburl||GHIDRA||||END|
 src/global/docs/ChangeHistory.html||GHIDRA||||END|
 src/global/docs/UserAgreement.html||GHIDRA||||END|

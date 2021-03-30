@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/languages/sh-1.slaspec||GHIDRA||||END|
 data/languages/sh-2.slaspec||GHIDRA||||END|
 data/languages/sh-2a.slaspec||GHIDRA||||END|

@@ -307,6 +307,7 @@ public class FrontEndTestEnv {
 		AbstractDockingTest.performAction(terminateCheckoutAction, context, false);
 		OptionDialog optDialog = AbstractDockingTest.waitForDialogComponent(OptionDialog.class);
 		AbstractGenericTest.pressButtonByText(optDialog.getComponent(), "Yes", true);
+		waitForTasks();
 		waitForSwing();
 	}
 

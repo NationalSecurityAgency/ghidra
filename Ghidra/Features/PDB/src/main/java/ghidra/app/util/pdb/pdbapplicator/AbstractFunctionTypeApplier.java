@@ -122,6 +122,14 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	protected abstract RecordNumber getArgListRecordNumber();
 
 	/**
+	 * Returns if known to be a constructor.
+	 * @return true if constructor.
+	 */
+	protected boolean isConstructor() {
+		return false;
+	}
+
+	/**
 	 * Method to create the {@link DataType} based upon the type indices of the calling
 	 * convention, return type, and arguments list. 
 	 * @param callingConventionParam Identification of the {@link AbstractMsType} record of the
@@ -202,6 +210,10 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	}
 
 	private boolean setReturnType() {
+
+		if (isConstructor()) {
+			return false;
+		}
 
 		DataType returnDataType = returnApplier.getDataType();
 		if (returnDataType == null) {

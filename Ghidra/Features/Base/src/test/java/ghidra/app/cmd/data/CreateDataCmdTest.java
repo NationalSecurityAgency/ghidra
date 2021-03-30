@@ -45,14 +45,6 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 	private Listing listing;
 	private ProgramBuilder builder;
 
-	/**
-	 * Constructor for CreateDataCmdTest.
-	 * @param arg0
-	 */
-	public CreateDataCmdTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		program = buildProgram();
@@ -637,8 +629,9 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		cmd.applyTo(program);
 
 		// Add external reference from pointer
-		program.getReferenceManager().addExternalReference(addr, "OtherFile", "ExtLabel", null,
-			SourceType.USER_DEFINED, 0, RefType.DATA);
+		program.getReferenceManager()
+				.addExternalReference(addr, "OtherFile", "ExtLabel", null,
+					SourceType.USER_DEFINED, 0, RefType.DATA);
 
 		// Undefined* becomes Byte*
 		cmd = new CreateDataCmd(addr, false, true, new ByteDataType());
@@ -724,7 +717,8 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		assertEquals(10, dt.getLength());
 
 		// Byte[] becomes Byte
-		CreateDataCmd cmd = new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
+		CreateDataCmd cmd =
+			new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
 		cmd.applyTo(program);
 
 		d = listing.getDataAt(addr);
@@ -792,7 +786,8 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		assertEquals(10, dt.getLength());
 
 		// struct becomes Byte
-		CreateDataCmd cmd = new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
+		CreateDataCmd cmd =
+			new CreateDataCmd(addr, new ByteDataType(), false, ClearDataMode.CLEAR_SINGLE_DATA);
 		cmd.applyTo(program);
 
 		d = listing.getDataAt(addr);

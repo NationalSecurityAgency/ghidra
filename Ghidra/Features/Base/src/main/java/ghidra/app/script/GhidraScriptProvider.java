@@ -133,4 +133,46 @@ public abstract class GhidraScriptProvider
 	protected void writeBody(PrintWriter writer) {
 		writer.println(getCommentCharacter() + "TODO Add User Code Here");
 	}
+
+	/**
+	 * Fixup a script name for searching in script directories.
+	 *
+	 * <p>This method is part of a poorly specified behavior that is due for future amendment, 
+	 * see {@link GhidraScriptUtil#fixupName(String)}.
+	 * 
+	 * @param scriptName the name of the script, must end with this provider's extension
+	 * @return a (relative) file path to the corresponding script
+	 */
+	@Deprecated
+	protected String fixupName(String scriptName) {
+		return scriptName;
+	}
+
+	/**
+	 * Return the start of certification header line if this file type is 
+	 * subject to certification.
+	 * @return start of certification header or null if not supported
+	 */
+	protected String getCertifyHeaderStart() {
+		return null;
+	}
+
+	/**
+	 * Return the prefix for each certification header bofy line if
+	 * this file is subject to certification
+	 * @return certification heaber body prefix or null if not supported
+	 */
+	protected String getCertificationBodyPrefix() {
+		return null;
+	}
+
+	/**
+	 * Return the end of certification header line if this file type is 
+	 * subject to certification.
+	 * @return end of certification header or null if not supported
+	 */
+	protected String getCertifyHeaderEnd() {
+		return null;
+	}
+
 }

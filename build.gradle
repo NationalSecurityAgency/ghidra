@@ -1,3 +1,18 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 apply plugin: 'eclipse'
 
 apply from: 'gradle/root/eclipse.gradle'
@@ -265,6 +280,7 @@ String getCurrentPlatformName() {
 		
 	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
 	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
+	boolean isAARCH_64 = archName.equals("aarch64");
 
 	if (osName.startsWith("Windows")) {
 		if (isX86_32) {
@@ -282,6 +298,9 @@ String getCurrentPlatformName() {
 	else if (osName.startsWith("Mac OS X")) {
 		if (isX86_64) {
 			return 'osx64'
+		}
+		if (isAARCH_64) {
+			return 'aarch64'
 		}
 	}
 	throw new GradleException("Unrecognized current platform -> osName = $osName, archName = $archName")

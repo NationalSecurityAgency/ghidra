@@ -1,5 +1,6 @@
 /* ###
  * IP: GHIDRA
+ * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +52,7 @@ public class RttiModelTest extends AbstractRttiTest {
 		setupRtti4_32(builder, 0x01001340L, 0, 0, 0, "0x01005364", "0x0100137c");
 		Address address = builder.addr(0x01001340L);
 		checkInvalidModel(new Rtti4Model(program, address, defaultValidationOptions),
-			"No vf table pointer is defined for this TypeDescriptor model.");
+			"TypeDescriptor data type at 01005364 doesn't point to a vfTable address in a loaded and initialized memory block.");
 	}
 
 	@Test
@@ -62,7 +63,7 @@ public class RttiModelTest extends AbstractRttiTest {
 		setupRtti0_32(builder, 0x01001364, "0x01007700", "0x0", "stuff");
 		Address address = builder.addr(0x01001340L);
 		checkInvalidModel(new Rtti4Model(program, address, defaultValidationOptions),
-			"No vf table pointer is defined for this TypeDescriptor model.");
+			"TypeDescriptor data type at 01001364 doesn't point to a vfTable address in a loaded and initialized memory block.");
 	}
 
 	@Test

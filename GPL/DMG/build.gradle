@@ -1,3 +1,6 @@
+/* ###
+ * IP: Public Domain
+ */
 apply from: file("../gpl.gradle").getCanonicalPath()
 
 if (findProject(':Generic') != null) {

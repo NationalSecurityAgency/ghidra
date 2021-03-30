@@ -1469,11 +1469,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	public DataType getDataType(String dataTypePath) {
 		// Category path now has sourceID followed by ":" followed by path under that source.
 		String name = getName();
-		if (dataTypePath.startsWith(name)) {
-			dataTypePath = dataTypePath.substring(name.length());
+		int nameLen = name.length();
+		if (dataTypePath.length() > nameLen && dataTypePath.charAt(nameLen) == '/' &&
+			dataTypePath.startsWith(name)) {
+			dataTypePath = dataTypePath.substring(nameLen);
 		}
-
-		if (!dataTypePath.startsWith("/")) {
+		else if (!dataTypePath.startsWith("/")) {
 			return null;
 		}
 

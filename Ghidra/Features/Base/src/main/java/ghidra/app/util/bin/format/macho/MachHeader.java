@@ -46,6 +46,7 @@ public class MachHeader implements StructConverter {
 	private long _commandIndex;
 	private FactoryBundledWithBinaryReader _reader;
 	private long _machHeaderStartIndexInProvider;
+	private long _machHeaderStartIndex = 0;
 	private boolean _parsed = false;
 
 	/**
@@ -123,9 +124,10 @@ public class MachHeader implements StructConverter {
 		}
 
 		if (isRemainingMachoRelativeToStartIndex) {
-			_machHeaderStartIndexInProvider = machHeaderStartIndexInProvider;
+			_machHeaderStartIndex = machHeaderStartIndexInProvider;
 		}
 
+		_machHeaderStartIndexInProvider = machHeaderStartIndexInProvider;
 		_reader = new FactoryBundledWithBinaryReader(factory, provider, isLittleEndian());
 		_reader.setPointerIndex(machHeaderStartIndexInProvider + 4);//skip magic number...
 
@@ -212,7 +214,19 @@ public class MachHeader implements StructConverter {
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}
+	
+	/**
+	 * Returns the start index that should be used for calculating offsets.
+	 * This will be 0 for things such as the dyld shared cache where offsets are
+	 * based off the beginning of the file.
+	 */
+	public long getStartIndex() {
+		return _machHeaderStartIndex;
+	}
 
+	/**
+	 * Returns offset of MachHeader in the ByteProvider
+	 */
 	public long getStartIndexInProvider() {
 		return _machHeaderStartIndexInProvider;
 	}

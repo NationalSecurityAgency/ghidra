@@ -77,7 +77,7 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 		
 		Section s = machSectionsByName.get(sectionName);
 		return (s != null) ? new ByteProviderWrapper(provider,
-			machHeader.getStartIndexInProvider() + s.getOffset(), s.getSize()) : null;
+			machHeader.getStartIndex() + s.getOffset(), s.getSize()) : null;
 	}
 
 	@Override

@@ -95,8 +95,8 @@ public class DataTypeParser {
 	 * the source data type manager, this means that all data type managers will be used when
 	 * resolving data types.
 	 *
-	 * @param dataTypeManagerService
-	 * @param allowedTypes
+	 * @param dataTypeManagerService data-type manager tool service, or null
+	 * @param allowedTypes constrains which data-types may be parsed 
 	 */
 	public DataTypeParser(DataTypeQueryService dataTypeManagerService,
 			AllowedDataTypes allowedTypes) {

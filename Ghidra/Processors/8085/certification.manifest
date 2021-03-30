@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
 data/languages/8085.cspec||GHIDRA||||END|
 data/languages/8085.ldefs||GHIDRA||reviewed||END|
 data/languages/8085.pspec||GHIDRA||reviewed||END|

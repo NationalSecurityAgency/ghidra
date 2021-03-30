@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.hover;
+package ghidra.pcode.floatformat;
 
-import ghidra.framework.plugintool.PluginTool;
-
-public abstract class AbstractTruncatedTextHover extends AbstractConfigurableHover {
-
-	public AbstractTruncatedTextHover(PluginTool tool, int priority) {
-		super(tool, priority);
-	}
+enum FloatKind {
+	FINITE, /* includes both normal and subnormal */
+	INFINITE,
+	QUIET_NAN,
+	SIGNALING_NAN;
 }

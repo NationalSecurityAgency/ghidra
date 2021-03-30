@@ -15,13 +15,15 @@
  */
 package ghidra.app.plugin.core.hover;
 
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.util.Disposable;
 
 /**
  * A listing or decompiler hover that employs some degree of configurability.
  */
-public abstract class AbstractConfigurableHover extends AbstractHover implements ConfigurableHover {
+public abstract class AbstractConfigurableHover extends AbstractHover
+		implements Disposable, OptionsChangeListener {
 
 	protected ToolOptions options;
 
@@ -29,6 +31,12 @@ public abstract class AbstractConfigurableHover extends AbstractHover implements
 		super(tool, priority);
 		initializeOptions();
 	}
+
+	protected abstract String getName();
+
+	protected abstract String getDescription();
+
+	protected abstract String getOptionsCategory();
 
 	@Override
 	public void dispose() {
@@ -39,8 +47,24 @@ public abstract class AbstractConfigurableHover extends AbstractHover implements
 	}
 
 	@Override
-	public void optionsChanged(ToolOptions theOptions, String optionName, Object oldValue, Object newValue) {
+	public void optionsChanged(ToolOptions theOptions, String optionName, Object oldValue,
+			Object newValue) {
 		setOptions(theOptions, optionName);
 	}
 
+	public void initializeOptions() {
+		options = tool.getOptions(getOptionsCategory());
+
+		String hoverName = getName();
+		options.registerOption(hoverName, true, null, getDescription());
+		setOptions(options, hoverName);
+		options.addOptionsChangeListener(this);
+	}
+
+	public void setOptions(Options options, String optionName) {
+		String hoverName = getName();
+		if (optionName.equals(hoverName)) {
+			enabled = options.getBoolean(hoverName, true);
+		}
+	}
 }

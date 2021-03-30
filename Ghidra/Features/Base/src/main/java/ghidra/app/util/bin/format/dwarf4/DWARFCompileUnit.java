@@ -49,11 +49,14 @@ public class DWARFCompileUnit {
 		String comp_dir = diea.getString(DWARFAttribute.DW_AT_comp_dir, null);
 
 		Number high_pc = null, low_pc = null, language = null, stmt_list = null;
+
 		if (diea.hasAttribute(DWARFAttribute.DW_AT_low_pc)) {
 			low_pc = diea.getLowPC(0);
 		}
 
-		if (diea.hasAttribute(DWARFAttribute.DW_AT_high_pc)) {
+		// if lowPC and highPC values are the same, don't read the high value
+		// because Ghidra can't express an empty range.
+		if (diea.hasAttribute(DWARFAttribute.DW_AT_high_pc) && !diea.isLowPCEqualHighPC()) {
 			high_pc = diea.getHighPC();
 		}
 

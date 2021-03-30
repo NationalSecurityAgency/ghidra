@@ -85,8 +85,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 				return doubleValue;
 			}
 			BigInteger value = Utils.bytesToBigInteger(bytes, len, buf.isBigEndian(), false);
-			BigDecimal decValue = floatFormat.getHostFloat(value);
-			// TODO: adjust scale for improved display value ??
+			BigDecimal decValue = floatFormat.round(floatFormat.getHostFloat(value));
 			return decValue;
 		}
 		catch (UnsupportedFloatFormatException e) {
@@ -197,7 +196,8 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 				}
 				for (int size : floatMap.keySet()) {
 					if (!newFloatMap.containsKey(size)) {
-						newFloatMap.put(size, (AbstractFloatDataType) floatMap.get(size).clone(dtm));
+						newFloatMap.put(size,
+							(AbstractFloatDataType) floatMap.get(size).clone(dtm));
 					}
 				}
 			}

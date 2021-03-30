@@ -3081,28 +3081,47 @@ define pcodeop FloatVectorMult;
 define pcodeop VectorMultiply;
 define pcodeop PolynomialMultiply;
 
-:vmul.f32 Dd,Dn,Dm    is ( ($(AMODE) & cond=15 & c2327=0x06 & c2121=0 & c0811=13 & Q6=0 & c0404=1) |
+:vmul.f32 Dd,Dn,Dm    is ( ($(AMODE) & cond=15 & c2327=0x06 & c2121=0 & c2020=0 & c0811=13 & Q6=0 & c0404=1) |
                            ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c0811=13 & thv_Q6=0 & thv_c0404=1)) & Dn & Dd & Dm
 {
 	Dd = FloatVectorMult(Dn,Dm,2:1,32:1);
 }
 
-:vmul.f32 Qd,Qn,Qm    is ( ($(AMODE) & cond=15 & c2327=0x06 & c2121=0 & c0811=13 & Q6=1 & c0404=1) |
+:vmul.f32 Qd,Qn,Qm    is ( ($(AMODE) & cond=15 & c2327=0x06 & c2121=0 & c2020=0 & c0811=13 & Q6=1 & c0404=1) |
                            ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c0811=13 & thv_Q6=1 & thv_c0404=1) ) & Qm & Qn & Qd
 {
 	Qd = FloatVectorMult(Qn,Qm,2:1,32:1);
 }
 
-:vmul.f64 Dd,Dn,Dm		is COND & ( ($(AMODE) & cond=15 & c2327=0x1c & c2021=2 & c0811=11 & c0606=0 & c0404=0) |
+:vmul.f16 Dd,Dn,Dm    is ( ($(AMODE) & cond=15 & c2327=0x06 & c2121=0 & c2020=1 & c0811=13 & Q6=0 & c0404=1) |
+                           ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c2020=1 & thv_c0811=13 & thv_Q6=0 & thv_c0404=1)) & Dn & Dd & Dm
+{
+	Dd = FloatVectorMult(Dn,Dm,4:1,16:1);
+}
+
+:vmul.f16 Qd,Qn,Qm    is ( ($(AMODE) & cond=15 & c2327=0x06 & c2121=0 & c2020=1 & c0811=13 & Q6=1 & c0404=1) |
+                           ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c2020=1 & thv_c0811=13 & thv_Q6=1 & thv_c0404=1) ) & Qm & Qn & Qd
+{
+	Qd = FloatVectorMult(Qn,Qm,4:1,16:1);
+}
+
+:vmul^COND^".f64" Dd,Dn,Dm	is COND & ( ($(AMODE) & c2327=0x1c & c2021=2 & c0811=11 & c0606=0 & c0404=0) |
                                     ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=11 & thv_c0606=0 & thv_c0404=0) ) & Dm & Dn & Dd 
 {
 	Dd = Dn f* Dm;
 }
 
-:vmul.f32 Sd,Sn,Sm		is COND & ( ($(AMODE) & cond=15 & c2327=0x1c & c2021=2 & c0811=10 & c0606=0 & c0404=0) |
+:vmul^COND^".f32" Sd,Sn,Sm	is COND & ( ($(AMODE) & c2327=0x1c & c2021=2 & c0811=10 & c0606=0 & c0404=0) |
                                     ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=10 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd 
 {
 	Sd = Sn f* Sm;
+}
+
+:vmul^COND^".f16" Sd,Sn,Sm	is COND & ( ($(AMODE) & c2327=0x1c & c2021=2 & c0811=9 & c0606=0 & c0404=0) |
+                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=9 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd 
+{
+    product:2 = Sn:2 f* Sm:2;
+    Sd = zext(product);
 }
 
 :vmul.i^esize2021 Dd,Dn,Dm    is ( ($(AMODE) & cond=15 & c2327=4 & c0811=9 & Q6=0 & c0404=1) |

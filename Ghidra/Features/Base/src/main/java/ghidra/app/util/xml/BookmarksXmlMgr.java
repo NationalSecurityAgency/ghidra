@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,18 @@
  */
 package ghidra.app.util.xml;
 
+import org.xml.sax.SAXParseException;
+
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.address.AddressFormatException;
+import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.listing.Bookmark;
+import ghidra.program.model.listing.BookmarkManager;
+import ghidra.program.model.listing.BookmarkType;
+import ghidra.program.model.listing.Program;
 import ghidra.util.XmlProgramUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -26,8 +34,6 @@ import ghidra.util.xml.XmlAttributes;
 import ghidra.util.xml.XmlWriter;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-
-import org.xml.sax.SAXParseException;
 
 class BookmarksXmlMgr {
 	private BookmarkManager bookmarkMgr;
@@ -97,13 +103,13 @@ class BookmarksXmlMgr {
 		}
 
 		try {
-			if (!overwrite) {
-				if (bookmarkMgr.getBookmark(addr, type, category) != null) {
-					log.appendMsg("Conflicting '" + type + "' BOOKMARK ignored at: " + addr);
-					return;
-				}
+			boolean hasExistingBookmark = bookmarkMgr.getBookmark(addr, type, category) != null;
+			if (overwrite || !hasExistingBookmark) {
+				bookmarkMgr.setBookmark(addr, type, category, comment);
 			}
-			bookmarkMgr.setBookmark(addr, type, category, comment);
+			if (!overwrite && hasExistingBookmark) {
+				log.appendMsg("Conflicting '" + type + "' BOOKMARK ignored at: " + addr);
+			}
 		}
 		catch (Exception e) {
 			log.appendException(e);
