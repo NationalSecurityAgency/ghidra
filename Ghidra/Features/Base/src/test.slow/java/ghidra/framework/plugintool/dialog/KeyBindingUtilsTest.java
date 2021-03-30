@@ -502,7 +502,14 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(keyText.toUpperCase(), keyField.getText());
 
 		runSwing(() -> panel.apply());
-		assertEquals(KeyStroke.getKeyStroke(keyCode, 0), action.getKeyBinding());
+
+		if (!Objects.equals(KeyStroke.getKeyStroke(keyCode, 0), action.getKeyBinding())) {
+
+			Msg.debug(this, "Action did not take keybinding: " + action.getFullName());
+
+			assertEquals("Key binding was not applied", KeyStroke.getKeyStroke(keyCode, 0),
+				action.getKeyBinding());
+		}
 	}
 
 	private void selectRowForAction(DockingActionIf action) throws Exception {
