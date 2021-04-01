@@ -88,7 +88,6 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		this.objectManager = new TraceObjectManager(target, mapper, this);
 
 		trace.addConsumer(this);
-		System.err.println("constructor for DefaultTraceRecorder complete");
 	}
 
 	/*---------------- OBJECT MANAGER METHODS -------------------*/

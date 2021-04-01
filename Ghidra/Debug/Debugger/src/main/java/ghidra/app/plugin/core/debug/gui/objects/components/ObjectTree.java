@@ -316,7 +316,9 @@ public class ObjectTree implements ObjectPane {
 	public List<GTreeNode> update(ObjectContainer container) {
 		ObjectNode node = nodeMap.get(path(container));
 		if (node == null) {
-			Msg.warn(this, "Missing node: " + path(container));
+			if (path(container) != null) {
+				Msg.warn(this, "Missing node: " + path(container));
+			}
 			return new ArrayList<>();
 		}
 
