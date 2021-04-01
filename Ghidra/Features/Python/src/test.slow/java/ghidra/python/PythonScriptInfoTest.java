@@ -57,7 +57,7 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 		String descLine1 = "This script exists to check that the info on";
 		String descLine2 = "a script that has extensive documentation is";
 		String descLine3 = "properly parsed and represented.";
-		String author = "Admiral Pie Thawn";
+		String author = "Fake Name";
 		String categoryTop = "Test";
 		String categoryBottom = "ScriptInfo";
 		String keybinding = "ctrl shift COMMA";
