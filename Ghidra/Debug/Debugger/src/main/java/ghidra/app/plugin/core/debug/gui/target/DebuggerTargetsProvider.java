@@ -226,13 +226,16 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
-	private void setContextAndEmitEvents() {
+	private void setContext() {
 		myActionContext = new DebuggerModelActionContext(this, tree.getSelectionPath(), tree);
+		contextChanged();
+	}
+
+	private void emitEvents() {
 		DebuggerObjectModel model = myActionContext.getIfDebuggerModel();
 		if (model != null) {
 			modelService.activateModel(model);
 		}
-		contextChanged();
 	}
 
 	private void buildMainPanel() {
@@ -244,14 +247,16 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		mainPanel.add(tree);
 
+		// NB: for both of these, setContext should precede emitEvents
 		tree.getGTSelectionModel().addGTreeSelectionListener(evt -> {
-			if (evt.getEventOrigin() == EventOrigin.API_GENERATED) {
-				return;
+			setContext();
+			if (evt.getEventOrigin() != EventOrigin.API_GENERATED) {
+				emitEvents();
 			}
-			setContextAndEmitEvents();
 		});
 		tree.addGTModelListener((AnyChangeTreeModelListener) e -> {
-			setContextAndEmitEvents();
+			setContext();
+			emitEvents();
 		});
 	}
 
