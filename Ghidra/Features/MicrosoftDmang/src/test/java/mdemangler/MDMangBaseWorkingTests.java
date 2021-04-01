@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Categories.class)
-@ExcludeCategory(MDMangFailingTests.class)
+@ExcludeCategory(MDMangFailingTestCategory.class)
 @SuiteClasses(MDMangBaseTest.class)
 /**
  * This test suite has the purpose of driving the tests in MDMangBaseTest and
@@ -33,6 +33,6 @@ import org.junit.runners.Suite.SuiteClasses;
  * during nightly or continuous testing. The MDMangBaseTest class is not located
  * in a folder that will be seen by these tests.
  */
-public class MDMangBaseTestSuite {
+public class MDMangBaseWorkingTests {
 	// Purposefully empty.
 }

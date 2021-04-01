@@ -3400,8 +3400,9 @@ define pcodeop lswxOp;
 #rfid	0x4c 00 00 24 
 :rfid		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=18 & BIT_0=0	
 { 
-	returnFromInterrupt();  
-	return[SRR0]; 
+	MSR = returnFromInterrupt(MSR, SRR1);
+	local ra = SRR0;
+	return[ra];
 }
 
 @ifdef BIT_64

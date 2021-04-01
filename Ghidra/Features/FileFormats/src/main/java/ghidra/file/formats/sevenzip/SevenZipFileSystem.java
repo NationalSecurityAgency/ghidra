@@ -15,8 +15,9 @@
  */
 package ghidra.file.formats.sevenzip;
 
-import java.io.*;
 import java.util.*;
+
+import java.io.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -260,6 +261,9 @@ public class SevenZipFileSystem implements GFileSystem {
 			}
 			case UNKNOWN_OPERATION_RESULT: {
 				throw new IOException("Unexpected: 7-Zip returned unknown operation result");
+			}
+			case WRONG_PASSWORD: {
+				throw new IOException("7-Zip wrong password");
 			}
 			case OK:
 			default: {

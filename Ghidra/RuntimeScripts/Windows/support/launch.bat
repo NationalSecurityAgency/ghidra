@@ -36,7 +36,7 @@ for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLI
 :: '% ~' dereferences the value in param 0
 :: 'd' - drive
 :: 'p' - path (without filename)
-set SUPPORT_DIR=%~dp0
+set "SUPPORT_DIR=%~dp0"
 
 ::
 :: Parse arguments
@@ -63,20 +63,25 @@ goto showUsage
 ::
 :: Production Environment
 ::
-set INSTALL_DIR=%SUPPORT_DIR%..\
-set CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\lib\Utility.jar
-set LS_CPATH=%SUPPORT_DIR%LaunchSupport.jar
-set DEBUG_LOG4J=%SUPPORT_DIR%debug.log4j.xml
+set "INSTALL_DIR=%SUPPORT_DIR%..\"
+set "CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\lib\Utility.jar"
+set "LS_CPATH=%SUPPORT_DIR%LaunchSupport.jar"
+set "DEBUG_LOG4J=%SUPPORT_DIR%debug.log4j.xml"
 
 if exist "%INSTALL_DIR%Ghidra" goto continue2
 
 ::
 :: Development Environment
 ::
-set INSTALL_DIR=%INSTALL_DIR%..\..\..\
-set CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\bin\main
-set LS_CPATH=%INSTALL_DIR%GhidraBuild\LaunchSupport\bin\main
-set DEBUG_LOG4J=%INSTALL_DIR%Ghidra\RuntimeScripts\Common\support\debug.log4j.xml
+set "INSTALL_DIR=%INSTALL_DIR%..\..\..\"
+set "CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\bin\main"
+set "LS_CPATH=%INSTALL_DIR%GhidraBuild\LaunchSupport\bin\main"
+set "DEBUG_LOG4J=%INSTALL_DIR%Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
+if not exist "%LS_CPATH%" (
+	echo Ghidra cannot launch in development mode because Eclipse has not compiled its class files.
+	set ERRORLEVEL=1
+	goto exit1
+)
 
 :continue2
 
@@ -108,7 +113,7 @@ if "%JAVA_HOME%" == "" (
 		goto exit1
 	)
 )
-set JAVA_CMD=%JAVA_HOME%\bin\java
+set "JAVA_CMD=%JAVA_HOME%\bin\java"
 
 :: Get the configurable VM arguments from the launch properties
 for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -vmargs') do set VMARG_LIST=%VMARG_LIST% %%i
@@ -136,11 +141,8 @@ if "%DEBUG%"=="y" (
 		set DEBUG_ADDRESS=127.0.0.1:18001
 	)
 		
-	set VMARG_LIST=!VMARG_LIST! -Xdebug
-	set VMARG_LIST=!VMARG_LIST! -Xnoagent
-	set VMARG_LIST=!VMARG_LIST! -Djava.compiler=NONE
-	set VMARG_LIST=!VMARG_LIST! -Dlog4j.configuration="!DEBUG_LOG4J!"
-	set VMARG_LIST=!VMARG_LIST! -Xrunjdwp:transport=dt_socket,server=y,suspend=!SUSPEND!,address=!DEBUG_ADDRESS!
+	set VMARG_LIST=!VMARG_LIST! -Dlog4j.configuration="!DEBUG_LOG4J!"	
+	set VMARG_LIST=!VMARG_LIST! -agentlib:jdwp=transport=dt_socket,server=y,suspend=!SUSPEND!,address=!DEBUG_ADDRESS!
 	goto continue3
 )
 

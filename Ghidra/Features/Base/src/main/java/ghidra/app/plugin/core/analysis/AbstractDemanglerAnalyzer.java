@@ -57,18 +57,37 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
+		try {
+			monitor.setIndeterminate(true);
+			return doAdded(program, set, monitor, log);
+		}
+		finally {
+			monitor.setIndeterminate(false);
+		}
+	}
+
+	private boolean doAdded(Program program, AddressSetView set, TaskMonitor monitor,
+			MessageLog log)
+			throws CancelledException {
+
 		DemanglerOptions options = getOptions();
 		if (!validateOptions(options, log)) {
 			log.appendMsg(getName(), "Invalid demangler options--cannot demangle");
 			return false;
 		}
 
-		monitor.initialize(100);
+		int count = 0;
+
+		String defaultMessage = monitor.getMessage();
 
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
 			monitor.checkCanceled();
+
+			if (++count % 100 == 0) {
+				monitor.setMessage(defaultMessage + " - " + count + " symbols");
+			}
 
 			Symbol symbol = it.next();
 			if (skipSymbol(symbol)) {
@@ -81,12 +100,6 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			if (demangled != null) {
 				apply(program, address, demangled, options, log, monitor);
 			}
-
-			Address min = set.getMinAddress();
-			Address max = set.getMaxAddress();
-			int distance = (int) (address.getOffset() - min.getOffset());
-			int percent = (int) ((distance / max.getOffset()) * 100);
-			monitor.setProgress(percent);
 		}
 
 		return true;

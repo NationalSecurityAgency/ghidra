@@ -15,6 +15,7 @@
  */
 package ghidra.graph.viewer.popup;
 
+import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.*;
 
@@ -126,6 +127,13 @@ public class PopupRegulator<V, E> {
 		}
 
 		if (event == null) {
+			return;
+		}
+
+		Component c = event.getComponent();
+		if (!c.isShowing()) {
+			// This method is called from a a timer.  It is possible that the graph has been 
+			// closed by the time this method is called.
 			return;
 		}
 

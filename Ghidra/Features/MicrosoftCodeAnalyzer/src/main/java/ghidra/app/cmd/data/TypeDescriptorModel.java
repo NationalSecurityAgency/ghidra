@@ -30,7 +30,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -615,7 +614,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		if (nsSymbol == null) {
 			return false; // global namespace.
 		}
-		return !nsSymbol.checkIsValid();
+		return nsSymbol.isDeleted();
 	}
 
 	/**

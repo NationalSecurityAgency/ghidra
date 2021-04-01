@@ -144,11 +144,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				return;
 			}
 
-			if (elf.e_shnum() != 0) {
-				// discard tiny alignment/filler segment fragments when
-				// section headers are present
-				pruneDiscardableBlocks();
-			}
+			pruneDiscardableBlocks();
 
 			markupElfHeader(monitor);
 			markupProgramHeaders(monitor);
@@ -162,8 +158,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			elf.getLoadAdapter().processElf(this, monitor);
 
-			processRelocations(monitor);
 			processEntryPoints(monitor);
+
+			processRelocations(monitor);
 			processImports(monitor);
 
 			monitor.setMessage("Processing PLT/GOT ...");
@@ -206,7 +203,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		for (ElfSectionHeader section : sections) {
-			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL) {
+			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL ||
+				section.getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
 				continue;
 			}
 			section.getSize();
@@ -215,56 +213,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			long offset = section.getOffset();
 			if (size > 0) {
 				fileMap.paintRange(offset, offset + size - 1, -3); // -3: used by section 
-			}
-		}
-
-		// Allocate unused file ranges (0: first segment index, segments.length: first section index)
-
-		// Make segment file allocations
-		for (int i = 0; i < segments.length; i++) {
-			ElfProgramHeader segment = segments[i];
-			if (segment.getType() == ElfProgramHeaderConstants.PT_NULL) {
-				continue;
-			}
-			long size = segment.getFileSize();
-			long offset = segment.getOffset();
-			if (size == 0 && offset > 0) {
-				ValueRange valueRange = fileMap.getValueRange(offset);
-				if (valueRange == null || valueRange.getValue() < -1) {
-					continue;
-				}
-				if (valueRange.getValue() >= 0 && valueRange.getStart() < segment.getOffset()) {
-					ElfProgramHeader otherSegment = segments[valueRange.getValue()];
-					otherSegment.setSize(offset - valueRange.getStart(), 0); // reduce previous segment allocation
-				}
-				segment.setSize(valueRange.getEnd() - offset + 1, 0);
-				fileMap.paintRange(offset, valueRange.getEnd(), i); // allocated to segment
-			}
-		}
-
-		// Make section file allocations
-		int firstSectionIndex = segments.length;
-		for (int i = 0; i < sections.length; i++) {
-			ElfSectionHeader section = sections[i];
-			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL) {
-				continue;
-			}
-			long size = section.getSize();
-			long offset = section.getOffset();
-			if (size == 0 && offset > 0) {
-				ValueRange valueRange = fileMap.getValueRange(offset);
-				if (valueRange == null || valueRange.getValue() < -1) {
-					continue;
-				}
-				if (valueRange.getValue() >= firstSectionIndex &&
-					valueRange.getStart() < section.getOffset()) {
-					ElfSectionHeader otherSection =
-						sections[valueRange.getValue() - firstSectionIndex];
-					otherSection.setSize(offset - valueRange.getStart()); // reduce previous section allocation
-				}
-				section.setSize(valueRange.getEnd() - offset + 1);
-				Msg.info(this, "Forced section " + i + " size: " + section.getSize());
-				fileMap.paintRange(offset, valueRange.getEnd(), firstSectionIndex + i); // allocated to section
 			}
 		}
 
@@ -302,17 +250,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void pruneDiscardableBlocks() {
-		byte[] bytes = new byte[DISCARDABLE_SEGMENT_SIZE];
 		try {
 			for (MemoryBlock block : memory.getBlocks()) {
 				long size = block.getSize();
-				if (size > DISCARDABLE_SEGMENT_SIZE ||
-					!(block.getName().startsWith(SEGMENT_NAME_PREFIX) ||
-						block.getName().startsWith(UNALLOCATED_NAME_PREFIX))) {
-					continue;
+				// prune any zero-filled unallocated block or segment blocks smaller than DISCARDABLE_SEGMENT_SIZE
+				if (!block.getName().startsWith(UNALLOCATED_NAME_PREFIX)) {
+					// Don't prune segments when sections are absent
+					if (elf.e_shnum() == 0 || size > DISCARDABLE_SEGMENT_SIZE ||
+						!block.getName().startsWith(SEGMENT_NAME_PREFIX)) {
+						continue;
+					}
 				}
-				block.getBytes(block.getStart(), bytes, 0, (int) size);
-				if (isZeroedArray(bytes, (int) size)) {
+				if (isZeroFilledBlock(block)) {
 					Msg.debug(this,
 						"Removing discardable alignment/filler segment at " + block.getStart());
 					memory.removeBlock(block, TaskMonitor.DUMMY);
@@ -322,6 +271,25 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		catch (LockException | MemoryAccessException e) {
 			throw new AssertException(e); // should never happen
 		}
+	}
+
+	private boolean isZeroFilledBlock(MemoryBlock block) throws MemoryAccessException {
+		int bufSize = 8 * 1024;
+		long blockSize = block.getSize();
+		if (blockSize < bufSize) {
+			bufSize = (int) blockSize;
+		}
+		byte[] bytes = new byte[bufSize];
+		Address addr = block.getStart();
+		long cnt = 0;
+		while (cnt < blockSize) {
+			int readLen = block.getBytes(addr.add(cnt), bytes, 0, bufSize);
+			if (readLen <= 0 || !isZeroedArray(bytes, readLen)) {
+				return false;
+			}
+			cnt += readLen;
+		}
+		return true;
 	}
 
 	private boolean isZeroedArray(byte[] bytes, int len) {
@@ -462,11 +430,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	/**
 	 * Processes the GNU version section.
+	 * @throws CancelledException 
 	 */
-	private void processGNU(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void processGNU(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 
 		Address versionTableAddr = null;
 
@@ -588,10 +555,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void processEntryPoints(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void processEntryPoints(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 		monitor.setMessage("Creating entry points...");
 
 		long entry = elf.e_entry(); // already adjusted for pre-link
@@ -711,11 +676,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return msg;
 	}
 
-	private void markupInterpreter(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
-
+	private void markupInterpreter(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 		monitor.setMessage("Processing interpreter...");
 		Address interpStrAddr = null;
 
@@ -745,10 +707,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		listing.setComment(interpStrAddr, CodeUnit.EOL_COMMENT, "Initial Elf program interpreter");
 	}
 
-	private void processImports(TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
+	private void processImports(TaskMonitor monitor) throws CancelledException {
+		monitor.checkCanceled();
 		monitor.setMessage("Processing imports...");
 
 		ExternalManager extManager = program.getExternalManager();
@@ -774,6 +734,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Address defaultBase = getDefaultAddress(elf.adjustAddressForPrelink(0));
 		AddressSpace defaultSpace = defaultBase.getAddressSpace();
 		long defaultBaseOffset = defaultBase.getAddressableWordOffset();
+
+		int totalCount = 0;
+		for (ElfRelocationTable relocationTable : elf.getRelocationTables()) {
+			totalCount += relocationTable.getRelocationCount();
+		}
+		monitor.initialize(totalCount);
 
 		for (ElfRelocationTable relocationTable : elf.getRelocationTables()) {
 
@@ -811,6 +777,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					log("Failed to identify relocation base address for relocation table 0x" +
 						relocationTable.getAddressOffset() + " [section: " +
 						sectionToBeRelocated.getNameAsString() + "]");
+					monitor.incrementProgress(relocationTable.getRelocationCount());
 					continue;
 				}
 				relocationSpace = sectionLoadAddr.getAddressSpace();
@@ -863,6 +830,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		for (ElfRelocation reloc : relocs) {
 
 			monitor.checkCanceled();
+			monitor.incrementProgress(1);
 
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = null;
@@ -1318,6 +1286,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		ElfSymbolTable[] symbolTables = elf.getSymbolTables();
 
+		int totalCount = 0;
+		for (ElfSymbolTable elfSymbolTable : symbolTables) {
+			totalCount += elfSymbolTable.getSymbolCount();
+		}
+		monitor.initialize(totalCount);
+
 		for (ElfSymbolTable elfSymbolTable : symbolTables) {
 			monitor.checkCanceled();
 
@@ -1352,6 +1326,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			TaskMonitor monitor) throws CancelledException {
 		for (ElfSymbol elfSymbol : symbols) {
 			monitor.checkCanceled();
+			monitor.incrementProgress(1);
+
 			try {
 
 				Address address = calculateSymbolAddress(elfSymbol);
@@ -2306,9 +2282,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private void processStringTables(TaskMonitor monitor) throws CancelledException {
 		monitor.setMessage("Processing string tables...");
+		monitor.setShowProgressValue(false);
 
-		for (ElfStringTable stringTable : elf.getStringTables()) {
+		ElfStringTable[] stringTables = elf.getStringTables();
 
+		long totalLength = 0;
+		for (ElfStringTable stringTable : stringTables) {
+			totalLength += stringTable.getLength();
+		}
+		monitor.initialize(totalLength);
+
+		for (ElfStringTable stringTable : stringTables) {
 			monitor.checkCanceled();
 
 			Address stringTableAddr = null;
@@ -2323,18 +2307,26 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (stringTableAddr == null) {
 //				log("Failed to locate string table at file offset 0x" +
 //					Long.toHexString(stringTable.getFileOffset()));
+				monitor.incrementProgress(stringTable.getLength()); // skipping table
 				continue;
 			}
 
 			AddressRange rangeConstraint = getMarkupMemoryRangeConstraint(stringTableAddr);
 			if (rangeConstraint == null) {
+				monitor.incrementProgress(stringTable.getLength()); // skipping table
 				continue;
 			}
 
-			long limit = Math.min(stringTable.getLength(), rangeConstraint.getLength());
+			long tblLength = stringTable.getLength();
+			long limit = Math.min(tblLength, rangeConstraint.getLength());
+			if (limit < tblLength) {
+				monitor.incrementProgress(tblLength - limit);
+			}
 
 			markupStringTable(stringTableAddr, limit, monitor);
 		}
+
+		monitor.setShowProgressValue(true);
 	}
 
 	private void markupStringTable(Address address, long tableBytesLength, TaskMonitor monitor) {
@@ -2353,6 +2345,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			address = address.addNoWrap(1);
 			while (!monitor.isCancelled() && address.compareTo(end) < 0) {
 				int length = createString(address);
+				monitor.incrementProgress(length);
 				address = address.addNoWrap(length);
 			}
 		}
@@ -2907,7 +2900,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		for (ElfSectionHeader elfSectionToLoad : sections) {
 			monitor.checkCanceled();
 			int type = elfSectionToLoad.getType();
-			if (type != ElfSectionHeaderConstants.SHN_UNDEF &&
+			if (type != ElfSectionHeaderConstants.SHT_NULL &&
 				(includeOtherBlocks || elfSectionToLoad.isAlloc())) {
 				long fileOffset = elfSectionToLoad.getOffset();
 				if (fileOffset < 0 || fileOffset >= fileBytes.getSize()) {
@@ -3004,8 +2997,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		final String blockName = elfSectionToLoad.getNameAsString();
 
 		try {
-			if (loadOffset == -1 || (loadOffset == 0 &&
-				elfSectionToLoad.getType() == ElfSectionHeaderConstants.SHT_NOBITS)) {
+			if (loadOffset == -1 ||
+				elfSectionToLoad.getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
 				if (!elfSectionToLoad.isAlloc() &&
 					elfSectionToLoad.getType() != ElfSectionHeaderConstants.SHT_PROGBITS) {
 					return; // non-allocate at runtime

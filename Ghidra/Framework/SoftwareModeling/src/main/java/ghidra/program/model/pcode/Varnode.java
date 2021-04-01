@@ -255,9 +255,9 @@ public class Varnode {
 	}
 
 	/**
-	 * @return is persistant
+	 * @return is persistent
 	 */
-	public boolean isPersistant() {
+	public boolean isPersistent() {
 		return false;				// Not a valid query with a free varnode
 	}
 
@@ -476,7 +476,7 @@ public class Varnode {
 			}
 			attrstring = el.getAttribute("persists");
 			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setPersistant(vn, true);
+				factory.setPersistent(vn, true);
 			}
 			attrstring = el.getAttribute("addrtied");
 			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {

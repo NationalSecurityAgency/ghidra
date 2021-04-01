@@ -239,14 +239,13 @@ public class GnuDemanglerParser {
 	 * Pattern: text for|to text
 	 *
 	 * Parts:
-	 * 			-required text (capture group 2)
-	 * 			-a space
-	 * 			-'for' or 'to' (capture group 3)
-	 * 			-a space
+	 * 			-required text (capture group 2) -+
+	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
+	 * 			-a space                         -+
 	 * 			-optional text (capture group 4)
-	 *
-	 * Note:    capture group 1 is the combination of groups 2 and 3
-	 *
+	 * 	
+	 * Note:    capture group 1 is the combination of groups 2 and 3 with trailing space
+	 * 
 	 * Examples:
 	 *		construction vtable for
 	 *		vtable for
@@ -258,7 +257,7 @@ public class GnuDemanglerParser {
 	 *		non-virtual thunk to
 	 */
 	private static final Pattern DESCRIPTIVE_PREFIX_PATTERN =
-		Pattern.compile("((.+ )+(for|to) )(.+)");
+		Pattern.compile("((.+ )(for|to) )(.+)");
 
 	/**
 	 * The c 'decltype' keyword pattern
@@ -303,7 +302,7 @@ public class GnuDemanglerParser {
 		// note: this capture group seems to fail with excessive templating
 		String operatorTemplates = "(<.+>){0,1}";
 		String operatorPrefix =
-			".*(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ".*)\\s*";
+			"(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ")\\s*";
 		String parameters = "(\\(.*\\))";
 		String trailing = "(.*)";
 

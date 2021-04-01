@@ -172,6 +172,8 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 
 		functionGraphOptions.loadOptions(options);
 
+		connectedProvider.optionsChanged();
+
 		if (functionGraphOptions.optionChangeRequiresRelayout(optionName)) {
 			connectedProvider.refreshAndKeepPerspective();
 		}

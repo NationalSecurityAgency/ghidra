@@ -124,7 +124,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	// a cache to prevent unnecessary layout calculations
 	private Dimension lastSize;
 
-	private VisualGraphOptions options = new VisualGraphOptions();
+	protected VisualGraphOptions options = new VisualGraphOptions();
 
 	public GraphComponent(G graph) {
 
@@ -208,9 +208,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		renderContext.setVertexFillPaintTransformer(
 			new PickableVertexPaintTransformer<>(pickedVertexState, Color.WHITE, Color.YELLOW));
 
-		viewer.setBackground(Color.WHITE);
-
-		viewer.setGraphOptions(new VisualGraphOptions());
+		viewer.setGraphOptions(options);
 
 		return viewer;
 	}
@@ -296,6 +294,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			VisualGraphLayout<V, E> layout, Dimension viewerSize) {
 
 		SatelliteGraphViewer<V, E> viewer = createSatelliteGraphViewer(masterViewer, viewerSize);
+
+		viewer.setGraphOptions(options);
 
 		viewer.setMinimumSize(viewerSize);
 		viewer.setMaximumSize(viewerSize);
@@ -525,6 +525,15 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	public void setGraphOptions(VisualGraphOptions options) {
 		this.options = options;
+
+		// the viewers may be null if called during initialization
+		if (primaryViewer != null) {
+			primaryViewer.setGraphOptions(options);
+		}
+
+		if (satelliteViewer != null) {
+			satelliteViewer.setGraphOptions(options);
+		}
 	}
 
 	public boolean isUninitialized() {
@@ -560,6 +569,11 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	public JComponent getComponent() {
 		return mainPanel;
+	}
+
+	public void optionsChanged() {
+		primaryViewer.optionsChanged();
+		satelliteViewer.optionsChanged();
 	}
 
 	public void repaint() {

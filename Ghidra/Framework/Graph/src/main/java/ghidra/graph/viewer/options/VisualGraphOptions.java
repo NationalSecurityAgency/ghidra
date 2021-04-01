@@ -15,9 +15,15 @@
  */
 package ghidra.graph.viewer.options;
 
+import java.awt.Color;
+
 import docking.DockingUtils;
 
 public class VisualGraphOptions {
+
+	public static final String GRAPH_BACKGROUND_COLOR_KEY = "Graph Background Color";
+	public static final String GRAPH_BACKGROUND_COLOR_DESCRPTION =
+		"The graph display background color";
 
 	public static final String SHOW_ANIMATION_OPTIONS_KEY = "Use Animation";
 	public static final String SHOW_ANIMATION_DESCRIPTION = "Signals to the Function Graph to " +
@@ -48,6 +54,9 @@ public class VisualGraphOptions {
 		"new graphs and already rendered graphs are zoomed and positioned.  See the help for " +
 		"more details.";
 
+	public static final Color DEFAULT_GRAPH_BACKGROUND_COLOR = Color.WHITE;
+	protected Color graphBackgroundColor = DEFAULT_GRAPH_BACKGROUND_COLOR;
+
 	protected boolean useAnimation = true;
 	protected boolean scrollWheelPans = false;
 
@@ -58,6 +67,10 @@ public class VisualGraphOptions {
 	protected boolean useCondensedLayout = true;
 
 	protected ViewRestoreOption viewRestoreOption = ViewRestoreOption.START_FULLY_ZOOMED_OUT;
+
+	public Color getGraphBackgroundColor() {
+		return graphBackgroundColor;
+	}
 
 	public boolean getScrollWheelPans() {
 		return scrollWheelPans;

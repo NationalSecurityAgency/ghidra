@@ -1,7 +1,8 @@
 /* ###
  * IP: Apache License 2.0
- * 
- *  This is fix for a bug found in the Felix Framework:
+ */
+/***
+ * This is fix for a bug found in the Felix Framework:
  * 
  *   https://issues.apache.org/jira/browse/FELIX-6297
  *
@@ -9,8 +10,8 @@
  *  
  *  THIS FILE SHOULD BE REMOVED WHEN THE ISSUE IS ADDRESSED.
  *  
- */
-/*
+ *** 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -30,23 +31,14 @@
  */
 package org.apache.felix.framework.util;
 
-import org.apache.felix.framework.cache.Content;
-import org.osgi.framework.Version;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.jar.Attributes;
+import java.util.*;
 import java.util.jar.Manifest;
+
+import org.apache.felix.framework.cache.Content;
+import org.osgi.framework.Version;
 
 public class MultiReleaseContent implements Content
 {

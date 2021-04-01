@@ -34,8 +34,8 @@ public class MultiStateActionBuilder<T> extends
 		AbstractActionBuilder<MultiStateDockingAction<T>, ActionContext, MultiStateActionBuilder<T>> {
 
 	private BiConsumer<ActionState<T>, EventTrigger> actionStateChangedCallback;
+	private boolean useCheckboxForIcons;
 	private boolean performActionOnButtonClick = false;
-	private boolean fireFirstAction = true;
 
 	private List<ActionState<T>> states = new ArrayList<>();
 
@@ -81,6 +81,20 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
+	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
+	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
+	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a 
+	 * checkbox icon will be used to show the active action state.
+	 * 
+	 * @param b true to use a checkbox
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> useCheckboxForIcons(boolean b) {
+		this.useCheckboxForIcons = b;
+		return self();
+	}
+
+	/**
 	 * Add an action state 
 	 * 
 	 * @param displayName the name to appear in the action menu
@@ -115,17 +129,6 @@ public class MultiStateActionBuilder<T> extends
 		return self();
 	}
 
-	/**
-	 * controls whether the first action added will automatically fire an event or not
-	 *
-	 * @param fireFirstAction do fire an action on the first action. Defaults to {@code true}
-	 * @return this MultiActionDockingActionBuilder (for chaining)
-	 */
-	public MultiStateActionBuilder<T> fireFirstAction(boolean fireFirstAction) {
-		this.fireFirstAction = fireFirstAction;
-		return self();
-	}
-
 	@Override
 	public MultiStateDockingAction<T> build() {
 		validate();
@@ -145,7 +148,6 @@ public class MultiStateActionBuilder<T> extends
 					}
 				}
 			};
-		action.setFireFirstEvent(fireFirstAction);
 
 		for (ActionState<T> actionState : states) {
 			action.addActionState(actionState);
@@ -153,6 +155,7 @@ public class MultiStateActionBuilder<T> extends
 
 		decorateAction(action);
 		action.setPerformActionOnPrimaryButtonClick(performActionOnButtonClick);
+		action.setUseCheckboxForIcons(useCheckboxForIcons);
 		return action;
 	}
 

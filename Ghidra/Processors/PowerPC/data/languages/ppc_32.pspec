@@ -81,8 +81,8 @@
 	<register name="spr037" group="SPR_UNNAMED"/>
   	<register name="spr038" group="SPR_UNNAMED"/>
   	<register name="spr039" group="SPR_UNNAMED"/>
-	<register name="spr03a" rename="CSRR0" group="SPR"/>
-	<register name="spr03b" rename="CSRR1" group="SPR"/>
+  	<register name="CSRR0" group="SPR"/>
+	<register name="CSRR1" group="SPR"/>
 	<register name="spr03c" group="SPR_UNNAMED"/>
   	<register name="spr03d" group="SPR_UNNAMED"/>
   	<register name="spr03e" group="SPR_UNNAMED"/>

@@ -1735,11 +1735,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			}
 
 			Component bestCenter = getJavaActiveWindow();
-			Window bestParent = getParentWindow(bestCenter);
-
-			if (!provider.isModal()) {
-				bestParent = getBestNonModalParent(provider, bestParent);
-			}
+			Window bestParent = getBestParent(provider, bestCenter);
 
 			//
 			// Note: prefer the active window; allow user's choice of center component when it is
@@ -1762,11 +1758,27 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 	}
 
+	private static Window getBestParent(DialogComponentProvider provider, Component component) {
+		Window bestParent = getParentWindow(component);
+		if (!provider.isModal()) {
+			bestParent = getBestNonModalParent(provider, bestParent);
+		}
+
+		if (bestParent == null) {
+			bestParent = getJavaActiveWindow();
+		}
+
+		if (bestParent != null && !bestParent.isShowing()) {
+			bestParent = null; // don't let non-showing windows be parents
+		}
+
+		return bestParent;
+	}
+
 	private static Window getBestNonModalParent(DialogComponentProvider newProvider,
 			Window bestParent) {
 
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Window activeWindow = kfm.getActiveWindow();
+		Window activeWindow = getJavaActiveWindow();
 		if (!(activeWindow instanceof DockingDialog)) {
 			return bestParent;
 		}
@@ -1927,13 +1939,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private static Window getJavaActiveWindow() {
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		return kfm.getActiveWindow();
+		Window activeWindow = kfm.getActiveWindow();
+		if (activeWindow == null) {
+			return null;
+		}
+		if (!activeWindow.isShowing()) {
+			return null; // don't let non-showing windows be considered active
+		}
+		return activeWindow;
 	}
 
 	private static Window getActiveNonTransientWindow() {
 
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Window bestWindow = kfm.getActiveWindow();
+		Window bestWindow = getJavaActiveWindow();
 		if (bestWindow instanceof DockingDialog) {
 			// We do not want Task Dialogs becoming parents, as they will get closed when the
 			// task is finished, closing any other child dialogs, which means that dialogs such
@@ -2160,6 +2178,34 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	public static void clearMouseOverHelp() {
 		actionUnderMouse = null;
 		objectUnderMouse = null;
+	}
+
+	/**
+	 * Shows a popup menu over the given component.  If this given component is not part of the
+	 * docking windows hierarchy, then no action is taken.
+	 * 
+	 * @param component the component 
+	 */
+	public static void showContextMenu(Component component) {
+
+		DockingWindowManager dwm = getInstance(component);
+		if (dwm == null) {
+			return;
+		}
+
+		DockableComponent dockableComponent = dwm.getDockableComponent(component);
+		if (dockableComponent == null) {
+			return;
+		}
+
+		Rectangle bounds = dockableComponent.getBounds();
+
+		bounds.x = 0;
+		bounds.y = 0;
+		int x = (int) bounds.getCenterX();
+		int y = (int) bounds.getCenterY();
+		PopupMenuContext popupContext = new PopupMenuContext(dockableComponent, new Point(x, y));
+		dockableComponent.showContextMenu(popupContext);
 	}
 
 	public void contextChanged(ComponentProvider provider) {

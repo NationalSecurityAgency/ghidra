@@ -76,6 +76,11 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 	}
 
 	@Override
+	protected boolean isConstructor() {
+		return ((AbstractMemberFunctionMsType) msType).isConstructor();
+	}
+
+	@Override
 	void apply() throws PdbException, CancelledException {
 		predefineClasses();
 		applyFunction(getCallingConvention(), hasThisPointer());
@@ -175,8 +180,7 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 //	}
 
 	private MsTypeApplier getThisPointerApplier(AbstractMemberFunctionMsType procType) {
-		MsTypeApplier applier =
-			applicator.getTypeApplier(procType.getThisPointerRecordNumber());
+		MsTypeApplier applier = applicator.getTypeApplier(procType.getThisPointerRecordNumber());
 
 //		if ((applier instanceof PrimitiveTypeApplier &&
 //		((PrimitiveTypeApplier) applier).isNoType())) {

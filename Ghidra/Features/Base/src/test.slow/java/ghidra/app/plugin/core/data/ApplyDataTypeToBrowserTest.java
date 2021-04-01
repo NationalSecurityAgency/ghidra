@@ -167,7 +167,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testChooseDataTypeOnDefinedDts() throws Exception {
 
-		// 
+		//
 		// Test that apply data on an existing type will offer to clear that type
 		//
 
@@ -205,8 +205,6 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testChooseDataTypeWhereDoesNotFit() throws Exception {
 		goTo("004027e0");
-
-		showDataTypeChooser();
 
 		showDataTypeChooser();
 		chooseInDialog("_person");
@@ -790,8 +788,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(expectedText, statusText);
 	}
 
-	private void dragNDropDataTypeToCurrentBrowserLocation(
-			final DataType dataType) {
+	private void dragNDropDataTypeToCurrentBrowserLocation(final DataType dataType) {
 		executeOnSwingWithoutBlocking(() -> {
 			// Simulate the drag-n-drop of the data type onto the location.
 			ProgramLocation programLocation = codeViewerProvider.getLocation();

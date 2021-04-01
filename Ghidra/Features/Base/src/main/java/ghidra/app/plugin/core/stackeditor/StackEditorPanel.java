@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,16 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
-import ghidra.app.plugin.core.compositeeditor.CompositeEditorPanel;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.DatabaseObject;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.util.exception.UsrException;
-
 import java.awt.event.*;
 
 import javax.swing.*;
 
 import docking.widgets.OptionDialog;
+import ghidra.app.plugin.core.compositeeditor.CompositeEditorPanel;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
+import ghidra.util.exception.UsrException;
 
 /**
  * Panel for editing a function stack.
@@ -274,14 +271,12 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		if (originalDt instanceof StackFrameDataType) {
 			StackFrameDataType sfdt = (StackFrameDataType) originalDt;
 			Function function = sfdt.getFunction();
-			if (function instanceof DatabaseObject) {
-				if (!((DatabaseObject) function).checkIsValid()) {
-					// Cancel Editor.
-					provider.dispose();
-					PluginTool tool = ((StackEditorProvider) provider).getPlugin().getTool();
-					tool.setStatusInfo("Stack Editor was closed for " + provider.getName());
-					return;
-				}
+			if (function.isDeleted()) {
+				// Cancel Editor.
+				provider.dispose();
+				PluginTool tool = ((StackEditorProvider) provider).getPlugin().getTool();
+				tool.setStatusInfo("Stack Editor was closed for " + provider.getName());
+				return;
 			}
 			StackFrame stack = function.getStackFrame();
 			StackFrameDataType newSfdt = new StackFrameDataType(stack, dtm);
@@ -329,13 +324,10 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		super.dispose();
 	}
 
-	/**
-	 * @param localSizeField
-	 */
 	private void removeFocusListeners(JTextField textField) {
 		FocusListener[] fl = textField.getFocusListeners();
-		for (int i = 0; i < fl.length; i++) {
-			textField.removeFocusListener(fl[i]);
+		for (FocusListener element : fl) {
+			textField.removeFocusListener(element);
 		}
 	}
 

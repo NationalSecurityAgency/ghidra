@@ -92,9 +92,9 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param includeTextField if true, the dialog can display a status progressMessage with progress details
-	 * @param includeCancelButton if true, a cancel button will be displayed 
+	 * @param includeCancelButton if true, a cancel button will be displayed
 	 */
 	public TaskMonitorComponent(boolean includeTextField, boolean includeCancelButton) {
 		updateProgressPanelRunnable = () -> updateProgressPanel();
@@ -106,7 +106,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		shouldCancelRunnable = () -> {
 			int currentTaskID = taskID.get();
 
-			boolean userSaysYes = OptionDialog.showYesNoDialog(TaskMonitorComponent.this, "Cancel?",
+			boolean userSaysYes = OptionDialog.showYesNoDialog(null, "Cancel?",
 				"Do you really want to cancel " + getTaskName() + "?") == OptionDialog.OPTION_ONE;
 
 			if (userSaysYes && currentTaskID == taskID.get()) {
@@ -206,7 +206,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		//       a chance to do so.  In other words, the background thread will end up
 		//       blocking instead of working, which defeats our attempts to never show
 		//       a task dialog for fast background tasks.
-		//		
+		//
 		isIndeterminate.set(indeterminate);
 		Swing.runIfSwingOrRunLater(() -> {
 			boolean newValue = isIndeterminate.get();
@@ -269,7 +269,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	/**
 	 * Returns true if {@link #setIndeterminate(boolean)} with a value of <code>true</code> has
 	 * been called.
-	 * 
+	 *
 	 * @return true if {@link #setIndeterminate(boolean)} with a value of <code>true</code> has
 	 * been called.
 	 */
@@ -280,7 +280,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	/**
 	 * Set whether the progress bar should be visible
-	 * 
+	 *
 	 * @param show true if the progress bar should be visible
 	 */
 	public synchronized void showProgress(boolean show) {
@@ -293,7 +293,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	/**
 	 * Set the name of the task; the name shows up in the tool tip for
 	 * the cancel button.
-	 * 
+	 *
 	 * @param name the name of the task
 	 */
 	public void setTaskName(String name) {
@@ -303,7 +303,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	/**
 	 * Set the visibility of the cancel button
-	 * 
+	 *
 	 * @param visible if true, show the cancel button; false otherwise
 	 */
 	public void setCancelButtonVisibility(boolean visible) {
@@ -325,7 +325,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 
 	/**
 	 * Sets the visibility of the progress icon
-	 * 
+	 *
 	 * @param visible if true, display the progress icon
 	 */
 	public void showProgressIcon(boolean visible) {

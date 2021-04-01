@@ -129,23 +129,33 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 }
 
 :se_rfmci						is $(ISVLE) & OP16_VLE=11 {
-	returnFromCriticalInterrupt();
+	MSR = returnFromMachineCheckInterrupt(MSR, spr23b); #MCSRR1
+	local ra = spr23a; #MCSRR0
+	return[ra];
 }
 
 :se_rfci						is $(ISVLE) & OP16_VLE=9 {
-	returnFromCriticalInterrupt();
+	MSR = returnFromCriticalInterrupt(MSR, CSRR1);
+	local ra = CSRR0;
+	return[ra];
 }
 
 :se_rfi							is $(ISVLE) & OP16_VLE=8 {
-	returnFromInterrupt();
+	MSR = returnFromInterrupt(MSR, SRR1);
+	local ra = SRR0;
+	return[ra];
 }
 
 :se_rfdi						is $(ISVLE) & OP16_VLE=10 {
-	returnFromInterrupt();
+	MSR = returnFromDebugInterrupt(MSR, spr23f); #DSRR1
+	local ra = spr23e; #DSRR0
+	return[ra];
 }
 
 :se_rfgi						is $(ISVLE) & OP16_VLE=12 {
-	returnFromInterrupt();
+	MSR = returnFromGuestInterrupt(MSR, spr17b); #GSRR1
+	local ra = spr17a; #GSRR0
+	return[ra];
 }
 
 :e_crand CC_D_OP,CC_OP,CC_B_OP	is $(ISVLE) & OP=31 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=257 & BIT_0=0
@@ -213,16 +223,16 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_ldmvcsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=5
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadReg(spr03a);
-	loadReg(spr03b);
+	loadReg(CSRR0);
+	loadReg(CSRR1);
 }
 
 # e_ldmvdsrrw 6 (0b0001_10) 0b00110 RA 0b0001_0000 D8
 :e_ldmvdsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x10 & BITS_21_25=6
 {
 	tea = d8PlusRaOrZeroAddress;
-	loadReg(spr23e);
-	loadReg(spr23f);
+	loadReg(spr23e); #DSRR0
+	loadReg(spr23f); #DSRR1
 }
 
 # e_ldmvgprw 6 (0b0001_10) 0b00000 RA 0b0001_0000 D8
@@ -348,16 +358,16 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :e_stmvcsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=5
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeReg(spr03a);
-	storeReg(spr03b);
+	storeReg(CSRR0);
+	storeReg(CSRR1);
 }
 
 # e_stmvdsrrw 6 (0b0001_10) 0b00110 RA 0b0001_0001 D8
 :e_stmvdsrrw d8PlusRaOrZeroAddress is $(ISVLE) & OP=6 & d8PlusRaOrZeroAddress & XOP_8_VLE=0x11 & BITS_21_25=6
 {
 	tea = d8PlusRaOrZeroAddress;
-	storeReg(spr23e);
-	storeReg(spr23f);
+	storeReg(spr23e); #DSRR0
+	storeReg(spr23f); #DSRR1
 }
 
 # e_stmvgprw 6 (0b0001_10) 0b00000 RA 0b0001_0001 D8

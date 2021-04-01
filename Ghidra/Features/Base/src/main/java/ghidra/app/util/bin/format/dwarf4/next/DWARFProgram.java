@@ -54,12 +54,8 @@ public class DWARFProgram implements Closeable {
 	private static final int NAME_HASH_REPLACEMENT_SIZE = 8 + 2 + 2;
 	private static final String ELLIPSES_STR = "...";
 
-	public static boolean alreadyDWARFImported(Program prog) {
-		return DWARFFunctionImporter.hasDWARFProgModule(prog, DWARF_ROOT_NAME);
-	}
-
 	/**
-	 * Returns true if the {@link Program program} probably DWARF information.
+	 * Returns true if the {@link Program program} probably has DWARF information.
 	 * <p>
 	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr" program sections.
 	 * <p>
@@ -67,17 +63,17 @@ public class DWARFProgram implements Closeable {
 	 * original binary file on the native filesystem.  (ie. outside of Ghidra).  See the DSymSectionProvider
 	 * for more info.
 	 * <p>
-	 * @param program
-	 * @param monitor
-	 * @return
+	 * @param program {@link Program} to test
+	 * @return boolean true if program has DWARF info, false if not
 	 */
-	public static boolean isDWARF(Program program, TaskMonitor monitor) {
+	public static boolean isDWARF(Program program) {
 		String format = program.getExecutableFormat();
 
-		if (ElfLoader.ELF_NAME.equals(format)) {
+		if (ElfLoader.ELF_NAME.equals(format) &&
+			DWARFSectionProviderFactory.createSectionProviderFor(program) != null) {
 			return true;
 		}
-		else if (MachoLoader.MACH_O_NAME.equals(format) &&
+		if (MachoLoader.MACH_O_NAME.equals(format) &&
 			DSymSectionProvider.getDSYMForProgram(program) != null) {
 			return true;
 		}

@@ -88,7 +88,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		gPickedState = new GPickedState<>((MultiPickedState<V>) pickedState);
 		setPickedVertexState(gPickedState);
 
-		popupRegulator = new PopupRegulator<V, E>(new GraphViewerPopupSource());
+		popupRegulator = new PopupRegulator<>(new GraphViewerPopupSource());
 	}
 
 	private void buildUpdater() {
@@ -158,6 +158,11 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 
 	public void setGraphOptions(VisualGraphOptions options) {
 		this.options = options;
+		optionsChanged();
+	}
+
+	public void optionsChanged() {
+		setBackground(options.getGraphBackgroundColor());
 	}
 
 	public VisualGraphOptions getOptions() {

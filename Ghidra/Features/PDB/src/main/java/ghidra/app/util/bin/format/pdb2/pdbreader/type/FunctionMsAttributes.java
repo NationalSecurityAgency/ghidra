@@ -58,4 +58,8 @@ public class FunctionMsAttributes extends AbstractParsableItem {
 		isInstanceConstructorOfClassWithVirtualBases = ((attributes & 0x0001) == 0x0001);
 	}
 
+	boolean isConstructor() {
+		return isInstanceConstructor || isInstanceConstructorOfClassWithVirtualBases;
+	}
+
 }

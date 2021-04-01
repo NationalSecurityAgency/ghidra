@@ -2732,10 +2732,10 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :INC  Rmr32        is vexMode=0 & opsize=1 & row = 4 & page = 0 & Rmr32 { OF = scarry(Rmr32,1);   Rmr32 =  Rmr32 + 1; resultflags( Rmr32); }
 @endif
 
-:INSB^rep^reptail eseDI1,DX is vexMode=0 & rep & reptail & byte=0x6c & eseDI1 & DX      { eseDI1 = in(DX); }
-:INSW^rep^reptail eseDI2,DX is vexMode=0 & rep & reptail & opsize=0 & byte=0x6d & eseDI2 & DX   { eseDI2 = in(DX); }
-:INSD^rep^reptail eseDI4,DX is vexMode=0 & rep & reptail & opsize=1 & byte=0x6d & eseDI4 & DX   { eseDI4 = in(DX); }
-:INSD^rep^reptail eseDI4,DX is vexMode=0 & rep & reptail & opsize=2 & byte=0x6d & eseDI4 & DX   { eseDI4 = in(DX); }
+:INSB^rep^reptail eseDI1,DX is vexMode=0 & rep & reptail & byte=0x6c & eseDI1 & DX      { build rep; build eseDI1; eseDI1 = in(DX); build reptail; }
+:INSW^rep^reptail eseDI2,DX is vexMode=0 & rep & reptail & opsize=0 & byte=0x6d & eseDI2 & DX   { build rep; build eseDI2; eseDI2 = in(DX); build reptail; }
+:INSD^rep^reptail eseDI4,DX is vexMode=0 & rep & reptail & opsize=1 & byte=0x6d & eseDI4 & DX   { build rep; build eseDI4; eseDI4 = in(DX); build reptail; }
+:INSD^rep^reptail eseDI4,DX is vexMode=0 & rep & reptail & opsize=2 & byte=0x6d & eseDI4 & DX   { build rep; build eseDI4; eseDI4 = in(DX); build reptail; }
 
 :INT1           is vexMode=0 & byte=0xf1                            { tmp:1 = 0x1; intloc:$(SIZE) = swi(tmp); call [intloc]; return [0:1]; }
 :INT3           is vexMode=0 & byte=0xcc                            { tmp:1 = 0x3; intloc:$(SIZE) = swi(tmp); call [intloc]; return [0:1]; }
@@ -3208,9 +3208,9 @@ define pcodeop swap_bytes;
 :OUT DX,AX          is vexMode=0 & opsize=0 & byte=0xef & DX & AX       { out(DX,AX); }
 :OUT DX,EAX         is vexMode=0 &            byte=0xef & DX & EAX      { out(DX,EAX); }
 
-:OUTSB^rep^reptail DX,dseSI1    is vexMode=0 & rep & reptail & byte=0x6e & DX & dseSI1      { out(dseSI1,DX); }
-:OUTSW^rep^reptail DX,dseSI2    is vexMode=0 & rep & reptail & opsize=0 & byte=0x6f & DX & dseSI2   { out(dseSI2,DX); }
-:OUTSD^rep^reptail DX,dseSI4    is vexMode=0 & rep & reptail &            byte=0x6f & DX & dseSI4   { out(dseSI4,DX); }
+:OUTSB^rep^reptail DX,dseSI1    is vexMode=0 & rep & reptail & byte=0x6e & DX & dseSI1      { build rep; build dseSI1; out(dseSI1,DX); build reptail;}
+:OUTSW^rep^reptail DX,dseSI2    is vexMode=0 & rep & reptail & opsize=0 & byte=0x6f & DX & dseSI2   { build rep; build dseSI2; out(dseSI2,DX); build reptail;}
+:OUTSD^rep^reptail DX,dseSI4    is vexMode=0 & rep & reptail &            byte=0x6f & DX & dseSI4   { build rep; build dseSI4; out(dseSI4,DX); build reptail;}
 
 :PAUSE          is vexMode=0 & opsize=0 & $(PRE_F3) & byte=0x90     {  }
 :PAUSE          is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x90     {  }
@@ -5712,10 +5712,10 @@ define pcodeop movmskps;
 
 :MOVUPS       XmmReg2, XmmReg1 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x11; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,32] = XmmReg2[0,32];
-    XmmReg1[32,32] = XmmReg2[32,32];
-    XmmReg1[64,32] = XmmReg2[64,32];
-    XmmReg1[96,32] = XmmReg2[96,32];
+    XmmReg2[0,32] = XmmReg1[0,32];
+    XmmReg2[32,32] = XmmReg1[32,32];
+    XmmReg2[64,32] = XmmReg1[64,32];
+    XmmReg2[96,32] = XmmReg1[96,32];
 }
 
 :MULPD        XmmReg, m128     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x59; m128 & XmmReg ...
@@ -6585,10 +6585,18 @@ define pcodeop pcmpeqb;
     Reg32 = zext(temp:2);
 }
 
-:PEXTRW        Reg32_m16, XmmReg1, imm8 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x15; XmmReg1 ... & Reg32_m16; imm8
+#break PEXTRW with reg/mem dest into two constructors to handle zext in register case
+:PEXTRW        Rmr32, XmmReg1, imm8 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x15; (mod = 3 & Rmr32 & check_Rmr32_dest) & XmmReg1 ; imm8
 {
     temp:16 = XmmReg1 >> ( (imm8 & 0x07) * 16 );
-    Reg32_m16 = zext(temp:2);
+    Rmr32 = zext(temp:2);
+    build check_Rmr32_dest;
+}
+
+:PEXTRW        m16, XmmReg1, imm8 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x15; XmmReg1 ... & m16; imm8
+{
+    temp:16 = XmmReg1 >> ( (imm8 & 0x07) * 16 );
+    m16 = temp:2;
 }
 
 define pcodeop phaddd;
@@ -6807,16 +6815,19 @@ Order3: order3	is imm8 [ order3 = (((imm8 >> 6) & 0x3) << 5); ] { export *[const
 
 :PSHUFD         XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; xmmmod=3 & XmmReg1 & XmmReg2 ; imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = XmmReg2 >> Order0;   
+    #in case XmmReg1 and XmmReg2 are the same register
+    local original_XmmReg2:16 = XmmReg2;
+    
+    shifted:16 = original_XmmReg2 >> Order0;   
     XmmReg1[0,32] = shifted:4;
     
-    shifted = XmmReg2 >> Order1;   
+    shifted = original_XmmReg2 >> Order1;   
     XmmReg1[32,32] = shifted:4;
 
-    shifted = XmmReg2 >> Order2;   
+    shifted = original_XmmReg2 >> Order2;   
     XmmReg1[64,32] = shifted:4;
 
-    shifted = XmmReg2 >> Order3;   
+    shifted = original_XmmReg2 >> Order3;   
     XmmReg1[96,32] = shifted:4;
 }
 
@@ -7054,14 +7065,17 @@ define pcodeop psraw;
 
 :PSRLW          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD1; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,16]   = XmmReg1[0,16]   >> XmmReg2[0,64];
-    XmmReg1[16,16]  = XmmReg1[16,16]  >> XmmReg2[0,64];
-    XmmReg1[32,16]  = XmmReg1[32,16]  >> XmmReg2[0,64];
-    XmmReg1[48,16]  = XmmReg1[48,16]  >> XmmReg2[0,64];
-    XmmReg1[64,16]  = XmmReg1[64,16]  >> XmmReg2[0,64];
-    XmmReg1[80,16]  = XmmReg1[80,16]  >> XmmReg2[0,64];
-    XmmReg1[96,16]  = XmmReg1[96,16]  >> XmmReg2[0,64];
-    XmmReg1[112,16] = XmmReg1[112,16] >> XmmReg2[0,64];
+    #save this off in case XmmReg1 and XmmReg2 are the same register
+    local count:8 = XmmReg2[0,64];
+    
+    XmmReg1[0,16]   = XmmReg1[0,16]   >> count;
+    XmmReg1[16,16]  = XmmReg1[16,16]  >> count;
+    XmmReg1[32,16]  = XmmReg1[32,16]  >> count;
+    XmmReg1[48,16]  = XmmReg1[48,16]  >> count;
+    XmmReg1[64,16]  = XmmReg1[64,16]  >> count;
+    XmmReg1[80,16]  = XmmReg1[80,16]  >> count;
+    XmmReg1[96,16]  = XmmReg1[96,16]  >> count;
+    XmmReg1[112,16] = XmmReg1[112,16] >> count;
 }
 
 :PSRLW          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x71; mod = 0b11 & reg_opcode=2 & XmmReg2; imm8
@@ -7086,10 +7100,13 @@ define pcodeop psraw;
 
 :PSRLD          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD2; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,32]  = XmmReg1[0,32]  >> XmmReg2[0,64];
-    XmmReg1[32,32] = XmmReg1[32,32] >> XmmReg2[0,64];
-    XmmReg1[64,32] = XmmReg1[64,32] >> XmmReg2[0,64];
-    XmmReg1[96,32] = XmmReg1[96,32] >> XmmReg2[0,64];
+    #save this off in case XmmReg1 and XmmReg2 are the same register
+    local count = XmmReg2[0,64];
+    
+    XmmReg1[0,32]  = XmmReg1[0,32]  >> count;
+    XmmReg1[32,32] = XmmReg1[32,32] >> count;
+    XmmReg1[64,32] = XmmReg1[64,32] >> count;
+    XmmReg1[96,32] = XmmReg1[96,32] >> count;
 }
 
 :PSRLD          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x72; mod = 0b11 & reg_opcode=2 & XmmReg2; imm8
@@ -7108,8 +7125,11 @@ define pcodeop psraw;
 
 :PSRLQ          XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xD3; xmmmod = 3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,64]  = XmmReg1[0,64]  >> XmmReg2[0,64];
-    XmmReg1[64,64] = XmmReg1[64,64] >> XmmReg2[0,64];
+    #save this off in case XmmReg1 and XmmReg2 are the same register
+    local count = XmmReg2[0,64];
+    
+    XmmReg1[0,64]  = XmmReg1[0,64]  >> count;
+    XmmReg1[64,64] = XmmReg1[64,64] >> count;
 }
 
 :PSRLQ          XmmReg2, imm8     is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x73; mod = 0b11 & reg_opcode=2 & XmmReg2; imm8

@@ -290,7 +290,7 @@ class ProgramTextWriter {
 
 			if (options.isShowComments()) {
 				DisplayableEol displayableEol = new DisplayableEol(currentCodeUnit, false, false,
-					false, true, 6 /* arbitrary! */, true);
+					false, true, 6 /* arbitrary! */, true, true);
 				String[] eol = displayableEol.getComments();
 				if (eol != null && eol.length > 0) {
 					len = options.getAddrWidth() + options.getBytesWidth() +
@@ -618,8 +618,10 @@ class ProgramTextWriter {
 
 					if (options.isHTML()) {
 						Reference ref =
-							cu.getProgram().getReferenceManager().getPrimaryReferenceFrom(cuAddress,
-								i);
+							cu.getProgram()
+									.getReferenceManager()
+									.getPrimaryReferenceFrom(cuAddress,
+										i);
 						addReferenceLinkedText(ref, opReps[i], true);
 					}
 					else {

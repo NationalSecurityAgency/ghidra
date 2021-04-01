@@ -12,8 +12,6 @@ define pcodeop memoryBarrier;
 define pcodeop moveFromAPIDIndirect;
 define pcodeop moveFromPerformanceMonitorRegister;
 define pcodeop moveToPerformanceMonitorRegister;
-define pcodeop returnFromDebugInterrupt;
-define pcodeop returnFromMachineCheckInterrupt;
 define pcodeop invalidateTLB;
 
 #dcblc 0,0,r0		#FIXME
@@ -102,15 +100,17 @@ pmrn: pmr       is BITS_16_20 & BITS_11_15 [ pmr = BITS_11_15 << 5 | BITS_16_20;
 #rfdi           #FIXME
 :rfdi           is $(NOTVLE) & OP=19 & XOP_1_10=39
 { 
-	returnFromDebugInterrupt();
-	return[SRR0]; 
+	MSR = returnFromDebugInterrupt(MSR, spr23f); #DSRR1
+	local ra = spr23e; #DSRR0
+	return[ra];
 }
 
 #rfmci          #FIXME
 :rfmci          is $(NOTVLE) & OP=19 & XOP_0_10=76
 { 
-	returnFromMachineCheckInterrupt();
-	return[SRR0]; 
+	MSR = returnFromMachineCheckInterrupt(MSR, spr23b); #MCSRR1
+	local ra = spr23a; #MCSRR0
+	return[ra];
 }
 
 

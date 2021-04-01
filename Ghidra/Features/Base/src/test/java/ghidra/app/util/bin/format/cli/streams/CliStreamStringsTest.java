@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.pe.cli.streams;
+package ghidra.app.util.bin.format.cli.streams;
 
 import static org.junit.Assert.*;
 
@@ -26,6 +26,7 @@ import generic.test.AbstractGTest;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.format.pe.cli.CliStreamHeader;
+import ghidra.app.util.bin.format.pe.cli.streams.CliStreamStrings;
 import ghidra.util.LittleEndianDataConverter;
 
 public class CliStreamStringsTest extends AbstractGTest {

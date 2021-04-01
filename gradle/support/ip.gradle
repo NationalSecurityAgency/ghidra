@@ -1,4 +1,18 @@
-
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /*********************************************************************************
  * ip.gradle
  *
@@ -152,12 +166,13 @@ def addToMap(Map<String, List<String>> map, String ip, String path) {
 /*********************************************************************************
  * checks if a file supports a C style header based on its extension.
  *********************************************************************************/
-def isSourceFile(File file) {
+def isCSourceFile(File file) {
 
 	String filename = file.getName().toLowerCase();
 
 	return filename.endsWith(".java") ||
 		   filename.endsWith(".c") ||
+		   filename.endsWith(".gradle") ||
 		   filename.endsWith(".groovy") ||
 		   filename.endsWith(".cpp") ||
 		   filename.endsWith(".cc") ||
@@ -170,26 +185,49 @@ def isSourceFile(File file) {
 		   filename.endsWith(".proto");
 }
 
+/*********************************************************************************
+ * checks if a file supports a Bash style header based on its extension.
+ *********************************************************************************/
+def isBashSourceFile(File file) {
+
+	String filename = file.getName().toLowerCase();
+	
+	// NOTE: bash/shell scripts without extension will not utilize a header
+	return filename.endsWith(".py") ||
+			filename.endsWith(".sh") ||
+			filename.endsWith(".bash") ||
+			filename.endsWith(".command");
+}
+
 
 /*********************************************************************************
- * Gets the ip for a file in the module from its header (or certification.manifest
+ * Gets the ip for a file in the module from its header (or certification.manifest)
  *********************************************************************************/
 def getIp(File projectDir, File file) {
-	if (isSourceFile(file)) {
-		return getIpForSourceFile(file);
+	String ip = null;
+	if (isCSourceFile(file)) {
+		ip = getIpForSourceFile(file, " * IP:");
 	}
-	return getIpForNonSourceFile(projectDir, file);
+	else if (isBashSourceFile(file)) {
+		ip = getIpForSourceFile(file, "#  IP:");
+	}
+	if (ip == null) {
+		ip = getIpForNonSourceFile(projectDir, file);
+	}
+	return ip;
 }
 
 /*********************************************************************************
  * Gets the ip from a file that has a certification header 
  *********************************************************************************/
-def getIpForSourceFile(File file) {
+def getIpForSourceFile(File file, String prefix) {
+	// IP marking occurs within first 4-lines of file
 	String ip =null
 	String line;
+	int lineNum = 0;
 	file.withReader { reader ->
-		while((line = reader.readLine()) != null) {
-			if (line.startsWith(" * IP:")) {
+		while(++lineNum < 5 && (line = reader.readLine()) != null) {
+			if (line.startsWith(prefix)) {
 				ip = line.substring(7).trim();
 				break;
 			}		

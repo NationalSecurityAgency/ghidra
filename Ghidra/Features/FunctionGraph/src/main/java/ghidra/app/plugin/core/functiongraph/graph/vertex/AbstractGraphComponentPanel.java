@@ -140,9 +140,6 @@ public abstract class AbstractGraphComponentPanel extends JPanel {
 		}
 
 		Component header = getHeader();
-		if (clickedComponent == null) {
-			return false;
-		}
 		return SwingUtilities.isDescendingFrom(clickedComponent, header);
 	}
 

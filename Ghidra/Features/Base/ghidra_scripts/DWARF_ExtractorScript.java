@@ -63,7 +63,7 @@ public class DWARF_ExtractorScript extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		if (!DWARFProgram.isDWARF(currentProgram, monitor)) {
+		if (!DWARFProgram.isDWARF(currentProgram)) {
 			popup("Unable to find DWARF information, aborting");
 			return;
 		}

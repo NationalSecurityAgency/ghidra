@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -882,6 +883,30 @@ public class DIEAggregate {
 			}
 		}
 		throw new IOException("Bad/unsupported DW_AT_high_pc attribute value or type");
+	}
+
+	/**
+	 * Returns true if the raw lowPc and highPc values are the same.
+	 * <p>
+	 * This indicates an empty range, in which case the caller may want to take
+	 * special steps to avoid issues with Ghidra ranges.
+	 * <p>
+	 * Only seen in extremely old gcc versions.  Typically the low & high
+	 * pc values are omitted if the CU is empty.
+	 * 
+	 * @return boolean true if the LowPC and HighPC values are present and equal
+	 */
+	public boolean isLowPCEqualHighPC() {
+		AttrInfo low = findAttribute(DWARFAttribute.DW_AT_low_pc);
+		AttrInfo high = findAttribute(DWARFAttribute.DW_AT_high_pc);
+		if (low != null && high != null && low.form == high.form &&
+			low.attr instanceof DWARFNumericAttribute &&
+			high.attr instanceof DWARFNumericAttribute) {
+			DWARFNumericAttribute lowVal = (DWARFNumericAttribute) low.attr;
+			DWARFNumericAttribute highVal = (DWARFNumericAttribute) high.attr;
+			return lowVal.getValue() == highVal.getValue();
+		}
+		return false;
 	}
 
 	/**

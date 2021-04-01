@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +33,11 @@ public class ReservedKeyBindings {
 	public static final KeyStroke HELP_INFO_KEY =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F1, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
+	public static final KeyStroke CONTEXT_MENU_KEY1 =
+		KeyStroke.getKeyStroke(KeyEvent.VK_F10, InputEvent.SHIFT_DOWN_MASK);
+	public static final KeyStroke CONTEXT_MENU_KEY2 =
+		KeyStroke.getKeyStroke(KeyEvent.VK_CONTEXT_MENU, 0);
+
 	public static final KeyStroke FOCUS_INFO_KEY =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F2, DockingUtils.CONTROL_KEY_MODIFIER_MASK |
 			InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
@@ -50,7 +54,8 @@ public class ReservedKeyBindings {
 			code == KeyEvent.VK_CAPS_LOCK || code == KeyEvent.VK_TAB ||
 			HELP_KEY1.equals(keyStroke) || HELP_KEY2.equals(keyStroke) ||
 			HELP_INFO_KEY.equals(keyStroke) || UPDATE_KEY_BINDINGS_KEY.equals(keyStroke) ||
-			FOCUS_INFO_KEY.equals(keyStroke) || FOCUS_CYCLE_INFO_KEY.equals(keyStroke)) {
+			FOCUS_INFO_KEY.equals(keyStroke) || FOCUS_CYCLE_INFO_KEY.equals(keyStroke) ||
+			CONTEXT_MENU_KEY1.equals(keyStroke) || CONTEXT_MENU_KEY2.equals(keyStroke)) {
 			return true;
 		}
 

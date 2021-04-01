@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -38,7 +39,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.*;
@@ -47,13 +48,13 @@ import ghidra.util.task.TaskMonitor;
 import utility.function.Callback;
 
 /**
- * Dialog to show a table of items.  If the dialog is constructed with a non-null 
+ * Dialog to show a table of items.  If the dialog is constructed with a non-null
  * {@link TableChooserExecutor}, then a button will be placed in the dialog, allowing the user
  * to perform the action defined by the executor.
- * 
- * <p>Each button press will use the selected items as the items to be processed.  While the 
- * items are scheduled to be processed, they will still be in the table, painted light gray.  
- * Attempting to reschedule any of these pending items will have no effect.   Each time the 
+ *
+ * <p>Each button press will use the selected items as the items to be processed.  While the
+ * items are scheduled to be processed, they will still be in the table, painted light gray.
+ * Attempting to reschedule any of these pending items will have no effect.   Each time the
  * button is pressed, a new {@link SwingWorker} is created, which will put the processing into
  * a background thread.   Further, by using multiple workers, the work will be performed in
  * parallel.
@@ -113,8 +114,7 @@ public class TableChooserDialog extends DialogComponentProvider
 			table.installNavigation(goToService, navigatable);
 		}
 		table.getSelectionModel()
-				.addListSelectionListener(
-					e -> setOkEnabled(table.getSelectedRowCount() > 0));
+				.addListSelectionListener(e -> setOkEnabled(table.getSelectedRowCount() > 0));
 
 		GhidraTableFilterPanel<AddressableRowObject> filterPanel =
 			new GhidraTableFilterPanel<>(table, model);
@@ -128,12 +128,12 @@ public class TableChooserDialog extends DialogComponentProvider
 	 * @param callback the callback to notify
 	 */
 	public void setClosedListener(Callback callback) {
-		this.closedCallback = Callback.dummyIfNull(callback);
+		Swing.runNow(() -> closedCallback = Callback.dummyIfNull(callback));
 	}
 
 	/**
 	 * Adds the given object to this dialog.  This method can be called from any thread.
-	 * 
+	 *
 	 * @param rowObject the object to add
 	 */
 	public void add(AddressableRowObject rowObject) {
@@ -141,9 +141,9 @@ public class TableChooserDialog extends DialogComponentProvider
 	}
 
 	/**
-	 * Removes the given object from this dialog.  Nothing will happen if the given item is not 
+	 * Removes the given object from this dialog.  Nothing will happen if the given item is not
 	 * in this dialog.  This method can be called from any thread.
-	 * 
+	 *
 	 * @param rowObject the object to remove
 	 */
 	public void remove(AddressableRowObject rowObject) {
@@ -153,8 +153,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	private void createTableModel() {
 
 		// note: the task monitor is installed later when this model is added to the threaded panel
-		SystemUtilities.runSwingNow(
-			() -> model = new TableChooserTableModel("Test", tool, program, null));
+		Swing.runNow(() -> model = new TableChooserTableModel("Test", tool, program, null));
 	}
 
 	private void createActions() {
@@ -175,8 +174,8 @@ public class TableChooserDialog extends DialogComponentProvider
 		};
 
 		DockingAction selectionNavigationAction = new SelectionNavigationAction(owner, table);
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+		selectionNavigationAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		addAction(selectAction);
 		addAction(selectionNavigationAction);
@@ -296,7 +295,49 @@ public class TableChooserDialog extends DialogComponentProvider
 	}
 
 	public void addCustomColumn(ColumnDisplay<?> columnDisplay) {
-		model.addCustomColumn(columnDisplay);
+		Swing.runNow(() -> model.addCustomColumn(columnDisplay));
+	}
+
+	/**
+	 * Sets the default sorted column for this dialog.
+	 *
+	 * <P>This method should be called after all custom columns have been added via
+	 * {@link #addCustomColumn(ColumnDisplay)}.
+	 *
+	 * @param index the view's 0-based column index
+	 * @see #setSortState(TableSortState)
+	 * @throws IllegalArgumentException if an invalid column is requested for sorting
+	 */
+	public void setSortColumn(int index) {
+		setSortState(TableSortState.createDefaultSortState(index));
+	}
+
+	/**
+	 * Sets the column sort state for this dialog.   The {@link TableSortState} allows for
+	 * combinations of sorted columns in ascending or descending order.
+	 *
+	 * <P>This method should be called after all custom columns have been added via
+	 * {@link #addCustomColumn(ColumnDisplay)}.
+	 *
+	 * @param state the sort state
+	 * @see #setSortColumn(int)
+	 * @throws IllegalArgumentException if an invalid column is requested for sorting
+	 */
+	public void setSortState(TableSortState state) {
+		AtomicReference<IllegalArgumentException> ref = new AtomicReference<>();
+		Swing.runNow(() -> {
+			try {
+				model.setTableSortState(state);
+			}
+			catch (IllegalArgumentException e) {
+				ref.set(e);
+			}
+		});
+		IllegalArgumentException exception = ref.get();
+		if (exception != null) {
+			// use a new exception so the stack trace points to this class, not the runnable above
+			throw new IllegalArgumentException(exception);
+		}
 	}
 
 	@Override
@@ -313,15 +354,17 @@ public class TableChooserDialog extends DialogComponentProvider
 	}
 
 	public void clearSelection() {
-		table.clearSelection();
+		Swing.runNow(() -> table.clearSelection());
 	}
 
 	public void selectRows(int... rows) {
 
-		ListSelectionModel selectionModel = table.getSelectionModel();
-		for (int row : rows) {
-			selectionModel.addSelectionInterval(row, row);
-		}
+		Swing.runNow(() -> {
+			ListSelectionModel selectionModel = table.getSelectionModel();
+			for (int row : rows) {
+				selectionModel.addSelectionInterval(row, row);
+			}
+		});
 	}
 
 	public int[] getSelectedRows() {

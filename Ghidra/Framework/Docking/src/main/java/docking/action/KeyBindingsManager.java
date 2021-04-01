@@ -15,10 +15,10 @@
  */
 package docking.action;
 
+import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -61,6 +61,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 	public void addReservedAction(DockingActionIf action) {
 		KeyStroke keyBinding = action.getKeyBinding();
+		Objects.requireNonNull(keyBinding);
 		addReservedKeyBinding(action, keyBinding);
 	}
 
@@ -76,14 +77,48 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 	private void addKeyBinding(ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
+
 		if (ReservedKeyBindings.isReservedKeystroke(keyStroke)) {
 			throw new AssertException("Cannot assign action to a reserved keystroke.  " +
 				"Action: " + action.getName() + " - Keystroke: " + keyStroke);
 		}
 
-		DockingKeyBindingAction existingAction = dockingKeyMap.get(keyStroke);
+		// map standard keybinding to action 
+		doAddKeyBinding(provider, action, keyStroke);
+
+		fixupAltGraphKeyStrokeMapping(provider, action, keyStroke);
+	}
+
+	private void fixupAltGraphKeyStrokeMapping(ComponentProvider provider, DockingActionIf action,
+			KeyStroke keyStroke) {
+
+		// special case 
+		int modifiers = keyStroke.getModifiers();
+		if ((modifiers & InputEvent.ALT_DOWN_MASK) == InputEvent.ALT_DOWN_MASK) {
+			//
+			// Also register the 'Alt' binding with the 'Alt Graph' mask.  This fixes the but
+			// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873) 
+			// that have different key codes for the left and right Alt keys.
+			//
+			modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
+			KeyStroke updateKeyStroke =
+				KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, false);
+			doAddKeyBinding(provider, action, updateKeyStroke, keyStroke);
+		}
+	}
+
+	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
+			KeyStroke keyStroke) {
+		doAddKeyBinding(provider, action, keyStroke, keyStroke);
+	}
+
+	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,
+			KeyStroke mappingKeyStroke, KeyStroke actionKeyStroke) {
+
+		DockingKeyBindingAction existingAction = dockingKeyMap.get(mappingKeyStroke);
 		if (existingAction == null) {
-			dockingKeyMap.put(keyStroke, new MultipleKeyAction(tool, provider, action, keyStroke));
+			dockingKeyMap.put(mappingKeyStroke,
+				new MultipleKeyAction(tool, provider, action, actionKeyStroke));
 			return;
 		}
 

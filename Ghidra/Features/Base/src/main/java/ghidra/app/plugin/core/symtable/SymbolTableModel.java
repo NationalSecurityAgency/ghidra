@@ -264,12 +264,13 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 			updateObject(Symbol);
 		}
 		else {
+			// the symbol may be in the table, as it could have passed the filter before the change
 			removeObject(Symbol);
 		}
 	}
 
 	void delete(List<Symbol> rowObjects) {
-		if (rowObjects == null || rowObjects.size() == 0) {
+		if (rowObjects == null || rowObjects.isEmpty()) {
 			return;
 		}
 
@@ -379,7 +380,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public Symbol getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 			return symbol;
@@ -400,7 +401,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public Boolean getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 			return symbol.isPinned();
@@ -435,7 +436,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public ProgramLocation getProgramLocation(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 			return symbol.getProgramLocation();
@@ -454,7 +455,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 
@@ -483,7 +484,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 
@@ -520,7 +521,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 			return symbol.getParentNamespace().getName(true);
@@ -530,7 +531,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 	private class SourceTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<Symbol, SourceType> {
 
-		private GColumnRenderer<SourceType> renderer = new AbstractGColumnRenderer<SourceType>() {
+		private GColumnRenderer<SourceType> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			protected String getText(Object value) {
 				if (value == null) {
@@ -580,7 +581,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		@Override
 		public Integer getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 			return Integer.valueOf(symbol.getReferenceCount());
@@ -612,7 +613,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		@Override
 		public Integer getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 
@@ -665,7 +666,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 
@@ -702,7 +703,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		public String getValue(Symbol symbol, Settings settings, Program p,
 				ServiceProvider svcProvider) throws IllegalArgumentException {
 
-			if (!symbol.checkIsValid()) {
+			if (symbol.isDeleted()) {
 				return null;
 			}
 

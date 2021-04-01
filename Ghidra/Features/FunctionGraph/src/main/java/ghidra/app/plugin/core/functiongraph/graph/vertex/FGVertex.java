@@ -93,15 +93,17 @@ public interface FGVertex extends VisualVertex {
 	public void clearColor();
 
 	/**
-	 * Signals to this vertex that it is associated with a group.  False implies that this vertex
-	 * is not and has not been part of a group.  True signals that this vertex is not currently
-	 * grouped, but that it has been part of a group and can be put back into its group form 
-	 * again.
+	 * Signals to this vertex that it is associated with a group
 	 * 
-	 * @param groupMember True if this vertex is a associate with a group
+	 * @param groupInfo the new group info for this vertex; null if the vertex is no longer part
+	 *        of a group 
 	 */
 	public void updateGroupAssociationStatus(GroupHistoryInfo groupInfo);
 
+	/**
+	 * The group info for this vertex if it is in a group; null if not in a group
+	 * @return the group info or null
+	 */
 	public GroupHistoryInfo getGroupInfo();
 
 	/**
@@ -190,8 +192,8 @@ public interface FGVertex extends VisualVertex {
 	public void refreshDisplay();
 
 	/**
-	 * Refresh the vertex's display information if the given address is the entry point
-	 * of the vertex.
+	 * Refresh the vertex's display information if the given address is the vertex entry point
+	 * @param address the addresses
 	 */
 	public void refreshDisplayForAddress(Address address);
 
