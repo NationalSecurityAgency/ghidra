@@ -27,7 +27,6 @@ import org.junit.Test;
 
 import ghidra.dbg.agent.*;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetObject.TargetUpdateMode;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
@@ -268,8 +267,6 @@ public class TargetObjectSchemaValidationTest {
 
 	ValidatedObject createRepleteValidatedObject() {
 		TargetObjectSchema schema = ctx.builder(new SchemaName("test"))
-				.addAttributeSchema(new DefaultAttributeSchema("_update_mode",
-					EnumerableTargetObjectSchema.UPDATE_MODE.getName(), true, false, false), null)
 				.addAttributeSchema(new DefaultAttributeSchema("_display",
 					EnumerableTargetObjectSchema.STRING.getName(), true, false, false), null)
 				.addAttributeSchema(new DefaultAttributeSchema("int",
@@ -287,12 +284,10 @@ public class TargetObjectSchemaValidationTest {
 		ValidatedObject obj = createRepleteValidatedObject();
 		obj.setAttributes(List.of(), Map.of(
 			"_display", "Hello",
-			"_update_mode", TargetUpdateMode.SOLICITED,
 			"int", 5),
 			"Test");
 		obj.setAttributes(List.of(), Map.of(
 			"_display", "World",
-			"_update_mode", TargetUpdateMode.FIXED,
 			"int", 6),
 			"Test");
 	}
@@ -309,7 +304,6 @@ public class TargetObjectSchemaValidationTest {
 		ValidatedObject obj = createRepleteValidatedObject();
 		obj.setAttributes(List.of(), Map.of(
 			"_display", "World",
-			"_update_mode", TargetUpdateMode.UNSOLICITED,
 			"int", 7.0),
 			"Test");
 	}

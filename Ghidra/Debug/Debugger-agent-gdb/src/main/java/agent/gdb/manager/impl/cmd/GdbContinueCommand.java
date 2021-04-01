@@ -52,6 +52,7 @@ public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
+		evt = checkErrorViaCli(evt);
 		if (evt instanceof GdbCommandRunningEvent) {
 			pending.claim(evt);
 			return pending.hasAny(GdbRunningEvent.class);

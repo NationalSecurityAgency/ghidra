@@ -33,7 +33,8 @@ public interface TargetExecutionStateful extends TargetObject {
 		/**
 		 * The object has been created, but it not yet alive
 		 * 
-		 * This may apply, e.g., to a GDB "Inferior" which has no yet been used to launch or attach
+		 * <p>
+		 * This may apply, e.g., to a GDB "Inferior," which has no yet been used to launch or attach
 		 * to a process.
 		 */
 		INACTIVE {
@@ -55,6 +56,13 @@ public interface TargetExecutionStateful extends TargetObject {
 
 		/**
 		 * The object is alive, but its execution state is unspecified
+		 * 
+		 * <p>
+		 * Implementations should use {@link #STOPPED} and {@link #RUNNING} whenever possible. For
+		 * some objects, e.g., a process, this is conventionally determined by its parts, e.g.,
+		 * threads: A process is running when <em>any</em> of its threads are running. It is stopped
+		 * when <em>all</em> of its threads are stopped. For the clients' sakes, all models should
+		 * implement these conventions internally.
 		 */
 		ALIVE {
 			@Override
@@ -124,7 +132,7 @@ public interface TargetExecutionStateful extends TargetObject {
 		 * <p>
 		 * The object still exists but no longer represents something alive. This could be used for
 		 * stale handles to objects which may still be queried (e.g., for a process exit code), or
-		 * e.g., a GDB "Inferior" which could be re-used to launch or attach to another process.
+		 * e.g., a GDB "Inferior," which could be re-used to launch or attach to another process.
 		 */
 		TERMINATED {
 			@Override
@@ -173,18 +181,6 @@ public interface TargetExecutionStateful extends TargetObject {
 	@TargetAttributeType(name = STATE_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default TargetExecutionState getExecutionState() {
 		return getTypedAttributeNowByName(STATE_ATTRIBUTE_NAME, TargetExecutionState.class,
-			TargetExecutionState.STOPPED);
-	}
-
-	public interface TargetExecutionStateListener extends TargetObjectListener {
-		/**
-		 * The object has entered a different execution state
-		 * 
-		 * @param object the object
-		 * @param state the new state
-		 */
-		default void executionStateChanged(TargetExecutionStateful object,
-				TargetExecutionState state) {
-		}
+			TargetExecutionState.INACTIVE);
 	}
 }

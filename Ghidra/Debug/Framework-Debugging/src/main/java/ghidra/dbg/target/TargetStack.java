@@ -27,6 +27,10 @@ import ghidra.dbg.DebuggerTargetObjectIface;
  * <p>
  * Conventionally, if the debugger can also unwind register values, then each frame should present a
  * register bank. Otherwise, the same object presenting this stack should present the register bank.
+ * 
+ * <p>
+ * TODO: Probably remove this. It serves only as a container of {@link TargetStackFrame}, which can
+ * be discovered using the schema.
  */
 @DebuggerTargetObjectIface("Stack")
 public interface TargetStack extends TargetObject {

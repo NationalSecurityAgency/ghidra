@@ -37,13 +37,22 @@ public class DBAnnotatedObject extends DatabaseObject {
 		this.store = store;
 		this.record = record;
 		if (store != null) {
-			this.adapter = store.errHandler;
+			this.adapter = store.adapter;
 			this.codecs = (List) store.codecs;
 		}
 		else {
 			this.adapter = null;
 			this.codecs = null;
 		}
+	}
+
+	/**
+	 * Get an opaque unique id for this object, whose hash is immutable
+	 * 
+	 * @return the opaque object id
+	 */
+	public ObjectKey getObjectKey() {
+		return new ObjectKey(store.adapter, store.table.getName(), key);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

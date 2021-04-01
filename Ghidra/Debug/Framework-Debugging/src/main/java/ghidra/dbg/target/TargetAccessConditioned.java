@@ -36,10 +36,4 @@ public interface TargetAccessConditioned extends TargetObject {
 	public default boolean isAccessible() {
 		return getTypedAttributeNowByName(ACCESSIBLE_ATTRIBUTE_NAME, Boolean.class, true);
 	}
-
-	public interface TargetAccessibilityListener extends TargetObjectListener {
-		default void accessibilityChanged(TargetAccessConditioned object,
-				boolean accessibe) {
-		}
-	}
 }

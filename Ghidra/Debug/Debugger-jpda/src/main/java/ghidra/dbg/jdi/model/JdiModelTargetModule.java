@@ -23,12 +23,15 @@ import com.sun.jdi.ModuleReference;
 
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "Module", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "UID", type = Long.class, fixed = true), //
-	@TargetAttributeType(type = Object.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Module",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "UID", type = Long.class, fixed = true),
+		@TargetAttributeType(type = Object.class)
+	})
 public class JdiModelTargetModule extends JdiModelTargetObjectReference {
 
 	public static String getUniqueId(ModuleReference module) {
@@ -45,11 +48,11 @@ public class JdiModelTargetModule extends JdiModelTargetObjectReference {
 		this.module = module;
 
 		changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, getUniqueId(module), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, getUniqueId(module) //
 		), "Initialized");
 	}
 
+	@Override
 	public CompletableFuture<Void> init() {
 		return CompletableFuture.completedFuture(null);
 	}

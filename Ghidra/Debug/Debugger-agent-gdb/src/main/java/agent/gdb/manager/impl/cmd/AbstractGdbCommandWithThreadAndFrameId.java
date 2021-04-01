@@ -54,6 +54,11 @@ public abstract class AbstractGdbCommandWithThreadAndFrameId<T>
 	}
 
 	@Override
+	public Integer impliesCurrentFrameId() {
+		return frameId;
+	}
+
+	@Override
 	protected String encode(String threadPart) {
 		return encode(threadPart, makeFramePart());
 	}

@@ -54,37 +54,4 @@ public interface TargetConsole extends TargetObject {
 	 * @return a future which completes when the data is sent
 	 */
 	public CompletableFuture<Void> write(byte[] data);
-
-	public interface TargetConsoleListener extends TargetObjectListener {
-		/**
-		 * The console has produced output
-		 * 
-		 * @param console the console producing the output
-		 * @param channel identifies the "output stream", stdout or stderr
-		 * @param data the output data
-		 */
-		default void consoleOutput(TargetObject console, Channel channel, byte[] data) {
-		}
-
-		/**
-		 * The console has produced output
-		 * 
-		 * @implNote Overriding this method is not a substitute for overriding
-		 *           {@link #consoleOutput(TargetObject, Channel, byte[])}. Some models may invoke
-		 *           this {@code String} variant as a convenience, which by default, invokes the
-		 *           {@code byte[]} variant, but models are only expected to invoke the
-		 *           {@code byte[]} variant. A client may override this method simply to avoid
-		 *           back-and-forth conversions between {@code String}s and {@code byte[]}s.
-		 * 
-		 * @param console the console producing the output
-		 * @param channel identifies the "output stream", stdout or stderr
-		 * @param text the output text
-		 */
-		default void consoleOutput(TargetObject console, Channel channel, String text) {
-			consoleOutput(console, channel, text.getBytes(CHARSET));
-		}
-	}
-
-	public interface TargetTextConsoleListener extends TargetConsoleListener {
-	}
 }

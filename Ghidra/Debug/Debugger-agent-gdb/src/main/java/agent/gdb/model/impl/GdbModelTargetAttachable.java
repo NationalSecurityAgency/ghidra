@@ -36,7 +36,8 @@ import ghidra.dbg.util.PathUtils;
 public class GdbModelTargetAttachable
 		extends DefaultTargetObject<TargetObject, GdbModelTargetAvailableContainer>
 		implements TargetAttachable {
-	protected static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
+
+	public static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
 	// TODO: DESCRIPTION, TYPE, USER?
 
 	protected static String indexAttachable(GdbProcessThreadGroup process) {
@@ -62,8 +63,7 @@ public class GdbModelTargetAttachable
 
 		this.changeAttributes(List.of(), List.of(), Map.of( //
 			PID_ATTRIBUTE_NAME, pid, //
-			DISPLAY_ATTRIBUTE_NAME, display, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, display //
 		), "Initialized");
 	}
 

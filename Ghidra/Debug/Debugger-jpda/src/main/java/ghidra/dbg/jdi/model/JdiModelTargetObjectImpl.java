@@ -58,8 +58,7 @@ public class JdiModelTargetObjectImpl extends
 		}
 
 		changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, display = getDisplay(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, display = getDisplay() //
 		), "Initialized");
 	}
 
@@ -82,8 +81,7 @@ public class JdiModelTargetObjectImpl extends
 		}
 
 		changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, display = getDisplay(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, display = getDisplay() //
 		), "Initialized");
 	}
 
@@ -170,7 +168,6 @@ public class JdiModelTargetObjectImpl extends
 			changeAttributes(List.of(), List.of(), Map.of( //
 				MODIFIED_ATTRIBUTE_NAME, modified //
 			), "Refreshed");
-			listeners.fire.displayChanged(this, getDisplay());
 		}
 	}
 
@@ -179,4 +176,10 @@ public class JdiModelTargetObjectImpl extends
 			MODIFIED_ATTRIBUTE_NAME, false //
 		), "Refreshed");
 	}
+
+	public TargetObject searchForSuitable(Class<? extends TargetObject> type) {
+		List<String> pathToClass = model.getRootSchema().searchForSuitable(type, path);
+		return model.getModelObject(pathToClass);
+	}
+
 }

@@ -101,13 +101,18 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 
 		private void threadAdded(TraceThread thread) {
+			TraceRecorder recorder = current.getRecorder();
+			if (supportsFocus(recorder)) {
+				// TODO: Same for stack frame? I can't imagine it's as common as this....
+				if (thread == recorder.getTraceThreadForSuccessor(recorder.getFocus())) {
+					activate(DebuggerCoordinates.thread(thread));
+				}
+				return;
+			}
 			if (current.getTrace() != trace) {
 				return;
 			}
 			if (current.getThread() != null) {
-				return;
-			}
-			if (supportsFocus(current.getRecorder())) {
 				return;
 			}
 			activate(DebuggerCoordinates.thread(thread));
@@ -198,8 +203,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return t;
 	}
 
-	protected <T> CompletableFuture<T> tryHarder(Supplier<CompletableFuture<T>> action,
-			int retries, long retryAfterMillis) {
+	protected <T> CompletableFuture<T> tryHarder(Supplier<CompletableFuture<T>> action, int retries,
+			long retryAfterMillis) {
 		Executor exe = CompletableFuture.delayedExecutor(retryAfterMillis, TimeUnit.MILLISECONDS);
 		// NB. thenCompose(f -> f) also ensures exceptions are handled here, not passed through
 		CompletableFuture<T> result =
@@ -478,7 +483,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		// Note, not likely we can view non-zero frame with emulated ticks
 		Integer frame = coordinates.getFrame();
 		if (frame == null) {
-			if (recorder != null && recorder.isSupportsFocus()) {
+			if (supportsFocus(recorder)) {
 				TraceStackFrame traceFrame = frameFromTargetFocus(recorder, focus);
 				if (traceFrame == null) {
 					Msg.warn(this,
@@ -664,7 +669,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (varView != null) {
 			varView.setSnap(coordinates.getSnap());
 		}
-		firePluginEvent(new TraceActivatedPluginEvent(getName(), coordinates));
+		Swing.runIfSwingOrRunLater(() -> {
+			firePluginEvent(new TraceActivatedPluginEvent(getName(), coordinates));
+		});
 	}
 
 	@Override

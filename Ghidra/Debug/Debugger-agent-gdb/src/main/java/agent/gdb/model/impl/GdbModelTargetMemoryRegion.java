@@ -17,8 +17,11 @@ package agent.gdb.model.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.impl.GdbMemoryMapping;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
@@ -29,11 +32,9 @@ import ghidra.program.model.address.*;
 @TargetObjectSchemaInfo(
 	name = "MemoryRegion",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetMemoryRegion
 		extends DefaultTargetObject<TargetObject, GdbModelTargetProcessMemory>
 		implements TargetMemoryRegion {
@@ -81,8 +82,7 @@ public class GdbModelTargetMemoryRegion
 			EXECUTABLE_ATTRIBUTE_NAME, isExecutable(), //
 			OBJFILE_ATTRIBUTE_NAME, objfile = mapping.getObjfile(), //
 			OFFSET_ATTRIBUTE_NAME, offset = mapping.getOffset().longValue(), //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(mapping), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(mapping) //
 		), "Initialized");
 	}
 
@@ -136,5 +136,10 @@ public class GdbModelTargetMemoryRegion
 	@TargetAttributeType(name = OFFSET_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	public long getOffset() {
 		return offset;
+	}
+
+	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		// Nothing to do here
+		return AsyncUtils.NIL;
 	}
 }

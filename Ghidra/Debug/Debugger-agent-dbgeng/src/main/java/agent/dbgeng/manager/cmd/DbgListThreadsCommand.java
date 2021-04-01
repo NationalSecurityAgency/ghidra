@@ -20,7 +20,8 @@ import java.util.*;
 import agent.dbgeng.dbgeng.DebugSystemObjects;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgThread;
-import agent.dbgeng.manager.impl.*;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
 import ghidra.util.Msg;
 
 public class DbgListThreadsCommand extends AbstractDbgCommand<Map<DebugThreadId, DbgThread>> {
@@ -45,8 +46,7 @@ public class DbgListThreadsCommand extends AbstractDbgCommand<Map<DebugThreadId,
 			DebugSystemObjects so = manager.getSystemObjects();
 			so.setCurrentThreadId(id);
 			int tid = so.getCurrentThreadSystemId();
-			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid);
-			thread.add();
+			manager.getThreadComputeIfAbsent(id, process, tid);
 		}
 		for (DebugThreadId id : new ArrayList<>(cur)) {
 			if (updatedThreadIds.contains(id)) {

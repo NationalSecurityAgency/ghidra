@@ -19,8 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugSystemObjects;
-import agent.dbgeng.manager.DbgEventsListenerAdapter;
-import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.*;
 import ghidra.dbg.target.TargetAggregate;
@@ -46,11 +45,11 @@ public interface DbgModelTargetProcess extends //
 
 	public void processStarted(Long pid);
 
-	public void processExited(Long exitCode);
-
 	public DbgModelTargetThreadContainer getThreads();
 
 	public DbgModelTargetModuleContainer getModules();
+
+	public void threadStateChangedSpecific(DbgThread thread, DbgState state);
 
 	public default DbgProcess getProcess() {
 		DbgManagerImpl manager = getManager();
@@ -78,4 +77,5 @@ public interface DbgModelTargetProcess extends //
 		}
 		return manager.selectProcess(process);
 	}
+
 }

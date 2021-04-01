@@ -29,6 +29,7 @@ public class GdbThreadSelectedEvent extends AbstractGdbEventWithFields {
 	/**
 	 * Construct a new event by parsing the tail for information
 	 * 
+	 * <p>
 	 * The selected thread ID must be specified by GDB.
 	 * 
 	 * @param tail the text following the event type in the GDB/MI event record

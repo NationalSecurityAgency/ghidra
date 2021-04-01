@@ -17,13 +17,15 @@ package agent.dbgeng.model.iface2;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
+import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.util.ConversionUtils;
@@ -34,6 +36,11 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 
 	public DbgModelTargetRegister getTargetRegister(DbgRegister register);
 
+	public default void threadStateChangedSpecific(DbgState state, DbgReason reason) {
+		readRegistersNamed(getCachedElements().keySet());
+	}
+
+	// NB: Does anyone call this anymore?
 	@Override
 	public default CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(
 			Collection<String> names) {
@@ -84,9 +91,9 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 					reg.setModified(value.toString(16).equals(oldval));
 				}
 			}
-			ListenerSet<TargetObjectListener> listeners = getListeners();
+			ListenerSet<DebuggerModelListener> listeners = getListeners();
 			if (listeners != null) {
-				listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, result);
+				listeners.fire.registersUpdated(getProxy(), result);
 			}
 			return result;
 		});
@@ -96,7 +103,7 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 	public default CompletableFuture<Void> writeRegistersNamed(Map<String, byte[]> values) {
 		DbgThread thread = getParentThread().getThread();
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			fetchElements().handle(seq::nextIgnore);
+			requestNativeElements().handle(seq::nextIgnore);
 		}).then(seq -> {
 			thread.listRegisters().handle(seq::next);
 		}, TypeSpec.cls(DbgRegisterSet.class)).then((regset, seq) -> {
@@ -115,8 +122,26 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 			getParentThread().getThread().writeRegisters(toWrite).handle(seq::next);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).then(seq -> {
-			getListeners().fire(TargetRegisterBankListener.class).registersUpdated(this, values);
+			getListeners().fire.registersUpdated(getProxy(), values);
 			seq.exit();
 		}).finish();
 	}
+
+	@Override
+	public default Map<String, byte[]> getCachedRegisters() {
+		return getValues();
+	}
+
+	public default Map<String, byte[]> getValues() {
+		Map<String, byte[]> result = new HashMap<>();
+		for (Entry<String, ?> entry : this.getCachedAttributes().entrySet()) {
+			if (entry.getValue() instanceof DbgModelTargetRegister) {
+				DbgModelTargetRegister reg = (DbgModelTargetRegister) entry.getValue();
+				byte[] bytes = reg.getBytes();
+				result.put(entry.getKey(), bytes);
+			}
+		}
+		return result;
+	}
+
 }

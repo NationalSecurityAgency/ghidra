@@ -33,9 +33,10 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.*;
+import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.model.TestTargetProcess;
-import ghidra.dbg.target.TargetBreakpointContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.Program;
@@ -50,7 +51,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerGUITest
+		implements AsyncTestUtils {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -84,14 +86,13 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected void addLiveBreakpoint(TraceRecorder recorder, long offset) throws Exception {
-		TargetBreakpointContainer cont = getBreakpointContainer(recorder);
-		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SOFTWARE))
+		TargetBreakpointSpecContainer cont = getBreakpointContainer(recorder);
+		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SW_EXECUTE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
-	protected void addStaticMemoryAndBreakpoint()
-			throws LockException, DuplicateNameException, MemoryConflictException,
-			AddressOverflowException, CancelledException {
+	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
+			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(program, "Add bookmark break", true)) {
 			program.getMemory()
@@ -114,7 +115,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testAddLiveOpenTracePopulatesProvider() throws Exception {
+	public void testAddLiveOpenTracePopulatesProvider() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
@@ -122,6 +123,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
+		waitOn(mb.testModel.flushEvents());
 		waitForDomainObject(trace);
 
 		// NB, optionally open trace. Mapping only works if open...
@@ -514,8 +516,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			assertEquals(2, lb2.getTraceBreakpoints().size());
 		});
 
-		List<LogicalBreakpointRow> breakData =
-			bptModel.getModelData();
+		List<LogicalBreakpointRow> breakData = bptModel.getModelData();
 		List<BreakpointLocationRow> filtLocs =
 			breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
 
@@ -574,8 +575,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	public static final Set<String> POPUP_ACTIONS = Set.of(
-		AbstractEnableSelectedBreakpointsAction.NAME,
-		AbstractDisableSelectedBreakpointsAction.NAME,
+		AbstractEnableSelectedBreakpointsAction.NAME, AbstractDisableSelectedBreakpointsAction.NAME,
 		AbstractClearSelectedBreakpointsAction.NAME);
 
 	@Test
@@ -590,10 +590,10 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		// NOTE: the row becomes selected by right-click
 		clickTableCellWithButton(breakpointsProvider.breakpointTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
-		assertMenu(POPUP_ACTIONS, Set.of(
-			AbstractEnableSelectedBreakpointsAction.NAME,
-			AbstractDisableSelectedBreakpointsAction.NAME,
-			AbstractClearSelectedBreakpointsAction.NAME));
+		assertMenu(POPUP_ACTIONS,
+			Set.of(AbstractEnableSelectedBreakpointsAction.NAME,
+				AbstractDisableSelectedBreakpointsAction.NAME,
+				AbstractClearSelectedBreakpointsAction.NAME));
 
 		// NOTE: With no selection, no actions (even table built-in) apply, so no menu
 	}

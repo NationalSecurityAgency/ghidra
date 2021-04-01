@@ -22,42 +22,36 @@ import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.model.iface2.DbgModelTargetModule;
 import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
-import ghidra.async.AsyncFence;
-import ghidra.async.AsyncLazyMap;
-import ghidra.dbg.target.TargetModule;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.lifecycle.Internal;
-import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(
-	name = "ModuleContainer",
-	elements = { //
-		@TargetElementType(type = DbgModelTargetModuleImpl.class) //
-	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
-	},
-	canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "ModuleContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetModuleImpl.class) //
+}, //
+		elementResync = ResyncMode.ONCE, //
+		attributes = { //
+			@TargetAttributeType(type = Void.class) //
+		}, canonicalContainer = true)
 public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleContainer {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
 
+	protected final DbgModelTargetProcessImpl targetProcess;
 	protected final DbgProcess process;
-
-	// TODO: Is it possible to load the same object twice?
-	protected final AsyncLazyMap<String, DbgModelTargetModule> modulesByName =
-		new AsyncLazyMap<String, DbgModelTargetModule>(new HashMap<>(), this::doGetTargetModule);
 
 	public DbgModelTargetModuleContainerImpl(DbgModelTargetProcessImpl process) {
 		super(process.getModel(), process, "Modules", "ModuleContainer");
+		this.targetProcess = process;
 		this.process = process.process;
+		requestElements(false);
 	}
 
 	@Override
 	@Internal
 	public void libraryLoaded(String name) {
-		CompletableFuture<DbgModelTargetModule> module;
+		DbgModelTargetModule module;
 		synchronized (this) {
 			/**
 			 * It's not a good idea to remove "stale" entries. If the entry's already present, it's
@@ -65,32 +59,26 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 			 * sections loaded. Removing it will cause it to load all module sections again!
 			 */
 			//modulesByName.remove(name);
-			module = doGetTargetModule(name);
+			module = getTargetModule(name);
 		}
-		module.thenAccept(mod -> {
-			changeElements(List.of(), List.of(mod), Map.of(), "Loaded");
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, null, TargetEventType.MODULE_LOADED, "Library " + name + " loaded",
-						List.of(mod));
-		}).exceptionally(e -> {
-			Msg.error(this, "Problem getting module for library load: " + name, e);
-			return null;
-		});
+		TargetThread eventThread =
+			(TargetThread) getModel().getModelObject(getManager().getEventThread());
+		changeElements(List.of(), List.of(module), Map.of(), "Loaded");
+		getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
+			"Library " + name + " loaded", List.of(module));
 	}
 
 	@Override
 	@Internal
 	public void libraryUnloaded(String name) {
-		if (!modulesByName.containsKey(name)) {
-			return;
-		}
-		modulesByName.get(name).thenAccept(mod -> {
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, null, TargetEventType.MODULE_UNLOADED,
-						"Library " + name + " unloaded", List.of(mod));
-		});
-		synchronized (this) {
-			modulesByName.remove(name);
+		DbgModelTargetModule targetModule = getTargetModule(name);
+		if (targetModule != null) {
+			TargetThread eventThread =
+				(TargetThread) getModel().getModelObject(getManager().getEventThread());
+			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
+				"Library " + name + " unloaded", List.of(targetModule));
+			DbgModelImpl impl = (DbgModelImpl) model;
+			impl.deleteModelObject(targetModule.getDbgModule());
 		}
 		changeElements(List.of(name), List.of(), Map.of(), "Unloaded");
 	}
@@ -108,34 +96,28 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		List<TargetObject> result = new ArrayList<>();
-		return process.listModules().thenCompose(byName -> {
-			AsyncFence fence = new AsyncFence();
+		return process.listModules().thenAccept(byName -> {
 			synchronized (this) {
-				modulesByName.retainKeys(byName.keySet());
 				for (Map.Entry<String, DbgModule> ent : byName.entrySet()) {
-					fence.include(getTargetModule(ent.getKey()).thenAccept(module -> {
-						result.add(module);
-					}));
+					result.add(getTargetModule(ent.getKey()));
 				}
 			}
-			return fence.ready();
-		}).thenAccept(__ -> {
 			changeElements(List.of(), result, Map.of(), "Refreshed");
 		});
 	}
 
-	protected CompletableFuture<DbgModelTargetModule> doGetTargetModule(String name) {
+	public DbgModelTargetModule getTargetModule(String name) {
 		// Only get here from libraryLoaded or getElements. The known list should be fresh.
 		DbgModule module = process.getKnownModules().get(name);
 		if (module == null) {
-			return CompletableFuture.completedFuture(null);
+			return null;
 		}
-		return CompletableFuture.completedFuture(new DbgModelTargetModuleImpl(this, module));
-		//TODO: return module.listSections().thenApply(__ -> new DbgModelTargetModule(this, module));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(module);
+		if (modelObject != null) {
+			return (DbgModelTargetModule) modelObject;
+		}
+		return new DbgModelTargetModuleImpl(this, module);
 	}
 
-	@Override
-	public CompletableFuture<DbgModelTargetModule> getTargetModule(String name) {
-		return modulesByName.get(name);
-	}
 }

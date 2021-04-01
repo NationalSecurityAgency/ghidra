@@ -26,7 +26,6 @@ import agent.dbgeng.model.iface1.*;
 import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetConsole;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
 import ghidra.dbg.util.PathUtils;
 
 public interface DbgModelTargetSession extends //
@@ -38,7 +37,6 @@ public interface DbgModelTargetSession extends //
 		DbgModelTargetResumable, //
 		DbgEventsListenerAdapter, //
 		DbgModelSelectableObject, //
-		TargetFocusScopeListener, //
 		TargetAggregate {
 
 	DbgModelTargetProcessContainer getProcesses();
@@ -69,7 +67,7 @@ public interface DbgModelTargetSession extends //
 		if (output.contains("loaded *kernel* extension dll for usermode")) {
 			return;
 		}
-		getListeners().fire(TargetInterpreterListener.class).consoleOutput(this, chan, output);
+		getListeners().fire.consoleOutput(getProxy(), chan, output);
 	}
 
 	@Override

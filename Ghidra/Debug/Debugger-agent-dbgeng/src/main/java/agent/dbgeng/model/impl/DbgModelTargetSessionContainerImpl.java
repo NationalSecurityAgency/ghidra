@@ -23,19 +23,14 @@ import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "SessionContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetSessionImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "SessionContainer", elements = {
+	@TargetElementType(type = DbgModelTargetSessionImpl.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class DbgModelTargetSessionContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSessionContainer {
-
-	protected final Map<DebugSessionId, DbgModelTargetSession> sessionsById =
-		new WeakValueHashMap<>();
 
 	public DbgModelTargetSessionContainerImpl(DbgModelTargetRoot root) {
 		super(root.getModel(), root, "Sessions", "SessionContainer");
@@ -51,9 +46,9 @@ public class DbgModelTargetSessionContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public void sessionRemoved(DebugSessionId sessionId, DbgCause cause) {
-		synchronized (this) {
-			sessionsById.remove(sessionId);
-		}
+		//synchronized (this) {
+		//	sessionsById.remove(sessionId);
+		//}
 		changeElements(List.of( //
 			DbgModelTargetSessionImpl.indexSession(sessionId) //
 		), List.of(), Map.of(), "Removed");
@@ -61,8 +56,12 @@ public class DbgModelTargetSessionContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public synchronized DbgModelTargetSession getTargetSession(DbgSession session) {
-		DebugSessionId id = session.getId();
-		return sessionsById.computeIfAbsent(id, i -> new DbgModelTargetSessionImpl(this, session));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(session);
+		if (modelObject != null) {
+			return (DbgModelTargetSession) modelObject;
+		}
+		return new DbgModelTargetSessionImpl(this, session);
 	}
 
 	@Override

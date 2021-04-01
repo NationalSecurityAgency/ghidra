@@ -22,18 +22,16 @@ import java.util.Map;
 import agent.gdb.manager.GdbRegister;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
-import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(
-	name = "RegisterValue",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
+@TargetObjectSchemaInfo(name = "RegisterValue", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrameRegister
-		extends DefaultTargetObject<TargetObject, GdbModelTargetStackFrameRegisterContainer> {
+		extends DefaultTargetObject<TargetObject, GdbModelTargetStackFrameRegisterContainer>
+		implements TargetRegister {
 
 	protected static String indexRegister(GdbRegister register) {
 		String name = register.getName();
@@ -50,15 +48,20 @@ public class GdbModelTargetStackFrameRegister
 	protected final GdbModelImpl impl;
 	protected final GdbRegister register;
 
+	protected final int bitLength;
+
 	public GdbModelTargetStackFrameRegister(GdbModelTargetStackFrameRegisterContainer registers,
 			GdbRegister register) {
 		super(registers.impl, registers, keyRegister(register), "Register");
 		this.impl = registers.impl;
 		this.register = register;
 
+		this.bitLength = register.getSize() * 8;
+
 		changeAttributes(List.of(), Map.of( //
+			CONTAINER_ATTRIBUTE_NAME, registers, //
+			LENGTH_ATTRIBUTE_NAME, bitLength, //
 			DISPLAY_ATTRIBUTE_NAME, getName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
 			MODIFIED_ATTRIBUTE_NAME, false //
 		), "Initialized");
 	}
@@ -68,19 +71,18 @@ public class GdbModelTargetStackFrameRegister
 		return getCachedAttribute(DISPLAY_ATTRIBUTE_NAME).toString();
 	}
 
-	public void updateValue(BigInteger bigNewVal) {
-		String value = bigNewVal.toString(16);
+	public void stateChanged(byte[] bytes) {
+		BigInteger bigval = new BigInteger(1, bytes);
+		String value = bigval.toString(16);
 		Object oldval = getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
-		boolean modified = (bigNewVal.longValue() != 0 && value.equals(oldval));
+		boolean modified = (bigval.longValue() != 0 && value.equals(oldval));
 
 		String newval = getName() + " : " + value;
-		Delta<?, ?> delta = changeAttributes(List.of(), Map.of( //
+		changeAttributes(List.of(), Map.of( //
 			VALUE_ATTRIBUTE_NAME, value, //
 			DISPLAY_ATTRIBUTE_NAME, newval, //
 			MODIFIED_ATTRIBUTE_NAME, modified //
 		), "Value Updated");
-		if (delta.added.containsKey(DISPLAY_ATTRIBUTE_NAME)) {
-			listeners.fire.displayChanged(this, newval);
-		}
 	}
+
 }

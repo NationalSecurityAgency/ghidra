@@ -15,8 +15,6 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
-
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -34,7 +32,8 @@ import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
-import ghidra.async.*;
+import ghidra.async.AsyncLazyValue;
+import ghidra.async.AsyncReference;
 import ghidra.util.Msg;
 
 public class DbgThreadImpl implements DbgThread {
@@ -91,7 +90,7 @@ public class DbgThreadImpl implements DbgThread {
 	 */
 	public void add() {
 		manager.threads.put(id, this);
-		manager.getEventListeners().fire.threadCreated(this, DbgCause.Causes.UNCLAIMED);
+		//manager.getEventListeners().fire.threadCreated(this, DbgCause.Causes.UNCLAIMED);
 		process.addThread(this);
 		state.addChangeListener((oldState, newState, pair) -> {
 			this.manager.getEventListeners().fire.threadStateChanged(this, newState, pair.cause,
@@ -147,18 +146,18 @@ public class DbgThreadImpl implements DbgThread {
 	}
 
 	private CompletableFuture<DbgRegisterSet> doListRegisters() {
-		return sequence(TypeSpec.cls(DbgRegisterSet.class)).then((seq) -> {
-			manager.execute(new DbgListRegisterDescriptionsCommand(manager)).handle(seq::next);
-		}, TypeSpec.cls(DebugRegisterDescription.class).list()).then((descs, seq) -> {
+		CompletableFuture<List<DebugRegisterDescription>> listCmd =
+			manager.execute(new DbgListRegisterDescriptionsCommand(manager));
+		return listCmd.thenApply(descs -> {
 			if (descs == null) {
-				return;
+				return new DbgRegisterSet(Set.of());
 			}
 			List<DbgRegister> regs = new ArrayList<>();
 			for (DebugRegisterDescription desc : descs) {
 				regs.add(new DbgRegister(desc));
 			}
-			seq.exit(new DbgRegisterSet(regs));
-		}).finish();
+			return new DbgRegisterSet(regs);
+		});
 	}
 
 	@Override
@@ -208,47 +207,37 @@ public class DbgThreadImpl implements DbgThread {
 
 	@Override
 	public CompletableFuture<Void> cont() {
-		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
-		}).then((seq) -> {
-			manager.execute(new DbgContinueCommand(manager)).handle(seq::exit);
-		}).finish();
+		return select().thenCompose(__ -> {
+			return manager.execute(new DbgContinueCommand(manager));
+		});
 	}
 
 	@Override
 	public CompletableFuture<Void> step(ExecSuffix suffix) {
-		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
-		}).then((seq) -> {
-			manager.execute(new DbgStepCommand(manager, id, suffix)).handle(seq::exit);
-		}).finish();
+		return select().thenCompose(__ -> {
+			return manager.execute(new DbgStepCommand(manager, id, suffix));
+		});
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
-		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
-		}).then((seq) -> {
-			manager.execute(new DbgStepCommand(manager, id, args)).handle(seq::exit);
-		}).finish();
+		return select().thenCompose(__ -> {
+			return manager.execute(new DbgStepCommand(manager, id, args));
+		});
 	}
 
 	@Override
 	public CompletableFuture<Void> kill() {
-		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
-		}).then((seq) -> {
-			manager.execute(new DbgKillCommand(manager)).handle(seq::exit);
-		}).finish();
+		return select().thenCompose(__ -> {
+			return manager.execute(new DbgKillCommand(manager));
+		});
 	}
 
 	@Override
 	public CompletableFuture<Void> detach() {
-		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
-		}).then((seq) -> {
-			manager.execute(new DbgDetachCommand(manager, process)).handle(seq::exit);
-		}).finish();
+		return select().thenCompose(__ -> {
+			return manager.execute(new DbgDetachCommand(manager, process));
+		});
 	}
 
 	public DebugEventInformation getInfo() {

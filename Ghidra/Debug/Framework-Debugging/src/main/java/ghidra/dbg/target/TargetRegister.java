@@ -68,6 +68,12 @@ public interface TargetRegister extends TargetObject {
 		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}
 
+	/**
+	 * Get the name of this register
+	 * 
+	 * <p>
+	 * TODO: Instead of overriding getIndex, we should introduce getRegisterName.
+	 */
 	@Override
 	public default String getIndex() {
 		return PathUtils.isIndex(getPath()) ? PathUtils.getIndex(getPath())

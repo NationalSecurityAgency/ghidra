@@ -31,7 +31,6 @@ import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointListener;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
@@ -93,6 +92,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		//  DEBUGGER_ATTRIBUTE_NAME, "dbgeng", //
 		//  OS_ATTRIBUTE_NAME, "Windows", //
 		), "Initialized");
+
 		impl.getManager().addEventsListener(this);
 	}
 
@@ -115,7 +115,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			intrinsics.put(TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus);
 			DbgModelTargetSession session = focus.getParentSession();
 			session.select();
-			listeners.fire(TargetFocusScopeListener.class).focusChanged(this, sel);
 		}
 		return doFire;
 	}
@@ -167,31 +166,30 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	@Override
 	public void processAdded(DbgProcess proc, DbgCause cause) {
-		stateChanged(proc, DbgState.STARTING, "ProcessAdded");
 		getObject(proc).thenAccept(obj -> {
-			DbgModelTargetProcess process = (DbgModelTargetProcess) obj;
-			if (process == null) {
+			DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) obj;
+			if (targetProcess == null) {
+				System.err.println("processAdded - null");
 				return;
 			}
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(
-						this, null, TargetEventType.PROCESS_CREATED, "Process " + proc.getId() +
-							" started " + "notepad.exe" + " pid=" + proc.getPid(),
-						List.of(process));
+			System.err.println("SERVER:processAdded: " + proc);
+			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_CREATED,
+				"Process " + proc.getId() + " started " + "notepad.exe" + " pid=" + proc.getPid(),
+				List.of(targetProcess));
 		});
 	}
 
 	@Override
 	public void threadCreated(DbgThread thread, DbgCause cause) {
-		stateChanged(thread, DbgState.STARTING, "ThreadCreated");
 		getObject(thread).thenAccept(obj -> {
 			DbgModelTargetThread targetThread = (DbgModelTargetThread) obj;
 			if (targetThread == null) {
+				System.err.println("threadCreated - null");
 				return;
 			}
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, targetThread, TargetEventType.THREAD_CREATED,
-						"Thread " + thread.getId() + " started", List.of(targetThread));
+			System.err.println("SERVER:threadCreated: " + targetThread);
+			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
+				"Thread " + thread.getId() + " started", List.of(targetThread));
 		});
 	}
 
@@ -202,9 +200,11 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (mod == null) {
 				return;
 			}
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, null, TargetEventType.MODULE_LOADED,
-						"Library " + info.moduleName + " loaded", List.of(mod));
+			getObject(getManager().getEventThread()).thenAccept(t -> {
+				TargetThread eventThread = (TargetThread) t;
+				getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
+					"Library " + info.getModuleName() + " loaded", List.of(mod));
+			});
 		});
 	}
 
@@ -215,13 +215,19 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (mod == null) {
 				return;
 			}
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, null, TargetEventType.MODULE_UNLOADED,
-						"Library " + info.moduleName + " unloaded", List.of(mod));
+			getObject(getManager().getEventThread()).thenAccept(t -> {
+				TargetThread eventThread = (TargetThread) t;
+				getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
+					"Library " + info.getModuleName() + " unloaded", List.of(mod));
+			});
 		});
 	}
 
 	private CompletableFuture<DbgModelTargetObject> getObject(Object object) {
+		DbgModelTargetObject modelObject = (DbgModelTargetObject) getModel().getModelObject(object);
+		if (modelObject != null) {
+			return CompletableFuture.completedFuture(modelObject);
+		}
 		List<String> objPath = findObject(object);
 		if (objPath == null) {
 			return CompletableFuture.completedFuture(null);
@@ -232,10 +238,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			getModel().fetchModelObject(objPath).handle(seq::next);
 		}, TypeSpec.cls(TargetObject.class)).then((pobj, seq) -> {
 			DbgModelTargetObject pimpl = (DbgModelTargetObject) pobj;
+			getModel().addModelObject(object, pimpl);
 			seq.exit(pimpl);
 		}).finish();
 	}
 
+	//TODO: fix this
 	private CompletableFuture<DbgModelTargetObject> getObjectRevisited(Object object,
 			List<String> ext, Object info) {
 		List<String> objPath = findObject(object);
@@ -279,30 +287,23 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	@Override
 	public void processRemoved(DebugProcessId processId, DbgCause cause) {
-		getObject(processId).thenAccept(obj -> {
-			DbgModelTargetProcess process = obj.as(DbgModelTargetProcess.class);
-			if (process == null) {
-				return;
-			}
-			DbgProcess proc = process.getProcess();
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, null, TargetEventType.PROCESS_EXITED,
-						"Process " + proc.getId() + " exited code=" + proc.getExitCode(),
-						List.of(process));
-		});
+		DbgModelTargetProcess process = (DbgModelTargetProcess) getObject(processId);
+		if (process == null) {
+			return;
+		}
+		DbgProcess proc = process.getProcess();
+		getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+			"Process " + proc.getId() + " exited code=" + proc.getExitCode(), List.of(process));
 	}
 
 	@Override
 	public void threadExited(DebugThreadId threadId, DbgProcess process, DbgCause cause) {
-		getObject(threadId).thenAccept(obj -> {
-			DbgModelTargetThread targetThread = obj.as(DbgModelTargetThread.class);
-			if (targetThread == null) {
-				return;
-			}
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, targetThread, TargetEventType.THREAD_EXITED,
-						"Thread " + threadId + " exited", List.of(targetThread));
-		});
+		DbgModelTargetThread targetThread = (DbgModelTargetThread) getObject(threadId);
+		if (targetThread == null) {
+			return;
+		}
+		getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
+			"Thread " + threadId + " exited", List.of(targetThread));
 	}
 
 	@Override
@@ -323,9 +324,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			intrinsics.put(TargetEventScope.EVENT_THREAD_ATTRIBUTE_NAME,
 				Long.toHexString(thread.getTid()));
 			TargetEventType eventType = getEventType(state, cause, reason);
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, targetThread, eventType,
-						"Thread " + thread.getId() + " state changed", List.of(targetThread));
+			getListeners().fire.event(getProxy(), targetThread, eventType,
+				"Thread " + thread.getId() + " state changed", List.of(targetThread));
 		});
 	}
 
@@ -336,8 +336,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			getModel().fetchModelValue(objPath).handle(seq::next);
 		}, TypeSpec.cls(Object.class)).then((obj, seq) -> {
 			if (obj instanceof DbgModelTargetExecutionStateful) {
-				DbgModelTargetExecutionStateful stateful =
-					(DbgModelTargetExecutionStateful) obj;
+				DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) obj;
 				TargetExecutionState execState = stateful.convertState(state);
 				stateful.setExecutionState(execState, reason);
 			}
@@ -374,13 +373,13 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 					DbgModelTargetBreakpointSpec bpt = (DbgModelTargetBreakpointSpec) obj;
 					if (bpt == null) {
 						Msg.error(this, "Stopped for breakpoint unknown to the agent: " +
-							info.getNumber() + " (pc=" + info.getLocation() + ")");
+							info.getNumber() + " (pc=" + info.getExpression() + ")");
 						return;
 					}
 
-					listeners.fire(TargetBreakpointListener.class)
-							.breakpointHit((TargetBreakpointContainer) bpt.getParent(),
-								getParentProcess(), null, bpt, bpt);
+					DbgModelTargetThread targetThread = getParentProcess().getThreads()
+							.getTargetThread(getManager().getEventThread());
+					listeners.fire.breakpointHit(bpt.getParent(), targetThread, null, bpt, bpt);
 					bpt.breakpointHit();
 				});
 	}
@@ -470,6 +469,9 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 					return TargetEventType.THREAD_EXITED;
 				}
 				return TargetEventType.STOPPED;
+			case SESSION_EXIT:
+				getModel().close();
+				break;
 			default:
 				break;
 		}

@@ -30,11 +30,7 @@ import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
-import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetObject.TargetUpdateMode;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
@@ -50,26 +46,26 @@ import ghidra.util.Msg;
  */
 @TargetObjectSchemaInfo(
 	name = "Debugger",
-	elements = { //
-		@TargetElementType(type = Void.class) //
+	elements = {
+		@TargetElementType(type = Void.class)
 	},
-	attributes = { //
+	attributes = {
 		@TargetAttributeType(
 			name = "Attributes",
 			type = JdiModelTargetAttributesContainer.class,
 			required = true,
-			fixed = true), //
+			fixed = true),
 		@TargetAttributeType(
 			name = "Connectors",
 			type = JdiModelTargetConnectorContainer.class,
 			required = true,
-			fixed = true), //
+			fixed = true),
 		@TargetAttributeType(
 			name = "VirtualMachines",
 			type = JdiModelTargetVMContainer.class,
 			required = true,
-			fixed = true), //
-		@TargetAttributeType(type = Void.class) //
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
 	})
 public class JdiModelTargetRoot extends DefaultTargetModelRoot implements // 
 		JdiModelTargetAccessConditioned, //
@@ -113,8 +109,7 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 		), Map.of( //
 			ACCESSIBLE_ATTRIBUTE_NAME, accessible, //
 			DISPLAY_ATTRIBUTE_NAME, display, //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS //
 		), "Initialized");
 
 		impl.getManager().addEventsListener(null, this);
@@ -188,7 +183,6 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 				ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
 		}
-		listeners.fire(TargetAccessibilityListener.class).accessibilityChanged(this, accessible);
 	}
 
 	@Override
@@ -268,7 +262,6 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 			changeAttributes(List.of(), List.of(), Map.of( //
 				FOCUS_ATTRIBUTE_NAME, focus //
 			), "Focus changed");
-			listeners.fire(TargetFocusScopeListener.class).focusChanged(this, sel);
 			return true;
 		}
 		return false;

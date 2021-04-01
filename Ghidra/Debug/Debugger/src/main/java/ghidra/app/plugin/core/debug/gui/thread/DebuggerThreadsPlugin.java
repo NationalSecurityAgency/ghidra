@@ -29,8 +29,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		category = PluginCategoryNames.DEBUGGER, //
 		packageName = DebuggerPluginPackage.NAME, //
 		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			TraceOpenedPluginEvent.class, //
+		eventsConsumed = { TraceOpenedPluginEvent.class, //
 			TraceClosedPluginEvent.class, //
 			TraceActivatedPluginEvent.class, //
 		}, //

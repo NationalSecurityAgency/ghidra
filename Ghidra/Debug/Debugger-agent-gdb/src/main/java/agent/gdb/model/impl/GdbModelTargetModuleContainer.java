@@ -22,18 +22,18 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbModule;
 import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
 import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.lifecycle.Internal;
-import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "ModuleContainer",
+	elementResync = ResyncMode.ONCE, // TODO: Should this be NEVER?
 	attributes = {
 		@TargetAttributeType(type = Void.class)
 	},
@@ -122,11 +122,8 @@ public class GdbModelTargetModuleContainer
 	}
 
 	public CompletableFuture<?> refreshInternal() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return doRefresh().exceptionally(ex -> {
-			Msg.error(this, "Problem refreshing inferior's modules", ex);
+			impl.reportError(this, "Problem refreshing inferior's modules", ex);
 			return null;
 		});
 	}

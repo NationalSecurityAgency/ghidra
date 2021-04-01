@@ -17,15 +17,15 @@ package ghidra.dbg.target.schema;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
+import ghidra.dbg.util.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
-import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
 /**
@@ -44,6 +44,9 @@ import ghidra.util.Msg;
  * which matches any key. Similarly, the wild-card index is {@code []}.
  */
 public interface TargetObjectSchema {
+	public static final ResyncMode DEFAULT_ELEMENT_RESYNC = ResyncMode.NEVER;
+	public static final ResyncMode DEFAULT_ATTRIBUTE_RESYNC = ResyncMode.NEVER;
+
 	/**
 	 * An identifier for schemas within a context.
 	 * 
@@ -97,6 +100,71 @@ public interface TargetObjectSchema {
 		public int compareTo(SchemaName o) {
 			return this.name.compareTo(o.name);
 		}
+	}
+
+	/**
+	 * A mode describing what "promise" a model makes when keeping elements or attributes up to date
+	 * 
+	 * <p>
+	 * Each object specifies a element sync mode, and an attribute sync mode. These describe when
+	 * the client must call {@link TargetObject#resync(boolean, boolean)} to refresh/resync to
+	 * ensure it has a fresh cache of elements and/or attributes. Note that any client requesting a
+	 * resync will cause all clients to receive the updates.
+	 */
+	enum ResyncMode {
+		/**
+		 * The object's elements are kept up to date via unsolicited push notifications / callbacks
+		 * 
+		 * <p>
+		 * The client should never have to call {@link TargetObject#resync()}. This is the default,
+		 * and it is preferred for attributes. It is most appropriate for small-ish collections that
+		 * change often and that the client is likely to need, e.g., the process, thread, and module
+		 * lists. In general, if the native debugger or API offers callbacks for updating the
+		 * collection, then this is the mode to use.
+		 */
+		NEVER {
+			@Override
+			public boolean shouldResync(CompletableFuture<Void> curRequest) {
+				return false;
+			}
+		},
+		/**
+		 * The object must be explicitly synchronized once
+		 * 
+		 * <p>
+		 * This mode is appropriate for large collections, e.g., the symbols of a module. To push
+		 * these without solicitation could be expensive, both for the model to retrieve them from
+		 * the debugger, and for the client to process the collection. They should only be retrieved
+		 * when asked, via {@link TargetObject#resync()}. Such collections are typically fixed, and
+		 * so do not require later updates. Nevertheless, if the collection <em>does</em> change,
+		 * then those updates must be pushed without further solicitation.
+		 */
+		ONCE {
+			@Override
+			public boolean shouldResync(CompletableFuture<Void> curRequest) {
+				return curRequest == null || curRequest.isCompletedExceptionally();
+			}
+		},
+		/**
+		 * The object's elements are only updated when requested
+		 * 
+		 * <p>
+		 * This is the default for elements. It is appropriate for collections where the client
+		 * doesn't necessarily need an up-to-date copy. Please note the higher likelihood that the
+		 * client may make requests involving an object that has since become invalid. The model
+		 * must be prepared to reject those requests gracefully. The most common example is the list
+		 * of attachable processes: It should only be retrieved when requested, and there's no need
+		 * to keep it up to date. If a process terminates, and the client later requests to attach
+		 * to it, the request may be rejected.
+		 */
+		ALWAYS {
+			@Override
+			public boolean shouldResync(CompletableFuture<Void> curRequest) {
+				return true;
+			}
+		};
+
+		public abstract boolean shouldResync(CompletableFuture<Void> curRequest);
 	}
 
 	/**
@@ -259,6 +327,13 @@ public interface TargetObjectSchema {
 	}
 
 	/**
+	 * Get the re-synchronization mode for the object's elements
+	 * 
+	 * @return the element re-synchronization mode
+	 */
+	ResyncMode getElementResyncMode();
+
+	/**
 	 * Get the map of attribute names to named schemas
 	 * 
 	 * @return the map
@@ -298,6 +373,13 @@ public interface TargetObjectSchema {
 		}
 		return getDefaultAttributeSchema();
 	}
+
+	/**
+	 * Get the re-synchronization mode for attributes
+	 * 
+	 * @return the attribute re-synchronization mode
+	 */
+	ResyncMode getAttributeResyncMode();
 
 	/**
 	 * Get the named schema for a child having the given key
@@ -346,6 +428,13 @@ public interface TargetObjectSchema {
 	}
 
 	/**
+	 * Do the same as {@link #searchFor(Class, List, boolean)} with an empty prefix
+	 */
+	default PathMatcher searchFor(Class<? extends TargetObject> type, boolean requireCanonical) {
+		return searchFor(type, List.of(), requireCanonical);
+	}
+
+	/**
 	 * Find (sub) path patterns that match objects implementing a given interface
 	 * 
 	 * <p>
@@ -353,44 +442,290 @@ public interface TargetObjectSchema {
 	 * successor implementing the interface.
 	 * 
 	 * @param type the sub-type of {@link TargetObject} to search for
+	 * @param prefix the prefix for each relative path pattern
 	 * @param requireCanonical only return patterns matching a canonical location for the type
 	 * @return a set of patterns where such objects could be found
 	 */
-	default Set<PathPattern> searchFor(Class<? extends TargetObject> type,
+	default PathMatcher searchFor(Class<? extends TargetObject> type, List<String> prefix,
 			boolean requireCanonical) {
 		if (type == TargetObject.class) {
 			throw new IllegalArgumentException("Must provide a specific interface");
 		}
-		Set<PathPattern> result = new LinkedHashSet<>();
-		searchFor(result, List.of(), false, type, requireCanonical);
+		PathMatcher result = new PathMatcher();
+		Private.searchFor(this, result, prefix, true, type, requireCanonical, new HashSet<>());
 		return result;
 	}
 
-	@Internal // TODO: Make a separate internal interface?
-	default void searchFor(Set<PathPattern> result, List<String> prefix, boolean parentIsCanonical,
-			Class<? extends TargetObject> type, boolean requireCanonical) {
-		if (getInterfaces().contains(type) && parentIsCanonical) {
-			result.add(new PathPattern(prefix));
+	class Private {
+		private abstract static class BreadthFirst<T extends SearchEntry> {
+			Set<T> allOnLevel = new HashSet<>();
+
+			public BreadthFirst(Set<T> seed) {
+				allOnLevel.addAll(seed);
+			}
+
+			public void expandAttributes(Set<T> nextLevel, T ent) {
+				SchemaContext ctx = ent.schema.getContext();
+				for (AttributeSchema as : ent.schema.getAttributeSchemas().values()) {
+					try {
+						SchemaName schema = as.getSchema();
+						TargetObjectSchema child = ctx.getSchema(schema);
+						expandAttribute(nextLevel, ent, child,
+							PathUtils.extend(ent.path, as.getName()));
+					}
+					catch (NullPointerException npe) {
+						Msg.error(this, "Null schema for " + as);
+					}
+				}
+			}
+
+			public void expandDefaultAttribute(Set<T> nextLevel, T ent) {
+				SchemaContext ctx = ent.schema.getContext();
+				AttributeSchema das = ent.schema.getDefaultAttributeSchema();
+				TargetObjectSchema child = ctx.getSchema(das.getSchema());
+				expandAttribute(nextLevel, ent, child, PathUtils.extend(ent.path, das.getName()));
+			}
+
+			public void expandElements(Set<T> nextLevel, T ent) {
+				SchemaContext ctx = ent.schema.getContext();
+				for (Map.Entry<String, SchemaName> elemEnt : ent.schema.getElementSchemas()
+						.entrySet()) {
+					TargetObjectSchema child = ctx.getSchema(elemEnt.getValue());
+					expandElement(nextLevel, ent, child,
+						PathUtils.index(ent.path, elemEnt.getKey()));
+				}
+			}
+
+			public void expandDefaultElement(Set<T> nextLevel, T ent) {
+				SchemaContext ctx = ent.schema.getContext();
+				TargetObjectSchema child = ctx.getSchema(ent.schema.getDefaultElementSchema());
+				expandElement(nextLevel, ent, child, PathUtils.index(ent.path, ""));
+			}
+
+			public void nextLevel() {
+				Set<T> nextLevel = new HashSet<>();
+				for (T ent : allOnLevel) {
+					if (!descend(ent)) {
+						continue;
+					}
+					expandAttributes(nextLevel, ent);
+					expandDefaultAttribute(nextLevel, ent);
+					expandElements(nextLevel, ent);
+					expandDefaultElement(nextLevel, ent);
+				}
+				allOnLevel = nextLevel;
+			}
+
+			public boolean descend(T ent) {
+				return true;
+			}
+
+			public void expandAttribute(Set<T> nextLevel, T ent, TargetObjectSchema schema,
+					List<String> path) {
+			}
+
+			public void expandElement(Set<T> nextLevel, T ent, TargetObjectSchema schema,
+					List<String> path) {
+			}
 		}
 
-		for (Entry<String, SchemaName> ent : getElementSchemas().entrySet()) {
-			List<String> extended = PathUtils.index(prefix, ent.getKey());
-			TargetObjectSchema elemSchema = getContext().getSchema(ent.getValue());
-			elemSchema.searchFor(result, extended, isCanonicalContainer(), type, requireCanonical);
-		}
-		List<String> deExtended = PathUtils.extend(prefix, "[]");
-		TargetObjectSchema deSchema = getContext().getSchema(getDefaultElementSchema());
-		deSchema.searchFor(result, deExtended, isCanonicalContainer(), type, requireCanonical);
+		private static class SearchEntry {
+			final List<String> path;
+			final TargetObjectSchema schema;
 
-		for (Entry<String, AttributeSchema> ent : getAttributeSchemas().entrySet()) {
-			List<String> extended = PathUtils.extend(prefix, ent.getKey());
-			TargetObjectSchema attrSchema = getContext().getSchema(ent.getValue().getSchema());
-			attrSchema.searchFor(result, extended, isCanonicalContainer(), type, requireCanonical);
+			public SearchEntry(List<String> path, TargetObjectSchema schema) {
+				this.path = path;
+				this.schema = schema;
+			}
 		}
-		List<String> daExtended = PathUtils.extend(prefix, "");
-		TargetObjectSchema daSchema =
-			getContext().getSchema(getDefaultAttributeSchema().getSchema());
-		daSchema.searchFor(result, daExtended, isCanonicalContainer(), type, requireCanonical);
+
+		private static class CanonicalSearchEntry extends SearchEntry {
+			final boolean parentIsCanonical;
+
+			public CanonicalSearchEntry(List<String> path, boolean parentIsCanonical,
+					TargetObjectSchema schema) {
+				super(path, schema);
+				this.parentIsCanonical = parentIsCanonical;
+			}
+		}
+
+		private static void searchFor(TargetObjectSchema sch, PathMatcher result,
+				List<String> prefix, boolean parentIsCanonical, Class<? extends TargetObject> type,
+				boolean requireCanonical, Set<TargetObjectSchema> visited) {
+			if (!visited.add(sch)) {
+				return;
+			}
+
+			if (sch.getInterfaces().contains(type) && parentIsCanonical) {
+				result.addPattern(prefix);
+			}
+			SchemaContext ctx = sch.getContext();
+			boolean isCanonical = sch.isCanonicalContainer();
+			for (Entry<String, SchemaName> ent : sch.getElementSchemas().entrySet()) {
+				List<String> extended = PathUtils.index(prefix, ent.getKey());
+				TargetObjectSchema elemSchema = ctx.getSchema(ent.getValue());
+				searchFor(elemSchema, result, extended, isCanonical, type, requireCanonical,
+					visited);
+			}
+			List<String> deExtended = PathUtils.extend(prefix, "[]");
+			TargetObjectSchema deSchema = ctx.getSchema(sch.getDefaultElementSchema());
+			searchFor(deSchema, result, deExtended, isCanonical, type, requireCanonical, visited);
+
+			for (Entry<String, AttributeSchema> ent : sch.getAttributeSchemas().entrySet()) {
+				List<String> extended = PathUtils.extend(prefix, ent.getKey());
+				TargetObjectSchema attrSchema = ctx.getSchema(ent.getValue().getSchema());
+				searchFor(attrSchema, result, extended, parentIsCanonical, type, requireCanonical,
+					visited);
+			}
+			List<String> daExtended = PathUtils.extend(prefix, "");
+			TargetObjectSchema daSchema =
+				ctx.getSchema(sch.getDefaultAttributeSchema().getSchema());
+			searchFor(daSchema, result, daExtended, parentIsCanonical, type, requireCanonical,
+				visited);
+
+			visited.remove(sch);
+		}
+
+		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
+				Class<? extends TargetObject> type) {
+			Set<SearchEntry> init = Set.of(new SearchEntry(List.of(), seed));
+			BreadthFirst<SearchEntry> breadth = new BreadthFirst<>(init) {
+				final Set<TargetObjectSchema> visited = new HashSet<>();
+
+				@Override
+				public boolean descend(SearchEntry ent) {
+					return ent.schema.getInterfaces().contains(TargetAggregate.class);
+				}
+
+				@Override
+				public void expandAttribute(Set<SearchEntry> nextLevel, SearchEntry ent,
+						TargetObjectSchema schema, List<String> path) {
+					if (visited.add(schema)) {
+						nextLevel.add(new SearchEntry(path, schema));
+					}
+				}
+
+				@Override
+				public void expandDefaultAttribute(Set<SearchEntry> nextLevel, SearchEntry ent) {
+				}
+
+				@Override
+				public void expandElements(Set<SearchEntry> nextLevel, SearchEntry ent) {
+				}
+
+				@Override
+				public void expandDefaultElement(Set<SearchEntry> nextLevel, SearchEntry ent) {
+				}
+			};
+			while (!breadth.allOnLevel.isEmpty()) {
+				Set<SearchEntry> found = breadth.allOnLevel.stream()
+						.filter(ent -> ent.schema.getInterfaces().contains(type))
+						.collect(Collectors.toSet());
+				if (!found.isEmpty()) {
+					if (found.size() == 1) {
+						return found.iterator().next().path;
+					}
+					return null;
+				}
+				breadth.nextLevel();
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Find the (sub) path to the canonical container for objects implementing a given interface
+	 * 
+	 * <p>
+	 * If more than one container is found having the shortest path, then {@code null} is returned.
+	 * 
+	 * @param type the sub-type of {@link TargetObject} to search for
+	 * @return the single path to that container
+	 */
+	default List<String> searchForCanonicalContainer(Class<? extends TargetObject> type) {
+		if (type == TargetObject.class) {
+			throw new IllegalArgumentException("Must provide a specific interface");
+		}
+		SchemaContext ctx = getContext();
+		Set<TargetObjectSchema> visited = new HashSet<>();
+		Set<TargetObjectSchema> visitedAsElement = new HashSet<>();
+		Set<Private.CanonicalSearchEntry> allOnLevel = new HashSet<>();
+		allOnLevel.add(new Private.CanonicalSearchEntry(List.of(), false, this));
+		while (!allOnLevel.isEmpty()) {
+			List<String> found = null;
+			for (Private.CanonicalSearchEntry ent : allOnLevel) {
+				if (ent.schema.getInterfaces().contains(type) && ent.parentIsCanonical) {
+					// Check for final being index is in parentIsCanonical.
+					if (found != null) {
+						return null; // Non-unique answer
+					}
+					found = PathUtils.parent(ent.path);
+				}
+			}
+			if (found != null) {
+				return List.copyOf(found); // Unique shortest answer
+			}
+
+			Set<Private.CanonicalSearchEntry> nextLevel = new HashSet<>();
+			for (Private.CanonicalSearchEntry ent : allOnLevel) {
+				if (PathPattern.isWildcard(PathUtils.getKey(ent.path))) {
+					continue;
+				}
+				for (Map.Entry<String, AttributeSchema> attrEnt : ent.schema.getAttributeSchemas()
+						.entrySet()) {
+					TargetObjectSchema attrSchema = ctx.getSchema(attrEnt.getValue().getSchema());
+					if (TargetObject.class.isAssignableFrom(attrSchema.getType()) &&
+						visited.add(attrSchema)) {
+						nextLevel.add(new Private.CanonicalSearchEntry(
+							PathUtils.extend(ent.path, attrEnt.getKey()), false, // If child is not element, this is not is canonical container
+							attrSchema));
+					}
+				}
+				for (Map.Entry<String, SchemaName> elemEnt : ent.schema.getElementSchemas()
+						.entrySet()) {
+					TargetObjectSchema elemSchema = ctx.getSchema(elemEnt.getValue());
+					visited.add(elemSchema); // Add but do not condition
+					if (visitedAsElement.add(elemSchema)) {
+						nextLevel.add(new Private.CanonicalSearchEntry(
+							PathUtils.index(ent.path, elemEnt.getKey()),
+							ent.schema.isCanonicalContainer(), elemSchema));
+					}
+				}
+				TargetObjectSchema deSchema = ctx.getSchema(ent.schema.getDefaultElementSchema());
+				visited.add(deSchema);
+				if (visitedAsElement.add(deSchema)) {
+					nextLevel.add(new Private.CanonicalSearchEntry(PathUtils.index(ent.path, ""),
+						ent.schema.isCanonicalContainer(), deSchema));
+				}
+			}
+			allOnLevel = nextLevel;
+		}
+		// We exhausted the reachable schemas
+		return null;
+	}
+
+	default List<String> searchForSuitable(Class<? extends TargetObject> type, List<String> path) {
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = getSuccessorSchema(path);
+			if (schema.getInterfaces().contains(type)) {
+				return path;
+			}
+			List<String> inAgg = Private.searchForSuitableInAggregate(schema, type);
+			if (inAgg != null) {
+				return PathUtils.extend(path, inAgg);
+			}
+		}
+		return null;
+	}
+
+	default List<String> searchForAncestor(Class<? extends TargetObject> type, List<String> path) {
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = getSuccessorSchema(path);
+			if (schema.getInterfaces().contains(type)) {
+				return path;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -433,8 +768,8 @@ public interface TargetObjectSchema {
 			String path =
 				key == null ? null : PathUtils.toString(PathUtils.extend(parentPath, key));
 			String msg = path == null
-					? "Value " + value + " does not conform to required type " +
-						getType() + " of schema " + this
+					? "Value " + value + " does not conform to required type " + getType() +
+						" of schema " + this
 					: "Value " + value + " for " + path + " does not conform to required type " +
 						getType() + " of schema " + this;
 			Msg.error(this, msg);
@@ -445,8 +780,8 @@ public interface TargetObjectSchema {
 		for (Class<? extends TargetObject> iface : getInterfaces()) {
 			if (!iface.isAssignableFrom(cls)) {
 				// TODO: Should this throw an exception, eventually?
-				String msg = "Value " + value + " does not implement required interface " +
-					iface + " of schema " + this;
+				String msg = "Value " + value + " does not implement required interface " + iface +
+					" of schema " + this;
 				Msg.error(this, msg);
 				if (strict) {
 					throw new AssertionError(msg);
@@ -465,8 +800,7 @@ public interface TargetObjectSchema {
 	 */
 	default void validateRequiredAttributes(TargetObject object, boolean strict) {
 		Set<String> present = object.getCachedAttributes().keySet();
-		Set<String> missing = getAttributeSchemas()
-				.values()
+		Set<String> missing = getAttributeSchemas().values()
 				.stream()
 				.filter(AttributeSchema::isRequired)
 				.map(AttributeSchema::getName)
@@ -553,8 +887,7 @@ public interface TargetObjectSchema {
 	 * @param delta the delta, before or after the fact
 	 */
 	default void validateElementDelta(List<String> parentPath,
-			Delta<?, ? extends TargetObject> delta,
-			boolean strict) {
+			Delta<?, ? extends TargetObject> delta, boolean strict) {
 		for (Map.Entry<String, ? extends TargetObject> ent : delta.added.entrySet()) {
 			TargetObject element = ent.getValue();
 			TargetObjectSchema schema = getContext().getSchema(getElementSchema(ent.getKey()));

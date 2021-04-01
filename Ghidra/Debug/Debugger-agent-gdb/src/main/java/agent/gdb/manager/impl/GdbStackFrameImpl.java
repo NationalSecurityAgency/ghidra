@@ -77,6 +77,32 @@ public class GdbStackFrameImpl implements GdbStackFrame {
 	}
 
 	@Override
+	public GdbStackFrame fillWith(GdbStackFrame frame) {
+		if (addr != null && func != null) {
+			return this;
+		}
+		BigInteger fAddr = addr;
+		if (fAddr == null) {
+			if (frame != null && frame.getAddress() != null) {
+				fAddr = frame.getAddress();
+			}
+			else {
+				fAddr = BigInteger.ZERO;
+			}
+		}
+		String fFunc = func;
+		if (fFunc == null) {
+			if (frame != null && frame.getFunction() != null) {
+				fFunc = frame.getFunction();
+			}
+			else {
+				fFunc = "";
+			}
+		}
+		return new GdbStackFrameImpl(thread, level, fAddr, fFunc);
+	}
+
+	@Override
 	public CompletableFuture<Void> select() {
 		return manager.execute(new GdbThreadSelectCommand(manager, thread.getId(), level));
 	}
@@ -95,7 +121,9 @@ public class GdbStackFrameImpl implements GdbStackFrame {
 
 	@Override
 	public CompletableFuture<Void> writeRegisters(Map<GdbRegister, BigInteger> regVals) {
-		return manager.execute(new GdbWriteRegistersCommand(manager, thread, level, regVals));
+		return thread.getInferior().syncEndianness().thenCompose(__ -> {
+			return manager.execute(new GdbWriteRegistersCommand(manager, thread, level, regVals));
+		});
 	}
 
 	@Override

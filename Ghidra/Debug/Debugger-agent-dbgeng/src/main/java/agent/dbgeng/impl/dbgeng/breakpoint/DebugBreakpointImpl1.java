@@ -15,13 +15,16 @@
  */
 package agent.dbgeng.impl.dbgeng.breakpoint;
 
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.ptr.PointerByReference;
 
 import agent.dbgeng.dbgeng.DbgEng;
-import agent.dbgeng.dbgeng.DebugClient;
 import agent.dbgeng.dbgeng.DbgEng.OpaqueCleanable;
+import agent.dbgeng.dbgeng.DebugClient;
 import agent.dbgeng.impl.dbgeng.client.DebugClientInternal;
 import agent.dbgeng.impl.dbgeng.control.DebugControlInternal;
 import agent.dbgeng.jna.dbgeng.WinNTExtra.Machine;
@@ -124,9 +127,14 @@ public class DebugBreakpointImpl1 implements DebugBreakpointInternal {
 	}
 
 	@Override
-	public long getOffset() {
+	public Long getOffset() {
 		ULONGLONGByReference pullOffset = new ULONGLONGByReference();
-		COMUtils.checkRC(jnaBreakpoint.GetOffset(pullOffset));
+		HRESULT getOffset = jnaBreakpoint.GetOffset(pullOffset);
+		if (getOffset.longValue() == Kernel32.E_NOINTERFACE) {
+			// Per MSDN, this means the placement is deferred
+			return null;
+		}
+		COMUtils.checkRC(getOffset);
 		return pullOffset.getValue().longValue();
 	}
 
@@ -134,6 +142,21 @@ public class DebugBreakpointImpl1 implements DebugBreakpointInternal {
 	public void setOffset(long offset) {
 		ULONGLONG ullOffset = new ULONGLONG(offset);
 		COMUtils.checkRC(jnaBreakpoint.SetOffset(ullOffset));
+	}
+
+	@Override
+	public String getOffsetExpression() {
+		ULONGByReference pulExpressionSize = new ULONGByReference();
+		COMUtils.checkRC(jnaBreakpoint.GetOffsetExpression(null, new ULONG(0), pulExpressionSize));
+		byte[] buffer = new byte[pulExpressionSize.getValue().intValue()];
+		COMUtils.checkRC(
+			jnaBreakpoint.GetOffsetExpression(buffer, pulExpressionSize.getValue(), null));
+		return Native.toString(buffer);
+	}
+
+	@Override
+	public void setOffsetExpression(String expression) {
+		COMUtils.checkRC(jnaBreakpoint.SetOffsetExpression(expression));
 	}
 
 	@Override

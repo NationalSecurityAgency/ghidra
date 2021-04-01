@@ -18,8 +18,11 @@ package agent.gdb.model.impl;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import agent.gdb.manager.*;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import agent.gdb.manager.reason.GdbReason;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetModelRoot;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
@@ -32,15 +35,13 @@ import ghidra.util.Msg;
 @TargetObjectSchemaInfo(
 	name = "Session",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
-public class GdbModelTargetSession extends DefaultTargetModelRoot implements
-		TargetAccessConditioned, TargetAttacher, TargetFocusScope, TargetInterpreter,
-		TargetInterruptible, TargetCmdLineLauncher, TargetEventScope,
-		GdbConsoleOutputListener, GdbEventsListenerAdapter {
+		@TargetAttributeType(type = Void.class) })
+public class GdbModelTargetSession extends DefaultTargetModelRoot
+		implements TargetAccessConditioned, TargetAttacher, TargetFocusScope, TargetInterpreter,
+		TargetInterruptible, TargetCmdLineLauncher, TargetEventScope, GdbConsoleOutputListener,
+		GdbEventsListenerAdapter {
 	protected static final String GDB_PROMPT = "(gdb)";
 
 	protected final GdbModelImpl impl;
@@ -51,6 +52,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 	protected final GdbModelTargetBreakpointContainer breakpoints;
 
 	private boolean accessible = true;
+	protected AtomicInteger focusFreezeCount = new AtomicInteger();
 	protected GdbModelSelectableObject focus;
 
 	protected String debugger = "gdb"; // Used by GdbModelTargetEnvironment
@@ -71,7 +73,8 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 			PROMPT_ATTRIBUTE_NAME, GDB_PROMPT, //
 			DISPLAY_ATTRIBUTE_NAME, display, //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, GdbModelTargetInferior.SUPPORTED_KINDS, //
+			FOCUS_ATTRIBUTE_NAME, this // Satisfy schema. Will be set to first inferior.
 		), "Initialized");
 		impl.gdb.addEventsListener(this);
 		impl.gdb.addConsoleOutputListener(this);
@@ -109,7 +112,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 				Map.of(DISPLAY_ATTRIBUTE_NAME, display = out.split("\n")[0].strip() //
 			), "Version refreshed");
 		}).exceptionally(e -> {
-			Msg.error(this, "Could not get GDB version", e);
+			model.reportError(this, "Could not get GDB version", e);
 			debugger = "gdb";
 			return null;
 		});
@@ -133,7 +136,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 			default:
 				throw new AssertionError();
 		}
-		listeners.fire(TargetInterpreterListener.class).consoleOutput(this, dbgChannel, out);
+		listeners.fire.consoleOutput(this, dbgChannel, out);
 	}
 
 	@Override
@@ -158,16 +161,9 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 	}
 
 	public void setAccessible(boolean accessible) {
-		synchronized (attributes) {
-			if (this.accessible == accessible) {
-				return;
-			}
-			this.accessible = accessible;
-			changeAttributes(List.of(), Map.of( //
-				ACCESSIBLE_ATTRIBUTE_NAME, accessible //
-			), "Accessibility changed");
-		}
-		listeners.fire(TargetAccessibilityListener.class).accessibilityChanged(this, accessible);
+		changeAttributes(List.of(), Map.of( //
+			ACCESSIBLE_ATTRIBUTE_NAME, this.accessible = accessible //
+		), "Accessibility changed");
 	}
 
 	@Override
@@ -177,29 +173,27 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 
 	@Override
 	public CompletableFuture<Void> launch(List<String> args) {
-		// TODO: Find first unused inferior?
-		return impl.gdb.addInferior().thenCompose(inf -> {
+		return impl.gateFuture(impl.gdb.availableInferior().thenCompose(inf -> {
 			return GdbModelImplUtils.launch(impl, inf, args);
-		});
+		}).thenApply(__ -> null));
 	}
 
 	@Override
 	public CompletableFuture<Void> attach(TargetAttachable attachable) {
-		GdbModelTargetAttachable mine =
-			getModel().assertMine(GdbModelTargetAttachable.class, attachable);
+		GdbModelTargetAttachable mine = impl.assertMine(GdbModelTargetAttachable.class, attachable);
 		return attach(mine.pid);
 	}
 
 	@Override
 	public CompletableFuture<Void> attach(long pid) {
-		// TODO: Find first unused inferior?
-		return impl.gdb.addInferior().thenCompose(inf -> {
+		return impl.gateFuture(impl.gdb.availableInferior().thenCompose(inf -> {
 			return inf.attach(pid).thenApply(__ -> null);
-		});
+		}));
 	}
 
 	@Override
 	public CompletableFuture<Void> interrupt() {
+		//return impl.gdb.interrupt();
 		try {
 			impl.gdb.sendInterruptNow();
 		}
@@ -211,12 +205,13 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 
 	@Override
 	public CompletableFuture<Void> execute(String cmd) {
-		return impl.gdb.console(cmd).exceptionally(GdbModelImpl::translateEx);
+		return impl.gateFuture(impl.gdb.console(cmd).exceptionally(GdbModelImpl::translateEx));
 	}
 
 	@Override
 	public CompletableFuture<String> executeCapture(String cmd) {
-		return impl.gdb.consoleCapture(cmd).exceptionally(GdbModelImpl::translateEx);
+		return impl
+				.gateFuture(impl.gdb.consoleCapture(cmd).exceptionally(GdbModelImpl::translateEx));
 	}
 
 	@Override
@@ -244,22 +239,40 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot implements
 		inferiors.invalidateMemoryAndRegisterCaches();
 	}
 
-	protected void setFocus(GdbModelSelectableObject sel) {
-		boolean doFire;
-		synchronized (this) {
-			doFire = !Objects.equals(this.focus, sel);
-			this.focus = sel;
-		}
-		if (doFire) {
+	protected void freezeFocusUpdates() {
+		focusFreezeCount.incrementAndGet();
+	}
+
+	protected void thawFocusUpdates() {
+		focusFreezeCount.decrementAndGet();
+	}
+
+	protected void setFocus(GdbModelSelectableObject focus) {
+		if (focusFreezeCount.get() == 0) {
 			changeAttributes(List.of(), Map.of( //
-				FOCUS_ATTRIBUTE_NAME, focus //
+				FOCUS_ATTRIBUTE_NAME, this.focus = focus //
 			), "Focus changed");
-			listeners.fire(TargetFocusScopeListener.class).focusChanged(this, sel);
 		}
 	}
 
 	@Override
 	public GdbModelSelectableObject getFocus() {
 		return focus;
+	}
+
+	@Override
+	public void inferiorStateChanged(GdbInferior inf, Collection<GdbThread> threads, GdbState state,
+			GdbThread thread, GdbCause cause, GdbReason reason) {
+		GdbStateChangeRecord sco =
+			new GdbStateChangeRecord(inf, threads, state, thread, cause, reason);
+		GdbInferior toFocus = thread == null ? impl.gdb.currentInferior() : thread.getInferior();
+		freezeFocusUpdates();
+		CompletableFuture<Void> infUpdates = CompletableFuture.allOf(
+			breakpoints.stateChanged(sco),
+			inferiors.stateChanged(sco));
+		infUpdates.whenComplete((v, t) -> {
+			thawFocusUpdates();
+			toFocus.select();
+		});
 	}
 }

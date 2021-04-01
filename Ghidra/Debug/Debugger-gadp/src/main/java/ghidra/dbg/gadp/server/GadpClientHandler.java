@@ -37,7 +37,6 @@ import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetConsole.TargetTextConsoleListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
@@ -78,7 +77,7 @@ public class GadpClientHandler
 		}
 	}
 
-	protected class ListenerForEvents implements DebuggerModelListener, TargetTextConsoleListener {
+	protected class ListenerForEvents implements DebuggerModelListener {
 		@Override
 		public void created(TargetObject object) {
 			if (!sock.isOpen()) {
@@ -175,7 +174,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void breakpointHit(TargetBreakpointContainer container, TargetObject trapped,
+		public void breakpointHit(TargetObject container, TargetObject trapped,
 				TargetStackFrame frame, TargetBreakpointSpec spec,
 				TargetBreakpointLocation breakpoint) {
 			if (!sock.isOpen()) {
@@ -209,7 +208,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void memoryReadError(TargetMemory memory, AddressRange range,
+		public void memoryReadError(TargetObject memory, AddressRange range,
 				DebuggerMemoryAccessException e) {
 			if (!sock.isOpen()) {
 				return;
@@ -225,7 +224,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
+		public void memoryUpdated(TargetObject memory, Address address, byte[] data) {
 			if (!sock.isOpen()) {
 				return;
 			}
@@ -240,7 +239,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
+		public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
 			if (!sock.isOpen()) {
 				return;
 			}
@@ -254,7 +253,7 @@ public class GadpClientHandler
 		}
 
 		@Override
-		public void event(TargetEventScope object, TargetThread eventThread, TargetEventType type,
+		public void event(TargetObject object, TargetThread eventThread, TargetEventType type,
 				String description, List<Object> parameters) {
 			if (!sock.isOpen()) {
 				return;
@@ -502,6 +501,7 @@ public class GadpClientHandler
 	protected CompletableFuture<?> processResync(int seqno, Gadp.ResyncRequest req) {
 		List<String> path = req.getPath().getEList();
 		return model.fetchModelObject(path).thenCompose(obj -> {
+			DebuggerObjectModel.requireNonNull(obj, path);
 			return obj.resync(req.getAttributes(), req.getElements());
 		}).thenCompose(__ -> {
 			return model.flushEvents();
@@ -541,7 +541,7 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<Void> performBreakCreate(Gadp.BreakCreateRequest req,
-			TargetBreakpointContainer breaks) {
+			TargetBreakpointSpecContainer breaks) {
 		Set<TargetBreakpointKind> kinds = GadpValueUtils.getBreakKindSet(req.getKinds());
 		switch (req.getSpecCase()) {
 			case EXPRESSION:
@@ -556,8 +556,8 @@ public class GadpClientHandler
 	}
 
 	protected CompletableFuture<?> processBreakCreate(int seqno, Gadp.BreakCreateRequest req) {
-		TargetBreakpointContainer breaks =
-			getObjectChecked(req.getPath()).as(TargetBreakpointContainer.class);
+		TargetBreakpointSpecContainer breaks =
+			getObjectChecked(req.getPath()).as(TargetBreakpointSpecContainer.class);
 		return performBreakCreate(req, breaks).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {

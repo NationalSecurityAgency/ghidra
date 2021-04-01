@@ -121,7 +121,7 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 			map.put(retAddr.getIndex(), bytes);
 		}
 		if (!map.isEmpty()) {
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, map);
+			listeners.fire.registersUpdated(this, map);
 		}
 		return CompletableFuture.completedFuture(map);
 	}

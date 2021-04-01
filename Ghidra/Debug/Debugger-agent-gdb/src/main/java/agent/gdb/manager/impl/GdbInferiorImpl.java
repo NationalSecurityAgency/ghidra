@@ -21,8 +21,6 @@ import java.nio.ByteOrder;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -203,9 +201,19 @@ public class GdbInferiorImpl implements GdbInferior {
 		return threads;
 	}
 
+	protected <T> CompletableFuture<T> execute(GdbCommand<? extends T> cmd) {
+		/**
+		 * Queue select and execute one immediately after the other. If I do thenCompose, it's
+		 * possible for some other command to get inserted between, which means this inferior may no
+		 * longer be current for the actual command execution. NB: The select command will cancel
+		 * itself if this inferior is already current.
+		 */
+		return select().thenCombine(manager.execute(cmd), (s, e) -> e);
+	}
+
 	@Override
 	public CompletableFuture<Map<Integer, GdbThread>> listThreads() {
-		return manager.execute(new GdbListThreadsCommand(manager, this));
+		return execute(new GdbListThreadsCommand(manager, this));
 	}
 
 	@Override
@@ -215,9 +223,9 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	@Override
 	public CompletableFuture<Map<String, GdbModule>> listModules() {
-		// "unlikely" is an unlikely section name. Goal is to exclude section lines.
+		// "nosections" is an unlikely section name. Goal is to exclude section lines.
 		// TODO: See how this behaves on other GDB versions.
-		return manager.consoleCapture("maintenance info sections ALLOBJ unlikely")
+		return consoleCapture("maintenance info sections ALLOBJ nosections")
 				.thenApply(this::parseModuleNames);
 	}
 
@@ -226,7 +234,7 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	protected CompletableFuture<Void> doLoadSections() {
-		return manager.consoleCapture("maintenance info sections ALLOBJ")
+		return consoleCapture("maintenance info sections ALLOBJ")
 				.thenAccept(this::parseAndUpdateAllModuleSections);
 	}
 
@@ -311,7 +319,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	@Override
 	public CompletableFuture<Map<BigInteger, GdbMemoryMapping>> listMappings() {
-		return manager.consoleCapture("info proc mappings").thenApply(this::parseMappings);
+		return consoleCapture("info proc mappings").thenApply(this::parseMappings);
 	}
 
 	protected Map<BigInteger, GdbMemoryMapping> parseMappings(String out) {
@@ -345,116 +353,93 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	@Override
 	public CompletableFuture<Void> fileExecAndSymbols(String file) {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbFileExecAndSymbolsCommand(manager, file));
-		});
+		return execute(new GdbFileExecAndSymbolsCommand(manager, file));
 	}
 
 	@Override
 	public CompletableFuture<GdbThread> run() {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbRunCommand(manager));
-		});
+		return execute(new GdbRunCommand(manager));
+	}
+
+	@Override
+	public CompletableFuture<GdbThread> start() {
+		return execute(new GdbStartCommand(manager));
+	}
+
+	@Override
+	public CompletableFuture<GdbThread> starti() {
+		return execute(new GdbStartInstructionCommand(manager));
 	}
 
 	@Override
 	public CompletableFuture<Set<GdbThread>> attach(long toPid) {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbAttachCommand(manager, toPid));
-		});
-	}
-
-	protected <T> CompletableFuture<T> preferThread(
-			Function<GdbThreadImpl, CompletableFuture<T>> viaThread,
-			Supplier<CompletableFuture<T>> viaThis) {
-		Optional<GdbThreadImpl> first = threads.values().stream().findFirst();
-		if (first.isPresent()) {
-			return viaThread.apply(first.get());
-		}
-		return select().thenCompose(__ -> viaThis.get());
+		return execute(new GdbAttachCommand(manager, toPid));
 	}
 
 	@Override
 	public CompletableFuture<Void> console(String command) {
-		return preferThread(t -> t.console(command), () -> manager.console(command));
+		return execute(new GdbConsoleExecCommand(manager, null, null, command,
+			GdbConsoleExecCommand.Output.CONSOLE)).thenApply(e -> null);
 	}
 
 	@Override
 	public CompletableFuture<String> consoleCapture(String command) {
-		return preferThread(t -> t.consoleCapture(command), () -> manager.consoleCapture(command));
+		return execute(new GdbConsoleExecCommand(manager, null, null, command,
+			GdbConsoleExecCommand.Output.CAPTURE));
 	}
 
 	@Override
 	public CompletableFuture<Void> cont() {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbContinueCommand(manager, null));
-		});
+		return execute(new GdbContinueCommand(manager, null));
 	}
 
 	@Override
 	public CompletableFuture<Void> step(ExecSuffix suffix) {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbStepCommand(manager, null, suffix));
-		});
+		return execute(new GdbStepCommand(manager, null, suffix));
 	}
 
 	@Override
 	public CompletableFuture<String> evaluate(String expression) {
-		return preferThread(t -> t.evaluate(expression),
-			() -> manager.execute(new GdbEvaluateCommand(manager, null, null, expression)));
+		return execute(new GdbEvaluateCommand(manager, null, null, expression));
 	}
 
 	@Override
 	public CompletableFuture<Void> setTty(String tty) {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbSetInferiorTtyCommand(manager, tty));
-		});
+		return execute(new GdbSetInferiorTtyCommand(manager, tty));
 	}
 
 	@Override
 	public CompletableFuture<String> getVar(String varName) {
 		// TODO: Are these actually per-inferior?
 		// If so, should make them accessible via thread
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbGetVarCommand(manager, varName));
-		});
+		return execute(new GdbGetVarCommand(manager, varName));
 	}
 
 	@Override
 	public CompletableFuture<Void> setVar(String varName, String val) {
 		// TODO: Are these actually per-inferior?
 		// If so, should make them accessible via thread
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbSetVarCommand(manager, null, varName, val));
-		});
+		return execute(new GdbSetVarCommand(manager, null, varName, val));
 	}
 
 	@Override
 	public CompletableFuture<Void> detach() {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbDetachCommand(manager, this, null));
-		});
+		return execute(new GdbDetachCommand(manager, this, null));
 	}
 
 	@Override
 	public CompletableFuture<Void> kill() {
-		return select().thenCompose(__ -> {
-			return manager.execute(new GdbKillCommand(manager, null));
-		});
+		return execute(new GdbKillCommand(manager, null));
 	}
 
 	@Override
 	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
-		// I can't imagine this working without a thread....
-		return preferThread(t -> t.readMemory(addr, buf, len),
-			() -> manager.execute(new GdbReadMemoryCommand(manager, null, addr, buf, len)));
+		return execute(new GdbReadMemoryCommand(manager, null, addr, buf, len));
 	}
 
 	@Override
 	public CompletableFuture<Void> writeMemory(long addr, ByteBuffer buf, int len) {
-		// I can't imagine this working without a thread....
-		return preferThread(t -> t.writeMemory(addr, buf, len),
-			() -> manager.execute(new GdbWriteMemoryCommand(manager, null, addr, buf, len)));
+		return execute(new GdbWriteMemoryCommand(manager, null, addr, buf, len));
 	}
 
 	@Override

@@ -24,14 +24,20 @@ import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "ElementsContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetObject.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ElementsContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetObject.class)
+	},
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetElementsContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 

@@ -20,11 +20,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.jdom.Element;
 
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.util.PathUtils;
-import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
 
 public class ObjectContainer implements Comparable<ObjectContainer> {
@@ -157,18 +154,16 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		});
 	}
 
+	/*
 	protected void checkAutoRecord() {
 		if (targetObject != null && provider.isAutorecord()) {
 			TargetProcess proc = DebugModelConventions.liveProcessOrNull(targetObject);
 			if (proc != null) {
-				provider.startRecording(proc, false).exceptionally(ex -> {
-					Msg.error("Could not record and/or open target: " + targetObject, ex);
-					return null;
-				});
+				provider.startRecording(proc, false);
 			}
-			// Note that the recorder seeds its own listener with its target
 		}
 	}
+	*/
 
 	public void augmentElements(Collection<String> elementsRemoved,
 			Map<String, ? extends TargetObject> elementsAdded) {
@@ -340,7 +335,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 			c.propagateProvider(provider);
 		}
 		provider.fireObjectUpdated(this);
-		checkAutoRecord();
+		//checkAutoRecord();
 	}
 
 	// This should only be called once when the connection is activated

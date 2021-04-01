@@ -34,28 +34,35 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		this.manager = manager;
 	}
 
+	protected DebugStatus checkInterrupt(DebugStatus normal) {
+		if (manager.getControl().getInterrupt()) {
+			return DebugStatus.BREAK;
+		}
+		return normal;
+	}
+
 	@Override
 	public DebugStatus breakpoint(DebugBreakpoint bp) {
 		Msg.info(this, "***Breakpoint: " + bp.getId());
-		return manager.processEvent(new DbgBreakpointEvent(bp));
+		return checkInterrupt(manager.processEvent(new DbgBreakpointEvent(bp)));
 	}
 
 	@Override
 	public DebugStatus exception(DebugExceptionRecord64 exception, boolean firstChance) {
 		Msg.info(this, "***Exception: " + exception + ", first=" + firstChance);
-		return manager.processEvent(new DbgExceptionEvent(exception));
+		return checkInterrupt(manager.processEvent(new DbgExceptionEvent(exception)));
 	}
 
 	@Override
 	public DebugStatus createThread(DebugThreadInfo threadInfo) {
 		Msg.info(this, "***Thread created: " + Long.toHexString(threadInfo.handle));
-		return manager.processEvent(new DbgThreadCreatedEvent(threadInfo));
+		return checkInterrupt(manager.processEvent(new DbgThreadCreatedEvent(threadInfo)));
 	}
 
 	@Override
 	public DebugStatus exitThread(int exitCode) {
 		Msg.info(this, "***Thread exited: " + exitCode);
-		return manager.processEvent(new DbgThreadExitedEvent(exitCode));
+		return checkInterrupt(manager.processEvent(new DbgThreadExitedEvent(exitCode)));
 	}
 
 	@Override
@@ -63,20 +70,20 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		Msg.info(this, "***Process created: " + Long.toHexString(processInfo.handle));
 		Msg.info(this,
 			" **Thread created: " + Long.toHexString(processInfo.initialThreadInfo.handle));
-		return manager.processEvent(new DbgProcessCreatedEvent(processInfo));
+		return checkInterrupt(manager.processEvent(new DbgProcessCreatedEvent(processInfo)));
 	}
 
 	@Override
 	public DebugStatus exitProcess(int exitCode) {
 		Msg.info(this, "***Process exited: " + exitCode);
 		Msg.info(this, " **Thread exited");
-		return manager.processEvent(new DbgProcessExitedEvent(exitCode));
+		return checkInterrupt(manager.processEvent(new DbgProcessExitedEvent(exitCode)));
 	}
 
 	@Override
 	public DebugStatus loadModule(DebugModuleInfo moduleInfo) {
 		Msg.info(this, "***Module Loaded: " + moduleInfo);
-		return manager.processEvent(new DbgModuleLoadedEvent(moduleInfo));
+		return checkInterrupt(manager.processEvent(new DbgModuleLoadedEvent(moduleInfo)));
 	}
 
 	@Override
@@ -85,7 +92,7 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 			"***Module Unloaded: " + imageBaseName + ", " + Long.toHexString(baseOffset));
 		DebugModuleInfo info =
 			new DebugModuleInfo(0L, baseOffset, 0, basename(imageBaseName), imageBaseName, 0, 0);
-		return manager.processEvent(new DbgModuleUnloadedEvent(info));
+		return checkInterrupt(manager.processEvent(new DbgModuleUnloadedEvent(info)));
 	}
 
 	private String basename(String path) {
@@ -103,27 +110,27 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 			DebugStatus status = DebugStatus.fromArgument(argument);
 			Msg.info(this, "***ExecutionStatus: " + status);
 			if (status.equals(DebugStatus.NO_DEBUGGEE)) {
-				event.setState(DbgState.EXIT);
+				event.setState(DbgState.SESSION_EXIT);
 			}
-			return manager.processEvent(event);
+			return checkInterrupt(manager.processEvent(event));
 		}
 		if (flags.contains(ChangeEngineState.BREAKPOINTS)) {
 			Msg.info(this, "***BreakpointChanged: " + flags + ", " + argument + " on " +
 				Thread.currentThread());
-			return manager.processEvent(event);
+			return checkInterrupt(manager.processEvent(event));
 		}
 		if (flags.contains(ChangeEngineState.CURRENT_THREAD)) {
 			Msg.info(this, "***CurrentThread: " + argument);
 			if (argument < 0) {
-				return manager.processEvent(event);
+				return checkInterrupt(manager.processEvent(event));
 			}
 		}
 		if (flags.contains(ChangeEngineState.SYSTEMS)) {
 			Msg.info(this, "***Systems: " + argument);
 			event.setState(DbgState.RUNNING);
-			return manager.processEvent(event);
+			return checkInterrupt(manager.processEvent(event));
 		}
-		return DebugStatus.NO_CHANGE;
+		return checkInterrupt(DebugStatus.NO_CHANGE);
 	}
 
 	//@Override

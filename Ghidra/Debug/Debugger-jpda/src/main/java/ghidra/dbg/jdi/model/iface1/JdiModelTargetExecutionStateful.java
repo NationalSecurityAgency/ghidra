@@ -35,7 +35,6 @@ public interface JdiModelTargetExecutionStateful
 		changeAttributes(List.of(), Map.of( //
 			STATE_ATTRIBUTE_NAME, state //
 		), reason);
-		getListeners().fire(TargetExecutionStateListener.class).executionStateChanged(this, state);
 	}
 
 }

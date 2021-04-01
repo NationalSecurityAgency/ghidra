@@ -17,6 +17,8 @@ package ghidra.dbg.target.schema;
 
 import java.lang.annotation.*;
 
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
+
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TargetObjectSchemaInfo {
@@ -26,5 +28,9 @@ public @interface TargetObjectSchemaInfo {
 
 	TargetElementType[] elements() default {};
 
+	ResyncMode elementResync() default ResyncMode.NEVER;
+
 	TargetAttributeType[] attributes() default {};
+
+	ResyncMode attributeResync() default ResyncMode.NEVER;
 }

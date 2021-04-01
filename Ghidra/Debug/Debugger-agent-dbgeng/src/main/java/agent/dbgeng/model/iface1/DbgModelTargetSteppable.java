@@ -66,20 +66,21 @@ public interface DbgModelTargetSteppable extends DbgModelTargetObject, TargetSte
 			default:
 				if (this instanceof DbgModelTargetThread) {
 					DbgModelTargetThread targetThread = (DbgModelTargetThread) this;
-					return targetThread.getThread().step(convertToDbg(kind));
+					return getModel().gateFuture(targetThread.getThread().step(convertToDbg(kind)));
 				}
 				if (this instanceof DbgModelTargetProcess) {
 					DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) this;
-					return targetProcess.getProcess().step(convertToDbg(kind));
+					return getModel()
+							.gateFuture(targetProcess.getProcess().step(convertToDbg(kind)));
 				}
-				return thread.step(convertToDbg(kind));
+				return getModel().gateFuture(thread.step(convertToDbg(kind)));
 		}
 	}
 
 	@Override
 	default CompletableFuture<Void> step(Map<String, ?> args) {
 		DbgThread thread = getManager().getCurrentThread();
-		return thread.step(args);
+		return getModel().gateFuture(thread.step(args));
 	}
 
 }

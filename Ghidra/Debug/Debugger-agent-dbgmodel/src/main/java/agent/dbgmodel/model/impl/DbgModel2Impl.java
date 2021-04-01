@@ -16,7 +16,7 @@
 package agent.dbgmodel.model.impl;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import org.jdom.JDOMException;
@@ -26,6 +26,7 @@ import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import agent.dbgmodel.manager.DbgManager2Impl;
+import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractTargetObject;
 import ghidra.dbg.agent.AbstractTargetObject.ProxyFactory;
 import ghidra.dbg.agent.SpiTargetObject;
@@ -33,6 +34,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.program.model.address.*;
+import ghidra.util.Msg;
 import utilities.util.ProxyUtilities;
 
 public class DbgModel2Impl extends AbstractDbgModel
@@ -63,10 +65,9 @@ public class DbgModel2Impl extends AbstractDbgModel
 		new DefaultAddressFactory(new AddressSpace[] { space });
 
 	protected final DbgManager2Impl dbg;
-	protected final DbgModel2TargetRootImpl root;
 	protected DbgModelTargetSession session;
 
-	protected final CompletableFuture<DbgModel2TargetRootImpl> completedRoot;
+	protected Map<Object, TargetObject> objectMap = new HashMap<>();
 
 	public DbgModel2Impl() {
 		this.dbg = new DbgManager2Impl();
@@ -100,7 +101,7 @@ public class DbgModel2Impl extends AbstractDbgModel
 
 	@Override
 	public CompletableFuture<Void> startDbgEng(String[] args) {
-		return dbg.start(args);
+		return dbg.start(args).thenApplyAsync(__ -> null, clientExecutor);
 	}
 
 	@Override
@@ -110,6 +111,8 @@ public class DbgModel2Impl extends AbstractDbgModel
 
 	@Override
 	public void terminate() throws IOException {
+		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		root.invalidateSubtree(root, "Dbgmodel is terminating");
 		dbg.terminate();
 	}
 
@@ -143,4 +146,19 @@ public class DbgModel2Impl extends AbstractDbgModel
 	public DbgModelTargetSession getSession() {
 		return session;
 	}
+
+	@Override
+	public void addModelObject(Object object, TargetObject modelObject) {
+		if (modelObject == null) {
+			Msg.error(this, "Attempt to add null for key: " + object);
+			return;
+		}
+		objectMap.put(object, modelObject);
+	}
+
+	@Override
+	public TargetObject getModelObject(Object object) {
+		return objectMap.get(object);
+	}
+
 }

@@ -26,26 +26,21 @@ import agent.dbgeng.manager.reason.*;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "ThreadContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetThreadImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "ThreadContainer", elements = {
+	@TargetElementType(type = DbgModelTargetThreadImpl.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetThreadContainer {
 
 	protected final DbgProcess process;
-
-	protected final Map<DebugThreadId, DbgModelTargetThreadImpl> threadsById =
-		new WeakValueHashMap<>();
 
 	public DbgModelTargetThreadContainerImpl(DbgModelTargetProcessImpl process) {
 		super(process.getModel(), process, "Threads", "ThreadContainer");
 		this.process = process.process;
 
 		getManager().addEventsListener(this);
+		requestElements(false);
 	}
 
 	@Override
@@ -53,34 +48,32 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		changeElements(List.of(), List.of(getTargetThread(thread)), Map.of(), "Created");
 		DbgModelTargetThread targetThread = getTargetThread(thread);
 		changeElements(List.of(), List.of(targetThread), Map.of(), "Created");
-		targetThread.threadStateChanged(DbgState.STARTING, DbgReason.getReason(null));
-		getListeners().fire(TargetEventScopeListener.class)
-				.event(this, targetThread, TargetEventType.THREAD_CREATED,
-					"Thread " + thread.getId() + " started", List.of(targetThread));
+		targetThread.threadStateChangedSpecific(DbgState.STARTING, DbgReason.getReason(null));
+		getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
+			"Thread " + thread.getId() + " started", List.of(targetThread));
 	}
 
 	@Override
 	public void threadStateChanged(DbgThread thread, DbgState state, DbgCause cause,
 			DbgReason reason) {
 		DbgModelTargetThread targetThread = getTargetThread(thread);
-		targetThread.threadStateChanged(state, reason);
 		TargetEventType eventType = getEventType(state, cause, reason);
-		getListeners().fire(TargetEventScopeListener.class)
-				.event(this, targetThread, eventType, "Thread " + thread.getId() + " state changed",
-					List.of(targetThread));
+		getListeners().fire.event(getProxy(), targetThread, eventType,
+			"Thread " + thread.getId() + " state changed", List.of(targetThread));
+		targetThread.threadStateChangedSpecific(state, reason);
 	}
 
 	@Override
 	public void threadExited(DebugThreadId threadId) {
-		DbgModelTargetThread targetThread = threadsById.get(threadId);
+		DbgModelImpl impl = (DbgModelImpl) model;
+		DbgModelTargetThread targetThread = (DbgModelTargetThread) impl.getModelObject(threadId);
 		if (targetThread != null) {
-			getListeners().fire(TargetEventScopeListener.class)
-					.event(this, targetThread, TargetEventType.THREAD_EXITED,
-						"Thread " + threadId + " exited", List.of(targetThread));
+			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
+				"Thread " + threadId + " exited", List.of(targetThread));
 		}
-		synchronized (this) {
-			threadsById.remove(threadId);
-		}
+		//synchronized (this) {
+		//	threadsById.remove(threadId);
+		//}
 		changeElements(List.of( //
 			DbgModelTargetThreadImpl.indexThread(threadId) //
 		), List.of(), Map.of(), "Exited");
@@ -125,8 +118,12 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public synchronized DbgModelTargetThread getTargetThread(DbgThread thread) {
-		return threadsById.computeIfAbsent(thread.getId(),
-			i -> new DbgModelTargetThreadImpl(this, (DbgModelTargetProcess) parent, thread));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(thread);
+		if (modelObject != null) {
+			return (DbgModelTargetThread) modelObject;
+		}
+		return new DbgModelTargetThreadImpl(this, (DbgModelTargetProcess) parent, thread);
 	}
 
 }

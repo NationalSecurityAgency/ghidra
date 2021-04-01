@@ -34,9 +34,9 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
-import ghidra.dbg.target.TargetBreakpointContainer;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.util.DebuggerModelTestUtils;
+import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -131,16 +131,16 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
 		}
 
-		TargetBreakpointContainer bc1 =
+		TargetBreakpointSpecContainer bc1 =
 			waitFor(() -> Unique.assertAtMostOne(recorder1.collectBreakpointContainers(null)),
 				"No container");
-		waitOn(bc1.placeBreakpoint(mb.addr(0x00401234), Set.of(TargetBreakpointKind.SOFTWARE)));
+		waitOn(bc1.placeBreakpoint(mb.addr(0x00401234), Set.of(TargetBreakpointKind.SW_EXECUTE)));
 		waitOn(bc1.placeBreakpoint(mb.rng(0x00604321, 0x00604324),
 			Set.of(TargetBreakpointKind.WRITE)));
-		TargetBreakpointContainer bc3 =
+		TargetBreakpointSpecContainer bc3 =
 			waitFor(() -> Unique.assertAtMostOne(recorder3.collectBreakpointContainers(null)),
 				"No container");
-		waitOn(bc3.placeBreakpoint(mb.addr(0x7fac1234), Set.of(TargetBreakpointKind.SOFTWARE)));
+		waitOn(bc3.placeBreakpoint(mb.addr(0x7fac1234), Set.of(TargetBreakpointKind.SW_EXECUTE)));
 
 		TraceBreakpoint bpt = waitForValue(() -> Unique.assertAtMostOne(
 			trace3.getBreakpointManager().getBreakpointsAt(0, addr(trace3, 0x7fac1234))));

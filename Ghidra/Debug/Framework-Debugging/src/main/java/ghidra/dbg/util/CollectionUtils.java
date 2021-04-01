@@ -346,7 +346,8 @@ public enum CollectionUtils {
 			return removed.isEmpty() && added.isEmpty();
 		}
 
-		public Delta<T, U> apply(Map<String, T> mutable, BiPredicate<Object, Object> equals) {
+		public Delta<T, U> apply(Map<String, T> mutable,
+				BiPredicate<Object, Object> equals) {
 			return apply(mutable, removed.keySet(), added, equals);
 		}
 

@@ -35,7 +35,7 @@ import ghidra.program.model.address.AddressRange;
 		@TargetAttributeType(type = Void.class)
 	})
 public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements //
-		//TargetMemory<JdiModelTargetSection>,  
+		//TargetMemory,
 		TargetMemoryRegion, TargetSection {
 
 	protected final Method method;
@@ -52,8 +52,7 @@ public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements /
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			MODULE_ATTRIBUTE_NAME, parent.getClassType(), //
 			READABLE_ATTRIBUTE_NAME, true, //
-			MEMORY_ATTRIBUTE_NAME, parent, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			MEMORY_ATTRIBUTE_NAME, parent, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range //
 		), "Initialized");
 	}
 
@@ -66,8 +65,7 @@ public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements /
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			MODULE_ATTRIBUTE_NAME, parent.getClassType(), //
-			TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range //
 		), "Initialized");
 	}
 

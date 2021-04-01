@@ -21,9 +21,8 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface1.DbgModelTargetBptHelper;
-import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.program.model.address.*;
 
 public interface DbgModelTargetBreakpointSpec extends //
@@ -42,24 +41,24 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	@Override
 	public default CompletableFuture<Void> delete() {
-		return getManager().deleteBreakpoints(getNumber());
+		return getModel().gateFuture(getManager().deleteBreakpoints(getNumber()));
 	}
 
 	@Override
 	public default CompletableFuture<Void> disable() {
 		setEnabled(false, "Disabled");
-		return getManager().disableBreakpoints(getNumber());
+		return getModel().gateFuture(getManager().disableBreakpoints(getNumber()));
 	}
 
 	@Override
 	public default CompletableFuture<Void> enable() {
 		setEnabled(true, "Enabled");
-		return getManager().enableBreakpoints(getNumber());
+		return getModel().gateFuture(getManager().enableBreakpoints(getNumber()));
 	}
 
 	@Override
 	public default String getExpression() {
-		return getBreakpointInfo().getLocation();
+		return getBreakpointInfo().getExpression();
 	}
 
 	public default long getNumber() {
@@ -70,9 +69,9 @@ public interface DbgModelTargetBreakpointSpec extends //
 	public default TargetBreakpointKindSet getKinds() {
 		switch (getBreakpointInfo().getType()) {
 			case BREAKPOINT:
-				return TargetBreakpointKindSet.of(TargetBreakpointKind.SOFTWARE);
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
 			case HW_BREAKPOINT:
-				return TargetBreakpointKindSet.of(TargetBreakpointKind.EXECUTE);
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.HW_EXECUTE);
 			case HW_WATCHPOINT:
 				return TargetBreakpointKindSet.of(TargetBreakpointKind.WRITE);
 			case READ_WATCHPOINT:
@@ -106,7 +105,6 @@ public interface DbgModelTargetBreakpointSpec extends //
 				catch (AddressFormatException e) {
 					e.printStackTrace();
 				}
-				map.put(AFFECTS_ATTRIBUTE_NAME, doGetAffects());
 				map.put(SPEC_ATTRIBUTE_NAME, this);
 				map.put(EXPRESSION_ATTRIBUTE_NAME, addstr);
 				map.put(KINDS_ATTRIBUTE_NAME, getKinds());
@@ -124,14 +122,16 @@ public interface DbgModelTargetBreakpointSpec extends //
 		});
 	}
 
-	public default Address doGetAddress() {
-		DbgBreakpointInfo info = getBreakpointInfo();
-		return getModel().getAddress("ram", info.addrAsLong());
+	private long orZero(Long l) {
+		if (l == null) {
+			return 0;
+		}
+		return l;
 	}
 
-	public default TargetObjectList<?> doGetAffects() {
-		DbgModelTargetProcess process = getParentProcess();
-		return TargetObjectList.of(process);
+	public default Address doGetAddress() {
+		DbgBreakpointInfo info = getBreakpointInfo();
+		return getModel().getAddress("ram", orZero(info.getOffset()));
 	}
 
 	public default void updateInfo(DbgBreakpointInfo oldInfo, DbgBreakpointInfo newInfo,
@@ -157,7 +157,6 @@ public interface DbgModelTargetBreakpointSpec extends //
 		setBreakpointEnabled(enabled);
 		changeAttributes(List.of(), Map.of(ENABLED_ATTRIBUTE_NAME, enabled //
 		), reason);
-		getListeners().fire(TargetBreakpointSpecListener.class).breakpointToggled(this, enabled);
 	}
 
 	@Override
@@ -176,7 +175,10 @@ public interface DbgModelTargetBreakpointSpec extends //
 	}
 
 	public default void breakpointHit() {
-		getActions().fire.breakpointHit(this, getParentProcess(), null, this);
+		DbgModelTargetThread targetThread =
+			getParentProcess().getThreads().getTargetThread(getManager().getEventThread());
+		getActions().fire.breakpointHit((DbgModelTargetBreakpointSpec) getProxy(), targetThread,
+			null, this);
 	}
 
 }

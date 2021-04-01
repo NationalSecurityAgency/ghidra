@@ -18,6 +18,7 @@ package ghidra.dbg.gadp;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -36,6 +37,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import generic.ID;
 import generic.Unique;
 import ghidra.async.*;
+import ghidra.dbg.AnnotatedDebuggerAttributeListener;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.attributes.TargetStringList;
@@ -47,17 +49,15 @@ import ghidra.dbg.gadp.server.AbstractGadpServer;
 import ghidra.dbg.gadp.server.GadpClientHandler;
 import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetObject.TargetObjectListener;
-import ghidra.dbg.target.TargetObject.TargetUpdateMode;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.dbg.util.*;
-import ghidra.dbg.util.AttributesChangedListener.AttributesChangedInvocation;
-import ghidra.dbg.util.ElementsChangedListener.ElementsChangedInvocation;
+import ghidra.dbg.testutil.*;
+import ghidra.dbg.testutil.AttributesChangedListener.AttributesChangedInvocation;
+import ghidra.dbg.testutil.ElementsChangedListener.ElementsChangedInvocation;
+import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -283,8 +283,7 @@ public class GadpClientServerTest {
 	}
 
 	@TargetObjectSchemaInfo(name = "Session")
-	public class TestGadpTargetSession extends DefaultTargetModelRoot
-			implements TargetFocusScope {
+	public class TestGadpTargetSession extends DefaultTargetModelRoot implements TargetFocusScope {
 		protected final TestGadpTargetAvailableContainer available =
 			new TestGadpTargetAvailableContainer(this);
 		protected final TestGadpTargetProcessContainer processes =
@@ -315,18 +314,14 @@ public class GadpClientServerTest {
 
 		public void addLinks() throws Throwable {
 			waitOn(available.fetchElements());
-			links.setElements(List.of(), Map.of(
-				"1", available.getCachedElements().get("2"),
-				"2", available.getCachedElements().get("1")),
-				"Initialized");
+			links.setElements(List.of(), Map.of("1", available.getCachedElements().get("2"), "2",
+				available.getCachedElements().get("1")), "Initialized");
 			changeAttributes(List.of(), List.of(links), Map.of(), "Adding links");
 		}
 
 		public void setFocus(TestGadpTargetProcess process) {
-			changeAttributes(List.of(), List.of(), Map.of(
-				FOCUS_ATTRIBUTE_NAME, process),
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, process),
 				"New Process");
-			listeners.fire(TargetFocusScopeListener.class).focusChanged(this, process);
 		}
 
 		@Override
@@ -363,12 +358,12 @@ public class GadpClientServerTest {
 		}
 	}
 
-	private static final TargetParameterMap PARAMS = TargetParameterMap.copyOf(Map.of(
-		"whom", ParameterDescription.create(String.class, "whom", true, "World",
-			"Whom to greet", "The person or people to greet"),
-		"others", ParameterDescription.create(TargetStringList.class, "others",
-			false, TargetStringList.of(), "Others to greet",
-			"List of other people to greet individually")));
+	private static final TargetParameterMap PARAMS = TargetParameterMap.copyOf(Map.of("whom",
+		ParameterDescription.create(String.class, "whom", true, "World", "Whom to greet",
+			"The person or people to greet"),
+		"others",
+		ParameterDescription.create(TargetStringList.class, "others", false, TargetStringList.of(),
+			"Others to greet", "List of other people to greet individually")));
 
 	public class TestGadpTargetMethod extends TestTargetObject<TargetObject, TestTargetObject<?, ?>>
 			implements TargetMethod {
@@ -376,22 +371,20 @@ public class GadpClientServerTest {
 		public TestGadpTargetMethod(TestTargetObject<?, ?> parent, String key) {
 			super(parent.getModel(), parent, key, "Method");
 
-			setAttributes(Map.of(
-				PARAMETERS_ATTRIBUTE_NAME, PARAMS,
-				RETURN_TYPE_ATTRIBUTE_NAME, Integer.class),
-				"Initialized");
+			setAttributes(Map.of(PARAMETERS_ATTRIBUTE_NAME, PARAMS, RETURN_TYPE_ATTRIBUTE_NAME,
+				Integer.class), "Initialized");
 		}
 
 		@Override
 		public CompletableFuture<Object> invoke(Map<String, ?> arguments) {
 			TestMethodInvocation invocation = new TestMethodInvocation(arguments);
 			invocations.offer(invocation);
-			return invocation.thenApply(obj -> {
-				parent.changeAttributes(List.of(), Map.ofEntries(
-					Map.entry("greet(" + arguments.get("arg") + ")", obj)),
+			return model.gateFuture(invocation.thenApply(obj -> {
+				parent.changeAttributes(List.of(),
+					Map.ofEntries(Map.entry("greet(" + arguments.get("arg") + ")", obj)),
 					"greet() invoked");
 				return obj;
-			}).thenCompose(model::gateFuture);
+			}));
 		}
 	}
 
@@ -415,8 +408,7 @@ public class GadpClientServerTest {
 	public class TestGadpTargetProcess
 			extends TestTargetObject<TargetObject, TestGadpTargetProcessContainer> {
 		public TestGadpTargetProcess(TestGadpTargetProcessContainer processes, int index) {
-			super(processes.getModel(), processes,
-				PathUtils.makeKey(PathUtils.makeIndex(index)),
+			super(processes.getModel(), processes, PathUtils.makeKey(PathUtils.makeIndex(index)),
 				"Process");
 		}
 	}
@@ -427,17 +419,14 @@ public class GadpClientServerTest {
 		public TestGadpTargetAvailableContainer(TestGadpTargetSession session) {
 			super(session.getModel(), session, "Available", "AvailableContainer");
 
-			setAttributes(List.of(
-				new TestGadpTargetMethod(this, "greet")),
-				Map.of(), "Initialized");
+			setAttributes(List.of(new TestGadpTargetMethod(this, "greet")), Map.of(),
+				"Initialized");
 		}
 
 		@Override
 		public CompletableFuture<Void> requestElements(boolean refresh) {
-			setElements(List.of(
-				new TestGadpTargetAvailable(this, 1, "echo"),
-				new TestGadpTargetAvailable(this, 2, "dd")),
-				Map.of(), "Refreshed");
+			setElements(List.of(new TestGadpTargetAvailable(this, 1, "echo"),
+				new TestGadpTargetAvailable(this, 2, "dd")), Map.of(), "Refreshed");
 			return super.requestElements(refresh);
 		}
 	}
@@ -450,9 +439,7 @@ public class GadpClientServerTest {
 				String cmd) {
 			super(available.getModel(), available, PathUtils.makeKey(PathUtils.makeIndex(pid)),
 				"Available");
-			changeAttributes(List.of(), Map.of(
-				"pid", pid,
-				"cmd", cmd //
+			changeAttributes(List.of(), Map.of("pid", pid, "cmd", cmd //
 			), "Initialized");
 		}
 	}
@@ -706,14 +693,11 @@ public class GadpClientServerTest {
 			assertEquals(PARAMS, method.getParameters());
 			assertEquals(Integer.class, method.getReturnType());
 
-			CompletableFuture<Object> future = method.invoke(Map.of(
-				"whom", "GADP",
-				"others", TargetStringList.of("Alice", "Bob")));
+			CompletableFuture<Object> future = method
+					.invoke(Map.of("whom", "GADP", "others", TargetStringList.of("Alice", "Bob")));
 			waitOn(invocations.count.waitValue(1));
 			TestMethodInvocation invocation = invocations.poll();
-			assertEquals(Map.of(
-				"whom", "GADP",
-				"others", TargetStringList.of("Alice", "Bob")),
+			assertEquals(Map.of("whom", "GADP", "others", TargetStringList.of("Alice", "Bob")),
 				invocation.args);
 			invocation.complete(42);
 			int result = (Integer) waitOn(future);
@@ -780,11 +764,8 @@ public class GadpClientServerTest {
 				waitOn(client.fetchObjectElements(List.of()));
 			assertEquals(0, elements.size());
 			Map<String, ?> attributes = waitOn(client.fetchObjectAttributes(List.of()));
-			assertEquals(Set.of(
-				"Processes", "Available",
-				TargetObject.DISPLAY_ATTRIBUTE_NAME,
-				TargetObject.UPDATE_MODE_ATTRIBUTE_NAME),
-				attributes.keySet());
+			assertEquals(Set.of("Processes", "Available", TargetObject.DISPLAY_ATTRIBUTE_NAME,
+				TargetObject.UPDATE_MODE_ATTRIBUTE_NAME), attributes.keySet());
 			Object procContAttr = attributes.get("Processes");
 			TargetObject procCont = (TargetObject) procContAttr;
 			assertEquals(List.of("Processes"), procCont.getPath());
@@ -824,7 +805,7 @@ public class GadpClientServerTest {
 		List<ElementsChangedInvocation> invocations = new ArrayList<>();
 		// Any listener which calls .get on a child ref would do....
 		// This object-getting listener is the pattern that revealed this problem, though.
-		TargetObjectListener listener = new TargetObjectListener() {
+		DebuggerModelListener listener = new DebuggerModelListener() {
 			@Override
 			public void elementsChanged(TargetObject parent, Collection<String> removed,
 					Map<String, ? extends TargetObject> added) {
@@ -855,15 +836,16 @@ public class GadpClientServerTest {
 
 		CompletableFuture<List<String>> focusPath = new CompletableFuture<>();
 		AtomicBoolean failed = new AtomicBoolean();
-		TargetFocusScopeListener focusListener = new TargetFocusScopeListener() {
-			@Override
-			public void focusChanged(TargetFocusScope object, TargetObject focused) {
-				Msg.info(this, "Focus changed to " + focused);
-				if (!focusPath.complete(focused.getPath())) {
-					failed.set(true);
+		DebuggerModelListener focusListener =
+			new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
+				@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
+				public void focusChanged(TargetObject object, TargetObject focused) {
+					Msg.info(this, "Focus changed to " + focused);
+					if (!focusPath.complete(focused.getPath())) {
+						failed.set(true);
+					}
 				}
-			}
-		};
+			};
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
@@ -935,8 +917,7 @@ public class GadpClientServerTest {
 			assertEquals(procContainer, eci.parent);
 			assertEquals(List.of(), List.copyOf(eci.removed));
 			assertEquals(1, eci.added.size());
-			Entry<String, ? extends TargetObject> ent =
-				eci.added.entrySet().iterator().next();
+			Entry<String, ? extends TargetObject> ent = eci.added.entrySet().iterator().next();
 			assertEquals("0", ent.getKey());
 			assertEquals(List.of("Processes", "[0]"), ent.getValue().getPath());
 		}
@@ -957,8 +938,7 @@ public class GadpClientServerTest {
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
 
-			TargetObject availCont =
-				waitOn(client.fetchModelObject(PathUtils.parse("Available")));
+			TargetObject availCont = waitOn(client.fetchModelObject(PathUtils.parse("Available")));
 			availCont.addListener(elemL);
 			Map<String, ? extends TargetObject> avail1 = waitOn(availCont.fetchElements());
 			assertEquals(2, avail1.size());
@@ -969,8 +949,7 @@ public class GadpClientServerTest {
 
 			elemL.clear();
 			TestGadpTargetAvailableContainer ssAvail = runner.server.model.session.available;
-			ssAvail.setElements(List.of(
-				new TestGadpTargetAvailable(ssAvail, 1, "cat") //
+			ssAvail.setElements(List.of(new TestGadpTargetAvailable(ssAvail, 1, "cat") //
 			), "Changed");
 
 			waitOn(invL.count.waitValue(2));
@@ -998,9 +977,9 @@ public class GadpClientServerTest {
 
 			Map<ID<TargetObject>, String> actualInv = invL.invocations.stream()
 					.collect(Collectors.toMap(ii -> ID.of(ii.object), ii -> ii.reason));
-			Map<ID<TargetObject>, String> expectedInv = Map.ofEntries(
-				Map.entry(ID.of(avail1.get("1")), "Replaced"),
-				Map.entry(ID.of(avail1.get("2")), "Changed"));
+			Map<ID<TargetObject>, String> expectedInv =
+				Map.ofEntries(Map.entry(ID.of(avail1.get("1")), "Replaced"),
+					Map.entry(ID.of(avail1.get("2")), "Changed"));
 			assertEquals(expectedInv, actualInv);
 		}
 	}
@@ -1019,36 +998,25 @@ public class GadpClientServerTest {
 			TargetObject echoAvail =
 				waitOn(client.fetchModelObject(PathUtils.parse("Available[1]")));
 			echoAvail.addListener(attrL);
-			assertEquals(Map.ofEntries(
-				Map.entry("pid", 1),
-				Map.entry("cmd", "echo"),
-				Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-				Map.entry("_display", "[1]")),
-				waitOn(echoAvail.fetchAttributes()));
+			assertEquals(Map.ofEntries(Map.entry("pid", 1), Map.entry("cmd", "echo"),
+				Map.entry("_display", "[1]")), waitOn(echoAvail.fetchAttributes()));
 
 			TestGadpTargetAvailable ssEchoAvail =
 				runner.server.model.session.available.getCachedElements().get("1");
 
-			ssEchoAvail.changeAttributes(List.of("pid"), Map.ofEntries(
-				Map.entry("cmd", "echo"),
-				Map.entry("args", "Hello, World!")),
+			ssEchoAvail.changeAttributes(List.of("pid"),
+				Map.ofEntries(Map.entry("cmd", "echo"), Map.entry("args", "Hello, World!")),
 				"Changed");
 
 			waitOn(attrL.count.waitValue(1));
 
-			assertEquals(Map.ofEntries(
-				Map.entry("cmd", "echo"),
-				Map.entry("args", "Hello, World!"),
-				Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-				Map.entry("_display", "[1]")),
-				echoAvail.getCachedAttributes());
+			assertEquals(Map.ofEntries(Map.entry("cmd", "echo"), Map.entry("args", "Hello, World!"),
+				Map.entry("_display", "[1]")), echoAvail.getCachedAttributes());
 
 			AttributesChangedInvocation changed = Unique.assertOne(attrL.invocations);
 			assertSame(echoAvail, changed.parent);
 			assertEquals(Set.of("pid"), Set.copyOf(changed.removed));
-			assertEquals(Map.ofEntries(
-				Map.entry("args", "Hello, World!")),
-				changed.added);
+			assertEquals(Map.ofEntries(Map.entry("args", "Hello, World!")), changed.added);
 		}
 	}
 
@@ -1063,8 +1031,7 @@ public class GadpClientServerTest {
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
 
-			TargetObject availCont =
-				waitOn(client.fetchModelObject(PathUtils.parse("Available")));
+			TargetObject availCont = waitOn(client.fetchModelObject(PathUtils.parse("Available")));
 			availCont.addListener(invL);
 			for (TargetObject avail : waitOn(availCont.fetchElements()).values()) {
 				avail.addListener(invL);
@@ -1083,10 +1050,9 @@ public class GadpClientServerTest {
 
 			assertEquals(Gadp.RootMessage.newBuilder()
 					.setEventNotification(Gadp.EventNotification.newBuilder()
-							.setPath(Gadp.Path.newBuilder()
-									.addAllE(List.of("Available")))
-							.setObjectInvalidateEvent(Gadp.ObjectInvalidateEvent.newBuilder()
-									.setReason("Clear")))
+							.setPath(Gadp.Path.newBuilder().addAllE(List.of("Available")))
+							.setObjectInvalidateEvent(
+								Gadp.ObjectInvalidateEvent.newBuilder().setReason("Clear")))
 					.build(),
 				client.getMessageChannel().record.get(0).assertReceived());
 		}
@@ -1107,21 +1073,13 @@ public class GadpClientServerTest {
 				waitOn(client.fetchModelObject(PathUtils.parse("Available[1]")));
 			// TODO: This comes back null too often...
 			echoAvail.addListener(attrL);
-			assertEquals(Map.ofEntries(
-				Map.entry("pid", 1),
-				Map.entry("cmd", "echo"),
-				Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-				Map.entry("_display", "[1]")),
-				waitOn(echoAvail.fetchAttributes()));
+			assertEquals(Map.ofEntries(Map.entry("pid", 1), Map.entry("cmd", "echo"),
+				Map.entry("_display", "[1]")), waitOn(echoAvail.fetchAttributes()));
 
 			TargetObject ddAvail = waitOn(client.fetchModelObject(PathUtils.parse("Available[2]")));
 			ddAvail.addListener(attrL);
-			assertEquals(Map.ofEntries(
-				Map.entry("pid", 2),
-				Map.entry("cmd", "dd"),
-				Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-				Map.entry("_display", "[2]")),
-				waitOn(ddAvail.fetchAttributes()));
+			assertEquals(Map.ofEntries(Map.entry("pid", 2), Map.entry("cmd", "dd"),
+				Map.entry("_display", "[2]")), waitOn(ddAvail.fetchAttributes()));
 
 			// NB: copy
 			Map<String, TestGadpTargetAvailable> ssAvail =
@@ -1130,21 +1088,18 @@ public class GadpClientServerTest {
 			runner.server.model.session.available.changeElements(List.of("1"), List.of(), Map.of(),
 				"1 is Gone");
 			// Should produce nothing
-			(ssAvail.get("1")).changeAttributes(List.of(), Map.ofEntries(
-				Map.entry("args", "Hello, World!")),
-				"Changed");
+			(ssAvail.get("1")).changeAttributes(List.of(),
+				Map.ofEntries(Map.entry("args", "Hello, World!")), "Changed");
 			// Produce something, so we know we didn't get the other thing
-			(ssAvail.get("2")).changeAttributes(List.of(), List.of(), Map.of(
-				"args", "if=/dev/null"),
-				"Observe");
+			(ssAvail.get("2")).changeAttributes(List.of(), List.of(),
+				Map.of("args", "if=/dev/null"), "Observe");
 
 			waitOn(attrL.count.waitValue(1));
 
 			AttributesChangedInvocation changed = Unique.assertOne(attrL.invocations);
 			assertSame(ddAvail, changed.parent);
 			assertEquals(Set.of(), Set.copyOf(changed.removed));
-			assertEquals(Map.of(
-				"args", "if=/dev/null" //
+			assertEquals(Map.of("args", "if=/dev/null" //
 			), changed.added);
 		}
 	}
@@ -1160,8 +1115,7 @@ public class GadpClientServerTest {
 			runner.server.model.session.addLinks();
 			TargetObject canonical =
 				waitOn(client.fetchModelObject(PathUtils.parse("Available[2]")));
-			TargetObject link =
-				waitOn(client.fetchModelObject(PathUtils.parse("Links[1]")));
+			TargetObject link = waitOn(client.fetchModelObject(PathUtils.parse("Links[1]")));
 			assertSame(canonical, link);
 			assertEquals(PathUtils.parse("Available[2]"), link.getPath());
 			waitOn(client.close());
@@ -1183,8 +1137,7 @@ public class GadpClientServerTest {
 			TargetObject linkVal =
 				(TargetObject) waitOn(client.fetchModelValue(PathUtils.parse("Links[1]")));
 			assertTrue(linkVal instanceof TargetObject);
-			TargetObject linkObj =
-				waitOn(client.fetchModelObject(PathUtils.parse("Links[1]")));
+			TargetObject linkObj = waitOn(client.fetchModelObject(PathUtils.parse("Links[1]")));
 			assertSame(linkVal, linkObj);
 			TargetObject canonical =
 				waitOn(client.fetchModelObject(PathUtils.parse("Available[2]")));
@@ -1302,28 +1255,24 @@ public class GadpClientServerTest {
 			root.changeAttributes(List.of(), List.of(a), Map.of(), "Because");
 			runner.server.model.addModelRoot(root);
 			waitOn(client.fetchModelRoot());
+			waitOn(client.flushEvents());
 
-			assertEquals(List.of(
-				new CallEntry("created", List.of(
-					client.getModelRoot())),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelRoot(), Set.of(), Map.ofEntries(
-						Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-						Map.entry("_display", "<root>")))),
-				new CallEntry("created", List.of(
-					client.getModelObject(PathUtils.parse("a")))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelObject(PathUtils.parse("a")), Set.of(), Map.ofEntries(
-						Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-						Map.entry("_display", "a")))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelObject(PathUtils.parse("a")), Set.of(), Map.ofEntries(
-						Map.entry("test", 6)))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelRoot(), Set.of(), Map.ofEntries(
-						Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
-				new CallEntry("rootAdded", List.of(client.getModelRoot()))),
-				listener.record);
+			assertEquals(List.of(new CallEntry("created", List.of(client.getModelRoot())),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelRoot(), Set.of(),
+						Map.ofEntries(Map.entry("_display", "<root>")))),
+				new CallEntry("created", List.of(client.getModelObject(PathUtils.parse("a")))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelObject(PathUtils.parse("a")), Set.of(),
+						Map.ofEntries(Map.entry("_display", "a")))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelObject(PathUtils.parse("a")), Set.of(),
+						Map.ofEntries(Map.entry("test", 6)))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelRoot(), Set.of(),
+						Map.ofEntries(
+							Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
+				new CallEntry("rootAdded", List.of(client.getModelRoot()))), listener.record);
 		}
 	}
 
@@ -1355,27 +1304,22 @@ public class GadpClientServerTest {
 			waitOn(client.fetchModelRoot());
 			waitOn(client.flushEvents());
 
-			assertEquals(List.of(
-				new CallEntry("created", List.of(
-					client.getModelRoot())),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelRoot(), Set.of(), Map.ofEntries(
-						Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-						Map.entry("_display", "<root>")))),
-				new CallEntry("created", List.of(
-					client.getModelObject(PathUtils.parse("a")))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelObject(PathUtils.parse("a")), Set.of(), Map.ofEntries(
-						Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-						Map.entry("_display", "a")))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelObject(PathUtils.parse("a")), Set.of(), Map.ofEntries(
-						Map.entry("test", 6)))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelRoot(), Set.of(), Map.ofEntries(
-						Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
-				new CallEntry("rootAdded", List.of(client.getModelRoot()))),
-				listener.record);
+			assertEquals(List.of(new CallEntry("created", List.of(client.getModelRoot())),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelRoot(), Set.of(),
+						Map.ofEntries(Map.entry("_display", "<root>")))),
+				new CallEntry("created", List.of(client.getModelObject(PathUtils.parse("a")))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelObject(PathUtils.parse("a")), Set.of(),
+						Map.ofEntries(Map.entry("_display", "a")))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelObject(PathUtils.parse("a")), Set.of(),
+						Map.ofEntries(Map.entry("test", 6)))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelRoot(), Set.of(),
+						Map.ofEntries(
+							Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
+				new CallEntry("rootAdded", List.of(client.getModelRoot()))), listener.record);
 		}
 	}
 
@@ -1408,27 +1352,22 @@ public class GadpClientServerTest {
 			waitOn(client.fetchModelRoot());
 			waitOn(client.flushEvents());
 
-			assertEquals(List.of(
-				new CallEntry("created", List.of(
-					client.getModelRoot())),
+			assertEquals(List.of(new CallEntry("created", List.of(client.getModelRoot())),
 				new CallEntry("attributesChanged", List.of( // Defaults upon client-side construction
-					client.getModelRoot(), Set.of(), Map.ofEntries(
-						Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-						Map.entry("_display", "<root>")))),
-				new CallEntry("created", List.of(
-					client.getModelObject(PathUtils.parse("a")))),
+					client.getModelRoot(), Set.of(),
+					Map.ofEntries(Map.entry("_display", "<root>")))),
+				new CallEntry("created", List.of(client.getModelObject(PathUtils.parse("a")))),
 				new CallEntry("attributesChanged", List.of( // Defaults
-					client.getModelObject(PathUtils.parse("a")), Set.of(), Map.ofEntries(
-						Map.entry("_update_mode", TargetUpdateMode.UNSOLICITED),
-						Map.entry("_display", "a")))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelObject(PathUtils.parse("a")), Set.of(), Map.ofEntries(
-						Map.entry("test", 6)))),
-				new CallEntry("attributesChanged", List.of(
-					client.getModelRoot(), Set.of(), Map.ofEntries(
-						Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
-				new CallEntry("rootAdded", List.of(client.getModelRoot()))),
-				listener.record);
+					client.getModelObject(PathUtils.parse("a")), Set.of(),
+					Map.ofEntries(Map.entry("_display", "a")))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelObject(PathUtils.parse("a")), Set.of(),
+						Map.ofEntries(Map.entry("test", 6)))),
+				new CallEntry("attributesChanged",
+					List.of(client.getModelRoot(), Set.of(),
+						Map.ofEntries(
+							Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
+				new CallEntry("rootAdded", List.of(client.getModelRoot()))), listener.record);
 		}
 	}
 }

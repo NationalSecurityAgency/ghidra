@@ -15,25 +15,38 @@
  */
 #include <stdio.h>
 #include <Windows.h>
+#include <debugapi.h>
+#include <shellapi.h>
 
 int __declspec(dllexport) func(char* msg) {
 	printf("%s\n", msg);
 }
 
-int main(int argc, char** argv) {
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+	OutputDebugStringW(L"Starting\n");
+	LPWSTR *argvW;
+	int argc = 0;
+	argvW = CommandLineToArgvW(GetCommandLine(), &argc);
+	if (argvW != NULL) {
+		LocalFree(argvW);
+	} else {
+		return 0;
+	}
+	wprintf(L"argc: %d\n", argc);
 	if (argc != 1) {
 		func("I'm the child");
 		return 1;
 	}
 	STARTUPINFO sStartupInfo = {sizeof(sStartupInfo)};
 	PROCESS_INFORMATION sProcessInformation = {0};
-	BOOL result = CreateProcess(argv[0], "expCreateProcess child", NULL, NULL, FALSE, 0, NULL, NULL, &sStartupInfo, &sProcessInformation);
+	wprintf(L"Me: %s\n", argvW[0]);
+	BOOL result = CreateProcessW(argvW[0], L"expCreateProcess child", NULL, NULL, FALSE, 0, NULL, NULL, &sStartupInfo, &sProcessInformation);
 	if (result == FALSE) {
 		DWORD le = GetLastError();
 		fprintf(stderr, "Could not create child process: %d\n", le);
-		char err[1024];
+		wchar_t err[1024];
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, le, 0, err, sizeof(err), NULL);
-		fprintf(stderr, "  Message: '%s'\n", err);
+		fwprintf(stderr, L"  Message: '%s'\n", err);
 		DebugBreak();
 		return -1;
 	}

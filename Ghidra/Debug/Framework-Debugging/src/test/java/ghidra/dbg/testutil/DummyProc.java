@@ -16,14 +16,13 @@
 package ghidra.dbg.testutil;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import ghidra.framework.Application;
 
 public class DummyProc implements AutoCloseable {
-	final Process process;
+	public final Process process;
 	public final long pid;
 
 	public static String which(String cmd) {
@@ -33,40 +32,37 @@ public class DummyProc implements AutoCloseable {
 		catch (Exception e) {
 			// fallback to system
 		}
+		if (new File(cmd).canExecute()) {
+			return cmd;
+		}
+		String line;
 		try {
-			Process exec = new ProcessBuilder("which", cmd).start();
+			boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
+			Process exec = new ProcessBuilder(isWindows ? "where" : "which", cmd).start();
 			exec.waitFor();
 			BufferedReader reader =
 				new BufferedReader(new InputStreamReader(exec.getInputStream()));
-			return reader.readLine().trim();
+			line = reader.readLine();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+		if (line == null) {
+			throw new RuntimeException("Cannot find " + cmd);
+		}
+		return line.trim();
 	}
 
-	public static DummyProc run(String... args) throws NoSuchFieldException, SecurityException,
-			IllegalArgumentException, IllegalAccessException, IOException {
+	public static DummyProc run(String... args) throws IOException {
 		DummyProc proc = new DummyProc(args);
 		return proc;
 	}
 
-	DummyProc(String... args) throws IOException, NoSuchFieldException, SecurityException,
-			IllegalArgumentException, IllegalAccessException {
+	DummyProc(String... args) throws IOException {
 		args[0] = which(args[0]);
 		process = new ProcessBuilder(args).start();
 
-		@SuppressWarnings("hiding")
-		long pid = -1;
-		try {
-			Field pidFld = process.getClass().getDeclaredField("pid");
-			pidFld.setAccessible(true);
-			pid = pidFld.getLong(process);
-		}
-		catch (NoSuchFieldException | SecurityException e) {
-			throw new AssertionError("Could not get pid for DummyProc", e);
-		}
-		this.pid = pid;
+		pid = process.pid();
 	}
 
 	@Override

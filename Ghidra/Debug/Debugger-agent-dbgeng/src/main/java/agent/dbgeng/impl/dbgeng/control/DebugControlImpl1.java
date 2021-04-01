@@ -15,6 +15,8 @@
  */
 package agent.dbgeng.impl.dbgeng.control;
 
+import javax.help.UnsupportedOperationException;
+
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinError;
@@ -209,6 +211,16 @@ public class DebugControlImpl1 implements DebugControlInternal {
 	@Override
 	public DebugBreakpoint addBreakpoint(BreakType type) {
 		return doAddBreakpoint(type, DbgEngUtil.DEBUG_ANY_ID);
+	}
+
+	@Override
+	public DebugBreakpoint addBreakpoint2(BreakType type) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DebugBreakpoint addBreakpoint2(BreakType type, int desiredId) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

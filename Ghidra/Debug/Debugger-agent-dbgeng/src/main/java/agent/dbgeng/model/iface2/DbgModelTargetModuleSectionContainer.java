@@ -15,6 +15,9 @@
  */
 package agent.dbgeng.model.iface2;
 
-public interface DbgModelTargetModuleSectionContainer extends DbgModelTargetObject {
+import ghidra.dbg.target.TargetSectionContainer;
+
+public interface DbgModelTargetModuleSectionContainer
+		extends DbgModelTargetObject, TargetSectionContainer {
 
 }

@@ -27,7 +27,6 @@ import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(name = "BreakpointContainer", elements = { //
 	@TargetElementType(type = DbgModelTargetBreakpointSpecImpl.class) //
@@ -39,8 +38,6 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 
 	protected static final TargetBreakpointKindSet SUPPORTED_KINDS =
 		TargetBreakpointKindSet.of(TargetBreakpointKind.values());
-
-	private final Map<Long, DbgModelTargetBreakpointSpec> specsByNumber = new WeakValueHashMap<>();
 
 	public DbgModelTargetBreakpointContainerImpl(DbgModelTargetDebugContainer debug) {
 		super(debug.getModel(), debug, "Breakpoints", "BreakpointContainer");
@@ -66,9 +63,8 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 
 	@Override
 	public void breakpointDeleted(DbgBreakpointInfo info, DbgCause cause) {
-		synchronized (this) {
-			getSpecsByNumber().remove(info.getNumber());
-		}
+		DbgModelImpl impl = (DbgModelImpl) model;
+		impl.deleteModelObject(info.getDebugBreakpoint());
 		changeElements(List.of( //
 			DbgModelTargetBreakpointSpecImpl.indexBreakpoint(info) //
 		), List.of(), Map.of(), "Deleted");
@@ -76,17 +72,20 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 
 	@Override
 	public void breakpointHit(DbgBreakpointInfo info, DbgCause cause) {
+		DbgModelTargetThread targetThread =
+			getParentProcess().getThreads().getTargetThread(getManager().getEventThread());
 		DbgModelTargetBreakpointSpec spec = getTargetBreakpointSpec(info);
-		listeners.fire(TargetBreakpointListener.class)
-				.breakpointHit(this, getParentProcess(), null, spec, spec);
+		listeners.fire.breakpointHit(getProxy(), targetThread, null, spec, spec);
 		spec.breakpointHit();
 	}
 
 	public DbgModelTargetBreakpointSpec getTargetBreakpointSpec(DbgBreakpointInfo info) {
-		synchronized (this) {
-			return getSpecsByNumber().computeIfAbsent(info.getNumber(),
-				i -> new DbgModelTargetBreakpointSpecImpl(this, info));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(info.getDebugBreakpoint());
+		if (modelObject != null) {
+			return (DbgModelTargetBreakpointSpec) modelObject;
 		}
+		return new DbgModelTargetBreakpointSpecImpl(this, info);
 	}
 
 	@Override
@@ -102,9 +101,5 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 			}
 			setElements(specs, Map.of(), "Refreshed");
 		});
-	}
-
-	public Map<Long, DbgModelTargetBreakpointSpec> getSpecsByNumber() {
-		return specsByNumber;
 	}
 }

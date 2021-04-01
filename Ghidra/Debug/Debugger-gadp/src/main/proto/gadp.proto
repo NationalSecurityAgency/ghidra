@@ -166,12 +166,6 @@ message DataType {
 	bool const = 6;
 }
 
-enum UpdateMode {
-	UM_UNSOLICITED = 0;
-	UM_SOLICITED = 1;
-	UM_FIXED = 2;
-}
-
 enum ValueType {
 	VT_VOID = 0;
 	VT_BOOL = 1;
@@ -189,7 +183,6 @@ enum ValueType {
 	VT_STEP_KIND_SET = 13;
 	VT_PRIMITIVE_KIND = 14;
 	VT_DATA_TYPE = 15;
-	VT_UPDATE_MODE = 16;
 	VT_PATH = 17;
 	VT_PATH_LIST = 18;
 	VT_TYPE = 19;
@@ -227,7 +220,6 @@ message Value {
 		StepKindsSet step_kinds_value = 13;
 		PrimitiveKind primitive_kind_value = 14;
 		DataType data_type_value = 15;
-		UpdateMode update_mode_value = 16;
 		Path path_value = 17;
 		PathList path_list_value = 18;
 		ModelObjectStub object_stub = 20;

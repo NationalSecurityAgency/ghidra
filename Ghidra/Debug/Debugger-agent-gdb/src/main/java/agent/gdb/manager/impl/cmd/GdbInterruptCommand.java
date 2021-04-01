@@ -21,6 +21,7 @@ import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbStoppedEvent;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
+import ghidra.util.Msg;
 
 /**
  * Implementation of {@link GdbManager#interrupt()} when we start GDB
@@ -40,12 +41,15 @@ public class GdbInterruptCommand extends AbstractGdbCommand<Void> {
 	public String encode() {
 		Interpreter i = getInterpreter();
 		if (i == manager.getRunningInterpreter()) {
+			Msg.debug(this, "Using ^C to interrupt");
 			return "\u0003";
 		}
 		switch (i) {
 			case CLI:
+				Msg.debug(this, "Interrupting via CLI");
 				return "interrupt";
 			case MI2:
+				Msg.debug(this, "Interrupting via MI2");
 				return "-exec-interrupt";
 			default:
 				throw new AssertionError();

@@ -15,10 +15,10 @@
  */
 package ghidra.dbg;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Predicate;
 
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -27,6 +27,7 @@ import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
@@ -223,16 +224,16 @@ public interface DebuggerObjectModel {
 	 * 
 	 * @param <T> the required implementation-specific type
 	 * @param cls the class for the required type
-	 * @param ref the reference (or object) to check
+	 * @param obj the object to check
 	 * @return the object, cast to the desired typed
-	 * @throws IllegalArgumentException if -ref- does not belong to this model
+	 * @throws DebuggerIllegalArgumentException if {@code obj} does not belong to this model
 	 */
-	default <T extends TargetObject> T assertMine(Class<T> cls, TargetObject ref) {
-		if (ref.getModel() != this) {
-			throw new IllegalArgumentException(
-				"TargetObject (or ref)" + ref + " does not belong to this model");
+	default <T extends TargetObject> T assertMine(Class<T> cls, TargetObject obj) {
+		if (obj.getModel() != this) {
+			throw new DebuggerIllegalArgumentException(
+				"TargetObject " + obj + " does not belong to this model");
 		}
-		return cls.cast(ref);
+		return cls.cast(obj);
 	}
 
 	/**
@@ -304,18 +305,19 @@ public interface DebuggerObjectModel {
 	 * 
 	 * <p>
 	 * The root is a virtual object to contain all the top-level objects of the model tree. This
-	 * object represents the debugger itself.
+	 * object represents the debugger itself. Note in most cases {@link #getModelRoot()} is
+	 * sufficient; however, if you've just created the model, it is prudent to wait for it to create
+	 * its root. For asynchronous cases, just listen for the root-creation and -added events. This
+	 * method returns a future which completes after the root-added event.
 	 * 
-	 * @return the root
-	 * @deprecated use {@link #getModelRoot()} instead
+	 * @return a future which completes with the root
 	 */
-	@Deprecated(forRemoval = true)
 	public CompletableFuture<? extends TargetObject> fetchModelRoot();
 
 	/**
 	 * Get the root object of the model
 	 * 
-	 * @return the root
+	 * @return the root or {@code null} if it hasn't been created, yet
 	 */
 	public TargetObject getModelRoot();
 
@@ -426,9 +428,15 @@ public interface DebuggerObjectModel {
 	}
 
 	/**
-	 * @see #fetchModelObject(List)
-	 * @deprecated Use {@link #getModelObject(List)} instead, or {@link #fetchModelObject(List)} if
-	 *             a refresh is needed
+	 * Get an object from the model, resyncing according to the schema
+	 * 
+	 * <p>
+	 * This is necessary when an object in the path has a resync mode other than
+	 * {@link ResyncMode#NEVER} for the child being retrieved. Please note that some synchronization
+	 * may still be required on the client side, since accessing the object before it is created
+	 * will cause a {@code null} completion.
+	 * 
+	 * @return a future that completes with the object or with {@code null} if it doesn't exist
 	 */
 	@Deprecated
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path) {
@@ -441,12 +449,24 @@ public interface DebuggerObjectModel {
 	 * <p>
 	 * Note this may return an object which is still being constructed, i.e., between being created
 	 * and being added to the model. This differs from {@link #getModelValue(List)}, which will only
-	 * return an object after it has been added.
+	 * return an object after it has been added. This method also never follows links.
 	 * 
 	 * @param path the path of the object
-	 * @return the object
+	 * @return the object or {@code null} if it doesn't exist
 	 */
 	public TargetObject getModelObject(List<String> path);
+
+	/**
+	 * Get all created objects matching a given predicate
+	 * 
+	 * <p>
+	 * Note the predicate is executed while holding an internal model-wide lock. Be careful and keep
+	 * it simple.
+	 * 
+	 * @param predicate the predicate
+	 * @return the set of matching objects
+	 */
+	public Set<TargetObject> getModelObjects(Predicate<? super TargetObject> predicate);
 
 	/**
 	 * @see #fetchModelObject(List)
@@ -455,6 +475,9 @@ public interface DebuggerObjectModel {
 		return fetchModelObject(List.of(path));
 	}
 
+	/**
+	 * @see #getModelObject(List)
+	 */
 	public default TargetObject getModelObject(String... path) {
 		return getModelObject(List.of(path));
 	}

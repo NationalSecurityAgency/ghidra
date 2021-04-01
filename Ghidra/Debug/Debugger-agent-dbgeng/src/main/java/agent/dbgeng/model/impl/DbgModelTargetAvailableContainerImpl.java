@@ -25,13 +25,19 @@ import org.apache.commons.lang3.tuple.Pair;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "AvailableContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetAvailableImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "AvailableContainer",
+	elements = {
+		@TargetElementType(type = DbgModelTargetAvailableImpl.class)
+	},
+	elementResync = ResyncMode.ALWAYS,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetAvailableContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetAvailableContainer {
 
@@ -40,9 +46,6 @@ public class DbgModelTargetAvailableContainerImpl extends DbgModelTargetObjectIm
 
 	public DbgModelTargetAvailableContainerImpl(DbgModelTargetRoot root) {
 		super(root.getModel(), root, "Available", "AvailableContainer");
-		changeAttributes(List.of(), List.of(), Map.of( //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.SOLICITED //
-		), "Initialized");
 	}
 
 	@Override

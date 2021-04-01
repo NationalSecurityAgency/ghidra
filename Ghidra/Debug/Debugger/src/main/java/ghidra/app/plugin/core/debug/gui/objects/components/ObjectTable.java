@@ -29,7 +29,6 @@ import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.services.*;
-import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -269,7 +268,7 @@ public class ObjectTable<R> implements ObjectPane {
 	}
 
 	@Override
-	public void setFocus(TargetFocusScope object, TargetObject focused) {
+	public void setFocus(TargetObject object, TargetObject focused) {
 		Swing.runIfSwingOrRunLater(() -> {
 			setSelectedObject(focused);
 		});

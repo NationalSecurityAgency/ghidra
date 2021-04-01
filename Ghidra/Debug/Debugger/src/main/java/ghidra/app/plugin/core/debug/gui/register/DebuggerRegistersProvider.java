@@ -29,6 +29,8 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.google.common.collect.Range;
 
 import docking.*;
@@ -44,6 +46,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.services.*;
+import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.dbg.error.DebuggerModelAccessException;
@@ -285,17 +288,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	class RegAccessListener implements TraceRecorderListener {
 		@Override
 		public void registerBankMapped(TraceRecorder recorder) {
-			if (readTheseCoords) {
-				return;
-			}
 			Swing.runIfSwingOrRunLater(() -> loadValues());
 		}
 
 		@Override
 		public void registerAccessibilityChanged(TraceRecorder recorder) {
-			if (readTheseCoords) {
-				return;
-			}
 			Swing.runIfSwingOrRunLater(() -> loadValues());
 		}
 	}
@@ -363,7 +360,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-	private boolean readTheseCoords = false; /* "read" past tense */
+	private AsyncLazyValue<Void> readTheseCoords =
+		new AsyncLazyValue<>(this::readRegistersIfLiveAndAccessible); /* "read" past tense */
 	private Trace currentTrace; // Copy for transition
 	private TraceRecorder currentRecorder; // Copy of transition
 
@@ -707,7 +705,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		previous = current;
 		current = coordinates;
 
-		readTheseCoords = false;
+		readTheseCoords = new AsyncLazyValue<>(this::readRegistersIfLiveAndAccessible);
 		doSetTrace(current.getTrace());
 		doSetRecorder(current.getRecorder());
 		updateSubTitle();
@@ -1098,7 +1096,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		regsTableModel.fireTableDataChanged();
-		return readRegistersIfLiveAndAccessible();
+		//return AsyncUtils.NIL;
+		// In case we need to read a non-zero frame
+		return readTheseCoords.request();
 	}
 
 	private Set<Register> baseRegisters(Set<Register> regs) {
@@ -1113,10 +1113,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (recorder.getSnap() != current.getSnap()) {
 			return AsyncUtils.NIL;
 		}
+		if (current.getFrame() == 0) {
+			// Should have been pushed by model. non-zero frames are poll-only
+			return AsyncUtils.NIL;
+		}
 		TraceThread traceThread = current.getThread();
 		TargetThread targetThread = recorder.getTargetThread(traceThread);
-		if (targetThread == null ||
-			!recorder.isRegisterBankAccessible(traceThread, current.getFrame())) {
+		if (targetThread == null) {
 			return AsyncUtils.NIL;
 		}
 		Set<Register> toRead = new HashSet<>(baseRegisters(getSelectionFor(traceThread)));
@@ -1126,16 +1129,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		toRead.retainAll(regMapper.getRegistersOnTarget());
-		TargetRegisterBank bank =
-			recorder.getTargetRegisterBank(traceThread, current.getFrame());
-		if (!bank.isValid()) {
+		TargetRegisterBank bank = recorder.getTargetRegisterBank(traceThread, current.getFrame());
+		if (bank == null || !bank.isValid()) {
+			Msg.error(this, "Current frame's bank does not exist");
 			return AsyncUtils.NIL;
 		}
 		CompletableFuture<Void> future =
 			recorder.captureThreadRegisters(traceThread, current.getFrame(), toRead);
-		return future.thenAccept(__ -> {
-			readTheseCoords = true;
-		}).exceptionally(ex -> {
+		return future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
 			if (ex instanceof DebuggerModelAccessException) {
 				String msg =
@@ -1147,7 +1148,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				Msg.showError(this, getComponent(), "Read Target Registers",
 					"Could not read target registers for selected thread", ex);
 			}
-			return null;
+			return ExceptionUtils.rethrow(ex);
 		});
 	}
 

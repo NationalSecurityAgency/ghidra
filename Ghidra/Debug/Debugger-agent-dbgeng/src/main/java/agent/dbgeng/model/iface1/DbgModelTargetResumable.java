@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetResumable;
 
 /**
@@ -33,6 +34,9 @@ public interface DbgModelTargetResumable extends DbgModelTargetObject, TargetRes
 	@Override
 	public default CompletableFuture<Void> resume() {
 		DbgProcess process = getManager().getCurrentProcess();
+		if (process == null) {
+			return AsyncUtils.NIL;
+		}
 		return process.cont();
 	}
 

@@ -22,11 +22,15 @@ import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "AttributesContainer", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Object.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "AttributesContainer",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = Object.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetAttributesContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 

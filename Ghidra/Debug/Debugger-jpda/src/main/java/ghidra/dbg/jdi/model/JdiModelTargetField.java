@@ -26,12 +26,15 @@ import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "Field", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Field",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
+		@TargetAttributeType(type = Void.class)
+	})
 public class JdiModelTargetField extends JdiModelTargetObjectImpl {
 
 	protected final Field field;
@@ -46,8 +49,7 @@ public class JdiModelTargetField extends JdiModelTargetObjectImpl {
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
-			TYPE_ATTRIBUTE_NAME, field.typeName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			TYPE_ATTRIBUTE_NAME, field.typeName() //
 		), "Initialized");
 	}
 
@@ -101,6 +103,7 @@ public class JdiModelTargetField extends JdiModelTargetObjectImpl {
 		return CompletableFuture.completedFuture(null);
 	}
 
+	@Override
 	public CompletableFuture<Void> init() {
 		return CompletableFuture.completedFuture(null);
 	}

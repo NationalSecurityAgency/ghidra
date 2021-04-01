@@ -16,21 +16,30 @@
 package agent.dbgeng.model.impl;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgSessionImpl;
 import agent.dbgeng.model.AbstractDbgModel;
-import agent.dbgeng.model.iface2.DbgModelTargetSession;
-import agent.dbgeng.model.iface2.DbgModelTargetSessionContainer;
+import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerModelClosedReason;
+import ghidra.dbg.DebuggerObjectModelWithMemory;
+import ghidra.dbg.error.DebuggerModelTerminatingException;
+import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.AnnotatedSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
 
-public class DbgModelImpl extends AbstractDbgModel {
+public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectModelWithMemory {
 	// TODO: Need some minimal memory modeling per architecture on the model/agent side.
 	// The model must convert to and from Ghidra's address space names
 	protected static final String SPACE_NAME = "ram";
@@ -50,6 +59,8 @@ public class DbgModelImpl extends AbstractDbgModel {
 	protected final DbgModelTargetSessionImpl session;
 
 	protected final CompletableFuture<DbgModelTargetRootImpl> completedRoot;
+
+	protected Map<Object, TargetObject> objectMap = new HashMap<>();
 
 	public DbgModelImpl() {
 		this.dbg = DbgManager.newInstance();
@@ -79,7 +90,7 @@ public class DbgModelImpl extends AbstractDbgModel {
 
 	@Override
 	public CompletableFuture<Void> startDbgEng(String[] args) {
-		return dbg.start(args);
+		return dbg.start(args).thenApplyAsync(__ -> null, clientExecutor);
 	}
 
 	@Override
@@ -89,6 +100,8 @@ public class DbgModelImpl extends AbstractDbgModel {
 
 	@Override
 	public void terminate() throws IOException {
+		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		root.invalidateSubtree(root, "Dbgeng is terminating");
 		dbg.terminate();
 	}
 
@@ -113,6 +126,10 @@ public class DbgModelImpl extends AbstractDbgModel {
 			terminate();
 			return super.close();
 		}
+		catch (RejectedExecutionException e) {
+			reportError(this, "Model is already closing", e);
+			return AsyncUtils.NIL;
+		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);
 		}
@@ -121,5 +138,40 @@ public class DbgModelImpl extends AbstractDbgModel {
 	@Override
 	public DbgModelTargetSession getSession() {
 		return session;
+	}
+
+	@Override
+	public TargetMemory getMemory(TargetObject target, Address address, int length) {
+		if (target instanceof DbgModelTargetProcess) {
+			DbgModelTargetProcess process = (DbgModelTargetProcess) target;
+			return new DbgModelTargetMemoryContainerImpl(process);
+		}
+		return null;
+	}
+
+	@Override
+	public void addModelObject(Object object, TargetObject targetObject) {
+		objectMap.put(object, targetObject);
+	}
+
+	@Override
+	public TargetObject getModelObject(Object object) {
+		return objectMap.get(object);
+	}
+
+	public void deleteModelObject(Object object) {
+		objectMap.remove(object);
+	}
+
+	@Override
+	public <T> CompletableFuture<T> gateFuture(CompletableFuture<T> future) {
+		return super.gateFuture(future).exceptionally(ex -> {
+			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+				if (cause instanceof RejectedExecutionException) {
+					throw new DebuggerModelTerminatingException("dbgeng is terminating", ex);
+				}
+			}
+			return ExceptionUtils.rethrow(ex);
+		});
 	}
 }

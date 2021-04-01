@@ -17,15 +17,18 @@ package ghidra.dbg.agent;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.util.Msg;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A default implementation of {@link TargetObject} suitable for cases where the implementation
@@ -39,13 +42,43 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		extends AbstractTargetObject<P> {
 
 	/** Note modifying this directly subverts notifications */
-	protected final Map<String, E> elements = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
+	protected final Map<String, E> elements =
+		new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
+	protected final Map<String, E> cbElements =
+		new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
+	protected final Map<String, E> roCbElements =
+		Collections.unmodifiableMap(cbElements);
 	protected CompletableFuture<Void> curElemsRequest;
 
 	/** Note modifying this directly subverts notifications */
 	protected final Map<String, Object> attributes =
 		new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
+	protected final Map<String, Object> cbAttributes =
+		new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
+	protected final Map<String, Object> roCbAttributes =
+		Collections.unmodifiableMap(cbAttributes);
 	protected CompletableFuture<Void> curAttrsRequest;
+
+	/*protected static Set<Class<?>> dependencySet = Set.of(//
+		TargetProcess.class, //
+		TargetThread.class, //
+		TargetStack.class, //
+		TargetStackFrame.class, //
+		TargetRegisterBank.class, //
+		TargetRegisterContainer.class, //
+		TargetRegister.class, //
+		TargetMemory.class, //
+		TargetMemoryRegion.class, //
+		TargetModule.class, //
+		TargetModuleContainer.class, //
+		TargetSection.class, //
+		TargetBreakpointSpecContainer.class, //
+		TargetBreakpointSpec.class, //
+		TargetBreakpointLocation.class, //
+		TargetEventScope.class, //
+		TargetFocusScope.class, //
+		TargetExecutionStateful.class //
+	);*/
 
 	/**
 	 * Construct a new default target object whose schema is derived from the parent
@@ -117,10 +150,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			AbstractDebuggerObjectModel model, P parent, String key, String typeHint,
 			TargetObjectSchema schema) {
 		super(proxyFactory, proxyInfo, model, parent, key, typeHint, schema);
-		changeAttributes(List.of(), List.of(), Map.ofEntries(
-			Map.entry(DISPLAY_ATTRIBUTE_NAME, key == null ? "<root>" : key),
-			Map.entry(UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED)),
-			"Initialized");
+		changeAttributes(List.of(), List.of(),
+			Map.ofEntries(Map.entry(DISPLAY_ATTRIBUTE_NAME, key == null ? "<root>" : key)),
+			"Default");
 	}
 
 	public <I> DefaultTargetObject(ProxyFactory<I> proxyFactory, I proxyInfo,
@@ -157,8 +189,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	@Override
 	public CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements) {
-		return CompletableFuture.allOf(
-			fetchAttributes(refreshAttributes),
+		return CompletableFuture.allOf(fetchAttributes(refreshAttributes),
 			fetchElements(refreshElements));
 	}
 
@@ -186,6 +217,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		return AsyncUtils.NIL;
 	}
 
+	private boolean shouldRequestElements(boolean refresh) {
+		if (refresh) {
+			return true;
+		}
+		ResyncMode resync = getSchema().getElementResyncMode();
+		return resync.shouldResync(curElemsRequest);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -199,11 +238,10 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	public CompletableFuture<? extends Map<String, ? extends E>> fetchElements(boolean refresh) {
 		CompletableFuture<Void> req;
 		synchronized (elements) {
-			if (refresh || curElemsRequest == null || curElemsRequest.isCompletedExceptionally() ||
-				getUpdateMode() == TargetUpdateMode.SOLICITED) {
-				curElemsRequest = requestElements(refresh).thenCompose(model::gateFuture);
+			if (shouldRequestElements(refresh)) {
+				curElemsRequest = model.gateFuture(requestElements(refresh));
 			}
-			req = curElemsRequest;
+			req = curElemsRequest == null ? AsyncUtils.NIL : curElemsRequest;
 		}
 		return req.thenApply(__ -> getCachedElements());
 	}
@@ -220,6 +258,11 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 	}
 
+	@Override
+	public Map<String, E> getCallbackElements() {
+		return roCbElements;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -230,22 +273,13 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		return fetchElements().thenApply(elems -> elems.get(index));
 	}
 
-	protected Map<String, E> combineElements(Collection<? extends E> canonical,
-			Map<String, ? extends E> links) {
+	protected Map<String, E> combineElements(Collection<? extends E> autoKeyed,
+			Map<String, ? extends E> mapKeyed) {
 		Map<String, E> asMap = new LinkedHashMap<>();
-		for (E e : canonical) {
-			if (!PathUtils.parent(e.getPath()).equals(getPath())) {
-				Msg.error(this, "Link found in canonical elements of " + parent + ": " + e);
-			}
+		for (E e : autoKeyed) {
 			asMap.put(e.getIndex(), e);
 		}
-		for (Map.Entry<String, ? extends E> ent : links.entrySet()) {
-			if (!PathUtils.isLink(getPath(), PathUtils.makeKey(ent.getKey()),
-				ent.getValue().getPath())) {
-				//Msg.error(this, "Canonical element found in links: " + ent);
-			}
-			asMap.put(ent.getKey(), ent.getValue());
-		}
+		asMap.putAll(mapKeyed);
 		return asMap;
 	}
 
@@ -256,14 +290,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * An existing element is left in place if it's identical to its replacement as in {@code ==}.
 	 * This method also invalidates the sub-trees of removed elements, if any.
 	 * 
-	 * @param canonical the desired set of canonical elements
-	 * @param links the desired map of linked elements
+	 * @param autoKeyed the desired set of elements where keys are given by the elements
+	 * @param mapKeyed the desired map of elements with specified keys (usually for links)
 	 * @param reason the reason for the change (used as the reason for invalidation)
 	 * @return the delta from the previous elements
 	 */
-	public Delta<E, E> setElements(Collection<? extends E> canonical,
-			Map<String, ? extends E> links, String reason) {
-		Map<String, E> elements = combineElements(canonical, links);
+	public Delta<E, E> setElements(Collection<? extends E> autoKeyed,
+			Map<String, ? extends E> mapKeyed, String reason) {
+		Map<String, E> elements = combineElements(autoKeyed, mapKeyed);
 		return setElements(elements, reason);
 	}
 
@@ -272,6 +306,15 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<E, E> setElements(Collection<? extends E> elements, String reason) {
 		return setElements(elements, Map.of(), reason);
+	}
+
+	private void updateCallbackElements(Delta<E, E> delta) {
+		CompletableFuture.runAsync(() -> {
+			delta.apply(this.cbElements, Delta.SAME);
+		}, model.clientExecutor).exceptionally(ex -> {
+			Msg.error(this, "Error updating elements before callback");
+			return null;
+		});
 	}
 
 	private Delta<E, E> setElements(Map<String, E> elements, String reason) {
@@ -283,8 +326,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		if (schemax != null) {
 			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		}
-		doInvalidateElements(delta.removed.values(), reason);
+		doInvalidateElements(delta.removed, reason);
 		if (!delta.isEmpty()) {
+			updateCallbackElements(delta);
 			listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
@@ -298,15 +342,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * This method also invalidates the sub-trees of removed elements, if any.
 	 * 
 	 * @param remove the set of indices to remove
-	 * @param addCanonical the set of canonical elements to add
-	 * @param addLinks the map of linked elements to add
+	 * @param autoKeyed the set of elements to add with the elements' keys
+	 * @param mapKeyed the map of elements to add with given keys (usually for links)
 	 * @param reason the reason for the change (used as the reason for invalidation)
 	 * @return the actual delta from the previous to the current elements
 	 */
-	public Delta<E, E> changeElements(Collection<String> remove,
-			Collection<? extends E> addCanonical, Map<String, ? extends E> addLinks,
-			String reason) {
-		Map<String, E> add = combineElements(addCanonical, addLinks);
+	public Delta<E, E> changeElements(Collection<String> remove, Collection<? extends E> autoKeyed,
+			Map<String, ? extends E> mapKeyed, String reason) {
+		Map<String, E> add = combineElements(autoKeyed, mapKeyed);
 		return changeElements(remove, add, reason);
 	}
 
@@ -318,7 +361,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		return changeElements(remove, add, Map.of(), reason);
 	}
 
-	private Delta<E, E> changeElements(Collection<String> remove, Map<String, E> add,
+	public Delta<E, E> changeElements(Collection<String> remove, Map<String, E> add,
 			String reason) {
 		Delta<E, E> delta;
 		synchronized (model.lock) {
@@ -328,8 +371,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		if (schemax != null) {
 			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		}
-		doInvalidateElements(delta.removed.values(), reason);
+		doInvalidateElements(delta.removed, reason);
 		if (!delta.isEmpty()) {
+			updateCallbackElements(delta);
 			listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
@@ -353,6 +397,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		return AsyncUtils.NIL;
 	}
 
+	private boolean shouldRequestAttributes(boolean refresh) {
+		if (refresh) {
+			return true;
+		}
+		ResyncMode resync = getSchema().getAttributeResyncMode();
+		return resync.shouldResync(curAttrsRequest);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -367,10 +419,10 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		CompletableFuture<Void> req;
 		synchronized (attributes) {
 			// update_mode does not affect attributes. They always behave as if UNSOLICITED.
-			if (refresh || curAttrsRequest == null || curAttrsRequest.isCompletedExceptionally()) {
-				curAttrsRequest = requestAttributes(refresh).thenCompose(model::gateFuture);
+			if (shouldRequestAttributes(refresh)) {
+				curAttrsRequest = model.gateFuture(requestAttributes(refresh));
 			}
-			req = curAttrsRequest;
+			req = curAttrsRequest == null ? AsyncUtils.NIL : curAttrsRequest;
 		}
 		return req.thenApply(__ -> {
 			synchronized (model.lock) {
@@ -395,31 +447,24 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	}
 
 	@Override
+	public Map<String, ?> getCallbackAttributes() {
+		return roCbAttributes;
+	}
+
+	@Override
 	public Object getCachedAttribute(String name) {
 		synchronized (model.lock) {
 			return attributes.get(name);
 		}
 	}
 
-	protected Map<String, Object> combineAttributes(
-			Collection<? extends TargetObject> canonicalObjects, Map<String, ?> linksAndValues) {
+	protected Map<String, Object> combineAttributes(Collection<? extends TargetObject> autoKeyed,
+			Map<String, ?> mapKeyed) {
 		Map<String, Object> asMap = new LinkedHashMap<>();
-		for (TargetObject ca : canonicalObjects) {
-			if (!PathUtils.parent(ca.getPath()).equals(getPath())) {
-				Msg.error(this, "Link found in canonical attributes: " + ca);
-			}
+		for (TargetObject ca : autoKeyed) {
 			asMap.put(ca.getName(), ca);
 		}
-		for (Map.Entry<String, ?> ent : linksAndValues.entrySet()) {
-			Object av = ent.getValue();
-			/*if (av instanceof TargetObject) {
-				TargetObject link = (TargetObject) av;
-				if (!PathUtils.isLink(getPath(), ent.getKey(), link.getPath())) {
-					//Msg.error(this, "Canonical attribute found in links: " + ent);
-				}
-			}*/
-			asMap.put(ent.getKey(), av);
-		}
+		asMap.putAll(mapKeyed);
 		return asMap;
 	}
 
@@ -431,22 +476,31 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * defined by {@link Objects#equals(Object, Object)}. This method also invalidates the sub-trees
 	 * of removed non-reference object-valued attributes.
 	 * 
-	 * @param canonicalObjects the desired set of canonical object-valued attributes
-	 * @param linksAndValues the desired map of other attributes
+	 * @param autoKeyed the desired set of object-valued attributes using the objects' keys
+	 * @param mapKeyed the desired map of other attributes (usually links and primitive values)
 	 * @param reason the reason for the change (used as the reason for invalidation)
 	 * @return the delta from the previous attributes
 	 */
-	public Delta<?, ?> setAttributes(Collection<? extends TargetObject> canonicalObjects,
-			Map<String, ?> linksAndValues, String reason) {
-		Map<String, ?> attributes = combineAttributes(canonicalObjects, linksAndValues);
+	public Delta<?, ?> setAttributes(Collection<? extends TargetObject> autoKeyed,
+			Map<String, ?> mapKeyed, String reason) {
+		Map<String, ?> attributes = combineAttributes(autoKeyed, mapKeyed);
 		return setAttributes(attributes, reason);
+	}
+
+	private void updateCallbackAttributes(Delta<Object, ?> delta) {
+		CompletableFuture.runAsync(() -> {
+			delta.apply(this.cbAttributes, Delta.EQUAL);
+		}, model.clientExecutor).exceptionally(ex -> {
+			Msg.error(this, "Error updating elements before callback");
+			return null;
+		});
 	}
 
 	/**
 	 * TODO: Document me.
 	 */
 	public Delta<?, ?> setAttributes(Map<String, ?> attributes, String reason) {
-		Delta<?, ?> delta;
+		Delta<Object, ?> delta;
 		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
 		}
@@ -456,6 +510,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {
+			updateCallbackAttributes(delta);
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
@@ -470,16 +525,31 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * of removed non-reference object-valued attributes.
 	 * 
 	 * @param remove the set of names to remove
-	 * @param addCanonicalObjects the set of canonical object-valued attributes to add
-	 * @param addLinksAndValues the map of other attributes to add
+	 * @param autoKeyed the set of object-valued attributes to add using the objects' keys
+	 * @param mapKeyed the map of other attributes to add (usually links and primitives)
 	 * @param reason the reason for the change (used as the reason for invalidation)
 	 * @return the actual delta from the previous to the current attributes
 	 */
 	public Delta<?, ?> changeAttributes(List<String> remove,
-			Collection<? extends TargetObject> addCanonicalObjects,
-			Map<String, ?> addLinksAndValues, String reason) {
-		Map<String, ?> add = combineAttributes(addCanonicalObjects, addLinksAndValues);
+			Collection<? extends TargetObject> autoKeyed, Map<String, ?> mapKeyed, String reason) {
+		Map<String, ?> add = combineAttributes(autoKeyed, mapKeyed);
 		return changeAttributes(remove, add, reason);
+	}
+
+	public <T> Map<String, T> filterValid(String name, Map<String, T> map) {
+		return map.entrySet().stream().filter(ent -> {
+			T val = ent.getValue();
+			if (!(val instanceof TargetObject)) {
+				return true;
+			}
+			TargetObject obj = (TargetObject) val;
+			if (obj.isValid()) {
+				return true;
+			}
+			Msg.error(this, name + " " + ent.getKey() + " of " + getJoinedPath(".") +
+				" linked to invalid object: " + obj.getJoinedPath("."));
+			return false;
+		}).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 	}
 
 	/**
@@ -491,7 +561,8 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * used to specify the "canonical" location.
 	 */
 	public Delta<?, ?> changeAttributes(List<String> remove, Map<String, ?> add, String reason) {
-		Delta<?, ?> delta;
+		// add = filterValid("Attribute", add);
+		Delta<Object, ?> delta;
 		synchronized (model.lock) {
 			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
 		}
@@ -500,9 +571,87 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
-		if (!delta.isEmpty()) {
+		if (!delta.isEmpty()/* && !reason.equals("Default")*/) {
+			updateCallbackAttributes(delta);
 			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
 		}
 		return delta;
+	}
+
+	@Override
+	public ListenerSet<DebuggerModelListener> getListeners() {
+		return listeners;
+	}
+
+	/*
+	private CompletableFuture<Void> findDependencies(TargetObjectListener l) {
+		//System.err.println("findDependencies " + this);
+		Map<String, TargetObject> resultAttrs = new HashMap<>();
+		Map<String, TargetObject> resultElems = new HashMap<>();
+		AsyncFence fence = new AsyncFence();
+		fence.include(fetchAttributes(false).thenCompose(attrs -> {
+			AsyncFence af = new AsyncFence();
+			for (String key : attrs.keySet()) { //requiredObjKeys) {
+				Object object = attrs.get(key);
+				if (!(object instanceof TargetObjectRef)) {
+					continue;
+				}
+				TargetObjectRef ref = (TargetObjectRef) object;
+				if (PathUtils.isLink(getPath(), key, ref.getPath())) {
+					continue;
+				}
+				af.include(ref.fetch().thenAccept(obj -> {
+					if (isDependency(obj)) {
+						synchronized (this) {
+							resultAttrs.put(key, obj);
+							obj.addListener(l);
+						}
+					}
+				}));
+			}
+			return af.ready();
+		}));
+		fence.include(fetchElements(false).thenCompose(elems -> {
+			AsyncFence ef = new AsyncFence();
+			for (Entry<String, ? extends TargetObjectRef> entry : elems.entrySet()) {
+				ef.include(entry.getValue().fetch().thenAccept(obj -> {
+					synchronized (this) {
+						resultElems.put(entry.getKey(), obj);
+						obj.addListener(l);
+					}
+				}));
+			}
+			return ef.ready();
+		}));
+		return fence.ready();
+	}
+	
+	public boolean isDependency(TargetObject object) {
+		String name = object.getName();
+		if (name != null) {
+			if (name.equals("Debug"))
+				return true;
+			if (name.equals("Stack"))
+				return true;
+		}
+	
+		Set<Class<? extends TargetObject>> interfaces = object.getSchema().getInterfaces();
+		for (Class<? extends TargetObject> ifc : interfaces) {
+			if (dependencySet.contains(ifc)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	*/
+
+	@Override
+	public void addListener(DebuggerModelListener l) {
+		listeners.add(l);
+		/*
+		if (isDependency(this)) {
+			findDependencies(l);
+		}
+		*/
 	}
 }

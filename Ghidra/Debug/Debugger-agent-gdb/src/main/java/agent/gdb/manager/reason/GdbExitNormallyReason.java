@@ -20,13 +20,14 @@ import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 /**
  * The inferior stopped because it has exited (with status 0)
  */
-public class GdbExitNormallyReason implements GdbReason {
+public class GdbExitNormallyReason extends GdbExitedReason {
 	public GdbExitNormallyReason(GdbMiFieldList info) {
+		super(0);
 		// Nothing additional to parse
 	}
 
 	@Override
 	public String desc() {
-		return "Exited normally";
+		return "Exited normally (with code 0)";
 	}
 }

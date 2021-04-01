@@ -23,12 +23,18 @@ import com.sun.jdi.Method;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
-@TargetObjectSchemaInfo(name = "TargetMethodContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetMethod.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "TargetMethodContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetMethod.class)
+	},
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetMethodContainer extends JdiModelTargetObjectImpl {
 
 	protected final JdiModelTargetReferenceType reftype;

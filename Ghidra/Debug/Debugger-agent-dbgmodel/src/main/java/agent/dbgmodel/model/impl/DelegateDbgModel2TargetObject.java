@@ -183,6 +183,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	public DelegateDbgModel2TargetObject(DbgModel2Impl model, DbgModelTargetObject parent,
 			String key, ModelObject modelObject, List<Class<? extends TargetObject>> mixins) {
 		super(model, mixins, model, parent.getProxy(), key, getHintForObject(modelObject));
+		//System.err.println(this);
 		this.state = new ProxyState(model, modelObject);
 		this.cleanable = CLEANER.register(this, state);
 
@@ -192,6 +193,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			model.getManager().addEventsListener((DbgEventsListener) proxy);
 		}
 		setModelObject(modelObject);
+		update0();
 	}
 
 	public DelegateDbgModel2TargetObject clone(String key, ModelObject modelObject) {
@@ -247,6 +249,10 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 				onExit();
 				break;
 			}
+			case SESSION_EXIT: {
+				getModel().close();
+				return;
+			}
 		}
 		if (proxy instanceof TargetExecutionStateful) {
 			setExecutionState(exec, "Refreshed");
@@ -261,12 +267,50 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			proxy instanceof DbgModelTargetStackFrame || //
 			proxy instanceof DbgModelTargetStack || //
 			proxy instanceof DbgModelTargetTTD) {
-			listeners.fire.invalidateCacheRequested(proxy);
+			//listeners.fire.invalidateCacheRequested(proxy);
+			return;
+		}
+	}
+
+	public void update0() {
+		if (PathUtils.isLink(parent.getPath(), proxy.getName(), proxy.getPath())) {
+			return;
+		}
+		if (proxy instanceof DbgModelTargetSession || //
+			proxy instanceof DbgModelTargetProcess || //
+			proxy instanceof DbgModelTargetThread) {
+			requestAttributes(false);
+			return;
+		}
+		if (proxy instanceof DbgModelTargetRegisterContainer || //
+			proxy.getName().equals("Stack")) {
+			requestAttributes(false);
+			return;
+		}
+		if (proxy instanceof DbgModelTargetRegisterBank) {
+			requestAttributes(false).thenAccept(__ -> {
+				DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) proxy;
+				Map<String, byte[]> result = bank.getValues();
+				System.err.println("SERVER:fire.registersUpdated " + bank);
+				listeners.fire.registersUpdated(bank, result);
+			});
+			return;
+		}
+
+		if (proxy instanceof DbgModelTargetProcessContainer || //
+			proxy instanceof DbgModelTargetThreadContainer || //
+			proxy instanceof DbgModelTargetModuleContainer || //
+			proxy instanceof DbgModelTargetBreakpointContainer || //
+			proxy instanceof DbgModelTargetStack) {
+			requestElements(false);
 			return;
 		}
 	}
 
 	private void update() {
+		if (PathUtils.isLink(parent.getPath(), proxy.getName(), proxy.getPath())) {
+			return;
+		}
 		if (proxy instanceof DbgModelTargetProcessContainer || //
 			proxy instanceof DbgModelTargetThreadContainer || //
 			proxy instanceof DbgModelTargetModuleContainer || //
@@ -275,15 +319,22 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			proxy instanceof DbgModelTargetRegisterBank || //
 			proxy instanceof DbgModelTargetStack || //
 			proxy instanceof DbgModelTargetTTD) {
-			requestElements(true);
-			requestAttributes(true);
+			requestElements(false);
+			requestAttributes(false);
 			return;
 		}
-		if (proxy instanceof DbgModelTargetRegister || proxy instanceof DbgModelTargetStackFrame) {
-			DbgThread thread = getProxy().getParentThread().getThread();
-			if (thread.equals(getManager().getEventThread())) {
-				requestAttributes(true);
-			}
+		if (proxy instanceof DbgModelTargetRegisterBank) {
+			requestAttributes(false).thenAccept(__ -> {
+				DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) proxy;
+				Map<String, byte[]> result = bank.getValues();
+				System.err.println("SERVER:fire.registersUpdated " + bank);
+				listeners.fire.registersUpdated(bank, result);
+			});
+			return;
+		}
+		if (proxy instanceof DbgModelTargetRegister || //
+			proxy instanceof DbgModelTargetStackFrame) {
+			requestAttributes(false);
 			return;
 		}
 	}
@@ -319,6 +370,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
+			DbgModelTargetAccessConditioned accessConditioned =
+				(DbgModelTargetAccessConditioned) proxy;
 		}
 	}
 

@@ -22,8 +22,9 @@ import java.util.function.Function;
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import ghidra.async.AsyncFence;
-import ghidra.dbg.target.TargetBreakpointContainer;
+import ghidra.dbg.target.TargetBreakpointLocationContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 
@@ -34,8 +35,10 @@ import ghidra.program.model.address.AddressRange;
 	attributes = {
 		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
-public interface DbgModelTargetBreakpointContainer
-		extends DbgModelTargetObject, TargetBreakpointContainer, DbgEventsListenerAdapter {
+public interface DbgModelTargetBreakpointContainer extends DbgModelTargetObject, //
+		TargetBreakpointSpecContainer, //
+		TargetBreakpointLocationContainer, //
+		DbgEventsListenerAdapter {
 
 	/*
 	@Override
@@ -65,13 +68,13 @@ public interface DbgModelTargetBreakpointContainer
 		else if (kinds.contains(TargetBreakpointKind.WRITE)) {
 			fence.include(placer.apply(DbgBreakpointType.HW_WATCHPOINT));
 		}
-		if (kinds.contains(TargetBreakpointKind.EXECUTE)) {
+		if (kinds.contains(TargetBreakpointKind.HW_EXECUTE)) {
 			fence.include(placer.apply(DbgBreakpointType.HW_BREAKPOINT));
 		}
-		if (kinds.contains(TargetBreakpointKind.SOFTWARE)) {
+		if (kinds.contains(TargetBreakpointKind.SW_EXECUTE)) {
 			fence.include(placer.apply(DbgBreakpointType.BREAKPOINT));
 		}
-		return fence.ready();
+		return getModel().gateFuture(fence.ready());
 	}
 
 	@Override

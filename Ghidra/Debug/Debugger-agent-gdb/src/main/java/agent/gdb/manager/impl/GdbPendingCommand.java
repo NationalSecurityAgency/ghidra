@@ -54,6 +54,14 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 		return cmd;
 	}
 
+	public Integer impliesCurrentThreadId() {
+		return cmd.impliesCurrentThreadId();
+	}
+
+	public Integer impliesCurrentFrameId() {
+		return cmd.impliesCurrentFrameId();
+	}
+
 	/**
 	 * Finish the execution of this command
 	 */
@@ -71,6 +79,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 	/**
 	 * Handle an event
 	 * 
+	 * <p>
 	 * This gives the command implementation the first chance to claim or steal an event
 	 * 
 	 * @param evt the event

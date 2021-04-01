@@ -59,4 +59,16 @@ public interface InvalidatableTargetObjectIf extends TargetObject {
 	 * @param reason a human-consumable explanation for the removal
 	 */
 	void invalidateSubtree(TargetObject branch, String reason);
+
+	/**
+	 * Invalidate this subtree, without locking
+	 * 
+	 * <p>
+	 * This really only exists to avoid reentering a lock. This should be called when a thread has
+	 * already acquired the relevant lock(s).
+	 * 
+	 * @param branch
+	 * @param reason
+	 */
+	void doInvalidateSubtree(TargetObject branch, String reason);
 }

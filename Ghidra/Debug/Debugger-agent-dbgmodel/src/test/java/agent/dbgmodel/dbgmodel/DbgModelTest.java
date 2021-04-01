@@ -453,8 +453,8 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 					System.out.println(p.toString());
 				}
 				catch (COMException e) {
-					System.out.println(
-						"Error with PID " + util.getCtlId(p) + ": " + e.getMessage());
+					System.out
+							.println("Error with PID " + util.getCtlId(p) + ": " + e.getMessage());
 				}
 			}
 		}
@@ -726,8 +726,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				module.getVersion();
 				DebugHostModuleImpl1 impl = (DebugHostModuleImpl1) module;
 				System.out.println("  FVer: " + Long.toHexString(impl.getFileVersion()));
-				System.out.println(
-					"  Pvar: " + Long.toHexString(impl.getProductVersion()));
+				System.out.println("  Pvar: " + Long.toHexString(impl.getProductVersion()));
 			}
 		}
 	}
@@ -805,8 +804,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			maker.start();
 
 			client.getControl()
-					.execute(
-						".load c:\\Software\\windbg\\amd64\\winext\\JSProvider.dll");
+					.execute(".load c:\\Software\\windbg\\amd64\\winext\\JSProvider.dll");
 			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TTDReplayCPU.dll");
 			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TTDAnalyze.dll");
 			client.getControl().execute(".load c:\\Software\\windbg\\amd64\\ttd\\TtdExt.dll");
@@ -864,8 +862,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testSymbols() {
-		try (ProcMaker maker =
-			new ProcMaker("c:\\Users\\dbmilla\\Desktop\\ConsoleApplication1.exe")) {
+		try (ProcMaker maker = new ProcMaker("c:\\Users\\user\\Desktop\\ConsoleApplication1.exe")) {
 			maker.start();
 
 			DebugSymbols ds = client.getSymbols();
@@ -883,8 +880,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				System.out.println(module.getName().toString());
 				System.out.println(module.getSymbolKind());
 
-				List<DebugSymbolId> symbol0 =
-					client.getSymbols().getSymbolIdsByName("");
+				List<DebugSymbolId> symbol0 = client.getSymbols().getSymbolIdsByName("");
 				System.out.println(symbol0.size());
 
 				try {
@@ -940,8 +936,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			maker.start();
 
 			DebugModule umod = client.getSymbols()
-					.getModuleByIndex(
-						client.getSymbols().getNumberLoadedModules() + 1);
+					.getModuleByIndex(client.getSymbols().getNumberLoadedModules() + 1);
 			System.out.println(umod.getBase());
 		}
 	}
@@ -998,8 +993,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			// Debugger should be able to modify program code.
 			DebugMemoryBasicInformation writable = null;
 			space: for (DebugMemoryBasicInformation info : client.getDataSpaces()
-					.iterateVirtual(
-						0)) {
+					.iterateVirtual(0)) {
 				for (PageProtection prot : info.protect) {
 					if (prot.isWrite()) {
 						writable = info;

@@ -27,7 +27,8 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetInterpreter;
+import ghidra.dbg.target.TargetObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -238,7 +239,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		System.err.println("modelModified " + model);
 	}
 
-	public void setFocus(TargetFocusScope object, TargetObject focused) {
+	public void setFocus(TargetObject object, TargetObject focused) {
 		for (DebuggerObjectsProvider p : providers) {
 			p.setFocus(object, focused);
 		}

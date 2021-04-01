@@ -58,8 +58,5 @@ public class TestTargetThread
 		Delta<?, ?> delta = changeAttributes(List.of(), List.of(), Map.of(
 			STATE_ATTRIBUTE_NAME, state //
 		), "Changed state");
-		if (delta.added.containsKey(STATE_ATTRIBUTE_NAME)) {
-			listeners.fire(TargetExecutionStateListener.class).executionStateChanged(this, state);
-		}
 	}
 }

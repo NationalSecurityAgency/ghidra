@@ -25,6 +25,7 @@ import agent.gdb.manager.impl.GdbThreadInfo;
 /**
  * A handle to a thread controlled by GDB
  * 
+ * <p>
  * Each thread is numbered by GDB. Methods that return a {@link CompletableFuture} send a command to
  * GDB via its GDB/MI interpreter. Where applicable, the {@code --thread} parameter is provided to
  * GDB to ensure commands are executed on this thread. The returned future completes when GDB has
@@ -43,6 +44,7 @@ public interface GdbThread
 	/**
 	 * Get the GDB-assigned thread number
 	 * 
+	 * <p>
 	 * This is not the OS-assigned TID.
 	 * 
 	 * @return the number
@@ -73,6 +75,7 @@ public interface GdbThread
 	/**
 	 * Set the value of an internal GDB variable
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code set [VAR_NAME]=[VAL]}.
 	 * 
 	 * @param varName the name of the GDB variable
@@ -98,6 +101,7 @@ public interface GdbThread
 	/**
 	 * Continue execution
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code continue}. Depending on GDB's execution mode,
 	 * this may allow other threads to execute, too.
 	 * 
@@ -108,12 +112,12 @@ public interface GdbThread
 	/**
 	 * Step the thread
 	 * 
+	 * <p>
 	 * Note that the command can complete before the thread has finished stepping. The command
 	 * completes as soon as the thread is running. A separate stop event is emitted when the step is
 	 * completed.
 	 * 
 	 * @param suffix specifies how far to step, or on what conditions stepping ends.
-	 * 
 	 * @return a future that completes once the thread is running
 	 */
 	CompletableFuture<Void> step(ExecSuffix suffix);
@@ -121,6 +125,7 @@ public interface GdbThread
 	/**
 	 * Detach from the entire process
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code detach}. It will detach the entire process, not
 	 * just this thread.
 	 * 
@@ -131,6 +136,7 @@ public interface GdbThread
 	/**
 	 * Kill the entire process
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code kill}. It will kill the entire process, not just
 	 * this thread.
 	 * 

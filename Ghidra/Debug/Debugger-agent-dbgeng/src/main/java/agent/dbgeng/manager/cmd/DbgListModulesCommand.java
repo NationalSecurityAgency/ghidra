@@ -18,6 +18,7 @@ package agent.dbgeng.manager.cmd;
 import java.util.*;
 
 import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
 import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.impl.*;
 import ghidra.util.Msg;
@@ -62,6 +63,10 @@ public class DbgListModulesCommand extends AbstractDbgCommand<Map<String, DbgMod
 		DebugSymbols symbols = manager.getSymbols();
 		for (DebugModule module : symbols.iterateModules(0)) {
 			DebugModuleInfo info = symbols.getModuleParameters(1, module.getIndex());
+			String imageName = module.getName(DebugModuleName.IMAGE);
+			String moduleName = module.getName(DebugModuleName.MODULE);
+			info.setImageName(imageName);
+			info.setModuleName(moduleName);
 			updatedModules.put(info.toString(), module);
 			moduleInfo.put(module, info);
 		}

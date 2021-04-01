@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.agent;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -30,11 +30,10 @@ import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
-import ghidra.dbg.target.TargetRegisterBank.TargetRegisterBankListener;
-import ghidra.dbg.util.*;
-import ghidra.dbg.util.AttributesChangedListener.AttributesChangedInvocation;
-import ghidra.dbg.util.ElementsChangedListener.ElementsChangedInvocation;
-import ghidra.dbg.util.InvalidatedListener.InvalidatedInvocation;
+import ghidra.dbg.testutil.*;
+import ghidra.dbg.testutil.AttributesChangedListener.AttributesChangedInvocation;
+import ghidra.dbg.testutil.ElementsChangedListener.ElementsChangedInvocation;
+import ghidra.dbg.testutil.InvalidatedListener.InvalidatedInvocation;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
 
@@ -278,7 +277,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		}
 
 		@Override
-		public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
+		public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
 			record.add(new ImmutablePair<>("registersUpdated", bank));
 		}
 	}
@@ -291,19 +290,16 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
 		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
-		fakeA1rb.listeners.fire(TargetRegisterBankListener.class)
-				.registersUpdated(fakeA1rb, Map.of());
+		fakeA1rb.listeners.fire.registersUpdated(fakeA1rb, Map.of());
 		fakeA.setElements(List.of(fakeA1rb), "Init");
 		model.root.setAttributes(List.of(fakeA), Map.of(), "Init");
 
 		waitOn(model.clientExecutor);
 
-		assertEquals(List.of(
-			new ImmutablePair<>("created", fakeA),
+		assertEquals(List.of(new ImmutablePair<>("created", fakeA),
 			new ImmutablePair<>("created", fakeA1rb),
 			new ImmutablePair<>("registersUpdated", fakeA1rb),
-			new ImmutablePair<>("addedElem", fakeA1rb),
-			new ImmutablePair<>("addedAttr", fakeA)),
+			new ImmutablePair<>("addedElem", fakeA1rb), new ImmutablePair<>("addedAttr", fakeA)),
 			listener.record);
 	}
 
@@ -312,8 +308,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
 		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
-		fakeA1rb.listeners.fire(TargetRegisterBankListener.class)
-				.registersUpdated(fakeA1rb, Map.of());
+		fakeA1rb.listeners.fire.registersUpdated(fakeA1rb, Map.of());
 		fakeA.setElements(List.of(fakeA1rb), "Init");
 		model.root.setAttributes(List.of(fakeA), Map.of(), "Init");
 		EventRecordingListener listener = new EventRecordingListener();
@@ -321,12 +316,9 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		waitOn(model.clientExecutor);
 
-		assertEquals(List.of(
-			new ImmutablePair<>("created", model.root),
-			new ImmutablePair<>("created", fakeA),
-			new ImmutablePair<>("created", fakeA1rb),
-			new ImmutablePair<>("addedElem", fakeA1rb),
-			new ImmutablePair<>("addedAttr", fakeA)),
+		assertEquals(List.of(new ImmutablePair<>("created", model.root),
+			new ImmutablePair<>("created", fakeA), new ImmutablePair<>("created", fakeA1rb),
+			new ImmutablePair<>("addedElem", fakeA1rb), new ImmutablePair<>("addedAttr", fakeA)),
 			listener.record);
 	}
 }

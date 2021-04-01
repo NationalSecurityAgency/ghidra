@@ -60,8 +60,7 @@ public class GdbModelTargetSymbol
 			// TODO: DATA_TYPE
 			VALUE_ATTRIBUTE_NAME, value,
 			SIZE_ATTRIBUTE_NAME, size,
-			DISPLAY_ATTRIBUTE_NAME, symbol.getName(),
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED),
+			DISPLAY_ATTRIBUTE_NAME, symbol.getName()),
 			"Initialized");
 	}
 

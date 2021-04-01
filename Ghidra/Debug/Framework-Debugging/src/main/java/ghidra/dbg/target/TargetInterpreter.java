@@ -18,8 +18,6 @@ package ghidra.dbg.target;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetConsole.TargetTextConsoleListener;
 import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
@@ -71,31 +69,5 @@ public interface TargetInterpreter extends TargetObject {
 	@TargetAttributeType(name = PROMPT_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default String getPrompt() {
 		return getTypedAttributeNowByName(PROMPT_ATTRIBUTE_NAME, String.class, ">");
-	}
-
-	public interface TargetInterpreterListener extends TargetTextConsoleListener {
-		/**
-		 * {@inheritDoc}
-		 * 
-		 * <p>
-		 * This should only receive console output for non-captured commands. See
-		 * {@link TargetInterpreter#executeCapture(String)}.
-		 */
-		@Override
-		default void consoleOutput(TargetObject console, Channel channel, String text) {
-			TargetTextConsoleListener.super.consoleOutput(console, channel, text);
-		}
-
-		/**
-		 * The interpreter's prompt has changed
-		 * 
-		 * <p>
-		 * Any UI elements presenting the prompt should be updated immediately.
-		 * 
-		 * @param interpreter the interpreter whose prompt changed
-		 * @param prompt the new prompt
-		 */
-		default void promptChanged(TargetInterpreter interpreter, String prompt) {
-		}
 	}
 }

@@ -74,6 +74,15 @@ public enum DbgState {
 		public boolean isAlive() {
 			return false;
 		}
+	},
+	/**
+	 * Dbg or the process has exited
+	 */
+	SESSION_EXIT {
+		@Override
+		public boolean isAlive() {
+			return false;
+		}
 	};
 
 	public abstract boolean isAlive();

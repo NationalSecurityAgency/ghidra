@@ -24,12 +24,15 @@ import com.sun.jdi.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "ObjectReference", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "UID", type = Long.class, required = true, fixed = true), //
-	@TargetAttributeType(type = Object.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "ObjectReference",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "UID", type = Long.class, required = true, fixed = true),
+		@TargetAttributeType(type = Object.class)
+	})
 public class JdiModelTargetObjectReference extends JdiModelTargetValue {
 
 	private static final long MAX_REFERRERS = 100;
@@ -51,8 +54,7 @@ public class JdiModelTargetObjectReference extends JdiModelTargetValue {
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
-			"UID", objref.uniqueID(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			"UID", objref.uniqueID() //
 		), "Initialized");
 
 	}

@@ -18,8 +18,6 @@ package agent.dbgeng.model.iface2;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetObject;
-
 public interface DbgModelTargetTTD extends DbgModelTargetObject {
 
 	@Override
@@ -28,25 +26,28 @@ public interface DbgModelTargetTTD extends DbgModelTargetObject {
 			if (attrs == null) {
 				return CompletableFuture.completedFuture(null);
 			}
-			TargetObject attributes = (TargetObject) attrs.get("Position");
+			DbgModelTargetObject attributes = (DbgModelTargetObject) attrs.get("Position");
 			if (attributes == null) {
 				return CompletableFuture.completedFuture(null);
 			}
-			return attributes.fetchAttributes(true);
-		}).thenCompose(subattrs -> {
-			if (subattrs == null) {
-				return CompletableFuture.completedFuture(null);
-			}
-			TargetObject seq = (TargetObject) subattrs.get("Sequence");
-			return seq.fetchAttribute(VALUE_ATTRIBUTE_NAME).thenCompose(sqval -> {
-				String sqstr = sqval.toString();
-				TargetObject steps = (TargetObject) subattrs.get("Steps");
-				return steps.fetchAttribute(VALUE_ATTRIBUTE_NAME).thenAccept(stval -> {
-					String oldval = (String) getCachedAttribute(DISPLAY_ATTRIBUTE_NAME);
-					String ststr = stval.toString();
-					String display = String.format("TTD %s:%s", sqstr, ststr);
-					map.put(DISPLAY_ATTRIBUTE_NAME, display);
-					setModified(map, !display.equals(oldval));
+			return attributes.requestAugmentedAttributes().thenCompose(ax -> {
+				Map<String, ?> subattrs = attributes.getCachedAttributes();
+				if (subattrs == null) {
+					return CompletableFuture.completedFuture(null);
+				}
+				DbgModelTargetObject seq = (DbgModelTargetObject) subattrs.get("Sequence");
+				return seq.requestAugmentedAttributes().thenCompose(bx -> {
+					Object sqval = seq.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
+					String sqstr = sqval.toString();
+					DbgModelTargetObject steps = (DbgModelTargetObject) subattrs.get("Steps");
+					return steps.requestAugmentedAttributes().thenAccept(cx -> {
+						Object stval = steps.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
+						String oldval = (String) getCachedAttribute(DISPLAY_ATTRIBUTE_NAME);
+						String ststr = stval.toString();
+						String display = String.format("TTD %s:%s", sqstr, ststr);
+						map.put(DISPLAY_ATTRIBUTE_NAME, display);
+						setModified(map, !display.equals(oldval));
+					});
 				});
 			});
 		});

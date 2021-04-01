@@ -30,8 +30,7 @@ import ghidra.dbg.util.PathUtils;
 @TargetObjectSchemaInfo(
 	name = "Session",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
 		@TargetAttributeType(
 			name = "Attributes",
@@ -42,8 +41,7 @@ import ghidra.dbg.util.PathUtils;
 			type = DbgModelTargetProcessContainerImpl.class,
 			required = true,
 			fixed = true),
-		@TargetAttributeType(type = Void.class)
-	})
+		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSession {
 
@@ -71,6 +69,7 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 	public DbgModelTargetSessionImpl(DbgModelTargetSessionContainerImpl sessions,
 			DbgSession session) {
 		super(sessions.getModel(), sessions, keySession(session), "Session");
+		this.getModel().addModelObject(session, this);
 
 		this.attributes = new DbgModelTargetSessionAttributesImpl(this);
 		this.processes = new DbgModelTargetProcessContainerImpl(this);
@@ -79,10 +78,9 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 			attributes, //
 			processes //
 		), Map.of( //
-			ACCESSIBLE_ATTRIBUTE_NAME, true, //
+			ACCESSIBLE_ATTRIBUTE_NAME, accessible, //
 			PROMPT_ATTRIBUTE_NAME, DBG_PROMPT, //
-			STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
 		), "Initialized");
 
 		getManager().addEventsListener(this);

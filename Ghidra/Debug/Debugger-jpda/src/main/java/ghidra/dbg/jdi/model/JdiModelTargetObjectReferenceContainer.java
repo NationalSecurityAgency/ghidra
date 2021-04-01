@@ -24,12 +24,18 @@ import com.sun.jdi.ObjectReference;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
-@TargetObjectSchemaInfo(name = "TargetObjectReferenceContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetObjectReference.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "TargetObjectReferenceContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetObjectReference.class)
+	},
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetObjectReferenceContainer extends JdiModelTargetObjectImpl {
 
 	protected final List<ObjectReference> refs;

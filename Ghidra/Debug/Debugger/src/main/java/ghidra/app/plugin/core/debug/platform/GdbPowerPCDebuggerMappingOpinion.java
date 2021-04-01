@@ -16,12 +16,11 @@
 package ghidra.app.plugin.core.debug.platform;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
-import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetProcess;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 
@@ -63,16 +62,6 @@ public class GdbPowerPCDebuggerMappingOpinion implements DebuggerMappingOpinion 
 	}
 
 	@Override
-	public CompletableFuture<Set<DebuggerMappingOffer>> getOffers(TargetObject target) {
-		if (!(target instanceof TargetProcess)) {
-			return CompletableFuture.completedFuture(Set.of());
-		}
-		TargetProcess process = (TargetProcess) target;
-		CompletableFuture<? extends TargetEnvironment> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
-		return futureEnv.thenApply(env -> offersForEnv(env, process));
-	}
-
 	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();

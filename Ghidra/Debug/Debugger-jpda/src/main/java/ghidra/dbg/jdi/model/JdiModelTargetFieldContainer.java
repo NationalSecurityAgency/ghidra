@@ -23,12 +23,18 @@ import com.sun.jdi.Field;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
-@TargetObjectSchemaInfo(name = "FieldsContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetField.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "FieldsContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetField.class)
+	},
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetFieldContainer extends JdiModelTargetObjectImpl {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
 

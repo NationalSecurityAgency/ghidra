@@ -23,11 +23,13 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.GdbProcessThreadGroup;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "AvailableContainer",
+	elementResync = ResyncMode.ALWAYS,
 	attributes = {
 		@TargetAttributeType(type = Void.class)
 	},
@@ -44,9 +46,6 @@ public class GdbModelTargetAvailableContainer
 	public GdbModelTargetAvailableContainer(GdbModelTargetSession session) {
 		super(session.impl, session, NAME, "AvailableContainer");
 		this.impl = session.impl;
-		changeAttributes(List.of(), Map.of(
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.SOLICITED //
-		), "Initialized");
 	}
 
 	@Override

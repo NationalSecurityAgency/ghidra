@@ -30,7 +30,7 @@ import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.ModelObjectDelta;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -38,7 +38,6 @@ import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetObject.TargetUpdateMode;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -69,9 +68,9 @@ public enum GadpValueUtils {
 			case BK_WRITE:
 				return TargetBreakpointKind.WRITE;
 			case BK_EXECUTE:
-				return TargetBreakpointKind.EXECUTE;
+				return TargetBreakpointKind.HW_EXECUTE;
 			case BK_SOFTWARE:
-				return TargetBreakpointKind.SOFTWARE;
+				return TargetBreakpointKind.SW_EXECUTE;
 			default:
 				throw new IllegalArgumentException();
 		}
@@ -89,9 +88,9 @@ public enum GadpValueUtils {
 				return Gadp.BreakKind.BK_READ;
 			case WRITE:
 				return Gadp.BreakKind.BK_WRITE;
-			case EXECUTE:
+			case HW_EXECUTE:
 				return Gadp.BreakKind.BK_EXECUTE;
-			case SOFTWARE:
+			case SW_EXECUTE:
 				return Gadp.BreakKind.BK_SOFTWARE;
 			default:
 				throw new IllegalArgumentException();
@@ -375,30 +374,6 @@ public enum GadpValueUtils {
 		return TargetStringList.copyOf(list.getSList());
 	}
 
-	public static Gadp.UpdateMode makeUpdateMode(TargetUpdateMode mode) {
-		switch (mode) {
-			case SOLICITED:
-				return Gadp.UpdateMode.UM_SOLICITED;
-			case FIXED:
-				return Gadp.UpdateMode.UM_FIXED;
-			case UNSOLICITED:
-			default:
-				return Gadp.UpdateMode.UM_UNSOLICITED;
-		}
-	}
-
-	public static TargetUpdateMode getUpdateMode(Gadp.UpdateMode mode) {
-		switch (mode) {
-			case UM_FIXED:
-				return TargetUpdateMode.FIXED;
-			case UM_SOLICITED:
-				return TargetUpdateMode.SOLICITED;
-			case UM_UNSOLICITED:
-			default:
-				return TargetUpdateMode.UNSOLICITED;
-		}
-	}
-
 	public static Class<?> getValueType(Gadp.ValueType type) {
 		switch (type) {
 			case VT_VOID:
@@ -433,8 +408,6 @@ public enum GadpValueUtils {
 				return TargetPrimitiveDataType.class;
 			case VT_DATA_TYPE:
 				return TargetDataType.class;
-			case VT_UPDATE_MODE:
-				return TargetUpdateMode.class;
 			case VT_PATH:
 				return TargetObject.class;
 			case VT_PATH_LIST:
@@ -521,9 +494,6 @@ public enum GadpValueUtils {
 		}
 		if (type == TargetDataType.class) {
 			return Gadp.ValueType.VT_DATA_TYPE;
-		}
-		if (type == TargetUpdateMode.class) {
-			return Gadp.ValueType.VT_UPDATE_MODE;
 		}
 		if (type == TargetObject.class) {
 			return Gadp.ValueType.VT_PATH;
@@ -613,9 +583,6 @@ public enum GadpValueUtils {
 		}
 		// TODO: TargetPrimitiveDataType?
 		// TODO: TargetDataType?
-		else if (value instanceof TargetUpdateMode) {
-			b.setUpdateModeValue(makeUpdateMode((TargetUpdateMode) value));
-		}
 		else if (value instanceof TargetParameterMap) {
 			b.setParametersValue(makeParameterList((TargetParameterMap) value));
 		}
@@ -705,8 +672,6 @@ public enum GadpValueUtils {
 				return TODO("Marhsalling types over GADP", value.getPrimitiveKindValue());
 			case DATA_TYPE_VALUE:
 				return TODO("Marshalling types over GADP", value.getDataTypeValue());
-			case UPDATE_MODE_VALUE:
-				return getUpdateMode(value.getUpdateModeValue());
 			case PARAMETERS_VALUE:
 				return getParameters(model, value.getParametersValue());
 			case PATH_VALUE:

@@ -54,10 +54,10 @@ public abstract class AbstractTestTargetRegisterBank<P extends TestTargetObject>
 			}
 			result.put(n, v);
 		}
-		return regs.getModel().future(result).thenApply(__ -> {
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, result);
+		return model.gateFuture(regs.getModel().future(result).thenApply(__ -> {
+			listeners.fire.registersUpdated(this, result);
 			return result;
-		}).thenCompose(model::gateFuture);
+		}));
 	}
 
 	protected CompletableFuture<Void> writeRegs(Map<String, byte[]> values,
@@ -80,9 +80,9 @@ public abstract class AbstractTestTargetRegisterBank<P extends TestTargetObject>
 			}
 		}
 		future.thenAccept(__ -> {
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, updates);
-		}).thenCompose(model::gateFuture);
-		return future;
+			listeners.fire.registersUpdated(this, updates);
+		});
+		return model.gateFuture(future);
 	}
 
 	public void setFromBank(AbstractTestTargetRegisterBank<?> bank) {

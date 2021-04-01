@@ -24,7 +24,6 @@ import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerModelTypeException;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
@@ -161,16 +160,18 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	Set<Class<? extends TargetObject>> ALL_INTERFACES = Set.of(TargetAccessConditioned.class,
 		TargetAggregate.class, TargetAttachable.class, TargetAttacher.class,
-		TargetBreakpointContainer.class, TargetBreakpointSpec.class, TargetDataTypeMember.class,
-		TargetDataTypeNamespace.class, TargetDeletable.class, TargetDetachable.class,
-		TargetBreakpointLocation.class, TargetEnvironment.class, TargetEventScope.class,
+		TargetBreakpointLocation.class, TargetBreakpointLocationContainer.class,
+		TargetBreakpointSpec.class, TargetBreakpointSpecContainer.class, TargetConsole.class,
+		TargetDataTypeMember.class, TargetDataTypeNamespace.class, TargetDeletable.class,
+		TargetDetachable.class, TargetEnvironment.class, TargetEventScope.class,
 		TargetExecutionStateful.class, TargetFocusScope.class, TargetInterpreter.class,
-		TargetInterruptible.class, TargetKillable.class, TargetLauncher.class, TargetMethod.class,
-		TargetMemory.class, TargetMemoryRegion.class, TargetModule.class,
+		TargetInterruptible.class, TargetKillable.class, TargetLauncher.class, TargetMemory.class,
+		TargetMemoryRegion.class, TargetMethod.class, TargetModule.class,
 		TargetModuleContainer.class, TargetNamedDataType.class, TargetProcess.class,
 		TargetRegister.class, TargetRegisterBank.class, TargetRegisterContainer.class,
-		TargetResumable.class, TargetSection.class, TargetStack.class, TargetStackFrame.class,
-		TargetSteppable.class, TargetSymbol.class, TargetSymbolNamespace.class, TargetThread.class);
+		TargetResumable.class, TargetSection.class, TargetSectionContainer.class, TargetStack.class,
+		TargetStackFrame.class, TargetSteppable.class, TargetSymbol.class,
+		TargetSymbolNamespace.class, TargetThread.class, TargetTogglable.class);
 	Map<String, Class<? extends TargetObject>> INTERFACES_BY_NAME = initInterfacesByName();
 
 	/**
@@ -256,7 +257,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 			}
 		}
 
-		protected static Collection<String> getInterfaceNamesOf(Class<? extends TargetObject> cls) {
+		public static Collection<String> getInterfaceNamesOf(Class<? extends TargetObject> cls) {
 			return INTERFACE_NAMES_BY_CLASS.computeIfAbsent(cls, Protected::doGetInterfaceNamesOf);
 		}
 
@@ -274,32 +275,6 @@ public interface TargetObject extends Comparable<TargetObject> {
 			result.sort(Comparator.naturalOrder());
 			return result;
 		}
-	}
-
-	enum TargetUpdateMode {
-		/**
-		 * The object's elements are kept up to date via unsolicited push notifications / callbacks.
-		 * 
-		 * <p>
-		 * This is the default.
-		 */
-		UNSOLICITED,
-		/**
-		 * The object's elements are only updated when requested.
-		 * 
-		 * <p>
-		 * The request may still generate push notifications / callbacks if others are listening
-		 */
-		SOLICITED,
-		/**
-		 * The object's elements will not change.
-		 * 
-		 * <p>
-		 * This is a promise made by the model implementation. Once the {@code update_mode}
-		 * attribute has this value, it should never be changed back. Note that other attributes of
-		 * this object are still expected to be kept up to date, if they change.
-		 */
-		FIXED;
 	}
 
 	/**
@@ -603,9 +578,27 @@ public interface TargetObject extends Comparable<TargetObject> {
 	/**
 	 * Get the cached elements of this object
 	 * 
+	 * @see #getCallbackElements()
 	 * @return the map of indices to element references
 	 */
 	public Map<String, ? extends TargetObject> getCachedElements();
+
+	/**
+	 * Get the cached elements of this object synchronized with the callbacks
+	 * 
+	 * <p>
+	 * Whereas {@link #getCachedElements()} gets the map of elements <em>right now</em>, it's
+	 * possible that view of elements is far ahead of the callback processing queue. This view is of
+	 * the elements as the change callbacks have been processed so far. When accessing this from the
+	 * {@link DebuggerModelListener#elementsChanged(TargetObject, Collection, Map)} callback, this
+	 * map will have just had the given delta applied to it.
+	 * 
+	 * <p>
+	 * <b>WARNING:</b>The returned map must only be accessed by the callback thread.
+	 * 
+	 * @return the map of indices to element references
+	 */
+	public Map<String, ? extends TargetObject> getCallbackElements();
 
 	/**
 	 * Fetch all the elements of this object
@@ -882,32 +875,6 @@ public interface TargetObject extends Comparable<TargetObject> {
 	}
 
 	/**
-	 * Get the element update mode for this object
-	 * 
-	 * <p>
-	 * The update mode informs the client's caching implementation. If set to
-	 * {@link TargetUpdateMode#UNSOLICITED}, the client will assume its cache is kept up to date via
-	 * listener callbacks, and may avoid querying for the object's elements. If set to
-	 * {@link TargetUpdateMode#FIXED}, the client can optionally remove its listener for element
-	 * changes but still assume its cache is up to date, since the object's elements are no longer
-	 * changing. If set to {@link TargetUpdateMode#SOLICITED}, the client must re-validate its cache
-	 * whenever the elements are requested. It is still recommended that the client listen for
-	 * element changes, since the local cache may be updated (resulting in callbacks) when handling
-	 * requests from another client.
-	 * 
-	 * <p>
-	 * IMPORTANT: Update mode does not apply to attributes. Except in rare circumstances, the model
-	 * must keep an object's attributes up to date.
-	 * 
-	 * @return the update mode
-	 */
-	@TargetAttributeType(name = UPDATE_MODE_ATTRIBUTE_NAME, hidden = true)
-	public default TargetUpdateMode getUpdateMode() {
-		return getTypedAttributeNowByName(UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.class,
-			TargetUpdateMode.UNSOLICITED);
-	}
-
-	/**
 	 * A custom ordinal for positioning this item on screen
 	 * 
 	 * <p>
@@ -976,10 +943,13 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * Refresh the children of this object
 	 * 
 	 * <p>
-	 * This is necessary when {@link #getUpdateMode()} is {@link TargetUpdateMode#SOLICITED}. It is
-	 * also useful when the user believes things are out of sync. This causes the model to update
-	 * its attributes and/or elements. If either of the {@code refresh} parameters are set, the
-	 * model should be aggressive in ensuring its caches are up to date.
+	 * The default fetch implementations follow the prescription of
+	 * {@link TargetObjectSchema#getElementResyncMode()} and
+	 * {@link TargetObjectSchema#getAttributeResyncMode()}. The client may call this method when,
+	 * for unknown reasons, the respective cache(s) are out of sync with the target debugger. Such
+	 * circumstances indicate an implementation error, but this method may provide a means to
+	 * recover. When a {@code refresh} parameter is set, the model should be aggressive in updating
+	 * its respective cache(s).
 	 * 
 	 * @param refreshAttributes ask the model to refresh attributes, querying the debugger if needed
 	 * @param refreshElements as the model to refresh elements, querying the debugger if needed
@@ -1032,9 +1002,27 @@ public interface TargetObject extends Comparable<TargetObject> {
 	/**
 	 * Get the cached attributes of this object
 	 * 
+	 * @see #getCallbackAttributes()
 	 * @return the cached name-value map of attributes
 	 */
 	public Map<String, ?> getCachedAttributes();
+
+	/**
+	 * Get the cached attributes of this object synchronized with the callbacks
+	 * 
+	 * <p>
+	 * Whereas {@link #getCachedAttributes()} gets the map of attributes <em>right now</em>, it's
+	 * possible that view of attributes if far ahead of the callback processing queue. This view is
+	 * of the attributes as the change callbacks have been processed so far. When accessing this
+	 * from the {@link DebuggerModelListener#attributesChanged(TargetObject, Collection, Map)}
+	 * callback, this map will have just had the given delta applied to it.
+	 * 
+	 * <p>
+	 * <b>WARNING:</b>The returned map must only be accessed by the callback thread.
+	 * 
+	 * @return the cached name-value map of attributes
+	 */
+	public Map<String, ?> getCallbackAttributes();
 
 	/**
 	 * Get the named attribute from the cache
@@ -1106,7 +1094,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @see DebuggerObjectModel#addModelListener(DebuggerModelListener)
 	 * @param l the listener
 	 */
-	public default void addListener(TargetObjectListener l) {
+	public default void addListener(DebuggerModelListener l) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -1118,107 +1106,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * 
 	 * @param l the listener
 	 */
-	public default void removeListener(TargetObjectListener l) {
+	public default void removeListener(DebuggerModelListener l) {
 		throw new UnsupportedOperationException();
-	}
-
-	public interface TargetObjectListener {
-
-		/**
-		 * The object was created
-		 * 
-		 * <p>
-		 * This can only be received by listening on the model. While the created object can now
-		 * appear in other callbacks, it should not be used aside from those callbacks, until it is
-		 * added to its parent. Until that time, the object may not adhere to the schema, since its
-		 * children are still being initialized.
-		 * 
-		 * @param object the newly-created object
-		 */
-		default void created(TargetObject object) {
-		}
-
-		/**
-		 * The object is no longer valid
-		 * 
-		 * <p>
-		 * This should be the final callback ever issued for this object. Invalidation of an object
-		 * implies invalidation of all its successors; nevertheless, the implementation MUST
-		 * explicitly invoke this callback for those successors in preorder. Users need only listen
-		 * for invalidation by installing a listener on the object of interest. However, a user must
-		 * be able to ignore invalidation events on an object it has already removed and/or
-		 * invalidated. For models that are managed by a client connection, disconnecting or
-		 * otherwise terminating the session should invalidate the root, and thus every object must
-		 * receive this callback.
-		 * 
-		 * <p>
-		 * If an invalidated object is replaced (i.e., a new object with the same path is added to
-		 * the model), the implementation must be careful to issue all invalidations related to the
-		 * removed object before the replacement is added, so that delayed invalidations are not
-		 * mistakenly applied to the replacement or its successors.
-		 * 
-		 * @param object the now-invalid object
-		 * @param branch the root of the sub-tree being invalidated
-		 * @param reason an informational, human-consumable reason, if applicable
-		 */
-		default void invalidated(TargetObject object, TargetObject branch, String reason) {
-		}
-
-		/**
-		 * The object's display string has changed
-		 * 
-		 * @param object the object
-		 * @param display the new display string
-		 */
-		default void displayChanged(TargetObject object, String display) {
-		}
-
-		/**
-		 * The object's elements changed
-		 * 
-		 * @param parent the object whose children changed
-		 * @param removed the list of removed children
-		 * @param added a map of indices to new children references
-		 */
-		default void elementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObject> added) {
-		}
-
-		/**
-		 * The object's attributes changed
-		 * 
-		 * <p>
-		 * In the case of an object-valued attribute, changes to that object do not constitute a
-		 * changed attribute. The attribute is considered changed only when that attribute is
-		 * assigned to a completely different object.
-		 * 
-		 * @param parent the object whose attributes changed
-		 * @param removed the list of removed attributes
-		 * @param added a map of names to new/changed attributes
-		 */
-		default void attributesChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ?> added) {
-		}
-
-		/**
-		 * The model has requested the user invalidate caches associated with this object
-		 * 
-		 * <p>
-		 * For objects with methods exposing contents which transcend elements and attributes (e.g.,
-		 * memory contents), this callback requests that any caches associated with that content be
-		 * invalidated. Most notably, this usually occurs when an object (e.g., thread) enters the
-		 * {@link TargetExecutionState#RUNNING} state, to inform proxies that they should invalidate
-		 * their memory and register caches. In most cases, users need not worry about this
-		 * callback. Protocol implementations that use the model, however, should forward this
-		 * request to the client implementation.
-		 * 
-		 * <p>
-		 * Note caches of elements and attributes are not affected by this callback. See
-		 * {@link TargetObject#invalidateCaches()}.
-		 * 
-		 * @param object the object whose caches must be invalidated
-		 */
-		default void invalidateCacheRequested(TargetObject object) {
-		}
 	}
 }

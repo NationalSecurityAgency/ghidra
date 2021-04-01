@@ -18,15 +18,12 @@ package agent.gdb.model.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import agent.gdb.manager.breakpoint.GdbBreakpointLocation;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import generic.Unique;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.attributes.TargetObjectList;
-import ghidra.dbg.attributes.TargetObjectList.DefaultTargetObjectList;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
@@ -57,7 +54,6 @@ public class GdbModelTargetBreakpointLocation
 
 	protected Address address;
 	protected Integer length;
-	protected final TargetObjectList<GdbModelTargetInferior> affects;
 	protected String display;
 
 	public GdbModelTargetBreakpointLocation(GdbModelTargetBreakpointSpec spec,
@@ -66,24 +62,21 @@ public class GdbModelTargetBreakpointLocation
 		this.impl = spec.impl;
 		this.loc = loc;
 
-		this.affects = doGetAffects();
 		if (!spec.info.getType().isWatchpoint()) {
 			this.address = doGetAddress();
 			this.length = 1;
 			doChangeAttributes("Initialized");
 		}
-		assert !this.affects.isEmpty();
 	}
 
 	protected void doChangeAttributes(String reason) {
 		this.changeAttributes(List.of(), Map.of(
 			SPEC_ATTRIBUTE_NAME, parent,
-			AFFECTS_ATTRIBUTE_NAME, affects,
 			ADDRESS_ATTRIBUTE_NAME, address,
 			LENGTH_ATTRIBUTE_NAME, length,
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(),
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
 		), reason);
+		placeLocations();
 	}
 
 	/**
@@ -103,7 +96,8 @@ public class GdbModelTargetBreakpointLocation
 			throw new AssertionError("non-location location");
 		}
 		String exp = what.substring(GdbBreakpointLocation.WATCHPOINT_LOCATION_PREFIX.length());
-		GdbModelTargetInferior inf = Unique.assertOne(affects);
+		int iid = Unique.assertOne(loc.getInferiorIds());
+		GdbModelTargetInferior inf = impl.session.inferiors.getTargetInferior(iid);
 		String addrSizeExp = String.format("{(long long)&(%s), (long long)sizeof(%s)}", exp, exp);
 		return inf.inferior.evaluate(addrSizeExp).thenAccept(result -> {
 			List<Long> vals;
@@ -136,16 +130,28 @@ public class GdbModelTargetBreakpointLocation
 		return length;
 	}
 
-	protected TargetObjectList<GdbModelTargetInferior> doGetAffects() {
-		return loc.getInferiorIds()
-				.stream()
-				.map(impl.session.inferiors::getTargetInferior)
-				.collect(Collectors.toCollection(DefaultTargetObjectList::new));
+	protected void placeLocations() {
+		for (GdbModelTargetInferior inf : impl.session.inferiors.getCachedElements().values()) {
+			if (loc.getInferiorIds().contains(inf.inferior.getId())) {
+				inf.addBreakpointLocation(this);
+			}
+			else {
+				inf.removeBreakpointLocation(this);
+			}
+		}
 	}
 
 	@Override
-	public TargetObjectList<GdbModelTargetInferior> getAffects() {
-		return affects;
+	protected void doInvalidate(TargetObject branch, String reason) {
+		removeLocations();
+		super.doInvalidate(branch, reason);
+	}
+
+	protected void removeLocations() {
+		// TODO: Shouldn't the framework do this for us? The location is invalidated.
+		for (GdbModelTargetInferior inf : impl.session.inferiors.getCachedElements().values()) {
+			inf.removeBreakpointLocation(this);
+		}
 	}
 
 	@Override

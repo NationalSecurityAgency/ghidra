@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
@@ -30,12 +30,11 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterTableColumns;
-import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
+import ghidra.async.AsyncTestUtils;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
@@ -47,7 +46,8 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
-public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerGUITest
+		implements AsyncTestUtils {
 	static {
 		DebuggerModelServiceTest.addTestModelPathPatterns();
 	}
@@ -151,6 +151,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			if (thread == null) {
 				return false;
 			}
+			/*
 			DebuggerRegisterMapper mapper = recorder.getRegisterMapper(thread);
 			if (mapper == null) {
 				return false;
@@ -158,6 +159,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			if (!mapper.getRegistersOnTarget().containsAll(baseRegs)) {
 				return false;
 			}
+			*/
 			return true;
 		});
 		return recorder;
@@ -320,15 +322,18 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testLiveActivateThenAddValuesPopulatesPanel() throws Exception {
+	public void testLiveActivateThenAddValuesPopulatesPanel() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		traceManager.openTrace(recorder.getTrace());
 		traceManager.activateThread(recorder.getTraceThread(mb.testThread1));
 		waitForSwing();
 
 		mb.testBank1.writeRegister("pc", new byte[] { 0x00, 0x40, 0x00, 0x00 });
+		waitOn(mb.testModel.flushEvents());
 		waitForDomainObject(recorder.getTrace());
 
+		RegisterRow rowL = findRegisterRow(pc);
+		waitForPass(() -> assertTrue(rowL.isKnown()));
 		assertPCRowValuePopulated();
 	}
 
@@ -396,7 +401,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testLiveModifySubValueAffectsTarget() throws Exception {
+	public void testLiveModifySubValueAffectsTarget() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		Trace trace = recorder.getTrace();
 		traceManager.openTrace(trace);
@@ -407,14 +412,12 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertTrue(registersProvider.actionEnableEdits.isEnabled());
 		performAction(registersProvider.actionEnableEdits);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Pretend fetch", true)) {
-			TraceMemoryRegisterSpace regs =
-				trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
-			regs.setValue(0, new RegisterValue(r0, BigInteger.ZERO));
-		}
+		mb.testBank1.writeRegistersNamed(Map.of("r0", new byte[] { 0 }));
+		waitOn(mb.testModel.flushEvents());
+		waitForDomainObject(trace);
 
 		RegisterRow rowL = findRegisterRow(r0l);
-		assertTrue(rowL.isValueEditable());
+		waitForPass(() -> assertTrue(rowL.isValueEditable()));
 
 		setRowText(rowL, "05060708");
 		waitForSwing();
@@ -656,7 +659,8 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		// TODO: It'd be nice if plugin tracked disconnected providers....
 		DebuggerRegistersProvider cloned =
 			(DebuggerRegistersProvider) tool.getActiveComponentProvider();
-		assertEquals("[Registers: Thread1, 0]", cloned.getTitle());
+		assertEquals("[Registers]", cloned.getTitle());
+		assertEquals("Thread1", cloned.getSubTitle());
 
 		traceManager.activateThread(thread2);
 		waitForSwing();

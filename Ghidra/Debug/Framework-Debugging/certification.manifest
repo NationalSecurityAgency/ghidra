@@ -4,3 +4,4 @@
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+src/test/resources/ghidra/dbg/model/test_schema.xml||GHIDRA||||END|

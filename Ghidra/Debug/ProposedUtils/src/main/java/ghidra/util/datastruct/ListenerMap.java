@@ -61,8 +61,13 @@ public class ListenerMap<K, P, V extends P> {
 	protected static final AtomicReference<Throwable> firstExc = new AtomicReference<>();
 
 	protected static void reportError(Object listener, Throwable e) {
-		Msg.error(listener, "Listener " + listener + " caused unexpected exception", e);
-		firstExc.accumulateAndGet(e, (o, n) -> o == null ? n : o);
+		if (e instanceof RejectedExecutionException) {
+			Msg.trace(listener, "Listener invocation rejected: " + e);
+		}
+		else {
+			Msg.error(listener, "Listener " + listener + " caused unexpected exception", e);
+			firstExc.accumulateAndGet(e, (o, n) -> o == null ? n : o);
+		}
 	}
 
 	/**
@@ -128,9 +133,6 @@ public class ListenerMap<K, P, V extends P> {
 					//	"Invoking: " + method.getName() + " @" + System.identityHashCode(executor));
 					try {
 						method.invoke(l, args);
-					}
-					catch (RejectedExecutionException e) {
-						Msg.trace(this, "Listener invocation rejected", e);
 					}
 					catch (InvocationTargetException e) {
 						Throwable cause = e.getCause();
@@ -230,6 +232,12 @@ public class ListenerMap<K, P, V extends P> {
 
 	@SuppressWarnings("unchecked")
 	public <T extends P> T fire(Class<T> ext) {
+		if (ext == iface) {
+			return ext.cast(fire);
+		}
+		if (!iface.isAssignableFrom(ext)) {
+			throw new IllegalArgumentException("Cannot fire on less-specific interface");
+		}
 		return (T) extFires.computeIfAbsent(ext,
 			e -> (P) Proxy.newProxyInstance(this.getClass().getClassLoader(),
 				new Class<?>[] { iface, ext }, new ListenerHandler<>(ext)));

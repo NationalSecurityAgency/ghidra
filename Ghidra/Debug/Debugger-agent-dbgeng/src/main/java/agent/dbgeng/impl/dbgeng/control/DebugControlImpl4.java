@@ -19,13 +19,18 @@ import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinDef.ULONGByReference;
-
-import agent.dbgeng.dbgeng.DebugValue.DebugValueType;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
-import agent.dbgeng.jna.dbgeng.control.IDebugControl4;
-
 import com.sun.jna.platform.win32.COM.COMUtils;
+import com.sun.jna.ptr.PointerByReference;
 
+import agent.dbgeng.dbgeng.DebugBreakpoint;
+import agent.dbgeng.dbgeng.DebugBreakpoint.BreakType;
+import agent.dbgeng.dbgeng.DebugValue.DebugValueType;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.breakpoint.DebugBreakpointInternal;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
+import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint;
+import agent.dbgeng.jna.dbgeng.breakpoint.WrapIDebugBreakpoint;
+import agent.dbgeng.jna.dbgeng.control.IDebugControl4;
 import ghidra.comm.util.BitmaskSet;
 
 public class DebugControlImpl4 extends DebugControlImpl3 {
@@ -92,4 +97,26 @@ public class DebugControlImpl4 extends DebugControlImpl3 {
 	public void returnInput(String input) {
 		COMUtils.checkRC(jnaControl.ReturnInputWide(new WString(input)));
 	}
+
+	public DebugBreakpoint doAddBreakpoint2(BreakType type, ULONG ulDesiredId) {
+		ULONG ulType = new ULONG(type.ordinal());
+		PointerByReference ppBp = new PointerByReference();
+		COMUtils.checkRC(jnaControl.AddBreakpoint2(ulType, ulDesiredId, ppBp));
+		IDebugBreakpoint Bp = new WrapIDebugBreakpoint(ppBp.getValue());
+		DebugBreakpoint bpt =
+			DebugBreakpointInternal.tryPreferredInterfaces(this, Bp::QueryInterface);
+		// AddRef or no? Probably not.
+		return bpt;
+	}
+
+	@Override
+	public DebugBreakpoint addBreakpoint2(BreakType type, int desiredId) {
+		return doAddBreakpoint2(type, new ULONG(desiredId));
+	}
+
+	@Override
+	public DebugBreakpoint addBreakpoint2(BreakType type) {
+		return doAddBreakpoint2(type, DbgEngUtil.DEBUG_ANY_ID);
+	}
+
 }

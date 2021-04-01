@@ -19,8 +19,10 @@ import agent.dbgeng.manager.impl.DbgRegister;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetRegisterContainer;
 
-public interface DbgModelTargetRegisterContainerAndBank
-		extends DbgModelTargetObject, TargetRegisterContainer, TargetRegisterBank {
+public interface DbgModelTargetRegisterContainerAndBank extends //
+		DbgModelTargetObject, //
+		TargetRegisterContainer, //
+		TargetRegisterBank {
 
 	public DbgModelTargetRegister getTargetRegister(DbgRegister register);
 

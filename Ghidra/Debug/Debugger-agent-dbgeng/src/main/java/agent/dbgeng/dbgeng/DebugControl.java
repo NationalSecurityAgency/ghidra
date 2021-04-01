@@ -254,6 +254,7 @@ public interface DebugControl extends DebugControlReentrant {
 	/**
 	 * Shortcut to retrieve all breakpoints for the current process.
 	 * 
+	 * <p>
 	 * Uses {@link #getNumberBreakpoints()} and {@link #getBreakpointByIndex(int)} to enumerate all
 	 * breakpoints for the current process.
 	 * 
@@ -287,9 +288,53 @@ public interface DebugControl extends DebugControlReentrant {
 	 */
 	DebugBreakpoint getBreakpointById(int id);
 
+	/**
+	 * Add a (resolved) breakpoint with the given type and desired id
+	 * 
+	 * <p>
+	 * This is equivalent, in part, to the {@code bp} command.
+	 * 
+	 * @param type the type
+	 * @param desiredId the desired id
+	 * @return the breakpoint, disabled at offset 0
+	 */
 	DebugBreakpoint addBreakpoint(BreakType type, int desiredId);
 
+	/**
+	 * Add a (resolved) breakpoint with the given type and any id
+	 * 
+	 * <p>
+	 * This is equivalent, in part, to the {@code bp} command.
+	 * 
+	 * @param type the type
+	 * @return the breakpoint, disable at offset 0
+	 */
 	DebugBreakpoint addBreakpoint(BreakType type);
+
+	/**
+	 * Add an unresolved breakpoint with the given type and desired id
+	 * 
+	 * <p>
+	 * This is equivalent, in part, to the {@code bu} command. See the MSDN for a comparison of
+	 * {@code bu} and {@code bp}.
+	 * 
+	 * @param type the type
+	 * @param desiredId the desired id
+	 * @return the breakpoint, disabled at offset 0
+	 */
+	DebugBreakpoint addBreakpoint2(BreakType type, int desiredId);
+
+	/**
+	 * Add an unresolved breakpoint with the given type and any id
+	 * 
+	 * <p>
+	 * This is equivalent, in part, to the {@code bu} command. See the MSDN for a comparison of
+	 * {@code bu} and {@code bp}.
+	 * 
+	 * @param desiredId the desired id
+	 * @return the breakpoint, disabled at offset 0
+	 */
+	DebugBreakpoint addBreakpoint2(BreakType type);
 
 	void waitForEvent(int timeout);
 
@@ -311,5 +356,4 @@ public interface DebugControl extends DebugControlReentrant {
 	int getExecutingProcessorType();
 
 	int getDebuggeeType();
-
 }

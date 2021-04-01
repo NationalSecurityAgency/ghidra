@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.interpreters;
 
 import java.io.*;
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,10 +31,9 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.PinInterpreterAction;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
+import ghidra.dbg.AnnotatedDebuggerAttributeListener;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetConsole.TargetConsoleListener;
 import ghidra.dbg.target.TargetInterpreter;
-import ghidra.dbg.target.TargetInterpreter.TargetInterpreterListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -45,7 +45,11 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	 * We inherit console text output from interpreter listener, even though we may be listening to
 	 * a plain console.
 	 */
-	protected class ForInterpreterListener implements TargetInterpreterListener {
+	protected class ForInterpreterListener extends AnnotatedDebuggerAttributeListener {
+		public ForInterpreterListener() {
+			super(MethodHandles.lookup());
+		}
+
 		@Override
 		public void consoleOutput(TargetObject console, Channel channel, byte[] out) {
 			OutputStream os;
@@ -77,15 +81,15 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 			}
 		}
 
-		@Override
+		@AttributeCallback(TargetObject.DISPLAY_ATTRIBUTE_NAME)
 		public void displayChanged(TargetObject object, String display) {
 			// TODO: Add setSubTitle(String) to InterpreterConsole
 			InterpreterComponentProvider provider = (InterpreterComponentProvider) guiConsole;
 			Swing.runLater(() -> provider.setSubTitle(display));
 		}
 
-		@Override
-		public void promptChanged(TargetInterpreter i, String prompt) {
+		@AttributeCallback(TargetInterpreter.PROMPT_ATTRIBUTE_NAME)
+		public void promptChanged(TargetObject interpreter, String prompt) {
 			Swing.runLater(() -> guiConsole.setPrompt(prompt));
 		}
 
@@ -109,7 +113,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	protected final T targetConsole;
 
 	protected final AtomicBoolean running = new AtomicBoolean(false);
-	protected final TargetConsoleListener listener = new ForInterpreterListener();
+	protected final ForInterpreterListener listener = new ForInterpreterListener();
 	protected Thread thread;
 	protected InterpreterConsole guiConsole;
 	protected BufferedReader inReader;
@@ -193,7 +197,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		try {
 			while (running.get()) {
 				String line = inReader.readLine();
-				if (!running.get()) {
+				if (line == null || !running.get()) {
 					return;
 				}
 				sendLine(line).exceptionally(e -> {

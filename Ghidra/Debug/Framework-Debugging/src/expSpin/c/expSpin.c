@@ -15,7 +15,7 @@
  */
 #include <Windows.h>
 
-__declspec(dllexport) int main(int argc, char** argv) {
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 	for (int i = 0; i < 10; i++) {
 		Sleep(1000);
 	}

@@ -18,32 +18,23 @@ package ghidra.dbg.jdi.model;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.sun.jdi.*;
 
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface1.JdiModelSelectableObject;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetFocusScope;
+import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(
-	name = "StackFrame",
-	elements = {
-		@TargetElementType(type = Void.class)
-	},
-	attributes = {
-		@TargetAttributeType(type = Object.class)
-	})
-public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl
-		implements TargetStackFrame, //
+@TargetObjectSchemaInfo(name = "StackFrame", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(type = Object.class) })
+public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl implements TargetStackFrame, //
 		//TargetRegisterBank, //
 		JdiEventsListenerAdapter, //
 		JdiModelSelectableObject {
@@ -130,13 +121,7 @@ public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl
 	@Override
 	public void threadSelected(ThreadReference eventThread, StackFrame eventFrame, JdiCause cause) {
 		if (eventThread.equals(thread.thread) && eventFrame.equals(frame)) {
-			AtomicReference<JdiModelTargetFocusScope> scope = new AtomicReference<>();
-			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-				DebugModelConventions.findSuitable(JdiModelTargetFocusScope.class, this)
-						.handle(seq::next);
-			}, scope).then(seq -> {
-				scope.get().setFocus(this);
-			}).finish();
+			((JdiModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
 	}
 

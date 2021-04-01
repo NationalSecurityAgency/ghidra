@@ -15,51 +15,19 @@
  */
 package ghidra.app.plugin.core.debug.utils;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.function.BiFunction;
 
-import ghidra.async.AsyncDebouncer;
-import ghidra.async.AsyncTimer;
-import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
+import ghidra.framework.model.UndoableDomainObject;
 
-public class TransactionCoalescer {
-	protected final Program program;
-	protected final AsyncDebouncer<Void> debouncer;
-
-	protected final Deque<Runnable> coalesced = new LinkedList<>();
-
-	public TransactionCoalescer(Program program, int delayWindow) {
-		this.program = program;
-		this.debouncer = new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, delayWindow);
-
-		this.debouncer.addListener(v -> processCoalesced());
+public interface TransactionCoalescer {
+	public interface TxFactory<T extends UndoableDomainObject, U>
+			extends BiFunction<T, String, U> {
 	}
 
-	protected void processCoalesced() {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Coalesced", false)) {
-			while (true) {
-				Runnable next;
-				synchronized (coalesced) {
-					next = coalesced.poll();
-				}
-				if (next == null) {
-					break;
-				}
-				next.run();
-			}
-			tid.commit();
-		}
-		catch (Exception e) {
-			Msg.error(this, "Cancelled coalesced transaction due to exception", e);
-		}
-		// TODO: Is this really a good place for this?
-		program.clearUndo();
+	public interface CoalescedTx extends AutoCloseable {
+		@Override
+		void close();
 	}
 
-	public synchronized void submit(Runnable runnable) {
-		coalesced.offer(runnable);
-		debouncer.contact(null);
-	}
+	CoalescedTx start(String description);
 }

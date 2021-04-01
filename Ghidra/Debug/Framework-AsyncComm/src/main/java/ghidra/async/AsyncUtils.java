@@ -830,7 +830,11 @@ public interface AsyncUtils<T> {
 	}
 
 	public interface TemperamentalRunnable {
-		public void run() throws Exception;
+		public void run() throws Throwable;
+	}
+
+	public interface TemperamentalSupplier<T> {
+		public T get() throws Throwable;
 	}
 
 	/**

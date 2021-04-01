@@ -54,9 +54,15 @@ public abstract class AbstractGdbCommandWithThreadId<T> extends AbstractGdbComma
 		return threadId;
 	}
 
+	@Override
+	public Integer impliesCurrentThreadId() {
+		return threadId;
+	}
+
 	/**
 	 * Encode the command in GDB/MI, given the pre-constructed thread argument part
 	 * 
+	 * <p>
 	 * The given thread argument is preceded by a space, but not followed by one. For example, a
 	 * command can be properly constructed as:
 	 * 

@@ -24,8 +24,7 @@ import org.jdom.input.SAXBuilder;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.TargetObjectSchema.*;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
 
@@ -88,6 +87,10 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 		if (schema.isCanonicalContainer()) {
 			XmlUtilities.setStringAttr(result, "canonical", "yes");
 		}
+		XmlUtilities.setStringAttr(result, "elementResync",
+			schema.getElementResyncMode().name());
+		XmlUtilities.setStringAttr(result, "attributeResync",
+			schema.getAttributeResyncMode().name());
 
 		for (Map.Entry<String, SchemaName> ent : schema.getElementSchemas().entrySet()) {
 			Element elemElem = new Element("element");
@@ -162,6 +165,10 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 		}
 
 		builder.setCanonicalContainer(parseBoolean(schemaElem, "canonical"));
+		builder.setElementResyncMode(
+			ResyncMode.valueOf(schemaElem.getAttributeValue("elementResync")));
+		builder.setAttributeResyncMode(
+			ResyncMode.valueOf(schemaElem.getAttributeValue("attributeResync")));
 
 		for (Element elemElem : XmlUtilities.getChildren(schemaElem, "element")) {
 			SchemaName schema = name(elemElem.getAttributeValue("schema"));

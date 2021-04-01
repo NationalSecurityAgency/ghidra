@@ -20,42 +20,36 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgRegister;
-import agent.dbgeng.manager.impl.DbgRegisterSet;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.ConversionUtils;
 
-@TargetObjectSchemaInfo(
-	name = "RegisterContainer",
-	elements = {
-		@TargetElementType(type = DbgModelTargetRegisterImpl.class)
-	},
-	attributes = {
-		@TargetAttributeType(
-			name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME,
-			type = DbgModelTargetRegisterContainerImpl.class),
-		@TargetAttributeType(type = Void.class)
-	},
-	canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "RegisterContainer", elements = {
+	@TargetElementType(type = DbgModelTargetRegisterImpl.class) }, elementResync = ResyncMode.ONCE, //
+		attributes = {
+			@TargetAttributeType(name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, type = DbgModelTargetRegisterContainerImpl.class),
+			@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetRegisterContainerAndBank {
 
 	protected final DbgThread thread;
 
-	protected final Map<Integer, DbgModelTargetRegister> registersByNumber = new HashMap<>();
 	protected final Map<String, DbgModelTargetRegister> registersByName = new HashMap<>();
+
+	private Map<String, byte[]> values = new HashMap<>();
 
 	public DbgModelTargetRegisterContainerImpl(DbgModelTargetThread thread) {
 		super(thread.getModel(), thread, "Registers", "RegisterContainer");
 		this.thread = thread.getThread();
 
+		requestElements(false);
 		changeAttributes(List.of(), List.of(), Map.of( //
 			TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this //
 		), "Initialized");
@@ -64,9 +58,13 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		return thread.listRegisters().thenAccept(regs -> {
-			if (regs.size() != registersByNumber.size()) {
-				registersByNumber.clear();
+			if (regs.size() != registersByName.size()) {
+				DbgModelImpl impl = (DbgModelImpl) model;
+				for (DbgRegister reg : regs) {
+					impl.deleteModelObject(reg);
+				}
 				registersByName.clear();
+
 			}
 			List<TargetObject> registers;
 			synchronized (this) {
@@ -79,10 +77,20 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 		});
 	}
 
+	public void threadStateChangedSpecific(DbgState state, DbgReason reason) {
+		if (state.equals(DbgState.STOPPED)) {
+			readRegistersNamed(getCachedElements().keySet());
+		}
+	}
+
 	@Override
 	public synchronized DbgModelTargetRegister getTargetRegister(DbgRegister register) {
-		DbgModelTargetRegister reg = registersByNumber.computeIfAbsent(register.getNumber(),
-			n -> new DbgModelTargetRegisterImpl(this, register));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(register);
+		if (modelObject != null) {
+			return (DbgModelTargetRegister) modelObject;
+		}
+		DbgModelTargetRegister reg = new DbgModelTargetRegisterImpl(this, register);
 		registersByName.put(register.getName(), reg);
 		return reg;
 	}
@@ -90,14 +98,12 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 	@Override
 	public CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(
 			Collection<String> names) {
-		return AsyncUtils.sequence(TypeSpec.map(String.class, byte[].class)).then(seq -> {
-			thread.listRegisters().handle(seq::next);
-		}, TypeSpec.cls(DbgRegisterSet.class)).then((regs, seq) -> {
-			if (regs.size() != registersByNumber.size() || getCachedElements().isEmpty()) {
-				requestElements(true).handle(seq::next);
+		return model.gateFuture(thread.listRegisters().thenCompose(regs -> {
+			if (regs.size() != registersByName.size() || getCachedElements().isEmpty()) {
+				return requestElements(false);
 			}
-			seq.next(null, null);
-		}).then(seq -> {
+			return AsyncUtils.NIL;
+		}).thenCompose(__ -> {
 			Set<DbgRegister> toRead = new LinkedHashSet<>();
 			for (String regname : names) {
 				DbgModelTargetRegister reg = registersByName.get(regname);
@@ -109,11 +115,11 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 					//throw new DebuggerRegisterAccessException("No such register: " + regname);
 				}
 			}
-			thread.readRegisters(toRead).handle(seq::next);
-		}, TypeSpec.map(DbgRegister.class, BigInteger.class)).then((vals, seq) -> {
+			return thread.readRegisters(toRead);
+		}).thenApply(vals -> {
 			Map<String, byte[]> result = new LinkedHashMap<>();
 			for (DbgRegister dbgReg : vals.keySet()) {
-				DbgModelTargetRegister reg = registersByNumber.get(dbgReg.getNumber());
+				DbgModelTargetRegister reg = getTargetRegister(dbgReg);
 				String oldval = (String) reg.getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
 				BigInteger value = vals.get(dbgReg);
 				byte[] bytes = ConversionUtils.bigIntegerToBytes(dbgReg.getSize(), value);
@@ -129,18 +135,17 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 					reg.setModified(!value.toString(16).equals(oldval));
 				}
 			}
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, result);
-			seq.exit(result);
-		}).finish();
+			this.values = result;
+			listeners.fire.registersUpdated(getProxy(), result);
+			return result;
+		}));
 	}
 
 	@Override
 	public CompletableFuture<Void> writeRegistersNamed(Map<String, byte[]> values) {
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			thread.listRegisters().handle(seq::next);
-		}, TypeSpec.cls(DbgRegisterSet.class)).then((regs, seq) -> {
-			fetchElements().handle(seq::nextIgnore);
-		}).then(seq -> {
+		return model.gateFuture(thread.listRegisters().thenCompose(regs -> {
+			return requestElements(false);
+		}).thenCompose(__ -> {
 			Map<String, ? extends TargetObject> regs = getCachedElements();
 			Map<DbgRegister, BigInteger> toWrite = new LinkedHashMap<>();
 			for (Map.Entry<String, byte[]> ent : values.entrySet()) {
@@ -152,32 +157,15 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 				BigInteger val = new BigInteger(1, ent.getValue());
 				toWrite.put(reg.getRegister(), val);
 			}
-			thread.writeRegisters(toWrite).handle(seq::next);
+			return thread.writeRegisters(toWrite);
 			// TODO: Should probably filter only effective and normalized writes in the callback
-		}).then(seq -> {
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, values);
-			seq.exit();
-		}).finish();
+		}).thenAccept(__ -> {
+			listeners.fire.registersUpdated(getProxy(), values);
+		}));
 	}
 
-	/*
-	public void invalidateRegisterCaches() {
-		listeners.fire.invalidateCacheRequested(this);
-	}
-	*/
-
-	@Override
-	public void onRunning() {
-		// NB: We don't want to do this apparently
-		//invalidateRegisterCaches();
-		setAccessible(false);
+	public Map<String, byte[]> getCachedRegisters() {
+		return values;
 	}
 
-	@Override
-	public void onStopped() {
-		setAccessible(true);
-		if (thread.equals(getManager().getEventThread())) {
-			readRegistersNamed(getCachedElements().keySet());
-		}
-	}
 }

@@ -59,8 +59,7 @@ public class GdbModelTargetEnvironment
 			ENDIAN_ATTRIBUTE_NAME, endian,
 			VISIBLE_ARCH_ATTRIBUTE_NAME, arch,
 			VISIBLE_OS_ATTRIBUTE_NAME, os,
-			VISIBLE_ENDIAN_ATTRIBUTE_NAME, endian,
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED),
+			VISIBLE_ENDIAN_ATTRIBUTE_NAME, endian),
 			"Initialized");
 		refreshInternal();
 	}
@@ -83,9 +82,10 @@ public class GdbModelTargetEnvironment
 		 * is a known thread -- unlikely for an inferior that is just starting -- we could use the
 		 * --thread parameter.
 		 */
-		return impl.gdb.consoleCapture("show architecture").thenAccept(out -> {
+		return CompletableFuture.supplyAsync(() -> null).thenCompose(__ -> {
+			return impl.gdb.consoleCapture("show architecture");
+		}).thenAccept(out -> {
 			String[] tokens = out.split("\\s+");
-			@SuppressWarnings("hiding")
 			String arch = tokens[tokens.length - 1].trim();
 			while (arch.endsWith(".") || arch.endsWith(")") || arch.endsWith("\"")) {
 				arch = arch.substring(0, arch.length() - 1);
@@ -115,9 +115,10 @@ public class GdbModelTargetEnvironment
 		/**
 		 * TODO: Ditto the "current inferior" issue as refreshArchitecture
 		 */
-		return impl.gdb.consoleCapture("show os").thenAccept(out -> {
+		return CompletableFuture.supplyAsync(() -> null).thenCompose(__ -> {
+			return impl.gdb.consoleCapture("show os");
+		}).thenAccept(out -> {
 			String[] tokens = out.split("\n")[0].split("\\s+");
-			@SuppressWarnings("hiding")
 			String os = tokens[tokens.length - 1].trim();
 			if (os.endsWith(".")) {
 				os = os.substring(0, os.length() - 1);
@@ -143,7 +144,9 @@ public class GdbModelTargetEnvironment
 
 	protected CompletableFuture<Void> refreshEndian() {
 		// TODO: This duplicates GdbInferiorImpl.syncEndianness....
-		return impl.gdb.consoleCapture("show endian").thenAccept(out -> {
+		return CompletableFuture.supplyAsync(() -> null).thenCompose(__ -> {
+			return impl.gdb.consoleCapture("show endian");
+		}).thenAccept(out -> {
 			if (out.toLowerCase().contains("little endian")) {
 				endian = "little";
 			}

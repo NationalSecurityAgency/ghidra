@@ -27,15 +27,17 @@ public class GdbInferiorSelectCommand extends AbstractGdbCommand<Void> {
 	}
 
 	@Override
+	public void preCheck(GdbPendingCommand<? super Void> pending) {
+		if (manager.currentInferior().getId() == id) {
+			pending.complete(null);
+		}
+	}
+
+	@Override
 	public String encode() {
 		/**
 		 * There does not appear to be a real -inferior-select command
-		 * 
-		 * Also, if the requested inferior is already current, don't do anything.
 		 */
-		if (manager.currentInferior().getId() == id) {
-			return "-interpreter-exec console echo";
-		}
 		return "-interpreter-exec console \"inferior " + id + "\"";
 	}
 

@@ -15,23 +15,27 @@
  */
 package agent.gdb.model.impl;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.gdb.manager.*;
-import agent.gdb.manager.reason.GdbReason;
+import agent.gdb.manager.GdbInferior;
+import agent.gdb.manager.GdbThread;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import agent.gdb.manager.reason.GdbBreakpointHitReason;
+import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "ThreadContainer",
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	},
+		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
 public class GdbModelTargetThreadContainer
 		extends DefaultTargetObject<GdbModelTargetThread, GdbModelTargetInferior> {
@@ -53,17 +57,6 @@ public class GdbModelTargetThreadContainer
 		GdbModelTargetThread targetThread = getTargetThread(thread);
 		changeElements(List.of(), List.of(targetThread), "Created");
 		return targetThread;
-	}
-
-	public void threadStateChanged(GdbThread thread, GdbState state, GdbReason reason) {
-		getTargetThread(thread).threadStateChanged(state, reason);
-	}
-
-	public void threadsStateChanged(Collection<? extends GdbThread> threads, GdbState state,
-			GdbReason reason) {
-		for (GdbThread thread : threads) {
-			threadStateChanged(thread, state, reason);
-		}
 	}
 
 	public void threadExited(int threadId) {
@@ -95,6 +88,7 @@ public class GdbModelTargetThreadContainer
 	}
 
 	public synchronized GdbModelTargetThread getTargetThread(GdbThread thread) {
+		assert thread.getInferior() == inferior;
 		return threadsById.computeIfAbsent(thread.getId(),
 			i -> new GdbModelTargetThread(this, parent, thread));
 	}
@@ -107,5 +101,23 @@ public class GdbModelTargetThreadContainer
 		for (GdbModelTargetThread thread : threadsById.values()) {
 			thread.invalidateRegisterCaches();
 		}
+	}
+
+	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		return requestElements(false).thenCompose(__ -> {
+			AsyncFence fence = new AsyncFence();
+			for (GdbModelTargetThread modelThread : threadsById.values()) {
+				fence.include(modelThread.stateChanged(sco));
+			}
+			return fence.ready();
+		}).exceptionally(__ -> {
+			Msg.error(this, "Could not update threads " + this + " on STOPPED");
+			return null;
+		});
+	}
+
+	public GdbModelTargetBreakpointLocation breakpointHit(GdbBreakpointHitReason reason) {
+		GdbThread thread = impl.gdb.getThread(reason.getThreadId());
+		return getTargetThread(thread).breakpointHit(reason);
 	}
 }

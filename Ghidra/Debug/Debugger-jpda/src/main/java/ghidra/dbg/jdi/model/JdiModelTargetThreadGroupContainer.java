@@ -28,11 +28,15 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "ThreadGroupContainer", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(type = JdiModelTargetThreadGroupContainer.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ThreadGroupContainer",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(type = JdiModelTargetThreadGroupContainer.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 

@@ -25,6 +25,7 @@ import org.junit.Test;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 
 public class AnnotatedTargetObjectSchemaTest {
@@ -40,8 +41,6 @@ public class AnnotatedTargetObjectSchemaTest {
 			EnumerableTargetObjectSchema.STRING.getName(), false, false, true), null);
 		builder.addAttributeSchema(new DefaultAttributeSchema("_kind",
 			EnumerableTargetObjectSchema.STRING.getName(), false, true, true), null);
-		builder.addAttributeSchema(new DefaultAttributeSchema("_update_mode",
-			EnumerableTargetObjectSchema.UPDATE_MODE.getName(), false, false, true), null);
 		builder.addAttributeSchema(new DefaultAttributeSchema("_order",
 			EnumerableTargetObjectSchema.INT.getName(), false, false, true), null);
 		builder.addAttributeSchema(new DefaultAttributeSchema("_modified",
@@ -233,6 +232,29 @@ public class AnnotatedTargetObjectSchemaTest {
 				.build();
 		assertEquals(exp, schema);
 		assertEquals("TestAnnotatedTargetRootWithListedAttrs", schema.getName().toString());
+	}
+
+	@TargetObjectSchemaInfo(elementResync = ResyncMode.ONCE, attributeResync = ResyncMode.ALWAYS)
+	static class TestAnnotatedTargetRootWithResyncModes extends DefaultTargetModelRoot {
+
+		public TestAnnotatedTargetRootWithResyncModes(AbstractDebuggerObjectModel model,
+				String typeHint) {
+			super(model, typeHint);
+		}
+	}
+
+	@Test
+	public void testAnnotatedRootWithResyuncModes() {
+		AnnotatedSchemaContext ctx = new AnnotatedSchemaContext();
+		TargetObjectSchema schema =
+			ctx.getSchemaForClass(TestAnnotatedTargetRootWithResyncModes.class);
+
+		TargetObjectSchema exp = addBasicAttributes(ctx.builder(schema.getName()))
+				.addInterface(TargetAggregate.class)
+				.setElementResyncMode(ResyncMode.ONCE)
+				.setAttributeResyncMode(ResyncMode.ALWAYS)
+				.build();
+		assertEquals(exp, schema);
 	}
 
 	static class NotAPrimitive {

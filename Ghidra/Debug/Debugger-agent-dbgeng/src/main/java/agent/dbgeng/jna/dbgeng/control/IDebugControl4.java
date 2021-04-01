@@ -20,6 +20,7 @@ import com.sun.jna.platform.win32.Guid.IID;
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinDef.ULONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.ptr.PointerByReference;
 
 import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
@@ -90,6 +91,8 @@ public interface IDebugControl4 extends IDebugControl3 {
 			return this.ordinal() + start;
 		}
 	}
+
+	HRESULT AddBreakpoint2(ULONG Type, ULONG DesiredId, PointerByReference Bp);
 
 	HRESULT ReturnInputWide(WString Buffer);
 

@@ -26,22 +26,18 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "MemoryRegion", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType( //
-			name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME, //
-			type = DbgModelTargetMemoryContainerImpl.class), //
-	@TargetAttributeType(name = "BaseAddress", type = Address.class), //
-	@TargetAttributeType(name = "EndAddress", type = Address.class), //
-	@TargetAttributeType(name = "RegionSize", type = String.class), //
-	@TargetAttributeType(name = "AllocationBase", type = Address.class), //
-	@TargetAttributeType(name = "AllocationProtect", type = String.class), //
-	@TargetAttributeType(name = "Protect", type = String.class), //
-	@TargetAttributeType(name = "State", type = String.class), //
-	@TargetAttributeType(name = "Type", type = String.class), //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(name = "MemoryRegion", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME, type = DbgModelTargetMemoryContainerImpl.class),
+		@TargetAttributeType(name = "BaseAddress", type = Address.class),
+		@TargetAttributeType(name = "EndAddress", type = Address.class),
+		@TargetAttributeType(name = "RegionSize", type = String.class),
+		@TargetAttributeType(name = "AllocationBase", type = Address.class),
+		@TargetAttributeType(name = "AllocationProtect", type = String.class),
+		@TargetAttributeType(name = "Protect", type = String.class),
+		@TargetAttributeType(name = "State", type = String.class),
+		@TargetAttributeType(name = "Type", type = String.class),
+		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetMemoryRegion {
 
@@ -64,6 +60,7 @@ public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 	public DbgModelTargetMemoryRegionImpl(DbgModelTargetMemoryContainer memory,
 			DbgModuleMemory region) {
 		super(memory.getModel(), memory, keySection(region), "Region");
+		this.getModel().addModelObject(region, this);
 		this.section = region;
 
 		this.range = doGetRange(section);
@@ -92,8 +89,7 @@ public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 			RANGE_ATTRIBUTE_NAME, doGetRange(section), //
 			READABLE_ATTRIBUTE_NAME, isReadable(), //
 			WRITABLE_ATTRIBUTE_NAME, isWritable(), //
-			EXECUTABLE_ATTRIBUTE_NAME, isExecutable(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			EXECUTABLE_ATTRIBUTE_NAME, isExecutable() //
 		), "Initialized");
 
 		AddressSpace space = getModel().getAddressSpace("ram");

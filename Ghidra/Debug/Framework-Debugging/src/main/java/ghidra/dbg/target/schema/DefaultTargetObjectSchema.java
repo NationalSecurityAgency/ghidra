@@ -124,24 +124,34 @@ public class DefaultTargetObjectSchema
 	private final Class<?> type;
 	private final Set<Class<? extends TargetObject>> interfaces;
 	private final boolean isCanonicalContainer;
+
 	private final Map<String, SchemaName> elementSchemas;
 	private final SchemaName defaultElementSchema;
+	private final ResyncMode elementResync;
+
 	private final Map<String, AttributeSchema> attributeSchemas;
 	private final AttributeSchema defaultAttributeSchema;
+	private final ResyncMode attributeResync;
 
 	DefaultTargetObjectSchema(SchemaContext context, SchemaName name, Class<?> type,
 			Set<Class<? extends TargetObject>> interfaces, boolean isCanonicalContainer,
 			Map<String, SchemaName> elementSchemas, SchemaName defaultElementSchema,
-			Map<String, AttributeSchema> attributeSchemas, AttributeSchema defaultAttributeSchema) {
+			ResyncMode elementResync,
+			Map<String, AttributeSchema> attributeSchemas, AttributeSchema defaultAttributeSchema,
+			ResyncMode attributeResync) {
 		this.context = context;
 		this.name = name;
 		this.type = type;
 		this.interfaces = Collections.unmodifiableSet(new LinkedHashSet<>(interfaces));
 		this.isCanonicalContainer = isCanonicalContainer;
+
 		this.elementSchemas = Collections.unmodifiableMap(new LinkedHashMap<>(elementSchemas));
 		this.defaultElementSchema = defaultElementSchema;
+		this.elementResync = elementResync;
+
 		this.attributeSchemas = Collections.unmodifiableMap(new LinkedHashMap<>(attributeSchemas));
 		this.defaultAttributeSchema = defaultAttributeSchema;
+		this.attributeResync = attributeResync;
 	}
 
 	@Override
@@ -180,6 +190,11 @@ public class DefaultTargetObjectSchema
 	}
 
 	@Override
+	public ResyncMode getElementResyncMode() {
+		return elementResync;
+	}
+
+	@Override
 	public Map<String, AttributeSchema> getAttributeSchemas() {
 		return attributeSchemas;
 	}
@@ -187,6 +202,11 @@ public class DefaultTargetObjectSchema
 	@Override
 	public AttributeSchema getDefaultAttributeSchema() {
 		return defaultAttributeSchema;
+	}
+
+	@Override
+	public ResyncMode getAttributeResyncMode() {
+		return attributeResync;
 	}
 
 	@Override
@@ -209,11 +229,11 @@ public class DefaultTargetObjectSchema
 			sb.append(" ");
 		}
 		sb.append("]\n" + INDENT);
-		sb.append("elements = ");
+		sb.append("elements(resync " + elementResync + ") = ");
 		sb.append(elementSchemas);
 		sb.append(" default " + defaultElementSchema);
 		sb.append("\n" + INDENT);
-		sb.append("attributes = ");
+		sb.append("attributes(resync " + attributeResync + ") = ");
 		sb.append(attributeSchemas);
 		sb.append(" default " + defaultAttributeSchema);
 		sb.append("\n}");
@@ -257,10 +277,16 @@ public class DefaultTargetObjectSchema
 		if (!Objects.equals(this.defaultElementSchema, that.defaultElementSchema)) {
 			return false;
 		}
+		if (!Objects.equals(this.elementResync, that.elementResync)) {
+			return false;
+		}
 		if (!Objects.equals(this.attributeSchemas, that.attributeSchemas)) {
 			return false;
 		}
 		if (!Objects.equals(this.defaultAttributeSchema, that.defaultAttributeSchema)) {
+			return false;
+		}
+		if (!Objects.equals(this.attributeResync, that.attributeResync)) {
 			return false;
 		}
 		return true;

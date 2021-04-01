@@ -369,7 +369,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				Set<TargetBreakpointKind> tKinds =
 					TraceRecorder.traceToTargetBreakpointKinds(kinds);
 
-				for (TargetBreakpointContainer cont : recorder
+				for (TargetBreakpointSpecContainer cont : recorder
 						.collectBreakpointContainers(null)) {
 					LinkedHashSet<TargetBreakpointKind> supKinds = new LinkedHashSet<>(tKinds);
 					supKinds.retainAll(cont.getSupportedBreakpointKinds());

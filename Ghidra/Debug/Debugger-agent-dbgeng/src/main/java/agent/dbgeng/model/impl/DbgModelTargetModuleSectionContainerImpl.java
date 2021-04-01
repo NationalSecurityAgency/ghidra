@@ -15,27 +15,21 @@
  */
 package agent.dbgeng.model.impl;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.DbgModuleSection;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "SectionContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetModuleSectionImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "SectionContainer", elements = {
+	@TargetElementType(type = DbgModelTargetModuleSectionImpl.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class DbgModelTargetModuleSectionContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleSectionContainer {
 
 	protected final DbgModule module;
-
-	protected final Map<Long, DbgModelTargetModuleSectionImpl> sectionsByStart =
-		new WeakValueHashMap<>();
 
 	public DbgModelTargetModuleSectionContainerImpl(DbgModelTargetModule module) {
 		super(module.getModel(), module, "Sections", "ModuleSections");
@@ -61,8 +55,12 @@ public class DbgModelTargetModuleSectionContainerImpl extends DbgModelTargetObje
 	}
 
 	protected synchronized DbgModelTargetModuleSection getModuleSection(DbgModuleSection section) {
-		return sectionsByStart.computeIfAbsent(section.getStart(),
-			s -> new DbgModelTargetModuleSectionImpl(this, section));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(section);
+		if (modelObject != null) {
+			return (DbgModelTargetModuleSection) modelObject;
+		}
+		return new DbgModelTargetModuleSectionImpl(this, section);
 	}
 
 }

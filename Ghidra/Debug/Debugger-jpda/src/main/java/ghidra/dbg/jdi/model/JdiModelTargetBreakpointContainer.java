@@ -25,7 +25,7 @@ import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
-import ghidra.dbg.target.TargetBreakpointContainer;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
@@ -33,15 +33,15 @@ import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointContainer",
-	elements = { //
-		@TargetElementType(type = JdiModelTargetBreakpointSpec.class) //
+	elements = {
+		@TargetElementType(type = JdiModelTargetBreakpointSpec.class)
 	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
+	attributes = {
+		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
 public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl implements
-		TargetBreakpointContainer, JdiEventsListenerAdapter {
+		TargetBreakpointSpecContainer, JdiEventsListenerAdapter {
 
 	protected static final TargetBreakpointKindSet SUPPORTED_KINDS =
 		TargetBreakpointKindSet.of(TargetBreakpointKind.values());
@@ -82,7 +82,7 @@ public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl 
 	@Override
 	public CompletableFuture<Void> placeBreakpoint(AddressRange range,
 			Set<TargetBreakpointKind> kinds) {
-		if (kinds.contains(TargetBreakpointKind.SOFTWARE)) {
+		if (kinds.contains(TargetBreakpointKind.SW_EXECUTE)) {
 			Location location = impl.getLocation(range.getMinAddress());
 			JdiModelTargetLocation targetLocation =
 				(JdiModelTargetLocation) getTargetObject(location);
@@ -100,14 +100,14 @@ public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl 
 			Set<TargetBreakpointKind> kinds) {
 		JdiModelTargetObject targetObject = getTargetObject(expression);
 		if (targetObject != null) {
-			if (kinds.contains(TargetBreakpointKind.SOFTWARE) &&
+			if (kinds.contains(TargetBreakpointKind.SW_EXECUTE) &&
 				targetObject instanceof JdiModelTargetLocation) {
 				JdiModelTargetLocation targetLocation = (JdiModelTargetLocation) targetObject;
 				JdiBreakpointInfo info = targetLocation.addBreakpoint();
 				breakpointCreated(info, JdiCause.Causes.UNCLAIMED);
 			}
 			if ((kinds.contains(TargetBreakpointKind.READ) ||
-				kinds.contains(TargetBreakpointKind.EXECUTE)) &&
+				kinds.contains(TargetBreakpointKind.HW_EXECUTE)) &&
 				targetObject instanceof JdiModelTargetField && targetVM.vm.canWatchFieldAccess()) {
 				JdiModelTargetField targetField = (JdiModelTargetField) targetObject;
 				JdiBreakpointInfo info = targetField.addAccessWatchpoint();

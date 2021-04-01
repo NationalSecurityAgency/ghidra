@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.awt.BorderLayout;
 import java.awt.event.*;
@@ -51,6 +51,7 @@ import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.util.*;
+import ghidra.util.database.ObjectKey;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -121,10 +122,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	protected static class LogicalBreakpointTableModel extends RowWrappedEnumeratedColumnTableModel< //
-			LogicalBreakpointTableColumns, LogicalBreakpointRow, LogicalBreakpoint> {
+			LogicalBreakpointTableColumns, LogicalBreakpoint, LogicalBreakpointRow, LogicalBreakpoint> {
 
 		public LogicalBreakpointTableModel(DebuggerBreakpointsProvider provider) {
-			super("Breakpoints", LogicalBreakpointTableColumns.class,
+			super("Breakpoints", LogicalBreakpointTableColumns.class, lb -> lb,
 				lb -> new LogicalBreakpointRow(provider, lb));
 		}
 
@@ -198,10 +199,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected static class BreakpointLocationTableModel
 			extends RowWrappedEnumeratedColumnTableModel< //
-					BreakpointLocationTableColumns, BreakpointLocationRow, TraceBreakpoint> {
+					BreakpointLocationTableColumns, ObjectKey, BreakpointLocationRow, TraceBreakpoint> {
 
 		public BreakpointLocationTableModel() {
-			super("Locations", BreakpointLocationTableColumns.class, BreakpointLocationRow::new);
+			super("Locations", BreakpointLocationTableColumns.class, TraceBreakpoint::getObjectKey,
+				BreakpointLocationRow::new);
 		}
 
 		@Override
@@ -965,7 +967,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	public void setSelectedLocations(Set<TraceBreakpoint> sel) {
-		DebuggerResources.setSelectedRows(sel, locationTableModel.getMap(), locationTable,
+		DebuggerResources.setSelectedRows(
+			sel.stream().map(b -> b.getObjectKey()).collect(Collectors.toSet()),
+			locationTableModel.getMap(), locationTable,
 			locationTableModel, locationFilterPanel);
 	}
 }

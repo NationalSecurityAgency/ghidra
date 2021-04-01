@@ -34,7 +34,7 @@ import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.util.DebuggerModelTestUtils;
+import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -290,7 +290,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	}
 
 	protected void addTargetAccessBreakpoint(TraceRecorder r) throws Exception {
-		TargetBreakpointContainer cont = getBreakpointContainer(r);
+		TargetBreakpointSpecContainer cont = getBreakpointContainer(r);
 		cont.placeBreakpoint(mb.testModel.getAddress("ram", 0x56550123),
 			Set.of(TargetBreakpointKind.READ, TargetBreakpointKind.WRITE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -301,13 +301,13 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		TraceMemoryRegion textRegion =
 			waitFor(() -> r.getTraceMemoryRegion(region), "Recorder missed region: " + region);
 		long offset = textRegion.getMinAddress().getOffset() + 0x0123;
-		TargetBreakpointContainer cont = getBreakpointContainer(r);
-		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SOFTWARE))
+		TargetBreakpointSpecContainer cont = getBreakpointContainer(r);
+		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SW_EXECUTE))
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	protected void removeTargetSoftwareBreakpoint(TraceRecorder r) throws Exception {
-		TargetBreakpointContainer cont = getBreakpointContainer(r);
+		TargetBreakpointSpecContainer cont = getBreakpointContainer(r);
 		cont.fetchElements().thenAccept(elements -> {
 			for (TargetObject obj : elements.values()) {
 				if (!(obj instanceof TargetBreakpointSpec) ||
@@ -315,7 +315,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 					continue;
 				}
 				TargetBreakpointSpec spec = (TargetBreakpointSpec) obj;
-				if (!spec.getKinds().contains(TargetBreakpointKind.SOFTWARE)) {
+				if (!spec.getKinds().contains(TargetBreakpointKind.SW_EXECUTE)) {
 					continue;
 				}
 				TargetDeletable del = (TargetDeletable) obj;

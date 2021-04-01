@@ -23,13 +23,32 @@ import agent.dbgeng.model.iface2.DbgModelTargetRoot;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
-@TargetObjectSchemaInfo(name = "ConnectorContainer", attributes = { //
-	@TargetAttributeType(name = "Launch process", type = DbgModelTargetProcessLaunchConnectorImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Attach to process", type = DbgModelTargetProcessAttachConnectorImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Load trace/dump", type = DbgModelTargetTraceOrDumpConnectorImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Attach to kernel", type = DbgModelTargetKernelConnectorImpl.class, required = true, fixed = true), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ConnectorContainer",
+	attributes = {
+		@TargetAttributeType(
+			name = "Launch process",
+			type = DbgModelTargetProcessLaunchConnectorImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Attach to process",
+			type = DbgModelTargetProcessAttachConnectorImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Load trace/dump",
+			type = DbgModelTargetTraceOrDumpConnectorImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Attach to kernel",
+			type = DbgModelTargetKernelConnectorImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetConnectorContainerImpl extends DbgModelTargetObjectImpl {
 
 	protected final DbgModelTargetRoot root;

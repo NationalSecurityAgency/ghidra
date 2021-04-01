@@ -31,12 +31,12 @@ public interface DbgModelTargetInterpreter extends DbgModelTargetObject, TargetI
 
 	@Override
 	public default CompletableFuture<Void> execute(String cmd) {
-		return getManager().console(cmd);
+		return getModel().gateFuture(getManager().console(cmd));
 	}
 
 	@Override
 	public default CompletableFuture<String> executeCapture(String cmd) {
-		return getManager().consoleCapture(cmd);
+		return getModel().gateFuture(getManager().consoleCapture(cmd));
 	}
 
 }

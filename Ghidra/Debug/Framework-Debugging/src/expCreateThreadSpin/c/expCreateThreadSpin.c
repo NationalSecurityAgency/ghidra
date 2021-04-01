@@ -24,7 +24,7 @@ __declspec(dllexport) unsigned int WINAPI work(DWORD* param) {
 	}
 }
 
-int main(int argc, char** argv) {
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 	DWORD zero = 0;
 	DWORD one = 1;
 	HANDLE thread = _beginthreadex(NULL, 0, work, &one, 0, NULL);

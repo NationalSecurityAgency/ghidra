@@ -26,6 +26,7 @@ import agent.gdb.manager.impl.GdbMemoryMapping;
 /**
  * A handle to a GDB inferior
  * 
+ * <p>
  * Each inferior controlled by GDB is numbered and usually corresponds to a target process. Methods
  * that return a {@link CompletableFuture} send a command to GDB via its GDB/MI interpreter. Each
  * method issuing a command will first change focus to this inferior. The returned future completes
@@ -50,6 +51,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * If exited (implying a previous start), get the process exit code
 	 * 
+	 * <p>
 	 * This may be slightly system-dependent, as the exit code may specify either the status of a
 	 * normal exit, or the cause of an abnormal exit.
 	 * 
@@ -60,6 +62,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Get the executable path
 	 * 
+	 * <p>
 	 * TODO: I presume path on the target system
 	 * 
 	 * @return the executable
@@ -69,6 +72,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Get a thread belonging to this inferior
 	 * 
+	 * <p>
 	 * GDB (at least recent versions) numbers its threads using a global counter. The thread ID is
 	 * this number, not the OS-assigned TID.
 	 * 
@@ -80,6 +84,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Enumerate the threads known to the manager to belong to this inferior
 	 * 
+	 * <p>
 	 * This does not send any commands to GDB. Rather it simply returns a read-only handle to the
 	 * manager's internal map for tracking threads and inferiors.
 	 * 
@@ -90,6 +95,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * List GDB's threads in this inferior (thread group)
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code info threads}.
 	 * 
 	 * @return a future that completes with a map of global thread IDs to thread handles
@@ -99,6 +105,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Enumerate the modules known to the manager to belong to this inferior
 	 * 
+	 * <p>
 	 * This does not send any commands to GDB. Rather it simply returns a read-only handle to the
 	 * manager's internal map for tracking modules.
 	 * 
@@ -109,6 +116,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * List GDB's modules in this inferior (process, thread group)
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code maintenance info sections ALLOBJ}. This command
 	 * is more thorough than {@code info shared} as it contains the executable module, shared
 	 * libraries, system-supplied objects, and enumerates all sections thereof, not just
@@ -135,8 +143,10 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Change CLI focus to this inferior
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code inferior [THIS_ID]}.
 	 * 
+	 * <p>
 	 * GDB's CLI has the concept of focus. That is, commands issued must be applied to some
 	 * "current" inferior. This method changes GDB's current inferior so that subsequent commands
 	 * will apply to this inferior. Commands issued from this handle are always executed with this
@@ -149,6 +159,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Specify a binary image for execution and debug symbols
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code file [FILE]}.
 	 * 
 	 * @param file the path to the binary image
@@ -159,11 +170,11 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Begin execution
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code run}. Note this will <em>not</em> stop at
-	 * {@code main}. The caller should first set breakpoints if an immediate stop is desired. If the
-	 * same behavior as {@code start} is desired, consider using {@link #console(String)} or
-	 * {@link #consoleCapture(String)}.
+	 * {@code main}. The caller should first set breakpoints if an immediate stop is desired.
 	 * 
+	 * <p>
 	 * This command completes as soon as the inferior is running. If a stop is expected at a
 	 * breakpoint, then the caller should listen for that event before issuing additional commands.
 	 * Alternatively, the caller may interrupt the inferior. The manager has only been tested on GDB
@@ -174,8 +185,32 @@ public interface GdbInferior extends GdbMemoryOperations {
 	CompletableFuture<GdbThread> run();
 
 	/**
+	 * Begin execution, stopping at {@code main}
+	 * 
+	 * <p>
+	 * This is equivalent to the CLI command: {@code start}. Otherwise, it behaves the same as
+	 * {@link #run()}.
+	 * 
+	 * @return a future that completes with a handle to the first thread of the running inferior
+	 */
+	CompletableFuture<GdbThread> start();
+
+	/**
+	 * Begin execution, stopping at the first instruction
+	 * 
+	 * <p>
+	 * This is equivalent to the CLI command: {@code starti}. Otherwise, it behaves the same as
+	 * {@link #run()}. Note that {@code starti} is a relatively new command to GDB. Your version may
+	 * not support it.
+	 * 
+	 * @return a future that completes with a handle to the first thread of the running inferior
+	 */
+	CompletableFuture<GdbThread> starti();
+
+	/**
 	 * Attach to a running process
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code attach [PID]}.
 	 * 
 	 * @param pid the OS-assigned process ID of the target process
@@ -186,6 +221,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Execute an arbitrary CLI command, printing output to the CLI console
 	 * 
+	 * <p>
 	 * Note: to ensure a certain thread has focus for a console command, see
 	 * {@link GdbThread#console(String)}.
 	 * 
@@ -197,6 +233,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Execute an arbitrary CLI command, capturing its console output
 	 * 
+	 * <p>
 	 * The output will not be printed to the CLI console. To ensure a certain thread has focus for a
 	 * console command, see {@link GdbThread#consoleCapture(String)}.
 	 * 
@@ -208,6 +245,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Continue execution
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code continue}.
 	 * 
 	 * @return a future that completes once the inferior is running
@@ -217,6 +255,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Step execution
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code step}.
 	 *
 	 * @param suffix specifies how far to step, or on what conditions stepping ends.
@@ -228,6 +267,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Evaluate an expression
 	 * 
+	 * <p>
 	 * This evaluates an expression in the same way that the CLI commands {@code print},
 	 * {@code output}, and {@code call} would.
 	 * 
@@ -239,6 +279,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Set the controlling TTY for future executions
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code set inferior-tty [TTY]}. It does not affect the
 	 * currently running process, if any. This is useful, e.g., to separate target output from GDB's
 	 * output. If, e.g., a program outputs lines which look like GDB/MI records, the manager will
@@ -253,6 +294,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Get the value of an internal GDB variable
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code show [VAR_NAME]}.
 	 * 
 	 * @param varName the name of the GDB variable
@@ -263,6 +305,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Set the value of an internal GDB variable
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code set [VAR_NAME]=[VAL]}.
 	 * 
 	 * @param varName the name of the GDB variable
@@ -283,6 +326,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	/**
 	 * Kill the process
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command {@code kill}.
 	 * 
 	 * @return a future that completes when GDB has executed the command

@@ -18,48 +18,25 @@ package agent.dbgeng.model.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(
-	name = "Process",
-	elements = {
-		@TargetElementType(type = Void.class)
-	},
-	attributes = {
-		@TargetAttributeType(
-			name = "Debug",
-			type = DbgModelTargetDebugContainerImpl.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Memory",
-			type = DbgModelTargetMemoryContainerImpl.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Modules",
-			type = DbgModelTargetModuleContainerImpl.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Threads",
-			type = DbgModelTargetThreadContainerImpl.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(type = Void.class)
-	})
+@TargetObjectSchemaInfo(name = "Process", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(name = "Debug", type = DbgModelTargetDebugContainerImpl.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Memory", type = DbgModelTargetMemoryContainerImpl.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Modules", type = DbgModelTargetModuleContainerImpl.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Threads", type = DbgModelTargetThreadContainerImpl.class, required = true, fixed = true),
+		@TargetAttributeType(name = DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME, type = Long.class),
+		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcess {
 
@@ -92,6 +69,8 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 
 	public DbgModelTargetProcessImpl(DbgModelTargetProcessContainer processes, DbgProcess process) {
 		super(processes.getModel(), processes, keyProcess(process), "Process");
+		this.getModel().addModelObject(process, this);
+		this.getModel().addModelObject(process.getId(), this);
 		this.process = process;
 
 		this.debug = new DbgModelTargetDebugContainerImpl(this);
@@ -107,7 +86,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			//sections, //
 			threads //
 		), Map.of( //
-			ACCESSIBLE_ATTRIBUTE_NAME, false, //
+			ACCESSIBLE_ATTRIBUTE_NAME, accessible = false, //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, PARAMETERS, //
 			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
@@ -129,36 +108,28 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void processSelected(DbgProcess eventProcess, DbgCause cause) {
 		if (eventProcess.equals(process)) {
-			AtomicReference<DbgModelTargetFocusScope> scope = new AtomicReference<>();
-			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-				DebugModelConventions.findSuitable(DbgModelTargetFocusScope.class, this)
-						.handle(seq::next);
-			}, scope).then(seq -> {
-				scope.get().setFocus(this);
-			}).finish();
+			((DbgModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
 	}
 
-	@Override
-	public void threadStateChanged(DbgThread thread, DbgState state, DbgCause cause,
-			DbgReason reason) {
+	public void threadStateChangedSpecific(DbgThread thread, DbgState state) {
 		TargetExecutionState targetState = convertState(state);
 		setExecutionState(targetState, "ThreadStateChanged");
 	}
 
 	@Override
 	public CompletableFuture<Void> launch(List<String> args) {
-		return DbgModelImplUtils.launch(getModel(), process, args);
+		return model.gateFuture(DbgModelImplUtils.launch(getModel(), process, args));
 	}
 
 	@Override
 	public CompletableFuture<Void> resume() {
-		return process.cont();
+		return model.gateFuture(process.cont());
 	}
 
 	@Override
 	public CompletableFuture<Void> kill() {
-		return process.kill();
+		return model.gateFuture(process.kill());
 	}
 
 	@Override
@@ -166,22 +137,22 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		getModel().assertMine(TargetObject.class, attachable);
 		// NOTE: Get the object and type check it myself.
 		// The typed ref could have been unsafely cast
-		return process.reattach(attachable).thenApply(set -> null);
+		return model.gateFuture(process.reattach(attachable)).thenApply(set -> null);
 	}
 
 	@Override
 	public CompletableFuture<Void> attach(long pid) {
-		return process.attach(pid).thenApply(set -> null);
+		return model.gateFuture(process.attach(pid)).thenApply(set -> null);
 	}
 
 	@Override
 	public CompletableFuture<Void> detach() {
-		return process.detach();
+		return model.gateFuture(process.detach());
 	}
 
 	@Override
 	public CompletableFuture<Void> delete() {
-		return process.remove();
+		return model.gateFuture(process.remove());
 	}
 
 	@Override
@@ -192,13 +163,13 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			case ADVANCE: // Why no exec-advance in dbgeng?
 				throw new UnsupportedOperationException(kind.name());
 			default:
-				return process.step(convertToDbg(kind));
+				return model.gateFuture(process.step(convertToDbg(kind)));
 		}
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
-		return process.step(args);
+		return model.gateFuture(process.step(args));
 	}
 
 	@Override
@@ -213,20 +184,16 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public void processExited(Long exitCode) {
-		if (exitCode != null) {
+	public void processExited(DbgProcess proc, DbgCause cause) {
+		if (proc.equals(this.process)) {
 			changeAttributes(List.of(), List.of(), Map.of( //
-				EXIT_CODE_ATTRIBUTE_NAME, exitCode //
+				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
+				EXIT_CODE_ATTRIBUTE_NAME, proc.getExitCode() //
 			), "Exited");
+			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+				"Process " + proc.getId() + " exited code=" + proc.getExitCode(),
+				List.of(getProxy()));
 		}
-		setExecutionState(TargetExecutionState.TERMINATED, "Exited");
-	}
-
-	@Override
-	public void onExit() {
-		super.onExit();
-		DbgModelTargetProcessContainer processes = (DbgModelTargetProcessContainer) getParent();
-		processes.processRemoved(process.getId(), DbgCause.Causes.UNCLAIMED);
 	}
 
 	@Override

@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
@@ -35,18 +35,40 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * object include the resolved {@link TargetBreakpointLocation}s. If the debugger does not share
  * this same concept, then its breakpoints should implement both the specification and the location;
  * the specification need not have any children.
+ * 
+ * <p>
+ * This object extends {@link TargetTogglable} for a transitional period only. Implementations whose
+ * breakpoint specifications can be toggled should declare this interface explicitly. When the
+ * specification is user togglable, toggling it should effectively toggle all locations -- whether
+ * or not the locations are user togglable.
  */
 @DebuggerTargetObjectIface("BreakpointSpec")
-public interface TargetBreakpointSpec extends TargetObject {
+public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ TargetTogglable {
 
 	public enum TargetBreakpointKind {
-		READ, WRITE, EXECUTE, SOFTWARE;
+		/**
+		 * A read breakpoint, likely implemented in hardware
+		 */
+		READ,
+		/**
+		 * A write breakpoint, likely implemented in hardware
+		 */
+		WRITE,
+		/**
+		 * An execution breakpoint implemented in hardware, i.e., without modifying the target's
+		 * program memory
+		 */
+		HW_EXECUTE,
+		/**
+		 * An execution breakpoint implemented in software, i.e., by modifying the target's program
+		 * memory
+		 */
+		SW_EXECUTE;
 	}
 
 	String CONTAINER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "container";
 	String EXPRESSION_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "expression";
 	String KINDS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "kinds";
-	String ENABLED_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "enabled";
 
 	/**
 	 * Get the container of this breakpoint.
@@ -59,8 +81,9 @@ public interface TargetBreakpointSpec extends TargetObject {
 	 * @return a reference to the container
 	 */
 	@TargetAttributeType(name = CONTAINER_ATTRIBUTE_NAME, required = true, hidden = true)
-	public default TargetBreakpointContainer getContainer() {
-		return getTypedAttributeNowByName(CONTAINER_ATTRIBUTE_NAME, TargetBreakpointContainer.class,
+	public default TargetBreakpointSpecContainer getContainer() {
+		return getTypedAttributeNowByName(CONTAINER_ATTRIBUTE_NAME,
+			TargetBreakpointSpecContainer.class,
 			null);
 	}
 
@@ -87,16 +110,6 @@ public interface TargetBreakpointSpec extends TargetObject {
 	public default TargetBreakpointKindSet getKinds() {
 		return getTypedAttributeNowByName(KINDS_ATTRIBUTE_NAME, TargetBreakpointKindSet.class,
 			TargetBreakpointKindSet.EMPTY);
-	}
-
-	/**
-	 * Check if the breakpoint is enabled
-	 * 
-	 * @return true if enabled, false otherwise
-	 */
-	@TargetAttributeType(name = ENABLED_ATTRIBUTE_NAME, required = true, hidden = true)
-	public default boolean isEnabled() {
-		return getTypedAttributeNowByName(ENABLED_ATTRIBUTE_NAME, Boolean.class, false);
 	}
 
 	/**
@@ -133,25 +146,6 @@ public interface TargetBreakpointSpec extends TargetObject {
 	}
 
 	/**
-	 * Disable all breakpoints resulting from this specification
-	 */
-	public CompletableFuture<Void> disable();
-
-	/**
-	 * Enable all breakpoints resulting from this specification
-	 */
-	public CompletableFuture<Void> enable();
-
-	/**
-	 * Enable or disable all breakpoints resulting from this specification
-	 * 
-	 * @param enabled true to enable, false to disable
-	 */
-	public default CompletableFuture<Void> toggle(boolean enabled) {
-		return enabled ? enable() : disable();
-	}
-
-	/**
 	 * Get the locations created by this specification.
 	 * 
 	 * <p>
@@ -171,9 +165,4 @@ public interface TargetBreakpointSpec extends TargetObject {
 	}
 
 	// TODO: Make hit count part of the common interface?
-
-	public interface TargetBreakpointSpecListener extends TargetObjectListener {
-		default void breakpointToggled(TargetBreakpointSpec spec, boolean enabled) {
-		}
-	}
 }

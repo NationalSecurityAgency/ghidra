@@ -208,7 +208,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		}
 	}
 
-	protected static TargetBreakpointContainer getBreakpointContainer(TraceRecorder r) {
+	protected static TargetBreakpointSpecContainer getBreakpointContainer(TraceRecorder r) {
 		return waitFor(() -> Unique.assertAtMostOne(r.collectBreakpointContainers(null)),
 			"No container");
 	}

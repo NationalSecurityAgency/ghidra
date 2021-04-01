@@ -21,8 +21,6 @@ import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface2.DbgModelTargetAvailable;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
 import ghidra.dbg.target.TargetAttachable;
 import ghidra.dbg.target.TargetAttacher;
 import ghidra.util.Msg;
@@ -30,6 +28,7 @@ import ghidra.util.Msg;
 /**
  * An interface which indicates this object is capable of launching targets.
  * 
+ * <p>
  * The targets this launcher creates ought to appear in its successors.
  * 
  * @param <T> type for this
@@ -42,22 +41,20 @@ public interface DbgModelTargetAttacher extends DbgModelTargetObject, TargetAtta
 			getModel().assertMine(DbgModelTargetAvailable.class, attachable);
 		// TODO: This and the below new DbgProcessImpl seem to do the same thing
 		// Both should be expressed the same way
-		return getManager().addProcess().thenAccept(process -> {
-			process.attach(available.getPid());
-		}).exceptionally((exc) -> {
+		return getModel().gateFuture(getManager().addProcess().thenCompose(process -> {
+			return process.attach(available.getPid());
+		}).exceptionally(exc -> {
 			Msg.error(this, "attach failed");
 			return null;
-		});
+		})).thenApply(__ -> null);
 	}
 
 	@Override
 	public default CompletableFuture<Void> attach(long pid) {
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			DbgProcess process = new DbgProcessImpl(getManager());
-			process.attach(pid).handle(seq::nextIgnore);
-		}).finish().exceptionally((exc) -> {
+		DbgProcess process = new DbgProcessImpl(getManager());
+		return getModel().gateFuture(process.attach(pid).exceptionally(exc -> {
 			Msg.error(this, "attach failed");
 			return null;
-		});
+		})).thenApply(__ -> null);
 	}
 }

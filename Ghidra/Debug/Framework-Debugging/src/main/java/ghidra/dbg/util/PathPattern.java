@@ -15,8 +15,7 @@
  */
 package ghidra.dbg.util;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class PathPattern implements PathPredicates {
 	private final List<String> pattern;
@@ -45,6 +44,11 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("<PathPattern %s>", PathUtils.toString(pattern));
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof PathPattern)) {
 			return false;
@@ -58,6 +62,10 @@ public class PathPattern implements PathPredicates {
 		return pattern.hashCode();
 	}
 
+	public static boolean isWildcard(String pat) {
+		return "[]".equals(pat) || "".equals(pat);
+	}
+
 	public static boolean keyMatches(String pat, String key) {
 		if (key.equals(pat)) {
 			return true;
@@ -65,7 +73,7 @@ public class PathPattern implements PathPredicates {
 		if ("[]".equals(pat) && PathUtils.isIndex(key)) {
 			return true;
 		}
-		if ("".equals(pat) && PathUtils.isName(pat)) {
+		if ("".equals(pat) && PathUtils.isName(key)) {
 			return true;
 		}
 		return false;
@@ -89,18 +97,101 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
-	public boolean successorCouldMatch(List<String> path) {
+	public boolean successorCouldMatch(List<String> path, boolean strict) {
 		if (path.size() > pattern.size()) {
+			return false;
+		}
+		if (strict && path.size() == pattern.size()) {
 			return false;
 		}
 		return matchesUpTo(path, path.size());
 	}
 
 	@Override
-	public boolean ancestorMatches(List<String> path) {
+	public boolean ancestorMatches(List<String> path, boolean strict) {
 		if (path.size() < pattern.size()) {
 			return false;
 		}
+		if (strict && path.size() == pattern.size()) {
+			return false;
+		}
 		return matchesUpTo(path, pattern.size());
+	}
+
+	protected static boolean containsWildcards(List<String> pattern) {
+		for (String pat : pattern) {
+			if (isWildcard(pat)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public List<String> getSingletonPath() {
+		if (containsWildcards(pattern)) {
+			return null;
+		}
+		return pattern;
+	}
+
+	public int countWildcards() {
+		return (int) pattern.stream().filter(k -> isWildcard(k)).count();
+	}
+
+	@Override
+	public PathPattern getSingletonPattern() {
+		return this;
+	}
+
+	@Override
+	public Set<String> getNextNames(List<String> path) {
+		if (path.size() >= pattern.size()) {
+			return Set.of();
+		}
+		String pat = pattern.get(path.size());
+		if (PathUtils.isName(pat)) {
+			return Set.of(pat);
+		}
+		return Set.of();
+	}
+
+	@Override
+	public Set<String> getNextIndices(List<String> path) {
+		if (path.size() >= pattern.size()) {
+			return Set.of();
+		}
+		String pat = pattern.get(path.size());
+		if (PathUtils.isIndex(pat)) {
+			return Set.of(PathUtils.parseIndex(pat));
+		}
+		return Set.of();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
+	}
+
+	@Override
+	public PathPattern applyIndices(List<String> indices) {
+		List<String> result = new ArrayList<>(pattern.size());
+		Iterator<String> it = indices.iterator();
+		for (String pat : pattern) {
+			if (it.hasNext() && isWildcard(pat)) {
+				String index = it.next();
+				if (PathUtils.isIndex(pat)) {
+					result.add(PathUtils.makeKey(index));
+				}
+				else {
+					// NB. Rare for attribute wildcards, but just in case
+					result.add(index);
+				}
+			}
+			else {
+				result.add(pat);
+			}
+		}
+		return new PathPattern(result);
 	}
 }

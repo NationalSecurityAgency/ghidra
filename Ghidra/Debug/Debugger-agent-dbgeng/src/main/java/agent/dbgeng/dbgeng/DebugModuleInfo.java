@@ -26,23 +26,39 @@ public class DebugModuleInfo {
 	public final long imageFileHandle;
 	public final long baseOffset;
 	public final int moduleSize;
-	public final String moduleName;
-	public final String imageName;
 	public final int checkSum;
 	public final int timeDateStamp;
+	private String moduleName;
+	private String imageName;
 
 	public DebugModuleInfo(long imageFileHandle, long baseOffset, int moduleSize, String moduleName,
 			String imageName, int checkSum, int timeDateStamp) {
 		this.imageFileHandle = imageFileHandle;
 		this.baseOffset = baseOffset;
 		this.moduleSize = moduleSize;
-		this.moduleName = moduleName;
-		this.imageName = imageName;
+		this.setModuleName(moduleName);
+		this.setImageName(imageName);
 		this.checkSum = checkSum;
 		this.timeDateStamp = timeDateStamp; // TODO: Convert to DateTime?
 	}
 
 	public String toString() {
 		return Long.toHexString(baseOffset);
+	}
+
+	public String getModuleName() {
+		return moduleName;
+	}
+
+	public void setModuleName(String moduleName) {
+		this.moduleName = moduleName;
+	}
+
+	public String getImageName() {
+		return imageName;
+	}
+
+	public void setImageName(String imageName) {
+		this.imageName = imageName;
 	}
 }

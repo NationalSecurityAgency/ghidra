@@ -18,8 +18,7 @@ package ghidra.dbg.target.schema;
 import java.util.*;
 
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.TargetObjectSchema.*;
 
 public class SchemaBuilder {
 	private final DefaultSchemaContext context;
@@ -28,10 +27,14 @@ public class SchemaBuilder {
 	private Class<?> type = TargetObject.class;
 	private Set<Class<? extends TargetObject>> interfaces = new LinkedHashSet<>();
 	private boolean isCanonicalContainer = false;
+
 	private Map<String, SchemaName> elementSchemas = new LinkedHashMap<>();
 	private SchemaName defaultElementSchema = EnumerableTargetObjectSchema.OBJECT.getName();
+	private ResyncMode elementResync = TargetObjectSchema.DEFAULT_ELEMENT_RESYNC;
+
 	private Map<String, AttributeSchema> attributeSchemas = new LinkedHashMap<>();
 	private AttributeSchema defaultAttributeSchema = AttributeSchema.DEFAULT_ANY;
+	private ResyncMode attributeResync = TargetObjectSchema.DEFAULT_ATTRIBUTE_RESYNC;
 
 	private Map<String, Object> elementOrigins = new LinkedHashMap<>();
 	private Map<String, Object> attributeOrigins = new LinkedHashMap<>();
@@ -65,6 +68,11 @@ public class SchemaBuilder {
 		return this;
 	}
 
+	public SchemaBuilder removeInterface(Class<? extends TargetObject> iface) {
+		this.interfaces.remove(iface);
+		return this;
+	}
+
 	public SchemaBuilder setCanonicalContainer(boolean isCanonicalContainer) {
 		this.isCanonicalContainer = isCanonicalContainer;
 		return this;
@@ -72,12 +80,6 @@ public class SchemaBuilder {
 
 	public boolean isCanonicalContaineration() {
 		return isCanonicalContainer;
-	}
-
-	public SchemaBuilder setElementSchemas(Map<String, SchemaName> elementSchemas) {
-		this.elementSchemas.clear();
-		this.elementSchemas.putAll(elementSchemas);
-		return this;
 	}
 
 	/**
@@ -101,6 +103,15 @@ public class SchemaBuilder {
 		return this;
 	}
 
+	public SchemaBuilder removeElementSchema(String index) {
+		if (index.equals("")) {
+			return setDefaultElementSchema(EnumerableTargetObjectSchema.OBJECT.getName());
+		}
+		elementSchemas.remove(index);
+		elementOrigins.remove(index);
+		return this;
+	}
+
 	public Map<String, SchemaName> getElementSchemas() {
 		return Map.copyOf(elementSchemas);
 	}
@@ -114,10 +125,13 @@ public class SchemaBuilder {
 		return defaultElementSchema;
 	}
 
-	public SchemaBuilder setAttributeSchemas(Map<String, AttributeSchema> attributeSchemas) {
-		this.attributeSchemas.clear();
-		this.attributeSchemas.putAll(attributeSchemas);
+	public SchemaBuilder setElementResyncMode(ResyncMode elementResync) {
+		this.elementResync = elementResync;
 		return this;
+	}
+
+	public ResyncMode getElementResyncMode() {
+		return elementResync;
 	}
 
 	/**
@@ -141,6 +155,15 @@ public class SchemaBuilder {
 		}
 		attributeSchemas.put(schema.getName(), schema);
 		attributeOrigins.put(schema.getName(), origin);
+		return this;
+	}
+
+	public SchemaBuilder removeAttributeSchema(String name) {
+		if (name.equals("")) {
+			return setDefaultAttributeSchema(AttributeSchema.DEFAULT_ANY);
+		}
+		attributeSchemas.remove(name);
+		attributeOrigins.remove(name);
 		return this;
 	}
 
@@ -170,6 +193,15 @@ public class SchemaBuilder {
 		return defaultAttributeSchema;
 	}
 
+	public SchemaBuilder setAttributeResyncMode(ResyncMode attributeResync) {
+		this.attributeResync = attributeResync;
+		return this;
+	}
+
+	public ResyncMode getAttributeResyncMode() {
+		return attributeResync;
+	}
+
 	public TargetObjectSchema buildAndAdd() {
 		TargetObjectSchema schema = build();
 		context.putSchema(schema);
@@ -177,7 +209,9 @@ public class SchemaBuilder {
 	}
 
 	public TargetObjectSchema build() {
-		return new DefaultTargetObjectSchema(context, name, type, interfaces, isCanonicalContainer,
-			elementSchemas, defaultElementSchema, attributeSchemas, defaultAttributeSchema);
+		return new DefaultTargetObjectSchema(
+			context, name, type, interfaces, isCanonicalContainer,
+			elementSchemas, defaultElementSchema, elementResync,
+			attributeSchemas, defaultAttributeSchema, attributeResync);
 	}
 }

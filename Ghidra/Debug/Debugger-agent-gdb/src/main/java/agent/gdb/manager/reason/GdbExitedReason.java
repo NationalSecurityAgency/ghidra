@@ -27,6 +27,10 @@ public class GdbExitedReason implements GdbReason {
 		this.exitCode = Integer.parseInt(info.getString("exit-code"));
 	}
 
+	public GdbExitedReason(int exitCode) {
+		this.exitCode = exitCode;
+	}
+
 	/**
 	 * Get the exit code of the inferior
 	 * 

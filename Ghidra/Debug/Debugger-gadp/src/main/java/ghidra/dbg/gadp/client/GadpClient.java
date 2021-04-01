@@ -313,13 +313,8 @@ public class GadpClient extends AbstractDebuggerObjectModel
 		}
 		else if (old == ChannelState.ACTIVE && set == ChannelState.CLOSED) {
 			listeners.fire.modelClosed(reason);
-			List<GadpClientTargetObject> copy;
-			synchronized (lock) {
-				copy = List.copyOf(modelProxies.values());
-			}
-			for (GadpClientTargetObject proxy : copy) {
-				proxy.getDelegate().doInvalidate(root, "GADP Client disconnected");
-			}
+			root.invalidateSubtree(root, "GADP Client disconnected");
+			messageMatcher.flush(new DebuggerModelTerminatingException("GADP Client disconnected"));
 		}
 	}
 
@@ -355,6 +350,10 @@ public class GadpClient extends AbstractDebuggerObjectModel
 
 	protected <M extends Message> CompletableFuture<M> sendChecked(Message.Builder req,
 			M exampleRep) {
+		if (channelState.get().isTerminate()) {
+			return CompletableFuture.failedFuture(
+				new DebuggerModelTerminatingException("GADP Client disconnected"));
+		}
 		return sendCommand(req)
 				.thenApply(msg -> require(exampleRep, checkError(msg)));
 		//.thenCompose(msg -> flushEvents().thenApply(__ -> msg));
@@ -486,13 +485,12 @@ public class GadpClient extends AbstractDebuggerObjectModel
 	public CompletableFuture<Void> close() {
 		try {
 			messageChannel.close();
-			CompletableFuture.runAsync(() -> {
-				channelState.set(ChannelState.CLOSED, DebuggerModelClosedReason.normal());
-			}, clientExecutor).exceptionally(ex -> {
-				Msg.error("Problem upon firing channel state change", ex);
-				return null;
-			});
+			channelState.set(ChannelState.CLOSED, DebuggerModelClosedReason.normal());
 			return super.close();
+		}
+		catch (RejectedExecutionException e) {
+			reportError(this, "Client already closed", e);
+			return AsyncUtils.NIL;
 		}
 		catch (IOException e) {
 			return CompletableFuture.failedFuture(e);

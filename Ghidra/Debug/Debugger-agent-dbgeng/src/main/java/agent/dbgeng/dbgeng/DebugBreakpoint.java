@@ -108,9 +108,22 @@ public interface DebugBreakpoint {
 
 	void setFlags(BreakFlags... flags);
 
-	long getOffset();
+	/**
+	 * Get the location on target that triggers the breakpoint
+	 * 
+	 * <p>
+	 * If the breakpoint is deferred, this will return {@code null}. In that case, use
+	 * {@link #getOffsetExpression()}.
+	 * 
+	 * @return the offset, or {@code null}
+	 */
+	Long getOffset();
 
 	void setOffset(long offset);
+
+	String getOffsetExpression();
+
+	void setOffsetExpression(String expression);
 
 	BreakDataParameters getDataParameters();
 

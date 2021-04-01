@@ -19,20 +19,16 @@ import java.util.List;
 import java.util.Map;
 
 import agent.gdb.manager.GdbRegister;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(
-	name = "RegisterDescriptor",
-	elements = {
-		@TargetElementType(type = Void.class)
-	},
-	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
+@TargetObjectSchemaInfo(name = "RegisterDescriptor", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetRegister
 		extends DefaultTargetObject<TargetObject, GdbModelTargetRegisterContainer>
 		implements TargetRegister {
@@ -64,8 +60,7 @@ public class GdbModelTargetRegister
 		changeAttributes(List.of(), Map.of( //
 			CONTAINER_ATTRIBUTE_NAME, registers, //
 			LENGTH_ATTRIBUTE_NAME, bitLength, //
-			DISPLAY_ATTRIBUTE_NAME, getName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, getName() //
 		), "Initialized");
 	}
 
@@ -83,4 +78,8 @@ public class GdbModelTargetRegister
 	public GdbModelTargetRegisterContainer getContainer() {
 		return parent;
 	}
+
+	public void stateChanged(GdbStateChangeRecord sco) {
+	}
+
 }

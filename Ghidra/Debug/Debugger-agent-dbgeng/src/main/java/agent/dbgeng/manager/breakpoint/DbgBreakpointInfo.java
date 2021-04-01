@@ -15,11 +15,10 @@
  */
 package agent.dbgeng.manager.breakpoint;
 
-import java.util.*;
+import java.util.Objects;
 
 import agent.dbgeng.dbgeng.DebugBreakpoint;
 import agent.dbgeng.dbgeng.DebugBreakpoint.*;
-import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.DbgThread;
 import ghidra.comm.util.BitmaskSet;
@@ -39,8 +38,9 @@ public class DbgBreakpointInfo {
 	private final long number;
 	private boolean enabled;
 
-	private final String location;
-	private final List<DbgBreakpointLocation> locations;
+	private Long offset;
+	private String expression;
+	//private final List<DbgBreakpointLocation> locations;
 
 	/**
 	 * Construct Dbg breakpoint information
@@ -64,28 +64,28 @@ public class DbgBreakpointInfo {
 	}
 
 	public DbgBreakpointInfo(DebugBreakpoint bp, DbgProcess process, DbgThread thread) {
-		this.bpt = bp;
+		this.setBreakpoint(bp);
 		this.proc = process;
 		this.eventThread = thread;
 		this.number = bpt.getId();
 		this.bptType = bpt.getType();
 		this.flags = bpt.getFlags();
-		//this.parameters = bpt.getDataParameters();
-		//this.access = parameters.access;
-		//this.size = parameters.size;
-		this.location = Long.toHexString(bpt.getOffset());
-		List<DbgBreakpointLocation> locs = new ArrayList<>();
-		List<DebugProcessId> ids = new ArrayList<>();
-		ids.add(proc.getId());
-		locs.add(new DbgBreakpointLocation(bpt.getId(), 1, true, location, ids));
-		this.locations = Collections.unmodifiableList(locs);
+		if (bpt.getType().breakType.equals(BreakType.DATA)) {
+			this.parameters = bpt.getDataParameters();
+		}
+		this.access = parameters.access;
+		this.size = parameters.size;
+		this.offset = bpt.getOffset();
+		this.expression = bpt.getOffsetExpression();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(number, bptType, getFlags(), location, enabled, access, size);
+		return Objects.hash(number, bptType, getFlags(), /*location,*/ enabled, access, getSize(),
+			offset, expression);
 	}
 
+	@Override
 	public String toString() {
 		return Integer.toHexString(bpt.getId());
 	}
@@ -110,10 +110,16 @@ public class DbgBreakpointInfo {
 		if (this.getFlags() != that.getFlags()) {
 			return false;
 		}
-		if (this.size != that.size) {
+		if (this.getSize() != that.getSize()) {
 			return false;
 		}
-		if (!Objects.equals(this.location, that.location)) {
+		/*if (!Objects.equals(this.location, that.location)) {
+			return false;
+		}*/
+		if (!Objects.equals(this.expression, that.expression)) {
+			return false;
+		}
+		if (!Objects.equals(this.offset, that.offset)) {
 			return false;
 		}
 		if (this.enabled != that.enabled) {
@@ -173,12 +179,12 @@ public class DbgBreakpointInfo {
 	}
 
 	/**
-	 * Get the location of the breakpoint
+	 * Get the offset expression of the breakpoint
 	 * 
 	 * @return the location
 	 */
-	public String getLocation() {
-		return location;
+	public String getExpression() {
+		return expression;
 	}
 
 	/**
@@ -200,12 +206,16 @@ public class DbgBreakpointInfo {
 	}
 
 	/**
-	 * Assuming the location is an address, get it as a long
+	 * Get the offset of this breakpoint
 	 * 
-	 * @return the address
+	 * <p>
+	 * Note if the offset was given as an expression, but it hasn't been resolved, this will return
+	 * {@code null}.
+	 * 
+	 * @return the offset, or {@code null}
 	 */
-	public long addrAsLong() {
-		return Long.parseUnsignedLong(location, 16);
+	public Long getOffset() {
+		return offset;
 	}
 
 	/**
@@ -238,15 +248,16 @@ public class DbgBreakpointInfo {
 	/**
 	 * Get a list of resolved addresses
 	 * 
+	 * <p>
 	 * The effective locations may change for a variety of reasons. Most notable, a new module may
 	 * be loaded, having location(s) that match the desired location of this breakpoint. The binary
 	 * addresses within will become new effective locations of this breakpoint.
 	 * 
 	 * @return the list of locations at the time the breakpoint information was captured
 	 */
-	public List<DbgBreakpointLocation> getLocations() {
+	/*public List<DbgBreakpointLocation> getLocations() {
 		return locations;
-	}
+	}*/
 
 	public DbgBreakpointInfo withEnabled(@SuppressWarnings("hiding") boolean enabled) {
 		if (isEnabled() == enabled) {
@@ -271,7 +282,20 @@ public class DbgBreakpointInfo {
 		return eventThread;
 	}
 
-	public long getAddressAsLong() {
-		return locations.get(0).addrAsLong();
+	public void setBreakpoint(DebugBreakpoint bpt) {
+		this.bpt = bpt;
+		this.bptType = bpt.getType();
+		this.flags = bpt.getFlags();
+		this.offset = bpt.getOffset();
+		this.expression = bpt.getOffsetExpression();
+		if (bptType.breakType.equals(BreakType.DATA)) {
+			BreakDataParameters p = bpt.getDataParameters();
+			this.access = p.access;
+			this.size = p.size;
+		}
 	}
+
+	/*public long getAddressAsLong() {
+		return locations.get(0).addrAsLong();
+	}*/ // getOffset instead
 }

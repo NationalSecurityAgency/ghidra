@@ -28,7 +28,7 @@ import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
-import ghidra.dbg.util.DebuggerModelTestUtils;
+import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;

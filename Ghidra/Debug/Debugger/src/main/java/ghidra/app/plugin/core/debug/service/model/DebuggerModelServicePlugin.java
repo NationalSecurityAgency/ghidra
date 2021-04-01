@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.CharBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -33,15 +34,12 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.services.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetFocusScope.TargetFocusScopeListener;
-import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndOnly;
@@ -59,17 +57,8 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(
-	shortDescription = "Debugger models manager service",
-	description = "Manage debug sessions, connections, and trace recording",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.HIDDEN,
-	servicesRequired = {
-	},
-	servicesProvided = {
-		DebuggerModelService.class,
-	})
+@PluginInfo(shortDescription = "Debugger models manager service", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.HIDDEN, servicesRequired = {}, servicesProvided = {
+	DebuggerModelService.class, })
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, FrontEndOnly {
 
@@ -83,7 +72,7 @@ public class DebuggerModelServicePlugin extends Plugin
 		protected TargetObject root;
 		protected TargetFocusScope focusScope;
 
-		protected TargetObjectListener forRemoval = new TargetObjectListener() {
+		protected DebuggerModelListener forRemoval = new DebuggerModelListener() {
 			@Override
 			public void invalidated(TargetObject object, TargetObject branch, String reason) {
 				synchronized (listenersByModel) {
@@ -99,19 +88,20 @@ public class DebuggerModelServicePlugin extends Plugin
 			}
 		};
 
-		protected TargetFocusScopeListener forFocus = new TargetFocusScopeListener() {
-			@Override
-			public void focusChanged(TargetFocusScope object, TargetObject focused) {
-				fireFocusEvent(focused);
-				List<DebuggerModelServiceProxyPlugin> copy;
-				synchronized (proxies) {
-					copy = List.copyOf(proxies);
+		protected DebuggerModelListener forFocus =
+			new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
+				@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
+				public void focusChanged(TargetObject object, TargetObject focused) {
+					fireFocusEvent(focused);
+					List<DebuggerModelServiceProxyPlugin> copy;
+					synchronized (proxies) {
+						copy = List.copyOf(proxies);
+					}
+					for (DebuggerModelServiceProxyPlugin proxy : copy) {
+						proxy.fireFocusEvent(focused);
+					}
 				}
-				for (DebuggerModelServiceProxyPlugin proxy : copy) {
-					proxy.fireFocusEvent(focused);
-				}
-			}
-		};
+			};
 
 		protected ListenersForRemovalAndFocus(DebuggerObjectModel model) {
 			this.model = model;
@@ -344,6 +334,10 @@ public class DebuggerModelServicePlugin extends Plugin
 			}
 			recorder = doBeginRecording(target, mapper);
 			recorder.addListener(listenerOnRecorders);
+			recorder.init().exceptionally(e -> {
+				Msg.showError(this, null, "Record Trace", "Error initializing recorder", e);
+				return null;
+			});
 			recordersByTarget.put(target, recorder);
 		}
 		recorderListeners.fire.elementAdded(recorder);
@@ -355,74 +349,64 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public CompletableFuture<TraceRecorder> recordTargetBestOffer(TargetObject target) {
+	public TraceRecorder recordTargetBestOffer(TargetObject target) {
 		synchronized (recordersByTarget) {
 			TraceRecorder recorder = recordersByTarget.get(target);
 			if (recorder != null) {
 				Msg.warn(this, "Target is already being recorded: " + target);
-				return CompletableFuture.completedFuture(recorder);
+				return recorder;
 			}
 		}
-		return DebuggerMappingOpinion.queryOpinions(target).thenApply(offers -> {
-			DebuggerTargetTraceMapper mapper = DebuggerMappingOffer.first(offers);
-			if (mapper == null) {
-				throw new NoSuchElementException("No mapper for target: " + target);
-			}
-			try {
-				return recordTarget(target, mapper);
-			}
-			catch (IOException e) {
-				throw new AssertionError("Could not record target: " + target, e);
-			}
-		}).exceptionally(ex -> {
-			Msg.error(this, "Could not query trace-recording opinions", ex);
-			return null;
-		});
+		DebuggerTargetTraceMapper mapper =
+			DebuggerMappingOffer.first(DebuggerMappingOpinion.queryOpinions(target));
+		if (mapper == null) {
+			throw new NoSuchElementException("No mapper for target: " + target);
+		}
+		try {
+			return recordTarget(target, mapper);
+		}
+		catch (IOException e) {
+			throw new AssertionError("Could not record target: " + target, e);
+		}
 	}
 
 	@Override
 	@Internal
-	public CompletableFuture<TraceRecorder> doRecordTargetPromptOffers(PluginTool t,
-			TargetObject target) {
+	public TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target) {
 		synchronized (recordersByTarget) {
 			TraceRecorder recorder = recordersByTarget.get(target);
 			if (recorder != null) {
 				Msg.warn(this, "Target is already being recorded: " + target);
-				return CompletableFuture.completedFuture(recorder);
+				return recorder;
 			}
 		}
-		return DebuggerMappingOpinion.queryOpinions(target).thenApply(offers -> {
-			DebuggerMappingOffer selected;
-			if (offers.size() == 1) {
-				selected = offers.get(0);
+		List<DebuggerMappingOffer> offers = DebuggerMappingOpinion.queryOpinions(target);
+		DebuggerMappingOffer selected;
+		if (offers.size() == 1) {
+			selected = offers.get(0);
+		}
+		else {
+			offerDialog.setOffers(offers);
+			t.showDialog(offerDialog);
+			// TODO: Is cancelled?
+			if (offerDialog.isCancelled()) {
+				return null;
 			}
-			else {
-				offerDialog.setOffers(offers);
-				t.showDialog(offerDialog);
-				// TODO: Is cancelled?
-				if (offerDialog.isCancelled()) {
-					return null;
-				}
-				selected = offerDialog.getSelectedOffer();
-			}
-			assert selected != null;
-			DebuggerTargetTraceMapper mapper = selected.take();
-			try {
-				return recordTarget(target, mapper);
-			}
-			catch (IOException e) {
-				throw new AssertionError("Could not record target: " + target, e);
-				// TODO: For certain errors, It may not be appropriate to close the dialog.
-			}
-		}).exceptionally(ex -> {
-			Msg.showError(this, null, DebuggerResources.AbstractRecordAction.NAME,
-				"Could not query trace-recording opinions", ex);
-			return null;
-		});
+			selected = offerDialog.getSelectedOffer();
+		}
+		assert selected != null;
+		DebuggerTargetTraceMapper mapper = selected.take();
+		try {
+			return recordTarget(target, mapper);
+		}
+		catch (IOException e) {
+			throw new AssertionError("Could not record target: " + target, e);
+			// TODO: For certain errors, It may not be appropriate to close the dialog.
+		}
 	}
 
 	@Override
-	public CompletableFuture<TraceRecorder> recordTargetPromptOffers(TargetObject target) {
+	public TraceRecorder recordTargetPromptOffers(TargetObject target) {
 		return doRecordTargetPromptOffers(tool, target);
 	}
 
@@ -546,10 +530,6 @@ public class DebuggerModelServicePlugin extends Plugin
 		//DefaultTraceRecorder recorder = new DefaultTraceRecorder(this, trace, target, mapper);
 		TraceRecorder recorder = mapper.startRecording(this, trace);
 		trace.release(this); // The recorder now owns it (on behalf of the service)
-		recorder.init().exceptionally(e -> {
-			Msg.showError(this, null, "Record Trace", "Error initializing recorder", e);
-			return null;
-		});
 		return recorder;
 	}
 

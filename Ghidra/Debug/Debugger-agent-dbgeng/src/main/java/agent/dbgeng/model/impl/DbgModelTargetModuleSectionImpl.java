@@ -23,14 +23,9 @@ import agent.dbgeng.model.iface2.DbgModelTargetModuleSection;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(
-	name = "Section",
-	elements = { //
-		@TargetElementType(type = Void.class) //
-	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
-	})
+@TargetObjectSchemaInfo(name = "Section", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleSection {
 	protected static final String OBJFILE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "objfile";
@@ -40,6 +35,7 @@ public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 	public DbgModelTargetModuleSectionImpl(DbgModelTargetModuleSectionContainerImpl sections,
 			DbgModuleSection section) {
 		super(sections.getModel(), sections, section.getName(), "Section");
+		this.getModel().addModelObject(section, this);
 
 		AddressSpace space = getModel().getAddressSpace("ram");
 		Address min = space.getAddress(section.getStart());
@@ -50,8 +46,7 @@ public class DbgModelTargetModuleSectionImpl extends DbgModelTargetObjectImpl
 		changeAttributes(List.of(), List.of(), Map.of( //
 			MODULE_ATTRIBUTE_NAME, sections.getParent(), //
 			RANGE_ATTRIBUTE_NAME, range, //
-			DISPLAY_ATTRIBUTE_NAME, section.getName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, section.getName() //
 		), "Initialized");
 	}
 

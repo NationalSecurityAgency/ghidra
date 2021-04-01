@@ -32,9 +32,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.datastruct.CollectionChangeListener;
 
-@ServiceInfo(
-	defaultProvider = DebuggerModelServiceProxyPlugin.class,
-	description = "Service for managing debug sessions and connections")
+@ServiceInfo(defaultProvider = DebuggerModelServiceProxyPlugin.class, description = "Service for managing debug sessions and connections")
 public interface DebuggerModelService {
 	/**
 	 * Get the set of model factories found on the classpath
@@ -128,7 +126,7 @@ public interface DebuggerModelService {
 	 * @param target the target to record.
 	 * @return a future which completes with the recorder, or completes exceptionally
 	 */
-	CompletableFuture<TraceRecorder> recordTargetBestOffer(TargetObject target);
+	TraceRecorder recordTargetBestOffer(TargetObject target);
 
 	/**
 	 * Query mapping opinions, prompt the user, and record the given target
@@ -143,7 +141,7 @@ public interface DebuggerModelService {
 	 * @param target the target to record.
 	 * @return a future which completes with the recorder, or completes exceptionally
 	 */
-	CompletableFuture<TraceRecorder> recordTargetPromptOffers(TargetObject target);
+	TraceRecorder recordTargetPromptOffers(TargetObject target);
 
 	/**
 	 * Start and open a new trace on the given target

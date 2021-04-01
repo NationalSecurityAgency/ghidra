@@ -15,22 +15,9 @@
  */
 package ghidra.dbg.gadp.client;
 
-import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.target.TargetExecutionStateful;
-import ghidra.dbg.util.ValueUtils;
 
 public interface GadpClientTargetExecutionStateful
 		extends GadpClientTargetObject, TargetExecutionStateful {
-
-	default TargetExecutionState stateFromObj(Object obj) {
-		return ValueUtils.expectType(obj, TargetExecutionState.class, this,
-			STATE_ATTRIBUTE_NAME, TargetExecutionState.INACTIVE, true);
-	}
-
-	@GadpAttributeChangeCallback(STATE_ATTRIBUTE_NAME)
-	default void handleStateChanged(Object state) {
-		getDelegate().getListeners()
-				.fire(TargetExecutionStateListener.class)
-				.executionStateChanged(this, stateFromObj(state));
-	}
+	// Nothing to add
 }

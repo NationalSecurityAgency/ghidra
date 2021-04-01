@@ -27,7 +27,6 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
-import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "Module",
@@ -77,7 +76,6 @@ public class GdbModelTargetModule
 			VISIBLE_MODULE_NAME_ATTRIBUTE_NAME, module.getName(), //
 			RANGE_ATTRIBUTE_NAME, range, //
 			MODULE_NAME_ATTRIBUTE_NAME, module.getName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
 			SHORT_DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay() //
 		), "Initialized");
@@ -85,7 +83,7 @@ public class GdbModelTargetModule
 
 	public CompletableFuture<Void> init() {
 		return sections.requestElements(true).exceptionally(ex -> {
-			Msg.error(this, "Could not initialize module sections and base", ex);
+			impl.reportError(this, "Could not initialize module sections and base", ex);
 			return null;
 		});
 	}

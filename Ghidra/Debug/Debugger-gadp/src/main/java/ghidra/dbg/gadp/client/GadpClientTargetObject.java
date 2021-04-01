@@ -19,12 +19,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
 import ghidra.dbg.agent.SpiTargetObject;
-import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetConsole.TargetConsoleListener;
-import ghidra.dbg.util.ValueUtils;
 import ghidra.util.Msg;
 
 public interface GadpClientTargetObject extends SpiTargetObject {
@@ -52,26 +49,14 @@ public interface GadpClientTargetObject extends SpiTargetObject {
 		getDelegate().doClearCaches();
 	}
 
-	default String displayFromObj(Object obj) {
-		return ValueUtils.expectType(obj, String.class, this, DISPLAY_ATTRIBUTE_NAME, getName(),
-			false);
-	}
-
-	@GadpAttributeChangeCallback(DISPLAY_ATTRIBUTE_NAME)
-	default void handleDisplayChanged(Object display) {
-		getDelegate().getListeners().fire.displayChanged(this, displayFromObj(display));
-	}
-
-	// TODO: It's odd to put this here.... I think it indicates a problem in the API
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.CONSOLE_OUTPUT_EVENT)
 	default void handleConsoleOutputEvent(Gadp.EventNotification notification) {
 		Gadp.ConsoleOutputEvent evt = notification.getConsoleOutputEvent();
 		int channelIndex = evt.getChannel();
 		Channel[] allChannels = Channel.values();
 		if (0 <= channelIndex && channelIndex < allChannels.length) {
-			getDelegate().getListeners()
-					.fire(TargetConsoleListener.class)
-					.consoleOutput(this, allChannels[channelIndex], evt.getData().toByteArray());
+			getDelegate().getListeners().fire.consoleOutput(this, allChannels[channelIndex],
+				evt.getData().toByteArray());
 		}
 		else {
 			Msg.error(this, "Received output for unknown channel " + channelIndex + ": " +

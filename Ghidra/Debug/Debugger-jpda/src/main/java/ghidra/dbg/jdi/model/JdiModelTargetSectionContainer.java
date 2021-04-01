@@ -125,12 +125,12 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 					bytes[i] = (byte) 0xFF;
 				}
 			}
-			listeners.fire(TargetMemoryListener.class).memoryUpdated(this, address, bytes);
+			listeners.fire.memoryUpdated(this, address, bytes);
 			return CompletableFuture.completedFuture(bytes);
 		}
 		if (addressSpace.equals(impl.getAddressSpace("constantPool"))) {
 			byte[] bytes = constantPool.getPool();
-			listeners.fire(TargetMemoryListener.class).memoryUpdated(this, address, bytes);
+			listeners.fire.memoryUpdated(this, address, bytes);
 			return CompletableFuture.completedFuture(bytes);
 		}
 		throw new RuntimeException();

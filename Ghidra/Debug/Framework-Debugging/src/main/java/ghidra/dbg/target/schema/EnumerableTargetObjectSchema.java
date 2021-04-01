@@ -20,13 +20,12 @@ import java.util.*;
 import ghidra.dbg.attributes.TargetDataType;
 import ghidra.dbg.attributes.TargetObjectList;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetObject.TargetUpdateMode;
 import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
-import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathMatcher;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
@@ -88,8 +87,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	SET_ATTACH_KIND("SET_ATTACH_KIND", TargetAttachKindSet.class), // TODO: Limited built-in generics
 	SET_BREAKPOINT_KIND("SET_BREAKPOINT_KIND", TargetBreakpointKindSet.class),
 	SET_STEP_KIND("SET_STEP_KIND", TargetStepKindSet.class),
-	EXECUTION_STATE("EXECUTION_STATE", TargetExecutionState.class),
-	UPDATE_MODE("UPDATE_MODE", TargetUpdateMode.class);
+	EXECUTION_STATE("EXECUTION_STATE", TargetExecutionState.class);
 
 	public static final class MinimalSchemaContext extends DefaultSchemaContext {
 		public static final SchemaContext INSTANCE = new MinimalSchemaContext();
@@ -173,6 +171,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	}
 
 	@Override
+	public ResyncMode getElementResyncMode() {
+		return TargetObjectSchema.DEFAULT_ELEMENT_RESYNC;
+	}
+
+	@Override
 	public Map<String, AttributeSchema> getAttributeSchemas() {
 		return Map.of();
 	}
@@ -183,8 +186,22 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	}
 
 	@Override
-	public void searchFor(Set<PathPattern> result, List<String> prefix, boolean parentIsCanonical,
-			Class<? extends TargetObject> type, boolean requireCanonical) {
-		return;
+	public ResyncMode getAttributeResyncMode() {
+		return TargetObjectSchema.DEFAULT_ATTRIBUTE_RESYNC;
+	}
+
+	@Override
+	public PathMatcher searchFor(Class<? extends TargetObject> type, boolean requireCanonical) {
+		return new PathMatcher();
+	}
+
+	@Override
+	public List<String> searchForCanonicalContainer(Class<? extends TargetObject> type) {
+		return null;
+	}
+
+	@Override
+	public List<String> searchForSuitable(Class<? extends TargetObject> type, List<String> path) {
+		return null;
 	}
 }

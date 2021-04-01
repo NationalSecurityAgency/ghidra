@@ -33,9 +33,6 @@ public class DbgModel2TargetAvailableContainerImpl extends DbgModel2TargetObject
 
 	public DbgModel2TargetAvailableContainerImpl(DbgModelTargetObject obj) {
 		super(obj.getModel(), obj, "Available", "AvailableContainer");
-		changeAttributes(List.of(), List.of(), Map.of( //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.SOLICITED //
-		), "Initialized");
 	}
 
 	@Override

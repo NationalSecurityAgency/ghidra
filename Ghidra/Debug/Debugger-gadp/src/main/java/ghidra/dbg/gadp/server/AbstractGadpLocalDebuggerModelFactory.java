@@ -145,7 +145,7 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements LocalDebu
 
 		@Override
 		public CompletableFuture<Void> close() {
-			return super.close().thenRun(() -> {
+			return super.close().whenComplete((v, e) -> {
 				agentThread.process.destroy();
 				agentThread.interrupt();
 			});

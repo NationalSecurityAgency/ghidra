@@ -23,6 +23,7 @@ public class GdbThreadSelectCommand extends AbstractGdbCommandWithThreadAndFrame
 	/**
 	 * Select the given thread and frame level
 	 * 
+	 * <p>
 	 * To simply select a thread, you should use frame 0 as the default.
 	 * 
 	 * @param manager the manager to execute the command

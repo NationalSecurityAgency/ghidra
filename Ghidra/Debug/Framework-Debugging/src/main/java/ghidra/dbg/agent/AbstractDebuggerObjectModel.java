@@ -17,16 +17,24 @@ package ghidra.dbg.agent;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
 public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectModel {
-	protected final Object lock = new Object();
-	protected final ExecutorService clientExecutor = Executors.newSingleThreadExecutor();
+	public final Object lock = new Object();
+	protected final ExecutorService clientExecutor =
+		Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+				.namingPattern(getClass().getSimpleName() + "-thread-%d")
+				.build());
 	protected final ListenerSet<DebuggerModelListener> listeners =
 		new ListenerSet<>(DebuggerModelListener.class, clientExecutor);
 
@@ -50,19 +58,18 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	}
 
 	protected void objectInvalidated(TargetObject object) {
-		synchronized (lock) {
-			creationLog.remove(object);
-		}
+		creationLog.remove(object.getPath());
 	}
 
 	protected void addModelRoot(SpiTargetObject root) {
 		assert root == this.root;
 		synchronized (lock) {
 			rootAdded = true;
+			root.getSchema()
+					.validateTypeAndInterfaces(root, null, null, root.enforcesStrictSchema());
+			this.completedRoot.completeAsync(() -> root, clientExecutor);
+			listeners.fire.rootAdded(root);
 		}
-		root.getSchema().validateTypeAndInterfaces(root, null, null, root.enforcesStrictSchema());
-		this.completedRoot.completeAsync(() -> root, clientExecutor);
-		listeners.fire.rootAdded(root);
 	}
 
 	@Override
@@ -77,20 +84,27 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		}
 	}
 
+	protected void onClientExecutor(DebuggerModelListener listener, Runnable r) {
+		CompletableFuture.runAsync(r, clientExecutor).exceptionally(t -> {
+			Msg.error(this, "Listener " + listener + " caused unexpected exception", t);
+			return null;
+		});
+	}
+
 	protected void replayTreeEvents(DebuggerModelListener listener) {
 		if (root == null) {
 			assert creationLog.isEmpty();
 			return;
 		}
 		for (SpiTargetObject object : creationLog.values()) {
-			listener.created(object);
+			onClientExecutor(listener, () -> listener.created(object));
 		}
 		Set<SpiTargetObject> visited = new HashSet<>();
 		for (SpiTargetObject object : creationLog.values()) {
 			replayAddEvents(listener, object, visited);
 		}
 		if (rootAdded) {
-			listener.rootAdded(root);
+			onClientExecutor(listener, () -> listener.rootAdded(root));
 		}
 	}
 
@@ -99,34 +113,42 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		if (!visited.add(object)) {
 			return;
 		}
-		for (Object val : object.getCachedAttributes().values()) {
+		Map<String, ?> cachedAttributes = object.getCachedAttributes();
+		for (Object val : cachedAttributes.values()) {
 			if (!(val instanceof TargetObject)) {
 				continue;
 			}
 			assert val instanceof SpiTargetObject;
 			replayAddEvents(listener, (SpiTargetObject) val, visited);
 		}
-		listener.attributesChanged(object, List.of(), object.getCachedAttributes());
-		for (TargetObject elem : object.getCachedElements().values()) {
+		if (!cachedAttributes.isEmpty()) {
+			onClientExecutor(listener,
+				() -> listener.attributesChanged(object, List.of(), cachedAttributes));
+		}
+		Map<String, ? extends TargetObject> cachedElements = object.getCachedElements();
+		for (TargetObject elem : cachedElements.values()) {
 			assert elem instanceof SpiTargetObject;
 			replayAddEvents(listener, (SpiTargetObject) elem, visited);
 		}
-		listener.elementsChanged(object, List.of(), object.getCachedElements());
+		if (!cachedElements.isEmpty()) {
+			onClientExecutor(listener,
+				() -> listener.elementsChanged(object, List.of(), cachedElements));
+		}
 	}
 
 	@Override
 	public void addModelListener(DebuggerModelListener listener, boolean replay) {
-		CompletableFuture.runAsync(() -> {
+		try {
 			synchronized (lock) {
 				if (replay) {
 					replayTreeEvents(listener);
 				}
 				listeners.add(listener);
 			}
-		}, clientExecutor).exceptionally(ex -> {
+		}
+		catch (Throwable ex) {
 			listener.catastrophic(ex);
-			return null;
-		});
+		}
 	}
 
 	@Override
@@ -137,30 +159,27 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	/**
 	 * Ensure that dependent computations occur on the client executor
 	 * 
-	 * <p>
-	 * Use as a method reference in a final call to
-	 * {@link CompletableFuture#thenCompose(java.util.function.Function)} to ensure the final stage
-	 * completes on the client executor.
-	 * 
 	 * @param <T> the type of the future value
-	 * @param v the value
-	 * @return a future while completes with the given value on the client executor
+	 * @param v the future
+	 * @return a future which completes after the given one on the client executor
 	 */
-	public <T> CompletableFuture<T> gateFuture(T v) {
-		//Msg.debug(this, "Gate requested @" + System.identityHashCode(clientExecutor));
-		//Msg.debug(this, "  rvalue: " + v);
-		return CompletableFuture.supplyAsync(() -> {
-			//Msg.debug(this, "Gate completing @" + System.identityHashCode(clientExecutor));
-			//Msg.debug(this, "  cvalue: " + v);
-			return v;
+	public <T> CompletableFuture<T> gateFuture(CompletableFuture<T> future) {
+		return future.whenCompleteAsync((t, ex) -> {
 		}, clientExecutor);
 	}
 
 	@Override
 	public CompletableFuture<Void> flushEvents() {
+		return CompletableFuture.supplyAsync(() -> null, clientExecutor);
+	}
+
+	/*
+	@Override
+	public CompletableFuture<Void> flushEvents() {
 		return gateFuture(null);
 		//return CompletableFuture.supplyAsync(() -> gateFuture((Void) null)).thenCompose(f -> f);
 	}
+	*/
 
 	@Override
 	public CompletableFuture<Void> close() {
@@ -197,7 +216,17 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	@Override
 	public TargetObject getModelObject(List<String> path) {
 		synchronized (lock) {
+			if (path.isEmpty()) {
+				return root;
+			}
 			return creationLog.get(path);
+		}
+	}
+
+	@Override
+	public Set<TargetObject> getModelObjects(Predicate<? super TargetObject> predicate) {
+		synchronized (lock) {
+			return creationLog.values().stream().filter(predicate).collect(Collectors.toSet());
 		}
 	}
 }

@@ -23,10 +23,17 @@ import agent.dbgeng.model.iface2.DbgModelTargetProcess;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
-@TargetObjectSchemaInfo(name = "DebugContainer", attributes = { //
-	@TargetAttributeType(name = "Breakpoints", type = DbgModelTargetBreakpointContainerImpl.class, required = true, fixed = true), //	
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "DebugContainer",
+	attributes = {
+		@TargetAttributeType(
+			name = "Breakpoints",
+			type = DbgModelTargetBreakpointContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetDebugContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetDebugContainer {
 

@@ -365,6 +365,13 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	CompletableFuture<GdbInferior> addInferior();
 
 	/**
+	 * Find an unused inferior, possibly creating a new one
+	 * 
+	 * @return a future which completes with the handle to the found inferior
+	 */
+	CompletableFuture<GdbInferior> availableInferior();
+
+	/**
 	 * Remove an inferior
 	 * 
 	 * <p>

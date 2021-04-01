@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.target;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
@@ -290,7 +290,7 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 			// TODO: Ensure when tree is populated, correct model is selected
 		}
 		// Note, setSelectedNode does not take EventOrigin
-		tree.setSelectionPaths(new TreePath[] { node.getTreePath() }, EventOrigin.USER_GENERATED);
+		tree.setSelectionPaths(new TreePath[] { node.getTreePath() }, EventOrigin.API_GENERATED);
 	}
 
 	protected void clearServiceCaches(DebuggerModelService service) {

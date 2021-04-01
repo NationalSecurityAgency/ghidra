@@ -19,9 +19,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
-import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
 
 /**
  * The memory model of a target object
@@ -89,39 +87,5 @@ public interface TargetMemory extends TargetObject {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public default CompletableFuture<? extends Map<String, ? extends TargetMemoryRegion>> getRegions() {
 		return fetchChildrenSupporting((Class) TargetMemoryRegion.class);
-	}
-
-	public interface TargetMemoryListener extends TargetObjectListener {
-		/**
-		 * Memory was successfully read or written
-		 * 
-		 * <p>
-		 * If the implementation employs a cache, then it need only report reads or writes which
-		 * updated that cache. However, that cache must be invalidated whenever any other event
-		 * occurs which could change memory, e.g., the target stepping or running.
-		 * 
-		 * <p>
-		 * If the implementation can detect memory reads or writes <em>driven by the debugger</em>
-		 * then it is also acceptable to call this method for those events. However, this method
-		 * <em>must not</em> be called for memory changes <em>driven by the target</em>. In other
-		 * words, this method should only be called for reads or writes requested by the user.
-		 * 
-		 * @param memory this memory object
-		 * @param address the starting address of the affected range
-		 * @param data the new data for the affected range
-		 */
-		default void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
-		}
-
-		/**
-		 * An attempt to read memory failed
-		 * 
-		 * @param memory the memory object
-		 * @param range the range for the read which generated the error
-		 * @param e the error
-		 */
-		default void memoryReadError(TargetMemory memory, AddressRange range,
-				DebuggerMemoryAccessException e) {
-		}
 	}
 }

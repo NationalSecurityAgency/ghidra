@@ -24,17 +24,13 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.gadp.GadpRegistry;
-import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.EventNotification.EvtCase;
 import ghidra.dbg.memory.CachedMemory;
-import ghidra.dbg.target.TargetAccessConditioned;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
@@ -129,27 +125,8 @@ public class DelegateGadpClientTargetObject
 		}
 	}
 
-	protected static class GadpAttributeChangeCallbackMap
-			extends GadpHandlerMap<GadpAttributeChangeCallback, String> {
-		protected static final Class<?>[] PARAMETER_CLASSES = new Class<?>[] { Object.class };
-
-		public GadpAttributeChangeCallbackMap(Set<Class<? extends TargetObject>> ifaces) {
-			super(GadpAttributeChangeCallback.class, PARAMETER_CLASSES);
-			for (Class<? extends TargetObject> iface : ifaces) {
-				registerInterface(iface);
-			}
-		}
-
-		@Override
-		protected String getKey(GadpAttributeChangeCallback annot) {
-			return annot.value();
-		}
-	}
-
 	protected static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 	protected static final Map<Set<Class<? extends TargetObject>>, GadpEventHandlerMap> EVENT_HANDLER_MAPS_BY_COMPOSITION =
-		new HashMap<>();
-	protected static final Map<Set<Class<? extends TargetObject>>, GadpAttributeChangeCallbackMap> ATTRIBUTE_CHANGE_CALLBACKS_MAPS_BY_COMPOSITION =
 		new HashMap<>();
 
 	protected static GadpClientTargetObject makeModelProxy(GadpClient client,
@@ -166,7 +143,6 @@ public class DelegateGadpClientTargetObject
 	private final List<String> ifaceNames;
 	private final List<Class<? extends TargetObject>> ifaces;
 	private final GadpEventHandlerMap eventHandlers;
-	private final GadpAttributeChangeCallbackMap attributeChangeCallbacks;
 
 	protected Map<AddressSpace, CachedMemory> memCache = null; // Becomes active if this is a TargetMemory
 	protected Map<String, byte[]> regCache = null; // Becomes active if this is a TargtRegisterBank
@@ -185,9 +161,6 @@ public class DelegateGadpClientTargetObject
 		allMixins.add(GadpClientTargetObject.class);
 		this.eventHandlers = EVENT_HANDLER_MAPS_BY_COMPOSITION.computeIfAbsent(allMixins,
 			GadpEventHandlerMap::new);
-		this.attributeChangeCallbacks =
-			ATTRIBUTE_CHANGE_CALLBACKS_MAPS_BY_COMPOSITION.computeIfAbsent(allMixins,
-				GadpAttributeChangeCallbackMap::new);
 	}
 
 	@Override
@@ -241,44 +214,11 @@ public class DelegateGadpClientTargetObject
 			GadpValueUtils.getAttributeMap(this, deltaA.getAddedList());
 
 		changeElements(deltaE.getRemovedList(), List.of(), elementsAdded, "Updated");
-		Delta<?, ?> attrDelta =
-			changeAttributes(deltaA.getRemovedList(), attributesAdded, "Updated");
-		for (String name : attrDelta.getKeysRemoved()) {
-			handleAttributeChange(name, null);
-		}
-		for (Map.Entry<String, ?> a : attrDelta.added.entrySet()) {
-			handleAttributeChange(a.getKey(), a.getValue());
-		}
+		changeAttributes(deltaA.getRemovedList(), attributesAdded, "Updated");
 	}
 
 	protected void handleEvent(Gadp.EventNotification notify) {
 		eventHandlers.handle(getProxy(), notify.getEvtCase(), notify);
-	}
-
-	/**
-	 * Translate the given attribute change into an interface-specific property change, if
-	 * applicable, and invokes the appropriate listeners
-	 * 
-	 * @implNote The model interface allow listening for attribute changes in general, as well as
-	 *           some interface-specific property changes. The convention in model is for such
-	 *           properties to be encoded as an attribute with a specified name, e.g., the
-	 *           'accessible' attribute encodes the valcachedAue for
-	 *           {@link TargetAccessConditioned#getAccessibility()}, and changes will invoke
-	 *           {@link TargetAccessibilityListener#accessibilityChanged(TargetAccessConditioned, TargetAccessibility)}.
-	 *           Taking advantage of the general attribute getting/change-listening convention, GADP
-	 *           communicates only the attribute changes, and then invokes the corresponding
-	 *           interface-specific property change listeners on the client side. So long as the
-	 *           model implementation on the server side follows the convention, then the
-	 *           client-side proxies will obey the same. If not, then client-side behavior is
-	 *           undefined.
-	 * 
-	 * @see GadpAttributeChangeCallback
-	 * 
-	 * @param name the name of the attribute
-	 * @param value the new value of the attribute
-	 */
-	protected void handleAttributeChange(String name, Object value) {
-		attributeChangeCallbacks.handle(getProxy(), name, value);
 	}
 
 	protected void assertValid() {
@@ -345,7 +285,7 @@ public class DelegateGadpClientTargetObject
 	}
 
 	@Override
-	protected void doInvalidate(TargetObject branch, String reason) {
+	public void doInvalidate(TargetObject branch, String reason) {
 		client.removeProxy(path, reason);
 		super.doInvalidate(branch, reason);
 	}

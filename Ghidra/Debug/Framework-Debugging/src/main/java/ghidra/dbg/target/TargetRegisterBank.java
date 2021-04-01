@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.util.Msg;
 
 /**
@@ -36,14 +37,23 @@ import ghidra.util.Msg;
 public interface TargetRegisterBank extends TargetObject {
 
 	String DESCRIPTIONS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "descriptions";
+	// TODO: Remove this stopgap once we implement register-value replay
+	String REGISTERVALS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "register_values";
 
 	/**
 	 * Get the object describing the registers in this bank
 	 * 
+	 * <p>
+	 * TODO: {@link TargetRegisterContainer} ought to be removed. However, some models present a
+	 * complex structure for their register banks and containers, splitting the set into, e.g.,
+	 * User, Vector, etc. I suspect the simplest way for a client to accommodate this is to use
+	 * {@link TargetObjectSchema#searchFor(Class, boolean)}, passing {@link TargetRegister}. The
+	 * "canonical container" concept doesn't really work here, as that will yield each set, rather
+	 * than the full descriptions container.
+	 * 
 	 * @return a future which completes with object
 	 */
 	@TargetAttributeType(name = DESCRIPTIONS_ATTRIBUTE_NAME)
-	@SuppressWarnings("unchecked")
 	public default TargetRegisterContainer getDescriptions() {
 		return getTypedAttributeNowByName(DESCRIPTIONS_ATTRIBUTE_NAME,
 			TargetRegisterContainer.class, null);
@@ -198,21 +208,5 @@ public interface TargetRegisterBank extends TargetObject {
 			Msg.error(this, "Error clearing register caches");
 			return null;
 		});
-	}
-
-	public interface TargetRegisterBankListener extends TargetObjectListener {
-		/**
-		 * Registers were successfully read or written
-		 * 
-		 * <p>
-		 * If the implementation employs a cache, then it need only report reads or writes which
-		 * updated that cache. However, that cache must be invalidated whenever any other event
-		 * occurs which could change register values, e.g., the target stepping or running.
-		 * 
-		 * @param bank this register bank object
-		 * @param updates a name-value map of updated registers
-		 */
-		default void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
-		}
 	}
 }

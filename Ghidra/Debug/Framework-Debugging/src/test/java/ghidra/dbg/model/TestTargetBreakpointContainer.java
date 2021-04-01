@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ghidra.dbg.target.TargetBreakpointContainer;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.program.model.address.AddressRange;
 
@@ -31,7 +31,7 @@ import ghidra.program.model.address.AddressRange;
 
 public class TestTargetBreakpointContainer
 		extends DefaultTestTargetObject<TestTargetBreakpoint, TestTargetProcess>
-		implements TargetBreakpointContainer {
+		implements TargetBreakpointSpecContainer {
 
 	protected static final TargetBreakpointKindSet ALL_KINDS =
 		TargetBreakpointKindSet.of(TargetBreakpointKind.values());

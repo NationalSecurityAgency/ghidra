@@ -52,8 +52,8 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.target.TargetObject.TargetObjectListener;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
+import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
@@ -70,10 +70,8 @@ import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
 
-public class DebuggerObjectsProvider extends ComponentProviderAdapter implements //AllTargetObjectListenerAdapter,
-		TargetObjectListener, //
-		DebuggerModelListener, //
-		ObjectContainerListener {
+public class DebuggerObjectsProvider extends ComponentProviderAdapter
+		implements ObjectContainerListener {
 
 	public static final String PATH_JOIN_CHAR = ".";
 	//private static final String AUTOUPDATE_ATTRIBUTE_NAME = "autoupdate";
@@ -170,7 +168,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			description = "The foreground color for links to items in the objects tree", //
 			help = @HelpInfo(anchor = "colors") //
 	)
-	Color linkForegroundColor = Color.GREEN;
+	Color linkForegroundColor = Color.GREEN.darker();
 
 	@AutoOptionDefined( //
 			name = "Default Extended Step", //
@@ -202,6 +200,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	};
 
 	private boolean asTree = true;
+	private MyObjectListener listener = new MyObjectListener();
 
 	public DebuggerMethodInvocationDialog launchDialog;
 	public DebuggerAttachDialog attachDialog;
@@ -301,7 +300,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 
 	public void setModel(DebuggerObjectModel model) {
 		currentModel = model;
-		currentModel.addModelListener(this, true);
+		currentModel.addModelListener(getListener(), true);
 		refresh();
 	}
 
@@ -463,8 +462,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 				List<ObjectContainer> containers = new ArrayList<>();
 				for (String path : targetMap.keySet()) {
 					if (path.endsWith(key)) {
-						ObjectContainer container = targetMap.get(path);
-						containers.add(container);
+						synchronized (targetMap) {
+							ObjectContainer container = targetMap.get(path);
+							containers.add(container);
+						}
 					}
 				}
 				for (ObjectContainer container : containers) {
@@ -659,8 +660,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		if (targetObject != null && !container.isLink()) {
 			String key = targetObject.getJoinedPath(PATH_JOIN_CHAR);
 			container.subscribe();
-			targetMap.put(key, container);
-			refSet.add(targetObject);
+			synchronized (targetMap) {
+				targetMap.put(key, container);
+				refSet.add(targetObject);
+			}
 			if (targetObject instanceof TargetInterpreter) {
 				TargetInterpreter interpreter = (TargetInterpreter) targetObject;
 				getPlugin().showConsole(interpreter);
@@ -675,8 +678,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public void deleteFromMap(ObjectContainer container) {
 		TargetObject targetObject = container.getTargetObject();
 		if (targetObject != null) {
-			targetMap.remove(targetObject.getJoinedPath(PATH_JOIN_CHAR));
-			refSet.remove(targetObject);
+			synchronized (targetMap) {
+				targetMap.remove(targetObject.getJoinedPath(PATH_JOIN_CHAR));
+				refSet.remove(targetObject);
+			}
 		}
 	}
 
@@ -741,7 +746,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public void closeComponent() {
 		TargetObject targetObject = getRoot().getTargetObject();
 		if (targetObject != null) {
-			targetObject.removeListener(this);
+			targetObject.removeListener(getListener());
 		}
 		super.closeComponent();
 	}
@@ -1153,9 +1158,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			.helpLocation(AbstractSetBreakpointAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
 			.enabledWhen(ctx -> 
-				isInstance(ctx, TargetBreakpointContainer.class) && isStopped(ctx))
+				isInstance(ctx, TargetBreakpointSpecContainer.class) && isStopped(ctx))
 			.popupWhen(ctx -> 
-				isInstance(ctx, TargetBreakpointContainer.class) && isStopped(ctx))
+				isInstance(ctx, TargetBreakpointSpecContainer.class) && isStopped(ctx))
 			.onAction(ctx -> performSetBreakpoint(ctx))
 			.enabled(false) 
 			.buildAndInstallLocal(this); 
@@ -1348,23 +1353,21 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		}).finish();
 	}
 
-	public CompletableFuture<Void> startRecording(TargetProcess targetObject, boolean prompt) {
-		CompletableFuture<TraceRecorder> future;
+	public void startRecording(TargetProcess targetObject, boolean prompt) {
+		TraceRecorder rec;
 		if (prompt) {
-			future = modelService.recordTargetPromptOffers(targetObject);
+			rec = modelService.recordTargetPromptOffers(targetObject);
 		}
 		else {
-			future = modelService.recordTargetBestOffer(targetObject);
+			rec = modelService.recordTargetBestOffer(targetObject);
 		}
-		return future.thenAccept(rec -> {
-			if (rec == null) {
-				return; // Cancelled
-			}
-			//this.recorder = rec;
-			Trace trace = rec.getTrace();
-			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
-		});
+		if (rec == null) {
+			return; // Cancelled
+		}
+		//this.recorder = rec;
+		Trace trace = rec.getTrace();
+		traceManager.openTrace(trace);
+		traceManager.activateTrace(trace);
 	}
 
 	public void stopRecording(TargetObject targetObject) {
@@ -1409,22 +1412,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			DebugModelConventions.findSuitable(TargetProcess.class, obj).thenAccept(process -> {
 				TargetProcess valid = DebugModelConventions.liveProcessOrNull(process);
 				if (valid != null) {
-					startRecording(valid, true).exceptionally(ex -> {
-						Msg.showError(this, null, "Record",
-							"Could not record and/or open target: " + valid, ex);
-						return null;
-					});
+					startRecording(valid, true);
 				}
 			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't record"));
 		}
 		else {
 			TargetProcess valid = DebugModelConventions.liveProcessOrNull(obj);
 			if (valid != null) {
-				startRecording(valid, true).exceptionally(ex -> {
-					Msg.showError(this, null, "Record",
-						"Could not record and/or open target: " + valid, ex);
-					return null;
-				});
+				startRecording(valid, true);
 			}
 		}
 	}
@@ -1520,7 +1515,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	public void performSetBreakpoint(ActionContext context) {
 		TargetObject obj = getObjectFromContext(context);
 		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetBreakpointContainer.class, obj)
+			DebugModelConventions.findSuitable(TargetBreakpointSpecContainer.class, obj)
 					.thenAccept(suitable -> {
 						breakpointDialog.setContainer(suitable);
 						tool.showDialog(breakpointDialog);
@@ -1529,7 +1524,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 						DebuggerResources.showError(getComponent(), "Couldn't set breakpoint"));
 		}
 		else {
-			TargetBreakpointContainer container = (TargetBreakpointContainer) obj;
+			TargetBreakpointSpecContainer container = (TargetBreakpointSpecContainer) obj;
 			breakpointDialog.setContainer(container);
 			tool.showDialog(breakpointDialog);
 		}
@@ -1584,112 +1579,143 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		return false;
 	}
 
-	@Override
-	public void accessibilityChanged(TargetAccessConditioned object, boolean accessible) {
-		//this.access = accessibility.equals(TargetAccessibility.ACCESSIBLE);
-		plugin.getTool().contextChanged(this);
-	}
+	class MyObjectListener extends AnnotatedDebuggerAttributeListener {
+		protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
 
-	@Override
-	public void consoleOutput(TargetObject console, Channel channel, String out) {
-		//getPlugin().showConsole((TargetInterpreter) console);
-		System.err.println("consoleOutput: " + out);
-	}
+		public MyObjectListener() {
+			super(MethodHandles.lookup());
+		}
 
-	@Override
-	public void displayChanged(TargetObject object, String display) {
-		//System.err.println("displayChanged: " + display);
-		if (ObjectContainer.visibleByDefault(object.getName())) {
-			pane.signalDataChanged(getContainerByPath(object.getPath()));
+		@AttributeCallback(TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME)
+		public void accessibilityChanged(TargetObject object, boolean accessible) {
+			//this.access = accessibility.equals(TargetAccessibility.ACCESSIBLE);
+			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+		}
+
+		@Override
+		public void consoleOutput(TargetObject console, Channel channel, String out) {
+			//getPlugin().showConsole((TargetInterpreter) console);
+			System.err.println("consoleOutput: " + out);
+		}
+
+		@AttributeCallback(TargetObject.DISPLAY_ATTRIBUTE_NAME)
+		public void displayChanged(TargetObject object, String display) {
+			//System.err.println("displayChanged: " + display);
+			if (ObjectContainer.visibleByDefault(object.getName())) {
+				pane.signalDataChanged(getContainerByPath(object.getPath()));
+			}
+		}
+
+		@AttributeCallback(TargetObject.MODIFIED_ATTRIBUTE_NAME)
+		public void modifiedChanged(TargetObject object, boolean modified) {
+			//System.err.println("modifiedChanged: " + display);
+			if (ObjectContainer.visibleByDefault(object.getName())) {
+				pane.signalDataChanged(getContainerByPath(object.getPath()));
+			}
+		}
+
+		@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
+		public void executionStateChanged(TargetObject object, TargetExecutionState state) {
+			//this.state = state;
+			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+		}
+
+		@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
+		public void focusChanged(TargetObject object, TargetObject focused) {
+			plugin.setFocus(object, focused);
+			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+		}
+
+		@Override
+		public void memoryUpdated(TargetObject memory, Address address, byte[] data) {
+			//System.err.println("memoryUpdated");
+		}
+
+		@Override
+		public void memoryReadError(TargetObject memory, AddressRange range,
+				DebuggerMemoryAccessException e) {
+			System.err.println("memoryReadError");
+		}
+
+		@AttributeCallback(TargetInterpreter.PROMPT_ATTRIBUTE_NAME)
+		public void promptChanged(TargetObject interpreter, String prompt) {
+			//System.err.println("promptChanged: " + prompt);
+		}
+
+		@Override
+		public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
+			Map<String, ? extends TargetObject> cachedElements = bank.getCachedElements();
+			for (String key : cachedElements.keySet()) {
+				TargetObject ref = cachedElements.get(key);
+				displayChanged(ref, "registersUpdated");
+			}
+			Map<String, ?> cachedAttributes = bank.getCachedAttributes();
+			for (String key : cachedAttributes.keySet()) {
+				Object obj = cachedAttributes.get(key);
+				if (obj instanceof TargetObject) {
+					displayChanged((TargetObject) obj, "registersUpdated");
+				}
+			}
+		}
+
+		@Override
+		public void elementsChanged(TargetObject parent, Collection<String> removed,
+				Map<String, ? extends TargetObject> added) {
+			//System.err.println("local EC: " + parent);
+			ObjectContainer container =
+				parent == null ? null : getContainerByPath(parent.getPath());
+			if (container != null) {
+				container.augmentElements(removed, added);
+				boolean visibleChange = false;
+				for (String key : removed) {
+					visibleChange |= ObjectContainer.visibleByDefault(key);
+				}
+				for (String key : added.keySet()) {
+					visibleChange |= ObjectContainer.visibleByDefault(key);
+				}
+				if (visibleChange) {
+					container.propagateProvider(DebuggerObjectsProvider.this);
+					update(container);
+				}
+			}
+		}
+
+		@Override
+		public void attributesChanged(TargetObject parent, Collection<String> removed,
+				Map<String, ?> added) {
+			super.attributesChanged(parent, removed, added);
+			//System.err.println("local AC: " + parent + ":" + removed + ":" + added);
+			ObjectContainer container =
+				parent == null ? null : getContainerByPath(parent.getPath());
+			if (container != null) {
+				container.augmentAttributes(removed, added);
+				boolean visibleChange = false;
+				for (String key : removed) {
+					visibleChange |= ObjectContainer.visibleByDefault(key);
+				}
+				for (String key : added.keySet()) {
+					visibleChange |= ObjectContainer.visibleByDefault(key);
+				}
+				if (visibleChange) {
+					container.propagateProvider(DebuggerObjectsProvider.this);
+					update(container);
+				}
+			}
+			if (parent != null && isAutorecord() &&
+				parent.getCachedAttribute(TargetExecutionStateful.STATE_ATTRIBUTE_NAME) != null) {
+				TargetProcess proc = DebugModelConventions.liveProcessOrNull(parent);
+				if (proc != null) {
+					startRecording(proc, false);
+				}
+			}
 		}
 	}
 
-	@Override
-	public void executionStateChanged(TargetExecutionStateful object, TargetExecutionState state) {
-		//this.state = state;
-		plugin.getTool().contextChanged(this);
-	}
-
-	@Override
-	public void focusChanged(TargetFocusScope object, TargetObject focused) {
-		plugin.setFocus(object, focused);
-		plugin.getTool().contextChanged(this);
-	}
-
-	public void setFocus(TargetFocusScope object, TargetObject focused) {
+	public void setFocus(TargetObject object, TargetObject focused) {
 		if (focused.getModel() != currentModel) {
 			return;
 		}
 		pane.setFocus(object, focused);
-	}
-
-	@Override
-	public void memoryUpdated(TargetMemory memory, Address address, byte[] data) {
-		//System.err.println("memoryUpdated");
-	}
-
-	@Override
-	public void memoryReadError(TargetMemory memory, AddressRange range,
-			DebuggerMemoryAccessException e) {
-		System.err.println("memoryReadError");
-	}
-
-	@Override
-	public void promptChanged(TargetInterpreter interpreter, String prompt) {
-		System.err.println("promptChanged: " + prompt);
-	}
-
-	@Override
-	public void registersUpdated(TargetRegisterBank bank, Map<String, byte[]> updates) {
-		Map<String, ? extends TargetObject> cachedElements = bank.getCachedElements();
-		for (String key : cachedElements.keySet()) {
-			TargetObject ref = cachedElements.get(key);
-			if (ref instanceof TargetObject) {
-				displayChanged(ref, "registersUpdated");
-			}
-		}
-	}
-
-	@Override
-	public void elementsChanged(TargetObject parent, Collection<String> removed,
-			Map<String, ? extends TargetObject> added) {
-		//System.err.println("local EC: " + parent);
-		ObjectContainer container = parent == null ? null : getContainerByPath(parent.getPath());
-		if (container != null) {
-			container.augmentElements(removed, added);
-			boolean visibleChange = false;
-			for (String key : removed) {
-				visibleChange |= ObjectContainer.visibleByDefault(key);
-			}
-			for (String key : added.keySet()) {
-				visibleChange |= ObjectContainer.visibleByDefault(key);
-			}
-			if (visibleChange) {
-				container.propagateProvider(this);
-				update(container);
-			}
-		}
-	}
-
-	@Override
-	public void attributesChanged(TargetObject parent, Collection<String> removed,
-			Map<String, ?> added) {
-		//System.err.println("local AC: " + parent + ":" + removed + ":" + added);
-		ObjectContainer container = parent == null ? null : getContainerByPath(parent.getPath());
-		if (container != null) {
-			container.augmentAttributes(removed, added);
-			boolean visibleChange = false;
-			for (String key : removed) {
-				visibleChange |= ObjectContainer.visibleByDefault(key);
-			}
-			for (String key : added.keySet()) {
-				visibleChange |= ObjectContainer.visibleByDefault(key);
-			}
-			if (visibleChange) {
-				container.propagateProvider(this);
-				update(container);
-			}
-		}
 	}
 
 	public DebuggerTraceManagerService getTraceManager() {
@@ -1795,6 +1821,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 
 	public DebuggerListingService getListingService() {
 		return listingService;
+	}
+
+	public DebuggerModelListener getListener() {
+		return listener.reorderer;
 	}
 
 }

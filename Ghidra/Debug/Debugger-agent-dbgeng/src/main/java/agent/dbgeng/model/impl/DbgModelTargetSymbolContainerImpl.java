@@ -24,19 +24,20 @@ import agent.dbgeng.manager.impl.DbgMinimalSymbol;
 import agent.dbgeng.model.iface2.DbgModelTargetSymbolContainer;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.datastruct.WeakValueHashMap;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
-@TargetObjectSchemaInfo(name = "SymbolContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetSymbolImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "SymbolContainer",
+	elements = {
+		@TargetElementType(type = DbgModelTargetSymbolImpl.class) },
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class) },
+	canonicalContainer = true)
 public class DbgModelTargetSymbolContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSymbolContainer {
 
 	protected final DbgModelTargetModuleImpl module;
-
-	protected final Map<String, DbgModelTargetSymbolImpl> symbolsByName = new WeakValueHashMap<>();
 
 	public DbgModelTargetSymbolContainerImpl(DbgModelTargetModuleImpl module) {
 		super(module.getModel(), module, "Symbols", "SymbolContainer");
@@ -59,7 +60,11 @@ public class DbgModelTargetSymbolContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public synchronized DbgModelTargetSymbolImpl getTargetSymbol(DbgMinimalSymbol symbol) {
-		return symbolsByName.computeIfAbsent(symbol.getName(),
-			n -> new DbgModelTargetSymbolImpl(this, symbol));
+		DbgModelImpl impl = (DbgModelImpl) model;
+		TargetObject modelObject = impl.getModelObject(symbol);
+		if (modelObject != null) {
+			return (DbgModelTargetSymbolImpl) modelObject;
+		}
+		return new DbgModelTargetSymbolImpl(this, symbol);
 	}
 }

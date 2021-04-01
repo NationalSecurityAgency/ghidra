@@ -78,8 +78,7 @@ public class JdiModelTargetReferenceType extends JdiModelTargetType implements T
 			DISPLAY_ATTRIBUTE_NAME, reftype.name(), //
 			SHORT_DISPLAY_ATTRIBUTE_NAME, reftype.name(), //
 			RANGE_ATTRIBUTE_NAME, new AddressRangeImpl(zero, zero), //
-			MODULE_NAME_ATTRIBUTE_NAME, reftype.name(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			MODULE_NAME_ATTRIBUTE_NAME, reftype.name() //
 		), "Initialized");
 
 	}

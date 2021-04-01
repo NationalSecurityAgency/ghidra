@@ -15,6 +15,12 @@
  */
 package agent.dbgeng.impl.dbgeng.breakpoint;
 
+import com.sun.jna.Native;
+import com.sun.jna.WString;
+import com.sun.jna.platform.win32.WinDef.ULONG;
+import com.sun.jna.platform.win32.WinDef.ULONGByReference;
+import com.sun.jna.platform.win32.COM.COMUtils;
+
 import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint2;
 
 public class DebugBreakpointImpl2 extends DebugBreakpointImpl1 {
@@ -24,5 +30,21 @@ public class DebugBreakpointImpl2 extends DebugBreakpointImpl1 {
 	public DebugBreakpointImpl2(IDebugBreakpoint2 jnaBreakpoint) {
 		super(jnaBreakpoint);
 		this.jnaBreakpoint = jnaBreakpoint;
+	}
+
+	@Override
+	public String getOffsetExpression() {
+		ULONGByReference pulExpressionSize = new ULONGByReference();
+		COMUtils.checkRC(
+			jnaBreakpoint.GetOffsetExpressionWide(null, new ULONG(0), pulExpressionSize));
+		char[] buffer = new char[pulExpressionSize.getValue().intValue()];
+		COMUtils.checkRC(
+			jnaBreakpoint.GetOffsetExpressionWide(buffer, pulExpressionSize.getValue(), null));
+		return Native.toString(buffer);
+	}
+
+	@Override
+	public void setOffsetExpression(String expression) {
+		COMUtils.checkRC(jnaBreakpoint.SetOffsetExpressionWide(new WString(expression)));
 	}
 }

@@ -25,6 +25,7 @@ import agent.gdb.manager.impl.cmd.AbstractGdbCommandWithThreadId;
 /**
  * The interface for GDB command implementations
  *
+ * <p>
  * Commands are executed by GDB in serial. In order to distinguish the likely cause of events, the
  * manager will wait to issue each command until it has seen a prompt. Thus, commands are queued up,
  * and the manager uses the {@link CompletableFuture} pattern to "return" results after execution
@@ -34,14 +35,19 @@ import agent.gdb.manager.impl.cmd.AbstractGdbCommandWithThreadId;
  * use {@link AbstractGdbCommand} or {@link AbstractGdbCommandWithThreadId} to ensure consistent
  * processing.
  * 
- * To begin executing the command, the manager encodes the command, using {@link #encode()}. Any
- * event that occurs during command execution is given to
- * {@link #handle(GdbEvent, GdbPendingCommand)}. The implementor then has the option to "claim" or
- * "steal" the event. When claimed, any subsequent event processor or listener is provided this
- * command as the event's cause. When stolen, no subsequent event processors are called. The
- * implementation ought to keep a list of claimed and stolen events. Once GDB has finished executing
- * the command, the manager calls {@link #complete(GdbPendingCommand)}, allowing the implementation
- * to process its claimed and stolen events and return the result of the command.
+ * <p>
+ * Before executing the command, the manager calls {@link #preCheck(GdbPendingCommand)}, giving the
+ * implementation an opportunity to cancel the command or complete it early. If the command is
+ * completed after the pre-check, the manager will not encode it, and instead proceed to the next
+ * command. This is useful for eliminating unneeded "focus" commands. To begin executing the
+ * command, the manager encodes the command, using {@link #encode()}. Any event that occurs during
+ * command execution is given to {@link #handle(GdbEvent, GdbPendingCommand)}. The implementor then
+ * has the option to "claim" or "steal" the event. When claimed, any subsequent event processor or
+ * listener is provided this command as the event's cause. When stolen, no subsequent event
+ * processors are called. The implementation ought to keep a list of claimed and stolen events. Once
+ * GDB has finished executing the command, the manager calls {@link #complete(GdbPendingCommand)},
+ * allowing the implementation to process its claimed and stolen events and return the result of the
+ * command.
  *
  * @param <T> the type of object "returned" by the command
  */
@@ -56,6 +62,16 @@ public interface GdbCommand<T> {
 	public boolean validInState(GdbState state);
 
 	/**
+	 * Perform any pre-execution screening for this command
+	 * 
+	 * <p>
+	 * Complete {@code} pending with a result to short-circuit the execution of this command.
+	 * 
+	 * @param pending the pending command result
+	 */
+	void preCheck(GdbPendingCommand<? super T> pending);
+
+	/**
 	 * Encode the command in GDB/MI
 	 * 
 	 * @return the encoded command
@@ -63,7 +79,21 @@ public interface GdbCommand<T> {
 	public String encode();
 
 	/**
-	 * Handle an event that ocurred during the execution of this command
+	 * If executing this command changes the current thread, return that thread's ID
+	 * 
+	 * @return the new current thread ID
+	 */
+	public Integer impliesCurrentThreadId();
+
+	/**
+	 * If executing this command change the current frame, return that frame's ID
+	 * 
+	 * @return the new current frame ID
+	 */
+	public Integer impliesCurrentFrameId();
+
+	/**
+	 * Handle an event that occurred during the execution of this command
 	 * 
 	 * @param evt the event
 	 * @param pending a copy of the executing command instance
@@ -74,6 +104,7 @@ public interface GdbCommand<T> {
 	/**
 	 * Called when the manager believes this command is finished executing
 	 * 
+	 * <p>
 	 * This is presumed when the manager receives the prompt after issuing the encoded command
 	 * 
 	 * @param pending a copy of the now-finished-executing command instance

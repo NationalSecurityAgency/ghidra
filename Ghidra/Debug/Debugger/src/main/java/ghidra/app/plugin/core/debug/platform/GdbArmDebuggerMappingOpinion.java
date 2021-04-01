@@ -16,22 +16,19 @@
 package ghidra.app.plugin.core.debug.platform;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
-import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetProcess;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 
 public class GdbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_ARM_LE_V8 = new LanguageID("ARM:LE:32:v8");
 	protected static final LanguageID LANG_ID_ARM_BE_V8 = new LanguageID("ARM:BE:32:v8");
-	protected static final LanguageID LANG_ID_AARCH64_LE_V8A =
-		new LanguageID("AARCH64:LE:64:v8A");
-	protected static final LanguageID LANG_ID_AARCH64_BE_V8A =
-		new LanguageID("AARCH64:BE:64:v8A");
+	protected static final LanguageID LANG_ID_AARCH64_LE_V8A = new LanguageID("AARCH64:LE:64:v8A");
+	protected static final LanguageID LANG_ID_AARCH64_BE_V8A = new LanguageID("AARCH64:BE:64:v8A");
 	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
 	protected static class GdbArmLELinuxOffer extends AbstractGdbDebuggerMappingOffer {
@@ -48,19 +45,7 @@ public class GdbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	@Override
-	public CompletableFuture<Set<DebuggerMappingOffer>> getOffers(TargetObject target) {
-		if (!(target instanceof TargetProcess)) {
-			return CompletableFuture.completedFuture(Set.of());
-		}
-		TargetProcess process = (TargetProcess) target;
-		CompletableFuture<? extends TargetEnvironment> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
-		return futureEnv.thenApply(env -> offersForEnv(env, process));
-	}
-
-	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env,
-			TargetProcess process) {
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}

@@ -23,15 +23,18 @@ import com.sun.jdi.LocalVariable;
 
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "LocalVariable", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
-	@TargetAttributeType(name = "Generic Signature", type = String.class), //
-	@TargetAttributeType(name = "Signature", type = String.class), //
-	@TargetAttributeType(name = "Type", type = String.class, required = true), //
-	@TargetAttributeType(type = Void.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "LocalVariable",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
+		@TargetAttributeType(name = "Generic Signature", type = String.class),
+		@TargetAttributeType(name = "Signature", type = String.class),
+		@TargetAttributeType(name = "Type", type = String.class, required = true),
+		@TargetAttributeType(type = Void.class)
+	})
 public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 
 	String IS_ARGUMENT_ATTRIBUTE_NAME = "IsArg";
@@ -47,8 +50,7 @@ public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, var.name(), //
-			VISIBLE_TYPE_ATTRIBUTE_NAME, var.typeName(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			VISIBLE_TYPE_ATTRIBUTE_NAME, var.typeName() //
 		), "Initialized");
 
 	}
@@ -89,6 +91,7 @@ public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 		return CompletableFuture.completedFuture(null);
 	}
 
+	@Override
 	public CompletableFuture<Void> init() {
 		return CompletableFuture.completedFuture(null);
 	}

@@ -21,6 +21,7 @@ import com.sun.jna.*;
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinDef.ULONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.ptr.PointerByReference;
 
 import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
 
@@ -33,6 +34,11 @@ public class WrapIDebugControl4 extends WrapIDebugControl3 implements IDebugCont
 
 	public WrapIDebugControl4(Pointer pvInstance) {
 		super(pvInstance);
+	}
+
+	@Override
+	public HRESULT AddBreakpoint2(ULONG Type, ULONG DesiredId, PointerByReference Bp) {
+		return _invokeHR(VTIndices4.ADD_BREAKPOINT2, getPointer(), Type, DesiredId, Bp);
 	}
 
 	@Override

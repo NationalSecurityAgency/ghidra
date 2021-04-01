@@ -25,15 +25,15 @@ import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "SessionAttributes",
-	elements = { //
-		@TargetElementType(type = Void.class) //
+	elements = {
+		@TargetElementType(type = Void.class)
 	},
-	attributes = { //
+	attributes = {
 		@TargetAttributeType(
 			name = "Machine",
 			type = DbgModelTargetSessionAttributesMachineImpl.class,
-			fixed = true), //
-		@TargetAttributeType(type = Void.class) //
+			fixed = true),
+		@TargetAttributeType(type = Void.class)
 	})
 public class DbgModelTargetSessionAttributesImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSessionAttributes {
@@ -51,7 +51,7 @@ public class DbgModelTargetSessionAttributesImpl extends DbgModelTargetObjectImp
 			ARCH_ATTRIBUTE_NAME, "x86_64", //
 			DEBUGGER_ATTRIBUTE_NAME, "dbgeng", //
 			OS_ATTRIBUTE_NAME, "Windows", //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			ENDIAN_ATTRIBUTE_NAME, "little" //
 		), "Initialized");
 
 		getManager().addEventsListener(this);

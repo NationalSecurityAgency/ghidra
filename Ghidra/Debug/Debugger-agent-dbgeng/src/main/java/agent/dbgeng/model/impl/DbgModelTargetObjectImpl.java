@@ -26,7 +26,6 @@ import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetAccessConditioned.TargetAccessibilityListener;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 
@@ -71,10 +70,6 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
-			DbgModelTargetAccessConditioned accessConditioned =
-				(DbgModelTargetAccessConditioned) this;
-			listeners.fire(TargetAccessibilityListener.class)
-					.accessibilityChanged(accessConditioned, accessible);
 		}
 	}
 
@@ -135,6 +130,10 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 				onExit();
 				break;
 			}
+			case SESSION_EXIT: {
+				getModel().close();
+				return;
+			}
 		}
 		if (this instanceof DbgModelTargetExecutionStateful) {
 			DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) this;
@@ -144,6 +143,11 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 
 	@Override
 	public CompletableFuture<? extends Map<String, ?>> requestNativeAttributes() {
+		throw new AssertionError();  // shouldn't ever be here
+	}
+
+	@Override
+	public CompletableFuture<List<TargetObject>> requestNativeElements() {
 		throw new AssertionError();  // shouldn't ever be here
 	}
 
@@ -178,7 +182,6 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 	public void setModified(Map<String, Object> map, boolean b) {
 		if (modified) {
 			map.put(MODIFIED_ATTRIBUTE_NAME, modified);
-			listeners.fire.displayChanged(this, getDisplay());
 		}
 	}
 
@@ -188,7 +191,6 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 			changeAttributes(List.of(), List.of(), Map.of( //
 				MODIFIED_ATTRIBUTE_NAME, modified //
 			), "Refreshed");
-			listeners.fire.displayChanged(this, getDisplay());
 		}
 	}
 
@@ -197,6 +199,11 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			MODIFIED_ATTRIBUTE_NAME, false //
 		), "Refreshed");
+	}
+
+	public TargetObject searchForSuitable(Class<? extends TargetObject> type) {
+		List<String> pathToClass = model.getRootSchema().searchForSuitable(type, path);
+		return model.getModelObject(pathToClass);
 	}
 
 }

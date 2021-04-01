@@ -50,39 +50,25 @@ public interface TargetFocusScope extends TargetObject {
 	/**
 	 * Get the focused object in this scope
 	 * 
+	 * <p>
+	 * Note that client UIs should be careful about event loops and user intuition when listening
+	 * for changes of this attribute. The client should avoid calling
+	 * {@link #requestFocus(TargetObject)} in response. Perhaps the simplest way is to only request
+	 * focus when the selected object has actually changed. The debugger may "adjust" the focus. For
+	 * example, when focusing a thread, the debugger may instead focus a particular frame in that
+	 * thread (a successor). Or, when focusing a memory region, the debugger may only focus the
+	 * owning process (an ancestor). The suggested strategy (a work in progress) is the "same level,
+	 * same type" rule. It may be appropriate to highlight the actual focused object to cue the user
+	 * in, but the user's selection should remain at the same level. If an ancestor or successor
+	 * receives focus, leave the user's selection as is. If a sibling element or one of its
+	 * successors receives focus, select that sibling. A similar rule applies to "cousin" elements,
+	 * so long as they have the same type. In most other cases, it's appropriate to select the
+	 * focused element. TODO: Implement this rule in {@link DebugModelConventions}
+	 * 
 	 * @return a reference to the focused object or {@code null} if no object is focused.
 	 */
 	@TargetAttributeType(name = FOCUS_ATTRIBUTE_NAME, required = true, hidden = true)
 	default TargetObject getFocus() {
 		return getTypedAttributeNowByName(FOCUS_ATTRIBUTE_NAME, TargetObject.class, null);
-	}
-
-	public interface TargetFocusScopeListener extends TargetObjectListener {
-		/**
-		 * Focused has changed within this scope
-		 * 
-		 * <p>
-		 * Note that client UIs should be careful about event loops and user intuition when
-		 * receiving this event. The client should avoid calling
-		 * {@link TargetFocusScope#requestFocus(TargetObject)} in response to this event. Perhaps
-		 * the simplest way is to only request focus when the selected object has actually changed.
-		 * Also, the debugger may "adjust" the focus. For example, when focusing a thread, the
-		 * debugger may additionally focus a particular frame in that thread (a successor). Or, when
-		 * focusing a memory region, the debugger may only focus the owning process (an ancestor).
-		 * The suggested strategy (a work in progress) is the "same level, same type" rule. It may
-		 * be appropriate to highlight the actual focused object to cue the user in, but the user's
-		 * selection should remain at the same level. If an ancestor or successor receives focus,
-		 * leave the user's selection as is. If a sibling element or one of its successors receives
-		 * focus, select that sibling. A similar rule applies to "cousin" elements, so long as they
-		 * have the same type. In most other cases, it's appropriate to select the focused element.
-		 * 
-		 * <p>
-		 * TODO: Implement this rule in {@link DebugModelConventions}
-		 * 
-		 * @param object this scope
-		 * @param focused the object receiving focus
-		 */
-		default void focusChanged(TargetFocusScope object, TargetObject focused) {
-		}
 	}
 }

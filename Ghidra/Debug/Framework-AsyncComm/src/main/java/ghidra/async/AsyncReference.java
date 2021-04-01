@@ -18,8 +18,7 @@ package ghidra.async;
 import java.lang.ref.Cleaner.Cleanable;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -168,7 +167,7 @@ public class AsyncReference<T, C> {
 				listener.accept(oldVal, newVal, cause);
 			}
 			catch (RejectedExecutionException exc) {
-				Msg.trace(this, "Ignoring rejection", exc);
+				Msg.trace(this, "Ignoring rejection: " + exc);
 			}
 			catch (Throwable exc) {
 				Msg.error(this, "Ignoring exception on async reference listener: ", exc);
@@ -376,7 +375,7 @@ public class AsyncReference<T, C> {
 			}
 		}
 
-		IllegalStateException ex = new IllegalStateException(reason);
+		ExecutionException ex = new ExecutionException("Disposed", reason);
 		for (CompletableFuture<?> future : toExcept) {
 			future.completeExceptionally(ex);
 		}

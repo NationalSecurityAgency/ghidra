@@ -43,16 +43,16 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 	//  (but, of course, may then cause change in state)
 	@Override
 	public default CompletableFuture<Void> requestFocus(TargetObject obj) {
-		return getManager().requestFocus(this, obj);
+		return getModel().gateFuture(getManager().requestFocus(this, obj));
 	}
 
 	public default CompletableFuture<Void> doRequestFocus(TargetObject obj) {
 		if (getManager().isWaiting()) {
-			return CompletableFuture.completedFuture(null);
+			return AsyncUtils.NIL;
 		}
 		getModel().assertMine(TargetObject.class, obj);
 		if (obj.equals(getFocus())) {
-			return CompletableFuture.completedFuture(null);
+			return AsyncUtils.NIL;
 		}
 		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");

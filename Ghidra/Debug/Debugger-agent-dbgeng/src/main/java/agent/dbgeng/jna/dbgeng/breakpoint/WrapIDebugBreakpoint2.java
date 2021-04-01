@@ -51,6 +51,6 @@ public class WrapIDebugBreakpoint2 extends WrapIDebugBreakpoint implements IDebu
 
 	@Override
 	public HRESULT SetOffsetExpressionWide(WString Expression) {
-		return _invokeHR(VTIndices2.SET_COMMAND_WIDE, getPointer(), Expression);
+		return _invokeHR(VTIndices2.SET_OFFSET_EXPRESSION_WIDE, getPointer(), Expression);
 	}
 }

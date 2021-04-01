@@ -23,8 +23,9 @@ import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.ExecSuffix;
 import agent.gdb.manager.impl.GdbFrameInfo;
 import agent.gdb.manager.impl.GdbThreadInfo;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbBreakpointHitReason;
-import agent.gdb.manager.reason.GdbReason;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
@@ -85,9 +86,7 @@ public class GdbModelTargetThread
 			STATE_ATTRIBUTE_NAME, convertState(thread.getState()), //
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
 			SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED, //
-			stack.getName(), stack //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
 		), "Initialized");
 
 		updateInfo().exceptionally(ex -> {
@@ -108,7 +107,6 @@ public class GdbModelTargetThread
 				SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
 				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
 			), "Initialized");
-			listeners.fire.displayChanged(this, getDisplay());
 		});
 	}
 
@@ -178,25 +176,6 @@ public class GdbModelTargetThread
 		}
 	}
 
-	protected void threadStateChanged(GdbState state, GdbReason reason) {
-		if (state == GdbState.STOPPED) {
-			updateStack(); // NB: Callee handles errors
-		}
-		TargetExecutionState targetState = convertState(state);
-		changeAttributes(List.of(), Map.of( //
-			STATE_ATTRIBUTE_NAME, targetState //
-		), reason.desc());
-		listeners.fire(TargetExecutionStateListener.class).executionStateChanged(this, targetState);
-
-		if (reason instanceof GdbBreakpointHitReason) {
-			GdbBreakpointHitReason bpHit = (GdbBreakpointHitReason) reason;
-			GdbStackFrame frame = bpHit.getFrame(thread);
-			GdbModelTargetStackFrame f = stack.getTargetFrame(frame);
-			long bpId = bpHit.getBreakpointId();
-			impl.session.breakpoints.breakpointHit(bpId, f);
-		}
-	}
-
 	protected ExecSuffix convertToGdb(TargetStepKind kind) {
 		switch (kind) {
 			case FINISH:
@@ -227,9 +206,9 @@ public class GdbModelTargetThread
 				throw new UnsupportedOperationException(kind.name());
 			case ADVANCE: // Why no exec-advance in GDB/MI?
 				// TODO: This doesn't work, since advance requires a parameter
-				return thread.console("advance");
+				return model.gateFuture(thread.console("advance"));
 			default:
-				return thread.step(convertToGdb(kind));
+				return model.gateFuture(thread.step(convertToGdb(kind)));
 		}
 	}
 
@@ -237,17 +216,32 @@ public class GdbModelTargetThread
 		stack.invalidateRegisterCaches();
 	}
 
-	protected CompletableFuture<?> updateStack() {
-		Msg.debug(this, "Updating stack for " + this);
-		return stack.update().thenCompose(__ -> updateInfo()).exceptionally(ex -> {
-			model.reportError(this, "Could not update stack for thread " + this, ex);
-			return null;
-		});
-	}
-
 	@Override
 	@Internal
 	public CompletableFuture<Void> select() {
-		return thread.select();
+		return impl.gateFuture(thread.select());
+	}
+
+	public GdbModelTargetBreakpointLocation breakpointHit(GdbBreakpointHitReason reason) {
+		GdbStackFrame frame = reason.getFrame(thread);
+		GdbModelTargetStackFrame targetFrame = stack.getTargetFrame(frame);
+		long bpId = reason.getBreakpointId();
+		return impl.session.breakpoints.breakpointHit(bpId, targetFrame);
+	}
+
+	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		GdbState state = sco.getState();
+		CompletableFuture<Void> result = AsyncUtils.NIL;
+		if (state == GdbState.STOPPED) {
+			Msg.debug(this, "Updating stack for " + this);
+			result = CompletableFuture.allOf(
+				updateInfo(),
+				stack.stateChanged(sco));
+		}
+		TargetExecutionState targetState = convertState(state);
+		changeAttributes(List.of(), Map.of( //
+			STATE_ATTRIBUTE_NAME, targetState //
+		), sco.getReason().desc());
+		return result;
 	}
 }

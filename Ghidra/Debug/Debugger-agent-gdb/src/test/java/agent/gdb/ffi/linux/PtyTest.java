@@ -131,6 +131,7 @@ public class PtyTest {
 		Map<String, String> env = new HashMap<>();
 		env.put("PS1", "BASH:");
 		env.put("PROMPT_COMMAND", "");
+		env.put("TERM", "");
 		try (Pty pty = Pty.openpty()) {
 			PtyMaster master = pty.getMaster();
 			PrintWriter writer = new PrintWriter(master.getOutputStream());
@@ -162,6 +163,8 @@ public class PtyTest {
 	public void testSessionBashInterruptCat() throws IOException, InterruptedException {
 		Map<String, String> env = new HashMap<>();
 		env.put("PS1", "BASH:");
+		env.put("PROMPT_COMMAND", "");
+		env.put("TERM", "");
 		try (Pty pty = Pty.openpty()) {
 			PtyMaster master = pty.getMaster();
 			PrintWriter writer = new PrintWriter(master.getOutputStream());

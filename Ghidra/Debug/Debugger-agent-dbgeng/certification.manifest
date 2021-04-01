@@ -4,5 +4,6 @@
 .project||NONE||reviewed||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+hs_err_pid5696.mdmp||GHIDRA||||END|
 src/javaprovider/def/javaprovider.def||GHIDRA||||END|
 src/javaprovider/rc/javaprovider.rc||GHIDRA||||END|

@@ -24,11 +24,13 @@ import agent.gdb.manager.impl.GdbMinimalSymbol;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetSymbolNamespace;
 import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "SymbolContainer",
+	elementResync = ResyncMode.ONCE,
 	attributes = {
 		@TargetAttributeType(type = Void.class)
 	},
@@ -60,9 +62,6 @@ public class GdbModelTargetSymbolContainer
 						.collect(Collectors.toList());
 			}
 			setElements(symbols, "Refreshed");
-			changeAttributes(List.of(), Map.of(
-				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
-			), "Refreshed");
 		});
 	}
 

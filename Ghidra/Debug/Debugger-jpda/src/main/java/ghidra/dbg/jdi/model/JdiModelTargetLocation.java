@@ -30,15 +30,18 @@ import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
-@TargetObjectSchemaInfo(name = "Location", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Method", type = String.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Line", type = Integer.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Index", type = Long.class, required = true, fixed = true), //
-	@TargetAttributeType(name = "Address", type = String.class, required = true, fixed = true), //
-	@TargetAttributeType(type = Object.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Location",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "Method", type = String.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Line", type = Integer.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Index", type = Long.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Address", type = String.class, required = true, fixed = true),
+		@TargetAttributeType(type = Object.class) //
+	})
 public class JdiModelTargetLocation extends JdiModelTargetObjectImpl {
 
 	public static String getUniqueId(Location obj) {
@@ -63,8 +66,7 @@ public class JdiModelTargetLocation extends JdiModelTargetObjectImpl {
 			"Method", location.method().name(), //
 			"Line", location.lineNumber(), //
 			"Index", location.codeIndex(), //
-			"Address", Long.toHexString(address.getOffset()), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			"Address", Long.toHexString(address.getOffset()) //
 		), "Initialized");
 
 	}
@@ -92,6 +94,7 @@ public class JdiModelTargetLocation extends JdiModelTargetObjectImpl {
 		return CompletableFuture.completedFuture(null);
 	}
 
+	@Override
 	public CompletableFuture<Void> init() {
 		return CompletableFuture.completedFuture(null);
 	}

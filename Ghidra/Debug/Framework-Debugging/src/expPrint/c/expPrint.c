@@ -16,14 +16,21 @@
 #include <stdio.h>
 
 #ifdef WIN32
+#include <Windows.h>
+#include <debugapi.h>
 #define DLLEXPORT __declspec(dllexport)
 #else
 #define DLLEXPORT
+#define OutputDebugString(out) printf("%s\n", out)
 #endif
 
 DLLEXPORT volatile char overwrite[] = "Hello, World!";
 
+#ifdef WIN32
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
+#else
 int main(int argc, char** argv) {
-	printf("%s\n", overwrite);
+#endif
+	OutputDebugString(overwrite);
 	return overwrite[0];
 }

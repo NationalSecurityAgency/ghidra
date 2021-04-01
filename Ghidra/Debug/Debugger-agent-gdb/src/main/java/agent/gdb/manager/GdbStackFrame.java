@@ -57,4 +57,16 @@ public interface GdbStackFrame extends GdbStackFrameOperations {
 	 * @return the thread
 	 */
 	GdbThread getThread();
+
+	/**
+	 * Fill in missing address and function fields with those from the given frame
+	 * 
+	 * <p>
+	 * If the given frame is null, or is also missing those fields, they will be filled is with 0
+	 * and "".
+	 * 
+	 * @param frame
+	 * @return
+	 */
+	GdbStackFrame fillWith(GdbStackFrame frame);
 }

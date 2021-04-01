@@ -17,45 +17,31 @@ package ghidra.dbg.jdi.model;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 
-import ghidra.async.*;
-import ghidra.dbg.DebugModelConventions;
+import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(
-	name = "Thread",
-	elements = { //
-		@TargetElementType(type = Void.class)
-	},
-	attributes = {
+@TargetObjectSchemaInfo(name = "Thread", elements = { //
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
-		@TargetAttributeType(
-			name = "Registers",
-			type = JdiModelTargetRegisterContainer.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Stack",
-			type = JdiModelTargetStack.class,
-			required = true,
-			fixed = true),
+		@TargetAttributeType(name = "Registers", type = JdiModelTargetRegisterContainer.class, required = true, fixed = true),
+		@TargetAttributeType(name = "Stack", type = JdiModelTargetStack.class, required = true, fixed = true),
 		@TargetAttributeType(name = "Status", type = Integer.class),
 		@TargetAttributeType(name = "UID", type = Long.class, fixed = true),
 		@TargetAttributeType(type = Object.class) //
-	},
-	canonicalContainer = true)
+}, canonicalContainer = true)
 public class JdiModelTargetThread extends JdiModelTargetObjectReference implements //
 		TargetThread, //
 		JdiModelTargetAccessConditioned, //
@@ -112,7 +98,6 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
 			DISPLAY_ATTRIBUTE_NAME, display = getDisplay() //
 		), "Initialized");
-		listeners.fire(TargetExecutionStateListener.class).executionStateChanged(this, targetState);
 
 		getManager().addStateListener(thread.virtualMachine(), accessListener);
 	}
@@ -277,13 +262,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	@Override
 	public void threadSelected(ThreadReference eventThread, StackFrame frame, JdiCause cause) {
 		if (eventThread.equals(thread) && frame == null) {
-			AtomicReference<JdiModelTargetFocusScope> scope = new AtomicReference<>();
-			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-				DebugModelConventions.findSuitable(JdiModelTargetFocusScope.class, this)
-						.handle(seq::next);
-			}, scope).then(seq -> {
-				scope.get().setFocus(this);
-			}).finish();
+			((JdiModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
 	}
 
@@ -303,7 +282,6 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		changeAttributes(List.of(), List.of(), Map.of( //
 			STATE_ATTRIBUTE_NAME, targetState //
 		), "Refreshed");
-		listeners.fire(TargetExecutionStateListener.class).executionStateChanged(this, targetState);
 	}
 
 	protected CompletableFuture<?> update() {

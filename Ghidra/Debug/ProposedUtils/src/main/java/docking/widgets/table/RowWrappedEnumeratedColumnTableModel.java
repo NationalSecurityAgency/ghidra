@@ -21,23 +21,34 @@ import java.util.stream.Collectors;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 
-public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTableColumn<C, R>, R, T>
+/**
+ * A table model where the columns are enumerated, and the rows are wrappers on the objects being
+ * displayed
+ * 
+ * @param <C> the type of columns
+ * @param <K> the type of (immutable) keys for uniquely identifying an object
+ * @param <R> the type of rows
+ * @param <T> the type of objects being wrapped
+ */
+public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTableColumn<C, R>, K, R, T>
 		extends DefaultEnumeratedColumnTableModel<C, R> {
+	private final Function<T, K> keyFunc;
 	private final Function<T, R> wrapper;
-	private final Map<T, R> map = new HashMap<>();
+	private final Map<K, R> map = new HashMap<>();
 
 	public RowWrappedEnumeratedColumnTableModel(String name, Class<C> colType,
-			Function<T, R> wrapper) {
+			Function<T, K> keyFunc, Function<T, R> wrapper) {
 		super(name, colType);
+		this.keyFunc = keyFunc;
 		this.wrapper = wrapper;
 	}
 
 	protected synchronized R rowFor(T t) {
-		return map.computeIfAbsent(t, wrapper);
+		return map.computeIfAbsent(keyFunc.apply(t), k -> wrapper.apply(t));
 	}
 
 	protected synchronized R delFor(T t) {
-		return map.remove(t);
+		return map.remove(keyFunc.apply(t));
 	}
 
 	protected synchronized List<R> rowsFor(Collection<? extends T> c) {
@@ -69,7 +80,7 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		map.keySet().removeAll(c);
 	}
 
-	public synchronized Map<T, R> getMap() {
+	public synchronized Map<K, R> getMap() {
 		return Map.copyOf(map);
 	}
 }

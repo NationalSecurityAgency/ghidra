@@ -32,8 +32,7 @@ public interface DbgReason {
 
 		@Override
 		public String desc() {
-			// TODO Auto-generated method stub
-			return null;
+			return "Unknown";
 		}
 	}
 

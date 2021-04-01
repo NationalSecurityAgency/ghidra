@@ -24,12 +24,18 @@ import com.sun.jdi.Value;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
-@TargetObjectSchemaInfo(name = "TargetValueContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetValue.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "TargetValueContainer",
+	elements = {
+		@TargetElementType(type = JdiModelTargetValue.class)
+	},
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetValueContainer extends JdiModelTargetObjectImpl {
 
 	private List<Value> values;

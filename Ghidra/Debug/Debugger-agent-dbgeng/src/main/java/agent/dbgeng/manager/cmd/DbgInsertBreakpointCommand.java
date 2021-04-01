@@ -15,11 +15,9 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.dbgeng.DebugBreakpoint;
 import agent.dbgeng.dbgeng.DebugBreakpoint.*;
+import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.manager.breakpoint.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import ghidra.comm.util.BitmaskSet;
@@ -28,41 +26,33 @@ import ghidra.comm.util.BitmaskSet;
  * Implementation of {@link DbgBreakpointInsertions#insertBreakpoint(String)}
  */
 public class DbgInsertBreakpointCommand extends AbstractDbgCommand<DbgBreakpointInfo> {
-	private List<Long> locations;
+	//private List<Long> locations;
 	private final DbgBreakpointType type;
 	private DbgBreakpointInfo bkpt;
 	private int len;
+	private final String expression;
+	private final Long loc;
 
 	public DbgInsertBreakpointCommand(DbgManagerImpl manager, String expression,
 			DbgBreakpointType type) {
 		super(manager);
-		locations = new ArrayList<>();
-		DebugSymbols symbols = manager.getSymbols();
-		List<DebugSymbolId> ids = symbols.getSymbolIdsByName(expression);
-		if (ids.isEmpty()) {
-			locations.add(Long.decode(expression));
-		}
-		else {
-			for (DebugSymbolId id : ids) {
-				DebugSymbolEntry entry = symbols.getSymbolEntry(id);
-				locations.add(entry.offset);
-			}
-		}
 		this.type = type;
+		this.expression = expression;
+		this.loc = null;
 	}
 
 	public DbgInsertBreakpointCommand(DbgManagerImpl manager, long loc, int len,
 			DbgBreakpointType type) {
 		super(manager);
-		locations = new ArrayList<>();
-		locations.add(loc);
 		this.len = len;
 		this.type = type;
+		this.expression = null;
+		this.loc = loc;
 	}
 
 	@Override
 	public DbgBreakpointInfo complete(DbgPendingCommand<?> pending) {
-		manager.doBreakpointCreated(bkpt, pending);
+		//manager.doBreakpointCreated(bkpt, pending);
 		return bkpt;
 	}
 
@@ -73,8 +63,8 @@ public class DbgInsertBreakpointCommand extends AbstractDbgCommand<DbgBreakpoint
 		if (type.equals(DbgBreakpointType.BREAKPOINT)) {
 			bt = BreakType.CODE;
 		}
-		DebugBreakpoint bp = control.addBreakpoint(bt);
-		bp.addFlags(BreakFlags.ENABLED);
+		// 2 for BU, 1 for BP
+		DebugBreakpoint bp = control.addBreakpoint/*2*/(bt);
 		if (bt.equals(BreakType.DATA)) {
 			BitmaskSet<BreakAccess> access = BitmaskSet.of(BreakAccess.EXECUTE);
 			if (type.equals(DbgBreakpointType.ACCESS_WATCHPOINT)) {
@@ -92,9 +82,14 @@ public class DbgInsertBreakpointCommand extends AbstractDbgCommand<DbgBreakpoint
 			}
 			bp.setDataParameters(len, access);
 		}
-		for (Long loc : locations) {
+		if (loc != null) {
 			bp.setOffset(loc);
-			bkpt = new DbgBreakpointInfo(bp, manager.getCurrentProcess());
 		}
+		else {
+			bp.setOffsetExpression(expression);
+		}
+		bp.addFlags(BreakFlags.ENABLED);
+
+		bkpt = new DbgBreakpointInfo(bp, manager.getCurrentProcess());
 	}
 }

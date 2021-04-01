@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 
@@ -173,6 +174,11 @@ public class DummyTargetObject implements TargetObject {
 	}
 
 	@Override
+	public Map<String, ? extends TargetObject> getCallbackElements() {
+		return elements;
+	}
+
+	@Override
 	public CompletableFuture<? extends Map<String, ?>> fetchAttributes() {
 		if (!key.equals(TargetObject.DISPLAY_ATTRIBUTE_NAME)) {
 			if (value != null) {
@@ -191,7 +197,6 @@ public class DummyTargetObject implements TargetObject {
 			if (type != null) {
 				addAttribute(TargetObject.TYPE_ATTRIBUTE_NAME, type);
 			}
-			addAttribute(TargetObject.UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED);
 		}
 		// Why not completedFuture(attributes)?
 		return CompletableFuture.supplyAsync(() -> attributes);
@@ -203,11 +208,16 @@ public class DummyTargetObject implements TargetObject {
 	}
 
 	@Override
-	public void addListener(TargetObjectListener l) {
+	public Map<String, ?> getCallbackAttributes() {
+		return attributes;
 	}
 
 	@Override
-	public void removeListener(TargetObjectListener l) {
+	public void addListener(DebuggerModelListener l) {
+	}
+
+	@Override
+	public void removeListener(DebuggerModelListener l) {
 	}
 
 	public String getJoinedPath() {

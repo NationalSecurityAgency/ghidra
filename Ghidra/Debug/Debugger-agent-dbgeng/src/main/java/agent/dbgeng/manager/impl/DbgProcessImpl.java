@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.sequence;
+import static ghidra.async.AsyncUtils.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -109,7 +109,7 @@ public class DbgProcessImpl implements DbgProcess {
 	 */
 	public void add() {
 		manager.processes.put(id, this);
-		manager.getEventListeners().fire.processAdded(this, DbgCause.Causes.UNCLAIMED);
+		//manager.getEventListeners().fire.processAdded(this, DbgCause.Causes.UNCLAIMED);
 		//manager.addProcess(this, cause);
 	}
 
@@ -352,7 +352,7 @@ public class DbgProcessImpl implements DbgProcess {
 	}
 
 	protected void moduleLoaded(DebugModuleInfo info) {
-		if (!modules.containsKey(info.moduleName)) {
+		if (!modules.containsKey(info.getModuleName())) {
 			DbgModuleImpl module = new DbgModuleImpl(manager, this, info);
 			modules.put(info.toString(), module);
 		}

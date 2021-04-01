@@ -20,14 +20,13 @@ import java.util.*;
 import ghidra.app.plugin.core.debug.register.RegisterTypeInfo;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.TargetRegisterContainer;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.*;
 
 public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 	protected final Language language;
 	protected final CompilerSpec cspec;
-	protected final TargetRegisterContainer targetRegContainer;
+	//protected final TargetRegisterContainer targetRegContainer;
 	protected final boolean caseSensitive;
 
 	protected final Map<String, Register> languageRegs = new LinkedHashMap<>();
@@ -41,7 +40,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 			TargetRegisterContainer targetRegContainer, boolean caseSensitive) {
 		this.language = cSpec.getLanguage();
 		this.cspec = cSpec;
-		this.targetRegContainer = targetRegContainer;
+		//this.targetRegContainer = targetRegContainer;
 		this.caseSensitive = caseSensitive;
 
 		this.instrCtrTypeInfo = new RegisterTypeInfo(PointerDataType.dataType,
@@ -63,6 +62,16 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 			}
 			filtLanguageRegs.put(normalizeName(lReg.getName()), lReg);
 		}
+	}
+
+	protected synchronized Register considerRegister(String index) {
+		String name = normalizeName(index);
+		Register lReg = filtLanguageRegs.get(name);
+		if (lReg == null) {
+			return null;
+		}
+		languageRegs.put(name, lReg);
+		return lReg;
 	}
 
 	protected synchronized Register considerRegister(TargetRegister tReg) {
@@ -132,17 +141,17 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 
 	@Override
 	public synchronized void targetRegisterAdded(TargetRegister register) {
-		if (!PathUtils.isAncestor(targetRegContainer.getPath(), register.getPath())) {
-			return;
-		}
+		//if (!PathUtils.isAncestor(targetRegContainer.getPath(), register.getPath())) {
+		//	return;
+		//}
 		considerRegister(register);
 	}
 
 	@Override
 	public synchronized void targetRegisterRemoved(TargetRegister register) {
-		if (!PathUtils.isAncestor(targetRegContainer.getPath(), register.getPath())) {
-			return;
-		}
+		//if (!PathUtils.isAncestor(targetRegContainer.getPath(), register.getPath())) {
+		//	return;
+		//}
 		removeRegister(register);
 	}
 }

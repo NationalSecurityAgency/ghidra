@@ -221,6 +221,7 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 	}
 
 	private void connect(ActionEvent evt) {
+		connectButton.setEnabled(false);
 		for (Map.Entry<Property<?>, PropertyEditor> ent : propertyEditors.entrySet()) {
 			Property<?> prop = ent.getKey();
 			@SuppressWarnings("unchecked")
@@ -232,11 +233,13 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 			modelService.addModel(model);
 			setStatusText("");
 			close();
+			connectButton.setEnabled(true);
 			return CompletableFuture.runAsync(() -> modelService.activateModel(model),
 				SwingExecutorService.INSTANCE);
 		}).exceptionally(e -> {
 			Msg.showError(this, getComponent(), "Could not connect", e);
 			setStatusText("Could not connect: " + e.getMessage(), MessageType.ERROR);
+			connectButton.setEnabled(true);
 			return null;
 		});
 	}

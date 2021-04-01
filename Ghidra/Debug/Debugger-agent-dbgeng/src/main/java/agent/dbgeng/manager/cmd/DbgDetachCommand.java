@@ -19,10 +19,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import agent.dbgeng.dbgeng.DebugClient;
-import agent.dbgeng.manager.DbgEvent;
+import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgProcess;
-import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
-import agent.dbgeng.manager.evt.DbgThreadExitedEvent;
 import agent.dbgeng.manager.impl.*;
 
 /**
@@ -44,6 +42,7 @@ public class DbgDetachCommand extends AbstractDbgCommand<Void> {
 			manager.fireThreadExited(t.getId(), process, pending);
 			t.remove();
 		}
+		manager.getEventListeners().fire.processRemoved(process.getId(), DbgCause.Causes.UNCLAIMED);
 		return null;
 	}
 

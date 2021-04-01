@@ -25,6 +25,7 @@ import agent.gdb.manager.impl.cmd.GdbCommandError;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
+import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.AnnotatedSchemaContext;
@@ -126,7 +127,8 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 			return gdb.runRC();
 		}
 		catch (IOException e) {
-			return CompletableFuture.failedFuture(e);
+			return CompletableFuture.failedFuture(
+				new DebuggerModelTerminatingException("Error while starting GDB", e));
 		}
 	}
 

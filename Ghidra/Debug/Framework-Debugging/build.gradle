@@ -19,18 +19,22 @@ dependencies {
 task testSpecimenWin64 {
 	dependsOn 'expCreateProcessWin64Executable'
 	dependsOn 'expCreateThreadExitWin64Executable'
-	dependsOn 'expCreateThreadSpinWin64Executable'
+	//dependsOn 'expCreateThreadSpinWin64Executable'
 	dependsOn 'expPrintWin64Executable'
-	dependsOn 'expSpinWin64Executable'
+	//dependsOn 'expSpinWin64Executable'
+	dependsOn 'expRegistersWin64Executable'
+	dependsOn 'expStackWin64Executable'
 }
 
 task testSpecimenLinux64 {
 	dependsOn 'expCloneExecExecutable'//Linux64Executable'
 	dependsOn 'expCloneExitExecutable'//Linux64Executable'
-	dependsOn 'expCloneSpinExecutable'//Linux64Executable'
+	//dependsOn 'expCloneSpinExecutable'//Linux64Executable'
 	dependsOn 'expForkExecutable'//Linux64Executable'
 	dependsOn 'expPrintLinux64Executable'
-	dependsOn 'expTypesExecutable'//Linux64Executable'
+	//dependsOn 'expTypesExecutable'//Linux64Executable'
+	dependsOn 'expRegistersLinux64Executable'
+	dependsOn 'expStackLinux64Executable'
 }
 
 model {
@@ -83,25 +87,54 @@ model {
 		expTypes(NativeExecutableSpec) {
 			targetPlatform "linux64"
 			//targetPlatform "linux32" // TODO: Test on these
+			binaries {
+				withType(NativeExecutableBinarySpec) {
+					if (toolChain in Gcc) {
+						cCompiler.args("-gdwarf-2")
+					}
+				}
+			}
+		}
+		expRegisters(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
+		}
+		expStack(NativeExecutableSpec) {
+			targetPlatform "linux64"
+			//targetPlatform "linux32" // TODO: Test on these
+			targetPlatform "win64"
+			targetPlatform "win32" // TODO: Test on these
 		}
 	}
 
 	binaries {
 		withType(NativeExecutableBinarySpec) {
 			if (toolChain in Gcc) {
-				cCompiler.args("-gdwarf-2", "-std=c99")
+				cCompiler.args("-std=c99")
 				linker.args("-lpthread")
 				linker.args("-lutil")
 			}
 			if (toolChain in VisualCpp) {
 				cppCompiler.define("VS_PROJECT")
-				linker.args("/SUBSYSTEM:CONSOLE", "/DYNAMICBASE", "/NXCOMPAT")
+				// NB. No /SUBSYSTEM:CONSOLE
+				// that creates a subprocess
+				linker.args("/SUBSYSTEM:windows", "/DYNAMICBASE", "/NXCOMPAT")
+				linker.args("shell32.lib");
 			}
 			if (targetPlatform.name.startsWith("win")) {
 				cppCompiler.define("WIN32")
+				cCompiler.define("WIN32")
+
 				cppCompiler.define("_WINDOWS")
+				cCompiler.define("_WINDOWS")
+
 				cppCompiler.define("UNICODE")
+				cCompiler.define("_UNICODE")
+
 				cppCompiler.define("_UNICODE")
+				cCompiler.define("UNICODE")
 			}
 		}
 	}

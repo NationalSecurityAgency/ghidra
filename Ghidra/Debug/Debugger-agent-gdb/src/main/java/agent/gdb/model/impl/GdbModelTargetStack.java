@@ -22,23 +22,21 @@ import java.util.stream.Collectors;
 
 import agent.gdb.manager.GdbStackFrame;
 import agent.gdb.manager.GdbThread;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "Stack",
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	},
+		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
-public class GdbModelTargetStack
-		extends DefaultTargetObject<GdbModelTargetStackFrame, GdbModelTargetThread>
-		implements TargetStack {
+public class GdbModelTargetStack extends
+		DefaultTargetObject<GdbModelTargetStackFrame, GdbModelTargetThread> implements TargetStack {
 	public static final String NAME = "Stack";
 
 	protected final GdbModelImpl impl;
@@ -61,8 +59,8 @@ public class GdbModelTargetStack
 			synchronized (this) {
 				frames = f.stream().map(this::getTargetFrame).collect(Collectors.toList());
 			}
-			// TODO: This might be a case where "move" is useful
 			setElements(frames, "Refreshed");
+			//Msg.debug(this, "Completed stack frames update");
 		});
 	}
 
@@ -89,12 +87,15 @@ public class GdbModelTargetStack
 	 * GDB doesn't produce stack change events, but they should only ever happen by running a
 	 * target. Thus, every time we're STOPPED, this method should be called.
 	 */
-	protected CompletableFuture<?> update() {
-		if (!isObserved()) {
+	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		return requestElements(true).thenCompose(__ -> {
+			GdbModelTargetStackFrame innermost = framesByLevel.get(0);
+			if (innermost != null) {
+				return innermost.stateChanged(sco);
+			}
 			return AsyncUtils.NIL;
-		}
-		return fetchElements(true).exceptionally(e -> {
-			Msg.error(this, "Could not update stack " + this + " on STOPPED");
+		}).exceptionally(e -> {
+			impl.reportError(this, "Could not update stack " + this + " on STOPPED", e);
 			return null;
 		});
 	}

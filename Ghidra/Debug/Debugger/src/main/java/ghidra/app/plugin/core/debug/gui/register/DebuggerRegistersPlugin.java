@@ -41,8 +41,7 @@ import ghidra.util.Msg;
 		category = PluginCategoryNames.DEBUGGER, //
 		packageName = DebuggerPluginPackage.NAME, //
 		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			TraceActivatedPluginEvent.class, //
+		eventsConsumed = { TraceActivatedPluginEvent.class, //
 			TraceClosedPluginEvent.class, //
 		}, //
 		servicesRequired = { //

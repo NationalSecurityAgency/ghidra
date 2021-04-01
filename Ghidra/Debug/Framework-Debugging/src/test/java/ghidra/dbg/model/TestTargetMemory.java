@@ -47,7 +47,7 @@ public class TestTargetMemory
 		memory.getData(address.getOffset(), data);
 		CompletableFuture<byte[]> future = getModel().future(data);
 		future.thenAccept(__ -> {
-			listeners.fire(TargetMemoryListener.class).memoryUpdated(this, address, data);
+			listeners.fire.memoryUpdated(this, address, data);
 		});
 		return future;
 	}
@@ -62,7 +62,7 @@ public class TestTargetMemory
 		setMemory(address, data);
 		CompletableFuture<Void> future = getModel().future(null);
 		future.thenAccept(__ -> {
-			listeners.fire(TargetMemoryListener.class).memoryUpdated(this, address, data);
+			listeners.fire.memoryUpdated(this, address, data);
 		});
 		return future;
 	}
@@ -78,7 +78,6 @@ public class TestTargetMemory
 		changeAttributes(List.of(), Map.ofEntries(
 			Map.entry(ACCESSIBLE_ATTRIBUTE_NAME, accessible)),
 			"Set Test Memory Accessibility");
-		listeners.fire(TargetAccessibilityListener.class).accessibilityChanged(this, accessible);
 		return old;
 	}
 }

@@ -15,6 +15,8 @@
  */
 package agent.dbgeng.model.iface2;
 
-public interface DbgModelTargetDebugContainer extends DbgModelTargetObject {
+import ghidra.dbg.target.TargetAggregate;
+
+public interface DbgModelTargetDebugContainer extends DbgModelTargetObject, TargetAggregate {
 
 }

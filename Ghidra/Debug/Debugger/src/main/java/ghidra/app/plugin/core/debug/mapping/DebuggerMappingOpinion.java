@@ -16,10 +16,9 @@
 package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
-import ghidra.async.AsyncFence;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.target.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
@@ -35,22 +34,16 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	 * @param target the target to be recorded, usually a process
 	 * @return a future which completes with the set of offers
 	 */
-	public static CompletableFuture<List<DebuggerMappingOffer>> queryOpinions(
-			TargetObject target) {
+	public static List<DebuggerMappingOffer> queryOpinions(TargetObject target) {
 		List<DebuggerMappingOffer> result = new ArrayList<>();
-		AsyncFence fence = new AsyncFence();
 		for (DebuggerMappingOpinion opinion : ClassSearcher
 				.getInstances(DebuggerMappingOpinion.class)) {
-			fence.include(opinion.getOffers(target).thenAccept(offers -> {
-				synchronized (result) {
-					result.addAll(offers);
-				}
-			}));
+			synchronized (result) {
+				result.addAll(opinion.getOffers(target));
+			}
 		}
-		return fence.ready().thenApply(__ -> {
-			result.sort(HIGHEST_CONFIDENCE_FIRST);
-			return result;
-		});
+		result.sort(HIGHEST_CONFIDENCE_FIRST);
+		return result;
 	}
 
 	/**
@@ -59,5 +52,18 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	 * @param target the target, usually a process
 	 * @return a future which completes with true if it knows, false if not
 	 */
-	CompletableFuture<Set<DebuggerMappingOffer>> getOffers(TargetObject target);
+	public default Set<DebuggerMappingOffer> getOffers(TargetObject target) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
+		TargetProcess process = (TargetProcess) target;
+		DebuggerObjectModel model = process.getModel();
+		List<String> pathToEnv =
+			model.getRootSchema().searchForSuitable(TargetEnvironment.class, process.getPath());
+		TargetEnvironment env = (TargetEnvironment) model.getModelObject(pathToEnv);
+		return offersForEnv(env, process);
+	}
+
+	Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process);
+
 }

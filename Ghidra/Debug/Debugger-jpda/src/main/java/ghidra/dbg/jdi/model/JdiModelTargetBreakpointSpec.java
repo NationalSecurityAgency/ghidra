@@ -20,24 +20,23 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetDeletable;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointSpec",
-	attributes = { //
-		@TargetAttributeType( //
-			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, //
-			type = JdiModelTargetBreakpointContainer.class), //
-		@TargetAttributeType( //
-			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
-			type = JdiModelTargetBreakpointSpec.class), //
-		@TargetAttributeType(type = Void.class) //
+	attributes = {
+		@TargetAttributeType(
+			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME,
+			type = JdiModelTargetBreakpointContainer.class),
+		@TargetAttributeType(
+			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME,
+			type = JdiModelTargetBreakpointSpec.class),
+		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
 public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
@@ -78,7 +77,7 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	protected TargetBreakpointKindSet computeKinds(JdiBreakpointInfo from) {
 		switch (from.getType()) {
 			case BREAKPOINT:
-				return TargetBreakpointKindSet.of(TargetBreakpointKind.SOFTWARE);
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
 			case MODIFICATION_WATCHPOINT:
 				return TargetBreakpointKindSet.of(TargetBreakpointKind.WRITE);
 			case ACCESS_WATCHPOINT:
@@ -111,18 +110,11 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	protected void updateAttributesFromInfo(String reason) {
 		boolean enabled = info.isEnabled();
 
-		Delta<?, ?> delta = changeAttributes(List.of(), List.of(), Map.of( //
+		changeAttributes(List.of(), List.of(), Map.of( //
 			ENABLED_ATTRIBUTE_NAME, enabled, //
 			KINDS_ATTRIBUTE_NAME, kinds = computeKinds(info), //
 			DISPLAY_ATTRIBUTE_NAME, display = getDisplay() //
 		), reason);
-		// TODO: These attribute-specific conveniences should be done by DTO.
-		if (delta.added.containsKey(ENABLED_ATTRIBUTE_NAME)) {
-			listeners.fire(TargetBreakpointSpecListener.class).breakpointToggled(this, enabled);
-		}
-		if (delta.added.containsKey(DISPLAY_ATTRIBUTE_NAME)) {
-			listeners.fire.displayChanged(this, display);
-		}
 	}
 
 	protected CompletableFuture<Void> updateInfo(JdiBreakpointInfo oldInfo,

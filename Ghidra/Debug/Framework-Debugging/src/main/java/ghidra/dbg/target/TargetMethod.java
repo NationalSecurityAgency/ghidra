@@ -153,16 +153,17 @@ public interface TargetMethod extends TargetObject {
 				return (T) arguments.get(name);
 			}
 			if (required) {
-				throw new DebuggerIllegalArgumentException("Missing required parameter " + name);
+				throw new DebuggerIllegalArgumentException(
+					"Missing required parameter '" + name + "'");
 			}
 			return defaultValue;
 		}
 
 		@Override
 		public String toString() {
-			return String.format("<ParameterDescription " +
-				"name=%s type=%s default=%s required=%s " +
-				"display='%s' description='%s' choices=%s",
+			return String.format(
+				"<ParameterDescription " + "name=%s type=%s default=%s required=%s " +
+					"display='%s' description='%s' choices=%s",
 				name, type, defaultValue, required, display, description, choices);
 		}
 	}
@@ -173,9 +174,8 @@ public interface TargetMethod extends TargetObject {
 			// Nothing
 		}
 
-		public static class ImmutableTargetParameterMap
-				extends AbstractNMap<String, ParameterDescription<?>>
-				implements TargetParameterMap {
+		public static class ImmutableTargetParameterMap extends
+				AbstractNMap<String, ParameterDescription<?>> implements TargetParameterMap {
 
 			public ImmutableTargetParameterMap(Map<String, ParameterDescription<?>> map) {
 				super(map);
@@ -200,8 +200,7 @@ public interface TargetMethod extends TargetObject {
 	 * @return a map of descriptions by name
 	 */
 	static TargetParameterMap makeParameters(Stream<ParameterDescription<?>> params) {
-		return TargetParameterMap.copyOf(
-			params.collect(Collectors.toMap(p -> p.name, p -> p)));
+		return TargetParameterMap.copyOf(params.collect(Collectors.toMap(p -> p.name, p -> p)));
 	}
 
 	/**
@@ -210,8 +209,7 @@ public interface TargetMethod extends TargetObject {
 	 * @param params the descriptions
 	 * @return a map of descriptions by name
 	 */
-	static TargetParameterMap makeParameters(
-			Collection<ParameterDescription<?>> params) {
+	static TargetParameterMap makeParameters(Collection<ParameterDescription<?>> params) {
 		return makeParameters(params.stream());
 	}
 
@@ -221,8 +219,7 @@ public interface TargetMethod extends TargetObject {
 	 * @param params the descriptions
 	 * @return a map of descriptions by name
 	 */
-	static TargetParameterMap makeParameters(
-			ParameterDescription<?>... params) {
+	static TargetParameterMap makeParameters(ParameterDescription<?>... params) {
 		return makeParameters(Stream.of(params));
 	}
 
@@ -240,8 +237,7 @@ public interface TargetMethod extends TargetObject {
 			if (!parameters.keySet().containsAll(arguments.keySet())) {
 				Set<String> extraneous = new TreeSet<>(arguments.keySet());
 				extraneous.removeAll(parameters.keySet());
-				throw new DebuggerIllegalArgumentException(
-					"Extraneous parameters: " + extraneous);
+				throw new DebuggerIllegalArgumentException("Extraneous parameters: " + extraneous);
 			}
 		}
 		Map<String, Object> valid = new LinkedHashMap<>();
@@ -290,8 +286,8 @@ public interface TargetMethod extends TargetObject {
 	 * @return the parameter map
 	 */
 	static TargetParameterMap getParameters(TargetObject obj) {
-		return obj.getTypedAttributeNowByName(PARAMETERS_ATTRIBUTE_NAME,
-			TargetParameterMap.class, TargetParameterMap.of());
+		return obj.getTypedAttributeNowByName(PARAMETERS_ATTRIBUTE_NAME, TargetParameterMap.class,
+			TargetParameterMap.of());
 	}
 
 	/**
@@ -299,11 +295,7 @@ public interface TargetMethod extends TargetObject {
 	 * 
 	 * @return the name-description map of parameters
 	 */
-	@TargetAttributeType(
-		name = PARAMETERS_ATTRIBUTE_NAME,
-		required = true,
-		fixed = true,
-		hidden = true)
+	@TargetAttributeType(name = PARAMETERS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default public TargetParameterMap getParameters() {
 		return getParameters(this);
 	}
@@ -318,14 +310,9 @@ public interface TargetMethod extends TargetObject {
 	 * 
 	 * @return the return type
 	 */
-	@TargetAttributeType(
-		name = RETURN_TYPE_ATTRIBUTE_NAME,
-		required = true,
-		fixed = true,
-		hidden = true)
+	@TargetAttributeType(name = RETURN_TYPE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
 	default public Class<?> getReturnType() {
-		return getTypedAttributeNowByName(RETURN_TYPE_ATTRIBUTE_NAME, Class.class,
-			Object.class);
+		return getTypedAttributeNowByName(RETURN_TYPE_ATTRIBUTE_NAME, Class.class, Object.class);
 	}
 
 	// TODO: Allow extra parameters, i.e., varargs?

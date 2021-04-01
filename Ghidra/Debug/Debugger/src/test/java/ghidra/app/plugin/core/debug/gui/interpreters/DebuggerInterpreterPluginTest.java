@@ -29,7 +29,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.dbg.model.TestTargetInterpreter.ExecuteCall;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.util.DebuggerModelTestUtils;
+import ghidra.dbg.testutil.DebuggerModelTestUtils;
 
 public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest
 		implements DebuggerModelTestUtils {

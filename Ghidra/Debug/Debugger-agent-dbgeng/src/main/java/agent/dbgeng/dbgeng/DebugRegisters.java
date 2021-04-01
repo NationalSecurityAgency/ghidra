@@ -134,7 +134,7 @@ public interface DebugRegisters {
 	 */
 	default DebugValue getValueByName(String name) {
 		int indexByName = getIndexByName(name);
-		if (indexByName > 0) {
+		if (indexByName >= 0) {
 			return getValue(indexByName);
 		}
 		return null;

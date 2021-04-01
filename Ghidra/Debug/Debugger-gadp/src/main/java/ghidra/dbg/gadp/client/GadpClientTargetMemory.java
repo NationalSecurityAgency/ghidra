@@ -89,7 +89,7 @@ public interface GadpClientTargetMemory extends GadpClientTargetObject, TargetMe
 		byte[] data = evt.getContent().toByteArray();
 		DelegateGadpClientTargetObject delegate = getDelegate();
 		delegate.getMemoryCache(address.getAddressSpace()).updateMemory(address.getOffset(), data);
-		delegate.getListeners().fire(TargetMemoryListener.class).memoryUpdated(this, address, data);
+		delegate.getListeners().fire.memoryUpdated(this, address, data);
 	}
 
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.MEMORY_ERROR_EVENT)
@@ -98,8 +98,7 @@ public interface GadpClientTargetMemory extends GadpClientTargetObject, TargetMe
 		AddressRange range = GadpValueUtils.getAddressRange(getModel(), evt.getRange());
 		String message = evt.getMessage();
 		// Errors are not cached, but recorded in trace
-		getDelegate().getListeners()
-				.fire(TargetMemoryListener.class)
-				.memoryReadError(this, range, new DebuggerMemoryAccessException(message));
+		getDelegate().getListeners().fire.memoryReadError(this, range,
+			new DebuggerMemoryAccessException(message));
 	}
 }

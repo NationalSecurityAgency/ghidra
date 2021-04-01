@@ -15,14 +15,17 @@
  */
 package ghidra.dbg.model;
 
+import java.io.IOException;
 import java.util.concurrent.*;
 
-import ghidra.dbg.agent.AbstractDebuggerObjectModel;
+import org.jdom.JDOMException;
+
 import ghidra.dbg.target.TargetObject;
-import ghidra.program.model.address.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 
 // TODO: Refactor with other Fake and Test model stuff.
-public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
+public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	public static final String TEST_MODEL_STRING = "Test Model";
 	protected static final int DELAY_MILLIS = 250;
 
@@ -34,9 +37,19 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 		ASYNC, DELAYED;
 	}
 
-	protected final AddressSpace ram =
-		new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
-	protected final AddressFactory factory = new DefaultAddressFactory(new AddressSpace[] { ram });
+	public static final XmlSchemaContext SCHEMA_CTX;
+	public static final TargetObjectSchema ROOT_SCHEMA;
+	static {
+		try {
+			SCHEMA_CTX = XmlSchemaContext.deserialize(
+				EmptyDebuggerObjectModel.class.getResourceAsStream("test_schema.xml"));
+			ROOT_SCHEMA = SCHEMA_CTX.getSchema(SCHEMA_CTX.name("Test"));
+		}
+		catch (IOException | JDOMException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 	public final TestTargetSession session;
 
 	protected int invalidateCachesCount;
@@ -50,8 +63,13 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 	}
 
 	public TestDebuggerObjectModel(String rootHint) {
-		this.session = new TestTargetSession(this, rootHint);
+		this.session = new TestTargetSession(this, rootHint, ROOT_SCHEMA);
 		addModelRoot(session);
+	}
+
+	@Override
+	public TargetObjectSchema getRootSchema() {
+		return ROOT_SCHEMA;
 	}
 
 	@Override
@@ -59,14 +77,9 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 		return TEST_MODEL_STRING;
 	}
 
-	@Override
+	@Override // TODO: Give test writer control of addModelRoot
 	public CompletableFuture<? extends TargetObject> fetchModelRoot() {
 		return future(session);
-	}
-
-	@Override
-	public AddressFactory getAddressFactory() {
-		return factory;
 	}
 
 	@Override
@@ -85,14 +98,6 @@ public class TestDebuggerObjectModel extends AbstractDebuggerObjectModel {
 
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return session.requestFocus(obj);
-	}
-
-	public Address addr(long off) {
-		return ram.getAddress(off);
-	}
-
-	public AddressRange range(long min, long max) {
-		return new AddressRangeImpl(addr(min), addr(max));
 	}
 
 	@Override

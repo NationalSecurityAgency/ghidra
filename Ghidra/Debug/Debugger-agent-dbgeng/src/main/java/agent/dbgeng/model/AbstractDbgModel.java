@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
+import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.AddressFactory;
 
 public abstract class AbstractDbgModel extends AbstractDebuggerObjectModel {
@@ -36,5 +37,9 @@ public abstract class AbstractDbgModel extends AbstractDebuggerObjectModel {
 	public abstract AddressFactory getAddressFactory();
 
 	public abstract DbgModelTargetSession getSession();
+
+	public abstract void addModelObject(Object object, TargetObject targetObject);
+
+	public abstract TargetObject getModelObject(Object object);
 
 }

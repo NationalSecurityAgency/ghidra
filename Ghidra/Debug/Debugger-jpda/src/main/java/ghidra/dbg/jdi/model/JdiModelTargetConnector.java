@@ -74,8 +74,7 @@ public class JdiModelTargetConnector extends JdiModelTargetObjectImpl
 			"Default Arguments", cx.defaultArguments(), //
 			"Transport", cx.transport(), //
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME,
-			paramDescs = TargetParameterMap.copyOf(computeParameters()), //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			paramDescs = TargetParameterMap.copyOf(computeParameters()) //
 		), "Initialized");
 	}
 

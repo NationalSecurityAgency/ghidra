@@ -17,10 +17,8 @@ package ghidra.app.plugin.core.debug.platform;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.*;
 import ghidra.program.model.lang.*;
 
@@ -57,8 +55,7 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 
 		@Override
-		protected DebuggerRegisterMapper createRegisterMapper(
-				TargetRegisterContainer registers) {
+		protected DebuggerRegisterMapper createRegisterMapper(TargetRegisterContainer registers) {
 			return new DefaultDebuggerRegisterMapper(cSpec, registers, false);
 		}
 	}
@@ -85,19 +82,7 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	@Override
-	public CompletableFuture<Set<DebuggerMappingOffer>> getOffers(TargetObject target) {
-		if (!(target instanceof TargetProcess)) {
-			return CompletableFuture.completedFuture(Set.of());
-		}
-		TargetProcess process = (TargetProcess) target;
-		CompletableFuture<? extends TargetEnvironment> futureEnv =
-			DebugModelConventions.findSuitable(TargetEnvironment.class, target);
-		return futureEnv.thenApply(env -> offersForEnv(env, process));
-	}
-
-	protected Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env,
-			TargetProcess process) {
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
 		if (env == null || !env.getDebugger().toLowerCase().contains("dbg")) {
 			return Set.of();
 		}

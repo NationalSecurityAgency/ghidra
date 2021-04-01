@@ -45,6 +45,19 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
+	protected synchronized Register considerRegister(String index) {
+		Register lReg = super.considerRegister(index);
+		if (lReg == null) {
+			return null;
+		}
+		//synchronized (present) {
+		present.computeIfAbsent(lReg.getBaseRegister(), r -> new TreeSet<>(LENGTH_COMPARATOR))
+				.add(lReg);
+		//}
+		return lReg;
+	}
+
+	@Override
 	protected synchronized Register considerRegister(TargetRegister tReg) {
 		Register lReg = super.considerRegister(tReg);
 		if (lReg == null) {
@@ -120,7 +133,10 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 		}
 		Register lReg = languageRegs.get(normalizeName(tRegName));
 		if (lReg == null) {
-			return null;
+			lReg = considerRegister(tRegName);
+			if (lReg == null) {
+				return null;
+			}
 		}
 		Register lbReg = lReg.getBaseRegister();
 		TreeSet<Register> subs = present.get(lbReg);

@@ -40,7 +40,8 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAccessConditioned;
+import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.util.*;
@@ -352,7 +353,7 @@ public class ObjectTree implements ObjectPane {
 	}
 
 	@Override
-	public void setFocus(TargetFocusScope object, TargetObject focused) {
+	public void setFocus(TargetObject object, TargetObject focused) {
 		Swing.runIfSwingOrRunLater(() -> {
 			List<String> path = focused.getPath();
 			tree.setSelectedNodeByNamePath(addRootNameToPath(path));
@@ -395,7 +396,7 @@ public class ObjectTree implements ObjectPane {
 		DebuggerObjectsProvider provider = getProvider();
 		ObjectContainer oc = node.getContainer();
 		provider.deleteFromMap(oc);
-		oc.getTargetObject().removeListener(provider);
+		oc.getTargetObject().removeListener(provider.getListener());
 		nodeMap.remove(path(node.getContainer()));
 	}
 

@@ -21,6 +21,7 @@ import ghidra.dbg.target.TargetAttachable;
 /**
  * An interface which indicates this object is capable of launching targets.
  * 
+ * <p>
  * The targets this launcher creates ought to appear in its successors.
  * 
  * @param <T> type for this

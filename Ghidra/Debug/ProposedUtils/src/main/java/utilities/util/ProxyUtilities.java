@@ -75,7 +75,7 @@ public enum ProxyUtilities {
 	public static <T, U> T composeOnDelegate(Class<T> iface, T delegate,
 			List<Class<? extends U>> mixins, MethodHandles.Lookup lookup) {
 		Class<?>[] allIface = new Class<?>[1 + mixins.size()];
-		mixins.toArray(allIface);
+		allIface = mixins.toArray(allIface);
 		allIface[allIface.length - 1] = iface;
 		ComposedHandler handler = new ComposedHandler(delegate, lookup);
 		return (T) Proxy.newProxyInstance(delegate.getClass().getClassLoader(), allIface, handler);

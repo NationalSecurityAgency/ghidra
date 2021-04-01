@@ -24,10 +24,12 @@ import agent.gdb.manager.GdbCause;
 import agent.gdb.manager.GdbEventsListenerAdapter;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointType;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncFence;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetBreakpointContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.program.model.address.AddressRange;
@@ -37,12 +39,11 @@ import ghidra.util.datastruct.WeakValueHashMap;
 @TargetObjectSchemaInfo(
 	name = "BreakpointContainer",
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	},
+		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
 public class GdbModelTargetBreakpointContainer
 		extends DefaultTargetObject<GdbModelTargetBreakpointSpec, GdbModelTargetSession>
-		implements TargetBreakpointContainer, GdbEventsListenerAdapter {
+		implements TargetBreakpointSpecContainer, GdbEventsListenerAdapter {
 	public static final String NAME = "Breakpoints";
 
 	protected static final TargetBreakpointKindSet SUPPORTED_KINDS =
@@ -79,23 +80,24 @@ public class GdbModelTargetBreakpointContainer
 		getTargetBreakpointSpec(oldInfo).updateInfo(oldInfo, newInfo, "Modified");
 	}
 
-	protected void breakpointHit(long bpId, GdbModelTargetStackFrame frame) {
+	protected GdbModelTargetBreakpointLocation breakpointHit(long bpId,
+			GdbModelTargetStackFrame frame) {
 		GdbModelTargetBreakpointSpec spec = getTargetBreakpointSpecIfPresent(bpId);
 		if (spec == null) {
 			Msg.error(this, "Stopped for breakpoint unknown to the agent: " + bpId + " (pc=" +
 				frame.getProgramCounter() + ")");
-			return;
+			return null;
 		}
 
-		GdbModelTargetBreakpointLocation eb = spec.findEffective(frame);
-		if (eb == null) {
+		GdbModelTargetBreakpointLocation loc = spec.findLocation(frame);
+		if (loc == null) {
 			Msg.warn(this, "Stopped for a breakpoint whose location is unknown to the agent: " +
 				spec + " (pc=" + frame.getProgramCounter() + ")");
-			//return; // Not idea, but eb == null should be fine, since the spec holds the actions 
+			//return; // Not ideal, but eb == null should be fine, since the spec holds the actions 
 		}
-		listeners.fire(TargetBreakpointListener.class)
-				.breakpointHit(this, frame.thread, frame, spec, eb);
-		spec.breakpointHit(frame, eb);
+		listeners.fire.breakpointHit(this, frame.thread, frame, spec, loc);
+		spec.breakpointHit(frame, loc);
+		return loc;
 	}
 
 	@Override
@@ -120,13 +122,13 @@ public class GdbModelTargetBreakpointContainer
 		else if (kinds.contains(TargetBreakpointKind.WRITE)) {
 			fence.include(placer.apply(GdbBreakpointType.HW_WATCHPOINT));
 		}
-		if (kinds.contains(TargetBreakpointKind.EXECUTE)) {
+		if (kinds.contains(TargetBreakpointKind.HW_EXECUTE)) {
 			fence.include(placer.apply(GdbBreakpointType.HW_BREAKPOINT));
 		}
-		if (kinds.contains(TargetBreakpointKind.SOFTWARE)) {
+		if (kinds.contains(TargetBreakpointKind.SW_EXECUTE)) {
 			fence.include(placer.apply(GdbBreakpointType.BREAKPOINT));
 		}
-		return fence.ready().exceptionally(GdbModelImpl::translateEx);
+		return impl.gateFuture(fence.ready().exceptionally(GdbModelImpl::translateEx));
 	}
 
 	@Override
@@ -138,7 +140,6 @@ public class GdbModelTargetBreakpointContainer
 	@Override
 	public CompletableFuture<Void> placeBreakpoint(AddressRange range,
 			Set<TargetBreakpointKind> kinds) {
-		// TODO: Consider how to translate address spaces
 		long offset = range.getMinAddress().getOffset();
 		int len = (int) range.getLength();
 		return doPlaceBreakpoint(kinds, t -> impl.gdb.insertBreakpoint(offset, len, t));
@@ -164,9 +165,7 @@ public class GdbModelTargetBreakpointContainer
 					.collect(Collectors.toList());
 		}
 		return CompletableFuture
-				.allOf(specs.stream()
-						.map(s -> s.init())
-						.toArray(CompletableFuture[]::new))
+				.allOf(specs.stream().map(s -> s.init()).toArray(CompletableFuture[]::new))
 				.thenRun(() -> {
 					setElements(specs, "Refreshed");
 				});
@@ -178,5 +177,10 @@ public class GdbModelTargetBreakpointContainer
 			return updateUsingBreakpoints(impl.gdb.getKnownBreakpoints());
 		}
 		return impl.gdb.listBreakpoints().thenCompose(this::updateUsingBreakpoints);
+	}
+
+	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		// NB. This container should be updated via GDB's events.
+		return AsyncUtils.NIL;
 	}
 }

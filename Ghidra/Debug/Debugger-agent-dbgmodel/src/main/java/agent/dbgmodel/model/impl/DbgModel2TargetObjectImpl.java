@@ -30,13 +30,14 @@ import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.TypeKind;
 import agent.dbgmodel.manager.DbgManager2Impl;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetBreakpointContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.util.Msg;
@@ -82,8 +83,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	}
 
 	public <I> DbgModel2TargetObjectImpl(ProxyFactory<I> proxyFactory, I proxyInfo,
-			AbstractDbgModel model, TargetObject parent, String name,
-			String typeHint) {
+			AbstractDbgModel model, TargetObject parent, String name, String typeHint) {
 		super(proxyFactory, proxyInfo, model, parent, name, typeHint);
 	}
 
@@ -105,11 +105,15 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		return manager2.listAttributes(pathX, this);
 	}
 
+	public CompletableFuture<Void> requestAugmentedAttributes() {
+		return requestAttributes(false);
+	}
+
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
-		synchronized (elements) {
-			List<TargetObject> nlist = new ArrayList<>();
-			return requestNativeElements().thenCompose(list -> {
+		List<TargetObject> nlist = new ArrayList<>();
+		return requestNativeElements().thenCompose(list -> {
+			synchronized (elements) {
 				for (TargetObject element : elements.values()) {
 					if (!list.contains(element)) {
 						if (element instanceof DbgStateListener) {
@@ -121,11 +125,12 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					}
 				}
 				nlist.addAll(list);
-				return processModelObjectElements(nlist);
-			}).thenAccept(__ -> {
-				setElements(nlist, Map.of(), "Refreshed");
-			});
-		}
+				return AsyncUtils.NIL;
+				//return processModelObjectElements(nlist);
+			}
+		}).thenAccept(__ -> {
+			changeElements(List.of(), nlist, Map.of(), "Refreshed");
+		});
 	}
 
 	@Override
@@ -150,7 +155,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				return addModelObjectAttributes(nmap);
 			}
 		}).thenAccept(__ -> {
-			setAttributes(List.of(), nmap, "Refreshed");
+			changeAttributes(List.of(), nmap, "Refreshed");
 		});
 	}
 
@@ -169,7 +174,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			if (proxy instanceof TargetStackFrame || //
 				proxy instanceof TargetModule || //
 				proxy instanceof TargetBreakpointSpec) {
-				return delegate.requestAttributes(true);
+				return delegate.requestAttributes(false);
 			}
 		}
 		return CompletableFuture.completedFuture(null);
@@ -185,7 +190,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		String value = modelObject.getValueString();
 
 		attrs.put(DISPLAY_ATTRIBUTE_NAME, key);
-		attrs.put(UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.UNSOLICITED);
 		if (kind != null) {
 			attrs.put(KIND_ATTRIBUTE_NAME, kind.toString());
 		}
@@ -231,8 +235,8 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			if (proxy instanceof TargetInterpreter) {
 				attrs.put(TargetInterpreter.PROMPT_ATTRIBUTE_NAME, DBG_PROMPT);
 			}
-			if (proxy instanceof TargetBreakpointContainer) {
-				attrs.put(TargetBreakpointContainer.SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME,
+			if (proxy instanceof TargetBreakpointSpecContainer) {
+				attrs.put(TargetBreakpointSpecContainer.SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME,
 					TargetBreakpointKindSet.of(TargetBreakpointKind.values()));
 			}
 			if (proxy instanceof TargetBreakpointSpec) {
@@ -295,7 +299,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				if (elements.containsKey(trimKey)) {
 					return CompletableFuture.completedFuture(elements.get(trimKey));
 				}
-				return requestElements(true).thenApply(__ -> getCachedElements().get(trimKey));
+				return requestElements(false).thenApply(__ -> getCachedElements().get(trimKey));
 			}
 		}
 		synchronized (attributes) {
@@ -313,7 +317,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					return obj;
 				});
 			}
-			return requestAttributes(true).thenApply(__ -> getCachedAttribute(key));
+			return requestAttributes(false).thenApply(__ -> getCachedAttribute(key));
 		}
 	}
 
@@ -345,7 +349,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	}
 
 	@Override
-	public void removeListener(TargetObjectListener l) {
+	public void removeListener(DebuggerModelListener l) {
 		listeners.clear();
 	}
 
@@ -383,7 +387,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public void setModified(Map<String, Object> attrs, boolean modified) {
 		if (modified) {
 			attrs.put(MODIFIED_ATTRIBUTE_NAME, modified);
-			listeners.fire.displayChanged(this, getDisplay());
 		}
 	}
 
@@ -393,7 +396,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			changeAttributes(List.of(), List.of(), Map.of( //
 				MODIFIED_ATTRIBUTE_NAME, modified //
 			), "Refreshed");
-			listeners.fire.displayChanged(this, getDisplay());
 		}
 	}
 
@@ -406,40 +408,97 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		}
 	}
 
-	// NB: We're overriding these to prevent events being added as newly added elements
-	//  initialize and pull the attributes needed for their display
-	@Override
-	public Delta<?, ?> setAttributes(Map<String, ?> attributes, String reason) {
-		Delta<?, ?> delta;
-		synchronized (this.attributes) {
-			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
-		}
-		TargetObjectSchema schemax = getSchema();
-		if (schemax != null) {
-			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
-		}
-		doInvalidateAttributes(delta.removed, reason);
-		if (!delta.isEmpty()) {
-			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
-			return delta;
-		}
-		return delta;
+	/*
+	protected static Set<Class<?>> dependencySet = Set.of(//
+		TargetProcess.class, //
+		TargetThread.class, //
+		TargetStack.class, //
+		TargetStackFrame.class, //
+		TargetRegisterBank.class, //
+		TargetRegisterContainer.class, //
+		TargetRegister.class, //
+		TargetMemory.class, //
+		TargetMemoryRegion.class, //
+		TargetModule.class, //
+		TargetModuleContainer.class, //
+		TargetSection.class, //
+		TargetBreakpointContainer.class, //
+		TargetBreakpointSpec.class, //
+		TargetBreakpointLocation.class, //
+		TargetEventScope.class, //
+		TargetFocusScope.class, //
+		TargetExecutionStateful.class //
+	);
+	
+	private CompletableFuture<Void> findDependencies(TargetObjectListener l) {
+		System.err.println("findDependencies " + this);
+		Map<String, TargetObject> resultAttrs = new HashMap<>();
+		Map<String, TargetObject> resultElems = new HashMap<>();
+		AsyncFence fence = new AsyncFence();
+		fence.include(fetchAttributes(false).thenCompose(attrs -> {
+			AsyncFence af = new AsyncFence();
+			for (String key : attrs.keySet()) { //requiredObjKeys) {
+				Object object = attrs.get(key);
+				if (!(object instanceof TargetObjectRef)) {
+					continue;
+				}
+				TargetObjectRef ref = (TargetObjectRef) object;
+				if (PathUtils.isLink(getPath(), key, ref.getPath())) {
+					continue;
+				}
+				af.include(ref.fetch().thenAccept(obj -> {
+					if (isDependency(obj)) {
+						synchronized (this) {
+							resultAttrs.put(key, obj);
+							obj.addListener(l);
+						}
+					}
+				}));
+			}
+			return af.ready();
+		}));
+		fence.include(fetchElements(false).thenCompose(elems -> {
+			AsyncFence ef = new AsyncFence();
+			for (Entry<String, ? extends TargetObjectRef> entry : elems.entrySet()) {
+				ef.include(entry.getValue().fetch().thenAccept(obj -> {
+					synchronized (this) {
+						resultElems.put(entry.getKey(), obj);
+						obj.addListener(l);
+					}
+				}));
+			}
+			return ef.ready();
+		}));
+		return fence.ready().thenAccept(__ -> {
+			listeners.fire.attributesChanged(this, List.of(), resultAttrs);
+			listeners.fire.elementsChanged(this, List.of(), resultElems);
+		});
 	}
-
-	@Override
-	public Delta<?, ?> changeAttributes(List<String> remove, Map<String, ?> add, String reason) {
-		Delta<?, ?> delta;
-		synchronized (attributes) {
-			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
+	
+	public boolean isDependency(TargetObject object) {
+		String name = object.getName();
+		if (name != null) {
+			if (name.equals("Debug"))
+				return true;
+			if (name.equals("Stack"))
+				return true;
 		}
-		TargetObjectSchema schemax = getSchema();
-		if (schemax != null) {
-			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
+	
+		Set<Class<? extends TargetObject>> interfaces = object.getSchema().getInterfaces();
+		for (Class<? extends TargetObject> ifc : interfaces) {
+			if (dependencySet.contains(ifc)) {
+				return true;
+			}
 		}
-		doInvalidateAttributes(delta.removed, reason);
-		if (!delta.isEmpty()) {
-			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
-		}
-		return delta;
+		return false;
 	}
+	
+	@Override
+	public void addListener(TargetObjectListener l) {
+		listeners.add(l);
+		if (isDependency(this)) {
+			findDependencies(l);
+		}
+	}
+	*/
 }

@@ -15,21 +15,19 @@
  */
 package agent.gdb.model.impl;
 
-import java.math.BigInteger;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import agent.gdb.manager.GdbRegister;
 import agent.gdb.manager.GdbStackFrame;
+import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.error.DebuggerRegisterAccessException;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.*;
-import ghidra.dbg.util.ConversionUtils;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
-import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "StackFrame",
@@ -40,7 +38,7 @@ import ghidra.util.Msg;
 		@TargetAttributeType(type = Void.class)
 	})
 public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, GdbModelTargetStack>
-		implements TargetStackFrame, TargetRegisterBank, GdbModelSelectableObject {
+		implements TargetStackFrame, GdbModelSelectableObject {
 	public static final String FUNC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "function";
 	public static final String FROM_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "from"; // TODO
 
@@ -78,14 +76,8 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 
 		this.registers = new GdbModelTargetStackFrameRegisterContainer(this);
 
-		changeAttributes(List.of(),
-			List.of(
-				registers),
-			Map.of(
-				DESCRIPTIONS_ATTRIBUTE_NAME, getDescriptions(),
-				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame),
-				UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED),
-			"Initialized");
+		changeAttributes(List.of(), List.of(registers), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame)), "Initialized");
 		setFrame(frame);
 	}
 
@@ -97,72 +89,15 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		return registers;
 	}
 
-	@Override
-	public GdbModelTargetRegisterContainer getDescriptions() {
-		return inferior.registers;
-	}
-
-	@Override
-	public CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(
-			Collection<String> names) {
-		return inferior.registers.fetchElements().thenCompose(regs -> {
-			Set<GdbRegister> toRead = new LinkedHashSet<>();
-			for (String regname : names) {
-				GdbModelTargetRegister reg = regs.get(regname);
-				if (reg == null) {
-					throw new DebuggerRegisterAccessException("No such register: " + regname);
-				}
-				toRead.add(reg.register);
-			}
-			return frame.readRegisters(toRead);
-		}).thenApply(vals -> {
-			Map<String, byte[]> result = new LinkedHashMap<>();
-			Map<GdbRegister, BigInteger> values = new LinkedHashMap<>();
-			for (Map.Entry<GdbRegister, BigInteger> ent : vals.entrySet()) {
-				GdbRegister reg = ent.getKey();
-				String regName = reg.getName();
-				BigInteger val = ent.getValue();
-				if (val == null) {
-					Msg.warn(this, "Register " + regName + " value came back null.");
-					continue;
-				}
-				byte[] bytes = ConversionUtils.bigIntegerToBytes(reg.getSize(), val);
-				values.put(reg, val);
-				result.put(regName, bytes);
-			}
-			registers.setValues(values);
-			changeAttributes(List.of(), List.of( //
-				registers //
-			), Map.of(), "Refreshed");
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, result);
-			return result;
-		});
-	}
-
-	@Override
-	public CompletableFuture<Void> writeRegistersNamed(Map<String, byte[]> values) {
-		return inferior.registers.fetchElements().thenCompose(regs -> {
-			Map<GdbRegister, BigInteger> toWrite = new LinkedHashMap<>();
-			for (Map.Entry<String, byte[]> ent : values.entrySet()) {
-				String regname = ent.getKey();
-				GdbModelTargetRegister reg = regs.get(regname);
-				if (reg == null) {
-					throw new DebuggerRegisterAccessException("No such register: " + regname);
-				}
-				BigInteger val = new BigInteger(1, ent.getValue());
-				toWrite.put(reg.register, val);
-			}
-			return frame.writeRegisters(toWrite);
-		}).thenAccept(__ -> {
-			listeners.fire(TargetRegisterBankListener.class).registersUpdated(this, values);
-		});
-	}
-
 	protected void setFrame(GdbStackFrame frame) {
+		frame = frame.fillWith(this.frame);
+		if (this.frame == frame) {
+			return;
+		}
+		this.frame = frame;
 		this.pc = impl.space.getAddress(frame.getAddress().longValue());
 		this.func = frame.getFunction();
 		// TODO: module? "from"
-		this.frame = frame;
 
 		changeAttributes(List.of(), List.of( //
 			registers //
@@ -180,11 +115,20 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 	@Override
 	@Internal
 	public CompletableFuture<Void> select() {
-		return frame.select();
+		return impl.gateFuture(frame.select());
 	}
 
 	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME)
 	public String getFunction() {
 		return func;
+	}
+
+	@Override
+	public Address getProgramCounter() {
+		return pc;
+	}
+
+	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		return registers.stateChanged(sco);
 	}
 }

@@ -24,15 +24,17 @@ import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
+ * Note this is in the testing source because it's not meant to be shipped in
+ * the release.... That may change if it proves stable, though, no?
  */
 @FactoryDescription( //
-		brief = "IN-VM MS dbgeng local debugger", //
-		htmlDetails = "Launch a dbgeng session in this same JVM" //
+	brief = "IN-VM MS dbgeng local debugger", //
+	htmlDetails = "Launch a dbgeng session in this same JVM" //
 )
 @ExtensionPointProperties(priority = 80)
 public class DbgEngInJvmDebuggerModelFactory implements LocalDebuggerModelFactory {
+
+	// TODO remoteTransport option?
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {

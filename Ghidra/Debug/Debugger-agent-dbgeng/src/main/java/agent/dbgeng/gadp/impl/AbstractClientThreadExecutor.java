@@ -31,6 +31,7 @@ import ghidra.util.Msg;
 /**
  * A single-threaded executor which creates and exclusively accesses the {@code dbgeng.dll} client.
  * 
+ * <p>
  * The executor also has a priority mechanism, so that callbacks may register follow-on handlers
  * which take precedence over other tasks in the queue (which could trigger additional callbacks).
  * This is required since certain operation are not allowed during normal callback processing. For
@@ -102,6 +103,7 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 		 * we can always create a new thread and client, using the existing client's reentrant
 		 * methods.
 		 * 
+		 * <p>
 		 * As stated in the MSDN, this thread repeatedly calls {@code DispatchEvents} in order to
 		 * receive callbacks regarding events caused by other clients. If, however, an wait is
 		 * registered, or the current engine state indicates that a wait is proper, the thread calls
@@ -196,6 +198,7 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 	/**
 	 * Schedule a task with a given priority.
 	 * 
+	 * <p>
 	 * Smaller priority values indicate earlier execution. The default priority is
 	 * {@link #DEFAULT_PRIORITY}.
 	 * 
@@ -224,6 +227,7 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 	/**
 	 * Schedule a task with the given priority, taking a reference to the client.
 	 * 
+	 * <p>
 	 * This is a convenience which spares a call to {@link #getClient()}. See
 	 * {@link #execute(int, Runnable)} about priority.
 	 * 

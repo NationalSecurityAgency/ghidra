@@ -27,7 +27,7 @@ public interface DbgModelTargetModuleContainer
 	@Override
 	public CompletableFuture<? extends TargetModule> addSyntheticModule(String name);
 
-	public CompletableFuture<DbgModelTargetModule> getTargetModule(String name);
+	public DbgModelTargetModule getTargetModule(String name);
 
 	public void libraryLoaded(String name);
 

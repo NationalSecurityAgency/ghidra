@@ -55,7 +55,7 @@ public class GdbThreadImpl implements GdbThread {
 	private final GdbInferiorImpl inferior;
 
 	private final AsyncReference<GdbState, CauseReasonPair> state =
-		new AsyncReference<>(GdbState.STOPPED);
+		new AsyncReference<>(GdbState.RUNNING);
 
 	private final AsyncLazyValue<GdbRegisterSet> registers =
 		new AsyncLazyValue<>(this::doListRegisters);
@@ -128,7 +128,7 @@ public class GdbThreadImpl implements GdbThread {
 	protected <T> CompletableFuture<T> execute(AbstractGdbCommand<T> cmd) {
 		switch (cmd.getInterpreter()) {
 			case CLI:
-				return select().thenCompose(v -> manager.execute(cmd));
+				return select().thenCombine(manager.execute(cmd), (__, v) -> v);
 			case MI2:
 				return manager.execute(cmd);
 			default:

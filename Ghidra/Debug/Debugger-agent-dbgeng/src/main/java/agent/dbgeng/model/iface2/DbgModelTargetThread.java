@@ -55,7 +55,7 @@ public interface DbgModelTargetThread extends //
 		}
 	}
 
-	public void threadStateChanged(DbgState state, DbgReason reason);
+	public void threadStateChangedSpecific(DbgState state, DbgReason reason);
 
 	@Override
 	public default CompletableFuture<Void> select() {

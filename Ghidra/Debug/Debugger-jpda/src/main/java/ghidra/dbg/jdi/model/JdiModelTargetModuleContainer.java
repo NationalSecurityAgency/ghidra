@@ -27,16 +27,18 @@ import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "TargetModuleContainer",
-	elements = { //
-		@TargetElementType(type = JdiModelTargetModule.class) //
+	elements = {
+		@TargetElementType(type = JdiModelTargetModule.class)
 	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
 public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl

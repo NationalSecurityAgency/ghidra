@@ -23,6 +23,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.database.ObjectKey;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -36,6 +37,13 @@ public interface TraceBreakpoint {
 	 * @return the trace
 	 */
 	Trace getTrace();
+
+	/**
+	 * Get an opaque unique id for this object, whose hash is immutable
+	 * 
+	 * @return the opaque object id
+	 */
+	ObjectKey getObjectKey();
 
 	/**
 	 * Get the "full name" of this breakpoint

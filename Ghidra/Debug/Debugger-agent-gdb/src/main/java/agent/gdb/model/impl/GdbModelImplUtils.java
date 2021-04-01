@@ -19,29 +19,33 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbInferior;
-import ghidra.async.AsyncUtils;
+import agent.gdb.manager.GdbThread;
 import ghidra.dbg.util.ShellUtils;
 
 public enum GdbModelImplUtils {
 	;
-	public static CompletableFuture<Void> launch(GdbModelImpl impl, GdbInferior inferior,
+	public static CompletableFuture<GdbThread> launch(GdbModelImpl impl, GdbInferior inferior,
 			List<String> args) {
-		return inferior.fileExecAndSymbols(args.get(0)).thenCompose(__ -> {
-			return inferior.setVar("args", ShellUtils.generateLine(args.subList(1, args.size())));
-		}).thenCompose(__ -> {
-			if (impl.noStarti) {
-				return inferior.console("start");
-			}
-			return inferior.console("starti").thenApply(___ -> true).exceptionally(e -> {
+		// Queue all these up to avoid other commands getting between.
+		CompletableFuture<Void> feas = inferior.fileExecAndSymbols(args.get(0));
+		CompletableFuture<Void> sargs =
+			inferior.setVar("args", ShellUtils.generateLine(args.subList(1, args.size())));
+		CompletableFuture<Void> both = CompletableFuture.allOf(feas, sargs);
+		if (impl.noStarti) {
+			return both.thenCombine(inferior.start(), (__, t) -> t);
+		}
+		else {
+			return both.thenCombine(inferior.starti(), (__, t) -> t).exceptionally(ex -> {
 				impl.noStarti = true;
-				return false;
-			}).thenCompose(success -> {
-				if (success) {
-					return AsyncUtils.NIL;
+				// TODO: Check that the error is actually Undefined command: "starti"
+				return null;
+			}).thenCompose(thread -> {
+				if (thread == null) {
+					return inferior.start();
 				}
-				return inferior.console("start");
+				return CompletableFuture.completedStage(thread);
 			});
-		});
+		}
 	}
 
 	public static <V> V noDupMerge(V first, V second) {

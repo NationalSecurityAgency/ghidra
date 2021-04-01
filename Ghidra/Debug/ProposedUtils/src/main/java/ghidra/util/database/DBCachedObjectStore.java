@@ -366,7 +366,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 						return it.hasNext();
 					}
 					catch (IOException e) {
-						errHandler.dbError(e);
+						adapter.dbError(e);
 						return false;
 					}
 				}
@@ -377,7 +377,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 						return fromRaw(it.next());
 					}
 					catch (IOException e) {
-						errHandler.dbError(e);
+						adapter.dbError(e);
 						return null;
 					}
 				}
@@ -388,7 +388,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 						it.delete();
 					}
 					catch (IOException e) {
-						errHandler.dbError(e);
+						adapter.dbError(e);
 					}
 				}
 			};
@@ -402,7 +402,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 				return iterator(rawIterator(direction, keyRange));
 			}
 			catch (IOException e) {
-				errHandler.dbError(e);
+				adapter.dbError(e);
 				return null;
 			}
 		}
@@ -418,7 +418,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 				}
 			}
 			catch (IOException e) {
-				errHandler.dbError(e);
+				adapter.dbError(e);
 			}
 		}
 
@@ -433,7 +433,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 				}
 			}
 			catch (IOException e) {
-				errHandler.dbError(e);
+				adapter.dbError(e);
 			}
 		}
 
@@ -479,7 +479,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 				}
 			}
 			catch (IOException e) {
-				errHandler.dbError(e);
+				adapter.dbError(e);
 			}
 			return result;
 		}
@@ -685,7 +685,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	};
 
-	final ErrorHandler errHandler;
+	final DBCachedDomainObjectAdapter adapter;
 	final DBHandle dbh;
 	final DBObjectCache<T> cache;
 	private final Class<T> objectType;
@@ -704,7 +704,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	public DBCachedObjectStore(DBCachedDomainObjectAdapter adapter, Class<T> objectType,
 			DBAnnotatedObjectFactory<T> factory, Table table) {
-		this.errHandler = adapter;
+		this.adapter = adapter;
 		this.dbh = adapter.getDBHandle();
 		this.objectType = objectType;
 		this.factory = factory;
@@ -715,13 +715,13 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		this.lock = adapter.getReadWriteLock();
 		this.codecs = DBCachedObjectStoreFactory.getCodecs(objectType);
 
-		this.asForwardMap = new DBCachedObjectStoreMap<>(this, errHandler, lock, Direction.FORWARD);
+		this.asForwardMap = new DBCachedObjectStoreMap<>(this, adapter, lock, Direction.FORWARD);
 		this.asForwardKeySet =
-			new DBCachedObjectStoreKeySet(this, errHandler, lock, Direction.FORWARD);
+			new DBCachedObjectStoreKeySet(this, adapter, lock, Direction.FORWARD);
 		this.asForwardValueCollection =
-			new DBCachedObjectStoreValueCollection<>(this, errHandler, lock, Direction.FORWARD);
+			new DBCachedObjectStoreValueCollection<>(this, adapter, lock, Direction.FORWARD);
 		this.asForwardEntrySet =
-			new DBCachedObjectStoreEntrySet<>(this, errHandler, lock, Direction.FORWARD);
+			new DBCachedObjectStoreEntrySet<>(this, adapter, lock, Direction.FORWARD);
 	}
 
 	/**
@@ -777,7 +777,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 		}
 		return i;
 	}
@@ -815,7 +815,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return keyRange.contains(rec.getKey());
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return false;
 		}
 	}
@@ -825,7 +825,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return keys.typedContains(key);
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return false;
 		}
 	}
@@ -835,7 +835,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return objects.typedContains(obj);
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return false;
 		}
 	}
@@ -862,7 +862,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return doCreate(key);
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return null;
 		}
 	}
@@ -877,7 +877,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return doCreate(table.getKey());
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return null;
 		}
 	}
@@ -904,7 +904,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 		@SuppressWarnings("unchecked")
 		DBFieldCodec<K, T, ?> castCodec = (DBFieldCodec<K, T, ?>) codec;
-		return new DBCachedObjectIndex<>(this, errHandler, castCodec, columnIndex, Range.all(),
+		return new DBCachedObjectIndex<>(this, adapter, castCodec, columnIndex, Range.all(),
 			Direction.FORWARD);
 	}
 
@@ -922,7 +922,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return objects.typedRemove(obj) != null;
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return false;
 		}
 	}
@@ -932,7 +932,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return keys.typedRemove(key);
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return null;
 		}
 	}
@@ -943,7 +943,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			cache.invalidate();
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 		}
 	}
 
@@ -962,7 +962,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			cache.delete(List.of(new KeyRange(min, max)));
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 		}
 	}
 
@@ -975,7 +975,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return supplier.get();
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return null;
 		}
 	}
@@ -985,7 +985,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return objects.get(key);
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			adapter.dbError(e);
 			return null;
 		}
 	}
@@ -1013,7 +1013,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	protected DBCachedObjectStoreFoundKeysValueCollection<T> findObjects(int columnIndex,
 			Field field) throws IOException {
 		Field[] found = table.findRecords(field, columnIndex);
-		return new DBCachedObjectStoreFoundKeysValueCollection<>(this, errHandler, lock, found);
+		return new DBCachedObjectStoreFoundKeysValueCollection<>(this, adapter, lock, found);
 	}
 
 	protected Iterator<T> iterator(int columnIndex, Range<Field> fieldRange, Direction direction)
@@ -1041,7 +1041,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	@Override
 	public void dbError(IOException e) {
-		errHandler.dbError(e);
+		adapter.dbError(e);
 	}
 
 	/**

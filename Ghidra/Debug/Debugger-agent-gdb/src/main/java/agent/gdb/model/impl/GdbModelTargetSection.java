@@ -66,8 +66,7 @@ public class GdbModelTargetSection
 			MODULE_ATTRIBUTE_NAME, module,
 			RANGE_ATTRIBUTE_NAME, range,
 			VISIBLE_RANGE_ATTRIBUTE_NAME, range,
-			DISPLAY_ATTRIBUTE_NAME, section.getName(),
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED),
+			DISPLAY_ATTRIBUTE_NAME, section.getName()),
 			"Initialized");
 	}
 

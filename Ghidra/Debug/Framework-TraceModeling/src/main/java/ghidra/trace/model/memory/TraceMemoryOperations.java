@@ -179,6 +179,7 @@ public interface TraceMemoryOperations {
 	/**
 	 * Set the state of memory over a given time and address range
 	 * 
+	 * <p>
 	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
 	 * bytes will automatically update the state accordingly.
 	 * 
@@ -221,6 +222,7 @@ public interface TraceMemoryOperations {
 	/**
 	 * Get the entry recording the most recent state at the given snap and address
 	 * 
+	 * <p>
 	 * The entry includes the entire entry at that snap. Parts occluded by more recent snaps are not
 	 * subtracted from the entry's address range.
 	 * 

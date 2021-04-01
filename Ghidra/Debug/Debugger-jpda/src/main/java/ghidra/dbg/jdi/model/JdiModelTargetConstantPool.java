@@ -22,19 +22,21 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetSection;
 import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.program.model.address.AddressRange;
 
 @TargetObjectSchemaInfo(
 	name = "ConstantPool",
-	elements = { //
-		@TargetElementType(type = Void.class) //
+	elements = {
+		@TargetElementType(type = Void.class)
 	},
-	attributes = { //
-		@TargetAttributeType(type = Void.class) //
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
 public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl implements //
-		//TargetMemory<JdiModelTargetSection>,  
+		//TargetMemory
 		TargetMemoryRegion, TargetSection {
 
 	private AddressRange range;
@@ -52,8 +54,7 @@ public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl impleme
 			MODULE_ATTRIBUTE_NAME, parent.getClassType(), //
 			READABLE_ATTRIBUTE_NAME, true, //
 			MEMORY_ATTRIBUTE_NAME, parent, //
-			TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range //
 		), "Initialized");
 	}
 

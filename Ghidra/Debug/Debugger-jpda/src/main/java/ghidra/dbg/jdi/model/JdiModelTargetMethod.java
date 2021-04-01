@@ -23,12 +23,15 @@ import com.sun.jdi.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "Method", elements = { //
-	@TargetElementType(type = Void.class) //
-}, attributes = { //
-	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
-	@TargetAttributeType(type = Object.class) //
-})
+@TargetObjectSchemaInfo(
+	name = "Method",
+	elements = {
+		@TargetElementType(type = Void.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
+		@TargetAttributeType(type = Object.class)
+	})
 public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 
 	protected final Method method;
@@ -46,8 +49,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 		this.method = method;
 
 		changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //	
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			DISPLAY_ATTRIBUTE_NAME, getDisplay() //
 		), "Initialized");
 
 	}
@@ -162,6 +164,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 		return CompletableFuture.completedFuture(null);
 	}
 
+	@Override
 	public CompletableFuture<Void> init() {
 		return CompletableFuture.completedFuture(null);
 	}

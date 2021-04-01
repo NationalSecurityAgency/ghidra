@@ -18,6 +18,8 @@ package agent.dbgeng.model.iface2;
 import ghidra.dbg.target.TargetAttachable;
 
 public interface DbgModelTargetAvailable extends DbgModelTargetObject, TargetAttachable {
+	String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
+	// TODO: DESCRIPTION, TYPE, USER?
 
 	public long getPid();
 

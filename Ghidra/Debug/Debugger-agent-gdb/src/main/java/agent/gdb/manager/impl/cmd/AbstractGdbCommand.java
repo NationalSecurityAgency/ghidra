@@ -16,9 +16,12 @@
 package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbState;
-import agent.gdb.manager.impl.GdbCommand;
-import agent.gdb.manager.impl.GdbManagerImpl;
+import agent.gdb.manager.evt.GdbCommandErrorEvent;
+import agent.gdb.manager.evt.GdbConsoleOutputEvent;
+import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
+import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
+import ghidra.util.Msg;
 
 /**
  * A base class for interacting with specific GDB commands
@@ -44,6 +47,10 @@ public abstract class AbstractGdbCommand<T> implements GdbCommand<T> {
 	}
 
 	@Override
+	public void preCheck(GdbPendingCommand<? super T> pending) {
+	}
+
+	@Override
 	public String toString() {
 		return "<GDB/" + getInterpreter() + " " + encode() + ">";
 	}
@@ -57,5 +64,46 @@ public abstract class AbstractGdbCommand<T> implements GdbCommand<T> {
 	@Override
 	public Interpreter getInterpreter() {
 		return Interpreter.MI2;
+	}
+
+	/**
+	 * Check for an error reported in MI2 syntax via the CLI
+	 * 
+	 * <p>
+	 * This must be used in the {@link #handle(GdbEvent, GdbPendingCommand)} callback when the
+	 * command is encoded as a MI2 command (using {@code interpreter-exec mi2}) but issued via the
+	 * CLI. Depending on the GDB version and the outcome of the command, the result may be reported
+	 * via the CLI, but in MI2 syntax. As of yet, this has only been observed for {@code ^error}
+	 * results.
+	 * 
+	 * @param evt the event to check
+	 * @return the decoded error event, if applicable, or the original unmodified event.
+	 */
+	protected GdbEvent<?> checkErrorViaCli(GdbEvent<?> evt) {
+		if (evt instanceof GdbConsoleOutputEvent) {
+			GdbConsoleOutputEvent outEvt = (GdbConsoleOutputEvent) evt;
+			// This is quirky in 8.0.1.
+			// I don't know to what other version(s) it applies.
+			String out = outEvt.getOutput();
+			if (out.startsWith("^error")) {
+				try {
+					return GdbCommandErrorEvent.fromMi2(out.split(",", 2)[1].trim());
+				}
+				catch (GdbParseError e) {
+					Msg.error(this, "Could not parse error result", e);
+				}
+			}
+		}
+		return evt;
+	}
+
+	@Override
+	public Integer impliesCurrentThreadId() {
+		return null;
+	}
+
+	@Override
+	public Integer impliesCurrentFrameId() {
+		return null;
 	}
 }

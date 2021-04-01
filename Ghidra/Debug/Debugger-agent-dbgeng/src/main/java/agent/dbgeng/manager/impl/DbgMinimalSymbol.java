@@ -17,25 +17,30 @@ package agent.dbgeng.manager.impl;
 
 public class DbgMinimalSymbol {
 	protected final long index;
-	protected final String type;
+	protected final int typeId;
 	protected final String name;
 	protected final long address;
+	protected final long size;
+	private final int tag;
+	private final long moduleBase;
 
-	public DbgMinimalSymbol(long index, String type, String name, long address) {
+	public DbgMinimalSymbol(long index, int typeId, String name, long address, long size, int tag,
+			long moduleBase) {
 		this.index = index;
-		this.type = type;
+		this.typeId = typeId;
 		this.name = name;
 		this.address = address;
+		this.size = size;
+		this.tag = tag;
+		this.moduleBase = moduleBase;
 	}
 
 	public long getIndex() {
 		return index;
 	}
 
-	public String getType() {
-		// TODO: Interpret these types
-		// Observed: t, T, D, S
-		return type;
+	public int getTypeId() {
+		return typeId;
 	}
 
 	public String getName() {
@@ -44,5 +49,17 @@ public class DbgMinimalSymbol {
 
 	public long getAddress() {
 		return address;
+	}
+
+	public long getSize() {
+		return size;
+	}
+
+	public int getTag() {
+		return tag;
+	}
+
+	public long getModuleBase() {
+		return moduleBase;
 	}
 }

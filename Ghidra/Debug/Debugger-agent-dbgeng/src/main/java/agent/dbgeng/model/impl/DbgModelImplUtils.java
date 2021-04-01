@@ -20,16 +20,12 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.model.AbstractDbgModel;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
 
 public enum DbgModelImplUtils {
 	;
 	public static CompletableFuture<Void> launch(AbstractDbgModel impl, DbgProcess process,
 			List<String> args) {
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			process.fileExecAndSymbols(args.get(0));
-		}).finish();
+		return process.fileExecAndSymbols(args.get(0));
 	}
 
 	public static <V> V noDupMerge(V first, V second) {

@@ -48,21 +48,20 @@ import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo( //
-	shortDescription = "Debugger models manager service (proxy to front-end)", //
-	description = "Manage debug sessions, connections, and trace recording", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsConsumed = {
-		ProgramActivatedPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerTraceManagerService.class, //
-	}, //
-	servicesProvided = { //
-		DebuggerModelService.class, //
-	} //
+		shortDescription = "Debugger models manager service (proxy to front-end)", //
+		description = "Manage debug sessions, connections, and trace recording", //
+		category = PluginCategoryNames.DEBUGGER, //
+		packageName = DebuggerPluginPackage.NAME, //
+		status = PluginStatus.RELEASED, //
+		eventsConsumed = { ProgramActivatedPluginEvent.class, //
+			ProgramClosedPluginEvent.class, //
+		}, //
+		servicesRequired = { //
+			DebuggerTraceManagerService.class, //
+		}, //
+		servicesProvided = { //
+			DebuggerModelService.class, //
+		} //
 )
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
@@ -362,18 +361,17 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
-	public CompletableFuture<TraceRecorder> recordTargetBestOffer(TargetObject target) {
+	public TraceRecorder recordTargetBestOffer(TargetObject target) {
 		return delegate.recordTargetBestOffer(target);
 	}
 
 	@Override
-	public CompletableFuture<TraceRecorder> doRecordTargetPromptOffers(PluginTool t,
-			TargetObject target) {
+	public TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target) {
 		return delegate.doRecordTargetPromptOffers(t, target);
 	}
 
 	@Override
-	public CompletableFuture<TraceRecorder> recordTargetPromptOffers(TargetObject target) {
+	public TraceRecorder recordTargetPromptOffers(TargetObject target) {
 		return doRecordTargetPromptOffers(tool, target);
 	}
 

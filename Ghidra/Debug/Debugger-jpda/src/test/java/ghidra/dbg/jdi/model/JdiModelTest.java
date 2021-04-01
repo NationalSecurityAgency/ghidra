@@ -25,7 +25,7 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.jdi.JdiExperimentsTest;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.util.DebuggerModelTestUtils;
+import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 

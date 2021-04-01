@@ -38,8 +38,8 @@ public class DebugModelConventionsTest {
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TargetBreakpointContainer bpts = DebugModelConventions
-				.findSuitable(TargetBreakpointContainer.class, mb.testProcess1)
+		TargetBreakpointSpecContainer bpts = DebugModelConventions
+				.findSuitable(TargetBreakpointSpecContainer.class, mb.testProcess1)
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		assertEquals(mb.testProcess1.breaks, bpts);
 	}
@@ -49,8 +49,8 @@ public class DebugModelConventionsTest {
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TargetBreakpointContainer bpts = DebugModelConventions
-				.findSuitable(TargetBreakpointContainer.class, mb.testProcess1.threads)
+		TargetBreakpointSpecContainer bpts = DebugModelConventions
+				.findSuitable(TargetBreakpointSpecContainer.class, mb.testProcess1.threads)
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		assertEquals(mb.testProcess1.breaks, bpts);
 	}

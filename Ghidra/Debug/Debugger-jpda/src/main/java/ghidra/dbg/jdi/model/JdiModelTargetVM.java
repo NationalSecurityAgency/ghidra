@@ -18,7 +18,6 @@ package ghidra.dbg.jdi.model;
 import java.lang.ProcessHandle.Info;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.sun.jdi.PathSearchingVirtualMachine;
 import com.sun.jdi.VirtualMachine;
@@ -27,16 +26,14 @@ import com.sun.jdi.connect.Connector.Argument;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 
-import ghidra.async.*;
-import ghidra.dbg.DebugModelConventions;
+import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 
 /**
@@ -46,34 +43,14 @@ import ghidra.lifecycle.Internal;
  * UI perspective, it doesn't make sense semantically.
  */
 @TargetObjectSchemaInfo(name = "VM", elements = {
-//	@TargetElementType(type = Void.class) 
-},
-	attributes = {
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
-		@TargetAttributeType(
-			name = "Breakpoints",
-			type = JdiModelTargetBreakpointContainer.class,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Classes",
-			type = JdiModelTargetClassContainer.class,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Modules",
-			type = JdiModelTargetModuleContainer.class,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Threads",
-			type = JdiModelTargetThreadContainer.class,
-			required = true,
-			fixed = true),
-		@TargetAttributeType(
-			name = "ThreadGroups",
-			type = JdiModelTargetThreadGroupContainer.class,
-			fixed = true),
-		@TargetAttributeType(type = Object.class)
-	},
-	canonicalContainer = true)
+		@TargetAttributeType(name = "Breakpoints", type = JdiModelTargetBreakpointContainer.class, fixed = true),
+		@TargetAttributeType(name = "Classes", type = JdiModelTargetClassContainer.class, fixed = true),
+		@TargetAttributeType(name = "Modules", type = JdiModelTargetModuleContainer.class, fixed = true),
+		@TargetAttributeType(name = "Threads", type = JdiModelTargetThreadContainer.class, required = true, fixed = true),
+		@TargetAttributeType(name = "ThreadGroups", type = JdiModelTargetThreadGroupContainer.class, fixed = true),
+		@TargetAttributeType(type = Object.class) }, canonicalContainer = true)
 public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		TargetProcess, //
 		TargetAggregate, //
@@ -162,11 +139,8 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 			ARCH_ATTRIBUTE_NAME, vm.name(), //
 			DEBUGGER_ATTRIBUTE_NAME, vm.description(), //
 			OS_ATTRIBUTE_NAME, "JRE " + vm.version(), //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS, //
-			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
+			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetCmdLineLauncher.PARAMETERS //
 		), "Initialized");
-		listeners.fire(TargetExecutionStateListener.class)
-				.executionStateChanged(this, TargetExecutionState.ALIVE);
 
 		if (process != null) {
 			changeAttributes(List.of(), List.of( //
@@ -297,8 +271,6 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 					DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 				), "Started");
 			}
-			listeners.fire(TargetExecutionStateListener.class)
-					.executionStateChanged(this, TargetExecutionState.ALIVE);
 			vmSelected(vm, JdiCause.Causes.UNCLAIMED);
 		});
 	}
@@ -317,20 +289,12 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 				DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 			), "Exited");
 		}
-		listeners.fire(TargetExecutionStateListener.class)
-				.executionStateChanged(this, TargetExecutionState.TERMINATED);
 	}
 
 	@Override
 	public void vmSelected(VirtualMachine eventVM, JdiCause cause) {
 		if (eventVM.equals(vm)) {
-			AtomicReference<JdiModelTargetFocusScope> scope = new AtomicReference<>();
-			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-				DebugModelConventions.findSuitable(JdiModelTargetFocusScope.class, this)
-						.handle(seq::next);
-			}, scope).then(seq -> {
-				scope.get().setFocus(this);
-			}).finish();
+			((JdiModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
 	}
 
@@ -338,7 +302,6 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		changeAttributes(List.of(), List.of(), Map.of( //
 			STATE_ATTRIBUTE_NAME, targetState //
 		), reason.desc());
-		listeners.fire(TargetExecutionStateListener.class).executionStateChanged(this, targetState);
 	}
 
 	@Override

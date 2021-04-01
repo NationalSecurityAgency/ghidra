@@ -18,12 +18,10 @@ package ghidra.dbg.gadp.client;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
-import ghidra.dbg.gadp.client.annot.GadpAttributeChangeCallback;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
-import ghidra.dbg.util.ValueUtils;
 
 public interface GadpClientTargetFocusScope extends GadpClientTargetObject, TargetFocusScope {
 
@@ -40,17 +38,5 @@ public interface GadpClientTargetFocusScope extends GadpClientTargetObject, Targ
 				.setFocus(GadpValueUtils.makePath(obj.getPath())),
 			Gadp.FocusReply.getDefaultInstance())
 				.thenApply(__ -> null);
-	}
-
-	default TargetObject focusFromObj(Object obj) {
-		return ValueUtils.expectType(obj, TargetObject.class, this, FOCUS_ATTRIBUTE_NAME, this,
-			true);
-	}
-
-	@GadpAttributeChangeCallback(FOCUS_ATTRIBUTE_NAME)
-	default void handleFocusChanged(Object focus) {
-		getDelegate().getListeners()
-				.fire(TargetFocusScopeListener.class)
-				.focusChanged(this, focusFromObj(focus));
 	}
 }

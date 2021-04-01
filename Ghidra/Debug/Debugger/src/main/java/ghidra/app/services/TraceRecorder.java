@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
-import ghidra.app.plugin.core.debug.service.model.DefaultTraceRecorder.ListenerForRecord;
+import ghidra.app.plugin.core.debug.service.model.TraceEventListener;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -36,11 +36,11 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
-import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -75,9 +75,9 @@ public interface TraceRecorder {
 				return TraceBreakpointKind.READ;
 			case WRITE:
 				return TraceBreakpointKind.WRITE;
-			case EXECUTE:
+			case HW_EXECUTE:
 				return TraceBreakpointKind.EXECUTE;
-			case SOFTWARE:
+			case SW_EXECUTE:
 				return TraceBreakpointKind.SOFTWARE;
 			default:
 				throw new AssertionError();
@@ -110,9 +110,9 @@ public interface TraceRecorder {
 			case WRITE:
 				return TargetBreakpointKind.WRITE;
 			case EXECUTE:
-				return TargetBreakpointKind.EXECUTE;
+				return TargetBreakpointKind.HW_EXECUTE;
 			case SOFTWARE:
-				return TargetBreakpointKind.SOFTWARE;
+				return TargetBreakpointKind.SW_EXECUTE;
 			default:
 				throw new AssertionError();
 		}
@@ -203,8 +203,6 @@ public interface TraceRecorder {
 	 * @param listener the listener
 	 */
 	void removeListener(TraceRecorderListener listener);
-
-	boolean isViewAtPresent(TraceProgramView view);
 
 	TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt);
 
@@ -407,7 +405,7 @@ public interface TraceRecorder {
 	 * @param thread an optional thread, or {@code null} for the process
 	 * @return the list of collected containers, possibly empty
 	 */
-	List<TargetBreakpointContainer> collectBreakpointContainers(TargetThread thread);
+	List<TargetBreakpointSpecContainer> collectBreakpointContainers(TargetThread thread);
 
 	/**
 	 * Collect effective breakpoint pertinent to the target or a given thread
@@ -424,8 +422,8 @@ public interface TraceRecorder {
 	/**
 	 * Get the kinds of breakpoints supported by any of the recorded breakpoint containers.
 	 * 
-	 * This is the union of all kinds supported among all {@link TargetBreakpointContainer}s found
-	 * applicable to the target by this recorder. Chances are, there is only one container.
+	 * This is the union of all kinds supported among all {@link TargetBreakpointSpecContainer}s
+	 * found applicable to the target by this recorder. Chances are, there is only one container.
 	 * 
 	 * @return the set of supported kinds
 	 */
@@ -478,5 +476,7 @@ public interface TraceRecorder {
 	 * @return the listener
 	 */
 	@Internal
-	ListenerForRecord getListenerForRecord();
+	TraceEventListener getListenerForRecord();
+
+	ListenerSet<TraceRecorderListener> getListeners();
 }

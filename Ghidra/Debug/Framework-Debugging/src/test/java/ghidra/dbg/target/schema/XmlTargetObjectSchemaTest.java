@@ -25,13 +25,12 @@ import org.junit.Test;
 import ghidra.dbg.target.TargetInterpreter;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.TargetObjectSchema.*;
 
 public class XmlTargetObjectSchemaTest {
 	protected static final String SCHEMA_XML = "" +
 		"<context>\n" +
-		"    <schema name=\"root\" canonical=\"yes\">\n" +
+		"    <schema name=\"root\" canonical=\"yes\" elementResync=\"NEVER\" attributeResync=\"ONCE\">\n" +
 		"        <interface name=\"Process\" />\n" +
 		"        <interface name=\"Interpreter\" />\n" +
 		"        <element index=\"reserved\" schema=\"VOID\" />\n" +
@@ -40,7 +39,7 @@ public class XmlTargetObjectSchemaTest {
 		"        <attribute name=\"some_object\" schema=\"OBJECT\" required=\"yes\" fixed=\"yes\" hidden=\"yes\" />\n" +
 		"        <attribute schema=\"ANY\" hidden=\"yes\" />\n" +
 		"    </schema>\n" +
-		"    <schema name=\"down1\">\n" +
+		"    <schema name=\"down1\" elementResync=\"ALWAYS\" attributeResync=\"ALWAYS\">\n" +
 		"        <element schema=\"OBJECT\" />\n" +
 		"        <attribute schema=\"VOID\" fixed=\"yes\" hidden=\"yes\" />\n" +
 		"    </schema>\n" +
@@ -55,13 +54,17 @@ public class XmlTargetObjectSchemaTest {
 			.setCanonicalContainer(true)
 			.addElementSchema("reserved", EnumerableTargetObjectSchema.VOID.getName(), null)
 			.addElementSchema("", NAME_DOWN1, null)
+			.setElementResyncMode(ResyncMode.NEVER)
 			.addAttributeSchema(new DefaultAttributeSchema("some_int",
 				EnumerableTargetObjectSchema.INT.getName(), false, false, false), null)
 			.addAttributeSchema(new DefaultAttributeSchema("some_object",
 				EnumerableTargetObjectSchema.OBJECT.getName(), true, true, true), null)
+			.setAttributeResyncMode(ResyncMode.ONCE)
 			.buildAndAdd();
 	protected static final TargetObjectSchema SCHEMA_DOWN1 = CTX.builder(NAME_DOWN1)
+			.setElementResyncMode(ResyncMode.ALWAYS)
 			.setDefaultAttributeSchema(AttributeSchema.DEFAULT_VOID)
+			.setAttributeResyncMode(ResyncMode.ALWAYS)
 			.buildAndAdd();
 
 	@Test

@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.service.model;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
@@ -133,5 +132,5 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * @param target the target to record
 	 * @return a future which completes with the resulting recorder, unless cancelled
 	 */
-	CompletableFuture<TraceRecorder> doRecordTargetPromptOffers(PluginTool t, TargetObject target);
+	TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target);
 }
