@@ -1633,47 +1633,61 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :braf rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00100011 
 {
-    local temp:4 = inst_start + 4 + rm_08_11;
+    local dest:4 = inst_start + 4 + rm_08_11;
     delayslot(1);
-    goto [temp];
+    goto [dest];
 }
 @endif
 
 :bsr    target00_11  is opcode_12_15=0b1011 & target00_11  
 {
-    pr = inst_next;
+    local _pr:4 = inst_next;
+
     delayslot(1);
+
+    pr = _pr;
     call target00_11;
 }
 
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bsrf   rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00000011 
 {
-    pr = inst_next;
+    local _pr = inst_next;
     local dest = rm_08_11 + inst_next;
 
     delayslot(1);
+
+    pr = _pr;
     call [dest];
 }
 @endif
 
 :jmp    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00101011 
 {
+    local _pc:4 = rm_08_11;
     delayslot(1);
-    goto [rm_08_11];
+    pc = _pc;
+    goto [pc];
 }
 
 :jsr    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001011 
 {
-    pr = inst_next;
+    local _pr:4 = inst_next;
+    local _pc:4 = rm_08_11;
+
     delayslot(1);
-    call [rm_08_11];
+
+    pr = _pr;
+    pc = _pc;
+    call [_pc];
 }
 
 :rts  is opcode_00_15=0b0000000000001011 
 {
+    local _pc = pr;
     delayslot(1);
-    return [pr];
+    pc = _pc;
+    return [pc];
 }
 
 @if SH_VERSION == "2A"
