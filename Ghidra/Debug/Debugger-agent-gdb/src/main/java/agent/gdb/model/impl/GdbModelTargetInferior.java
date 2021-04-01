@@ -31,11 +31,8 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 
-@TargetObjectSchemaInfo(
-	name = "Inferior",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
+@TargetObjectSchemaInfo(name = "Inferior", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer>
@@ -79,6 +76,7 @@ public class GdbModelTargetInferior
 	protected final GdbModelTargetBreakpointLocationContainer breakpoints;
 
 	protected Long exitCode;
+	private Integer base = 10;
 
 	public GdbModelTargetInferior(GdbModelTargetInferiorContainer inferiors, GdbInferior inferior) {
 		super(inferiors.impl, inferiors, keyInferior(inferior), "Inferior");
@@ -140,10 +138,7 @@ public class GdbModelTargetInferior
 		return threads;
 	}
 
-	@TargetAttributeType(
-		name = GdbModelTargetBreakpointLocationContainer.NAME,
-		required = true,
-		fixed = true)
+	@TargetAttributeType(name = GdbModelTargetBreakpointLocationContainer.NAME, required = true, fixed = true)
 	public GdbModelTargetBreakpointLocationContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -347,8 +342,13 @@ public class GdbModelTargetInferior
 		if (inferior.getPid() == null) {
 			return display = String.format("%d - <null>", inferior.getId());
 		}
-		return display = String.format("%d - %s - %s", inferior.getId(), inferior.getDescriptor(),
-			inferior.getExecutable());
+		String descriptor = inferior.getDescriptor();
+		String[] split = descriptor.split(" ");
+		if (base == 16) {
+			descriptor = split[0] + " 0x" + Long.toHexString(Long.decode(split[1]));
+		}
+		return display =
+			String.format("%d - %s - %s", inferior.getId(), descriptor, inferior.getExecutable());
 	}
 
 	@Override
@@ -443,4 +443,10 @@ public class GdbModelTargetInferior
 	public void removeBreakpointLocation(GdbModelTargetBreakpointLocation loc) {
 		breakpoints.removeBreakpointLocation(loc);
 	}
+
+	public void setBase(Object value) {
+		this.base = (Integer) value;
+		updateDisplayAttribute();
+	}
+
 }

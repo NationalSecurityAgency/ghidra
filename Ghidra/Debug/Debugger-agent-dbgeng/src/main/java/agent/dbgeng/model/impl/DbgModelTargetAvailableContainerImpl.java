@@ -22,30 +22,31 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(
-	name = "AvailableContainer",
-	elements = {
-		@TargetElementType(type = DbgModelTargetAvailableImpl.class)
-	},
-	elementResync = ResyncMode.ALWAYS,
-	attributes = {
-		@TargetAttributeType(type = Void.class)
-	},
-	canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "AvailableContainer", elements = {
+	@TargetElementType(type = DbgModelTargetAvailableImpl.class) //
+}, elementResync = ResyncMode.ALWAYS, attributes = { //
+	@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
+	@TargetAttributeType(type = Void.class)  //
+}, canonicalContainer = true)
 public class DbgModelTargetAvailableContainerImpl extends DbgModelTargetObjectImpl
-		implements DbgModelTargetAvailableContainer {
+		implements DbgModelTargetAvailableContainer, DbgModelTargetConfigurable {
 
 	protected final Map<Integer, DbgModelTargetAvailable> attachablesById =
 		new WeakValueHashMap<>();
 
 	public DbgModelTargetAvailableContainerImpl(DbgModelTargetRoot root) {
 		super(root.getModel(), root, "Available", "AvailableContainer");
+		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 	}
 
 	@Override
@@ -71,4 +72,24 @@ public class DbgModelTargetAvailableContainerImpl extends DbgModelTargetObjectIm
 		return attachablesById.computeIfAbsent(pid,
 			i -> new DbgModelTargetAvailableImpl(this, pid));
 	}
+
+	@Override
+	public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+		switch (key) {
+			case BASE_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, value),
+						"Modified");
+					for (DbgModelTargetAvailable child : attachablesById.values()) {
+						child.setBase(value);
+					}
+				}
+				else {
+					throw new DebuggerIllegalArgumentException("Base should be numeric");
+				}
+			default:
+		}
+		return AsyncUtils.NIL;
+	}
+
 }

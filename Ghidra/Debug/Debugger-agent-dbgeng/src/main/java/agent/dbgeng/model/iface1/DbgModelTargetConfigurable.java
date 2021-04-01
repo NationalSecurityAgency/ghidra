@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.model.iface2;
+package agent.dbgeng.model.iface1;
 
-import ghidra.dbg.target.TargetAttachable;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import ghidra.dbg.target.TargetConfigurable;
 
-public interface DbgModelTargetAvailable extends DbgModelTargetObject, TargetAttachable {
-	String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
-	// TODO: DESCRIPTION, TYPE, USER?
-
-	public long getPid();
-
-	public void setBase(Object value);
+/**
+ * An interface which indicates this object is configurable.
+ * 
+ * @param <T> type for this
+ */
+public interface DbgModelTargetConfigurable extends DbgModelTargetObject, TargetConfigurable {
 
 }

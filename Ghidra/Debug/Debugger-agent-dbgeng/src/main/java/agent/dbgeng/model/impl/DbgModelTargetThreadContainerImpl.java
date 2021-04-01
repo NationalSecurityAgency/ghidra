@@ -23,21 +23,29 @@ import java.util.stream.Collectors;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.reason.*;
+import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 import agent.dbgeng.model.iface2.*;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "ThreadContainer", elements = {
-	@TargetElementType(type = DbgModelTargetThreadImpl.class) }, attributes = {
-		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "ThreadContainer", elements = { //
+	@TargetElementType(type = DbgModelTargetThreadImpl.class) //
+}, attributes = { //
+	@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
-		implements DbgModelTargetThreadContainer {
+		implements DbgModelTargetThreadContainer, DbgModelTargetConfigurable {
 
 	protected final DbgProcess process;
 
 	public DbgModelTargetThreadContainerImpl(DbgModelTargetProcessImpl process) {
 		super(process.getModel(), process, "Threads", "ThreadContainer");
 		this.process = process.process;
+		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 
 		getManager().addEventsListener(this);
 		requestElements(false);
@@ -126,4 +134,26 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		return new DbgModelTargetThreadImpl(this, (DbgModelTargetProcess) parent, thread);
 	}
 
+	@Override
+	public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+		switch (key) {
+			case BASE_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, value),
+						"Modified");
+					for (TargetObject child : getCachedElements().values()) {
+						if (child instanceof DbgModelTargetThreadImpl) {
+							DbgModelTargetThreadImpl targetThread =
+								(DbgModelTargetThreadImpl) child;
+							targetThread.setBase(value);
+						}
+					}
+				}
+				else {
+					throw new DebuggerIllegalArgumentException("Base should be numeric");
+				}
+			default:
+		}
+		return AsyncUtils.NIL;
+	}
 }

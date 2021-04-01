@@ -40,6 +40,7 @@ import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.attributes.TargetStringList;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.gadp.GadpClientServerTest.EventListener.CallEntry;
 import ghidra.dbg.gadp.client.GadpClient;
 import ghidra.dbg.gadp.protocol.Gadp;
@@ -383,27 +384,85 @@ public class GadpClientServerTest implements AsyncTestUtils {
 	@TargetObjectSchemaInfo(name = "ProcessContainer")
 	public class TestGadpTargetProcessContainer
 			extends TestTargetObject<TestGadpTargetProcess, TestGadpTargetSession>
-			implements TargetLauncher {
+			implements TargetLauncher, TargetConfigurable {
+
+		static final String BASE_ATTRIBUTE_NAME = "base";
+
+		int base = 10;
+
 		public TestGadpTargetProcessContainer(TestGadpTargetSession session) {
 			super(session.getModel(), session, "Processes", "ProcessContainer");
+
+			changeAttributes(List.of(), Map.ofEntries(
+				Map.entry(BASE_ATTRIBUTE_NAME, base)),
+				"Initialized");
 		}
 
 		@Override
 		public CompletableFuture<Void> launch(Map<String, ?> args) {
 			launches.offer(args);
-			TestGadpTargetProcess process = new TestGadpTargetProcess(this, 0);
+			long pid = args.containsKey("pid") ? (Long) args.get("pid") : 0;
+			TestGadpTargetProcess process = new TestGadpTargetProcess(this, pid, base);
 			changeElements(List.of(), List.of(process), Map.of(), "Launched");
 			parent.setFocus(process);
 			return AsyncUtils.NIL;
+		}
+
+		@Override
+		public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+			if (BASE_ATTRIBUTE_NAME.equals(key)) {
+				if (!(value instanceof Integer)) {
+					throw new DebuggerIllegalArgumentException(
+						"base must be an Integer in [0, 36]");
+				}
+				int base = (Integer) value;
+				if (base < 0 || 36 < base) {
+					throw new DebuggerIllegalArgumentException(
+						"base must be an Integer in [0, 36]");
+				}
+				setBase(base);
+			}
+			else {
+				throw new DebuggerIllegalArgumentException("unrecognized option: '" + key + "'");
+			}
+			return AsyncUtils.NIL;
+		}
+
+		public void setBase(int base) {
+			this.base = base;
+			for (TestGadpTargetProcess proc : elements.values()) {
+				proc.setBase(base);
+			}
 		}
 	}
 
 	@TargetObjectSchemaInfo(name = "Process")
 	public class TestGadpTargetProcess
-			extends TestTargetObject<TargetObject, TestGadpTargetProcessContainer> {
-		public TestGadpTargetProcess(TestGadpTargetProcessContainer processes, int index) {
-			super(processes.getModel(), processes, PathUtils.makeKey(PathUtils.makeIndex(index)),
+			extends TestTargetObject<TargetObject, TestGadpTargetProcessContainer>
+			implements TargetProcess {
+		final long pid;
+		int base = 10;
+
+		public TestGadpTargetProcess(TestGadpTargetProcessContainer processes, long pid, int base) {
+			super(processes.getModel(), processes, PathUtils.makeKey(PathUtils.makeIndex(pid)),
 				"Process");
+			this.pid = pid;
+			setBase(base);
+		}
+
+		void setBase(int base) {
+			this.base = base;
+			updateDisplay("Reconfigured base");
+		}
+
+		void updateDisplay(String reason) {
+			changeAttributes(List.of(),
+				Map.ofEntries(Map.entry(DISPLAY_ATTRIBUTE_NAME, computeDisplay())),
+				reason);
+		}
+
+		String computeDisplay() {
+			return Long.toString(pid, base);
 		}
 	}
 
@@ -1394,6 +1453,37 @@ public class GadpClientServerTest implements AsyncTestUtils {
 						Map.ofEntries(
 							Map.entry("a", client.getModelObject(PathUtils.parse("a")))))),
 				new CallEntry("rootAdded", List.of(client.getModelRoot()))), listener.record);
+		}
+	}
+
+	@Test
+	public void testWriteConfigurationOption() throws Throwable {
+		AsynchronousSocketChannel socket = socketChannel();
+		try (ServerRunner runner = new ServerRunner()) {
+			GadpClient client = new PrintingGadpClient("Test", socket);
+
+			try (TargetObjectAddedWaiter waiter = new TargetObjectAddedWaiter(client)) {
+				waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
+					runner.server.getLocalAddress()));
+				waitOn(client.connect());
+
+				TargetObject procs =
+					(TargetObject) waitOn(waiter.wait(PathUtils.parse("Processes")));
+				waitOn(((TargetConfigurable) procs).writeConfigurationOption(
+					TestGadpTargetProcessContainer.BASE_ATTRIBUTE_NAME, 8));
+				waitOn(((TargetLauncher) procs).launch(Map.ofEntries(Map.entry("pid", 1000L))));
+
+				TargetProcess p1000 =
+					(TargetProcess) waitOn(waiter.wait(PathUtils.parse("Processes[1000]")));
+
+				assertEquals("1750", p1000.getDisplay());
+
+				waitOn(((TargetConfigurable) procs).writeConfigurationOption(
+					TestGadpTargetProcessContainer.BASE_ATTRIBUTE_NAME, 10));
+
+				// NB. attribute change should arrive before completion of write
+				assertEquals("1000", p1000.getDisplay());
+			}
 		}
 	}
 }

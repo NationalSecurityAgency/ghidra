@@ -470,6 +470,14 @@ message ResyncRequest {
 message ResyncReply {
 }
 
+message ConfigureRequest {
+	Path path = 1;
+	NamedValue option = 2;
+}
+
+message ConfigureReply {
+}
+	
 enum TargetEventType {
 	EV_STOPPED = 0;
 	EV_RUNNING = 1;
@@ -584,12 +592,14 @@ message RootMessage {
 
 		InvokeRequest invoke_request = 105;
 		InvokeReply invoke_reply = 205;
-		
+
 		ResyncRequest resync_request = 125;
 		ResyncReply resync_reply = 225;
-		
+
 		ActivationRequest activation_request = 126;
 		ActivationReply activation_reply = 226;
 
+		ConfigureRequest configure_request = 127;
+		ConfigureReply configure_reply = 227;
 	}
 }

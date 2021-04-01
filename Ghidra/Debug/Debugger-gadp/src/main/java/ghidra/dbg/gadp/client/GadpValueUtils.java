@@ -30,8 +30,8 @@ import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.protocol.Gadp.ModelObjectDelta;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
-import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetMethod;
@@ -690,12 +690,12 @@ public enum GadpValueUtils {
 		}
 	}
 
-	public static Object getAttributeValue(GadpClientTargetObject object, Gadp.NamedValue attr) {
+	public static Object getAttributeValue(TargetObject object, Gadp.NamedValue attr) {
 		return getValue(object.getModel(), PathUtils.extend(object.getPath(), attr.getName()),
 			attr.getValue());
 	}
 
-	public static GadpClientTargetObject getElementValue(GadpClientTargetObject object,
+	public static GadpClientTargetObject getElementValue(TargetObject object,
 			Gadp.NamedValue elem) {
 		Object value = getValue(object.getModel(),
 			PathUtils.index(object.getPath(), elem.getName()), elem.getValue());

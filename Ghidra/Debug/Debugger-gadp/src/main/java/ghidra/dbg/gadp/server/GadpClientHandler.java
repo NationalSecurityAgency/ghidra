@@ -387,6 +387,8 @@ public class GadpClientHandler
 				return processBreakToggle(msg.getSequence(), msg.getBreakToggleRequest());
 			case CACHE_INVALIDATE_REQUEST:
 				return processCacheInvalidate(msg.getSequence(), msg.getCacheInvalidateRequest());
+			case CONFIGURE_REQUEST:
+				return processConfigure(msg.getSequence(), msg.getConfigureRequest());
 			case DELETE_REQUEST:
 				return processDelete(msg.getSequence(), msg.getDeleteRequest());
 			case DETACH_REQUEST:
@@ -670,14 +672,29 @@ public class GadpClientHandler
 
 	protected CompletableFuture<?> processCacheInvalidate(int seqno,
 			Gadp.CacheInvalidateRequest req) {
-		TargetObject obj = getObjectChecked(req.getPath());
 		List<String> path = req.getPath().getEList();
+		TargetObject obj = getObjectChecked(path);
 		return obj.invalidateCaches().thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {
 			return channel.write(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setCacheInvalidateReply(Gadp.CacheInvalidateReply.getDefaultInstance())
+					.build());
+		});
+	}
+
+	protected CompletableFuture<?> processConfigure(int seqno, Gadp.ConfigureRequest req) {
+		TargetConfigurable configurable =
+			getObjectChecked(req.getPath()).as(TargetConfigurable.class);
+		String key = req.getOption().getName();
+		Object value = GadpValueUtils.getAttributeValue(configurable, req.getOption());
+		return configurable.writeConfigurationOption(key, value).thenCompose(__ -> {
+			return model.flushEvents();
+		}).thenCompose(__ -> {
+			return channel.write(Gadp.RootMessage.newBuilder()
+					.setSequence(seqno)
+					.setConfigureReply(Gadp.ConfigureReply.getDefaultInstance())
 					.build());
 		});
 	}

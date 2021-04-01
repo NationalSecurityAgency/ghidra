@@ -24,19 +24,20 @@ import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
-@TargetObjectSchemaInfo(
-	name = "InferiorContainer",
-	attributes = {
-		@TargetAttributeType(type = Void.class) },
-	canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "InferiorContainer", attributes = {
+	@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class GdbModelTargetInferiorContainer
 		extends DefaultTargetObject<GdbModelTargetInferior, GdbModelTargetSession>
-		implements GdbEventsListenerAdapter {
+		implements TargetConfigurable, GdbEventsListenerAdapter {
 	public static final String NAME = "Inferiors";
 
 	protected final GdbModelImpl impl;
@@ -44,6 +45,7 @@ public class GdbModelTargetInferiorContainer
 	public GdbModelTargetInferiorContainer(GdbModelTargetSession session) {
 		super(session.impl, session, NAME, "InferiorContainer");
 		this.impl = session.impl;
+		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 10), "Initialized");
 
 		impl.gdb.addEventsListener(this);
 	}
@@ -168,4 +170,24 @@ public class GdbModelTargetInferiorContainer
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
 		return getTargetInferior(sco.getInferior()).stateChanged(sco);
 	}
+
+	@Override
+	public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+		switch (key) {
+			case BASE_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, value),
+						"Modified");
+					for (GdbModelTargetInferior child : this.getCachedElements().values()) {
+						child.setBase(value);
+					}
+				}
+				else {
+					throw new DebuggerIllegalArgumentException("Base should be numeric");
+				}
+			default:
+		}
+		return AsyncUtils.NIL;
+	}
+
 }

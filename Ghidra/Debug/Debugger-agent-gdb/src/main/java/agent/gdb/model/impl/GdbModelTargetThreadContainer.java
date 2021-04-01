@@ -26,6 +26,8 @@ import agent.gdb.manager.reason.GdbBreakpointHitReason;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
@@ -34,10 +36,13 @@ import ghidra.util.Msg;
 @TargetObjectSchemaInfo(
 	name = "ThreadContainer",
 	attributes = {
-		@TargetAttributeType(type = Void.class) },
+		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
+		@TargetAttributeType(type = Void.class) //
+	},
 	canonicalContainer = true)
 public class GdbModelTargetThreadContainer
-		extends DefaultTargetObject<GdbModelTargetThread, GdbModelTargetInferior> {
+		extends DefaultTargetObject<GdbModelTargetThread, GdbModelTargetInferior>
+		implements TargetConfigurable {
 	public static final String NAME = "Threads";
 
 	protected final GdbModelImpl impl;
@@ -47,6 +52,7 @@ public class GdbModelTargetThreadContainer
 		super(inferior.impl, inferior, NAME, "ThreadContainer");
 		this.impl = inferior.impl;
 		this.inferior = inferior.inferior;
+		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 10), "Initialized");
 	}
 
 	public GdbModelTargetThread threadCreated(GdbThread thread) {
@@ -136,4 +142,24 @@ public class GdbModelTargetThreadContainer
 		GdbThread thread = impl.gdb.getThread(reason.getThreadId());
 		return getTargetThread(thread).breakpointHit(reason);
 	}
+
+	@Override
+	public CompletableFuture<Void> writeConfigurationOption(String key, Object value) {
+		switch (key) {
+			case BASE_ATTRIBUTE_NAME:
+				if (value instanceof Integer) {
+					this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, value),
+						"Modified");
+					for (GdbModelTargetThread child : this.getCachedElements().values()) {
+						child.setBase(value);
+					}
+				}
+				else {
+					throw new DebuggerIllegalArgumentException("Base should be numeric");
+				}
+			default:
+		}
+		return AsyncUtils.NIL;
+	}
+
 }

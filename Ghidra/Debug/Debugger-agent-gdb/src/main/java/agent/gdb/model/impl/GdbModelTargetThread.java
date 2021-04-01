@@ -70,6 +70,7 @@ public class GdbModelTargetThread
 	protected String display;
 	protected String shortDisplay;
 	protected GdbThreadInfo info;
+	private Integer base = 10;
 
 	protected final GdbModelTargetStack stack;
 
@@ -158,9 +159,14 @@ public class GdbModelTargetThread
 		}
 		else {
 			sb.append(info.getId());
-			if (info.getTid() != null) {
+			Integer tid = info.getTid();
+			if (tid != null) {
+				String tidstr = Integer.toString(tid, base);
+				if (base == 16) {
+					tidstr = "0x" + tidstr;
+				}
 				sb.append(":");
-				sb.append(info.getTid());
+				sb.append(tidstr);
 			}
 		}
 		sb.append("]");
@@ -243,4 +249,10 @@ public class GdbModelTargetThread
 		), sco.getReason().desc());
 		return result;
 	}
+
+	public void setBase(Object value) {
+		this.base = (Integer) value;
+		updateInfo();
+	}
+
 }

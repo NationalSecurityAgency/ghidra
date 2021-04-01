@@ -52,16 +52,18 @@ public enum GadpRegistry {
 		registerInterface(TargetAggregate.class, GadpClientTargetAggregate.class);
 		registerInterface(TargetAttachable.class, GadpClientTargetAttachable.class);
 		registerInterface(TargetAttacher.class, GadpClientTargetAttacher.class);
+		registerInterface(TargetBreakpointLocation.class, GadpClientTargetBreakpointLocation.class);
 		registerInterface(TargetBreakpointLocationContainer.class,
 			GadpClientTargetBreakpointLocationContainer.class);
 		registerInterface(TargetBreakpointSpecContainer.class,
 			GadpClientTargetBreakpointSpecContainer.class);
 		registerInterface(TargetBreakpointSpec.class, GadpClientTargetBreakpointSpec.class);
+		registerInterface(TargetConfigurable.class, GadpClientTargetConfigurable.class);
+		registerInterface(TargetConsole.class, GadpClientTargetConsole.class);
 		registerInterface(TargetDataTypeMember.class, GadpClientTargetDataTypeMember.class);
 		registerInterface(TargetDataTypeNamespace.class, GadpClientTargetDataTypeNamespace.class);
 		registerInterface(TargetDeletable.class, GadpClientTargetDeletable.class);
 		registerInterface(TargetDetachable.class, GadpClientTargetDetachable.class);
-		registerInterface(TargetBreakpointLocation.class, GadpClientTargetBreakpointLocation.class);
 		registerInterface(TargetEnvironment.class, GadpClientTargetEnvironment.class);
 		registerInterface(TargetEventScope.class, GadpClientTargetEventScope.class);
 		registerInterface(TargetExecutionStateful.class, GadpClientTargetExecutionStateful.class);

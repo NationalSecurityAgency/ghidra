@@ -67,6 +67,8 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	// Note: not sure section info is available from the dbgeng
 	//protected final DbgModelTargetProcessSectionContainer sections;
 
+	private Integer base = 16;
+
 	public DbgModelTargetProcessImpl(DbgModelTargetProcessContainer processes, DbgProcess process) {
 		super(processes.getModel(), processes, keyProcess(process), "Process");
 		this.getModel().addModelObject(process, this);
@@ -102,7 +104,12 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		if (getManager().isKernelMode()) {
 			return "[kernel]";
 		}
-		return "[" + process.getId().id + ":0x" + Long.toHexString(process.getPid()) + "]";
+
+		String pidstr = Long.toString(process.getPid(), base);
+		if (base == 16) {
+			pidstr = "0x" + pidstr;
+		}
+		return "[" + process.getId().id + ":" + pidstr + "]";
 	}
 
 	@Override
@@ -177,7 +184,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		if (pid != null) {
 			changeAttributes(List.of(), List.of(), Map.of( //
 				PID_ATTRIBUTE_NAME, pid, //
-				DISPLAY_ATTRIBUTE_NAME, "[0x" + Long.toHexString(pid) + "]" //
+				DISPLAY_ATTRIBUTE_NAME, getDisplay()//
 			), "Started");
 		}
 		setExecutionState(TargetExecutionState.ALIVE, "Started");
@@ -220,5 +227,12 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public boolean isAccessible() {
 		return accessible;
+	}
+
+	public void setBase(Object value) {
+		this.base = (Integer) value;
+		changeAttributes(List.of(), List.of(), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, getDisplay()//
+		), "Started");
 	}
 }

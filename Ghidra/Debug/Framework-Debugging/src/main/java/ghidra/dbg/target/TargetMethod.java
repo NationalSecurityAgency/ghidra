@@ -29,6 +29,7 @@ import ghidra.dbg.util.CollectionUtils.AbstractNMap;
 /**
  * An object which can be invoked as a method
  * 
+ * <p>
  * TODO: Should parameters and return type be something incorporated into Schemas?
  */
 @DebuggerTargetObjectIface("Method")
@@ -295,7 +296,11 @@ public interface TargetMethod extends TargetObject {
 	 * 
 	 * @return the name-description map of parameters
 	 */
-	@TargetAttributeType(name = PARAMETERS_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = PARAMETERS_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	default public TargetParameterMap getParameters() {
 		return getParameters(this);
 	}
@@ -310,7 +315,11 @@ public interface TargetMethod extends TargetObject {
 	 * 
 	 * @return the return type
 	 */
-	@TargetAttributeType(name = RETURN_TYPE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = RETURN_TYPE_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	default public Class<?> getReturnType() {
 		return getTypedAttributeNowByName(RETURN_TYPE_ATTRIBUTE_NAME, Class.class, Object.class);
 	}

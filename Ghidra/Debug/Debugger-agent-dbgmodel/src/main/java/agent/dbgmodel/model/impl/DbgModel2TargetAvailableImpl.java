@@ -66,4 +66,9 @@ public class DbgModel2TargetAvailableImpl extends DbgModel2TargetObjectImpl
 		return pid;
 	}
 
+	@Override
+	public void setBase(Object value) {
+		// Nothing for now
+	}
+
 }

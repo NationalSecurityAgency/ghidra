@@ -25,14 +25,9 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(
-	name = "Attachable",
-	elements = {
-		@TargetElementType(type = Void.class)
-	},
-	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
+@TargetObjectSchemaInfo(name = "Attachable", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetAttachable
 		extends DefaultTargetObject<TargetObject, GdbModelTargetAvailableContainer>
 		implements TargetAttachable {
@@ -48,18 +43,23 @@ public class GdbModelTargetAttachable
 		return PathUtils.makeKey(indexAttachable(process));
 	}
 
-	protected static String computeDisplay(GdbProcessThreadGroup process) {
+	protected static String computeDisplay(GdbProcessThreadGroup process, Integer base) {
+		if (base == 16) {
+			return String.format("0x%x %s", process.getPid(), process.getDescription());
+		}
 		return String.format("%d %s", process.getPid(), process.getDescription());
 	}
 
-	protected final long pid;
-	protected final String display;
+	private GdbProcessThreadGroup process;
+	protected long pid;
+	protected String display;
 
 	public GdbModelTargetAttachable(GdbModelImpl impl, GdbModelTargetAvailableContainer parent,
 			GdbProcessThreadGroup process) {
 		super(impl, parent, keyAttachable(process), "Attachable");
+		this.process = process;
 		this.pid = process.getPid();
-		this.display = computeDisplay(process);
+		this.display = computeDisplay(process, 10);
 
 		this.changeAttributes(List.of(), List.of(), Map.of( //
 			PID_ATTRIBUTE_NAME, pid, //
@@ -76,4 +76,12 @@ public class GdbModelTargetAttachable
 	public String getDisplay() {
 		return display;
 	}
+
+	public void setBase(Object value) {
+		this.display = computeDisplay(process, (Integer) value);
+		this.changeAttributes(List.of(), List.of(), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, display //
+		), "Initialized");
+	}
+
 }

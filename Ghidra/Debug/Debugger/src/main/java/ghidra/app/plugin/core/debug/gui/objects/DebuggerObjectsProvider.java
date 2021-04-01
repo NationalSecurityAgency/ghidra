@@ -223,6 +223,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	ImportFromFactsAction importFromFactsAction;
 	OpenWinDbgTraceAction openTraceAction;
 
+	private ToggleDockingAction actionToggleBase;
 	private ToggleDockingAction actionToggleSubscribe;
 	private ToggleDockingAction actionToggleAutoRecord;
 	private ToggleDockingAction actionToggleHideIntrinsics;
@@ -237,6 +238,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean selectionOnly = false;
 	@AutoConfigStateField
 	private boolean ignoreState = false;
+
+	Set<TargetConfigurable> configurables = new HashSet<>();
 
 	public DebuggerObjectsProvider(final DebuggerObjectsPlugin plugin, DebuggerObjectModel model,
 			ObjectContainer container, boolean asTree) throws Exception {
@@ -672,6 +675,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 							setFocus(f, targetObject);
 						});
 			}
+			if (targetObject instanceof TargetConfigurable) {
+				configurables.add((TargetConfigurable) targetObject);
+			}
 		}
 	}
 
@@ -681,6 +687,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			synchronized (targetMap) {
 				targetMap.remove(targetObject.getJoinedPath(PATH_JOIN_CHAR));
 				refSet.remove(targetObject);
+				if (targetObject instanceof TargetConfigurable) {
+					configurables.remove(targetObject);
+				}
 			}
 		}
 	}
@@ -857,6 +866,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.enabled(true)
 			.buildAndInstallLocal(this);
 
+		groupTargetIndex++;
+
+		actionToggleBase = new ToggleActionBuilder("Toggle Base", plugin.getName())
+			.keyBinding("B")
+			.menuPath("&Toggle base")
+			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
+			.helpLocation(new HelpLocation(plugin.getName(), "toggle_base"))
+			.onAction(ctx -> performToggleBase(ctx))
+			.buildAndInstallLocal(this);
+	
 		groupTargetIndex++;
 
 		actionToggleSubscribe = new ToggleActionBuilder("Toggle Subscription", plugin.getName())
@@ -1236,6 +1255,18 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				"Refreshed");
 		}
 		*/
+	}
+
+	public void performToggleBase(ActionContext context) {
+		//Object contextObject = context.getContextObject();
+		for (TargetConfigurable configurable : configurables) {
+			Object value = configurable.getCachedAttribute(TargetConfigurable.BASE_ATTRIBUTE_NAME);
+			if (value != null) {
+				Integer base = (Integer) value;
+				base = base == 10 ? 16 : 10;
+				configurable.writeConfigurationOption(TargetConfigurable.BASE_ATTRIBUTE_NAME, base);
+			}
+		}
 	}
 
 	public void performToggleSubscription(ActionContext context) {

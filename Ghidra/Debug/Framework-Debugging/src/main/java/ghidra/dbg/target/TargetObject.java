@@ -159,13 +159,13 @@ import ghidra.lifecycle.Internal;
 public interface TargetObject extends Comparable<TargetObject> {
 
 	Set<Class<? extends TargetObject>> ALL_INTERFACES =
-		Set.of(TargetAccessConditioned.class, TargetAggregate.class, TargetAttachable.class,
-			TargetAttacher.class, TargetBreakpointLocation.class,
+		Set.of(TargetAccessConditioned.class, TargetActiveScope.class, TargetAggregate.class,
+			TargetAttachable.class, TargetAttacher.class, TargetBreakpointLocation.class,
 			TargetBreakpointLocationContainer.class, TargetBreakpointSpec.class,
-			TargetBreakpointSpecContainer.class, TargetConsole.class, TargetDataTypeMember.class,
-			TargetDataTypeNamespace.class, TargetDeletable.class, TargetDetachable.class,
-			TargetEnvironment.class, TargetEventScope.class, TargetExecutionStateful.class,
-			TargetActiveScope.class, TargetFocusScope.class, TargetInterpreter.class,
+			TargetBreakpointSpecContainer.class, TargetConfigurable.class, TargetConsole.class,
+			TargetDataTypeMember.class, TargetDataTypeNamespace.class, TargetDeletable.class,
+			TargetDetachable.class, TargetEnvironment.class, TargetEventScope.class,
+			TargetExecutionStateful.class, TargetFocusScope.class, TargetInterpreter.class,
 			TargetInterruptible.class, TargetKillable.class, TargetLauncher.class,
 			TargetMemory.class, TargetMemoryRegion.class, TargetMethod.class, TargetModule.class,
 			TargetModuleContainer.class, TargetNamedDataType.class, TargetProcess.class,

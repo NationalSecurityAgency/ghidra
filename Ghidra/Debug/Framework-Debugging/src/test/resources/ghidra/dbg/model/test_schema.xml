@@ -50,6 +50,7 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
+        <attribute name="base" schema="INT" hidden="yes" />
         <attribute schema="ANY" />
     </schema>
     <schema name="Interpreter" elementResync="NEVER" attributeResync="NEVER">

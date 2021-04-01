@@ -67,6 +67,7 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 	protected final DbgModelTargetStackImpl stack;
 
 	private DbgModelTargetProcess process;
+	private Integer base = 16;
 
 	public DbgModelTargetThreadImpl(DbgModelTargetThreadContainer threads,
 			DbgModelTargetProcess process, DbgThread thread) {
@@ -98,7 +99,11 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		if (getManager().isKernelMode()) {
 			return "[PR" + thread.getId().id + "]";
 		}
-		return "[" + thread.getId().id + ":0x" + Long.toHexString(thread.getTid()) + "]";
+		String tidstr = Long.toString(thread.getTid(), base);
+		if (base == 16) {
+			tidstr = "0x" + tidstr;
+		}
+		return "[" + thread.getId().id + ":" + tidstr + "]";
 	}
 
 	@Override
@@ -169,6 +174,13 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 	@Override
 	public String getExecutingProcessorType() {
 		return thread.getExecutingProcessorType().description;
+	}
+
+	public void setBase(Object value) {
+		this.base = (Integer) value;
+		changeAttributes(List.of(), List.of(), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, getDisplay()//
+		), "Started");
 	}
 
 }

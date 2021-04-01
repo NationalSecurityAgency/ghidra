@@ -27,25 +27,17 @@ import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(
-	name = "Session",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
-		@TargetAttributeType(
-			name = "Attributes",
-			type = DbgModelTargetSessionAttributesImpl.class,
-			fixed = true),
-		@TargetAttributeType(
-			name = "Processes",
-			type = DbgModelTargetProcessContainerImpl.class,
-			required = true,
-			fixed = true),
+@TargetObjectSchemaInfo(name = "Session", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
+		@TargetAttributeType(name = "Attributes", type = DbgModelTargetSessionAttributesImpl.class, fixed = true),
+		@TargetAttributeType(name = "Processes", type = DbgModelTargetProcessContainerImpl.class, required = true, fixed = true),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSession {
 
 	protected static final String DBG_PROMPT = "(kd)";
+	private Integer base = 16;
+
 	// NB: This should almost certainly always be implemented by the root of the object tree
 
 	protected static String indexSession(DebugSessionId debugSystemId) {
