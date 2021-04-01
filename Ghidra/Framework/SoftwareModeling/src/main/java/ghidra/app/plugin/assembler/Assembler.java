@@ -38,15 +38,15 @@ public interface Assembler {
 	 * 
 	 * <p>
 	 * This method is only valid if the assembler is bound to a program. An instance may optionally
-	 * implement this method without a program binding. In that case, the returned instruction block
-	 * will refer to pseudo instructions.
+	 * implement this method without a program binding. In that case, the returned iterator will
+	 * refer to pseudo instructions.
 	 * 
 	 * <p>
 	 * NOTE: There must be an active transaction on the bound program for this method to succeed.
 	 * 
 	 * @param at the location where the resulting instructions should be placed
 	 * @param listing a new-line separated or array sequence of instructions
-	 * @return the block of resulting instructions
+	 * @return an iterator over the resulting instructions
 	 * @throws AssemblySyntaxException a textual instruction is non well-formed
 	 * @throws AssemblySemanticException a well-formed instruction cannot be assembled
 	 * @throws MemoryAccessException there is an issue writing the result to program memory
@@ -196,7 +196,7 @@ public interface Assembler {
 			throws MemoryAccessException;
 
 	/**
-	 * Place an instruction into the bound program.
+	 * Place instruction bytes into the bound program.
 	 * 
 	 * <p>
 	 * This method is not valid without a program binding. Also, this method must be called during a
@@ -204,7 +204,7 @@ public interface Assembler {
 	 * 
 	 * @param insbytes the instruction data
 	 * @param at the location of the start of the instruction
-	 * @return the new {@link Instruction} code unit
+	 * @return an iterator over the disassembled instructions
 	 * @throws MemoryAccessException there is an issue writing the result to program memory
 	 */
 	public InstructionIterator patchProgram(byte[] insbytes, Address at)
