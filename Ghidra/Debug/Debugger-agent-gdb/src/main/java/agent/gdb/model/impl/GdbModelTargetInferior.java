@@ -222,20 +222,34 @@ public class GdbModelTargetInferior
 	protected CompletableFuture<Void> inferiorStarted(Long pid) {
 		parent.getListeners().fire.event(
 			parent, null, TargetEventType.PROCESS_CREATED, "Inferior " + inferior.getId() +
-				" started " + inferior.getExecutable() + " pid=" + inferior.getPid(),
+				" started " + inferior.getExecutable() + " pid=" + pid,
 			List.of(this));
 		AsyncFence fence = new AsyncFence();
 		fence.include(modules.refreshInternal());
 		//fence.include(registers.refreshInternal());
 		fence.include(environment.refreshInternal());
 		fence.include(impl.gdb.listInferiors()); // HACK to update inferior.getExecutable()
-		// NB. Hack also updates inferior.getPid(), so ignore pid parameter
 		return fence.ready().thenAccept(__ -> {
-			changeAttributes(List.of(),
-				Map.ofEntries(Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
-					Map.entry(PID_ATTRIBUTE_NAME, inferior.getPid()),
-					Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
-				"Refresh on started");
+			// NB. Hack also updates inferior.getPid()
+			Long p = pid;
+			if (p == null) {
+				// Might have become null if it quickly terminates
+				// Also, we should save it before waiting on the refresh
+				p = inferior.getPid();
+			}
+			if (p == null) {
+				changeAttributes(List.of(),
+					Map.ofEntries(Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
+						Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
+					"Refresh on started");
+			}
+			else {
+				changeAttributes(List.of(),
+					Map.ofEntries(Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
+						Map.entry(PID_ATTRIBUTE_NAME, p),
+						Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
+					"Refresh on started");
+			}
 		});
 	}
 

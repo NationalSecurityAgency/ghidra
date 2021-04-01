@@ -298,8 +298,8 @@ public class TraceObjectManager {
 	}
 
 	public void removeRegisterBank(TargetObject removed) {
-		ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(removed);
-		rec.removeRegisters((TargetRegisterBank) removed);
+		//ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(removed);
+		//rec.removeRegisters((TargetRegisterBank) removed);
 	}
 
 	public void addRegisterContainer(TargetObject added) {

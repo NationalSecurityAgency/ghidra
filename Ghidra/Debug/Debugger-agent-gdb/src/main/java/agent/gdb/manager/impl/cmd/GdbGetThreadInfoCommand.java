@@ -37,6 +37,11 @@ public class GdbGetThreadInfoCommand extends AbstractGdbCommandWithThreadId<GdbT
 	}
 
 	@Override
+	public Integer impliesCurrentThreadId() {
+		return null;
+	}
+
+	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
 		if (evt instanceof AbstractGdbCompletedCommandEvent) {
 			pending.claim(evt);

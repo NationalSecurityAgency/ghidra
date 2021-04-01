@@ -165,7 +165,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 				TargetObject obj = (TargetObject) val;
 				if (!PathUtils.isLink(object.getPath(), ent.getKey(), obj.getPath())) {
 					ObjectRecord rec = records.get(obj);
-					rec.added();
+					if (rec != null) {
+						rec.added();
+					}
 				}
 			}
 		}

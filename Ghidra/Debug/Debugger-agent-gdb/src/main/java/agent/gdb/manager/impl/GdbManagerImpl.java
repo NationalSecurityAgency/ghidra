@@ -70,7 +70,8 @@ public class GdbManagerImpl implements GdbManager {
 		CLI, MI2;
 	}
 
-	private static final boolean LOG_IO = true;
+	private static final boolean LOG_IO =
+		Boolean.parseBoolean(System.getProperty("agent.gdb.manager.log"));
 	private static final PrintWriter DBG_LOG;
 	static {
 		if (LOG_IO) {
@@ -838,7 +839,7 @@ public class GdbManagerImpl implements GdbManager {
 				throw new RuntimeException("GDB gave an unrecognized response", e);
 			}
 			catch (IllegalArgumentException e) {
-				Msg.warn(this, e.getMessage());
+				Msg.warn(this, "Error processing GDB output", e);
 			}
 		}
 	}
