@@ -1,6 +1,3 @@
 ##VERSION: 2.0
 ##MODULE IP: Jython License
 Module.manifest||GHIDRA||||END|
-build.gradle||GHIDRA||||END|
-src/main/resources/session.py||GHIDRA||||END|
-src/main/sh/execjar.sh||GHIDRA||||END|
