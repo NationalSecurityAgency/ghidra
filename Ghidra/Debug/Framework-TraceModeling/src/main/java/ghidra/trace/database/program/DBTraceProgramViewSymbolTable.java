@@ -29,8 +29,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 
 public class DBTraceProgramViewSymbolTable implements SymbolTable {
 
@@ -569,6 +568,47 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	public Namespace createNameSpace(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
 		return symbolManager.namespaces().add(name, assertTraceNamespace(parent), source);
+	}
+
+	@Override
+	public Namespace getOrCreateNameSpace(Namespace parent, String name, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
+		try (LockHold hold = program.trace.lockWrite()) {
+			Collection<? extends DBTraceNamespaceSymbol> exist =
+				symbolManager.namespaces().getNamed(name);
+			if (!exist.isEmpty()) {
+				return exist.iterator().next();
+			}
+			return createNameSpace(parent, name, source);
+		}
+	}
+
+	@Override
+	public GhidraClass convertNamespaceToClass(Namespace namespace) {
+		if (namespace instanceof GhidraClass) {
+			return (GhidraClass) namespace;
+		}
+		try (LockHold hold = program.trace.lockWrite()) {
+			DBTraceNamespaceSymbol dbNamespace = symbolManager.assertIsMine(namespace);
+
+			String origName = dbNamespace.getName();
+			SourceType origSource = dbNamespace.getSource();
+
+			String tempName = origName + System.nanoTime();
+			DBTraceClassSymbol dbClass =
+				symbolManager.classes().add(tempName, dbNamespace.getParentNamespace(), origSource);
+			for (AbstractDBTraceSymbol child : dbNamespace.getChildren()) {
+				child.setNamespace(dbClass);
+			}
+
+			dbNamespace.delete();
+			dbClass.setName(origName, origSource);
+			return dbClass;
+		}
+		catch (DuplicateNameException | InvalidInputException | IllegalArgumentException
+				| CircularDependencyException e) {
+			throw new AssertException("Unexpected exception creating class from namespace", e);
+		}
 	}
 
 	@Override

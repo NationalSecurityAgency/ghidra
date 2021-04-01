@@ -42,7 +42,7 @@ public class DBTraceFunctionStackFrame implements StackFrame, Unfinished {
 	}
 
 	protected synchronized boolean checkIsValid() {
-		if (function.checkIsValid()) {
+		if (!function.isDeleted()) {
 			if (!valid) {
 				growsNegative = function.getTrace().getBaseCompilerSpec().stackGrowsNegative();
 				variables = function.getVariables(VariableFilter.COMPOUND_STACK_VARIABLE_FILTER);

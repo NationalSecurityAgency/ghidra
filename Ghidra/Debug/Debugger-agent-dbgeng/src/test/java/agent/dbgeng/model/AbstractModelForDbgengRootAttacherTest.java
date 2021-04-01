@@ -15,11 +15,11 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import agent.dbgeng.model.invm.InVmDbgengModelHost;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.test.AbstractDebuggerModelAttacherTest;
@@ -27,13 +27,6 @@ import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengRootAttacherTest
 		extends AbstractDebuggerModelAttacherTest {
-
-	public class InVmModelForDbgengRootAttacherTest extends AbstractModelForDbgengRootAttacherTest {
-		@Override
-		public ModelHost modelHost() throws Throwable {
-			return new InVmDbgengModelHost();
-		}
-	}
 
 	@Override
 	protected TargetObject findProcessContainer() throws Throwable {

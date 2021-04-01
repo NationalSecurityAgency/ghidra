@@ -326,7 +326,10 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		@DBAnnotatedColumn(STORAGE_COLUMN_NAME)
 		static DBObjectColumn STORAGE_COLUMN;
 
-		@DBAnnotatedField(column = STORAGE_COLUMN_NAME, indexed = true, codec = VariableStorageDBFieldCodec.class)
+		@DBAnnotatedField(
+			column = STORAGE_COLUMN_NAME,
+			indexed = true,
+			codec = VariableStorageDBFieldCodec.class)
 		private VariableStorage storage;
 
 		protected final DBTraceSymbolManager manager;
@@ -642,7 +645,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 				view.invalidateCache();
 			}
 
-			if (!globalNamespace.checkIsValid()) {
+			if (globalNamespace.isDeleted()) {
 				throw new AssertionError();
 			}
 		}
@@ -766,7 +769,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		if (dbns.manager != this) {
 			return null;
 		}
-		if (!dbns.checkIsValid()) {
+		if (dbns.isDeleted()) {
 			return null;
 		}
 		if (namespaceStore.contains(dbns)) {
@@ -794,7 +797,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		if (dbSym.manager != this) {
 			return null;
 		}
-		if (!dbSym.checkIsValid()) {
+		if (dbSym.isDeleted()) {
 			return null;
 		}
 		long symbolID = dbSym.getID();
@@ -818,7 +821,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		if (dbFunc.manager != this) {
 			return null;
 		}
-		if (!dbFunc.checkIsValid()) {
+		if (dbFunc.isDeleted()) {
 			return null;
 		}
 		if (functionStore.contains(dbFunc)) {

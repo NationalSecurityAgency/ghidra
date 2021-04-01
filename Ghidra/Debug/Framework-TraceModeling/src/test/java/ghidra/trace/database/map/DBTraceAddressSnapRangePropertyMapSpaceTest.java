@@ -246,7 +246,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 			obj.space1.deleteValue(entry1);
 			assertEquals(0, obj.space1.size());
 			assertTrue(obj.space1.isEmpty());
-			assertFalse(entry1.checkIsValid());
+			assertTrue(entry1.isDeleted());
 
 			try {
 				obj.space1.deleteValue(entry2);
@@ -281,7 +281,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 			assertTrue(obj.space1.remove(entry1));
 			assertTrue(obj.space1.isEmpty());
-			assertFalse(entry1.getValue().checkIsValid());
+			assertTrue(entry1.getValue().isDeleted());
 			assertTrue(obj.space2.remove(entry1)); // TODO: Should match by shape?
 			TODO();
 			assertTrue(obj.space2.isEmpty());
@@ -358,10 +358,10 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 			MyEntry entry1 =
 				obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 			assertEquals(1, obj.space1.size());
-			assertFalse(entry1.isInvalid());
+			assertFalse(entry1.isDeleted());
 
 			obj.space1.clear();
-			assertTrue(entry1.isInvalid());
+			assertTrue(entry1.isDeleted());
 			assertTrue(obj.space1.isEmpty());
 		}
 	}
