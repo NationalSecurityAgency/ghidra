@@ -24,20 +24,20 @@ import ghidra.program.model.address.*;
 import ghidra.util.LockHold;
 
 public interface DBTraceDelegatingManager<M> {
-	interface ExcFunction<T, R, E1 extends Throwable, E2 extends Throwable> {
-		R apply(T t) throws E1, E2;
+	interface ExcFunction<T, R, E extends Throwable> {
+		R apply(T t) throws E;
 	}
 
-	interface ExcConsumer<T, E1 extends Throwable, E2 extends Throwable> {
-		void accept(T t) throws E1, E2;
+	interface ExcConsumer<T, E extends Throwable> {
+		void accept(T t) throws E;
 	}
 
-	interface ExcSupplier<T, E1 extends Throwable, E2 extends Throwable> {
-		T get() throws E1, E2;
+	interface ExcSupplier<T, E extends Throwable> {
+		T get() throws E;
 	}
 
-	interface ExcPredicate<T, E1 extends Throwable, E2 extends Throwable> {
-		boolean test(T t) throws E1, E2;
+	interface ExcPredicate<T, E extends Throwable> {
+		boolean test(T t) throws E;
 	}
 
 	default void checkIsInMemory(AddressSpace space) {
@@ -46,8 +46,8 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <T, E1 extends Throwable, E2 extends Throwable> T delegateWrite(AddressSpace space,
-			ExcFunction<M, T, E1, E2> func) throws E1, E2 {
+	default <T, E extends Throwable> T delegateWrite(AddressSpace space, ExcFunction<M, T, E> func)
+			throws E {
 		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, true);
@@ -55,8 +55,8 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <E1 extends Throwable, E2 extends Throwable> void delegateWriteV(AddressSpace space,
-			ExcConsumer<M, E1, E2> func) throws E1, E2 {
+	default <E extends Throwable> void delegateWriteV(AddressSpace space, ExcConsumer<M, E> func)
+			throws E {
 		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, true);
@@ -72,8 +72,8 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <E1 extends Throwable, E2 extends Throwable> void delegateWriteAll(Iterable<M> spaces,
-			ExcConsumer<M, E1, E2> func) throws E1, E2 {
+	default <E extends Throwable> void delegateWriteAll(Iterable<M> spaces, ExcConsumer<M, E> func)
+			throws E {
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			for (M m : spaces) {
 				func.accept(m);
@@ -81,13 +81,13 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <T, E1 extends Throwable, E2 extends Throwable> T delegateRead(AddressSpace space,
-			ExcFunction<M, T, E1, E2> func) throws E1, E2 {
+	default <T, E extends Throwable> T delegateRead(AddressSpace space,
+			ExcFunction<M, T, E> func) throws E {
 		return delegateRead(space, func, (T) null);
 	}
 
-	default <T, E1 extends Throwable, E2 extends Throwable> T delegateRead(AddressSpace space,
-			ExcFunction<M, T, E1, E2> func, T ifNull) throws E1, E2 {
+	default <T, E extends Throwable> T delegateRead(AddressSpace space,
+			ExcFunction<M, T, E> func, T ifNull) throws E {
 		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
@@ -98,8 +98,8 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <T, E1 extends Throwable, E2 extends Throwable> T delegateRead(AddressSpace space,
-			ExcFunction<M, T, E1, E2> func, ExcSupplier<T, E1, E2> ifNull) throws E1, E2 {
+	default <T, E extends Throwable> T delegateReadOr(AddressSpace space, ExcFunction<M, T, E> func,
+			ExcSupplier<T, E> ifNull) throws E {
 		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(readLock())) {
 			M m = getForSpace(space, false);
@@ -143,8 +143,8 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <E1 extends Throwable> void delegateDeleteV(AddressSpace space,
-			ExcConsumer<M, E1, E1> func) throws E1 {
+	default <E extends Throwable> void delegateDeleteV(AddressSpace space, ExcConsumer<M, E> func)
+			throws E {
 		checkIsInMemory(space);
 		try (LockHold hold = LockHold.lock(writeLock())) {
 			M m = getForSpace(space, false);
@@ -241,8 +241,8 @@ public interface DBTraceDelegatingManager<M> {
 	 * @param func an address set getter for each delegate
 	 * @return the unioned results
 	 */
-	default <E1 extends Throwable, E2 extends Throwable> AddressSetView delegateAddressSet(
-			Iterable<M> spaces, ExcFunction<M, AddressSetView, E1, E2> func) throws E1, E2 {
+	default <E extends Throwable> AddressSetView delegateAddressSet(
+			Iterable<M> spaces, ExcFunction<M, AddressSetView, E> func) throws E {
 		try (LockHold hold = LockHold.lock(readLock())) {
 			AddressSet result = new AddressSet();
 			for (M m : spaces) {
@@ -252,8 +252,8 @@ public interface DBTraceDelegatingManager<M> {
 		}
 	}
 
-	default <E1 extends Throwable, E2 extends Throwable> boolean delegateAny(Iterable<M> spaces,
-			ExcPredicate<M, E1, E2> func) throws E1, E2 {
+	default <E extends Throwable> boolean delegateAny(Iterable<M> spaces, ExcPredicate<M, E> func)
+			throws E {
 		try (LockHold hold = LockHold.lock(readLock())) {
 			for (M m : spaces) {
 				if (func.test(m)) {

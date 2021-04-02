@@ -44,18 +44,13 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.MathUtilities;
 import ghidra.util.UnionAddressSetView;
 import ghidra.util.database.DBOpenMode;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceMemoryManager
 		extends AbstractDBTraceSpaceBasedManager<DBTraceMemorySpace, DBTraceMemoryRegisterSpace>
 		implements TraceMemoryManager, DBTraceDelegatingManager<DBTraceMemorySpace> {
 	protected static final String NAME = "Memory";
-
-	interface AddRegionFunction extends ExcFunction<DBTraceMemorySpace, DBTraceMemoryRegion, //
-			TraceOverlappedRegionException, DuplicateNameException> {
-	}
 
 	public DBTraceMemoryManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
@@ -119,8 +114,16 @@ public class DBTraceMemoryManager
 	public DBTraceMemoryRegion addRegion(String path, Range<Long> lifespan,
 			AddressRange range, Collection<TraceMemoryFlag> flags)
 			throws TraceOverlappedRegionException, DuplicateNameException {
-		return delegateWrite(range.getAddressSpace(),
-			(AddRegionFunction) m -> m.addRegion(path, lifespan, range, flags));
+		try {
+			return delegateWrite(range.getAddressSpace(),
+				m -> m.addRegion(path, lifespan, range, flags));
+		}
+		catch (TraceOverlappedRegionException | DuplicateNameException e) {
+			throw e;
+		}
+		catch (UsrException e) {
+			throw new AssertionError(e); // Should never happen
+		}
 	}
 
 	@Override
