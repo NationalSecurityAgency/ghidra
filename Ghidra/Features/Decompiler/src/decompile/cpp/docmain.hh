@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +37,7 @@
   the main code workflow.
 
   The library provides its own Register
-  Transfer Languate (RTL), referred to internally as \b p-code,
+  Transfer Language (RTL), referred to internally as \b p-code,
   which is designed specifically for reverse engineering
   applications.  The disassembly of processor specific machine-code
   languages, and subsequent translation into \b p-code, forms
@@ -275,7 +274,7 @@
      about the variables it analyzes, as this kind of
      information is generally not present in the input
      binary.  Some information can be gathered about a
-     variable, based on the instructions it is used in (.i.e
+     variable, based on the instructions it is used in (i.e.
      if it is used in a floating point instruction).  Other
      information about type might be available from header
      files or from the user.  Once this is gathered, the
@@ -301,7 +300,7 @@
      compiler would, but to simplify and normalize for
      easier understanding and recognition by human analysts
      (and follow on machine processing).  Typical examples
-     of transforms include, copy propagation, constant
+     of transforms include: copy propagation, constant
      propagation, collecting terms, cancellation of
      operators and other algebraic simplifications, undoing
      multiplication and division optimizations, commuting
@@ -373,7 +372,7 @@
 
   Even after the initial merging of variables in phase 1,
   there are generally still too many for normal C code.  So
-  the decompiler, does additional, more speculative merging.
+  the decompiler does additional, more speculative merging.
   It first tries to merge the inputs and outputs of copy
   operations, and then the inputs and outputs of more
   general operations.  And finally, merging is attempted on
