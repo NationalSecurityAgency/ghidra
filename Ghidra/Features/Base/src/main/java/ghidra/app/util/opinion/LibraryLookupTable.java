@@ -143,7 +143,7 @@ public class LibraryLookupTable {
 		String company = props.getString("CompanyName", "");
 		String version = props.getString("FileVersion", "");
 
-		boolean save = company != null && company.toLowerCase().indexOf("microsoft") >= 0;
+		boolean save = true; // company != null && company.toLowerCase().indexOf("microsoft") >= 0;
 		if (!save) {
 			filesToDeleteList.add(file);
 		}

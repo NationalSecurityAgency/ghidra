@@ -1,3 +1,4 @@
+
 /* ###
  * IP: GHIDRA
  *
@@ -69,13 +70,14 @@ public class FixPascalCallingConvention extends GhidraScript {
 			}
 
 			Iterator<Function> functions = null;
-			
+
 			// add function if pointing at its entry point ...
 			if (isAddressAtFunctionStart(fnMgr, currentAddress)) {
 				functions = fnMgr.getFunctionsOverlapping(new AddressSet(currentAddress));
 			}
-			
-			// ... if not pointing at start of any function, try those currently selected ...
+
+			// ... if not pointing at start of any function, try those currently selected
+			// ...
 			if (((functions == null) || !functions.hasNext()) && (currentSelection != null)) {
 				functions = fnMgr.getFunctionsOverlapping(currentSelection);
 			}
@@ -84,7 +86,7 @@ public class FixPascalCallingConvention extends GhidraScript {
 			if ((functions == null) || !functions.hasNext()) {
 				functions = fnMgr.getFunctions(true);
 			}
-			
+
 			// update details
 			doRun(functions);
 
@@ -110,10 +112,10 @@ public class FixPascalCallingConvention extends GhidraScript {
 	 */
 	private boolean isAddressAtFunctionStart(FunctionManager fnMgr, Address address) {
 		boolean isAtStart = false;
-		
+
 		if ((address != null) && fnMgr.isInFunction(address)) {
 			Function func = fnMgr.getFunctionContaining(address);
-			isAtStart  = ((func != null) && (func.getEntryPoint().compareTo(address) == 0));
+			isAtStart = ((func != null) && (func.getEntryPoint().compareTo(address) == 0));
 		}
 
 		return isAtStart;
@@ -147,57 +149,58 @@ public class FixPascalCallingConvention extends GhidraScript {
 	 */
 	protected void doRun(Function func) {
 
-		println("Before: " + func.getName() + ": " + func.getCallingConventionName()
-				+ " and isExternal()=" + func.isExternal() + ", isThunk()=" + func.isThunk()
-				+ getDescription(func));
+		try {
+			println("Before: " + func.getName() + ": " + func.getCallingConventionName()
+					+ " and isExternal()=" + func.isExternal() + ", isThunk()=" + func.isThunk()
+					+ getDescription(func));
 
-		if (!func.getCallingConventionName().contains(GenericCallingConvention.pascal.name())
-				&& (func.isExternal() || func.isThunk())) {
-			try {
-				++cntConvertionTotal;
-				func.setCallingConvention(PASCAL16FAR);
-				++cntConvertionChanged;
-			} catch (InvalidInputException e) {
-				warningMessages.add("Failed to change function '" + func.getName() + "' from "
-						+ func.getCallingConventionName() + " to " + PASCAL16FAR + ".");
-			}
-		}
-
-		// ensure External and Thunks were updated above!
-		if (!func.getCallingConventionName().contains(GenericCallingConvention.pascal.name())) {
-			return;
-		}
-
-		// only applicable to functions with 2 or more parameters
-		int paramCnt = func.getParameterCount();
-		if (paramCnt < 2) {
-			return;
-		}
-
-		int firstLoc = func.getParameter(0).getStackOffset();
-		int lastLoc = func.getParameter(paramCnt - 1).getStackOffset();
-
-		if (lastLoc < firstLoc) {
-			return;
-		}
-
-		++cntFnsUpdated;
-
-		List<ParameterImpl> newParams = new ArrayList<>();
-
-		for (int paramPos = paramCnt - 1; paramPos >= 0; --paramPos) {
-			++cntParamsTotal;
-			Parameter param = func.getParameter(paramPos);
-			Varnode varnode = param.getLastStorageVarnode();
-			Address addr = varnode.getAddress();
-			if (!addr.isStackAddress()) {
-				println("Param '" + param.getName() + "' isn't on the stack!");
-				continue;
+			if (!func.getCallingConventionName().contains(GenericCallingConvention.pascal.name())
+					&& (func.isExternal() || func.isThunk())) {
+				try {
+					++cntConvertionTotal;
+					func.setCallingConvention(PASCAL16FAR);
+					++cntConvertionChanged;
+				} catch (InvalidInputException e) {
+					warningMessages.add("Failed to change function '" + func.getName() + "' from "
+							+ func.getCallingConventionName() + " to " + PASCAL16FAR + ".");
+				}
 			}
 
-			try {
-				VariableStorage storage = new VariableStorage(currentProgram, firstLoc,
-						varnode.getSize());
+			// ensure External and Thunks were updated above!
+			if (!func.getCallingConventionName().contains(GenericCallingConvention.pascal.name())) {
+				return;
+			}
+
+			// only applicable to functions with 2 or more parameters
+			int paramCnt = func.getParameterCount();
+			if (paramCnt < 2) {
+				return;
+			}
+
+			int firstLoc = func.getParameter(0).getStackOffset();
+			int lastLoc = func.getParameter(paramCnt - 1).getStackOffset();
+			// is already reversed
+			if (lastLoc < firstLoc) {
+				return;
+			}
+
+			++cntFnsUpdated;
+
+			List<ParameterImpl> newParams = new ArrayList<>();
+
+			for (int paramPos = paramCnt - 1; paramPos >= 0; --paramPos) {
+				++cntParamsTotal;
+				Parameter param = func.getParameter(paramPos);
+				Varnode varnode = param.getLastStorageVarnode();
+				Address addr = varnode.getAddress();
+				if (!addr.isStackAddress()) {
+					println("Param '" + param.getName() + "' isn't on the stack!");
+					continue;
+				}
+
+				try {
+					VariableStorage storage = new VariableStorage(currentProgram, firstLoc,
+							varnode.getSize());
 //				if (param instanceof ParameterDB) {
 //					ParameterDB paramDB = (ParameterDB) param;
 //					paramDB.setDynamicStorage(storage);
@@ -205,39 +208,43 @@ public class FixPascalCallingConvention extends GhidraScript {
 //					println("SCREWED");
 //				}
 
-				ParameterImpl pi = new ParameterImpl(param.getName(), param.getDataType(), storage,
-						currentProgram);
+					ParameterImpl pi = new ParameterImpl(param.getName(), param.getDataType(),
+							storage, currentProgram);
 
-				newParams.add(pi);
+					newParams.add(pi);
 
-				firstLoc += varnode.getSize();
+					firstLoc += varnode.getSize();
 
-				func.removeParameter(paramPos);
-			} catch (InvalidInputException e) {
-				warningMessages.add("Unable to adjust storage location for function "
-						+ func.getName() + ", parameter " + param.getName() + ".");
+					func.removeParameter(paramPos); // Had to use!
+				} catch (InvalidInputException e) {
+					warningMessages.add("Unable to adjust storage location for function "
+							+ func.getName() + ", parameter " + param.getName() + ".");
+				}
 			}
+
+			SourceType source = func.getSignatureSource();
+			StringBuffer buf = new StringBuffer();
+			for (int paramPos = paramCnt - 1; paramPos >= 0; --paramPos) {
+				ParameterImpl param = newParams.get(paramPos);
+				try {
+					buf.append(" ").append(param.getName()).append("[")
+							.append(param.getLastStorageVarnode().toString()).append("]");
+					func.setCustomVariableStorage(true); // TODO: should not need to be "Custom"!
+					func.addParameter(param, source); // Had to use!
+
+					++cntParamsReplaced;
+				} catch (DuplicateNameException | InvalidInputException e) {
+					warningMessages.add("Failed to reinsert function " + func.getName()
+							+ " parameter " + param.getName() + ".");
+				}
+			}
+			println("Params: " + buf.toString());
+
+		} finally {
+			println(" After: " + func.getName() + ":" + getDescription(func));
 		}
 
-		SourceType source = func.getSignatureSource();
-		StringBuffer buf = new StringBuffer();
-		for (int paramPos = paramCnt - 1; paramPos >= 0; --paramPos) {
-			ParameterImpl param = newParams.get(paramPos);
-			try {
-				buf.append(" ").append(param.getName()).append("[")
-						.append(param.getLastStorageVarnode().toString()).append("]");
-				func.setCustomVariableStorage(true); // TODO: should not need to be "Custom"!
-				func.addParameter(param, source);
-
-				++cntParamsReplaced;
-			} catch (DuplicateNameException | InvalidInputException e) {
-				warningMessages.add("Failed to reinsert function " + func.getName() + " parameter "
-						+ param.getName() + ".");
-			}
-		}
-		println("Params: " + buf.toString());
-		println(" After: " + func.getName() + ":" + getDescription(func));
-
+//		The code below failed.
 //		try {
 //			func.replaceParameters(newParams, FunctionUpdateType.CUSTOM_STORAGE, true, func.getSignatureSource());
 //			cntParamsReplaced += newParams.size();
