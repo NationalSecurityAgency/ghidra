@@ -261,7 +261,7 @@ class XmlExporter:
         elif ch == '\'' : return "&apos;"
         elif ch == '"' :  return "&quot;"
         elif ch == '\x7F': return ''
-        elif ord(ch) > 0x7F: return '&#x' + format((ord(ch),"x")) + ";"
+        elif ord(ch) > 0x7F: return '&#x' + format(ord(ch),"x") + ";"
         return ch
     
 
