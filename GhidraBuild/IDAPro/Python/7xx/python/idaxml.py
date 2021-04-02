@@ -647,7 +647,7 @@ class XmlExporter(IdaXml):
         # tag_remove seems to be losing last character
         # work around is to add a space
         cmt_text = ida_lines.tag_remove(cmt + ' ')
-        self.write_text(cmt_text)
+        self.write_text(cmt_text.decode('utf-8'))
         self.end_element(COMMENT, False)
 
 
