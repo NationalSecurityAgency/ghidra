@@ -4747,7 +4747,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
 	  trial.markNoUse();
       }
       else if (ancestorReal.execute(op,slot,&trial,false)) {
-	if (data.ancestorOpUse(maxancestor,vn,op,trial))
+	if (data.ancestorOpUse(maxancestor,vn,op,trial,0))
 	  trial.markActive();
 	else
 	  trial.markInactive();
@@ -4757,7 +4757,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
     }
     else {
       if (ancestorReal.execute(op,slot,&trial,true)) {
-	if (data.ancestorOpUse(maxancestor,vn,op,trial)) {
+	if (data.ancestorOpUse(maxancestor,vn,op,trial,0)) {
 	  trial.markActive();
 	  if (trial.hasCondExeEffect())
 	    activeinput.markNeedsFinalCheck();
