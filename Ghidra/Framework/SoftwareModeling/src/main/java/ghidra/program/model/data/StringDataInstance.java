@@ -162,7 +162,7 @@ public class StringDataInstance {
 			return ((AbstractStringDataType) dt).getStringDataInstance(data, data,
 				data.getLength());
 		}
-		if (dt instanceof Array && !data.isInitializedMemory()) {
+		if (dt instanceof Array && data.isInitializedMemory()) {
 			ArrayStringable arrayStringable =
 				ArrayStringable.getArrayStringable(((Array) dt).getDataType());
 			if (arrayStringable != null && arrayStringable.hasStringValue(data)) {
@@ -918,8 +918,9 @@ public class StringDataInstance {
 		if (byteOffset + charSize > stringBytes.length) {
 			return false;
 		}
-		long origCodePointValue = DataConverter.getInstance(buf.isBigEndian()).getValue(stringBytes,
-			byteOffset, charSize);
+		long origCodePointValue = DataConverter.getInstance(buf.isBigEndian())
+				.getValue(stringBytes,
+					byteOffset, charSize);
 		return origCodePointValue == StringUtilities.UNICODE_REPLACEMENT;
 	}
 
