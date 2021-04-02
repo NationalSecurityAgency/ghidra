@@ -17,6 +17,7 @@ src/decompile/datatests/forloop_thruspecial.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_varused.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_withskip.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
+src/decompile/datatests/multiret.xml||GHIDRA||||END|
 src/decompile/datatests/namespace.xml||GHIDRA||||END|
 src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
