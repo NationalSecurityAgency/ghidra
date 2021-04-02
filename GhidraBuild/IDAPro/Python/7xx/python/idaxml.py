@@ -2395,7 +2395,7 @@ class XmlImporter(IdaXml):
             # overlayed addresses not currently handled
             return BADADDR
         elif ':' in addrstr:
-            [segstr, offset_str] = string.split(addrstr,':')
+            [segstr, offset_str] = str.split(addrstr,':')
             offset = int(offset_str,16)
             if self.is_int(segstr) == True:
                 sgmt = int(segstr,16)
@@ -3239,7 +3239,7 @@ class XmlImporter(IdaXml):
             idc.warning(msg)
             return
         elif ':' in addrstr:
-            [seg_str, offset_str] = string.split(addrstr,':')
+            [seg_str, offset_str] = str.split(addrstr,':')
             offset = int(offset_str, 16)
             if self.is_int(seg_str):
                 base = int(seg_str, 16)
