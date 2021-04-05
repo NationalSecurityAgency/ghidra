@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.analysis;
 import ghidra.app.services.*;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
@@ -41,6 +40,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
+	private static final AddressSetView EXTERNAL_SET = new AddressSet(
+		AddressSpace.EXTERNAL_SPACE.getMinAddress(), AddressSpace.EXTERNAL_SPACE.getMaxAddress());
+
 	public AbstractDemanglerAnalyzer(String name, String description) {
 		super(name, description, AnalyzerType.BYTE_ANALYZER);
 		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before().before());
@@ -59,6 +61,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		try {
 			monitor.setIndeterminate(true);
+			// NOTE: demangling of Externals may lose mangled name if original
+			// imported name has already been assigned to the External symbol (e.g., ordinal based name)
 			return doAdded(program, set, monitor, log);
 		}
 		finally {
@@ -75,18 +79,42 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			log.appendMsg(getName(), "Invalid demangler options--cannot demangle");
 			return false;
 		}
+		
+		// Demangle external symbols after memory symbols.
+		// This is done to compensate for cases where the mangled name on externals may be lost
+		// after demangling when an alternate Ordinal symbol exists.  The external mangled
+		// name is helpful in preserving thunk relationships when a mangled symbols have been
+		// placed on a thunk.  It is assumed that analyzer is presented with entire
+		// EXTERNAL space in set (all or none).
+		boolean demangleExternals = set.contains(EXTERNAL_SET.getMinAddress());
+		if (demangleExternals) {
+			set = set.subtract(EXTERNAL_SET);
+		}
 
-		int count = 0;
+		String baseMonitorMessage = monitor.getMessage();
+		int memorySymbolCount =
+			demangleSymbols(program, set, 0, baseMonitorMessage, options, log, monitor);
+		if (demangleExternals) {
+			// process external symbols last
+			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, baseMonitorMessage, options,
+				log, monitor);
+		}
 
-		String defaultMessage = monitor.getMessage();
+		return true;
+	}
 
+	private int demangleSymbols(Program program, AddressSetView set, int initialCount,
+			String baseMonitorMessage, DemanglerOptions options, MessageLog log,
+			TaskMonitor monitor) throws CancelledException {
+
+		int count = initialCount;
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
 			monitor.checkCanceled();
 
 			if (++count % 100 == 0) {
-				monitor.setMessage(defaultMessage + " - " + count + " symbols");
+				monitor.setMessage(baseMonitorMessage + " - " + count + " symbols");
 			}
 
 			Symbol symbol = it.next();
@@ -101,8 +129,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 				apply(program, address, demangled, options, log, monitor);
 			}
 		}
-
-		return true;
+		return count;
 	}
 
 	/**
@@ -152,10 +179,13 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		// Someone has already added arguments or return to the function signature
+		// Someone has already added arguments or return to the function signature.
+		// Treatment of thunks must be handled later since thunk relationship may 
+		// need to be broken
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function function = (Function) symbol.getObject();
-			if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
+			if (!function.isThunk() &&
+				function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
 				return true;
 			}
 		}
