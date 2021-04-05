@@ -31,11 +31,8 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 
-@TargetObjectSchemaInfo(
-	name = "Inferior",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
+@TargetObjectSchemaInfo(name = "Inferior", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer>
@@ -138,10 +135,7 @@ public class GdbModelTargetInferior
 		return threads;
 	}
 
-	@TargetAttributeType(
-		name = GdbModelTargetBreakpointLocationContainer.NAME,
-		required = true,
-		fixed = true)
+	@TargetAttributeType(name = GdbModelTargetBreakpointLocationContainer.NAME, required = true, fixed = true)
 	public GdbModelTargetBreakpointLocationContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -220,9 +214,8 @@ public class GdbModelTargetInferior
 	}
 
 	protected CompletableFuture<Void> inferiorStarted(Long pid) {
-		parent.getListeners().fire.event(
-			parent, null, TargetEventType.PROCESS_CREATED, "Inferior " + inferior.getId() +
-				" started " + inferior.getExecutable() + " pid=" + pid,
+		parent.getListeners().fire.event(parent, null, TargetEventType.PROCESS_CREATED,
+			"Inferior " + inferior.getId() + " started " + inferior.getExecutable() + " pid=" + pid,
 			List.of(this));
 		AsyncFence fence = new AsyncFence();
 		fence.include(modules.refreshInternal());
@@ -264,7 +257,7 @@ public class GdbModelTargetInferior
 		}
 		else {
 			changeAttributes(List.of(), Map.of( //
-				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
+				STATE_ATTRIBUTE_NAME, state = TargetExecutionState.TERMINATED, //
 				DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 			), "Exited");
 		}
@@ -292,15 +285,13 @@ public class GdbModelTargetInferior
 			}
 			gatherThreads(params, sco.getAffectedThreads());
 			impl.session.getListeners().fire.event(impl.session, targetEventThread,
-				TargetEventType.BREAKPOINT_HIT,
-				bpHit.desc(), params);
+				TargetEventType.BREAKPOINT_HIT, bpHit.desc(), params);
 		}
 		else if (reason instanceof GdbEndSteppingRangeReason) {
 			List<Object> params = new ArrayList<>();
 			gatherThreads(params, sco.getAffectedThreads());
 			impl.session.getListeners().fire.event(impl.session, targetEventThread,
-				TargetEventType.STEP_COMPLETED,
-				reason.desc(), params);
+				TargetEventType.STEP_COMPLETED, reason.desc(), params);
 		}
 		else if (reason instanceof GdbSignalReceivedReason) {
 			GdbSignalReceivedReason signal = (GdbSignalReceivedReason) reason;
@@ -308,15 +299,13 @@ public class GdbModelTargetInferior
 			params.add(signal.getSignalName());
 			gatherThreads(params, sco.getAffectedThreads());
 			impl.session.getListeners().fire.event(impl.session, targetEventThread,
-				TargetEventType.SIGNAL,
-				reason.desc(), params);
+				TargetEventType.SIGNAL, reason.desc(), params);
 		}
 		else {
 			List<Object> params = new ArrayList<>();
 			gatherThreads(params, sco.getAffectedThreads());
 			impl.session.getListeners().fire.event(impl.session, targetEventThread,
-				TargetEventType.STOPPED,
-				reason.desc(), params);
+				TargetEventType.STOPPED, reason.desc(), params);
 		}
 	}
 

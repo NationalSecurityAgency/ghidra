@@ -384,6 +384,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return curFocus;
 	}
 
+	public void setCurrentFocus(TargetObject focused) {
+		curFocus = focused;
+	}
+
 	@Override
 	public CompletableFuture<Boolean> requestFocus(TargetObject focus) {
 		if (!isSupportsFocus()) {

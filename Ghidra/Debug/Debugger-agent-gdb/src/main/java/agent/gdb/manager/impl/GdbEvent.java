@@ -23,7 +23,7 @@ import agent.gdb.manager.GdbState;
  *
  * @param <T> the type of parsed information detailing the event
  */
-public interface GdbEvent<T> {
+public interface GdbEvent<T> extends GdbCause {
 
 	/**
 	 * Get the information detailing the event

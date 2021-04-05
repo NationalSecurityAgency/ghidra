@@ -258,7 +258,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 			return;
 		}
 		if (PathUtils.isAncestor(target.getPath(), focused.getPath())) {
-			curFocus = focused;
+			recorder.setCurrentFocus(focused);
 		}
 	}
 

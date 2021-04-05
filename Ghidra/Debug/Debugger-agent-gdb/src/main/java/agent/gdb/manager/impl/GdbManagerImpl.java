@@ -70,7 +70,7 @@ public class GdbManagerImpl implements GdbManager {
 		CLI, MI2;
 	}
 
-	private static final boolean LOG_IO =
+	private static final boolean LOG_IO = true |
 		Boolean.parseBoolean(System.getProperty("agent.gdb.manager.log"));
 	private static final PrintWriter DBG_LOG;
 	static {
@@ -748,7 +748,12 @@ public class GdbManagerImpl implements GdbManager {
 		Integer tid = curCmd.impliesCurrentThreadId();
 		GdbThreadImpl thread = null;
 		if (tid != null) {
-			thread = getThread(tid);
+			thread = threads.get(tid);
+			if (thread == null) {
+				Msg.info(this, "Thread " + tid + " no longer exists");
+				return;
+				// Presumably, some event will have announced the new current thread
+			}
 		}
 		Integer level = curCmd.impliesCurrentFrameId();
 		GdbStackFrameImpl frame = null;
@@ -1345,7 +1350,7 @@ public class GdbManagerImpl implements GdbManager {
 		}
 		if (evtThread != null) {
 			GdbStackFrameImpl frame = evt.getFrame(evtThread);
-			event(() -> listenersEvent.fire.threadSelected(evtThread, frame, evt.getCause()),
+			event(() -> listenersEvent.fire.threadSelected(evtThread, frame, evt),
 				"inferiorState-stopped");
 		}
 	}

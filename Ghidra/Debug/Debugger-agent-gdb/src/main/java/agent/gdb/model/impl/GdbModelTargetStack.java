@@ -74,6 +74,10 @@ public class GdbModelTargetStack extends
 		});
 	}
 
+	protected synchronized GdbModelTargetStackFrame getTargetFrameByLevel(int i) {
+		return framesByLevel.get(i);
+	}
+
 	protected void invalidateRegisterCaches() {
 		for (GdbModelTargetStackFrame frame : framesByLevel.values()) {
 			frame.invalidateRegisterCaches();

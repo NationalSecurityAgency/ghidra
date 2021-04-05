@@ -181,7 +181,13 @@ public class GdbModelTargetStackFrameRegisterContainer
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
 		return requestElements(false).exceptionally(ex -> {
-			impl.reportError(this, "Trouble updating registers on state change", ex);
+			if (!valid) {
+				Msg.info(this,
+					"Ignoring error when refreshing now-invalid thread registers: " + ex);
+			}
+			else {
+				impl.reportError(this, "Trouble updating registers on state change", ex);
+			}
 			return null;
 		});
 	}

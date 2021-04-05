@@ -49,6 +49,6 @@ public abstract class AbstractModelForGdbThreadFocusTest extends AbstractDebugge
 
 	@Override
 	protected List<String> getExpectedDefaultFocus() {
-		return PathUtils.parse("Inferiors[2].Threads[2]");
+		return PathUtils.parse("Inferiors[2].Threads[2].Stack[0]");
 	}
 }

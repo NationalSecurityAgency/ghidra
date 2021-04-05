@@ -18,9 +18,11 @@ package agent.gdb.model.impl;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import agent.gdb.manager.*;
+import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.Output;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbReason;
 import ghidra.async.AsyncUtils;
@@ -52,7 +54,6 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 	protected final GdbModelTargetBreakpointContainer breakpoints;
 
 	private boolean accessible = true;
-	protected AtomicInteger focusFreezeCount = new AtomicInteger();
 	protected GdbModelSelectableObject focus;
 
 	protected String debugger = "gdb"; // Used by GdbModelTargetEnvironment
@@ -148,8 +149,32 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		// Otherwise, we'll presumably get the =thread-selected event 
 	}
 
+	protected boolean isFocusInternallyDriven(GdbCause cause) {
+		if (cause == null || cause == GdbCause.Causes.UNCLAIMED) {
+			return false;
+		}
+		if (cause instanceof GdbEvent<?>) {
+			return false;
+		}
+		if (cause instanceof GdbPendingCommand<?>) {
+			GdbPendingCommand<?> pcmd = (GdbPendingCommand<?>) cause;
+			GdbCommand<?> cmd = pcmd.getCommand();
+			if (cmd instanceof GdbConsoleExecCommand) {
+				GdbConsoleExecCommand exec = (GdbConsoleExecCommand) cmd;
+				if (exec.getOutputTo() == Output.CAPTURE) {
+					return true;
+				}
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public void threadSelected(GdbThread thread, GdbStackFrame frame, GdbCause cause) {
+		if (isFocusInternallyDriven(cause)) {
+			return;
+		}
 		GdbModelTargetInferior inf = inferiors.getTargetInferior(thread.getInferior());
 		GdbModelTargetThread t = inf.threads.getTargetThread(thread);
 		if (frame == null) {
@@ -228,7 +253,13 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		while (cur != null) {
 			if (cur instanceof GdbModelSelectableObject) {
 				GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
-				return sel.select();
+				/**
+				 * Have to call setFocus here, since the call to select() is considered
+				 * "internally-driven"
+				 */
+				return sel.select().thenRun(() -> {
+					setFocus(sel);
+				});
 			}
 			cur = cur.getParent();
 		}
@@ -239,20 +270,10 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		inferiors.invalidateMemoryAndRegisterCaches();
 	}
 
-	protected void freezeFocusUpdates() {
-		focusFreezeCount.incrementAndGet();
-	}
-
-	protected void thawFocusUpdates() {
-		focusFreezeCount.decrementAndGet();
-	}
-
 	protected void setFocus(GdbModelSelectableObject focus) {
-		if (focusFreezeCount.get() == 0) {
-			changeAttributes(List.of(), Map.of( //
-				FOCUS_ATTRIBUTE_NAME, this.focus = focus //
-			), "Focus changed");
-		}
+		changeAttributes(List.of(), Map.of( //
+			FOCUS_ATTRIBUTE_NAME, this.focus = focus //
+		), "Focus changed");
 	}
 
 	@Override
@@ -263,16 +284,29 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 	@Override
 	public void inferiorStateChanged(GdbInferior inf, Collection<GdbThread> threads, GdbState state,
 			GdbThread thread, GdbCause cause, GdbReason reason) {
+		/**
+		 * TODO: It might be nice if the manager gave a manager-level callback for *stopped and
+		 * *running events. Without that, I can't really specify an action to execute, *after* all
+		 * inferiors have completed the stateChanged routines.
+		 */
 		GdbStateChangeRecord sco =
 			new GdbStateChangeRecord(inf, threads, state, thread, cause, reason);
-		GdbInferior toFocus = thread == null ? impl.gdb.currentInferior() : thread.getInferior();
-		freezeFocusUpdates();
+
 		CompletableFuture<Void> infUpdates = CompletableFuture.allOf(
 			breakpoints.stateChanged(sco),
 			inferiors.stateChanged(sco));
 		infUpdates.whenComplete((v, t) -> {
-			thawFocusUpdates();
-			toFocus.select();
+			if (thread == null) {
+				return;
+			}
+			/**
+			 * I have to do this for all inferiors, because I don't know in what order they will
+			 * complete.
+			 */
+			thread.select().exceptionally(ex -> {
+				impl.reportError(this, "Could not restore event thread", ex);
+				return null;
+			});
 		});
 	}
 }

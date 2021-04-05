@@ -94,8 +94,16 @@ public class GdbModelTargetModuleContainer
 		for (GdbModelTargetModule mod : modules) {
 			fence.include(mod.init());
 		}
+
+		/**
+		 * NB. Modules may have changed by the time the fence completes. We'll just remove invalid
+		 * modules, since any additions should cause a follow-on update.
+		 */
 		return fence.ready().thenAccept(__ -> {
-			changeElements(List.of(), modules, "Refreshed");
+			List<GdbModelTargetModule> validOnly = modules.stream()
+					.filter(m -> m.isValid())
+					.collect(Collectors.toList());
+			changeElements(List.of(), validOnly, "Refreshed");
 		});
 	}
 

@@ -20,6 +20,7 @@ import agent.gdb.manager.impl.GdbPendingCommand;
 /**
  * Identifies the cause of an event emitted by GDB
  * 
+ * <p>
  * This is not a concept native to GDB. Rather, it is a means to distinguish events that result from
  * commands issued by the {@link GdbManager} from those issued by the user or some other means. For
  * example, a call to {@link GdbManager#addInferior()} will emit a

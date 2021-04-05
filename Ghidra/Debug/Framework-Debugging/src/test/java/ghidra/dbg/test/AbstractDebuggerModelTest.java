@@ -291,7 +291,8 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 		TargetDetachable detachable = m.suitable(TargetDetachable.class, process.getPath());
 		waitAcc(detachable);
 		waitOn(detachable.detach());
-		assertFalse(DebugModelConventions.isProcessAlive(process));
+		retryVoid(() -> assertFalse(DebugModelConventions.isProcessAlive(process)),
+			List.of(AssertionError.class));
 	}
 
 	protected void runTestKill(TargetObject container, DebuggerTestSpecimen specimen)
@@ -300,7 +301,8 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 		TargetKillable killable = m.suitable(TargetKillable.class, process.getPath());
 		waitAcc(killable);
 		waitOn(killable.kill());
-		assertFalse(DebugModelConventions.isProcessAlive(process));
+		retryVoid(() -> assertFalse(DebugModelConventions.isProcessAlive(process)),
+			List.of(AssertionError.class));
 	}
 
 	protected void runTestResumeTerminates(TargetObject container, DebuggerTestSpecimen specimen)

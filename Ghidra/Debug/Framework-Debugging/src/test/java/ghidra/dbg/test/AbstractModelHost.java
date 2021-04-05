@@ -35,7 +35,8 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 	public DebuggerConsole console;
 
 	protected boolean validateCallbacks = true;
-	protected boolean validateEvents = true;
+	// NB. GDB's modules actually aren't "unloaded" until the inferior's file is replaced
+	protected boolean validateEvents = false;
 	protected boolean provideConsole = true;
 
 	@Override
@@ -43,8 +44,7 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 		DebuggerModelFactory factory = getModelFactory();
 		for (Map.Entry<String, Object> opt : options.entrySet()) {
 			@SuppressWarnings("unchecked")
-			Property<Object> property =
-				(Property<Object>) factory.getOptions().get(opt.getKey());
+			Property<Object> property = (Property<Object>) factory.getOptions().get(opt.getKey());
 			property.setValue(opt.getValue());
 		}
 		DebuggerObjectModel model = waitOn(factory.build());

@@ -97,7 +97,10 @@ public class GdbModuleImpl implements GdbModule {
 			}
 			return AsyncUtils.NIL;
 		}).thenAccept(__ -> {
-			assert loadSections.isDone();
+			if (!loadSections.isDone()) {
+				Msg.warn(this,
+					"Module's sections still not known: " + name + ". Probably got unloaded.");
+			}
 		});
 	}
 

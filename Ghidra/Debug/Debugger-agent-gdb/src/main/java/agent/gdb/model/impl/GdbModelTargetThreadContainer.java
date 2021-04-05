@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.gdb.manager.GdbInferior;
-import agent.gdb.manager.GdbThread;
+import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbBreakpointHitReason;
 import ghidra.async.AsyncFence;
@@ -104,6 +103,15 @@ public class GdbModelTargetThreadContainer
 	}
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
+		/**
+		 * No sense refreshing anything unless we're stopped. Worse yet, because of fun timing
+		 * issues, we often see RUNNING just a little late, since the callbacks are all issued on a
+		 * separate thread. If that RUNNING is received after the manager has processed a
+		 * =thread-exited, we will wind up invalidating that thread early.
+		 */
+		if (sco.getState() != GdbState.STOPPED) {
+			return AsyncUtils.NIL;
+		}
 		return requestElements(false).thenCompose(__ -> {
 			AsyncFence fence = new AsyncFence();
 			for (GdbModelTargetThread modelThread : threadsById.values()) {

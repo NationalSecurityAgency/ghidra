@@ -52,8 +52,9 @@ public class GdbStackFrameImpl implements GdbStackFrame {
 
 	@Override
 	public String toString() {
-		return "<GdbStackFrame: level=" + level + ",addr=0x" + addr.toString(16) + ",func='" +
-			func + "'>";
+		String strAddr = addr == null ? "<null>" : addr.toString(16);
+		String strFunc = func == null ? "<null>" : func.toString();
+		return "<GdbStackFrame: level=" + level + ",addr=0x" + strAddr + ",func='" + strFunc + "'>";
 	}
 
 	@Override

@@ -275,17 +275,17 @@ public class CallbackValidator implements DebuggerModelListener, AutoCloseable {
 				type + ",description=" + description + ",parameters=" + parameters + ")");
 		}
 		off.catching(() -> {
-			validateCallbackThread("event");
-			validateObject("event", object);
+			validateCallbackThread("event(" + type + ")");
+			validateObject("event(" + type + ")", object);
 			if (type == TargetEventType.THREAD_CREATED || type == TargetEventType.THREAD_EXITED) {
-				validateObject("event", eventThread);
+				validateObject("event(" + type + ")", eventThread);
 			}
 			else {
-				validateObjectOptional("event.eventThread", eventThread);
+				validateObjectOptional("event(" + type + ").eventThread", eventThread);
 			}
 			assertNotNull(type);
 			assertNotNull(description);
-			validateObjectsInCollection("event.parameters", parameters);
+			validateObjectsInCollection("event(" + type + ").parameters", parameters);
 		});
 	}
 

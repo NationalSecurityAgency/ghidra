@@ -74,4 +74,8 @@ public class GdbConsoleExecCommand extends AbstractGdbCommandWithThreadAndFrameI
 		}
 		return builder.toString();
 	}
+
+	public Output getOutputTo() {
+		return to;
+	}
 }

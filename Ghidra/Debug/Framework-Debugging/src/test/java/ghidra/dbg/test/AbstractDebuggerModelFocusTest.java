@@ -75,7 +75,8 @@ public abstract class AbstractDebuggerModelFocusTest extends AbstractDebuggerMod
 		TargetFocusScope scope = findFocusScope();
 		Set<TargetObject> focusable = getFocusableThings();
 		// The default must be one of the focusable objects
-		assertTrue(focusable.stream().anyMatch(f -> f.getPath().equals(expectedDefaultFocus)));
+		assertTrue(focusable.stream()
+				.anyMatch(f -> PathUtils.isAncestor(f.getPath(), expectedDefaultFocus)));
 		retryVoid(() -> {
 			assertEquals(expectedDefaultFocus, scope.getFocus().getPath());
 		}, List.of(AssertionError.class));
