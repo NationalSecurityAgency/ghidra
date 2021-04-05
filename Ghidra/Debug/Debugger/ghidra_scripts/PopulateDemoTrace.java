@@ -386,7 +386,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			 * A call to "exit" results in the immediate termination of the calling thread.
 			 */
 			Assembler asm = Assemblers.getAssembler(trace.getFixedProgramView(snap));
-			InstructionBlock mainBlock = asm.assemble(mainLabel.getAddress(), //
+			Iterator<Instruction> mainBlock = asm.assemble(mainLabel.getAddress(), //
 				"PUSH RBP", //
 				"MOV RBP,RSP", //
 				"CALL clone", //
@@ -404,7 +404,7 @@ public class PopulateDemoTrace extends GhidraScript {
 				"MOV dword ptr [RSP+8],0x21646c", //
 				"CALL exit" //
 			);
-			mainBlock.forEach(mainInstructions::add);
+			mainBlock.forEachRemaining(mainInstructions::add);
 
 			/**
 			 * Stub out "clone"

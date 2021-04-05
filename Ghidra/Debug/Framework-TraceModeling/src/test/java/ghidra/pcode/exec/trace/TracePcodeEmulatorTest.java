@@ -21,6 +21,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
@@ -33,7 +34,9 @@ import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.memory.TraceMemoryFlag;
@@ -76,9 +79,13 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				Range.atLeast(0L), tb.range(0x00100000, 0x0010ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
-			InstructionBlock block =
+			Iterator<Instruction> block =
 				asm.assemble(tb.addr(0x00400000), assembly.toArray(String[]::new));
-			Msg.info(this, "Assembly ended at: " + block.getMaxAddress());
+			Instruction last = null;
+			while (block.hasNext()) {
+				last = block.next();
+			}
+			Msg.info(this, "Assembly ended at: " + last.getMaxAddress());
 			PcodeExecutor<byte[]> exec =
 				TraceSleighUtils.buildByteExecutor(tb.trace, 0, thread, 0);
 			PcodeProgram initProg = SleighProgramCompiler.compileProgram(
