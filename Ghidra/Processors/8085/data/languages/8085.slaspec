@@ -349,6 +349,14 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	setResultFlags(A);
 }
 
+:XRA (HL)  is op0_8=0xae & HL {
+	AC_flag = 0;
+	CY_flag = 0;
+	P_flag = 0;
+	A = A ^ *:1 HL;
+	setResultFlags(A);
+}
+
 :XRI imm8  is op0_8=0xee; imm8 {
 	AC_flag = 0;
 	CY_flag = 0;

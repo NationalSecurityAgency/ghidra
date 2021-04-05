@@ -2508,6 +2508,17 @@
 	</para>
       </listitem>
     </varlistentry>
+    <varlistentry id="GeneralMaxInstruction">
+      <term><emphasis role="bold">Max Instructions per Function</emphasis></term>
+      <listitem>
+    <para>
+      This option sets a maximum number of machine instructions that the decompiler will attempt
+      to analyze for a single function, as a safeguard against analyzing a long sequence
+      of zeroes or other constant data. The decompiler will quickly throw an exception if it
+      traces control-flow into more than the indicated number of instructions.
+    </para>
+      </listitem>
+    </varlistentry>
     </variablelist>
     </informalexample>
   </para>

@@ -3174,17 +3174,20 @@ void FuncProto::setOutputLock(bool val)
   store->getOutput()->setTypeLock(val);
 }
 
-/// This value can be used as a hint as to how much of the return value is important and
-/// is used to inform the dead code \e consume algorithm.
-/// \param val is the estimated number of bytes or 0
-/// \return \b true if the value was changed
+/// Provide a hint as to how many bytes of the return value are important.
+/// The smallest hint is used to inform the dead-code removal algorithm.
+/// \param val is the hint (number of bytes or 0 for all bytes)
+/// \return \b true if the smallest hint has changed
 bool FuncProto::setReturnBytesConsumed(int4 val)
 
 {
-  int4 oldVal = returnBytesConsumed;
-  if (oldVal == 0 || val < oldVal)
+  if (val == 0)
+    return false;
+  if (returnBytesConsumed == 0 || val < returnBytesConsumed) {
     returnBytesConsumed = val;
-  return (oldVal != val);
+    return true;
+  }
+  return false;
 }
 
 /// \brief Assuming \b this prototype is locked, calculate the \e extrapop
@@ -4744,7 +4747,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
 	  trial.markNoUse();
       }
       else if (ancestorReal.execute(op,slot,&trial,false)) {
-	if (data.ancestorOpUse(maxancestor,vn,op,trial))
+	if (data.ancestorOpUse(maxancestor,vn,op,trial,0))
 	  trial.markActive();
 	else
 	  trial.markInactive();
@@ -4754,7 +4757,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
     }
     else {
       if (ancestorReal.execute(op,slot,&trial,true)) {
-	if (data.ancestorOpUse(maxancestor,vn,op,trial)) {
+	if (data.ancestorOpUse(maxancestor,vn,op,trial,0)) {
 	  trial.markActive();
 	  if (trial.hasCondExeEffect())
 	    activeinput.markNeedsFinalCheck();

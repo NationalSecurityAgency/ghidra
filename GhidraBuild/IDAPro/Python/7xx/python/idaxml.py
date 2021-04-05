@@ -647,7 +647,7 @@ class XmlExporter(IdaXml):
         # tag_remove seems to be losing last character
         # work around is to add a space
         cmt_text = ida_lines.tag_remove(cmt + ' ')
-        self.write_text(cmt_text)
+        self.write_text(cmt_text.decode('utf-8'))
         self.end_element(COMMENT, False)
 
 
@@ -2395,7 +2395,7 @@ class XmlImporter(IdaXml):
             # overlayed addresses not currently handled
             return BADADDR
         elif ':' in addrstr:
-            [segstr, offset_str] = string.split(addrstr,':')
+            [segstr, offset_str] = str.split(addrstr,':')
             offset = int(offset_str,16)
             if self.is_int(segstr) == True:
                 sgmt = int(segstr,16)
@@ -3111,11 +3111,11 @@ class XmlImporter(IdaXml):
         """
         regcmt = member.find(REGULAR_CMT)
         if regcmt != None:
-            idc.set_member_cmt(mbr, regcmt.text, False)
+            ida_struct.set_member_cmt(mbr, regcmt.text, False)
             self.update_counter(MEMBER + ':' + REGULAR_CMT)
         rptcmt = member.find(REPEATABLE_CMT)
         if rptcmt != None:
-            idc.set_member_cmt(mbr, rptcmt.text, True)
+            ida_struct.set_member_cmt(mbr, rptcmt.text, True)
             self.update_counter(MEMBER + ':' + REPEATABLE_CMT)
         
 
@@ -3239,7 +3239,7 @@ class XmlImporter(IdaXml):
             idc.warning(msg)
             return
         elif ':' in addrstr:
-            [seg_str, offset_str] = string.split(addrstr,':')
+            [seg_str, offset_str] = str.split(addrstr,':')
             offset = int(offset_str, 16)
             if self.is_int(seg_str):
                 base = int(seg_str, 16)

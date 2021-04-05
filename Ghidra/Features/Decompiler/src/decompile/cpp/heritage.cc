@@ -130,6 +130,45 @@ FlowBlock *PriorityQueue::extract(void)
   return res;
 }
 
+/// Initialize heritage state information for a particular address space
+/// \param spc is the address space
+HeritageInfo::HeritageInfo(AddrSpace *spc)
+
+{
+  if (spc == (AddrSpace *)0) {
+    space = (AddrSpace *)0;
+    delay = 0;
+    deadcodedelay = 0;
+    hasCallPlaceholders = false;
+  }
+  else if (!spc->isHeritaged()) {
+    space = (AddrSpace *)0;
+    delay = spc->getDelay();
+    deadcodedelay = spc->getDeadcodeDelay();
+    hasCallPlaceholders = false;
+  }
+  else {
+    space = spc;
+    delay = spc->getDelay();
+    deadcodedelay = spc->getDeadcodeDelay();
+    hasCallPlaceholders = (spc->getType() == IPTR_SPACEBASE);
+  }
+  deadremoved = 0;
+  warningissued = false;
+  loadGuardSearch = false;
+}
+
+void HeritageInfo::reset(void)
+
+{
+  // Leave any override intact: deadcodedelay = delay;
+  deadremoved = 0;
+  if (space != (AddrSpace *)0)
+    hasCallPlaceholders = (space->getType() == IPTR_SPACEBASE);
+  warningissued = false;
+  loadGuardSearch = false;
+}
+
 /// Instantiate the heritage manager for a particular function.
 /// \param data is the function
 Heritage::Heritage(Funcdata *data)
@@ -1180,16 +1219,10 @@ void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varno
       uintb off = addr.getOffset();
       bool tryregister = true;
       if (spc->getType() == IPTR_SPACEBASE) {
-	if (fc->getStackPlaceholderSlot() < 0) { // Any stack resolution is complete (or never started)
-	  if (fc->getSpacebaseOffset() != FuncCallSpecs::offset_unknown)
-	    off = spc->wrapOffset(off - fc->getSpacebaseOffset());
-	  else
-	    tryregister = false; // Do not attempt to register this stack loc as a trial
-	}
-	else {			// Stack has not been resolved, so we need to abort
-	  fc->abortSpacebaseRelative(*fd);
-	  tryregister = false;
-	}
+	if (fc->getSpacebaseOffset() != FuncCallSpecs::offset_unknown)
+	  off = spc->wrapOffset(off - fc->getSpacebaseOffset());
+	else
+	  tryregister = false; // Do not attempt to register this stack loc as a trial
       }
       Address transAddr(spc,off);	// Address relative to callee's stack
       if (tryregister) {
@@ -1694,6 +1727,19 @@ static void verify_dfs(const vector<FlowBlock *> &list,vector<vector<FlowBlock *
     throw LowlevelError("dfs does not verify");
 }
 #endif
+
+/// Assuming we are just about to do heritage on an address space,
+/// clear any placeholder LOADs associated with it on CALLs.
+/// \param info is state for the specific address space
+void Heritage::clearStackPlaceholders(HeritageInfo *info)
+
+{
+  int4 numCalls = fd->numCalls();
+  for(int4 i=0;i<numCalls;++i) {
+    fd->getCallSpecs(i)->abortSpacebaseRelative(*fd);
+  }
+  info->hasCallPlaceholders = false;	// Mark that clear has taken place
+}
 
 /// \brief Perform one level of Varnode splitting to match a JoinRecord
 ///
@@ -2288,16 +2334,9 @@ void Heritage::buildInfoList(void)
 {
   if (!infolist.empty()) return;
   const AddrSpaceManager *manage = fd->getArch();
-  infolist.resize(manage->numSpaces());
-  for(int4 i=0;i<manage->numSpaces();++i) {
-    AddrSpace *spc = manage->getSpace(i);
-    if (spc == (AddrSpace *)0)
-      infolist[i].set((AddrSpace *)0,0,0);
-    else if (!spc->isHeritaged())
-      infolist[i].set((AddrSpace *)0,spc->getDelay(),spc->getDeadcodeDelay());
-    else
-      infolist[i].set(spc,spc->getDelay(),spc->getDeadcodeDelay());
-  }
+  infolist.reserve(manage->numSpaces());
+  for(int4 i=0;i<manage->numSpaces();++i)
+    infolist.emplace_back(manage->getSpace(i));
 }
 
 /// From any address space that is active for this pass, free Varnodes are collected
@@ -2328,6 +2367,9 @@ void Heritage::heritage(void)
     info = &infolist[i];
     if (!info->isHeritaged()) continue;
     if (pass < info->delay) continue; // It is too soon to heritage this space
+    if (info->hasCallPlaceholders)
+      clearStackPlaceholders(info);
+
     if (!info->loadGuardSearch) {
       info->loadGuardSearch = true;
       if (discoverIndexedStackPointers(info->space,freeStores,true)) {
