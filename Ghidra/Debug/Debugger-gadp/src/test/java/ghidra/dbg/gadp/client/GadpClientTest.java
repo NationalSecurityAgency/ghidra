@@ -16,7 +16,6 @@
 package ghidra.dbg.gadp.client;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,37 +26,29 @@ import java.nio.channels.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import generic.Unique;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.async.*;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.testutil.ElementsChangedListener;
-import ghidra.dbg.testutil.ElementsChangedListener.ElementsChangedInvocation;
+import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 
-public class GadpClientTest {
-	private static final long TIMEOUT_MILLISECONDS =
-		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
+public class GadpClientTest implements AsyncTestUtils {
 	private static final String HELLO_WORLD = "Hello, World!";
 	private static final String TEST_HOST = "localhost";
 
-	protected static <T> T waitOn(CompletableFuture<T> future) throws Throwable {
-		try {
-			return future.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
-		}
-		catch (Exception e) {
-			throw AsyncUtils.unwrapThrowable(e);
-		}
-	}
+	public static final DefaultSchemaContext SCHEMA_CONTEXT = new DefaultSchemaContext();
+	public static final TargetObjectSchema ROOT_SCHEMA =
+		SCHEMA_CONTEXT.builder(new SchemaName("Root"))
+				.setAttributeResyncMode(ResyncMode.ONCE)
+				.buildAndAdd();
 
 	interface TestClientHandler {
 		void handle(SocketChannel cli, GadpVersion version) throws Exception;
@@ -80,7 +71,7 @@ public class GadpClientTest {
 
 		@Override
 		public void close() throws Exception {
-			cli.configureBlocking(false); // Cannot wait forever
+			//cli.configureBlocking(false); // Cannot wait forever
 			assertEquals(-1, cli.read(inbuf));
 			cli.close();
 			srv.close();
@@ -88,13 +79,15 @@ public class GadpClientTest {
 
 		public void accept() throws IOException {
 			this.cli = srv.accept();
+			cli.configureBlocking(false); // Cannot wait forever
 		}
 
 		public void nextSeq() {
 			seqno++;
 		}
 
-		public void expect(Gadp.RootMessage msg) throws IOException {
+		public void expect(Gadp.RootMessage msg) throws Throwable {
+			long start = System.currentTimeMillis();
 			Msg.debug(this, "Expecting: " + msg);
 
 			while (true) {
@@ -118,6 +111,13 @@ public class GadpClientTest {
 					if (len < 0) {
 						throw new AssertionError("Socket is closed");
 					}
+					else if (len == 0) {
+						if (Long.compareUnsigned(System.currentTimeMillis() - start,
+							TIMEOUT_MS) > 0) {
+							throw new TimeoutException("Timeout out expecting: " + msg);
+						}
+						Thread.sleep(100);
+					}
 				}
 			}
 		}
@@ -135,7 +135,7 @@ public class GadpClientTest {
 			}
 		}
 
-		public void expectRequestConnect() throws IOException {
+		public void expectRequestConnect() throws Throwable {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setConnectRequest(GadpVersion.makeRequest())
@@ -143,16 +143,17 @@ public class GadpClientTest {
 		}
 
 		public void sendReplyConnect(GadpVersion version) throws IOException {
+
 			send(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setConnectReply(Gadp.ConnectReply.newBuilder()
 							.setVersion(version.getName())
-							.setSchemaContext("<context/>")
-							.setRootSchema("OBJECT"))
+							.setSchemaContext(XmlSchemaContext.serialize(SCHEMA_CONTEXT))
+							.setRootSchema(ROOT_SCHEMA.getName().toString()))
 					.build());
 		}
 
-		public void handleConnect(GadpVersion version) throws IOException {
+		public void handleConnect(GadpVersion version) throws Throwable {
 			expectRequestConnect();
 			sendReplyConnect(version);
 			nextSeq();
@@ -183,7 +184,7 @@ public class GadpClientTest {
 			sendNotifyRootAdded();
 		}
 
-		public void expectRequestPing(String content) throws IOException {
+		public void expectRequestPing(String content) throws Throwable {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setPingRequest(Gadp.PingRequest.newBuilder()
@@ -199,7 +200,7 @@ public class GadpClientTest {
 					.build());
 		}
 
-		public void handlePing() throws IOException {
+		public void handlePing() throws Throwable {
 			expectRequestPing(HELLO_WORLD);
 			sendReplyPing(HELLO_WORLD);
 			nextSeq();
@@ -255,7 +256,7 @@ public class GadpClientTest {
 		}
 
 		public void expectRequestResync(List<String> path, boolean refreshAttributes,
-				boolean refreshElements) throws IOException {
+				boolean refreshElements) throws Throwable {
 			expect(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setResyncRequest(Gadp.ResyncRequest.newBuilder()
@@ -289,7 +290,7 @@ public class GadpClientTest {
 
 		public void handleResyncAttributes(List<String> path, boolean refresh,
 				Map<String, List<String>> objects, Map<String, Object> primitives)
-				throws Exception {
+				throws Throwable {
 			expectRequestResync(path, refresh, false);
 			if (primitives != null || objects != null) {
 				sendNotifyObjects(path, null, objects, primitives);
@@ -299,7 +300,7 @@ public class GadpClientTest {
 		}
 
 		public void handleResyncElements(List<String> path, boolean refresh,
-				Map<String, List<String>> objects) throws Exception {
+				Map<String, List<String>> objects) throws Throwable {
 			expectRequestResync(path, false, refresh);
 			if (objects != null) {
 				sendNotifyObjects(path, objects, null, null);
@@ -376,51 +377,7 @@ public class GadpClientTest {
 	}
 
 	@Test
-	public void testGetObjectRefInListener() throws Throwable {
-		ElementsChangedListener elemL = new ElementsChangedListener();
-
-		try (TestServer srv = new TestServer();
-				AsynchronousSocketChannel socket = AsynchronousSocketChannel.open()) {
-			GadpClient client = new GadpClient("Test", socket);
-
-			CompletableFuture<Void> sockConnect =
-				AsyncUtils.completable(TypeSpec.VOID, socket::connect, srv.addr);
-			srv.accept();
-			waitOn(sockConnect);
-
-			CompletableFuture<Void> gadpConnect = client.connect();
-			srv.handleConnect(GadpVersion.VER1);
-			waitOn(gadpConnect);
-
-			List<String> parentPath = PathUtils.parse("Parent");
-			CompletableFuture<? extends TargetObject> fetchParent =
-				client.fetchModelObject(parentPath);
-			srv.notifyAddRoot();
-			srv.sendNotifyObjectCreated(parentPath, List.of(), "Parent");
-			srv.handleResyncAttributes(List.of(), false, Map.of("Parent", parentPath), null);
-			TargetObject parent = waitOn(fetchParent);
-			parent.addListener(elemL);
-
-			CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements =
-				parent.fetchElements();
-			srv.handleResyncElements(parentPath, false, Map.of());
-			assertEquals(Map.of(), waitOn(fetchElements));
-
-			List<String> elem0Path = PathUtils.parse("Parent[0]");
-			srv.sendNotifyObjectCreated(elem0Path, List.of(), "Element");
-			srv.sendNotifyObjects(parentPath, Map.of("0", elem0Path), null, null);
-			waitOn(elemL.count.waitValue(1));
-			ElementsChangedInvocation changed = Unique.assertOne(elemL.invocations);
-			assertEquals(parent, changed.parent);
-			TargetObject child = Unique.assertOne(changed.added.values());
-			assertTrue(child instanceof GadpClientTargetObject);
-			assertEquals(elem0Path, child.getPath());
-		}
-		assertEquals(1, elemL.count.get().intValue()); // After connection is closed
-	}
-
-	@Test
-	public void testGetModelValueDeduped() throws Throwable {
+	public void testResyncOnceModelValueDeduped() throws Throwable {
 		try (TestServer srv = new TestServer();
 				AsynchronousSocketChannel socket = AsynchronousSocketChannel.open()) {
 			GadpClient client = new GadpClient("Test", socket);
