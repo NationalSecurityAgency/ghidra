@@ -403,19 +403,15 @@ public class TraceObjectManager {
 
 	public void addBreakpointContainer(TargetObject added) {
 		TargetObject obj = findThreadOrProcess(added);
-		if (obj != null) {
-			ManagedBreakpointRecorder breakpointRecorder = recorder.breakpointRecorder;
-			if (obj instanceof TargetThread) {
-				ManagedBreakpointRecorder rec =
-					recorder.getThreadRecorderForSuccessor(added).getBreakpointRecorder();
-				rec.offerBreakpointContainer((TargetBreakpointSpecContainer) added);
-				return;
-			}
-			breakpointRecorder.offerBreakpointContainer((TargetBreakpointSpecContainer) added);
+		// NB. obj can be null
+		ManagedBreakpointRecorder breakpointRecorder = recorder.breakpointRecorder;
+		if (obj instanceof TargetThread) {
+			ManagedBreakpointRecorder rec =
+				recorder.getThreadRecorderForSuccessor(added).getBreakpointRecorder();
+			rec.offerBreakpointContainer((TargetBreakpointSpecContainer) added);
+			return;
 		}
-		else {
-			Msg.error(this, "Error recording breakpoint container " + added);
-		}
+		breakpointRecorder.offerBreakpointContainer((TargetBreakpointSpecContainer) added);
 	}
 
 	public void removeBreakpointContainer(TargetObject removed) {
