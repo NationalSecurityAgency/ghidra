@@ -15,6 +15,7 @@
  */
 package agent.dbgmodel.model.invm;
 
+import agent.dbgeng.dbgeng.DbgEngTest;
 import agent.dbgeng.model.AbstractDbgengModelHost;
 import agent.dbgmodel.DbgModelInJvmDebuggerModelFactory;
 import ghidra.dbg.DebuggerModelFactory;
@@ -22,6 +23,7 @@ import ghidra.dbg.DebuggerModelFactory;
 public class InVmDbgmodelModelHost extends AbstractDbgengModelHost {
 	@Override
 	public DebuggerModelFactory getModelFactory() {
+		DbgEngTest.assumeDbgengDLLLoadable();
 		return new DbgModelInJvmDebuggerModelFactory();
 	}
 }
