@@ -28,6 +28,7 @@ import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -46,7 +47,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	protected TraceStaticMappingManager mappingManager;
 
 	protected AddressSpace dynSpace;
-	protected AddressSpace stSpace;;
+	protected AddressSpace stSpace;
 
 	@Before
 	public void setUpStaticMappingService() throws Exception {
@@ -59,7 +60,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		mappingManager = tb.trace.getStaticMappingManager();
 		waitForDomainObject(tb.trace);
 
-		createProgramFromTrace();
+		createProgram();
 		intoProject(program);
 		programManager.openProgram(program);
 		waitForProgram(program);
@@ -110,6 +111,29 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testAddMappingAddsToManager() throws Exception {
+		addMapping();
+
+		assertEquals(1, mappingManager.getAllEntries().size());
+		TraceStaticMapping m = mappingManager.findContaining(dynSpace.getAddress(0x00100000), 0);
+		assertTrue(m.getStaticProgramURL().toString().endsWith(getProgramName()));
+		assertEquals("ram:00200000", m.getStaticAddress());
+		assertEquals(0x1000, m.getLength());
+	}
+
+	@Test
+	public void testAddMappingSecondLanguage() throws Exception {
+		programManager.closeProgram(program, true);
+		DomainFile df = program.getDomainFile();
+		program.release(this);
+		df.delete();
+
+		createProgram(getSLEIGH_X86_LANGUAGE());
+		intoProject(program);
+		programManager.openProgram(program);
+		waitForProgram(program);
+
+		stSpace = program.getAddressFactory().getDefaultAddressSpace();
+
 		addMapping();
 
 		assertEquals(1, mappingManager.getAllEntries().size());

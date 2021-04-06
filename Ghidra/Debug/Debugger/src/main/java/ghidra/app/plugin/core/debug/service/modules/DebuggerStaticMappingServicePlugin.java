@@ -312,7 +312,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				Address minAddr = opened.getAddressFactory().getAddress(mapping.getStaticAddress());
 				Address maxAddr = addOrMax(minAddr, mapping.getLength() - 1);
 				this.staticRange = new AddressRangeImpl(minAddr, maxAddr);
-				this.shift = mapping.getMinTraceAddress().subtract(staticRange.getMinAddress());
+				this.shift = mapping.getMinTraceAddress().getOffset() -
+					staticRange.getMinAddress().getOffset();
 				return true;
 			}
 			return false;

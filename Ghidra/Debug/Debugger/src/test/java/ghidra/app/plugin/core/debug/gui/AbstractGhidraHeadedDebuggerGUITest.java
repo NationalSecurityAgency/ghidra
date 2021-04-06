@@ -508,17 +508,23 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected void createProgramFromTrace(Trace trace) throws IOException {
-		program = new ProgramDB(getProgramName(), trace.getBaseLanguage(),
-			trace.getBaseCompilerSpec(), this);
+		createProgram(trace.getBaseLanguage(), trace.getBaseCompilerSpec());
 	}
 
 	protected void createProgramFromTrace() throws IOException {
 		createProgramFromTrace(tb.trace);
 	}
 
+	protected void createProgram(Language lang, CompilerSpec cSpec) throws IOException {
+		program = new ProgramDB(getProgramName(), lang, cSpec, this);
+	}
+
+	protected void createProgram(Language lang) throws IOException {
+		createProgram(lang, lang.getDefaultCompilerSpec());
+	}
+
 	protected void createProgram() throws IOException {
-		Language lang = getToyBE64Language();
-		program = new ProgramDB(getProgramName(), lang, lang.getDefaultCompilerSpec(), this);
+		createProgram(getToyBE64Language());
 	}
 
 	protected void createAndOpenProgramFromTrace() throws IOException {
