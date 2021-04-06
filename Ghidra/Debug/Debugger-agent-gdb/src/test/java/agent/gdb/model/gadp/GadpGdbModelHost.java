@@ -15,6 +15,10 @@
  */
 package agent.gdb.model.gadp;
 
+import static org.junit.Assume.assumeTrue;
+
+import java.io.File;
+
 import agent.gdb.gadp.GdbLocalDebuggerModelFactory;
 import agent.gdb.model.AbstractGdbModelHost;
 import ghidra.dbg.DebuggerModelFactory;
@@ -22,6 +26,7 @@ import ghidra.dbg.DebuggerModelFactory;
 class GadpGdbModelHost extends AbstractGdbModelHost {
 	@Override
 	public DebuggerModelFactory getModelFactory() {
+		assumeTrue(new File("/usr/bin/gdb").canExecute());
 		return new GdbLocalDebuggerModelFactory();
 	}
 }

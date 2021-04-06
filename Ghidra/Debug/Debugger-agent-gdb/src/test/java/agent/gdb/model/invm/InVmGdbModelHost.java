@@ -15,6 +15,10 @@
  */
 package agent.gdb.model.invm;
 
+import static org.junit.Assume.assumeTrue;
+
+import java.io.File;
+
 import agent.gdb.GdbInJvmDebuggerModelFactory;
 import agent.gdb.model.AbstractGdbModelHost;
 import ghidra.dbg.DebuggerModelFactory;
@@ -22,6 +26,7 @@ import ghidra.dbg.DebuggerModelFactory;
 class InVmGdbModelHost extends AbstractGdbModelHost {
 	@Override
 	public DebuggerModelFactory getModelFactory() {
+		assumeTrue(new File("/usr/bin/gdb").canExecute());
 		return new GdbInJvmDebuggerModelFactory();
 	}
 }
