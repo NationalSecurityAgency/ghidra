@@ -265,7 +265,11 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 
 		rv = waitForValue(() -> rm.targetToTrace("eax", genBytes4()));
 		assertEquals(new RegisterValue(lRAX, new BigInteger("0000000089abcdef", 16)), rv);
-		assertNull(rm.targetToTrace("rax", genBytes8())); // Should no longer understand this one
+		/**
+		 * Should this be kept? I favoring a more accepting model makes sense, but I worry about
+		 * erroneous cases we might not be catching, by re-generating missing registers on the fly.
+		 */
+		// assertNull(rm.targetToTrace("rax", genBytes8())); // Should no longer understand this one
 
 		// This might be quite kick, back to 64-bit
 		mb.testProcess1.regs.addRegistersFromLanguage(getSLEIGH_X86_64_LANGUAGE(), r -> true);
