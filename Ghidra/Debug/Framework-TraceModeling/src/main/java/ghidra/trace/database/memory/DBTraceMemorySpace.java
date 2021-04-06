@@ -695,11 +695,22 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		return result;
 	}
 
+	protected int truncateLen(int len, Address start) {
+		long maxLen = start.getAddressSpace().getMaxAddress().subtract(start) + 1;
+		if (maxLen == 0) {
+			// Only happens when min=0 and max=ffff_ffff_ffff_ffff
+			return len;
+		}
+		return MathUtilities.unsignedMin(len, maxLen);
+	}
+
 	@Override
 	public int getViewBytes(long snap, Address start, ByteBuffer buf) {
 		AddressRange toRead;
-		int len = MathUtilities.unsignedMin(buf.remaining(),
-			start.getAddressSpace().getMaxAddress().subtract(start) + 1);
+		int len = truncateLen(buf.remaining(), start);
+		if (len == 0) {
+			return 0;
+		}
 		try {
 			toRead = new AddressRangeImpl(start, len);
 		}

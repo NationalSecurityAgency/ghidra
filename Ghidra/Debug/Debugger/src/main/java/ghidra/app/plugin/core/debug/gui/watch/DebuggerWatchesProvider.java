@@ -580,6 +580,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		for (WatchRow row : watchTableModel.getModelData()) {
 			AddressSet reads = row.getReads();
 			if (reads == null || reads.intersects(changed)) {
+				row.doTargetReads();
 				row.reevaluate();
 			}
 		}

@@ -52,6 +52,10 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 
 	protected abstract T getFromSpace(S space, long offset, int size);
 
+	protected T getFromNullSpace(int size) {
+		return arithmetic.fromConst(0, size);
+	}
+
 	protected abstract long offsetToLong(A offset);
 
 	@Override
@@ -90,7 +94,7 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		}
 		S s = getForSpace(space, false);
 		if (s == null) {
-			return arithmetic.fromConst(0, size);
+			return getFromNullSpace(size);
 		}
 		offset = truncateOffset(space, offset);
 		return getFromSpace(s, offset, size);

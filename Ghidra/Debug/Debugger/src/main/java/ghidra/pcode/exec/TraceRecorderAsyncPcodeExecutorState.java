@@ -21,11 +21,13 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.TraceRecorder;
 import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
+import ghidra.pcode.exec.trace.TraceMemoryStatePcodeExecutorStatePiece;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.task.TaskMonitor;
@@ -34,12 +36,15 @@ public class TraceRecorderAsyncPcodeExecutorState
 		extends AsyncWrappedPcodeExecutorState<byte[]> {
 	private final TraceRecorder recorder;
 	private final TraceBytesPcodeExecutorState traceState;
+	private final TraceMemoryStatePcodeExecutorStatePiece traceMemState;
 
 	public TraceRecorderAsyncPcodeExecutorState(TraceRecorder recorder, long snap,
 			TraceThread thread, int frame) {
 		super(new TraceBytesPcodeExecutorState(recorder.getTrace(), snap, thread, frame));
 		this.recorder = recorder;
 		this.traceState = (TraceBytesPcodeExecutorState) state;
+		this.traceMemState =
+			new TraceMemoryStatePcodeExecutorStatePiece(recorder.getTrace(), snap, thread, frame);
 	}
 
 	protected CompletableFuture<?> doSetTargetVar(AddressSpace space, long offset, int size,
@@ -119,6 +124,10 @@ public class TraceRecorderAsyncPcodeExecutorState
 			return super.doGetVar(space, offset, size, truncateAddressableUnit);
 		}
 		return offset.thenCompose(off -> {
+			TraceMemoryState ms = traceMemState.getVar(space, off, size, truncateAddressableUnit);
+			if (ms == TraceMemoryState.KNOWN) {
+				return super.doGetVar(space, offset, size, truncateAddressableUnit);
+			}
 			return doGetTargetVar(space, traceState.offsetToLong(off), size,
 				truncateAddressableUnit);
 		});

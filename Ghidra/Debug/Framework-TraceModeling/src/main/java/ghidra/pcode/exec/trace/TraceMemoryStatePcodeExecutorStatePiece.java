@@ -153,6 +153,11 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
+	protected TraceMemoryState getFromNullSpace(int size) {
+		return TraceMemoryState.UNKNOWN;
+	}
+
+	@Override
 	public MemBuffer getConcreteBuffer(Address address) {
 		throw new AssertionError("Cannot make TraceMemoryState into a concrete buffer");
 	}
