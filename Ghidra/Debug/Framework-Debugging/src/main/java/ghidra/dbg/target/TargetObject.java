@@ -1046,7 +1046,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	public default <T> T getTypedAttributeNowByName(String name, Class<T> cls, T fallback) {
 		Object obj = getCachedAttribute(name);
 		TargetObjectSchema schema = getSchema();
-		boolean required = schema == null ? false : schema.getAttributeSchema(name).isRequired();
+		boolean required = schema.getAttributeSchema(name).isRequired();
 		return ValueUtils.expectType(obj, cls, this, name, fallback, required);
 	}
 

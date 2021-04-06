@@ -165,10 +165,10 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	@Override
 	public String toString() {
-		if (schema == null) {
-			return String.format("<%s: path=%s model=%s schema=<null>>", getClass().getSimpleName(),
-				getJoinedPath("."), getModel());
-		}
+		//if (schema == null) {
+		//	return String.format("<%s: path=%s model=%s schema=<null>>", getClass().getSimpleName(),
+		//		getJoinedPath("."), getModel());
+		//}
 		return String.format("<%s: path=%s model=%s schema=%s>", getClass().getSimpleName(),
 			getJoinedPath("."), getModel(), schema.getName());
 	}

@@ -42,12 +42,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		extends AbstractTargetObject<P> {
 
 	/** Note modifying this directly subverts notifications */
-	protected final Map<String, E> elements =
-		new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
-	protected final Map<String, E> cbElements =
-		new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
-	protected final Map<String, E> roCbElements =
-		Collections.unmodifiableMap(cbElements);
+	protected final Map<String, E> elements = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
+	protected final Map<String, E> cbElements = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
+	protected final Map<String, E> roCbElements = Collections.unmodifiableMap(cbElements);
 	protected CompletableFuture<Void> curElemsRequest;
 
 	/** Note modifying this directly subverts notifications */
@@ -55,8 +52,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
 	protected final Map<String, Object> cbAttributes =
 		new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
-	protected final Map<String, Object> roCbAttributes =
-		Collections.unmodifiableMap(cbAttributes);
+	protected final Map<String, Object> roCbAttributes = Collections.unmodifiableMap(cbAttributes);
 	protected CompletableFuture<Void> curAttrsRequest;
 
 	/*protected static Set<Class<?>> dependencySet = Set.of(//
@@ -324,10 +320,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.elements, elements, Delta.SAME);
 		}
-		TargetObjectSchema schemax = getSchema();
-		if (schemax != null) {
-			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
-		}
+		getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		doInvalidateElements(delta.removed, reason);
 		if (!delta.isEmpty()) {
 			updateCallbackElements(delta);
@@ -369,10 +362,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (model.lock) {
 			delta = Delta.apply(this.elements, remove, add, Delta.SAME);
 		}
-		TargetObjectSchema schemax = getSchema();
-		if (schemax != null) {
-			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
-		}
+		getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		doInvalidateElements(delta.removed, reason);
 		if (!delta.isEmpty()) {
 			updateCallbackElements(delta);
@@ -508,10 +498,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
 		}
-		TargetObjectSchema schemax = getSchema();
-		if (schemax != null) {
-			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
-		}
+		getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {
 			updateCallbackAttributes(delta);
@@ -570,10 +557,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		synchronized (model.lock) {
 			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
 		}
-		TargetObjectSchema schemax = getSchema();
-		if (schemax != null) {
-			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
-		}
+		getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()/* && !reason.equals("Default")*/) {
 			updateCallbackAttributes(delta);
