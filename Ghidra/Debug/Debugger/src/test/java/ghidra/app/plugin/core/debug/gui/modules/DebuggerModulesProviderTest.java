@@ -46,6 +46,7 @@ import ghidra.dbg.model.TestTargetModule;
 import ghidra.dbg.model.TestTargetTypedefDataType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.AddressOverflowException;
@@ -493,6 +494,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			new AddressSet(listing.getCurrentSelection()));
 	}
 
+	protected void waitForLock(DomainObject lockable) {
+		waitForPass(() -> { // This is so gross
+			assertTrue(lockable.lock(null));
+			lockable.unlock();
+		});
+	}
+
 	@Test
 	public void testActionCaptureTypes() throws Exception {
 		assertFalse(modulesProvider.actionCaptureTypes.isEnabled());
@@ -523,7 +531,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// TODO: When action is included, put this assertion back
 		//assertTrue(modulesProvider.actionCaptureTypes.isEnabled());
 
-		performAction(modulesProvider.actionCaptureTypes, false);
+		performAction(modulesProvider.actionCaptureTypes, true);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -533,11 +541,14 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DataType expType =
 			conv.convertTargetDataType(typedef).get(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
 		// TODO: Some heuristic or convention to extract the module name, if applicable
-		DataType actType = dtm.getDataType("/Processes[1].Modules[first_proc].Types/myInt");
-		assertTypeEquals(expType, actType);
+		waitForPass(() -> {
+			DataType actType = dtm.getDataType("/Processes[1].Modules[first_proc].Types/myInt");
+			assertTypeEquals(expType, actType);
+		});
 
 		// TODO: When capture-types action is included, put this assertion back
 		//assertTrue(modulesProvider.actionCaptureTypes.isEnabled());
+		waitForLock(trace);
 		recorder.stopRecording();
 		waitForSwing();
 		assertFalse(modulesProvider.actionCaptureTypes.isEnabled());
@@ -567,11 +578,15 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.activateTrace(trace);
 		waitForSwing();
-		modulesProvider.setSelectedModules(Set.of(recorder.getTraceModule(module)));
-		waitForSwing();
-		assertTrue(modulesProvider.actionCaptureSymbols.isEnabled());
+		waitForPass(() -> {
+			TraceModule traceModule = recorder.getTraceModule(module);
+			assertNotNull(traceModule);
+			modulesProvider.setSelectedModules(Set.of(traceModule));
+			waitForSwing();
+			assertTrue(modulesProvider.actionCaptureSymbols.isEnabled());
+		});
 
-		performAction(modulesProvider.actionCaptureSymbols, false);
+		performAction(modulesProvider.actionCaptureSymbols, true);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -589,6 +604,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// TODO: Check data type once those are captured in Data units.
 
 		assertTrue(modulesProvider.actionCaptureSymbols.isEnabled());
+		waitForLock(trace);
 		recorder.stopRecording();
 		waitForSwing();
 		assertFalse(modulesProvider.actionCaptureSymbols.isEnabled());
