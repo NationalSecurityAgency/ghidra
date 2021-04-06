@@ -47,7 +47,6 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 	private final TraceMemoryManager memoryManager;
 
 	private boolean valid = true;
-	protected TargetObject curFocus;
 	protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
 
 	public TraceEventListener(TraceObjectManager collection) {

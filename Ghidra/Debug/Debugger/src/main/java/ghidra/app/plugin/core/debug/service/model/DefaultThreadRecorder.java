@@ -187,7 +187,6 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 				"Given thread and frame level does not have a live register bank");
 		}
 		// NOTE: Cache update, if applicable, will cause recorder to write values to trace
-		System.err.println("captureThreadRegisters " + thread + ":" + bank);
 		return bank.readRegisters(tRegs).thenApply(regMapper::targetToTrace);
 	}
 
@@ -219,6 +218,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			doFetchAndInitRegMapper(bank);
 		}
 		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
+		System.err.println("offerRegisters " + this.targetThread.getDisplay() + ":" + frameLevel);
 		TargetRegisterBank old = regs.put(frameLevel, bank);
 		if (null != old) {
 			Msg.warn(this, "Unexpected register bank replacement");

@@ -295,6 +295,9 @@ public class TraceObjectManager {
 
 	public void addRegisterBank(TargetObject added) {
 		ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(added);
+		if (added instanceof TargetStackFrame) {
+			rec.getStackRecorder().offerStackFrame((TargetStackFrame) added);
+		}
 		rec.offerRegisters((TargetRegisterBank) added);
 	}
 

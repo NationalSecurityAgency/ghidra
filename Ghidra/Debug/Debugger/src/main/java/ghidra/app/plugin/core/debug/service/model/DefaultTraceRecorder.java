@@ -304,7 +304,6 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
 			TraceThread thread, int frameLevel,
 			Set<Register> registers) {
-		System.err.println("captureThreadRegisters " + thread);
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return rec.captureThreadRegisters(thread, frameLevel, registers);
 	}

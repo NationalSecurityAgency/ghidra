@@ -66,8 +66,8 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 			TraceStack traceStack = stackManager.getStack(thread, snap, true);
 			traceStack.setDepth(stackDepth(), false);
 			for (Map.Entry<Integer, TargetStackFrame> ent : stack.entrySet()) {
-				Address tracePc = recorder.getMemoryMapper()
-						.targetToTrace(ent.getValue().getProgramCounter());
+				Address tracePc =
+					recorder.getMemoryMapper().targetToTrace(ent.getValue().getProgramCounter());
 				doRecordFrame(traceStack, ent.getKey(), tracePc);
 			}
 		});
@@ -87,8 +87,8 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	}
 
 	public void recordFrame(TargetStackFrame frame) {
+		stack.put(getFrameLevel(frame), frame);
 		tx.execute("Stack frame added", () -> {
-			stack.put(getFrameLevel(frame), frame);
 			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
 			if (memoryMapper == null) {
 				return;
