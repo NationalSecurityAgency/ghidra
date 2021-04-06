@@ -230,6 +230,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	}
 
 	private void processTrace(Trace trace) {
+		updateList.clear();
 		provider.reset();
 		TraceThreadManager threadManager = trace.getThreadManager();
 		for (TraceThread thread : threadManager.getAllThreads()) {
