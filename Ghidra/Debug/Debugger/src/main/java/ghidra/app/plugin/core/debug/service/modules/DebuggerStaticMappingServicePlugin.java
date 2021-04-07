@@ -23,8 +23,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Range;
 
@@ -286,7 +284,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		private Program program;
 		private AddressRange staticRange;
-		private Long shift;
+		private Long shift; // from static image to trace
 
 		public MappingEntry(TraceStaticMapping mapping) {
 			this.mapping = mapping;
@@ -568,7 +566,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedPrograms(AddressRange rng, Range<Long> span,
-				Map<Program, Pair<Long, AddressSetView>> result) {
+				Map<Program, ShiftAndAddressSetView> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				MappingEntry me = out.getValue();
@@ -579,15 +577,15 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 					continue;
 				}
 
-				Pair<Long, AddressSetView> set = result.computeIfAbsent(me.program,
-					p -> new ImmutablePair<>(me.shift, new AddressSet()));
-				((AddressSet) set.getRight()).add(me.mapTraceRangeToProgram(rng));
+				ShiftAndAddressSetView set = result.computeIfAbsent(me.program,
+					p -> new ShiftAndAddressSetView(-me.shift, new AddressSet()));
+				((AddressSet) set.getAddressSetView()).add(me.mapTraceRangeToProgram(rng));
 			}
 		}
 
-		public Map<Program, Pair<Long, AddressSetView>> getOpenMappedViews(AddressSetView set,
+		public Map<Program, ShiftAndAddressSetView> getOpenMappedViews(AddressSetView set,
 				Range<Long> span) {
-			Map<Program, Pair<Long, AddressSetView>> result = new HashMap<>();
+			Map<Program, ShiftAndAddressSetView> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedPrograms(rng, span, result);
 			}
@@ -718,7 +716,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedViews(AddressRange rng,
-				Map<TraceSnap, Pair<Long, AddressSetView>> result) {
+				Map<TraceSnap, ShiftAndAddressSetView> result) {
 			for (Entry<MappingEntry, Address> inPreceeding : inbound.headMapByValue(
 				rng.getMaxAddress(), true).entrySet()) {
 				Address start = inPreceeding.getValue();
@@ -729,14 +727,14 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				if (!me.isInProgramRange(rng)) {
 					continue;
 				}
-				Pair<Long, AddressSetView> set = result.computeIfAbsent(me.getTraceSnap(),
-					p -> new ImmutablePair<>(me.shift, new AddressSet()));
-				((AddressSet) set.getRight()).add(me.mapProgramRangeToTrace(rng));
+				ShiftAndAddressSetView set = result.computeIfAbsent(me.getTraceSnap(),
+					p -> new ShiftAndAddressSetView(me.shift, new AddressSet()));
+				((AddressSet) set.getAddressSetView()).add(me.mapProgramRangeToTrace(rng));
 			}
 		}
 
-		public Map<TraceSnap, Pair<Long, AddressSetView>> getOpenMappedViews(AddressSetView set) {
-			Map<TraceSnap, Pair<Long, AddressSetView>> result = new HashMap<>();
+		public Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(AddressSetView set) {
+			Map<TraceSnap, ShiftAndAddressSetView> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedViews(rng, result);
 			}
@@ -1156,7 +1154,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Map<Program, Pair<Long, AddressSetView>> getOpenMappedViews(Trace trace,
+	public Map<Program, ShiftAndAddressSetView> getOpenMappedViews(Trace trace,
 			AddressSetView set,
 			long snap) {
 		InfoPerTrace info = requireTrackedInfo(trace);
@@ -1167,7 +1165,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Map<TraceSnap, Pair<Long, AddressSetView>> getOpenMappedViews(Program program,
+	public Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(Program program,
 			AddressSetView set) {
 		InfoPerProgram info = requireTrackedInfo(program);
 		if (info == null) {

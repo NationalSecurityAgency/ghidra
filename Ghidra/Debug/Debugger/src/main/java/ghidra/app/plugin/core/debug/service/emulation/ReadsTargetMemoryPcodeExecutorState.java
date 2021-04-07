@@ -17,9 +17,8 @@ package ghidra.app.plugin.core.debug.service.emulation;
 
 import java.util.Map.Entry;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.app.services.DebuggerStaticMappingService.ShiftAndAddressSetView;
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -72,17 +71,17 @@ public class ReadsTargetMemoryPcodeExecutorState
 			DebuggerStaticMappingService mappingService =
 				tool.getService(DebuggerStaticMappingService.class);
 			byte[] data = new byte[4096];
-			for (Entry<Program, Pair<Long, AddressSetView>> ent : mappingService
+			for (Entry<Program, ShiftAndAddressSetView> ent : mappingService
 					.getOpenMappedViews(trace, unknown, snap)
 					.entrySet()) {
 				Program program = ent.getKey();
-				Pair<Long, AddressSetView> pair = ent.getValue();
+				ShiftAndAddressSetView shifted = ent.getValue();
 				Msg.warn(this,
 					"Filling in unknown trace memory in emulator using mapped image: " +
-						program + ": " + pair.getRight());
-				long shift = pair.getLeft();
+						program + ": " + shifted.getAddressSetView());
+				long shift = shifted.getShift();
 				Memory memory = program.getMemory();
-				for (AddressRange rng : pair.getRight()) {
+				for (AddressRange rng : shifted.getAddressSetView()) {
 					long lower = rng.getMinAddress().getOffset();
 					long fullLen = rng.getLength();
 					while (fullLen > 0) {

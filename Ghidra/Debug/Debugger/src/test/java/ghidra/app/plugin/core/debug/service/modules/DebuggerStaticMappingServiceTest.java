@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.util.*;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,6 +27,7 @@ import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.app.services.DebuggerStaticMappingService.ShiftAndAddressSetView;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -339,7 +339,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	public void testAddMappingThenTranslateTraceViewToStaticEmpty() throws Exception {
 		addMapping();
 
-		Map<Program, Pair<Long, AddressSetView>> views =
+		Map<Program, ShiftAndAddressSetView> views =
 			mappingService.getOpenMappedViews(tb.trace, new AddressSet(), 0);
 		assertTrue(views.isEmpty());
 	}
@@ -360,12 +360,12 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(dynSpace.getAddress(0xbadbadbadL), dynSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<Program, Pair<Long, AddressSetView>> views =
+		Map<Program, ShiftAndAddressSetView> views =
 			mappingService.getOpenMappedViews(tb.trace, set, 0);
 		assertEquals(1, views.size());
-		Pair<Long, AddressSetView> pair = views.get(program);
-		assertEquals(0x100000, pair.getLeft().longValue());
-		AddressSetView inStatic = pair.getRight();
+		ShiftAndAddressSetView shifted = views.get(program);
+		assertEquals(0x100000, shifted.getShift());
+		AddressSetView inStatic = shifted.getAddressSetView();
 		assertEquals(3, inStatic.getNumAddressRanges());
 		AddressSet expected = new AddressSet();
 		expected.add(stSpace.getAddress(0x00200000), stSpace.getAddress(0x002000ff));
@@ -380,7 +380,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		copyTrace();
 		add2ndMapping();
 
-		Map<TraceSnap, Pair<Long, AddressSetView>> views =
+		Map<TraceSnap, ShiftAndAddressSetView> views =
 			mappingService.getOpenMappedViews(program, new AddressSet());
 		assertTrue(views.isEmpty());
 	}
@@ -403,13 +403,15 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(stSpace.getAddress(0xbadbadbadL), stSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<TraceSnap, Pair<Long, AddressSetView>> views =
+		Map<TraceSnap, ShiftAndAddressSetView> views =
 			mappingService.getOpenMappedViews(program, set);
 		Msg.info(this, views);
 		assertEquals(2, views.size());
-		AddressSetView in1st = views.get(new DefaultTraceSnap(tb.trace, 0)).getRight();
+		ShiftAndAddressSetView shifted1 = views.get(new DefaultTraceSnap(tb.trace, 0));
+		assertEquals(-0x100000, shifted1.getShift());
+		AddressSetView in1st = shifted1.getAddressSetView();
 		assertEquals(5, in1st.getNumAddressRanges());
-		AddressSetView in2nd = views.get(new DefaultTraceSnap(copy, 0)).getRight();
+		AddressSetView in2nd = views.get(new DefaultTraceSnap(copy, 0)).getAddressSetView();
 		assertEquals(3, in2nd.getNumAddressRanges());
 
 		AddressSet expectedIn1st = new AddressSet();
