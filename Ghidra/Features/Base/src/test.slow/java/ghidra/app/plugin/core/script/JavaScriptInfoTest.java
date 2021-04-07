@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.script;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
@@ -62,7 +61,8 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 				"  // for a blank class, it sure is well documented!",
 				"}");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -101,7 +101,49 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 				"  // just a blank class, nothing to see here",
 				"}");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
+			fail("couldn't create a test script: " + e.getMessage());
+		}
+
+		ScriptInfo info = GhidraScriptUtil.newScriptInfo(scriptFile);
+		assertEquals(description + " \n", info.getDescription());
+
+		String[] actualCategory = info.getCategory();
+		assertEquals(1, actualCategory.length);
+		assertEquals(category, actualCategory[0]);
+	}
+
+	@Test
+	public void testJavaScriptWithBlockCommentAndCertifyHeader() {
+		String description = "Script with a block comment at the top.";
+		String category = "Test";
+		ResourceFile scriptFile = null;
+
+		try {
+			//@formatter:off
+			scriptFile = createTempScriptFileWithLines(
+				"/* ###" + 
+				" * IP: GHIDRA" + 
+				" * " +
+				" * Some license text..." + 
+				" * you may not use this file except in compliance with the License." + 
+				" * " +
+				" * blah blah blah" +
+				" */" +
+				" " + 
+				"/*",
+				" * This is a test block comment. It will be ignored.",
+				" * @category NotTheRealCategory",
+				" */",
+				"//" + description,
+				"//@category " + category,
+				"class BlockCommentScript {",
+				"  // just a blank class, nothing to see here",
+				"}");
+			//@formatter:on
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -128,7 +170,8 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 				"  // just a blank class, nothing to see here",
 				"}");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -156,7 +199,8 @@ public class JavaScriptInfoTest extends AbstractGhidraScriptMgrPluginTest {
 				"  // just a blank class, nothing to see here",
 				"}");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 

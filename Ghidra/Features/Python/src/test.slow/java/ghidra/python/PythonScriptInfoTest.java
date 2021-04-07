@@ -15,20 +15,15 @@
  */
 package ghidra.python;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import javax.swing.KeyStroke;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.BundleHost;
@@ -82,7 +77,8 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 				"#@importpackage " + importPackage,
 				"print('for a blank class, it sure is well documented!')");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -119,7 +115,47 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 				"#@category " + category,
 				"print 'hello!'");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
+			fail("couldn't create a test script: " + e.getMessage());
+		}
+
+		ScriptInfo info = GhidraScriptUtil.newScriptInfo(scriptFile);
+		assertEquals(description + " \n", info.getDescription());
+
+		String[] actualCategory = info.getCategory();
+		assertEquals(1, actualCategory.length);
+		assertEquals(category, actualCategory[0]);
+	}
+
+	@Test
+	public void testPythonScriptWithBlockCommentAndCertifyHeader() {
+		String description = "Script with a block comment at the top.";
+		String category = "Test";
+		ResourceFile scriptFile = null;
+
+		try {
+			//@formatter:off
+			scriptFile = createTempPyScriptFileWithLines(
+				"## ###" +
+				"# IP: GHIDRA" + 
+				"# " +
+				"# Some license text..." + 
+				"# you may not use this file except in compliance with the License." + 
+				"# " +
+				"# blah blah blah" +
+				"##" + 
+				"" +
+				"'''",
+				"This is a test block comment. It will be ignored.",
+				"@category NotTheRealCategory",
+				"'''",
+				"#" + description,
+				"#@category " + category,
+				"print 'hello!'");
+			//@formatter:on
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -144,7 +180,8 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 				"#@category " + category,
 				"print 'hello!'");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
@@ -170,7 +207,8 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 				"#@category " + category,
 				"print 'hello!'");
 			//@formatter:on
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 
