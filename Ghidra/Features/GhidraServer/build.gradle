@@ -40,12 +40,11 @@ addExports([
 ])
 
 CopySpec yajswCopySpec = copySpec {
-	File localFile = file("build/${yajswRelease}.zip")
-	File binFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
+	File depsFile = file("${DEPS_DIR}/GhidraServer/${yajswRelease}.zip")
+	File binRepoFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
 
-	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
-	// repo.
-	def yajswZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
+	def yajswZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
 	
 	from(yajswZipTree) {
 		include "${yajswRelease}/lib/core/**"

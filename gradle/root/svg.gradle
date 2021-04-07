@@ -43,7 +43,6 @@ task rasterizeSvg(type: JavaExec) {
 		// added these in the individual projects which use this task (eg: to the 'compile' 
 		// configuration) but since this is the only task which requires them, it seemed 
 		// appropriate to just add them here.
-		def BIN_REPO = rootProject.file(BIN_REPO_PATH).toString()
 		classpath = files (	BIN_REPO + "/ExternalLibraries/libsforBuild/batik-all-1.7.jar",
 							BIN_REPO + "/ExternalLibraries/libsforBuild/xml-apis-ext.jar")					
 					
