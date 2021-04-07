@@ -183,6 +183,7 @@ public interface TraceRecorder {
 	/**
 	 * Check if recording is active and the given view is at the present
 	 * 
+	 * <p>
 	 * To be at the present means the view's trace and snap matches the recorder's trace and snap.
 	 * The recorder must also be actively recording. Otherwise, this returns {@code false}.
 	 * 

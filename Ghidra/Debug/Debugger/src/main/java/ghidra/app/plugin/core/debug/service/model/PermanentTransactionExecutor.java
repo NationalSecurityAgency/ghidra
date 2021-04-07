@@ -30,9 +30,11 @@ public class PermanentTransactionExecutor {
 
 	private final TransactionCoalescer txc;
 	private final Executor executor;
+	private final UndoableDomainObject obj;
 
 	public PermanentTransactionExecutor(UndoableDomainObject obj, String name,
 			Function<ThreadFactory, Executor> executorFactory, int delayMs) {
+		this.obj = obj;
 		txc = new DefaultTransactionCoalescer<>(obj, RecorderPermanentTransaction::start, delayMs);
 		this.executor = executorFactory.apply(
 			new BasicThreadFactory.Builder().namingPattern(name + "-thread-%d").build());
@@ -40,6 +42,9 @@ public class PermanentTransactionExecutor {
 
 	public void execute(String description, Runnable runnable) {
 		CompletableFuture.runAsync(() -> {
+			if (obj.isClosed()) {
+				return;
+			}
 			try (CoalescedTx tx = txc.start(description)) {
 				runnable.run();
 			}

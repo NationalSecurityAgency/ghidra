@@ -46,6 +46,7 @@ import mockit.VerificationsInOrder;
 /**
  * TODO: Cover the error cases, and cases where {@code null} is expected
  * 
+ * <p>
  * TODO: Cover cases where multiple recorders are present
  */
 public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest
@@ -277,7 +278,9 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		CollectionChangeDelegateWrapper<TraceRecorder> wrapper =
 			new CollectionChangeDelegateWrapper<>(recorderChangeListener);
 		modelService.addTraceRecordersChangedListener(wrapper);
+		Trace trace = recorder.getTrace();
 		recorder.stopRecording();
+		waitForDomainObject(trace);
 
 		new VerificationsInOrder() {
 			{

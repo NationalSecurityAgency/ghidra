@@ -648,4 +648,9 @@ public class TraceObjectManager {
 		objects.remove(path);
 	}
 
+	public void disposeModelListeners() {
+		eventListener.dispose();
+		objectListener.dispose();
+	}
+
 }

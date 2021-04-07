@@ -209,6 +209,11 @@ public class TraceObjectListener implements DebuggerModelListener {
 		});
 	}
 
+	public void dispose() {
+		target.getModel().removeModelListener(reorderer);
+		reorderer.dispose();
+	}
+
 	/*
 	private CompletableFuture<List<TargetObject>> findDependenciesTop(TargetObject added) {
 		List<TargetObject> result = new ArrayList<>();

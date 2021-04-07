@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.*;
 
+import ghidra.framework.model.DomainObjectClosedListener;
+import ghidra.framework.model.DomainObjectException;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -29,6 +31,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
+import ghidra.util.exception.ClosedException;
 
 /**
  * Computes and tracks the "viewport" resulting from forking patterns encoded in snapshot schedules
@@ -46,7 +49,8 @@ import ghidra.util.datastruct.ListenerSet;
  * optimization.
  */
 public class DefaultTraceTimeViewport implements TraceTimeViewport {
-	protected class ForSnapshotsListener extends TraceDomainObjectListener {
+	protected class ForSnapshotsListener extends TraceDomainObjectListener
+			implements DomainObjectClosedListener {
 		{
 			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
 			listenFor(TraceSnapshotChangeType.CHANGED, this::snapshotChanged);
@@ -80,8 +84,14 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 				return;
 			}
 		}
+
+		@Override
+		public void domainObjectClosed() {
+			trace.removeListener(this);
+		}
 	}
 
+	protected final Trace trace;
 	protected final TraceTimeManager timeManager;
 	protected final List<Range<Long>> ordered = new ArrayList<>();
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
@@ -91,7 +101,9 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	protected long snap;
 
 	public DefaultTraceTimeViewport(Trace trace) {
+		this.trace = trace;
 		this.timeManager = trace.getTimeManager();
+		trace.addCloseListener(listener);
 		trace.addListener(listener);
 	}
 

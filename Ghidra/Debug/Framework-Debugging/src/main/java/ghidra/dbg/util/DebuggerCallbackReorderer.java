@@ -48,7 +48,10 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 		ObjectRecord(TargetObject obj) {
 			this.obj = obj;
 			TargetObject parent = obj.getParent();
-			ObjectRecord parentRecord = parent == null ? null : records.get(parent);
+			ObjectRecord parentRecord;
+			synchronized (records) {
+				parentRecord = parent == null ? null : records.get(parent);
+			}
 			if (parentRecord == null) {
 				complete = addedToParent.thenApply(this::completed);
 			}
@@ -59,7 +62,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 		}
 
 		TargetObject completed(TargetObject obj) {
-			records.remove(obj);
+			synchronized (records) {
+				records.remove(obj);
+			}
 			// NB. We should already be on the clientExecutor
 			Map<String, ?> attributes = obj.getCallbackAttributes();
 			if (!attributes.isEmpty()) {
@@ -85,12 +90,19 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 				addedToParent.cancel(false);
 			}
 		}
+
+		public void cancel() {
+			addedToParent.cancel(false);
+			complete.cancel(false);
+		}
 	}
 
 	private final DebuggerModelListener listener;
 
 	private final Map<TargetObject, ObjectRecord> records = new HashMap<>();
 	private CompletableFuture<Void> lastEvent = AsyncUtils.NIL;
+
+	private volatile boolean disposed = false;
 
 	public DebuggerCallbackReorderer(DebuggerModelListener listener) {
 		this.listener = listener;
@@ -107,34 +119,57 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 
 	@Override
 	public void catastrophic(Throwable t) {
+		if (disposed) {
+			return;
+		}
 		listener.catastrophic(t);
 	}
 
 	@Override
 	public void modelClosed(DebuggerModelClosedReason reason) {
+		if (disposed) {
+			return;
+		}
 		listener.modelClosed(reason);
 	}
 
 	@Override
 	public void modelOpened() {
+		if (disposed) {
+			return;
+		}
 		listener.modelOpened();
 	}
 
 	@Override
 	public void modelStateChanged() {
+		if (disposed) {
+			return;
+		}
 		listener.modelStateChanged();
 	}
 
 	@Override
 	public void created(TargetObject object) {
+		if (disposed) {
+			return;
+		}
 		//System.err.println("created object='" + object.getJoinedPath(".") + "'");
-		records.put(object, new ObjectRecord(object));
+		synchronized (records) {
+			records.put(object, new ObjectRecord(object));
+		}
 		defensive(() -> listener.created(object), "created");
 	}
 
 	@Override
 	public void invalidated(TargetObject object, TargetObject branch, String reason) {
-		ObjectRecord remove = records.remove(object);
+		if (disposed) {
+			return;
+		}
+		ObjectRecord remove;
+		synchronized (records) {
+			remove = records.remove(object);
+		}
 		if (remove != null) {
 			remove.removed();
 		}
@@ -143,16 +178,27 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 
 	@Override
 	public void rootAdded(TargetObject root) {
+		if (disposed) {
+			return;
+		}
 		defensive(() -> listener.rootAdded(root), "rootAdded");
-		records.get(root).added();
+		synchronized (records) {
+			records.get(root).added();
+		}
 	}
 
 	@Override
 	public void attributesChanged(TargetObject object, Collection<String> removed,
 			Map<String, ?> added) {
+		if (disposed) {
+			return;
+		}
 		//System.err.println("attributesChanged object=" + object.getJoinedPath(".") + ",removed=" +
 		//	removed + ",added=" + added);
-		ObjectRecord record = records.get(object);
+		ObjectRecord record;
+		synchronized (records) {
+			record = records.get(object);
+		}
 		if (record == null) {
 			defensive(() -> listener.attributesChanged(object, removed, added),
 				"attributesChanged");
@@ -164,7 +210,10 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 			if (val instanceof TargetObject) {
 				TargetObject obj = (TargetObject) val;
 				if (!PathUtils.isLink(object.getPath(), ent.getKey(), obj.getPath())) {
-					ObjectRecord rec = records.get(obj);
+					ObjectRecord rec;
+					synchronized (records) {
+						rec = records.get(obj);
+					}
 					if (rec != null) {
 						rec.added();
 					}
@@ -176,9 +225,15 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 	@Override
 	public void elementsChanged(TargetObject object, Collection<String> removed,
 			Map<String, ? extends TargetObject> added) {
+		if (disposed) {
+			return;
+		}
 		//System.err.println("elementsChanged object=" + object.getJoinedPath(".") + ",removed=" +
 		//	removed + ",added=" + added);
-		ObjectRecord record = records.get(object);
+		ObjectRecord record;
+		synchronized (records) {
+			record = records.get(object);
+		}
 		if (record == null) {
 			defensive(() -> listener.elementsChanged(object, removed, added), "elementsChanged");
 		}
@@ -187,7 +242,10 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 			//System.err.println("  " + ent.getKey());
 			TargetObject obj = ent.getValue();
 			if (!PathUtils.isElementLink(object.getPath(), ent.getKey(), obj.getPath())) {
-				ObjectRecord rec = records.get(obj);
+				ObjectRecord rec;
+				synchronized (records) {
+					rec = records.get(obj);
+				}
 				if (rec != null) {
 					rec.added();
 				}
@@ -195,14 +253,15 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 		}
 	}
 
-	private synchronized void orderedOnObjects(Collection<TargetObject> objects, Runnable r,
-			String cb) {
+	private void orderedOnObjects(Collection<TargetObject> objects, Runnable r, String cb) {
 		AsyncFence fence = new AsyncFence();
 		fence.include(lastEvent);
-		for (TargetObject obj : objects) {
-			ObjectRecord record = records.get(obj);
-			if (record != null) {
-				fence.include(record.complete);
+		synchronized (records) {
+			for (TargetObject obj : objects) {
+				ObjectRecord record = records.get(obj);
+				if (record != null) {
+					fence.include(record.complete);
+				}
 			}
 		}
 		lastEvent = fence.ready().thenAccept(__ -> {
@@ -216,6 +275,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 	@Override
 	public void breakpointHit(TargetObject container, TargetObject trapped, TargetStackFrame frame,
 			TargetBreakpointSpec spec, TargetBreakpointLocation breakpoint) {
+		if (disposed) {
+			return;
+		}
 		List<TargetObject> args = frame == null
 				? List.of(container, trapped, spec, breakpoint)
 				: List.of(container, trapped, frame, spec, breakpoint);
@@ -226,6 +288,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 
 	@Override
 	public void consoleOutput(TargetObject console, Channel channel, byte[] data) {
+		if (disposed) {
+			return;
+		}
 		orderedOnObjects(List.of(console), () -> {
 			listener.consoleOutput(console, channel, data);
 		}, "consoleOutput");
@@ -246,6 +311,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 	@Override
 	public void event(TargetObject object, TargetThread eventThread, TargetEventType type,
 			String description, List<Object> parameters) {
+		if (disposed) {
+			return;
+		}
 		List<TargetObject> objs = eventThread == null
 				? List.of(object)
 				: List.of(object, eventThread);
@@ -256,6 +324,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 
 	@Override
 	public void invalidateCacheRequested(TargetObject object) {
+		if (disposed) {
+			return;
+		}
 		orderedOnObjects(List.of(object), () -> {
 			listener.invalidateCacheRequested(object);
 		}, "invalidateCacheRequested");
@@ -264,6 +335,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 	@Override
 	public void memoryReadError(TargetObject memory, AddressRange range,
 			DebuggerMemoryAccessException e) {
+		if (disposed) {
+			return;
+		}
 		orderedOnObjects(List.of(memory), () -> {
 			listener.memoryReadError(memory, range, e);
 		}, "invalidateCacheRequested");
@@ -271,6 +345,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 
 	@Override
 	public void memoryUpdated(TargetObject memory, Address address, byte[] data) {
+		if (disposed) {
+			return;
+		}
 		orderedOnObjects(List.of(memory), () -> {
 			listener.memoryUpdated(memory, address, data);
 		}, "invalidateCacheRequested");
@@ -278,8 +355,23 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 
 	@Override
 	public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
+		if (disposed) {
+			return;
+		}
 		orderedOnObjects(List.of(bank), () -> {
 			listener.registersUpdated(bank, updates);
 		}, "invalidateCacheRequested");
+	}
+
+	public void dispose() {
+		disposed = true;
+		Set<ObjectRecord> volRecs;
+		synchronized (records) {
+			volRecs = Set.copyOf(records.values());
+			records.clear();
+		}
+		for (ObjectRecord rec : volRecs) {
+			rec.cancel();
+		}
 	}
 }

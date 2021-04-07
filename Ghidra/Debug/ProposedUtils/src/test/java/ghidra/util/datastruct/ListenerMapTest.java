@@ -16,12 +16,13 @@
 package ghidra.util.datastruct;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
-
-import ghidra.util.datastruct.ListenerMap;
 
 public class ListenerMapTest {
 	public interface DummyListener {
@@ -63,6 +64,65 @@ public class ListenerMapTest {
 		assertEquals("EventB", ar1.get());
 		assertEquals("EventC", ar2.get());
 		assertEquals("EventC", ar3.get());
+	}
+
+	protected void waitEvents(Executor executor) throws Throwable {
+		CompletableFuture.runAsync(() -> {
+		}, executor).get(1000, TimeUnit.MILLISECONDS);
+	}
+
+	@Test
+	public void testAddsRemovesImmediatelyEffective() throws Throwable {
+		Executor executor = Executors.newSingleThreadExecutor();
+		CompletableFuture.runAsync(() -> Thread.currentThread().setName("ExecutorThread"), executor)
+				.get();
+		ListenerMap<String, DummyListener, DummyListener> listeners =
+			new ListenerMap<>(DummyListener.class, executor);
+
+		Map<String, CompletableFuture<?>> stalls = Map.ofEntries(
+			Map.entry("StallA", new CompletableFuture<>()),
+			Map.entry("StallB", new CompletableFuture<>()),
+			Map.entry("StallD", new CompletableFuture<>()));
+		AtomicReference<String> ar1 = new AtomicReference<>();
+		DummyListener l1 = s -> {
+			CompletableFuture<?> stall = stalls.get(s);
+			if (stall != null) {
+				try {
+					stall.get();
+				}
+				catch (InterruptedException | ExecutionException e) {
+					// Nothing I really can do
+				}
+			}
+			ar1.set(s);
+		};
+		AtomicReference<String> ar2 = new AtomicReference<>();
+		DummyListener l2 = ar2::set;
+
+		listeners.put("Key1", l1);
+		ar1.set("None");
+		listeners.fire.event("StallA");
+		assertEquals("None", ar1.get());
+		stalls.get("StallA").complete(null);
+		waitEvents(executor);
+		assertEquals("StallA", ar1.get());
+
+		// NB. It's the the fire timeline that matters, but the completion timeline
+		listeners.fire.event("StallB");
+		listeners.fire.event("EventC");
+		listeners.put("Key2", l2);
+		stalls.get("StallB").complete(null);
+		waitEvents(executor);
+		assertEquals("EventC", ar1.get());
+		assertEquals("EventC", ar2.get());
+
+		listeners.fire.event("StallD");
+		listeners.fire.event("EventE");
+		listeners.remove("Key2");
+		stalls.get("StallD").complete(null);
+		waitEvents(executor);
+		assertEquals("EventE", ar1.get());
+		assertNotEquals("EventE", ar2.get());
 	}
 
 	@Test

@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * The interface for receiving input callbacks via {@code IDebugInputCallbacks} or a newer variant.
  * 
+ * <p>
  * Note: The wrapper implementation will select the appropriate native interface version.
  */
 @FunctionalInterface

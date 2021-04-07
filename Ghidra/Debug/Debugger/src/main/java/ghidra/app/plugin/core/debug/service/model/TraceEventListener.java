@@ -266,4 +266,9 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		return recorder.getThreadMap();
 	}
 
+	public void dispose() {
+		target.getModel().removeModelListener(reorderer);
+		reorderer.dispose();
+	}
+
 }

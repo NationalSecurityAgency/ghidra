@@ -346,7 +346,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	protected void invalidate() {
 		valid = false;
-		//listenerForRecord.dispose();
+		objectManager.disposeModelListeners();
 		trace.release(this);
 	}
 

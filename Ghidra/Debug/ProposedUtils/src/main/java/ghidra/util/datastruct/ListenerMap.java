@@ -118,17 +118,16 @@ public class ListenerMap<K, P, V extends P> {
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			//Msg.debug(this, "Queuing invocation: " + method.getName() + " @" +
 			//	System.identityHashCode(executor));
-			Collection<V> listenersVolatile;
-			Set<ListenerMap<?, ? extends P, ?>> chainedVolatile;
-			synchronized (lock) {
-				listenersVolatile = map.values();
-				chainedVolatile = chained;
-			}
-			for (V l : listenersVolatile) {
-				if (!ext.isAssignableFrom(l.getClass())) {
-					continue;
+			// Listener adds/removes need to take immediate effect, even with queued events
+			executor.execute(() -> {
+				Collection<V> listenersVolatile;
+				synchronized (lock) {
+					listenersVolatile = map.values();
 				}
-				executor.execute(() -> {
+				for (V l : listenersVolatile) {
+					if (!ext.isAssignableFrom(l.getClass())) {
+						continue;
+					}
 					//Msg.debug(this,
 					//	"Invoking: " + method.getName() + " @" + System.identityHashCode(executor));
 					try {
@@ -141,9 +140,13 @@ public class ListenerMap<K, P, V extends P> {
 					catch (Throwable e) {
 						reportError(l, e);
 					}
-				});
+				}
+			});
+			Set<ListenerMap<?, ? extends P, ?>> chainedVolatile;
+			synchronized (lock) {
+				chainedVolatile = chained;
 			}
-			for (ListenerMap<?, ? extends P, ?> c : chained) {
+			for (ListenerMap<?, ? extends P, ?> c : chainedVolatile) {
 				// Invocation will check if assignable
 				@SuppressWarnings("unchecked")
 				T l = ((ListenerMap<?, P, ?>) c).fire(ext);
