@@ -27,9 +27,10 @@ public class TestTargetStackFrameIsRegisterBank
 
 	protected Address pc;
 
-	public TestTargetStackFrameIsRegisterBank(TestTargetStack parent, int level) {
+	public TestTargetStackFrameIsRegisterBank(TestTargetStack parent, int level, Address pc) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(level)), "Frame",
 			parent.getParent().getParent().getParent().regs);
+		setPC(pc);
 	}
 
 	@Override
@@ -49,7 +50,7 @@ public class TestTargetStackFrameIsRegisterBank
 
 	public void setPC(Address address) {
 		changeAttributes(List.of(), Map.of(
-			PC_ATTRIBUTE_NAME, address //
+			PC_ATTRIBUTE_NAME, pc = address //
 		), "PC Updated");
 	}
 

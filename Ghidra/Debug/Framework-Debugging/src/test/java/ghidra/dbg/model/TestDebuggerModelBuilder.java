@@ -92,7 +92,7 @@ public class TestDebuggerModelBuilder {
 	 * Create register banks which are the top frame of stacks attributed to the threads.
 	 */
 	public void createTestThreadStacksAndFramesAreRegisterBanks() {
-		applyThreadRegisterBankConvention(t -> t.addStack().pushFrameIsBank());
+		applyThreadRegisterBankConvention(t -> t.addStack().pushFrameIsBank(addr(0x00400000)));
 	}
 
 	/**
@@ -100,6 +100,7 @@ public class TestDebuggerModelBuilder {
 	 * threads.
 	 */
 	public void createTestThreadStacksAndFramesHaveRegisterBanks() {
-		applyThreadRegisterBankConvention(t -> t.addStack().pushFrameHasBank().getBank());
+		applyThreadRegisterBankConvention(
+			t -> t.addStack().pushFrameHasBank(addr(0x00400000)).getBank());
 	}
 }

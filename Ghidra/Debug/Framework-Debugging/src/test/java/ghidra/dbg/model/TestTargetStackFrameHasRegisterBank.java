@@ -27,12 +27,13 @@ public class TestTargetStackFrameHasRegisterBank
 	protected final TestTargetRegisterBankInFrame bank;
 	protected Address pc;
 
-	public TestTargetStackFrameHasRegisterBank(TestTargetStack parent, int level) {
+	public TestTargetStackFrameHasRegisterBank(TestTargetStack parent, int level, Address pc) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(level)), "Frame");
 		bank = new TestTargetRegisterBankInFrame(this);
 
 		changeAttributes(List.of(), Map.of(
-			bank.getName(), bank //
+			bank.getName(), bank, //
+			PC_ATTRIBUTE_NAME, this.pc = pc //
 		), "Initialized");
 	}
 

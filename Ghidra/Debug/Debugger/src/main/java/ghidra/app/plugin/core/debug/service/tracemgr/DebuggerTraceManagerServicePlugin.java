@@ -984,10 +984,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return thread;
 			}
 		}
-		if (!Objects.equals(prev.getTrace(), resolved.getTrace())) {
-			return recorder.getTarget();
-		}
-		return null;
+		//if (!Objects.equals(prev.getTrace(), resolved.getTrace())) {
+		return recorder.getTarget();
+		//}
+		//return null;
 	}
 
 	@Override

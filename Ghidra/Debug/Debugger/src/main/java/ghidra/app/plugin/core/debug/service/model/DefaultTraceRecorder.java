@@ -236,8 +236,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	@Override
 	public TraceStackFrame getTraceStackFrame(TargetStackFrame frame) {
-		// THIS IS UNUSED
-		return null;
+		// Not the most efficient, but only used in testing.
+		return getTraceStackFrameForSuccessor(frame);
 	}
 
 	@Override

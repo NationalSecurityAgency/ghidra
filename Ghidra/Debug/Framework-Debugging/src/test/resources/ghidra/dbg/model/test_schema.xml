@@ -281,20 +281,6 @@
         <attribute schema="OBJECT" />
     </schema>
     <schema name="Stack" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-        <element schema="VOID" />
-        <attribute name="_modified" schema="BOOL" hidden="yes" />
-        <attribute name="_display" schema="STRING" hidden="yes" />
-        <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
-        <attribute name="_short_display" schema="STRING" hidden="yes" />
-        <attribute name="_value" schema="ANY" hidden="yes" />
-        <attribute name="_type" schema="STRING" hidden="yes" />
-        <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute name="Frames" schema="Frames" required="yes" />
-        <attribute schema="ANY" />
-    </schema>
-    <schema name="Frames" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-        <interface name="Stack" />
         <element schema="StackFrame" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />

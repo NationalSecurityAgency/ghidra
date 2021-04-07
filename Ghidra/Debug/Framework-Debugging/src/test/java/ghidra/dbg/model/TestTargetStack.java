@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.dbg.target.TargetStack;
+import ghidra.program.model.address.Address;
 
 public class TestTargetStack extends DefaultTestTargetObject<TestTargetStackFrame, TestTargetThread>
 		implements TargetStack {
@@ -42,8 +43,8 @@ public class TestTargetStack extends DefaultTestTargetObject<TestTargetStackFram
 	 * 
 	 * @return the "new" highest-indexed frame, into which old data was pushed
 	 */
-	public TestTargetStackFrameHasRegisterBank pushFrameHasBank() {
-		return pushFrame(new TestTargetStackFrameHasRegisterBank(this, elements.size()));
+	public TestTargetStackFrameHasRegisterBank pushFrameHasBank(Address pc) {
+		return pushFrame(new TestTargetStackFrameHasRegisterBank(this, elements.size(), pc));
 	}
 
 	/**
@@ -51,7 +52,7 @@ public class TestTargetStack extends DefaultTestTargetObject<TestTargetStackFram
 	 * 
 	 * @return the "new" highest-indexed frame, into which old data was pushed
 	 */
-	public TestTargetStackFrameIsRegisterBank pushFrameIsBank() {
-		return pushFrame(new TestTargetStackFrameIsRegisterBank(this, elements.size()));
+	public TestTargetStackFrameIsRegisterBank pushFrameIsBank(Address pc) {
+		return pushFrame(new TestTargetStackFrameIsRegisterBank(this, elements.size(), pc));
 	}
 }

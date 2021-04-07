@@ -15,8 +15,6 @@
  */
 package ghidra.dbg.util;
 
-import java.util.Collection;
-
 import ghidra.util.Msg;
 
 public enum ValueUtils {
@@ -43,20 +41,5 @@ public enum ValueUtils {
 			return fallback;
 		}
 		return cls.cast(val);
-	}
-
-	public static boolean expectBoolean(Object val, Object logObj, String attributeName,
-			boolean fallback, boolean required) {
-		Boolean exp = expectType(val, Boolean.class, logObj, attributeName, null, required);
-		if (exp == null) {
-			return fallback;
-		}
-		return exp;
-	}
-
-	@SuppressWarnings("unchecked")
-	public static <T extends Collection<E>, E> Class<T> colOf(Class<? super T> colType,
-			Class<E> elemType) {
-		return (Class<T>) colType;
 	}
 }
