@@ -15,12 +15,11 @@
  */
 package ghidra.app.plugin.core.strings;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
@@ -38,6 +37,7 @@ import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
+import resources.ResourceManager;
 
 /**
  * Plugin that provides the "Defined Strings" table, where all the currently defined
@@ -57,7 +57,11 @@ import resources.Icons;
 //@formatter:on
 public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectListener {
 
-	private DockingAction selectAction;
+	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
+	private static Icon REFRESH_NOT_NEEDED_ICON =
+		ResourceManager.getDisabledIcon(Icons.REFRESH_ICON, 60);
+
+	private DockingAction refreshAction;
 	private DockingAction showSettingsAction;
 	private DockingAction showDefaultSettingsAction;
 	private SelectionNavigationAction linkNavigationAction;
@@ -82,7 +86,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	}
 
 	private void createActions() {
-		DockingAction refreshAction = new DockingAction("Refresh Strings", getName()) {
+		refreshAction = new DockingAction("Refresh Strings", getName()) {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
@@ -91,12 +95,14 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 
 			@Override
 			public void actionPerformed(ActionContext context) {
+				getToolBarData().setIcon(REFRESH_NOT_NEEDED_ICON);
 				reload();
 			}
 		};
-		ImageIcon refreshIcon = Icons.REFRESH_ICON;
-		refreshAction.setDescription("Reloads all string data from the program");
-		refreshAction.setToolBarData(new ToolBarData(refreshIcon));
+		refreshAction.setToolBarData(new ToolBarData(REFRESH_NOT_NEEDED_ICON));
+		refreshAction.setDescription(
+			"<html>Push at any time to refresh the current table of strings.<br>" +
+				"This button is highlighted when the data <i>may</i> be stale.<br>");
 		refreshAction.setHelpLocation(new HelpLocation("ViewStringsPlugin", "Refresh"));
 		tool.addLocalAction(provider, refreshAction);
 
@@ -152,13 +158,6 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 
 	}
 
-	private void selectData(ProgramSelection selection) {
-		ProgramSelectionPluginEvent pspe =
-			new ProgramSelectionPluginEvent("Selection", selection, currentProgram);
-		firePluginEvent(pspe);
-		processEvent(pspe);
-	}
-
 	@Override
 	public void dispose() {
 		reloadUpdateMgr.dispose();
@@ -186,45 +185,50 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 		}
 	}
 
+	private void markDataAsStale() {
+		provider.getComponent().repaint();
+		refreshAction.getToolBarData().setIcon(REFRESH_ICON);
+	}
+
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+
 		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
 			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
 			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED) ||
 			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED)) {
-			reload();
-
+			markDataAsStale();
+			return;
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_CODE_ADDED)) {
-			for (int i = 0; i < ev.numRecords(); ++i) {
-				DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-				Object newValue = doRecord.getNewValue();
-				switch (doRecord.getEventType()) {
-					case ChangeManager.DOCR_CODE_REMOVED:
-					case ChangeManager.DOCR_COMPOSITE_ADDED:
-						ProgramChangeRecord pcRec = (ProgramChangeRecord) doRecord;
-						provider.remove(pcRec.getStart(), pcRec.getEnd());
-						break;
-					case ChangeManager.DOCR_CODE_ADDED:
-						if (newValue instanceof Data) {
-							provider.add((Data) newValue);
-						}
-						break;
-					default:
-						//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
-						break;
-				}
+
+		for (int i = 0; i < ev.numRecords(); ++i) {
+
+			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
+			Object newValue = doRecord.getNewValue();
+			switch (doRecord.getEventType()) {
+				case ChangeManager.DOCR_CODE_REMOVED:
+					ProgramChangeRecord pcRec = (ProgramChangeRecord) doRecord;
+					provider.remove(pcRec.getStart(), pcRec.getEnd());
+					break;
+				case ChangeManager.DOCR_CODE_ADDED:
+					if (newValue instanceof Data) {
+						provider.add((Data) newValue);
+					}
+					break;
+				default:
+					//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
+					break;
 			}
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED)) {
+
+		if (ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED)) {
 			// Unusual code: because the table model goes directly to the settings values
 			// during each repaint, we don't need to figure out which row was changed.
 			provider.getComponent().repaint();
 		}
 	}
 
-	void reload() {
+	private void reload() {
 		reloadUpdateMgr.update();
 	}
 }
