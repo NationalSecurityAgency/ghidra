@@ -16,6 +16,8 @@
 package agent.gdb.model.impl;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -62,6 +64,8 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 
 	protected final CompletableFuture<GdbModelTargetSession> completedSession;
 	protected final GdbStateListener gdbExitListener = this::checkExited;
+
+	protected Map<Object, TargetObject> objectMap = new HashMap<>();
 
 	public GdbModelImpl() {
 		this.gdb = GdbManager.newInstance();
@@ -162,4 +166,17 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 			return CompletableFuture.failedFuture(t);
 		}
 	}
+
+	public void addModelObject(Object object, TargetObject targetObject) {
+		objectMap.put(object, targetObject);
+	}
+
+	public TargetObject getModelObject(Object object) {
+		return objectMap.get(object);
+	}
+
+	public void deleteModelObject(Object object) {
+		objectMap.remove(object);
+	}
+
 }

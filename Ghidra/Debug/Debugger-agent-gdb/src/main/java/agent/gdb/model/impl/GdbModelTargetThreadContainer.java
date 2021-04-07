@@ -26,10 +26,10 @@ import agent.gdb.manager.reason.GdbBreakpointHitReason;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "ThreadContainer",
@@ -42,8 +42,6 @@ public class GdbModelTargetThreadContainer
 
 	protected final GdbModelImpl impl;
 	protected final GdbInferior inferior;
-
-	protected final Map<Integer, GdbModelTargetThread> threadsById = new WeakValueHashMap<>();
 
 	public GdbModelTargetThreadContainer(GdbModelTargetInferior inferior) {
 		super(inferior.impl, inferior, NAME, "ThreadContainer");
@@ -60,7 +58,7 @@ public class GdbModelTargetThreadContainer
 
 	public void threadExited(int threadId) {
 		synchronized (this) {
-			threadsById.remove(threadId);
+			impl.deleteModelObject(threadId);
 		}
 		changeElements(List.of(GdbModelTargetThread.indexThread(threadId)), List.of(), "Exited");
 	}
@@ -81,24 +79,32 @@ public class GdbModelTargetThreadContainer
 			return AsyncUtils.NIL;
 		}
 		return inferior.listThreads().thenAccept(byTID -> {
-			threadsById.keySet().retainAll(byTID.keySet());
+			for (Integer tid : inferior.getKnownThreads().keySet()) {
+				if (!byTID.keySet().contains(tid)) {
+					impl.deleteModelObject(byTID.get(tid));
+				}
+			}
 			updateUsingThreads(byTID);
 		});
 	}
 
 	public synchronized GdbModelTargetThread getTargetThread(GdbThread thread) {
 		assert thread.getInferior() == inferior;
-		return threadsById.computeIfAbsent(thread.getId(),
-			i -> new GdbModelTargetThread(this, parent, thread));
+		TargetObject modelObject = impl.getModelObject(thread);
+		if (modelObject != null) {
+			return (GdbModelTargetThread) modelObject;
+		}
+		return new GdbModelTargetThread(this, parent, thread);
 	}
 
-	public synchronized GdbModelTargetThread getTargetThreadIfPresent(int threadId) {
-		return threadsById.get(threadId);
+	public synchronized GdbModelTargetThread getTargetThreadIfPresent(GdbThread thread) {
+		return (GdbModelTargetThread) impl.getModelObject(thread);
 	}
 
 	protected void invalidateRegisterCaches() {
-		for (GdbModelTargetThread thread : threadsById.values()) {
-			thread.invalidateRegisterCaches();
+		for (GdbThread thread : inferior.getKnownThreads().values()) {
+			GdbModelTargetThread targetThread = (GdbModelTargetThread) impl.getModelObject(thread);
+			targetThread.invalidateRegisterCaches();
 		}
 	}
 
@@ -114,8 +120,10 @@ public class GdbModelTargetThreadContainer
 		}
 		return requestElements(false).thenCompose(__ -> {
 			AsyncFence fence = new AsyncFence();
-			for (GdbModelTargetThread modelThread : threadsById.values()) {
-				fence.include(modelThread.stateChanged(sco));
+			for (GdbThread thread : inferior.getKnownThreads().values()) {
+				GdbModelTargetThread targetThread =
+					(GdbModelTargetThread) impl.getModelObject(thread);
+				fence.include(targetThread.stateChanged(sco));
 			}
 			return fence.ready();
 		}).exceptionally(__ -> {

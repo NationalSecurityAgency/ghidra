@@ -29,14 +29,11 @@ import ghidra.program.model.address.*;
 @TargetObjectSchemaInfo(
 	name = "Section",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
-public class GdbModelTargetSection
-		extends DefaultTargetObject<TargetObject, GdbModelTargetSectionContainer>
-		implements TargetSection {
+		@TargetAttributeType(type = Void.class) })
+public class GdbModelTargetSection extends
+		DefaultTargetObject<TargetObject, GdbModelTargetSectionContainer> implements TargetSection {
 
 	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 
@@ -59,6 +56,7 @@ public class GdbModelTargetSection
 		super(sections.impl, sections, keySection(section), "Section");
 		this.impl = sections.impl;
 		this.section = section;
+		impl.addModelObject(section, this);
 
 		this.module = module;
 		this.range = doGetRange();

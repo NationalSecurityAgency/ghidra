@@ -33,11 +33,9 @@ import ghidra.program.model.address.Address;
 @TargetObjectSchemaInfo(
 	name = "BreakpointLocation",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetBreakpointLocation
 		extends DefaultTargetObject<TargetObject, GdbModelTargetBreakpointSpec>
 		implements TargetBreakpointLocation {
@@ -61,6 +59,7 @@ public class GdbModelTargetBreakpointLocation
 		super(spec.impl, spec, keyLocation(loc), "BreakpointLocation");
 		this.impl = spec.impl;
 		this.loc = loc;
+		impl.addModelObject(loc, this);
 
 		if (!spec.info.getType().isWatchpoint()) {
 			this.address = doGetAddress();
@@ -74,8 +73,8 @@ public class GdbModelTargetBreakpointLocation
 			SPEC_ATTRIBUTE_NAME, parent,
 			ADDRESS_ATTRIBUTE_NAME, address,
 			LENGTH_ATTRIBUTE_NAME, length,
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
-		), reason);
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay()),
+			reason);
 		placeLocations();
 	}
 

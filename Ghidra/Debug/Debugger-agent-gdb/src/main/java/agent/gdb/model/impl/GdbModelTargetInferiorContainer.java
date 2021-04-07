@@ -25,9 +25,9 @@ import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "InferiorContainer",
@@ -40,8 +40,6 @@ public class GdbModelTargetInferiorContainer
 	public static final String NAME = "Inferiors";
 
 	protected final GdbModelImpl impl;
-
-	protected final Map<Integer, GdbModelTargetInferior> inferiorsById = new WeakValueHashMap<>();
 
 	public GdbModelTargetInferiorContainer(GdbModelTargetSession session) {
 		super(session.impl, session, NAME, "InferiorContainer");
@@ -76,7 +74,7 @@ public class GdbModelTargetInferiorContainer
 	@Override
 	public void inferiorRemoved(int inferiorId, GdbCause cause) {
 		synchronized (this) {
-			inferiorsById.remove(inferiorId);
+			impl.deleteModelObject(inferiorId);
 		}
 		changeElements(List.of(GdbModelTargetInferior.indexInferior(inferiorId)), List.of(),
 			"Removed");
@@ -93,7 +91,8 @@ public class GdbModelTargetInferiorContainer
 	@Override
 	public void threadExited(int threadId, GdbInferior inf, GdbCause cause) {
 		GdbModelTargetInferior inferior = getTargetInferior(inf);
-		GdbModelTargetThread targetThread = inferior.threads.getTargetThreadIfPresent(threadId);
+		GdbThread thread = inf.getKnownThreads().get(threadId);
+		GdbModelTargetThread targetThread = inferior.threads.getTargetThreadIfPresent(thread);
 		parent.getListeners().fire.event(parent, targetThread, TargetEventType.THREAD_EXITED,
 			"Thread " + threadId + " exited", List.of(targetThread));
 		inferior.threads.threadExited(threadId);
@@ -144,25 +143,25 @@ public class GdbModelTargetInferiorContainer
 	// Cache should be kept in sync all the time, anyway
 
 	public synchronized GdbModelTargetInferior getTargetInferior(int id) {
-		return inferiorsById.computeIfAbsent(id,
-			i -> new GdbModelTargetInferior(this, impl.gdb.getKnownInferiors().get(id)));
+		TargetObject modelObject = impl.getModelObject(id);
+		if (modelObject != null) {
+			return (GdbModelTargetInferior) modelObject;
+		}
+		return new GdbModelTargetInferior(this, impl.gdb.getKnownInferiors().get(id));
 	}
 
 	public synchronized GdbModelTargetInferior getTargetInferior(GdbInferior inferior) {
-		GdbModelTargetInferior modelInferior = inferiorsById.get(inferior.getId());
-		if (modelInferior != null) {
-			modelInferior.updateDisplayAttribute();
+		TargetObject modelObject = impl.getModelObject(inferior);
+		if (modelObject != null) {
+			return (GdbModelTargetInferior) modelObject;
 		}
-		else {
-			modelInferior = new GdbModelTargetInferior(this, inferior);
-			inferiorsById.put(inferior.getId(), modelInferior);
-		}
-		return modelInferior;
+		return new GdbModelTargetInferior(this, inferior);
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {
-		for (GdbModelTargetInferior inf : inferiorsById.values()) {
-			inf.invalidateMemoryAndRegisterCaches();
+		for (GdbInferior inf : impl.gdb.getKnownInferiors().values()) {
+			GdbModelTargetInferior targetInf = (GdbModelTargetInferior) impl.getModelObject(inf);
+			targetInf.invalidateMemoryAndRegisterCaches();
 		}
 	}
 

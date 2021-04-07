@@ -31,8 +31,11 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 
-@TargetObjectSchemaInfo(name = "Inferior", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "Inferior",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer>
@@ -81,6 +84,8 @@ public class GdbModelTargetInferior
 		super(inferiors.impl, inferiors, keyInferior(inferior), "Inferior");
 		this.impl = inferiors.impl;
 		this.inferior = inferior;
+		impl.addModelObject(inferior, this);
+		impl.addModelObject(inferior.getId(), this);
 
 		this.environment = new GdbModelTargetEnvironment(this);
 		this.memory = new GdbModelTargetProcessMemory(this);
@@ -135,7 +140,10 @@ public class GdbModelTargetInferior
 		return threads;
 	}
 
-	@TargetAttributeType(name = GdbModelTargetBreakpointLocationContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetBreakpointLocationContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetBreakpointLocationContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -231,16 +239,16 @@ public class GdbModelTargetInferior
 				p = inferior.getPid();
 			}
 			if (p == null) {
-				changeAttributes(List.of(),
-					Map.ofEntries(Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
-						Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
+				changeAttributes(List.of(), Map.ofEntries(
+					Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
+					Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
 					"Refresh on started");
 			}
 			else {
-				changeAttributes(List.of(),
-					Map.ofEntries(Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
-						Map.entry(PID_ATTRIBUTE_NAME, p),
-						Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
+				changeAttributes(List.of(), Map.ofEntries(
+					Map.entry(STATE_ATTRIBUTE_NAME, state = realState),
+					Map.entry(PID_ATTRIBUTE_NAME, p),
+					Map.entry(DISPLAY_ATTRIBUTE_NAME, updateDisplay())),
 					"Refresh on started");
 			}
 		});

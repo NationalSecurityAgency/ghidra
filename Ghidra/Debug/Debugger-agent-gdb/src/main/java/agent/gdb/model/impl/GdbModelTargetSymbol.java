@@ -29,14 +29,11 @@ import ghidra.program.model.address.Address;
 @TargetObjectSchemaInfo(
 	name = "Symbol",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
-public class GdbModelTargetSymbol
-		extends DefaultTargetObject<TargetObject, GdbModelTargetSymbolContainer>
-		implements TargetSymbol {
+		@TargetAttributeType(type = Void.class) })
+public class GdbModelTargetSymbol extends
+		DefaultTargetObject<TargetObject, GdbModelTargetSymbolContainer> implements TargetSymbol {
 	protected static String indexSymbol(GdbMinimalSymbol symbol) {
 		return symbol.getName();
 	}
@@ -51,6 +48,7 @@ public class GdbModelTargetSymbol
 
 	public GdbModelTargetSymbol(GdbModelTargetSymbolContainer symbols, GdbMinimalSymbol symbol) {
 		super(symbols.impl, symbols, keySymbol(symbol), "Symbol");
+		symbols.impl.addModelObject(symbol, this);
 		this.constant = false;
 		this.value = symbols.impl.space.getAddress(symbol.getAddress());
 		this.size = 0;

@@ -54,6 +54,7 @@ public class GdbModelTargetRegister
 		super(registers.impl, registers, keyRegister(register), "Register");
 		this.impl = registers.impl;
 		this.register = register;
+		impl.addModelObject(register, this);
 
 		this.bitLength = register.getSize() * 8;
 

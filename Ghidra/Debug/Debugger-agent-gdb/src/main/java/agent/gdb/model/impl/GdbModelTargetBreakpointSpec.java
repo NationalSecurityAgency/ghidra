@@ -36,8 +36,7 @@ import ghidra.util.datastruct.WeakValueHashMap;
 @TargetObjectSchemaInfo(
 	name = "BreakpointSpec",
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	},
+		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
 public class GdbModelTargetBreakpointSpec extends
 		DefaultTargetObject<GdbModelTargetBreakpointLocation, GdbModelTargetBreakpointContainer>
@@ -74,12 +73,10 @@ public class GdbModelTargetBreakpointSpec extends
 		super(breakpoints.impl, breakpoints, keyBreakpoint(info), "BreakpointSpec");
 		this.impl = breakpoints.impl;
 		this.number = info.getNumber();
-
 		this.info = info;
+		impl.addModelObject(info, this);
 
-		changeAttributes(List.of(), Map.of(
-			CONTAINER_ATTRIBUTE_NAME, breakpoints),
-			"Initialized");
+		changeAttributes(List.of(), Map.of(CONTAINER_ATTRIBUTE_NAME, breakpoints), "Initialized");
 	}
 
 	protected CompletableFuture<Void> init() {
@@ -177,8 +174,8 @@ public class GdbModelTargetBreakpointSpec extends
 			ENABLED_ATTRIBUTE_NAME, enabled = info.isEnabled(),
 			EXPRESSION_ATTRIBUTE_NAME, expression = info.getOriginalLocation(),
 			KINDS_ATTRIBUTE_NAME, kinds = computeKinds(info),
-			DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
-		), reason);
+			DISPLAY_ATTRIBUTE_NAME, updateDisplay()),
+			reason);
 	}
 
 	protected synchronized List<GdbModelTargetBreakpointLocation> setInfoAndComputeLocations(
@@ -197,8 +194,7 @@ public class GdbModelTargetBreakpointSpec extends
 
 	protected CompletableFuture<Void> updateBktpInfo(GdbBreakpointInfo oldInfo,
 			GdbBreakpointInfo newInfo, String reason) {
-		List<GdbModelTargetBreakpointLocation> locs =
-			setInfoAndComputeLocations(oldInfo, newInfo);
+		List<GdbModelTargetBreakpointLocation> locs = setInfoAndComputeLocations(oldInfo, newInfo);
 		updateAttributesFromInfo(reason);
 		setElements(locs, reason);
 		return AsyncUtils.NIL;
@@ -206,8 +202,7 @@ public class GdbModelTargetBreakpointSpec extends
 
 	protected CompletableFuture<Void> updateWptInfo(GdbBreakpointInfo oldInfo,
 			GdbBreakpointInfo newInfo, String reason) {
-		List<GdbModelTargetBreakpointLocation> locs =
-			setInfoAndComputeLocations(oldInfo, newInfo);
+		List<GdbModelTargetBreakpointLocation> locs = setInfoAndComputeLocations(oldInfo, newInfo);
 		updateAttributesFromInfo(reason);
 		assert locs.size() == 1;
 		return locs.get(0).initWpt().thenAccept(__ -> {

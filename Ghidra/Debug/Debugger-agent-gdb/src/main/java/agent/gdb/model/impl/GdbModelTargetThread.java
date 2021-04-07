@@ -35,8 +35,10 @@ import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "Thread",
-	elements = { @TargetElementType(type = Void.class) },
-	attributes = { @TargetAttributeType(type = Void.class) })
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetThread
 		extends DefaultTargetObject<TargetObject, GdbModelTargetThreadContainer> implements
 		TargetThread, TargetExecutionStateful, TargetSteppable, GdbModelSelectableObject {
@@ -77,6 +79,7 @@ public class GdbModelTargetThread
 		this.impl = threads.impl;
 		this.inferior = inferior.inferior;
 		this.thread = thread;
+		impl.addModelObject(thread, this);
 
 		this.stack = new GdbModelTargetStack(this, inferior);
 
@@ -232,9 +235,7 @@ public class GdbModelTargetThread
 		CompletableFuture<Void> result = AsyncUtils.NIL;
 		if (state == GdbState.STOPPED) {
 			Msg.debug(this, "Updating stack for " + this);
-			result = CompletableFuture.allOf(
-				updateInfo(),
-				stack.stateChanged(sco));
+			result = CompletableFuture.allOf(updateInfo(), stack.stateChanged(sco));
 		}
 		TargetExecutionState targetState = convertState(state);
 		changeAttributes(List.of(), Map.of( //

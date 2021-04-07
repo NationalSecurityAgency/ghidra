@@ -32,11 +32,9 @@ import ghidra.program.model.address.Address;
 @TargetObjectSchemaInfo(
 	name = "StackFrame",
 	elements = {
-		@TargetElementType(type = Void.class)
-	},
+		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(type = Void.class)
-	})
+		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, GdbModelTargetStack>
 		implements TargetStackFrame, GdbModelSelectableObject {
 	public static final String FUNC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "function";
@@ -73,11 +71,13 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		this.impl = stack.impl;
 		this.thread = thread;
 		this.inferior = inferior;
+		impl.addModelObject(frame, this);
 
 		this.registers = new GdbModelTargetStackFrameRegisterContainer(this);
 
 		changeAttributes(List.of(), List.of(registers), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame)), "Initialized");
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame)),
+			"Initialized");
 		setFrame(frame);
 	}
 

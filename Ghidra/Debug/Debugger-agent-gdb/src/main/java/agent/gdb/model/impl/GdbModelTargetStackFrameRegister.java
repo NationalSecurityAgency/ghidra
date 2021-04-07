@@ -26,8 +26,11 @@ import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "RegisterValue", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "RegisterValue",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrameRegister
 		extends DefaultTargetObject<TargetObject, GdbModelTargetStackFrameRegisterContainer>
@@ -55,6 +58,7 @@ public class GdbModelTargetStackFrameRegister
 		super(registers.impl, registers, keyRegister(register), "Register");
 		this.impl = registers.impl;
 		this.register = register;
+		impl.addModelObject(register, this);
 
 		this.bitLength = register.getSize() * 8;
 

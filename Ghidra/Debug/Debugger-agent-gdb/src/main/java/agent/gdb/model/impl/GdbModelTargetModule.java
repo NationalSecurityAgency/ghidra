@@ -33,12 +33,11 @@ import ghidra.program.model.address.*;
 	elements = { //
 		@TargetElementType(type = Void.class) //
 	},
-	attributes = { //
+	attributes = { // 
 		@TargetAttributeType(type = Void.class) //
 	})
-public class GdbModelTargetModule
-		extends DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer>
-		implements TargetModule {
+public class GdbModelTargetModule extends
+		DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer> implements TargetModule {
 
 	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 	public static final String VISIBLE_MODULE_NAME_ATTRIBUTE_NAME = "module name";
@@ -66,6 +65,8 @@ public class GdbModelTargetModule
 		this.impl = modules.impl;
 		this.inferior = modules.inferior;
 		this.module = module;
+		impl.addModelObject(module, this);
+		impl.addModelObject(module.getName(), this);
 
 		this.sections = new GdbModelTargetSectionContainer(this);
 		this.symbols = new GdbModelTargetSymbolContainer(this);

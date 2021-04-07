@@ -34,8 +34,11 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Session", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "Session",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetSession extends DefaultTargetModelRoot
 		implements TargetAccessConditioned, TargetAttacher, TargetInterpreter, TargetInterruptible,
@@ -58,6 +61,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 	public GdbModelTargetSession(GdbModelImpl impl, TargetObjectSchema schema) {
 		super(impl, "Session", schema);
 		this.impl = impl;
+		//impl.addModelObject(session, this);
 
 		this.inferiors = new GdbModelTargetInferiorContainer(this);
 		this.available = new GdbModelTargetAvailableContainer(this);
@@ -85,12 +89,18 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		return inferiors;
 	}
 
-	@TargetAttributeType(name = GdbModelTargetAvailableContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetAvailableContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetAvailableContainer getAvailable() {
 		return available;
 	}
 
-	@TargetAttributeType(name = GdbModelTargetBreakpointContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetBreakpointContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetBreakpointContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -322,14 +332,9 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 	@Override
 	public void threadStateChanged(GdbThread thread, GdbState state, GdbCause cause,
 			GdbReason reason) {
-
-		/* REQUIRES GP-762
 		TargetThread targetThread = (TargetThread) impl.getModelObject(thread);
 		changeAttributes(List.of(), List.of(), Map.of( //
 			TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread //
 		), reason.desc());
-		*/
-
 	}
-
 }

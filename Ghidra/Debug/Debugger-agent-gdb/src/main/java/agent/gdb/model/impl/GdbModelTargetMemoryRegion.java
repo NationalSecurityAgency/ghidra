@@ -66,6 +66,7 @@ public class GdbModelTargetMemoryRegion
 	public GdbModelTargetMemoryRegion(GdbModelTargetProcessMemory memory,
 			GdbMemoryMapping mapping) {
 		super(memory.impl, memory, keyRegion(mapping), "MemoryRegion");
+		memory.impl.addModelObject(mapping, this);
 		try {
 			Address min = memory.impl.getAddressFactory()
 					.getDefaultAddressSpace()
@@ -75,7 +76,8 @@ public class GdbModelTargetMemoryRegion
 		catch (AddressFormatException | AddressOverflowException e) {
 			throw new AssertionError(e);
 		}
-		changeAttributes(List.of(), Map.of(MEMORY_ATTRIBUTE_NAME, memory, //
+		changeAttributes(List.of(), Map.of( //
+			MEMORY_ATTRIBUTE_NAME, memory, //
 			RANGE_ATTRIBUTE_NAME, range, //
 			READABLE_ATTRIBUTE_NAME, isReadable(), //
 			WRITABLE_ATTRIBUTE_NAME, isWritable(), //
@@ -133,7 +135,11 @@ public class GdbModelTargetMemoryRegion
 		return objfile;
 	}
 
-	@TargetAttributeType(name = OFFSET_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
+	@TargetAttributeType(
+		name = OFFSET_ATTRIBUTE_NAME,
+		required = true,
+		fixed = true,
+		hidden = true)
 	public long getOffset() {
 		return offset;
 	}
