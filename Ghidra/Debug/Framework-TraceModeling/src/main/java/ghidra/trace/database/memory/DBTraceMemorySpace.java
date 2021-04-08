@@ -745,8 +745,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			AddressRange rng = ent.getKey();
 			int offset = (int) rng.getMinAddress().subtract(toRead.getMinAddress());
 			int length = (int) rng.getLength();
-			buf.position(pos + offset);
 			buf.limit(pos + offset + length);
+			buf.position(pos + offset);
 			int read = getBytes(ent.getValue(), rng.getMinAddress(), buf);
 			if (read < length) {
 				break;
