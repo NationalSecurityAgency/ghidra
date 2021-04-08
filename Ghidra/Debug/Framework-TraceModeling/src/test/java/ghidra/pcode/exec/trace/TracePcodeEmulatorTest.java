@@ -20,9 +20,7 @@ import static org.junit.Assert.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -79,8 +77,8 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				Range.atLeast(0L), tb.range(0x00100000, 0x0010ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
-			Iterator<Instruction> block =
-				asm.assemble(tb.addr(0x00400000), assembly.toArray(String[]::new));
+			Iterator<Instruction> block = assembly.isEmpty() ? Collections.emptyIterator()
+					: asm.assemble(tb.addr(0x00400000), assembly.toArray(String[]::new));
 			Instruction last = null;
 			while (block.hasNext()) {
 				last = block.next();
@@ -331,29 +329,16 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	@Test
 	public void testBRDS() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
-			// TODO: Seems traces do not take delay-slotted instructions well...
-			// Assemble to the side and just write bytes in until that's fixed
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			TraceThread thread = initTrace(tb,
 				List.of(
 					"pc = 0x00400000;",
 					"sp = 0x00110000;"),
-				List.of());
-
-			try (UndoableTransaction tid = tb.startTransaction()) {
-				tb.trace.getMemoryManager()
-						.putBytes(0, tb.addr(0x00400000), ByteBuffer.wrap(
-							asm.assembleLine(tb.addr(0x00400000), "brds 0x00400006")));
-				tb.trace.getMemoryManager()
-						.putBytes(0, tb.addr(0x00400002), ByteBuffer.wrap(
-							asm.assembleLine(tb.addr(0x00400002), "imm r0, #1234"))); // decimal
-				tb.trace.getMemoryManager()
-						.putBytes(0, tb.addr(0x00400004), ByteBuffer.wrap(
-							asm.assembleLine(tb.addr(0x00400004), "imm r0, #2020")));
-				tb.trace.getMemoryManager()
-						.putBytes(0, tb.addr(0x00400006), ByteBuffer.wrap(
-							asm.assembleLine(tb.addr(0x00400006), "imm r1, #2021")));
-			}
+				List.of(
+					"brds 0x00400006",
+					"imm r0, #1234", // decimal
+					"imm r0, #2020",
+					"imm r1, #2021"));
 
 			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
