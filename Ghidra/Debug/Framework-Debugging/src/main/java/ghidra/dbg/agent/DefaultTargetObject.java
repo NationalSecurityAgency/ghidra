@@ -310,7 +310,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	private void updateCallbackElements(Delta<E, E> delta) {
 		CompletableFuture.runAsync(() -> {
-			delta.apply(this.cbElements, Delta.SAME);
+			synchronized (model.cbLock) {
+				delta.apply(this.cbElements, Delta.SAME);
+			}
 		}, model.clientExecutor).exceptionally(ex -> {
 			Msg.error(this, "Error updating elements before callback");
 			return null;
@@ -489,7 +491,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	private void updateCallbackAttributes(Delta<Object, ?> delta) {
 		CompletableFuture.runAsync(() -> {
-			delta.apply(this.cbAttributes, Delta.EQUAL);
+			synchronized (model.cbLock) {
+				delta.apply(this.cbAttributes, Delta.EQUAL);
+			}
 		}, model.clientExecutor).exceptionally(ex -> {
 			Msg.error(this, "Error updating elements before callback");
 			return null;

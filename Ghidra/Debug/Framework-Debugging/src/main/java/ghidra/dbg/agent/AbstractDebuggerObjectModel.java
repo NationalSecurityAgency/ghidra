@@ -31,6 +31,7 @@ import ghidra.util.datastruct.ListenerSet;
 
 public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectModel {
 	public final Object lock = new Object();
+	public final Object cbLock = new Object();
 	protected final ExecutorService clientExecutor =
 		Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
 				.namingPattern(getClass().getSimpleName() + "-thread-%d")
@@ -40,10 +41,12 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 
 	protected SpiTargetObject root;
 	protected boolean rootAdded;
+	protected boolean cbRootAdded;
 	protected CompletableFuture<SpiTargetObject> completedRoot = new CompletableFuture<>();
 
 	// Remember the order of creation events
 	protected final Map<List<String>, SpiTargetObject> creationLog = new LinkedHashMap<>();
+	protected final Map<List<String>, SpiTargetObject> cbCreationLog = new LinkedHashMap<>();
 
 	protected void objectCreated(SpiTargetObject object) {
 		synchronized (lock) {
@@ -55,6 +58,14 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 				this.root = object;
 			}
 		}
+		CompletableFuture.runAsync(() -> {
+			synchronized (cbLock) {
+				cbCreationLog.put(object.getPath(), object);
+			}
+		}, clientExecutor).exceptionally(ex -> {
+			Msg.error(this, "Error updating objectCreated before callback");
+			return null;
+		});
 	}
 
 	protected void objectInvalidated(TargetObject object) {
@@ -65,11 +76,20 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		assert root == this.root;
 		synchronized (lock) {
 			rootAdded = true;
-			root.getSchema()
-					.validateTypeAndInterfaces(root, null, null, root.enforcesStrictSchema());
-			this.completedRoot.completeAsync(() -> root, clientExecutor);
-			listeners.fire.rootAdded(root);
 		}
+		root.getSchema()
+				.validateTypeAndInterfaces(root, null, null, root.enforcesStrictSchema());
+		CompletableFuture.runAsync(() -> {
+			synchronized (cbLock) {
+				cbRootAdded = true;
+			}
+			completedRoot.complete(root);
+		}, clientExecutor).exceptionally(ex -> {
+			Msg.error(this, "Error updating rootAdded before callback");
+			return null;
+		});
+		this.completedRoot.completeAsync(() -> root, clientExecutor);
+		listeners.fire.rootAdded(root);
 	}
 
 	@Override
@@ -84,27 +104,25 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		}
 	}
 
-	protected void onClientExecutor(DebuggerModelListener listener, Runnable r) {
-		CompletableFuture.runAsync(r, clientExecutor).exceptionally(t -> {
+	protected void replayed(DebuggerModelListener listener, Runnable r) {
+		try {
+			r.run();
+		}
+		catch (Throwable t) {
 			Msg.error(this, "Listener " + listener + " caused unexpected exception", t);
-			return null;
-		});
+		}
 	}
 
 	protected void replayTreeEvents(DebuggerModelListener listener) {
-		if (root == null) {
-			assert creationLog.isEmpty();
-			return;
-		}
-		for (SpiTargetObject object : creationLog.values()) {
-			onClientExecutor(listener, () -> listener.created(object));
+		for (SpiTargetObject object : cbCreationLog.values()) {
+			replayed(listener, () -> listener.created(object));
 		}
 		Set<SpiTargetObject> visited = new HashSet<>();
-		for (SpiTargetObject object : creationLog.values()) {
+		for (SpiTargetObject object : cbCreationLog.values()) {
 			replayAddEvents(listener, object, visited);
 		}
-		if (rootAdded) {
-			onClientExecutor(listener, () -> listener.rootAdded(root));
+		if (cbRootAdded) {
+			replayed(listener, () -> listener.rootAdded(root));
 		}
 	}
 
@@ -113,41 +131,44 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		if (!visited.add(object)) {
 			return;
 		}
-		Map<String, ?> cachedAttributes = object.getCachedAttributes();
-		for (Object val : cachedAttributes.values()) {
+		Map<String, ?> cbAttributes = object.getCallbackAttributes();
+		for (Object val : cbAttributes.values()) {
 			if (!(val instanceof TargetObject)) {
 				continue;
 			}
 			assert val instanceof SpiTargetObject;
 			replayAddEvents(listener, (SpiTargetObject) val, visited);
 		}
-		if (!cachedAttributes.isEmpty()) {
-			onClientExecutor(listener,
-				() -> listener.attributesChanged(object, List.of(), cachedAttributes));
+		if (!cbAttributes.isEmpty()) {
+			replayed(listener,
+				() -> listener.attributesChanged(object, List.of(), cbAttributes));
 		}
-		Map<String, ? extends TargetObject> cachedElements = object.getCachedElements();
-		for (TargetObject elem : cachedElements.values()) {
+		Map<String, ? extends TargetObject> cbElements = object.getCallbackElements();
+		for (TargetObject elem : cbElements.values()) {
 			assert elem instanceof SpiTargetObject;
 			replayAddEvents(listener, (SpiTargetObject) elem, visited);
 		}
-		if (!cachedElements.isEmpty()) {
-			onClientExecutor(listener,
-				() -> listener.elementsChanged(object, List.of(), cachedElements));
+		if (!cbElements.isEmpty()) {
+			replayed(listener,
+				() -> listener.elementsChanged(object, List.of(), cbElements));
 		}
 	}
 
 	@Override
 	public void addModelListener(DebuggerModelListener listener, boolean replay) {
-		try {
-			synchronized (lock) {
-				if (replay) {
+		if (replay) {
+			synchronized (cbLock) {
+				CompletableFuture.runAsync(() -> {
 					replayTreeEvents(listener);
-				}
-				listeners.add(listener);
+					listeners.add(listener);
+				}, clientExecutor).exceptionally(ex -> {
+					listener.catastrophic(ex);
+					return null;
+				});
 			}
 		}
-		catch (Throwable ex) {
-			listener.catastrophic(ex);
+		else {
+			listeners.add(listener);
 		}
 	}
 

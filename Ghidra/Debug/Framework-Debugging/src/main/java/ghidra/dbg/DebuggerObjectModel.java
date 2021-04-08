@@ -471,6 +471,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * @see #fetchModelObject(List)
 	 */
+	@Deprecated
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(String... path) {
 		return fetchModelObject(List.of(path));
 	}

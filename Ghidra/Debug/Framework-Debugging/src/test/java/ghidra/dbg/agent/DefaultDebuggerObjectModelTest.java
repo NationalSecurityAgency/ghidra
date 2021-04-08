@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.agent;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -34,6 +34,7 @@ import ghidra.dbg.testutil.*;
 import ghidra.dbg.testutil.AttributesChangedListener.AttributesChangedInvocation;
 import ghidra.dbg.testutil.ElementsChangedListener.ElementsChangedInvocation;
 import ghidra.dbg.testutil.InvalidatedListener.InvalidatedInvocation;
+import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
 
@@ -116,7 +117,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 	@Test
 	public void testGetModelObjectLen0() throws Throwable {
-		assertEquals(model.root, waitOn(model.fetchModelObject()));
+		assertEquals(model.root, waitOn(model.fetchModelValue()));
 	}
 
 	@Test
@@ -124,7 +125,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject a = new FakeTargetObject(model, model.root, "A");
 		model.root.changeAttributes(List.of(), Map.of("A", a), "Test");
 
-		assertEquals(a, waitOn(model.fetchModelObject("A")));
+		assertEquals(a, waitOn(model.fetchModelValue("A")));
 	}
 
 	@Test
@@ -132,7 +133,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject a = new FakeTargetObject(model, model.root, "A");
 		model.root.changeAttributes(List.of(), Map.of("A", a), "Test");
 
-		assertEquals(null, waitOn(model.fetchModelObject("NoA")));
+		assertEquals(null, waitOn(model.fetchModelValue("NoA")));
 	}
 
 	@Test
@@ -143,7 +144,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject b = new FakeTargetObject(model, a, "[B]");
 		a.changeElements(List.of(), List.of(b), "Test");
 
-		assertEquals(b, waitOn(model.fetchModelObject("A", "[B]")));
+		assertEquals(b, waitOn(model.fetchModelValue("A", "[B]")));
 	}
 
 	@Test
@@ -154,31 +155,36 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject b = new FakeTargetObject(model, a, "[B]");
 		a.changeElements(List.of(), List.of(b), "Test");
 
-		assertEquals(null, waitOn(model.fetchModelObject("NoA", "[B]")));
-		assertEquals(null, waitOn(model.fetchModelObject("NoA", "[NoB]")));
-		assertEquals(null, waitOn(model.fetchModelObject("A", "[NoB]")));
+		assertEquals(null, waitOn(model.fetchModelValue("NoA", "[B]")));
+		assertEquals(null, waitOn(model.fetchModelValue("NoA", "[NoB]")));
+		assertEquals(null, waitOn(model.fetchModelValue("A", "[NoB]")));
 	}
 
 	@Test
 	public void testElementReplacement() throws Throwable {
 		ElementsChangedListener elemL = new ElementsChangedListener();
 		InvalidatedListener invL = new InvalidatedListener();
+		model.addModelListener(elemL);
+		model.addModelListener(invL);
+		TargetObjectAddedWaiter waiter = new TargetObjectAddedWaiter(model);
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "[A]");
 		model.root.setElements(List.of(fakeA), "Init");
-
-		model.root.addListener(elemL);
-		fakeA.addListener(invL);
+		assertEquals(fakeA, waitOn(waiter.wait(PathUtils.parse("[A]"))));
+		waitOn(model.flushEvents());
+		elemL.clear();
+		invL.clear();
 
 		PhonyTargetObject phonyA = new PhonyTargetObject(model, model.root, "[A]");
 
 		// mere creation causes removal of old
-		waitOn(elemL.count.waitValue(1));
+		waitOn(elemL.count.waitUntil(c -> c >= 1));
 		ElementsChangedInvocation changed1 = Unique.assertOne(elemL.invocations);
 		assertSame(model.root, changed1.parent);
 		assertEquals(Set.of("A"), changed1.removed);
 		assertTrue(changed1.added.isEmpty());
-		waitOn(invL.count.waitValue(1));
+
+		waitOn(invL.count.waitUntil(c -> c >= 1));
 		InvalidatedInvocation invalidated = Unique.assertOne(invL.invocations);
 		assertSame(fakeA, invalidated.object);
 
@@ -186,38 +192,45 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		invL.clear();
 		model.root.setElements(List.of(phonyA), "Replace");
 
-		assertSame(phonyA, waitOn(model.fetchModelObject("[A]")));
+		assertSame(phonyA, waitOn(model.fetchModelValue("[A]")));
 		assertFalse(fakeA.isValid());
 
+		waitOn(elemL.count.waitUntil(c -> c >= 1));
 		ElementsChangedInvocation changed2 = Unique.assertOne(elemL.invocations);
 		assertSame(model.root, changed2.parent);
 		assertSame(phonyA, Unique.assertOne(changed2.added.values()));
 		assertTrue(changed2.removed.isEmpty());
+		waiter.close();
 	}
 
 	@Test
 	public void testAttributeReplacement() throws Throwable {
 		AttributesChangedListener attrL = new AttributesChangedListener();
+		model.addModelListener(attrL);
 
 		String str1 = new String("EqualStrings");
 		String str2 = new String("EqualStrings");
 		model.root.setAttributes(Map.of("a", str1), "Init");
-		model.root.addListener(attrL);
+		waitOn(model.flushEvents());
 
-		// Note: mere object creation will cause "prior removal"
-		// We'll do this test just with primitives
-		// Should not cause replacement, since they're equal
+		/**
+		 * Note: mere object creation will cause "prior removal," so we'll do this test just with
+		 * primitives. Should not cause replacement, since str1 and str2 are equal.
+		 */
+		attrL.clear();
 		model.root.setAttributes(Map.of("a", str2), "Replace");
-		waitOn(model.clientExecutor);
+		waitOn(model.flushEvents());
 
+		// Verify str1 was not replaced with str2
 		assertSame(str1, waitOn(model.fetchModelValue("a")));
 		assertEquals(0, attrL.invocations.size());
 
 		// Now, with prior removal
 		// TODO: Should I permit custom equality check?
+		attrL.clear();
 		model.root.setAttributes(Map.of(), "Clear");
 		model.root.setAttributes(Map.of("a", str2), "Replace");
-		waitOn(model.clientExecutor);
+		waitOn(model.flushEvents());
 
 		assertEquals(2, attrL.invocations.size());
 		AttributesChangedInvocation changed = attrL.invocations.get(0);
@@ -233,6 +246,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 	@Test
 	public void testInvalidation() throws Throwable {
 		InvalidatedListener invL = new InvalidatedListener();
+		model.addModelListener(invL);
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
 		model.root.setAttributes(Map.of("A", fakeA), "Init");
@@ -240,10 +254,8 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject fakeA1 = new FakeTargetObject(model, fakeA, "[1]");
 		FakeTargetObject fakeA2 = new FakeTargetObject(model, fakeA, "[2]");
 		fakeA.setElements(List.of(fakeA1, fakeA2), "Init");
-
-		fakeA.addListener(invL);
-		fakeA1.addListener(invL);
-		fakeA2.addListener(invL);
+		waitOn(model.flushEvents());
+		invL.clear();
 
 		model.root.setAttributes(Map.of(), "Clear");
 
@@ -277,6 +289,11 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		}
 
 		@Override
+		public void rootAdded(TargetObject root) {
+			record.add(new ImmutablePair<>("rootAdded", root));
+		}
+
+		@Override
 		public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
 			record.add(new ImmutablePair<>("registersUpdated", bank));
 		}
@@ -287,6 +304,8 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		EventRecordingListener listener = new EventRecordingListener();
 		model.addModelListener(listener, false);
 		waitOn(model.clientExecutor);
+		waitOn(model.fetchModelRoot());
+		listener.record.clear();
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
 		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
@@ -296,10 +315,12 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		waitOn(model.clientExecutor);
 
-		assertEquals(List.of(new ImmutablePair<>("created", fakeA),
+		assertEquals(List.of(
+			new ImmutablePair<>("created", fakeA),
 			new ImmutablePair<>("created", fakeA1rb),
 			new ImmutablePair<>("registersUpdated", fakeA1rb),
-			new ImmutablePair<>("addedElem", fakeA1rb), new ImmutablePair<>("addedAttr", fakeA)),
+			new ImmutablePair<>("addedElem", fakeA1rb),
+			new ImmutablePair<>("addedAttr", fakeA)),
 			listener.record);
 	}
 
@@ -316,9 +337,13 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		waitOn(model.clientExecutor);
 
-		assertEquals(List.of(new ImmutablePair<>("created", model.root),
-			new ImmutablePair<>("created", fakeA), new ImmutablePair<>("created", fakeA1rb),
-			new ImmutablePair<>("addedElem", fakeA1rb), new ImmutablePair<>("addedAttr", fakeA)),
+		assertEquals(List.of(
+			new ImmutablePair<>("created", model.root),
+			new ImmutablePair<>("created", fakeA),
+			new ImmutablePair<>("created", fakeA1rb),
+			new ImmutablePair<>("addedElem", fakeA1rb),
+			new ImmutablePair<>("addedAttr", fakeA),
+			new ImmutablePair<>("rootAdded", model.root)),
 			listener.record);
 	}
 }
