@@ -107,6 +107,9 @@ public class SleighAssembler implements Assembler {
 	@Override
 	public InstructionIterator patchProgram(byte[] insbytes, Address at)
 			throws MemoryAccessException {
+		if (insbytes.length == 0) {
+			return listing.getInstructions(new AddressSet(), true);
+		}
 		Address end = at.add(insbytes.length - 1);
 		listing.clearCodeUnits(at, end, false);
 		memory.setBytes(at, insbytes);
