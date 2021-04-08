@@ -204,7 +204,6 @@ public interface TargetObject extends Comparable<TargetObject> {
 	String DISPLAY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "display";
 	String SHORT_DISPLAY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "short_display";
 	String KIND_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "kind";
-	String UPDATE_MODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "update_mode";
 	String ORDER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "order";
 
 	// TODO: Should these belong to a new TargetValue interface?

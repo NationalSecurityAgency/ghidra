@@ -37,8 +37,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import generic.ID;
 import generic.Unique;
 import ghidra.async.*;
-import ghidra.dbg.AnnotatedDebuggerAttributeListener;
-import ghidra.dbg.DebuggerModelListener;
+import ghidra.dbg.*;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.attributes.TargetStringList;
 import ghidra.dbg.gadp.GadpClientServerTest.EventListener.CallEntry;
@@ -52,8 +51,8 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.testutil.*;
 import ghidra.dbg.testutil.AttributesChangedListener.AttributesChangedInvocation;
 import ghidra.dbg.testutil.ElementsChangedListener.ElementsChangedInvocation;
@@ -62,7 +61,7 @@ import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
-public class GadpClientServerTest {
+public class GadpClientServerTest implements AsyncTestUtils {
 	public static final long TIMEOUT_MILLISECONDS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -273,15 +272,6 @@ public class GadpClientServerTest {
 		}
 	}
 
-	protected static <T> T waitOn(CompletableFuture<T> future) throws Throwable {
-		try {
-			return future.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
-		}
-		catch (Exception e) {
-			throw AsyncUtils.unwrapThrowable(e);
-		}
-	}
-
 	@TargetObjectSchemaInfo(name = "Session")
 	public class TestGadpTargetSession extends DefaultTargetModelRoot implements TargetFocusScope {
 		protected final TestGadpTargetAvailableContainer available =
@@ -291,10 +281,12 @@ public class GadpClientServerTest {
 		protected final TestGadpTargetAvailableLinkContainer links =
 			new TestGadpTargetAvailableLinkContainer(this);
 
-		public TestGadpTargetSession(TestGadpObjectModel model) {
-			super(model, "Session");
+		public TestGadpTargetSession(TestGadpObjectModel model, TargetObjectSchema schema) {
+			super(model, "Session", schema);
 
-			changeAttributes(List.of(), List.of(available, processes), Map.of(), "Initialized");
+			changeAttributes(List.of(), List.of(available, processes), Map.ofEntries(
+				Map.entry(FOCUS_ATTRIBUTE_NAME, this)),
+				"Initialized");
 		}
 
 		@Override
@@ -388,6 +380,7 @@ public class GadpClientServerTest {
 		}
 	}
 
+	@TargetObjectSchemaInfo(name = "ProcessContainer")
 	public class TestGadpTargetProcessContainer
 			extends TestTargetObject<TestGadpTargetProcess, TestGadpTargetSession>
 			implements TargetLauncher {
@@ -405,6 +398,7 @@ public class GadpClientServerTest {
 		}
 	}
 
+	@TargetObjectSchemaInfo(name = "Process")
 	public class TestGadpTargetProcess
 			extends TestTargetObject<TargetObject, TestGadpTargetProcessContainer> {
 		public TestGadpTargetProcess(TestGadpTargetProcessContainer processes, int index) {
@@ -413,6 +407,7 @@ public class GadpClientServerTest {
 		}
 	}
 
+	@TargetObjectSchemaInfo(name = "AvailableContainer", elementResync = ResyncMode.ALWAYS)
 	public class TestGadpTargetAvailableContainer
 			extends TestTargetObject<TestGadpTargetAvailable, TestGadpTargetSession> {
 
@@ -431,6 +426,7 @@ public class GadpClientServerTest {
 		}
 	}
 
+	@TargetObjectSchemaInfo(name = "Available")
 	public class TestGadpTargetAvailable
 			extends TestTargetObject<TargetObject, TestGadpTargetAvailableContainer>
 			implements TargetAttachable {
@@ -455,7 +451,7 @@ public class GadpClientServerTest {
 		}
 	}
 
-	public class BlankObjectModel extends AbstractDebuggerObjectModel {
+	public static class BlankObjectModel extends AbstractDebuggerObjectModel {
 		private final AddressSpace ram =
 			new GenericAddressSpace("RAM", 64, AddressSpace.TYPE_RAM, 0);
 		private final AddressFactory factory =
@@ -469,11 +465,14 @@ public class GadpClientServerTest {
 
 	// TODO: Refactor with other Fake and Test. Probably put in Framework-Debugging....
 	public class TestGadpObjectModel extends BlankObjectModel {
+		private TargetObjectSchema rootSchema = EnumerableTargetObjectSchema.OBJECT;
 		private TestGadpTargetSession session;
 
 		public TestGadpObjectModel(boolean createSession) {
 			if (createSession) {
-				session = new TestGadpTargetSession(this);
+				AnnotatedSchemaContext ctx = new AnnotatedSchemaContext();
+				rootSchema = ctx.getSchemaForClass(TestGadpTargetSession.class);
+				session = new TestGadpTargetSession(this, rootSchema);
 				addModelRoot(session);
 			}
 		}
@@ -481,6 +480,11 @@ public class GadpClientServerTest {
 		@Override // file access
 		protected void addModelRoot(SpiTargetObject root) {
 			super.addModelRoot(root);
+		}
+
+		@Override
+		public TargetObjectSchema getRootSchema() {
+			return rootSchema;
 		}
 	}
 
@@ -765,7 +769,7 @@ public class GadpClientServerTest {
 			assertEquals(0, elements.size());
 			Map<String, ?> attributes = waitOn(client.fetchObjectAttributes(List.of()));
 			assertEquals(Set.of("Processes", "Available", TargetObject.DISPLAY_ATTRIBUTE_NAME,
-				TargetObject.UPDATE_MODE_ATTRIBUTE_NAME), attributes.keySet());
+				TargetFocusScope.FOCUS_ATTRIBUTE_NAME), attributes.keySet());
 			Object procContAttr = attributes.get("Processes");
 			TargetObject procCont = (TargetObject) procContAttr;
 			assertEquals(List.of("Processes"), procCont.getPath());
@@ -938,15 +942,13 @@ public class GadpClientServerTest {
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
 
-			TargetObject availCont = waitOn(client.fetchModelObject(PathUtils.parse("Available")));
-			availCont.addListener(elemL);
-			Map<String, ? extends TargetObject> avail1 = waitOn(availCont.fetchElements());
-			assertEquals(2, avail1.size());
-			for (TargetObject a : avail1.values()) {
-				assertTrue(a.isValid());
-				a.addListener(invL);
-			}
+			populateAvailableAndSync(client, runner);
+			TargetObject availCont = client.getModelObject(PathUtils.parse("Available"));
 
+			client.addModelListener(elemL);
+			client.addModelListener(invL);
+
+			Map<String, ? extends TargetObject> avail1 = availCont.getCachedElements();
 			elemL.clear();
 			TestGadpTargetAvailableContainer ssAvail = runner.server.model.session.available;
 			ssAvail.setElements(List.of(new TestGadpTargetAvailable(ssAvail, 1, "cat") //
@@ -959,8 +961,7 @@ public class GadpClientServerTest {
 				assertFalse(a.isValid());
 			}
 
-			assertEquals(1, availCont.getCachedElements().size());
-			Map<String, ? extends TargetObject> avail2 = waitOn(availCont.fetchElements());
+			Map<String, ? extends TargetObject> avail2 = availCont.getCachedElements();
 			assertEquals(1, avail2.size());
 			assertEquals("cat", avail2.get("1").getCachedAttribute("cmd"));
 
@@ -1031,12 +1032,9 @@ public class GadpClientServerTest {
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
 
-			TargetObject availCont = waitOn(client.fetchModelObject(PathUtils.parse("Available")));
-			availCont.addListener(invL);
-			for (TargetObject avail : waitOn(availCont.fetchElements()).values()) {
-				avail.addListener(invL);
-			}
+			populateAvailableAndSync(client, runner);
 
+			client.addModelListener(invL);
 			client.getMessageChannel().clear();
 			runner.server.model.session.changeAttributes(List.of("Available"), Map.of(), "Clear");
 
@@ -1044,8 +1042,8 @@ public class GadpClientServerTest {
 			 * Yes, should see all invalidations for the user side, but only one message should be
 			 * sent, for the root of the invalidated sub tree
 			 */
-			waitOn(invL.count.waitValue(3));
-			// NB. will not see attribute change, since not subscribed to root
+			waitOn(invL.count.waitValue(4)); // NB: Available + {[1],[2],.greet}
+			// NB. Expect single invalidation message, followed by invalidation message
 			waitOn(client.getMessageChannel().count.waitUntil(v -> v >= 1));
 
 			assertEquals(Gadp.RootMessage.newBuilder()
@@ -1056,6 +1054,44 @@ public class GadpClientServerTest {
 					.build(),
 				client.getMessageChannel().record.get(0).assertReceived());
 		}
+	}
+
+	protected void populateAvailableAndSync(DebuggerObjectModel client, ServerRunner runner)
+			throws Throwable {
+		// Cause these to exist
+		client.fetchModelValue(PathUtils.parse("Available[1]"));
+		client.fetchModelValue(PathUtils.parse("Available[2]"));
+		Map<String, String> initEntries = Map.ofEntries(Map.entry("args", "Init"));
+		var syncL = new DebuggerModelListener() {
+			CompletableFuture<?> here = new CompletableFuture<>();
+			CompletableFuture<?> init = new CompletableFuture<>();
+
+			@Override
+			public void created(TargetObject object) {
+				if ("Available[1]".equals(object.getJoinedPath("."))) {
+					here.complete(null);
+				}
+			}
+
+			@Override
+			public void attributesChanged(TargetObject object, Collection<String> removed,
+					Map<String, ?> added) {
+				if ("Available[1]".equals(object.getJoinedPath("."))) {
+					if (added.entrySet().containsAll(initEntries.entrySet())) {
+						init.complete(null);
+					}
+				}
+			}
+		};
+		client.addModelListener(syncL, true);
+
+		waitOn(syncL.here);
+		TestGadpTargetAvailable ssAvail1 =
+			runner.server.model.session.available.getCachedElements().get("1");
+		ssAvail1.changeAttributes(List.of(), initEntries, "Changed");
+		waitOn(syncL.init);
+
+		client.removeModelListener(syncL);
 	}
 
 	@Test
@@ -1069,81 +1105,65 @@ public class GadpClientServerTest {
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
 
-			TargetObject echoAvail =
-				waitOn(client.fetchModelObject(PathUtils.parse("Available[1]")));
-			// TODO: This comes back null too often...
-			echoAvail.addListener(attrL);
-			assertEquals(Map.ofEntries(Map.entry("pid", 1), Map.entry("cmd", "echo"),
-				Map.entry("_display", "[1]")), waitOn(echoAvail.fetchAttributes()));
+			client.addModelListener(attrL);
 
-			TargetObject ddAvail = waitOn(client.fetchModelObject(PathUtils.parse("Available[2]")));
-			ddAvail.addListener(attrL);
-			assertEquals(Map.ofEntries(Map.entry("pid", 2), Map.entry("cmd", "dd"),
-				Map.entry("_display", "[2]")), waitOn(ddAvail.fetchAttributes()));
-
+			populateAvailableAndSync(client, runner);
 			// NB: copy
 			Map<String, TestGadpTargetAvailable> ssAvail =
 				runner.server.model.session.available.getCachedElements();
+			TestGadpTargetAvailable ssAvail1 = ssAvail.get("1");
+			TestGadpTargetAvailable ssAvail2 = ssAvail.get("2");
 
+			// Now, begin the actual test
+			var invL = new DebuggerModelListener() {
+				CompletableFuture<?> gone = new CompletableFuture<>();
+
+				@Override
+				public void invalidated(TargetObject object, TargetObject branch, String reason) {
+					if ("Available[1]".equals(object.getJoinedPath("."))) {
+						gone.complete(null);
+					}
+				}
+			};
+			client.addModelListener(invL, true);
 			runner.server.model.session.available.changeElements(List.of("1"), List.of(), Map.of(),
 				"1 is Gone");
+			waitOn(invL.gone);
+			attrL.clear();
+
 			// Should produce nothing
-			(ssAvail.get("1")).changeAttributes(List.of(),
+			ssAvail1.changeAttributes(List.of(),
 				Map.ofEntries(Map.entry("args", "Hello, World!")), "Changed");
 			// Produce something, so we know we didn't get the other thing
-			(ssAvail.get("2")).changeAttributes(List.of(), List.of(),
-				Map.of("args", "if=/dev/null"), "Observe");
+			Map<String, String> expectedEntries = Map.ofEntries(Map.entry("args", "if=/dev/null"));
+			ssAvail2.changeAttributes(List.of(), List.of(), expectedEntries, "Observe");
 
 			waitOn(attrL.count.waitValue(1));
 
 			AttributesChangedInvocation changed = Unique.assertOne(attrL.invocations);
-			assertSame(ddAvail, changed.parent);
+			assertEquals("Available[2]", changed.parent.getJoinedPath("."));
 			assertEquals(Set.of(), Set.copyOf(changed.removed));
-			assertEquals(Map.of("args", "if=/dev/null" //
-			), changed.added);
+			assertEquals(expectedEntries, changed.added);
 		}
 	}
 
 	@Test
-	public void testProxyWithLinkedElementsCanonicalFirst() throws Throwable {
+	public void testProxyWithLinkedElements() throws Throwable {
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
+			TargetObjectAddedWaiter waiter = new TargetObjectAddedWaiter(client);
 			runner.server.model.session.addLinks();
 			TargetObject canonical =
-				waitOn(client.fetchModelObject(PathUtils.parse("Available[2]")));
-			TargetObject link = waitOn(client.fetchModelObject(PathUtils.parse("Links[1]")));
+				(TargetObject) waitOn(waiter.wait(PathUtils.parse("Available[2]")));
+			TargetObject link = (TargetObject) waitOn(waiter.wait(PathUtils.parse("Links[1]")));
 			assertSame(canonical, link);
 			assertEquals(PathUtils.parse("Available[2]"), link.getPath());
 			waitOn(client.close());
-		}
-		finally {
-			socket.close();
-		}
-	}
-
-	@Test
-	public void testProxyWithLinkedElementsLinkFirst() throws Throwable {
-		AsynchronousSocketChannel socket = socketChannel();
-		try (ServerRunner runner = new ServerRunner()) {
-			GadpClient client = new GadpClient("Test", socket);
-			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
-				runner.server.getLocalAddress()));
-			waitOn(client.connect());
-			runner.server.model.session.addLinks();
-			TargetObject linkVal =
-				(TargetObject) waitOn(client.fetchModelValue(PathUtils.parse("Links[1]")));
-			assertTrue(linkVal instanceof TargetObject);
-			TargetObject linkObj = waitOn(client.fetchModelObject(PathUtils.parse("Links[1]")));
-			assertSame(linkVal, linkObj);
-			TargetObject canonical =
-				waitOn(client.fetchModelObject(PathUtils.parse("Available[2]")));
-			assertSame(canonical, linkObj);
-			assertEquals(PathUtils.parse("Available[2]"), linkObj.getPath());
-			waitOn(client.close());
+			waiter.close();
 		}
 		finally {
 			socket.close();
@@ -1158,9 +1178,12 @@ public class GadpClientServerTest {
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
+			TargetObjectAddedWaiter waiter = new TargetObjectAddedWaiter(client);
 			runner.server.model.session.addLinks();
+			waitOn(waiter.wait(PathUtils.parse("Links[2]")));
 			assertEquals("echo", waitOn(client.fetchModelValue(PathUtils.parse("Links[2].cmd"))));
 			waitOn(client.close());
+			waiter.close();
 		}
 		finally {
 			socket.close();

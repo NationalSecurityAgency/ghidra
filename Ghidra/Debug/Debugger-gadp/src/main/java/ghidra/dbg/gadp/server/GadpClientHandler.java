@@ -38,8 +38,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
@@ -431,6 +430,10 @@ public class GadpClientHandler
 				"No listed version is supported");
 		}
 		TargetObjectSchema rootSchema = model.getRootSchema();
+		if (rootSchema == null) {
+			Msg.error(this, "Served model has no schema! Using OBJECT");
+			rootSchema = EnumerableTargetObjectSchema.OBJECT;
+		}
 		CompletableFuture<Integer> send = channel.write(Gadp.RootMessage.newBuilder()
 				.setSequence(seqno)
 				.setConnectReply(Gadp.ConnectReply.newBuilder()
