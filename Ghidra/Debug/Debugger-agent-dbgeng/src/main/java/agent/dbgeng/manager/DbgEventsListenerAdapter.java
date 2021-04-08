@@ -142,4 +142,10 @@ public interface DbgEventsListenerAdapter extends DbgEventsListener {
 	public default void consoleOutput(String output, int mask) {
 		// Extension point
 	}
+
+	@Override
+	public default void promptChanged(String prompt) {
+		// Extension point
+	}
+
 }

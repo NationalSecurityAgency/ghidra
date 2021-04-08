@@ -15,17 +15,15 @@
  */
 package agent.dbgeng.dbgeng;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
  * The interface for receiving input callbacks via {@code IDebugInputCallbacks} or a newer variant.
  * 
- * <p>
  * Note: The wrapper implementation will select the appropriate native interface version.
  */
 @FunctionalInterface
 public interface DebugInputCallbacks {
-	CompletableFuture<String> startInput();
+
+	public void startInput(long bufferSize);
 
 	default void endInput() {
 		// Optional implementation

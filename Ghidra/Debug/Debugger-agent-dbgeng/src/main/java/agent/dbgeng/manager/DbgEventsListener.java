@@ -244,4 +244,10 @@ public interface DbgEventsListener {
 	 * @param mask class of output
 	 */
 	void consoleOutput(String output, int mask);
+
+	/**
+	 * @param prompt for console output
+	 */
+	void promptChanged(String prompt);
+
 }

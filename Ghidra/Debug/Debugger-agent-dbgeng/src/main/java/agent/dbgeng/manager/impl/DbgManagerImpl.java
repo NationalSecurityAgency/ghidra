@@ -43,6 +43,7 @@ import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.evt.*;
 import agent.dbgeng.model.iface1.DbgModelTargetActiveScope;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
+import agent.dbgeng.model.iface1.DbgModelTargetInterpreter;
 import ghidra.async.*;
 import ghidra.comm.util.BitmaskSet;
 import ghidra.dbg.target.TargetObject;
@@ -110,6 +111,7 @@ public class DbgManagerImpl implements DbgManager {
 	private DbgThread eventThread;
 	private volatile boolean waiting = false;
 	private boolean kernelMode = false;
+	private CompletableFuture<String> continuation;
 
 	/**
 	 * Instantiate a new manager
@@ -370,6 +372,7 @@ public class DbgManagerImpl implements DbgManager {
 		status = dbgeng.getControl().getExecutionStatus();
 		dbgeng.setOutputCallbacks(new DbgDebugOutputCallbacks(this));
 		dbgeng.setEventCallbacks(new DbgDebugEventCallbacksAdapter(this));
+		dbgeng.setInputCallbacks(new DbgDebugInputCallbacks(this));
 		dbgeng.flushCallbacks();
 
 		if (!create) {
@@ -1429,6 +1432,13 @@ public class DbgManagerImpl implements DbgManager {
 
 	@Override
 	public CompletableFuture<Void> console(String command) {
+		if (continuation != null) {
+			String prompt = command.equals("") ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
+			getEventListeners().fire.promptChanged(prompt);
+			continuation.complete(command);
+			setContinuation(null);
+			return AsyncUtils.NIL;
+		}
 		return execute(
 			new DbgConsoleExecCommand(this, command, DbgConsoleExecCommand.Output.CONSOLE))
 					.thenApply(e -> null);
@@ -1498,4 +1508,7 @@ public class DbgManagerImpl implements DbgManager {
 		this.kernelMode = kernelMode;
 	}
 
+	public void setContinuation(CompletableFuture<String> continuation) {
+		this.continuation = continuation;
+	}
 }

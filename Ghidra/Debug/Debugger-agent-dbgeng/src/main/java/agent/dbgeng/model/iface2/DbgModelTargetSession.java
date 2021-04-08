@@ -15,6 +15,8 @@
  */
 package agent.dbgeng.model.iface2;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugClient.DebugOutputFlags;
@@ -68,6 +70,13 @@ public interface DbgModelTargetSession extends //
 			return;
 		}
 		getListeners().fire.consoleOutput(getProxy(), chan, output);
+	}
+
+	@Override
+	public default void promptChanged(String prompt) {
+		changeAttributes(List.of(), Map.of( //
+			PROMPT_ATTRIBUTE_NAME, prompt //
+		), "Refreshed");
 	}
 
 	@Override

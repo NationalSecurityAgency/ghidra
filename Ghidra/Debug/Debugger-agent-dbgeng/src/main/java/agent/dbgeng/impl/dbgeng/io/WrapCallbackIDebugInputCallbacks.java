@@ -15,10 +15,6 @@
  */
 package agent.dbgeng.impl.dbgeng.io;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 import com.sun.jna.platform.win32.WinDef.ULONG;
@@ -30,14 +26,11 @@ import com.sun.jna.ptr.PointerByReference;
 import agent.dbgeng.dbgeng.DebugInputCallbacks;
 import agent.dbgeng.impl.dbgeng.client.DebugClientImpl1;
 import agent.dbgeng.jna.dbgeng.io.*;
-import ghidra.util.exception.CancelledException;
 
 public class WrapCallbackIDebugInputCallbacks implements CallbackIDebugInputCallbacks {
 	private final DebugClientImpl1 client;
 	private final DebugInputCallbacks cb;
 	private ListenerIDebugInputCallbacks listener;
-
-	private final Set<CompletableFuture<String>> futures = new HashSet<>(); // TODO: Just one?
 
 	public WrapCallbackIDebugInputCallbacks(DebugClientImpl1 client, DebugInputCallbacks cb) {
 		this.client = client;
@@ -82,23 +75,7 @@ public class WrapCallbackIDebugInputCallbacks implements CallbackIDebugInputCall
 	@Override
 	public HRESULT StartInput(ULONG BufferSize) {
 		try {
-			CompletableFuture<String> future = cb.startInput();
-			if (future == null) {
-				return WinError.S_OK;
-			}
-			future.handle((input, exc) -> {
-				if (exc == null) {
-					client.getControl().returnInput(input);
-				}
-				else if (exc instanceof CancelledException) {
-					// Normal if another client provides input
-				}
-				else {
-					client.getControl().errln("ERROR getting input: " + exc.getMessage());
-				}
-				futures.remove(future);
-				return null;
-			});
+			cb.startInput(BufferSize.longValue());
 			return WinError.S_OK;
 		}
 		catch (Throwable e) {
@@ -109,9 +86,6 @@ public class WrapCallbackIDebugInputCallbacks implements CallbackIDebugInputCall
 	@Override
 	public HRESULT EndInput() {
 		try {
-			for (CompletableFuture<String> future : futures) {
-				future.cancel(true);
-			}
 			cb.endInput();
 			return WinError.S_OK;
 		}

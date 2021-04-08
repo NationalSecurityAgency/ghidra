@@ -22,15 +22,26 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
+import agent.dbgeng.model.iface1.DbgModelTargetInterpreter;
 import agent.dbgeng.model.iface2.DbgModelTargetProcessContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Session", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = "Attributes", type = DbgModelTargetSessionAttributesImpl.class, fixed = true),
-		@TargetAttributeType(name = "Processes", type = DbgModelTargetProcessContainerImpl.class, required = true, fixed = true),
+@TargetObjectSchemaInfo(
+	name = "Session",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = "Attributes",
+			type = DbgModelTargetSessionAttributesImpl.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Processes",
+			type = DbgModelTargetProcessContainerImpl.class,
+			required = true,
+			fixed = true),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetSession {
@@ -71,7 +82,7 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 			processes //
 		), Map.of( //
 			ACCESSIBLE_ATTRIBUTE_NAME, accessible, //
-			PROMPT_ATTRIBUTE_NAME, DBG_PROMPT, //
+			PROMPT_ATTRIBUTE_NAME, DbgModelTargetInterpreter.DBG_PROMPT, //
 			STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
 		), "Initialized");
 
