@@ -174,11 +174,13 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			Function callee = currentProgram.getFunctionManager().getFunctionAt(callTarget);
 			if (callee == null) {
 				String funcName = "syscall_" + String.format("%08X", offset);
-				if (syscallNumbersToNames.get(offset) != null) {
+				if (syscallNumbersToNames.containsKey(offset)) {
 					funcName = syscallNumbersToNames.get(offset);
 				}
 				callee = createFunction(callTarget, funcName);
 				callee.setCallingConvention(callingConvention);
+			} else if (syscallNumbersToNames.containsKey(offset)) {
+				callee.setName(syscallNumbersToNames.get(offset), SourceType.USER_DEFINED);
 			}
 			Reference ref = currentProgram.getReferenceManager().addMemoryReference(callSite,
 				callTarget, overrideType, SourceType.USER_DEFINED, Reference.MNEMONIC);
