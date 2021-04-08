@@ -1067,18 +1067,21 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			CompletableFuture<?> init = new CompletableFuture<>();
 
 			@Override
-			public void created(TargetObject object) {
-				if ("Available[1]".equals(object.getJoinedPath("."))) {
-					here.complete(null);
-				}
-			}
-
-			@Override
 			public void attributesChanged(TargetObject object, Collection<String> removed,
 					Map<String, ?> added) {
 				if ("Available[1]".equals(object.getJoinedPath("."))) {
 					if (added.entrySet().containsAll(initEntries.entrySet())) {
 						init.complete(null);
+					}
+				}
+			}
+
+			@Override
+			public void elementsChanged(TargetObject object, Collection<String> removed,
+					Map<String, ? extends TargetObject> added) {
+				for (TargetObject obj : added.values()) {
+					if ("Available[1]".equals(obj.getJoinedPath("."))) {
+						here.complete(null);
 					}
 				}
 			}
