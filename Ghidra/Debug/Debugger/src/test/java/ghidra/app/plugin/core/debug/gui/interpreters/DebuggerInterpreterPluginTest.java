@@ -63,13 +63,14 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		// Can't get at the component, so send keystrokes?
 		Robot robot = new Robot();
-		robot.keyPress(KeyEvent.VK_A);
-		robot.keyRelease(KeyEvent.VK_A);
-		robot.keyPress(KeyEvent.VK_ENTER);
-		robot.keyRelease(KeyEvent.VK_ENTER);
-		waitForSwing();
-
-		ExecuteCall<Void> exe = mb.testModel.session.interpreter.pollExecute();
+		ExecuteCall<Void> exe = waitForValue(() -> {
+			robot.keyPress(KeyEvent.VK_A);
+			robot.keyRelease(KeyEvent.VK_A);
+			robot.keyPress(KeyEvent.VK_ENTER);
+			robot.keyRelease(KeyEvent.VK_ENTER);
+			waitForSwing();
+			return mb.testModel.session.interpreter.pollExecute();
+		});
 		assertEquals("a", exe.cmd);
 		exe.complete(null); // Not necessary, but cleaner
 	}
@@ -128,7 +129,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		), Map.of(), "Invalidate interpreter");
 		waitForSwing();
 
-		assertFalse(interpreter.isVisible());
+		waitForPass(() -> assertFalse(interpreter.isVisible()));
 		assertFalse(interpreter.isInTool());
 	}
 
@@ -146,6 +147,6 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		), Map.of(), "Invalidate interpreter");
 		waitForSwing();
 
-		assertFalse(interpreter.isInputPermitted());
+		waitForPass(() -> assertFalse(interpreter.isInputPermitted()));
 	}
 }

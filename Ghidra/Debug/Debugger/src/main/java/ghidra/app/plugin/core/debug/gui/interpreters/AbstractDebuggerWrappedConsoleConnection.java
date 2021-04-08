@@ -84,12 +84,26 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		@AttributeCallback(TargetObject.DISPLAY_ATTRIBUTE_NAME)
 		public void displayChanged(TargetObject object, String display) {
 			// TODO: Add setSubTitle(String) to InterpreterConsole
+			if (guiConsole == null) {
+				/**
+				 * Can happen during init. setSubTitle will get called immediately after guiConsole
+				 * is initialized.
+				 */
+				return;
+			}
 			InterpreterComponentProvider provider = (InterpreterComponentProvider) guiConsole;
 			Swing.runLater(() -> provider.setSubTitle(display));
 		}
 
 		@AttributeCallback(TargetInterpreter.PROMPT_ATTRIBUTE_NAME)
 		public void promptChanged(TargetObject interpreter, String prompt) {
+			if (guiConsole == null) {
+				/**
+				 * Can happen during init. setPrompt will get called immediately after guiConsole is
+				 * initialized. NB. It happens in DebuggerWrappedInterpreterConnection
+				 */
+				return;
+			}
 			Swing.runLater(() -> guiConsole.setPrompt(prompt));
 		}
 
@@ -97,13 +111,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		public void invalidated(TargetObject object, TargetObject branch, String reason) {
 			Swing.runLater(() -> {
 				if (object == targetConsole) { // Redundant
-					if (pinned) {
-						running.set(false);
-						plugin.disableConsole(targetConsole, guiConsole);
-					}
-					else {
-						plugin.destroyConsole(targetConsole, guiConsole);
-					}
+					consoleInvalidated();
 				}
 			});
 		}
@@ -161,6 +169,20 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 		setStdIn(guiConsole.getStdin());
 
 		createActions();
+
+		if (!targetConsole.isValid()) {
+			consoleInvalidated();
+		}
+	}
+
+	protected void consoleInvalidated() {
+		if (pinned) {
+			running.set(false);
+			plugin.disableConsole(targetConsole, guiConsole);
+		}
+		else {
+			plugin.destroyConsole(targetConsole, guiConsole);
+		}
 	}
 
 	protected void createActions() {
