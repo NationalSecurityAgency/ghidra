@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -67,7 +66,8 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 			Executors::newSingleThreadExecutor, 100);
 	}
 
-	public CompletableFuture<Void> captureProcessMemory(AddressSetView set, TaskMonitor monitor) {
+	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
+			TaskMonitor monitor) {
 		// TODO: Figure out how to display/select per-thread memory.
 		//   Probably need a thread parameter passed in then?
 		//   NOTE: That thread memory will already be chained to process memory. Good.
@@ -81,6 +81,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		monitor.initialize(total);
 		monitor.setMessage("Capturing memory");
 		// TODO: Read blocks in parallel? Probably NO. Tends to overload the agent.
+		NavigableMap<Address, byte[]> result = new TreeMap<>();
 		return AsyncUtils.each(TypeSpec.VOID, expSet.iterator(), (r, loop) -> {
 			AddressRangeChunker it = new AddressRangeChunker(r, BLOCK_SIZE);
 			AsyncUtils.each(TypeSpec.VOID, it.iterator(), (vRng, inner) -> {
@@ -89,14 +90,15 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 				AddressRange tRng = recorder.getMemoryMapper().traceToTarget(vRng);
 				recorder.getProcessMemory()
 						.readMemory(tRng.getMinAddress(), (int) tRng.getLength())
-						.thenApply(b -> !monitor.isCancelled())
+						.thenAccept(data -> result.put(tRng.getMinAddress(), data))
+						.thenApply(__ -> !monitor.isCancelled())
 						.handle(inner::repeatWhile);
 			}).exceptionally(e -> {
 				Msg.error(this, "Error reading range " + r + ": " + e);
 				// NOTE: Above may double log, since recorder listens for errors, too
 				return null; // Continue looping on errors
 			}).thenApply(v -> !monitor.isCancelled()).handle(loop::repeatWhile);
-		});
+		}).thenApply(__ -> result);
 	}
 
 	@Override

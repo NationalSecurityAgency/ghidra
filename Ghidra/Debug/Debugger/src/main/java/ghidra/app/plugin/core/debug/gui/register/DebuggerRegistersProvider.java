@@ -1147,7 +1147,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			Msg.error(this, "Current frame's bank does not exist");
 			return AsyncUtils.NIL;
 		}
-		CompletableFuture<Void> future =
+		CompletableFuture<?> future =
 			recorder.captureThreadRegisters(traceThread, current.getFrame(), toRead);
 		return future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
@@ -1162,7 +1162,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 					"Could not read target registers for selected thread", ex);
 			}
 			return ExceptionUtils.rethrow(ex);
-		});
+		}).thenApply(__ -> null);
 	}
 
 	private void repaintTable() {

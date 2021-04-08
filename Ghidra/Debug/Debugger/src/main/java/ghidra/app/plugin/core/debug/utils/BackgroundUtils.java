@@ -32,14 +32,13 @@ public enum BackgroundUtils {
 
 	public static class AsyncBackgroundCommand<T extends UndoableDomainObject>
 			extends BackgroundCommand {
-		private CompletableFuture<Void> promise;
+		private CompletableFuture<?> promise;
 
 		private final CancelledListener cancelledListener = this::cancelled;
-		private final BiFunction<T, TaskMonitor, CompletableFuture<Void>> futureProducer;
+		private final BiFunction<T, TaskMonitor, CompletableFuture<?>> futureProducer;
 
 		private AsyncBackgroundCommand(String name, boolean hasProgress, boolean canCancel,
-				boolean isModal,
-				BiFunction<T, TaskMonitor, CompletableFuture<Void>> futureProducer) {
+				boolean isModal, BiFunction<T, TaskMonitor, CompletableFuture<?>> futureProducer) {
 			super(name, hasProgress, canCancel, isModal);
 			this.futureProducer = futureProducer;
 		}
@@ -77,7 +76,7 @@ public enum BackgroundUtils {
 
 	public static <T extends UndoableDomainObject> AsyncBackgroundCommand<T> async(PluginTool tool,
 			T obj, String name, boolean hasProgress, boolean canCancel, boolean isModal,
-			BiFunction<T, TaskMonitor, CompletableFuture<Void>> futureProducer) {
+			BiFunction<T, TaskMonitor, CompletableFuture<?>> futureProducer) {
 		AsyncBackgroundCommand<T> cmd =
 			new AsyncBackgroundCommand<>(name, hasProgress, canCancel, isModal, futureProducer);
 		tool.executeBackgroundCommand(cmd, obj);

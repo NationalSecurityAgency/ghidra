@@ -60,4 +60,8 @@ public interface PcodeExecutorStatePiece<A, T> {
 	}
 
 	MemBuffer getConcreteBuffer(Address address);
+
+	default long truncateOffset(AddressSpace space, long offset) {
+		return space.truncateAddressableWordOffset(offset) * space.getAddressableUnitSize();
+	}
 }

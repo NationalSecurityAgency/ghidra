@@ -32,10 +32,6 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		uniqueSpace = language.getAddressFactory().getUniqueSpace();
 	}
 
-	protected long truncateOffset(AddressSpace space, long offset) {
-		return space.truncateAddressableWordOffset(offset) * space.getAddressableUnitSize();
-	}
-
 	protected void setUnique(long offset, int size, T val) {
 		S s = getForSpace(uniqueSpace, true);
 		setInSpace(s, offset, size, val);

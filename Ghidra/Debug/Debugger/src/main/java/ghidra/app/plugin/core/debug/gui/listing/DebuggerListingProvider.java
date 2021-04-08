@@ -86,6 +86,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
@@ -1111,7 +1112,10 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	protected void doAutoReadMemory() {
-		autoReadMemorySpec.readMemory(current, visible);
+		autoReadMemorySpec.readMemory(current, visible).exceptionally(ex -> {
+			Msg.error(this, "Could not auto-read memory: " + ex);
+			return null;
+		});
 	}
 
 	public void staticProgramLocationChanged(ProgramLocation location) {

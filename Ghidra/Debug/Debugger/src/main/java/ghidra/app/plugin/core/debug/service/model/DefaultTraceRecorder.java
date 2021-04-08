@@ -254,9 +254,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	/*---------------- CAPTURE METHODS -------------------*/
 
 	@Override
-	public CompletableFuture<Void> captureProcessMemory(AddressSetView set, TaskMonitor monitor) {
+	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
+			TaskMonitor monitor) {
 		if (set.isEmpty()) {
-			return AsyncUtils.NIL;
+			return CompletableFuture.completedFuture(new TreeMap<>());
 		}
 		return memoryRecorder.captureProcessMemory(set, monitor);
 	}
@@ -300,7 +301,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Void> captureThreadRegisters(TraceThread thread, int frameLevel,
+	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
+			TraceThread thread, int frameLevel,
 			Set<Register> registers) {
 		System.err.println("captureThreadRegisters " + thread);
 		DefaultThreadRecorder rec = getThreadRecorder(thread);

@@ -15,16 +15,15 @@
  */
 package ghidra.pcode.exec;
 
-import java.util.Map;
-import java.util.Set;
+import java.math.BigInteger;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.TraceRecorder;
 import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
 import ghidra.pcode.exec.trace.TraceMemoryStatePcodeExecutorStatePiece;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -73,13 +72,36 @@ public class TraceRecorderAsyncPcodeExecutorState
 			Map.of(rv.getRegister(), rv));
 	}
 
+	protected byte[] knitFromResults(NavigableMap<Address, byte[]> map, Address addr, int size) {
+		Address floor = map.floorKey(addr);
+		NavigableMap<Address, byte[]> tail;
+		if (floor == null) {
+			tail = map;
+		}
+		else {
+			tail = map.tailMap(floor, true);
+		}
+		byte[] result = new byte[size];
+		for (Map.Entry<Address, byte[]> ent : tail.entrySet()) {
+			long off = ent.getKey().subtract(addr);
+			if (off >= size || off < 0) {
+				break;
+			}
+			int subSize = Math.min(size - (int) off, ent.getValue().length);
+			System.arraycopy(ent.getValue(), 0, result, (int) off, subSize);
+		}
+		return result;
+	}
+
 	protected CompletableFuture<byte[]> doGetTargetVar(AddressSpace space, long offset,
 			int size, boolean truncateAddressableUnit) {
 		if (space.isMemorySpace()) {
-			AddressSet set = new AddressSet(space.getAddress(offset),
-				space.getAddress(offset + size - 1));
-			return recorder.captureProcessMemory(set, TaskMonitor.DUMMY).thenApply(__ -> {
-				return state.getVar(space, offset, size, truncateAddressableUnit);
+			Address addr = space.getAddress(truncateOffset(space, offset));
+			AddressSet set = new AddressSet(addr, space.getAddress(offset + size - 1));
+			CompletableFuture<NavigableMap<Address, byte[]>> future =
+				recorder.captureProcessMemory(set, TaskMonitor.DUMMY);
+			return future.thenApply(map -> {
+				return knitFromResults(map, addr, size);
 			});
 		}
 		assert space.isRegisterSpace();
@@ -91,12 +113,20 @@ public class TraceRecorderAsyncPcodeExecutorState
 			throw new IllegalArgumentException(
 				"read from register space must be from one register");
 		}
-		register = register.getBaseRegister();
+		Register baseRegister = register.getBaseRegister();
 
-		return recorder.captureThreadRegisters(traceState.getThread(), traceState.getFrame(),
-			Set.of(register)).thenApply(__ -> {
+		CompletableFuture<Map<Register, RegisterValue>> future =
+			recorder.captureThreadRegisters(traceState.getThread(), traceState.getFrame(),
+				Set.of(baseRegister));
+		return future.thenApply(map -> {
+			RegisterValue baseVal = map.get(baseRegister);
+			if (baseVal == null) {
 				return state.getVar(space, offset, size, truncateAddressableUnit);
-			});
+			}
+			BigInteger val = baseVal.getRegisterValue(register).getUnsignedValue();
+			return Utils.bigIntegerToBytes(val, size,
+				recorder.getTrace().getBaseLanguage().isBigEndian());
+		});
 	}
 
 	protected boolean isTargetSpace(AddressSpace space) {

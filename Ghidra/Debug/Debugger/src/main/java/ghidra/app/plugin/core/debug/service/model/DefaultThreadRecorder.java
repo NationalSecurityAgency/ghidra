@@ -166,8 +166,8 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		});
 	}
 
-	public CompletableFuture<Void> captureThreadRegisters(TraceThread thread, int frameLevel,
-			Set<Register> registers) {
+	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
+			TraceThread thread, int frameLevel, Set<Register> registers) {
 		if (regMapper == null) {
 			throw new IllegalStateException("Have not found register descriptions for " + thread);
 		}
@@ -176,7 +176,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 				"All given registers must be recognized by the target");
 		}
 		if (registers.isEmpty()) {
-			return AsyncUtils.NIL;
+			return CompletableFuture.completedFuture(Map.of());
 		}
 		List<TargetRegister> tRegs =
 			registers.stream().map(regMapper::traceToTarget).collect(Collectors.toList());
@@ -188,7 +188,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		}
 		// NOTE: Cache update, if applicable, will cause recorder to write values to trace
 		System.err.println("captureThreadRegisters " + thread + ":" + bank);
-		return bank.readRegisters(tRegs).thenApply(__ -> null);
+		return bank.readRegisters(tRegs).thenApply(regMapper::targetToTrace);
 	}
 
 	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {

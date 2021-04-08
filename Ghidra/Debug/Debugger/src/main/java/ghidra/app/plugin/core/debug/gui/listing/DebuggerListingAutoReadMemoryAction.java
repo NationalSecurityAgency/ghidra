@@ -75,7 +75,7 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		 * @param visible the listing's visible addresses
 		 * @return a future that completes when the memory has been read
 		 */
-		CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates, AddressSetView visible);
+		CompletableFuture<?> readMemory(DebuggerCoordinates coordinates, AddressSetView visible);
 	}
 
 	class ReadNoneMemorySpec implements AutoReadMemorySpec {
@@ -102,7 +102,7 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		}
 
 		@Override
-		public CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates,
+		public CompletableFuture<?> readMemory(DebuggerCoordinates coordinates,
 				AddressSetView visible) {
 			if (!coordinates.isAliveAndReadsPresent()) {
 				return AsyncUtils.NIL;
@@ -133,7 +133,7 @@ public interface DebuggerListingAutoReadMemoryAction extends AutoReadMemoryActio
 		}
 
 		@Override
-		public CompletableFuture<Void> readMemory(DebuggerCoordinates coordinates,
+		public CompletableFuture<?> readMemory(DebuggerCoordinates coordinates,
 				AddressSetView visible) {
 			if (!coordinates.isAliveAndReadsPresent()) {
 				return AsyncUtils.NIL;

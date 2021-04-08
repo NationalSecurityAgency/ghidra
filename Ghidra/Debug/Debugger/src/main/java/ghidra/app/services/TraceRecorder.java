@@ -267,12 +267,12 @@ public interface TraceRecorder {
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param registers the <em>base</em> registers, as viewed by the trace
-	 * @return a future which completes when the registers have been captured.
+	 * @return a future which completes with the captured values
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Void> captureThreadRegisters(TraceThread thread, int frameLevel,
-			Set<Register> registers);
+	CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(TraceThread thread,
+			int frameLevel, Set<Register> registers);
 
 	/**
 	 * Write a target thread's registers.
@@ -327,9 +327,10 @@ public interface TraceRecorder {
 	 * 
 	 * @param selection the addresses to capture, as viewed in the trace
 	 * @param monitor a monitor for displaying task steps
-	 * @return a future which completes when memory has been captured.
+	 * @return a future which completes with the capture results
 	 */
-	CompletableFuture<Void> captureProcessMemory(AddressSetView selection, TaskMonitor monitor);
+	CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView selection,
+			TaskMonitor monitor);
 
 	/**
 	 * Capture the data types of a target's module.

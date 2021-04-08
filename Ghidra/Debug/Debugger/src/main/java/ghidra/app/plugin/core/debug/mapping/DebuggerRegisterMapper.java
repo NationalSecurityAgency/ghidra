@@ -16,9 +16,8 @@
 package ghidra.app.plugin.core.debug.mapping;
 
 import java.math.BigInteger;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import ghidra.app.plugin.core.debug.register.RegisterTypeInfo;
 import ghidra.dbg.target.TargetRegister;
@@ -77,6 +76,23 @@ public interface DebuggerRegisterMapper {
 	}
 
 	/**
+	 * Convert a collection of register values to a string-byte-array map suitable for the debug API
+	 * 
+	 * @param registerValues the collection of values
+	 * @return the map
+	 */
+	default Map<String, byte[]> traceToTarget(Collection<RegisterValue> registerValues) {
+		Map<String, byte[]> result = new LinkedHashMap<>();
+		for (RegisterValue rv : registerValues) {
+			Entry<String, byte[]> entry = traceToTarget(rv);
+			if (entry != null) {
+				result.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Convert a trace register name to a target register name
 	 * 
 	 * @param register the trace register
@@ -116,6 +132,23 @@ public interface DebuggerRegisterMapper {
 		}
 		BigInteger big = new BigInteger(1, value);
 		return new RegisterValue(lReg, big);
+	}
+
+	/**
+	 * Convert a string-byte-value map to a map of trace register values
+	 * 
+	 * @param values the target values
+	 * @return the trace values
+	 */
+	default Map<Register, RegisterValue> targetToTrace(Map<String, byte[]> values) {
+		Map<Register, RegisterValue> result = new LinkedHashMap<>();
+		for (Map.Entry<String, byte[]> ent : values.entrySet()) {
+			RegisterValue rv = targetToTrace(ent.getKey(), ent.getValue());
+			if (rv != null) {
+				result.put(rv.getRegister(), rv);
+			}
+		}
+		return result;
 	}
 
 	/**
