@@ -7044,6 +7044,7 @@ define pcodeop pwrsavOp;
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
+@ifdef NEVER
   W15 		= W15 - 2;
   tos1:2 	= *[ram]:2 W15;
 
@@ -7062,6 +7063,12 @@ define pcodeop pwrsavOp;
   PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2);
   
   return [PC];
+@else
+  W15 	= W15 - 4;
+  local tmp 	= *[ram]:4 W15;
+  CORCON_IPL3 = (tmp & 0x00800000) != 0;
+  return [tmp & 0x7FFFFF];
+@endif
 }
 @endif
 
@@ -7069,6 +7076,7 @@ define pcodeop pwrsavOp;
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
 
+@ifdef NEVER
   W15 		= W15 - 2;
   tos1:2 	= *[ram]:2 W15;
 
@@ -7090,6 +7098,14 @@ define pcodeop pwrsavOp;
   CORCON_SFA = ( tos2 & 0x0001 ) != 0;
   
   return [PC];
+  
+@else
+  W15 	= W15 - 4;
+  local tmp 	= *[ram]:4 W15;
+  CORCON_IPL3 = (tmp & 0x00800000) != 0;
+  CORCON_SFA = (tmp & 0x1) != 0;
+  return [tmp & 0x7FFFFE];
+@endif
 }
 @endif
 
@@ -7097,6 +7113,7 @@ define pcodeop pwrsavOp;
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
 
+@ifdef NEVER
   W15 		= W15 - 2;
   tos1:2 	= *[ram]:2 W15;
 
@@ -7118,11 +7135,20 @@ define pcodeop pwrsavOp;
   Wn_t =         k10_t;
   
   return [PC];
+  
+@else
+  W15 	= W15 - 4;
+  local tmp 	= *[ram]:4 W15;
+  CORCON_IPL3 = (tmp & 0x00800000) != 0;
+  Wn_t =         k10_t;
+  return [tmp & 0x7FFFFF];
+@endif
 } 
 
 
 :retlw.b   k10byte_t,Wnbyte_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10byte_t & Wnbyte_t {
 
+@ifdef NEVER
   W15 		= W15 - 2;
   tos1:2 	= *[ram]:2 W15;
 
@@ -7144,6 +7170,14 @@ define pcodeop pwrsavOp;
   Wnbyte_t =     k10byte_t;
   
   return [PC];
+  
+@else
+  W15 	= W15 - 4;
+  local tmp 	= *[ram]:4 W15;
+  CORCON_IPL3 = (tmp & 0x00800000) != 0;
+  Wnbyte_t =     k10byte_t;
+  return [tmp & 0x7FFFFF];
+@endif
 }
 @endif
 
@@ -7151,6 +7185,7 @@ define pcodeop pwrsavOp;
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
 
+@ifdef NEVER
   W15 = W15 - 2;
   tos1:2 		= *[ram]:2 W15;
 
@@ -7175,11 +7210,21 @@ define pcodeop pwrsavOp;
   Wn_t =         k10_t;
   
   return [PC];
+  
+@else
+  W15 	= W15 - 4;
+  local tmp 	= *[ram]:4 W15;
+  CORCON_IPL3 = (tmp & 0x00800000) != 0;
+  CORCON_SFA = (tmp & 0x1) != 0;
+  Wn_t = k10_t;
+  return [tmp & 0x7FFFFE];
+@endif
 } 
 
 
 :retlw.b   k10byte_t,Wnbyte_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10byte_t & Wnbyte_t {
 
+@ifdef NEVER
   W15 			= W15 - 2;
   tos1:2 		= *[ram]:2 W15;
 
@@ -7204,6 +7249,15 @@ define pcodeop pwrsavOp;
   Wnbyte_t =     k10byte_t;
   
   return [PC];
+  
+@else
+  W15 	= W15 - 4;
+  local tmp 	= *[ram]:4 W15;
+  CORCON_IPL3 = (tmp & 0x00800000) != 0;
+  CORCON_SFA = 	(tmp & 0x1) != 0;
+  Wnbyte_t =     k10byte_t;
+  return [tmp & 0x7FFFFE];
+@endif
 }
 @endif
 
