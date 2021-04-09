@@ -242,7 +242,6 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 
 	@Override
 	public CompletableFuture<Void> requestActivation(TargetObject obj) {
-		System.err.println("requestActivation " + obj);
 		impl.assertMine(TargetObject.class, obj);
 		/**
 		 * Yes, this is pointless, since I'm the root, but do it right (TM), since this may change
@@ -265,7 +264,6 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 
 	@Override
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
-		System.err.println("requestFocus " + obj);
 		impl.assertMine(TargetObject.class, obj);
 		/**
 		 * Yes, this is pointless, since I'm the root, but do it right (TM), since this may change
@@ -322,6 +320,9 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			 * I have to do this for all inferiors, because I don't know in what order they will
 			 * complete.
 			 */
+			if (impl.gdb.getKnownThreads().get(thread.getId()) != thread) {
+				return;
+			}
 			thread.setActive().exceptionally(ex -> {
 				impl.reportError(this, "Could not restore event thread", ex);
 				return null;

@@ -180,7 +180,9 @@ public class GdbModelTargetBreakpointSpec extends
 
 	protected synchronized List<GdbModelTargetBreakpointLocation> setInfoAndComputeLocations(
 			GdbBreakpointInfo oldInfo, GdbBreakpointInfo newInfo) {
-		assert oldInfo == this.info;
+		if (oldInfo != this.info) {
+			Msg.error(this, "Manager and model breakpoint info was/is out of sync!");
+		}
 		this.info = newInfo;
 		List<GdbModelTargetBreakpointLocation> effectives = newInfo.getLocations()
 				.stream()

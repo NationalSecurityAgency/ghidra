@@ -31,6 +31,7 @@ import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
@@ -64,7 +65,14 @@ public class GdbModelTargetThreadContainer
 
 	public void threadExited(int threadId) {
 		synchronized (this) {
-			impl.deleteModelObject(threadId);
+			GdbModelTargetThread targetThread =
+				getCachedElements().get(GdbModelTargetThread.indexThread(threadId));
+			if (targetThread == null) {
+				Msg.error(this, "Thread " + threadId + " exited, but was not in model.");
+			}
+			else {
+				impl.deleteModelObject(targetThread.thread);
+			}
 		}
 		changeElements(List.of(GdbModelTargetThread.indexThread(threadId)), List.of(), "Exited");
 	}
@@ -75,7 +83,10 @@ public class GdbModelTargetThreadContainer
 			threads =
 				byTID.values().stream().map(this::getTargetThread).collect(Collectors.toList());
 		}
-		setElements(threads, "Refreshed");
+		Delta<GdbModelTargetThread, ?> delta = setElements(threads, "Refreshed");
+		for (GdbModelTargetThread targetThread : delta.removed.values()) {
+			impl.deleteModelObject(targetThread.thread);
+		}
 	}
 
 	@Override
@@ -85,11 +96,6 @@ public class GdbModelTargetThreadContainer
 			return AsyncUtils.NIL;
 		}
 		return inferior.listThreads().thenAccept(byTID -> {
-			for (Integer tid : inferior.getKnownThreads().keySet()) {
-				if (!byTID.keySet().contains(tid)) {
-					impl.deleteModelObject(byTID.get(tid));
-				}
-			}
 			updateUsingThreads(byTID);
 		});
 	}

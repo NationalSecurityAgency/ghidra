@@ -208,10 +208,10 @@ public class GdbBreakpointInfo {
 
 	@Override
 	public String toString() {
-		return "<GdbBreakpointInfo number=" + number + ",type=" + type + ",disp=" + disp +
-			",addr=" + addr + ",pending=" + pending + ",enabled=" + enabled + ",times=" +
-			times +
-			",locations=" + locations + ">";
+		return String.format(
+			"<%s id=%08x,number=%d,type=%s,disp=%s,addr=%s,pending=%s,enabled=%s,times=%d,locations=%s>",
+			getClass().getSimpleName(), System.identityHashCode(this), number, type, disp, addr,
+			pending, enabled, times, locations);
 	}
 
 	@Override

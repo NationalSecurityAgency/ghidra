@@ -36,6 +36,7 @@ import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.parsing.GdbMiParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import ghidra.async.*;
+import ghidra.async.AsyncLock.Hold;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.dbg.util.PrefixMap;
@@ -727,7 +728,10 @@ public class GdbManagerImpl implements GdbManager {
 			curCmd = null;
 			//Msg.debug(this, "SET CURCMD = null");
 			//Msg.debug(this, "RELEASING cmdLock");
-			cmdLockHold.getAndSet(null).release();
+			Hold hold = cmdLockHold.getAndSet(null);
+			if (hold != null) {
+				hold.release();
+			}
 			return null;
 		});
 		return pcmd;
@@ -1155,6 +1159,7 @@ public class GdbManagerImpl implements GdbManager {
 		if (Objects.equals(newInfo, oldInfo)) {
 			return;
 		}
+		addKnownBreakpoint(newInfo, true);
 		event(() -> listenersEvent.fire.breakpointModified(newInfo, oldInfo, cause),
 			"breakpointModified");
 	}

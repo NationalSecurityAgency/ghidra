@@ -85,6 +85,9 @@ public class GdbModelTargetStackFrameRegisterContainer
 	 */
 	protected CompletableFuture<Void> populateRegisterDescriptions() {
 		return thread.thread.listRegisters().thenAccept(regs -> {
+			if (!valid) {
+				return;
+			}
 			if (regs.size() != registersByNumber.size()) {
 				allRegisters.clear();
 				registersByNumber.clear();

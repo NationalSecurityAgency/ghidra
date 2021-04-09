@@ -16,6 +16,7 @@
 package agent.gdb.manager.impl.cmd;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbCValueParser.*;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
+import ghidra.pcode.utils.Utils;
 import ghidra.util.Msg;
 
 /**
@@ -76,8 +78,48 @@ public class GdbReadRegistersCommand
 		return false;
 	}
 
+	protected BigInteger packElements(GdbArrayValue av, int byteCount, int bytesPer,
+			ByteOrder endianness) {
+		assert bytesPer * av.size() == byteCount;
+		List<BigInteger> elems = av.expectBigInts();
+		byte[] packed = new byte[byteCount];
+		ByteBuffer buf = ByteBuffer.wrap(packed);
+		int i = endianness == ByteOrder.BIG_ENDIAN ? 0 : packed.length - bytesPer;
+		int step = endianness == ByteOrder.BIG_ENDIAN ? bytesPer : -bytesPer;
+		for (BigInteger elem : elems) {
+			buf.position(i);
+			switch (bytesPer) {
+				case 1:
+					buf.put(elem.byteValue());
+					break;
+				case 2:
+					buf.putShort(elem.shortValue());
+					break;
+				case 4:
+					buf.putInt(elem.intValue());
+					break;
+				case 8:
+					buf.putLong(elem.longValue());
+					break;
+				default:
+					buf.put(Utils.bigIntegerToBytes(elem, bytesPer, true));
+					break;
+			}
+			i += step;
+		}
+		return new BigInteger(1, packed);
+	}
+
 	protected BigInteger parseAndFindInteger(String val, int byteCount) throws GdbParseError {
 		ByteOrder endianness = thread.getInferior().getEndianness();
+		if (val.contains("lbound")) {
+			/**
+			 * TODO: This might be useful information, but I've only ever seen
+			 * lbound=0x0,ubound=0xfff...fff} : size -1, so I'm just going to call this 0 and spare
+			 * the log a mess.
+			 */
+			return BigInteger.ZERO;
+		}
 		GdbCValue value = GdbCValueParser.parseValue(val);
 		if (value instanceof GdbIntValue) {
 			GdbIntValue iv = (GdbIntValue) value;
@@ -98,19 +140,21 @@ public class GdbReadRegistersCommand
 						throw new AssertionError("Expected an array of ints for " + ent);
 					}
 					GdbArrayValue int8a = (GdbArrayValue) int8v;
-					List<Integer> int8l = int8a.expectInts();
-					byte[] ordered = new byte[int8l.size()];
-					int i = endianness == ByteOrder.BIG_ENDIAN ? 0 : ordered.length - 1;
-					int step = endianness == ByteOrder.BIG_ENDIAN ? 1 : -1;
-					for (int b : int8l) {
-						ordered[i] = (byte) b;
-						i += step;
-					}
-					return new BigInteger(1, ordered);
+					return packElements(int8a, byteCount, 1, endianness);
 				}
 			}
 		}
-		throw new AssertionError("Expected an int, or a union containing an int. Got " + val);
+		if (value instanceof GdbArrayValue) {
+			GdbArrayValue av = (GdbArrayValue) value;
+			if (byteCount % av.size() != 0) {
+				throw new AssertionError("Cannot divide bytes evenly among vector elements. size=" +
+					byteCount + ", value=" + val);
+			}
+			int bytesPer = byteCount / av.size();
+			return packElements(av, byteCount, bytesPer, endianness);
+		}
+		throw new AssertionError(
+			"Expected an int, a union containing an int, or an array. Got " + val);
 	}
 
 	@Override

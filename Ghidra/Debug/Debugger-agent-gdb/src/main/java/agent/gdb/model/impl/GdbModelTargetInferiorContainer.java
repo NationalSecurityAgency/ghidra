@@ -31,10 +31,13 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
-@TargetObjectSchemaInfo(name = "InferiorContainer", attributes = {
-	@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "InferiorContainer",
+	attributes = {
+		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class GdbModelTargetInferiorContainer
 		extends DefaultTargetObject<GdbModelTargetInferior, GdbModelTargetSession>
 		implements TargetConfigurable, GdbEventsListenerAdapter {
@@ -93,8 +96,8 @@ public class GdbModelTargetInferiorContainer
 	@Override
 	public void threadExited(int threadId, GdbInferior inf, GdbCause cause) {
 		GdbModelTargetInferior inferior = getTargetInferior(inf);
-		GdbThread thread = inf.getKnownThreads().get(threadId);
-		GdbModelTargetThread targetThread = inferior.threads.getTargetThreadIfPresent(thread);
+		GdbModelTargetThread targetThread =
+			inferior.threads.getCachedElements().get(GdbModelTargetThread.indexThread(threadId));
 		parent.getListeners().fire.event(parent, targetThread, TargetEventType.THREAD_EXITED,
 			"Thread " + threadId + " exited", List.of(targetThread));
 		inferior.threads.threadExited(threadId);

@@ -131,26 +131,34 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		if (!visited.add(object)) {
 			return;
 		}
+		/**
+		 * It's rare, but technically, the creation is logged during construction, so cbAttributes
+		 * and/or cbElements could still be null.
+		 */
 		Map<String, ?> cbAttributes = object.getCallbackAttributes();
-		for (Object val : cbAttributes.values()) {
-			if (!(val instanceof TargetObject)) {
-				continue;
+		if (cbAttributes != null) {
+			for (Object val : cbAttributes.values()) {
+				if (!(val instanceof TargetObject)) {
+					continue;
+				}
+				assert val instanceof SpiTargetObject;
+				replayAddEvents(listener, (SpiTargetObject) val, visited);
 			}
-			assert val instanceof SpiTargetObject;
-			replayAddEvents(listener, (SpiTargetObject) val, visited);
-		}
-		if (!cbAttributes.isEmpty()) {
-			replayed(listener,
-				() -> listener.attributesChanged(object, List.of(), cbAttributes));
+			if (!cbAttributes.isEmpty()) {
+				replayed(listener,
+					() -> listener.attributesChanged(object, List.of(), cbAttributes));
+			}
 		}
 		Map<String, ? extends TargetObject> cbElements = object.getCallbackElements();
-		for (TargetObject elem : cbElements.values()) {
-			assert elem instanceof SpiTargetObject;
-			replayAddEvents(listener, (SpiTargetObject) elem, visited);
-		}
-		if (!cbElements.isEmpty()) {
-			replayed(listener,
-				() -> listener.elementsChanged(object, List.of(), cbElements));
+		if (cbElements != null) {
+			for (TargetObject elem : cbElements.values()) {
+				assert elem instanceof SpiTargetObject;
+				replayAddEvents(listener, (SpiTargetObject) elem, visited);
+			}
+			if (!cbElements.isEmpty()) {
+				replayed(listener,
+					() -> listener.elementsChanged(object, List.of(), cbElements));
+			}
 		}
 	}
 

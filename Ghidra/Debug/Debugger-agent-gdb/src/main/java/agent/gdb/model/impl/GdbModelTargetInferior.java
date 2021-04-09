@@ -31,8 +31,11 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 
-@TargetObjectSchemaInfo(name = "Inferior", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "Inferior",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetInferior
 		extends DefaultTargetObject<TargetObject, GdbModelTargetInferiorContainer>
@@ -138,7 +141,10 @@ public class GdbModelTargetInferior
 		return threads;
 	}
 
-	@TargetAttributeType(name = GdbModelTargetBreakpointLocationContainer.NAME, required = true, fixed = true)
+	@TargetAttributeType(
+		name = GdbModelTargetBreakpointLocationContainer.NAME,
+		required = true,
+		fixed = true)
 	public GdbModelTargetBreakpointLocationContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -253,14 +259,14 @@ public class GdbModelTargetInferior
 		this.exitCode = exitCode;
 		if (exitCode != null) {
 			changeAttributes(List.of(), Map.of( //
-				STATE_ATTRIBUTE_NAME, state = TargetExecutionState.TERMINATED, //
+				STATE_ATTRIBUTE_NAME, state = realState = TargetExecutionState.TERMINATED, //
 				EXIT_CODE_ATTRIBUTE_NAME, exitCode, //
 				DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 			), "Exited");
 		}
 		else {
 			changeAttributes(List.of(), Map.of( //
-				STATE_ATTRIBUTE_NAME, state = TargetExecutionState.TERMINATED, //
+				STATE_ATTRIBUTE_NAME, state = realState = TargetExecutionState.TERMINATED, //
 				DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 			), "Exited");
 		}

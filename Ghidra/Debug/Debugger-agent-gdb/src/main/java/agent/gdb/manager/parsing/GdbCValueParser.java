@@ -45,6 +45,10 @@ public class GdbCValueParser extends AbstractGdbParser {
 		default long expectLong() {
 			return ((GdbIntValue) this).val.longValueExact();
 		}
+
+		default BigInteger expectedBigInt() {
+			return ((GdbIntValue) this).val;
+		}
 	}
 
 	public interface GdbCompositeValue extends GdbCValue, Map<String, GdbCValue> {
@@ -110,6 +114,10 @@ public class GdbCValueParser extends AbstractGdbParser {
 
 		public default List<Long> expectLongs() {
 			return stream().map(v -> v.expectLong()).collect(Collectors.toList());
+		}
+
+		public default List<BigInteger> expectBigInts() {
+			return stream().map(v -> v.expectedBigInt()).collect(Collectors.toList());
 		}
 	}
 

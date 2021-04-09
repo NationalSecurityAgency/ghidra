@@ -126,14 +126,16 @@ public class GdbModelTargetProcessMemory
 
 	@Override
 	public CompletableFuture<byte[]> readMemory(Address address, int length) {
-		return doReadMemory(address, address.getOffset(), length);
+		return impl.gateFuture(doReadMemory(address, address.getOffset(), length));
 	}
 
 	@Override
 	public CompletableFuture<Void> writeMemory(Address address, byte[] data) {
-		return inferior.writeMemory(address.getOffset(), ByteBuffer.wrap(data)).thenAccept(__ -> {
+		CompletableFuture<Void> future =
+			inferior.writeMemory(address.getOffset(), ByteBuffer.wrap(data));
+		return impl.gateFuture(future.thenAccept(__ -> {
 			listeners.fire.memoryUpdated(this, address, data);
-		});
+		}));
 	}
 
 	protected void invalidateMemoryCaches() {
