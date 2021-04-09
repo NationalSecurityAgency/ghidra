@@ -112,6 +112,7 @@ public class TraceObjectManager {
 		putElementsHandler(TargetSectionContainer.class, this::elementsChangedSectionContainer);
 		putElementsHandler(TargetStack.class, this::elementsChangedStack);
 
+		putAttributesHandler(TargetBreakpointSpec.class, this::attributesChangedBreakpointSpec);
 		putAttributesHandler(TargetBreakpointLocation.class,
 			this::attributesChangedBreakpointLocation);
 		putAttributesHandler(TargetRegister.class, this::attributesChangedRegister);
@@ -463,6 +464,14 @@ public class TraceObjectManager {
 
 	public Set<TargetBreakpointLocation> getBreakpoints() {
 		return breakpoints;
+	}
+
+	public void attributesChangedBreakpointSpec(TargetObject bpt, Map<String, ?> added) {
+		if (added.containsKey(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME)) {
+			TargetBreakpointSpec spec = (TargetBreakpointSpec) bpt;
+			boolean enabled = (Boolean) added.get(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME);
+			recorder.breakpointRecorder.breakpointToggled(spec, enabled);
+		}
 	}
 
 	public void attributesChangedBreakpointLocation(TargetObject bpt, Map<String, ?> added) {

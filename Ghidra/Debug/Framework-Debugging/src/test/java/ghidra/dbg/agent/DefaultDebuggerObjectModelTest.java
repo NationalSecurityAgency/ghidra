@@ -303,7 +303,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 	public void testCreationAndModelListenerWithoutReplay() throws Throwable {
 		EventRecordingListener listener = new EventRecordingListener();
 		model.addModelListener(listener, false);
-		waitOn(model.clientExecutor);
+		waitOn(model.flushEvents());
 		waitOn(model.fetchModelRoot());
 		listener.record.clear();
 
@@ -313,7 +313,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		fakeA.setElements(List.of(fakeA1rb), "Init");
 		model.root.setAttributes(List.of(fakeA), Map.of(), "Init");
 
-		waitOn(model.clientExecutor);
+		waitOn(model.flushEvents());
 
 		assertEquals(List.of(
 			new ImmutablePair<>("created", fakeA),
@@ -335,7 +335,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		EventRecordingListener listener = new EventRecordingListener();
 		model.addModelListener(listener, true);
 
-		waitOn(model.clientExecutor);
+		waitOn(model.flushEvents());
 
 		assertEquals(List.of(
 			new ImmutablePair<>("created", model.root),

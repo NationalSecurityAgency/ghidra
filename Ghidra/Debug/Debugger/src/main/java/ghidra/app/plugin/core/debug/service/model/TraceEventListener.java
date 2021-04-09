@@ -32,7 +32,6 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.modules.TraceModule;
@@ -218,32 +217,6 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		recorder.memoryRecorder.tx.execute("Memory read error", () -> {
 			memoryManager.setState(snap, traceMin, TraceMemoryState.ERROR);
 			// TODO: Bookmark to describe error?
-		});
-	}
-
-	@AttributeCallback(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME)
-	public void breakpointToggled(TargetObject obj, boolean enabled) {
-		if (!valid) {
-			return;
-		}
-		TargetBreakpointSpec spec = (TargetBreakpointSpec) obj;
-		long snap = recorder.getSnap();
-		spec.getLocations().thenAccept(bpts -> {
-			recorder.breakpointRecorder.tx.execute("Breakpoint toggled", () -> {
-				for (TargetBreakpointLocation eb : bpts) {
-					TraceBreakpoint traceBpt = recorder.getTraceBreakpoint(eb);
-					if (traceBpt == null) {
-						String path = PathUtils.toString(eb.getPath());
-						Msg.warn(this, "Cannot find toggled trace breakpoint for " + path);
-						continue;
-					}
-					// Verify attributes match? Eh. If they don't, someone has fiddled with it.
-					traceBpt.splitWithEnabled(snap, enabled);
-				}
-			});
-		}).exceptionally(ex -> {
-			Msg.error(this, "Error recording toggled breakpoint spec: " + spec, ex);
-			return null;
 		});
 	}
 

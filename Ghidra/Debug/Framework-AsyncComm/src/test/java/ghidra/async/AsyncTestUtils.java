@@ -72,10 +72,6 @@ public interface AsyncTestUtils {
 		return waitOnNoValidate(validated);
 	}
 
-	default void waitOn(Executor executor) throws Throwable {
-		waitOn(CompletableFuture.supplyAsync(() -> null, executor));
-	}
-
 	default void retryVoid(TemperamentalRunnable runnable,
 			Collection<Class<? extends Throwable>> retriable) throws Throwable {
 		retry(() -> {

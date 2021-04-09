@@ -46,7 +46,6 @@ import ghidra.dbg.model.TestTargetModule;
 import ghidra.dbg.model.TestTargetTypedefDataType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.AddressOverflowException;
@@ -492,13 +491,6 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		performAction(modulesProvider.actionSelectAddresses);
 		assertEquals(tb.set(tb.range(0x55550000, 0x555500ff), tb.range(0x7f000000, 0x7f0003ff)),
 			new AddressSet(listing.getCurrentSelection()));
-	}
-
-	protected void waitForLock(DomainObject lockable) {
-		waitForPass(() -> { // This is so gross
-			assertTrue(lockable.lock(null));
-			lockable.unlock();
-		});
 	}
 
 	@Test

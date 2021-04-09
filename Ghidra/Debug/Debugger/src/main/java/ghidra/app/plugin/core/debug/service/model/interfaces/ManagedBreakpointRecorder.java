@@ -38,4 +38,6 @@ public interface ManagedBreakpointRecorder {
 
 	void breakpointLengthChanged(int length, Address traceAddr, String path);
 
+	void breakpointToggled(TargetBreakpointSpec spec, boolean enabled);
+
 }

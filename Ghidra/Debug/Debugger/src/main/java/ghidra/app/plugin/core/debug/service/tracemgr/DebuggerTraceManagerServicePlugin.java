@@ -899,6 +899,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Void> saveTrace(Trace trace) {
+		if (isDisposed()) {
+			Msg.error(this, "Cannot save trace after manager disposal! Data may have been lost.");
+			return AsyncUtils.NIL;
+		}
 		return saveTrace(tool, trace);
 	}
 

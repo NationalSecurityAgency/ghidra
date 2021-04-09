@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
@@ -61,9 +62,13 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		this.recorder = recorder;
 		this.trace = recorder.getTrace();
 		this.breakpointManager = trace.getBreakpointManager();
+		/**
+		 * NB. Must be single-threaded, since some events, e.g., toggled, modify existing
+		 * breakpoints.
+		 */
 		this.tx = new PermanentTransactionExecutor(trace,
 			"BreakpointRecorder:" + recorder.target.getJoinedPath("."),
-			Executors::newCachedThreadPool, 100);
+			Executors::newSingleThreadExecutor, 100);
 	}
 
 	@Override
@@ -187,6 +192,33 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		long snap = recorder.getSnap();
 		tx.execute("Breakpoint length changed", () -> {
 			doBreakpointLengthChanged(snap, length, traceAddr, path);
+		});
+	}
+
+	protected void doBreakpointToggled(long snap,
+			Collection<? extends TargetBreakpointLocation> bpts, boolean enabled) {
+		for (TargetBreakpointLocation bl : bpts) {
+			TraceBreakpoint traceBpt = recorder.getTraceBreakpoint(bl);
+			if (traceBpt == null) {
+				String path = PathUtils.toString(bl.getPath());
+				Msg.warn(this, "Cannot find toggled trace breakpoint for " + path);
+				continue;
+			}
+			// Verify attributes match? Eh. If they don't, someone has fiddled with it.
+			traceBpt.splitWithEnabled(snap, enabled);
+		}
+	}
+
+	@Override
+	public void breakpointToggled(TargetBreakpointSpec spec, boolean enabled) {
+		long snap = recorder.getSnap();
+		spec.getLocations().thenAccept(bpts -> {
+			recorder.breakpointRecorder.tx.execute("Breakpoint toggled", () -> {
+				doBreakpointToggled(snap, bpts, enabled);
+			});
+		}).exceptionally(ex -> {
+			Msg.error(this, "Error recording toggled breakpoint spec: " + spec, ex);
+			return null;
 		});
 	}
 

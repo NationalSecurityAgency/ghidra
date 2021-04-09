@@ -226,7 +226,7 @@
     <schema name="BreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
         <interface name="BreakpointSpecContainer" />
         <interface name="BreakpointLocationContainer" />
-        <element schema="BreakpointLocation" />
+        <element schema="Breakpoint" />
         <attribute name="_supported_breakpoint_kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
@@ -292,7 +292,8 @@
         <attribute name="_order" schema="INT" hidden="yes" />
         <attribute schema="ANY" />
     </schema>
-    <schema name="BreakpointLocation" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+    <schema name="Breakpoint" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+        <interface name="BreakpointSpec" />
         <interface name="BreakpointLocation" />
         <interface name="Deletable" />
         <element schema="OBJECT" />
@@ -301,7 +302,7 @@
         <attribute name="_kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
         <attribute name="_container" schema="BreakpointContainer" />
         <attribute name="_affects" schema="LIST_OBJECT" hidden="yes" />
-        <attribute name="_spec" schema="BreakpointLocation" />
+        <attribute name="_spec" schema="Breakpoint" />
         <attribute name="_length" schema="INT" hidden="yes" />
         <attribute name="_address" schema="ADDRESS" required="yes" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />

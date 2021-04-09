@@ -370,6 +370,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		protected LogicalBreakpointInternal removeFromLogicalBreakpoint(Address address,
 				TraceBreakpoint breakpoint, RemoveCollector c) {
 			Set<LogicalBreakpointInternal> set = breakpointsByAddress.get(address);
+			if (set == null) {
+				Msg.warn(this, "Breakpoint to remove is not present: " + breakpoint + ", trace=" +
+					breakpoint.getTrace());
+				return null;
+			}
 			for (LogicalBreakpointInternal lb : Set.copyOf(set)) {
 				if (lb.untrackBreakpoint(breakpoint)) {
 					if (lb.isEmpty()) {
@@ -384,7 +389,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 					return lb;
 				}
 			}
-			throw new AssertionError("Given breakpoint not present");
+			Msg.warn(this, "Breakpoint to remove is not present: " + breakpoint + ", trace=" +
+				breakpoint.getTrace());
+			return null;
 		}
 
 		protected boolean removeLogicalBreakpoint(Address address, LogicalBreakpoint lb) {
@@ -565,6 +572,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		protected void forgetTraceBreakpoint(TraceBreakpoint breakpoint, RemoveCollector c) {
 			LogicalBreakpointInternal lb =
 				removeFromLogicalBreakpoint(breakpoint.getMinAddress(), breakpoint, c);
+			if (lb == null) {
+				return; // Warnings already logged
+			}
 			assert lb.isEmpty() == (breakpointsByAddress
 					.get(breakpoint.getMinAddress()) == null ||
 				!breakpointsByAddress.get(breakpoint.getMinAddress()).contains(lb));

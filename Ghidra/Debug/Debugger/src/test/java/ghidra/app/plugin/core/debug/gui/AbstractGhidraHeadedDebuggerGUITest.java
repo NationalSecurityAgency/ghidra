@@ -157,6 +157,18 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	/**
+	 * This is so gross
+	 * 
+	 * @param lockable
+	 */
+	protected void waitForLock(DomainObject lockable) {
+		waitForPass(() -> {
+			assertTrue(lockable.lock(null));
+			lockable.unlock();
+		});
+	}
+
+	/**
 	 * Get an address in the trace's default space
 	 * 
 	 * @param trace the trace
