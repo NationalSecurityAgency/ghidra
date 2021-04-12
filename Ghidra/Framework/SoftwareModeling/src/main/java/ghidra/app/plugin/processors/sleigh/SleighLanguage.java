@@ -1327,10 +1327,8 @@ public class SleighLanguage implements Language {
 							currentManual = Application.findDataFileInAnyModule(
 								"manuals/" + matcher.group(1).trim());
 						}
-						if (currentManual == null) {
-							currentManual =
-								new ResourceFile(manualDirectory, matcher.group(1).trim());
-						}
+						currentManual =
+							new ResourceFile(manualDirectory, matcher.group(1).trim());
 						FileResolutionResult result =
 							FileUtilities.existsAndIsCaseDependent(currentManual);
 						missingDescription = matcher.group(2).trim();
