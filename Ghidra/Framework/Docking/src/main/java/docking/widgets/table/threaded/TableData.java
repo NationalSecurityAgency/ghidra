@@ -137,7 +137,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 * @param t the item
 	 * @return the index
 	 */
-	int indexOf(ROW_OBJECT t) {
+	public int indexOf(ROW_OBJECT t) {
 		if (!sortContext.isUnsorted()) {
 			Comparator<ROW_OBJECT> comparator = sortContext.getComparator();
 			return Collections.binarySearch(data, t, comparator);
@@ -153,7 +153,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 		return -1;
 	}
 
-	boolean remove(ROW_OBJECT t) {
+	public boolean remove(ROW_OBJECT t) {
 		if (source != null) {
 			source.remove(t);
 		}
@@ -186,7 +186,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 * 
 	 * @param value the row Object to insert
 	 */
-	void insert(ROW_OBJECT value) {
+	public void insert(ROW_OBJECT value) {
 
 		if (source != null) {
 			// always update the master data

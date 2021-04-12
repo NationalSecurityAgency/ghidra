@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.symtable;
 import java.util.*;
 
 import docking.widgets.table.*;
+import docking.widgets.table.threaded.TableAddRemoveStrategy;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.label.RenameLabelCmd;
@@ -60,6 +61,8 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 	private ReferenceManager refMgr;
 	private Symbol lastSymbol;
 	private SymbolFilter filter;
+	private TableAddRemoveStrategy<Symbol> deletedDbObjectAddRemoveStrategy =
+		new SymbolTableAddRemoveStrategy<>();
 
 	SymbolTableModel(SymbolProvider provider, PluginTool tool) {
 		super("Symbols", tool, null, null);
@@ -86,6 +89,11 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		descriptor.addHiddenColumn(new OriginalNameColumn());
 
 		return descriptor;
+	}
+
+	@Override
+	protected TableAddRemoveStrategy<Symbol> getAddRemoveStrategy() {
+		return deletedDbObjectAddRemoveStrategy;
 	}
 
 	void setFilter(SymbolFilter filter) {

@@ -84,8 +84,10 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void clearScriptCachedValues() {
-		Map<?, ?> map = (Map<?, ?>) TestUtils.getInstanceField("askMap", script);
-		map.clear();
+		if (script != null) {
+			Map<?, ?> map = (Map<?, ?>) TestUtils.getInstanceField("askMap", script);
+			map.clear();
+		}
 	}
 
 	@Test

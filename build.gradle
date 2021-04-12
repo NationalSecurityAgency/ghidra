@@ -51,9 +51,9 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
  *  Define the location of bin repo
  *********************************************************************************/
 project.ext.GHIDRA_GROUP = "Z Ghidra"
-project.ext.BIN_REPO = file("${projectDir}/../ghidra.bin").absolutePath
 project.ext.ROOT_PROJECT_DIR = projectDir.absolutePath
-project.ext.BIN_REPO_PATH = BIN_REPO // TODO make path names consistent
+project.ext.BIN_REPO = file("${projectDir}/../ghidra.bin").absolutePath
+project.ext.DEPS_DIR = file("${projectDir}/dependencies")
 
 /*********************************************************************************
  *  Prevent forked Java processes from stealing focus
@@ -67,13 +67,14 @@ allprojects {
 /*********************************************************************************
  *  Use flat directory-style repository if flatRepo directory is present.
  *********************************************************************************/
-if (file("flatRepo").isDirectory()) {
+def flatRepo = file("${DEPS_DIR}/flatRepo") 
+if (flatRepo.isDirectory()) {
 	allprojects {
 		repositories {
 			mavenLocal()
 			mavenCentral()
 			jcenter()
-			flatDir name: "flat", dirs:["$rootProject.projectDir/flatRepo"]
+			flatDir name: "flat", dirs:["$flatRepo"]
 		}
 	}
 }

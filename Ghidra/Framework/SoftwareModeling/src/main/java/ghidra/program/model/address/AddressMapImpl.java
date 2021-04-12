@@ -160,7 +160,7 @@ public class AddressMapImpl {
 	}
 
 	void checkAddressSpace(AddressSpace addrSpace) {
-		String name = addrSpace.getName().toUpperCase();
+		String name = addrSpace.getName();
 		AddressSpace existingSpace = spaceMap.get(name);
 		if (existingSpace == null) {
 			spaceMap.put(name, addrSpace);
@@ -248,10 +248,12 @@ public class AddressMapImpl {
 
 	private void addKeyRanges(List<KeyRange> keyRangeList, Address start, Address end) {
 		int index = Arrays.binarySearch(sortedBaseStartAddrs, start);
-		if (index < 0)
+		if (index < 0) {
 			index = -index - 2;
-		if (index < 0)
+		}
+		if (index < 0) {
 			index++;
+		}
 		while (index < sortedBaseStartAddrs.length &&
 			end.compareTo(sortedBaseStartAddrs[index]) >= 0) {
 			Address addr1 = max(start, sortedBaseStartAddrs[index]);
@@ -312,7 +314,7 @@ public class AddressMapImpl {
 		}
 
 		for (AddressSpace space : remapSpaces.values()) {
-			spaceMap.put(space.getName().toUpperCase(), space);
+			spaceMap.put(space.getName(), space);
 		}
 
 		for (int i = 0; i < baseAddrs.length; i++) {

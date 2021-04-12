@@ -80,12 +80,11 @@ task pyDevUnpack(type:Copy) {
 		!pyDevDestDir.exists()
 	}
 	
-	File localFile = file("build/PyDev 6.3.1.zip")
-	File binFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
+	File depsFile = file("${DEPS_DIR}/GhidraDev/PyDev 6.3.1.zip")
+	File binRepoFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
 
-	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
-	// repo.
-	def pyDevZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
+	def pyDevZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
 
 	from pyDevZipTree
 	exclude "**/.project", "**/.pydevproject"
@@ -104,12 +103,11 @@ task cdtUnpack(type:Copy) {
 		!cdtDestDir.exists()
 	}
 	
-	File localFile = file("build/cdt-8.6.0.zip")
-	File binFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
+	File depsFile = file("${DEPS_DIR}/GhidraDev/cdt-8.6.0.zip")
+	File binRepoFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
 
-	// First check if the file was downloaded and dropped in locally.  If not, check in the bin
-	// repo.
-	def cdtZipTree = localFile.exists() ? zipTree(localFile) : zipTree(binFile)
+	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
+	def cdtZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
 
 	from cdtZipTree
 

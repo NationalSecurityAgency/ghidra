@@ -3,7 +3,7 @@ ghidra.repos.config
 
 # Misc files produced while executing application
 repositories/
-flatRepo/
+dependencies/
 Ghidra/.ghidraSvrKeys
 wrapper.log*
 

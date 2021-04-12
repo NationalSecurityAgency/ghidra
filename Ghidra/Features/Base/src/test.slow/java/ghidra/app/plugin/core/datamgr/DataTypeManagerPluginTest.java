@@ -50,7 +50,7 @@ import ghidra.app.plugin.core.datamgr.actions.CreateTypeDefDialog;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.app.plugin.core.function.EditFunctionSignatureDialog;
+import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
@@ -695,11 +695,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			DataType dt = iter.next();
 			listTwo.add(dt);
 		}
-		for (int i = 0; i < listOne.size(); i++) {
-			DataType dt = listOne.get(i);
+		for (DataType dt : listOne) {
 			boolean found = false;
-			for (int j = 0; j < listTwo.size(); j++) {
-				DataType dt2 = listTwo.get(j);
+			for (DataType dt2 : listTwo) {
 				if (dt.isEquivalent(dt2)) {
 					found = true;
 					break;
@@ -807,8 +805,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertTrue(action.isEnabledForContext(treeContext));
 		performAction(action, treeContext, false);
 
-		EditFunctionSignatureDialog dialog =
-			waitForDialogComponent(EditFunctionSignatureDialog.class);
+		AbstractEditFunctionSignatureDialog dialog =
+			waitForDialogComponent(AbstractEditFunctionSignatureDialog.class);
 
 		JTextField textField = (JTextField) getInstanceField("signatureField", dialog);
 		setText(textField, newSignature);

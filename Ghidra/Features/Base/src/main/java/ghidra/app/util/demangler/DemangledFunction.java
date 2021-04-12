@@ -349,14 +349,26 @@ public class DemangledFunction extends DemangledObject {
 
 		Function function = createFunction(program, address, options.doDisassembly(), monitor);
 		if (function == null) {
-			// no function whose signature we need to update
-			// NOTE: this does not make much sense
-			// renameExistingSymbol(program, address, symbolTable);
-			// maybeCreateUndefined(program, address);
+			// No function whose signature we need to update
 			return false;
 		}
 
-		//if existing function signature is user defined - add demangled label only
+		if (function.isThunk()) {
+			// If thunked function has same mangled name we can discard our
+			// symbol if no other symbols at this address (i.e., rely entirely on
+			// thunked function).
+			// NOTE: mangled name on external may be lost once it is demangled.
+			if (shouldThunkBePreserved(function)) {
+				// Preserve thunk and remove mangled symbol.  Allow to proceed normally by returning true.
+				function.getSymbol().setName(null, SourceType.DEFAULT);
+				return true;
+			}
+
+			// Break thunk relationship and continue applying demangle function below
+			function.setThunkedFunction(null);
+		}
+
+		// If existing function signature is user defined - add demangled label only
 		boolean makePrimary = (function.getSignatureSource() != SourceType.USER_DEFINED);
 
 		Symbol demangledSymbol =
@@ -393,6 +405,65 @@ public class DemangledFunction extends DemangledObject {
 		cmd.applyTo(program);
 
 		return true;
+	}
+
+	/**
+	 * Determine if existing thunk relationship should be preserved and mangled symbol 
+	 * discarded.  This is the case when the thunk function mangled name matches
+	 * the thunked function since we want to avoid duplicate symbol names.
+	 * @param thunkFunction thunk function with a mangled symbol which is currently 
+	 * being demangled.
+	 * @return true if thunk should be preserved and mangled symbol discarded, otherwise
+	 * false if thunk relationship should be eliminated and demangled function information
+	 * should be applied as normal.
+	 */
+	private boolean shouldThunkBePreserved(Function thunkFunction) {
+		Program program = thunkFunction.getProgram();
+		SymbolTable symbolTable = program.getSymbolTable();
+		if (thunkFunction.getSymbol().isExternalEntryPoint()) {
+			return false; // entry point should retain its own symbol
+		}
+		Symbol[] symbols = symbolTable.getSymbols(thunkFunction.getEntryPoint());
+		if (symbols.length > 1) {
+			return false; // too many symbols present to preserve thunk
+		}
+		// NOTE: order of demangling unknown - thunked function may, or may not, have
+		// already been demangled
+		Function thunkedFunction = thunkFunction.getThunkedFunction(true);
+		if (mangled.equals(thunkedFunction.getName())) {
+			// thunked function has matching mangled name
+			return true;
+		}
+		if (thunkedFunction.isExternal()) {
+			if (thunkedFunction.getParentNamespace() instanceof Library) {
+				// Thunked function does not have mangled name, if it did it would have
+				// matched name check above or now reside in a different namespace
+				return false;
+			}
+			// assume external contained with specific namespace
+			ExternalLocation externalLocation =
+				program.getExternalManager().getExternalLocation(thunkedFunction.getSymbol());
+			String originalImportedName = externalLocation.getOriginalImportedName();
+			if (originalImportedName == null) {
+				// assume external manually manipulated without use of mangled name
+				return false;
+			}
+			if (mangled.equals(externalLocation.getOriginalImportedName())) {
+				// matching mangled name also resides at thunked function location
+				return true;
+			}
+
+			// TODO: carefully compare signature in absense of matching mangled name
+			return false;
+		}
+
+		if (symbolTable.getSymbol(mangled, thunkedFunction.getEntryPoint(),
+			program.getGlobalNamespace()) != null) {
+			// matching mangled name also resides at thunked function location
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean hasVarArgs() {
