@@ -110,8 +110,8 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		Language lang = trace.getBaseLanguage();
 		Register r0 = lang.getRegister("r0");
 		Register r1 = lang.getRegister("r1");
-		//TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
-		TraceThread thread = recorder.getTraceThread(mb.testThread1);
+		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
+		//TraceThread thread = recorder.getTraceThread(mb.testThread1);
 		TraceMemoryRegisterSpace rs = createRegSpace(thread);
 		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
 			Register::isBaseRegister);
