@@ -61,7 +61,7 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 		while (cur != null) {
 			if (cur instanceof DbgModelSelectableObject) {
 				DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
-				System.err.println("requestFocus " + obj);
+				//System.err.println("requestFocus " + obj);
 				setFocus(sel);
 				return AsyncUtils.NIL;
 			}

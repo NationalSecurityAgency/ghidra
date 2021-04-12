@@ -52,7 +52,7 @@ public interface DbgModelTargetActiveScope extends DbgModelTargetObject, TargetA
 		while (cur != null) {
 			if (cur instanceof DbgModelSelectableObject) {
 				DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
-				System.err.println("requestActivation " + obj);
+				//System.err.println("requestActivation " + obj);
 				return sel.setActive();
 			}
 			if (cur instanceof DbgModelTargetObject) {

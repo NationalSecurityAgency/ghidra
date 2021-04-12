@@ -117,6 +117,7 @@ public class TraceObjectManager {
 			this::attributesChangedBreakpointLocation);
 		putAttributesHandler(TargetRegister.class, this::attributesChangedRegister);
 		putAttributesHandler(TargetStackFrame.class, this::attributesChangedStackFrame);
+		putAttributesHandler(TargetThread.class, this::attributesChangedThread);
 
 		putRemHandler(TargetProcess.class, this::removeProcess);
 		putRemHandler(TargetThread.class, this::removeThread);
@@ -511,6 +512,19 @@ public class TraceObjectManager {
 			ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(frame);
 			if (rec != null) {
 				rec.getStackRecorder().offerStackFrame((TargetStackFrame) frame);
+			}
+		}
+	}
+
+	public void attributesChangedThread(TargetObject thread, Map<String, ?> added) {
+		if (added.containsKey(TargetObject.DISPLAY_ATTRIBUTE_NAME)) {
+			ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(thread);
+			if (rec != null) {
+				String name = (String) added.get(TargetObject.DISPLAY_ATTRIBUTE_NAME);
+				try (UndoableTransaction tid =
+					UndoableTransaction.start(rec.getTrace(), "Renamed thread", true)) {
+					rec.getTraceThread().setName(name);
+				}
 			}
 		}
 	}
