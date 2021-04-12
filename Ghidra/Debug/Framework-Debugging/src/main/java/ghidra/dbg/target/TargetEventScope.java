@@ -27,8 +27,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 @DebuggerTargetObjectIface("EventScope")
 public interface TargetEventScope extends TargetObject {
 
-	String EVENT_PROCESS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "event_process";
-	String EVENT_THREAD_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "event_thread";
+	String EVENT_OBJECT_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "event_thread";
 
 	public enum TargetEventType {
 		/**
@@ -117,32 +116,12 @@ public interface TargetEventScope extends TargetObject {
 	}
 
 	/**
-	 * If applicable, get the process producing the last reported event
-	 * 
-	 * <p>
-	 * TODO: This is currently the hexadecimal PID. It should really be a ref to the process object.
-	 * 
-	 * <p>
-	 * TODO: Since the event thread will be a successor of the event process, this may not be
-	 * needed, but perhaps keep it for convenience.
-	 * 
-	 * @return the process or reference
-	 */
-	@TargetAttributeType(name = EVENT_PROCESS_ATTRIBUTE_NAME, hidden = true)
-	public default /*TODO: TargetProcess*/ String getEventProcess() {
-		return getTypedAttributeNowByName(EVENT_PROCESS_ATTRIBUTE_NAME, String.class, null);
-	}
-
-	/**
 	 * If applicable, get the thread producing the last reported event
-	 * 
-	 * <p>
-	 * TODO: This is currently the hexadecimal TID. It should really be a ref to the thread object.
 	 * 
 	 * @return the thread or reference
 	 */
-	@TargetAttributeType(name = EVENT_THREAD_ATTRIBUTE_NAME, hidden = true)
-	public default /*TODO: TargetThread*/ String getEventThread() {
-		return getTypedAttributeNowByName(EVENT_THREAD_ATTRIBUTE_NAME, String.class, null);
+	@TargetAttributeType(name = EVENT_OBJECT_ATTRIBUTE_NAME, hidden = true)
+	public default TargetThread getEventThread() {
+		return getTypedAttributeNowByName(EVENT_OBJECT_ATTRIBUTE_NAME, TargetThread.class, null);
 	}
 }

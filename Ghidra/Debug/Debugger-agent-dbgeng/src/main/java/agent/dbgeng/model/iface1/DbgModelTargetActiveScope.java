@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg.jdi.model.iface1;
+package agent.dbgeng.model.iface1;
 
 import java.util.concurrent.CompletableFuture;
 
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
-import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
-import ghidra.dbg.target.TargetFocusScope;
+import ghidra.dbg.target.TargetActiveScope;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 
@@ -31,34 +31,38 @@ import ghidra.dbg.util.PathUtils;
  * 
  * @param <T> type for this
  */
-public interface JdiModelTargetFocusScope extends JdiModelTargetObject, TargetFocusScope {
+public interface DbgModelTargetActiveScope extends DbgModelTargetObject, TargetActiveScope {
 
-	@Override
-	public JdiModelSelectableObject getFocus();
-
-	// NB: setFocus changes attributes - propagates up to client
-	public boolean setFocus(JdiModelSelectableObject sel);
-
-	// NB: requestFocus request change in active object - propagates down to manager
+	// NB: requesActivation request change in active object - propagates down to manager
 	//  (but, of course, may then cause change in state)
 	@Override
-	public default CompletableFuture<Void> requestFocus(TargetObject obj) {
-		getModel().assertMine(TargetObject.class, obj);
-		if (obj.equals(getFocus())) {
-			return CompletableFuture.completedFuture(null);
+	public default CompletableFuture<Void> requestActivation(TargetObject obj) {
+		return getModel().gateFuture(getManager().requestActivation(this, obj));
+	}
+
+	public default CompletableFuture<Void> doRequestActivation(TargetObject obj) {
+		if (getManager().isWaiting()) {
+			return AsyncUtils.NIL;
 		}
+		getModel().assertMine(TargetObject.class, obj);
 		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
 		}
 		TargetObject cur = obj;
 		while (cur != null) {
-			if (cur instanceof JdiModelSelectableObject) {
-				JdiModelSelectableObject sel = (JdiModelSelectableObject) cur;
-				setFocus(sel);
+			if (cur instanceof DbgModelSelectableObject) {
+				DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
+				System.err.println("requestActivation " + obj);
 				return sel.setActive();
 			}
-			cur = cur.getParent();
+			if (cur instanceof DbgModelTargetObject) {
+				DbgModelTargetObject def = (DbgModelTargetObject) cur;
+				cur = def.getParent();
+				continue;
+			}
+			throw new AssertionError();
 		}
 		return AsyncUtils.NIL;
 	}
+
 }

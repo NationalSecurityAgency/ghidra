@@ -22,6 +22,7 @@ public interface DbgModelTargetRoot extends //
 		///DbgModelTargetObject,
 		DbgModelTargetAccessConditioned, //
 		DbgModelTargetAttacher, //
+		DbgModelTargetActiveScope, //
 		DbgModelTargetEventScope, //
 		DbgModelTargetLauncher, //
 		DbgModelTargetFocusScope, //
@@ -29,5 +30,6 @@ public interface DbgModelTargetRoot extends //
 
 	void setDefaultConnector(DbgModelTargetConnector defaultConnector);
 
+	// getActive & requestActivation implemented by DbgModelTargetObject & DbgModelTargetActiveScope 
 	// getFocus & requestFocus implemented by DbgModelTargetObject & DbgModelTargetFocusScope 
 }

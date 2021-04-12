@@ -85,6 +85,10 @@ public class ObjectTree implements ObjectPane {
 					TargetObject targetObject = node.getTargetObject();
 					if (targetObject != null && !(targetObject instanceof DummyTargetObject) &&
 						e.getEventOrigin().equals(EventOrigin.USER_GENERATED)) {
+						DebugModelConventions.requestActivation(targetObject).exceptionally(ex -> {
+							Msg.error(this, "Could not activate " + targetObject, ex);
+							return null;
+						});
 						DebugModelConventions.requestFocus(targetObject).exceptionally(ex -> {
 							Msg.error(this, "Could not focus " + targetObject, ex);
 							return null;

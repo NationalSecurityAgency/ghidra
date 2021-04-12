@@ -126,7 +126,7 @@ public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl implement
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		///return frame.select();
 		return CompletableFuture.completedFuture(null);
 	}

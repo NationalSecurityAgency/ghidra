@@ -481,7 +481,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void modelActivated(DebuggerObjectModel model) {
 		//TODO: what do we want here - change of focus, selection?
 		if (model != null && model.equals(currentModel)) {
-			this.requestFocus();
+			this.requestFocus(); // COMPONENT
 			this.toFront();
 		}
 	}

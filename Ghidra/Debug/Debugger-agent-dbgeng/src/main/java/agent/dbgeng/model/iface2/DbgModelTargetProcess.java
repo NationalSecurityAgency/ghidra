@@ -69,13 +69,13 @@ public interface DbgModelTargetProcess extends //
 	}
 
 	@Override
-	public default CompletableFuture<Void> select() {
+	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
 		DbgProcess process = getProcess();
 		if (process == null) {
 			process = manager.getEventProcess();
 		}
-		return manager.selectProcess(process);
+		return manager.setActiveProcess(process);
 	}
 
 }

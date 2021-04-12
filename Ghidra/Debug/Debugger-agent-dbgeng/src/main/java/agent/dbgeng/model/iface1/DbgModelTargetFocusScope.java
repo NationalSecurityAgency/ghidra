@@ -39,7 +39,7 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 	// NB: setFocus changes attributes - propagates up to client
 	public boolean setFocus(DbgModelSelectableObject sel);
 
-	// NB: requestFocus request change in active object - propagates down to manager
+	// NB: requestFocus request change in focused object - propagates down to manager
 	//  (but, of course, may then cause change in state)
 	@Override
 	public default CompletableFuture<Void> requestFocus(TargetObject obj) {
@@ -61,8 +61,9 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 		while (cur != null) {
 			if (cur instanceof DbgModelSelectableObject) {
 				DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
+				System.err.println("requestFocus " + obj);
 				setFocus(sel);
-				return sel.select();
+				return AsyncUtils.NIL;
 			}
 			if (cur instanceof DbgModelTargetObject) {
 				DbgModelTargetObject def = (DbgModelTargetObject) cur;

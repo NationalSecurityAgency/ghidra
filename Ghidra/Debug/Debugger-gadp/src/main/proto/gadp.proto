@@ -435,6 +435,15 @@ message CacheInvalidateEvent {
 message CacheInvalidateReply {
 }
 
+message ActivationRequest {
+	Path path = 1;
+	Path active = 2;
+}
+
+message ActivationReply {
+}
+
+
 message FocusRequest {
 	Path path = 1;
 	Path focus = 2;
@@ -578,5 +587,9 @@ message RootMessage {
 		
 		ResyncRequest resync_request = 125;
 		ResyncReply resync_reply = 225;
+		
+		ActivationRequest activation_request = 126;
+		ActivationReply activation_reply = 226;
+
 	}
 }

@@ -56,7 +56,7 @@ public class DbgModelTargetProcessAttachConnectorImpl extends DbgModelTargetObje
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		connectors.setDefaultConnector(this);
 		return CompletableFuture.completedFuture(null);
 	}

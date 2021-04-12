@@ -19,19 +19,17 @@ import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
-public class DbgProcessSelectCommand extends AbstractDbgCommand<Void> {
+public class DbgSetActiveProcessCommand extends AbstractDbgCommand<Void> {
 
 	private DbgProcess process;
 
 	/**
-	 * Select the given thread and frame level
-	 * 
-	 * To simply select a thread, you should use frame 0 as the default.
+	 * Set the active process
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param process the desired process
 	 */
-	public DbgProcessSelectCommand(DbgManagerImpl manager, DbgProcess process) {
+	public DbgSetActiveProcessCommand(DbgManagerImpl manager, DbgProcess process) {
 		super(manager);
 		this.process = process;
 	}

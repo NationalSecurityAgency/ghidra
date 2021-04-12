@@ -41,6 +41,7 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.evt.*;
+import agent.dbgeng.model.iface1.DbgModelTargetActiveScope;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import ghidra.async.*;
 import ghidra.comm.util.BitmaskSet;
@@ -1402,23 +1403,28 @@ public class DbgManagerImpl implements DbgManager {
 		return (DbgSessionImpl) eventSession;
 	}
 
-	public CompletableFuture<Void> selectThread(DbgThread thread) {
+	public CompletableFuture<Void> setActiveThread(DbgThread thread) {
 		currentThread = thread;
-		return execute(new DbgThreadSelectCommand(this, thread, null));
+		return execute(new DbgSetActiveThreadCommand(this, thread, null));
 	}
 
-	public CompletableFuture<Void> selectProcess(DbgProcess process) {
+	public CompletableFuture<Void> setActiveProcess(DbgProcess process) {
 		currentProcess = process;
-		return execute(new DbgProcessSelectCommand(this, process));
+		return execute(new DbgSetActiveProcessCommand(this, process));
 	}
 
-	public CompletableFuture<Void> selectSession(DbgSession session) {
+	public CompletableFuture<Void> setActiveSession(DbgSession session) {
 		currentSession = session;
-		return execute(new DbgSessionSelectCommand(this, session));
+		return execute(new DbgSetActiveSessionCommand(this, session));
 	}
 
 	public CompletableFuture<Void> requestFocus(DbgModelTargetFocusScope scope, TargetObject obj) {
 		return execute(new DbgRequestFocusCommand(this, scope, obj));
+	}
+
+	public CompletableFuture<Void> requestActivation(DbgModelTargetActiveScope activator,
+			TargetObject obj) {
+		return execute(new DbgRequestActivationCommand(this, activator, obj));
 	}
 
 	@Override

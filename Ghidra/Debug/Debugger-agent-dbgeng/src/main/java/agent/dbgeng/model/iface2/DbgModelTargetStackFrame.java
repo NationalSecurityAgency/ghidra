@@ -48,10 +48,10 @@ public interface DbgModelTargetStackFrame extends //
 	public static final String FROM_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "from"; // TODO
 
 	@Override
-	public default CompletableFuture<Void> select() {
+	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
 		DbgThreadImpl thread = manager.getCurrentThread();
-		return manager.selectThread(thread);
+		return manager.setActiveThread(thread);
 	}
 
 	@Override

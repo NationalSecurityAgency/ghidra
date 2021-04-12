@@ -17,6 +17,10 @@ package docking.widgets.timeline;
 
 import com.google.common.collect.Range;
 
-public interface TimelineViewRangeListener {
-	void viewRangeChanged(Range<Double> viewRange);
+public interface TimelineListener {
+	default void viewRangeChanged(Range<Double> viewRange) {
+	}
+
+	default void itemActivated(int index) {
+	}
 }

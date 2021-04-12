@@ -216,8 +216,8 @@ public class GdbModelTargetThread
 
 	@Override
 	@Internal
-	public CompletableFuture<Void> select() {
-		return impl.gateFuture(thread.select());
+	public CompletableFuture<Void> setActive() {
+		return impl.gateFuture(thread.setActive());
 	}
 
 	public GdbModelTargetBreakpointLocation breakpointHit(GdbBreakpointHitReason reason) {

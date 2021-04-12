@@ -370,7 +370,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 
 	@Override
 	@Internal
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		return CompletableFuture.completedFuture(null);
 	}
 

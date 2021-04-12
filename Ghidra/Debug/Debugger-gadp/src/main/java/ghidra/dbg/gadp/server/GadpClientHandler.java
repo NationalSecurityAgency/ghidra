@@ -417,6 +417,8 @@ public class GadpClientHandler
 				return processResume(msg.getSequence(), msg.getResumeRequest());
 			case STEP_REQUEST:
 				return processStep(msg.getSequence(), msg.getStepRequest());
+			case ACTIVATION_REQUEST:
+				return processActivation(msg.getSequence(), msg.getActivationRequest());
 			default:
 				throw new GadpErrorException(Gadp.ErrorCode.EC_BAD_REQUEST,
 					"Unrecognized request: " + msg.getMsgCase());
@@ -466,8 +468,8 @@ public class GadpClientHandler
 		return ref;
 	}
 
-	protected <T extends TargetObject> CompletableFuture<Integer> sendDelta(
-			List<String> parentPath, Delta<TargetObject, T> deltaE, Delta<?, ?> deltaA) {
+	protected <T extends TargetObject> CompletableFuture<Integer> sendDelta(List<String> parentPath,
+			Delta<TargetObject, T> deltaE, Delta<?, ?> deltaA) {
 		return channel.write(Gadp.RootMessage.newBuilder()
 				.setEventNotification(Gadp.EventNotification.newBuilder()
 						.setPath(GadpValueUtils.makePath(parentPath))
@@ -627,6 +629,19 @@ public class GadpClientHandler
 		});
 	}
 
+	protected CompletableFuture<?> processActivation(int seqno, Gadp.ActivationRequest req) {
+		TargetActiveScope scope = getObjectChecked(req.getPath()).as(TargetActiveScope.class);
+		TargetObject active = getObjectChecked(req.getActive());
+		return scope.requestActivation(active).thenCompose(__ -> {
+			return model.flushEvents();
+		}).thenCompose(__ -> {
+			return channel.write(Gadp.RootMessage.newBuilder()
+					.setSequence(seqno)
+					.setActivationReply(Gadp.ActivationReply.getDefaultInstance())
+					.build());
+		});
+	}
+
 	protected CompletableFuture<?> processFocus(int seqno, Gadp.FocusRequest req) {
 		TargetFocusScope scope = getObjectChecked(req.getPath()).as(TargetFocusScope.class);
 		TargetObject focus = getObjectChecked(req.getFocus());
@@ -705,8 +720,7 @@ public class GadpClientHandler
 			return channel.write(Gadp.RootMessage.newBuilder()
 					.setSequence(seqno)
 					.setMemoryReadReply(
-						Gadp.MemoryReadReply.newBuilder()
-								.setContent(ByteString.copyFrom(data)))
+						Gadp.MemoryReadReply.newBuilder().setContent(ByteString.copyFrom(data)))
 					.build());
 		});
 	}

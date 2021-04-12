@@ -957,7 +957,7 @@ public class GdbManagerImpl implements GdbManager {
 			event(() -> listenersEvent.fire.inferiorSelected(cur, evt.getCause()),
 				"groupRemoved-sel");
 			// Also cause GDB to generate thread selection events, if applicable
-			selectInferior(cur);
+			setActiveInferior(cur);
 		}
 	}
 
@@ -1524,7 +1524,7 @@ public class GdbManagerImpl implements GdbManager {
 	 * @param inferior the inferior to select
 	 * @return a future that completes when GDB has executed the command
 	 */
-	CompletableFuture<Void> selectInferior(GdbInferior inferior) {
+	CompletableFuture<Void> setActiveInferior(GdbInferior inferior) {
 		return execute(new GdbInferiorSelectCommand(this, inferior.getId()));
 	}
 

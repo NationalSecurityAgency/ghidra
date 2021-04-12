@@ -65,6 +65,7 @@ public enum GadpRegistry {
 		registerInterface(TargetEnvironment.class, GadpClientTargetEnvironment.class);
 		registerInterface(TargetEventScope.class, GadpClientTargetEventScope.class);
 		registerInterface(TargetExecutionStateful.class, GadpClientTargetExecutionStateful.class);
+		registerInterface(TargetActiveScope.class, GadpClientTargetActiveScope.class);
 		registerInterface(TargetFocusScope.class, GadpClientTargetFocusScope.class);
 		registerInterface(TargetInterpreter.class, GadpClientTargetInterpreter.class);
 		registerInterface(TargetInterruptible.class, GadpClientTargetInterruptible.class);

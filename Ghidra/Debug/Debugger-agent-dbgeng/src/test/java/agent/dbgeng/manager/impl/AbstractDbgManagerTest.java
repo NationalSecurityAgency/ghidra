@@ -406,7 +406,7 @@ public abstract class AbstractDbgManagerTest extends AbstractGhidraHeadlessInteg
 			}).then(seq -> {
 				mgr.waitForPrompt().handle(seq::next);
 			}).then(seq -> {
-				thread.get().select().handle(seq::next);
+				thread.get().setActive().handle(seq::next);
 			}).finish());
 		}
 	}

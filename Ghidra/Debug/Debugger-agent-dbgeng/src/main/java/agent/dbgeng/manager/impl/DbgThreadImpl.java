@@ -130,8 +130,8 @@ public class DbgThreadImpl implements DbgThread {
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
-		return manager.selectThread(this);
+	public CompletableFuture<Void> setActive() {
+		return manager.setActiveThread(this);
 	}
 
 	@Override
@@ -207,35 +207,35 @@ public class DbgThreadImpl implements DbgThread {
 
 	@Override
 	public CompletableFuture<Void> cont() {
-		return select().thenCompose(__ -> {
+		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgContinueCommand(manager));
 		});
 	}
 
 	@Override
 	public CompletableFuture<Void> step(ExecSuffix suffix) {
-		return select().thenCompose(__ -> {
+		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgStepCommand(manager, id, suffix));
 		});
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
-		return select().thenCompose(__ -> {
+		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgStepCommand(manager, id, args));
 		});
 	}
 
 	@Override
 	public CompletableFuture<Void> kill() {
-		return select().thenCompose(__ -> {
+		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgKillCommand(manager));
 		});
 	}
 
 	@Override
 	public CompletableFuture<Void> detach() {
-		return select().thenCompose(__ -> {
+		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgDetachCommand(manager, process));
 		});
 	}

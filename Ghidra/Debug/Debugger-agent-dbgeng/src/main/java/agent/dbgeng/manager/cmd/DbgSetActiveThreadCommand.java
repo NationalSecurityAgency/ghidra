@@ -19,20 +19,18 @@ import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
-public class DbgThreadSelectCommand extends AbstractDbgCommand<Void> {
+public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 
 	private DbgThread thread;
 
 	/**
-	 * Select the given thread and frame level
-	 * 
-	 * To simply select a thread, you should use frame 0 as the default.
+	 * Set the active thread
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param thread the desired thread
 	 * @param frameId the desired frame level
 	 */
-	public DbgThreadSelectCommand(DbgManagerImpl manager, DbgThread thread, Integer frameId) {
+	public DbgSetActiveThreadCommand(DbgManagerImpl manager, DbgThread thread, Integer frameId) {
 		super(manager);
 		this.thread = thread;
 	}

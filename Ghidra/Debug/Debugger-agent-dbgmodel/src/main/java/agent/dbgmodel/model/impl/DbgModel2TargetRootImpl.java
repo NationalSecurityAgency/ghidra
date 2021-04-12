@@ -114,7 +114,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			), "Focus changed");
 			intrinsics.put(TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus);
 			DbgModelTargetSession session = focus.getParentSession();
-			session.select();
+			session.setActive();
 		}
 		return doFire;
 	}
@@ -314,15 +314,10 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (targetThread == null) {
 				return;
 			}
-			DbgProcess process = thread.getProcess();
 			changeAttributes(List.of(), List.of(), Map.of( //
-				TargetEventScope.EVENT_PROCESS_ATTRIBUTE_NAME, Long.toHexString(process.getPid()), //
-				TargetEventScope.EVENT_THREAD_ATTRIBUTE_NAME, Long.toHexString(thread.getTid()) //
+				TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread //
 			), reason.desc());
-			intrinsics.put(TargetEventScope.EVENT_PROCESS_ATTRIBUTE_NAME,
-				Long.toHexString(process.getPid()));
-			intrinsics.put(TargetEventScope.EVENT_THREAD_ATTRIBUTE_NAME,
-				Long.toHexString(thread.getTid()));
+			intrinsics.put(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread);
 			TargetEventType eventType = getEventType(state, cause, reason);
 			getListeners().fire.event(getProxy(), targetThread, eventType,
 				"Thread " + thread.getId() + " state changed", List.of(targetThread));

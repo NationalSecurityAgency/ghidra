@@ -19,18 +19,16 @@ import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
-public class DbgSessionSelectCommand extends AbstractDbgCommand<Void> {
+public class DbgSetActiveSessionCommand extends AbstractDbgCommand<Void> {
 	private DbgSession session;
 
 	/**
-	 * Select the given thread and frame level
-	 * 
-	 * To simply select a thread, you should use frame 0 as the default.
+	 * Set the active session
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param process the desired process
 	 */
-	public DbgSessionSelectCommand(DbgManagerImpl manager, DbgSession session) {
+	public DbgSetActiveSessionCommand(DbgManagerImpl manager, DbgSession session) {
 		super(manager);
 		this.session = session;
 	}

@@ -154,7 +154,7 @@ public interface GdbInferior extends GdbMemoryOperations {
 	 * 
 	 * @return a future that completes when GDB has executed the command
 	 */
-	CompletableFuture<Void> select();
+	CompletableFuture<Void> setActive();
 
 	/**
 	 * Specify a binary image for execution and debug symbols

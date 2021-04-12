@@ -299,7 +299,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 
 	@Override
 	@Internal
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		return CompletableFuture.completedFuture(null);
 	}
 

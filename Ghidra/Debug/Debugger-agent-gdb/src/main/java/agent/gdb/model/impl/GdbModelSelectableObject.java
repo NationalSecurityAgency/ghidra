@@ -20,5 +20,5 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.target.TargetObject;
 
 interface GdbModelSelectableObject extends TargetObject {
-	CompletableFuture<Void> select();
+	CompletableFuture<Void> setActive();
 }

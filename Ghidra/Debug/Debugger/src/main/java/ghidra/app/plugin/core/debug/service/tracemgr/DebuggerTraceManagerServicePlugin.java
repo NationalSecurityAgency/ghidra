@@ -78,8 +78,7 @@ import ghidra.util.task.*;
 		ModelObjectFocusedPluginEvent.class,
 		TraceRecorderAdvancedPluginEvent.class,
 	},
-	servicesRequired = {
-	},
+	servicesRequired = {},
 	servicesProvided = {
 		DebuggerTraceManagerService.class,
 	})

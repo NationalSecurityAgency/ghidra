@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
-import agent.dbgeng.model.iface2.DbgModelTargetConnector;
-import agent.dbgeng.model.iface2.DbgModelTargetRoot;
+import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
@@ -119,10 +118,10 @@ public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 	@Override
 	public void threadStateChanged(DbgThread thread, DbgState state, DbgCause cause,
 			DbgReason reason) {
-		DbgProcess process = thread.getProcess();
+		DbgModelTargetThread targetThread =
+			(DbgModelTargetThread) getModel().getModelObject(thread);
 		changeAttributes(List.of(), List.of(), Map.of( //
-			TargetEventScope.EVENT_PROCESS_ATTRIBUTE_NAME, Long.toHexString(process.getPid()), //
-			TargetEventScope.EVENT_THREAD_ATTRIBUTE_NAME, Long.toHexString(thread.getTid()) //
+			TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread //
 		), reason.desc());
 	}
 

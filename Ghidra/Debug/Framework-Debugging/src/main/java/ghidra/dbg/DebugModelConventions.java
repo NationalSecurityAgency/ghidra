@@ -814,6 +814,26 @@ public enum DebugModelConventions {
 	}
 
 	/**
+	 * Request activation of the given object in its nearest active scope
+	 * 
+	 * <p>
+	 * Note if the object has no suitable active scope, this method fails silently.
+	 * 
+	 * @param obj the object on which to request activation
+	 * @return a future which completes when activation is granted, or exceptionally
+	 */
+	public static CompletableFuture<Void> requestActivation(TargetObject obj) {
+		CompletableFuture<? extends TargetActiveScope> futureActivator =
+			DebugModelConventions.findSuitable(TargetActiveScope.class, obj);
+		return futureActivator.thenCompose(activator -> {
+			if (activator == null) {
+				return AsyncUtils.NIL;
+			}
+			return activator.requestActivation(obj);
+		});
+	}
+
+	/**
 	 * Request focus on the given object in its nearest focus scope
 	 * 
 	 * <p>

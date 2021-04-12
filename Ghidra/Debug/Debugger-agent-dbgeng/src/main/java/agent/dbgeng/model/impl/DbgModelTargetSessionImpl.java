@@ -87,7 +87,7 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		//DbgManagerImpl manager = getManager();
 		//DbgProcessImpl process = manager.getCurrentProcess();
 		//return manager.execute(new DbgProcessSelectCommand(manager, process));

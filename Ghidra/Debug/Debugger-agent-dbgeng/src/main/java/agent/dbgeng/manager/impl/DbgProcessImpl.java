@@ -231,14 +231,14 @@ public class DbgProcessImpl implements DbgProcess {
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
-		return manager.selectProcess(this);
+	public CompletableFuture<Void> setActive() {
+		return manager.setActiveProcess(this);
 	}
 
 	@Override
 	public CompletableFuture<Void> fileExecAndSymbols(String file) {
 		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgFileExecAndSymbolsCommand(manager, file)).handle(seq::exit);
 		}).finish();
@@ -247,7 +247,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<DbgThread> run() {
 		return sequence(TypeSpec.cls(DbgThread.class)).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgRunCommand(manager)).handle(seq::exit);
 		}).finish();
@@ -256,7 +256,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Set<DbgThread>> attach(long toPid) {
 		return sequence(TypeSpec.cls(DbgThread.class).set()).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			pid = toPid; // TODO: Wait for successful completion?
 			manager.execute(
@@ -268,7 +268,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Set<DbgThread>> reattach(TargetAttachable attachable) {
 		return sequence(TypeSpec.cls(DbgThread.class).set()).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(
 				new DbgAttachCommand(manager, this, BitmaskSet.of(DebugAttachFlags.EXISTING)))
@@ -279,7 +279,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Void> detach() {
 		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgDetachCommand(manager, this)).handle(seq::exit);
 		}).finish();
@@ -288,7 +288,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Void> kill() {
 		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgKillCommand(manager)).handle(seq::exit);
 		}).finish();
@@ -297,7 +297,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Void> cont() {
 		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgContinueCommand(manager)).handle(seq::exit);
 		}).finish();
@@ -306,7 +306,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Void> step(ExecSuffix suffix) {
 		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgStepCommand(manager, null, suffix)).handle(seq::exit);
 		}).finish();
@@ -315,7 +315,7 @@ public class DbgProcessImpl implements DbgProcess {
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
 		return sequence(TypeSpec.VOID).then((seq) -> {
-			select().handle(seq::next);
+			setActive().handle(seq::next);
 		}).then((seq) -> {
 			manager.execute(new DbgStepCommand(manager, null, args)).handle(seq::exit);
 		}).finish();
@@ -328,7 +328,7 @@ public class DbgProcessImpl implements DbgProcess {
 		if (first.isPresent()) {
 			return viaThread.apply(first.get());
 		}
-		return select().thenCompose(__ -> viaThis.get());
+		return setActive().thenCompose(__ -> viaThis.get());
 	}
 
 	@Override

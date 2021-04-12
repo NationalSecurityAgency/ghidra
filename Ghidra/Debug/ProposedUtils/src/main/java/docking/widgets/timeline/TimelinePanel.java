@@ -433,6 +433,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 	}
 
 	protected class CellMouseListener extends MouseAdapter {
+
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			Component cell = e.getComponent();
@@ -454,6 +455,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 			else {
 				selectionModel.setSelectionInterval(index, index);
 			}
+			timelineListeners.fire.itemActivated(index);
 		}
 	}
 
@@ -481,8 +483,8 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 	protected final ItemTracker rows = new ItemTracker();
 	protected final List<TimelineTrack<T, N>> tracks = new ArrayList<>();
 	protected final Map<T, TimelineTrack<T, N>> trackMap = new HashMap<>();
-	protected final ListenerSet<TimelineViewRangeListener> viewRangeListeners =
-		new ListenerSet<>(TimelineViewRangeListener.class);
+	protected final ListenerSet<TimelineListener> timelineListeners =
+		new ListenerSet<>(TimelineListener.class);
 	protected final MouseListener mouseListener = new CellMouseListener();
 	protected final FocusListener focusListener = new CellFocusListener();
 
@@ -497,12 +499,12 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		setSelectionModel(new DefaultListSelectionModel());
 	}
 
-	public void addViewRangeListener(TimelineViewRangeListener listener) {
-		viewRangeListeners.add(listener);
+	public void addTimelineListener(TimelineListener listener) {
+		timelineListeners.add(listener);
 	}
 
-	public void removeViewRangeListener(TimelineViewRangeListener listener) {
-		viewRangeListeners.remove(listener);
+	public void removeTimelineListener(TimelineListener listener) {
+		timelineListeners.remove(listener);
 	}
 
 	protected Range<Double> computeViewRange() {
@@ -765,7 +767,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 			track.setViewRange(newViewRange);
 		}
 		validate();
-		viewRangeListeners.fire.viewRangeChanged(newViewRange);
+		timelineListeners.fire.viewRangeChanged(newViewRange);
 	}
 
 	public Range<Double> getViewRange() {
@@ -777,10 +779,8 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		UIManager.getDefaults()
 				.entrySet()
 				.stream()
-				.filter(
-					ent -> cls.isInstance(ent.getValue()))
-				.forEach(
-					ent -> sorted.put(ent.getKey(), cls.cast(ent.getValue())));
+				.filter(ent -> cls.isInstance(ent.getValue()))
+				.forEach(ent -> sorted.put(ent.getKey(), cls.cast(ent.getValue())));
 		for (Entry<Object, C> ent : sorted.entrySet()) {
 			System.out.println(String.format("%s=%s", ent.getKey(), fmt.apply(ent.getValue())));
 		}

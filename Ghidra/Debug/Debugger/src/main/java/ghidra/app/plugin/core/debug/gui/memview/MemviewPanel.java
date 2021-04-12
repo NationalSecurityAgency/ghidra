@@ -205,7 +205,7 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		requestFocus();
+		requestFocus();  // COMPONENT
 
 		ctrlPressed = false;
 		currentRectangle = null;

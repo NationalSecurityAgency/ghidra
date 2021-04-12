@@ -360,8 +360,8 @@ public class GdbModelTargetInferior
 
 	@Override
 	@Internal
-	public CompletableFuture<Void> select() {
-		return impl.gateFuture(inferior.select());
+	public CompletableFuture<Void> setActive() {
+		return impl.gateFuture(inferior.setActive());
 	}
 
 	@TargetAttributeType(name = EXIT_CODE_ATTRIBUTE_NAME)

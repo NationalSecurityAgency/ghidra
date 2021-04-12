@@ -27,8 +27,9 @@ import com.google.common.collect.Range;
 import docking.widgets.*;
 import docking.widgets.RangeCursorPanel.Direction;
 import docking.widgets.table.RowObjectTableModel;
+import docking.widgets.timeline.TimelineListener;
 import docking.widgets.timeline.TimelinePanel;
-import docking.widgets.timeline.TimelineViewRangeListener;
+import ghidra.app.services.DebuggerModelService;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -56,8 +57,11 @@ public class DebuggerThreadsTimelinePanel extends JScrollPane {
 	}
 
 	protected class ThreadTimelinePanel extends TimelinePanel<ThreadRow, Long> {
+		protected final RowObjectTableModel<ThreadRow> model;
+
 		public ThreadTimelinePanel(RowObjectTableModel<ThreadRow> model) {
 			super(model, ThreadRow::getLifespan);
+			this.model = model;
 		}
 	}
 
@@ -95,9 +99,17 @@ public class DebuggerThreadsTimelinePanel extends JScrollPane {
 	protected final ListenerSet<VetoableSnapRequestListener> listeners =
 		new ListenerSet<>(VetoableSnapRequestListener.class);
 	protected final RangeCursorValueListener valueListener = this::cursorValueChanged;
-	protected final TimelineViewRangeListener viewRangeListener = this::viewRangeChanged;
+	protected final TimelineListener timelineListener = new TimelineListener() {
+		@Override
+		public void viewRangeChanged(Range<Double> range) {
+			timelineViewRangeChanged(range);
+		}
+	};
+	private DebuggerModelService modelService;
+	private RowObjectTableModel<ThreadRow> model;
 
 	public DebuggerThreadsTimelinePanel(RowObjectTableModel<ThreadRow> model) {
+		this.model = model;
 		setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
@@ -106,7 +118,7 @@ public class DebuggerThreadsTimelinePanel extends JScrollPane {
 		setColumnHeaderView(topCursor);
 
 		topCursor.addValueListener(valueListener);
-		timeline.addViewRangeListener(viewRangeListener);
+		timeline.addTimelineListener(timelineListener);
 	}
 
 	public void addSnapRequestedListener(VetoableSnapRequestListener listener) {
@@ -122,7 +134,7 @@ public class DebuggerThreadsTimelinePanel extends JScrollPane {
 		}
 	}
 
-	private void viewRangeChanged(Range<Double> range) {
+	private void timelineViewRangeChanged(Range<Double> range) {
 		topCursor.setRange(range);
 	}
 
@@ -165,5 +177,9 @@ public class DebuggerThreadsTimelinePanel extends JScrollPane {
 			return null;
 		}
 		return timeline.getCellBounds(row);
+	}
+
+	public void addTimelineListener(TimelineListener listener) {
+		timeline.addTimelineListener(listener);
 	}
 }

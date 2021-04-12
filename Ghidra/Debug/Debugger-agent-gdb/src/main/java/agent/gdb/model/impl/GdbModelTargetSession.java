@@ -34,16 +34,13 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(
-	name = "Session",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
+@TargetObjectSchemaInfo(name = "Session", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetSession extends DefaultTargetModelRoot
-		implements TargetAccessConditioned, TargetAttacher, TargetFocusScope, TargetInterpreter,
-		TargetInterruptible, TargetCmdLineLauncher, TargetEventScope, GdbConsoleOutputListener,
-		GdbEventsListenerAdapter {
+		implements TargetAccessConditioned, TargetAttacher, TargetInterpreter, TargetInterruptible,
+		TargetCmdLineLauncher, TargetActiveScope, TargetEventScope, TargetFocusScope,
+		GdbConsoleOutputListener, GdbEventsListenerAdapter {
 	protected static final String GDB_PROMPT = "(gdb)";
 
 	protected final GdbModelImpl impl;
@@ -88,18 +85,12 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		return inferiors;
 	}
 
-	@TargetAttributeType(
-		name = GdbModelTargetAvailableContainer.NAME,
-		required = true,
-		fixed = true)
+	@TargetAttributeType(name = GdbModelTargetAvailableContainer.NAME, required = true, fixed = true)
 	public GdbModelTargetAvailableContainer getAvailable() {
 		return available;
 	}
 
-	@TargetAttributeType(
-		name = GdbModelTargetBreakpointContainer.NAME,
-		required = true,
-		fixed = true)
+	@TargetAttributeType(name = GdbModelTargetBreakpointContainer.NAME, required = true, fixed = true)
 	public GdbModelTargetBreakpointContainer getBreakpoints() {
 		return breakpoints;
 	}
@@ -240,7 +231,8 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 	}
 
 	@Override
-	public CompletableFuture<Void> requestFocus(TargetObject obj) {
+	public CompletableFuture<Void> requestActivation(TargetObject obj) {
+		System.err.println("requestActivation " + obj);
 		impl.assertMine(TargetObject.class, obj);
 		/**
 		 * Yes, this is pointless, since I'm the root, but do it right (TM), since this may change
@@ -253,13 +245,31 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		while (cur != null) {
 			if (cur instanceof GdbModelSelectableObject) {
 				GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
-				/**
-				 * Have to call setFocus here, since the call to select() is considered
-				 * "internally-driven"
-				 */
-				return sel.select().thenRun(() -> {
-					setFocus(sel);
-				});
+				return sel.setActive();
+			}
+			cur = cur.getParent();
+		}
+		return AsyncUtils.NIL;
+
+	}
+
+	@Override
+	public CompletableFuture<Void> requestFocus(TargetObject obj) {
+		System.err.println("requestFocus " + obj);
+		impl.assertMine(TargetObject.class, obj);
+		/**
+		 * Yes, this is pointless, since I'm the root, but do it right (TM), since this may change
+		 * or be used as an example for other implementations.
+		 */
+		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
+			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
+		}
+		TargetObject cur = obj;
+		while (cur != null) {
+			if (cur instanceof GdbModelSelectableObject) {
+				GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
+				setFocus(sel);
+				return AsyncUtils.NIL;
 			}
 			cur = cur.getParent();
 		}
@@ -292,9 +302,8 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		GdbStateChangeRecord sco =
 			new GdbStateChangeRecord(inf, threads, state, thread, cause, reason);
 
-		CompletableFuture<Void> infUpdates = CompletableFuture.allOf(
-			breakpoints.stateChanged(sco),
-			inferiors.stateChanged(sco));
+		CompletableFuture<Void> infUpdates =
+			CompletableFuture.allOf(breakpoints.stateChanged(sco), inferiors.stateChanged(sco));
 		infUpdates.whenComplete((v, t) -> {
 			if (thread == null) {
 				return;
@@ -303,10 +312,24 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			 * I have to do this for all inferiors, because I don't know in what order they will
 			 * complete.
 			 */
-			thread.select().exceptionally(ex -> {
+			thread.setActive().exceptionally(ex -> {
 				impl.reportError(this, "Could not restore event thread", ex);
 				return null;
 			});
 		});
 	}
+
+	@Override
+	public void threadStateChanged(GdbThread thread, GdbState state, GdbCause cause,
+			GdbReason reason) {
+
+		/* REQUIRES GP-762
+		TargetThread targetThread = (TargetThread) impl.getModelObject(thread);
+		changeAttributes(List.of(), List.of(), Map.of( //
+			TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread //
+		), reason.desc());
+		*/
+
+	}
+
 }

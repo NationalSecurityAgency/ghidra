@@ -138,9 +138,9 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
-		return manager.selectThread(thread.getThread());
+		return manager.setActiveThread(thread.getThread());
 	}
 
 	@Override

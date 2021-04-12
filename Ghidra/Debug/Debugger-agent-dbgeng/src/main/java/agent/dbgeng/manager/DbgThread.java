@@ -61,7 +61,7 @@ public interface DbgThread
 	 * 
 	 * @return a future that completes when the thread is the current thread
 	 */
-	CompletableFuture<Void> select();
+	CompletableFuture<Void> setActive();
 
 	/**
 	 * Get the process to which this thread belongs

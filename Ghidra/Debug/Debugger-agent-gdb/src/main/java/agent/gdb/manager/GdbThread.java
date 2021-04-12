@@ -70,7 +70,7 @@ public interface GdbThread
 	 * 
 	 * @return a future that completes when the thread is the current thread
 	 */
-	CompletableFuture<Void> select();
+	CompletableFuture<Void> setActive();
 
 	/**
 	 * Set the value of an internal GDB variable

@@ -158,20 +158,21 @@ import ghidra.lifecycle.Internal;
  */
 public interface TargetObject extends Comparable<TargetObject> {
 
-	Set<Class<? extends TargetObject>> ALL_INTERFACES = Set.of(TargetAccessConditioned.class,
-		TargetAggregate.class, TargetAttachable.class, TargetAttacher.class,
-		TargetBreakpointLocation.class, TargetBreakpointLocationContainer.class,
-		TargetBreakpointSpec.class, TargetBreakpointSpecContainer.class, TargetConsole.class,
-		TargetDataTypeMember.class, TargetDataTypeNamespace.class, TargetDeletable.class,
-		TargetDetachable.class, TargetEnvironment.class, TargetEventScope.class,
-		TargetExecutionStateful.class, TargetFocusScope.class, TargetInterpreter.class,
-		TargetInterruptible.class, TargetKillable.class, TargetLauncher.class, TargetMemory.class,
-		TargetMemoryRegion.class, TargetMethod.class, TargetModule.class,
-		TargetModuleContainer.class, TargetNamedDataType.class, TargetProcess.class,
-		TargetRegister.class, TargetRegisterBank.class, TargetRegisterContainer.class,
-		TargetResumable.class, TargetSection.class, TargetSectionContainer.class, TargetStack.class,
-		TargetStackFrame.class, TargetSteppable.class, TargetSymbol.class,
-		TargetSymbolNamespace.class, TargetThread.class, TargetTogglable.class);
+	Set<Class<? extends TargetObject>> ALL_INTERFACES =
+		Set.of(TargetAccessConditioned.class, TargetAggregate.class, TargetAttachable.class,
+			TargetAttacher.class, TargetBreakpointLocation.class,
+			TargetBreakpointLocationContainer.class, TargetBreakpointSpec.class,
+			TargetBreakpointSpecContainer.class, TargetConsole.class, TargetDataTypeMember.class,
+			TargetDataTypeNamespace.class, TargetDeletable.class, TargetDetachable.class,
+			TargetEnvironment.class, TargetEventScope.class, TargetExecutionStateful.class,
+			TargetActiveScope.class, TargetFocusScope.class, TargetInterpreter.class,
+			TargetInterruptible.class, TargetKillable.class, TargetLauncher.class,
+			TargetMemory.class, TargetMemoryRegion.class, TargetMethod.class, TargetModule.class,
+			TargetModuleContainer.class, TargetNamedDataType.class, TargetProcess.class,
+			TargetRegister.class, TargetRegisterBank.class, TargetRegisterContainer.class,
+			TargetResumable.class, TargetSection.class, TargetSectionContainer.class,
+			TargetStack.class, TargetStackFrame.class, TargetSteppable.class, TargetSymbol.class,
+			TargetSymbolNamespace.class, TargetThread.class, TargetTogglable.class);
 	Map<String, Class<? extends TargetObject>> INTERFACES_BY_NAME = initInterfacesByName();
 
 	/**
@@ -300,8 +301,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 			return false;
 		}
 		TargetObject that = (TargetObject) obj;
-		return this.getModel() == that.getModel() &&
-			Objects.equals(this.getPath(), that.getPath());
+		return this.getModel() == that.getModel() && Objects.equals(this.getPath(), that.getPath());
 	}
 
 	/**
@@ -371,8 +371,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 			}
 			int result = thisModel.toString().compareTo(thatModel.toString());
 			if (result == 0) {
-				return Integer.compare(
-					System.identityHashCode(thisModel),
+				return Integer.compare(System.identityHashCode(thisModel),
 					System.identityHashCode(thatModel));
 			}
 			return result;
@@ -707,8 +706,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 *         interface
 	 */
 	public default <T extends TargetObject> //
-	CompletableFuture<? extends Map<String, ? extends T>> fetchChildrenSupporting(
-			Class<T> iface) {
+	CompletableFuture<? extends Map<String, ? extends T>> fetchChildrenSupporting(Class<T> iface) {
 		return fetchChildren().thenApply(m -> m.entrySet()
 				.stream()
 				.filter(e -> iface.isAssignableFrom(e.getValue().getClass()))
@@ -793,8 +791,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	/**
 	 * @see #fetchSubAttributes(List)
 	 */
-	public default CompletableFuture<? extends Map<String, ?>> fetchSubAttributes(
-			String... sub) {
+	public default CompletableFuture<? extends Map<String, ?>> fetchSubAttributes(String... sub) {
 		return fetchSubAttributes(List.of(sub));
 	}
 

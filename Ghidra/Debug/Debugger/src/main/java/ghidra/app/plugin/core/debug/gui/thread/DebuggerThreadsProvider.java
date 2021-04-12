@@ -31,6 +31,7 @@ import docking.widgets.EventTrigger;
 import docking.widgets.HorizontalTabPanel;
 import docking.widgets.HorizontalTabPanel.TabListCellRenderer;
 import docking.widgets.table.*;
+import docking.widgets.timeline.TimelineListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -39,6 +40,8 @@ import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsTimelinePanel.VetoableSnapRequestListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
+import ghidra.dbg.DebugModelConventions;
+import ghidra.dbg.target.TargetThread;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -345,6 +348,13 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 	private ActionContext myActionContext;
 
+	private final TimelineListener timelineListener = new TimelineListener() {
+		@Override
+		public void itemActivated(int index) {
+			timelineItemActivated(index);
+		}
+	};
+
 	DockingAction actionSaveTrace;
 	StepSnapBackwardAction actionStepSnapBackward;
 	StepTickBackwardAction actionStepTickBackward;
@@ -543,6 +553,23 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		contextChanged();
 	}
 
+	private void timelineItemActivated(int index) {
+		ThreadRow row = threadTableModel.getRowObject(index);
+		rowActivated(row);
+	}
+
+	private void rowActivated(ThreadRow row) {
+		TraceThread thread = row.getThread();
+		Trace trace = thread.getTrace();
+		TraceRecorder recorder = modelService.getRecorder(trace);
+		if (recorder != null) {
+			TargetThread targetThread = recorder.getTargetThread(thread);
+			if (targetThread != null && targetThread.isValid()) {
+				DebugModelConventions.requestActivation(targetThread);
+			}
+		}
+	}
+
 	protected void buildMainPanel() {
 		traceTabPopupMenu = new JPopupMenu("Trace");
 
@@ -566,6 +593,16 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		threadTable.getSelectionModel().addListSelectionListener(this::threadRowSelected);
 		threadTimeline.setSelectionModel(threadTable.getSelectionModel());
 		threadTimeline.addSnapRequestedListener(snapListener);
+		threadTimeline.addTimelineListener(timelineListener);
+
+		threadTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				int selectedRow = threadTable.getSelectedRow();
+				ThreadRow row = threadTableModel.getRowObject(selectedRow);
+				rowActivated(row);
+			}
+		});
 
 		mainPanel.add(splitPane, BorderLayout.CENTER);
 
@@ -628,18 +665,15 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		closeItem.addActionListener(evt -> {
 			traceManager.closeTrace(trace);
 		});
-		JMenuItem closeOthers =
-			new JMenuItem("Close Others", DebuggerResources.ICON_CLOSE);
+		JMenuItem closeOthers = new JMenuItem("Close Others", DebuggerResources.ICON_CLOSE);
 		closeOthers.addActionListener(evt -> {
 			traceManager.closeOtherTraces(trace);
 		});
-		JMenuItem closeDead =
-			new JMenuItem("Close Dead", DebuggerResources.ICON_CLOSE);
+		JMenuItem closeDead = new JMenuItem("Close Dead", DebuggerResources.ICON_CLOSE);
 		closeDead.addActionListener(evt -> {
 			traceManager.closeDeadTraces();
 		});
-		JMenuItem closeAll =
-			new JMenuItem("Close All", DebuggerResources.ICON_CLOSE);
+		JMenuItem closeAll = new JMenuItem("Close All", DebuggerResources.ICON_CLOSE);
 		closeAll.addActionListener(evt -> {
 			for (Trace t : List.copyOf(traceManager.getOpenTraces())) {
 				traceManager.closeTrace(t);

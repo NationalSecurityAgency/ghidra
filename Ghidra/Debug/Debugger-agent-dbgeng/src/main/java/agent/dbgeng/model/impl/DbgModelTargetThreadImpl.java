@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.cmd.DbgThreadSelectCommand;
+import agent.dbgeng.manager.cmd.DbgSetActiveThreadCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
@@ -138,9 +138,9 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
-		return manager.execute(new DbgThreadSelectCommand(manager, thread, null));
+		return manager.execute(new DbgSetActiveThreadCommand(manager, thread, null));
 	}
 
 	public DbgModelTargetRegisterContainerAndBank getRegisters() {

@@ -89,7 +89,7 @@ public class JdiModelTargetProcess extends JdiModelTargetObjectImpl
 
 	@Override
 	@Internal
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		return CompletableFuture.completedFuture(null);
 		///return thread.select();
 	}

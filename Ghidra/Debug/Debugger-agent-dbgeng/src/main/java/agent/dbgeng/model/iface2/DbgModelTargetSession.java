@@ -71,12 +71,12 @@ public interface DbgModelTargetSession extends //
 	}
 
 	@Override
-	public default CompletableFuture<Void> select() {
+	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
 		DbgSession session = getSession();
 		if (session == null) {
 			session = manager.getEventSession();
 		}
-		return manager.selectSession(session);
+		return manager.setActiveSession(session);
 	}
 }

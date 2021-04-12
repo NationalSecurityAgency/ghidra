@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.model.iface2;
+package ghidra.dbg.target;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import agent.dbgeng.model.iface1.DbgModelSelectableObject;
-import ghidra.dbg.target.TargetLauncher;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.DebuggerTargetObjectIface;
 
-public interface DbgModelTargetConnector
-		extends DbgModelSelectableObject, TargetLauncher {
+/**
+ * An object made active
+ * 
+ * "Active" here describes which object in a given class the target should operate on
+ */
+@DebuggerTargetObjectIface("ActiveScope")
+public interface TargetActiveScope extends TargetObject {
 
-	@Override
-	public default String getDisplay() {
-		return getName();
-	}
+	/**
+	 * Set the given object as the target's active object for the given type
+	 * 
+	 * @param obj the object to setActive
+	 * @return a future which completes upon successfully changing focus.
+	 */
+	CompletableFuture<Void> requestActivation(TargetObject obj);
 
-	@Override
-	public CompletableFuture<Void> setActive();
-
-	@Override
-	public TargetParameterMap getParameters();
-
-	@Override
-	public CompletableFuture<Void> launch(Map<String, ?> args);
 }

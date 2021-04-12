@@ -49,7 +49,7 @@ public interface GdbStackFrame extends GdbStackFrameOperations {
 	 * 
 	 * @return a future that completes when the frame is the current frame
 	 */
-	CompletableFuture<Void> select();
+	CompletableFuture<Void> setActive();
 
 	/**
 	 * Get the thread for this frame

@@ -55,7 +55,7 @@ public class DbgModelTargetKernelConnectorImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> select() {
+	public CompletableFuture<Void> setActive() {
 		connectors.setDefaultConnector(this);
 		return CompletableFuture.completedFuture(null);
 	}

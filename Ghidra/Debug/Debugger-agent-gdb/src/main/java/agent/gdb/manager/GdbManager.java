@@ -258,7 +258,7 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	/**
 	 * Get the inferior which currently has focus
 	 * 
-	 * @see GdbInferior#select()
+	 * @see GdbInferior#setActive()
 	 * @return a handle to the inferior with focus
 	 */
 	GdbInferior currentInferior();

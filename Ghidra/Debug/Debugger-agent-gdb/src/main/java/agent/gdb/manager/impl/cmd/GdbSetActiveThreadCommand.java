@@ -19,7 +19,7 @@ import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 
-public class GdbThreadSelectCommand extends AbstractGdbCommandWithThreadAndFrameId<Void> {
+public class GdbSetActiveThreadCommand extends AbstractGdbCommandWithThreadAndFrameId<Void> {
 	/**
 	 * Select the given thread and frame level
 	 * 
@@ -30,7 +30,7 @@ public class GdbThreadSelectCommand extends AbstractGdbCommandWithThreadAndFrame
 	 * @param threadId the desired thread Id
 	 * @param frameId the desired frame level
 	 */
-	public GdbThreadSelectCommand(GdbManagerImpl manager, int threadId, Integer frameId) {
+	public GdbSetActiveThreadCommand(GdbManagerImpl manager, int threadId, Integer frameId) {
 		super(manager, threadId, frameId);
 	}
 
