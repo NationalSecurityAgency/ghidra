@@ -22,6 +22,6 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework DB'
 
 dependencies {
-	compile project(':Generic')
+	api project(':Generic')
 }
 

@@ -28,16 +28,16 @@ eclipse.project.name = 'Features PDB'
  * Build dependencies
  *********************************************************************************/
 dependencies {
-	compile project(":Base")
+	api project(":Base")
     
-    testCompile "org.jmockit:jmockit:1.44"	
+    testImplementation "org.jmockit:jmockit:1.44"	
 	
     // Demangler Analyzer needs to find MicrosoftDemangler
-    compile project(":MicrosoftDemangler")
+    api project(":MicrosoftDemangler")
 	helpPath project(path: ':Base', configuration: 'helpPath')  // this module's help has links to Base help files
 
-    testCompile project(path: ':Base', configuration: 'testArtifacts')
-    testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
+    testImplementation project(path: ':Base', configuration: 'testArtifacts')
+    testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }
 
 /**

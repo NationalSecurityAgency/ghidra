@@ -47,12 +47,13 @@ dependencies {
     	protocArtifact 'com.google.protobuf:protoc:3.11.1:osx-x86_64@exe'
     }
 
-	compile 'com.google.protobuf:protobuf-java:3.11.1'
-	compile project(':Framework-AsyncComm')
-	compile project(':Framework-Debugging')
-	compile project(':ProposedUtils')
+	api 'com.google.protobuf:protobuf-java:3.11.1'
+	api project(':Framework-AsyncComm')
+	api project(':Framework-Debugging')
+	api project(':ProposedUtils')
 	
-	testCompile project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }
 
 /*protobuf {

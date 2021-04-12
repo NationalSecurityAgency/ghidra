@@ -23,15 +23,16 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger'
 
 dependencies {
-	compile project(':Framework-AsyncComm')
-	compile project(':Framework-Debugging')
-	compile project(':Framework-TraceModeling')
-	compile project(':Base')
-	compile project(':ByteViewer')
-	compile project(':ProposedUtils')
+	api project(':Framework-AsyncComm')
+	api project(':Framework-Debugging')
+	api project(':Framework-TraceModeling')
+	api project(':Base')
+	api project(':ByteViewer')
+	api project(':ProposedUtils')
 
 	helpPath project(path: ':Base', configuration: 'helpPath')
 
-	testCompile project(path: ':Framework-Debugging', configuration: 'testArtifacts')
-	testCompile project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 }

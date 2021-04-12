@@ -24,17 +24,17 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Generic'
 
 dependencies {
-	compile project(':Utility')
-	compile "cglib:cglib-nodep:2.2"
-	compile "com.google.guava:guava:19.0"
-	compile "org.jdom:jdom-legacy:1.1.3"
-	compile "org.apache.logging.log4j:log4j-api:2.12.1"
-	compile "org.apache.logging.log4j:log4j-core:2.12.1"
-	compile "org.apache.commons:commons-collections4:4.1"
-	compile "org.apache.commons:commons-lang3:3.9"
-	compile "org.apache.commons:commons-text:1.6"
-	compile "commons-io:commons-io:2.6"	
-	compile "com.google.code.gson:gson:2.8.6"
+	api project(':Utility')
+	api "cglib:cglib-nodep:2.2"
+	api "com.google.guava:guava:19.0"
+	api "org.jdom:jdom-legacy:1.1.3"
+	api "org.apache.logging.log4j:log4j-api:2.12.1"
+	api "org.apache.logging.log4j:log4j-core:2.12.1"
+	api "org.apache.commons:commons-collections4:4.1"
+	api "org.apache.commons:commons-lang3:3.9"
+	api "org.apache.commons:commons-text:1.6"
+	api "commons-io:commons-io:2.6"	
+	api "com.google.code.gson:gson:2.8.6"
 
 	compileOnly "junit:junit:4.12"
 }

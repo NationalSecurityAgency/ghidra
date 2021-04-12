@@ -25,9 +25,9 @@ eclipse.project.name = 'Features Graph FunctionGraph'
 
 
 dependencies {
-	compile project(":Base")
+	api project(":Base")
    
-   	testCompile "org.jmockit:jmockit:1.44"
+   	testImplementation "org.jmockit:jmockit:1.44"
     
 	helpPath project(path: ":Base", configuration: 'helpPath')
 }

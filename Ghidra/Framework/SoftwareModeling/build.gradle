@@ -28,19 +28,19 @@ apply plugin: 'antlr'
 rootProject.prepDev.dependsOn compileJava
 
 dependencies {
-	compile project(':Generic')
-	compile project(':FileSystem')
-	compile project(':Project')
-	compile project(':Graph')
+	api project(':Generic')
+	api project(':FileSystem')
+	api project(':Project')
+	api project(':Graph')
 	
-	compile "msv:msv:20050913"
-	compile "msv:xsdlib:20050913"
-	compile "org.antlr:antlr-runtime:3.5.2"
+	api "msv:msv:20050913"
+	api "msv:xsdlib:20050913"
+	api "org.antlr:antlr-runtime:3.5.2"
 	
-	runtime "msv:relaxngDatatype:20050913"
-	compile "msv:isorelax:20050913"	
+	runtimeOnly "msv:relaxngDatatype:20050913"
+	api "msv:isorelax:20050913"	
 	
-	testCompile "org.jmockit:jmockit:1.44"	
+	testImplementation "org.jmockit:jmockit:1.44"	
 	
 	// Must specify the specific antlr implementation to use or it will default to trying to find
 	// version 2.7.7 (which we don't have)

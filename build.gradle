@@ -315,13 +315,20 @@ String getCurrentPlatformName() {
 List<String> getExternalRuntimeDependencies(Project project) {
 	List<String> list = new ArrayList<String>()
 
-	list.addAll(getExternalDependencies(project.configurations.compile));
-	list.addAll(getExternalDependencies(project.configurations.runtime));
+	if (project.configurations.find { it.name == 'api' }) {
+		list.addAll(getExternalDependencies(project, project.configurations.api));
+	}
+	if (project.configurations.find { it.name == 'implementation' }) {
+		list.addAll(getExternalDependencies(project, project.configurations.implementation));
+	}
+	if (project.configurations.find { it.name == 'runtimeOnly' }) {
+		list.addAll(getExternalDependencies(project, project.configurations.runtimeOnly));
+	}
 
 	return list
 }
 
-List<String> getExternalDependencies(Configuration configuration) {
+List<String> getExternalDependencies(Project project, Configuration configuration) {
 	List<String> list = new ArrayList<>();
 	configuration.dependencies.each { dep ->
 
@@ -344,9 +351,12 @@ List<String> getExternalDependencies(Configuration configuration) {
 				}
 			}
 
-			// loop back through all the dependency files, looking for one that contains the dependency name.
-			String depPath = configuration.find {
-				it.name.contains(searchString)
+			// loop back through all the dependency files, looking for one that contains the dependency name.	
+			String depPath = project.configurations
+				.findAll {it.isCanBeResolved()}
+				.collect {it.resolve()}
+				.flatten()
+				.find {it.getAbsolutePath().contains(searchString)
 			}
 			if (depPath == null) {
 				println("****************DID NOT FIND DEPENDENCY: name = "+name+" version = "+version)
@@ -369,7 +379,7 @@ Set<String> getAllExternalDependencies(Project project) {
 	Set<String> set = new HashSet<String>()
 	
 	project.getConfigurations().each { config ->
-		set.addAll(getExternalDependencies(config))
+		set.addAll(getExternalDependencies(project, config))
 	}
 	
 	return set

@@ -27,6 +27,6 @@ sleighCompileOptions = [
 ]
 
 dependencies {
-	compile project(':Base')
-	compile project(':FileFormats')
+	api project(':Base')
+	api project(':FileFormats')
 }

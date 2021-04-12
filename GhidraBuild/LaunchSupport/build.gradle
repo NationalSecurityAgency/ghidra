@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'eclipse'
 eclipse.project.name = '_LaunchSupport'
 
