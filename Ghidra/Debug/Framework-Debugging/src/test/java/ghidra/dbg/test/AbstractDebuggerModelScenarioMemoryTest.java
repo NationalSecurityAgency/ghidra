@@ -141,8 +141,7 @@ public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDe
 		Msg.debug(this, "Launching " + specimen);
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
 		Msg.debug(this, "  Done launching");
-		TargetObject processContainer = findProcessContainer();
-		TargetProcess process = retryForProcessRunning(processContainer, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		postLaunch(process);
 
 		Address address = Objects.requireNonNull(getAddressToWrite(process));

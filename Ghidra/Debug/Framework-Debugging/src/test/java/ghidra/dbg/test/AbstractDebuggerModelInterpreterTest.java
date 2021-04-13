@@ -15,9 +15,10 @@
  */
 package ghidra.dbg.test;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,23 +28,39 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.async.AsyncReference;
+import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetInterpreter;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.testutil.CatchOffThread;
 import ghidra.util.Msg;
 
 public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebuggerModelTest
 		implements RequiresAttachSpecimen, RequiresLaunchSpecimen {
 
+	/**
+	 * Get the path of the expected result of {@link #findInterpreter()} for this test
+	 * 
+	 * @return the expected path
+	 */
 	public List<String> getExpectedInterpreterPath() {
 		return null;
 	}
 
+	/**
+	 * Get the CLI command to echo a string back
+	 * 
+	 * @param msg the message to echo
+	 * @return the command
+	 */
 	protected abstract String getEchoCommand(String msg);
 
+	/**
+	 * If applicable, get the CLI command to terminate the session / model
+	 * 
+	 * @return the command
+	 */
 	protected abstract String getQuitCommand();
 
 	/**
@@ -52,6 +69,30 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 	 * @return the command
 	 */
 	protected abstract String getAttachCommand();
+
+	/**
+	 * Get the CLI command to detach from the given process
+	 * 
+	 * <p>
+	 * Note that the given process should already be the current/active process of the interpreter,
+	 * so the parameter may not be needed.
+	 * 
+	 * @param process the process to detach from, which should already be active
+	 * @return the command
+	 */
+	protected abstract String getDetachCommand(TargetProcess process);
+
+	/**
+	 * Get the CLI command to kill the given process
+	 * 
+	 * <p>
+	 * Note that the given process should already be the current/active process of the interpreter,
+	 * so the parameter may not be needed.
+	 * 
+	 * @param process the process to kill, which should already be active
+	 * @return the command
+	 */
+	protected abstract String getKillCommand(TargetProcess process);
 
 	@Test
 	public void testInterpreterIsWhereExpected() throws Throwable {
@@ -126,6 +167,11 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		runTestExecuteCapture(interpreter, cmd);
 	}
 
+	/**
+	 * Test that the user quitting via the CLI properly terminates the model
+	 * 
+	 * @throws Throwable expected since the model will terminate
+	 */
 	@Test(expected = DebuggerModelTerminatingException.class)
 	public void testExecuteQuit() throws Throwable {
 		String cmd = getQuitCommand();
@@ -151,14 +197,22 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		// TODO: Delete (spec vs. loc?)
 	}
 
-	protected void runTestLaunchViaInterpreterShowsInProcessContainer(TargetInterpreter interpreter,
-			TargetObject container) throws Throwable {
+	protected TargetProcess runTestLaunchViaInterpreterShowsInProcessContainer(
+			TargetInterpreter interpreter) throws Throwable {
 		DebuggerTestSpecimen specimen = getLaunchSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		for (String line : specimen.getLaunchScript()) {
 			waitOn(interpreter.execute(line));
 		}
-		retryForProcessRunning(container, specimen, this);
+		return retryForProcessRunning(specimen, this);
+	}
+
+	protected void runTestKillViaInterpreter(TargetProcess process, TargetInterpreter interpreter)
+			throws Throwable {
+		waitOn(interpreter.execute(getKillCommand(process)));
+		retryVoid(() -> {
+			assertFalse(DebugModelConventions.isProcessAlive(process));
+		}, List.of(AssertionError.class));
 	}
 
 	@Test
@@ -167,18 +221,26 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		m.build();
 
 		TargetInterpreter interpreter = findInterpreter();
-		TargetObject container = findProcessContainer();
-		assertNotNull("No process container", container);
-		runTestLaunchViaInterpreterShowsInProcessContainer(interpreter, container);
+		TargetProcess process = runTestLaunchViaInterpreterShowsInProcessContainer(interpreter);
+
+		runTestKillViaInterpreter(process, interpreter);
 	}
 
-	protected void runTestAttachViaInterpreterShowsInProcessContainer(TargetInterpreter interpreter,
-			TargetObject container) throws Throwable {
+	protected TargetProcess runTestAttachViaInterpreterShowsInProcessContainer(
+			TargetInterpreter interpreter) throws Throwable {
 		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		String cmd = getAttachCommand();
 		waitOn(interpreter.execute(cmd));
-		retryForProcessRunning(container, specimen, this);
+		return retryForProcessRunning(specimen, this);
+	}
+
+	protected void runTestDetachViaInterpreter(TargetProcess process, TargetInterpreter interpreter)
+			throws Throwable {
+		waitOn(interpreter.execute(getDetachCommand(process)));
+		retryVoid(() -> {
+			assertFalse(DebugModelConventions.isProcessAlive(process));
+		}, List.of(AssertionError.class));
 	}
 
 	@Test
@@ -189,8 +251,8 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		dummy = specimen.runDummy();
 
 		TargetInterpreter interpreter = findInterpreter();
-		TargetObject container = findProcessContainer();
-		assertNotNull("No process container", container);
-		runTestAttachViaInterpreterShowsInProcessContainer(interpreter, container);
+		TargetProcess process = runTestAttachViaInterpreterShowsInProcessContainer(interpreter);
+
+		runTestDetachViaInterpreter(process, interpreter);
 	}
 }

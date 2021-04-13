@@ -26,6 +26,7 @@ import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
 /**
@@ -245,8 +246,13 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 		valid = false;
 		model.objectInvalidated(getProxy());
 		listeners.fire.invalidated(getProxy(), branch, reason);
-		listeners.clear();
-		listeners.clearChained();
+		CompletableFuture.runAsync(() -> {
+			listeners.clear();
+			listeners.clearChained();
+		}, model.clientExecutor).exceptionally(ex -> {
+			Msg.error(this, "Error emptying invalidated object's listener set: ", ex);
+			return null;
+		});
 	}
 
 	protected void doInvalidateElements(Map<String, ?> elems, String reason) {

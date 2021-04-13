@@ -18,8 +18,6 @@ package agent.dbgeng.model;
 import java.util.List;
 import java.util.Map;
 
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.*;
 import ghidra.dbg.util.PathUtils;
 
@@ -35,11 +33,6 @@ public abstract class AbstractModelForDbgengX64RegistersTest
 	@Override
 	public AbstractDebuggerModelTest getTest() {
 		return this;
-	}
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
 	}
 
 	@Override

@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import ghidra.dbg.target.TargetLauncher;
 import ghidra.dbg.target.TargetObject;
@@ -34,11 +34,9 @@ public interface ProvidesTargetViaLaunchSpecimen extends RequiresTarget, Require
 	default TargetObject obtainTarget() throws Throwable {
 		TargetLauncher launcher = getTest().findLauncher();
 		assertNotNull("No launcher found", launcher);
-		TargetObject container = getTest().findProcessContainer();
-		assertNotNull("No process container found", container);
 		DebuggerTestSpecimen specimen = getLaunchSpecimen();
 		waitAcc(launcher);
 		launcher.launch(specimen.getLauncherArgs());
-		return retryForProcessRunning(container, specimen, getTest());
+		return retryForProcessRunning(specimen, getTest());
 	}
 }

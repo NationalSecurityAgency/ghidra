@@ -17,18 +17,10 @@ package agent.dbgeng.model;
 
 import java.util.List;
 
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.*;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengSteppableTest extends AbstractDebuggerModelSteppableTest
 		implements ProvidesTargetViaLaunchSpecimen {
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
 
 	@Override
 	public AbstractDebuggerModelTest getTest() {

@@ -31,6 +31,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.test.AbstractDebuggerModelTest;
 import ghidra.dbg.test.AbstractDebuggerModelTest.DebuggerTestSpecimen;
+import ghidra.dbg.util.PathUtils;
 import ghidra.util.NumericUtilities;
 
 public interface DebuggerModelTestUtils extends AsyncTestUtils {
@@ -164,10 +165,9 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 		}).findFirst().orElse(null);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	default Collection<TargetProcess> fetchProcesses(TargetObject container)
+	default Collection<TargetProcess> fetchProcesses(AbstractDebuggerModelTest test)
 			throws Throwable {
-		return (Collection) waitOn(container.fetchElements(true)).values();
+		return test.m.findAll(TargetProcess.class, PathUtils.parse(""), false).values();
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -176,32 +176,30 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 		return (Collection) waitOn(container.fetchElements(true)).values();
 	}
 
-	default TargetProcess getProcessRunning(TargetObject container,
-			DebuggerTestSpecimen specimen, AbstractDebuggerModelTest test) throws Throwable {
-		return getProcessRunning(container, specimen, test, p -> true);
+	default TargetProcess getProcessRunning(DebuggerTestSpecimen specimen,
+			AbstractDebuggerModelTest test) throws Throwable {
+		return getProcessRunning(specimen, test, p -> true);
 	}
 
-	default TargetProcess getProcessRunning(TargetObject container,
-			DebuggerTestSpecimen specimen, AbstractDebuggerModelTest test,
-			Predicate<TargetProcess> predicate) throws Throwable {
-		return getProcessRunning(fetchProcesses(container), specimen, test, predicate);
+	default TargetProcess getProcessRunning(DebuggerTestSpecimen specimen,
+			AbstractDebuggerModelTest test, Predicate<TargetProcess> predicate) throws Throwable {
+		return getProcessRunning(fetchProcesses(test), specimen, test, predicate);
 	}
 
-	default TargetProcess retryForProcessRunning(TargetObject container,
+	default TargetProcess retryForProcessRunning(
 			DebuggerTestSpecimen specimen, AbstractDebuggerModelTest test) throws Throwable {
 		return retry(() -> {
-			TargetProcess process = getProcessRunning(container, specimen, test);
+			TargetProcess process = getProcessRunning(specimen, test);
 			assertNotNull(process);
 			return process;
 		}, List.of(AssertionError.class));
 	}
 
-	default TargetProcess retryForOtherProcessRunning(TargetObject container,
-			DebuggerTestSpecimen specimen, AbstractDebuggerModelTest test,
-			Predicate<TargetProcess> predicate, long timeoutMs)
+	default TargetProcess retryForOtherProcessRunning(DebuggerTestSpecimen specimen,
+			AbstractDebuggerModelTest test, Predicate<TargetProcess> predicate, long timeoutMs)
 			throws Throwable {
 		return retry(timeoutMs, () -> {
-			TargetProcess process = getProcessRunning(container, specimen, test, predicate);
+			TargetProcess process = getProcessRunning(specimen, test, predicate);
 			assertNotNull(process);
 			return process;
 		}, List.of(AssertionError.class));

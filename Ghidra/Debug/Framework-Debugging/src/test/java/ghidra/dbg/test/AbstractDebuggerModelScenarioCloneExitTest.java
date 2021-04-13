@@ -15,7 +15,8 @@
  */
 package ghidra.dbg.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -131,14 +132,12 @@ public abstract class AbstractDebuggerModelScenarioCloneExitTest extends Abstrac
 		Msg.debug(this, "Launching " + specimen);
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
 		Msg.debug(this, "  Done launching");
-		TargetObject processContainer = findProcessContainer();
-		assertNotNull("No process container", processContainer);
-		TargetProcess process = retryForProcessRunning(processContainer, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		postLaunch(process);
-		TargetBreakpointSpecContainer breakpointContainer =
+		TargetBreakpointSpecContainer bpContainer =
 			findBreakpointSpecContainer(process.getPath());
 		Msg.debug(this, "Placing breakpoint");
-		waitOn(breakpointContainer.placeBreakpoint(getBreakpointExpression(),
+		waitOn(bpContainer.placeBreakpoint(getBreakpointExpression(),
 			Set.of(TargetBreakpointKind.SW_EXECUTE)));
 
 		assertTrue(DebugModelConventions.isProcessAlive(process));

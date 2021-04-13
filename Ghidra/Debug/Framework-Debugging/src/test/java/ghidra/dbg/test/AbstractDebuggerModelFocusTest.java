@@ -27,6 +27,10 @@ import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 
+/**
+ * TODO: Since activation and focus are separate concepts, we need to fix the terminology here and
+ * ensure we're testing the right things.
+ */
 public abstract class AbstractDebuggerModelFocusTest extends AbstractDebuggerModelTest {
 
 	/**

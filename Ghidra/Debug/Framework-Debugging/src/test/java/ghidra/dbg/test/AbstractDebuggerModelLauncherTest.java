@@ -15,12 +15,12 @@
  */
 package ghidra.dbg.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -31,16 +31,11 @@ import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.testutil.ElementTrackingListener;
 
 public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebuggerModelTest
 		implements RequiresLaunchSpecimen {
 
 	public List<String> getExpectedLauncherPath() {
-		return null;
-	}
-
-	public List<String> getExpectedProcessesContainerPath() {
 		return null;
 	}
 
@@ -56,16 +51,6 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 
 		TargetLauncher launcher = findLauncher();
 		assertEquals(expectedLauncherPath, launcher.getPath());
-	}
-
-	@Test
-	public void testProcessContainerIsWhereExpected() throws Throwable {
-		List<String> expectedProcessContainerPath = getExpectedProcessesContainerPath();
-		assumeNotNull(expectedProcessContainerPath);
-		m.build();
-
-		TargetObject container = findProcessContainer();
-		assertEquals(expectedProcessContainerPath, container.getPath());
 	}
 
 	protected void runTestLaunchParameters(TargetLauncher launcher,
@@ -123,12 +108,11 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 		waitOn(listener.observedCreated);
 	}
 
-	protected void runTestLaunchThenDetach(TargetLauncher launcher,
-			TargetObject container) throws Throwable {
+	protected void runTestLaunchThenDetach(TargetLauncher launcher) throws Throwable {
 		DebuggerTestSpecimen specimen = getLaunchSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestLaunch(launcher);
-		runTestDetach(container, specimen);
+		runTestDetach(specimen);
 	}
 
 	@Test
@@ -137,16 +121,14 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 		m.build();
 
 		TargetLauncher launcher = findLauncher();
-		TargetObject container = findProcessContainer();
-		runTestLaunchThenDetach(launcher, container);
+		runTestLaunchThenDetach(launcher);
 	}
 
-	protected void runTestLaunchThenKill(TargetLauncher launcher,
-			TargetObject container) throws Throwable {
+	protected void runTestLaunchThenKill(TargetLauncher launcher) throws Throwable {
 		DebuggerTestSpecimen specimen = getLaunchSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestLaunch(launcher);
-		runTestKill(container, specimen);
+		runTestKill(specimen);
 	}
 
 	@Test
@@ -155,16 +137,14 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 		m.build();
 
 		TargetLauncher launcher = findLauncher();
-		TargetObject container = findProcessContainer();
-		runTestLaunchThenKill(launcher, container);
+		runTestLaunchThenKill(launcher);
 	}
 
-	protected void runTestLaunchThenResume(TargetLauncher launcher,
-			TargetObject container) throws Throwable {
+	protected void runTestLaunchThenResume(TargetLauncher launcher) throws Throwable {
 		DebuggerTestSpecimen specimen = getLaunchSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestLaunch(launcher);
-		runTestResumeTerminates(container, specimen);
+		runTestResumeTerminates(specimen);
 	}
 
 	@Test
@@ -173,16 +153,14 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 		m.build();
 
 		TargetLauncher launcher = findLauncher();
-		TargetObject container = findProcessContainer();
-		runTestLaunchThenResume(launcher, container);
+		runTestLaunchThenResume(launcher);
 	}
 
-	protected void runTestLaunchShowsInProcessContainer(TargetLauncher launcher,
-			TargetObject container) throws Throwable {
+	protected void runTestLaunchShowsInProcessContainer(TargetLauncher launcher) throws Throwable {
 		DebuggerTestSpecimen specimen = getLaunchSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestLaunch(launcher);
-		retryForProcessRunning(container, specimen, this);
+		retryForProcessRunning(specimen, this);
 	}
 
 	@Test
@@ -191,34 +169,6 @@ public abstract class AbstractDebuggerModelLauncherTest extends AbstractDebugger
 		m.build();
 
 		TargetLauncher launcher = findLauncher();
-		TargetObject container = findProcessContainer();
-		runTestLaunchShowsInProcessContainer(launcher, container);
-	}
-
-	protected void runTestLaunchShowsInProcessContainerViaListener(
-			TargetLauncher launcher, TargetObject container) throws Throwable {
-		DebuggerTestSpecimen specimen = getLaunchSpecimen();
-		ElementTrackingListener<? extends TargetProcess> procListener =
-			new ElementTrackingListener<>(TargetProcess.class);
-		container.addListener(procListener);
-		// NB. Have to express interest, otherwise model is not obligated to invoke listener
-		Collection<TargetProcess> procsBefore = fetchProcesses(container);
-		procListener.putAll(container.getCachedElements());
-		assertNull(getProcessRunning(procsBefore, specimen, this));
-		runTestLaunch(launcher);
-		retryVoid(() -> {
-			// Cannot fetch elements. rely only on listener.
-			assertNotNull(getProcessRunning(procListener.elements.values(), specimen, this));
-		}, List.of(AssertionError.class));
-	}
-
-	@Test
-	public void testLaunchShowsInProcessContainerViaListener() throws Throwable {
-		assumeTrue(m.hasProcessContainer());
-		m.build();
-
-		TargetLauncher launcher = findLauncher();
-		TargetObject container = findProcessContainer();
-		runTestLaunchShowsInProcessContainerViaListener(launcher, container);
+		runTestLaunchShowsInProcessContainer(launcher);
 	}
 }

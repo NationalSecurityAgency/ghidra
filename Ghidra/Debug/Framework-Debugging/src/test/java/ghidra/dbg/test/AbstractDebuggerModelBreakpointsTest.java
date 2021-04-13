@@ -16,7 +16,8 @@
 package ghidra.dbg.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -38,18 +39,16 @@ import ghidra.util.Msg;
  * Tests the functionality of breakpoints
  * 
  * <p>
- * Note that this test does not check for nuances regarding specification vs.
- * location, as it is meant to generalize across models for interests of the UI
- * only. As such, we only test that we can set breakpoints at given addresses
- * and that a location manifests there, regardless of the intervening
- * mechanisms. We also test some basic operations on the breakpoint (location)
- * itself. Models which have separate specifications from locations, or for
- * which you want to test non-address specifications will need to add their own
- * tests, tailored to the semantics of that model's breakpoint specifications.
+ * Note that this test does not check for nuances regarding specification vs. location, as it is
+ * meant to generalize across models for interests of the UI only. As such, we only test that we can
+ * set breakpoints at given addresses and that a location manifests there, regardless of the
+ * intervening mechanisms. We also test some basic operations on the breakpoint (location) itself.
+ * Models which have separate specifications from locations, or for which you want to test
+ * non-address specifications will need to add their own tests, tailored to the semantics of that
+ * model's breakpoint specifications.
  * 
  * <p>
- * TODO: Enable, disable (if supported), delete (if supported), manipulation via
- * CLI is synced
+ * TODO: Enable, disable (if supported), delete (if supported), manipulation via CLI is synced
  */
 public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebuggerModelTest
 		implements RequiresTarget {
@@ -225,7 +224,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 		waitOn(container.placeBreakpoint(range, Set.of(kind)));
 		retryVoid(() -> {
 			Collection<? extends TargetBreakpointLocation> found =
-				m.findAll(TargetBreakpointLocation.class, target.getPath()).values();
+				m.findAll(TargetBreakpointLocation.class, target.getPath(), true).values();
 			assertAtLeastOneLocCovers(found, range, kind);
 		}, List.of(AssertionError.class));
 	}
@@ -261,7 +260,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			waitOn(container.placeBreakpoint(range, Set.of(kind)));
 			locs.add(retry(() -> {
 				Collection<? extends TargetBreakpointLocation> found =
-					m.findAll(TargetBreakpointLocation.class, target.getPath()).values();
+					m.findAll(TargetBreakpointLocation.class, target.getPath(), true).values();
 				return assertAtLeastOneLocCovers(found, range, kind);
 			}, List.of(AssertionError.class)));
 		}

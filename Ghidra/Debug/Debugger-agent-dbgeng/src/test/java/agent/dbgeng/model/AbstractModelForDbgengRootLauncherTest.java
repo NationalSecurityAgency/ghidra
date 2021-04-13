@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.Map;
 
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.test.AbstractDebuggerModelLauncherTest;
@@ -29,16 +29,6 @@ import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengRootLauncherTest
 		extends AbstractDebuggerModelLauncherTest {
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
-
-	@Override
-	public List<String> getExpectedProcessesContainerPath() {
-		return PathUtils.parse("Sessions[0].Processes");
-	}
 
 	@Override
 	public List<String> getExpectedLauncherPath() {

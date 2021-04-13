@@ -20,18 +20,11 @@ import static org.junit.Assert.assertEquals;
 import java.util.Map;
 
 import agent.dbgeng.model.impl.DbgModelTargetProcessImpl;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.AbstractDebuggerModelScenarioRegistersTest;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengScenarioX64RegistersTest
 		extends AbstractDebuggerModelScenarioRegistersTest {
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
 
 	@Override
 	protected DebuggerTestSpecimen getSpecimen() {

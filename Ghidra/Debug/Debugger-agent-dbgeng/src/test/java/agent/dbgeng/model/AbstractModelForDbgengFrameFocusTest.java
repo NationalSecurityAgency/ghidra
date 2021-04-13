@@ -46,7 +46,7 @@ public abstract class AbstractModelForDbgengFrameFocusTest
 
 		return retry(() -> {
 			Map<List<String>, TargetStackFrame> frames =
-				m.findAll(TargetStackFrame.class, seedPath());
+				m.findAll(TargetStackFrame.class, seedPath(), true);
 			assertTrue(frames.size() >= 3);
 			return Set.copyOf(frames.values());
 		}, List.of(AssertionError.class));

@@ -29,12 +29,11 @@ public interface ProvidesTargetViaAttachSpecimen extends RequiresTarget, Require
 	@Override
 	default TargetObject obtainTarget() throws Throwable {
 		TargetAttacher attacher = getTest().findAttacher();
-		TargetObject container = getTest().findProcessContainer();
 		DebuggerTestSpecimen specimen = getAttachSpecimen();
 		waitAcc(attacher);
 		DummyProc dummy = specimen.runDummy();
 		setDummy(dummy);
 		attacher.attach(dummy.pid);
-		return retryForProcessRunning(container, specimen, getTest());
+		return retryForProcessRunning(specimen, getTest());
 	}
 }

@@ -17,6 +17,7 @@ package agent.gdb.model;
 
 import java.util.List;
 
+import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.AbstractDebuggerModelInterpreterTest;
 
 public abstract class AbstractModelForGdbInterpreterTest
@@ -39,6 +40,16 @@ public abstract class AbstractModelForGdbInterpreterTest
 	@Override
 	protected String getAttachCommand() {
 		return "attach " + dummy.pid;
+	}
+
+	@Override
+	protected String getDetachCommand(TargetProcess process) {
+		return "detach";
+	}
+
+	@Override
+	protected String getKillCommand(TargetProcess process) {
+		return "kill";
 	}
 
 	@Override

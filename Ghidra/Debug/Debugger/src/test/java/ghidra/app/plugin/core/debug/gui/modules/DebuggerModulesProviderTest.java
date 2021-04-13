@@ -21,8 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.common.collect.Range;
 
@@ -489,6 +488,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
+	@Ignore("This action is hidden until supported")
 	public void testActionCaptureTypes() throws Exception {
 		assertFalse(modulesProvider.actionCaptureTypes.isEnabled());
 		createTestModel();

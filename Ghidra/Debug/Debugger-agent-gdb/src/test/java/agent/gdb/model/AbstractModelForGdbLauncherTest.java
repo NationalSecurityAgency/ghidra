@@ -18,7 +18,6 @@ package agent.gdb.model;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
 import java.util.Map;
 
 import ghidra.dbg.target.TargetEnvironment;
@@ -27,11 +26,6 @@ import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.test.AbstractDebuggerModelLauncherTest;
 
 public abstract class AbstractModelForGdbLauncherTest extends AbstractDebuggerModelLauncherTest {
-
-	@Override
-	public List<String> getExpectedProcessesContainerPath() {
-		return List.of("Inferiors");
-	}
 
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {

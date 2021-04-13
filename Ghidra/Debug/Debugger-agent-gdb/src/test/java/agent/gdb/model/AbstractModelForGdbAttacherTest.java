@@ -32,11 +32,6 @@ public abstract class AbstractModelForGdbAttacherTest extends AbstractDebuggerMo
 	}
 
 	@Override
-	public List<String> getExpectedProcessesContainerPath() {
-		return List.of("Inferiors");
-	}
-
-	@Override
 	public DebuggerTestSpecimen getAttachSpecimen() {
 		return GdbLinuxSpecimen.DD;
 	}

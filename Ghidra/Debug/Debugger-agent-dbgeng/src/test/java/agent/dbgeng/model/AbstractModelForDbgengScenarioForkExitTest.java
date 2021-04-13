@@ -18,17 +18,11 @@ package agent.dbgeng.model;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.test.AbstractDebuggerModelScenarioForkExitTest;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengScenarioForkExitTest
 		extends AbstractDebuggerModelScenarioForkExitTest {
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
 
 	@Override
 	protected DebuggerTestSpecimen getSpecimen() {

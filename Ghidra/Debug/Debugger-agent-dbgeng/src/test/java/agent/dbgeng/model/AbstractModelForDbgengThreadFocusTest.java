@@ -44,7 +44,7 @@ public abstract class AbstractModelForDbgengThreadFocusTest
 		}
 		return retry(() -> {
 			Map<List<String>, TargetThread> found =
-				m.findAll(TargetThread.class, PathUtils.parse("Sessions[0]"));
+				m.findAll(TargetThread.class, PathUtils.parse("Sessions[0]"), true);
 			assertEquals(count, found.size());
 			return Set.copyOf(found.values());
 		}, List.of(AssertionError.class));

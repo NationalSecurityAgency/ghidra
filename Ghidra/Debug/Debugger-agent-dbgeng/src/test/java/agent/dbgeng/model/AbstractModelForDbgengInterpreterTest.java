@@ -17,6 +17,7 @@ package agent.dbgeng.model;
 
 import java.util.List;
 
+import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.AbstractDebuggerModelInterpreterTest;
 import ghidra.dbg.util.PathUtils;
 
@@ -46,6 +47,16 @@ public abstract class AbstractModelForDbgengInterpreterTest
 	@Override
 	protected String getAttachCommand() {
 		return ".attach " + Long.toHexString(dummy.pid);
+	}
+
+	@Override
+	protected String getDetachCommand(TargetProcess process) {
+		return ".detach";
+	}
+
+	@Override
+	protected String getKillCommand(TargetProcess process) {
+		return ".kill";
 	}
 
 	@Override

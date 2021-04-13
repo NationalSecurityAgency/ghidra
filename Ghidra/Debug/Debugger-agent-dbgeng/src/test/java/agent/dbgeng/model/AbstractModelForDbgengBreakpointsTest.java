@@ -15,13 +15,14 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
 
-import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.test.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
@@ -79,10 +80,4 @@ public abstract class AbstractModelForDbgengBreakpointsTest
 				throw new AssertionError();
 		}
 	}
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
-
 }

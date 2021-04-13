@@ -206,16 +206,20 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 
 	@Override
 	public <T extends TargetObject> NavigableMap<List<String>, T> findAll(Class<T> cls,
-			List<String> seedPath) throws Throwable {
+			List<String> seedPath, boolean atLeastOne) throws Throwable {
 		PathMatcher matcher =
 			model.getRootSchema().getSuccessorSchema(seedPath).searchFor(cls, seedPath, false);
 		if (matcher.isEmpty()) {
 			return new TreeMap<>();
 		}
+
+		NavigableMap<List<String>, ?> found = atLeastOne
+				? waitOn(waiter.waitAtLeastOne(matcher))
+				: matcher.getCachedValues(model.getModelRoot());
 		// NB. Outside of testing, an "unsafe" cast of the map should be fine.
 		// During testing, we should expend the energy to verify the heap.
 		NavigableMap<List<String>, T> result = new TreeMap<>(PathComparator.KEYED);
-		for (Entry<List<String>, ?> ent : waitOn(waiter.waitAtLeastOne(matcher)).entrySet()) {
+		for (Entry<List<String>, ?> ent : found.entrySet()) {
 			result.put(ent.getKey(), cls.cast(ent.getValue()));
 		}
 		return result;

@@ -32,11 +32,6 @@ public abstract class AbstractModelForDbgengScenarioStackTest
 	protected NavigableMap<Address, String> symbolsByAddress = new TreeMap<>();
 
 	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
-
-	@Override
 	protected WindowsSpecimen getSpecimen() {
 		return WindowsSpecimen.STACK;
 	}

@@ -16,7 +16,8 @@
 package ghidra.dbg.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -33,7 +34,6 @@ import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.testutil.ElementTrackingListener;
 import ghidra.program.model.address.AddressFactory;
 
 public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebuggerModelTest
@@ -44,10 +44,6 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 	}
 
 	public List<String> getExpectedAttachableContainerPath() {
-		return null;
-	}
-
-	public List<String> getExpectedProcessesContainerPath() {
 		return null;
 	}
 
@@ -63,16 +59,6 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 
 		TargetAttacher attacher = findAttacher();
 		assertEquals(expectedAttacherPath, attacher.getPath());
-	}
-
-	@Test
-	public void testProcessContainerIsWhereExpected() throws Throwable {
-		List<String> expectedProcessContainerPath = getExpectedProcessesContainerPath();
-		assumeNotNull(expectedProcessContainerPath);
-		m.build();
-
-		TargetObject container = findProcessContainer();
-		assertEquals(expectedProcessContainerPath, container.getPath());
 	}
 
 	@Test
@@ -195,12 +181,12 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 		runTestAttachByObjBogusThrowsException(attacher);
 	}
 
-	protected void runTestAttachByPidThenDetach(TargetAttacher attacher, TargetObject container)
+	protected void runTestAttachByPidThenDetach(TargetAttacher attacher)
 			throws Throwable {
 		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestAttachByPid(attacher);
-		runTestDetach(container, specimen);
+		runTestDetach(specimen);
 		assertTrue(dummy.process.isAlive());
 	}
 
@@ -212,16 +198,15 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 		dummy = specimen.runDummy();
 
 		TargetAttacher attacher = findAttacher();
-		TargetObject container = findProcessContainer();
-		runTestAttachByPidThenDetach(attacher, container);
+		runTestAttachByPidThenDetach(attacher);
 	}
 
-	protected void runTestAttachByPidThenKill(TargetAttacher attacher, TargetObject container)
+	protected void runTestAttachByPidThenKill(TargetAttacher attacher)
 			throws Throwable {
 		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestAttachByPid(attacher);
-		runTestKill(container, specimen);
+		runTestKill(specimen);
 		retryVoid(() -> assertFalse(dummy.process.isAlive()), List.of(AssertionError.class));
 	}
 
@@ -233,16 +218,14 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 		dummy = specimen.runDummy();
 
 		TargetAttacher attacher = findAttacher();
-		TargetObject container = findProcessContainer();
-		runTestAttachByPidThenKill(attacher, container);
+		runTestAttachByPidThenKill(attacher);
 	}
 
-	protected void runTestAttachByPidThenResumeInterrupt(TargetAttacher attacher,
-			TargetObject container) throws Throwable {
+	protected void runTestAttachByPidThenResumeInterrupt(TargetAttacher attacher) throws Throwable {
 		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestAttachByPid(attacher);
-		runTestResumeInterruptMany(container, specimen, 3);
+		runTestResumeInterruptMany(specimen, 3);
 		assertTrue(dummy.process.isAlive());
 	}
 
@@ -254,16 +237,14 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 		dummy = specimen.runDummy();
 
 		TargetAttacher attacher = findAttacher();
-		TargetObject container = findProcessContainer();
-		runTestAttachByPidThenResumeInterrupt(attacher, container);
+		runTestAttachByPidThenResumeInterrupt(attacher);
 	}
 
-	protected void runTestAttachShowsInProcessContainer(TargetAttacher attacher,
-			TargetObject container) throws Throwable {
+	protected void runTestAttachShowsInProcessContainer(TargetAttacher attacher) throws Throwable {
 		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		assertNull(getProcessRunning(container, specimen, this));
+		assertNull(getProcessRunning(specimen, this));
 		runTestAttachByPid(attacher);
-		retryForProcessRunning(container, specimen, this);
+		retryForProcessRunning(specimen, this);
 	}
 
 	@Test
@@ -274,36 +255,6 @@ public abstract class AbstractDebuggerModelAttacherTest extends AbstractDebugger
 		dummy = specimen.runDummy();
 
 		TargetAttacher attacher = findAttacher();
-		TargetObject container = findProcessContainer();
-		runTestAttachShowsInProcessContainer(attacher, container);
-	}
-
-	protected void runTestAttachShowsInProcessContainerViaListener(TargetAttacher attacher,
-			TargetObject container) throws Throwable {
-		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		ElementTrackingListener<? extends TargetProcess> procListener =
-			new ElementTrackingListener<>(TargetProcess.class);
-		container.addListener(procListener);
-		// NB. Have to express interest, otherwise model is not obligated to invoke listener
-		Collection<TargetProcess> procsBefore = fetchProcesses(container);
-		procListener.putAll(container.getCachedElements());
-		assertNull(getProcessRunning(procsBefore, specimen, this));
-		runTestAttachByPid(attacher);
-		retryVoid(() -> {
-			// Cannot fetch elements. rely only on listener.
-			assertNotNull(getProcessRunning(procListener.elements.values(), specimen, this));
-		}, List.of(AssertionError.class));
-	}
-
-	@Test
-	public void testAttachShowsInProcessContainerViaListener() throws Throwable {
-		DebuggerTestSpecimen specimen = getAttachSpecimen();
-		assumeTrue(m.hasProcessContainer());
-		m.build();
-		dummy = specimen.runDummy();
-
-		TargetAttacher attacher = findAttacher();
-		TargetObject container = findProcessContainer();
-		runTestAttachShowsInProcessContainerViaListener(attacher, container);
+		runTestAttachShowsInProcessContainer(attacher);
 	}
 }

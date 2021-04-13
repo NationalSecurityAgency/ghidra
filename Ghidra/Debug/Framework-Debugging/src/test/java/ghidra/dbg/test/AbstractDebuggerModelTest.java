@@ -86,19 +86,6 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 	}
 
 	/**
-	 * Get the process container under test
-	 * 
-	 * <p>
-	 * This can be overridden to force a different object under the test.
-	 * 
-	 * @return the process container
-	 * @throws Throwable if anything goes wrong
-	 */
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, seedPath());
-	}
-
-	/**
 	 * Get the breakpoint container of a target under test
 	 * 
 	 * @param seedPath the path to the target
@@ -285,9 +272,9 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 		return waitOn(listener.trapped);
 	}
 
-	protected void runTestDetach(TargetObject container, DebuggerTestSpecimen specimen)
+	protected void runTestDetach(DebuggerTestSpecimen specimen)
 			throws Throwable {
-		TargetProcess process = retryForProcessRunning(container, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetDetachable detachable = m.suitable(TargetDetachable.class, process.getPath());
 		waitAcc(detachable);
 		waitOn(detachable.detach());
@@ -295,9 +282,9 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 			List.of(AssertionError.class));
 	}
 
-	protected void runTestKill(TargetObject container, DebuggerTestSpecimen specimen)
+	protected void runTestKill(DebuggerTestSpecimen specimen)
 			throws Throwable {
-		TargetProcess process = retryForProcessRunning(container, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetKillable killable = m.suitable(TargetKillable.class, process.getPath());
 		waitAcc(killable);
 		waitOn(killable.kill());
@@ -305,9 +292,8 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 			List.of(AssertionError.class));
 	}
 
-	protected void runTestResumeTerminates(TargetObject container, DebuggerTestSpecimen specimen)
-			throws Throwable {
-		TargetProcess process = retryForProcessRunning(container, specimen, this);
+	protected void runTestResumeTerminates(DebuggerTestSpecimen specimen) throws Throwable {
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetResumable resumable = m.suitable(TargetResumable.class, process.getPath());
 		AsyncState state =
 			new AsyncState(m.suitable(TargetExecutionStateful.class, process.getPath()));
@@ -318,9 +304,9 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 			List.of(AssertionError.class));
 	}
 
-	protected void runTestResumeInterruptMany(TargetObject container, DebuggerTestSpecimen specimen,
+	protected void runTestResumeInterruptMany(DebuggerTestSpecimen specimen,
 			int repetitions) throws Throwable {
-		TargetProcess process = retryForProcessRunning(container, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetResumable resumable = m.suitable(TargetResumable.class, process.getPath());
 		TargetInterruptible interruptible =
 			m.suitable(TargetInterruptible.class, process.getPath());
@@ -342,6 +328,6 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 				}, List.of(AssertionError.class));
 			}
 		}
-		waitOn(container.getModel().ping("Are you still there?"));
+		waitOn(m.getModel().ping("Are you still there?"));
 	}
 }

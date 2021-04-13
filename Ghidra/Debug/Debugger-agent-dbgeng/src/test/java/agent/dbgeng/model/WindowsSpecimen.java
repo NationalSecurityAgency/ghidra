@@ -100,7 +100,6 @@ public enum WindowsSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUt
 
 	public String getBinModuleName() {
 		return getShortName(getCommandLine().split("\\s+")[0]);
-
 	}
 
 	@Override
@@ -109,7 +108,7 @@ public enum WindowsSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUt
 		// NB. ShellUtils.parseArgs removes the \s. Not good.
 		String expected = getBinModuleName();
 		Collection<TargetModule> modules =
-			test.m.findAll(TargetModule.class, process.getPath()).values();
+			test.m.findAll(TargetModule.class, process.getPath(), true).values();
 		return modules.stream()
 				.anyMatch(m -> expected.equalsIgnoreCase(getShortName(m.getModuleName())));
 	}

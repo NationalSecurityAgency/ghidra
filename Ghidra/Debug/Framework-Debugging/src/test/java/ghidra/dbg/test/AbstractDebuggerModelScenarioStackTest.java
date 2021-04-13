@@ -122,8 +122,7 @@ public abstract class AbstractDebuggerModelScenarioStackTest extends AbstractDeb
 		TargetLauncher launcher = findLauncher();
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
 		Msg.debug(this, "  Done launching");
-		TargetObject processContainer = findProcessContainer();
-		TargetProcess process = retryForProcessRunning(processContainer, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		postLaunch(process);
 
 		TargetBreakpointSpecContainer breakpointContainer =
@@ -157,7 +156,7 @@ public abstract class AbstractDebuggerModelScenarioStackTest extends AbstractDeb
 		// Sort by path should present them innermost to outermost
 		List<TargetStackFrame> frames = retry(() -> {
 			List<TargetStackFrame> result =
-				List.copyOf(m.findAll(TargetStackFrame.class, stack.getPath()).values());
+				List.copyOf(m.findAll(TargetStackFrame.class, stack.getPath(), true).values());
 			assertTrue("Fewer than 4 frames", result.size() > 4);
 			return result;
 		}, List.of(AssertionError.class));

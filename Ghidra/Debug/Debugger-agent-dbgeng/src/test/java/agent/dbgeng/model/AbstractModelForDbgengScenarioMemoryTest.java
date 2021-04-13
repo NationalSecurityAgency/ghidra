@@ -30,11 +30,6 @@ public abstract class AbstractModelForDbgengScenarioMemoryTest
 		extends AbstractDebuggerModelScenarioMemoryTest {
 
 	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
-
-	@Override
 	protected WindowsSpecimen getSpecimen() {
 		return WindowsSpecimen.PRINT;
 	}

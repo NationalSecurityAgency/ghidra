@@ -15,7 +15,6 @@
  */
 package ghidra.dbg.test;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.invoke.MethodHandles;
@@ -138,9 +137,7 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 		Msg.debug(this, "Launching " + specimen);
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
 		Msg.debug(this, "  Done launching");
-		TargetObject processContainer = findProcessContainer();
-		assertNotNull(processContainer);
-		TargetProcess process = retryForProcessRunning(processContainer, specimen, this);
+		TargetProcess process = retryForProcessRunning(specimen, this);
 		postLaunch(process);
 
 		TargetBreakpointSpecContainer breakpointContainer =

@@ -15,18 +15,10 @@
  */
 package agent.dbgeng.model;
 
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.AbstractDebuggerModelScenarioCloneExitTest;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengScenarioCloneExitTest
 		extends AbstractDebuggerModelScenarioCloneExitTest {
-
-	@Override
-	protected TargetObject findProcessContainer() throws Throwable {
-		return m.findContainer(TargetProcess.class, PathUtils.parse("Sessions[0]"));
-	}
 
 	@Override
 	protected DebuggerTestSpecimen getSpecimen() {

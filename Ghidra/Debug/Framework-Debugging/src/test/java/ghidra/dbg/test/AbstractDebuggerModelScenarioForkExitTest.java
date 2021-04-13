@@ -182,8 +182,6 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 		Msg.debug(this, "Launching " + specimen);
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
 		Msg.debug(this, "  Done launching");
-		TargetObject processContainer = findProcessContainer();
-		assertNotNull("No process container", processContainer);
 		TargetProcess parentProcess = waitOn(stateMonitor.observedParent);
 		Msg.debug(this, "Parent is " + parentProcess.getJoinedPath("."));
 		postLaunch(parentProcess);
@@ -201,7 +199,7 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 			Msg.debug(this, "  Done " + i);
 			waitAcc(access(parentProcess));
 			try {
-				childProcess = retryForOtherProcessRunning(processContainer, specimen, this,
+				childProcess = retryForOtherProcessRunning(specimen, this,
 					p -> p != parentProcess, WAIT_FOR_CHILD_MS);
 			}
 			catch (AssertionError e) {

@@ -73,8 +73,8 @@ public interface TestDebuggerModelProvider {
 
 		<T extends TargetObject> T findAny(Class<T> cls, List<String> seedPath) throws Throwable;
 
-		<T extends TargetObject> Map<List<String>, T> findAll(Class<T> cls, List<String> seedPath)
-				throws Throwable;
+		<T extends TargetObject> Map<List<String>, T> findAll(Class<T> cls, List<String> seedPath,
+				boolean atLeastOne) throws Throwable;
 
 		TargetObject findContainer(Class<? extends TargetObject> cls, List<String> seedPath)
 				throws Throwable;

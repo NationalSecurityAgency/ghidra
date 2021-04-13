@@ -44,7 +44,7 @@ public abstract class AbstractModelForDbgengProcessFocusTest
 		}
 		return retry(() -> {
 			Map<List<String>, TargetProcess> found =
-				m.findAll(TargetProcess.class, PathUtils.parse("Sessions[0]"));
+				m.findAll(TargetProcess.class, PathUtils.parse("Sessions[0]"), true);
 			assertEquals(count, found.size());
 			return Set.copyOf(found.values());
 		}, List.of(AssertionError.class));
