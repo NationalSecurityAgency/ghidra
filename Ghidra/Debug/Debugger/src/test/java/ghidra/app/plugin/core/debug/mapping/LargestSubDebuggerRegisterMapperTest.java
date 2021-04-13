@@ -24,7 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegister;
 import ghidra.dbg.target.*;
@@ -34,9 +33,6 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.model.thread.TraceThread;
 
 public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDebuggerGUITest {
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	static class TestTargetMapper extends AbstractDebuggerTargetTraceMapper {
 		public TestTargetMapper(TargetObject target)

@@ -15,9 +15,8 @@
  */
 package ghidra.app.services;
 
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramSelection;

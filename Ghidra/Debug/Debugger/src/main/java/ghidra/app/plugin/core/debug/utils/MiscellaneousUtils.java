@@ -17,8 +17,13 @@ package ghidra.app.plugin.core.debug.utils;
 
 import java.awt.Component;
 import java.beans.PropertyEditor;
+import java.util.Map;
+import java.util.function.Function;
 
+import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.framework.options.*;
+import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 public enum MiscellaneousUtils {
 	;
@@ -56,5 +61,22 @@ public enum MiscellaneousUtils {
 
 		throw new IllegalStateException(
 			"Ghidra does not know how to use PropertyEditor: " + editor.getClass().getName());
+	}
+
+	public static <T> void collectUniqueInstances(Class<T> cls, Map<String, T> map,
+			Function<T, String> keyFunc) {
+		// This is wasteful. Existing instances will be re-instantiated and thrown away
+		for (T t : ClassSearcher.getInstances(cls)) {
+			String key = keyFunc.apply(t);
+			T exists = map.get(key);
+			if (exists != null) {
+				if (exists.getClass().equals(t.getClass())) {
+					continue;
+				}
+				Msg.error(LocationTrackingSpec.class,
+					cls.getSimpleName() + " conflict over key: " + key);
+			}
+			map.put(key, t);
+		}
 	}
 }

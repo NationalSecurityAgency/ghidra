@@ -34,7 +34,8 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.framework.options.AutoOptions;
@@ -426,7 +427,8 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 				provider.readConfigState(providerState); // Yes, config
 			}
 			else {
-				provider.setTrackingSpec(LocationTrackingSpec.TRACK_NONE);
+				provider.setTrackingSpec(
+					LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
 			}
 		}
 	}

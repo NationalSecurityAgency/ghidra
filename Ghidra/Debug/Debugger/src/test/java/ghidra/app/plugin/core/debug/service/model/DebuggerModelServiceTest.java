@@ -34,8 +34,6 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.model.TestLocalDebuggerModelFactory;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
-import ghidra.dbg.util.PathMatcher;
-import ghidra.dbg.util.PathUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.SystemUtilities;
@@ -53,58 +51,6 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		implements DebuggerModelTestUtils {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
-
-	public static final PathMatcher HARDCODED_MATCHER = new PathMatcher() {
-		{
-			// Paths for GDB
-			addPattern(PathUtils.parse("Breakpoints[]."));
-			addPattern(PathUtils.parse("Inferiors[].Memory[]"));
-			addPattern(PathUtils.parse("Inferiors[].Modules[].Sections[]"));
-			addPattern(PathUtils.parse("Inferiors[].Registers[]"));
-			addPattern(PathUtils.parse("Inferiors[].Threads[]"));
-			addPattern(PathUtils.parse("Inferiors[].Threads[].Stack[]"));
-
-			// Paths for dbgeng
-			addPattern(PathUtils.parse("Sessions[].Processes[].Memory[]"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Modules[]"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Registers[]"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Stack[]"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Debug.Breakpoints[]"));
-
-			// (Additional) paths for dbgmodel
-			addPattern(PathUtils.parse("Sessions[].Attributes"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Stack.Frames[]"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].TTD.Position"));
-			addPattern(PathUtils.parse("Sessions[].Processes[].Threads[].Registers.User."));
-
-			// Paths for JDI
-			addPattern(PathUtils.parse("VirtualMachines[]"));
-			addPattern(PathUtils.parse("VirtualMachines[].Breakpoints"));
-			addPattern(PathUtils.parse("VirtualMachines[].Classes[]"));
-			addPattern(PathUtils.parse("VirtualMachines[].Classes[].Sections[]"));
-			addPattern(PathUtils.parse("VirtualMachines[].Threads[]"));
-			addPattern(PathUtils.parse("VirtualMachines[].Threads[].Registers[]"));
-			addPattern(PathUtils.parse("VirtualMachines[].Threads[].Stack[]"));
-
-		}
-	};
-
-	public static void addTestModelPathPatterns() {
-		PathMatcher m = HARDCODED_MATCHER;
-		m.addPattern(PathUtils.parse("Processes[]"));
-		m.addPattern(PathUtils.parse("Processes[].Breakpoints[]"));
-		m.addPattern(PathUtils.parse("Processes[].Memory[]"));
-		m.addPattern(PathUtils.parse("Processes[].Modules[]"));
-		m.addPattern(PathUtils.parse("Processes[].Registers[]"));
-		m.addPattern(PathUtils.parse("Processes[].Threads[]"));
-		m.addPattern(PathUtils.parse("Processes[].Threads[].RegisterBank"));
-		m.addPattern(PathUtils.parse("Processes[].Threads[].Stack[]"));
-		m.addPattern(PathUtils.parse("Processes[].Threads[].Stack[].RegisterBank"));
-	}
-
-	static {
-		addTestModelPathPatterns();
-	}
 
 	/**
 	 * Exists just for mocking, because jmockit does Bad Things (TM) to

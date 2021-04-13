@@ -28,14 +28,13 @@ import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -50,10 +49,6 @@ import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenerator
 		implements DebuggerModelTestUtils {
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	TestDebuggerModelBuilder mb = new TestDebuggerModelBuilder();
 	DebuggerModelServiceProxyPlugin modelService;

@@ -1,5 +1,6 @@
+AutoReadMemorySpec
 DebuggerBot
 DebuggerMappingOpinion
 DebuggerModelFactory
 DisassemblyInject
-
+LocationTrackingSpec

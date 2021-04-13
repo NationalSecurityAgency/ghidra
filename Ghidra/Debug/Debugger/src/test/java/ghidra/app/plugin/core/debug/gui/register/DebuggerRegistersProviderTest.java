@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
@@ -27,8 +27,9 @@ import org.junit.*;
 import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterTableColumns;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
@@ -48,9 +49,6 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerGUITest
 		implements AsyncTestUtils {
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	protected DebuggerRegistersPlugin registersPlugin;
 	protected DebuggerRegistersProvider registersProvider;
@@ -701,7 +699,8 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
 		// Ensure cause is goto PC, not register tracking 
-		listingPlugin.setTrackingSpec(LocationTrackingSpec.TRACK_NONE);
+		listingPlugin.setTrackingSpec(
+			LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
 		traceManager.activateThread(thread);
 		waitForSwing();
 

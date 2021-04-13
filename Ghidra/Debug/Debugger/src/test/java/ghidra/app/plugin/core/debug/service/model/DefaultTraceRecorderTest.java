@@ -40,15 +40,7 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
-/**
- * NOTE: I'd like to avoid putting too much stuff in here until schemas are done, but I suppose
- * refactoring tests is all part of the refactoring game when it comes down to it.
- */
 public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITest {
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	@Test
 	public void testThreadsRecorded() throws Exception {

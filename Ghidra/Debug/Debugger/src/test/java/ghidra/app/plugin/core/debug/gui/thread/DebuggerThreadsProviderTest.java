@@ -29,7 +29,6 @@ import com.google.common.collect.Range;
 
 import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -39,9 +38,6 @@ import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	protected DebuggerThreadsPlugin threadsPlugin;
 	protected DebuggerThreadsProvider threadsProvider;

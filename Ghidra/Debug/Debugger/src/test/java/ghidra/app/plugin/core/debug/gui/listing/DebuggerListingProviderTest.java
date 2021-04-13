@@ -35,9 +35,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingAutoReadMemoryAction.AutoReadMemorySpec;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
+import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
@@ -59,15 +57,33 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+	static LocationTrackingSpec getLocationTrackingSpec(String name) {
+		return /*waitForValue(() ->*/ LocationTrackingSpec.fromConfigName(name)/*)*/;
+	}
+
+	static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
+		return AutoReadMemorySpec.fromConfigName(name);
+	}
+
+	final LocationTrackingSpec trackNone =
+		getLocationTrackingSpec(NoneLocationTrackingSpec.CONFIG_NAME);
+	final LocationTrackingSpec trackPc =
+		getLocationTrackingSpec(PCLocationTrackingSpec.CONFIG_NAME);
+	final LocationTrackingSpec trackSp =
+		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
+
+	final AutoReadMemorySpec readNone =
+		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+	final AutoReadMemorySpec readVisible =
+		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
+	final AutoReadMemorySpec readVisROOnce =
+		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+
 	protected DebuggerListingPlugin listingPlugin;
 	protected DebuggerListingProvider listingProvider;
 
 	protected DebuggerStaticMappingService mappingService;
 	protected CodeViewerService codeViewer;
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	@Before
 	public void setUpListingProviderTest() throws Exception {
@@ -230,7 +246,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceThread thread1;
 		TraceThread thread2;
 		DebuggerListingProvider extraListing = SwingExecutorService.INSTANCE.submit(
-			() -> listingPlugin.createListingIfMissing(LocationTrackingSpec.TRACK_PC, true)).get();
+			() -> listingPlugin.createListingIfMissing(trackPc, true)).get();
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
@@ -288,7 +304,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		//Pre-check
 		assertEquals(tb.addr(0x00400000), listingProvider.getLocation().getAddress());
 
-		listingProvider.setTrackingSpec(LocationTrackingSpec.TRACK_SP);
+		listingProvider.setTrackingSpec(trackSp);
 		waitForSwing();
 
 		ProgramLocation loc = listingProvider.getLocation();
@@ -299,7 +315,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testFollowsCurrentTraceOnTraceChangeWithoutRegisterTracking()
 			throws Exception {
-		listingProvider.setTrackingSpec(LocationTrackingSpec.TRACK_NONE);
+		listingProvider.setTrackingSpec(trackNone);
 		try ( //
 				ToyDBTraceBuilder b1 =
 					new ToyDBTraceBuilder(name.getMethodName() + "_1", LANGID_TOYBE64); //
@@ -356,7 +372,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testFollowsCurrentThreadOnThreadChangeWithoutRegisterTracking()
 			throws Exception {
-		listingProvider.setTrackingSpec(LocationTrackingSpec.TRACK_NONE);
+		listingProvider.setTrackingSpec(trackNone);
 		try ( //
 				ToyDBTraceBuilder b1 =
 					new ToyDBTraceBuilder(name.getMethodName() + "_1", LANGID_TOYBE64); //
@@ -635,8 +651,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		byte[] data = incBlock();
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
-		assertEquals(AutoReadMemorySpec.READ_VIS_RO_ONCE, listingProvider.getAutoReadMemorySpec());
-		listingProvider.setAutoReadMemorySpec(AutoReadMemorySpec.READ_NONE);
+		assertEquals(readVisROOnce, listingProvider.getAutoReadMemorySpec());
+		listingProvider.setAutoReadMemorySpec(readNone);
 
 		createTestModel();
 		mb.createTestProcessesAndThreads();
@@ -678,7 +694,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		 * NOTE: Should read immediately upon setting auto-read, but we're not focused on the
 		 * written block
 		 */
-		listingProvider.setAutoReadMemorySpec(AutoReadMemorySpec.READ_VIS_RO_ONCE);
+		listingProvider.setAutoReadMemorySpec(readVisROOnce);
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
@@ -731,7 +747,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			listingProvider.locationLabel.getText());
 
 		DebuggerListingProvider extraProvider = runSwing(
-			() -> listingPlugin.createListingIfMissing(LocationTrackingSpec.TRACK_NONE, false));
+			() -> listingPlugin.createListingIfMissing(trackNone, false));
 		waitForSwing();
 		assertEquals(traceManager.getCurrentView(), extraProvider.getProgram());
 		assertEquals("dynamic-testCloseCurrentTraceBlanksListings",
@@ -819,8 +835,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		// Check the default is track pc
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
 		runSwing(() -> goToDyn(tb.addr(0x00400000)));
@@ -831,15 +846,14 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		performAction(listingProvider.actionTrackLocation);
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		setActionStateWithTrigger(listingProvider.actionTrackLocation,
-			LocationTrackingSpec.TRACK_SP, EventTrigger.GUI_ACTION);
+		setActionStateWithTrigger(listingProvider.actionTrackLocation, trackSp,
+			EventTrigger.GUI_ACTION);
 		waitForSwing();
 		assertEquals(tb.addr(0x1fff8765), listingProvider.getLocation().getAddress());
 
-		listingProvider.setTrackingSpec(LocationTrackingSpec.TRACK_NONE);
+		listingProvider.setTrackingSpec(trackNone);
 		waitForSwing();
-		assertEquals(LocationTrackingSpec.TRACK_NONE,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackNone, listingProvider.actionTrackLocation.getCurrentUserData());
 	}
 
 	@Test
@@ -922,7 +936,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// NOTE: Action does not exist for main dynamic listing
 		DebuggerListingProvider extraProvider = runSwing(
-			() -> listingPlugin.createListingIfMissing(LocationTrackingSpec.TRACK_NONE, true));
+			() -> listingPlugin.createListingIfMissing(trackNone, true));
 		waitForSwing();
 		assertTrue(extraProvider.actionFollowsCurrentThread.isEnabled());
 		assertTrue(extraProvider.actionFollowsCurrentThread.isSelected());
@@ -950,7 +964,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
 		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
-		listingProvider.setAutoReadMemorySpec(AutoReadMemorySpec.READ_NONE);
+		listingProvider.setAutoReadMemorySpec(readNone);
 
 		// To verify enabled requires live target
 		createAndOpenTrace();
@@ -1045,28 +1059,24 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	public void testActionAutoReadMemory() {
 		assertTrue(listingProvider.actionAutoReadMemory.isEnabled());
 
-		assertEquals(AutoReadMemorySpec.READ_VIS_RO_ONCE, listingProvider.getAutoReadMemorySpec());
-		assertEquals(AutoReadMemorySpec.READ_VIS_RO_ONCE,
-			listingProvider.actionAutoReadMemory.getCurrentUserData());
+		assertEquals(readVisROOnce, listingProvider.getAutoReadMemorySpec());
+		assertEquals(readVisROOnce, listingProvider.actionAutoReadMemory.getCurrentUserData());
 
 		listingProvider.actionAutoReadMemory
-				.setCurrentActionStateByUserData(AutoReadMemorySpec.READ_NONE);
+				.setCurrentActionStateByUserData(readNone);
 		waitForSwing();
-		assertEquals(AutoReadMemorySpec.READ_NONE, listingProvider.getAutoReadMemorySpec());
-		assertEquals(AutoReadMemorySpec.READ_NONE,
-			listingProvider.actionAutoReadMemory.getCurrentUserData());
+		assertEquals(readNone, listingProvider.getAutoReadMemorySpec());
+		assertEquals(readNone, listingProvider.actionAutoReadMemory.getCurrentUserData());
 
-		listingProvider.setAutoReadMemorySpec(AutoReadMemorySpec.READ_VIS_RO_ONCE);
+		listingProvider.setAutoReadMemorySpec(readVisROOnce);
 		waitForSwing();
-		assertEquals(AutoReadMemorySpec.READ_VIS_RO_ONCE, listingProvider.getAutoReadMemorySpec());
-		assertEquals(AutoReadMemorySpec.READ_VIS_RO_ONCE,
-			listingProvider.actionAutoReadMemory.getCurrentUserData());
+		assertEquals(readVisROOnce, listingProvider.getAutoReadMemorySpec());
+		assertEquals(readVisROOnce, listingProvider.actionAutoReadMemory.getCurrentUserData());
 
-		listingProvider.setAutoReadMemorySpec(AutoReadMemorySpec.READ_NONE);
+		listingProvider.setAutoReadMemorySpec(readNone);
 		waitForSwing();
-		assertEquals(AutoReadMemorySpec.READ_NONE, listingProvider.getAutoReadMemorySpec());
-		assertEquals(AutoReadMemorySpec.READ_NONE,
-			listingProvider.actionAutoReadMemory.getCurrentUserData());
+		assertEquals(readNone, listingProvider.getAutoReadMemorySpec());
+		assertEquals(readNone, listingProvider.actionAutoReadMemory.getCurrentUserData());
 	}
 
 	@Test
@@ -1154,8 +1164,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testActivateThreadTracks() throws Exception {
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
 		createAndOpenTrace();
 		Register pc = tb.language.getProgramCounter();
@@ -1186,8 +1195,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testActivateSnapTracks() throws Exception {
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
 		createAndOpenTrace();
 		Register pc = tb.language.getProgramCounter();
@@ -1215,8 +1223,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testActivateFrameTracks() throws Exception {
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
 		createAndOpenTrace();
 		TraceThread thread;
@@ -1244,8 +1251,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testRegsPCChangedTracks() throws Exception {
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
 		createAndOpenTrace();
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
@@ -1275,8 +1281,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testRegsPCChangedTracksDespiteStackWithNoPC() throws Exception {
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
 		createAndOpenTrace();
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
@@ -1310,8 +1315,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testStackPCChangedTracks() throws Exception {
-		assertEquals(LocationTrackingSpec.TRACK_PC,
-			listingProvider.actionTrackLocation.getCurrentUserData());
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
 		createAndOpenTrace();
 		DBTraceStackManager sm = tb.trace.getStackManager();

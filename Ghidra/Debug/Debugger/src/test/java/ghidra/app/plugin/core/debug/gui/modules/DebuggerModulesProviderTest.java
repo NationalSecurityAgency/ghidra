@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.ModuleMapTableColumns;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.DebuggerStaticMappingService.ModuleMapEntry;
 import ghidra.app.services.DebuggerStaticMappingService.SectionMapEntry;
@@ -75,10 +74,6 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected TraceModule modLib;
 	protected TraceSection secLibText;
 	protected TraceSection secLibData;
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	@Before
 	public void setUpModulesProviderTest() throws Exception {

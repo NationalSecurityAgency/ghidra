@@ -26,7 +26,6 @@ import org.junit.*;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.async.AsyncReference;
@@ -53,10 +52,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		implements DebuggerModelTestUtils {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	/**
 	 * Tracks the current set of logical breakpoints.

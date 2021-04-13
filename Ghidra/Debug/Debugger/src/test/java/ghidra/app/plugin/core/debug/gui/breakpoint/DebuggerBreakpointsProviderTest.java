@@ -31,7 +31,6 @@ import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.*;
 import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.model.TestTargetProcess;
@@ -55,10 +54,6 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		implements AsyncTestUtils {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	protected DebuggerBreakpointsPlugin breakpointsPlugin;
 	protected DebuggerBreakpointsProvider breakpointsProvider;

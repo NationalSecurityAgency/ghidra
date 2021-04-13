@@ -46,10 +46,9 @@ import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingAutoReadMemoryAction.AutoReadMemorySpec;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingAutoReadMemoryAction.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingTrackLocationAction.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
+import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
+import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.plugin.core.exporter.ExporterDialog;
@@ -92,9 +91,7 @@ import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerListingProvider extends CodeViewerProvider implements ListingDisplayListener {
-	private static final LocationTrackingSpec DEFAULT_TRACKING_SPEC = LocationTrackingSpec.TRACK_PC;
-	private static final AutoReadMemorySpec DEFAULT_READ_MEMORY_SPEC =
-		AutoReadMemorySpec.READ_VIS_RO_ONCE;
+
 	private static final AutoConfigState.ClassHandler<DebuggerListingProvider> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerListingProvider.class, MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
@@ -314,6 +311,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 	}
 
+	private final LocationTrackingSpec defaultTrackingSpec =
+		LocationTrackingSpec.fromConfigName(PCLocationTrackingSpec.CONFIG_NAME);
+	private final AutoReadMemorySpec defaultReadMemorySpec =
+		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+
 	private final DebuggerListingPlugin plugin;
 
 	//@AutoServiceConsumed via method
@@ -356,7 +358,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	protected final DebuggerGoToDialog goToDialog;
 
 	@AutoConfigStateField(codec = TrackingSpecConfigFieldCodec.class)
-	protected LocationTrackingSpec trackingSpec = DEFAULT_TRACKING_SPEC;
+	protected LocationTrackingSpec trackingSpec = defaultTrackingSpec;
 	@AutoConfigStateField
 	protected boolean syncToStaticListing;
 	@AutoConfigStateField
@@ -364,7 +366,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	@AutoConfigStateField
 	protected boolean followsCurrentThread = true;
 	@AutoConfigStateField(codec = AutoReadMemorySpecConfigFieldCodec.class)
-	protected AutoReadMemorySpec autoReadMemorySpec = DEFAULT_READ_MEMORY_SPEC;
+	protected AutoReadMemorySpec autoReadMemorySpec = defaultReadMemorySpec;
 	// TODO: followsCurrentSnap
 
 	protected ForTrackingAndLabelingTraceListener forTrackingTraceListener =
@@ -698,11 +700,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		// TODO: Add "other" option, and present most-recent in menu, too
 		// TODO: "other" as in arbitrary expression?
 		// Only those applicable to the current thread's registers, though.
-		actionTrackLocation = DebuggerListingTrackLocationAction.builder(plugin)
+		actionTrackLocation = DebuggerTrackLocationAction.builder(plugin)
 				.onAction(this::activatedLocationTracking)
 				.onActionStateChanged(this::changedLocationTracking)
 				.buildAndInstallLocal(this);
-		actionTrackLocation.setCurrentActionStateByUserData(DEFAULT_TRACKING_SPEC);
+		actionTrackLocation.setCurrentActionStateByUserData(defaultTrackingSpec);
 
 		actionGoTo = GoToAction.builder(plugin)
 				.enabledWhen(ctx -> current.getView() != null)
@@ -721,11 +723,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			actionFollowsCurrentThread = new FollowsCurrentThreadAction();
 		}
 		actionCaptureSelectedMemory = new CaptureSelectedMemoryAction();
-		actionAutoReadMemory = DebuggerListingAutoReadMemoryAction.builder(plugin)
+		actionAutoReadMemory = DebuggerAutoReadMemoryAction.builder(plugin)
 				.onAction(this::activatedAutoReadMemory)
 				.onActionStateChanged(this::changedAutoReadMemory)
 				.buildAndInstallLocal(this);
-		actionAutoReadMemory.setCurrentActionStateByUserData(DEFAULT_READ_MEMORY_SPEC);
+		actionAutoReadMemory.setCurrentActionStateByUserData(defaultReadMemorySpec);
 
 		actionExportView = ExportTraceViewAction.builder(plugin)
 				.enabledWhen(ctx -> current.getView() != null)
@@ -1059,7 +1061,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			return null;
 		}
 		// NB: view's snap may be forked for emulation
-		Address address = trackingSpec.computeTraceAddress(cur, current.getView().getSnap());
+		Address address = trackingSpec.computeTraceAddress(tool, cur, current.getView().getSnap());
 		return address == null ? null : new ProgramLocation(current.getView(), address);
 	}
 
@@ -1112,7 +1114,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	protected void doAutoReadMemory() {
-		autoReadMemorySpec.readMemory(current, visible).exceptionally(ex -> {
+		autoReadMemorySpec.readMemory(tool, current, visible).exceptionally(ex -> {
 			Msg.error(this, "Could not auto-read memory: " + ex);
 			return null;
 		});

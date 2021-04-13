@@ -21,7 +21,6 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.TraceRecorder;
@@ -31,10 +30,6 @@ import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator {
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	// NOTE: Using model builder to capture "recording" icon in tabs
 	TestDebuggerModelBuilder mb = new TestDebuggerModelBuilder();

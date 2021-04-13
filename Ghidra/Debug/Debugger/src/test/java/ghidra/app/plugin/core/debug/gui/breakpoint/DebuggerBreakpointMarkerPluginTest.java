@@ -41,12 +41,11 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.framework.store.LockException;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.Address;
@@ -73,10 +72,6 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected static final Color E_COLOR = new Color(255, 128, 128);
 	protected static final Color DE_COLOR = new Color(255, 192, 128);
 	protected static final Color ED_COLOR = new Color(255, 128, 192);
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	protected DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
 	protected DebuggerListingPlugin listingPlugin;

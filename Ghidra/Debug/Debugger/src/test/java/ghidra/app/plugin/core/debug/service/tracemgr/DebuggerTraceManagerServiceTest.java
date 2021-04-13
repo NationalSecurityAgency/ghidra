@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
@@ -40,10 +39,6 @@ import ghidra.util.database.UndoableTransaction;
 public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
-
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	@Test
 	public void testGetOpenTraces() throws Exception {

@@ -26,7 +26,6 @@ import org.junit.*;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.program.model.address.Address;
@@ -43,9 +42,6 @@ import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
-	static {
-		DebuggerModelServiceTest.addTestModelPathPatterns();
-	}
 
 	protected static void assertNoErr(WatchRow row) {
 		Throwable error = row.getError();
