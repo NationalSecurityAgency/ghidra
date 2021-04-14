@@ -147,10 +147,15 @@ public class FixupMacho32bitArmOffsets {
 		Collections.sort( indexList );
 		
 		ByteArrayOutputStream tempOut = new ByteArrayOutputStream();
+		long fileLength = provider.length();
 		try {
 			long tempIndex = offsetAdjustment;
 			while ( !monitor.isCancelled() ) {
-				final int length = 0x10000;
+				long length = 0x10000;
+				if( tempIndex + length > fileLength ) {
+					length = fileLength - tempIndex;
+				}
+
 				byte [] buffer = provider.readBytes( tempIndex, length );
 
 				for ( Long index : indexList ) {
@@ -163,7 +168,7 @@ public class FixupMacho32bitArmOffsets {
 				tempOut.write( buffer );
 				tempIndex += buffer.length;
 				monitor.setMessage( "0x" + Long.toHexString( tempIndex ) );
-				if ( tempIndex > provider.length() ) {
+				if ( tempIndex >= provider.length() ) {
 					break;
 				}
 			}
