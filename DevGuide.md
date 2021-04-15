@@ -129,7 +129,7 @@ directory populated with the following files:
  * cdt-8.6.0.zip
  * PyDev 6.3.1.zip
  * yajsw-stable-12.12.zip
- * fid/*.fidb
+ * fidb/*.fidb
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
 instructions below...
