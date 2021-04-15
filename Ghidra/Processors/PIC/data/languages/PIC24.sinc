@@ -7066,6 +7066,8 @@ define pcodeop pwrsavOp;
 @else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
+  tmpSRL:1 = tmp(1);
+  unpackSRL( tmpSRL >> 8 );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   return [tmp & 0x7FFFFF];
 @endif
@@ -7102,6 +7104,8 @@ define pcodeop pwrsavOp;
 @else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
+  tmpSRL:1 = tmp(1);
+  unpackSRL( tmpSRL >> 8 );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = (tmp & 0x1) != 0;
   return [tmp & 0x7FFFFE];
@@ -7139,6 +7143,8 @@ define pcodeop pwrsavOp;
 @else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
+  tmpSRL:1 = tmp(1);
+  unpackSRL( tmpSRL >> 8 );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   Wn_t =         k10_t;
   return [tmp & 0x7FFFFF];
@@ -7174,6 +7180,8 @@ define pcodeop pwrsavOp;
 @else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
+  tmpSRL:1 = tmp(1);
+  unpackSRL( tmpSRL >> 8 );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   Wnbyte_t =     k10byte_t;
   return [tmp & 0x7FFFFF];
@@ -7214,6 +7222,8 @@ define pcodeop pwrsavOp;
 @else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
+  tmpSRL:1 = tmp(1);
+  unpackSRL( tmpSRL >> 8 );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = (tmp & 0x1) != 0;
   Wn_t = k10_t;
@@ -7253,6 +7263,8 @@ define pcodeop pwrsavOp;
 @else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
+  tmpSRL:1 = tmp(1);
+  unpackSRL( tmpSRL >> 8 );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = 	(tmp & 0x1) != 0;
   Wnbyte_t =     k10byte_t;
