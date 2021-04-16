@@ -128,9 +128,9 @@ public class DemangledFunction extends DemangledObject {
 		return callingConvention;
 	}
 
-	/** 
-	 * Special constructor where it has a templated type before the parameter list 
-	 * @param type the type 
+	/**
+	 * Special constructor where it has a templated type before the parameter list
+	 * @param type the type
 	 */
 	public void setTemplatedConstructorType(String type) {
 		this.templatedConstructorType = type;
@@ -335,19 +335,53 @@ public class DemangledFunction extends DemangledObject {
 		return super.isAlreadyDemangled(program, address);
 	}
 
+	/**
+	 * This method assumes preconditions test has been run.
+	 */
+	private boolean shouldDisassemble(Program program, Address address, DemanglerOptions options) {
+		CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
+		return (codeUnit instanceof Data); // preconditions check guarantees data is undefined data.
+	}
+
+	private boolean passesPreconditions(Program program, Address address) throws Exception {
+
+		if (!demangledNameSuccessfully()) {
+			throw new DemangledException("Symbol did not demangle at address: " + address);
+		}
+
+		if (isAlreadyDemangled(program, address)) {
+			return false; // not an error, but signifies that we should not continue to process
+		}
+
+		if (address.isMemoryAddress()) {
+			CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
+			if (codeUnit == null) {
+				throw new IllegalArgumentException(
+					"Address not in memory or is off-cut data/instruction: " + address);
+			}
+			if (codeUnit instanceof Data) {
+				if (((Data) codeUnit).isDefined()) {
+					throw new IllegalArgumentException("Defined data at address: " + address);
+				}
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
 
-		if (isAlreadyDemangled(program, address)) {
-			return true;
+		if (!passesPreconditions(program, address)) {
+			return true; // eventually will not return anything 
 		}
 
 		if (!super.applyTo(program, address, options, monitor)) {
 			return false;
 		}
 
-		Function function = createFunction(program, address, options.doDisassembly(), monitor);
+		boolean disassemble = shouldDisassemble(program, address, options);
+		Function function = createFunction(program, address, disassemble, monitor);
 		if (function == null) {
 			// No function whose signature we need to update
 			return false;
@@ -408,10 +442,10 @@ public class DemangledFunction extends DemangledObject {
 	}
 
 	/**
-	 * Determine if existing thunk relationship should be preserved and mangled symbol 
+	 * Determine if existing thunk relationship should be preserved and mangled symbol
 	 * discarded.  This is the case when the thunk function mangled name matches
 	 * the thunked function since we want to avoid duplicate symbol names.
-	 * @param thunkFunction thunk function with a mangled symbol which is currently 
+	 * @param thunkFunction thunk function with a mangled symbol which is currently
 	 * being demangled.
 	 * @return true if thunk should be preserved and mangled symbol discarded, otherwise
 	 * false if thunk relationship should be eliminated and demangled function information
@@ -453,7 +487,7 @@ public class DemangledFunction extends DemangledObject {
 				return true;
 			}
 
-			// TODO: carefully compare signature in absense of matching mangled name
+			// TODO: carefully compare signature in absence of matching mangled name
 			return false;
 		}
 
@@ -575,7 +609,7 @@ public class DemangledFunction extends DemangledObject {
 		if (program.getCompilerSpec().getCallingConvention(callingConvention) == null) {
 			// warn that calling convention not found.  Datatypes are still good,
 			// the real calling convention can be figured out later
-			//   For example X64 can have __cdecl, __fastcall, __stdcall, that 
+			//   For example X64 can have __cdecl, __fastcall, __stdcall, that
 			//   are accepted but ignored
 			BookmarkManager bm = program.getBookmarkManager();
 			Address entry = function.getEntryPoint();
@@ -674,7 +708,7 @@ public class DemangledFunction extends DemangledObject {
 
 	/**
 	 * check if the return/param data types were defined by better than analysis (user, import)
-	 * 
+	 *
 	 * @param func the function to check
 	 * @return true if the parameters are not undefined, or are of a higher source type.
 	 */
@@ -692,7 +726,7 @@ public class DemangledFunction extends DemangledObject {
 			if (dt == null || Undefined.isUndefined(dt)) {
 				continue;
 			}
-			// if the parameters source is higher than 
+			// if the parameters source is higher than
 			if (parameter.getSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
 				return true;
 			}
@@ -841,7 +875,7 @@ public class DemangledFunction extends DemangledObject {
 	}
 
 	protected Function createFunction(Program prog, Address addr, boolean doDisassembly,
-			TaskMonitor monitor) {
+			TaskMonitor monitor) throws DemangledException {
 		Listing listing = prog.getListing();
 		Function func = listing.getFunctionAt(addr);
 		if (func != null) {
@@ -851,7 +885,9 @@ public class DemangledFunction extends DemangledObject {
 		if (addr.isExternalAddress()) {
 			Symbol extSymbol = prog.getSymbolTable().getPrimarySymbol(addr);
 			CreateExternalFunctionCmd cmd = new CreateExternalFunctionCmd(extSymbol);
-			cmd.applyTo(prog);
+			if (!cmd.applyTo(prog)) {
+				throw new DemangledException("Unable to create function: " + cmd.getStatusMsg());
+			}
 		}
 		else {
 			if (doDisassembly) {
@@ -863,7 +899,9 @@ public class DemangledFunction extends DemangledObject {
 				}
 			}
 			CreateFunctionCmd cmd = new CreateFunctionCmd(addr);
-			cmd.applyTo(prog, monitor);
+			if (!cmd.applyTo(prog, monitor)) {
+				throw new DemangledException("Unable to create function: " + cmd.getStatusMsg());
+			}
 		}
 		return listing.getFunctionAt(addr);
 	}
