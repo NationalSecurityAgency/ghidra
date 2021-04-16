@@ -130,18 +130,21 @@ directory populated with the following files:
  * cdt-8.6.0.zip
  * PyDev 6.3.1.zip
  * yajsw-stable-12.12.zip
- * fid/*.fidb
+ * fidb/*.fidb
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
 instructions below...
 
 ### Manual Download Instructions
 
-Create the `~/git/ghidra/dependencies/` and `~/git/ghidra/dependencies/flatRepo` directories to hold the manually-downloaded dependencies:
+Create the `~/git/ghidra/dependencies/` directory and required subdirectories to hold the manually-downloaded dependencies:
 
 ```bash
 mkdir ~/git/ghidra/dependencies
 mkdir ~/git/ghidra/dependencies/flatRepo
+mkdir ~/git/ghidra/dependencies/fidb
+mkdir ~/git/ghidra/dependencies/GhidraServer
+mkdir ~/git/ghidra/dependencies/GhidraDev
 ```
 
 #### Get Dependencies for FileFormats:
@@ -184,26 +187,26 @@ cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/git/ghidra/depe
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
 Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in:
-`~/git/ghidra/dependencies/`:
+`~/git/ghidra/dependencies/GhidraServer/`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
-cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/dependencies/
+cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/dependencies/GhidraServer/
 ```
 
 #### Get Dependencies for GhidraDev
 
 Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for Eclipse.
 Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
-`~/git/ghidra/dependencies/`:
+`~/git/ghidra/dependencies/GhidraDev/`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'https://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
-cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/dependencies/
+cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/dependencies/GhidraDev/
 ```
 
 Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
@@ -211,7 +214,27 @@ Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same director
 ```bash
 cd ~/Downloads   # Or wherever
 curl -L -o 'PyDev 6.3.1.zip' https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
-cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra/dependencies/
+cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra/dependencies/GhidraDev/
+```
+
+#### Get Ghidra Function ID datasets
+
+Download the Ghidra Function ID dataset files from the `ghidra-data` GitHub repository and place them
+in `~/git/ghidra/dependencies/fidb`:
+
+```bash
+cd ~/Downloads   # Or wherever
+curl -L -o 'vs2012_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x64.fidb
+curl -L -o 'vs2012_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x86.fidb
+curl -L -o 'vs2015_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x64.fidb
+curl -L -o 'vs2015_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x86.fidb
+curl -L -o 'vs2017_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x64.fidb
+curl -L -o 'vs2017_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x86.fidb
+curl -L -o 'vs2019_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x64.fidb
+curl -L -o 'vs2019_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x86.fidb
+curl -L -o 'vsOlder_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x64.fidb
+curl -L -o 'vsOlder_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x86.fidb
+cp ~/Downloads/*.fidb ~/git/ghidra/dependencies/fidb/
 ```
 
 ## Building Ghidra
