@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.target;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
@@ -106,6 +106,7 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void actionPerformed(ActionContext context) {
+			connectDialog.reset();
 			tool.showDialog(connectDialog);
 		}
 
