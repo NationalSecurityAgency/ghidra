@@ -13,13 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.ffi.linux;
+package agent.gdb.pty.linux;
 
-/**
- * The master end of a pseudo-terminal
- */
-public class PtyMaster extends PtyEndpoint {
-	PtyMaster(int fd) {
-		super(fd);
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import agent.gdb.pty.PtyEndpoint;
+
+public class LinuxPtyEndpoint implements PtyEndpoint {
+	//private final int fd;
+	private final FdOutputStream outputStream;
+	private final FdInputStream inputStream;
+
+	LinuxPtyEndpoint(int fd) {
+		//this.fd = fd;
+		this.outputStream = new FdOutputStream(fd);
+		this.inputStream = new FdInputStream(fd);
+	}
+
+	@Override
+	public OutputStream getOutputStream() {
+		return outputStream;
+	}
+
+	@Override
+	public InputStream getInputStream() {
+		return inputStream;
 	}
 }

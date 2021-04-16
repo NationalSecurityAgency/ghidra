@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.ffi.linux;
+package agent.gdb.pty.linux;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,8 +25,10 @@ import jnr.posix.POSIXFactory;
 /**
  * An output stream that wraps a native POSIX file descriptor
  * 
- * WARNING: This class makes use of jnr-ffi to invoke native functions. An invalid file descriptor
- * is generally detected, but an incorrect, but valid file descriptor may cause undefined behavior.
+ * <p>
+ * <b>WARNING:</b> This class makes use of jnr-ffi to invoke native functions. An invalid file
+ * descriptor is generally detected, but an incorrect, but valid file descriptor may cause undefined
+ * behavior.
  */
 public class FdOutputStream extends OutputStream {
 	private static final POSIX LIB_POSIX = POSIXFactory.getNativePOSIX();

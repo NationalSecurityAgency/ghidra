@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.ffi.linux;
+package agent.gdb.pty.linux;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -23,21 +23,22 @@ import java.util.*;
 
 import org.junit.Test;
 
+import agent.gdb.pty.PtySession;
 import ghidra.dbg.testutil.DummyProc;
 
-public class PtyTest {
+public class LinuxPtyTest {
 	@Test
 	public void testOpenClosePty() throws IOException {
-		Pty pty = Pty.openpty();
+		LinuxPty pty = LinuxPty.openpty();
 		pty.close();
 	}
 
 	@Test
-	public void testMasterToSlave() throws IOException {
-		try (Pty pty = Pty.openpty()) {
-			PrintWriter writer = new PrintWriter(pty.getMaster().getOutputStream());
+	public void testParentToChild() throws IOException {
+		try (LinuxPty pty = LinuxPty.openpty()) {
+			PrintWriter writer = new PrintWriter(pty.getParent().getOutputStream());
 			BufferedReader reader =
-				new BufferedReader(new InputStreamReader(pty.getSlave().getInputStream()));
+				new BufferedReader(new InputStreamReader(pty.getChild().getInputStream()));
 
 			writer.println("Hello, World!");
 			writer.flush();
@@ -46,11 +47,11 @@ public class PtyTest {
 	}
 
 	@Test
-	public void testSlaveToMaster() throws IOException {
-		try (Pty pty = Pty.openpty()) {
-			PrintWriter writer = new PrintWriter(pty.getSlave().getOutputStream());
+	public void testChildToParent() throws IOException {
+		try (LinuxPty pty = LinuxPty.openpty()) {
+			PrintWriter writer = new PrintWriter(pty.getChild().getOutputStream());
 			BufferedReader reader =
-				new BufferedReader(new InputStreamReader(pty.getMaster().getInputStream()));
+				new BufferedReader(new InputStreamReader(pty.getParent().getInputStream()));
 
 			writer.println("Hello, World!");
 			writer.flush();
@@ -60,22 +61,24 @@ public class PtyTest {
 
 	@Test
 	public void testSessionBash() throws IOException, InterruptedException {
-		try (Pty pty = Pty.openpty()) {
-			Process bash = pty.getSlave().session(new String[] { DummyProc.which("bash") }, null);
-			pty.getMaster().getOutputStream().write("exit\n".getBytes());
-			assertEquals(0, bash.waitFor());
+		try (LinuxPty pty = LinuxPty.openpty()) {
+			PtySession bash =
+				pty.getChild().session(new String[] { DummyProc.which("bash") }, null);
+			pty.getParent().getOutputStream().write("exit\n".getBytes());
+			assertEquals(0, bash.waitExited().intValue());
 		}
 	}
 
 	@Test
 	public void testForkIntoNonExistent() throws IOException, InterruptedException {
-		try (Pty pty = Pty.openpty()) {
-			Process dies = pty.getSlave().session(new String[] { "thisHadBetterNotExist" }, null);
+		try (LinuxPty pty = LinuxPty.openpty()) {
+			PtySession dies =
+				pty.getChild().session(new String[] { "thisHadBetterNotExist" }, null);
 			/**
 			 * NOTE: Java subprocess dies with code 1 on unhandled exception. TODO: Is there a nice
 			 * way to distinguish whether the code is from java or the execed image?
 			 */
-			assertEquals(1, dies.waitFor());
+			assertEquals(1, dies.waitExited().intValue());
 		}
 	}
 
@@ -109,11 +112,12 @@ public class PtyTest {
 		};
 	}
 
-	public Thread runExitCheck(int expected, Process proc) {
+	public Thread runExitCheck(int expected, PtySession session) {
 		Thread exitCheck = new Thread(() -> {
 			while (true) {
 				try {
-					assertEquals("Early exit with wrong code", expected, proc.waitFor());
+					assertEquals("Early exit with wrong code", expected,
+						session.waitExited().intValue());
 					return;
 				}
 				catch (InterruptedException e) {
@@ -132,12 +136,12 @@ public class PtyTest {
 		env.put("PS1", "BASH:");
 		env.put("PROMPT_COMMAND", "");
 		env.put("TERM", "");
-		try (Pty pty = Pty.openpty()) {
-			PtyMaster master = pty.getMaster();
-			PrintWriter writer = new PrintWriter(master.getOutputStream());
-			BufferedReader reader = loggingReader(master.getInputStream());
-			Process bash =
-				pty.getSlave().session(new String[] { DummyProc.which("bash"), "--norc" }, env);
+		try (LinuxPty pty = LinuxPty.openpty()) {
+			LinuxPtyParent parent = pty.getParent();
+			PrintWriter writer = new PrintWriter(parent.getOutputStream());
+			BufferedReader reader = loggingReader(parent.getInputStream());
+			PtySession bash =
+				pty.getChild().session(new String[] { DummyProc.which("bash"), "--norc" }, env);
 			runExitCheck(3, bash);
 
 			writer.println("echo test");
@@ -155,7 +159,7 @@ public class PtyTest {
 			assertTrue("Not 'exit 3' or 'BASH:exit 3': '" + line + "'",
 				Set.of("BASH:exit 3", "exit 3").contains(line));
 
-			assertEquals(3, bash.waitFor());
+			assertEquals(3, bash.waitExited().intValue());
 		}
 	}
 
@@ -165,12 +169,12 @@ public class PtyTest {
 		env.put("PS1", "BASH:");
 		env.put("PROMPT_COMMAND", "");
 		env.put("TERM", "");
-		try (Pty pty = Pty.openpty()) {
-			PtyMaster master = pty.getMaster();
-			PrintWriter writer = new PrintWriter(master.getOutputStream());
-			BufferedReader reader = loggingReader(master.getInputStream());
-			Process bash =
-				pty.getSlave().session(new String[] { DummyProc.which("bash"), "--norc" }, env);
+		try (LinuxPty pty = LinuxPty.openpty()) {
+			LinuxPtyParent parent = pty.getParent();
+			PrintWriter writer = new PrintWriter(parent.getOutputStream());
+			BufferedReader reader = loggingReader(parent.getInputStream());
+			PtySession bash =
+				pty.getChild().session(new String[] { DummyProc.which("bash"), "--norc" }, env);
 			runExitCheck(3, bash);
 
 			writer.println("echo test");
@@ -210,7 +214,7 @@ public class PtyTest {
 			writer.flush();
 			assertTrue(Set.of("BASH:exit 3", "exit 3").contains(reader.readLine()));
 
-			assertEquals(3, bash.waitFor());
+			assertEquals(3, bash.waitExited().intValue());
 		}
 	}
 }

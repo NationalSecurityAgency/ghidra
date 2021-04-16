@@ -24,6 +24,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbCommandError;
+import agent.gdb.pty.PtyFactory;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
@@ -67,8 +68,8 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 
 	protected Map<Object, TargetObject> objectMap = new HashMap<>();
 
-	public GdbModelImpl() {
-		this.gdb = GdbManager.newInstance();
+	public GdbModelImpl(PtyFactory ptyFactory) {
+		this.gdb = GdbManager.newInstance(ptyFactory);
 		this.session = new GdbModelTargetSession(this, ROOT_SCHEMA);
 
 		this.completedSession = CompletableFuture.completedFuture(session);

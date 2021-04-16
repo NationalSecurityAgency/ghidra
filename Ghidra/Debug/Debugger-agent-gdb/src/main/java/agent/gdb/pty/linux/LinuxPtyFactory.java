@@ -13,33 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.manager.impl;
+package agent.gdb.pty.linux;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 
-import org.junit.Ignore;
-
-import agent.gdb.manager.GdbManager;
+import agent.gdb.pty.Pty;
 import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.linux.LinuxPtyFactory;
 
-@Ignore("Need compatible GDB version for CI")
-public class SpawnedCliGdbManagerTest extends AbstractGdbManagerTest {
+public class LinuxPtyFactory implements PtyFactory {
 	@Override
-	protected CompletableFuture<Void> startManager(GdbManager manager) {
-		try {
-			manager.start();
-			return manager.runRC();
-		}
-		catch (IOException e) {
-			throw new AssertionError(e);
-		}
-	}
-
-	@Override
-	protected PtyFactory getPtyFactory() {
-		// TODO: Choose by host OS
-		return new LinuxPtyFactory();
+	public Pty openpty() throws IOException {
+		return LinuxPty.openpty();
 	}
 }

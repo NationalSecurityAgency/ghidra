@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.gdb.gadp.GdbLocalDebuggerModelFactory;
 import agent.gdb.manager.GdbManager;
 import agent.gdb.model.impl.GdbModelImpl;
+import agent.gdb.pty.linux.LinuxPtyFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.LocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
@@ -30,8 +31,8 @@ import ghidra.util.classfinder.ExtensionPointProperties;
  * may change if it proves stable, though, no?
  */
 @FactoryDescription( //
-		brief = "IN-VM GNU gdb local debugger", //
-		htmlDetails = "Launch a GDB session in this same JVM" //
+	brief = "IN-VM GNU gdb local debugger", //
+	htmlDetails = "Launch a GDB session in this same JVM" //
 )
 @ExtensionPointProperties(priority = 80)
 public class GdbInJvmDebuggerModelFactory implements LocalDebuggerModelFactory {
@@ -48,7 +49,8 @@ public class GdbInJvmDebuggerModelFactory implements LocalDebuggerModelFactory {
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
-		GdbModelImpl model = new GdbModelImpl();
+		// TODO: Choose Linux or Windows pty based on host OS
+		GdbModelImpl model = new GdbModelImpl(new LinuxPtyFactory());
 		return model.startGDB(gdbCmd, new String[] {}).thenApply(__ -> model);
 	}
 

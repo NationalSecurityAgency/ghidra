@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.ffi.linux;
+package agent.gdb.pty.linux;
 
 import java.io.*;
 import java.net.URL;
@@ -21,60 +21,57 @@ import java.net.URLDecoder;
 import java.nio.file.Paths;
 import java.util.*;
 
-/**
- * The slave end of a pseudo-terminal
- */
-public class PtySlave extends PtyEndpoint {
-	private final File file;
+import agent.gdb.pty.PtyChild;
+import agent.gdb.pty.PtySession;
+import agent.gdb.pty.local.LocalProcessPtySession;
 
-	PtySlave(int fd, String name) {
+public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
+	private final String name;
+
+	LinuxPtyChild(int fd, String name) {
 		super(fd);
-		this.file = new File(name);
+		this.name = name;
+	}
+
+	@Override
+	public String nullSession() {
+		return name;
 	}
 
 	/**
-	 * Get the file referring to this pseudo-terminal
+	 * {@inheritDoc}
 	 * 
-	 * @return the file
-	 */
-	public File getFile() {
-		return file;
-	}
-
-	/**
-	 * Spawn a subprocess in a new session whose controlling tty is this pseudo-terminal
-	 * 
-	 * Implementation note: This uses {@link ProcessBuilder} to launch the subprocess. See its
-	 * documentation for more details of the parameters of this method.
-	 * 
-	 * Deep implementation note: This actually launches a Python script, which sets up the session
-	 * and then executes the requested program. The requested program image replaces the Python
-	 * interpreter so that the returned process is indeed a handle to the requested program, not a
-	 * Python interpreter. Ordinarily, this does not matter, but it may be useful to know when
-	 * debugging. Furthermore, if special characters are sent on the master before Python has
-	 * executed the requested program, they may be received by the Python interpreter. For example,
-	 * Ctrl-C might be received by Python by mistake if sent immediately upon spawning a new
-	 * session. Users should send a simple command, e.g., "echo", to confirm that the requested
-	 * program is active before sending special characters.
+	 * @implNote This uses {@link ProcessBuilder} to launch the subprocess. See its documentation
+	 *           for more details of the parameters of this method.
+	 * @implNote This actually launches a special "leader" subprocess, which sets up the session and
+	 *           then executes the requested program. The requested program image replaces the
+	 *           leader so that the returned process is indeed a handle to the requested program.
+	 *           Ordinarily, this does not matter, but it may be useful to know when debugging.
+	 *           Furthermore, if special characters are sent on the parent before the image is
+	 *           replaced, they may be received by the leader instead. For example, Ctrl-C might be
+	 *           received by the leader by mistake if sent immediately upon spawning a new session.
+	 *           Users should send a simple command, e.g., "echo", to confirm that the requested
+	 *           program is active before sending special characters.
 	 * 
 	 * @param args the image path and arguments
 	 * @param env the environment
 	 * @return a handle to the subprocess
 	 * @throws IOException
 	 */
-	public Process session(String[] args, Map<String, String> env) throws IOException {
+	@Override
+	public PtySession session(String[] args, Map<String, String> env) throws IOException {
 		return sessionUsingJavaLeader(args, env);
 	}
 
-	protected Process sessionUsingJavaLeader(String[] args, Map<String, String> env)
+	protected PtySession sessionUsingJavaLeader(String[] args, Map<String, String> env)
 			throws IOException {
 		final List<String> argsList = new ArrayList<>();
 		argsList.add("java");
 		argsList.add("-cp");
 		argsList.add(System.getProperty("java.class.path"));
-		argsList.add(PtySessionLeader.class.getCanonicalName());
+		argsList.add(LinuxPtySessionLeader.class.getCanonicalName());
 
-		argsList.add(file.getAbsolutePath());
+		argsList.add(name);
 		argsList.addAll(Arrays.asList(args));
 		ProcessBuilder builder = new ProcessBuilder(argsList);
 		if (env != null) {
@@ -82,17 +79,17 @@ public class PtySlave extends PtyEndpoint {
 		}
 		builder.inheritIO();
 
-		return builder.start();
+		return new LocalProcessPtySession(builder.start());
 	}
 
-	protected Process sessionUsingPythonLeader(String[] args, Map<String, String> env)
+	protected PtySession sessionUsingPythonLeader(String[] args, Map<String, String> env)
 			throws IOException {
 		final List<String> argsList = new ArrayList<>();
 		argsList.add("python");
 		argsList.add("-m");
 		argsList.add("session");
 
-		argsList.add(file.getAbsolutePath());
+		argsList.add(name);
 		argsList.addAll(Arrays.asList(args));
 		ProcessBuilder builder = new ProcessBuilder(argsList);
 		if (env != null) {
@@ -103,12 +100,12 @@ public class PtySlave extends PtyEndpoint {
 		builder.environment().put("PYTHONPATH", sourceLoc);
 		builder.inheritIO();
 
-		return builder.start();
+		return new LocalProcessPtySession(builder.start());
 	}
 
 	public static File getSourceLocationForResource(String name) {
 		// TODO: Refactor this with SystemUtilities.getSourceLocationForClass()
-		URL url = PtySlave.class.getClassLoader().getResource(name);
+		URL url = LinuxPtyChild.class.getClassLoader().getResource(name);
 		String urlFile = url.getFile();
 		try {
 			urlFile = URLDecoder.decode(urlFile, "UTF-8");

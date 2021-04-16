@@ -13,44 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.ffi.linux;
+package agent.gdb.pty.ssh;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * A base class for either end of a pseudo-terminal
- * 
- * This provides the input and output streams
- */
-public class PtyEndpoint {
-	private final int fd;
+import agent.gdb.pty.PtyEndpoint;
 
-	PtyEndpoint(int fd) {
-		this.fd = fd;
+public class SshPtyEndpoint implements PtyEndpoint {
+	private final OutputStream outputStream;
+	private final InputStream inputStream;
+
+	public SshPtyEndpoint(OutputStream outputStream, InputStream inputStream) {
+		this.outputStream = outputStream;
+		this.inputStream = inputStream;
+
 	}
 
-	/**
-	 * Get the output stream for this end of the pty
-	 * 
-	 * Writes to this stream arrive on the input stream for the opposite end, subject to the
-	 * terminal's line discipline.
-	 * 
-	 * @return the output stream
-	 */
+	@Override
 	public OutputStream getOutputStream() {
-		return new FdOutputStream(fd);
+		return outputStream;
 	}
 
-	/**
-	 * Get the input stream for this end of the pty
-	 * 
-	 * Writes to the output stream of the opposite end arrive here, subject to the terminal's line
-	 * discipline.
-	 * 
-	 * @return the input stream
-	 */
+	@Override
 	public InputStream getInputStream() {
-		return new FdInputStream(fd);
+		return inputStream;
 	}
 }

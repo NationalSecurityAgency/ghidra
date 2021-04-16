@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.ffi.linux;
+package agent.gdb.pty.linux;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -21,14 +21,14 @@ import java.util.concurrent.Callable;
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
 
-public class PtySessionLeader {
+public class LinuxPtySessionLeader {
 	private static final POSIX LIB_POSIX = POSIXFactory.getNativePOSIX();
 	private static final int O_RDWR = 2; // TODO: Find this in libs
 
 	public static void main(String[] args) throws Exception {
-		PtySessionLeader master = new PtySessionLeader();
-		master.parseArgs(args);
-		master.run();
+		LinuxPtySessionLeader leader = new LinuxPtySessionLeader();
+		leader.parseArgs(args);
+		leader.run();
 	}
 
 	protected String ptyPath;

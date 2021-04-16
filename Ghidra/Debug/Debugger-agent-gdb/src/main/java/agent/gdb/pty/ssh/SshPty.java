@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.manager.impl;
+package agent.gdb.pty.ssh;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 
-import org.junit.Ignore;
+import agent.gdb.pty.*;
+import ch.ethz.ssh2.Session;
 
-import agent.gdb.manager.GdbManager;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.linux.LinuxPtyFactory;
+public class SshPty implements Pty {
+	private final Session session;
 
-@Ignore("Need compatible GDB version for CI")
-public class SpawnedCliGdbManagerTest extends AbstractGdbManagerTest {
-	@Override
-	protected CompletableFuture<Void> startManager(GdbManager manager) {
-		try {
-			manager.start();
-			return manager.runRC();
-		}
-		catch (IOException e) {
-			throw new AssertionError(e);
-		}
+	public SshPty(Session session) throws IOException {
+		this.session = session;
+		session.requestDumbPTY();
 	}
 
 	@Override
-	protected PtyFactory getPtyFactory() {
-		// TODO: Choose by host OS
-		return new LinuxPtyFactory();
+	public PtyParent getParent() {
+		// TODO: Need I worry about stderr? I thought both pointed to the same tty....
+		return new SshPtyParent(session.getStdin(), session.getStdout());
+	}
+
+	@Override
+	public PtyChild getChild() {
+		return new SshPtyChild(session);
+	}
+
+	@Override
+	public void close() throws IOException {
+		session.close();
 	}
 }
