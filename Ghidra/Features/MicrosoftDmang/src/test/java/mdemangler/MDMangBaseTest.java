@@ -14563,6 +14563,24 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	// Contrived example.
+	@Test
+	public void testCastOperatorToFunctionPointer() throws Exception {
+		mangled = "??BClassName@@YAP6KXP6KXH@Z@ZXZ";
+		msTruth = "__cdecl ClassName::operator void (*)(void (*)(int))(void)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Contrived example.
+	@Test
+	public void testReferenceToConstMemberPointerOfTypeFloatAsFunctionParameter() throws Exception {
+		mangled = "?FnName@FnSpace@@YKXABPUClassName@@M@Z";
+		msTruth = "void FnSpace::FnName(float ClassName::* const &)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
 	//TODO: ignore for now.
 	@Ignore
 	public void testFuzzyFit() throws Exception {

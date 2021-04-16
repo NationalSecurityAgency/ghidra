@@ -47,7 +47,7 @@ public abstract class DemangledObject implements Demangled {
 	protected Demangled namespace;
 	protected String visibility;//public, protected, etc.
 
-	//TODO: storageClass refers to things such as "static" but const and volatile are 
+	//TODO: storageClass refers to things such as "static" but const and volatile are
 	// typeQualifiers.  Should change this everywhere(?).
 	protected String storageClass; //const, volatile, etc
 
@@ -69,6 +69,9 @@ public abstract class DemangledObject implements Demangled {
 	protected String memberScope;
 
 	private String signature;
+
+	// Status of mangled String converted successfully to demangled String
+	private boolean demangledNameSucceeded = false;
 
 	DemangledObject(String mangled, String originalDemangled) {
 		this.mangled = mangled;
@@ -179,6 +182,15 @@ public abstract class DemangledObject implements Demangled {
 			this.name =
 				DemanglerUtil.stripSuperfluousSignatureSpaces(name).trim().replace(' ', '_');
 		}
+		demangledNameSucceeded = !mangled.equals(name);
+	}
+
+	/**
+	 * Returns the success state of converting a mangled String into a demangled String
+	 * @return true succeeded creating demangled String
+	 */
+	public boolean demangledNameSuccessfully() {
+		return demangledNameSucceeded;
 	}
 
 	@Override
@@ -310,14 +322,19 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	/**
-	 * @param program The program for which to apply the comment 
+	 * @param program The program for which to apply the comment
 	 * @param address The address for the comment
 	 * @return {@code true} if a comment was applied
+	 * @throws Exception if the symbol could not be demangled or if the address is invalid
 	 */
-	public boolean applyPlateCommentOnly(Program program, Address address) {
-		if (mangled.equals(name)) {
-			return false;
+	public boolean applyPlateCommentOnly(Program program, Address address) throws Exception {
+		if (!demangledNameSuccessfully()) {
+			throw new DemangledException("Symbol did not demangle at address: " + address);
 		}
+		if (!address.isMemoryAddress() || !program.getMemory().contains(address)) {
+			throw new IllegalArgumentException("Invalid program memory address: " + address);
+		}
+
 		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
 		String newComment = generatePlateComment();
 		if (comment == null || comment.indexOf(newComment) < 0) {
@@ -423,10 +440,10 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	/**
-	 * Get or create the specified typeNamespace.  The returned namespace may only be a partial 
+	 * Get or create the specified typeNamespace.  The returned namespace may only be a partial
 	 * namespace if errors occurred.  The caller should check the returned namespace and adjust
-	 * any symbol creation accordingly.  
-	 * 
+	 * any symbol creation accordingly.
+	 *
 	 * @param program the program
 	 * @param typeNamespace demangled namespace
 	 * @param parentNamespace root namespace to be used (e.g., library, global, etc.)
@@ -456,13 +473,11 @@ public abstract class DemangledObject implements Demangled {
 			catch (DuplicateNameException e) {
 				Msg.error(DemangledObject.class,
 					"Failed to create namespace due to name conflict: " +
-						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName,
-							false));
+						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName, false));
 				break;
 			}
 			catch (InvalidInputException e) {
-				Msg.error(DemangledObject.class,
-					"Failed to create namespace: " + e.getMessage());
+				Msg.error(DemangledObject.class, "Failed to create namespace: " + e.getMessage());
 				break;
 			}
 
@@ -492,10 +507,10 @@ public abstract class DemangledObject implements Demangled {
 		return functionPermitted && symbolType == SymbolType.FUNCTION;
 	}
 
-	/** 
+	/**
 	 * Ensure name does not pass the limit defined by Ghidra
-	 * 
-	 * @param name the name whose length to restrict 
+	 *
+	 * @param name the name whose length to restrict
 	 * @return the name, updated as needed
 	 */
 	protected static String ensureNameLength(String name) {
