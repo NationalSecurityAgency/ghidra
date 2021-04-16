@@ -82,7 +82,7 @@ else {
 	File f = file("ghidra.repos.config")
 	if (!f.exists()) {
 		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
-			"  Ensure you have created the ${f.getName()} file.\n\n\n");
+			"  Ensure you have created the ${flatRepo.getName()} directory or ${f.getName()} file.\n\n\n");
 	}
 }
 
