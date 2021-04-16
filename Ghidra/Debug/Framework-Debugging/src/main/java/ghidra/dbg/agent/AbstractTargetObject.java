@@ -243,6 +243,9 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 	}
 
 	protected void doInvalidate(TargetObject branch, String reason) {
+		if (!valid) {
+			return;
+		}
 		valid = false;
 		model.objectInvalidated(getProxy());
 		listeners.fire.invalidated(getProxy(), branch, reason);

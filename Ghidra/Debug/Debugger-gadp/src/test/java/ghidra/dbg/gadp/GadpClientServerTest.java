@@ -1013,8 +1013,8 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			ssAvail.setElements(List.of(new TestGadpTargetAvailable(ssAvail, 1, "cat") //
 			), "Changed");
 
-			waitOn(invL.count.waitValue(2));
-			waitOn(elemL.count.waitValue(2));
+			waitOn(invL.count.waitUntil(c -> c >= 2));
+			waitOn(elemL.count.waitUntil(c -> c >= 2));
 
 			for (TargetObject a : avail1.values()) {
 				assertFalse(a.isValid());
