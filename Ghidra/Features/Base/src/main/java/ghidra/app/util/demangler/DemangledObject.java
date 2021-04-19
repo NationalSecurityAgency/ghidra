@@ -332,7 +332,7 @@ public abstract class DemangledObject implements Demangled {
 			throw new DemangledException("Symbol did not demangle at address: " + address);
 		}
 		if (!address.isMemoryAddress() || !program.getMemory().contains(address)) {
-			throw new IllegalArgumentException("Invalid program memory address: " + address);
+			return true; // skip this symbol
 		}
 
 		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
