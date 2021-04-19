@@ -263,8 +263,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 
 		String className =
 			"F<class_E::D::G<struct_E::D::H<bool_(__cdecl*const)(enum_C::B_const&),0>,bool,enum_C::B_const&>_>";
-		String functionName =
-			className + "<class_E::D::A<bool,enum_C::B_const&>_>";
+		String functionName = className + "<class_E::D::A<bool,enum_C::B_const&>_>";
 
 		Function function = assertFunction(functionName, addr);
 		assertNoBookmarkAt(addr);
@@ -294,7 +293,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 	 * location symbol.
 	 */
 	@Test
-	public void testApply_ExtrnalFunctionInClassInNamespace() throws Exception {
+	public void testApply_ExternalFunctionInClassInNamespace() throws Exception {
 
 		// this is: public long __thiscall ATL::CRegKey::Close(void)
 		String mangled = "?Close@CRegKey@ATL@@QAEJXZ";
