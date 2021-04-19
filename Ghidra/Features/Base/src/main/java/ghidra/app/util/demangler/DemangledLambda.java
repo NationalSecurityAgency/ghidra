@@ -34,4 +34,9 @@ public class DemangledLambda extends DemangledFunction {
 	public String toString() {
 		return getName();
 	}
+
+	@Override
+	protected void addParameters(StringBuilder buffer, boolean format) {
+		// no parameter display for lambdas; the name currently shows the parameters 
+	}
 }

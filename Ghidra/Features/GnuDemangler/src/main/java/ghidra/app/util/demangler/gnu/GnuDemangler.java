@@ -117,9 +117,6 @@ public class GnuDemangler implements Demangler {
 				dfunc.setNamespace(demangledObject.getNamespace());
 				demangledObject = dfunc;
 			}
-			else {
-				demangledObject.setSignature(demangled);
-			}
 
 			if (isDwarf) {
 				DemangledAddressTable dat =

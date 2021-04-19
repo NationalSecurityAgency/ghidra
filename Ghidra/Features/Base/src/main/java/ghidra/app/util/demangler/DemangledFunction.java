@@ -229,25 +229,8 @@ public class DemangledFunction extends DemangledObject {
 			buffer.append('<').append(templatedConstructorType).append('>');
 		}
 
-		Iterator<DemangledDataType> paramIterator = parameters.iterator();
-		buffer.append('(');
-		String pad = format ? pad(buffer.length()) : "";
-		if (!paramIterator.hasNext()) {
-			buffer.append("void");
-		}
+		addParameters(buffer, format);
 
-		while (paramIterator.hasNext()) {
-			buffer.append(paramIterator.next().getSignature());
-			if (paramIterator.hasNext()) {
-				buffer.append(',');
-				if (format) {
-					buffer.append('\n');
-				}
-				buffer.append(pad);
-			}
-		}
-
-		buffer.append(')');
 		buffer.append(storageClass == null ? "" : " " + storageClass);
 
 		if (returnType instanceof DemangledFunctionPointer) {
@@ -301,6 +284,29 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		return buffer.toString();
+	}
+
+	protected void addParameters(StringBuilder buffer, boolean format) {
+		Iterator<DemangledDataType> paramIterator = parameters.iterator();
+		buffer.append('(');
+		int padLength = format ? buffer.length() : 0;
+		String pad = StringUtils.rightPad("", padLength);
+		if (!paramIterator.hasNext()) {
+			buffer.append("void");
+		}
+
+		while (paramIterator.hasNext()) {
+			buffer.append(paramIterator.next().getSignature());
+			if (paramIterator.hasNext()) {
+				buffer.append(',');
+				if (format) {
+					buffer.append('\n');
+				}
+				buffer.append(pad);
+			}
+		}
+
+		buffer.append(')');
 	}
 
 	@Override

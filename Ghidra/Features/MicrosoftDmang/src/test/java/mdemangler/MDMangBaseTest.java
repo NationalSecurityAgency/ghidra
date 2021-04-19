@@ -477,6 +477,15 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionPointer_NamedFunctionPointerWithAnonymousFunctionPointerParameter()
+			throws Exception {
+		mangled = "?fun@@3P6KXP6KXH@Z@ZA";
+		msTruth = "void (* fun)(void (*)(int))";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
 	public void testFunctionPointer_EMod_invalid() throws Exception {
 		mangled = "?fn@@3PE6AHH@ZA";
 		msTruth = "?fn@@3PE6AHH@ZA";
