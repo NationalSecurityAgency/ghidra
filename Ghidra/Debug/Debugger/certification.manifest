@@ -4,8 +4,6 @@
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
-.classpath||NONE||reviewed||END|
-.project||NONE||reviewed||END|
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|

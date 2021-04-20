@@ -1,5 +1,4 @@
 ##VERSION: 2.0
-.project||NONE||||END|
 Module.manifest||GHIDRA||||END|
 data/build.xml||GHIDRA||||END|
 data/languages/HCS12.cspec||GHIDRA||||END|

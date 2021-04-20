@@ -1,6 +1,4 @@
 ##VERSION: 2.0
-.classpath||NONE||reviewed||END|
-.project||NONE||reviewed||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
