@@ -128,7 +128,7 @@ public class GdbThreadImpl implements GdbThread {
 	protected <T> CompletableFuture<T> execute(AbstractGdbCommand<T> cmd) {
 		switch (cmd.getInterpreter()) {
 			case CLI:
-				return setActive().thenCombine(manager.execute(cmd), (__, v) -> v);
+				return setActive(true).thenCombine(manager.execute(cmd), (__, v) -> v);
 			case MI2:
 				return manager.execute(cmd);
 			default:
@@ -137,9 +137,9 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
-	public CompletableFuture<Void> setActive() {
+	public CompletableFuture<Void> setActive(boolean internal) {
 		// Bypass the select-me-first logic
-		return manager.execute(new GdbSetActiveThreadCommand(manager, id, null));
+		return manager.execute(new GdbSetActiveThreadCommand(manager, id, null, internal));
 	}
 
 	@Override

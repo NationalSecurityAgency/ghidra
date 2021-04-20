@@ -17,10 +17,10 @@ package agent.dbgmodel.model.invm;
 
 import org.junit.Ignore;
 
-import agent.dbgeng.model.AbstractModelForDbgengSessionFocusTest;
+import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
 
 @Ignore("Don't know how to make multiple sessions")
-public class InVmModelForDbgmodelSessionFocusTest extends AbstractModelForDbgengSessionFocusTest {
+public class InVmModelForDbgmodelSessionFocusTest extends AbstractModelForDbgengSessionActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();

@@ -162,10 +162,97 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 		return null;
 	}
 
-	protected void runTestPlaceBreakpoint(TargetBreakpointKind kind) throws Throwable {
-		assumeTrue(getExpectedSupportedKinds().contains(kind));
-		m.build();
+	/**
+	 * Verify that the given breakpoint location covers the required range and kind, using the
+	 * interpreter
+	 * 
+	 * @param range the requested range of the breakpoint
+	 * @param kind the requested kind of the breakpoint
+	 * @param loc the location object
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void assertLocCoversViaInterpreter(AddressRange range,
+			TargetBreakpointKind kind, TargetBreakpointLocation loc,
+			TargetInterpreter interpreter) throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
 
+	/**
+	 * Verify that the given spec and/or location is in the given state, using the interpreter
+	 * 
+	 * @param t the spec or location
+	 * @param enabled the expected state: true for enabled, false for disabled
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void assertEnabledViaInterpreter(TargetTogglable t, boolean enabled,
+			TargetInterpreter interpreter) throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
+
+	/**
+	 * Verify that the given spec and/or location no longer exists, using the interpreter
+	 * 
+	 * @param d the spec or location
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void assertDeletedViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
+			throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
+
+	/**
+	 * Place the given breakpoint using the interpreter
+	 * 
+	 * @param range the requested range
+	 * @param kind the requested kind
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void placeBreakpointViaInterpreter(AddressRange range, TargetBreakpointKind kind,
+			TargetInterpreter interpreter) throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
+
+	/**
+	 * Disable the given spec and/or location using the interpreter
+	 * 
+	 * @param t the spec and/or location
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void disableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
+			throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
+
+	/**
+	 * Enable the given spec and/or location using the interpreter
+	 * 
+	 * @param t the spec and/or location
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void enableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
+			throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
+
+	/**
+	 * Delete the given spec and/or location using the interpreter
+	 * 
+	 * @param d the spec and/or location
+	 * @param interpreter the interpreter
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void deleteViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
+			throws Throwable {
+		fail("Unless hasInterpreter is false, the test must implement this method");
+	}
+
+	protected void addMonitor() {
 		var monitor = new DebuggerModelListener() {
 			DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
 
@@ -217,25 +304,56 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			}
 		};
 		m.getModel().addModelListener(monitor.reorderer, true);
+	}
+
+	protected void runTestPlaceBreakpoint(TargetBreakpointKind kind) throws Throwable {
+		assumeTrue(getExpectedSupportedKinds().contains(kind));
+		m.build();
+
+		addMonitor();
 
 		TargetObject target = obtainTarget();
 		TargetBreakpointSpecContainer container = findBreakpointSpecContainer(target.getPath());
 		AddressRange range = getSuitableRangeForBreakpoint(target, kind);
 		waitOn(container.placeBreakpoint(range, Set.of(kind)));
-		retryVoid(() -> {
+		TargetBreakpointLocation loc = retry(() -> {
 			Collection<? extends TargetBreakpointLocation> found =
 				m.findAll(TargetBreakpointLocation.class, target.getPath(), true).values();
-			assertAtLeastOneLocCovers(found, range, kind);
+			return assertAtLeastOneLocCovers(found, range, kind);
 		}, List.of(AssertionError.class));
+		if (m.hasInterpreter()) {
+			TargetInterpreter interpreter = findInterpreter();
+			assertLocCoversViaInterpreter(range, kind, loc, interpreter);
+		}
+	}
+
+	protected void runTestPlaceBreakpointViaInterpreter(TargetBreakpointKind kind)
+			throws Throwable {
+		assumeTrue(getExpectedSupportedKinds().contains(kind));
+		assumeTrue(m.hasInterpreter());
+		m.build();
+
+		addMonitor();
+
+		TargetObject target = obtainTarget();
+		TargetInterpreter interpreter = findInterpreter();
+		AddressRange range = getSuitableRangeForBreakpoint(target, kind);
+		placeBreakpointViaInterpreter(range, kind, interpreter);
+		TargetBreakpointLocation loc = retry(() -> {
+			Collection<? extends TargetBreakpointLocation> found =
+				m.findAll(TargetBreakpointLocation.class, target.getPath(), true).values();
+			return assertAtLeastOneLocCovers(found, range, kind);
+		}, List.of(AssertionError.class));
+		assertLocCoversViaInterpreter(range, kind, loc, interpreter);
 	}
 
 	@Test
-	public void testPlaceSoftwareBreakpoint() throws Throwable {
+	public void testPlaceSoftwareExecuteBreakpoint() throws Throwable {
 		runTestPlaceBreakpoint(TargetBreakpointKind.SW_EXECUTE);
 	}
 
 	@Test
-	public void testPlaceHardwareBreakpoint() throws Throwable {
+	public void testPlaceHardwareExecuteBreakpoint() throws Throwable {
 		runTestPlaceBreakpoint(TargetBreakpointKind.HW_EXECUTE);
 	}
 
@@ -247,6 +365,26 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 	@Test
 	public void testPlaceWriteBreakpoint() throws Throwable {
 		runTestPlaceBreakpoint(TargetBreakpointKind.WRITE);
+	}
+
+	@Test
+	public void testPlaceSoftwareExecuteBreakpointViaInterpreter() throws Throwable {
+		runTestPlaceBreakpointViaInterpreter(TargetBreakpointKind.SW_EXECUTE);
+	}
+
+	@Test
+	public void testPlaceHardwareExecuteBreakpointViaInterpreter() throws Throwable {
+		runTestPlaceBreakpointViaInterpreter(TargetBreakpointKind.HW_EXECUTE);
+	}
+
+	@Test
+	public void testPlaceReadBreakpointViaInterpreter() throws Throwable {
+		runTestPlaceBreakpointViaInterpreter(TargetBreakpointKind.READ);
+	}
+
+	@Test
+	public void testPlaceWriteBreakpointViaInterpreter() throws Throwable {
+		runTestPlaceBreakpointViaInterpreter(TargetBreakpointKind.WRITE);
 	}
 
 	protected Set<TargetBreakpointLocation> createLocations() throws Throwable {
@@ -278,6 +416,10 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			retryVoid(() -> {
 				assertFalse(t.isEnabled());
 			}, List.of(AssertionError.class));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertEnabledViaInterpreter(t, false, interpreter);
+			}
 		}
 		// Repeat it for fun. Should have no effect
 		for (TargetTogglable t : order) {
@@ -285,6 +427,10 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			retryVoid(() -> {
 				assertFalse(t.isEnabled());
 			}, List.of(AssertionError.class));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertEnabledViaInterpreter(t, false, interpreter);
+			}
 		}
 
 		// Enable each
@@ -293,6 +439,10 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			retryVoid(() -> {
 				assertTrue(t.isEnabled());
 			}, List.of(AssertionError.class));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertEnabledViaInterpreter(t, true, interpreter);
+			}
 		}
 		// Repeat it for fun. Should have no effect
 		for (TargetTogglable t : order) {
@@ -300,6 +450,49 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			retryVoid(() -> {
 				assertTrue(t.isEnabled());
 			}, List.of(AssertionError.class));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertEnabledViaInterpreter(t, true, interpreter);
+			}
+		}
+	}
+
+	protected void runToggleTestViaInterpreter(Set<TargetTogglable> set,
+			TargetInterpreter interpreter) throws Throwable {
+		List<TargetTogglable> order = new ArrayList<>(set);
+		Collections.shuffle(order);
+		// Disable each
+		for (TargetTogglable t : order) {
+			disableViaInterpreter(t, interpreter);
+			retryVoid(() -> {
+				assertFalse(t.isEnabled());
+			}, List.of(AssertionError.class));
+			assertEnabledViaInterpreter(t, false, interpreter);
+		}
+		// Repeat it for fun. Should have no effect
+		for (TargetTogglable t : order) {
+			disableViaInterpreter(t, interpreter);
+			retryVoid(() -> {
+				assertFalse(t.isEnabled());
+			}, List.of(AssertionError.class));
+			assertEnabledViaInterpreter(t, false, interpreter);
+		}
+
+		// Enable each
+		for (TargetTogglable t : order) {
+			enableViaInterpreter(t, interpreter);
+			retryVoid(() -> {
+				assertTrue(t.isEnabled());
+			}, List.of(AssertionError.class));
+			assertEnabledViaInterpreter(t, true, interpreter);
+		}
+		// Repeat it for fun. Should have no effect
+		for (TargetTogglable t : order) {
+			enableViaInterpreter(t, interpreter);
+			retryVoid(() -> {
+				assertTrue(t.isEnabled());
+			}, List.of(AssertionError.class));
+			assertEnabledViaInterpreter(t, true, interpreter);
 		}
 	}
 
@@ -314,6 +507,19 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 	}
 
 	@Test
+	public void testToggleBreakpointsViaInterpreter() throws Throwable {
+		assumeTrue(m.hasInterpreter());
+		m.build();
+
+		TargetInterpreter interpreter = findInterpreter();
+		Set<TargetBreakpointLocation> locs = createLocations();
+		runToggleTestViaInterpreter(locs.stream()
+				.map(l -> l.getSpecification().as(TargetTogglable.class))
+				.collect(Collectors.toSet()),
+			interpreter);
+	}
+
+	@Test
 	public void testToggleBreakpointLocations() throws Throwable {
 		assumeTrue(isSupportsTogglableLocations());
 		m.build();
@@ -323,15 +529,46 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			locs.stream().map(l -> l.as(TargetTogglable.class)).collect(Collectors.toSet()));
 	}
 
+	@Test
+	public void testToggleBreakpointLocationsViaInterpreter() throws Throwable {
+		assumeTrue(isSupportsTogglableLocations());
+		assumeTrue(m.hasInterpreter());
+		m.build();
+
+		TargetInterpreter interpreter = findInterpreter();
+		Set<TargetBreakpointLocation> locs = createLocations();
+		runToggleTestViaInterpreter(
+			locs.stream().map(l -> l.as(TargetTogglable.class)).collect(Collectors.toSet()),
+			interpreter);
+	}
+
 	protected void runDeleteTest(Set<TargetDeletable> set) throws Throwable {
 		List<TargetDeletable> order = new ArrayList<>(set);
 		Collections.shuffle(order);
-		// Disable each
+		// Delete each
 		for (TargetDeletable d : order) {
 			waitOn(d.delete());
 			retryVoid(() -> {
 				assertFalse(d.isValid());
 			}, List.of(AssertionError.class));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertDeletedViaInterpreter(d, interpreter);
+			}
+		}
+	}
+
+	protected void runDeleteTestViaInterpreter(Set<TargetDeletable> set,
+			TargetInterpreter interpreter) throws Throwable {
+		List<TargetDeletable> order = new ArrayList<>(set);
+		Collections.shuffle(order);
+		// Delete each
+		for (TargetDeletable d : order) {
+			deleteViaInterpreter(d, interpreter);
+			retryVoid(() -> {
+				assertFalse(d.isValid());
+			}, List.of(AssertionError.class));
+			assertDeletedViaInterpreter(d, interpreter);
 		}
 	}
 
@@ -346,6 +583,19 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 	}
 
 	@Test
+	public void testDeleteBreakpointsViaInterpreter() throws Throwable {
+		assumeTrue(m.hasInterpreter());
+		m.build();
+
+		TargetInterpreter interpreter = findInterpreter();
+		Set<TargetBreakpointLocation> locs = createLocations();
+		runDeleteTestViaInterpreter(locs.stream()
+				.map(l -> l.getSpecification().as(TargetDeletable.class))
+				.collect(Collectors.toSet()),
+			interpreter);
+	}
+
+	@Test
 	public void testDeleteBreakpointLocations() throws Throwable {
 		assumeTrue(isSupportsDeletableLocations());
 		m.build();
@@ -353,5 +603,18 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 		Set<TargetBreakpointLocation> locs = createLocations();
 		runDeleteTest(
 			locs.stream().map(l -> l.as(TargetDeletable.class)).collect(Collectors.toSet()));
+	}
+
+	@Test
+	public void testDeleteBreakpointLocationsViaInterpreter() throws Throwable {
+		assumeTrue(isSupportsDeletableLocations());
+		assumeTrue(m.hasInterpreter());
+		m.build();
+
+		TargetInterpreter interpreter = findInterpreter();
+		Set<TargetBreakpointLocation> locs = createLocations();
+		runDeleteTestViaInterpreter(
+			locs.stream().map(l -> l.as(TargetDeletable.class)).collect(Collectors.toSet()),
+			interpreter);
 	}
 }

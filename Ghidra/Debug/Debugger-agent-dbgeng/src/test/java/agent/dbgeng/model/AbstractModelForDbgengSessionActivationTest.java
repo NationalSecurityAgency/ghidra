@@ -20,13 +20,13 @@ import static ghidra.lifecycle.Unfinished.TODO;
 import java.util.Set;
 
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.test.AbstractDebuggerModelFocusTest;
+import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
 
-public abstract class AbstractModelForDbgengSessionFocusTest
-		extends AbstractDebuggerModelFocusTest {
+public abstract class AbstractModelForDbgengSessionActivationTest
+		extends AbstractDebuggerModelActivationTest {
 
 	@Override
-	protected Set<TargetObject> getFocusableThings() throws Throwable {
+	protected Set<TargetObject> getActivatableThings() throws Throwable {
 		TODO("Don't know how to make multiple sessions");
 		return null;
 	}

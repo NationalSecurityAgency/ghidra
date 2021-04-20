@@ -152,9 +152,10 @@ public interface GdbInferior extends GdbMemoryOperations {
 	 * will apply to this inferior. Commands issued from this handle are always executed with this
 	 * inferior in focus, so it is rare to invoke his method directly.
 	 * 
+	 * @param internal true to prevent announcement of the change
 	 * @return a future that completes when GDB has executed the command
 	 */
-	CompletableFuture<Void> setActive();
+	CompletableFuture<Void> setActive(boolean internal);
 
 	/**
 	 * Specify a binary image for execution and debug symbols

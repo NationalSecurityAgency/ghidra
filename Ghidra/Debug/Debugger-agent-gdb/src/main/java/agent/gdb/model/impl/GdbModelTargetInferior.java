@@ -375,7 +375,7 @@ public class GdbModelTargetInferior
 	@Override
 	@Internal
 	public CompletableFuture<Void> setActive() {
-		return impl.gateFuture(inferior.setActive());
+		return impl.gateFuture(inferior.setActive(false));
 	}
 
 	@TargetAttributeType(name = EXIT_CODE_ATTRIBUTE_NAME)

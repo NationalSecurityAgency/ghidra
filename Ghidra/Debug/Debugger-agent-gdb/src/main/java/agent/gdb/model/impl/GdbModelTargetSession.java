@@ -21,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.*;
-import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand;
-import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.Output;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbReason;
 import ghidra.async.AsyncUtils;
@@ -150,6 +148,13 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		// Otherwise, we'll presumably get the =thread-selected event 
 	}
 
+	/**
+	 * TODO: This check should be done in the manager? This "internal" concept is either a manager
+	 * concept or a model concept. Right now, it breaches the interface.
+	 * 
+	 * @param cause the cause to examine
+	 * @return true if internal
+	 */
 	protected boolean isFocusInternallyDriven(GdbCause cause) {
 		if (cause == null || cause == GdbCause.Causes.UNCLAIMED) {
 			return false;
@@ -160,13 +165,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		if (cause instanceof GdbPendingCommand<?>) {
 			GdbPendingCommand<?> pcmd = (GdbPendingCommand<?>) cause;
 			GdbCommand<?> cmd = pcmd.getCommand();
-			if (cmd instanceof GdbConsoleExecCommand) {
-				GdbConsoleExecCommand exec = (GdbConsoleExecCommand) cmd;
-				if (exec.getOutputTo() == Output.CAPTURE) {
-					return true;
-				}
-				return false;
-			}
+			return cmd.isFocusInternallyDriven();
 		}
 		return true;
 	}
@@ -323,7 +322,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			if (impl.gdb.getKnownThreads().get(thread.getId()) != thread) {
 				return;
 			}
-			thread.setActive().exceptionally(ex -> {
+			thread.setActive(true).exceptionally(ex -> {
 				impl.reportError(this, "Could not restore event thread", ex);
 				return null;
 			});

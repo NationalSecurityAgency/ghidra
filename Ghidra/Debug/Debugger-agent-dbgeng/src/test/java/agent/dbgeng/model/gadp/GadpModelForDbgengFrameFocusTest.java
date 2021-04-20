@@ -15,9 +15,9 @@
  */
 package agent.dbgeng.model.gadp;
 
-import agent.dbgeng.model.AbstractModelForDbgengFrameFocusTest;
+import agent.dbgeng.model.AbstractModelForDbgengFrameActivationTest;
 
-public class GadpModelForDbgengFrameFocusTest extends AbstractModelForDbgengFrameFocusTest {
+public class GadpModelForDbgengFrameFocusTest extends AbstractModelForDbgengFrameActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new GadpDbgengModelHost();

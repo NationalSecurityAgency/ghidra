@@ -15,23 +15,29 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
-import ghidra.dbg.target.*;
-import ghidra.dbg.test.AbstractDebuggerModelFocusTest;
+import org.junit.Ignore;
 
-public abstract class AbstractModelForDbgengFrameFocusTest
-		extends AbstractDebuggerModelFocusTest {
+import ghidra.dbg.target.*;
+import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
+
+public abstract class AbstractModelForDbgengFrameActivationTest
+		extends AbstractDebuggerModelActivationTest {
+
+	private static final PathPattern STACK_PATTERN =
+		new PathPattern(PathUtils.parse("Sessions[0].Processes[].Threads[].Stack.Frames[]"));
 
 	protected DebuggerTestSpecimen getSpecimen() {
 		return WindowsSpecimen.STACK;
 	}
 
 	@Override
-	protected Set<TargetObject> getFocusableThings() throws Throwable {
+	protected Set<TargetObject> getActivatableThings() throws Throwable {
 		DebuggerTestSpecimen specimen = getSpecimen();
 		TargetLauncher launcher = findLauncher(); // root launcher should generate new inferiors
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
@@ -44,11 +50,30 @@ public abstract class AbstractModelForDbgengFrameFocusTest
 
 		trapAt("expStack!break_here", process);
 
+		waitSettled(m.getModel(), 200);
+
 		return retry(() -> {
 			Map<List<String>, TargetStackFrame> frames =
 				m.findAll(TargetStackFrame.class, seedPath(), true);
 			assertTrue(frames.size() >= 3);
 			return Set.copyOf(frames.values());
 		}, List.of(AssertionError.class));
+	}
+
+	// TODO: Should probably assert default focus/activation here
+
+	@Override
+	@Ignore("dbgeng.dll has no event for frame activation")
+	public void testActivateEachViaInterpreter() throws Throwable {
+	}
+
+	@Override
+	protected void assertActiveViaInterpreter(TargetObject expected, TargetInterpreter interpreter)
+			throws Throwable {
+		String line = waitOn(interpreter.executeCapture(".frame")).trim();
+		assertFalse(line.contains("\n"));
+		int frameId = Integer.parseInt(line.split("\\s+")[0], 16);
+		int expId = Integer.parseInt(STACK_PATTERN.matchIndices(expected.getPath()).get(2), 16);
+		assertEquals(expId, frameId);
 	}
 }

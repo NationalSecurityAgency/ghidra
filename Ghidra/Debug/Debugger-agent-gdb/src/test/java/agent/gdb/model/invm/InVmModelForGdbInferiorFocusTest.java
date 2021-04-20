@@ -15,9 +15,9 @@
  */
 package agent.gdb.model.invm;
 
-import agent.gdb.model.AbstractModelForGdbInferiorFocusTest;
+import agent.gdb.model.AbstractModelForGdbInferiorActivationTest;
 
-public class InVmModelForGdbInferiorFocusTest extends AbstractModelForGdbInferiorFocusTest {
+public class InVmModelForGdbInferiorFocusTest extends AbstractModelForGdbInferiorActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmGdbModelHost();

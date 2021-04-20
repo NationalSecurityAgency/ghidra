@@ -15,9 +15,9 @@
  */
 package agent.dbgeng.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengFrameFocusTest;
+import agent.dbgeng.model.AbstractModelForDbgengFrameActivationTest;
 
-public class InVmModelForDbgengFrameFocusTest extends AbstractModelForDbgengFrameFocusTest {
+public class InVmModelForDbgengFrameFocusTest extends AbstractModelForDbgengFrameActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgengModelHost();

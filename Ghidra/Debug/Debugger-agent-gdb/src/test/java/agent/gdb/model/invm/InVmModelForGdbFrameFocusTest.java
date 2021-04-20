@@ -15,9 +15,9 @@
  */
 package agent.gdb.model.invm;
 
-import agent.gdb.model.AbstractModelForGdbFrameFocusTest;
+import agent.gdb.model.AbstractModelForGdbFrameActivationTest;
 
-public class InVmModelForGdbFrameFocusTest extends AbstractModelForGdbFrameFocusTest {
+public class InVmModelForGdbFrameFocusTest extends AbstractModelForGdbFrameActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmGdbModelHost();

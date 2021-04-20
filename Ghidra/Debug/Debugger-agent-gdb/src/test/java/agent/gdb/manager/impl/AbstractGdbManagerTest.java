@@ -412,7 +412,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			//waitOn(mgr.waitForPrompt());
-			waitOn(thread.setActive());
+			waitOn(thread.setActive(false));
 		}
 	}
 

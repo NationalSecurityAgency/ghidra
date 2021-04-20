@@ -15,7 +15,6 @@
  */
 package ghidra.dbg.test;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.async.AsyncReference;
@@ -180,21 +178,6 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 		TargetInterpreter interpreter = m.find(TargetInterpreter.class, List.of());
 		runTestExecute(interpreter, cmd);
-	}
-
-	@Test
-	@Ignore
-	public void testFocusIsSynced() throws Throwable {
-		TODO();
-	}
-
-	@Test
-	@Ignore
-	public void testBreakpointsAreSynced() throws Throwable {
-		TODO();
-		// TODO: Place different kinds
-		// TODO: Enable/disable
-		// TODO: Delete (spec vs. loc?)
 	}
 
 	protected TargetProcess runTestLaunchViaInterpreterShowsInProcessContainer(

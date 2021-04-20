@@ -17,10 +17,10 @@ package agent.dbgeng.model.gadp;
 
 import org.junit.Ignore;
 
-import agent.dbgeng.model.AbstractModelForDbgengSessionFocusTest;
+import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
 
 @Ignore("Don't know how to make multiple sessions")
-public class GadpModelForDbgengSessionFocusTest extends AbstractModelForDbgengSessionFocusTest {
+public class GadpModelForDbgengSessionFocusTest extends AbstractModelForDbgengSessionActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new GadpDbgengModelHost();

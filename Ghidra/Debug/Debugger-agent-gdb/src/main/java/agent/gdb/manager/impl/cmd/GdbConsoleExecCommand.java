@@ -78,4 +78,9 @@ public class GdbConsoleExecCommand extends AbstractGdbCommandWithThreadAndFrameI
 	public Output getOutputTo() {
 		return to;
 	}
+
+	@Override
+	public boolean isFocusInternallyDriven() {
+		return to == Output.CAPTURE;
+	}
 }

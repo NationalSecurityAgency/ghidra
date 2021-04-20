@@ -15,19 +15,28 @@
  */
 package agent.gdb.model;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import generic.Unique;
 import ghidra.dbg.target.TargetInterpreter;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.test.AbstractDebuggerModelFocusTest;
+import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
+import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
 
-public abstract class AbstractModelForGdbInferiorFocusTest extends AbstractDebuggerModelFocusTest {
+public abstract class AbstractModelForGdbInferiorActivationTest
+		extends AbstractDebuggerModelActivationTest {
+
+	private static final PathPattern INF_PATTERN = new PathPattern(PathUtils.parse("Inferiors[]"));;
 
 	@Override
-	protected Set<TargetObject> getFocusableThings() throws Throwable {
+	protected Set<TargetObject> getActivatableThings() throws Throwable {
 		CompletableFuture<?> inf1 = m.getAddedWaiter().wait(PathUtils.parse("Inferiors[1]"));
 		CompletableFuture<?> inf2 = m.getAddedWaiter().wait(PathUtils.parse("Inferiors[2]"));
 		CompletableFuture<?> inf3 = m.getAddedWaiter().wait(PathUtils.parse("Inferiors[3]"));
@@ -37,6 +46,8 @@ public abstract class AbstractModelForGdbInferiorFocusTest extends AbstractDebug
 		waitOn(interpreter.execute("add-inferior"));
 		waitOn(interpreter.execute("add-inferior"));
 
+		waitSettled(m.getModel(), 200);
+
 		return Set.of(
 			(TargetObject) waitOn(inf1),
 			(TargetObject) waitOn(inf2),
@@ -44,7 +55,25 @@ public abstract class AbstractModelForGdbInferiorFocusTest extends AbstractDebug
 	}
 
 	@Override
-	protected List<String> getExpectedDefaultFocus() {
+	protected List<String> getExpectedDefaultActivePath() {
 		return PathUtils.parse("Inferiors[1]");
+	}
+
+	@Override
+	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
+			throws Throwable {
+		String index = Unique.assertOne(INF_PATTERN.matchIndices(obj.getPath()));
+		waitOn(interpreter.execute("inferior " + index));
+	}
+
+	@Override
+	protected void assertActiveViaInterpreter(TargetObject expected, TargetInterpreter interpreter)
+			throws Throwable {
+		String output = waitOn(interpreter.executeCapture("info inferiors"));
+		String line = Unique.assertOne(Stream.of(output.split("\n"))
+				.filter(l -> l.trim().startsWith("*"))
+				.collect(Collectors.toList())).trim();
+		String inferiorId = line.split("\\s+")[1];
+		assertEquals(expected.getPath(), INF_PATTERN.applyIndices(inferiorId).getSingletonPath());
 	}
 }

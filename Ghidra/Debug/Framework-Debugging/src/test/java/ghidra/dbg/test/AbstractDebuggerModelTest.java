@@ -56,6 +56,10 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 		return List.of();
 	}
 
+	protected TargetActiveScope findActiveScope() throws Throwable {
+		return m.find(TargetActiveScope.class, seedPath());
+	}
+
 	protected TargetObject findAttachableContainer() throws Throwable {
 		return m.findContainer(TargetAttachable.class, seedPath());
 	}

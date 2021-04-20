@@ -15,9 +15,9 @@
  */
 package agent.dbgeng.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengThreadFocusTest;
+import agent.dbgeng.model.AbstractModelForDbgengThreadActivationTest;
 
-public class InVmModelForDbgengThreadFocusTest extends AbstractModelForDbgengThreadFocusTest {
+public class InVmModelForDbgengThreadFocusTest extends AbstractModelForDbgengThreadActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgengModelHost();

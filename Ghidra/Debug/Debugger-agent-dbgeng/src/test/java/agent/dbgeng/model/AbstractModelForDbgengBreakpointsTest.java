@@ -15,20 +15,24 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.test.*;
+import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
 public abstract class AbstractModelForDbgengBreakpointsTest
 		extends AbstractDebuggerModelBreakpointsTest implements ProvidesTargetViaLaunchSpecimen {
+
+	private static final PathPattern BREAK_PATTERN =
+		new PathPattern(PathUtils.parse("Sessions[0].Processes[].Debug.Breakpoints[]"));
+	private static final int BREAK_ID_POS = 1;
 
 	@Override
 	public AbstractDebuggerModelTest getTest() {
@@ -79,5 +83,89 @@ public abstract class AbstractModelForDbgengBreakpointsTest
 			default:
 				throw new AssertionError();
 		}
+	}
+
+	@Override
+	protected void placeBreakpointViaInterpreter(AddressRange range, TargetBreakpointKind kind,
+			TargetInterpreter interpreter) throws Throwable {
+		Address min = range.getMinAddress();
+		if (range.getLength() == 4) {
+			switch (kind) {
+				case READ:
+					waitOn(interpreter.execute("ba r4 " + min));
+					break;
+				case WRITE:
+					waitOn(interpreter.execute("ba w4 " + min));
+					break;
+				default:
+					fail();
+			}
+		}
+		else if (range.getLength() == 1) {
+			switch (kind) {
+				case SW_EXECUTE:
+					waitOn(interpreter.execute("bp " + min));
+					break;
+				case HW_EXECUTE:
+					waitOn(interpreter.execute("ba e1 " + min));
+					break;
+				default:
+					fail();
+			}
+		}
+		else {
+			fail();
+		}
+	}
+
+	@Override
+	protected void disableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
+			throws Throwable {
+		String bpId = BREAK_PATTERN.matchIndices(t.getPath()).get(BREAK_ID_POS);
+		waitOn(interpreter.execute("bd " + bpId));
+	}
+
+	@Override
+	protected void enableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
+			throws Throwable {
+		String bpId = BREAK_PATTERN.matchIndices(t.getPath()).get(BREAK_ID_POS);
+		waitOn(interpreter.execute("be " + bpId));
+	}
+
+	@Override
+	protected void deleteViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
+			throws Throwable {
+		String bpId = BREAK_PATTERN.matchIndices(d.getPath()).get(BREAK_ID_POS);
+		waitOn(interpreter.execute("bc " + bpId));
+	}
+
+	@Override
+	protected void assertLocCoversViaInterpreter(AddressRange range, TargetBreakpointKind kind,
+			TargetBreakpointLocation loc, TargetInterpreter interpreter) throws Throwable {
+		String bpId = BREAK_PATTERN.matchIndices(loc.getPath()).get(BREAK_ID_POS);
+		String line = waitOn(interpreter.executeCapture("bl " + bpId)).trim();
+		assertFalse(line.contains("\n"));
+		// NB. WinDbg numbers breakpoints in base 10, by default
+		assertTrue(line.startsWith(bpId));
+		// TODO: Do I care to parse the details? The ID is confirmed, and details via the object...
+	}
+
+	@Override
+	protected void assertEnabledViaInterpreter(TargetTogglable t, boolean enabled,
+			TargetInterpreter interpreter) throws Throwable {
+		String bpId = BREAK_PATTERN.matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String line = waitOn(interpreter.executeCapture("bl " + bpId)).trim();
+		assertFalse(line.contains("\n"));
+		assertTrue(line.startsWith(bpId));
+		String e = line.split("\\s+")[1];
+		assertEquals(enabled ? "e" : "d", e);
+	}
+
+	@Override
+	protected void assertDeletedViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
+			throws Throwable {
+		String bpId = BREAK_PATTERN.matchIndices(d.getPath()).get(BREAK_ID_POS);
+		String line = waitOn(interpreter.executeCapture("bl " + bpId)).trim();
+		assertEquals("", line);
 	}
 }

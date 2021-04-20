@@ -15,9 +15,9 @@
  */
 package agent.dbgmodel.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengProcessFocusTest;
+import agent.dbgeng.model.AbstractModelForDbgengProcessActivationTest;
 
-public class InVmModelForDbgmodelProcessFocusTest extends AbstractModelForDbgengProcessFocusTest {
+public class InVmModelForDbgmodelProcessFocusTest extends AbstractModelForDbgengProcessActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();

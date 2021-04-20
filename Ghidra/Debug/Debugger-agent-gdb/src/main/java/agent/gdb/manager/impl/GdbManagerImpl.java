@@ -961,7 +961,7 @@ public class GdbManagerImpl implements GdbManager {
 			event(() -> listenersEvent.fire.inferiorSelected(cur, evt.getCause()),
 				"groupRemoved-sel");
 			// Also cause GDB to generate thread selection events, if applicable
-			setActiveInferior(cur);
+			setActiveInferior(cur, false);
 		}
 	}
 
@@ -1527,10 +1527,11 @@ public class GdbManagerImpl implements GdbManager {
 	 * This issues a command to GDB to change its focus. It is not just a manager concept.
 	 * 
 	 * @param inferior the inferior to select
+	 * @param internal true to prevent announcement of the change
 	 * @return a future that completes when GDB has executed the command
 	 */
-	CompletableFuture<Void> setActiveInferior(GdbInferior inferior) {
-		return execute(new GdbInferiorSelectCommand(this, inferior.getId()));
+	CompletableFuture<Void> setActiveInferior(GdbInferior inferior, boolean internal) {
+		return execute(new GdbInferiorSelectCommand(this, inferior.getId(), internal));
 	}
 
 	@Override

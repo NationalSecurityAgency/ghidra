@@ -15,23 +15,31 @@
  */
 package agent.gdb.model;
 
+import static org.junit.Assert.*;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import generic.Unique;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.test.AbstractDebuggerModelFocusTest;
+import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
+import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
 
-public abstract class AbstractModelForGdbFrameFocusTest extends AbstractDebuggerModelFocusTest {
+public abstract class AbstractModelForGdbFrameActivationTest
+		extends AbstractDebuggerModelActivationTest {
+
+	private static final PathPattern STACK_PATTERN =
+		new PathPattern(PathUtils.parse("Inferiors[1].Threads[1].Stack[]"));
 
 	DebuggerTestSpecimen getSpecimen() {
 		return GdbLinuxSpecimen.STACK;
 	}
 
 	@Override
-	protected Set<TargetObject> getFocusableThings() throws Throwable {
+	protected Set<TargetObject> getActivatableThings() throws Throwable {
 		CompletableFuture<?> frame0 =
 			m.getAddedWaiter().wait(PathUtils.parse("Inferiors[1].Threads[1].Stack[0]"));
 		CompletableFuture<?> frame1 =
@@ -48,6 +56,8 @@ public abstract class AbstractModelForGdbFrameFocusTest extends AbstractDebugger
 			(TargetResumable) waitOn(m.getAddedWaiter().wait(PathUtils.parse("Inferiors[1]")));
 		waitOn(inf.resume());
 
+		waitSettled(m.getModel(), 200);
+
 		return Set.of(
 			(TargetObject) waitOn(frame0),
 			(TargetObject) waitOn(frame1),
@@ -55,7 +65,24 @@ public abstract class AbstractModelForGdbFrameFocusTest extends AbstractDebugger
 	}
 
 	@Override
-	protected List<String> getExpectedDefaultFocus() {
+	protected List<String> getExpectedDefaultActivePath() {
 		return PathUtils.parse("Inferiors[1].Threads[1].Stack[0]");
+	}
+
+	@Override
+	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
+			throws Throwable {
+		String index = Unique.assertOne(STACK_PATTERN.matchIndices(obj.getPath()));
+		waitOn(interpreter.execute("frame " + index));
+	}
+
+	@Override
+	protected void assertActiveViaInterpreter(TargetObject expected, TargetInterpreter interpreter)
+			throws Throwable {
+		String line = waitOn(interpreter.executeCapture("frame")).trim();
+		assertFalse(line.contains("\n"));
+		assertTrue(line.startsWith("#"));
+		String frameLevel = line.substring(1).split("\\s+")[0];
+		assertEquals(expected.getPath(), STACK_PATTERN.applyIndices(frameLevel).getSingletonPath());
 	}
 }
