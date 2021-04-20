@@ -1,5 +1,4 @@
 ##VERSION: 2.0
-.project||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/LanguageMap.txt||GHIDRA||||END|
