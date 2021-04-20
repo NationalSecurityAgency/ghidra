@@ -98,6 +98,7 @@ public interface TargetLauncher extends TargetObject {
 
 		public CmdLineParser(Reader r) {
 			super(r);
+			resetSyntax();
 			wordChars(0, 255);
 			whitespaceChars(' ', ' ');
 			quoteChar('"');
