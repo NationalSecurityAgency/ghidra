@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,13 +25,11 @@ import generic.Unique;
 import ghidra.dbg.target.*;
 import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
 import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengProcessActivationTest
 		extends AbstractDebuggerModelActivationTest {
 
-	private static final PathPattern PROCESS_PATTERN =
-		new PathPattern(PathUtils.parse("Sessions[0].Processes[]"));
+	protected abstract PathPattern getProcessPattern();
 
 	protected int getCount() {
 		return 3;
@@ -40,6 +38,8 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 	protected DebuggerTestSpecimen getSpecimen() {
 		return WindowsSpecimen.PRINT;
 	}
+
+	public abstract List<String> getExpectedSessionPath();
 
 	@Override
 	protected Set<TargetObject> getActivatableThings() throws Throwable {
@@ -54,7 +54,7 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 
 		return retry(() -> {
 			Map<List<String>, TargetProcess> found =
-				m.findAll(TargetProcess.class, PathUtils.parse("Sessions[0]"), true);
+				m.findAll(TargetProcess.class, getExpectedSessionPath(), true);
 			assertEquals(count, found.size());
 			return Set.copyOf(found.values());
 		}, List.of(AssertionError.class));
@@ -63,9 +63,11 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String id = Unique.assertOne(PROCESS_PATTERN.matchIndices(obj.getPath()));
-		waitOn(interpreter.execute("|" + id + "s"));
+		String id = Unique.assertOne(getProcessPattern().matchIndices(obj.getPath()));
+		waitOn(interpreter.execute("|" + id + " s"));
 	}
+
+	public abstract String getIdFromCapture(String line);
 
 	@Override
 	protected void assertActiveViaInterpreter(TargetObject expected, TargetInterpreter interpreter)
@@ -74,7 +76,8 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 		String line = Unique.assertOne(Stream.of(output.split("\n"))
 				.filter(l -> l.trim().startsWith("."))
 				.collect(Collectors.toList())).trim();
-		String procId = line.split("\\s+")[1];
-		assertEquals(expected.getPath(), PROCESS_PATTERN.applyIndices(procId).getSingletonPath());
+		String procId = getIdFromCapture(line);
+		assertEquals(expected.getPath(),
+			getProcessPattern().applyIndices(procId).getSingletonPath());
 	}
 }

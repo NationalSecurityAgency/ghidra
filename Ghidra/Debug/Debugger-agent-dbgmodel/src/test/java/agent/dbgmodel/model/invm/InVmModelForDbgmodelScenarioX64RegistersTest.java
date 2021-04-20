@@ -23,4 +23,5 @@ public class InVmModelForDbgmodelScenarioX64RegistersTest
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();
 	}
+
 }

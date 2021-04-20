@@ -26,6 +26,7 @@ import agent.dbgeng.model.iface1.DbgModelSelectableObject;
 import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
 import agent.dbgeng.model.iface2.*;
 import agent.dbgeng.model.impl.DbgModelTargetConnectorContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetProcessImpl;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
@@ -146,6 +147,11 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	public void objectSelected(Object object) {
 		List<String> objPath = findObject(object);
+		TargetObject obj = getModel().getModelObject(objPath);
+		if (obj instanceof DbgModelSelectableObject) {
+			setFocus((DbgModelSelectableObject) obj);
+		}
+		/*
 		getModel().fetchModelValue(objPath, true).thenAccept(obj -> {
 			if (obj instanceof DbgModelSelectableObject) {
 				setFocus((DbgModelSelectableObject) obj);
@@ -154,6 +160,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			Msg.error("Could not set focus on selected object: " + PathUtils.toString(objPath), ex);
 			return null;
 		});
+		*/
 	}
 
 	@Override
@@ -262,6 +269,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			}
 			DbgModel2TargetProxy proxy = (DbgModel2TargetProxy) pobj;
 			DelegateDbgModel2TargetObject delegate = proxy.getDelegate();
+			Map<String, ? extends TargetObject> existingElements =
+				delegate.getCachedElements();
 
 			xpath.add(0, "Debugger");
 			DbgManager2Impl manager = (DbgManager2Impl) getManager();
@@ -270,13 +279,44 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				String searchKey = obj.getSearchKey();
 				if (searchKey.equals(info.toString())) {
 					String elKey = PathUtils.makeKey(searchKey);
-					DbgModel2TargetProxy proxyElement =
-						(DbgModel2TargetProxy) DelegateDbgModel2TargetObject
-								.makeProxy(delegate.getModel(), delegate, elKey, obj);
+					DbgModel2TargetProxy proxyElement;
+					if (existingElements.containsKey(searchKey)) {
+						proxyElement = (DbgModel2TargetProxy) existingElements.get(searchKey);
+						DelegateDbgModel2TargetObject elementDelegate = proxyElement.getDelegate();
+						elementDelegate.setModelObject(obj);
+					}
+					else {
+						proxyElement = (DbgModel2TargetProxy) DelegateDbgModel2TargetObject
+								.makeProxy((DbgModel2Impl) proxy.getModel(), proxy, elKey, obj);
+					}
+					//DbgModel2TargetProxy proxyElement =
+					//	(DbgModel2TargetProxy) DelegateDbgModel2TargetObject
+					//			.makeProxy(delegate.getModel(), delegate, elKey, obj);
 					delegate.changeElements(List.of(), List.of(proxyElement), "Created");
 					seq.exit(proxyElement);
 				}
 			}
+		}).finish();
+	}
+
+	private CompletableFuture<Void> getObjectAndRemove(Object object,
+			List<String> ext, Object info) {
+		List<String> objPath = findObject(object);
+		if (objPath == null) {
+			return CompletableFuture.completedFuture(null);
+		}
+		List<String> xpath = new ArrayList<>();
+		xpath.addAll(objPath);
+		xpath.addAll(ext);
+		return AsyncUtils.sequence(TypeSpec.cls(Void.class)).then(seq -> {
+			getModel().fetchModelObject(xpath).handle(seq::next);
+		}, TypeSpec.cls(TargetObject.class)).then((pobj, seq) -> {
+			if (pobj == null) {
+				return;
+			}
+			DbgModel2TargetProxy proxy = (DbgModel2TargetProxy) pobj;
+			DelegateDbgModel2TargetObject delegate = proxy.getDelegate();
+			delegate.changeElements(List.of(info.toString()), List.of(), "Deleted");
 		}).finish();
 	}
 
@@ -287,23 +327,44 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	@Override
 	public void processRemoved(DebugProcessId processId, DbgCause cause) {
-		DbgModelTargetProcess process = (DbgModelTargetProcess) getObject(processId);
-		if (process == null) {
-			return;
+		getObject(processId).thenAccept(object -> {
+			if (object == null) {
+				return;
+			}
+			DbgModelTargetProcess process = (DbgModelTargetProcess) object.getProxy();
+			process.setExecutionState(TargetExecutionState.INACTIVE, "Detached");
+			DbgProcess proc = process.getProcess();
+			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+				"Process " + proc.getId() + " exited code=" + proc.getExitCode(), List.of(process));
+		});
+	}
+
+	@Override
+	public void processExited(DbgProcess proc, DbgCause cause) {
+		DbgModelTargetProcess targetProcess =
+			(DbgModelTargetProcess) getModel().getModelObject(proc);
+		if (targetProcess != null) {
+			targetProcess.changeAttributes(List.of(), Map.of( //
+				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
+				DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME, proc.getExitCode() //
+			), "Exited");
+			getListeners().fire.event(targetProcess.getProxy(), null,
+				TargetEventType.PROCESS_EXITED,
+				"Process " + proc.getId() + " exited code=" + proc.getExitCode(),
+				List.of(getProxy()));
 		}
-		DbgProcess proc = process.getProcess();
-		getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
-			"Process " + proc.getId() + " exited code=" + proc.getExitCode(), List.of(process));
 	}
 
 	@Override
 	public void threadExited(DebugThreadId threadId, DbgProcess process, DbgCause cause) {
-		DbgModelTargetThread targetThread = (DbgModelTargetThread) getObject(threadId);
-		if (targetThread == null) {
-			return;
-		}
-		getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
-			"Thread " + threadId + " exited", List.of(targetThread));
+		getObject(threadId).thenAccept(thread -> {
+			if (thread == null) {
+				return;
+			}
+			DbgModelTargetThread targetThread = (DbgModelTargetThread) thread.getProxy();
+			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
+				"Thread " + threadId + " exited", List.of(targetThread));
+		});
 	}
 
 	@Override
@@ -321,22 +382,37 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			TargetEventType eventType = getEventType(state, cause, reason);
 			getListeners().fire.event(getProxy(), targetThread, eventType,
 				"Thread " + thread.getId() + " state changed", List.of(targetThread));
+			targetThread.threadStateChangedSpecific(state, reason);
 		});
 	}
 
 	private CompletableFuture<DbgModelTargetObject> stateChanged(Object object, DbgState state,
 			String reason) {
 		List<String> objPath = findObject(object);
+		DbgModelTargetObject obj = (DbgModelTargetObject) getModel().getModelObject(objPath);
+		if (obj instanceof DbgModelTargetExecutionStateful) {
+			DbgModelTargetExecutionStateful stateful =
+				(DbgModelTargetExecutionStateful) obj;
+			TargetExecutionState execState = stateful.convertState(state);
+			stateful.setExecutionState(execState, reason);
+		}
+		return CompletableFuture.completedFuture(obj);
+		/*
 		return AsyncUtils.sequence(TypeSpec.cls(DbgModelTargetObject.class)).then(seq -> {
 			getModel().fetchModelValue(objPath).handle(seq::next);
-		}, TypeSpec.cls(Object.class)).then((obj, seq) -> {
-			if (obj instanceof DbgModelTargetExecutionStateful) {
-				DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) obj;
-				TargetExecutionState execState = stateful.convertState(state);
-				stateful.setExecutionState(execState, reason);
-			}
-			seq.exit((DbgModelTargetObject) obj);
-		}).finish();
+		}, TypeSpec.cls(Object.class))
+				.then((obj, seq) -> {
+					// This is quite possibly redundant
+					if (obj instanceof DbgModelTargetExecutionStateful) {
+						DbgModelTargetExecutionStateful stateful =
+							(DbgModelTargetExecutionStateful) obj;
+						TargetExecutionState execState = stateful.convertState(state);
+						stateful.setExecutionState(execState, reason);
+					}
+					seq.exit((DbgModelTargetObject) obj);
+				})
+				.finish();
+		*/
 	}
 
 	@Override
@@ -356,9 +432,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	@Override
 	public void breakpointDeleted(DbgBreakpointInfo info, DbgCause cause) {
-		int id = info.getDebugBreakpoint().getId();
-		bptInfoMap.remove(id);
-		getObjectRevisited(info.getProc(), List.of("Debug", "Breakpoints"), info);
+		bptInfoMap.remove((int) info.getNumber());
+		getObjectAndRemove(info.getProc(), List.of("Debug", "Breakpoints"), info);
 	}
 
 	@Override
@@ -372,8 +447,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 						return;
 					}
 
-					DbgModelTargetThread targetThread = getParentProcess().getThreads()
-							.getTargetThread(getManager().getEventThread());
+					DbgThread thread = info.getEventThread();
+					TargetObject targetThread = getModel().getModelObject(thread);
 					listeners.fire.breakpointHit(bpt.getParent(), targetThread, null, bpt, bpt);
 					bpt.breakpointHit();
 				});

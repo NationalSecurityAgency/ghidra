@@ -15,11 +15,45 @@
  */
 package agent.dbgmodel.model.invm;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
 import agent.dbgeng.model.AbstractModelForDbgengX64RegistersTest;
+import ghidra.dbg.util.PathUtils;
 
 public class InVmModelForDbgmodelX64RegistersTest extends AbstractModelForDbgengX64RegistersTest {
+
+	public final Map<String, byte[]> REG_VALSX = Map.ofEntries(
+		Map.entry("rax", arr("0123456789abcdef")),
+		Map.entry("rdx", arr("fedcba9876543210")));
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();
+	}
+
+	@Override
+	public boolean isRegisterBankAlsoContainer() {
+		return false;
+	}
+
+	@Override
+	public List<String> getExpectedRegisterBankPath(List<String> threadPath) {
+		return PathUtils.extend(threadPath, List.of("Registers", "User"));
+	}
+
+	@Override
+	public Map<String, byte[]> getRegisterWrites() {
+		return REG_VALSX;
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testRegistersHaveExpectedSizes() throws Throwable {
+		super.testRegistersHaveExpectedSizes();
 	}
 }

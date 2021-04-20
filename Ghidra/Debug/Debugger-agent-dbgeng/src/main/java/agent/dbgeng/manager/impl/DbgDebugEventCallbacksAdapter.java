@@ -121,9 +121,7 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		}
 		if (flags.contains(ChangeEngineState.CURRENT_THREAD)) {
 			Msg.info(this, "***CurrentThread: " + argument);
-			if (argument < 0) {
-				return checkInterrupt(manager.processEvent(event));
-			}
+			return checkInterrupt(manager.processEvent(event));
 		}
 		if (flags.contains(ChangeEngineState.SYSTEMS)) {
 			Msg.info(this, "***Systems: " + argument);

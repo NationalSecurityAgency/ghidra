@@ -15,9 +15,12 @@
  */
 package agent.dbgeng.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengThreadActivationTest;
+import org.junit.Ignore;
 
-public class InVmModelForDbgengThreadFocusTest extends AbstractModelForDbgengThreadActivationTest {
+import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
+
+@Ignore("Don't know how to make multiple sessions")
+public class InVmModelForDbgengSessionActivationTest extends AbstractModelForDbgengSessionActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgengModelHost();

@@ -15,14 +15,31 @@
  */
 package agent.dbgeng.model.invm;
 
-import org.junit.Ignore;
+import java.util.List;
 
-import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
+import agent.dbgeng.model.AbstractModelForDbgengThreadActivationTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
 
-@Ignore("Don't know how to make multiple sessions")
-public class InVmModelForDbgengSessionFocusTest extends AbstractModelForDbgengSessionActivationTest {
+public class InVmModelForDbgengThreadActivationTest
+		extends AbstractModelForDbgengThreadActivationTest {
+
+	protected PathPattern getThreadPattern() {
+		return new PathPattern(PathUtils.parse("Sessions[0].Processes[].Threads[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgengModelHost();
 	}
+
+	@Override
+	public List<String> getExpectedSessionPath() {
+		return PathUtils.parse("Sessions[0]");
+	}
+
+	public String getIdFromCapture(String line) {
+		return line.split("\\s+")[1];
+	}
+
 }

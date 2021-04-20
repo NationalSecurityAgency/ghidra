@@ -41,9 +41,7 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.evt.*;
-import agent.dbgeng.model.iface1.DbgModelTargetActiveScope;
-import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
-import agent.dbgeng.model.iface1.DbgModelTargetInterpreter;
+import agent.dbgeng.model.iface1.*;
 import ghidra.async.*;
 import ghidra.comm.util.BitmaskSet;
 import ghidra.dbg.target.TargetObject;
@@ -951,7 +949,16 @@ public class DbgManagerImpl implements DbgManager {
 			processEvent(new DbgBreakpointModifiedEvent(bptId));
 		}
 		if (flags.contains(ChangeEngineState.CURRENT_THREAD)) {
-			// handled above
+			long id = evt.getArgument();
+			for (DebugThreadId key : getThreads()) {
+				if (key.id == id) {
+					DbgThread thread = getThread(key);
+					if (thread != null) {
+						getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+					}
+					break;
+				}
+			}
 		}
 		if (flags.contains(ChangeEngineState.SYSTEMS)) {
 			processEvent(new DbgSystemsEvent(argument));
@@ -1404,6 +1411,11 @@ public class DbgManagerImpl implements DbgManager {
 
 	public DbgSessionImpl getEventSession() {
 		return (DbgSessionImpl) eventSession;
+	}
+
+	public CompletableFuture<Void> setActiveFrame(DbgThread thread, int index) {
+		currentThread = thread;
+		return execute(new DbgSetActiveThreadCommand(this, thread, index));
 	}
 
 	public CompletableFuture<Void> setActiveThread(DbgThread thread) {

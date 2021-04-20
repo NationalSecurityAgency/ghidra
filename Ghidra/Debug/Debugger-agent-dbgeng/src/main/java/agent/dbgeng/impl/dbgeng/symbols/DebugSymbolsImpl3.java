@@ -20,6 +20,8 @@ import java.util.*;
 import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.platform.win32.COM.COMUtils;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
@@ -28,14 +30,26 @@ import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_MODULE_AND_ID;
 import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_SYMBOL_ENTRY;
 import agent.dbgeng.jna.dbgeng.symbols.IDebugSymbols3;
 
-import com.sun.jna.platform.win32.COM.COMUtils;
-
 public class DebugSymbolsImpl3 extends DebugSymbolsImpl2 {
 	private final IDebugSymbols3 jnaSymbols;
 
 	public DebugSymbolsImpl3(IDebugSymbols3 jnaSymbols) {
 		super(jnaSymbols);
 		this.jnaSymbols = jnaSymbols;
+	}
+
+	@Override
+	public int getCurrentScopeFrameIndex() {
+		ULONGByReference pulIndex = new ULONGByReference();
+		COMUtils.checkRC(jnaSymbols.GetCurrentScopeFrameIndex(pulIndex));
+		return pulIndex.getValue().intValue();
+	}
+
+	@Override
+	public void setCurrentScopeFrameIndex(int index) {
+		ULONG ulIndex = new ULONG(index);
+		HRESULT hr = jnaSymbols.SetCurrentScopeFrameIndex(ulIndex);
+		COMUtils.checkRC(hr);
 	}
 
 	@Override

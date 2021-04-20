@@ -18,10 +18,8 @@ package agent.dbgeng.model.impl;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetFocusScope;
@@ -30,19 +28,44 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
-@TargetObjectSchemaInfo(name = "StackFrame", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = DbgModelTargetStackFrame.FUNC_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.FUNC_TABLE_ENTRY_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.INST_OFFSET_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.FRAME_OFFSET_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.RETURN_OFFSET_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.STACK_OFFSET_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.VIRTUAL_ATTRIBUTE_NAME, type = Boolean.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM0_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM1_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM2_ATTRIBUTE_NAME, type = String.class),
-		@TargetAttributeType(name = DbgModelTargetStackFrame.PARAM3_ATTRIBUTE_NAME, type = String.class),
+@TargetObjectSchemaInfo(
+	name = "StackFrame",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.FUNC_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.FUNC_TABLE_ENTRY_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.INST_OFFSET_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.FRAME_OFFSET_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.RETURN_OFFSET_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.STACK_OFFSET_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.VIRTUAL_ATTRIBUTE_NAME,
+			type = Boolean.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.PARAM0_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.PARAM1_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.PARAM2_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetStackFrame.PARAM3_ATTRIBUTE_NAME,
+			type = String.class),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetStackFrame {
@@ -135,12 +158,6 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 			PARAM2_ATTRIBUTE_NAME, Long.toHexString(params[2]), //
 			PARAM3_ATTRIBUTE_NAME, Long.toHexString(params[3]) //
 		), "Refreshed");
-	}
-
-	@Override
-	public CompletableFuture<Void> setActive() {
-		DbgManagerImpl manager = getManager();
-		return manager.setActiveThread(thread.getThread());
 	}
 
 	@Override

@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.model.gadp;
+package agent.dbgeng.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengThreadActivationTest;
+import agent.dbgeng.model.AbstractModelForDbgengFrameActivationTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
 
-public class GadpModelForDbgengThreadFocusTest extends AbstractModelForDbgengThreadActivationTest {
+public class InVmModelForDbgengFrameActivationTest
+		extends AbstractModelForDbgengFrameActivationTest {
+
+	protected PathPattern getStackPattern() {
+		return new PathPattern(PathUtils.parse("Sessions[0].Processes[].Threads[].Stack[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new GadpDbgengModelHost();
+		return new InVmDbgengModelHost();
 	}
 }

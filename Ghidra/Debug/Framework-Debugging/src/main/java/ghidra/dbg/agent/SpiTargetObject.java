@@ -26,4 +26,13 @@ public interface SpiTargetObject extends TargetObject, InvalidatableTargetObject
 	//Map<String, ? extends SpiTargetObject> getCachedElements();
 
 	boolean enforcesStrictSchema();
+
+	/**
+	 * If this internal implementation is a proxy, get its delegate
+	 * 
+	 * @return the delegate, or this same object
+	 */
+	default SpiTargetObject getDelegate() {
+		return this;
+	}
 }

@@ -77,4 +77,9 @@ public interface DebugSymbols {
 	int getSymbolOptions();
 
 	void setSymbolOptions(int options);
+
+	public int getCurrentScopeFrameIndex();
+
+	public void setCurrentScopeFrameIndex(int index);
+
 }

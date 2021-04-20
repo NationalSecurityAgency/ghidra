@@ -20,17 +20,16 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.junit.Ignore;
+import org.junit.Test;
 
 import ghidra.dbg.target.*;
 import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
 import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengFrameActivationTest
 		extends AbstractDebuggerModelActivationTest {
 
-	private static final PathPattern STACK_PATTERN =
-		new PathPattern(PathUtils.parse("Sessions[0].Processes[].Threads[].Stack.Frames[]"));
+	protected abstract PathPattern getStackPattern();
 
 	protected DebuggerTestSpecimen getSpecimen() {
 		return WindowsSpecimen.STACK;
@@ -73,7 +72,45 @@ public abstract class AbstractModelForDbgengFrameActivationTest
 		String line = waitOn(interpreter.executeCapture(".frame")).trim();
 		assertFalse(line.contains("\n"));
 		int frameId = Integer.parseInt(line.split("\\s+")[0], 16);
-		int expId = Integer.parseInt(STACK_PATTERN.matchIndices(expected.getPath()).get(2), 16);
+		int expId = Integer.decode(getStackPattern().matchIndices(expected.getPath()).get(2));
 		assertEquals(expId, frameId);
 	}
+
+	@Override
+	@Test
+	public void testActivateEachOnce() throws Throwable {
+		m.build();
+
+		TargetActiveScope activeScope = findActiveScope();
+		Set<TargetObject> activatable = getActivatableThings();
+		for (TargetObject obj : activatable) {
+			waitOn(activeScope.requestActivation(obj));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertActiveViaInterpreter(obj, interpreter);
+			}
+		}
+
+	}
+
+	@Test
+	public void testActivateEachTwice() throws Throwable {
+		m.build();
+
+		TargetActiveScope activeScope = findActiveScope();
+		Set<TargetObject> activatable = getActivatableThings();
+		for (TargetObject obj : activatable) {
+			waitOn(activeScope.requestActivation(obj));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertActiveViaInterpreter(obj, interpreter);
+			}
+			waitOn(activeScope.requestActivation(obj));
+			if (m.hasInterpreter()) {
+				TargetInterpreter interpreter = findInterpreter();
+				assertActiveViaInterpreter(obj, interpreter);
+			}
+		}
+	}
+
 }

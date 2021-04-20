@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.model.gadp;
+package agent.gdb.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengFrameActivationTest;
+import agent.gdb.model.AbstractModelForGdbInferiorActivationTest;
 
-public class GadpModelForDbgengFrameFocusTest extends AbstractModelForDbgengFrameActivationTest {
+public class InVmModelForGdbInferiorActivationTest extends AbstractModelForGdbInferiorActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new GadpDbgengModelHost();
+		return new InVmGdbModelHost();
 	}
 }

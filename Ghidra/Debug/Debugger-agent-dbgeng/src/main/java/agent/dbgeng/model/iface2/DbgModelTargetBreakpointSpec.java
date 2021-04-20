@@ -89,6 +89,7 @@ public interface DbgModelTargetBreakpointSpec extends //
 		AddressSpace space = getModel().getAddressSpace("ram");
 		return requestNativeAttributes().thenAccept(attrs -> {
 			if (attrs != null) {
+				map.putAll(attrs);
 				TargetObject addr = (TargetObject) attrs.get("Address");
 				TargetObject id = (TargetObject) attrs.get("Id");
 				//TargetObject unique = (TargetObject) attrs.get("UniqueID");
@@ -108,7 +109,7 @@ public interface DbgModelTargetBreakpointSpec extends //
 				map.put(SPEC_ATTRIBUTE_NAME, this);
 				map.put(EXPRESSION_ATTRIBUTE_NAME, addstr);
 				map.put(KINDS_ATTRIBUTE_NAME, getKinds());
-				map.put(BPT_INDEX_ATTRIBUTE_NAME, Long.decode(idstr));
+				//map.put(BPT_INDEX_ATTRIBUTE_NAME, Long.decode(idstr));
 				map.put(ENABLED_ATTRIBUTE_NAME, enstr.equals("-1"));
 				setEnabled(enstr.equals("-1"), "Refreshed");
 				int size = getBreakpointInfo().getSize();

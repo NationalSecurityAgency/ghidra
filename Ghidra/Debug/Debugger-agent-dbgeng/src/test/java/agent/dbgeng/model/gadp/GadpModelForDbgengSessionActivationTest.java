@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.model.invm;
+package agent.dbgeng.model.gadp;
 
-import agent.dbgeng.model.AbstractModelForDbgengProcessActivationTest;
+import org.junit.Ignore;
 
-public class InVmModelForDbgengProcessFocusTest extends AbstractModelForDbgengProcessActivationTest {
+import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
+
+@Ignore("Don't know how to make multiple sessions")
+public class GadpModelForDbgengSessionActivationTest extends AbstractModelForDbgengSessionActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new InVmDbgengModelHost();
+		return new GadpDbgengModelHost();
 	}
 }

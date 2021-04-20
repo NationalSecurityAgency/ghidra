@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgmodel.model.invm;
+package agent.gdb.model.invm;
 
-import agent.dbgeng.model.AbstractModelForDbgengThreadActivationTest;
+import agent.gdb.model.AbstractModelForGdbThreadActivationTest;
 
-public class InVmModelForDbgmodelThreadFocusTest extends AbstractModelForDbgengThreadActivationTest {
+public class InVmModelForGdbThreadActivationTest extends AbstractModelForGdbThreadActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new InVmDbgmodelModelHost();
+		return new InVmGdbModelHost();
 	}
 }

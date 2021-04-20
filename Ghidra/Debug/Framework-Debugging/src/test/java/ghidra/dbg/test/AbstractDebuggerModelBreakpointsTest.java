@@ -16,8 +16,7 @@
 package ghidra.dbg.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -511,8 +510,8 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 		assumeTrue(m.hasInterpreter());
 		m.build();
 
-		TargetInterpreter interpreter = findInterpreter();
 		Set<TargetBreakpointLocation> locs = createLocations();
+		TargetInterpreter interpreter = findInterpreter();
 		runToggleTestViaInterpreter(locs.stream()
 				.map(l -> l.getSpecification().as(TargetTogglable.class))
 				.collect(Collectors.toSet()),
@@ -535,8 +534,8 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 		assumeTrue(m.hasInterpreter());
 		m.build();
 
-		TargetInterpreter interpreter = findInterpreter();
 		Set<TargetBreakpointLocation> locs = createLocations();
+		TargetInterpreter interpreter = findInterpreter();
 		runToggleTestViaInterpreter(
 			locs.stream().map(l -> l.as(TargetTogglable.class)).collect(Collectors.toSet()),
 			interpreter);
@@ -587,8 +586,8 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 		assumeTrue(m.hasInterpreter());
 		m.build();
 
-		TargetInterpreter interpreter = findInterpreter();
 		Set<TargetBreakpointLocation> locs = createLocations();
+		TargetInterpreter interpreter = findInterpreter();
 		runDeleteTestViaInterpreter(locs.stream()
 				.map(l -> l.getSpecification().as(TargetDeletable.class))
 				.collect(Collectors.toSet()),

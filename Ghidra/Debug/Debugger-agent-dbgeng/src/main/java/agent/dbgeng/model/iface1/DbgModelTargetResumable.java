@@ -37,7 +37,7 @@ public interface DbgModelTargetResumable extends DbgModelTargetObject, TargetRes
 		if (process == null) {
 			return AsyncUtils.NIL;
 		}
-		return process.cont();
+		return getModel().gateFuture(process.cont());
 	}
 
 }

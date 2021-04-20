@@ -13,13 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgmodel.model.invm;
+package agent.dbgeng.model.gadp;
 
-import agent.dbgeng.model.AbstractModelForDbgengFrameActivationTest;
+import java.util.List;
 
-public class InVmModelForDbgmodelFrameFocusTest extends AbstractModelForDbgengFrameActivationTest {
+import agent.dbgeng.model.AbstractModelForDbgengProcessActivationTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
+
+public class GadpModelForDbgengProcessActivationTest
+		extends AbstractModelForDbgengProcessActivationTest {
+
+	protected PathPattern getProcessPattern() {
+		return new PathPattern(PathUtils.parse("Sessions[0].Processes[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new InVmDbgmodelModelHost();
+		return new GadpDbgengModelHost();
 	}
+
+	@Override
+	public List<String> getExpectedSessionPath() {
+		return PathUtils.parse("Sessions[0]");
+	}
+
+	public String getIdFromCapture(String line) {
+		return line.split("\\s+")[1];
+	}
+
 }

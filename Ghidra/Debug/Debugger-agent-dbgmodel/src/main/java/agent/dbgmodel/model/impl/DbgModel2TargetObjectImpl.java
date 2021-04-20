@@ -34,8 +34,8 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
@@ -247,6 +247,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "x86_64");
 				attrs.put(TargetEnvironment.DEBUGGER_ATTRIBUTE_NAME, "dbgeng");
 				attrs.put(TargetEnvironment.OS_ATTRIBUTE_NAME, "Windows");
+				attrs.put(TargetEnvironment.ENDIAN_ATTRIBUTE_NAME, "little");
 			}
 			if (proxy instanceof TargetModule) {
 				//attrs.put(TargetObject.ORDER_ATTRIBUTE_NAME,
@@ -293,6 +294,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public CompletableFuture<?> fetchChild(final String key) {
+		/* Would like to do this, but has some very bad effects
+		return getModel().gateFuture(doFetchChild(key));
+		}	
+		public CompletableFuture<?> doFetchChild(final String key) {
+		*/
 		synchronized (elements) {
 			if (key.startsWith("[") && key.endsWith("]")) {
 				String trimKey = key.substring(1, key.length() - 1);
@@ -350,7 +356,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public void removeListener(DebuggerModelListener l) {
-		listeners.clear();
+		listeners.remove(l);
 	}
 
 	@Override

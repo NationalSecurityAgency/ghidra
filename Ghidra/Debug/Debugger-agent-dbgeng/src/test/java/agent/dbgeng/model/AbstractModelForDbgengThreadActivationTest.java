@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,21 +25,21 @@ import generic.Unique;
 import ghidra.dbg.target.*;
 import ghidra.dbg.test.AbstractDebuggerModelActivationTest;
 import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForDbgengThreadActivationTest
 		extends AbstractDebuggerModelActivationTest {
 
-	private static final PathPattern THREAD_PATTERN =
-		new PathPattern(PathUtils.parse("Sessions[0].Processes[].Threads[]"));
+	protected abstract PathPattern getThreadPattern();
 
 	protected DebuggerTestSpecimen getSpecimen() {
 		return WindowsSpecimen.PRINT;
 	}
 
 	protected int getCount() {
-		return 3;
+		return 1;
 	}
+
+	protected abstract List<String> getExpectedSessionPath();
 
 	@Override
 	protected Set<TargetObject> getActivatableThings() throws Throwable {
@@ -54,7 +54,7 @@ public abstract class AbstractModelForDbgengThreadActivationTest
 
 		return retry(() -> {
 			Map<List<String>, TargetThread> found =
-				m.findAll(TargetThread.class, PathUtils.parse("Sessions[0]"), true);
+				m.findAll(TargetThread.class, getExpectedSessionPath(), true);
 			assertEquals(count, found.size());
 			return Set.copyOf(found.values());
 		}, List.of(AssertionError.class));
@@ -63,10 +63,12 @@ public abstract class AbstractModelForDbgengThreadActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String threadId = THREAD_PATTERN.matchIndices(obj.getPath()).get(1);
+		String threadId = getThreadPattern().matchIndices(obj.getPath()).get(1);
 		// TODO: This test is imperfect, since processes are activated as well
-		waitOn(interpreter.execute("~" + threadId + "s"));
+		waitOn(interpreter.execute("~" + threadId + " s"));
 	}
+
+	public abstract String getIdFromCapture(String line);
 
 	@Override
 	protected void assertActiveViaInterpreter(TargetObject expected, TargetInterpreter interpreter)
@@ -75,8 +77,8 @@ public abstract class AbstractModelForDbgengThreadActivationTest
 		String line = Unique.assertOne(Stream.of(output.split("\n"))
 				.filter(l -> l.trim().startsWith("."))
 				.collect(Collectors.toList())).trim();
-		int threadId = Integer.parseInt(line.split("\\s+")[1]); // dbgeng TIDs are base 10
-		int expId = Integer.parseInt(THREAD_PATTERN.matchIndices(expected.getPath()).get(1));
+		String threadId = getIdFromCapture(line);
+		String expId = getThreadPattern().matchIndices(expected.getPath()).get(1);
 		assertEquals(expId, threadId);
 	}
 }

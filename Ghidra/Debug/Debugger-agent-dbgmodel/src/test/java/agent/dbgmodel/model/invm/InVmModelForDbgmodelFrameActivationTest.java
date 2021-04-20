@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgeng.model.gadp;
+package agent.dbgmodel.model.invm;
 
-import org.junit.Ignore;
+import agent.dbgeng.model.AbstractModelForDbgengFrameActivationTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
 
-import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
+public class InVmModelForDbgmodelFrameActivationTest
+		extends AbstractModelForDbgengFrameActivationTest {
 
-@Ignore("Don't know how to make multiple sessions")
-public class GadpModelForDbgengSessionFocusTest extends AbstractModelForDbgengSessionActivationTest {
+	protected PathPattern getStackPattern() {
+		return new PathPattern(
+			PathUtils.parse("Sessions[0x0].Processes[].Threads[].Stack.Frames[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new GadpDbgengModelHost();
+		return new InVmDbgmodelModelHost();
 	}
 }

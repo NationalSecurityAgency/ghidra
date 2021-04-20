@@ -15,11 +15,30 @@
  */
 package agent.dbgeng.model.gadp;
 
-import agent.dbgeng.model.AbstractModelForDbgengProcessActivationTest;
+import java.util.List;
 
-public class GadpModelForDbgengProcessFocusTest extends AbstractModelForDbgengProcessActivationTest {
+import agent.dbgeng.model.AbstractModelForDbgengThreadActivationTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
+
+public class GadpModelForDbgengThreadActivationTest
+		extends AbstractModelForDbgengThreadActivationTest {
+
+	protected PathPattern getThreadPattern() {
+		return new PathPattern(PathUtils.parse("Sessions[0].Processes[].Threads[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new GadpDbgengModelHost();
+	}
+
+	@Override
+	public List<String> getExpectedSessionPath() {
+		return PathUtils.parse("Sessions[0]");
+	}
+
+	public String getIdFromCapture(String line) {
+		return line.split("\\s+")[1];
 	}
 }

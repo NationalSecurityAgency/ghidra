@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.model.invm;
+package agent.dbgmodel.model.invm;
 
-import agent.gdb.model.AbstractModelForGdbInferiorActivationTest;
+import org.junit.Ignore;
 
-public class InVmModelForGdbInferiorFocusTest extends AbstractModelForGdbInferiorActivationTest {
+import agent.dbgeng.model.AbstractModelForDbgengSessionActivationTest;
+
+@Ignore("Don't know how to make multiple sessions")
+public class InVmModelForDbgmodelSessionActivationTest extends AbstractModelForDbgengSessionActivationTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new InVmGdbModelHost();
+		return new InVmDbgmodelModelHost();
 	}
 }

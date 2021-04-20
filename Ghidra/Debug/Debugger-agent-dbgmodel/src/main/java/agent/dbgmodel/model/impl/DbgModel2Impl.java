@@ -18,18 +18,22 @@ package agent.dbgmodel.model.impl;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom.JDOMException;
 
-import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.*;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import agent.dbgmodel.manager.DbgManager2Impl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractTargetObject;
 import ghidra.dbg.agent.AbstractTargetObject.ProxyFactory;
 import ghidra.dbg.agent.SpiTargetObject;
+import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
@@ -137,6 +141,10 @@ public class DbgModel2Impl extends AbstractDbgModel
 			terminate();
 			return super.close();
 		}
+		catch (RejectedExecutionException e) {
+			reportError(this, "Model is already closing", e);
+			return AsyncUtils.NIL;
+		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);
 		}
@@ -154,6 +162,14 @@ public class DbgModel2Impl extends AbstractDbgModel
 			return;
 		}
 		objectMap.put(object, modelObject);
+		if (object instanceof DbgProcessImpl) {
+			DbgProcessImpl impl = (DbgProcessImpl) object;
+			objectMap.put(impl.getId(), modelObject);
+		}
+		if (object instanceof DbgThreadImpl) {
+			DbgThreadImpl impl = (DbgThreadImpl) object;
+			objectMap.put(impl.getId(), modelObject);
+		}
 	}
 
 	@Override
@@ -161,4 +177,15 @@ public class DbgModel2Impl extends AbstractDbgModel
 		return objectMap.get(object);
 	}
 
+	@Override
+	public <T> CompletableFuture<T> gateFuture(CompletableFuture<T> future) {
+		return super.gateFuture(future).exceptionally(ex -> {
+			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+				if (cause instanceof RejectedExecutionException) {
+					throw new DebuggerModelTerminatingException("dbgeng is terminating", ex);
+				}
+			}
+			return ExceptionUtils.rethrow(ex);
+		});
+	}
 }

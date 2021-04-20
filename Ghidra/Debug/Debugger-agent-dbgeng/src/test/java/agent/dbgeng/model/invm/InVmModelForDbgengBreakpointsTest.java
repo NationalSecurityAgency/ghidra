@@ -16,8 +16,16 @@
 package agent.dbgeng.model.invm;
 
 import agent.dbgeng.model.AbstractModelForDbgengBreakpointsTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
 
 public class InVmModelForDbgengBreakpointsTest extends AbstractModelForDbgengBreakpointsTest {
+
+	@Override
+	protected PathPattern getBreakPattern() {
+		return new PathPattern(PathUtils.parse("Sessions[0].Processes[].Debug.Breakpoints[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgengModelHost();

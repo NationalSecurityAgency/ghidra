@@ -16,8 +16,7 @@
 package ghidra.dbg.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.util.List;
 import java.util.Set;
@@ -150,6 +149,7 @@ public abstract class AbstractDebuggerModelActivationTest extends AbstractDebugg
 				assertActiveViaInterpreter(obj, interpreter);
 			}
 		}
+
 	}
 
 	@Test
@@ -185,8 +185,8 @@ public abstract class AbstractDebuggerModelActivationTest extends AbstractDebugg
 		m.build();
 
 		TargetFocusScope focusScope = findFocusScope();
-		TargetInterpreter interpreter = findInterpreter();
 		Set<TargetObject> activatable = getActivatableThings();
+		TargetInterpreter interpreter = findInterpreter();
 		for (TargetObject obj : activatable) {
 			activateViaInterpreter(obj, interpreter);
 			retryVoid(() -> {
