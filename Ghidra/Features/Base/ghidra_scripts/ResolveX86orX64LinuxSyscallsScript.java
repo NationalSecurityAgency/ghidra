@@ -79,6 +79,9 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 	//if they're both Linux...
 	private String syscallFileName;
 
+	//file containing no-return function names
+	private String noreturnFileName = "ElfFunctionsThatDoNotReturn";
+
 	//the type of overriding reference to apply 
 	private RefType overrideType;
 
@@ -163,6 +166,9 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		//you might have to create this yourself!
 		Map<Long, String> syscallNumbersToNames = getSyscallNumberMap();
 
+		//get a set of names of all noreturn functions
+		Set<String> noreturnFunctions = getNoReturnFunctions();
+
 		//at each system call call site where a constant could be determined, create
 		//the system call (if not already created), then add the appropriate overriding reference
 		//use syscallNumbersToNames to name the created functions
@@ -179,6 +185,12 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 				}
 				callee = createFunction(callTarget, funcName);
 				callee.setCallingConvention(callingConvention);
+
+				// check if the function name is a no-return function
+				// leading underscores are stripped during checking
+				if (noreturnFunctions.contains(funcName.replaceAll("^_+", ""))) {
+					callee.setNoReturn(true);
+				}
 			}
 			Reference ref = currentProgram.getReferenceManager().addMemoryReference(callSite,
 				callTarget, overrideType, SourceType.USER_DEFINED, Reference.MNEMONIC);
@@ -225,6 +237,28 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		return syscallMap;
 	}
 
+	private Set<String> getNoReturnFunctions() {
+		Set<String> noreturnFunctions = new HashSet<>();
+		ResourceFile rFile = Application.findDataFileInAnyModule(noreturnFileName);
+		if (rFile == null) {
+			popup("Error opening noreturn function file.");
+			return noreturnFunctions;
+		}
+		try (FileReader fReader = new FileReader(rFile.getFile(false));
+				BufferedReader bReader = new BufferedReader(fReader)) {
+			String line = null;
+			while ((line = bReader.readLine()) != null) {
+				//lines starting with # are comments
+				if (!line.startsWith("#")) {
+					noreturnFunctions.add(line.trim());
+				}
+			}
+		}
+		catch (IOException e) {
+			Msg.showError(this, null, "Error reading noreturn file", e.getMessage(), e);
+		}
+		return noreturnFunctions;
+	}
 	/**
 	 * Scans through all of the functions defined in {@code program} and returns
 	 * a map which takes a function to the set of address in its body which contain
