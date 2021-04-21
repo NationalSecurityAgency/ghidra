@@ -84,6 +84,11 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	@Override
+	public String getBrief() {
+		return "GDB@" + Integer.toHexString(System.identityHashCode(this));
+	}
+
+	@Override
 	public AddressSpace getAddressSpace(String name) {
 		if (!SPACE_NAME.equals(name)) {
 			return null;

@@ -109,70 +109,70 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_DEFAULT_BACKGROUND_COLOR = "Object Colors.Background";
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
-			description = "The default foreground color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
+		description = "The default foreground color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
-			description = "The default background color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
+		description = "The default background color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultBackgroundColor = Color.WHITE;
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
-			description = "The foreground color for items normally not visible (toggleable)", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
+		description = "The foreground color for items normally not visible (toggleable)", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color invisibleForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
-			description = "The foreground color for modified items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
+		description = "The foreground color for modified items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color modifiedForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
-			description = "The foreground color for subscribed items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
+		description = "The foreground color for subscribed items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color subscribedForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
-			description = "The foreground color for items in error", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
+		description = "The foreground color for items in error", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color errorForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
-			description = "The foreground color for intrinsic items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
+		description = "The foreground color for intrinsic items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color intrinsicForegroundColor = Color.BLUE;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
-			description = "The foreground color for target object items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
+		description = "The foreground color for target object items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color targetForegroundColor = Color.MAGENTA;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
-			description = "The foreground color for property accessor items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
+		description = "The foreground color for property accessor items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color accessorForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
-			description = "The foreground color for links to items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
+		description = "The foreground color for links to items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color linkForegroundColor = Color.GREEN.darker();
 
 	@AutoOptionDefined( //
-			name = "Default Extended Step", //
-			description = "The default string for the extended step command" //
+		name = "Default Extended Step", //
+		description = "The default string for the extended step command" //
 	//help = @HelpInfo(anchor = "colors") //
 	)
 	String extendedStep = "";
@@ -486,16 +486,19 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (model != null && model.equals(currentModel)) {
 			this.requestFocus(); // COMPONENT
 			this.toFront();
+			setSubTitle(currentModel.getBrief());
 		}
 	}
 
 	// TODO: These events aren't being called anymore
 	// TraceActivatedEvents now carry complete "coordinates" (trace,thread,snap,frame,etc.)
 	public void traceActivated(DebuggerCoordinates coordinates) {
+
 		if (currentTrace == coordinates.getTrace()) {
 			return;
 		}
 		setTrace(coordinates.getTrace(), coordinates.getThread(), true);
+
 	}
 
 	public void setTrace(Trace trace, TraceThread thread, boolean select) {

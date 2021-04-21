@@ -72,6 +72,11 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	@Override
+	public String getBrief() {
+		return "JDI@" + Integer.toHexString(System.identityHashCode(this));
+	}
+
+	@Override
 	public AddressSpace getAddressSpace(String name) {
 		switch (name) {
 			case "ram":
