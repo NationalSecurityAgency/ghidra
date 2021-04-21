@@ -15,12 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import java.util.concurrent.Executors;
-
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedModuleRecorder;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetSection;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.*;
@@ -32,15 +29,11 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 	private final DefaultTraceRecorder recorder;
 	private final Trace trace;
 	private final TraceModuleManager moduleManager;
-	final PermanentTransactionExecutor tx;
 
 	public DefaultModuleRecorder(DefaultTraceRecorder recorder) {
 		this.recorder = recorder;
 		this.trace = recorder.getTrace();
 		this.moduleManager = trace.getModuleManager();
-		this.tx = new PermanentTransactionExecutor(trace,
-			"ModuleRecorder:" + recorder.target.getJoinedPath("."),
-			f -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), f), 500);
 	}
 
 	protected TraceModule doRecordProcessModule(long snap, TargetModule module) {
@@ -75,9 +68,9 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 	public void offerProcessModule(TargetModule module) {
 		long snap = recorder.getSnap();
 		String path = module.getJoinedPath(".");
-		tx.execute("Module " + path + " loaded", () -> {
+		recorder.parTx.execute("Module " + path + " loaded", () -> {
 			doRecordProcessModule(snap, module);
-		});
+		}, path);
 	}
 
 	protected TraceSection doRecordProcessModuleSection(long snap, TargetSection section) {
@@ -105,13 +98,13 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 	public void offerProcessModuleSection(TargetSection section) {
 		long snap = recorder.getSnap();
 		String path = section.getJoinedPath(".");
-		tx.execute("Section " + path + " added", () -> {
+		recorder.parTx.execute("Section " + path + " added", () -> {
 			doRecordProcessModuleSection(snap, section);
-		});
+		}, section.getModule().getJoinedPath("."));
 	}
 
 	protected void doRemoveProcessModule(long snap, TargetModule module) {
-		String path = PathUtils.toString(module.getPath());
+		String path = module.getJoinedPath(".");
 		//TraceThread eventThread = recorder.getSnapshot().getEventThread();
 		TraceModule traceModule = moduleManager.getLoadedModuleByPath(snap, path);
 		if (traceModule == null) {
@@ -133,21 +126,21 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 	@Override
 	public void removeProcessModule(TargetModule module) {
 		long snap = recorder.getSnap();
-		String path = PathUtils.toString(module.getPath());
-		tx.execute("Module " + path + " unloaded", () -> {
+		String path = module.getJoinedPath(".");
+		recorder.parTx.execute("Module " + path + " unloaded", () -> {
 			doRemoveProcessModule(snap, module);
-		});
+		}, path);
 	}
 
 	@Override
 	public TraceModule getTraceModule(TargetModule module) {
-		String path = PathUtils.toString(module.getPath());
+		String path = module.getJoinedPath(".");
 		return moduleManager.getLoadedModuleByPath(recorder.getSnap(), path);
 	}
 
 	@Override
 	public TraceSection getTraceSection(TargetSection section) {
-		String path = PathUtils.toString(section.getPath());
+		String path = section.getJoinedPath(".");
 		return moduleManager.getLoadedSectionByPath(recorder.getSnap(), path);
 	}
 }

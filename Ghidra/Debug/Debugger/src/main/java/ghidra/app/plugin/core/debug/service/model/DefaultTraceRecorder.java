@@ -50,6 +50,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class DefaultTraceRecorder implements TraceRecorder {
+	static final int POOL_SIZE = Math.min(16, Runtime.getRuntime().availableProcessors());
 
 	protected final DebuggerModelServicePlugin plugin;
 	protected final PluginTool tool;
@@ -68,6 +69,9 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	DefaultSymbolRecorder symbolRecorder;
 	DefaultTimeRecorder timeRecorder;
 
+	//protected final PermanentTransactionExecutor seqTx;
+	protected final PermanentTransactionExecutor parTx;
+
 	protected final AsyncLazyValue<Void> lazyInit = new AsyncLazyValue<>(this::doInit);
 	private boolean valid = true;
 
@@ -77,6 +81,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		this.tool = plugin.getTool();
 		this.trace = trace;
 		this.target = target;
+
+		//seqTx = new PermanentTransactionExecutor(
+		//	trace, "TraceRecorder(seq): " + target.getJoinedPath("."), 1, 100);
+		parTx = new PermanentTransactionExecutor(
+			trace, "TraceRecorder(par): " + target.getJoinedPath("."), POOL_SIZE, 100);
 
 		this.processRecorder = new DefaultProcessRecorder(this);
 		this.breakpointRecorder = new DefaultBreakpointRecorder(this);
@@ -88,6 +97,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		this.objectManager = new TraceObjectManager(target, mapper, this);
 
 		trace.addConsumer(this);
+
 	}
 
 	/*---------------- OBJECT MANAGER METHODS -------------------*/

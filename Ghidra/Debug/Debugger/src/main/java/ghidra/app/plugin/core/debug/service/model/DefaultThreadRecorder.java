@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.*;
@@ -41,7 +40,6 @@ import ghidra.util.TimedMsg;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DefaultThreadRecorder implements ManagedThreadRecorder {
-
 	//private static final boolean LOG_STACK_TRACE = false;
 
 	private final TargetThread targetThread;
@@ -67,7 +65,6 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 
 	private final DefaultStackRecorder stackRecorder;
 	private final DefaultBreakpointRecorder breakpointRecorder;
-	final PermanentTransactionExecutor tx;
 
 	protected static int getFrameLevel(TargetStackFrame frame) {
 		// TODO: A fair assumption? frames are elements with numeric base-10 indices
@@ -86,10 +83,6 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		this.traceThread = traceThread;
 
 		this.memoryManager = trace.getMemoryManager();
-
-		this.tx = new PermanentTransactionExecutor(trace,
-			"ThreadRecorder:" + recorder.target.getJoinedPath("."),
-			f -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), f), 100);
 
 		//this.threadMemory = new RecorderComposedMemory(recorder.getProcessMemory());
 		this.threadMemory = recorder.getProcessMemory();
@@ -248,7 +241,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 	public void threadDestroyed() {
 		String path = getTargetThread().getJoinedPath(".");
 		long snap = recorder.getSnap();
-		tx.execute("Thread " + path + " destroyed", () -> {
+		recorder.parTx.execute("Thread " + path + " destroyed", () -> {
 			// TODO: Should it be key - 1
 			// Perhaps, since the thread should not exist
 			// But it could imply earlier destruction than actually observed
@@ -258,7 +251,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			catch (DuplicateNameException e) {
 				throw new AssertionError(e); // Should be shrinking
 			}
-		});
+		}, path);
 	}
 
 	@Override
@@ -272,7 +265,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		long snap = recorder.getSnap();
 		String path = bank.getJoinedPath(".");
 		TimedMsg.info(this, "Reg values changed: " + updates.keySet());
-		tx.execute("Registers " + path + " changed", () -> {
+		recorder.parTx.execute("Registers " + path + " changed", () -> {
 			TraceCodeManager codeManager = trace.getCodeManager();
 			TraceCodeRegisterSpace codeRegisterSpace =
 				codeManager.getCodeRegisterSpace(traceThread, false);
@@ -295,7 +288,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 					}
 				}
 			}
-		});
+		}, getTargetThread().getJoinedPath("."));
 	}
 
 	@Override
@@ -310,7 +303,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		long snap = recorder.getSnap();
 		String path = targetRegister.getJoinedPath(".");
 		//TimedMsg.info(this, "Register value changed: " + targetRegister);
-		tx.execute("Register " + path + " changed", () -> {
+		recorder.parTx.execute("Register " + path + " changed", () -> {
 			TraceCodeManager codeManager = trace.getCodeManager();
 			TraceCodeRegisterSpace codeRegisterSpace =
 				codeManager.getCodeRegisterSpace(traceThread, false);
@@ -335,7 +328,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 					readAlignedConditionally(key, addr); // NB: Reports errors
 				}
 			}
-		});
+		}, getTargetThread().getJoinedPath("."));
 	}
 
 	public CompletableFuture<Void> writeThreadRegisters(int frameLevel,

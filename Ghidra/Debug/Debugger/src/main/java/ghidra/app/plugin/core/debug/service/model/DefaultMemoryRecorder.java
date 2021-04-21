@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 
 import com.google.common.collect.Range;
 
@@ -55,15 +54,11 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 	private final DefaultTraceRecorder recorder;
 	private final Trace trace;
 	private final TraceMemoryManager memoryManager;
-	final PermanentTransactionExecutor tx;
 
 	public DefaultMemoryRecorder(DefaultTraceRecorder recorder) {
 		this.recorder = recorder;
 		this.trace = recorder.getTrace();
 		this.memoryManager = trace.getMemoryManager();
-		this.tx = new PermanentTransactionExecutor(trace,
-			"MemoryRecorder:" + recorder.target.getJoinedPath("."),
-			Executors::newSingleThreadExecutor, 100);
 	}
 
 	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
@@ -108,7 +103,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		//recorder.objectManager.addMemory(mem);
 		String path = PathUtils.toString(region.getPath());
 		long snap = recorder.getSnap();
-		tx.execute("Memory region " + path + " added", () -> {
+		recorder.parTx.execute("Memory region " + path + " added", () -> {
 			try {
 				TraceMemoryRegion traceRegion =
 					memoryManager.getLiveRegionByPath(snap, path);
@@ -127,8 +122,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 			catch (DuplicateNameException e) {
 				Msg.error(this, "Failed to create region due to duplicate: " + e);
 			}
-		});
-
+		}, path);
 	}
 
 	@Override
@@ -136,7 +130,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		// Already removed from processMemory. That's how we knew to go here.
 		String path = PathUtils.toString(region.getPath());
 		long snap = recorder.getSnap();
-		tx.execute("Memory region " + path + " removed", () -> {
+		recorder.parTx.execute("Memory region " + path + " removed", () -> {
 			try {
 				TraceMemoryRegion traceRegion = memoryManager.getLiveRegionByPath(snap, path);
 				if (traceRegion == null) {
@@ -149,7 +143,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 				// Region is shrinking in time
 				Msg.error(this, "Failed to record region removal: " + e);
 			}
-		});
+		}, path);
 	}
 
 	@Override

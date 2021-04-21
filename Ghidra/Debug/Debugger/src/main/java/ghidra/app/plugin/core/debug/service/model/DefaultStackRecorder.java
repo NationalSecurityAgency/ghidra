@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.*;
-import java.util.concurrent.Executors;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
@@ -42,16 +41,12 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	private final DefaultTraceRecorder recorder;
 	private final Trace trace;
 	private final TraceStackManager stackManager;
-	final PermanentTransactionExecutor tx;
 
 	public DefaultStackRecorder(TraceThread thread, DefaultTraceRecorder recorder) {
 		this.thread = thread;
 		this.recorder = recorder;
 		this.trace = recorder.getTrace();
 		this.stackManager = trace.getStackManager();
-		this.tx = new PermanentTransactionExecutor(trace,
-			"ModuleRecorder:" + recorder.target.getJoinedPath("."),
-			Executors::newSingleThreadExecutor, 100);
 	}
 
 	@Override
@@ -62,7 +57,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	@Override
 	public void recordStack() {
 		long snap = recorder.getSnap();
-		tx.execute("Stack changed", () -> {
+		recorder.parTx.execute("Stack changed", () -> {
 			TraceStack traceStack = stackManager.getStack(thread, snap, true);
 			traceStack.setDepth(stackDepth(), false);
 			for (Map.Entry<Integer, TargetStackFrame> ent : stack.entrySet()) {
@@ -70,15 +65,15 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 					recorder.getMemoryMapper().targetToTrace(ent.getValue().getProgramCounter());
 				doRecordFrame(traceStack, ent.getKey(), tracePc);
 			}
-		});
+		}, thread.getPath());
 	}
 
 	public void popStack() {
 		long snap = recorder.getSnap();
-		tx.execute("Stack popped", () -> {
+		recorder.parTx.execute("Stack popped", () -> {
 			TraceStack traceStack = stackManager.getStack(thread, snap, true);
 			traceStack.setDepth(stackDepth(), false);
-		});
+		}, thread.getPath());
 	}
 
 	public void doRecordFrame(TraceStack traceStack, int frameLevel, Address pc) {
@@ -88,7 +83,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 
 	public void recordFrame(TargetStackFrame frame) {
 		stack.put(getFrameLevel(frame), frame);
-		tx.execute("Stack frame added", () -> {
+		recorder.parTx.execute("Stack frame added", () -> {
 			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
 			if (memoryMapper == null) {
 				return;
@@ -97,7 +92,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 			Address tracePc = pc == null ? null : memoryMapper.targetToTrace(pc);
 			TraceStack traceStack = stackManager.getStack(thread, recorder.getSnap(), true);
 			doRecordFrame(traceStack, getFrameLevel(frame), tracePc);
-		});
+		}, thread.getPath());
 	}
 
 	protected int stackDepth() {

@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Executors;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedBreakpointRecorder;
 import ghidra.app.services.TraceRecorder;
@@ -54,7 +53,6 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	private final DefaultTraceRecorder recorder;
 	private final Trace trace;
 	private final TraceBreakpointManager breakpointManager;
-	final PermanentTransactionExecutor tx;
 
 	protected TargetBreakpointSpecContainer breakpointContainer;
 
@@ -62,13 +60,6 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		this.recorder = recorder;
 		this.trace = recorder.getTrace();
 		this.breakpointManager = trace.getBreakpointManager();
-		/**
-		 * NB. Must be single-threaded, since some events, e.g., toggled, modify existing
-		 * breakpoints.
-		 */
-		this.tx = new PermanentTransactionExecutor(trace,
-			"BreakpointRecorder:" + recorder.target.getJoinedPath("."),
-			Executors::newSingleThreadExecutor, 100);
 	}
 
 	@Override
@@ -124,9 +115,9 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 			Set<TraceThread> traceThreads) {
 		String path = loc.getJoinedPath(".");
 		long snap = recorder.getSnap();
-		tx.execute("Breakpoint " + path + " placed", () -> {
+		recorder.parTx.execute("Breakpoint " + path + " placed", () -> {
 			doRecordBreakpoint(snap, loc, traceThreads);
-		});
+		}, path);
 	}
 
 	protected void doRemoveBreakpointLocation(long snap, TargetBreakpointLocation loc) {
@@ -155,9 +146,9 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	public void removeBreakpointLocation(TargetBreakpointLocation loc) {
 		String path = loc.getJoinedPath(".");
 		long snap = recorder.getSnap();
-		tx.execute("Breakpoint " + path + " deleted", () -> {
+		recorder.parTx.execute("Breakpoint " + path + " deleted", () -> {
 			doRemoveBreakpointLocation(snap, loc);
-		});
+		}, path);
 	}
 
 	protected void doBreakpointLengthChanged(long snap, int length, Address traceAddr,
@@ -190,22 +181,24 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	public void breakpointLengthChanged(int length, Address traceAddr, String path)
 			throws AssertionError {
 		long snap = recorder.getSnap();
-		tx.execute("Breakpoint length changed", () -> {
+		recorder.parTx.execute("Breakpoint length changed", () -> {
 			doBreakpointLengthChanged(snap, length, traceAddr, path);
-		});
+		}, path);
 	}
 
 	protected void doBreakpointToggled(long snap,
 			Collection<? extends TargetBreakpointLocation> bpts, boolean enabled) {
 		for (TargetBreakpointLocation bl : bpts) {
-			TraceBreakpoint traceBpt = recorder.getTraceBreakpoint(bl);
-			if (traceBpt == null) {
-				String path = PathUtils.toString(bl.getPath());
-				Msg.warn(this, "Cannot find toggled trace breakpoint for " + path);
-				continue;
-			}
-			// Verify attributes match? Eh. If they don't, someone has fiddled with it.
-			traceBpt.splitWithEnabled(snap, enabled);
+			String path = PathUtils.toString(bl.getPath());
+			recorder.parTx.execute("Breakpoint " + path + " toggled", () -> {
+				TraceBreakpoint traceBpt = recorder.getTraceBreakpoint(bl);
+				if (traceBpt == null) {
+					Msg.warn(this, "Cannot find toggled trace breakpoint for " + path);
+					return;
+				}
+				// Verify attributes match? Eh. If they don't, someone has fiddled with it.
+				traceBpt.splitWithEnabled(snap, enabled);
+			}, path);
 		}
 	}
 
@@ -213,11 +206,10 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	public void breakpointToggled(TargetBreakpointSpec spec, boolean enabled) {
 		long snap = recorder.getSnap();
 		spec.getLocations().thenAccept(bpts -> {
-			recorder.breakpointRecorder.tx.execute("Breakpoint toggled", () -> {
-				doBreakpointToggled(snap, bpts, enabled);
-			});
+			doBreakpointToggled(snap, bpts, enabled);
 		}).exceptionally(ex -> {
-			Msg.error(this, "Error recording toggled breakpoint spec: " + spec, ex);
+			Msg.error(this, "Error recording toggled breakpoint spec: " + spec.getJoinedPath("."),
+				ex);
 			return null;
 		});
 	}
@@ -232,5 +224,4 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	public TargetBreakpointSpecContainer getBreakpointContainer() {
 		return breakpointContainer;
 	}
-
 }
