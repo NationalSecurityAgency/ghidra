@@ -1038,7 +1038,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     # tmp1 = old_q_eq_m ? rn_08_11 > tmp0 : rn_08_11 < tmp0;
     tmp1 = (old_q_eq_m * (rn_08_11 > tmp0)) + (!old_q_eq_m * (rn_08_11 < tmp0));
     # $(Q_FLAG) = m_eq_q ? tmp1 : tmp1 == 0;
-    $(Q_FLAG) = (m_eq_q * tmp1) + (!m_eq_q & (tmp1 == 0));
+    $(Q_FLAG) = (m_eq_q * tmp1) + (!m_eq_q * (tmp1 == 0));
     
     $(T_FLAG) = $(Q_FLAG) == $(M_FLAG);
 }
