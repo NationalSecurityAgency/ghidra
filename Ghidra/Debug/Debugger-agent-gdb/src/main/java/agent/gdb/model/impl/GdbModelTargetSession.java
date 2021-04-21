@@ -32,6 +32,14 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
+/**
+ * TODO: We should probably expose the raw CLI (if available) via TargetConsole, and perhaps re-work
+ * the UI to use it when available. This could more generally solve the multi-line input thing, and
+ * provide a distinction between API access (where {@link TargetInterpreter} makes more sense), and
+ * I/O access (where {@link TargetConsole}) makes more sense. I'm hoping this will also allow the
+ * CLI to prompt the user when appropriate, e.g., on {@code quit} when an inferior is active. NOTE:
+ * Probably should not expose raw MI2 via TargetConsole
+ */
 @TargetObjectSchemaInfo(
 	name = "Session",
 	elements = {

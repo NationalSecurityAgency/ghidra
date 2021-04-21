@@ -77,7 +77,7 @@ public class GdbManagerImpl implements GdbManager {
 	static {
 		if (LOG_IO) {
 			try {
-				DBG_LOG = new PrintWriter(new FileOutputStream(new File("DBG.log")));
+				DBG_LOG = new PrintWriter(new FileOutputStream(new File("GDB.log")));
 			}
 			catch (FileNotFoundException e) {
 				throw new AssertionError(e);
@@ -810,6 +810,7 @@ public class GdbManagerImpl implements GdbManager {
 	/**
 	 * Schedule a line of GDB output for processing
 	 * 
+	 * <p>
 	 * Before the implementation started using a PTY, the channel was used to distinguish whether
 	 * the line was read from stdout or stderr. Now, all output is assumed to be from stdout.
 	 * 
@@ -1485,6 +1486,18 @@ public class GdbManagerImpl implements GdbManager {
 			os.write(3);
 			os.flush();
 		}
+	}
+
+	@Internal
+	public void injectInput(Interpreter interpreter, String input) {
+		PrintWriter writer = getWriter(interpreter);
+		writer.print(input);
+		writer.flush();
+	}
+
+	@Internal
+	public void synthesizeConsoleOut(Channel channel, String line) {
+		listenersConsoleOutput.fire.output(channel, line);
 	}
 
 	@Override
