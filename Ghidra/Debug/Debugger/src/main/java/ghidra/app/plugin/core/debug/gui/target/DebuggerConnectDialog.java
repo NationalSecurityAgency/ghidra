@@ -236,13 +236,12 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 		synchronized (this) {
 			futureConnect = factory.build();
 		}
-		futureConnect.thenCompose(model -> {
+		futureConnect.thenAcceptAsync(model -> {
 			modelService.addModel(model);
 			setStatusText("");
 			close();
-			return CompletableFuture.runAsync(() -> modelService.activateModel(model),
-				SwingExecutorService.INSTANCE);
-		}).exceptionally(e -> {
+			modelService.activateModel(model);
+		}, SwingExecutorService.INSTANCE).exceptionally(e -> {
 			e = AsyncUtils.unwrapThrowable(e);
 			if (!(e instanceof CancellationException)) {
 				Msg.showError(this, getComponent(), "Could not connect", e);

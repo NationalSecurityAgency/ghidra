@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg.jdi;
+package ghidra.app.plugin.core.debug.service.model.launch;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Collection;
 
-import ghidra.dbg.DebuggerModelFactory;
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.jdi.model.JdiModelImpl;
-import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
+import ghidra.app.services.DebuggerModelService;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.listing.Program;
+import ghidra.util.classfinder.ExtensionPoint;
 
-@FactoryDescription( //
-	brief = "JDI debugger", //
-	htmlDetails = "Debug a Java or Dalvik VM (supports JDWP)" //
-)
-public class JdiDebuggerModelFactory implements DebuggerModelFactory {
-
-	@Override
-	public CompletableFuture<? extends DebuggerObjectModel> build() {
-		return CompletableFuture.completedFuture(new JdiModelImpl());
-	}
+public interface DebuggerProgramLaunchOpinion extends ExtensionPoint {
+	Collection<DebuggerProgramLaunchOffer> getOffers(Program program, PluginTool tool,
+			DebuggerModelService service);
 }

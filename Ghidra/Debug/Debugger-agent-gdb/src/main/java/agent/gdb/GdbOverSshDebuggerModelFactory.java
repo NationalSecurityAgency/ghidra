@@ -19,16 +19,15 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.model.impl.GdbModelImpl;
 import agent.gdb.pty.ssh.GhidraSshPtyFactory;
+import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.LocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
+import ghidra.dbg.util.ConfigurableFactory.FactoryOption;
 
 @FactoryDescription(
 	brief = "GNU gdb via SSH",
 	htmlDetails = "Launch a GDB session over an SSH connection")
-@ExtensionPointProperties(priority = 60)
-public class GdbOverSshDebuggerModelFactory implements LocalDebuggerModelFactory {
+public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 
 	private String gdbCmd = "gdb";
 	@FactoryOption("GDB launch command")

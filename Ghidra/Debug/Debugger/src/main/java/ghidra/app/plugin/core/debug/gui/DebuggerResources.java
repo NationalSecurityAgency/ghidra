@@ -42,6 +42,7 @@ import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.app.services.MarkerService;
 import ghidra.framework.plugintool.Plugin;
@@ -403,17 +404,24 @@ public interface DebuggerResources {
 
 	interface DebugProgramAction {
 		String NAME = "Debug Program";
-		String DESCRIPTION_PREFIX = "Debug ";
 		Icon ICON = ICON_DEBUGGER;
 		String GROUP = GROUP_GENERAL;
 		String HELP_ANCHOR = "debug_program";
 
-		static ActionBuilder builder(Plugin owner, Plugin helpOwner) {
-			return new ActionBuilder(NAME, owner.getName()).description(DESCRIPTION_PREFIX)
+		static <T> MultiStateActionBuilder<T> buttonBuilder(Plugin owner, Plugin helpOwner) {
+			return new MultiStateActionBuilder<T>(NAME, owner.getName())
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP)
-					.menuPath(DebuggerPluginPackage.NAME, DESCRIPTION_PREFIX)
-					.menuIcon(ICON)
+					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
+		}
+
+		static ActionBuilder menuBuilder(DebuggerProgramLaunchOffer offer, Plugin owner,
+				Plugin helpOwner) {
+			return new ActionBuilder(offer.getConfigName(), owner.getName())
+					.description(offer.getButtonTitle())
+					.menuPath(DebuggerPluginPackage.NAME, offer.getMenuParentTitle(),
+						offer.getMenuTitle())
+					.menuIcon(offer.getIcon())
 					.menuGroup(GROUP)
 					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
 		}

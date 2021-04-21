@@ -17,14 +17,12 @@ package agent.gdb;
 
 import java.util.concurrent.CompletableFuture;
 
-import agent.gdb.gadp.GdbLocalDebuggerModelFactory;
 import agent.gdb.manager.GdbManager;
 import agent.gdb.model.impl.GdbModelImpl;
 import agent.gdb.pty.linux.LinuxPtyFactory;
+import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.LocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
  * Note this is in the testing source because it's not meant to be shipped in the release.... That
@@ -34,8 +32,7 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 	brief = "IN-VM GNU gdb local debugger", //
 	htmlDetails = "Launch a GDB session in this same JVM" //
 )
-@ExtensionPointProperties(priority = 80)
-public class GdbInJvmDebuggerModelFactory implements LocalDebuggerModelFactory {
+public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	private String gdbCmd = GdbManager.DEFAULT_GDB_CMD;
 	@FactoryOption("GDB launch command")
@@ -56,7 +53,7 @@ public class GdbInJvmDebuggerModelFactory implements LocalDebuggerModelFactory {
 
 	@Override
 	public boolean isCompatible() {
-		return GdbLocalDebuggerModelFactory.checkGdbPresent(gdbCmd);
+		return GdbCompatibility.INSTANCE.isCompatible(gdbCmd);
 	}
 
 	public String getGdbCommand() {

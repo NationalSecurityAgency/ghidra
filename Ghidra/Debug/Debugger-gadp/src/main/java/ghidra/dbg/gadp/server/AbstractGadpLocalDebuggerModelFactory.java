@@ -23,12 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.LocalDebuggerModelFactory;
+import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.gadp.client.GadpClient;
 import ghidra.dbg.gadp.client.GadpTcpDebuggerModelFactory;
+import ghidra.dbg.util.ConfigurableFactory.FactoryOption;
 import ghidra.util.Msg;
 
-public abstract class AbstractGadpLocalDebuggerModelFactory implements LocalDebuggerModelFactory {
+public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerModelFactory {
 	public static final boolean LOG_AGENT_STDOUT = true;
 
 	protected String host = "localhost";
