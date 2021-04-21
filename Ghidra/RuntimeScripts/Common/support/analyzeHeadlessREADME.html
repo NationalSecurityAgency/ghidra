@@ -361,8 +361,13 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     path to a script log file is not set, script logs are written to <typewriter>script.log</typewriter> 
     in the user directory, by default.
     <br><br>
-    NOTE: Only the built-in scripting print methods will print to the the script log file 
-    (print, println, printf, printerr).
+    Note: Only the built-in scripting print methods will print to the the
+    script log file (<typewriter>print</typewriter>,
+    <typewriter>println</typewriter>, <typewriter>printf</typewriter>,
+    <typewriter>printerr</typewriter>).
+    <br><br>Also note that in Python scripts, <typewriter>print</typewriter>
+    writes to <typewriter>stdout</typewriter>.  To write to the log from
+    Python, use <typewriter>println</typewriter> instead.
     </LI>
 
     <br><br>
@@ -519,7 +524,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     Although this method of authentication is normally discouraged, the server connection will 
     likely fail authentication if a password is required and this parameter is not enabled.
     <br>
-    <b><u><i>NOTE: In some cases, password entry will be echoed to the console (a warning will show at 
+    <b><u><i>Note: In some cases, password entry will be echoed to the console (a warning will show at 
     password prompt).</i></u></b>
     </LI>
 
@@ -881,7 +886,7 @@ public class Script1 extends GhidraScript {
 
 </PRE>
 </P>
-<b>NOTE: </b>If <a href="#scripting_passArgs">script-specific arguments</a> have been passed into the 
+<b>Note: </b>If <a href="#scripting_passArgs">script-specific arguments</a> have been passed into the 
 script, the <typewriter>askXxx()</typewriter> methods will consume values found in the argument array 
 rather than a <typewriter>.properties</typewriter> file.  The first <typewriter>askXxx()</typewriter> 
 method will use the first value in the array, the second <typewriter>askXxx()</typewriter> method will 
@@ -946,7 +951,7 @@ programs in the current session, unless changed).
 </P>
 
 <P>
-NOTE: To check whether analysis is currently enabled, use the following method:
+Note: To check whether analysis is currently enabled, use the following method:
 
 <PRE>
     boolean analysisEnabled = isHeadlessAnalysisEnabled();
