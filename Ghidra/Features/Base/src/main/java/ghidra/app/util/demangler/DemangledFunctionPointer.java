@@ -20,12 +20,34 @@ package ghidra.app.util.demangler;
  */
 public class DemangledFunctionPointer extends AbstractDemangledFunctionDefinitionDataType {
 
+	/** display parens in front of parameter list */
+	private boolean displayFunctionPointerSyntax = true;
+
 	public DemangledFunctionPointer(String mangled, String originalDemangled) {
 		super(mangled, originalDemangled);
+		incrementPointerLevels(); // a function pointer is 1 level by default
 	}
 
 	@Override
 	protected String getTypeString() {
 		return "*";
+	}
+
+	/**
+	 * Signals whether to display function pointer syntax when there is no function name, which 
+	 * is '{@code (*)}', such as found in this example '{@code void (*)()}'.  the default is true
+	 * @param b true to display nameless function pointer syntax; false to not display 
+	 */
+	public void setDisplayDefaultFunctionPointerSyntax(boolean b) {
+		this.displayFunctionPointerSyntax = b;
+	}
+
+	@Override
+	protected void addFunctionPointerParens(StringBuilder buffer, String s) {
+		if (!displayFunctionPointerSyntax) {
+			return;
+		}
+
+		buffer.append('(').append(s).append(')');
 	}
 }
