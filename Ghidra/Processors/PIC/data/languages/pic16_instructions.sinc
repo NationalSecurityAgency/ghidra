@@ -287,7 +287,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 @if PROCESSOR == "PIC_16F"
 
-:ADD^fsrk sk6	is op7=0x62 & fsrk & sk6 {
+:ADDFSR fsrk, sk6	is op7=0x62 & fsrk & sk6 {
 	fsrk = fsrk + sk6;
 }
 @endif
@@ -382,6 +382,12 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	val = W & val;
 	setResultFlags(val);
 	destREG = val;
+}
+
+:ASRF srcREG, D				is op6=0x37 & srcREG & D & destREG					{
+	#  --11 0111 dfff ffff
+	$(C) = srcREG & 0x1;
+	destREG = srcREG s>> 1;
 }
 
 :BCF srcREG, bit			is op4=0x4 & srcREG & bit							{
@@ -612,6 +618,12 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	call [absAddr11];
 }
 
+:CALLW					is op14=0x000a						{
+	#  --00 0000 0000 1010
+	push(&:2 inst_next);
+	call [W];
+}
+	
 :CLRF srcREG				is op6=0x01 & d=1 & srcREG						{
 	#  --00 0001 1fff ffff
 	#  0000 0001 1000 0000	->	CLRF INDF
@@ -733,6 +745,18 @@ srcFSR: fsr"--"		is fsr & mm=3 { addr:2 = fsr; fsr = fsr - 1; export *[DATA]:1 a
 
 srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 	addr:2 = fsrk + sk6; export *[DATA]:1 addr;
+}
+
+:LSLF srcREG, D				is op6=0x35 & srcREG & D & destREG					{
+	#  --11 0101 dfff ffff
+	$(C) = (srcREG & 80) != 0;
+	destREG = srcREG << 1;
+}
+
+:LSRF srcREG, D				is op6=0x36 & srcREG & D & destREG					{
+	#  --11 0110 dfff ffff
+	$(C) = srcREG & 0x1;
+	destREG = srcREG >> 1;
 }
 
 :MOVIW srcFSR			is op11=2 & srcFSR {
