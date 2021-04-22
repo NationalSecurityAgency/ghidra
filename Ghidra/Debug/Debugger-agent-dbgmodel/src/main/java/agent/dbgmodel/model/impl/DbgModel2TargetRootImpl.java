@@ -332,10 +332,10 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				return;
 			}
 			DbgModelTargetProcess process = (DbgModelTargetProcess) object.getProxy();
-			process.setExecutionState(TargetExecutionState.INACTIVE, "Detached");
-			DbgProcess proc = process.getProcess();
-			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
-				"Process " + proc.getId() + " exited code=" + proc.getExitCode(), List.of(process));
+			if (!process.getExecutionState().equals(TargetExecutionState.TERMINATED)) {
+				process.setExecutionState(TargetExecutionState.INACTIVE, "Detached");
+			}
+			process.getParent().resync();
 		});
 	}
 
@@ -540,8 +540,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				}
 				return TargetEventType.STOPPED;
 			case SESSION_EXIT:
-				getModel().close();
-				break;
+				return TargetEventType.PROCESS_EXITED;
 			default:
 				break;
 		}

@@ -110,6 +110,7 @@ public class DbgManagerImpl implements DbgManager {
 	private volatile boolean waiting = false;
 	private boolean kernelMode = false;
 	private CompletableFuture<String> continuation;
+	private long processCount = 0;
 
 	/**
 	 * Instantiate a new manager
@@ -998,6 +999,12 @@ public class DbgManagerImpl implements DbgManager {
 		waiting = true;
 
 		Long info = evt.getInfo();
+		if (info.intValue() >= 0) {
+			processCount++;
+		}
+		else {
+			processCount--;
+		}
 		DebugProcessId id = new DebugProcessId(info.intValue());
 
 		String key = Integer.toHexString(id.id);
@@ -1523,4 +1530,9 @@ public class DbgManagerImpl implements DbgManager {
 	public void setContinuation(CompletableFuture<String> continuation) {
 		this.continuation = continuation;
 	}
+
+	public long getProcessCount() {
+		return processCount;
+	}
+
 }

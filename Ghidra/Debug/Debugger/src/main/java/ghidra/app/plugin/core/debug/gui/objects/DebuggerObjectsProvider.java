@@ -101,6 +101,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR = "Object Colors.Subscribed";
 	public static final String OPTION_NAME_INVISIBLE_FOREGROUND_COLOR =
 		"Object Colors.Invisible (when toggled on)";
+	public static final String OPTION_NAME_INVALIDATED_FOREGROUND_COLOR =
+		"Object Colors.Invalidated";
 	public static final String OPTION_NAME_ERROR_FOREGROUND_COLOR = "Object Colors.Errors";
 	public static final String OPTION_NAME_INTRINSIC_FOREGROUND_COLOR = "Object Colors.Intrinsics";
 	public static final String OPTION_NAME_TARGET_FOREGROUND_COLOR = "Object Colors.Targets";
@@ -127,6 +129,12 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		help = @HelpInfo(anchor = "colors") //
 	)
 	Color invisibleForegroundColor = Color.LIGHT_GRAY;
+	@AutoOptionDefined( //
+		name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR, //
+		description = "The foreground color for items no longer valid", //
+		help = @HelpInfo(anchor = "colors") //
+	)
+	Color invalidatedForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
 		name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
 		description = "The foreground color for modified items in the objects tree", //
@@ -383,6 +391,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	@AutoOptionConsumed(name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR)
 	private void setInvisibleForegroundColor(Color color) {
 		invisibleForegroundColor = color;
+		if (pane != null) {
+			pane.getComponent().repaint();
+		}
+	}
+
+	@AutoOptionConsumed(name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR)
+	private void setInvalidatedForegroundColor(Color color) {
+		invalidatedForegroundColor = color;
 		if (pane != null) {
 			pane.getComponent().repaint();
 		}
@@ -734,16 +750,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			boolean usingAttributes) {
 		String xkey = usingAttributes ? key : "[" + key + "]";
 		if (val instanceof TargetObject) {
-			TargetObject ref = (TargetObject) val;
-			List<String> path = ref.getPath();
+			TargetObject to = (TargetObject) val;
+			List<String> path = to.getPath();
 			boolean isLink = PathUtils.isLink(parent.getPath(), xkey, path);
 			boolean isMethod = false;
-			if (ref instanceof TargetObject) {
-				TargetObject to = ref;
-				isMethod = to instanceof TargetMethod;
-			}
+			isMethod = to instanceof TargetMethod;
 			if (!(val instanceof DummyTargetObject) && !isMethod) {
-				return new ObjectContainer(ref, isLink ? xkey : null);
+				return new ObjectContainer(to, isLink ? xkey : null);
 			}
 		}
 		else {
@@ -1786,6 +1799,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				return intrinsicForegroundColor;
 			case OPTION_NAME_INVISIBLE_FOREGROUND_COLOR:
 				return invisibleForegroundColor;
+			case OPTION_NAME_INVALIDATED_FOREGROUND_COLOR:
+				return invalidatedForegroundColor;
 			case OPTION_NAME_MODIFIED_FOREGROUND_COLOR:
 				return modifiedForegroundColor;
 			case OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR:

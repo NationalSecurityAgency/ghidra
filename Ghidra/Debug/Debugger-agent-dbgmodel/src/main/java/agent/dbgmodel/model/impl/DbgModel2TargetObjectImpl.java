@@ -16,6 +16,7 @@
 package agent.dbgmodel.model.impl;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -112,9 +113,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		List<TargetObject> nlist = new ArrayList<>();
+		List<String> rlist = new ArrayList<>();
 		return requestNativeElements().thenCompose(list -> {
 			synchronized (elements) {
-				for (TargetObject element : elements.values()) {
+				for (Entry<String, TargetObject> entry : elements.entrySet()) {
+					TargetObject element = entry.getValue();
 					if (!list.contains(element)) {
 						if (element instanceof DbgStateListener) {
 							getManager().removeStateListener((DbgStateListener) element);
@@ -122,6 +125,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 						if (element instanceof DbgEventsListener) {
 							getManager().removeEventsListener((DbgEventsListener) element);
 						}
+						rlist.add(entry.getKey());
 					}
 				}
 				nlist.addAll(list);
@@ -129,18 +133,20 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				//return processModelObjectElements(nlist);
 			}
 		}).thenAccept(__ -> {
-			changeElements(List.of(), nlist, Map.of(), "Refreshed");
+			changeElements(rlist, nlist, Map.of(), "Refreshed");
 		});
 	}
 
 	@Override
 	public CompletableFuture<Void> requestAttributes(boolean refresh) {
 		Map<String, Object> nmap = new HashMap<>();
+		List<String> rlist = new ArrayList<>();
 		return requestNativeAttributes().thenCompose(map -> {
 			synchronized (attributes) {
 				if (map != null) {
 					Collection<?> values = map.values();
-					for (Object attribute : attributes.values()) {
+					for (Entry<String, Object> entry : attributes.entrySet()) {
+						Object attribute = entry.getValue();
 						if (!values.contains(attribute)) {
 							if (attribute instanceof DbgStateListener) {
 								getManager().removeStateListener((DbgStateListener) attribute);
@@ -148,6 +154,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 							if (attribute instanceof DbgEventsListener) {
 								getManager().removeEventsListener((DbgEventsListener) attribute);
 							}
+							rlist.add(entry.getKey());
 						}
 					}
 					nmap.putAll(map);

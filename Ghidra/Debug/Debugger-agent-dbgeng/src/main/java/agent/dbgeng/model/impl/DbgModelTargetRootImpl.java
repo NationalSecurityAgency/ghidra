@@ -27,11 +27,26 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Debugger", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = "Available", type = DbgModelTargetAvailableContainerImpl.class, required = true, fixed = true),
-		@TargetAttributeType(name = "Connectors", type = DbgModelTargetConnectorContainerImpl.class, required = true, fixed = true),
-		@TargetAttributeType(name = "Sessions", type = DbgModelTargetSessionContainerImpl.class, required = true, fixed = true),
+@TargetObjectSchemaInfo(
+	name = "Debugger",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = "Available",
+			type = DbgModelTargetAvailableContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Connectors",
+			type = DbgModelTargetConnectorContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Sessions",
+			type = DbgModelTargetSessionContainerImpl.class,
+			required = true,
+			fixed = true),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 		implements DbgModelTargetRoot {
@@ -120,9 +135,11 @@ public class DbgModelTargetRootImpl extends DbgModelDefaultTargetModelRoot
 			DbgReason reason) {
 		DbgModelTargetThread targetThread =
 			(DbgModelTargetThread) getModel().getModelObject(thread);
-		changeAttributes(List.of(), List.of(), Map.of( //
-			TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread //
-		), reason.desc());
+		if (targetThread != null) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, targetThread //
+			), reason.desc());
+		}
 	}
 
 	@Override

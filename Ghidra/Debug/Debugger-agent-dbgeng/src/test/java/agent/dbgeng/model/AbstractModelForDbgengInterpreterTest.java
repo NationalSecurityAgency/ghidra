@@ -68,4 +68,14 @@ public abstract class AbstractModelForDbgengInterpreterTest
 	public DebuggerTestSpecimen getLaunchSpecimen() {
 		return WindowsSpecimen.PRINT;
 	}
+
+	/*
+	@Override
+	@Ignore
+	@Test(expected = DebuggerModelTerminatingException.class)
+	public void testExecuteQuit() throws Throwable {
+		// Different behavior for dbg clients vice gdb
+	}
+	*/
+
 }
