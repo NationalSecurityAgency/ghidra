@@ -24,6 +24,8 @@
 
 #include <iostream>
 #include <string>
+#include <mutex>
+#include <thread>
 
 string Attributes::bogus_uri("http://unused.uri");
 
@@ -112,7 +114,9 @@ extern void print_content(const string &str);	///< Send character data to the Co
 extern int4 convertEntityRef(const string &ref);	///< Convert an XML entity to its equivalent character
 extern int4 convertCharRef(const string &ref);	///< Convert an XML character reference to its equivalent character
 static XmlScan *global_scan;					///< Global reference to the scanner
+static std::mutex global_scan_mutex;
 static ContentHandler *handler;					///< Global reference to the content handler
+static std::mutex handler_mutex;
 extern int yydebug;								///< Debug mode
 %}
 
@@ -517,6 +521,8 @@ int4 xml_parse(istream &i,ContentHandler *hand,int4 dbg)
 #if YYDEBUG
   yydebug = dbg;
 #endif
+  std::lock_guard<std::mutex> global_scan_lock(global_scan_mutex);
+  std::lock_guard<std::mutex> handler_lock(handler_mutex);
   global_scan = new XmlScan(i);
   handler = hand;
   handler->startDocument();
