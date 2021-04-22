@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="CODE" first="0x0000" last="0x1fff"/>
+    
+    <range space="DATA" first="0x0020" last="0x007f"/>
+    <range space="DATA" first="0x00a0" last="0x00ff"/>
+    <range space="DATA" first="0x0120" last="0x017f"/>
+    <range space="DATA" first="0x01a0" last="0x01ff"/>
+    <range space="DATA" first="0x0220" last="0x027f"/>
+    <range space="DATA" first="0x02a0" last="0x02ff"/>
+    <range space="DATA" first="0x0320" last="0x037f"/>
+    <range space="DATA" first="0x03a0" last="0x03ff"/>
+    <range space="DATA" first="0x0420" last="0x047f"/>
+    <range space="DATA" first="0x04a0" last="0x04ff"/>
+    <range space="DATA" first="0x0520" last="0x057f"/>
+    <range space="DATA" first="0x05a0" last="0x05ff"/>
+    <range space="DATA" first="0x0620" last="0x064f"/>
+    <range space="DATA" first="0x0670" last="0x067f"/>
+    <range space="DATA" first="0x06f0" last="0x06ff"/>
+    <range space="DATA" first="0x0770" last="0x077f"/>
+    <range space="DATA" first="0x07f0" last="0x07ff"/>
+    <range space="DATA" first="0x0870" last="0x087f"/>
+    <range space="DATA" first="0x08f0" last="0x08ff"/>
+    <range space="DATA" first="0x0970" last="0x097f"/>
+    <range space="DATA" first="0x09f0" last="0x09ff"/>
+    <range space="DATA" first="0x0a70" last="0x0a7f"/>
+    <range space="DATA" first="0x0af0" last="0x0aff"/>
+    <range space="DATA" first="0x0b70" last="0x0b7f"/>
+    <range space="DATA" first="0x0bf0" last="0x0bff"/>
+    <range space="DATA" first="0x0c70" last="0x0c7f"/>
+    <range space="DATA" first="0x0cf0" last="0x0cff"/>
+    <range space="DATA" first="0x0d70" last="0x0d7f"/>
+    <range space="DATA" first="0x0df0" last="0x0dff"/>
+    <range space="DATA" first="0x0e70" last="0x0e7f"/>
+    <range space="DATA" first="0x0ef0" last="0x0eff"/>
+    <range space="DATA" first="0x0f70" last="0x0f7f"/>
+    <range space="DATA" first="0x0ff0" last="0x0fff"/>
+    <range space="DATA" first="0x1070" last="0x107f"/>
+    <range space="DATA" first="0x10f0" last="0x10ff"/>
+    <range space="DATA" first="0x1170" last="0x117f"/>
+    <range space="DATA" first="0x11f0" last="0x11ff"/>
+    <range space="DATA" first="0x1270" last="0x127f"/>
+    <range space="DATA" first="0x12f0" last="0x12ff"/>
+    <range space="DATA" first="0x1370" last="0x137f"/>
+    <range space="DATA" first="0x13f0" last="0x13ff"/>
+    <range space="DATA" first="0x1470" last="0x147f"/>
+    <range space="DATA" first="0x14f0" last="0x14ff"/>
+    <range space="DATA" first="0x1570" last="0x157f"/>
+    <range space="DATA" first="0x15f0" last="0x15ff"/>
+    <range space="DATA" first="0x1670" last="0x167f"/>
+    <range space="DATA" first="0x16f0" last="0x16ff"/>
+    <range space="DATA" first="0x1770" last="0x177f"/>
+    <range space="DATA" first="0x17f0" last="0x17ff"/>
+    <range space="DATA" first="0x1870" last="0x187f"/>
+    <range space="DATA" first="0x18f0" last="0x18ff"/>
+    <range space="DATA" first="0x1970" last="0x197f"/>
+    <range space="DATA" first="0x19f0" last="0x19ff"/>
+    <range space="DATA" first="0x1a70" last="0x1a7f"/>
+    <range space="DATA" first="0x1af0" last="0x1aff"/>
+    <range space="DATA" first="0x1b70" last="0x1b7f"/>
+    <range space="DATA" first="0x1bf0" last="0x1bff"/>
+    <range space="DATA" first="0x1c70" last="0x1c7f"/>
+    <range space="DATA" first="0x1cf0" last="0x1cff"/>
+    <range space="DATA" first="0x1d70" last="0x1d7f"/>
+    <range space="DATA" first="0x1df0" last="0x1dff"/>
+    <range space="DATA" first="0x1e70" last="0x1e7f"/>
+    <range space="DATA" first="0x1ef0" last="0x1eff"/>
+    <range space="DATA" first="0x1f70" last="0x1f7f"/>
+    <range space="DATA" first="0x1ff0" last="0x1fff"/>
+  </global>
+  <nohighptr>
+    <range space="DATA" first="0x0000" last="0x001f"/>
+    <range space="DATA" first="0x0080" last="0x009f"/>
+    <range space="DATA" first="0x0100" last="0x011f"/>
+    <range space="DATA" first="0x0180" last="0x019f"/>
+    <range space="DATA" first="0x0200" last="0x021f"/>
+    <range space="DATA" first="0x0280" last="0x029f"/>
+    <range space="DATA" first="0x0300" last="0x031f"/>
+    <range space="DATA" first="0x0380" last="0x039f"/>
+    <range space="DATA" first="0x0400" last="0x041f"/>
+    <range space="DATA" first="0x0480" last="0x049f"/>
+    <range space="DATA" first="0x0500" last="0x051f"/>
+    <range space="DATA" first="0x0580" last="0x059f"/>
+    <range space="DATA" first="0x0600" last="0x061f"/>
+    <range space="DATA" first="0x0680" last="0x069f"/>
+    <range space="DATA" first="0x0700" last="0x071f"/>
+    <range space="DATA" first="0x0780" last="0x079f"/>
+    <range space="DATA" first="0x0800" last="0x081f"/>
+    <range space="DATA" first="0x0880" last="0x089f"/>
+    <range space="DATA" first="0x0900" last="0x091f"/>
+    <range space="DATA" first="0x0980" last="0x099f"/>
+    <range space="DATA" first="0x0a00" last="0x0a1f"/>
+    <range space="DATA" first="0x0a80" last="0x0a9f"/>
+    <range space="DATA" first="0x0b00" last="0x0b1f"/>
+    <range space="DATA" first="0x0b80" last="0x0b9f"/>
+    <range space="DATA" first="0x0c00" last="0x0c1f"/>
+    <range space="DATA" first="0x0c80" last="0x0c9f"/>
+    <range space="DATA" first="0x0d00" last="0x0d1f"/>
+    <range space="DATA" first="0x0d80" last="0x0d9f"/>
+    <range space="DATA" first="0x0e00" last="0x0e1f"/>
+    <range space="DATA" first="0x0e80" last="0x0e9f"/>
+    <range space="DATA" first="0x0f00" last="0x0f1f"/>
+    <range space="DATA" first="0x0f80" last="0x0f9f"/>
+    <range space="DATA" first="0x1000" last="0x101f"/>
+    <range space="DATA" first="0x1080" last="0x109f"/>
+    <range space="DATA" first="0x1100" last="0x111f"/>
+    <range space="DATA" first="0x1180" last="0x119f"/>
+    <range space="DATA" first="0x1200" last="0x121f"/>
+    <range space="DATA" first="0x1280" last="0x129f"/>
+    <range space="DATA" first="0x1300" last="0x131f"/>
+    <range space="DATA" first="0x1380" last="0x139f"/>
+    <range space="DATA" first="0x1400" last="0x141f"/>
+    <range space="DATA" first="0x1480" last="0x149f"/>
+    <range space="DATA" first="0x1500" last="0x151f"/>
+    <range space="DATA" first="0x1580" last="0x159f"/>
+    <range space="DATA" first="0x1600" last="0x161f"/>
+    <range space="DATA" first="0x1680" last="0x169f"/>
+    <range space="DATA" first="0x1700" last="0x171f"/>
+    <range space="DATA" first="0x1780" last="0x179f"/>
+    <range space="DATA" first="0x1800" last="0x181f"/>
+    <range space="DATA" first="0x1880" last="0x189f"/>
+    <range space="DATA" first="0x1900" last="0x191f"/>
+    <range space="DATA" first="0x1980" last="0x199f"/>
+    <range space="DATA" first="0x1a00" last="0x1a1f"/>
+    <range space="DATA" first="0x1a80" last="0x1a9f"/>
+    <range space="DATA" first="0x1b00" last="0x1b1f"/>
+    <range space="DATA" first="0x1b80" last="0x1b9f"/>
+    <range space="DATA" first="0x1c00" last="0x1c1f"/>
+    <range space="DATA" first="0x1c80" last="0x1c9f"/>
+    <range space="DATA" first="0x1d00" last="0x1d1f"/>
+    <range space="DATA" first="0x1d80" last="0x1d9f"/>
+    <range space="DATA" first="0x1e00" last="0x1e6f"/>
+    <range space="DATA" first="0x1e80" last="0x1eef"/>
+    <range space="DATA" first="0x1f00" last="0x1f6f"/>
+    <range space="DATA" first="0x1f80" last="0x1fef"/>
+  </nohighptr>
+  <stackpointer register="STKPTR" space="HWSTACK" growth="positive"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="-2" stackshift="-2">
+      <input>
+        <pentry minsize="1" maxsize="1">
+          <register name="W"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="1">
+          <register name="W"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="STATUS"/>
+        <register name="PC"/>
+        <register name="PCL"/>
+        <register name="PCLATH"/>
+        <register name="STKPTR"/>
+        <register name="BSR"/>
+      </unaffected>
+      <localrange>
+        <range space="stack" first="0x0" last="0xf"/>
+      </localrange>
+    </prototype>
+  </default_proto>
+</compiler_spec>

@@ -29,8 +29,6 @@
       </output>
       <unaffected>
         <register name="STATUS"/>
-        <register name="IRP"/>
-        <register name="RP"/>
         <register name="PC"/>
         <register name="PCL"/>
         <register name="PCLATH"/>

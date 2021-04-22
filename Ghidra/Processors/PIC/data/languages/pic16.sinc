@@ -30,7 +30,7 @@ define alignment=2;
 # Instruction Memory (ROM-based)
 define space CODE type=ram_space wordsize=2 size=2 default;
 
-# General Purpose Register Memory consists of 4-banks of 255-bytes for PIC16,
+# General Purpose RAM Memory consists of 4-banks of 255-bytes for PIC16,
 # or 32-banks of 255 bytes each for PIC_16F.
 # Bank selection occurs using STATUS register bits RP0 & RP1
 define space DATA type=ram_space size=2; 
@@ -51,8 +51,6 @@ define register offset=0x0003 size=1 [ W SkipNext ];
 
 # Status bit registers (these do not really exist and must get reflected into the STATUS byte register)
 @if PROCESSOR == "PIC_16"
-define register offset=0x0007 size=1 [ IRP RP ];
-@elif PROCESSOR == "PIC_16F"
 define register offset=0x0007 size=1 [ IRP RP ];
 @endif
 
