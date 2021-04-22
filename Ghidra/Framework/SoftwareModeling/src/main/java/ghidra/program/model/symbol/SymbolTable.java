@@ -541,17 +541,6 @@ public interface SymbolTable {
 			throws DuplicateNameException, InvalidInputException;
 
 	/**
-	 * Creates a Symbol that is just a placeholder for use when trying to find symbols by using
-	 * {@link Symbol#getID()}.   This is useful for locating symbols in Java collections when
-	 * a symbol has been deleted and the only remaining information is that symbol's ID.
-	 * 
-	 * @param address the address of the symbol
-	 * @param id the id of the symbol
-	 * @return the fake symbol
-	 */
-	public Symbol createSymbolPlaceholder(Address address, long id);
-
-	/**
 	 * Converts the given namespace to a class namespace
 	 * 
 	 * @param namespace the namespace to convert
