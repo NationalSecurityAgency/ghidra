@@ -20,10 +20,12 @@ import agent.gdb.manager.impl.*;
 
 public class GdbInferiorSelectCommand extends AbstractGdbCommand<Void> {
 	private final int id;
+	private final boolean internal;
 
-	public GdbInferiorSelectCommand(GdbManagerImpl manager, int id) {
+	public GdbInferiorSelectCommand(GdbManagerImpl manager, int id, boolean internal) {
 		super(manager);
 		this.id = id;
+		this.internal = internal;
 	}
 
 	@Override
@@ -57,5 +59,10 @@ public class GdbInferiorSelectCommand extends AbstractGdbCommand<Void> {
 	public Void complete(GdbPendingCommand<?> pending) {
 		pending.checkCompletion(GdbCommandDoneEvent.class);
 		return null;
+	}
+
+	@Override
+	public boolean isFocusInternallyDriven() {
+		return internal;
 	}
 }

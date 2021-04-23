@@ -99,6 +99,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 				return DbgModelTargetRegisterBank.class;
 			case "TTD":
 				return DbgModelTargetTTD.class;
+			case "Debug":
+				return DbgModelTargetDebugContainer.class;
 		}
 		if (parentName != null) {
 			switch (parentName) {
@@ -287,6 +289,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			requestAttributes(false);
 			return;
 		}
+		/*
 		if (proxy instanceof DbgModelTargetRegisterBank) {
 			requestAttributes(false).thenAccept(__ -> {
 				DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) proxy;
@@ -296,6 +299,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			});
 			return;
 		}
+		*/
 
 		if (proxy instanceof DbgModelTargetProcessContainer || //
 			proxy instanceof DbgModelTargetThreadContainer || //
@@ -323,6 +327,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			requestAttributes(false);
 			return;
 		}
+		/*
 		if (proxy instanceof DbgModelTargetRegisterBank) {
 			requestAttributes(false).thenAccept(__ -> {
 				DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) proxy;
@@ -332,8 +337,13 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			});
 			return;
 		}
+		*/
 		if (proxy instanceof DbgModelTargetRegister || //
 			proxy instanceof DbgModelTargetStackFrame) {
+			requestAttributes(false);
+			return;
+		}
+		if (proxy.getName().equals("Debug")) {
 			requestAttributes(false);
 			return;
 		}

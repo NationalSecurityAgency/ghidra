@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -24,6 +24,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -36,6 +37,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
 import ghidra.app.services.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
@@ -48,6 +51,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.lifecycle.Internal;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -57,8 +61,15 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(shortDescription = "Debugger models manager service", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.HIDDEN, servicesRequired = {}, servicesProvided = {
-	DebuggerModelService.class, })
+@PluginInfo(
+	shortDescription = "Debugger models manager service",
+	description = "Manage debug sessions, connections, and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.HIDDEN,
+	servicesRequired = {},
+	servicesProvided = {
+		DebuggerModelService.class, })
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, FrontEndOnly {
 
@@ -296,28 +307,6 @@ public class DebuggerModelServicePlugin extends Plugin
 		listener.dispose();
 		modelListeners.fire.elementRemoved(model);
 		return true;
-	}
-
-	protected LocalDebuggerModelFactory getDefaultLocalDebuggerModelFactory() {
-		return factories.stream()
-				.filter(LocalDebuggerModelFactory.class::isInstance)
-				.map(LocalDebuggerModelFactory.class::cast)
-				.sorted(Comparator.comparing(f -> -f.getPriority()))
-				.filter(LocalDebuggerModelFactory::isCompatible)
-				.findFirst()
-				.orElse(null);
-	}
-
-	@Override
-	public CompletableFuture<? extends DebuggerObjectModel> startLocalSession() {
-		LocalDebuggerModelFactory factory = getDefaultLocalDebuggerModelFactory();
-		if (factory == null) {
-			return CompletableFuture.failedFuture(
-				new NoSuchElementException("No suitable launcher for the local platform"));
-		}
-		CompletableFuture<? extends DebuggerObjectModel> future = factory.build();
-		future.thenAccept(this::addModel);
-		return future;
 	}
 
 	@Override
@@ -676,5 +665,12 @@ public class DebuggerModelServicePlugin extends Plugin
 				factory.readConfigState(factoryState);
 			}
 		}
+	}
+
+	@Override
+	public Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program) {
+		return ClassSearcher.getInstances(DebuggerProgramLaunchOpinion.class)
+				.stream()
+				.flatMap(opinion -> opinion.getOffers(program, tool, this).stream());
 	}
 }

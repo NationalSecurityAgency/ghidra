@@ -101,6 +101,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR = "Object Colors.Subscribed";
 	public static final String OPTION_NAME_INVISIBLE_FOREGROUND_COLOR =
 		"Object Colors.Invisible (when toggled on)";
+	public static final String OPTION_NAME_INVALIDATED_FOREGROUND_COLOR =
+		"Object Colors.Invalidated";
 	public static final String OPTION_NAME_ERROR_FOREGROUND_COLOR = "Object Colors.Errors";
 	public static final String OPTION_NAME_INTRINSIC_FOREGROUND_COLOR = "Object Colors.Intrinsics";
 	public static final String OPTION_NAME_TARGET_FOREGROUND_COLOR = "Object Colors.Targets";
@@ -109,70 +111,76 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_DEFAULT_BACKGROUND_COLOR = "Object Colors.Background";
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
-			description = "The default foreground color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
+		description = "The default foreground color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
-			description = "The default background color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
+		description = "The default background color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultBackgroundColor = Color.WHITE;
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
-			description = "The foreground color for items normally not visible (toggleable)", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
+		description = "The foreground color for items normally not visible (toggleable)", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color invisibleForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
-			description = "The foreground color for modified items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR, //
+		description = "The foreground color for items no longer valid", //
+		help = @HelpInfo(anchor = "colors") //
+	)
+	Color invalidatedForegroundColor = Color.LIGHT_GRAY;
+	@AutoOptionDefined( //
+		name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
+		description = "The foreground color for modified items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color modifiedForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
-			description = "The foreground color for subscribed items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
+		description = "The foreground color for subscribed items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color subscribedForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
-			description = "The foreground color for items in error", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
+		description = "The foreground color for items in error", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color errorForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
-			description = "The foreground color for intrinsic items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
+		description = "The foreground color for intrinsic items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color intrinsicForegroundColor = Color.BLUE;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
-			description = "The foreground color for target object items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
+		description = "The foreground color for target object items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color targetForegroundColor = Color.MAGENTA;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
-			description = "The foreground color for property accessor items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
+		description = "The foreground color for property accessor items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color accessorForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
-			description = "The foreground color for links to items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
+		description = "The foreground color for links to items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color linkForegroundColor = Color.GREEN.darker();
 
 	@AutoOptionDefined( //
-			name = "Default Extended Step", //
-			description = "The default string for the extended step command" //
+		name = "Default Extended Step", //
+		description = "The default string for the extended step command" //
 	//help = @HelpInfo(anchor = "colors") //
 	)
 	String extendedStep = "";
@@ -388,6 +396,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 	}
 
+	@AutoOptionConsumed(name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR)
+	private void setInvalidatedForegroundColor(Color color) {
+		invalidatedForegroundColor = color;
+		if (pane != null) {
+			pane.getComponent().repaint();
+		}
+	}
+
 	@AutoOptionConsumed(name = OPTION_NAME_LINK_FOREGROUND_COLOR)
 	private void setLinkForegroundColor(Color color) {
 		linkForegroundColor = color;
@@ -486,16 +502,19 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (model != null && model.equals(currentModel)) {
 			this.requestFocus(); // COMPONENT
 			this.toFront();
+			setSubTitle(currentModel.getBrief());
 		}
 	}
 
 	// TODO: These events aren't being called anymore
 	// TraceActivatedEvents now carry complete "coordinates" (trace,thread,snap,frame,etc.)
 	public void traceActivated(DebuggerCoordinates coordinates) {
+
 		if (currentTrace == coordinates.getTrace()) {
 			return;
 		}
 		setTrace(coordinates.getTrace(), coordinates.getThread(), true);
+
 	}
 
 	public void setTrace(Trace trace, TraceThread thread, boolean select) {
@@ -731,16 +750,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			boolean usingAttributes) {
 		String xkey = usingAttributes ? key : "[" + key + "]";
 		if (val instanceof TargetObject) {
-			TargetObject ref = (TargetObject) val;
-			List<String> path = ref.getPath();
+			TargetObject to = (TargetObject) val;
+			List<String> path = to.getPath();
 			boolean isLink = PathUtils.isLink(parent.getPath(), xkey, path);
 			boolean isMethod = false;
-			if (ref instanceof TargetObject) {
-				TargetObject to = ref;
-				isMethod = to instanceof TargetMethod;
-			}
+			isMethod = to instanceof TargetMethod;
 			if (!(val instanceof DummyTargetObject) && !isMethod) {
-				return new ObjectContainer(ref, isLink ? xkey : null);
+				return new ObjectContainer(to, isLink ? xkey : null);
 			}
 		}
 		else {
@@ -1783,6 +1799,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				return intrinsicForegroundColor;
 			case OPTION_NAME_INVISIBLE_FOREGROUND_COLOR:
 				return invisibleForegroundColor;
+			case OPTION_NAME_INVALIDATED_FOREGROUND_COLOR:
+				return invalidatedForegroundColor;
 			case OPTION_NAME_MODIFIED_FOREGROUND_COLOR:
 				return modifiedForegroundColor;
 			case OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR:

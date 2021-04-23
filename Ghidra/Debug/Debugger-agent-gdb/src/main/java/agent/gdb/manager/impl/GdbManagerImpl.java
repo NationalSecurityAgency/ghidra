@@ -26,7 +26,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.python.core.PyDictionary;
 import org.python.util.InteractiveConsole;
 
-import agent.gdb.ffi.linux.Pty;
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbCause.Causes;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
@@ -35,6 +34,7 @@ import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.parsing.GdbMiParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
+import agent.gdb.pty.*;
 import ghidra.async.*;
 import ghidra.async.AsyncLock.Hold;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
@@ -77,7 +77,7 @@ public class GdbManagerImpl implements GdbManager {
 	static {
 		if (LOG_IO) {
 			try {
-				DBG_LOG = new PrintWriter(new FileOutputStream(new File("DBG.log")));
+				DBG_LOG = new PrintWriter(new FileOutputStream(new File("GDB.log")));
 			}
 			catch (FileNotFoundException e) {
 				throw new AssertionError(e);
@@ -104,7 +104,7 @@ public class GdbManagerImpl implements GdbManager {
 			this.pty = pty;
 			this.channel = channel;
 			this.reader =
-				new BufferedReader(new InputStreamReader(pty.getMaster().getInputStream()));
+				new BufferedReader(new InputStreamReader(pty.getParent().getInputStream()));
 			this.interpreter = interpreter;
 			hasWriter = new CompletableFuture<>();
 		}
@@ -124,7 +124,7 @@ public class GdbManagerImpl implements GdbManager {
 						}
 					}
 					if (writer == null) {
-						writer = new PrintWriter(pty.getMaster().getOutputStream());
+						writer = new PrintWriter(pty.getParent().getOutputStream());
 						hasWriter.complete(null);
 					}
 					//Msg.debug(this, channel + ": " + line);
@@ -145,6 +145,8 @@ public class GdbManagerImpl implements GdbManager {
 		}
 	}
 
+	private final PtyFactory ptyFactory;
+
 	private final AsyncReference<GdbState, GdbCause> state =
 		new AsyncReference<>(GdbState.NOT_STARTED);
 	// A copy of state, which is updated on the eventThread.
@@ -156,7 +158,7 @@ public class GdbManagerImpl implements GdbManager {
 	private final HandlerMap<GdbEvent<?>, Void, Void> handlerMap = new HandlerMap<>();
 	private final AtomicBoolean exited = new AtomicBoolean(false);
 
-	private Process gdb;
+	private PtySession gdb;
 	private Thread gdbWaiter;
 
 	private PtyThread iniThread;
@@ -193,8 +195,12 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Instantiate a new manager
+	 * 
+	 * @param ptyFactory a factory for creating Pty's for child GDBs
 	 */
-	public GdbManagerImpl() {
+	public GdbManagerImpl(PtyFactory ptyFactory) {
+		this.ptyFactory = ptyFactory;
+
 		state.filter(this::stateFilter);
 		state.addChangeListener(this::trackRunningInterpreter);
 		state.addChangeListener((os, ns, c) -> event(() -> asyncState.set(ns, c), "managerState"));
@@ -556,9 +562,9 @@ public class GdbManagerImpl implements GdbManager {
 		executor = Executors.newSingleThreadExecutor();
 
 		if (gdbCmd != null) {
-			iniThread = new PtyThread(Pty.openpty(), Channel.STDOUT, null);
+			iniThread = new PtyThread(ptyFactory.openpty(), Channel.STDOUT, null);
 
-			gdb = iniThread.pty.getSlave().session(fullargs.toArray(new String[] {}), null);
+			gdb = iniThread.pty.getChild().session(fullargs.toArray(new String[] {}), null);
 			gdbWaiter = new Thread(this::waitGdbExit, "GDB WaitExit");
 			gdbWaiter.start();
 
@@ -575,14 +581,16 @@ public class GdbManagerImpl implements GdbManager {
 			}
 			switch (iniThread.interpreter) {
 				case CLI:
+					Pty mi2Pty = ptyFactory.openpty();
+
 					cliThread = iniThread;
 					cliThread.setName("GDB Read CLI");
+					cliThread.writer.println("new-ui mi2 " + mi2Pty.getChild().nullSession());
+					cliThread.writer.flush();
 
-					mi2Thread = new PtyThread(Pty.openpty(), Channel.STDOUT, Interpreter.MI2);
+					mi2Thread = new PtyThread(mi2Pty, Channel.STDOUT, Interpreter.MI2);
 					mi2Thread.setName("GDB Read MI2");
 					mi2Thread.start();
-					cliThread.writer.println("new-ui mi2 " + mi2Thread.pty.getSlave().getFile());
-					cliThread.writer.flush();
 					try {
 						mi2Thread.hasWriter.get(2, TimeUnit.SECONDS);
 					}
@@ -598,10 +606,12 @@ public class GdbManagerImpl implements GdbManager {
 			}
 		}
 		else {
-			mi2Thread = new PtyThread(Pty.openpty(), Channel.STDOUT, Interpreter.MI2);
-			mi2Thread.setName("GDB Read MI2");
+			Pty mi2Pty = ptyFactory.openpty();
 			Msg.info(this, "Agent is waiting for GDB/MI v2 interpreter at " +
-				mi2Thread.pty.getSlave().getFile());
+				mi2Pty.getChild().nullSession());
+			mi2Thread = new PtyThread(mi2Pty, Channel.STDOUT, Interpreter.MI2);
+			mi2Thread.setName("GDB Read MI2");
+
 			mi2Thread.start();
 		}
 	}
@@ -622,7 +632,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	private void waitGdbExit() {
 		try {
-			int exitcode = gdb.waitFor();
+			int exitcode = gdb.waitExited();
 			state.set(GdbState.EXIT, Causes.UNCLAIMED);
 			exited.set(true);
 			if (!executor.isShutdown()) {
@@ -800,6 +810,7 @@ public class GdbManagerImpl implements GdbManager {
 	/**
 	 * Schedule a line of GDB output for processing
 	 * 
+	 * <p>
 	 * Before the implementation started using a PTY, the channel was used to distinguish whether
 	 * the line was read from stdout or stderr. Now, all output is assumed to be from stdout.
 	 * 
@@ -961,7 +972,7 @@ public class GdbManagerImpl implements GdbManager {
 			event(() -> listenersEvent.fire.inferiorSelected(cur, evt.getCause()),
 				"groupRemoved-sel");
 			// Also cause GDB to generate thread selection events, if applicable
-			setActiveInferior(cur);
+			setActiveInferior(cur, false);
 		}
 	}
 
@@ -1466,15 +1477,27 @@ public class GdbManagerImpl implements GdbManager {
 		checkStarted();
 		Msg.info(this, "Interrupting");
 		if (cliThread != null) {
-			OutputStream os = cliThread.pty.getMaster().getOutputStream();
+			OutputStream os = cliThread.pty.getParent().getOutputStream();
 			os.write(3);
 			os.flush();
 		}
 		if (mi2Thread != null) {
-			OutputStream os = mi2Thread.pty.getMaster().getOutputStream();
+			OutputStream os = mi2Thread.pty.getParent().getOutputStream();
 			os.write(3);
 			os.flush();
 		}
+	}
+
+	@Internal
+	public void injectInput(Interpreter interpreter, String input) {
+		PrintWriter writer = getWriter(interpreter);
+		writer.print(input);
+		writer.flush();
+	}
+
+	@Internal
+	public void synthesizeConsoleOut(Channel channel, String line) {
+		listenersConsoleOutput.fire.output(channel, line);
 	}
 
 	@Override
@@ -1527,10 +1550,11 @@ public class GdbManagerImpl implements GdbManager {
 	 * This issues a command to GDB to change its focus. It is not just a manager concept.
 	 * 
 	 * @param inferior the inferior to select
+	 * @param internal true to prevent announcement of the change
 	 * @return a future that completes when GDB has executed the command
 	 */
-	CompletableFuture<Void> setActiveInferior(GdbInferior inferior) {
-		return execute(new GdbInferiorSelectCommand(this, inferior.getId()));
+	CompletableFuture<Void> setActiveInferior(GdbInferior inferior, boolean internal) {
+		return execute(new GdbInferiorSelectCommand(this, inferior.getId(), internal));
 	}
 
 	@Override
@@ -1588,8 +1612,8 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	@Override
-	public String getMi2PtyName() {
-		return mi2Thread.pty.getSlave().getFile().getAbsolutePath();
+	public String getMi2PtyName() throws IOException {
+		return mi2Thread.pty.getChild().nullSession();
 	}
 
 	public boolean hasCli() {

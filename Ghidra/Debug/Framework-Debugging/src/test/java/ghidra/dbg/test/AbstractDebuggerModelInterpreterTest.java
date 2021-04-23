@@ -15,7 +15,6 @@
  */
 package ghidra.dbg.test;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.async.AsyncReference;
@@ -94,13 +92,26 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 	 */
 	protected abstract String getKillCommand(TargetProcess process);
 
+	/**
+	 * Perform an pre-test actions to ensure an interpreter exists where expected
+	 * 
+	 * <p>
+	 * The model will have been built already. This method is invoked immediately preceding
+	 * {@link #findInterpreter()}
+	 * 
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected void ensureInterpreterAvailable() throws Throwable {
+	}
+
 	@Test
 	public void testInterpreterIsWhereExpected() throws Throwable {
 		List<String> expectedInterpreterPath = getExpectedInterpreterPath();
 		assumeNotNull(expectedInterpreterPath);
 		m.build();
 
-		TargetInterpreter interpreter = m.find(TargetInterpreter.class, List.of());
+		ensureInterpreterAvailable();
+		TargetInterpreter interpreter = findInterpreter();
 		assertEquals(expectedInterpreterPath, interpreter.getPath());
 	}
 
@@ -128,7 +139,8 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		assumeNotNull(cmd);
 		m.build();
 
-		TargetInterpreter interpreter = m.find(TargetInterpreter.class, List.of());
+		ensureInterpreterAvailable();
+		TargetInterpreter interpreter = findInterpreter();
 		runTestExecute(interpreter, cmd);
 	}
 
@@ -163,7 +175,8 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		assumeNotNull(cmd);
 		m.build();
 
-		TargetInterpreter interpreter = m.find(TargetInterpreter.class, List.of());
+		ensureInterpreterAvailable();
+		TargetInterpreter interpreter = findInterpreter();
 		runTestExecuteCapture(interpreter, cmd);
 	}
 
@@ -178,23 +191,9 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		assumeNotNull(cmd);
 		m.build();
 
-		TargetInterpreter interpreter = m.find(TargetInterpreter.class, List.of());
+		ensureInterpreterAvailable();
+		TargetInterpreter interpreter = findInterpreter();
 		runTestExecute(interpreter, cmd);
-	}
-
-	@Test
-	@Ignore
-	public void testFocusIsSynced() throws Throwable {
-		TODO();
-	}
-
-	@Test
-	@Ignore
-	public void testBreakpointsAreSynced() throws Throwable {
-		TODO();
-		// TODO: Place different kinds
-		// TODO: Enable/disable
-		// TODO: Delete (spec vs. loc?)
 	}
 
 	protected TargetProcess runTestLaunchViaInterpreterShowsInProcessContainer(
@@ -220,6 +219,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		assumeTrue(m.hasProcessContainer());
 		m.build();
 
+		ensureInterpreterAvailable();
 		TargetInterpreter interpreter = findInterpreter();
 		TargetProcess process = runTestLaunchViaInterpreterShowsInProcessContainer(interpreter);
 
@@ -250,6 +250,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		m.build();
 		dummy = specimen.runDummy();
 
+		ensureInterpreterAvailable();
 		TargetInterpreter interpreter = findInterpreter();
 		TargetProcess process = runTestAttachViaInterpreterShowsInProcessContainer(interpreter);
 

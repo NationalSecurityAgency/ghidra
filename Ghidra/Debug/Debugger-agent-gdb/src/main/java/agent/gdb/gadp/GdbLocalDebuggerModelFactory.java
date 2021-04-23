@@ -15,10 +15,9 @@
  */
 package agent.gdb.gadp;
 
-import java.io.IOException;
-import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
 
+import agent.gdb.GdbCompatibility;
 import agent.gdb.manager.GdbManager;
 import ghidra.dbg.gadp.server.AbstractGadpLocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
@@ -26,31 +25,11 @@ import ghidra.dbg.util.ShellUtils;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 @FactoryDescription( //
-		brief = "GNU gdb local agent via GADP/TCP", //
-		htmlDetails = "Launch a new agent using GDB. This may start a new session or join an existing one." //
+	brief = "GNU gdb local agent via GADP/TCP", //
+	htmlDetails = "Launch a new agent using GDB. This may start a new session or join an existing one." //
 )
 @ExtensionPointProperties(priority = 100)
 public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
-	public static boolean checkGdbPresent(String gdbCmd) {
-		List<String> args = ShellUtils.parseArgs(gdbCmd);
-		if (args.isEmpty()) {
-			return false;
-		}
-		try {
-			ProcessBuilder builder = new ProcessBuilder(args.get(0), "--version");
-			builder.redirectError(Redirect.INHERIT);
-			builder.redirectOutput(Redirect.INHERIT);
-			@SuppressWarnings("unused")
-			Process gdb = builder.start();
-			// TODO: Once supported versions are decided, check the version.
-			return true;
-		}
-		catch (IOException e) {
-			return false;
-		}
-	}
-
-	protected Boolean isSuitable;
 
 	private String gdbCmd = GdbManager.DEFAULT_GDB_CMD;
 	@FactoryOption("GDB launch command")
@@ -62,15 +41,10 @@ public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModel
 	public final Property<Boolean> useExistingOption =
 		Property.fromAccessors(boolean.class, this::isUseExisting, this::setUseExisting);
 
-	// TODO: A factory which connects to GDB via SSH. Would need to refactor manager.
-
 	@Override
 	public boolean isCompatible() {
 		// TODO: Could potentially support GDB on Windows, but the pty thing would need porting.
-		if (isSuitable != null) {
-			return isSuitable;
-		}
-		return isSuitable = checkGdbPresent(gdbCmd);
+		return GdbCompatibility.INSTANCE.isCompatible(gdbCmd);
 	}
 
 	public String getGdbCommand() {

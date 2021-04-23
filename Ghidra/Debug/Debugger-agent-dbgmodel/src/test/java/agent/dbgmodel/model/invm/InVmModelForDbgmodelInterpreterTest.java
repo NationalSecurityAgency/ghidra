@@ -15,15 +15,48 @@
  */
 package agent.dbgmodel.model.invm;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeTrue;
+
+import java.util.List;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
 import agent.dbgeng.model.AbstractModelForDbgengInterpreterTest;
+import agent.dbgeng.model.WindowsSpecimen;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import ghidra.dbg.target.TargetInterpreter;
+import ghidra.dbg.target.TargetProcess;
+import ghidra.dbg.test.AbstractDebuggerModelTest;
+import ghidra.dbg.test.ProvidesTargetViaLaunchSpecimen;
+import ghidra.dbg.util.PathUtils;
 
-public class InVmModelForDbgmodelInterpreterTest extends AbstractModelForDbgengInterpreterTest {
+public class InVmModelForDbgmodelInterpreterTest extends AbstractModelForDbgengInterpreterTest
+		implements ProvidesTargetViaLaunchSpecimen {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();
+	}
+
+	@Override
+	public AbstractDebuggerModelTest getTest() {
+		return this;
+	}
+
+	@Override
+	protected List<String> seedPath() {
+		return PathUtils.parse("");
+	}
+
+	@Override
+	public List<String> getExpectedInterpreterPath() {
+		return PathUtils.parse("Sessions[0x0]");
+	}
+
+	@Override
+	protected void ensureInterpreterAvailable() throws Throwable {
+		obtainTarget();
 	}
 
 	@Override
@@ -32,4 +65,24 @@ public class InVmModelForDbgmodelInterpreterTest extends AbstractModelForDbgengI
 	public void testAttachViaInterpreterShowsInProcessContainer() throws Throwable {
 		super.testAttachViaInterpreterShowsInProcessContainer();
 	}
+
+	@Override
+	@Test
+	public void testLaunchViaInterpreterShowsInProcessContainer() throws Throwable {
+		assumeTrue(m.hasProcessContainer());
+		m.build();
+		DbgModelTargetProcess initialTarget = (DbgModelTargetProcess) obtainTarget();
+
+		DebuggerTestSpecimen specimen = WindowsSpecimen.NOTEPAD;
+		assertNull(getProcessRunning(specimen, this));
+		TargetInterpreter interpreter = findInterpreter();
+		for (String line : specimen.getLaunchScript()) {
+			waitOn(interpreter.execute(line));
+		}
+		TargetProcess process = retryForProcessRunning(specimen, this);
+		initialTarget.detach();
+
+		runTestKillViaInterpreter(process, interpreter);
+	}
+
 }

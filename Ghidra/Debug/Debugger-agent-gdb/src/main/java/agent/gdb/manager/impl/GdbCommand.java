@@ -67,7 +67,7 @@ public interface GdbCommand<T> {
 	 * <p>
 	 * Complete {@code} pending with a result to short-circuit the execution of this command.
 	 * 
-	 * @param pending the pending command result
+	 * @param pending the pend@Override ing command result
 	 */
 	void preCheck(GdbPendingCommand<? super T> pending);
 
@@ -91,6 +91,13 @@ public interface GdbCommand<T> {
 	 * @return the new current frame ID
 	 */
 	public Integer impliesCurrentFrameId();
+
+	/**
+	 * Check if focus announcements from this command should be suppressed
+	 * 
+	 * @return true to suppress announcements
+	 */
+	public boolean isFocusInternallyDriven();
 
 	/**
 	 * Handle an event that occurred during the execution of this command

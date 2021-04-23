@@ -15,13 +15,15 @@
  */
 package agent.dbgeng.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Map;
 
-import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.DebugModelConventions;
+import ghidra.dbg.DebugModelConventions.AsyncState;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.test.AbstractDebuggerModelLauncherTest;
@@ -54,4 +56,17 @@ public abstract class AbstractModelForDbgengRootLauncherTest
 		assertEquals("little", environment.getEndian());
 		assertTrue(environment.getDebugger().toLowerCase().contains("dbgeng"));
 	}
+
+	protected void runTestResumeTerminates(DebuggerTestSpecimen specimen) throws Throwable {
+		TargetProcess process = retryForProcessRunning(specimen, this);
+		TargetResumable resumable = m.suitable(TargetResumable.class, process.getPath());
+		AsyncState state =
+			new AsyncState(m.suitable(TargetExecutionStateful.class, process.getPath()));
+		TargetExecutionState st = waitOn(state.waitUntil(s -> s == TargetExecutionState.STOPPED));
+		assertTrue(st.isAlive());
+		waitOn(resumable.resume());
+		retryVoid(() -> assertFalse(DebugModelConventions.isProcessAlive(process)),
+			List.of(AssertionError.class));
+	}
+
 }

@@ -23,15 +23,19 @@ import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import ghidra.async.AsyncReference;
-import ghidra.async.AsyncTestUtils;
-import ghidra.dbg.DebugModelConventions;
+import ghidra.async.*;
+import ghidra.dbg.*;
 import ghidra.dbg.DebugModelConventions.AsyncAccess;
+import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetConsole.Channel;
+import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.test.AbstractDebuggerModelTest;
 import ghidra.dbg.test.AbstractDebuggerModelTest.DebuggerTestSpecimen;
 import ghidra.dbg.util.PathUtils;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.util.NumericUtilities;
 
 public interface DebuggerModelTestUtils extends AsyncTestUtils {
@@ -203,5 +207,79 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 			assertNotNull(process);
 			return process;
 		}, List.of(AssertionError.class));
+	}
+
+	default void waitSettled(DebuggerObjectModel model, int ms) throws Throwable {
+		AsyncDebouncer<Void> debouncer = new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, ms);
+		var listener = new DebuggerModelListener() {
+			@Override
+			public void attributesChanged(TargetObject object, Collection<String> removed,
+					Map<String, ?> added) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void breakpointHit(TargetObject container, TargetObject trapped,
+					TargetStackFrame frame, TargetBreakpointSpec spec,
+					TargetBreakpointLocation breakpoint) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void consoleOutput(TargetObject console, Channel channel, byte[] data) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void created(TargetObject object) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void elementsChanged(TargetObject object, Collection<String> removed,
+					Map<String, ? extends TargetObject> added) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void event(TargetObject object, TargetThread eventThread, TargetEventType type,
+					String description, List<Object> parameters) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void invalidateCacheRequested(TargetObject object) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void invalidated(TargetObject object, TargetObject branch, String reason) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void memoryReadError(TargetObject memory, AddressRange range,
+					DebuggerMemoryAccessException e) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void memoryUpdated(TargetObject memory, Address address, byte[] data) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void registersUpdated(TargetObject bank, Map<String, byte[]> updates) {
+				debouncer.contact(null);
+			}
+
+			@Override
+			public void rootAdded(TargetObject root) {
+				debouncer.contact(null);
+			}
+		};
+		model.addModelListener(listener);
+		debouncer.contact(null);
+		waitOnNoValidate(debouncer.settled());
 	}
 }

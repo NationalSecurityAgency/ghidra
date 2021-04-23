@@ -31,7 +31,7 @@ import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.testutil.*;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
 
 /**
@@ -41,7 +41,7 @@ import ghidra.util.Msg;
  * <li>TODO: ensure registersUpdated(RegisterBank) immediately upon created(RegisterBank) ?</li>
  * </ul>
  */
-public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIntegrationTest
+public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedIntegrationTest
 		implements TestDebuggerModelProvider, DebuggerModelTestUtils {
 
 	protected DummyProc dummy;
@@ -54,6 +54,10 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadlessIn
 	 */
 	protected List<String> seedPath() {
 		return List.of();
+	}
+
+	protected TargetActiveScope findActiveScope() throws Throwable {
+		return m.find(TargetActiveScope.class, seedPath());
 	}
 
 	protected TargetObject findAttachableContainer() throws Throwable {

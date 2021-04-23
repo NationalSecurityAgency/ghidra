@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.gadp.GdbGadpServer;
 import agent.gdb.model.impl.GdbModelImpl;
+import agent.gdb.pty.linux.LinuxPtyFactory;
 import ghidra.dbg.gadp.server.AbstractGadpServer;
 
 public class GdbGadpServerImpl implements GdbGadpServer {
@@ -35,7 +36,8 @@ public class GdbGadpServerImpl implements GdbGadpServer {
 
 	public GdbGadpServerImpl(SocketAddress addr) throws IOException {
 		super();
-		this.model = new GdbModelImpl();
+		// TODO: Select Linux or Windows factory based on host OS
+		this.model = new GdbModelImpl(new LinuxPtyFactory());
 		this.server = new GadpSide(model, addr);
 	}
 

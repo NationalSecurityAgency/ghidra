@@ -141,6 +141,7 @@ src/main/resources/images/launch.png||GHIDRA||||END|
 src/main/resources/images/modules.png||GHIDRA||||END|
 src/main/resources/images/object-populated.png||GHIDRA||||END|
 src/main/resources/images/object-running.png||GHIDRA||||END|
+src/main/resources/images/object-terminated.png||GHIDRA||||END|
 src/main/resources/images/object-unpopulated.png||GHIDRA||||END|
 src/main/resources/images/process.png||GHIDRA||||END|
 src/main/resources/images/record.png||GHIDRA||||END|
@@ -180,6 +181,7 @@ src/main/svg/disconnect.svg||GHIDRA||||END|
 src/main/svg/kill.svg||GHIDRA||||END|
 src/main/svg/launch.svg||GHIDRA||||END|
 src/main/svg/memory.svg||GHIDRA||||END|
+src/main/svg/object-terminated.svg||GHIDRA||||END|
 src/main/svg/process.svg||GHIDRA||||END|
 src/main/svg/recording.svg||GHIDRA||||END|
 src/main/svg/register-marker.svg||GHIDRA||||END|

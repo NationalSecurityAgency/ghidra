@@ -16,10 +16,20 @@
 package agent.dbgmodel.model.invm;
 
 import agent.dbgeng.model.AbstractModelForDbgengScenarioStackTest;
+import ghidra.dbg.target.TargetProcess;
+import ghidra.program.model.address.Address;
 
 public class InVmModelForDbgmodelScenarioStackTest extends AbstractModelForDbgengScenarioStackTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();
+	}
+
+	@Override
+	protected void postLaunch(TargetProcess process) throws Throwable {
+	}
+
+	@Override
+	protected void validateFramePC(int index, Address pc) {
 	}
 }

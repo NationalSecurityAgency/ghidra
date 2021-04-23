@@ -75,6 +75,11 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 	}
 
 	@Override
+	public String getBrief() {
+		return "DBGENG@" + Integer.toHexString(System.identityHashCode(this));
+	}
+
+	@Override
 	public AddressSpace getAddressSpace(String name) {
 		if (!SPACE_NAME.equals(name)) {
 			return null;

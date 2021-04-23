@@ -34,6 +34,16 @@ public class WrapIDebugSymbols3 extends WrapIDebugSymbols2 implements IDebugSymb
 	}
 
 	@Override
+	public HRESULT GetCurrentScopeFrameIndex(ULONGByReference Index) {
+		return _invokeHR(VTIndices3.GET_CURRENT_SCOPE_FRAME_INDEX, getPointer(), Index);
+	}
+
+	@Override
+	public HRESULT SetCurrentScopeFrameIndex(ULONG Index) {
+		return _invokeHR(VTIndices3.SET_SCOPE_FRAME_BY_INDEX, getPointer(), Index);
+	}
+
+	@Override
 	public HRESULT GetModuleByModuleNameWide(WString Name, ULONG StartIndex, ULONGByReference Index,
 			ULONGLONGByReference Base) {
 		return _invokeHR(VTIndices3.GET_MODULE_BY_MODULE_NAME_WIDE, getPointer(), Name, StartIndex,

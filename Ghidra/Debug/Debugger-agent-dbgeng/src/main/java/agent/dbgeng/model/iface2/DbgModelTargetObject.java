@@ -24,13 +24,12 @@ import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.AbstractDbgModel;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelListener;
-import ghidra.dbg.agent.InvalidatableTargetObjectIf;
 import ghidra.dbg.agent.SpiTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.util.datastruct.ListenerSet;
 
-public interface DbgModelTargetObject extends SpiTargetObject, InvalidatableTargetObjectIf {
+public interface DbgModelTargetObject extends SpiTargetObject {
 
 	@Override
 	public AbstractDbgModel getModel();

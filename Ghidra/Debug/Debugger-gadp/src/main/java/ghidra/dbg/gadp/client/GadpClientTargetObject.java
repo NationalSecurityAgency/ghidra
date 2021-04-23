@@ -30,6 +30,7 @@ public interface GadpClientTargetObject extends SpiTargetObject {
 	@Override
 	GadpClient getModel();
 
+	@Override
 	DelegateGadpClientTargetObject getDelegate();
 
 	@GadpEventHandler(Gadp.EventNotification.EvtCase.MODEL_OBJECT_EVENT)

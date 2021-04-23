@@ -136,7 +136,8 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 				return;
 			}
 			TargetModule mod = (TargetModule) p0;
-			recorder.moduleRecorder.tx.execute("Adjust module load", () -> {
+			String modPath = mod.getJoinedPath(".");
+			recorder.parTx.execute("Adjust module load: " + modPath, () -> {
 				TraceModule traceModule = recorder.getTraceModule(mod);
 				if (traceModule == null) {
 					return;
@@ -147,7 +148,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 				catch (DuplicateNameException e) {
 					Msg.error(this, "Could not set module loaded snap", e);
 				}
-			});
+			}, modPath);
 		}
 	}
 
@@ -199,9 +200,10 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		Address traceAddr = recorder.getMemoryMapper().targetToTrace(address);
 		long snap = recorder.getSnap();
 		TimedMsg.info(this, "Memory updated: " + address + " (" + data.length + ")");
-		recorder.memoryRecorder.tx.execute("Memory observed", () -> {
+		String path = memory.getJoinedPath(".");
+		recorder.parTx.execute("Memory observed: " + path, () -> {
 			memoryManager.putBytes(snap, traceAddr, ByteBuffer.wrap(data));
-		});
+		}, path); // sel could be rand()...
 	}
 
 	@Override
@@ -213,10 +215,11 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		Msg.error(this, "Error reading range " + range, e);
 		Address traceMin = recorder.getMemoryMapper().targetToTrace(range.getMinAddress());
 		long snap = recorder.getSnap();
-		recorder.memoryRecorder.tx.execute("Memory read error", () -> {
+		String path = memory.getJoinedPath(".");
+		recorder.parTx.execute("Memory read error: " + path, () -> {
 			memoryManager.setState(snap, traceMin, TraceMemoryState.ERROR);
 			// TODO: Bookmark to describe error?
-		});
+		}, path); // sel could be rand()...
 	}
 
 	protected void stackUpdated(TargetStack stack) {

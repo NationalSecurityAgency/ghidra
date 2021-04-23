@@ -15,12 +15,32 @@
  */
 package agent.dbgmodel.model.invm;
 
+import java.util.*;
+
 import agent.dbgeng.model.AbstractModelForDbgengScenarioMemoryTest;
+import ghidra.dbg.target.TargetModule;
+import ghidra.dbg.target.TargetProcess;
+import ghidra.dbg.util.PathUtils;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 
 public class InVmModelForDbgmodelScenarioMemoryTest
 		extends AbstractModelForDbgengScenarioMemoryTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();
+	}
+
+	@Override
+	protected Address getAddressToWrite(TargetProcess process) throws Throwable {
+		// It seems this is the only test case that exercises module symbols.
+		List<String> modulePath = PathUtils.extend(process.getPath(),
+			PathUtils.parse("Modules"));
+		Map<List<String>, TargetModule> modules = m.findAll(TargetModule.class, modulePath, true);
+		Collection<TargetModule> values = modules.values();
+		TargetModule test = (TargetModule) values.toArray()[0];
+		AddressRange range =
+			(AddressRange) test.fetchAttribute(TargetModule.RANGE_ATTRIBUTE_NAME).get();
+		return range.getMinAddress().add(0x15000);
 	}
 }

@@ -742,9 +742,8 @@ public enum DebugModelConventions {
 			this.name = name;
 			this.obj = obj;
 			obj.addListener(this);
-			obj.fetchAttribute(name).thenAccept(t -> {
-				set((T) t, null);
-			}).exceptionally(ex -> {
+			set((T) obj.getCachedAttribute(name), null);
+			obj.fetchAttribute(name).exceptionally(ex -> {
 				Msg.error(this, "Could not get initial value of " + name + " for " + obj, ex);
 				return null;
 			});

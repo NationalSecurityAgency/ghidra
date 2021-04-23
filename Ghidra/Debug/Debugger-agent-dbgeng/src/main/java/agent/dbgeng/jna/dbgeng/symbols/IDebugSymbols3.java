@@ -104,6 +104,10 @@ public interface IDebugSymbols3 extends IDebugSymbols2 {
 		}
 	}
 
+	HRESULT GetCurrentScopeFrameIndex(ULONGByReference Index);
+
+	HRESULT SetCurrentScopeFrameIndex(ULONG Index);
+
 	HRESULT GetModuleByModuleNameWide(WString Name, ULONG StartIndex, ULONGByReference Index,
 			ULONGLONGByReference Base);
 

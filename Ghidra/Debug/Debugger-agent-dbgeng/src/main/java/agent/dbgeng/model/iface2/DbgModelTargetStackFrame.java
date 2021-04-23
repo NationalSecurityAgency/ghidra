@@ -51,7 +51,10 @@ public interface DbgModelTargetStackFrame extends //
 	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
 		DbgThreadImpl thread = manager.getCurrentThread();
-		return manager.setActiveThread(thread);
+		String name = this.getName();
+		String stripped = name.substring(1, name.length() - 1);
+		int index = Integer.decode(stripped);
+		return manager.setActiveFrame(thread, index);
 	}
 
 	@Override
@@ -61,6 +64,7 @@ public interface DbgModelTargetStackFrame extends //
 			if (attrs == null) {
 				return CompletableFuture.completedFuture(null);
 			}
+			map.putAll(attrs);
 			DbgModelTargetObject attributes = (DbgModelTargetObject) attrs.get("Attributes");
 			if (attributes == null) {
 				return CompletableFuture.completedFuture(null);

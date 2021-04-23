@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 
@@ -36,10 +34,8 @@ public interface DbgModelTargetLauncher extends DbgModelTargetObject, TargetCmdL
 
 	@Override
 	public default CompletableFuture<Void> launch(List<String> args) {
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getManager().launch(args).handle(seq::nextIgnore);
-		}).finish().exceptionally((exc) -> {
+		return getModel().gateFuture(getManager().launch(args)).exceptionally((exc) -> {
 			throw new DebuggerUserException("Launch failed for " + args);
-		});
+		}).thenApply(__ -> null);
 	}
 }

@@ -26,9 +26,14 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "MemoryRegion", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME, type = DbgModelTargetMemoryContainerImpl.class),
+@TargetObjectSchemaInfo(
+	name = "MemoryRegion",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME,
+			type = DbgModelTargetMemoryContainerImpl.class),
 		@TargetAttributeType(name = "BaseAddress", type = Address.class),
 		@TargetAttributeType(name = "EndAddress", type = Address.class),
 		@TargetAttributeType(name = "RegionSize", type = String.class),

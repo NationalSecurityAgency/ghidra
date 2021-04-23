@@ -16,7 +16,7 @@
 package ghidra.dbg.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.*;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -109,7 +109,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 	 * @return the window in milliseconds
 	 */
 	protected long getDebounceWindowMs() {
-		return 1000;
+		return 5000;
 	}
 
 	enum CallbackType {

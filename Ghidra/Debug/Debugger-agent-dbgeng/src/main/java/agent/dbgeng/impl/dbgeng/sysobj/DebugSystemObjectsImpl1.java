@@ -103,7 +103,11 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 	@Override
 	public int getNumberThreads() {
 		ULONGByReference pulNumber = new ULONGByReference();
-		COMUtils.checkRC(jnaSysobj.GetNumberThreads(pulNumber));
+		HRESULT hr = jnaSysobj.GetNumberThreads(pulNumber);
+		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
+			return 0;
+		}
+		COMUtils.checkRC(hr);
 		return pulNumber.getValue().intValue();
 	}
 

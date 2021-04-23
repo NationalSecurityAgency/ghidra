@@ -104,8 +104,9 @@ public class GdbStackFrameImpl implements GdbStackFrame {
 	}
 
 	@Override
-	public CompletableFuture<Void> setActive() {
-		return manager.execute(new GdbSetActiveThreadCommand(manager, thread.getId(), level));
+	public CompletableFuture<Void> setActive(boolean internal) {
+		return manager
+				.execute(new GdbSetActiveThreadCommand(manager, thread.getId(), level, internal));
 	}
 
 	@Override

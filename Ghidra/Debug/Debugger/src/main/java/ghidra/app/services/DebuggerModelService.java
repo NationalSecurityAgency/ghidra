@@ -19,20 +19,25 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.*;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.datastruct.CollectionChangeListener;
 
-@ServiceInfo(defaultProvider = DebuggerModelServiceProxyPlugin.class, description = "Service for managing debug sessions and connections")
+@ServiceInfo(
+	defaultProvider = DebuggerModelServiceProxyPlugin.class,
+	description = "Service for managing debug sessions and connections")
 public interface DebuggerModelService {
 	/**
 	 * Get the set of model factories found on the classpath
@@ -58,6 +63,7 @@ public interface DebuggerModelService {
 	/**
 	 * Get the set of active recorders
 	 *
+	 * <p>
 	 * A recorder is active as long as its target (usually a process) is valid. It becomes inactive
 	 * when the target becomes invalid, or when the user stops the recording.
 	 * 
@@ -68,6 +74,7 @@ public interface DebuggerModelService {
 	/**
 	 * Register a model with this service
 	 * 
+	 * <p>
 	 * In general, the tool will only display models registered here
 	 * 
 	 * @param model the model to register
@@ -85,25 +92,17 @@ public interface DebuggerModelService {
 	boolean removeModel(DebuggerObjectModel model);
 
 	/**
-	 * Start and connect to a suitable debugger on the local system
-	 * 
-	 * In most circumstances, this will start a local GADP agent compatible with the local operating
-	 * system. It will then connect to it via localhost, and register the resulting model with this
-	 * service.
-	 * 
-	 * @return a future which completes upon successful session creation.
-	 */
-	CompletableFuture<? extends DebuggerObjectModel> startLocalSession();
-
-	/**
 	 * Start a new trace on the given target
 	 * 
+	 * <p>
 	 * Following conventions, the target must be a container, usually a process. Ideally, the model
 	 * will present the process as having memory, modules, and threads; and the model will present
 	 * each thread as having registers, or a stack with frame 0 presenting the registers.
 	 * 
+	 * <p>
 	 * Any given container can be traced by at most one recorder.
 	 * 
+	 * <p>
 	 * TODO: If mappers remain bound to a prospective target, then remove target from the parameters
 	 * here.
 	 * 
@@ -119,6 +118,7 @@ public interface DebuggerModelService {
 	/**
 	 * Query mapping opinions and record the given target using the "best" offer
 	 * 
+	 * <p>
 	 * If exactly one offer is given, this simply uses it. If multiple are given, this automatically
 	 * chooses the "best" one without prompting the user. If none are given, this fails.
 	 * 
@@ -131,10 +131,12 @@ public interface DebuggerModelService {
 	/**
 	 * Query mapping opinions, prompt the user, and record the given target
 	 * 
+	 * <p>
 	 * Even if exactly one offer is given, the user is prompted to provide information about the new
 	 * recording, and to give the user an opportunity to cancel. If none are given, the prompt says
 	 * as much. If the user cancels, the returned future completes with {@code null}.
 	 * 
+	 * <p>
 	 * TODO: Should the prompt allow the user to force an opinion which gave no offers?
 	 * 
 	 * @see DebuggerMappingOpinion#queryOpinions(TargetObject)
@@ -146,6 +148,7 @@ public interface DebuggerModelService {
 	/**
 	 * Start and open a new trace on the given target
 	 *
+	 * <p>
 	 * Starts a new trace, and opens it in the tool
 	 * 
 	 * @see #recordTarget(TargetObject)
@@ -180,8 +183,10 @@ public interface DebuggerModelService {
 	/**
 	 * Get the object (usually a process) associated with the given destination trace
 	 *
+	 * <p>
 	 * A recorder uses conventions to discover the "process" in the model, given a target object.
 	 * 
+	 * <p>
 	 * TODO: Conventions for targets other than processes are not yet specified.
 	 * 
 	 * @param trace the destination trace
@@ -200,11 +205,13 @@ public interface DebuggerModelService {
 	/**
 	 * Get the object associated with the given destination trace thread
 	 * 
+	 * <p>
 	 * A recorder uses conventions to discover "threads" for a given target object, usually a
 	 * process. Those threads are then assigned to corresponding destination trace threads. Assuming
 	 * the given trace thread is the destination of an active recorder, this method finds the
 	 * corresponding model "thread."
 	 * 
+	 * <p>
 	 * TODO: Conventions for targets other than processes (containing threads) are not yet
 	 * specified.
 	 * 
@@ -216,6 +223,7 @@ public interface DebuggerModelService {
 	/**
 	 * Get the destination trace thread, if applicable, for a given source thread
 	 * 
+	 * <p>
 	 * Consider {@link #getTraceThread(TargetObject, TargetExecutionStateful)} if the caller already
 	 * has a handle to the thread's container.
 	 * 
@@ -227,6 +235,7 @@ public interface DebuggerModelService {
 	/**
 	 * Get the destination trace thread, if applicable, for a given source thread
 	 * 
+	 * <p>
 	 * This method is slightly faster than {@link #getTraceThread(TargetExecutionStateful)}, since
 	 * it doesn't have to search for the applicable recorder. However, if the wrong container is
 	 * given, this method will fail to find the given thread.
@@ -254,6 +263,7 @@ public interface DebuggerModelService {
 	/**
 	 * Get the last focused object related to the given target
 	 * 
+	 * <p>
 	 * Assuming the target object is being actively traced, find the last focused object among those
 	 * being traced by the same recorder. Essentially, given that the target likely belongs to a
 	 * process, find the object within that process that last had focus. This is primarily used when
@@ -268,6 +278,7 @@ public interface DebuggerModelService {
 	/**
 	 * Listen for changes in available model factories
 	 * 
+	 * <p>
 	 * The caller must keep a strong reference to the listener, or it will be automatically removed.
 	 * 
 	 * @param listener the listener
@@ -284,8 +295,10 @@ public interface DebuggerModelService {
 	/**
 	 * Listen for changes in registered models
 	 * 
+	 * <p>
 	 * The caller must beep a strong reference to the listener, or it will be automatically removed.
 	 * 
+	 * <p>
 	 * TODO: Probably replace this with a {@link PluginEvent}
 	 * 
 	 * @param listener the listener
@@ -295,6 +308,7 @@ public interface DebuggerModelService {
 	/**
 	 * Remove a listener for changes in registered models
 	 * 
+	 * <p>
 	 * TODO: Probably replace this with a {@link PluginEvent}
 	 * 
 	 * @param listener the listener
@@ -304,8 +318,10 @@ public interface DebuggerModelService {
 	/**
 	 * Listen for changes in active trace recorders
 	 * 
+	 * <p>
 	 * The caller must beep a strong reference to the listener, or it will be automatically removed.
 	 * 
+	 * <p>
 	 * TODO: Probably replace this with a {@link PluginEvent}
 	 * 
 	 * @param listener the listener
@@ -315,9 +331,18 @@ public interface DebuggerModelService {
 	/**
 	 * Remove a listener for changes in active trace recorders
 	 * 
+	 * <p>
 	 * TODO: Probably replace this with a {@link PluginEvent}
 	 * 
 	 * @param listener the listener
 	 */
 	void removeTraceRecordersChangedListener(CollectionChangeListener<TraceRecorder> listener);
+
+	/**
+	 * Collect all offers for launching the given program
+	 * 
+	 * @param program the program to launch
+	 * @return the offers
+	 */
+	Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program);
 }

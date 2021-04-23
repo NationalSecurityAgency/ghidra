@@ -5,6 +5,7 @@
         <interface name="Attacher" />
         <interface name="EventScope" />
         <interface name="Launcher" />
+        <interface name="ActiveScope" />
         <interface name="FocusScope" />
         <interface name="Aggregate" />
         <element schema="VOID" />
@@ -153,7 +154,7 @@
     <schema name="Available" elementResync="NEVER" attributeResync="NEVER">
         <interface name="Attachable" />
         <element schema="VOID" />
-        <attribute name="_pid" schema="INT" hidden="yes" />
+        <attribute name="_pid" schema="LONG" hidden="yes" required="yes"/>
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
@@ -169,7 +170,7 @@
         <element schema="VOID" />
         <attribute name="_os" schema="STRING" hidden="yes" />
         <attribute name="_debugger" schema="STRING" hidden="yes" />
-        <attribute name="_endian" schema="STRING" hidden="yes" />
+        <!-- attribute name="_endian" schema="STRING" hidden="yes" /-->
         <attribute name="_arch" schema="STRING" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
@@ -285,6 +286,7 @@
         <attribute schema="ANY" />
     </schema>
     <schema name="DebugContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+        <interface name="Aggregate" />
         <element schema="OBJECT" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
@@ -515,7 +517,7 @@
         <attribute name="Disposition" schema="OBJECT" />
         <attribute name="Pending" schema="OBJECT" />
         <attribute name="Times" schema="OBJECT" />
-        <attribute schema="VOID" />
+        <attribute schema="ANY" />
     </schema>
     <schema name="StackFrame" elementResync="NEVER" attributeResync="NEVER">
         <interface name="StackFrame" />

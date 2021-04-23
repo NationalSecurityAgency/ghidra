@@ -19,20 +19,21 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.event.ModelObjectFocusedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncPairingQueue;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.model.TestDebuggerObjectModel;
-import ghidra.dbg.model.TestLocalDebuggerModelFactory;
+import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -146,6 +147,17 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	@Test
+	public void testGetProgramLaunchOffers() throws Exception {
+		createAndOpenProgramWithExePath("/my/fun/path");
+		TestDebuggerModelFactory factory = new TestDebuggerModelFactory();
+		modelServiceInternal.setModelFactories(List.of(factory));
+		List<DebuggerProgramLaunchOffer> offers =
+			modelService.getProgramLaunchOffers(program).collect(Collectors.toList());
+		DebuggerProgramLaunchOffer offer = Unique.assertOne(offers);
+		assertEquals(TestDebuggerProgramLaunchOffer.class, offer.getClass());
+	}
+
+	@Test
 	public void testGetModels() throws Exception {
 		assertEquals(Set.of(), modelService.getModels());
 		createTestModel();
@@ -233,21 +245,6 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 				recorderChangeListener.elementRemoved(recorder);
 			}
 		};
-	}
-
-	@Test
-	public void testStartLocalSession() throws Exception {
-		TestLocalDebuggerModelFactory factory = new TestLocalDebuggerModelFactory();
-		modelServiceInternal.setModelFactories(List.of(factory));
-
-		CompletableFuture<? extends DebuggerObjectModel> futureSession =
-			modelService.startLocalSession();
-		TestDebuggerObjectModel model = new TestDebuggerObjectModel();
-		assertEquals(Set.of(), modelService.getModels());
-		factory.pollBuild().complete(model);
-		futureSession.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-
-		assertEquals(Set.of(model), modelService.getModels());
 	}
 
 	@Test

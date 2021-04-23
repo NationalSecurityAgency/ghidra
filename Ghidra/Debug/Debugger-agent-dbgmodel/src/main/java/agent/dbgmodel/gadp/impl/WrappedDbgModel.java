@@ -971,4 +971,14 @@ public class WrappedDbgModel
 		return DebugValueType.INVALID;
 	}
 
+	@Override
+	public int getCurrentScopeFrameIndex() {
+		return client.getSymbols().getCurrentScopeFrameIndex();
+	}
+
+	@Override
+	public void setCurrentScopeFrameIndex(int index) {
+		client.getSymbols().setCurrentScopeFrameIndex(index);
+	}
+
 }

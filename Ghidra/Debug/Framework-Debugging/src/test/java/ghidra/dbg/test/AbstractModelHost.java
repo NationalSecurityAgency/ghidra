@@ -125,6 +125,11 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 	}
 
 	@Override
+	public boolean hasInterpreter() {
+		return true;
+	}
+
+	@Override
 	public boolean hasInterruptibleProcesses() {
 		return true;
 	}

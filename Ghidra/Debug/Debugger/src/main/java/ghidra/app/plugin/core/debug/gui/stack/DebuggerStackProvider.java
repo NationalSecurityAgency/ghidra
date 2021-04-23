@@ -34,6 +34,8 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
+import ghidra.dbg.DebugModelConventions;
+import ghidra.dbg.target.TargetStackFrame;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -225,6 +227,8 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
+	// @AutoServiceConsumed  by method
+	private DebuggerModelService modelService;
 	// @AutoServiceConsumed via method
 	DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
@@ -299,6 +303,13 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 				}
 				listingService.goTo(pc, true);
 			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				int selectedRow = stackTable.getSelectedRow();
+				StackFrameRow row = stackTableModel.getRowObject(selectedRow);
+				rowActivated(row);
+			}
 		});
 
 		// TODO: Adjust default column widths?
@@ -329,6 +340,19 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		cbFrameSelected.invoke(() -> {
 			traceManager.activateFrame(myActionContext.getFrame().getFrameLevel());
 		});
+	}
+
+	private void rowActivated(StackFrameRow row) {
+		TraceStackFrame frame = row.frame;
+		TraceThread thread = frame.getStack().getThread();
+		Trace trace = thread.getTrace();
+		TraceRecorder recorder = modelService.getRecorder(trace);
+		if (recorder != null) {
+			TargetStackFrame targetFrame = recorder.getTargetStackFrame(thread, frame.getLevel());
+			if (targetFrame != null && targetFrame.isValid()) {
+				DebugModelConventions.requestActivation(targetFrame);
+			}
+		}
 	}
 
 	protected void createActions() {
@@ -488,6 +512,11 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 				stackFilterPanel.setSelectedItem(row);
 			}
 		}
+	}
+
+	@AutoServiceConsumed
+	public void setModelService(DebuggerModelService modelService) {
+		this.modelService = modelService;
 	}
 
 	@AutoServiceConsumed

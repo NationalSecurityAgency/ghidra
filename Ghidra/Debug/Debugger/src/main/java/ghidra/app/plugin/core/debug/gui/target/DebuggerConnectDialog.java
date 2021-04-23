@@ -21,6 +21,7 @@ import java.awt.event.ItemEvent;
 import java.beans.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import javax.swing.*;
@@ -33,8 +34,10 @@ import docking.DialogComponentProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.app.services.DebuggerModelService;
+import ghidra.async.AsyncUtils;
 import ghidra.async.SwingExecutorService;
 import ghidra.dbg.DebuggerModelFactory;
+import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.Property;
 import ghidra.framework.options.SaveState;
 import ghidra.util.*;
@@ -82,6 +85,7 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 	private PairLayout layout;
 
 	protected JButton connectButton;
+	protected CompletableFuture<? extends DebuggerObjectModel> futureConnect;
 
 	protected static class FactoryEntry {
 		DebuggerModelFactory factory;
@@ -229,19 +233,40 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 			objProp.setValue(ent.getValue().getValue());
 		}
 		setStatusText("Connecting...");
-		factory.build().thenCompose(model -> {
+		synchronized (this) {
+			futureConnect = factory.build();
+		}
+		futureConnect.thenAcceptAsync(model -> {
 			modelService.addModel(model);
 			setStatusText("");
 			close();
-			connectButton.setEnabled(true);
-			return CompletableFuture.runAsync(() -> modelService.activateModel(model),
-				SwingExecutorService.INSTANCE);
-		}).exceptionally(e -> {
-			Msg.showError(this, getComponent(), "Could not connect", e);
+			modelService.activateModel(model);
+		}, SwingExecutorService.INSTANCE).exceptionally(e -> {
+			e = AsyncUtils.unwrapThrowable(e);
+			if (!(e instanceof CancellationException)) {
+				Msg.showError(this, getComponent(), "Could not connect", e);
+			}
 			setStatusText("Could not connect: " + e.getMessage(), MessageType.ERROR);
-			connectButton.setEnabled(true);
 			return null;
+		}).whenComplete((v, e) -> {
+			synchronized (this) {
+				futureConnect = null;
+			}
+			connectButton.setEnabled(true);
 		});
+	}
+
+	@Override
+	protected void cancelCallback() {
+		if (futureConnect != null) {
+			futureConnect.cancel(false);
+		}
+		super.cancelCallback();
+	}
+
+	protected void reset() {
+		setStatusText("");
+		connectButton.setEnabled(true);
 	}
 
 	protected void syncOptionsEnabled() {

@@ -110,7 +110,8 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 			DebugStatus status = DebugStatus.fromArgument(argument);
 			Msg.info(this, "***ExecutionStatus: " + status);
 			if (status.equals(DebugStatus.NO_DEBUGGEE)) {
-				event.setState(DbgState.SESSION_EXIT);
+				long processCount = manager.getProcessCount();
+				event.setState(processCount > 0 ? DbgState.SESSION_EXIT : DbgState.EXIT);
 			}
 			return checkInterrupt(manager.processEvent(event));
 		}
@@ -121,9 +122,7 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		}
 		if (flags.contains(ChangeEngineState.CURRENT_THREAD)) {
 			Msg.info(this, "***CurrentThread: " + argument);
-			if (argument < 0) {
-				return checkInterrupt(manager.processEvent(event));
-			}
+			return checkInterrupt(manager.processEvent(event));
 		}
 		if (flags.contains(ChangeEngineState.SYSTEMS)) {
 			Msg.info(this, "***Systems: " + argument);
@@ -133,10 +132,18 @@ public class DbgDebugEventCallbacksAdapter extends DebugEventCallbacksAdapter {
 		return checkInterrupt(DebugStatus.NO_CHANGE);
 	}
 
-	//@Override
-	//public DebugStatus changeDebuggeeState(BitmaskSet<ChangeDebuggeeState> flags, long argument) {
-	//	System.err.println("CHANGE_DEBUGGEE_STATE: " + flags + ":" + argument);
-	//	return DebugStatus.NO_CHANGE;
-	//}
+	/*
+	@Override
+	public DebugStatus changeDebuggeeState(BitmaskSet<ChangeDebuggeeState> flags, long argument) {
+		System.err.println("CHANGE_DEBUGGEE_STATE: " + flags + ":" + argument);
+		return DebugStatus.NO_CHANGE;
+	}
+	
+	@Override
+	public DebugStatus sessionStatus(SessionStatus status) {
+		System.err.println("SESSION_STATUS: " + status);
+		return DebugStatus.NO_CHANGE;
+	}
+	*/
 
 }
