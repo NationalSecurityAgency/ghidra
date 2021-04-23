@@ -151,14 +151,14 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		}, path);
 	}
 
-	protected void doBreakpointLengthChanged(long snap, int length, Address traceAddr,
+	protected void doBreakpointLocationChanged(long snap, int length, Address traceAddr,
 			String path) {
 		for (TraceBreakpoint traceBpt : breakpointManager.getBreakpointsByPath(path)) {
-			if (traceBpt.getLength() == length) {
+			AddressRange range = range(traceAddr, length);
+			if (traceBpt.getRange().equals(range)) {
 				continue; // Nothing to change
 			}
 			// TODO: Verify all other attributes match?
-			// TODO: Should this be allowed to happen?
 			try {
 				if (traceBpt.getPlacedSnap() == snap) {
 					traceBpt.delete();
@@ -166,7 +166,7 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 				else {
 					traceBpt.setClearedSnap(snap - 1);
 				}
-				breakpointManager.placeBreakpoint(path, snap, range(traceAddr, length),
+				breakpointManager.placeBreakpoint(path, snap, range,
 					traceBpt.getThreads(), traceBpt.getKinds(), traceBpt.isEnabled(),
 					traceBpt.getComment());
 			}
@@ -178,11 +178,11 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	}
 
 	@Override
-	public void breakpointLengthChanged(int length, Address traceAddr, String path)
+	public void breakpointLocationChanged(int length, Address traceAddr, String path)
 			throws AssertionError {
 		long snap = recorder.getSnap();
 		recorder.parTx.execute("Breakpoint length changed", () -> {
-			doBreakpointLengthChanged(snap, length, traceAddr, path);
+			doBreakpointLocationChanged(snap, length, traceAddr, path);
 		}, path);
 	}
 

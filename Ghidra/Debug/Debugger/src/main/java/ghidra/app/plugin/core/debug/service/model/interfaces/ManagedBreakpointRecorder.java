@@ -43,7 +43,7 @@ public interface ManagedBreakpointRecorder {
 	 * @param traceAddr the address of the location in the trace
 	 * @param path the dot-separated path of the breakpoint location in the model
 	 */
-	void breakpointLengthChanged(int length, Address traceAddr, String path);
+	void breakpointLocationChanged(int length, Address traceAddr, String path);
 
 	void breakpointToggled(TargetBreakpointSpec spec, boolean enabled);
 }
