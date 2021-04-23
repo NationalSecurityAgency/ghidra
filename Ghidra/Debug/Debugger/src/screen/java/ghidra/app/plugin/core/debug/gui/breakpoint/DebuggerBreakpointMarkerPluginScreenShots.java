@@ -70,7 +70,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c60), 1,
-			Set.of(TraceBreakpointKind.SOFTWARE));
+			Set.of(TraceBreakpointKind.SW_EXECUTE));
 
 		Msg.debug(this, "Disabling breakpoint");
 		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
@@ -79,7 +79,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing another");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c63), 1,
-			Set.of(TraceBreakpointKind.SOFTWARE));
+			Set.of(TraceBreakpointKind.SW_EXECUTE));
 
 		Msg.debug(this, "Saving program");
 		program.save("Placed breakpoints", TaskMonitor.DUMMY);

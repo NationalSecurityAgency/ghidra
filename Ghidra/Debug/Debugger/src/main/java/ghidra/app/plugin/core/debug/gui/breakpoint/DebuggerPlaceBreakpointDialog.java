@@ -71,8 +71,8 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		JLabel labelKinds = new JLabel("Kinds");
 		DefaultComboBoxModel<String> kindModel = new DefaultComboBoxModel<>();
 		// TODO: Let user select whatever combo?
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(SOFTWARE)));
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(EXECUTE)));
+		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(SW_EXECUTE)));
+		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(HW_EXECUTE)));
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ)));
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(WRITE)));
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ, WRITE)));

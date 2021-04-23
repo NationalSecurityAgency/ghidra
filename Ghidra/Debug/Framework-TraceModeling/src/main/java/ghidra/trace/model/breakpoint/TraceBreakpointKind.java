@@ -22,8 +22,10 @@ import org.apache.commons.collections4.set.AbstractSetDecorator;
 /**
  * The kind of breakpoint
  * 
+ * <p>
  * This identifies the sort of access that would trap execution
  * 
+ * <p>
  * TODO: This is identical to {@code TargetBreakpointKind} (not in the classpath here). Is there a
  * common place we could factor both? Should we? CAUTION: Encoding in a trace database depends on
  * this enum's {@code bits} field, so we must take care not to introduce a dependency that would
@@ -32,8 +34,8 @@ import org.apache.commons.collections4.set.AbstractSetDecorator;
 public enum TraceBreakpointKind {
 	READ(1 << 0),
 	WRITE(1 << 1),
-	EXECUTE(1 << 2),
-	SOFTWARE(1 << 3);
+	HW_EXECUTE(1 << 2),
+	SW_EXECUTE(1 << 3);
 
 	public static class TraceBreakpointKindSet extends AbstractSetDecorator<TraceBreakpointKind> {
 		public static TraceBreakpointKindSet of(TraceBreakpointKind... kinds) {

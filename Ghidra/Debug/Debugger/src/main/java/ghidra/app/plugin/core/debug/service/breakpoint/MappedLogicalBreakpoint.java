@@ -302,24 +302,26 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	@Override
 	public Enablement computeEnablementForTrace(Trace trace) {
 		TraceBreakpointSet breaks = traceBreaks.get(trace);
+		ProgramEnablement progEn = progBreak.computeEnablement();
 		if (breaks == null) {
-			return Enablement.NONE;
+			return TraceEnablement.MISSING.combineProgram(progEn);
 		}
-		return breaks.computeEnablement().combine(progBreak.computeEnablement());
+		// NB: Order matters. Trace is primary
+		return breaks.computeEnablement().combineProgram(progEn);
 	}
 
 	@Override
 	public Enablement computeEnablement() {
-		Enablement en = progBreak.computeEnablement();
+		ProgramEnablement progEn = progBreak.computeEnablement();
+		TraceEnablement traceEn = TraceEnablement.NONE;
 		for (TraceBreakpointSet breaks : traceBreaks.values()) {
-			Enablement tEn = breaks.computeEnablement();
-			assert tEn.consistent;
-			en = en.combine(tEn);
-			if (en.consistent) {
-				return en;
+			TraceEnablement tEn = breaks.computeEnablement();
+			traceEn = traceEn.combine(tEn);
+			if (traceEn == TraceEnablement.MIXED) {
+				break;
 			}
 		}
-		return en;
+		return progEn.combineTrace(traceEn);
 	}
 
 	@Override

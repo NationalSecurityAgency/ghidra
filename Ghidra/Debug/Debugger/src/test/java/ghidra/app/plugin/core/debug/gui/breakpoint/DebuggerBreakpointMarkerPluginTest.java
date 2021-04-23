@@ -110,7 +110,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00400123),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SOFTWARE;1", "");
+						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
 		}
 	}
 
@@ -212,7 +212,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		Address addr = addr(program, 0x00400123);
 		hackMarkerBackgroundColors(program);
 
-		assertEquals(E_COLOR, getBackgroundColor(program, addr));
+		waitForPass(() -> assertEquals(E_COLOR, getBackgroundColor(program, addr)));
 
 		lb.disableForProgram();
 		waitForDomainObject(program);
@@ -265,7 +265,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		AbstractClearBreakpointAction.NAME);
 
 	protected static final Set<String> SET_ACTIONS =
-		Set.of("SOFTWARE", "EXECUTE", "READ,WRITE", "READ", "WRITE");
+		Set.of("SW_EXECUTE", "HW_EXECUTE", "READ,WRITE", "READ", "WRITE");
 
 	@Test
 	public void testProgramNoBreakPopupMenus() throws Exception {
@@ -458,7 +458,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 			assertEquals(Enablement.ENABLED, lb.computeEnablement());
 			// TODO: Different cases for different expected default kinds?
-			assertEquals(Set.of(TraceBreakpointKind.SOFTWARE), lb.getKinds());
+			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
 		});
 	}
 
@@ -566,25 +566,25 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	@Test
 	public void testActionSetSoftwareBreakpointProgram() throws Exception {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
-			Set.of(TraceBreakpointKind.SOFTWARE));
+			Set.of(TraceBreakpointKind.SW_EXECUTE));
 	}
 
 	@Test
 	public void testActionSetSoftwareBreakpointTrace() throws Exception {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
-			Set.of(TraceBreakpointKind.SOFTWARE));
+			Set.of(TraceBreakpointKind.SW_EXECUTE));
 	}
 
 	@Test
 	public void testActionSetExecuteBreakpointProgram() throws Exception {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
-			Set.of(TraceBreakpointKind.EXECUTE));
+			Set.of(TraceBreakpointKind.HW_EXECUTE));
 	}
 
 	@Test
 	public void testActionSetExecuteBreakpointTrace() throws Exception {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
-			Set.of(TraceBreakpointKind.EXECUTE));
+			Set.of(TraceBreakpointKind.HW_EXECUTE));
 	}
 
 	@Test
@@ -694,7 +694,9 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint,
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
+		// NB. Because it was deleted from the *trace context*
 		waitForPass(
-			() -> assertEquals(Enablement.DISABLED_ENABLED, lb.computeEnablementForTrace(trace)));
+			() -> assertEquals(Enablement.INEFFECTIVE_ENABLED,
+				lb.computeEnablementForTrace(trace)));
 	}
 }

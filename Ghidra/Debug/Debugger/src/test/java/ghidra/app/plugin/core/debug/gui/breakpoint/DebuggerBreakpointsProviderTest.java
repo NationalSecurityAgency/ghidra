@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.services.*;
+import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
@@ -95,7 +96,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00400123),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SOFTWARE;1", "");
+						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
 		}
 	}
 
@@ -129,8 +130,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		assertEquals("55550123", row.getAddress().toString());
 		assertEquals(trace, row.getDomainObject());
-		assertEquals("SOFTWARE", row.getKinds());
-		assertTrue(row.isEnabled());
+		assertEquals("SW_EXECUTE", row.getKinds());
+		assertEquals(Enablement.ENABLED, row.getEnablement());
 	}
 
 	@Test
@@ -149,16 +150,16 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		LogicalBreakpointRow row =
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
-		assertTrue(row.isEnabled());
+		assertEquals(Enablement.ENABLED, row.getEnablement());
 
 		// NB, the row does not take the value immediately, but via async callbacks
 		row.setEnabled(false);
 
-		waitForPass(() -> assertEquals(Boolean.FALSE, row.isEnabled()));
+		waitForPass(() -> assertEquals(Enablement.DISABLED, row.getEnablement()));
 
 		row.setEnabled(true);
 
-		waitForPass(() -> assertEquals(Boolean.TRUE, row.isEnabled()));
+		waitForPass(() -> assertEquals(Enablement.ENABLED, row.getEnablement()));
 	}
 
 	@Test
@@ -172,8 +173,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		assertEquals("00400123", row.getAddress().toString());
 		assertEquals(program, row.getDomainObject());
-		assertEquals("SOFTWARE", row.getKinds());
-		assertTrue(row.isEnabled());
+		assertEquals("SW_EXECUTE", row.getKinds());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 	}
 
 	@Test
@@ -185,17 +186,17 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		LogicalBreakpointRow row =
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
-		assertTrue(row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 
 		row.setEnabled(false); // Synchronous, but on swing thread
 		waitForDomainObject(program);
 
-		assertEquals(Boolean.FALSE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, row.getEnablement());
 
 		row.setEnabled(true);
 		waitForDomainObject(program);
 
-		assertEquals(Boolean.TRUE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 	}
 
 	@Test
@@ -221,7 +222,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			LogicalBreakpoint lb = row.getLogicalBreakpoint();
 			assertEquals(program, lb.getProgram());
 			assertEquals(Set.of(trace), lb.getParticipatingTraces());
-			assertEquals(Boolean.TRUE, row.isEnabled());
+			assertEquals(Enablement.ENABLED, row.getEnablement());
 		});
 
 		LogicalBreakpointRow row =
@@ -231,24 +232,22 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		lb.disableForProgram();
 		waitForDomainObject(program);
 
-		// TODO: As of now, the table displays "N/A", which is not ideal
-		// Would be nicer to have icons, but still want click to toggle.
-		assertNull(row.isEnabled());
+		assertEquals(Enablement.DISABLED_ENABLED, row.getEnablement());
 
 		// NOTE: This acts on the corresponding target, not directly on trace
 		lb.disableForTrace(trace);
 
-		waitForPass(() -> assertEquals(Boolean.FALSE, row.isEnabled()));
+		waitForPass(() -> assertEquals(Enablement.DISABLED, row.getEnablement()));
 
 		lb.enableForProgram();
 		waitForDomainObject(program);
 
-		assertNull(row.isEnabled());
+		assertEquals(Enablement.ENABLED_DISABLED, row.getEnablement());
 
 		// This duplicates the initial case, but without it, I just feel incomplete
 		lb.enableForTrace(trace);
 
-		waitForPass(() -> assertEquals(Boolean.TRUE, row.isEnabled()));
+		waitForPass(() -> assertEquals(Enablement.ENABLED, row.getEnablement()));
 	}
 
 	// TODO: Test a scenario where one spec manifests two breaks, select both, and perform actions
@@ -256,7 +255,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	// TODO: Test a scenario where one spec manifests the same mapped breakpoint in two traces
 
 	@Test
-	public void testActionEnableSelectedBreakpoints() throws Exception {
+	public void testActionEnableSelectedBreakpoints() throws Throwable {
 		createProgram();
 		programManager.openProgram(program);
 		waitForSwing();
@@ -274,12 +273,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		breakpointsProvider.breakpointFilterPanel.setSelectedItem(row);
 		waitForSwing();
 
-		assertEquals(Boolean.FALSE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionEnableSelectedBreakpointsAction.isEnabled());
 
 		performAction(breakpointsProvider.actionEnableSelectedBreakpointsAction);
 
-		assertEquals(Boolean.TRUE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionEnableSelectedBreakpointsAction.isEnabled());
 
 		breakpointsProvider.breakpointTable.clearSelection();
@@ -293,7 +292,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		assertTrue(breakpointsProvider.actionEnableSelectedBreakpointsAction.isEnabled());
 
 		// Bookmark part should actually be synchronous.
-		row.getLogicalBreakpoint().delete().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		waitOn(row.getLogicalBreakpoint().delete());
 		waitForDomainObject(program);
 
 		assertFalse(breakpointsProvider.actionEnableSelectedBreakpointsAction.isEnabled());
@@ -317,12 +316,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		row.setEnabled(false);
 		waitForSwing();
 
-		assertEquals(Boolean.FALSE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionEnableAllBreakpointsAction.isEnabled());
 
 		performAction(breakpointsProvider.actionEnableAllBreakpointsAction);
 
-		assertEquals(Boolean.TRUE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionEnableAllBreakpointsAction.isEnabled());
 
 		// Bookmark part should actually be synchronous.
@@ -333,7 +332,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testActionDisableSelectedBreakpoints() throws Exception {
+	public void testActionDisableSelectedBreakpoints() throws Throwable {
 		createProgram();
 		programManager.openProgram(program);
 		waitForSwing();
@@ -350,12 +349,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		breakpointsProvider.breakpointFilterPanel.setSelectedItem(row);
 		waitForSwing();
 
-		assertEquals(Boolean.TRUE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionDisableSelectedBreakpointsAction.isEnabled());
 
 		performAction(breakpointsProvider.actionDisableSelectedBreakpointsAction);
 
-		assertEquals(Boolean.FALSE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionDisableSelectedBreakpointsAction.isEnabled());
 
 		breakpointsProvider.breakpointTable.clearSelection();
@@ -369,7 +368,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		assertTrue(breakpointsProvider.actionDisableSelectedBreakpointsAction.isEnabled());
 
 		// Bookmark part should actually be synchronous.
-		row.getLogicalBreakpoint().delete().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		waitOn(row.getLogicalBreakpoint().delete());
 		waitForDomainObject(program);
 
 		assertFalse(breakpointsProvider.actionDisableSelectedBreakpointsAction.isEnabled());
@@ -389,12 +388,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		assertTrue(breakpointsProvider.actionDisableAllBreakpointsAction.isEnabled());
 		LogicalBreakpointRow row =
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
-		assertEquals(Boolean.TRUE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionDisableAllBreakpointsAction.isEnabled());
 
 		performAction(breakpointsProvider.actionDisableAllBreakpointsAction);
 
-		assertEquals(Boolean.FALSE, row.isEnabled());
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, row.getEnablement());
 		assertTrue(breakpointsProvider.actionDisableAllBreakpointsAction.isEnabled());
 
 		// Bookmark part should actually be synchronous.
