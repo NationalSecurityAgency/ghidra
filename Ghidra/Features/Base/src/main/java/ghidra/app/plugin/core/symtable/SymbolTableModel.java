@@ -62,7 +62,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 	private Symbol lastSymbol;
 	private SymbolFilter filter;
 	private TableAddRemoveStrategy<Symbol> deletedDbObjectAddRemoveStrategy =
-		new SymbolTableAddRemoveStrategy<>();
+		new SymbolTableAddRemoveStrategy();
 
 	SymbolTableModel(SymbolProvider provider, PluginTool tool) {
 		super("Symbols", tool, null, null);

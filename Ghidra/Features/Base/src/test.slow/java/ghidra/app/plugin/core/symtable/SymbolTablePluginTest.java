@@ -152,28 +152,6 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void sortAscending(int column) {
-		runSwing(() -> symbolModel.setTableSortState(
-			TableSortState.createDefaultSortState(column, true)));
-		waitForTableModel(symbolModel);
-
-		waitForCondition(() -> {
-			TableSortState sort = runSwing(() -> symbolModel.getTableSortState());
-			return sort.getColumnSortState(column).isAscending();
-		});
-	}
-
-	private void sortDescending(int column) {
-		runSwing(() -> symbolModel.setTableSortState(
-			TableSortState.createDefaultSortState(column, false)));
-		waitForTableModel(symbolModel);
-
-		waitForCondition(() -> {
-			TableSortState sort = runSwing(() -> symbolModel.getTableSortState());
-			return !sort.getColumnSortState(column).isAscending();
-		});
-	}
-
 	@Test
 	public void testColumnDiscovery() throws Exception {
 		//
@@ -449,19 +427,18 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// 1 Function label removed (1 dynamic added at function entry)
 		// Locals were promoted to global.
-		assertEquals(rowCount, symbolTable.getRowCount());
 		int newDynamicSymbolRow = findRow("SUB_00000052");
-		assertFalse(newDynamicSymbolRow == -1);
+		assertNotEquals(-1, newDynamicSymbolRow);
+		assertEquals(rowCount, symbolTable.getRowCount());
 
 		int anotherLocal_RowIndex = findRow("AnotherLocal");
 		selectRow(anotherLocal_RowIndex);
 
 		performAction(deleteAction, true);
+		waitForNotBusy();
 		anotherLocalSymbol = getUniqueSymbol(program, "AnotherLocal");
 		assertNull("Delete action did not delete symbol: " + anotherLocalSymbol,
 			anotherLocalSymbol);// AnotherLocal should have been promoted to global since user defined.
-
-		waitForNotBusy();
 
 		// 1 Data label removed
 		int expected = rowCount - 1;
@@ -655,6 +632,29 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testRenameUpdatesSort() throws Exception {
+
+		openProgram("sample");
+
+		waitForNotBusy();
+
+		//
+		// Functions: 'ghidra', 'func_with_parms'
+		//
+		assertEquals(25, symbolTable.getRowCount());
+
+		Symbol symbol = getUniqueSymbol(program, "ghidra");
+		int rowIndex = indexOf(symbol);
+
+		setName(symbol, "____ghidra", SourceType.DEFAULT);
+		assertEquals(25, symbolTable.getRowCount());
+
+		int updatedRowIndex = indexOf(symbol);
+		assertNotEquals(rowIndex, updatedRowIndex);
+		assertEquals(0, updatedRowIndex);
+	}
+
+	@Test
 	public void testDefaultFunctionToNamedFunctionWithFilterOn() throws Exception {
 		openProgram("sample");
 
@@ -756,20 +756,6 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		refCount = getRefCount(row);
 		assertNotNull(refCount);
 		assertEquals(3, refCount.intValue());
-	}
-
-	private Reference getReference(Address from, Address to) {
-
-		ReferenceManager rm = program.getReferenceManager();
-		Reference[] refs = rm.getReferencesFrom(from);
-		for (Reference element : refs) {
-			if (to.equals(element.getToAddress())) {
-				return element;
-			}
-		}
-
-		fail("Did not find expected mem reference between " + from + " and " + to);
-		return null;
 	}
 
 	@Test
@@ -1133,6 +1119,46 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Helper methods
 //==================================================================================================
+
+	private Reference getReference(Address from, Address to) {
+
+		ReferenceManager rm = program.getReferenceManager();
+		Reference[] refs = rm.getReferencesFrom(from);
+		for (Reference element : refs) {
+			if (to.equals(element.getToAddress())) {
+				return element;
+			}
+		}
+
+		fail("Did not find expected mem reference between " + from + " and " + to);
+		return null;
+	}
+
+	private void sortAscending(int column) {
+		runSwing(() -> symbolModel.setTableSortState(
+			TableSortState.createDefaultSortState(column, true)));
+		waitForTableModel(symbolModel);
+
+		waitForCondition(() -> {
+			TableSortState sort = runSwing(() -> symbolModel.getTableSortState());
+			return sort.getColumnSortState(column).isAscending();
+		});
+	}
+
+	private void sortDescending(int column) {
+		runSwing(() -> symbolModel.setTableSortState(
+			TableSortState.createDefaultSortState(column, false)));
+		waitForTableModel(symbolModel);
+
+		waitForCondition(() -> {
+			TableSortState sort = runSwing(() -> symbolModel.getTableSortState());
+			return !sort.getColumnSortState(column).isAscending();
+		});
+	}
+
+	private int indexOf(Symbol symbol) {
+		return runSwing(() -> symbolModel.getRowIndex(symbol));
+	}
 
 	private void removeReference(String from, String to) {
 
@@ -1634,9 +1660,13 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private int findRow(String symbolName, String namespace) {
+		waitForSwing();
 		int max = symbolTable.getRowCount();
 		for (int i = 0; i < max; i++) {
 			Symbol s = (Symbol) symbolTable.getValueAt(i, SymbolTableModel.LABEL_COL);
+			if (s == null) {
+				continue; // symbol deleted
+			}
 			if (symbolName.equals(s.getName()) &&
 				namespace.equals(s.getParentNamespace().getName())) {
 				return i;

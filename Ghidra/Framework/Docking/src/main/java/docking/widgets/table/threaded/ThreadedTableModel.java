@@ -15,6 +15,8 @@
  */
 package docking.widgets.table.threaded;
 
+import static docking.widgets.table.AddRemoveListItem.Type.*;
+
 import java.util.*;
 
 import javax.swing.SwingUtilities;
@@ -499,7 +501,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object for which to schedule the update
 	 */
 	public void updateObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(true, true, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(CHANGE, obj));
 	}
 
 	/**
@@ -507,7 +509,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object to add
 	 */
 	public void addObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(true, false, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(ADD, obj));
 	}
 
 	/**
@@ -526,7 +528,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * @param obj the object to remove
 	 */
 	public void removeObject(ROW_OBJECT obj) {
-		updateManager.addRemove(new AddRemoveListItem<>(false, true, obj));
+		updateManager.addRemove(new AddRemoveListItem<>(REMOVE, obj));
 	}
 
 	protected void updateNow() {

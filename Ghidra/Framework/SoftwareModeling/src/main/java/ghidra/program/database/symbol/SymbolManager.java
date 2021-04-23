@@ -2400,11 +2400,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 	}
 
-	@Override
-	public Symbol createSymbolPlaceholder(Address address, long id) {
-		return SymbolDB.createSymbolPlaceholder(this, address, id);
-	}
-
 	/**
 	 * Creates a symbol, specifying all information for the record.  This method is not on the
 	 * public interface and is only intended for program API internal use.  The user of this
