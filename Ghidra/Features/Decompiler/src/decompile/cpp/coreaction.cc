@@ -4305,6 +4305,8 @@ bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Va
   case CPUI_MULTIEQUAL:
     if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
     break;
+  case CPUI_INT_SLESS:
+  case CPUI_INT_SLESSEQUAL:
   case CPUI_INT_LESS:
   case CPUI_INT_LESSEQUAL:
     if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
@@ -4399,6 +4401,11 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
     }
     else
       newtype = alttype;
+    break;
+  case CPUI_INT_SLESS:
+  case CPUI_INT_SLESSEQUAL:
+    if (alttype->getMetatype() != TYPE_INT) return false;	// Only propagate signed things
+    newtype = alttype;
     break;
   case CPUI_NEW:
     {
