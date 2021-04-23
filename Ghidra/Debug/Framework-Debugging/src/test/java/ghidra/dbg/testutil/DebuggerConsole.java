@@ -56,6 +56,10 @@ public class DebuggerConsole extends Thread implements DebuggerModelListener, Au
 		try {
 			while (!closed) {
 				String line = reader.readLine();
+				if (line == null) {
+					// NB. EOF happens immediately under Gradle
+					return;
+				}
 				if (interpreter == null) {
 					System.err.println("Have not found interpreter, yet");
 					continue;
