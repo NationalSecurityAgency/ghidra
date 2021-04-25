@@ -58,6 +58,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionDefaultPrototype());
   registerOption(new OptionInferConstPtr());
   registerOption(new OptionForLoops());
+  registerOption(new OptionShortVars());
   registerOption(new OptionInline());
   registerOption(new OptionNoReturn());
   registerOption(new OptionStructAlign());
@@ -261,6 +262,19 @@ string OptionForLoops::apply(Architecture *glb,const string &p1,const string &p2
   glb->analyze_for_loops = onOrOff(p1);
 
   string res = "Recovery of for-loops is " + p1;
+  return res;
+}
+
+/// \class OptionShortVars
+/// \brief Toggle whether the decompiler attempts to use shorter variable names
+///
+/// Setting the first parameter to "on" causes the decompiler to use shorter variables names
+string OptionShortVars::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  glb->short_var_names = onOrOff(p1);
+
+  string res = "Short var names is " + p1;
   return res;
 }
 
