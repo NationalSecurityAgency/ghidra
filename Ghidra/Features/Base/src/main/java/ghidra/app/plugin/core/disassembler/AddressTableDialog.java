@@ -29,6 +29,7 @@ import docking.action.DockingAction;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.HintTextField;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
@@ -238,18 +239,11 @@ public class AddressTableDialog extends DialogComponentProvider {
 		JLabel viewOffsetLabel = new GDLabel("  ");
 		viewOffsetLabel.setEnabled(false);
 
-		viewOffset = new HintTextField(20);
+		viewOffset = new HintTextField("<table start address>");
 		viewOffset.setName("viewOffset");
 		viewOffset.setToolTipText("Address of the selected table starting at the given offset");
-		viewOffset.setHintText("table start address");
-		viewOffset.showHint();
-
-		// We want the background of this text field to be the same as the panel, so it doesn't
-		// look like something editable.  
-		Color panelColor = makeOptionsPanel.getBackground();
-		viewOffset.setBackground(
-			new Color(panelColor.getRed(), panelColor.getGreen(), panelColor.getBlue()));
-		viewOffset.setEditable(false);
+		viewOffset.setColumns(20);
+		viewOffset.setEnabled(false);
 
 		offsetField = new JTextField(2);
 		offsetField.setName("offset");
@@ -554,23 +548,5 @@ public class AddressTableDialog extends DialogComponentProvider {
 			new HelpLocation(HelpTopics.SEARCH, "AddressTables_Selection_Navigation"));
 		addAction(selectionNavigationAction);
 		addAction(selectAction);
-	}
-
-	private void doMakeSelection() {
-		Program program = plugin.getProgram();
-		AddressSet set = new AddressSet();
-		AutoTableDisassemblerModel model = plugin.getModel();
-		int[] selectedRows = resultsTable.getSelectedRows();
-		for (int selectedRow : selectedRows) {
-			Address selectedAddress = model.getAddress(selectedRow);
-			AddressTable addrTab = model.get(selectedAddress);
-			if (addrTab != null) {
-				set.addRange(selectedAddress, selectedAddress.add(addrTab.getByteLength() - 1));
-			}
-		}
-		if (!set.isEmpty()) {
-			plugin.firePluginEvent(new ProgramSelectionPluginEvent(plugin.getName(),
-				new ProgramSelection(set), program));
-		}
 	}
 }
