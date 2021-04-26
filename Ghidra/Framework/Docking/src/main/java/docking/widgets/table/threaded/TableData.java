@@ -165,7 +165,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 
 		Comparator<ROW_OBJECT> comparator = sortContext.getComparator();
 		int index = Collections.binarySearch(data, t, comparator);
-		if (index > 0) {
+		if (index >= 0) {
 			data.remove(index);
 			return true;
 		}
