@@ -33,37 +33,40 @@ import util.CollectionUtils;
  * the {@link Task} interface, which means less boiler-plate code.
  *
  * <P>An example of usage:
- * <pre>{@literal
- * 		MonitoredRunnable r =
- *			monitor -> doWork(parameter, monitor);
- *		new TaskBuilder("Task Title", r)
- *			.setHasProgress(true)
- *			.setCanCancel(true)
- *			.setStatusTextAlignment(SwingConstants.LEADING)
- *			.launchModal();
+ * <pre>
+ * {@literal
+ * MonitoredRunnable r =
+ *     monitor -> doWork(parameter, monitor);
+ *     
+ * new TaskBuilder("Task Title", r)
+ *    .setHasProgress(true)
+ *    .setCanCancel(true)
+ *    .setStatusTextAlignment(SwingConstants.LEADING)
+ *    .launchModal();
  * }</pre>
  *
  * Or,
  *
- * <pre>{@literal
- *	    TaskBuilder.withRunnable(monitor -> doWork(parameter, monitor))
- *			.setTitle("Task Title")
- *			.setHasProgress(true)
- *			.setCanCancel(true)
- *			.setStatusTextAlignment(SwingConstants.LEADING)
- *			.launchModal();
+ * <pre>
+ * {@literal
+ * TaskBuilder.withRunnable(monitor -> doWork(parameter, monitor))
+ *     .setTitle("Task Title")
+ *     .setHasProgress(true)
+ *     .setCanCancel(true)
+ *     .setStatusTextAlignment(SwingConstants.LEADING)
+ *     .launchModal();
  * }</pre>
  *
  *  Or,
  *
  * <pre>
- *	    TaskBuilder.withTask(new AwesomeTask(awesomeStuff)).launchModal();
+ * TaskBuilder.withTask(new AwesomeTask(awesomeStuff)).launchModal();
  * </pre>
  *
  * Or,
  *
  * <pre>
- *	    {@link TaskLauncher#launch(Task) TaskLauncher.launch}(new AwesomeTask(awesomeStuff));
+ * {@link TaskLauncher#launch(Task) TaskLauncher.launch}(new AwesomeTask(awesomeStuff));
  * </pre>
  *
  *

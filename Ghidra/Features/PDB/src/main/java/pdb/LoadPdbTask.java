@@ -37,8 +37,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 
 class LoadPdbTask extends Task {
 	private File pdbFile;
@@ -59,8 +58,15 @@ class LoadPdbTask extends Task {
 
 	@Override
 	public void run(final TaskMonitor monitor) {
-		final MessageLog log = new MessageLog();
 
+		WrappingTaskMonitor wrappedMonitor = new WrappingTaskMonitor(monitor) {
+			@Override
+			public void initialize(long max) {
+				// don't let called clients change our monitor type; we don't show progress
+			}
+		};
+
+		MessageLog log = new MessageLog();
 		AnalysisWorker worker = new AnalysisWorker() {
 
 			@Override
@@ -74,11 +80,11 @@ class LoadPdbTask extends Task {
 
 				try {
 					if (useMsDiaParser) {
-						if (!parseWithMsDiaParser(log, monitor)) {
+						if (!parseWithMsDiaParser(log, wrappedMonitor)) {
 							return false;
 						}
 					}
-					else if (!parseWithNewParser(log, monitor)) {
+					else if (!parseWithNewParser(log, wrappedMonitor)) {
 						return false;
 					}
 					analyzeSymbols(currentMonitor, log);
@@ -92,7 +98,7 @@ class LoadPdbTask extends Task {
 
 		try {
 			AutoAnalysisManager.getAnalysisManager(program)
-					.scheduleWorker(worker, null, true, monitor);
+					.scheduleWorker(worker, null, true, wrappedMonitor);
 			if (log.hasMessages()) {
 				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Load PDB File",
 					"There were warnings/errors loading the PDB file.", log.toString(),

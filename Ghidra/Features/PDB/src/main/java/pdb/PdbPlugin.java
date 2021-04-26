@@ -17,6 +17,8 @@ package pdb;
 
 import java.io.File;
 
+import javax.swing.SwingConstants;
+
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -36,6 +38,7 @@ import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.task.TaskBuilder;
 import ghidra.util.task.TaskLauncher;
 
 //@formatter:off
@@ -134,8 +137,12 @@ public class PdbPlugin extends Plugin {
 
 			// note: We intentionally use a 0-delay here.  Our underlying task may show modal
 			//       dialog prompts.  We want the task progress dialog to be showing before any
-			//       promts appear.
+			//       prompts appear.
+
 			LoadPdbTask task = new LoadPdbTask(program, pdb, useMsDiaParser, restrictions, service);
+			TaskBuilder.withTask(task)
+					.setStatusTextAlignment(SwingConstants.LEADING)
+					.setLaunchDelay(0);
 			new TaskLauncher(task, null, 0);
 		}
 		catch (Exception pe) {
