@@ -29,8 +29,7 @@ import ghidra.util.Msg;
  * Dialog to show the panel for the auto analysis options.
  *
  */
-public class AnalysisOptionsDialog extends DialogComponentProvider implements
-		PropertyChangeListener {
+public class AnalysisOptionsDialog extends DialogComponentProvider {
 	private boolean doAnalysis;
 	private AnalysisPanel panel;
 	private EditorStateFactory editorStateFactory = new EditorStateFactory();
@@ -65,21 +64,6 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 	}
 
 	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-
-		// On any analyzer status change, update the options for all programs
-		// being analyzed. This is necessary to keep options consistent across all
-		// programs being analyzed.
-		//
-		// Note: It's possible to receive a property change notification before the 
-		//       analysis panel has finished being constructed, so protect against
-		//       that before calling the update method.
-		if (panel != null) {
-			panel.updateOptionForAllPrograms(evt.getPropertyName(), (Boolean) evt.getNewValue());
-		}
-	}
-
-	@Override
 	public void okCallback() {
 		try {
 			panel.applyChanges();
@@ -102,7 +86,8 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 	 * @return the new analysis panel
 	 */
 	private AnalysisPanel buildComponent(List<Program> programs) {
-		AnalysisPanel panel = new AnalysisPanel(programs, editorStateFactory, this);
+		AnalysisPanel panel = new AnalysisPanel(programs, editorStateFactory);
 		return panel;
 	}
 }
+

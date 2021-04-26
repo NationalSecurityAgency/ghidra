@@ -16,7 +16,10 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.beans.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -26,29 +29,47 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.TableColumn;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import docking.help.Help;
 import docking.help.HelpService;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.GhidraOptions;
 import ghidra.app.services.Analyzer;
+import ghidra.framework.Application;
+import ghidra.framework.GenericRunInfo;
 import ghidra.framework.options.*;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
+import utilities.util.FileUtilities;
 
 class AnalysisPanel extends JPanel implements PropertyChangeListener {
+	// create an empty options to represent the defaults of the analyzers
+	private static final Options STANDARD_DEFAULT_OPTIONS =
+		new FileOptions("Standard Defaults");
+	private static final String OPTIONS_FILE_EXTENSION = "options";
 
 	public static final String PROTOTYPE = " (Prototype)";
 	public final static int COLUMN_ANALYZER_IS_ENABLED = 0;
 
+	private static final String ANALYZER_OPTIONS_SAVE_DIR = "analyzer_options";
+
+	// preference which retains last used analyzer_options file name 
+	private static final String LAST_DEFAULT_OPTIONS = "LAST_ANALYSIS_OPTIONS_USED";
+
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
 	private Options analysisOptions;
+	private Options currentProgramOptions; // this will have all the non-default options from the program
+	private Options selectedOptions = STANDARD_DEFAULT_OPTIONS;
 
 	private JTable table;
 	private AnalysisEnablementTableModel model;
@@ -61,6 +82,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private EditorStateFactory editorStateFactory;
 
 	private JPanel noOptionsPanel;
+	private GhidraComboBox<Options> defaultOptionsCombo;
+	private JButton deleteButton;
 
 	/**
 	 * Constructor
@@ -81,6 +104,18 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * @param editorStateFactory the editor factory
 	 * @param propertyChangeListener subscriber for property change notifications
 	 */
+	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory) {
+		this(programs, editorStateFactory, e -> {});
+	}
+	
+
+	/**
+	 * Constructor
+	 *
+	 * @param programs list of programs that will be analyzed
+	 * @param editorStateFactory the editor factory
+	 * @param propertyChangeListener subscriber for property change notifications
+	 */
 	AnalysisPanel(List<Program> programs, EditorStateFactory editorStateFactory,
 			PropertyChangeListener propertyChangeListener) {
 
@@ -89,15 +124,30 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		if (CollectionUtils.isEmpty(programs)) {
 			throw new AssertException("Must provide a program to run analysis");
 		}
-
 		this.programs = programs;
 		this.propertyChangeListener = propertyChangeListener;
 		this.editorStateFactory = editorStateFactory;
 		analysisOptions = programs.get(0).getOptions(Program.ANALYSIS_PROPERTIES);
-
+		currentProgramOptions = getNonDefaultProgramOptions();
 		setName("Analysis Panel");
 		build();
 		load();
+		loadCurrentOptionsIntoEditors();
+	}
+
+	/**
+	 * Copies the the non-default options from the program analysis options into a new options object
+	 * @return the the non-default options from the program analysis options into a new options object
+	 */
+	private Options getNonDefaultProgramOptions() {
+		FileOptions options = new FileOptions("Current Program Options");
+		List<String> optionNames = analysisOptions.getOptionNames();
+		for (String optionName : optionNames) {
+			if (!analysisOptions.isDefaultValue(optionName)) {
+				options.putObject(optionName, analysisOptions.getObject(optionName, null));
+			}
+		}
+		return options;
 	}
 
 	private void load() {
@@ -141,6 +191,12 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private void build() {
+		setLayout(new BorderLayout());
+		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		add(buildMainPanel(), BorderLayout.CENTER);
+	}
+
+	private JComponent buildMainPanel() {
 		buildTable();
 		buildAnalyzerOptionsPanel();
 
@@ -148,14 +204,33 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildLeftPanel(), buildRightPanel());
 		splitpane.setBorder(null);
 
-		setLayout(new BorderLayout());
-		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		add(splitpane, BorderLayout.CENTER);
+		return splitpane;
 	}
 
 	private void buildAnalyzerOptionsPanel() {
 		analyzerOptionsPanel = new JPanel(new BorderLayout());
 		configureBorder(analyzerOptionsPanel, "Options");
+	}
+
+	private Component buildOptionsComboBoxPanel() {
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
+		Options[] defaultOptionsArray = getDefaultOptionsArray();
+		defaultOptionsCombo = new GhidraComboBox<>(defaultOptionsArray);
+		selectedOptions = findOptions(defaultOptionsArray, getLastUsedDefaultOptionsName());
+		defaultOptionsCombo.setSelectedItem(selectedOptions);
+		defaultOptionsCombo.addItemListener(this::analysisComboChanged);
+		Dimension preferredSize = defaultOptionsCombo.getPreferredSize();
+		defaultOptionsCombo.setPreferredSize(new Dimension(200, preferredSize.height));
+		panel.add(defaultOptionsCombo);
+
+		deleteButton = new JButton("Delete");
+		deleteButton.addActionListener(e -> deleteSelectedOptionsConfiguration());
+		deleteButton.setToolTipText("Deletes the currently selected user configuration");
+		panel.add(deleteButton);
+
+		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		return panel;
 	}
 
 	private Component buildRightPanel() {
@@ -185,7 +260,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private JPanel buildLeftPanel() {
-		JPanel buttonPanel = buildButtonPanel();
+		JPanel buttonPanel = buildControlPanel();
 
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -199,18 +274,51 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		return panel;
 	}
 
+	private JPanel buildControlPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+
+		panel.add(buildButtonPanel(), BorderLayout.NORTH);
+		panel.add(buildOptionsComboBoxPanel(), BorderLayout.SOUTH);
+
+		return panel;
+	}
+
 	private JPanel buildButtonPanel() {
 		JButton selectAllButton = new JButton("Select All");
 		selectAllButton.addActionListener(e -> selectAll());
 		JButton deselectAllButton = new JButton("Deselect All");
 		deselectAllButton.addActionListener(e -> deselectAll());
-		JButton restoreDefaultsButton = new JButton("Restore Defaults");
-		restoreDefaultsButton.addActionListener(e -> restoreDefaults());
+		JButton resetButton = new JButton("Reset");
+		resetButton.setToolTipText("Resets the editors to the selected options configuration");
+		resetButton.addActionListener(e -> loadCurrentOptionsIntoEditors());
+		JButton saveButton = new JButton("Save...");
+		saveButton.setToolTipText("Saves the current editor settings to a named configuration");
+		saveButton.addActionListener(e -> saveCurrentOptionsConfiguration());
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		buttonPanel.add(selectAllButton);
 		buttonPanel.add(deselectAllButton);
-		buttonPanel.add(restoreDefaultsButton);
+		buttonPanel.add(resetButton);
+		buttonPanel.add(saveButton);
 		return buttonPanel;
+	}
+
+	private void deleteSelectedOptionsConfiguration() {
+		if (!isUserConfiguration(selectedOptions)) {
+			// can only delete user configurations
+			return;
+		}
+		String configurationName = selectedOptions.getName();
+		int result = OptionDialog.showYesNoDialog(this, "Delete Configuration?",
+			"Are you sure you want to delete options configuration \"" + configurationName + "\"?");
+		if (result != OptionDialog.YES_OPTION) {
+			return;
+		}
+
+		File configurationFile = getOptionsSaveFile(configurationName);
+		configurationFile.delete();
+		selectedOptions = currentProgramOptions;
+		reloadOptionsCombo(currentProgramOptions);
+		loadCurrentOptionsIntoEditors();
 	}
 
 	private void selectAll() {
@@ -227,15 +335,83 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 	}
 
-	private void restoreDefaults() {
-		int answer = OptionDialog.showYesNoDialog(this, "Restore Default Analysis Options",
-			"Do you really want to restore the analysis options to the default values?");
-		if (answer == OptionDialog.YES_OPTION) {
-			AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(programs.get(0));
-			manager.restoreDefaultOptions();
-			editorStateFactory.clearAll();
-			load();
+	private void saveCurrentOptionsConfiguration() {
+		String defaultSaveName = "";
+		if (selectedOptions != STANDARD_DEFAULT_OPTIONS &&
+			selectedOptions != currentProgramOptions) {
+			defaultSaveName = selectedOptions.getName();
 		}
+		String saveName = OptionDialog.showInputSingleLineDialog(this, "Save Configuration",
+			"Options Configuration Name", defaultSaveName);
+		if (saveName == null) {
+			return;
+		}
+		saveName = saveName.trim();
+		if (saveName.length() == 0) {
+			return;
+		}
+		File saveFile = getOptionsSaveFile(saveName);
+		FileOptions saved = saveCurrentOptions();
+		try {
+			saved.save(saveFile);
+			reloadOptionsCombo(saved);
+		}
+		catch (IOException e) {
+			Msg.error(this, "Error saving default options", e);
+		}
+	}
+
+	private FileOptions saveCurrentOptions() {
+		FileOptions saveTo = new FileOptions("");
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			boolean enabled = analyzerState.isEnabled();
+			if (!Objects.equals(Boolean.valueOf(enabled),
+				analysisOptions.getDefaultValue(analyzerName))) {
+				saveTo.setBoolean(analyzerName, enabled);
+			}
+		}
+
+		for (EditorState editorState : editorList) {
+			editorState.applyNonDefaults(saveTo);
+		}
+		return saveTo;
+	}
+
+	private void loadCurrentOptionsIntoEditors() {
+		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			Object defaultObject = analysisOptions.getDefaultValue(analyzerName);
+			boolean defaultValue =
+				(defaultObject instanceof Boolean) ? (Boolean) defaultObject : false;
+			boolean newValue = selectedOptions.getBoolean(analyzerName, defaultValue);
+			analyzerState.setEnabled(newValue);
+			setAnalyzerEnabled(analyzerName, newValue, false);
+			model.fireTableRowsUpdated(0, model.getRowCount() - 1);
+		}
+
+		for (EditorState editorState : editorList) {
+			editorState.loadFrom(selectedOptions);
+		}
+		updateDeleteButton();
+	}
+
+	private void reloadOptionsCombo(Options newDefaultOptions) {
+		Options[] defaultOptionsArray = getDefaultOptionsArray();
+		defaultOptionsCombo.setModel(new DefaultComboBoxModel<Options>(defaultOptionsArray));
+		Options selected = findOptions(defaultOptionsArray, newDefaultOptions.getName());
+		defaultOptionsCombo.setSelectedItem(selected);
+	}
+
+	private Options findOptions(Options[] defaultOptionsArray, String name) {
+		for (Options fileOptions : defaultOptionsArray) {
+			if (fileOptions.getName().equals(name)) {
+				return fileOptions;
+			}
+		}
+		return STANDARD_DEFAULT_OPTIONS;
 	}
 
 	private void configureEnabledColumnWidth(int width) {
@@ -290,7 +466,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		component.setBorder(compoundBorder);
 	}
 
-	void setAnalyzerEnabled(String analyzerName, boolean enabled) {
+	void setAnalyzerEnabled(String analyzerName, boolean enabled, boolean fireEvent) {
 		List<Component> list = analyzerManagedComponentsMap.get(analyzerName);
 		if (list != null) {
 			Iterator<Component> iterator = list.iterator();
@@ -299,23 +475,25 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 				next.setEnabled(enabled);
 			}
 		}
-		propertyChange(null);
+		if (fireEvent) {
+			propertyChange(null);
+		}
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (checkForDifferences()) {
+		if (checkForDifferencesWithProgram()) {
 			propertyChangeListener.propertyChange(
 				new PropertyChangeEvent(this, GhidraOptions.APPLY_ENABLED, null, Boolean.TRUE));
 		}
 	}
 
-	private boolean checkForDifferences() {
+	private boolean checkForDifferencesWithProgram() {
 		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
 		boolean changes = false;
-		for (int i = 0; i < analyzerStates.size(); ++i) {
-			String analyzerName = analyzerStates.get(i).getName();
-			boolean currEnabled = analyzerStates.get(i).isEnabled();
+		for (AnalyzerEnablementState analyzerState : analyzerStates) {
+			String analyzerName = analyzerState.getName();
+			boolean currEnabled = analyzerState.isEnabled();
 			boolean origEnabled = analysisOptions.getBoolean(analyzerName, false);
 			if (currEnabled != origEnabled) {
 				changes = true;
@@ -342,26 +520,56 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	 * analyzed.
 	 */
 	void applyChanges() {
-		List<AnalyzerEnablementState> analyzerStates = model.getModelData();
-		for (AnalyzerEnablementState analyzerState : analyzerStates) {
-			String analyzerName = analyzerState.getName();
-			boolean enabled = analyzerState.isEnabled();
-
-			int id = programs.get(0).startTransaction("setting analysis options");
-			boolean commit = false;
-			try {
+		int id = programs.get(0).startTransaction("Setting Analysis Options");
+		boolean commit = false;
+		try {
+			List<AnalyzerEnablementState> analyzerStates = model.getModelData();
+			for (AnalyzerEnablementState analyzerState : analyzerStates) {
+				String analyzerName = analyzerState.getName();
+				boolean enabled = analyzerState.isEnabled();
 				analysisOptions.setBoolean(analyzerName, enabled);
 				commit = true;
 			}
-			finally {
-				programs.get(0).endTransaction(id, commit);
+			for (EditorState info : editorList) {
+				info.applyValue();
 			}
-
-			updateOptionForAllPrograms(analyzerName, enabled);
+		}
+		finally {
+			programs.get(0).endTransaction(id, commit);
 		}
 
-		for (EditorState info : editorList) {
-			info.applyValue();
+		copyOptionsToAllPrograms();
+		currentProgramOptions = getNonDefaultProgramOptions();
+		reloadOptionsCombo(currentProgramOptions);
+	}
+
+	private void copyOptionsToAllPrograms() {
+		for (int i = 1; i < programs.size(); i++) {
+			Program program = programs.get(i);
+
+			int id = program.startTransaction("Setting Analysis Options");
+			boolean commit = false;
+			try {
+				copyOptionsTo(program);
+				commit = true;
+			}
+			finally {
+				program.endTransaction(id, commit);
+			}
+		}
+	}
+
+	private void copyOptionsTo(Program program) {
+		Options destinationOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
+
+		// first remove all options in destination
+		for (String optionName : destinationOptions.getOptionNames()) {
+			destinationOptions.removeOption(optionName);
+		}
+
+		// now copy all the options in the source
+		for (String optionName : analysisOptions.getOptionNames()) {
+			destinationOptions.putObject(optionName, analysisOptions.getObject(optionName, null));
 		}
 	}
 
@@ -415,7 +623,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			if (value instanceof Boolean) {
 				enabled = (Boolean) value;
 			}
-			setAnalyzerEnabled(analyzerName, enabled);
+			setAnalyzerEnabled(analyzerName, enabled, false);
 		}
 	}
 
@@ -478,4 +686,126 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 	}
 
+	private String getLastUsedDefaultOptionsName() {
+		// if the program has non-default options, then it has been analyzed before, use its 
+		// current settings initially
+		if (isAnalyzed()) {
+			return currentProgramOptions.getName();
+		}
+		// Otherwise, use the last used analysis options configuration
+		return Preferences.getProperty(LAST_DEFAULT_OPTIONS, STANDARD_DEFAULT_OPTIONS.getName());
+	}
+
+	private boolean isAnalyzed() {
+		Options options = programs.get(0).getOptions(Program.PROGRAM_INFO);
+		return options.getBoolean(Program.ANALYZED, false);
+	}
+
+	private Options[] getDefaultOptionsArray() {
+		List<Options> savedDefaultsList = getSavedOptionsObjects();
+		Options[] optionsArray = new FileOptions[savedDefaultsList.size() + 2]; // 2 standard configurations always present
+		optionsArray[0] = currentProgramOptions;
+		optionsArray[1] = STANDARD_DEFAULT_OPTIONS;
+		for (int i = 0; i < savedDefaultsList.size(); i++) {
+			optionsArray[i + 2] = savedDefaultsList.get(i);
+		}
+		return optionsArray;
+	}
+
+	private File getOptionsSaveFile(String saveName) {
+		File userSettingsDirectory = Application.getUserSettingsDirectory();
+		File optionsDir = new File(userSettingsDirectory, ANALYZER_OPTIONS_SAVE_DIR);
+		FileUtilities.mkdirs(optionsDir);
+		return new File(optionsDir, saveName + "." + OPTIONS_FILE_EXTENSION);
+	}
+
+	private List<Options> getSavedOptionsObjects() {
+		File userSettingsDirectory = Application.getUserSettingsDirectory();
+		File optionsDir = new File(userSettingsDirectory, ANALYZER_OPTIONS_SAVE_DIR);
+		if (!optionsDir.isDirectory()) {
+			// new installation, copy any old saved analysis options files to current
+			migrateOptionsFromPreviousRevision(optionsDir);
+		}
+		return readSavedOptions(optionsDir);
+	}
+
+	private List<Options> readSavedOptions(File optionsDir) {
+		List<Options> list = new ArrayList<>();
+		File[] listFiles = optionsDir.listFiles();
+		for (File file : listFiles) {
+			if (OPTIONS_FILE_EXTENSION.equals(FilenameUtils.getExtension(file.getName()))) {
+				FileOptions fileOptions;
+				try {
+					fileOptions = new FileOptions(file);
+					list.add(fileOptions);
+				}
+				catch (IOException e) {
+					Msg.error(this, "Error reading saved analysis options", e);
+				}
+			}
+		}
+
+		return list;
+	}
+
+	private void migrateOptionsFromPreviousRevision(File optionsDir) {
+		FileUtilities.mkdirs(optionsDir);
+		File previous = getMostRecentApplicationSettingsDirWithSavedOptions();
+		if (previous == null) {
+			return;
+		}
+		List<Options> readSavedOptions = readSavedOptions(previous);
+		for (Options options : readSavedOptions) {
+			FileOptions fileOptions = (FileOptions) options;
+			String name = fileOptions.getName();
+			try {
+				fileOptions.save(getOptionsSaveFile(name));
+			} catch (IOException e) {
+				Msg.error(this, "Error copying analysis options from previous Ghidra install", e);
+			}
+		}
+	}
+	private File getMostRecentApplicationSettingsDirWithSavedOptions() {
+		List<File> ghidraUserDirsByTime = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
+		if (ghidraUserDirsByTime.size() == 0) {
+			return null;
+		}
+
+		// get the tools from the most recent projects first
+		for (File ghidraUserDir : ghidraUserDirsByTime) {
+			File possible = new File(ghidraUserDir, ANALYZER_OPTIONS_SAVE_DIR);
+			if (possible.exists()) {
+				return possible;
+			}
+		}
+		return null;
+	}
+
+
+	private boolean isUserConfiguration(Options options) {
+		if (options == STANDARD_DEFAULT_OPTIONS ||
+			options == currentProgramOptions) {
+			// these two are not user configurations.
+			return false;
+		}
+		return true;
+
+	}
+
+	private void analysisComboChanged(ItemEvent e) {
+		if (e.getStateChange() == ItemEvent.SELECTED) {
+			selectedOptions = (FileOptions) defaultOptionsCombo.getSelectedItem();
+			updateDeleteButton();
+			loadCurrentOptionsIntoEditors();
+			// save off preference (unless it is the current program options, then don't save it)
+			if (selectedOptions != currentProgramOptions) {
+				Preferences.setProperty(LAST_DEFAULT_OPTIONS, selectedOptions.getName());
+			}
+		}
+	}
+
+	private void updateDeleteButton() {
+		deleteButton.setEnabled(isUserConfiguration(selectedOptions));
+	}
 }
+
