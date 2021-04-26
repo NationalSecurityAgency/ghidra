@@ -15,21 +15,16 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.table.TableModel;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
@@ -37,12 +32,15 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.ProgramManager;
+import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import utilities.util.FileUtilities;
 
 public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -53,6 +51,7 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	
 	@Before
 	public void setUp() throws Exception {
+		cleanUpStoredPreferences();
 		env = new TestEnv();
 		tool = env.getTool();
 		tool.addPlugin(CodeBrowserPlugin.class.getName());
@@ -73,8 +72,17 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	@After
 	public void tearDown() throws Exception {
 		env.release(program);
-		tool.close();
 		env.dispose();
+		cleanUpStoredPreferences();
+	}
+
+	private static void cleanUpStoredPreferences() {
+		Preferences.clear();
+		Preferences.store();
+
+		File userSettingsDirectory = Application.getUserSettingsDirectory();
+		File optionsDir = new File(userSettingsDirectory, AnalysisPanel.ANALYZER_OPTIONS_SAVE_DIR);
+		FileUtilities.deleteDir(optionsDir);
 	}
 
 	@Test
@@ -139,7 +147,7 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		setAnalyzerEnabled("Reference", false);
 		setAnalyzerEnabled("ASCII Strings", false);
 
-		pressButtonByText(optionsDialog, "Save", false);
+		pressButtonByText(optionsDialog, "Save...", false);
 		saveConfig("foo");
 		
 		assertComboboxEquals("foo");
@@ -223,8 +231,11 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		pressButtonByText(optionsDialog, "Analyze");
 		
+		waitForBusyTool(tool);
+
 		assertFalse(isAnalyzerEnabledInProgramOptions("Stack"));
 		assertFalse(isAnalyzerEnabledInProgramOptions("Reference"));
+
 	}
 
 //==================================================================================================
@@ -235,7 +246,7 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		setAnalyzerEnabled("Reference", refOn);
 		setAnalyzerEnabled("ASCII Strings", stringOn);
 	
-		pressButtonByText(optionsDialog, "Save", false);
+		pressButtonByText(optionsDialog, "Save...", false);
 		saveConfig(name);
 			
 	}

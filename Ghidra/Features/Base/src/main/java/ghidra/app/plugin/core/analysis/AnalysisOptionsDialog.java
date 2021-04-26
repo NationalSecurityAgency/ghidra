@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import docking.DialogComponentProvider;
@@ -51,7 +49,7 @@ public class AnalysisOptionsDialog extends DialogComponentProvider {
 	AnalysisOptionsDialog(List<Program> programs) {
 		super("Analysis Options");
 		setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions"));
-		panel = buildComponent(programs);
+		panel = new AnalysisPanel(programs, editorStateFactory);
 
 		addWorkPanel(panel);
 		addOKButton();
@@ -79,15 +77,5 @@ public class AnalysisOptionsDialog extends DialogComponentProvider {
 		return doAnalysis;
 	}
 
-	/**
-	 * Constructs a new {@link AnalysisPanel}
-	 * 
-	 * @param programs the programs to analyze
-	 * @return the new analysis panel
-	 */
-	private AnalysisPanel buildComponent(List<Program> programs) {
-		AnalysisPanel panel = new AnalysisPanel(programs, editorStateFactory);
-		return panel;
-	}
 }
 

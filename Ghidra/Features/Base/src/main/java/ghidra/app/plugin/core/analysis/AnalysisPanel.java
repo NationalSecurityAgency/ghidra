@@ -55,15 +55,19 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	// create an empty options to represent the defaults of the analyzers
 	private static final Options STANDARD_DEFAULT_OPTIONS =
 		new FileOptions("Standard Defaults");
+
+	private static final int CURRENT_PROGRAM_OPTIONS_CHOICE_INDEX = 0;
+	private static final int STANDARD_OPTIONS_CHOICE_INDEX = 1;
+
 	private static final String OPTIONS_FILE_EXTENSION = "options";
 
 	public static final String PROTOTYPE = " (Prototype)";
 	public final static int COLUMN_ANALYZER_IS_ENABLED = 0;
 
-	private static final String ANALYZER_OPTIONS_SAVE_DIR = "analyzer_options";
+	static final String ANALYZER_OPTIONS_SAVE_DIR = "analyzer_options";
 
 	// preference which retains last used analyzer_options file name 
-	private static final String LAST_DEFAULT_OPTIONS = "LAST_ANALYSIS_OPTIONS_USED";
+	public static final String LAST_USED_OPTIONS_CONFIG = "LAST_USED_OPTIONS_CONFIG";
 
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
@@ -341,8 +345,10 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			selectedOptions != currentProgramOptions) {
 			defaultSaveName = selectedOptions.getName();
 		}
-		String saveName = OptionDialog.showInputSingleLineDialog(this, "Save Configuration",
-			"Options Configuration Name", defaultSaveName);
+
+		String saveName = OptionDialog.showEditableInputChoiceDialog(this, "Save Configuration",
+			"Options Configuration Name", getSavedChoices(), defaultSaveName,
+			OptionDialog.QUESTION_MESSAGE);
 		if (saveName == null) {
 			return;
 		}
@@ -351,6 +357,11 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			return;
 		}
 		File saveFile = getOptionsSaveFile(saveName);
+		if (saveFile.exists() && OptionDialog.CANCEL_OPTION ==
+			OptionDialog.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
+					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
+			return;
+		}
 		FileOptions saved = saveCurrentOptions();
 		try {
 			saved.save(saveFile);
@@ -687,13 +698,14 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private String getLastUsedDefaultOptionsName() {
-		// if the program has non-default options, then it has been analyzed before, use its 
+		// if the program has non-default options or has been analyzed use its 
 		// current settings initially
-		if (isAnalyzed()) {
+		if (isAnalyzed() || !currentProgramOptions.getOptionNames().isEmpty()) {
 			return currentProgramOptions.getName();
 		}
 		// Otherwise, use the last used analysis options configuration
-		return Preferences.getProperty(LAST_DEFAULT_OPTIONS, STANDARD_DEFAULT_OPTIONS.getName());
+		return Preferences.getProperty(LAST_USED_OPTIONS_CONFIG,
+			STANDARD_DEFAULT_OPTIONS.getName());
 	}
 
 	private boolean isAnalyzed() {
@@ -704,12 +716,23 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private Options[] getDefaultOptionsArray() {
 		List<Options> savedDefaultsList = getSavedOptionsObjects();
 		Options[] optionsArray = new FileOptions[savedDefaultsList.size() + 2]; // 2 standard configurations always present
-		optionsArray[0] = currentProgramOptions;
-		optionsArray[1] = STANDARD_DEFAULT_OPTIONS;
+		optionsArray[CURRENT_PROGRAM_OPTIONS_CHOICE_INDEX] = currentProgramOptions;
+		optionsArray[STANDARD_OPTIONS_CHOICE_INDEX] = STANDARD_DEFAULT_OPTIONS;
 		for (int i = 0; i < savedDefaultsList.size(); i++) {
 			optionsArray[i + 2] = savedDefaultsList.get(i);
 		}
 		return optionsArray;
+	}
+
+	private String[] getSavedChoices() {
+		Options[] defaultOptionsArray = getDefaultOptionsArray();
+		List<String> list = new ArrayList<>();
+		for (int i = 2; i < defaultOptionsArray.length; i++) {
+			list.add(defaultOptionsArray[i].getName());
+		}
+		String[] a = new String[list.size()];
+		list.toArray(a);
+		return a;
 	}
 
 	private File getOptionsSaveFile(String saveName) {
@@ -732,6 +755,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	private List<Options> readSavedOptions(File optionsDir) {
 		List<Options> list = new ArrayList<>();
 		File[] listFiles = optionsDir.listFiles();
+		Arrays.sort(listFiles);
 		for (File file : listFiles) {
 			if (OPTIONS_FILE_EXTENSION.equals(FilenameUtils.getExtension(file.getName()))) {
 				FileOptions fileOptions;
@@ -799,7 +823,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			loadCurrentOptionsIntoEditors();
 			// save off preference (unless it is the current program options, then don't save it)
 			if (selectedOptions != currentProgramOptions) {
-				Preferences.setProperty(LAST_DEFAULT_OPTIONS, selectedOptions.getName());
+				Preferences.setProperty(LAST_USED_OPTIONS_CONFIG,
+					selectedOptions.getName());
 			}
 		}
 	}
