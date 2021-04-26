@@ -43,7 +43,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {
-		return GdbLinuxSpecimen.ECHO_HW;
+		return GdbLinuxSpecimen.PRINT;
 	}
 
 	@Override

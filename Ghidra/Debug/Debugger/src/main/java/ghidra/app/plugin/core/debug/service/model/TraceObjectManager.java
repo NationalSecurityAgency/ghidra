@@ -478,13 +478,14 @@ public class TraceObjectManager {
 		}
 	}
 
-	public void attributesChangedBreakpointLocation(TargetObject bpt, Map<String, ?> added) {
-		if (added.containsKey(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME)) {
-			Address traceAddr = recorder.getMemoryMapper()
-					.targetToTrace(((TargetBreakpointLocation) bpt).getAddress());
-			String path = bpt.getJoinedPath(".");
-			Integer length = (Integer) added.get(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME);
-			recorder.breakpointRecorder.breakpointLengthChanged(length, traceAddr, path);
+	public void attributesChangedBreakpointLocation(TargetObject obj, Map<String, ?> added) {
+		TargetBreakpointLocation loc = (TargetBreakpointLocation) obj;
+		if (added.containsKey(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME) ||
+			added.containsKey(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME)) {
+			Address traceAddr = recorder.getMemoryMapper().targetToTrace(loc.getAddress());
+			String path = loc.getJoinedPath(".");
+			int length = loc.getLengthOrDefault(1);
+			recorder.breakpointRecorder.breakpointLocationChanged(length, traceAddr, path);
 		}
 	}
 

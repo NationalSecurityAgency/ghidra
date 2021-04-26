@@ -54,6 +54,6 @@ public abstract class AbstractModelForGdbAmd64RegistersTest
 	 */
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {
-		return GdbLinuxSpecimen.ECHO_HW;
+		return GdbLinuxSpecimen.PRINT;
 	}
 }

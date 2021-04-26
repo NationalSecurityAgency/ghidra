@@ -211,7 +211,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			doFetchAndInitRegMapper(bank);
 		}
 		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
-		System.err.println("offerRegisters " + this.targetThread.getDisplay() + ":" + frameLevel);
+		//System.err.println("offerRegisters " + this.targetThread.getDisplay() + ":" + frameLevel);
 		TargetRegisterBank old = regs.put(frameLevel, bank);
 		if (null != old) {
 			Msg.warn(this, "Unexpected register bank replacement");
