@@ -85,7 +85,8 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 
 	@Override
 	public String getBrief() {
-		return "GDB@" + Integer.toHexString(System.identityHashCode(this));
+		return "GDB@" + Integer.toHexString(System.identityHashCode(this)) + " " +
+			gdb.getPtyDescription();
 	}
 
 	@Override

@@ -15,7 +15,7 @@
  */
 package agent.gdb.manager.impl;
 
-import static ghidra.async.AsyncUtils.loop;
+import static ghidra.async.AsyncUtils.*;
 
 import java.io.*;
 import java.util.*;
@@ -1614,6 +1614,11 @@ public class GdbManagerImpl implements GdbManager {
 	@Override
 	public String getMi2PtyName() throws IOException {
 		return mi2Thread.pty.getChild().nullSession();
+	}
+
+	@Override
+	public String getPtyDescription() {
+		return ptyFactory.getDescription();
 	}
 
 	public boolean hasCli() {

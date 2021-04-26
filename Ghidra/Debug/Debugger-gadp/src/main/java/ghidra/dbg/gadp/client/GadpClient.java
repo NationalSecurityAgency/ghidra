@@ -438,7 +438,7 @@ public class GadpClient extends AbstractDebuggerObjectModel
 
 	@Override
 	public String getBrief() {
-		return description + " via GADP (" + channelState.get().name().toLowerCase() + ")";
+		return "GADP@" + Integer.toHexString(System.identityHashCode(this)) + " " + description;
 	}
 
 	public CompletableFuture<Void> connect() {

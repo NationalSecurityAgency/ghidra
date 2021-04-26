@@ -514,4 +514,12 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * @throws IOException if the filename could not be determined
 	 */
 	String getMi2PtyName() throws IOException;
+
+	/**
+	 * Get a description for the pty for this GDB session
+	 * 
+	 * @return the description
+	 */
+	String getPtyDescription();
+
 }
