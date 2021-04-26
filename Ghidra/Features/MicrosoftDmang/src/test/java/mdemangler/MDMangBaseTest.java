@@ -64,7 +64,7 @@ import ghidra.util.Msg;
  *  was able to make a change to this code base and run against the core set of tests below
  *  and found that I broke no tests, but when I ran against the Windows 10 symbols, I failed
  *  more than 1300 of these tests when the norm was to fail 73.  Note too, that I immediately
- *  throw away symbols from these sets that I can immediately say that Microsoft has gotten 
+ *  throw away symbols from these sets that I can immediately say that Microsoft has gotten
  *  wrong (e.g., has "??" in the demangled string), but this approach gives general direction
  *  and it often (as in my example case) leads me to grab another symbol or two to put into
  *  the core set of tests to provide constraints around this living design.
@@ -179,7 +179,8 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	};
 
 	private void demangleAndTest() throws Exception {
-		testConfiguration.demangleAndTest(mangled, mdTruth, msTruth, ghTruth, ms2013Truth);
+		testConfiguration.demangleAndTest(testName, mangled, mdTruth, msTruth, ghTruth,
+			ms2013Truth);
 	}
 
 	@Test
@@ -188,7 +189,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for 'const name1::name0::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const name1::name0::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -199,7 +199,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall zz::z::`dynamic initializer for 'const name1::name0::`vftable'{for `xx::x's `yy::y'}''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall zz::z::`dynamic initializer for 'const name1::name0::`vftable'{for `xx::x's `yy::y'}''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -210,7 +209,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall z::`dynamic initializer for 'const name1::name0::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall z::`dynamic initializer for 'const name1::name0::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -276,7 +274,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall name1::`dynamic initializer for 'name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall name1::`dynamic initializer for 'name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -295,7 +292,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -329,7 +325,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for 'const name0::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const name0::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -339,7 +334,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall name1::`dynamic initializer for 'const name0::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall name1::`dynamic initializer for 'const name0::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -349,7 +343,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for 'int name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'int name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -359,7 +352,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall name1::`dynamic initializer for 'name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall name1::`dynamic initializer for 'name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -370,7 +362,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -382,7 +373,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'private: static class name2::name3<class name5::name4 ^ __ptr64> name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'private: static class name2::name3<class name5::name4 ^ __ptr64> name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -393,7 +383,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -404,7 +393,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static int name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static int name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -415,7 +403,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -426,7 +413,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -436,7 +422,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for 'const name0::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const name0::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -1306,7 +1291,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -1316,7 +1300,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for 'const name0::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const name0::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -3485,7 +3468,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
-	//Manufactured; Keep. 
+	//Manufactured; Keep.
 	@Test
 	public void testTemplateParameter_BQRS_DirectArgModifiers() throws Exception {
 		//BQRS modifiers are only valid on direct arguments of functions and templates.
@@ -4722,7 +4705,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		//_P is prefix for another special name, such that:
 		//  "?_PE" that looks like (prefix) and "?E" or
 		//  "?_P_E" that looks like (prefix) and "?_E"
-		//  Prefix is "`udt returning'" 
+		//  Prefix is "`udt returning'"
 		mangled = "??_PENameSpace@@$$FQAEPAXI@Z";
 		msTruth = "public: void * __thiscall NameSpace::`udt returning'operator++(unsigned int)";
 		mdTruth = msTruth;
@@ -4735,7 +4718,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		//_P is prefix for another special name, such that:
 		//  "?_PE" that looks like (prefix) and "?E" or
 		//  "?_P_E" that looks like (prefix) and "?_E"
-		//  Prefix is "`udt returning'" 
+		//  Prefix is "`udt returning'"
 		mangled = "??_P_P_PENameSpace@@$$FQAEPAXI@Z";
 		msTruth =
 			"public: void * __thiscall NameSpace::`udt returning'`udt returning'`udt returning'operator++(unsigned int)";
@@ -4748,7 +4731,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testSpecialNames_Q() throws Exception {
 		//name = "`EH'"; //must have more embedding as we haven't gotten undname to return yet.
-		//manufactured and not sure if good example or not... needs to output "`EH'" ??? 
+		//manufactured and not sure if good example or not... needs to output "`EH'" ???
 		//TODO: need to look closer... as this must be a function, I think (but so do all of those other operators above).
 		mangled = "??_QNamespace1@Namespace2@@$$FQAEPAXI@Z";
 		msTruth = "public: void * __thiscall Namespace2::Namespace1::(unsigned int)";
@@ -7340,7 +7323,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	//Following is OK to move to LOW--test is already on LOW in WineDemanglerTest.
 //	//TODO: Research this.  Not sure about this symbol and result.  Came from WineDemanglerTest.
 //	//MSFT 2015 undname yields: "S358<`template-parameter-2',CHelper_AD::tARootDir,AVCString * const volatile,void,unsigned char, ?? &>"
-//	//  This is wrong for multiple reasons: "??" and "GetADRoot" -> "tARoot..." 
+//	//  This is wrong for multiple reasons: "??" and "GetADRoot" -> "tARoot..."
 //	@Test
 //	public void testOrigTest_bq() throws Exception {
 //		mangled = "?$S358@?1??GetADRootDir@CHelper_AD@@SA?AVCString@@XZ@4EA";
@@ -7464,7 +7447,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -7475,7 +7457,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool <name2>::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -8081,7 +8062,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -8884,7 +8864,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 
 	// Added Y01 (array) to exercise Override code in MDDataReferenceType.  This
 	//  symbol is supposed to fail.
-	// Original symbol was: "?var@@3$$CBHA" 
+	// Original symbol was: "?var@@3$$CBHA"
 	// TODO:
 	// Ultimately $$C (MDDataReferenceType) needs to extend MDModifiedType (not MDModifierType), but MDModifiedType
 	//  is still under construction.  The MDArrayReferenceType (Y (Y01)) is only to be found in the MDmodifierType.
@@ -9866,7 +9846,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	// Manufactured --KEEP, Need to add tests for isC and referredToType
 	@Test
 	public void testManagedProperties_ai() throws Exception {
-		//NEW HAND-MADE 
+		//NEW HAND-MADE
 		mangled = "?FN@@QEAM@BE$AAVCL@@@Z";
 		msTruth = "public: __clrcall FN(class CL % __ptr64 volatile) __ptr64";
 		mdTruth = msTruth;
@@ -10522,7 +10502,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10533,7 +10512,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static int name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static int name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10544,7 +10522,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10555,7 +10532,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10585,7 +10561,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'private: static class name2::name3<class name5::name4 ^ __ptr64> name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'private: static class name2::name3<class name5::name4 ^ __ptr64> name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10596,7 +10571,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static int name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static int name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10608,7 +10582,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic atexit destructor for 'private: static class name2::name3<class name5::name4 ^ __ptr64> name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic atexit destructor for 'private: static class name2::name3<class name5::name4 ^ __ptr64> name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10619,7 +10592,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static enum name2::name4::name3 name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -10630,7 +10602,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'public: static bool name2::name1::name0''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static bool name2::name1::name0''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -11529,7 +11500,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
-	//Test showing that we can have a full typeinfo after (note '$' becomes part of name--not template) 
+	//Test showing that we can have a full typeinfo after (note '$' becomes part of name--not template)
 	@Test
 	public void testCodeView_Simple_01test_with_typeinfo() throws Exception {
 		mangled = "?@?$name@H@@3HA";
@@ -11599,7 +11570,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "?@???__Eabc@@3HA";
 		msTruth = "CV: int `dynamic initializer for 'abc''";
 		mdTruth = msTruth;
-		ghTruth = "int `dynamic initializer for 'abc''"; //makes typeinfo avail at high level too
 		demangleAndTest();
 	}
 
@@ -11650,7 +11620,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for '__mpnhHeap''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for '__mpnhHeap''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -11707,7 +11676,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'const std::bad_alloc::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const std::bad_alloc::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -11726,7 +11694,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for '_AtlModule''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for '_AtlModule''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -13775,7 +13742,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
-	//TODO: Need to do dispatcher for VS2017? vs. VS2015?  We do not have VS2017 yet to see what it does.  
+	//TODO: Need to do dispatcher for VS2017? vs. VS2015?  We do not have VS2017 yet to see what it does.
 	//TODO (20170331): Need to do some testing/fuzzing with something more up-to-date than VS2015.
 	//Problem is at location 29-31 where we have a '?' followed by a 'C', which is trying to determine the encoded number, but the 'C'
 	// is followed by an invalid character 'i' for an encoded number.  This sequence is repeated later.
@@ -13931,7 +13898,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 			"void __clrcall `dynamic initializer for 'const std::bad_alloc::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const std::bad_alloc::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -13985,7 +13951,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth = "void __clrcall `dynamic initializer for 'const bad_cast::`vftable'''(void)";
 		mdTruth =
 			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'const bad_cast::`vftable'''(void)(void)";
-		ghTruth = msTruth;
 		demangleAndTest();
 	}
 
@@ -14443,7 +14408,6 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth =
 			"[MEP] void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'PBBBMbr''(void)(void)";
 		msTruth = dbTruth;
-		ghTruth = dbTruth;
 		demangleAndTest();
 	}
 
@@ -14586,6 +14550,63 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	public void testReferenceToConstMemberPointerOfTypeFloatAsFunctionParameter() throws Exception {
 		mangled = "?FnName@FnSpace@@YKXABPUClassName@@M@Z";
 		msTruth = "void FnSpace::FnName(float ClassName::* const &)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testFunctionIndirectWithBlankCallingConvention() throws Exception {
+		mangled = "?FN@@QAAH$$A6KH@Z@Z";
+		msTruth = "public: int __cdecl FN(int ())";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testCPPManagedILMain_1() throws Exception {
+		mangled = "?main@@$$HYAHXZ";
+		msTruth = "int __cdecl main(void)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	// Not happy with this next thing.... might be CPPManagedILDLLImporData, but not yet sure.
+	public void testCPPManagedILDLLImportData_1() throws Exception {
+		mangled =
+			"???__E?Initialized@CurrentDomain@<CrtImplementationDetails>@@$$Q2HA@@YMXXZ@?A0x1ed4f156@@$$FYMXXZ";
+		msTruth =
+			"void __clrcall `dynamic initializer for 'public: static int <CrtImplementationDetails>::CurrentDomain::Initialized''(void)";
+		mdTruth =
+			"void __clrcall `anonymous namespace'::void __clrcall `dynamic initializer for 'public: static int <CrtImplementationDetails>::CurrentDomain::Initialized''(void)(void)";
+		demangleAndTest();
+	}
+
+	@Category(MDMangFailingTestCategory.class)
+	@Test
+	public void testCPPManagedILFunction_1() throws Exception {
+		mangled =
+			"?A0x1ed4f156.??__E?Initialized@CurrentDomain@<CrtImplementationDetails>@@$$Q2HA@@YMXXZ";
+		msTruth = "unknown";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Temporary counterpoint in trying to figure out the above.
+	@Test
+	public void testXXXCounterpoint2() throws Exception {
+		mangled = ".?AV?$name1@Vname2@@Uname3@name4@@@name4@@";
+		mdTruth = "class name4::name1<class name2,struct name4::name3>";
+		msTruth = mdTruth;
+		demangleAndTest();
+	}
+
+	// Temporary test for trying to fuzz solutions for the above.
+	@Test
+	public void testXXXFuzz() throws Exception {
+		mangled = "??__E?Initialized@CurrentDomain@<CrtImplementationDetails>@@$$Q2HA@@YMXXZ";
+		msTruth =
+			"void __clrcall `dynamic initializer for 'public: static int <CrtImplementationDetails>::CurrentDomain::Initialized''(void)";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
