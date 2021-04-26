@@ -36,7 +36,7 @@ public abstract class AbstractModelForGdbThreadActivationTest
 		new PathPattern(PathUtils.parse("Inferiors[].Threads[]"));
 
 	protected DebuggerTestSpecimen getSpecimen() {
-		return GdbLinuxSpecimen.ECHO_HW;
+		return GdbLinuxSpecimen.PRINT;
 	}
 
 	@Override
