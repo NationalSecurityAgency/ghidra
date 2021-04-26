@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,10 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.rules.TestName;
 
 import ghidra.util.Msg;
 import mdemangler.datatype.MDDataType;
@@ -62,6 +65,7 @@ public class MDBaseTestConfiguration {
 	/**
 	 * Runs through the process of creating a demangler, demangling a symbol string,
 	 * testing the output, and performing other ancillary outputs and tests.
+	 * @param testName TestName of the test being run.
 	 * @param mangledArg Mangled string to process
 	 * @param mdtruth Truth that "we" (developers of this demangler) believe is truth
 	 * @param mstruth Truth that was output from one of the Microsoft tools (e.g., undname).
@@ -69,13 +73,15 @@ public class MDBaseTestConfiguration {
 	 * @param ms2013truth Like mstruth, but from Visual Studio 2013 version of tool.
 	 * @throws Exception if any exceptions are thrown
 	 */
-	public void demangleAndTest(String mangledArg, String mdtruth, String mstruth, String ghtruth,
-			String ms2013truth) throws Exception {
+	public void demangleAndTest(TestName testName, String mangledArg, String mdtruth,
+			String mstruth, String ghtruth, String ms2013truth) throws Exception {
 		mangled = mangledArg;
 		setTruth(mdtruth, mstruth, ghtruth, ms2013truth);
 		outputInfo = new StringBuilder();
 
 		if (verboseOutput) {
+			outputInfo.append("\n   Test: ");
+			outputInfo.append(testName.getMethodName());
 			outputInfo.append(getNumberHeader(mangledArg.length()));
 			outputInfo.append(getTestHeader());
 		}
