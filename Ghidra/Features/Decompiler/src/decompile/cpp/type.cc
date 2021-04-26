@@ -764,6 +764,9 @@ int4 TypeEnum::compareDependency(const Datatype &op) const
   const TypeEnum *te = (const TypeEnum *) &op;
   map<uintb,string>::const_iterator iter1,iter2;
 
+  if (namemap.size() != te->namemap.size()) {
+    return (namemap.size() < te->namemap.size()) ? -1 : 1;
+  }
   iter1 = namemap.begin();
   iter2 = te->namemap.begin();
   while(iter1 != namemap.end()) {
