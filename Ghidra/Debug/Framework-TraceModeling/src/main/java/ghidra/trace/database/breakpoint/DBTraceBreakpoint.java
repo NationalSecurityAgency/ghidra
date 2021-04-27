@@ -207,6 +207,7 @@ public class DBTraceBreakpoint
 					Msg.warn(this, "Thread " + threadKeys[i] +
 						" has been deleted since creating this breakpoint.");
 				}
+				threads.add(t);
 			}
 			return Collections.unmodifiableSet(threads);
 		}
@@ -287,32 +288,41 @@ public class DBTraceBreakpoint
 	public DBTraceBreakpoint splitAndSet(long snap, boolean en,
 			Collection<TraceBreakpointKind> kinds) {
 		DBTraceBreakpoint that;
-		Range<Long> oldLifespan;
-		Range<Long> newLifespan;
+		Range<Long> oldLifespan = null;
+		Range<Long> newLifespan = null;
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			if (!lifespan.contains(snap)) {
 				throw new IllegalArgumentException("snap = " + snap);
 			}
-			if (flagsByte == computeFlagsByte(enabled, kinds)) {
+			if (flagsByte == computeFlagsByte(en, kinds)) {
 				return this;
 			}
 			if (snap == getPlacedSnap()) {
-				setEnabled(en);
-				return this;
+				this.doSetFlags(en, kinds);
+				that = this;
 			}
-
-			that = doCopy();
-			that.doSetLifespan(DBTraceUtils.toRange(snap, getClearedSnap()));
-			that.doSetFlags(en, kinds);
-			oldLifespan = lifespan;
-			newLifespan = DBTraceUtils.toRange(getPlacedSnap(), snap - 1);
-			this.doSetLifespan(newLifespan);
+			else {
+				that = doCopy();
+				that.doSetLifespan(DBTraceUtils.toRange(snap, getClearedSnap()));
+				that.doSetFlags(en, kinds);
+				oldLifespan = lifespan;
+				newLifespan = DBTraceUtils.toRange(getPlacedSnap(), snap - 1);
+				this.doSetLifespan(newLifespan);
+			}
 		}
-		// Yes, issue ADDED, before LIFESPAN_CHANGED, as noted in docs
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, space, that));
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.LIFESPAN_CHANGED,
-			space, this, oldLifespan, newLifespan));
+		if (that == this) {
+			space.trace.setChanged(
+				new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED, space, this));
+		}
+		else {
+			// Yes, issue ADDED, before LIFESPAN_CHANGED, as noted in docs
+			space.trace.setChanged(
+				new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, space, that));
+			space.trace.setChanged(
+				new TraceChangeRecord<>(TraceBreakpointChangeType.LIFESPAN_CHANGED,
+					space, this, Objects.requireNonNull(oldLifespan),
+					Objects.requireNonNull(newLifespan)));
+		}
 		return that;
 	}
 
