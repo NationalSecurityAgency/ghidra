@@ -117,6 +117,7 @@ public class TraceObjectManager {
 		putAttributesHandler(TargetBreakpointSpec.class, this::attributesChangedBreakpointSpec);
 		putAttributesHandler(TargetBreakpointLocation.class,
 			this::attributesChangedBreakpointLocation);
+		putAttributesHandler(TargetMemoryRegion.class, this::attributesChangedMemoryRegion);
 		putAttributesHandler(TargetRegister.class, this::attributesChangedRegister);
 		putAttributesHandler(TargetStackFrame.class, this::attributesChangedStackFrame);
 		putAttributesHandler(TargetThread.class, this::attributesChangedThread);
@@ -491,6 +492,12 @@ public class TraceObjectManager {
 			String path = loc.getJoinedPath(".");
 			int length = loc.getLengthOrDefault(1);
 			recorder.breakpointRecorder.breakpointLocationChanged(length, traceAddr, path);
+		}
+	}
+
+	public void attributesChangedMemoryRegion(TargetObject region, Map<String, ?> added) {
+		if (added.containsKey(TargetObject.DISPLAY_ATTRIBUTE_NAME)) {
+			recorder.memoryRecorder.regionChanged((TargetMemoryRegion) region, region.getDisplay());
 		}
 	}
 
