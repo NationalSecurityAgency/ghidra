@@ -108,11 +108,16 @@ public class GdbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 
 		@Override
-		public String getMenuTitle() {
+		public String getQuickTitle() {
 			Map<String, Property<?>> opts = factory.getOptions();
 			return String.format("in GDB via ssh:%s@%s",
 				opts.get("SSH username").getValue(),
 				opts.get("SSH hostname").getValue());
+		}
+
+		@Override
+		public String getMenuTitle() {
+			return "in GDB via ssh";
 		}
 	}
 

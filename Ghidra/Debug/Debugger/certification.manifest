@@ -31,6 +31,9 @@ src/main/help/help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.ht
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/DebuggerBreakpointsPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-disable.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-enable.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-ineffective-d.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-ineffective-e.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-de.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-ed.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-clear-all.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-disable-all.png||GHIDRA||||END|
@@ -120,6 +123,8 @@ src/main/resources/images/blank.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-clear.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-disable.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-enable.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-ineffective-d.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-ineffective-e.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-mixed-de.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-mixed-ed.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-set.png||GHIDRA||||END|
@@ -165,6 +170,8 @@ src/main/svg/blank.svg||GHIDRA||||END|
 src/main/svg/breakpoint-clear.svg||GHIDRA||||END|
 src/main/svg/breakpoint-disable.svg||GHIDRA||||END|
 src/main/svg/breakpoint-enable.svg||GHIDRA||||END|
+src/main/svg/breakpoint-ineffective-d.svg||GHIDRA||||END|
+src/main/svg/breakpoint-ineffective-e.svg||GHIDRA||||END|
 src/main/svg/breakpoint-mixed-de.svg||GHIDRA||||END|
 src/main/svg/breakpoint-mixed-ed.svg||GHIDRA||||END|
 src/main/svg/breakpoint-set.svg||GHIDRA||||END|

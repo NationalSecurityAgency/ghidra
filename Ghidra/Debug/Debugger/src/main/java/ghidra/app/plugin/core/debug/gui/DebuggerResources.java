@@ -252,10 +252,14 @@ public interface DebuggerResources {
 
 	String MARKER_NAME_BREAKPOINT_ENABLED = "Enabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_DISABLED = "Disabled Breakpoint";
+	String MARKER_NAME_BREAKPOINT_INEFFECTIVE_E = "Ineffective Enabled Breakpoint";
+	String MARKER_NAME_BREAKPOINT_INEFFECTIVE_D = "Ineffective Disabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_MIXED_ED = "Mixed Enabled-Disabled Breakpont";
 	String MARKER_NAME_BREAKPOINT_MIXED_DE = "Mixed Disabled-Enabled Breakpont";
 	int PRIORITY_BREAKPOINT_ENABLED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_DISABLED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
+	int PRIORITY_BREAKPOINT_INEFFECTIVE_E_MARKER = MarkerService.BREAKPOINT_PRIORITY;
+	int PRIORITY_BREAKPOINT_INEFFECTIVE_D_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_MIXED_ED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_MIXED_DE_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	ImageIcon ICON_BREAKPOINT_ENABLED_MARKER = ICON_ENABLE_BREAKPOINT;
@@ -264,6 +268,10 @@ public interface DebuggerResources {
 		ResourceManager.loadImage("images/breakpoint-mixed-ed.png");
 	ImageIcon ICON_BREAKPOINT_MIXED_DE_MARKER =
 		ResourceManager.loadImage("images/breakpoint-mixed-de.png");
+	ImageIcon ICON_BREAKPOINT_INEFFECTIVE_E_MARKER =
+		ResourceManager.loadImage("images/breakpoint-ineffective-e.png");
+	ImageIcon ICON_BREAKPOINT_INEFFECTIVE_D_MARKER =
+		ResourceManager.loadImage("images/breakpoint-ineffective-d.png");
 
 	Icon ICON_UNIQUE_REF_READ =
 		new RotateIcon(ResourceManager.loadImage("images/cursor_arrow.gif"), 180); // TODO
@@ -274,6 +282,13 @@ public interface DebuggerResources {
 	Color DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS = new Color(0.875f, 0.75f, 0.75f);
 	String OPTION_NAME_COLORS_DISABLED_BREAKPOINT_MARKERS = "Colors.Disabled Breakpoint Markers";
 	Color DEFAULT_COLOR_DISABLED_BREAKPOINT_MARKERS = DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS;
+	String OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_MARKERS =
+		"Colors.Ineffective Enabled Breakpoint Markers";
+	Color DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_MARKERS = new Color(0.75f, 0.75f, 0.75f);
+	String OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_MARKERS =
+		"Colors.Ineffective Disabled Breakpoint Markers";
+	Color DEFAULT_COLOR_INEFFECTIVE_D_BREAKPOINT_MARKERS =
+		DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_MARKERS;
 
 	String OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND =
 		"Colors.Enabled Breakpoint Markers Have Background";
@@ -282,6 +297,14 @@ public interface DebuggerResources {
 	String OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND =
 		"Colors.Disabled Breakpoint Markers Have Background";
 	boolean DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND = false;
+
+	String OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND =
+		"Colors.Ineffective Enabled Breakpoint Markers Have Background";
+	boolean DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND = true;
+
+	String OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND =
+		"Colors.Ineffective Disabled Breakpoint Markers Have Background";
+	boolean DEFAULT_COLOR_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND = false;
 
 	// TODO: Re-assign/name groups
 	String GROUP_GENERAL = "Dbg1. General";

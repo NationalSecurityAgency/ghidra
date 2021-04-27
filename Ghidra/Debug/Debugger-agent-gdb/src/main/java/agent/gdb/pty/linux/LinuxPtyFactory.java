@@ -25,4 +25,9 @@ public class LinuxPtyFactory implements PtyFactory {
 	public Pty openpty() throws IOException {
 		return LinuxPty.openpty();
 	}
+
+	@Override
+	public String getDescription() {
+		return "local";
+	}
 }

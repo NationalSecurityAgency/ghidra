@@ -22,50 +22,35 @@ import javax.swing.SwingConstants;
 
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class DebuggerBreakpointEnablementTableCellRenderer
-		extends AbstractGColumnRenderer<Enablement> {
+public class DebuggerBreakpointLocEnabledTableCellRenderer
+		extends AbstractGColumnRenderer<Boolean> {
 
-	protected static Icon iconForEnablement(Enablement en) {
-		switch (en) {
-			case NONE:
-				return null;
-			case ENABLED:
-				return DebuggerResources.ICON_BREAKPOINT_ENABLED_MARKER;
-			case DISABLED:
-				return DebuggerResources.ICON_BREAKPOINT_DISABLED_MARKER;
-			case INEFFECTIVE_ENABLED:
-				return DebuggerResources.ICON_BREAKPOINT_INEFFECTIVE_E_MARKER;
-			case INEFFECTIVE_DISABLED:
-				return DebuggerResources.ICON_BREAKPOINT_INEFFECTIVE_D_MARKER;
-			case ENABLED_DISABLED:
-				return DebuggerResources.ICON_BREAKPOINT_MIXED_ED_MARKER;
-			case DISABLED_ENABLED:
-				return DebuggerResources.ICON_BREAKPOINT_MIXED_DE_MARKER;
-			default:
-				throw new AssertionError(en);
-		}
+	protected static Icon iconForEnabled(Boolean enabled) {
+		return enabled == null ? null
+				: enabled
+						? DebuggerResources.ICON_BREAKPOINT_ENABLED_MARKER
+						: DebuggerResources.ICON_BREAKPOINT_DISABLED_MARKER;
 	}
 
-	public DebuggerBreakpointEnablementTableCellRenderer() {
+	public DebuggerBreakpointLocEnabledTableCellRenderer() {
 		setHorizontalAlignment(SwingConstants.CENTER);
 	}
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data);
-		Enablement en = (Enablement) data.getValue();
-		setIcon(iconForEnablement(en));
+		Boolean en = (Boolean) data.getValue();
+		setIcon(iconForEnabled(en));
 		setHorizontalAlignment(SwingConstants.CENTER);
 		setText("");
 		return this;
 	}
 
 	@Override
-	public String getFilterString(Enablement t, Settings settings) {
-		return t.name();
+	public String getFilterString(Boolean t, Settings settings) {
+		return t == null ? "null" : t ? "enabled" : "disabled";
 	}
 }

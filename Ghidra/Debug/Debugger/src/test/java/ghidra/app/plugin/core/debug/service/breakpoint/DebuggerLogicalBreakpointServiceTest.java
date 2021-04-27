@@ -377,7 +377,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		LogicalBreakpoint enLb = Unique
 				.assertOne(breakpointService.getBreakpointsAt(trace, addr(trace, offset)));
 		assertNull(enLb.getProgramLocation());
-		assertEquals(Set.of(TraceBreakpointKind.SOFTWARE), enLb.getKinds());
+		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
 		TraceBreakpoint bpt = Unique.assertOne(trace.getBreakpointManager().getAllBreakpoints());
 		assertEquals(Set.of(trace), enLb.getMappedTraces());
@@ -394,7 +394,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
 		assertNull(enLb.getProgramBookmark());
 		assertEquals(Enablement.DISABLED_ENABLED, enLb.computeEnablementForProgram(program));
-		assertEquals(Set.of(TraceBreakpointKind.SOFTWARE), enLb.getKinds());
+		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
 		TraceBreakpoint bpt = Unique.assertOne(trace.getBreakpointManager().getAllBreakpoints());
 		assertEquals(Set.of(trace), enLb.getMappedTraces());
@@ -414,7 +414,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(enBm, enLb.getProgramBookmark());
 		assertTrue(enLb.getMappedTraces().isEmpty());
 		assertEquals(Enablement.ENABLED, enLb.computeEnablementForProgram(program));
-		assertEquals(Set.of(TraceBreakpointKind.SOFTWARE), enLb.getKinds());
+		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
 		LogicalBreakpoint disLb = Unique
 				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
@@ -423,7 +423,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(disBm, disLb.getProgramBookmark());
 		assertTrue(disLb.getMappedTraces().isEmpty());
 		assertEquals(Enablement.DISABLED, disLb.computeEnablementForProgram(program));
-		assertEquals(Set.of(TraceBreakpointKind.SOFTWARE), disLb.getKinds());
+		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), disLb.getKinds());
 	}
 
 	protected void assertLogicalBreakpointsForMappedBookmarks(Trace trace) {

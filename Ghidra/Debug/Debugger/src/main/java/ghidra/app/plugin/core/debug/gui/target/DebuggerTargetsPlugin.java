@@ -20,23 +20,22 @@ import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.ModelActivatedPluginEvent;
 import ghidra.app.services.DebuggerModelService;
-import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 
 @PluginInfo( //
-		shortDescription = "Debugger targets manager", //
-		description = "GUI to manage connections to external debuggers and trace recording", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			ModelActivatedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-			DebuggerModelService.class, //
-		} //
+	shortDescription = "Debugger targets manager", //
+	description = "GUI to manage connections to external debuggers and trace recording", //
+	category = PluginCategoryNames.DEBUGGER, //
+	packageName = DebuggerPluginPackage.NAME, //
+	status = PluginStatus.RELEASED, //
+	eventsConsumed = {
+		ModelActivatedPluginEvent.class, //
+	}, //
+	servicesRequired = { //
+		DebuggerModelService.class, //
+	} //
 )
 public class DebuggerTargetsPlugin extends AbstractDebuggerPlugin {
 	@AutoServiceConsumed
@@ -67,15 +66,5 @@ public class DebuggerTargetsPlugin extends AbstractDebuggerPlugin {
 			ModelActivatedPluginEvent evt = (ModelActivatedPluginEvent) event;
 			provider.modelActivated(evt.getActiveModel());
 		}
-	}
-
-	@Override
-	public void writeConfigState(SaveState saveState) {
-		provider.writeConfigState(saveState);
-	}
-
-	@Override
-	public void readConfigState(SaveState saveState) {
-		provider.readConfigState(saveState);
 	}
 }

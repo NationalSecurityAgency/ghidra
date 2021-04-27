@@ -131,4 +131,9 @@ public class GhidraSshPtyFactory implements PtyFactory {
 		}
 		return new SshPty(sshConn.openSession());
 	}
+
+	@Override
+	public String getDescription() {
+		return "ssh:" + hostname + "(user=" + username + ",port=" + port + ")";
+	}
 }

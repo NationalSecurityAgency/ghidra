@@ -251,15 +251,23 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		}
 	}
 
+	protected CompletableFuture<DebuggerObjectModel> connect(boolean prompt) {
+		DebuggerModelService service = tool.getService(DebuggerModelService.class);
+		DebuggerModelFactory factory = getModelFactory();
+		if (prompt) {
+			return service.showConnectDialog(factory);
+		}
+		return factory.build().thenApplyAsync(m -> {
+			service.addModel(m);
+			return m;
+		});
+	}
+
 	@Override
 	public CompletableFuture<Void> launchProgram(TaskMonitor monitor, boolean prompt) {
 		monitor.initialize(2);
 		monitor.setMessage("Connecting");
-		return getModelFactory().build().thenApplyAsync(m -> {
-			DebuggerModelService service = tool.getService(DebuggerModelService.class);
-			service.addModel(m);
-			return m;
-		}).thenComposeAsync(m -> {
+		return connect(prompt).thenComposeAsync(m -> {
 			List<String> launcherPath = getLauncherPath();
 			TargetObjectSchema schema = m.getRootSchema().getSuccessorSchema(launcherPath);
 			if (!schema.getInterfaces().contains(TargetLauncher.class)) {

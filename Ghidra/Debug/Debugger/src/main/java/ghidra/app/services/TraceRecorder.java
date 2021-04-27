@@ -76,9 +76,9 @@ public interface TraceRecorder {
 			case WRITE:
 				return TraceBreakpointKind.WRITE;
 			case HW_EXECUTE:
-				return TraceBreakpointKind.EXECUTE;
+				return TraceBreakpointKind.HW_EXECUTE;
 			case SW_EXECUTE:
-				return TraceBreakpointKind.SOFTWARE;
+				return TraceBreakpointKind.SW_EXECUTE;
 			default:
 				throw new AssertionError();
 		}
@@ -109,9 +109,9 @@ public interface TraceRecorder {
 				return TargetBreakpointKind.READ;
 			case WRITE:
 				return TargetBreakpointKind.WRITE;
-			case EXECUTE:
+			case HW_EXECUTE:
 				return TargetBreakpointKind.HW_EXECUTE;
-			case SOFTWARE:
+			case SW_EXECUTE:
 				return TargetBreakpointKind.SW_EXECUTE;
 			default:
 				throw new AssertionError();

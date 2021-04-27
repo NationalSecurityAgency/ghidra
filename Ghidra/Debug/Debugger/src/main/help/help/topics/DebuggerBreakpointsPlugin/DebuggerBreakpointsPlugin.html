@@ -25,7 +25,7 @@
     <P>Breakpoints refer to any mechanism which may trap execution based on an address. The
     breakpoints manager presents all active breakpoints among all open programs and live traces.
     Note that dead traces are not considered, and only the breakpoints at the present are
-    considered, even if the user has stepped a trace backward. Breakpoints which map to the same
+    displayed, even if the user has stepped a trace backward. Breakpoints which map to the same
     address in the same module, i.e., program image, and otherwise share the same attributes, are
     grouped into a logical breakpoint. <B>NOTE:</B> The breakpoints window cannot display or
     manipulate breakpoints from a target until that target is recorded into a trace. See the <A
@@ -46,28 +46,46 @@
     the grouping of breakpoint locations into logical breakpoints by this manager is done
     <EM>without respect</EM> to the specifications. Often the specification is at a higher stratum
     than Ghidra natively understands, e.g., the source filename and line number, and so such
-    specifications are not relevant. Note, however, that the model may not permit locations to be
+    specifications are not relevant. Note, however, that the model might not permit locations to be
     manipulated independently of their specification, which may limit how the manager can operate
     on each breakpoint location.</P>
 
     <P>Because of the logical grouping of breakpoints, it is possible for a breakpoint to be in a
     mixed or inconsistent state. This happens quite commonly, e.g., when a breakpoint is placed in
     a Ghidra program before that program is mapped in any traced target. Once mapped in, the
-    location of that breakpoint in the trace is computed and noted as missing. A missing location
-    in a logical breakpoint is treated the same as a disabled breakpoint. Thus, the logical
-    breakpoint enters an inconsistent state, because it is "enabled" in the program, but "disabled"
-    in the trace. Toggling such a breakpoint enables all missing locations, bringing it into a
-    consistent enabled state. Toggling it again will disable all locations.</P>
+    location of that breakpoint in the trace is computed and noted as missing. A logical breakpoint
+    without any location in a trace (i.e., on an actual target) is called "ineffective" and is
+    drawn in grey. An enabled logical breakpoint having a disabled location is called
+    "inconsistent" and its icon will indicate that state. A disabled logical breakpoint having an
+    enabled location is similarly "inconsistent." Toggling ineffective or inconsistent breakpoints
+    enables and/or places all locations, bringing it into a consistent enabled state. Toggling it
+    again disables all locations.</P>
 
     <H2>Tables and Columns</H2>
 
     <P>The top table, which lists logical breakpoints, has the following columns:</P>
 
     <UL>
-      <LI>Enabled - displays an icon indicating the state of the breakpoint: <IMG alt="" src=
-      "images/breakpoint-enable.png"> Enabled, <IMG alt="" src="images/breakpoint-disable.png">
-      Disabled, or <IMG alt="" src="images/breakpoint-mixed-ed.png"> Inconsistent. Clicking the
-      icon toggles the breakpoint.</LI>
+      <LI>Enabled - displays an icon indicating the state of the breakpoint. Clicking the icon
+      toggles the breakpoint.</LI>
+
+      <LI style="list-style: none">
+        <UL>
+          <LI><IMG alt="" src="images/breakpoint-enable.png"> Enabled</LI>
+
+          <LI><IMG alt="" src="images/breakpoint-disable.png"> Disabled</LI>
+
+          <LI><IMG alt="" src="images/breakpoint-mixed-ed.png"> Inconsistent: Enabled with disabled
+          locations</LI>
+
+          <LI><IMG alt="" src="images/breakpoint-mixed-de.png"> Inconsistent: Disabled with enabled
+          locations</LI>
+
+          <LI><IMG alt="" src="images/breakpoint-ineffective-e.png"> Enabled but ineffective</LI>
+
+          <LI><IMG alt="" src="images/breakpoint-ineffective-d.png"> Disabled and ineffective</LI>
+        </UL>
+      </LI>
 
       <LI>Image - gives the name of the Ghidra program, if the breakpoint is mapped to one.</LI>
 
@@ -89,6 +107,9 @@
     <P>The bottom table, which lists trace breakpoint locations, has the following columns:</P>
 
     <UL>
+      <LI>Enabled - displays an icon indicating the state of the location. Clicking the icon
+      toggles the location.</LI>
+
       <LI>Name - displays the name given to the location by the connected debugger. This field is
       user modifiable.</LI>
 

@@ -186,8 +186,9 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		}, path);
 	}
 
-	protected void doBreakpointToggled(long snap,
-			Collection<? extends TargetBreakpointLocation> bpts, boolean enabled) {
+	protected void doBreakpointSpecChanged(long snap,
+			Collection<? extends TargetBreakpointLocation> bpts, boolean enabled,
+			Collection<TraceBreakpointKind> kinds) {
 		for (TargetBreakpointLocation bl : bpts) {
 			String path = PathUtils.toString(bl.getPath());
 			recorder.parTx.execute("Breakpoint " + path + " toggled", () -> {
@@ -197,16 +198,17 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 					return;
 				}
 				// Verify attributes match? Eh. If they don't, someone has fiddled with it.
-				traceBpt.splitWithEnabled(snap, enabled);
+				traceBpt.splitAndSet(snap, enabled, kinds);
 			}, path);
 		}
 	}
 
 	@Override
-	public void breakpointToggled(TargetBreakpointSpec spec, boolean enabled) {
+	public void breakpointSpecChanged(TargetBreakpointSpec spec, boolean enabled,
+			Collection<TraceBreakpointKind> kinds) {
 		long snap = recorder.getSnap();
 		spec.getLocations().thenAccept(bpts -> {
-			doBreakpointToggled(snap, bpts, enabled);
+			doBreakpointSpecChanged(snap, bpts, enabled, kinds);
 		}).exceptionally(ex -> {
 			Msg.error(this, "Error recording toggled breakpoint spec: " + spec.getJoinedPath("."),
 				ex);

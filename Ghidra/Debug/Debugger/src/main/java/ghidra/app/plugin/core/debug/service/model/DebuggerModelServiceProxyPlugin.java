@@ -18,9 +18,12 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -57,6 +60,7 @@ import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo( //
@@ -94,12 +98,17 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 			@Override
 			public String getMenuParentTitle() {
-				return null;
+				return "";
 			}
 
 			@Override
 			public String getMenuTitle() {
-				return null;
+				return "";
+			}
+
+			@Override
+			public String getQuickTitle() {
+				return "";
 			}
 
 			@Override
@@ -257,6 +266,11 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
+		return delegate.doShowConnectDialog(tool, factory);
+	}
+
+	@Override
 	public Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program) {
 		return orderOffers(delegate.getProgramLaunchOffers(program), program);
 	}
@@ -325,7 +339,15 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 				Msg.error(this, "Trouble writing recent launches to program user data");
 				return null;
 			});
-			return offer.launchProgram(m, prompt);
+			return offer.launchProgram(m, prompt).exceptionally(ex -> {
+				Throwable t = AsyncUtils.unwrapThrowable(ex);
+				if (t instanceof CancellationException || t instanceof CancelledException) {
+					return null;
+				}
+				return ExceptionUtils.rethrow(ex);
+			}).whenCompleteAsync((v, e) -> {
+				updateActionDebugProgram();
+			}, AsyncUtils.SWING_EXECUTOR);
 		});
 	}
 

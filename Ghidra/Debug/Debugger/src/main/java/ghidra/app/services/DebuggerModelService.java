@@ -266,9 +266,10 @@ public interface DebuggerModelService {
 	 * <p>
 	 * Assuming the target object is being actively traced, find the last focused object among those
 	 * being traced by the same recorder. Essentially, given that the target likely belongs to a
-	 * process, find the object within that process that last had focus. This is primarily used when
-	 * switching focus between traces. Since the user has not explicitly selected a model object,
-	 * the UI should choose the one which had focus when the newly-activated trace was last active.
+	 * process, find the object within that process that last had focus. This is primarily used
+	 * wh@Override en switching focus between traces. Since the user has not explicitly selected a
+	 * model object, the UI should choose the one which had focus when the newly-activated trace was
+	 * last active.
 	 * 
 	 * @param target a source model object being actively traced
 	 * @return the last focused object being traced by the same recorder
@@ -345,4 +346,21 @@ public interface DebuggerModelService {
 	 * @return the offers
 	 */
 	Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program);
+
+	/**
+	 * Prompt the user to create a new connection
+	 * 
+	 * @return a future which completes with the new connection, possibly cancelled
+	 */
+	default CompletableFuture<DebuggerObjectModel> showConnectDialog() {
+		return showConnectDialog(null);
+	}
+
+	/**
+	 * Prompt the user to create a new connection, optionally fixing the factory
+	 * 
+	 * @param factory the required factory, or null for user selection
+	 * @return a future which completes with the new connection, possible cancelled
+	 */
+	CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory);
 }

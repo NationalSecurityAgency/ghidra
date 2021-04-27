@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.target;
+package ghidra.app.plugin.core.debug.service.model;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -86,6 +86,7 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 
 	protected JButton connectButton;
 	protected CompletableFuture<? extends DebuggerObjectModel> futureConnect;
+	protected CompletableFuture<DebuggerObjectModel> result;
 
 	protected static class FactoryEntry {
 		DebuggerModelFactory factory;
@@ -236,11 +237,21 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 		synchronized (this) {
 			futureConnect = factory.build();
 		}
-		futureConnect.thenAcceptAsync(model -> {
-			modelService.addModel(model);
+		futureConnect.thenAcceptAsync(m -> {
+			modelService.addModel(m);
 			setStatusText("");
 			close();
-			modelService.activateModel(model);
+			modelService.activateModel(m);
+			synchronized (this) {
+				/**
+				 * NB. Errors will typically be reported, the dialog stays up, and the user is given
+				 * an opportunity to rectify the failure. Thus, errors should not be used to
+				 * complete the result exceptionally. Only catastrophic errors and cancellation
+				 * should affect the result.
+				 */
+				result.completeAsync(() -> m);
+				result = null;
+			}
 		}, SwingExecutorService.INSTANCE).exceptionally(e -> {
 			e = AsyncUtils.unwrapThrowable(e);
 			if (!(e instanceof CancellationException)) {
@@ -261,12 +272,31 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 		if (futureConnect != null) {
 			futureConnect.cancel(false);
 		}
+		if (result != null) {
+			result.cancel(false);
+		}
 		super.cancelCallback();
 	}
 
-	protected void reset() {
+	protected synchronized CompletableFuture<DebuggerObjectModel> reset(
+			DebuggerModelFactory factory) {
+		if (factory != null) {
+			synchronized (factories) {
+				dropdownModel.setSelectedItem(factories.get(factory));
+			}
+			dropdown.setEnabled(false);
+		}
+		else {
+			dropdown.setEnabled(true);
+		}
+
+		if (result != null) {
+			result.cancel(false);
+		}
+		result = new CompletableFuture<>();
 		setStatusText("");
 		connectButton.setEnabled(true);
+		return result;
 	}
 
 	protected void syncOptionsEnabled() {

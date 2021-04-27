@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
+import ghidra.app.plugin.core.debug.service.model.*;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;

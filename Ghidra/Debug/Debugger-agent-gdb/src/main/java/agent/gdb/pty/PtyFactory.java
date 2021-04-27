@@ -29,4 +29,6 @@ public interface PtyFactory {
 	 * @throws IOException for an I/O error, including cancellation
 	 */
 	Pty openpty() throws IOException;
+
+	String getDescription();
 }

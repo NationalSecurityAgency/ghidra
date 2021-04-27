@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -106,8 +105,9 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			connectDialog.reset();
-			tool.showDialog(connectDialog);
+			// NB. Drop the future on the floor, because the UI will report issues.
+			// Cancellation should be ignored.
+			modelService.showConnectDialog();
 		}
 
 		@Override
@@ -162,8 +162,6 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 	private JPanel mainPanel;
 	protected GTree tree;
 	protected DebuggerConnectionsNode rootNode;
-
-	protected DebuggerConnectDialog connectDialog = new DebuggerConnectDialog();
 
 	ConnectAction actionConnect;
 	DisconnectAction actionDisconnect;
@@ -267,7 +265,6 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 			rootNode = new DebuggerConnectionsNode(modelService, this);
 			tree.setRootNode(rootNode);
 		}
-		connectDialog.setModelService(modelService);
 	}
 
 	protected void updateTree(boolean select, Object obj) {
@@ -303,13 +300,5 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 		for (DebuggerObjectModel model : service.getModels()) {
 			model.invalidateAllLocalCaches();
 		}
-	}
-
-	public void writeConfigState(SaveState saveState) {
-		connectDialog.writeConfigState(saveState);
-	}
-
-	public void readConfigState(SaveState saveState) {
-		connectDialog.readConfigState(saveState);
 	}
 }
