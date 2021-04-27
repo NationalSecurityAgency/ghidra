@@ -29,7 +29,7 @@ import org.junit.*;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
-import docking.widgets.dialogs.InputDialog;
+import docking.widgets.dialogs.InputWithChoicesDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.Application;
@@ -276,7 +276,7 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void saveConfig(String name) {
-		InputDialog dialog = waitForDialogComponent(InputDialog.class);
+		InputWithChoicesDialog dialog = waitForDialogComponent(InputWithChoicesDialog.class);
 		runSwing(() -> dialog.setValue(name));
 		pressButtonByText(dialog, "OK");
 		waitForSwing();
