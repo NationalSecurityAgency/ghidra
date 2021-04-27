@@ -413,7 +413,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(addr(program, 0x00400123), enLb.getProgramLocation().getAddress());
 		assertEquals(enBm, enLb.getProgramBookmark());
 		assertTrue(enLb.getMappedTraces().isEmpty());
-		assertEquals(Enablement.ENABLED, enLb.computeEnablementForProgram(program));
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, enLb.computeEnablementForProgram(program));
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
 		LogicalBreakpoint disLb = Unique
@@ -422,7 +422,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(addr(program, 0x00400321), disLb.getProgramLocation().getAddress());
 		assertEquals(disBm, disLb.getProgramBookmark());
 		assertTrue(disLb.getMappedTraces().isEmpty());
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForProgram(program));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForProgram(program));
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), disLb.getKinds());
 	}
 
@@ -438,8 +438,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(addr(trace, 0x55550123), enLb.getTraceAddress(trace));
 		assertEquals(Set.of(), enLb.getTraceBreakpoints(trace));
 		assertEquals(Set.of(), enLb.getTraceBreakpoints());
-		assertEquals(Enablement.ENABLED_DISABLED, enLb.computeEnablementForProgram(program));
-		assertEquals(Enablement.DISABLED_ENABLED, enLb.computeEnablementForTrace(trace));
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, enLb.computeEnablementForProgram(program));
+		assertEquals(Enablement.INEFFECTIVE_ENABLED, enLb.computeEnablementForTrace(trace));
 
 		LogicalBreakpoint disLb = Unique
 				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
@@ -450,8 +450,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(addr(trace, 0x55550321), disLb.getTraceAddress(trace));
 		assertEquals(Set.of(), disLb.getTraceBreakpoints(trace));
 		assertEquals(Set.of(), disLb.getTraceBreakpoints());
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForProgram(program));
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForTrace(trace));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForProgram(program));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForTrace(trace));
 	}
 
 	protected void assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(Trace trace1,
@@ -490,9 +490,9 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(Set.of(), disLb.getTraceBreakpoints(trace1));
 		assertEquals(Set.of(), disLb.getTraceBreakpoints(trace2));
 		assertEquals(Set.of(), disLb.getTraceBreakpoints());
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForProgram(program));
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForTrace(trace1));
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForTrace(trace2));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForProgram(program));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForTrace(trace1));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForTrace(trace2));
 	}
 
 	protected void assertLogicalBreakpointForMappedBookmarkAnd1TraceBreakpoint(Trace trace) {
@@ -522,8 +522,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertEquals(addr(trace, 0x55550321), disLb.getTraceAddress(trace));
 		assertEquals(Set.of(), disLb.getTraceBreakpoints(trace));
 		assertEquals(Set.of(), disLb.getTraceBreakpoints());
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForProgram(program));
-		assertEquals(Enablement.DISABLED, disLb.computeEnablementForTrace(trace));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForProgram(program));
+		assertEquals(Enablement.INEFFECTIVE_DISABLED, disLb.computeEnablementForTrace(trace));
 	}
 
 	@Test

@@ -117,7 +117,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				return ProgramEnablement.DISABLED;
 			}
 			else {
-				return ProgramEnablement.NONE;
+				return ProgramEnablement.MISSING;
 			}
 		}
 
@@ -306,9 +306,6 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 		public TraceEnablement computeEnablement() {
 			TraceEnablement en = TraceEnablement.MISSING;
-			if (breakpoints.isEmpty()) {
-				return TraceEnablement.MISSING;
-			}
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
 				en = en.combine(TraceEnablement.fromBool(bpt.obj.isEnabled()));
 				if (en == TraceEnablement.MIXED) {
