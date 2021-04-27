@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
+import ghidra.app.services.TraceRecorder;
 import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncLazyMap;
 import ghidra.dbg.target.*;
@@ -30,6 +31,7 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
@@ -471,10 +473,13 @@ public class TraceObjectManager {
 	}
 
 	public void attributesChangedBreakpointSpec(TargetObject bpt, Map<String, ?> added) {
-		if (added.containsKey(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME)) {
+		if (added.containsKey(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME) ||
+			added.containsKey(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME)) {
 			TargetBreakpointSpec spec = (TargetBreakpointSpec) bpt;
-			boolean enabled = (Boolean) added.get(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME);
-			recorder.breakpointRecorder.breakpointToggled(spec, enabled);
+			boolean enabled = spec.isEnabled();
+			Set<TraceBreakpointKind> traceKinds =
+				TraceRecorder.targetToTraceBreakpointKinds(spec.getKinds());
+			recorder.breakpointRecorder.breakpointSpecChanged(spec, enabled, traceKinds);
 		}
 	}
 

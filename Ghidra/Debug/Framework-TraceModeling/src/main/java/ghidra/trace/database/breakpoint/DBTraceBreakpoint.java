@@ -284,7 +284,8 @@ public class DBTraceBreakpoint
 	}
 
 	@Override
-	public DBTraceBreakpoint splitWithEnabled(long snap, boolean en) {
+	public DBTraceBreakpoint splitAndSet(long snap, boolean en,
+			Collection<TraceBreakpointKind> kinds) {
 		DBTraceBreakpoint that;
 		Range<Long> oldLifespan;
 		Range<Long> newLifespan;
@@ -292,7 +293,7 @@ public class DBTraceBreakpoint
 			if (!lifespan.contains(snap)) {
 				throw new IllegalArgumentException("snap = " + snap);
 			}
-			if (en == enabled) {
+			if (flagsByte == computeFlagsByte(enabled, kinds)) {
 				return this;
 			}
 			if (snap == getPlacedSnap()) {
@@ -302,7 +303,7 @@ public class DBTraceBreakpoint
 
 			that = doCopy();
 			that.doSetLifespan(DBTraceUtils.toRange(snap, getClearedSnap()));
-			that.doSetEnabled(en);
+			that.doSetFlags(en, kinds);
 			oldLifespan = lifespan;
 			newLifespan = DBTraceUtils.toRange(getPlacedSnap(), snap - 1);
 			this.doSetLifespan(newLifespan);
@@ -315,13 +316,46 @@ public class DBTraceBreakpoint
 		return that;
 	}
 
-	protected void doSetEnabled(@SuppressWarnings("hiding") boolean enabled) {
+	protected static byte computeFlagsByte(boolean enabled, Collection<TraceBreakpointKind> kinds) {
+		byte flags = 0;
+		for (TraceBreakpointKind k : kinds) {
+			flags |= k.getBits();
+		}
+		if (enabled) {
+			flags |= ENABLED_MASK;
+		}
+		return flags;
+	}
+
+	protected void doSetFlags(boolean enabled, Collection<TraceBreakpointKind> kinds) {
+		this.flagsByte = computeFlagsByte(enabled, kinds);
+		this.kinds.clear();
+		this.kinds.addAll(kinds);
+		this.enabled = enabled;
+		update(FLAGS_COLUMN);
+	}
+
+	protected void doSetEnabled(boolean enabled) {
 		this.enabled = enabled;
 		if (enabled) {
 			flagsByte |= ENABLED_MASK;
 		}
 		else {
 			flagsByte &= ~ENABLED_MASK;
+		}
+		update(FLAGS_COLUMN);
+	}
+
+	protected void doSetKinds(Collection<TraceBreakpointKind> kinds) {
+		for (TraceBreakpointKind k : TraceBreakpointKind.values()) {
+			if (kinds.contains(k)) {
+				this.flagsByte |= k.getBits();
+				this.kinds.add(k);
+			}
+			else {
+				this.flagsByte &= ~k.getBits();
+				this.kinds.remove(k);
+			}
 		}
 		update(FLAGS_COLUMN);
 	}
@@ -340,6 +374,15 @@ public class DBTraceBreakpoint
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return enabled;
 		}
+	}
+
+	@Override
+	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
+			doSetKinds(kinds);
+		}
+		space.trace.setChanged(
+			new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED, space, this));
 	}
 
 	@Override

@@ -15,11 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.service.model.interfaces;
 
+import java.util.Collection;
 import java.util.Set;
 
 import ghidra.dbg.target.*;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.thread.TraceThread;
 
 public interface ManagedBreakpointRecorder {
@@ -37,7 +39,7 @@ public interface ManagedBreakpointRecorder {
 	TraceBreakpoint getTraceBreakpoint(TargetBreakpointLocation bpt);
 
 	/**
-	 * The length of a breakpoint location has changed
+	 * The range of a breakpoint location has changed
 	 * 
 	 * @param length the new length
 	 * @param traceAddr the address of the location in the trace
@@ -45,5 +47,13 @@ public interface ManagedBreakpointRecorder {
 	 */
 	void breakpointLocationChanged(int length, Address traceAddr, String path);
 
-	void breakpointToggled(TargetBreakpointSpec spec, boolean enabled);
+	/**
+	 * A breakpoint specification has changed (typically, toggled)
+	 * 
+	 * @param spec the specification that changed
+	 * @param enabled whether or not the spec is enabled
+	 * @param kinds the kinds of the spec
+	 */
+	void breakpointSpecChanged(TargetBreakpointSpec spec, boolean enabled,
+			Collection<TraceBreakpointKind> kinds);
 }
