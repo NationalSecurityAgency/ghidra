@@ -69,8 +69,7 @@ public class WindowsResourceReferenceAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-		runScript(program, set, "WindowsResourceReference.java", monitor);
-		return true;
+		return runScript(program, set, "WindowsResourceReference.java", monitor);
 	}
 
 	public boolean runScript(Program program, AddressSetView set, String scriptName,
@@ -115,7 +114,7 @@ public class WindowsResourceReferenceAnalyzer extends AbstractAnalyzer {
 			Msg.warn(this, "Unable to locate script class: " + e.getMessage(), e);
 		}
 		catch (CancelledException e) {
-			Msg.warn(this, "User cancelled script.", e);
+			// ignore
 		}
 		catch (Exception e) {
 			Msg.warn("Error running script: " + scriptName + "\n" + e.getMessage(), e);
