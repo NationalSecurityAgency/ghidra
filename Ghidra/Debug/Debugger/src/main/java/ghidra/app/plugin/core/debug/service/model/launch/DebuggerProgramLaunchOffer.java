@@ -86,12 +86,25 @@ public interface DebuggerProgramLaunchOffer {
 	String getMenuTitle();
 
 	/**
+	 * Get the text displayed if the user will not be prompted
+	 * 
+	 * <p>
+	 * Sometimes when "the last options" are being used without prompting, it's a good idea to
+	 * remind the user what those options were.
+	 * 
+	 * @return the title
+	 */
+	default String getQuickTitle() {
+		return getMenuTitle();
+	}
+
+	/**
 	 * Get the text displayed on buttons for this offer
 	 * 
 	 * @return the title
 	 */
 	default String getButtonTitle() {
-		return getMenuParentTitle() + " " + getMenuTitle();
+		return getMenuParentTitle() + " " + getQuickTitle();
 	}
 
 	/**

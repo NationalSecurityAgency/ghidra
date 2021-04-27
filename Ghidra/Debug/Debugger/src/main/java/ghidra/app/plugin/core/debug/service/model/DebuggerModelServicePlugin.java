@@ -201,7 +201,10 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected final ChangeListener classChangeListener = new ChangeListenerForFactoryInstances();
 	protected final ListenerOnRecorders listenerOnRecorders = new ListenerOnRecorders();
 
-	DebuggerSelectMappingOfferDialog offerDialog = new DebuggerSelectMappingOfferDialog();
+	protected final DebuggerSelectMappingOfferDialog offerDialog =
+		new DebuggerSelectMappingOfferDialog();
+	protected final DebuggerConnectDialog connectDialog = new DebuggerConnectDialog();
+
 	DockingAction actionDisconnectAll;
 
 	protected DebuggerObjectModel currentModel;
@@ -211,6 +214,7 @@ public class DebuggerModelServicePlugin extends Plugin
 
 		ClassSearcher.addChangeListener(classChangeListener);
 		refreshFactoryInstances();
+		connectDialog.setModelService(this);
 	}
 
 	@Override
@@ -653,6 +657,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			factory.writeConfigState(factoryState);
 			saveState.putXmlElement(stateName, factoryState.saveToXml());
 		}
+		connectDialog.writeConfigState(saveState);
 	}
 
 	@Override
@@ -665,6 +670,7 @@ public class DebuggerModelServicePlugin extends Plugin
 				factory.readConfigState(factoryState);
 			}
 		}
+		connectDialog.readConfigState(saveState);
 	}
 
 	@Override
@@ -672,5 +678,17 @@ public class DebuggerModelServicePlugin extends Plugin
 		return ClassSearcher.getInstances(DebuggerProgramLaunchOpinion.class)
 				.stream()
 				.flatMap(opinion -> opinion.getOffers(program, tool, this).stream());
+	}
+
+	protected CompletableFuture<DebuggerObjectModel> doShowConnectDialog(PluginTool tool,
+			DebuggerModelFactory factory) {
+		CompletableFuture<DebuggerObjectModel> future = connectDialog.reset(factory);
+		tool.showDialog(connectDialog);
+		return future;
+	}
+
+	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
+		return doShowConnectDialog(tool, factory);
 	}
 }

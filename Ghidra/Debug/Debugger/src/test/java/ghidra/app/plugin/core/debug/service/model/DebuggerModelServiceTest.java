@@ -17,16 +17,23 @@ package ghidra.app.plugin.core.debug.service.model;
 
 import static org.junit.Assert.*;
 
+import java.awt.Component;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.event.ModelObjectFocusedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
+import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog.FactoryEntry;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.services.TraceRecorder;
@@ -34,9 +41,11 @@ import ghidra.async.AsyncPairingQueue;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerModelFactory;
+import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.CollectionChangeListener;
 import mockit.Mocked;
@@ -484,5 +493,68 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 
 		waitOn(mb.testModel.close());
 		assertNull(modelService.getCurrentModel());
+	}
+
+	@Test
+	public void testConnectDialogPopulates() {
+		modelServiceInternal.setModelFactories(List.of(mb.testFactory));
+		waitForSwing();
+
+		Swing.runLater(() -> modelService.showConnectDialog());
+		DebuggerConnectDialog dialog = waitForDialogComponent(DebuggerConnectDialog.class);
+
+		FactoryEntry fe = (FactoryEntry) dialog.dropdownModel.getSelectedItem();
+		assertEquals(mb.testFactory, fe.factory);
+
+		assertEquals(TestDebuggerModelFactory.FAKE_DETAILS_HTML, dialog.description.getText());
+
+		Component[] components = dialog.pairPanel.getComponents();
+
+		assertTrue(components[0] instanceof JLabel);
+		JLabel label = (JLabel) components[0];
+		assertEquals(TestDebuggerModelFactory.FAKE_OPTION_NAME, label.getText());
+
+		assertTrue(components[1] instanceof JTextField);
+		JTextField field = (JTextField) components[1];
+		assertEquals(TestDebuggerModelFactory.FAKE_DEFAULT, field.getText());
+
+		pressButtonByText(dialog, "Cancel", true);
+	}
+
+	@Test
+	public void testConnectDialogConnectsAndRegistersModelWithService() throws Throwable {
+		modelServiceInternal.setModelFactories(List.of(mb.testFactory));
+
+		CompletableFuture<DebuggerObjectModel> futureModel = new CompletableFuture<>();
+		CollectionChangeListener<DebuggerObjectModel> listener =
+			new CollectionChangeListener<DebuggerObjectModel>() {
+				@Override
+				public void elementAdded(DebuggerObjectModel element) {
+					futureModel.complete(element);
+				}
+
+				@Override
+				public void elementModified(DebuggerObjectModel element) {
+					// Don't care
+				}
+
+				@Override
+				public void elementRemoved(DebuggerObjectModel element) {
+					fail();
+				}
+			};
+		modelService.addModelsChangedListener(listener);
+		Swing.runLater(() -> modelService.showConnectDialog());
+
+		DebuggerConnectDialog connectDialog = waitForDialogComponent(DebuggerConnectDialog.class);
+
+		FactoryEntry fe = (FactoryEntry) connectDialog.dropdownModel.getSelectedItem();
+		assertEquals(mb.testFactory, fe.factory);
+
+		pressButtonByText(connectDialog, AbstractConnectAction.NAME, true);
+		// NOTE: testModel is null. Don't use #createTestModel(), which adds to service
+		TestDebuggerObjectModel model = new TestDebuggerObjectModel();
+		mb.testFactory.pollBuild().complete(model);
+		assertEquals(model, waitOn(futureModel));
 	}
 }
