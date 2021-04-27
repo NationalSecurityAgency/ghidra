@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.equate;
 
 import static org.junit.Assert.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +53,7 @@ import ghidra.util.table.GhidraTable;
  */
 public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
-	/**
+	/*
 	 * Tests that the set equate menu option is enabled when the cursor is on a valid scalar.
 	 */
 	@Test
@@ -67,11 +66,11 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		putCursorOnOperand(0x01002a83, 0);
 		assertTrue(setAction.isEnabledForContext(getListingContext()));
 		//rename and remove should not be in popup in this case
-		assertTrue(!renameAction.isEnabledForContext(getListingContext()));
-		assertTrue(!removeAction.isEnabledForContext(getListingContext()));
+		assertFalse(renameAction.isEnabledForContext(getListingContext()));
+		assertFalse(removeAction.isEnabledForContext(getListingContext()));
 	}
 
-	/**
+	/*
 	 * Tests that the rename menu option is enabled when the cursor is on an address with
 	 * a valid equate set.
 	 */
@@ -85,10 +84,10 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		assertTrue(removeAction.isEnabledForContext(getListingContext()));
 
 		//set equate action should not be in the popup in this case
-		assertTrue(!setAction.isEnabledForContext(getListingContext()));
+		assertFalse(setAction.isEnabledForContext(getListingContext()));
 	}
 
-	/**
+	/*
 	 * Tests that the remove menu option is available when the cursor is on an address
 	 * with a valid equate set.
 	 */
@@ -102,12 +101,11 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		assertTrue(removeAction.isEnabledForContext(getListingContext()));
 
 		//set equate action should not be in the popup in this case
-		assertTrue(!setAction.isEnabledForContext(getListingContext()));
+		assertFalse(setAction.isEnabledForContext(getListingContext()));
 	}
 
 	@Test
-	public void testApplyToOptions_SetEquate()
-			throws InterruptedException, InvocationTargetException {
+	public void testApplyToOptions_SetEquate() {
 		putCursorOnOperand(0x01002a8e, 0);
 
 		SetEquateDialog d = showSetEquateDialog();
@@ -143,7 +141,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		//select applyToAll and verify that the other buttons respond accordingly
 		applyToAllButton.setSelected(true);
-		SwingUtilities.invokeAndWait(
+		runSwing(
 			() -> applyToAllButton.getActionListeners()[0].actionPerformed(null));
 		program.flushEvents();
 		waitForSwing();
@@ -157,7 +155,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		close(d);
 	}
 
-	/**
+	/*
 	 * Tests that the current selection button is the default option on the 
 	 * Set Equate dialog if there is a range of addresses selected.
 	 * 
@@ -165,8 +163,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	 * @throws InvocationTargetException
 	 */
 	@Test
-	public void testApplyToOptions_SetEquate_Selection()
-			throws InterruptedException, InvocationTargetException {
+	public void testApplyToOptions_SetEquate_Selection() {
 
 		// put the cursor on a scalar 
 		putCursorOnOperand(0x1004bbd, 0);
@@ -207,7 +204,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		//select applyToSelection and verify that the other buttons respond accordingly
 		applyToSelectionButton.setSelected(true);
-		SwingUtilities.invokeAndWait(
+		runSwing(
 			() -> applyToSelectionButton.getActionListeners()[0].actionPerformed(null));
 		program.flushEvents();
 		waitForSwing();
@@ -227,7 +224,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		performAction(renameAction, cb.getProvider(), false);
 		SetEquateDialog d =
-			waitForDialogComponent(tool.getToolFrame(), SetEquateDialog.class, 2000);
+			waitForDialogComponent(SetEquateDialog.class);
 		assertNotNull(d);
 
 		JRadioButton applyToCurrentButton =
@@ -271,7 +268,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		performAction(renameAction, cb.getProvider(), false);
 		SetEquateDialog d =
-			waitForDialogComponent(tool.getToolFrame(), SetEquateDialog.class, 2000);
+			waitForDialogComponent(SetEquateDialog.class);
 		assertNotNull(d);
 
 		JRadioButton applyToCurrentButton =
@@ -688,7 +685,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		assertEquals("0x2", f.getFieldElement(0, 22).getText());
 	}
 
-	/**
+	/*
 	 * Tests that the user is prompted before attempting to remove an equate within
 	 * a selection. 
 	 * 
@@ -707,7 +704,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		performAction(removeAction, cb.getProvider(), false);
 
 		// Wait for the confirmation dialog to pop up and verify.
-		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		close(d);
 	}
@@ -718,10 +715,10 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		env.close(program);
 
-		assertTrue(!setAction.isEnabledForContext(new ActionContext()));
+		assertFalse(setAction.isEnabledForContext(new ActionContext()));
 	}
 
-	/**
+	/*
 	 * Tests that the user cannot set an equate on a scalar that is
 	 * undefined (the equate option is not made available).
 	 */
@@ -739,7 +736,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		applyCmd(program, cmd);
 
 		// Verify that the menu option for setting an equate is not enabled.
-		assertTrue(!setAction.isEnabledForContext(getListingContext()));
+		assertFalse(setAction.isEnabledForContext(getListingContext()));
 	}
 
 	@Test

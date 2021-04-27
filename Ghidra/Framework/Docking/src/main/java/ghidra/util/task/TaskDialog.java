@@ -205,11 +205,26 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		return userSaysYes;
 	}
 
+	private boolean isInstalled(Component c) {
+		Component[] components = mainPanel.getComponents();
+		for (Component component : components) {
+			if (c == component) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Adds the panel that contains the progress bar to the dialog
 	 */
 	private void installProgressMonitor() {
 		Swing.runIfSwingOrRunLater(() -> {
+
+			if (isInstalled(monitorComponent)) {
+				return;
+			}
+
 			mainPanel.removeAll();
 			mainPanel.add(monitorComponent, BorderLayout.CENTER);
 			repack();
@@ -222,6 +237,11 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 */
 	private void installActivityDisplay() {
 		Swing.runIfSwingOrRunLater(() -> {
+
+			if (isInstalled(activityPanel)) {
+				return;
+			}
+
 			mainPanel.removeAll();
 			mainPanel.add(activityPanel, BorderLayout.CENTER);
 			repack();
