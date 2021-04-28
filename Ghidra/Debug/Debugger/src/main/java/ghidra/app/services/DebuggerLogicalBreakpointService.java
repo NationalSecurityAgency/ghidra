@@ -141,9 +141,9 @@ public interface DebuggerLogicalBreakpointService {
 		Program progOrView = loc.getProgram();
 		if (progOrView instanceof TraceProgramView) {
 			TraceProgramView view = (TraceProgramView) progOrView;
-			return traceFunc.apply(view.getTrace(), loc.getAddress());
+			return traceFunc.apply(view.getTrace(), loc.getByteAddress());
 		}
-		return progFunc.apply(progOrView, loc.getAddress());
+		return progFunc.apply(progOrView, loc.getByteAddress());
 	}
 
 	default Enablement computeEnablement(Collection<LogicalBreakpoint> col) {

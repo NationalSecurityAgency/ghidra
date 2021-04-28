@@ -278,7 +278,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 
 	@Override
 	public Address getAddress() {
-		return progBreak.getLocation().getAddress();
+		return progBreak.getLocation().getByteAddress();
 	}
 
 	@Override

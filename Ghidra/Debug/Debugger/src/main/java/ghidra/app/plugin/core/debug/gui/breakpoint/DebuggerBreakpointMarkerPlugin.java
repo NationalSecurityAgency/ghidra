@@ -173,7 +173,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	protected static long computeDefaultLength(ActionContext context,
 			Collection<TraceBreakpointKind> selected) {
-		if (selected.contains(TraceBreakpointKind.HW_EXECUTE) ||
+		if (selected.isEmpty() ||
+			selected.contains(TraceBreakpointKind.HW_EXECUTE) ||
 			selected.contains(TraceBreakpointKind.SW_EXECUTE)) {
 			return 1;
 		}
@@ -529,11 +530,13 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			}
 			Set<LogicalBreakpoint> bs = breakpointService.getBreakpointsAt(loc);
 			if (bs == null || bs.isEmpty()) {
-				Set<TraceBreakpointKind> kinds = getApplicableKindsFromContext(context);
-				if (kinds.isEmpty()) {
-					Msg.showError(this, null, NAME, "Cannot determine appropriate breakpoint kind");
+				Set<TraceBreakpointKind> supported = getSupportedKindsFromContext(context);
+				if (supported.isEmpty()) {
+					Msg.showError(this, null, NAME,
+						"It seems this target does not support breakpoints.");
 					return;
 				}
+				Set<TraceBreakpointKind> kinds = computeDefaultKinds(context, supported);
 				long length = computeDefaultLength(context, kinds);
 				placeBreakpointDialog.prompt(tool, breakpointService, NAME, loc, length, kinds);
 				return;
@@ -939,14 +942,13 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		return true;
 	}
 
-	protected Set<TraceBreakpointKind> getApplicableKindsFromContext(ActionContext context) {
+	protected Set<TraceBreakpointKind> getSupportedKindsFromContext(ActionContext context) {
 		Set<TraceRecorder> recorders = getRecordersFromContext(context);
 		if (recorders.isEmpty()) {
-			return computeDefaultKinds(context, EnumSet.allOf(TraceBreakpointKind.class));
+			return EnumSet.allOf(TraceBreakpointKind.class);
 		}
 		return recorders.stream()
-				.flatMap(rec -> computeDefaultKinds(context,
-					rec.getSupportedBreakpointKinds()).stream())
+				.flatMap(rec -> rec.getSupportedBreakpointKinds().stream())
 				.collect(Collectors.toSet());
 	}
 
@@ -978,7 +980,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			Address start = bEnt.getKey();
 			for (Map.Entry<Long, Enablement> eEnt : en.entrySet()) {
 				Address end = start.add(eEnt.getKey() - 1);
-				marks.get(eEnt.getValue()).add(start, end);
+				MarkerSet set = marks.get(eEnt.getValue());
+				if (set != null) {
+					set.add(start, end);
+				}
 			}
 		}
 	}

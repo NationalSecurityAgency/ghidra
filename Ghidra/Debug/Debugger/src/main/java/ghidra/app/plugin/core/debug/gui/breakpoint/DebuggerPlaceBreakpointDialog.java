@@ -87,12 +87,11 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		addCancelButton();
 	}
 
-	@SuppressWarnings("hiding")
 	public void prompt(PluginTool tool, DebuggerLogicalBreakpointService service, String title,
 			ProgramLocation loc, long length, Collection<TraceBreakpointKind> kinds) {
 		this.service = service;
 		this.program = loc.getProgram();
-		this.address = loc.getAddress();
+		this.address = loc.getAddress(); // byte address can be confusing here.
 		this.length = length;
 		this.kinds = Set.copyOf(kinds);
 
