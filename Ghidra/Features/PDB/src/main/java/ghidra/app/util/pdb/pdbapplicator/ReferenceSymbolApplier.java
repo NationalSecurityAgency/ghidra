@@ -52,15 +52,15 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	@Override
 	void apply() throws CancelledException, PdbException {
 		// Potential recursive call via applicator.procSym().
-		AbstractMsSymbolIterator refIter = getInitializedReferencedSymbolGroup().iterator();
+		AbstractMsSymbolIterator refIter = getInitializedReferencedSymbolGroupIterator();
 		applicator.procSym(refIter);
 	}
 
-	SymbolGroup getInitializedReferencedSymbolGroup() {
+	AbstractMsSymbolIterator getInitializedReferencedSymbolGroupIterator() {
 		SymbolGroup refSymbolGroup = getReferencedSymbolGroup();
 		AbstractMsSymbolIterator refIter = refSymbolGroup.iterator();
 		refIter.initGetByOffset(getOffsetInReferencedSymbolGroup());
-		return refSymbolGroup;
+		return refIter;
 	}
 
 	SymbolGroup getReferencedSymbolGroup() {
