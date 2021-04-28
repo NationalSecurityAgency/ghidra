@@ -49,7 +49,7 @@ public class GdbM68kDebuggerMappingOpinion implements DebuggerMappingOpinion {
 			return Set.of();
 		}
 		String arch = env.getArchitecture();
-		if (arch.startsWith("mips:32")) {
+		if (arch.startsWith("m68k")) {
 			return Set.of(new GdbM68kBELinux32DefOffer(process));
 		}
 		return Set.of();
