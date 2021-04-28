@@ -63,7 +63,7 @@ public interface TraceStaticMapping {
 	/**
 	 * Get the length of the mapping, i.e., the length of the range
 	 * 
-	 * @return the length
+	 * @return the length, where 0 indicates {@code 1 << 64}
 	 */
 	long getLength();
 

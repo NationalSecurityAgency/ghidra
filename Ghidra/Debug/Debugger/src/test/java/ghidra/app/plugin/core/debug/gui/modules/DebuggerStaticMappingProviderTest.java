@@ -106,7 +106,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 
 	@Test
 	public void testAddAction() throws Exception {
-		assertFalse(mappingsProvider.actionAdd.isEnabled());
+		assertTrue(mappingsProvider.actionAdd.isEnabled());
 
 		createProgramFromTrace(tb.trace);
 		intoProject(tb.trace);
@@ -135,16 +135,18 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		programManager.openProgram(program);
 		waitForSwing();
 
-		assertFalse(mappingsProvider.actionAdd.isEnabled());
-
 		ProgramSelection traceSel =
 			new ProgramSelection(tb.addr(0xdeadbeefL), tb.addr(0xdeadbeefL + 0x0f));
 		listingPlugin.getProvider().setSelection(traceSel);
 		codeViewerPlugin.goTo(new ProgramLocation(program, addr(program, 0xc0de1234L)), true);
 		waitForSwing();
 
-		assertTrue(mappingsProvider.actionAdd.isEnabled());
-		performAction(mappingsProvider.actionAdd, true);
+		performAction(mappingsProvider.actionAdd, false);
+
+		DebuggerAddMappingDialog dialog = waitForDialogComponent(DebuggerAddMappingDialog.class);
+		dialog.applyCallback();
+		dialog.close();
+		waitForDomainObject(tb.trace);
 
 		TraceStaticMapping entry = Unique.assertOne(manager.getAllEntries());
 		assertEquals(Range.atLeast(0L), entry.getLifespan());

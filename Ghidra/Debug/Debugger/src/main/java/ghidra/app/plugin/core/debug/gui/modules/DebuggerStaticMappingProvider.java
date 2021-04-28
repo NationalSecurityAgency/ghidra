@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.modules;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
+import java.math.BigInteger;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Function;
@@ -41,15 +42,18 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.*;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.modules.TraceStaticMapping;
+import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.MathUtilities;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.table.GhidraTableFilterPanel;
 
@@ -60,7 +64,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		DYNAMIC_ADDRESS("Dynamic Address", Address.class, StaticMappingRow::getTraceAddress),
 		STATIC_URL("Static Program", URL.class, StaticMappingRow::getStaticProgramURL),
 		STATIC_ADDRESS("Static Address", String.class, StaticMappingRow::getStaticAddress),
-		LENGTH("Length", Long.class, StaticMappingRow::getLength),
+		LENGTH("Length", BigInteger.class, StaticMappingRow::getBigLength),
 		SHIFT("Shift", Long.class, StaticMappingRow::getShift),
 		LIFESPAN("Lifespan", Range.class, StaticMappingRow::getLifespan);
 
@@ -113,6 +117,8 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 
 	private final DebuggerStaticMappingPlugin plugin;
 
+	private final DebuggerAddMappingDialog addMappingDialog;
+
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService;
 	// TODO: Use events to track selections? This can only work with the main listings.
@@ -146,6 +152,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_MAPPINGS, plugin.getName(), null);
 		this.plugin = plugin;
 
+		this.addMappingDialog = new DebuggerAddMappingDialog();
 		this.autoWiring = AutoService.wireServicesConsumed(plugin, this);
 
 		setIcon(DebuggerResources.ICON_PROVIDER_MAPPINGS);
@@ -155,6 +162,11 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		buildMainPanel();
 		setVisible(true);
 		createActions();
+	}
+
+	@AutoServiceConsumed
+	private void setMappingService(DebuggerStaticMappingService mappingService) {
+		addMappingDialog.setMappingService(mappingService);
 	}
 
 	@Override
@@ -215,7 +227,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		statAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
 		TableColumn lengthCol = columnModel.getColumn(StaticMappingTableColumns.LENGTH.ordinal());
 		// TODO: Get user column settings working. Still, should default to Hex
-		lengthCol.setCellRenderer(CustomToStringCellRenderer.MONO_LONG_HEX);
+		lengthCol.setCellRenderer(CustomToStringCellRenderer.MONO_BIG_HEX);
 		TableColumn shiftCol = columnModel.getColumn(StaticMappingTableColumns.SHIFT.ordinal());
 		shiftCol.setCellRenderer(CustomToStringCellRenderer.MONO_LONG_HEX);
 	}
@@ -223,7 +235,6 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 	protected void createActions() {
 		actionAdd = AddAction.builder(plugin)
 				.description("Add Mapping from Listing Selections")
-				.enabledWhen(this::haveMappableSelections)
 				.onAction(this::activatedAdd)
 				.buildAndInstallLocal(this);
 		actionRemove = RemoveAction.builder(plugin)
@@ -240,38 +251,10 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		contextChanged();
 	}
 
-	private boolean haveMappableSelections(ActionContext ignore) {
-		// TODO: Use events to track selections/locations
-		if (codeViewerService == null || listingService == null) {
-			return false;
-		}
-		ProgramLocation progLoc = codeViewerService.getCurrentLocation();
-		ProgramLocation traceLoc = listingService.getCurrentLocation();
-
-		if (progLoc == null || traceLoc == null) {
-			return false;
-		}
-
-		ProgramSelection progSel = codeViewerService.getCurrentSelection();
-		ProgramSelection traceSel = listingService.getCurrentSelection();
-
-		if (progSel != null && progSel.getNumAddressRanges() > 1) {
-			return false;
-		}
-		if (traceSel != null && traceSel.getNumAddressRanges() > 1) {
-			return false;
-		}
-
-		long progLen = progSel == null ? 0 : progSel.getNumAddresses();
-		long traceLen = traceSel == null ? 0 : traceSel.getNumAddresses();
-		if (progLen == 0 && traceLen == 0) {
-			return false;
-		}
-		return true;
-	}
-
 	private void activatedAdd(ActionContext ignore) {
-		// TODO: Use events to track selections/locations
+		tool.showDialog(addMappingDialog);
+		// Try to populate the dialog based on selection, if applicable
+
 		if (codeViewerService == null || listingService == null) {
 			return;
 		}
@@ -303,17 +286,13 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		Address progStart = progLen != 0 ? progSel.getMinAddress() : progLoc.getAddress();
 		Address traceStart = traceLen != 0 ? traceSel.getMinAddress() : traceLoc.getAddress();
 		TraceProgramView view = (TraceProgramView) traceLoc.getProgram();
-		TraceLocation from =
-			new DefaultTraceLocation(currentTrace, null, Range.atLeast(view.getSnap()), traceStart);
-		ProgramLocation to = new ProgramLocation(progLoc.getProgram(), progStart);
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(currentTrace, "Add Static Mapping", false)) {
-			mappingService.addMapping(from, to, length, true);
-			tid.commit();
+		try {
+			addMappingDialog.setValues(progLoc.getProgram(), currentTrace, progStart, traceStart,
+				length, Range.atLeast(view.getSnap()));
 		}
-		catch (TraceConflictedMappingException e) {
-			throw new AssertionError(e); // I said truncateExisting
+		catch (AddressOverflowException e) {
+			Msg.showError(this, null, "Add Mapping", "Error populating dialog");
 		}
 	}
 
@@ -387,5 +366,11 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		currentTrace = trace;
 		addNewListeners();
 		loadMappings();
+
+		addMappingDialog.setTrace(trace);
+	}
+
+	public void setProgram(Program program) {
+		addMappingDialog.setProgram(program);
 	}
 }

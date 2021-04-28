@@ -76,7 +76,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	public DBTraceStaticMapping add(AddressRange range, Range<Long> lifespan, URL toProgramURL,
 			String toAddress)
 			throws TraceConflictedMappingException {
-		if (lifespan.lowerBoundType() != BoundType.CLOSED) {
+		if (lifespan.hasLowerBound() && lifespan.lowerBoundType() != BoundType.CLOSED) {
 			throw new IllegalArgumentException("Lower bound must be closed");
 		}
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
