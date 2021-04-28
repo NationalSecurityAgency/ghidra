@@ -25,7 +25,6 @@ eclipse.project.name = 'Features FileFormats'
 dependencies {
 	compile project(':Base')
 	compile project(':Recognizers')
-	compile project(':Python')
 	
 	compile ':dex-ir:2.0'
 	compile ':dex-reader:2.0'
@@ -33,6 +32,7 @@ dependencies {
 	compile ':dex-translator:2.0'
 
 	compile 'org.ow2.asm:asm-debug-all:4.1'
+	compile 'org.bouncycastle:bcprov-jdk15on:1.68'
 
 	compile 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
 	compile 'org.smali:dexlib:1.4.0'
