@@ -53,13 +53,12 @@ public class CreateRelocationBasedOperandReferences extends GhidraScript {
 		Iterator<Relocation> relocations = relocationTable.getRelocations();
 
 		monitor.initialize(relocationTable.getSize());
-		int progress = 0;
 		int refCount = 0;
 
 		while (relocations.hasNext()) {
 			monitor.checkCanceled();
 			Relocation r = relocations.next();
-			monitor.setProgress(progress++);
+			monitor.incrementProgress(1);
 
 			Instruction instr = listing.getInstructionAt(r.getAddress());
 			if (instr == null) {
@@ -137,11 +136,13 @@ public class CreateRelocationBasedOperandReferences extends GhidraScript {
 			}
 			if (obj instanceof Scalar) {
 				if (s != null) {
+					// more than one scalar found
 					return null;
 				}
 				s = (Scalar) obj;
 			}
 			else {
+				// non-scalar found
 				return null;
 			}
 		}
