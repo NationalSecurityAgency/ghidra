@@ -156,7 +156,7 @@ def initTestJVM(Task task, String rootDirName) {
     // -javaagent:/path/to/jmockit.jar
     task.doFirst {
 	    def jmockitPath = configurations.jmockitAgent.singleFile
-	    
+	    	    
 		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configuration=' + logPropertiesUrl,
@@ -177,10 +177,14 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Duser.country=US',
 			'-Duser.language=en',
 			'-Djdk.attach.allowAttachSelf',
-			'-javaagent:' + jmockitPath,			
-			'-DLock.DEBUG=true',
+			'-javaagent:' + jmockitPath,
+			'-noverify',
+			'-XX:TieredStopAtLevel=1',
 			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
 			
+			
+			// Note: this args are used to speed-up the tests, but are not safe for production code
+			// -noverify and -XX:TieredStopAtLevel=1			
 			
 			// Note: modern remote debug invocation;
 			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
@@ -191,6 +195,16 @@ def initTestJVM(Task task, String rootDirName) {
 			//  -Xnoagent
 			//  -Djava.compiler=NONE
 			//  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
+			
+			//
+			// TODO Future Updates:
+			// The test configuration should be updated to support all known modes of operation:
+			// command-line test execution, CI test execution of a branch upon request, and full
+			// CI test execution (this is slow and may need to run overnight).  We do not currently
+			// support well running tests via the command-line.   See discussion at github 2854. 
+			// For better command-line usage we will need to update tests such that they can 
+			// share a VM, enabling us to elimnate the use of 'forEver 1' in this file.
+			// 
 	}
 }
 /*********************************************************************************

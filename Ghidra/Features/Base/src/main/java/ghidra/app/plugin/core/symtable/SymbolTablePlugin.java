@@ -609,8 +609,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		protected void doRun() {
 
 			SymbolTable symbolTable = currentProgram.getSymbolTable();
-			Symbol removedSymbol =
-				symbolTable.createSymbolPlaceholder(address, symbolId);
+			Symbol removedSymbol = new ProxySymbol(symbolId, address);
 			symProvider.symbolRemoved(removedSymbol);
 			refProvider.symbolRemoved(removedSymbol);
 
@@ -741,7 +740,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 
 			if (symProvider.isShowingDynamicSymbols()) {
 				long id = symbolTable.getDynamicSymbolID(reference.getToAddress());
-				Symbol removedSymbol = symbolTable.createSymbolPlaceholder(toAddr, id);
+				Symbol removedSymbol = new ProxySymbol(id, toAddr);
 				symProvider.symbolRemoved(removedSymbol);
 				refProvider.symbolRemoved(removedSymbol);
 			}

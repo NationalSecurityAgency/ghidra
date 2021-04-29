@@ -110,6 +110,10 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 
 	@Override
 	public void setProgram(Program prog) {
+		if (isDisposed) {
+			return;
+		}
+
 		if (prog == null) {
 			super.setProgram(null);
 			refManager = null;

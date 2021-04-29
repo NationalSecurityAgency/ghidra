@@ -15,36 +15,86 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
+import ghidra.program.database.ProgramDB;
+import ghidra.program.database.util.ProgramTransaction;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.listing.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class PublicAPITest extends AbstractGenericTest {
-	private Language x86;
+	Language x86;
+	Language toy;
+
+	Program program;
 
 	@Before
 	public void setUp() throws Exception {
 		SleighLanguageProvider provider = new SleighLanguageProvider();
 		x86 = provider.getLanguage(new LanguageID("x86:LE:64:default"));
+		toy = provider.getLanguage(new LanguageID("Toy:BE:64:default"));
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		if (program != null) {
+			program.release(this);
+		}
 	}
 
 	@Test
 	public void testADD0() throws AssemblySyntaxException, AssemblySemanticException {
+		// Mostly just test that it doesn't crash
 		Assembler asm = Assemblers.getAssembler(x86);
 		byte[] b =
 			asm.assembleLine(x86.getDefaultSpace().getAddress(0x40000000), "ADD byte ptr [RBX],BL");
-		printArray(b);
+		assertNotEquals(0, b.length);
 	}
 
-	public static void printArray(byte[] arr) {
-		for (int i = 0; i < arr.length; i++) {
-			System.out.printf("%02x", arr[i]);
+	protected Address addr(long offset) {
+		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+	}
+
+	@Test
+	public void testAssembleWithDelaySlot() throws Exception,
+			AddressOverflowException, CancelledException {
+		program = new ProgramDB("test", toy, toy.getDefaultCompilerSpec(), this);
+
+		InstructionIterator it;
+		try (ProgramTransaction tid = ProgramTransaction.open(program, "Test")) {
+			program.getMemory()
+					.createInitializedBlock(".text", addr(0x00400000), 0x1000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+			Assembler asm = Assemblers.getAssembler(program);
+
+			it = asm.assemble(addr(0x00400000),
+				"brds 0x00400004",
+				"add r0, #6");
+
+			tid.commit();
 		}
-		System.out.println();
+
+		List<Instruction> result = new ArrayList<>();
+		while (it.hasNext()) {
+			result.add(it.next());
+		}
+
+		assertEquals(2, result.size());
+		assertEquals("brds", result.get(0).getMnemonicString());
+		assertEquals("_add", result.get(1).getMnemonicString());
 	}
 }

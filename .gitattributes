@@ -3,53 +3,79 @@
 
 # Explicitly declare text files you want to always be normalized and converted
 # to native line endings on checkout.
-*.java text
-*.gradle text
-*.manifest text
+*.bash text
+*.c text
+*.cc text
+*.command text
+*.cpp text
+*.cspec text
 *.css text
+*.gradle text
+*.groovy text
+*.h text
+*.hh text
 *.htm text
 *.html text
+*.java text
+*.jj text
 *.js text
 *.json text
 *.jsp text
 *.jspf text
 *.jspx text
+*.l text
+*.lang text
+*.ldefs text
+*.manifest text
+*.opinion text
+*.props text
 *.properties text
-*.tld text
-*.txt text
+*.proto text
+*.pspec text
+*.py text
+*.rxg text
+*.sh text
+*.sla text
 *.tag text
+*.tld text
+*.tool text
+*.trans text
+*.txt text
 *.xml text
-*.c text
-*.h text
-*.cpp text
-*.hh text
-*.cc text
+*.y text
 
 # Declare files that will always have CRLF line endings on checkout.
+*.bat text eol=crlf
 *.sln text eol=crlf
 *.vcproj text eol=crlf
 *.vcxproj text eol=crlf
-*.bat text eol=crlf
 
 # Denote all files that are truly binary and should not be modified.
-*.png binary
-*.jpg binary
+*.a binary
+*.apk binary
+*.bmp binary
 *.class binary
 *.dll binary
+*.dmg binary
 *.ear binary
-*.gif binary
-*.ico binary
-*.jar binary
-*.jpeg binary
-*.so binary
-*.war binary
-*.pdf binary
 *.exe binary
-*.lib binary
-*.sa binary
+*.gdt binary
+*.gif binary
 *.gz binary
 *.gzf binary
-*.tgz binary
+*.ico binary
+*.ipsw binary
+*.jar binary
+*.jpeg binary
+*.jpg binary
+*.lib binary
+*.o binary
+*.obj binary
+*.pdf binary
+*.png binary
+*.sa binary
+*.so binary
 *.tar binary
-*.sh binary
-
+*.tgz binary
+*.war binary
+*.zip binary

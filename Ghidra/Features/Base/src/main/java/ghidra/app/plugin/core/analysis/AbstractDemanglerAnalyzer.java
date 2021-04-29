@@ -15,31 +15,36 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import ghidra.app.services.*;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * The base demangler analyzer.  Implementations of this analyzer will attempt to demangle 
+ * The base demangler analyzer.  Implementations of this analyzer will attempt to demangle
  * symbols in the binary being analyzed.
- * 
+ *
  * <P>Default implementations of this class exist for Microsoft and GNU.   These two analyzers will
  * only be enabled when the program being analyzed has an architecture that fits each respective
- * analyzer.  Users can subclass this analyzer to easily control the demangling behavior from 
+ * analyzer.  Users can subclass this analyzer to easily control the demangling behavior from
  * the analyzer UI.
- * 
- * <P>This analyzer will call each implementation's 
- * {@link #doDemangle(String, DemanglerOptions, MessageLog)} method for each symbol.   
+ *
+ * <P>This analyzer will call each implementation's
+ * {@link #doDemangle(String, DemanglerOptions, MessageLog)} method for each symbol.
  * See the various protected methods of this class for points at which behavior can be overridden.
- * 
+ *
  */
 public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
+
+	private static final AddressSetView EXTERNAL_SET = new AddressSet(
+		AddressSpace.EXTERNAL_SPACE.getMinAddress(), AddressSpace.EXTERNAL_SPACE.getMaxAddress());
 
 	public AbstractDemanglerAnalyzer(String name, String description) {
 		super(name, description, AnalyzerType.BYTE_ANALYZER);
@@ -49,7 +54,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		// override this to control program-specific enablement 
+		// override this to control program-specific enablement
 		return true;
 	}
 
@@ -59,6 +64,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		try {
 			monitor.setIndeterminate(true);
+			// NOTE: demangling of Externals may lose mangled name if original
+			// imported name has already been assigned to the External symbol (e.g., ordinal based name)
 			return doAdded(program, set, monitor, log);
 		}
 		finally {
@@ -67,8 +74,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean doAdded(Program program, AddressSetView set, TaskMonitor monitor,
-			MessageLog log)
-			throws CancelledException {
+			MessageLog log) throws CancelledException {
 
 		DemanglerOptions options = getOptions();
 		if (!validateOptions(options, log)) {
@@ -76,17 +82,41 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		int count = 0;
+		// Demangle external symbols after memory symbols.
+		// This is done to compensate for cases where the mangled name on externals may be lost
+		// after demangling when an alternate Ordinal symbol exists.  The external mangled
+		// name is helpful in preserving thunk relationships when a mangled symbols have been
+		// placed on a thunk.  It is assumed that analyzer is presented with entire
+		// EXTERNAL space in set (all or none).
+		boolean demangleExternals = set.contains(EXTERNAL_SET.getMinAddress());
+		if (demangleExternals) {
+			set = set.subtract(EXTERNAL_SET);
+		}
 
-		String defaultMessage = monitor.getMessage();
+		String baseMonitorMessage = monitor.getMessage();
+		int memorySymbolCount =
+			demangleSymbols(program, set, 0, baseMonitorMessage, options, log, monitor);
+		if (demangleExternals) {
+			// process external symbols last
+			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, baseMonitorMessage, options,
+				log, monitor);
+		}
 
+		return true;
+	}
+
+	private int demangleSymbols(Program program, AddressSetView set, int initialCount,
+			String baseMonitorMessage, DemanglerOptions options, MessageLog log,
+			TaskMonitor monitor) throws CancelledException {
+
+		int count = initialCount;
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
 			monitor.checkCanceled();
 
 			if (++count % 100 == 0) {
-				monitor.setMessage(defaultMessage + " - " + count + " symbols");
+				monitor.setMessage(baseMonitorMessage + " - " + count + " symbols");
 			}
 
 			Symbol symbol = it.next();
@@ -101,15 +131,14 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 				apply(program, address, demangled, options, log, monitor);
 			}
 		}
-
-		return true;
+		return count;
 	}
 
 	/**
 	 * The implementation-specific demangling callback
-	 * 
+	 *
 	 * @param mangled the mangled string
-	 * @param options the demangler options 
+	 * @param options the demangler options
 	 * @param log the error log
 	 * @return the demangled object; null if demangling was unsuccessful
 	 * @throws DemangledException if there is a problem demangling or building the result
@@ -120,7 +149,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Called before each analysis request to ensure that the current options (which may have
 	 * user-defined input) will work with the current demangler
-	 * 
+	 *
 	 * @param options the current options in use
 	 * @param log the error log into which error message can be written
 	 * @return true if valid
@@ -132,7 +161,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * True if this analyzer should <b>not</b> attempt to demangle the given symbol
-	 * 
+	 *
 	 * @param symbol the symbol
 	 * @return true to skip the symbol
 	 */
@@ -152,10 +181,13 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		// Someone has already added arguments or return to the function signature
+		// Someone has already added arguments or return to the function signature.
+		// Treatment of thunks must be handled later since thunk relationship may
+		// need to be broken
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function function = (Function) symbol.getObject();
-			if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
+			if (!function.isThunk() &&
+				function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
 				return true;
 			}
 		}
@@ -164,15 +196,15 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Creates the options for the demangler used by implementations of this analyzer.  This will 
+	 * Creates the options for the demangler used by implementations of this analyzer.  This will
 	 * be called before each {@link #added(Program, AddressSetView, TaskMonitor, MessageLog)}
 	 * call processes symbols.
-	 * 
-	 * @return the options 
+	 *
+	 * @return the options
 	 */
 	protected DemanglerOptions getOptions() {
 		// note: these can be stored in the analyzer subclass and updated when the
-		//       analysis options change		
+		//       analysis options change
 		DemanglerOptions options = new DemanglerOptions();
 		options.setApplySignature(true);
 		options.setDoDisassembly(true);
@@ -183,7 +215,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	/**
 	 * This calss's default demangle method.  This may be overridden to change how errors are
 	 * handled.
-	 *  
+	 *
 	 * @param mangled the mangled string
 	 * @param address the symbol address
 	 * @param options the demangler options
@@ -206,9 +238,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 				}
 			}
 
-			log.appendMsg(getName(),
-				"Unable to demangle symbol: " + mangled + " at " + address + ".  Message: " +
-					e.getMessage());
+			log.appendMsg(getName(), "Unable to demangle symbol: " + mangled + " at " + address +
+				".  Message: " + e.getMessage());
 			return null;
 		}
 
@@ -217,9 +248,9 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Applies the given demangled object to the program
-	 * 
+	 *
 	 * @param program the program
-	 * @param address the apply address 
+	 * @param address the apply address
 	 * @param demangled the demangled object
 	 * @param options the options used during the apply
 	 * @param log the error log
@@ -228,27 +259,37 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	protected void apply(Program program, Address address, DemangledObject demangled,
 			DemanglerOptions options, MessageLog log, TaskMonitor monitor) {
 
-		String errorMessage = null;
 		try {
 			if (demangled.applyTo(program, address, options, monitor)) {
 				return;
 			}
+			logApplyErrorMessage(log, demangled, address, null);
 		}
 		catch (Exception e) {
-			String message = e.getMessage();
-			if (message == null) {
-				message = "";
-			}
-			errorMessage = "\n" + e.getClass().getSimpleName() + ' ' + message;
+			logApplyErrorMessage(log, demangled, address, e);
 		}
 
-		String failMessage = " (" + getName() + "/" + demangled.getClass().getName() + ")";
-		if (errorMessage != null) {
-			failMessage += errorMessage;
+	}
+
+	private void logApplyErrorMessage(MessageLog log, DemangledObject demangled, Address address,
+			Exception exception) {
+
+		String message;
+		String name;
+		if (exception == null) {
+			// Eventually, if we switch all errors over to being passed by an exception, then
+			// we can eliminate this block of code (and not pass null into this method).
+			message = "Unknown error at address " + address;
+			name = "\n\t" + demangled.getName();
+		}
+		else {
+			message = ExceptionUtils.getMessage(exception);
+			name = StringUtils.EMPTY;
 		}
 
-		log.appendMsg(getName(), "Failed to apply mangled symbol at " + address + "; name:  " +
-			demangled.getMangledString() + failMessage);
+		String className = demangled.getClass().getSimpleName();
+		log.appendMsg(getName(), "Apply failure (" + className + ": " + message + ")\n\t" +
+			demangled.getMangledString() + name);
 	}
 
 	protected String cleanSymbol(Address address, String name) {

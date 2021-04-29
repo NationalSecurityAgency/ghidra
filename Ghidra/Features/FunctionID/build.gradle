@@ -31,10 +31,11 @@ dependencies {
 	
 }
 
-// All *.fidb files located in the BIN repo under src/main/fidb will be unpacked
-def fidbSrcDir = "${getProjectLocationInBinRepo(project)}/src/main/fidb"
-
-def fidDbFiles = fileTree(fidbSrcDir) {
+// All *.fidb files located in the dependencies/fid directory OR the 
+// BIN repo under src/main/fidb will be unpacked
+def depsDir = file("${DEPS_DIR}/fidb")
+def binRepoDir = "${getProjectLocationInBinRepo(project)}/src/main/fidb"
+def fidDbFiles = fileTree(depsDir.exists() ? depsDir : binRepoDir) {
 	include '**/*.fidb'
 }
 

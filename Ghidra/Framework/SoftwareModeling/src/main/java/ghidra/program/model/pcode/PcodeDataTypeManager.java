@@ -100,7 +100,7 @@ public class PcodeDataTypeManager {
 		progDataTypes = prog.getDataTypeManager();
 		dataOrganization = progDataTypes.getDataOrganization();
 		voidInputIsVarargs = true;				// By default, do not lock-in void parameter lists
-		displayLanguage = prog.getCompilerSpec().getDecompilerOutputLanguage(prog);
+		displayLanguage = prog.getCompilerSpec().getDecompilerOutputLanguage();
 		if (displayLanguage != DecompilerLanguage.C_LANGUAGE) {
 			voidInputIsVarargs = false;
 		}
@@ -588,8 +588,10 @@ public class PcodeDataTypeManager {
 		}
 		else {
 			int sz = type.getLength();
+			boolean isVarLength = false;
 			if (sz <= 0) {
 				sz = size;
+				isVarLength = true;
 			}
 			appendNameIdAttributes(resBuf, origType);
 			if (sz < 16) {
@@ -601,6 +603,9 @@ public class PcodeDataTypeManager {
 				// Build an "opaque" structure with no fields
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
+				if (isVarLength) {
+					SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", isVarLength);
+				}
 				resBuf.append('>');
 			}
 		}

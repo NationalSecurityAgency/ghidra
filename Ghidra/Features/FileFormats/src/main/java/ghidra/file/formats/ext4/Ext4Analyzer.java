@@ -198,10 +198,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 				List<Ext4Extent> entries = i_block.getExtentEntries();
 				for( int i = 0; i < numEntries; i++ ) {
 					Ext4Extent extent = entries.get(i);
-					int low = extent.getEe_start_lo();
-					int high = extent.getEe_start_hi();
-					int blockNumber = (high << 16) | low;
-					long offset = blockNumber * blockSize;
+					long offset = extent.getExtentStartBlockNumber() * blockSize;
 					reader.setPointerIndex(offset);
 					Address address = toAddr(program, offset);
 					if( isDirEntry2 ) {

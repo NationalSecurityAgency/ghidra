@@ -21,6 +21,7 @@
 - [Building Supporting Data](#building-supporting-data)
   * [Building Data Type Archives](#building-data-type-archives)
   * [Building FID Databases](#building-fid-databases)
+- [Hacking on the Debugger](#hacking-on-the-debugger)
 
 ## Catalog of Dependencies
 
@@ -33,7 +34,7 @@ You may not need all of these, depending on which portions you are building or d
       - https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot
     - Amazon Corretto
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 5.0 or later - We use version 5.0, and tested with up to 5.6.3.
+* Gradle 5.0 or later - We use version 5.0, and tested with up to 6.8.3.
     - https://gradle.org/next-steps/?version=5.0&format=bin
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/
@@ -61,9 +62,9 @@ You may not need all of these, depending on which portions you are building or d
     - https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/
 * Eclipse PDE - Environment for developing the GhidraDev plugin.
     - https://www.eclipse.org/pde/
-* Eclipse CDT. We use version 8.6.0 - Build dependency for the GhidraDev plugin.
+* Eclipse CDT. We build against version 8.6.0 - Build dependency for the GhidraDev plugin.
     - https://www.eclipse.org/cdt/
-* PyDev. We use version 6.3.1 - Build dependency for the GhidraDev plugin.
+* PyDev. We build against version 6.3.1 - Build dependency for the GhidraDev plugin.
     - https://sourceforge.net/projects/pydev/files/pydev/
 
 There are many, many others automatically downloaded by Gradle from Maven Central and Bintray JCenter when building and/or setting up the development environment.
@@ -110,64 +111,67 @@ or manually by downloading the required dependencies.  Choose one of the two fol
 The flat directory-style repository can be setup automatically by running a simple Gradle script. 
 Navigate to `~/git/ghidra` and run the following:
 ```
-gradle --init-script gradle/support/fetchDependencies.gradle init
+gradle -I gradle/support/fetchDependencies.gradle init
 ```
 The Gradle task to be executed, in this case _init_, is unimportant. The point is to have Gradle execute
-the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/flatRepo/` 
-directory populated with the following jar files:
- * AXMLPrinter2
- * csframework
- * dex-ir-2.0
- * dex-reader-2.0
- * dex-reader-api-2.0
- * dex-tools-2.0
- * dex-translator-2.0
- * dex-writer-2.0
- * hfsx
- * hfsx_dmglib
- * iharder-base64
-
-There will also be a new archive files at:
- * ~/git/ghidra/Ghidra/Features/GhidraServer/build/`yajsw-stable-12.12.zip`
- * ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/`PyDev 6.3.1.zip`
- * ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/`cdt-8.6.0.zip`
+the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/dependencies/` 
+directory populated with the following files:
+ * flatRepo/AXMLPrinter2.jar
+ * flatRepo/csframework.jar
+ * flatRepo/dex-ir-2.0.jar
+ * flatRepo/dex-reader-2.0.jar
+ * flatRepo/dex-reader-api-2.0.jar
+ * flatRepo/dex-tools-2.0.jar
+ * flatRepo/dex-translator-2.0.jar
+ * flatRepo/dex-writer-2.0.jar
+ * flatRepo/hfsx.jar
+ * flatRepo/hfsx_dmglib.jar
+ * flatRepo/iharder-base64.jar
+ * cdt-8.6.0.zip
+ * PyDev 6.3.1.zip
+ * yajsw-stable-12.12.zip
+ * fidb/*.fidb
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
 instructions below...
 
 ### Manual Download Instructions
 
-Create the `~/git/ghidra/flatRepo/` directory to hold the manually-downloaded dependencies:
+Create the `~/git/ghidra/dependencies/` directory and required subdirectories to hold the manually-downloaded dependencies:
 
 ```bash
-mkdir ~/git/ghidra/flatRepo
+mkdir ~/git/ghidra/dependencies
+mkdir ~/git/ghidra/dependencies/flatRepo
+mkdir ~/git/ghidra/dependencies/fidb
+mkdir ~/git/ghidra/dependencies/GhidraServer
+mkdir ~/git/ghidra/dependencies/GhidraDev
 ```
 
 #### Get Dependencies for FileFormats:
 
 Download `dex-tools-2.0.zip` from the dex2jar project's releases page on GitHub.
-Unpack the `dex-*.jar` files from the `lib` directory to `~/git/ghidra/flatRepo`:
+Unpack the `dex-*.jar` files from the `lib` directory to `~/git/ghidra/dependencies/flatRepo`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip
 unzip dex-tools-2.0.zip
-cp dex2jar-2.0/lib/dex-*.jar ~/git/ghidra/flatRepo/
+cp dex2jar-2.0/lib/dex-*.jar ~/git/ghidra/dependencies/flatRepo/
 
 ```
 
 Download `AXMLPrinter2.jar` from the "android4me" archive on code.google.com.
-Place it in `~/git/ghidra/flatRepo`:
+Place it in `~/git/ghidra/dependencies/flatRepo`:
 
 ```bash
-cd ~/git/ghidra/flatRepo
+cd ~/git/ghidra/dependencies/flatRepo
 curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
 ```
 
 #### Get Dependencies for DMG:
 
 Download `hfsexplorer-0_21-bin.zip` from www.catacombae.org.
-Unpack the `lib` directory to `~/git/ghidra/flatRepo`:
+Unpack the `lib` directory to `~/git/ghidra/dependencies/flatRepo`:
 
 ```bash
 cd ~/Downloads   # Or wherever
@@ -176,35 +180,33 @@ mkdir hfsx
 cd hfsx
 unzip ../hfsexplorer-0_21-bin.zip
 cd lib
-cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/git/ghidra/flatRepo/
+cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/git/ghidra/dependencies/flatRepo/
 ```
 
 #### Get Dependencies for GhidraServer
 
 Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
 Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in:
-`~/git/ghidra/Ghidra/Features/GhidraServer/build`:
+`~/git/ghidra/dependencies/GhidraServer/`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
-mkdir -p ~/git/ghidra/Ghidra/Features/GhidraServer/build/
-cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/Ghidra/Features/GhidraServer/build/
+cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/dependencies/GhidraServer/
 ```
 
 #### Get Dependencies for GhidraDev
 
 Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for Eclipse.
 Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
-`~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/`:
+`~/git/ghidra/dependencies/GhidraDev/`:
 
 ```bash
 cd ~/Downloads   # Or wherever
 curl -OL 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'https://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
-mkdir -p ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
-cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
+cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/dependencies/GhidraDev/
 ```
 
 Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
@@ -212,7 +214,27 @@ Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same director
 ```bash
 cd ~/Downloads   # Or wherever
 curl -L -o 'PyDev 6.3.1.zip' https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
-cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
+cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra/dependencies/GhidraDev/
+```
+
+#### Get Ghidra Function ID datasets
+
+Download the Ghidra Function ID dataset files from the `ghidra-data` GitHub repository and place them
+in `~/git/ghidra/dependencies/fidb`:
+
+```bash
+cd ~/Downloads   # Or wherever
+curl -L -o 'vs2012_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x64.fidb
+curl -L -o 'vs2012_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x86.fidb
+curl -L -o 'vs2015_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x64.fidb
+curl -L -o 'vs2015_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x86.fidb
+curl -L -o 'vs2017_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x64.fidb
+curl -L -o 'vs2017_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x86.fidb
+curl -L -o 'vs2019_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x64.fidb
+curl -L -o 'vs2019_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x86.fidb
+curl -L -o 'vsOlder_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x64.fidb
+curl -L -o 'vsOlder_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x86.fidb
+cp ~/Downloads/*.fidb ~/git/ghidra/dependencies/fidb/
 ```
 
 ## Building Ghidra
@@ -376,4 +398,11 @@ Fill out the options appropriately and click OK.
 
 If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.
 
+### Hacking on the Debugger
+
+The Debugger consists of multiple modules comprising its own collection of utilities, frameworks, and features.
+There is plenty of new ground to be broken.
+Before getting too deep into it, please see our dedicated [Debugger Developer's Guide][DbgGuide].
+
 [ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data
+[DbgGuide]: DebuggerDevGuide.md

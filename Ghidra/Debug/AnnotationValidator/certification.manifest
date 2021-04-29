@@ -1,0 +1,3 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+src/main/resources/META-INF/services/javax.annotation.processing.Processor||GHIDRA||||END|

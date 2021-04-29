@@ -129,7 +129,7 @@ public class DemanglerCmd extends BackgroundCommand {
 				".  Message: " + message);
 		}
 
-		Msg.error(this, getStatusMsg());
+		Msg.error(this, getStatusMsg(), e);
 	}
 
 	public String getResult() {

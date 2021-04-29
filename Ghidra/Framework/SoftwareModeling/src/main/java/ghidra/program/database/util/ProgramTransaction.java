@@ -24,11 +24,9 @@ import ghidra.program.model.listing.Program;
  * This is meant to be used as an idiom in a try-with-resources block:
  * 
  * <pre>
- * {@code
  * try (ProgramTransaction t = ProgramTransaction.open(program, "Demo")) {
  *     program.getMemory().....
  *     t.commit();
- * }
  * }
  * </pre>
  * 

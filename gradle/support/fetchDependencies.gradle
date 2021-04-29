@@ -22,29 +22,13 @@
  * immediately after cloning the Ghidra repository before any other gradle     *
  * tasks are run.                                                              *
  *                                                                             *
- * Specifically, this task:                                                    *
+ * usage: from the command line in the main ghidra repository directory, run   *
+ *        the following:                                                       *
  *                                                                             *
- *   1. Downloads various dependencies required by the ghidra build and        *
- *      puts them in <ghidra repo>/build/downloads/. From here they are        *
- *      unzipped and/or copied to their final locations. The files to be       *
- *      downloaded:                                                            *
- *          - dex-tools-2.0.zip                                                *
- *          - AXMLPrinter2.jar                                                 *
- *          - hfsexplorer-0_21-bin.zip                                         *
- *          - yajsw-stable-12.12.zip                                           *
- *          - cdt-8.6.0.zip                                                    *
- *          - PyDev 6.3.1.zip                                                  *
- *                                                                             *
- *   2. Creates a directory at <ghidra repo>/flatRepo which is used as a       *
- *      flat directory-style respository for the files extracted above.        *
- *                                                                             *
- * usage: from the command line in the main ghidra repository                  *
- *        directory, run the following:                                        *
- *                                                                             *
- *        gradle --init-script gradle/support/fetchDependencies.gradle init    *
+ *        gradle -I gradle/support/fetchDependencies.gradle init               *
  *                                                                             *
  * Note: When running the script, files will only be downloaded if             *
- *       necessary (eg: they are not already in the build/downloads/           *
+ *       necessary (eg: they are not already in the dependencies/downloads/    *
  *       directory).                                                           *
  *                                                                             *
  *******************************************************************************/
@@ -52,138 +36,226 @@
 import java.util.zip.*;
 import java.nio.file.*;
 import java.security.MessageDigest;
-import org.apache.commons.io.*;
-import org.apache.commons.io.filefilter.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
-ext.HOME_DIR = System.getProperty('user.home')
-ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile().getParentFile()
-ext.FLAT_REPO_DIR = new File(REPO_DIR, "flatRepo")
-ext.DOWNLOADS_DIR = new File(REPO_DIR, "build/downloads")
-
-// Stores the size of the file being downloaded (for formatting print statements)
-ext.FILE_SIZE = 0;
-
-// The URLs for each of the dependencies
-ext.DEX_ZIP = 'https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip'
-ext.AXML_ZIP = 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar'
-ext.HFS_ZIP = 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip'
-ext.YAJSW_ZIP = 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip'
-ext.PYDEV_ZIP = 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip'
-ext.CDT_ZIP = 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
-
-// The SHA-256s for each of the dependencies
-ext.DEX_SHA_256 = '7907eb4d6e9280b6e17ddce7ee0507eae2ef161ee29f70a10dbc6944fdca75bc'
-ext.AXML_SHA_256 = '00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d'
-ext.HFS_SHA_256 = '90c9b54798abca5b12f4a678db7d0a4c970f4702cb153c11919536d0014dedbf'
-ext.YAJSW_SHA_256 = '1398fcb1e93abb19992c4fa06d7fe5758aabb4c45781d7ef306c6f57ca7a7321'
-ext.PYDEV_SHA_256 = '4d81fe9d8afe7665b8ea20844d3f5107f446742927c59973eade4f29809b0699'
-ext.CDT_SHA_256 = '81b7d19d57c4a3009f4761699a72e8d642b5e1d9251d2bb98df438b1e28f8ba9'
-
-// Number of times to try and establish a connection when downloading files before
-// failing
-ext.NUM_RETRIES = 2
-
-// Set up a maven repository configuration so we can get access to Apache FileUtils for
-// copying/deleting files.
 initscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'commons-io:commons-io:2.5'
-    }
+	repositories { mavenCentral() }
+	dependencies { classpath 'commons-io:commons-io:2.8.0' }
 }
 
-// This is where the real flow of the script starts...
-try {
-	createDirs()
-	populateFlatRepo()
+ext.NUM_RETRIES = 3 // # of times to try to download a file before failing
+ext.REPO_DIR = ((Script)this).buildscript.getSourceFile().getParentFile().getParentFile().getParentFile()
+ext.DEPS_DIR = file("${REPO_DIR}/dependencies")
+ext.DOWNLOADS_DIR = file("${DEPS_DIR}/downloads")
+ext.FID_DIR = file("${DEPS_DIR}/fidb")
+ext.FLAT_REPO_DIR = file("${DEPS_DIR}/flatRepo")
+
+ext.deps = [
+	[
+		name: 'dex-tools-2.0.zip',
+		url: 'https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip',
+		sha256: '7907eb4d6e9280b6e17ddce7ee0507eae2ef161ee29f70a10dbc6944fdca75bc',
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, 'dex-tools-2.0.zip')
+			FileUtils.copyDirectory(new File(DOWNLOADS_DIR, 'dex2jar-2.0/lib/'), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
+		}
+	],
+	[
+		name: 'hfsexplorer-0_21-bin.zip',
+		url: 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip',
+		sha256: '90c9b54798abca5b12f4a678db7d0a4c970f4702cb153c11919536d0014dedbf',
+		destination: {
+			def hfsxdir = new File (DOWNLOADS_DIR, "hfsx")
+			hfsxdir.mkdir()
+			unzip (DOWNLOADS_DIR, hfsxdir, 'hfsexplorer-0_21-bin.zip')
+			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/csframework.jar"), FLAT_REPO_DIR);
+			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx_dmglib.jar"), FLAT_REPO_DIR);
+			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx.jar"), FLAT_REPO_DIR);
+			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/iharder-base64.jar"), FLAT_REPO_DIR);
+		}
+	],
+	[
+		name: 'AXMLPrinter2.jar',
+		url: 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar',
+		sha256: '00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d',
+		destination: FLAT_REPO_DIR
+	],
+	[
+		name: 'yajsw-stable-12.12.zip',
+		url: 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip',
+		sha256: '1398fcb1e93abb19992c4fa06d7fe5758aabb4c45781d7ef306c6f57ca7a7321',
+		destination: file("${DEPS_DIR}/GhidraServer")
+	],
+	[
+		name: 'PyDev 6.3.1.zip',
+		url: 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip',
+		sha256: '4d81fe9d8afe7665b8ea20844d3f5107f446742927c59973eade4f29809b0699',
+		destination: file("${DEPS_DIR}/GhidraDev")
+	],
+	[
+		name: 'cdt-8.6.0.zip',
+		url: 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip',
+		sha256: '81b7d19d57c4a3009f4761699a72e8d642b5e1d9251d2bb98df438b1e28f8ba9',
+		destination: file("${DEPS_DIR}/GhidraDev")
+	],
+	[
+		name: 'vs2012_x64.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x64.fidb',
+		sha256: 'f26548a6df6b6963a418d8c83ac216d9e196b180d944a52b8123c457d472b7c9',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2012_x86.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x86.fidb',
+		sha256: '0a8962cf3699d5b8d4b3a79400382462519edc26570a46b2085200e38534f900',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2015_x64.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x64.fidb',
+		sha256: '187248f87fc1deb695bc3051b2d92f9b7482023a356821154db22478eed13088',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2015_x86.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x86.fidb',
+		sha256: '1d05afa070e9c09b83ee15d544c8559ed0d2b53d7eac476f8f5f8849543b3812',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2017_x64.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x64.fidb',
+		sha256: '1784ad6b25571177ff8212871867559998c6b8256bb1dbaeee864b580c1b2d6a',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2017_x86.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x86.fidb',
+		sha256: 'bc9bf30621190e0eb56c4db5ec30ad0401ca7be0311f5a2ce3d894178eafd19c',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2019_x64.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x64.fidb',
+		sha256: 'aab04eefd1142f7b3c3f86c8d766abe361b167b4fe4157c36fad18777b2a6fbd',
+		destination: FID_DIR
+	],
+	[
+		name: 'vs2019_x86.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x86.fidb',
+		sha256: '0a2282ac3479ffc022e6cdb4e32e057bc10f0394cfb0f8016d7145be0167f5f7',
+		destination: FID_DIR
+	],
+	[
+		name: 'vsOlder_x64.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x64.fidb',
+		sha256: 'fe1856c0acad297d9ba4fb6a2df1d32ba34df766d9f1a2a16da0ca2b375e23dd',
+		destination: FID_DIR
+	],
+	[
+		name: 'vsOlder_x86.fidb',
+		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x86.fidb',
+		sha256: '46e56bc82ba68ad4e9a3c6a2e4ecd3428e2c390c7de0a379fa0165a58d46e115',
+		destination: FID_DIR
+	]
+]
+
+// Download dependencies (if necessary) and verify their hashes
+DOWNLOADS_DIR.mkdirs()
+deps.each {
+	File file = new File(DOWNLOADS_DIR, it.name)
+	if (!it.sha256.equals(generateHash(file))) {
+		download(it.url, file.path)
+		assert(it.sha256.equals(generateHash(file)));
+	}
 }
-finally {
-	cleanup()  
+
+// Copies the downloaded dependencies to their required destination. 
+// Some downloads require pre-processing before their relevant pieces can be copied.
+deps.each {
+	if (it.destination instanceof File) {
+		println("Copying " + it.name + " to " + it.destination)
+		it.destination.mkdirs()
+		FileUtils.copyFile(new File(DOWNLOADS_DIR, it.name), new File(it.destination, it.name));
+	}
+	else if (it.destination instanceof Closure) {
+		println("Processing " + it.name)
+		it.destination()
+	}
+	else {
+		throw new GradleException("Unexpected destination type: " + it.destination)
+	}
 }
+//-------------------------------------Helper methods----------------------------------------------
 
 /**
- * Creates the directories where the dependencies will be downloaded and stored
- */
-def createDirs() {   
-   if (!DOWNLOADS_DIR.exists()) {
-      DOWNLOADS_DIR.mkdirs()
-   }
-   if (!FLAT_REPO_DIR.exists()) {
-      FLAT_REPO_DIR.mkdirs()
-   }
-}
-
-/**
- * Downloads a file from a URL. If there is a problem connecting to the given
- * URL the attempt will be retried NUM_RETRIES times before failing.
+ * Downloads a file from a URL. The download attempt will be tried NUM_RETRIES times before failing.
  *
- * Progress is shown on the command line in the form of the number of bytes
- * downloaded and a percentage of the total. 
+ * Progress is shown on the command line in the form of the number of bytes downloaded and a 
+ * percentage of the total. 
  *
- * Note: We do not validate that the number of bytes downloaded matches the
- *       expected total here; any discrepencies will be caught when checking
- *       the SHA-256s later on.
+ * Note: We do not validate that the number of bytes downloaded matches the expected total here; any
+ * discrepencies will be caught when checking the SHA-256s later on.
  *
  * @param url the file to download
  * @param filename the local file to create for the download
  */
 def download(url, filename) {
 
-   println("File: " + url)
-   BufferedInputStream istream = establishConnection(url, NUM_RETRIES);
-   assert istream != null : "   ***CONNECTION FAILURE***\n   max attempts exceeded; exiting\n"
-   
-   FileOutputStream ostream = new FileOutputStream(filename);
-   def dataBuffer = new byte[1024];
-   int bytesRead;
-   int totalRead;
-   while ((bytesRead = istream.read(dataBuffer, 0, 1024)) != -1) { 
-	   
-     ostream.write(dataBuffer, 0, bytesRead);
-     totalRead += bytesRead
-	      
-     print("\r")
-     if (FILE_SIZE.equals("unknown")) {
-        print("   Downloading: " + totalRead + " of " + FILE_SIZE)
-     }
-     else {
-        int pctComplete = (totalRead / FILE_SIZE) * 100
-        print("   Downloading: " + totalRead + " of " + FILE_SIZE + " (" + pctComplete + "%)")
-     }
-     System.out.flush()
-   }
-   println("")
-	
-   istream.close();
-   ostream.close();
+	println("URL: " + url)
+	def(InputStream istream, size) = establishConnection(url, NUM_RETRIES);
+	assert istream != null : "   ***CONNECTION FAILURE***\n   max attempts exceeded; exiting\n"
+
+	FileOutputStream ostream = new FileOutputStream(filename);
+	def dataBuffer = new byte[1024];
+	int bytesRead;
+	int totalRead;
+	while ((bytesRead = istream.read(dataBuffer, 0, 1024)) != -1) { 
+		ostream.write(dataBuffer, 0, bytesRead);
+		totalRead += bytesRead
+		print("\r")
+		print("   Downloading: " + totalRead + " of " + size)
+		if (!size.equals("???")) {
+			int pctComplete = (totalRead / size) * 100
+			print(" (" + pctComplete + "%)")
+		}
+		print("                                               ") // overwrite gradle timer output
+		System.out.flush()
+	}
+	println()
+	istream.close();
+	ostream.close();
 }
 
 /**
- * Attemps to establish a connection to the given URL. 
+ * Attempts to establish a connection to the given URL 
  *
- * @param url the site to connect to
- * @param retries the number of times to attempt to reconnect if there is a failure
- * @return the InputStream for the URL
+ * @param url the URL to connect to
+ * @param retries the number of times to attempt to connect if there are failures
+ * @return the InputStream for the URL, and the size of the download in bytes as a string
  */
 def establishConnection(url, retries) {
-   for (int i=0; i<retries; i++) {
-      try {
-         println("   Connect attempt " + (i+1) + " of " + retries)
-         URLConnection conn = new URL(url).openConnection();
-         FILE_SIZE = conn.getContentLength();
-         if (FILE_SIZE == -1) {
-            // This can happen if there is a problem retrieving the size; we've seen it happen
-            // in testing. 
-            FILE_SIZE = "unknown" 
-         }
-         return new BufferedInputStream(new URL(url).openStream()); 
-      }
-      catch (Exception e) {
-         println("   Connection error! " + e)
-      }
-   }
+	for (int i = 0; i < retries; i++) {
+		try {
+			if (i == 0) {
+				println("   Connecting...")
+			}
+			else {
+				println("   Connecting (" + (i+1) + "/" + retries + ")...")
+			}
+			URLConnection conn = new URL(url).openConnection();
+			conn.setRequestMethod("HEAD");
+			def size = conn.getContentLengthLong();
+			if (size == -1) {
+				size = "???" 
+			}
+			return [new BufferedInputStream(new URL(url).openStream()), size]; 
+		}
+		catch (Exception e) {
+			println("   Connection error! " + e)
+		}
+	}
 }
 
 /**
@@ -194,191 +266,38 @@ def establishConnection(url, retries) {
  * @param zipFileName the name of the file to unpack
  */
 def unzip(sourceDir, targetDir, zipFileName) {
-   def zip = new ZipFile(new File(sourceDir, zipFileName))
-   
-   zip.entries().findAll { !it.directory }.each { e ->
-      (e.name as File).with { f -> 
-         if (f.parentFile != null) {
-	         File destPath = new File(targetDir.path, f.parentFile.path)
-	         destPath.mkdirs()
-	         File targetFile = new File(destPath.path, f.name)
-	         targetFile.withOutputStream { w -> 
-	            w << zip.getInputStream(e)
-	         }
-	      }
-      }
-   }
+	def zip = new ZipFile(new File(sourceDir, zipFileName))
+	zip.entries().findAll { !it.directory }.each { e ->
+		(e.name as File).with { f -> 
+			if (f.parentFile != null) {
+				File destPath = new File(targetDir.path, f.parentFile.path)
+				destPath.mkdirs()
+				File targetFile = new File(destPath.path, f.name)
+				targetFile.withOutputStream { w -> 
+					w << zip.getInputStream(e)
+				}
+			}
+		}
+	}
+	zip.close()
 }
 
 /**
- * Downloads and stores the necessary dependencies in the local flat repository.
+ * Generates the SHA-256 hash for the given file
  *
- * If the dependency already exists in the downloads folder (DOWNLOADS_DIR) and has the
- * proper checksum, it will NOT be re-downloaded.
+ * @param file the file to generate the SHA-256 hash for
+ * @return the generated SHA-256 hash, or null if the file does not exist
  */
-def populateFlatRepo() {
-
-   // 1. Download all the dependencies and verify their checksums. If the dependency has already
-   //    been download, do NOT download again.
-   File file = new File(DOWNLOADS_DIR, 'dex-tools-2.0.zip')
-   if (!DEX_SHA_256.equals(generateChecksum(file))) {
-      download (DEX_ZIP, file.path)
-      validateChecksum(generateChecksum(file), DEX_SHA_256);
-   }
-  
-   file = new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar')
-   if (!AXML_SHA_256.equals(generateChecksum(file))) {
-      download (AXML_ZIP, file.path)
-      validateChecksum(generateChecksum(file), AXML_SHA_256);
-   }
-   
-   file = new File(DOWNLOADS_DIR, 'hfsexplorer-0_21-bin.zip')
-   if (!HFS_SHA_256.equals(generateChecksum(file))) {
-      download (HFS_ZIP, file.path)
-      validateChecksum(generateChecksum(file), HFS_SHA_256);
-   }
-   
-   file = new File(DOWNLOADS_DIR, 'yajsw-stable-12.12.zip')
-   if (!YAJSW_SHA_256.equals(generateChecksum(file))) {
-      download (YAJSW_ZIP, file.path)
-      validateChecksum(generateChecksum(file), YAJSW_SHA_256);
-   }
-   
-   file = new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip')
-   if (!PYDEV_SHA_256.equals(generateChecksum(file))) {
-      download (PYDEV_ZIP, file.path)
-      validateChecksum(generateChecksum(file), PYDEV_SHA_256);
-   }
-   
-   file = new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip')
-   if (!CDT_SHA_256.equals(generateChecksum(file))) {
-      download (CDT_ZIP, file.path)
-      validateChecksum(generateChecksum(file), CDT_SHA_256);
-   }
-   
-   // 2. Unzip the dependencies
-   unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
-   unzipHfsx()
-
-   // 3. Copy the necessary jars to the flatRepo directory. Yajsw, CDT, and PyDev go directly into
-   //    the source repository.
-   copyDexTools()
-   copyAXML()
-   copyHfsx()
-   copyYajsw()
-   copyPyDev()
-   copyCdt()
-}
-
-/**
- * Generates the SHA-256 for the given file
- *
- * @param file the file to generate the checksum for
- * @return the generated checksum
- */
-def generateChecksum(file) {
-   if (!file.exists()) {
-      return null
-   }
-   MessageDigest md = MessageDigest.getInstance("SHA-256");
-   md.update(Files.readAllBytes(Paths.get(file.path)));
-   byte[] digest = md.digest();
-   StringBuilder sb = new StringBuilder();
-   for (byte b : digest) {
-      sb.append(String.format("%02x", b));
-   }
-   
-   return sb.toString();
-}
-
-/**
- * Compares two checksums and generates an assert failure if they do not match
- *
- * @param sourceSha256 the checksum to validate
- * @param expectedSha256 the expected checksum
- */
-def validateChecksum(sourceSha256, expectedSha256) {
-   	assert(sourceSha256.equals(expectedSha256));    
-}
-
-/**
- * Unzips the hfsx zip file
- */
-def unzipHfsx() {
-   def hfsxdir = getOrCreateTempHfsxDir()
-   unzip (DOWNLOADS_DIR, hfsxdir, "hfsexplorer-0_21-bin.zip")
-}
-
-/**
- * Copies the dex-tools jars to the flat repository
- *
- * Note: This will only copy files beginning with "dex-"
- */
-def copyDexTools() {
-   FileUtils.copyDirectory(new File(DOWNLOADS_DIR, 'dex2jar-2.0/lib/'), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
-}
-
-/**
- * Copies the AXMLPrinter2 jar to the flat repository
- */
-def copyAXML() {
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'AXMLPrinter2.jar'), new File(FLAT_REPO_DIR, "AXMLPrinter2.jar"));
-}
-
-/**
- * Copies the necessary hfsx jars to the flat repository
- */
-def copyHfsx() {
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/csframework.jar"), new File(FLAT_REPO_DIR, "csframework.jar"));
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx_dmglib.jar"), new File(FLAT_REPO_DIR, "hfsx_dmglib.jar"));
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx.jar"), new File(FLAT_REPO_DIR, "hfsx.jar"));
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, "hfsx/lib/iharder-base64.jar"), new File(FLAT_REPO_DIR, "iharder-base64.jar"));
-}
-
-/**
- * Copies the yajswdir zip to its location in the GhidraServer project.
- */
-def copyYajsw() {
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, "yajsw-stable-12.12.zip"), new File(REPO_DIR, "Ghidra/Features/GhidraServer/build/yajsw-stable-12.12.zip"));
-}
-
-/**
- * Copies the pydev zip to its bin repository location
- */
-def copyPyDev() {
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'PyDev 6.3.1.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/PyDev 6.3.1.zip"));
-}
-
-/**
- * Copies the cdt zip to its bin repository location
- */
-def copyCdt() {
-   FileUtils.copyFile(new File(DOWNLOADS_DIR, 'cdt-8.6.0.zip'), new File(REPO_DIR, "GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/cdt-8.6.0.zip"));
-}
-
-/**
- * Creates a temporary folder to house the hfsx zip contents
- *
- * @return the newly-created hfsx directory object
- */
-def getOrCreateTempHfsxDir() {
-   def hfsxdir = new File (DOWNLOADS_DIR, "hfsx")
-   if (!hfsxdir.exists()) {
-       hfsxdir.mkdir()
-   }
-
-   return hfsxdir;
-}
-
-/**
- * Performs any cleanup operations that need to be performed after the flat repo has
- * been populated.
- */
-def cleanup() {
-   // Uncomment this if we want to delete the downloads folder. For now, leave this and 
-   // depend on a gradle clean to wipe it out.
-   //
-   //if (DOWNLOADS_DIR.exists()) {
-   //   FileUtils.deleteDirectory(DOWNLOADS_DIR)
-   //}
+def generateHash(file) {
+	if (!file.exists()) {
+		return null
+	}
+	MessageDigest md = MessageDigest.getInstance("SHA-256");
+	md.update(Files.readAllBytes(Paths.get(file.path)));
+	byte[] digest = md.digest();
+	StringBuilder sb = new StringBuilder();
+	for (byte b : digest) {
+		sb.append(String.format("%02x", b));
+	}
+	return sb.toString();
 }

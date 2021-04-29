@@ -2,7 +2,7 @@
 <xsl:stylesheet
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-<xsl:import href="/usr/share/sgml/docbook/xsl-stylesheets/fo/docbook.xsl"/>
+<xsl:import href="http://docbook.sourceforge.net/release/xsl/current/fo/docbook.xsl"/>
 
 <xsl:include href="decompileplugin_common.xsl" />
 
@@ -16,6 +16,6 @@
 
 <xsl:param name="admon.textlabel" select="0"/>  <!-- Don't display title for important/note tags -->
 
-<xsl:param name="admon.graphics.path" select="'./images/'"/>
+<xsl:param name="admon.graphics.path" select="'../../../build/images'"/>
 
 </xsl:stylesheet>

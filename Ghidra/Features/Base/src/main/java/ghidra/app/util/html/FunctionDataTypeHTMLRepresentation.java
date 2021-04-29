@@ -88,7 +88,7 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 		GenericCallingConvention genericCallingConvention =
 			functionDefinition.getGenericCallingConvention();
 		String modifier = genericCallingConvention != GenericCallingConvention.unknown
-				? (" " + genericCallingConvention.name())
+				? (" " + genericCallingConvention.getDeclarationName())
 				: "";
 		return new TextLine(
 			HTMLUtilities.friendlyEncodeHTML(returnDataType.getDisplayName()) + modifier);

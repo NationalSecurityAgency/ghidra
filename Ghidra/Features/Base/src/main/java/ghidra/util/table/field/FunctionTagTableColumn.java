@@ -27,7 +27,7 @@ import ghidra.program.model.listing.Program;
  * will be displayed as a set of comma-delimited strings, in sorted order.
  */
 public class FunctionTagTableColumn
-		extends AbstractProgramBasedDynamicTableColumn<Function, String> {
+		extends ProgramBasedDynamicTableColumnExtensionPoint<Function, String> {
 
 	@Override
 	public String getColumnName() {

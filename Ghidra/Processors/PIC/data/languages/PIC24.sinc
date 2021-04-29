@@ -86,8 +86,8 @@ define ram offset=0x36 size=2 [ RCOUNT ];  # Repeat counter
 # define ram offset=0x38 size=2 [ DCOUNT ];  # 13 bits long                    DO Loop counter
 define ram offset=0x54 size=1 [ TBLPAG ];  # 7bit Data Table Page Address
 @else
-define ram offset=0x31 size=1 [ TBLPAG ];  # 8bit Data Table Page Address
-define ram offset=0x33 size=1 [ PSVPAG ];  # Program Memory Visibility Page Address Pointer
+define ram offset=0x32 size=1 [ TBLPAG ];  # 8bit Data Table Page Address
+define ram offset=0x34 size=1 [ PSVPAG ];  # Program Memory Visibility Page Address Pointer
 define ram offset=0x36 size=2 [ RCOUNT ];  # Repeat counter
 define ram offset=0x38 size=2 [ DCOUNT ];  # 13 bits long                    DO Loop counter
 define ram offset=0x3A size=3 [ DOSTART ];

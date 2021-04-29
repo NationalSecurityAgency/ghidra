@@ -58,6 +58,11 @@ class Funcdata {
     baddata_present = 0x800,	///< Set if function flowed into bad data
     double_precis_on = 0x1000	///< Set if we are performing double precision recovery
   };
+  enum {
+    traverse_actionalt = 1,	///< Alternate path traverses a solid action or \e non-incidental COPY
+    traverse_indirect = 2,	///< Main path traverses an INDIRECT
+    traverse_indirectalt = 4	///< Alternate path traverses an INDIRECT
+  };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
   uint4 high_level_index;	///< Creation index of first Varnode created after HighVariables are created
@@ -116,6 +121,7 @@ class Funcdata {
   void nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop);
   void nodeSplitRawDuplicate(BlockBasic *b,BlockBasic *bprime);
   void nodeSplitInputPatch(BlockBasic *b,BlockBasic *bprime,int4 inedge);
+  static bool isAlternatePathValid(const Varnode *vn,uint4 flags);
   static bool descendantsOutside(Varnode *vn);
   static void saveVarnodeXml(ostream &s,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
   static bool checkIndirectUse(Varnode *vn);
@@ -363,9 +369,9 @@ public:
 
   HighVariable *findHigh(const string &name) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
-  bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,const ParamTrial &trial) const;
-  bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial) const;
-  bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial) const;
+  bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,uint4 flags,const ParamTrial &trial) const;
+  bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;
+  bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,uint4 mainFlags) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
   void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image

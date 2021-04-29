@@ -6,6 +6,19 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.2.4 Change History (April 2021)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Improved support running under JDK 16.  Note that Ghidra still only officially supports JDK 11 LTS. (GP-824, Issue #2879, #2888)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>API</I>. Corrected error condition which could occur if overlay memory block duplicates another memory space name or overlay block name in a case-insensitive manner.  The names are intended to be case-sensitive. (GP-839, Issue #2898)</li>
+    <li><I>Demangler</I>. Improved handling of mangled names on thunk functions which were previously left unmangled and could prevent name of underlying thunked function from appearing. (GP-809)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.2.3 Change History (March 2021)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
@@ -23,7 +36,7 @@
 <blockquote><p><u>Bugs</u></p>
 <ul>
     <li><I>Analysis</I>. The RTTI analyzer now runs prior to Reference analysis so that references into vftables are not turned into code or data before the vftables are created. (GP-517)</li>
-    <li><I>API</I>. <code>Funtion.getCalledFunctions(TaskMonitor)</code> and <code>Function.getCallingFunctions(TaskMonitor)</code> now support passing <code>null</code> for the task monitor parameter, which previously would have thrown an exception. (GP-589, Issue #2643)</li>
+    <li><I>API</I>. <code>Function.getCalledFunctions(TaskMonitor)</code> and <code>Function.getCallingFunctions(TaskMonitor)</code> now support passing <code>null</code> for the task monitor parameter, which previously would have thrown an exception. (GP-589, Issue #2643)</li>
     <li><I>Data Types</I>. Corrected segmented 32-bit pointer datatype address generation for 16:16 x86 far pointers. (GP-534, Issue #2548)</li>
     <li><I>Decompiler</I>. Fixed Decompiler issue where, when a function name extends beyond the line limit, an end-of-line comment could wrap around to additional lines without including additional <code>//</code> comment indicators. (GP-473)</li>
     <li><I>Decompiler</I>. Corrected an exception that could occur when attempting to edit function signature from the Decompiler. (GP-597, Issue #2601)</li>

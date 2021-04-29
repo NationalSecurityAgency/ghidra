@@ -32,4 +32,10 @@ public class DemangledFunctionIndirect extends AbstractDemangledFunctionDefiniti
 	protected String getTypeString() {
 		return EMPTY_STRING;
 	}
+
+	@Override
+	protected void addFunctionPointerParens(StringBuilder buffer, String s) {
+		// do not display pointer parens
+		buffer.append(s);
+	}
 }

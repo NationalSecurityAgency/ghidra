@@ -1,0 +1,111 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Troubleshooting</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger: Troubleshooting</H1>
+
+    <H2>Error Console</H2>
+
+    <P>The first place to look when you're having trouble is the error console. In Eclipse, this is
+    just the "Console" window. In Ghidra, it can be accessed from the main application window.
+    Sometimes it reports known issues; sometimes it reports unexpected behavior; etc., which may be
+    clues to exactly what has gone wrong.</P>
+
+    <H2>Settings and Toggles</H2>
+
+    <P>This list is not exhaustive, but here are some options to examine if you're having trouble.
+    In the FrontEnd tool, under <SPAN class="menu">Edit &rarr; Tool Options</SPAN>, select
+    "Debugger.Workflow."</P>
+
+    <UL>
+      <LI>"Map modules..." and "Map sections..." control how the debugger attempts to map static
+      and dynamic memory.</LI>
+
+      <LI>"Disassemble..." triggers automatic disassembly in the dynamic view.</LI>
+
+      <LI>"Show debugger interpreter..." automatically provides access to the command line.</LI>
+    </UL>
+
+    <P>In the Dynamic Listing:</P>
+
+    <UL>
+      <LI>"Auto-Import Current Module" will cause the user to be prompted for information to sync
+      static and dynamic listings.</LI>
+
+      <LI>"Sync to Static Listing" controls the tracking of the Static listing.</LI>
+    </UL>
+
+    <P>In the Objects provider:</P>
+
+    <UL>
+      <LI>"Record Automatically" causes a trace to be started when a Process object comes into
+      view. If the process object is not exposed automatically, you may have to expand the tree to
+      trigger the trace. If auto-record is toggled off, you'll need to hit "Record (R)" with the
+      process selected to start a trace.</LI>
+
+      <LI>"Subscribe to..." causes a particular obejct to be tracked by the trace. Processes,
+      threads, registers, memory, stack, and so forth are tracked automatically, but you may wish
+      to add other objects ad hoc.</LI>
+    </UL>
+
+    <P>In the Threads provider:</P>
+
+    <UL>
+      <LI>The "Track...to latest snap" toggle determines whether the caret (and all resulting
+      information) should track the current thread position as it updates.</LI>
+
+      <LI>The "Set to automatically save..." toggle causes traces to be saved into the Ghidra
+      program database at the end of a session. (Open sessions will be re-opened with the tool in
+      the Threads window, reflected in the thin tabs at its top.)</LI>
+
+      <LI>The "Synchronize..." toggle attempts to maintain synchronization between the Object
+      provider (i.e. the active target information) and the trace.</LI>
+    </UL>
+
+    <H2><A name="breakpoints_ineffective">My Breakpoints Aren't Working</A></H2>
+
+    <P>If your target is not breaking as expected, chances are the breakpoint has not actually been
+    sent to the debugger. Breakpoints in the static listing are not necessarily effective for a
+    target. Many things depend on tracing and module mapping to work correctly. Occasionally,
+    either because of configuration options, or some other hiccup, these dependencies are not met.
+    Futhermore, Ghidra can only send breakpoints to a target while it is suspended. If you are
+    trying, for example, to break before "main", you must ensure Ghidra has a chance to place the
+    breakpoint before the target would reach it. This may require using the command interpreter or
+    changing your native debugger's options. Otherwise, verify that you are actually tracing the
+    target where you expected a breakpoint to appear. Then, verify that the module containing your
+    breakpoint has been mapped into the trace.</P>
+
+    <H2>My Target is not Being Traced</H2>
+
+    <P>If the dynamic listing is empty, chances are, you are not recording your target. If that is
+    the case, right-click your target in the <A href=
+    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects</A> window and select
+    "Record". Please note that this action is enabled on any object, but is ignored if nothing
+    knows how to record it. Currently, only user-mode processes running on a 64-bit x86 system are
+    known to work well. Be sure you have selected the process, not a thread.</P>
+
+    <H2>My Modules are not Mapped in</H2>
+
+    <P>If changing your cursor location in the static listing does not automatically synchronize
+    the dynamic listing to the same place, and vice versa, chances are the module is not mapped.
+    (It is also possible you disabled this sync feature, but that is not usually the case.) You can
+    also check the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
+    window to see if the memory ranges are mapped properly. To attempt to map the module, use the
+    <A href="help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html">Modules</A> window.
+    Right-click the module where you expected to sync and select "Map Modules." If you do not see
+    the program you expected, it may be because it is not named in a way that Ghidra would
+    recognize it as the given module. Currently, the program's name must contain (case insensitive)
+    the module's filename (ignoring the full path). A user action to remedy this is a known feature
+    gap.</P>
+  </BODY>
+</HTML>

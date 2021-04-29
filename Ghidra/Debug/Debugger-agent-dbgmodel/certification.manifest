@@ -1,0 +1,6 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+Module.manifest||GHIDRA||||END|
+src/javaprovider/def/javaprovider.def||GHIDRA||||END|
+src/javaprovider/rc/javaprovider.rc||GHIDRA||||END|
+src/main/resources/agent/dbgmodel/model/impl/dbgmodel_schema.xml||GHIDRA||||END|

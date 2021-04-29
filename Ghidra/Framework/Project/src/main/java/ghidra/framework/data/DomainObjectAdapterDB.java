@@ -481,7 +481,8 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	 */
 	protected boolean propertyChanged(String propertyName, Object oldValue, Object newValue) {
 		setChanged(true);
-		fireEvent(new DomainObjectChangeRecord(DomainObject.DO_PROPERTY_CHANGED, name, name));
+		fireEvent(
+			new DomainObjectChangeRecord(DomainObject.DO_PROPERTY_CHANGED, propertyName, newValue));
 		return true;
 	}
 

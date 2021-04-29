@@ -376,6 +376,13 @@ public:
 #endif
 };
 
+/// \brief Node for a forward traversal of a Varnode expression
+struct TraverseNode {
+  const Varnode *vn;		///< Varnode at the point of traversal
+  uint4 flags;			///< Flags associated with the node
+  TraverseNode(const Varnode *v,uint4 f) { vn = v; flags = f; }
+};
+
 bool contiguous_test(Varnode *vn1,Varnode *vn2);	///< Test if Varnodes are pieces of a whole
 Varnode *findContiguousWhole(Funcdata &data,Varnode *vn1,
 				  Varnode *vn2);	///< Retrieve the whole Varnode given pieces

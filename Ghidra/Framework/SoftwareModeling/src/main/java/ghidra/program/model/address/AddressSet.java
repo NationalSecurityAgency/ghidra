@@ -1375,4 +1375,41 @@ public class AddressSet implements AddressSetView {
 		}
 		return null;
 	}
+
+	/**
+	 * Delete all addresses from the minimum address in the set up to and including toAddr.
+	 * Addresses less-than-or-equal to specified 
+	 * address based upon {@link Address} comparison.
+	 * 
+	 * @param toAddr only addresses greater than toAddr will be left in the set.
+	 */
+	public void deleteFromMin(Address toAddr) {
+		if (isEmpty()) {
+			return;
+		}
+		// check if toAddr is already before the start of the set
+		if (toAddr.compareTo(getMinAddress()) < 0) {
+			return;
+		}
+		delete(getMinAddress(), toAddr);
+	}
+
+	/**
+	 * Delete all addresses starting at the fromAddr to the maximum address in the set.
+	 * Addresses greater-than-or-equal to specified 
+	 * address based upon {@link Address} comparison.
+	 * 
+	 * @param fromAddr only addresses less than fromAddr will be left in the set.
+	 */
+	public void deleteToMax(Address fromAddr) {
+		if (isEmpty()) {
+			return;
+		}
+
+		// check if endAddr is already past the end of the set
+		if (fromAddr.compareTo(getMaxAddress()) > 0) {
+			return;
+		}
+		delete(fromAddr, getMaxAddress());
+	}
 }

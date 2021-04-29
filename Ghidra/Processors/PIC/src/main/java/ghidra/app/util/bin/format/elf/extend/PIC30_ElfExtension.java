@@ -247,6 +247,11 @@ public class PIC30_ElfExtension extends ElfExtension {
 		return null;
 	}
 
+	@Override
+	public int getDefaultAlignment(ElfLoadHelper elfLoadHelper) {
+		return 4; // alignment for external symbol allocation
+	}
+
 	private static class PIC30FilteredDataInputStream extends FilterInputStream {
 
 		// BYTES:  <byte> <pad>

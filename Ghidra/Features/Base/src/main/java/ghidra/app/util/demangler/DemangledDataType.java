@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -404,6 +406,9 @@ public class DemangledDataType extends DemangledType {
 	}
 
 	static Structure createPlaceHolderStructure(String dtName, Demangled namespace) {
+		if (StringUtils.isBlank(dtName)) {
+			throw new IllegalArgumentException("Name cannot be blank");
+		}
 		StructureDataType structDT = new StructureDataType(dtName, 0);
 		structDT.setDescription("PlaceHolder Structure");
 		structDT.setCategoryPath(getDemanglerCategoryPath(dtName, namespace));

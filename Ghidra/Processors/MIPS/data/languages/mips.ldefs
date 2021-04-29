@@ -10,8 +10,8 @@
             manualindexfile="../manuals/mipsM16.idx"
             id="MIPS:BE:32:default">
     <description>MIPS32 32-bit addresses, big endian, with mips16e</description>
-    <compiler name="default" spec="mips32.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="mips32.cspec" id="windows"/>
+    <compiler name="default" spec="mips32be.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips32be.cspec" id="windows"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -26,8 +26,8 @@
             manualindexfile="../manuals/mipsM16.idx"
             id="MIPS:LE:32:default">
     <description>MIPS32 32-bit addresses, little endian, with mips16e</description>
-    <compiler name="default" spec="mips32.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="mips32.cspec" id="windows"/>
+    <compiler name="default" spec="mips32le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -284,7 +284,7 @@
             manualindexfile="../manuals/mipsMic.idx"
             id="MIPS:BE:32:micro">
     <description>MIPS32 32-bit addresses, big endian, with microMIPS</description>
-    <compiler name="default" spec="mips32.cspec" id="default"/>
+    <compiler name="default" spec="mips32be.cspec" id="default"/>
     <external_name tool="gnu" name="mips:micromips"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -299,8 +299,8 @@
             manualindexfile="../manuals/mipsMic.idx"
             id="MIPS:LE:32:micro">
     <description>MIPS32 32-bit addresses, little endian, with microMIPS</description>
-    <compiler name="default" spec="mips32.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="mips32.cspec" id="windows"/>
+    <compiler name="default" spec="mips32le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
   </language>

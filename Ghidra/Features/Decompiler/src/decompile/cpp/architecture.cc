@@ -27,7 +27,7 @@
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 4;
-const uint4 ArchitectureCapability::minorversion = 0;
+const uint4 ArchitectureCapability::minorversion = 1;
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)
@@ -1218,6 +1218,26 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
     else if (elname == "inferptrbounds")
       parseInferPtrBounds(*iter);
   }
+
+  el = store.getTag("specextensions");		// Look for any user-defined configuration document
+  if (el != (const Element *)0) {
+    const List &userlist(el->getChildren());
+    for(iter=userlist.begin();iter!=userlist.end();++iter) {
+      const string &elname( (*iter)->getName() );
+      if (elname == "prototype")
+        parseProto(*iter);
+     else if (elname == "callfixup") {
+        pcodeinjectlib->restoreXmlInject(archid+" : compiler spec", (*iter)->getAttributeValue("name"),
+					 InjectPayload::CALLFIXUP_TYPE, *iter);
+      }
+      else if (elname == "callotherfixup") {
+        userops.parseCallOtherFixup(*iter,this);
+      }
+      else if (elname == "global")
+        globaltags.push_back(*iter);
+    }
+  }
+
   // <global> tags instantiate the base symbol table
   // They need to know about all spaces, so it must come
   // after parsing of <stackpointer> and <spacebase>

@@ -17,8 +17,6 @@ package ghidra.program.model.pcode;
 
 import java.util.Iterator;
 
-import org.xml.sax.Attributes;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -123,22 +121,22 @@ public class Varnode {
 
 	/**
 	 * Determine if this varnode contains the specified address
-	 * @param address the address for which to check
+	 * @param addr the address for which to check
 	 * @return true if this varnode contains the specified address
 	 */
-	public boolean contains(Address address) {
-		if (spaceID != address.getAddressSpace().getSpaceID()) {
+	public boolean contains(Address addr) {
+		if (spaceID != addr.getAddressSpace().getSpaceID()) {
 			return false;
 		}
 		if (isConstant() || isUnique() || isHash()) {
 			// this is not really a valid use case
-			return offset == address.getOffset();
+			return offset == addr.getOffset();
 		}
 		long endOffset = offset;
 		if (size > 0) {
 			endOffset = offset + size - 1;
 		}
-		long addrOffset = address.getOffset();
+		long addrOffset = addr.getOffset();
 		if (offset > endOffset) { // handle long-wrap condition
 			return offset <= addrOffset;
 		}
@@ -320,110 +318,16 @@ public class Varnode {
 	 * @param buf is the builder to which to append XML
 	 */
 	public void buildXML(StringBuilder buf) {
-		buildXMLAddress(buf, address, size);
+		AddressXML.buildXML(buf, address, size);
 	}
 
 	/**
-	 * Build an XML document representation of a varnode with the given address and size.
-	 * 
-	 * @param resBuf is the builder to which to append the XML
-	 * @param addr location varnode is defined at
-	 * @param size size of the varnode.
-	 */
-	public static void buildXMLAddress(StringBuilder resBuf, Address addr, int size) {
-		resBuf.append("<addr");
-		appendSpaceOffset(resBuf, addr);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		resBuf.append("/>");
-	}
-
-	/**
-	 * Convert an address into an XML document.
-	 * 
-	 * @param addr -- Address to convert to XML
-	 * @return XML string
-	 */
-	public static String buildXMLAddress(Address addr) {
-
-		if ((addr == null) || (addr == Address.NO_ADDRESS)) {
-			return "<addr/>";
-		}
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<addr");
-		appendSpaceOffset(resBuf, addr);
-		resBuf.append("/>");
-		return resBuf.toString();
-	}
-
-	/**
-	 * Convert a varnode array into an XML document.
-	 * 
-	 * @param varnodes sequence of storage varnodes
-	 * @param logicalsize the logical size value of the varnode
-	 * @return XML string
-	 */
-	public static String buildXMLAddress(Varnode[] varnodes, int logicalsize) {
-
-		if (varnodes == null) {
-			return "<addr/>";
-		}
-		if ((varnodes.length == 1) && (logicalsize == 0)) {
-			StringBuilder buf = new StringBuilder();
-			buildXMLAddress(buf, varnodes[0].address, varnodes[0].size);
-			return buf.toString();
-		}
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<addr space=\"join\"");
-		int piece = 0;
-		for (Varnode vn : varnodes) {
-			resBuf.append(" piece");
-			resBuf.append(Integer.toString(++piece));
-			resBuf.append("=\"");
-			buildVarnodePiece(resBuf, vn.address, vn.size);
-			resBuf.append("\"");
-		}
-		if (logicalsize != 0) {
-			resBuf.append(" logicalsize=\"").append(logicalsize).append('\"');
-		}
-		resBuf.append("/>");
-		return resBuf.toString();
-	}
-
-	private static void buildVarnodePiece(StringBuilder buf, Address addr, int size) {
-		AddressSpace space = addr.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			space = space.getPhysicalSpace();
-			addr = space.getAddress(addr.getOffset());
-		}
-		buf.append(space.getName());
-		buf.append(":0x");
-		long off = addr.getUnsignedOffset();
-		buf.append(Long.toHexString(off));
-		buf.append(':');
-		buf.append(Integer.toString(size));
-	}
-
-	public static void appendSpaceOffset(StringBuilder buf, Address addr) {
-		AddressSpace space = addr.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			if (space.getType() != AddressSpace.TYPE_OTHER) {
-				space = space.getPhysicalSpace();
-				addr = space.getAddress(addr.getOffset());
-			}
-		}
-		SpecXmlUtils.encodeStringAttribute(buf, "space", space.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", addr.getUnsignedOffset());
-	}
-
-	/**
-	 * Build a varnode from a SAX parse tree node
+	 * Build a Varnode from an XML stream
 	 * 
 	 * @param parser the parser
 	 * @param factory pcode factory used to create valid pcode
-	 * 
 	 * @return new varnode element based on info in the XML.
-	 * 
-	 * @throws PcodeXMLException
+	 * @throws PcodeXMLException if XML is improperly formed
 	 */
 	public static Varnode readXML(XmlPullParser parser, PcodeFactory factory)
 			throws PcodeXMLException {
@@ -442,7 +346,7 @@ public class Varnode {
 					return vn;
 				}
 			}
-			Address addr = readXMLAddress(el, factory.getAddressFactory());
+			Address addr = AddressXML.readXML(el, factory.getAddressFactory());
 			if (addr == null) {
 				return null;
 			}
@@ -525,7 +429,7 @@ public class Varnode {
 
 	/**
 	 * Convert this varnode to an alternate String representation based on a specified language.
-	 * @param language
+	 * @param language is the specified Language
 	 * @return string representation
 	 */
 	public String toString(Language language) {
@@ -575,126 +479,5 @@ public class Varnode {
 		result = prime * result + size;
 		result = prime * result + spaceID;
 		return result;
-	}
-
-	/**
-	 * Create an address from a SAX parse tree node.
-	 * 
-	 * @param el SAX parse tree element
-	 * @param addrFactory address factory used to create valid addresses
-	 * @return Address created from XML info
-	 */
-	public static Address readXMLAddress(XmlElement el, AddressFactory addrFactory) {
-		String localName = el.getName();
-		if (localName.equals("spaceid")) {
-			AddressSpace spc = addrFactory.getAddressSpace(el.getAttribute("name"));
-			int spaceid = spc.getSpaceID();
-			spc = addrFactory.getConstantSpace();
-			return spc.getAddress(spaceid);
-		}
-		else if (localName.equals("iop")) {
-			int ref = SpecXmlUtils.decodeInt(el.getAttribute("value"));
-			AddressSpace spc = addrFactory.getConstantSpace();
-			return spc.getAddress(ref);
-		}
-		String space = el.getAttribute("space");
-		if (space == null) {
-			return Address.NO_ADDRESS;
-		}
-		long offset = SpecXmlUtils.decodeLong(el.getAttribute("offset"));
-		AddressSpace spc = addrFactory.getAddressSpace(space);
-		if (spc == null) {
-			return null;
-		}
-		return spc.getAddress(offset);
-	}
-
-	public static Address readXMLAddress(String localName, Attributes attr,
-			AddressFactory addrFactory) {
-		if (localName.equals("spaceid")) {
-			AddressSpace spc = addrFactory.getAddressSpace(attr.getValue("name"));
-			int spaceid = spc.getSpaceID();
-			spc = addrFactory.getConstantSpace();
-			return spc.getAddress(spaceid);
-		}
-		else if (localName.equals("iop")) {
-			int ref = SpecXmlUtils.decodeInt(attr.getValue("value"));
-			AddressSpace spc = addrFactory.getConstantSpace();
-			return spc.getAddress(ref);
-		}
-		String space = attr.getValue("space");
-		if (space == null) {
-			return Address.NO_ADDRESS;
-		}
-		long offset = SpecXmlUtils.decodeLong(attr.getValue("offset"));
-		AddressSpace spc = addrFactory.getAddressSpace(space);
-		if (spc == null) {
-			return Address.NO_ADDRESS;
-		}
-		return spc.getAddress(offset);
-	}
-
-	/**
-	 * Parse an XML containing an address.  The format options are simple enough that we don't try to invoke
-	 * an actual XML parser but just walk the string
-	 * @param addrstring  is the string containing the XML tag
-	 * @param addrfactory is the factory that can produce addresses
-	 * @param refSpace can be null but is otherwise the reference AddressSpace from which the request is sent.
-	 * @return the created Address or Address.NO_ADDRESS in some special cases
-	 * @throws PcodeXMLException
-	 */
-	public static Address readXMLAddress(String addrstring, AddressFactory addrfactory,
-			AddressSpace refSpace) throws PcodeXMLException {
-
-		int tagstart = addrstring.indexOf('<');
-		if (tagstart >= 0) {
-			tagstart += 1;
-			if (addrstring.startsWith("spaceid", tagstart)) {
-				tagstart += 8;
-				int attrstart = addrstring.indexOf("name=\"", tagstart);
-				if (attrstart >= 0) {
-					attrstart += 6;
-					int nameend = addrstring.indexOf('\"', attrstart);
-					if (nameend >= 0) {
-						AddressSpace spc =
-							addrfactory.getAddressSpace(addrstring.substring(attrstart, nameend));
-						int spaceid = spc.getSpaceID();
-						spc = addrfactory.getConstantSpace();
-						return spc.getAddress(spaceid);
-					}
-				}
-
-			}
-			// There are several tag forms where we essentially want to just look for 'space' and 'offset' attributes
-			// don't explicitly check the tag name
-			int spacestart = addrstring.indexOf("space=\"");
-			if (spacestart >= 4) {
-				spacestart += 7;
-				int spaceend = addrstring.indexOf('"', spacestart);
-				if (spaceend >= spacestart) {
-					String spcname = addrstring.substring(spacestart, spaceend);
-					int offstart = addrstring.indexOf("offset=\"");
-					if (offstart >= 4) {
-						offstart += 8;
-						int offend = addrstring.indexOf('"', offstart);
-						if (offend >= offstart) {
-							String offstr = addrstring.substring(offstart, offend);
-							AddressSpace spc = addrfactory.getAddressSpace(spcname);
-							// Unknown spaces may result from "spacebase" registers defined in cspec
-							if (spc == null) {
-								return Address.NO_ADDRESS;
-							}
-							long offset = SpecXmlUtils.decodeLong(offstr);
-							Address addr = spc.getAddress(offset);
-							if (refSpace != null && refSpace.isOverlaySpace()) {
-								return refSpace.getOverlayAddress(addr);
-							}
-							return addr;
-						}
-					}
-				}
-			}
-		}
-		throw new PcodeXMLException("Badly formed address: " + addrstring);
 	}
 }

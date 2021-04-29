@@ -17,6 +17,7 @@ src/decompile/datatests/forloop_thruspecial.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_varused.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_withskip.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
+src/decompile/datatests/multiret.xml||GHIDRA||||END|
 src/decompile/datatests/namespace.xml||GHIDRA||||END|
 src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
@@ -25,9 +26,11 @@ src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
 src/decompile/datatests/promotecompare.xml||GHIDRA||||END|
 src/decompile/datatests/readvolatile.xml||GHIDRA||||END|
+src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
 src/decompile/datatests/twodim.xml||GHIDRA||||END|
 src/decompile/datatests/wayoffarray.xml||GHIDRA||||END|
+src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/cspec.xml||GHIDRA||||END|
 src/main/doc/cspec_html.xsl||GHIDRA||||END|
 src/main/doc/decompileplugin.xml||GHIDRA||||END|

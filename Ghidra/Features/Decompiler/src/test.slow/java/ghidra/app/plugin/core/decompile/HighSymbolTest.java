@@ -17,11 +17,8 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
-
 import org.junit.Test;
 
-import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.equate.SetEquateCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -30,7 +27,6 @@ import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.component.ClangTextField;
-import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.actions.IsolateVariableTask;
 import ghidra.app.plugin.core.decompile.actions.RenameVariableTask;
 import ghidra.framework.options.Options;
@@ -47,36 +43,6 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	@Override
 	protected String getProgramName() {
 		return "Winmine__XP.exe.gzf";
-	}
-
-	protected ClangTextField getLineStarting(String val) {
-		DecompilerPanel panel = provider.getDecompilerPanel();
-		List<Field> fields = panel.getFields();
-		for (Field field : fields) {
-			ClangTextField textField = (ClangTextField) field;
-			String text = textField.getText().trim();
-			if (text.startsWith(val)) {
-				return textField;
-			}
-		}
-		return null;
-	}
-
-	protected ClangTextField getLineContaining(String val) {
-		DecompilerPanel panel = provider.getDecompilerPanel();
-		List<Field> fields = panel.getFields();
-		for (Field field : fields) {
-			ClangTextField textField = (ClangTextField) field;
-			String text = textField.getText();
-			if (text.contains(val)) {
-				return textField;
-			}
-		}
-		return null;
-	}
-
-	protected HighFunction getHighFunction() {
-		return provider.getController().getHighFunction();
 	}
 
 	private void renameGlobalVariable(HighSymbol highSymbol, ClangToken tokenAtCursor,
@@ -114,6 +80,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 			options.setBoolean("Stack", false);
 		});
 	}
+
 	private void renameVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
 		RenameVariableTask rename =
 			new RenameVariableTask(provider.getTool(), highSymbol.getProgram(),

@@ -44,6 +44,7 @@ public class OneShotAnalysisCommand extends BackgroundCommand {
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		Program program = (Program) obj;
 		try {
+			monitor.setMessage(analyzer.getName());
 			return analyzer.added(program, set, monitor, log);
 		}
 		catch (CancelledException e) {

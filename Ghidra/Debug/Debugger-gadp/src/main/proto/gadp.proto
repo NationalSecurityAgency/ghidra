@@ -1,0 +1,605 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package ghidra.dbg.gadp.protocol;
+
+enum ErrorCode {
+	EC_UNKNOWN = 0;
+	EC_BAD_REQUEST = 1;
+	EC_NO_VERSION = 2;
+	EC_NO_OBJECT = 3;
+	EC_NO_INTERFACE = 4;
+	EC_BAD_ARGUMENT = 5;
+	EC_BAD_ADDRESS = 6;
+	EC_NOT_SUPPORTED = 7;
+	EC_MEMORY_ACCESS = 8;
+	EC_REGISTER_ACCESS = 9;
+	EC_USER_ERROR = 10;
+	EC_MODEL_ACCESS = 11;
+}
+
+// For testing: cause the server to report an unrecognized request error
+message ErrorRequest {
+}
+
+message ErrorReply {
+	ErrorCode code = 1;
+	string message = 2;
+}
+
+message ConnectRequest {
+	repeated string version = 1;
+}
+
+message ConnectReply {
+	string version = 1;
+	string schema_context = 2;
+	string root_schema = 3;
+}
+
+message PingRequest {
+	string content = 1;
+}
+
+message PingReply {
+	string content = 1;
+}
+
+message Address {
+	string space = 1;
+	uint64 offset = 2;
+}
+
+message AddressRange {
+	string space = 1;
+	uint64 offset = 2;
+	uint32 extend = 3;
+}
+
+message Path {
+	repeated string e = 1;
+}
+
+message PathList {
+	repeated Path path = 1;
+}
+
+enum BreakKind {
+	BK_READ = 0;
+	BK_WRITE = 1;
+	BK_EXECUTE = 2;
+	BK_SOFTWARE = 3;
+}
+
+message BreakKindsSet {
+	repeated BreakKind k = 1;
+}
+
+enum StepKind {
+	SK_INTO = 0;
+	SK_ADVANCE = 1;
+	SK_FINISH = 2;
+	SK_LINE = 3;
+	SK_OVER = 4;
+	SK_OVER_LINE = 5;
+	SK_SKIP = 6;
+	SK_RETURN = 7;
+	SK_UNTIL = 8;
+	SK_EXTENDED = 9;
+}
+
+message StepKindsSet {
+	repeated StepKind k = 1;
+}
+
+message StringList {
+	repeated string s = 1;
+}
+
+enum AttachKind {
+	AK_BY_OBJECT_REF = 0;
+	AK_BY_ID = 1;
+}
+
+message AttachKindSet {
+	repeated AttachKind k = 1;
+}
+
+enum ExecutionState {
+	ES_INACTIVE = 0;
+	ES_ALIVE = 1;
+	ES_STOPPED = 2;
+	ES_RUNNING = 3;
+	ES_TERMINATED = 4;
+}
+
+enum PrimitiveKind {
+	PK_UNDEFINED = 0;
+	PK_VOID = 1;
+	PK_UINT = 2;
+	PK_SINT = 3;
+	PK_FLOAT = 4;
+	PK_COMPLEX = 5;
+}
+
+message DataType {
+	message Array {
+		DataType element_type = 1;
+		uint32 element_count = 2;
+	}
+
+	message Bitfield {
+		DataType field_type = 1;
+		uint32 start_bit = 2;
+		uint32 length = 3;
+	}
+
+	message Pointer {
+		DataType referent_type = 1;
+	}
+
+	message Primitive {
+	    PrimitiveKind kind = 1;
+	    uint32 length = 2;
+	}
+
+	oneof dt {
+		Array array_type = 1;
+		Bitfield bitfield_type = 2;
+		Path named_type = 3;
+		Pointer pointer_type = 4;
+		Primitive primitive_type = 5;
+	}
+	bool const = 6;
+}
+
+enum ValueType {
+	VT_VOID = 0;
+	VT_BOOL = 1;
+	VT_INT = 2;
+	VT_LONG = 3;
+	VT_FLOAT = 4;
+	VT_DOUBLE = 5;
+	VT_BYTES = 6;
+	VT_STRING = 7;
+	VT_STRING_LIST = 8;
+	VT_ADDRESS = 9;
+	VT_RANGE = 10;
+	VT_BREAK_KIND_SET = 11;
+	VT_EXECUTION_STATE = 12;
+	VT_STEP_KIND_SET = 13;
+	VT_PRIMITIVE_KIND = 14;
+	VT_DATA_TYPE = 15;
+	VT_PATH = 17;
+	VT_PATH_LIST = 18;
+	VT_TYPE = 19;
+	VT_ATTACH_KIND_SET = 20;
+}
+
+message Parameter {
+	ValueType type = 1;	
+	string name = 2;
+	Value defaultValue = 3;
+	bool required = 4;
+	string display = 5;
+	string description = 6;
+	repeated Value choices = 7;
+}
+
+message ParameterList {
+	repeated Parameter parameter = 1;
+}
+
+message Value {
+	oneof spec {
+		bool bool_value = 1;
+		int32 int_value = 2;
+		int64 long_value = 3;
+		float float_value = 4;
+		double double_value = 5;
+		bytes bytes_value = 6;
+		string string_value = 7;
+		StringList string_list_value = 8;
+		Address address_value = 9;
+		AddressRange range_value = 10;
+		BreakKindsSet break_kinds_value = 11;
+		ExecutionState exec_state_value = 12;
+		StepKindsSet step_kinds_value = 13;
+		PrimitiveKind primitive_kind_value = 14;
+		DataType data_type_value = 15;
+		Path path_value = 17;
+		PathList path_list_value = 18;
+		ModelObjectStub object_stub = 20;
+		ParameterList parameters_value = 21;
+		ValueType type_value = 22;
+		AttachKindSet attach_kinds_value = 23;
+	}
+}
+
+message NamedValue {
+	string name = 1;
+	Value value = 2;
+}
+
+message ModelObjectStub {	
+}
+
+message ModelObjectDelta {
+	repeated string removed = 1;
+	repeated NamedValue added = 2;
+}
+
+message ModelObjectEvent {
+	ModelObjectDelta element_delta = 1;
+	ModelObjectDelta attribute_delta = 2;
+}
+
+message ObjectCreatedEvent {
+	string type_hint = 2;
+	repeated string interface = 3;
+}
+
+message ObjectInvalidateEvent {
+	string reason = 1;
+}
+
+message LaunchRequest {
+	Path path = 1;
+	repeated NamedValue argument = 2;
+}
+
+message LaunchReply {
+}
+
+message AttachRequest {
+	Path path = 1;
+	oneof spec {
+		Path target = 2;
+		sint64 pid = 3;
+	}
+}
+
+message AttachReply {
+}
+
+message KillRequest {
+	Path path = 1;
+}
+
+message KillReply {
+}
+
+message DetachRequest {
+	Path path = 1;
+}
+
+message DetachReply {
+}
+
+message ResumeRequest {
+	Path path = 1;
+}
+
+message ResumeReply {
+}
+
+message BreakCreateRequest {
+	Path path = 1;
+	oneof spec {
+		string expression = 2;
+		AddressRange address = 3;
+	}
+	BreakKindsSet kinds = 4;
+}
+
+message BreakCreateReply {
+}
+
+message BreakToggleRequest {
+	Path path = 1;
+	bool enabled = 2;
+}
+
+message BreakToggleReply {
+}
+
+message BreakHitEvent {
+	Path trapped = 1;
+	Path frame = 2;
+	Path spec = 3;
+	Path effective = 4;
+}
+
+message DeleteRequest {
+	Path path = 1;
+}
+
+message DeleteReply {
+}
+
+message ExecuteRequest {
+	Path path = 1;
+	string command = 2;
+	bool capture = 3;
+}
+
+message ConsoleWriteRequest {
+	Path path = 1;
+	bytes data = 2;
+}
+
+message ConsoleOutputEvent {
+	int32 channel = 1;
+	bytes data = 2;
+}
+
+message ExecuteReply {
+	string captured = 1;
+}
+
+message ConsoleWriteReply {
+}
+
+message InterruptRequest {
+	Path path = 1;
+}
+
+message InterruptReply {
+}
+
+message MemoryReadRequest {
+	Path path = 1;
+	AddressRange range = 2;
+}
+
+message MemoryReadReply {
+	bytes content = 1;
+}
+
+message MemoryWriteRequest {
+	Path path = 1;
+	Address start = 2;
+	bytes content = 3;
+}
+
+message MemoryWriteReply {
+	// TODO: Should this include amount written?
+}
+
+// Sent one something/someone else reads/writes memory
+message MemoryUpdateEvent {
+	Address address = 1;
+	bytes content = 2;
+}
+
+// Sent one something/someone else causes a read error
+message MemoryErrorEvent {
+	AddressRange range = 1;
+	string message = 2;
+}
+
+message RegisterValue {
+	string name = 1;
+	bytes content = 2;
+}
+
+message RegisterReadRequest {
+	Path path = 1;
+	repeated string name = 2;
+}
+
+message RegisterReadReply {
+	repeated RegisterValue value = 1;
+}
+
+message RegisterWriteRequest {
+	Path path = 1;
+	repeated RegisterValue value = 2;
+}
+
+message RegisterWriteReply {
+}
+
+message RegisterUpdateEvent {
+	repeated RegisterValue value = 1;
+}
+
+message StepRequest {
+	Path path = 1;
+	StepKind kind = 2;
+}
+
+message StepReply {
+}
+
+message CacheInvalidateRequest {
+	Path path = 1;
+}
+
+message CacheInvalidateEvent {
+}
+
+message CacheInvalidateReply {
+}
+
+message ActivationRequest {
+	Path path = 1;
+	Path active = 2;
+}
+
+message ActivationReply {
+}
+
+
+message FocusRequest {
+	Path path = 1;
+	Path focus = 2;
+}
+
+message FocusReply {
+}
+
+message InvokeRequest {
+	Path path = 1;
+	repeated NamedValue argument = 2;
+}
+
+message InvokeReply {
+	Value result = 1;
+}
+
+message ResyncRequest {
+	Path path = 1;
+	bool attributes = 2;
+	bool elements = 3;
+}
+
+message ResyncReply {
+}
+
+message ConfigureRequest {
+	Path path = 1;
+	NamedValue option = 2;
+}
+
+message ConfigureReply {
+}
+	
+enum TargetEventType {
+	EV_STOPPED = 0;
+	EV_RUNNING = 1;
+	EV_PROCESS_CREATED = 2;
+	EV_PROCESS_EXITED = 3;
+	EV_THREAD_CREATED = 4;
+	EV_THREAD_EXITED = 5;
+	EV_MODULE_LOADED = 6;
+	EV_MODULE_UNLOADED = 7;
+	EV_BREAKPOINT_HIT = 8;
+	EV_STEP_COMPLETED = 9;
+	EV_EXCEPTION = 10;
+	EV_SIGNAL = 11;
+}
+
+message TargetEvent {
+	Path eventThread = 1;
+	TargetEventType type = 2;
+	string description = 3;
+	repeated Value parameters = 4;
+}
+
+message RootAddedEvent {
+}
+
+message EventNotification {
+	Path path = 1;
+	oneof evt {
+		ModelObjectEvent model_object_event = 304;
+
+		BreakHitEvent break_hit_event = 314;
+		CacheInvalidateEvent cache_invalidate_event = 320;
+		ConsoleOutputEvent console_output_event = 312;
+		MemoryUpdateEvent memory_update_event = 317;
+		MemoryErrorEvent memory_error_event = 417;
+		ObjectCreatedEvent object_created_event = 324;
+		ObjectInvalidateEvent object_invalidate_event = 323;
+		RegisterUpdateEvent register_update_event = 322;
+		TargetEvent target_event = 330;
+		RootAddedEvent root_added_event = 326;
+	}
+}
+
+message RootMessage {
+	int32 sequence = 1;
+
+	oneof msg {
+		EventNotification event_notification = 2;
+
+		ErrorRequest error_request = 100;
+		ErrorReply error_reply = 200;
+
+		ConnectRequest connect_request = 101;
+		ConnectReply connect_reply = 201;
+
+		PingRequest ping_request = 102;
+		PingReply ping_reply = 202;
+
+		AttachRequest attach_request = 108;
+		AttachReply attach_reply = 208;
+
+		BreakCreateRequest break_create_request = 114;
+		BreakCreateReply break_create_reply = 214;
+
+		BreakToggleRequest break_toggle_request = 115;
+		BreakToggleReply break_toggle_reply = 215;
+
+		CacheInvalidateRequest cache_invalidate_request = 120;
+		CacheInvalidateReply cache_invalidate_reply = 220;
+
+		DeleteRequest delete_request = 116;
+		DeleteReply delete_reply = 216;
+
+		DetachRequest detach_request = 110;
+		DetachReply detach_reply = 210;
+
+		ExecuteRequest execute_request = 112;
+		ExecuteReply execute_reply = 212;
+
+		ConsoleWriteRequest console_write_request = 113;
+		ConsoleWriteReply console_write_reply = 213;
+
+		FocusRequest focus_request = 123;
+		FocusReply focus_reply = 223;
+
+		InterruptRequest interrupt_request = 124;
+		InterruptReply interrupt_reply = 224;
+
+		KillRequest kill_request = 109;
+		KillReply kill_reply = 209;
+
+		LaunchRequest launch_request = 107;
+		LaunchReply launch_reply = 207;
+
+		MemoryReadRequest memory_read_request = 117;
+		MemoryReadReply memory_read_reply = 217;
+		
+		MemoryWriteRequest memory_write_request = 118;
+		MemoryWriteReply memory_write_reply = 218;
+
+		RegisterReadRequest register_read_request = 121;
+		RegisterReadReply register_read_reply = 221;
+
+		RegisterWriteRequest register_write_request = 122;
+		RegisterWriteReply register_write_reply = 222;
+
+		ResumeRequest resume_request = 111;
+		ResumeReply resume_reply = 211;
+
+		StepRequest step_request = 119;
+		StepReply step_reply = 219;
+
+		InvokeRequest invoke_request = 105;
+		InvokeReply invoke_reply = 205;
+
+		ResyncRequest resync_request = 125;
+		ResyncReply resync_reply = 225;
+
+		ActivationRequest activation_request = 126;
+		ActivationReply activation_reply = 226;
+
+		ConfigureRequest configure_request = 127;
+		ConfigureReply configure_reply = 227;
+	}
+}

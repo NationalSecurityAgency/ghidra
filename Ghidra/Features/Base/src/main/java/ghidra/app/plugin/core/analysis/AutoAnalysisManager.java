@@ -485,7 +485,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * NOTE: method may only be invoked within the analysis thread
 	 * (i.e., by an Analyzer or AnalysisWorker).  Care must be taken to control depth
 	 * of yield, although this may be difficult to control.
-	 * @param monitor
+	 * @param monitor the monitor
 	 */
 	private void yield(Integer limitPriority, TaskMonitor monitor) {
 
@@ -516,7 +516,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * (i.e., lower values correspond to higher priority) will be permitted to run.  A value
 	 * of null will allow all pending analysis to complete (excluding any tasks which had
 	 * previously yielded).
-	 * @param monitor
+	 * @param monitor the monitor
 	 * @throws IllegalStateException if not invoked from the analysis thread.
 	 */
 	public void waitForAnalysis(final Integer limitPriority, TaskMonitor monitor) {
@@ -626,7 +626,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * yield method so that their limit-priority may be established during the yield.
 	 * <br>
 	 * If analysis is performed, a summary of task execution times will be printed to the log.
-	 * @param monitor
+	 * @param monitor the monitor
 	 */
 	public void startAnalysis(TaskMonitor monitor) {
 		startAnalysis(monitor, true);
@@ -642,7 +642,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * performed in which all queued tasks of a higher priority (smaller priority value) than the current
 	 * task will be executed prior to this method returning.  AnalysisWorker's should use the
 	 * yield method so that their limit-priority may be established during the yield.
-	 * @param monitor
+	 * @param monitor the monitor
 	 * @param printTaskTimes if true and analysis is performed, a summary of task execution times
 	 * will be printed to the log.
 	 */
@@ -722,7 +722,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Start auto-analysis if it is ENABLED and not yet running.
-	 * @param monitor
+	 * @param monitor the monitor
 	 * @param yield if true the current thread is the analysis thread and is yielding to the currently
 	 * executing task.
 	 * @param limitPriority the threshold priority value.  All queued tasks with a priority value
@@ -1204,7 +1204,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	/**
 	 * Get the time taken by a named task
 	 * The names of tasks that have run can be retrieved using getTimedTasks
-	 * @param taskName
+	 * @param map the times by task names
+	 * @param taskName the task name
 	 * @return the time taken by a named task
 	 */
 	public long getTaskTime(Map<String, Long> map, String taskName) {
@@ -1230,8 +1231,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		if (currentTime > 0) {
 			totalTime += currentTime;
 		}
-		Long l = new Long(totalTime);
-		return l.longValue();
+		return totalTime;
 	}
 
 	private void addToTaskTime(String taskName, long time) {
@@ -1252,7 +1252,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	}
 
 	/**
-	 * Print out the time for each task that ran for this auto analysis run.
+	 * Get a summary of the time for each task that ran for this auto analysis run
+	 * @return the string summary
 	 */
 	public String getTaskTimesString() {
 
@@ -1331,11 +1332,12 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * follow-on analysis of those changes.  If false it is critical that the worker be associated with a modal
 	 * task dialog which will prevent unrelated concurrent changes being made to the program while
 	 * the worker is active.
-	 * @param workerMonitor
+	 * @param workerMonitor the worker's monitor
 	 * @return boolean value returned by worker.analysisWorkerCallback
 	 * @throws InvocationTargetException if worker throws exception while running (see cause)
 	 * @throws InterruptedException if caller's thread is interrupted.  If this occurs a cancel
 	 * condition will be forced on the workerMonitor so that the worker will stop running.
+	 * @throws CancelledException if the job is cancelled
 	 * @see AnalysisPriority for priority values
 	 */
 	public boolean scheduleWorker(AnalysisWorker worker, Object workerContext,
@@ -1472,17 +1474,17 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	private class JointTaskMonitor implements TaskMonitor {
 
-		TaskMonitor dominantMonitor;
-		TaskMonitor slaveMonitor;
+		private TaskMonitor primaryMonitor;
+		private TaskMonitor secondaryMonitor;
 
-		JointTaskMonitor(TaskMonitor dominantMonitor, TaskMonitor slaveMonitor) {
-			this.dominantMonitor = dominantMonitor;
-			this.slaveMonitor = slaveMonitor;
+		JointTaskMonitor(TaskMonitor primaryMonitor, TaskMonitor secondaryMonitor) {
+			this.primaryMonitor = primaryMonitor;
+			this.secondaryMonitor = secondaryMonitor;
 		}
 
 		@Override
 		public boolean isCancelled() {
-			return dominantMonitor.isCancelled() || slaveMonitor.isCancelled();
+			return primaryMonitor.isCancelled() || secondaryMonitor.isCancelled();
 		}
 
 		@Override
@@ -1502,86 +1504,86 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 		@Override
 		public void setMessage(String message) {
-			dominantMonitor.setMessage(message);
-			slaveMonitor.setMessage(message);
+			primaryMonitor.setMessage(message);
+			secondaryMonitor.setMessage(message);
 		}
 
 		@Override
 		public String getMessage() {
-			return dominantMonitor.getMessage();
+			return primaryMonitor.getMessage();
 		}
 
 		@Override
 		public void setProgress(long value) {
-			dominantMonitor.setProgress(value);
-			slaveMonitor.setProgress(value);
+			primaryMonitor.setProgress(value);
+			secondaryMonitor.setProgress(value);
 		}
 
 		@Override
 		public void initialize(long max) {
-			dominantMonitor.initialize(max);
-			slaveMonitor.initialize(max);
+			primaryMonitor.initialize(max);
+			secondaryMonitor.initialize(max);
 		}
 
 		@Override
 		public void setMaximum(long max) {
-			dominantMonitor.setMaximum(max);
-			slaveMonitor.setMaximum(max);
+			primaryMonitor.setMaximum(max);
+			secondaryMonitor.setMaximum(max);
 		}
 
 		@Override
 		public long getMaximum() {
-			return Math.max(dominantMonitor.getMaximum(), slaveMonitor.getMaximum());
+			return Math.max(primaryMonitor.getMaximum(), secondaryMonitor.getMaximum());
 		}
 
 		@Override
 		public void checkCanceled() throws CancelledException {
-			dominantMonitor.checkCanceled();
-			slaveMonitor.checkCanceled();
+			primaryMonitor.checkCanceled();
+			secondaryMonitor.checkCanceled();
 		}
 
 		@Override
 		public void incrementProgress(long incrementAmount) {
-			dominantMonitor.incrementProgress(incrementAmount);
-			slaveMonitor.incrementProgress(incrementAmount);
+			primaryMonitor.incrementProgress(incrementAmount);
+			secondaryMonitor.incrementProgress(incrementAmount);
 		}
 
 		@Override
 		public long getProgress() {
-			return Math.max(dominantMonitor.getProgress(), slaveMonitor.getProgress());
+			return Math.max(primaryMonitor.getProgress(), secondaryMonitor.getProgress());
 		}
 
 		@Override
 		public void cancel() {
-			dominantMonitor.cancel();
-			slaveMonitor.cancel();
+			primaryMonitor.cancel();
+			secondaryMonitor.cancel();
 		}
 
 		@Override
 		public void addCancelledListener(CancelledListener listener) {
-			dominantMonitor.addCancelledListener(listener);
+			primaryMonitor.addCancelledListener(listener);
 		}
 
 		@Override
 		public void removeCancelledListener(CancelledListener listener) {
-			dominantMonitor.addCancelledListener(listener);
+			primaryMonitor.addCancelledListener(listener);
 		}
 
 		@Override
 		public void setCancelEnabled(boolean enable) {
-			dominantMonitor.setCancelEnabled(enable);
-			slaveMonitor.setCancelEnabled(enable);
+			primaryMonitor.setCancelEnabled(enable);
+			secondaryMonitor.setCancelEnabled(enable);
 		}
 
 		@Override
 		public boolean isCancelEnabled() {
-			return dominantMonitor.isCancelEnabled();
+			return primaryMonitor.isCancelEnabled();
 		}
 
 		@Override
 		public void clearCanceled() {
-			dominantMonitor.clearCanceled();
-			slaveMonitor.clearCanceled();
+			primaryMonitor.clearCanceled();
+			secondaryMonitor.clearCanceled();
 		}
 	}
 
