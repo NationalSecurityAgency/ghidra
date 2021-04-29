@@ -45,7 +45,7 @@ SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFFFFFFFFFF << ((SC
 @endif
 
 SIMM16: val						is IMM_0_10_VLE & SIMM_21_25_VLE [ val = (SIMM_21_25_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
-SIMM20: val						is IMM_0_10_VLE & IMM_16_20_VLE & SIMM_11_14_VLE [ val = (SIMM_11_14_VLE << 16 ) | (IMM_16_20_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
+SIMM20: val						is IMM_0_10_VLE & IMM_16_20_VLE & SIMM_11_14_VLE [ val = (SIMM_11_14_VLE << 16 ) | (IMM_16_20_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:4 val; }
 IMM16: val						is IMM_0_10_VLE & IMM_21_25_VLE [ val = (IMM_21_25_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
 IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) | IMM_0_10_VLE ;] { export *[const]:2 val; }
 
