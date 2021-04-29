@@ -15,7 +15,7 @@
  */
 package agent.gdb.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.loop;
 
 import java.io.*;
 import java.util.*;
@@ -654,6 +654,9 @@ public class GdbManagerImpl implements GdbManager {
 		if (gdbWaiter != null) {
 			gdbWaiter.interrupt();
 		}
+		if (gdb != null) {
+			gdb.destroyForcibly();
+		}
 		try {
 			if (cliThread != null) {
 				cliThread.interrupt();
@@ -666,9 +669,6 @@ public class GdbManagerImpl implements GdbManager {
 		}
 		catch (IOException e) {
 			Msg.error(this, "Problem closing PTYs to GDB.");
-		}
-		if (gdb != null) {
-			gdb.destroyForcibly();
 		}
 		DebuggerModelTerminatingException reason =
 			new DebuggerModelTerminatingException(GDB_IS_TERMINATING);
