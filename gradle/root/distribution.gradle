@@ -32,7 +32,7 @@ def PROJECT_DIR = file (rootProject.projectDir.absolutePath)
 ext.DISTRIBUTION_DIR = file("$buildDir/dist")
 ext.ZIP_NAME_PREFIX = "${rootProject.DISTRO_PREFIX}_${rootProject.BUILD_DATE_SHORT}"
 ext.ZIP_DIR_PREFIX = "${rootProject.DISTRO_PREFIX}"
-ext.ALL_REPOS = ['ghidra']
+ext.ALL_REPOS = [rootProject.file('.').getName()]
 
 // Add any additional repos to the ALL_REPOS array
 File extensionsList = file("ghidra.repos.config")
