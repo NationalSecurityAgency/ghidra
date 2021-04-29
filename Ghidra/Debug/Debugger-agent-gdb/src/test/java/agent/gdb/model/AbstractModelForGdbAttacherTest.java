@@ -33,7 +33,7 @@ public abstract class AbstractModelForGdbAttacherTest extends AbstractDebuggerMo
 
 	@Override
 	public DebuggerTestSpecimen getAttachSpecimen() {
-		return GdbLinuxSpecimen.DD;
+		return GdbLinuxSpecimen.SLEEP;
 	}
 
 	@Override

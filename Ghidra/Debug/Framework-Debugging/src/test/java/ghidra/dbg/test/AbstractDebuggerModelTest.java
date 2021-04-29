@@ -324,7 +324,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 					assertEquals(TargetExecutionState.RUNNING, stateful.getExecutionState());
 				}, List.of(AssertionError.class));
 			}
-			// NB. Never have to wait to interrupt. (Hmmmm, do we believe this?)
+			// NB. Never have to waitAcc to interrupt. It's likely inaccessible, anyway.
 			waitOn(interruptible.interrupt());
 			if (stateful != null) {
 				retryVoid(() -> {

@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -45,11 +46,13 @@ import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.app.services.MarkerService;
+import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.trace.model.Trace;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.RotateIcon;
@@ -1546,7 +1549,13 @@ public interface DebuggerResources {
 
 	static <T> Function<Throwable, T> showError(Component parent, String message) {
 		return e -> {
-			Msg.showError(parent, parent, DebuggerPluginPackage.NAME, message, e);
+			Throwable t = AsyncUtils.unwrapThrowable(e);
+			if (t instanceof CancelledException || t instanceof CancellationException) {
+				Msg.error(parent, "Cancelled: " + message);
+			}
+			else {
+				Msg.showError(parent, parent, DebuggerPluginPackage.NAME, message, e);
+			}
 			return null;
 		};
 	}

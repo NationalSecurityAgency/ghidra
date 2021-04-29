@@ -15,45 +15,48 @@
  */
 package agent.gdb.manager.impl.cmd;
 
-import agent.gdb.manager.GdbThread;
 import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
+import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
-public abstract class AbstractGdbCommandExpectRunning extends AbstractGdbCommand<GdbThread> {
+/**
+ * A marker and mixin for dealing with commands where resuming in a secondary (mi2) ui seems
+ * problematic.
+ * 
+ * <p>
+ * I'm not sure if it's a bug in GDB or Linux, or what, but if I attach to a target that doesn't
+ * have a tty then resume (i.e., continue or step) from the mi2 interpreter, it seems I cannot use
+ * "interrupt" from the primary (console) interpreter. So, for these resumes, I need to issue the
+ * command from the console, allowing ^C to work.
+ */
+public interface MixinResumeInCliGdbCommand extends GdbCommand<Void> {
 
-	protected AbstractGdbCommandExpectRunning(GdbManagerImpl manager) {
-		super(manager);
+	default Interpreter getInterpreter(GdbManagerImpl manager) {
+		if (manager.hasCli()) {
+			return Interpreter.CLI;
+		}
+		return Interpreter.MI2;
 	}
 
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		evt = checkErrorViaCli(evt);
+	default boolean handleExpectingRunning(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
 		if (evt instanceof GdbCommandRunningEvent) {
 			pending.claim(evt);
 			return pending.hasAny(GdbRunningEvent.class);
 		}
 		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
 			pending.claim(evt);
-			return true; // Not the expected Completed event
+			return true; // Not the expected Completed event 
 		}
 		else if (evt instanceof GdbRunningEvent) {
 			// Event happens no matter which interpreter received the command
 			pending.claim(evt);
 			return pending.hasAny(GdbCommandRunningEvent.class);
 		}
-		else if (evt instanceof GdbThreadCreatedEvent) {
-			pending.claim(evt);
-		}
 		return false;
 	}
 
-	@Override
-	public GdbThread complete(GdbPendingCommand<?> pending) {
+	default Void completeOnRunning(GdbPendingCommand<?> pending) {
 		pending.checkCompletion(GdbCommandRunningEvent.class);
-
-		// Just take the first thread. Others are considered clones.
-		GdbThreadCreatedEvent created = pending.findFirstOf(GdbThreadCreatedEvent.class);
-		int tid = created.getThreadId();
-		return manager.getThread(tid);
+		return null;
 	}
 }
