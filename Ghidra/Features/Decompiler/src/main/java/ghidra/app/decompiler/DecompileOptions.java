@@ -27,7 +27,9 @@ import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
@@ -404,7 +406,7 @@ public class DecompileOptions {
 		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
 		defaultFont = DEFAULT_FONT;
 		displayLineNumbers = LINE_NUMBER_DEF;
-		displayLanguage = BasicCompilerSpec.DECOMPILER_OUTPUT_DEF;
+		displayLanguage = ProgramCompilerSpec.DECOMPILER_OUTPUT_DEF;
 		protoEvalModel = "default";
 		decompileTimeoutSeconds = SUGGESTED_DECOMPILE_TIMEOUT_SECS;
 		payloadLimitMBytes = SUGGESTED_MAX_PAYLOAD_BYTES;
@@ -503,21 +505,21 @@ public class DecompileOptions {
 	 */
 	public void grabFromProgram(Program program) {
 		// Default values, even if there is no program
-		displayLanguage = BasicCompilerSpec.DECOMPILER_OUTPUT_DEF;
+		displayLanguage = ProgramCompilerSpec.DECOMPILER_OUTPUT_DEF;
 		protoEvalModel = "default";
 		if (program == null) {
 			return;
 		}
 
 		CompilerSpec cspec = program.getCompilerSpec();
-		PrototypeModel model = (PrototypeModel) cspec.getPrototypeEvaluationModel(program);
+		PrototypeModel model = cspec.getPrototypeEvaluationModel(EvaluationModelType.EVAL_CURRENT);
 		if (model != null) {
 			String modelname = model.getName();
 			if (modelname != null) {
 				protoEvalModel = modelname;
 			}
 		}
-		displayLanguage = cspec.getDecompilerOutputLanguage(program);
+		displayLanguage = cspec.getDecompilerOutputLanguage();
 	}
 
 	public String getProtoEvalModel() {

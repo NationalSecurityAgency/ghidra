@@ -23,35 +23,32 @@ import ghidra.program.model.listing.Program;
 
 public class PcodeInjectLibraryDex extends PcodeInjectLibrary {
 
-	private InjectPayloadDexParameters paramPayload = null;
-	private InjectPayloadDexRange rangePayload = null;
-
 	public PcodeInjectLibraryDex(SleighLanguage l) {
 		super(l);
 	}
 
-	@Override
-	public InjectPayload getPayload(int type, String name, Program program,
-			String context) {
-		if (type == InjectPayload.CALLMECHANISM_TYPE) {
-			if (paramPayload == null) {
-				paramPayload = new InjectPayloadDexParameters();
-			}
-			return paramPayload;
-		}
-		else if (type == InjectPayload.CALLOTHERFIXUP_TYPE && name.equals("moveRangeToIV")) {
-			if (rangePayload == null) {
-				rangePayload = new InjectPayloadDexRange();
-			}
-			return rangePayload;
-		}
+	public PcodeInjectLibraryDex(PcodeInjectLibraryDex op2) {
+		super(op2);
+	}
 
-		return super.getPayload(type, name, program, context);
+	@Override
+	public PcodeInjectLibrary clone() {
+		return new PcodeInjectLibraryDex(this);
+	}
+
+	@Override
+	public InjectPayload allocateInject(String sourceName, String name, int tp) {
+		if (tp == InjectPayload.CALLMECHANISM_TYPE) {
+			return new InjectPayloadDexParameters(name, sourceName);
+		}
+		else if (tp == InjectPayload.CALLOTHERFIXUP_TYPE && name.equals("moveRangeToIV")) {
+			return new InjectPayloadDexRange();
+		}
+		return super.allocateInject(sourceName, name, tp);
 	}
 
 	@Override
 	public ConstantPool getConstantPool(Program program) throws IOException {
 		return new ConstantPoolDex(program);
 	}
-
 }
