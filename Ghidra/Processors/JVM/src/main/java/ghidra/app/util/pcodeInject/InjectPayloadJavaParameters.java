@@ -31,13 +31,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.*;
 
 public class InjectPayloadJavaParameters implements InjectPayload {
 
-	private String name;
-	private String sourceName;
 	private InjectParameter[] noParams;
 	private boolean analysisStateRecoverable;
 	private AddressSpace constantSpace;
@@ -50,10 +46,7 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 	private Varnode eight;
 	private Varnode LVA;
 
-	public InjectPayloadJavaParameters(String nm, String srcName, SleighLanguage language,
-			long uniqBase) {
-		name = nm;
-		sourceName = srcName;
+	public InjectPayloadJavaParameters(SleighLanguage language, long uniqBase) {
 		noParams = new InjectParameter[0];
 		analysisStateRecoverable = true;
 		constantSpace = language.getAddressFactory().getConstantSpace();
@@ -77,7 +70,7 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 
 	@Override
 	public String getName() {
-		return name;
+		return "javaparameters";
 	}
 
 	@Override
@@ -87,7 +80,7 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 
 	@Override
 	public String getSource() {
-		return sourceName;
+		return "javaparameters";
 	}
 
 	@Override
@@ -103,11 +96,6 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 	@Override
 	public InjectParameter[] getOutput() {
 		return noParams;
-	}
-
-	@Override
-	public boolean isErrorPlaceholder() {
-		return false;
 	}
 
 	@Override
@@ -131,30 +119,29 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 		}
 		ClassFileJava classFile = analysisState.getClassFile();
 		MethodInfoJava methodInfo = analysisState.getMethodInfo(con.baseAddr);
-		if (methodInfo == null) {
+		if (methodInfo == null){
 			return new PcodeOp[0];
 		}
 		int descriptorIndex = methodInfo.getDescriptorIndex();
-		ConstantPoolUtf8Info descriptorInfo =
-			(ConstantPoolUtf8Info) (classFile.getConstantPool()[descriptorIndex]);
+		ConstantPoolUtf8Info descriptorInfo = (ConstantPoolUtf8Info)(classFile.getConstantPool()[descriptorIndex]);
 		String descriptor = descriptorInfo.getString();
 		List<JavaComputationalCategory> paramCategories = new ArrayList<>();
-		if (!methodInfo.isStatic()) {
+		if (!methodInfo.isStatic()){
 			paramCategories.add(JavaComputationalCategory.CAT_1);//for the this pointer
 		}
 		paramCategories.addAll(DescriptorDecoder.getParameterCategories(descriptor));
 		int numOps = paramCategories.size();
 
-		if (paramCategories.size() == 0) {
+		if (paramCategories.size() == 0){
 			//no this pointer, no parameters: nothing to do
 			return new PcodeOp[0];
 		}
 
-		PcodeOp[] resOps = new PcodeOp[1 + 3 * numOps];
+		PcodeOp[] resOps = new PcodeOp[1 + 3*numOps];
 		int seqNum = 0;
 
 		//initialize LVA to contain 0
-		PcodeOp copy = new PcodeOp(con.baseAddr, seqNum, PcodeOp.COPY);
+		PcodeOp copy = new PcodeOp(con.baseAddr,seqNum, PcodeOp.COPY);
 		copy.setInput(zero, 0);
 		copy.setOutput(LVA);
 		resOps[seqNum++] = copy;
@@ -162,8 +149,8 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 		Varnode tempLocation = null;
 		Varnode increment = null;
 
-		for (JavaComputationalCategory cat : paramCategories) {
-			if (cat.equals(JavaComputationalCategory.CAT_1)) {
+		for (JavaComputationalCategory cat : paramCategories){
+			if (cat.equals(JavaComputationalCategory.CAT_1)){
 				tempLocation = temp4;
 				increment = four;
 			}
@@ -180,59 +167,21 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 			//copy temporary to LVA
 			PcodeOp store = new PcodeOp(con.baseAddr, seqNum, PcodeOp.STORE);
 			store.setInput(new Varnode(constantSpace.getAddress(lvaID), 4), 0);
-			store.setInput(LVA, 1);
+			store.setInput(LVA,1);
 			store.setInput(tempLocation, 2);
-			resOps[seqNum++] = store;
+			resOps[seqNum++] = store;			
 			//increment LVA reg 
 			PcodeOp add = new PcodeOp(con.baseAddr, seqNum, PcodeOp.INT_ADD);
 			add.setInput(LVA, 0);
 			add.setInput(increment, 1);
 			add.setOutput(LVA);
-			resOps[seqNum++] = add;
-		}
+			resOps[seqNum++] = add;	
+		}	
 		return resOps;
 	}
 
 	@Override
 	public boolean isFallThru() {
 		return true;
-	}
-
-	@Override
-	public boolean isIncidentalCopy() {
-		return false;
-	}
-
-	@Override
-	public void saveXml(StringBuilder buffer) {
-		// Provide a minimal tag so decompiler can call-back
-		buffer.append("<pcode");
-		SpecXmlUtils.encodeStringAttribute(buffer, "inject", "uponentry");
-		SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
-		buffer.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage language) throws XmlParseException {
-		XmlElement el = parser.start();
-		String injectString = el.getAttribute("inject");
-		if (injectString == null || !injectString.equals("uponentry")) {
-			throw new XmlParseException("Expecting inject=\"uponentry\" attribute");
-		}
-		boolean isDynamic = SpecXmlUtils.decodeBoolean(el.getAttribute("dynamic"));
-		if (!isDynamic) {
-			throw new XmlParseException("Expecting dynamic attribute");
-		}
-		parser.end(el);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof InjectPayloadJavaParameters);		// All instances are equal
-	}
-
-	@Override
-	public int hashCode() {
-		return 123474217;		// All instances are equal
 	}
 }

@@ -29,7 +29,6 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
@@ -232,9 +231,6 @@ public class DecompilePlugin extends Plugin {
 		if (event instanceof ProgramActivatedPluginEvent) {
 			currentProgram = ((ProgramActivatedPluginEvent) event).getActiveProgram();
 			connectedProvider.doSetProgram(currentProgram);
-			if (currentProgram != null) {
-				SpecExtension.registerOptions(currentProgram);
-			}
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			ProgramLocation location = ((ProgramLocationPluginEvent) event).getLocation();

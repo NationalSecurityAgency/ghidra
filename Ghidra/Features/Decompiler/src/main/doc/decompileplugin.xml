@@ -834,33 +834,6 @@
     </para>
   </sect3>
 
-  <sect3 id="ConceptCallother">
-    <title>User-defined P-code Operations - CALLOTHER</title>
-    <para>
-      P-code allows for additional, processor specific, operations referred to
-      as <emphasis>user-defined</emphasis> or CALLOTHER operations.
-      These may be defined as part of a Ghidra's specification for the processor and
-      are typically used as placeholders for what is otherwise unmodeled processor behavior.
-      Each CALLOTHER must have a unique name, and as a p-code operation, it still takes
-      varnode inputs and may produce a varnode output. But the exact affect of the operation is
-      not specified.
-    </para>
-    <para>
-      The decompiler treats a CALLOTHER operation as a black box. It will keep track of data
-      flowing into and out of the operation but won't simplify or transform it. In decompiler
-      output, a CALLOTHER is usually displayed using its unique name, with functional syntax
-      showing its inputs and output.
-    </para>
-    <para>
-      Ghidra or a user can provide the behavior details for a named CALLOTHER operation.  The
-      details are provided as a sequence of p-code operations, referred to as a
-      <emphasis role="bold">Callother-Fixup</emphasis>, which is substituted for the
-      CALLOTHER operation during decompilation, or by other Analyzers that use p-code.
-      Callother-Fixups are applied by Ghidra for specific processor or compiler variants,
-      and a user can choose to apply them to an individual Program. (See <xref linkend="ExtensionOptions"/>)
-    </para>
-  </sect3>
-
   <sect3 id="ConceptInternalFunctions">
     <title>Internal Decompiler Functions</title>
     <para>
@@ -1189,13 +1162,10 @@
       use of multiple models.  Subsequently, each distinct model has a name like <code>__stdcall</code> or
       <code>__thiscall</code>. The decompiler makes use of the prototype model, as assigned to the function by the user or
       discovered in some other way, when performing its analysis of parameters.
-      It is possible for users to extend the set of prototype models available to a Program,
-      see <xref linkend="ExtensionOptions"/>.
     </para>
     <para>
       A prototype model is typically used as a whole and is assigned by name to individual functions.  But some of
-      the sub-concepts of the model may be relevant to reverse engineers. Concepts that a prototype
-      model encapsulates include:
+      the sub-concepts of the model may be relevant to reverse engineers.
     </para>
     <sect3 id="ConceptPrototypeStorage">
       <title>Incoming and Outgoing Storage Locations</title>
@@ -1238,138 +1208,6 @@
 	to be used to hold a value across the function.
       </para>
     </sect3>
-  </sect2>
-</section>
-
-<section id="ConceptSpecification">
-  <title>SLEIGH Specification Files</title>
-  <para>
-    SLEIGH is Ghidra's specification language for describing processor instructions.
-    Specification files are read in for a Program, and once configured, Ghidra's SLEIGH engine can:
-    <informalexample>
-      <itemizedlist mark='bullet' spacing='compact'>
-	<listitem>
-	  Disassemble machine instructions from the underlying bytes and
-	</listitem>
-	<listitem>
-	  Produce the raw p-code consumed by the decompiler and other analyzers.
-      </listitem>
-      </itemizedlist>
-    </informalexample>
-  </para>
-  <para>
-    Specification files are selected based on the <emphasis>Language Id</emphasis>
-    assigned to the Program at the time it is imported into Ghidra.
-    (See <link xlink:href="help/topics/ImporterPlugin/importer.htm">Import Program</link>)
-    <informalexample>
-      <itemizedlist mark='none' spacing='compact'>
-	<listitem><code>x86:LE:32:default:windows</code></listitem>
-	<listitem><code>AARCH64:LE:64:default:v8A:default</code></listitem>
-	<listitem><code>MIPS:BE:32:micro:default</code></listitem>
-      </itemizedlist>
-    </informalexample>
-    A <emphasis role="bold">Language Id</emphasis> is a label with these 5 formal fields, separated
-    by a ':' character:
-    <informalexample>
-      <itemizedlist spacing='compact'>
-	<listitem>Processor family</listitem>
-	<listitem>Endianess</listitem>
-	<listitem>Size of the address bus</listitem>
-	<listitem>Process variant</listitem>
-	<listitem>Compiler producing the Program</listitem>
-      </itemizedlist>
-    </informalexample>
-    A field with the value 'default' indicates either the preferred processor variant or the preferred compiler.
-  </para>
-  <para>
-    Within the Ghidra installation, specification files are stored based on the overarching
-    processor family, such as 'MIPS' or 'x86'.  For a specific family, files are located under
-    <informalexample>
-      <code>&lt;Root&gt;/Ghidra/Processors/&lt;Family&gt;/data/languages</code>
-    </informalexample>
-    where <code>&lt;Root&gt;</code> represents the root directory of the Ghidra installation and
-    <code>&lt;Family&gt;</code> is the processor family.
-  </para>
-  <para>
-    There are several types of specification files that are distinguishable by their suffix.
-    These include:
-    <informalexample>
-      <variablelist>
-      <?dbfo list-presentation="blocks"?>
-      <varlistentry>
-	<term><emphasis role="bold">SLEIGH files</emphasis> - *.slaspec or *.sinc</term>
-	<listitem>
-	  <para>
-	    These are the human readable SLEIGH language files. A single specification is
-	    rooted in one of the <code>*.slaspec</code> files, which may recursively include
-	    one or more <code>*.sinc</code> files.  The format of these files is described
-	    in the document "SLEIGH: A Language for Rapid Processor Specification".
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis role="bold">Compiled SLEIGH files</emphasis> - *.sla</term>
-	<listitem>
-	  <para>
-	    This is a compiled form of a single SLEIGH specification.  It is produced
-	    automatically by Ghidra from the corresponding <code>*.slaspec</code>.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis role="bold">Compiler specification files</emphasis> - *.cspec</term>
-	<listitem>
-	  <para>
-	    These files contain configuration for a specific compiler.  Analysis of Programs whose
-	    executable content was produced using this compiler benefits from this information.
-	    The file is an XML document with tags describing details of data organization and
-	    other conventions used by the compiler.  In particular, the compiler specification
-	    contains tags:
-	  </para>
-	  <para>
-	    <itemizedlist mark='none' spacing='compact'>
-	      <listitem>&lt;prototype&gt; - describing a specific calling convention</listitem>
-	      <listitem>&lt;callfixup&gt; - describing a Call-fixup</listitem>
-	      <listitem>&lt;callotherfixup&gt; - describing a Callother-fixup</listitem>
-	    </itemizedlist>
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis role="bold">Processor specification files</emphasis> - *.pspec</term>
-	<listitem>
-	  <para>
-	    These files contain configuration information that is specific to a particular
-	    processor variant.
-	  </para>
-	</listitem>
-      </varlistentry>
-      </variablelist>
-    </informalexample>
-  </para>
-  <sect2 id="ConceptModifySpec">
-    <title>Modifying Specification Files</title>
-    <para>
-      Changing any of the specification files described here is not recommended.
-      To make additions to either the <emphasis>compiler specification</emphasis>
-      or the <emphasis>processor specification</emphasis> files, see
-      <xref linkend="ExtensionOptions"/>, which describes a safe and portable way
-      to add specific elements.
-    </para>
-    <warning>
-      Making modifications to specification files within a Ghidra installation is possible,
-      but any analysis results obtained will likely not be portable to other installations.
-      In particular, saving a Program from a modified Ghidra and then reopening it using
-      an unmodified installation may corrupt the Program database.
-    </warning>
-    <para>
-      When Ghidra starts, it checks for changes to <code>*.slaspec</code>
-      and <code>*.sinc</code> files and will rebuild the corresponding
-      <code>*.sla</code> file automatically.  Also, specification files are read again when
-      Ghidra restarts. So analysts can and do make changes to these files.
-      However they need to be prepared to view any results as temporary and
-      should backup their installation and specific Programs being analyzed.
-    </para>
   </sect2>
 </section>
 
@@ -2247,8 +2085,7 @@
 	  The calling convention used by the function can be specified as part of the function prototype. The convention
 	  is specified by name, referring to the formal <xref linkend="ConceptPrototypeModel"/> that describes how storage
 	  locations are selected for individual parameters along with other information about how the compiler treats
-	  the function. Available models are determined by the processor and compiler, but can be extended by the user.
-	  See <xref linkend="ExtensionOptions"/>.
+	  the function.
 	</para>
 	<para>
 	  In the absence of parameter and return value annotations, the decompiler will use the prototype model as
@@ -2315,8 +2152,7 @@
 	</para>
 	<para>
 	  Call-fixups are specified by name.  The name and associated p-code chunk are typically defined in the
-	  <emphasis>compiler specification</emphasis> for the Program. Users can extend the available set
-	  of call-fixups.  See <xref linkend="ExtensionOptions"/>.
+	  <emphasis>compiler specification</emphasis> for the Program.
 	</para>
       </listitem>
     </varlistentry>
@@ -2617,15 +2453,12 @@
     </informalexample>
   </para>
   <para>
-    Options that are specific to the particular Program being analyzed are accessed by
-    selecting the Code Browser menu
+    Another source of options can be accessed by selecting the Code Browser menu
     <informalexample>
       <emphasis role="bold">Edit -> Options for &lt;Program&gt;</emphasis>
     </informalexample>
-    Picking the <emphasis>Decompiler</emphasis> tab shows <xref linkend="ProgramOptions"/>
-    that only affect the decompiler.  Picking the <xref linkend="ExtensionOptions"/> tab
-    shows a table of the available prototype models, call-fixups, and callother-fixups. These
-    affect more than just the decompiler but are also documented here.
+    and the picking the <emphasis>Decompiler</emphasis> tab. These <xref linkend="ProgramOptions"/>
+    are specific to the particular Program being analyzed.
   </para>
 </simplesect>
 <section id="GeneralOptions">
@@ -3128,8 +2961,7 @@
 <section id="ProgramOptions">
   <title>Program Options</title>
   <para>
-    Changes to these options affect only the decompiler and only for
-    the current Program being analyzed.
+    Changes to these options affect only the current Program being analyzed.
   </para>
   <para>
     <informalexample>
@@ -3149,280 +2981,6 @@
     </variablelist>
     </informalexample>
   </para>
-</section>
-<section id="ExtensionOptions">
-  <title>Specification Extensions</title>
-  <para>
-    This tab displays elements from the Program's <emphasis>compiler specification</emphasis> and
-    <emphasis>processor specification</emphasis> and allows the user to add or remove
-    <emphasis role="bold">extensions</emphasis>, including prototype models, call-fixups, and
-    callother-fixups.
-  </para>
-  <para>
-    Every program has a <emphasis>core</emphasis> set of specification elements,
-    loaded from the <xref linkend="ConceptSpecification"/>, that cannot
-    be modified or removed. Extensions, however, can be added to this core specification. Any extension
-    imported from this dialog is directly associated with the active Program and is stored permanently
-    with it.
-  </para>
-  <para>
-    Users can change or reimport an extension, if new information points to a better definition.
-    Users have full control over an extension, and unlike a core element, can tailor it specifically
-    to the Program.  
-  </para>
-  <para>
-    This options tab presents a table of all specification elements.
-    Each element, whether core or an extension, is displayed on a separate row with three columns:
-    <informalexample>
-      <itemizedlist mark='none' spacing='compact'>
-	<listitem><emphasis role="bold">Extension Type</emphasis> - indicating the type of element</listitem>
-	<listitem><emphasis role="bold">Name</emphasis> - showing the formal name of the element</listitem>
-	<listitem><emphasis role="bold">Status</emphasis> - indicating whether the element is core or an extension</listitem>
-      </itemizedlist>
-    </informalexample>
-    The core elements of the specification have a blank Status column, and any extension
-    is labeled either as "extension" or "override".
-  </para>
-  <sect2 id="ExtendTypes">
-    <title>Extension Types</title>
-    <para>
-      Each of the element types described here represents an XML tag of the same name, which, if
-      present in the table, must either be in the <emphasis>compiler specification</emphasis> file,
-      the <emphasis>processor specification</emphasis> file, or provided to Ghidra as an
-      import document.
-      <informalexample>
-	<variablelist>
-	<?dbfo list-presentation="blocks"?>
-	<varlistentry>
-	  <term><emphasis role="bold">prototype</emphasis></term>
-	  <listitem>
-	    <para>
-	      This element is a <xref linkend="ConceptPrototypeModel"/> that holds a specific named set
-	      of parameter passing details. It
-	      can be applied to individual functions by name, typically via the "Calling Convention" menu
-	      in the <link xlink:href="help/topics/FunctionPlugin/Variables.htm#Edit_Function">Function Editor Dialog</link>.
-	      See the documentation on <xref linkend="AnnotePrototype"/> for how they affect decompilation.
-	    </para>
-	    <para>
-	      The XML tag, <code>&lt;prototype&gt;</code> always has a <emphasis role="bold">name</emphasis> attribute
-	      that defines the formal name of the prototype model, which must be unique across all models.
-	      <programlisting>
-<![CDATA[<prototype name="__stdcall" extrapop="unknown" stackshift="4">
-  <input>
-    <pentry minsize="1" maxsize="500" align="4">
-      <addr offset="4" space="stack"/>
-    </pentry>
-  </input>
-  <output>
-  ...]]>
-	      </programlisting>
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">callfixup</emphasis></term>
-	  <listitem>
-	    <para>
-	      This element is a Call-fixup, which can be used to substitute a specific p-code
-	      sequence for CALL instructions during decompilation, as described in
-	      <xref linkend="AnnotePrototype"/>.
-	    </para>
-	    <para>
-	      The <code>&lt;callfixup&gt;</code> tag has a <emphasis role="bold">name</emphasis>
-	      attribute listing the formal name, which must be unique across all call-fixups.
-	      <programlisting>
-<![CDATA[<callfixup name="EH_prolog3">
-  <pcode>
-    <body><![CDATA<
-      EBP = ESP + 4;
-      tmp = * EBP;
-      ESP = ESP - tmp;
-      ESP = ESP - 24;
-    ]]>]]&gt;<![CDATA[</body>
-  </pcode>
-</callfixup>]]>
-	      </programlisting>
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">callotherfixup</emphasis></term>
-	  <listitem>
-	    <para>
-	      This element is a Callother-fixup, which can be used to substitute a specific p-code
-	      sequence for CALLOTHER p-code operations.  A CALLOTHER
-	      is a black-box, or unspecified p-code operation, see <xref linkend="ConceptCallother"/>.
-	    </para>
-	    <para>
-	      The <code>&lt;callotherfixup&gt;</code> tag has a
-	      <emphasis role="bold">targetop</emphasis> attribute which lists the
-	      name of the particular CALLOTHER operation it substitutes for.
-	      <programlisting>
-<![CDATA[<callotherfixup targetop="dynamicPush">
-  <pcode>
-    <input name="amount"/>
-    <body><![CDATA[
-      RSP = RSP + amount;
-    ]]>]]&gt;<![CDATA[</body>
-  </pcode>
-</callotherfixup>]]>
-	      </programlisting>
-	    </para>
-	  </listitem>
-	</varlistentry>
-	</variablelist>
-      </informalexample>
-    </para>
-  </sect2>
-  <sect2 id="ExtendStatus">
-    <title>Status</title>
-    <para>
-      The Status column labels an element as either a core specification
-      or an extension; it also gives an indication of whether the element
-      is about to be installed or removed.
-    </para>
-    <para>
-      With no changes pending, the column will show one of the three main values:
-      <informalexample>
-	<variablelist>
-	<?dbfo list-presentation="blocks"?>
-	<varlistentry>
-	  <term><emphasis>&lt;blank&gt;</emphasis></term>
-	  <listitem>
-	    <para>
-	      A blank Status column indicates that the element is a core part of the
-	      specification, originating from one of the <emphasis>specification files</emphasis>.
-	      These elements cannot be changed or removed.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">extension</emphasis></term>
-	  <listitem>
-	    <para>
-	      Indicates that the element is a program specific extension that has been
-	      added to the specification.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">override</emphasis></term>
-	  <listitem>
-	    <para>
-	      Indicates that the element, which must be a <emphasis role="bold">callotherfixup</emphasis>,
-	      is an extension that overrides a core element with the same target.  The extension
-	      effectively replaces the p-code injection of the core element with a user supplied one.
-	      If this type of extension is later removed, the core element becomes active again.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	</variablelist>
-      </informalexample>
-    </para>
-    <para>
-      If the user has either imported additional extensions or selected an extension for removal but
-      has not yet clicked the <emphasis>Apply</emphasis> button in the Options dialog, the Status column
-      may show one of the following values, indicating a pending change.
-      <informalexample>
-	<variablelist>
-	<?dbfo list-presentation="blocks"?>
-	<varlistentry>
-	  <term><emphasis role="bold">install</emphasis></term>
-	  <listitem>
-	    <para>
-	      Indicates a new extension that will be installed.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">remove</emphasis></term>
-	  <listitem>
-	    <para>
-	      Indicates an extension that is about to be removed.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">replace</emphasis></term>
-	  <listitem>
-	    <para>
-	      Indicates a new extension that will replace a current
-	      extension with the same name.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term><emphasis role="bold">override pending</emphasis></term>
-	  <listitem>
-	    <para>
-	      Indicates a new extension that will override a core element when
-	      it is installed.
-	    </para>
-	  </listitem>
-	</varlistentry>
-	</variablelist>
-      </informalexample>
-    </para>
-  </sect2>
-  <sect2 id="ExtendImport">
-    <title>Importing a New Extension</title>
-    <para>
-      The <emphasis>Import</emphasis> button at the bottom of the
-      "Specification Extensions" pane allows the user to import one of the
-      three element types, <emphasis role="bold">prototype</emphasis>,
-      <emphasis role="bold">callfixup</emphasis>, or <emphasis role="bold">callotherfixup</emphasis>,
-      into the program as a new extension.
-      The user must supply a properly formed XML document, as a file, that fully describes the new
-      extension.  Clicking the <emphasis>Import</emphasis> button brings up a File Chooser dialog,
-      from which the user must select their prepared XML file.  Once <emphasis>Ok</emphasis> is
-      clicked, the file is read in and validated.  If there are any problems with the validation, or if
-      the new extension's name collides with a core element, the import does not succeed and
-      an error message will be displayed. Otherwise, the import is accepted, and the table is updated
-      to indicate the pending change.
-    </para>
-    <para>
-      The final change to the program, installing the new extension, will not happen until the
-      <emphasis>Apply</emphasis> button, at the bottom of the Options dialog, is clicked.
-    </para>
-    <para>
-      The XML file describing the extension <emphasis>must</emphasis> have one of the tags,
-      <code>&lt;prototype&gt;</code>, <code>&lt;callfixup&gt;</code>, or <code>&lt;callotherfixup&gt;</code>,
-      as its single root element. Users can find numerous examples within the compiler
-      and processor specification files that come as part of Ghidra's installation.
-      See <xref linkend="ConceptSpecification"/>.
-    </para>
-    <para>
-      In the case of <emphasis role="bold">prototype</emphasis> and <emphasis role="bold">callfixup</emphasis>
-      elements, extensions cannot replace existing core elements, so the new extension <emphasis>must not</emphasis>
-      have a name that matches an existing core element.  If a new <emphasis role="bold">callotherfixup</emphasis>
-      extension has a targetop that matches a core element, the extension is automatically treated as an override.
-    </para>
-    <para>
-      Existing extensions can be replaced simply by importing a new extension with the same name or targetop.
-    </para>
-  </sect2>
-  <sect2 id="ExtendRemove">
-    <title>Removing an Extension</title>
-    <para>
-      The <emphasis>Remove</emphasis> button at the bottom of the "Specification Extensions" pane allows
-      the user to remove a previously installed extension.  A row from the table is selected first, which
-      must have a Status of <emphasis role="bold">extension</emphasis> or <emphasis role="bold">override</emphasis>.
-      Core elements of the specification cannot be removed.
-      Clicking the <emphasis>Remove</emphasis> button brings up a confirmation dialog, and if
-      <emphasis>Ok</emphasis> is clicked, the selected extension is marked for removal.  The Status of the row
-      changes to <emphasis role="bold">remove</emphasis>, reflecting this.
-    </para>
-    <para>
-      The final change to the program, removing the extension, will not happen until the
-      <emphasis>Apply</emphasis> button, at the bottom of the Options dialog, is clicked.
-    </para>
-    <para>
-      If a <emphasis role="bold">prototype</emphasis> or <emphasis role="bold">callfixup</emphasis> is removed,
-      all functions are checked to see if they have the matching calling convention or call-fixup set.
-      A function with matching calling convention is changed to have the <emphasis>default</emphasis> convention, which is always a core element.
-      A function with matching call-fixup is changed to have no call-fixup.
-    </para>
-  </sect2>
 </section>
 
 </chapter>

@@ -61,7 +61,7 @@ public class HighExternalSymbol extends HighSymbol {
 			SpecXmlUtils.xmlEscapeAttribute(buf, "name", name + "_exref");
 		}
 		buf.append(">\n");
-		AddressXML.buildXML(buf, resolveAddress);
+		buf.append(Varnode.buildXMLAddress(resolveAddress));
 		buf.append("</externrefsymbol>\n");
 	}
 }

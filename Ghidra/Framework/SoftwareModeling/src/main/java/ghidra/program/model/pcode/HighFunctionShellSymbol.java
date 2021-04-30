@@ -59,7 +59,7 @@ public class HighFunctionShellSymbol extends HighSymbol {
 		SpecXmlUtils.xmlEscapeAttribute(buf, "name", name);
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "size", 1);
 		buf.append(">\n");
-		AddressXML.buildXML(buf, getStorage().getMinAddress());
+		buf.append(Varnode.buildXMLAddress(getStorage().getMinAddress()));
 		buf.append("</function>\n");
 	}
 }

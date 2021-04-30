@@ -55,7 +55,6 @@ import ghidra.util.xml.XmlUtilities;
 public class DecompileCallback {
 
 	public final static int MAX_SYMBOL_COUNT = 16;
-
 	/**
 	 * Data returned for a query about strings
 	 */
@@ -71,7 +70,6 @@ public class DecompileCallback {
 	private Function cachedFunction;
 	private AddressSet undefinedBody;
 	private Address funcEntry;
-	private AddressSpace overlaySpace;		// non-null if function being decompiled is in an overlay
 	private int default_extrapop;
 	private Language pcodelanguage;
 	private CompilerSpec pcodecompilerspec;
@@ -127,8 +125,6 @@ public class DecompileCallback {
 			undefinedBody = new AddressSet(func.getBody());
 		}
 		funcEntry = entry;
-		AddressSpace spc = funcEntry.getAddressSpace();
-		overlaySpace = spc.isOverlaySpace() ? spc : null;
 		debug = dbg;
 		if (debug != null) {
 			debug.setPcodeDataTypeManager(dtmanage);
@@ -157,6 +153,19 @@ public class DecompileCallback {
 		nativeMessage = msg;
 	}
 
+	public synchronized int readXMLSize(String addrxml) {
+		int attrstart = addrxml.indexOf("size=\"");
+		if (attrstart >= 4) {
+			attrstart += 6;
+			int attrend = addrxml.indexOf('\"', attrstart);
+			if (attrend > attrstart) {
+				int size = SpecXmlUtils.decodeInt(addrxml.substring(attrstart, attrend));
+				return size;
+			}
+		}
+		return 0;
+	}
+
 	public synchronized ArrayList<String> readXMLNameList(String xml) throws PcodeXMLException {
 		try {
 			NameListHandler nmHandler = new NameListHandler();
@@ -173,11 +182,9 @@ public class DecompileCallback {
 
 	public byte[] getBytes(String addrxml) {
 		try {
-			Address addr = AddressXML.readXML(addrxml, addrfactory);
-			int size = AddressXML.readXMLSize(addrxml);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			int size = readXMLSize(addrxml);
+			Address addr;
+			addr = Varnode.readXMLAddress(addrxml, addrfactory, funcEntry.getAddressSpace());
 			if (addr == Address.NO_ADDRESS) {
 				throw new PcodeXMLException("Address does not physically map");
 			}
@@ -223,10 +230,7 @@ public class DecompileCallback {
 		Address addr;
 		int flags;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -266,10 +270,7 @@ public class DecompileCallback {
 	public PackedBytes getPcodePacked(String addrstring) {
 		Address addr = null;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -292,9 +293,8 @@ public class DecompileCallback {
 				}
 			}
 
-			PackedBytes pcode = instr.getPrototype()
-					.getPcodePacked(instr.getInstructionContext(),
-						new InstructionPcodeOverride(instr), uniqueFactory);
+			PackedBytes pcode = instr.getPrototype().getPcodePacked(instr.getInstructionContext(),
+				new InstructionPcodeOverride(instr), uniqueFactory);
 
 			return pcode;
 		}
@@ -346,7 +346,7 @@ public class DecompileCallback {
 	public String getPcodeInject(String nm, String context, int type) {
 		PcodeInjectLibrary snippetLibrary = pcodecompilerspec.getPcodeInjectLibrary();
 
-		InjectPayload payload = snippetLibrary.getPayload(type, nm);
+		InjectPayload payload = snippetLibrary.getPayload(type, nm, program, context);
 		if (payload == null) {
 			Msg.warn(this, "Decompiling " + funcEntry + ", no pcode inject with name: " + nm);
 			return null; // No fixup associated with this name
@@ -381,8 +381,8 @@ public class DecompileCallback {
 				con.nextAddr = con.baseAddr.add(fallThruOffset);
 
 				con.refAddr = null;
-				for (Reference ref : program.getReferenceManager()
-						.getReferencesFrom(con.baseAddr)) {
+				for (Reference ref : program.getReferenceManager().getReferencesFrom(
+					con.baseAddr)) {
 					if (ref.isPrimary() && ref.getReferenceType().isCall()) {
 						con.refAddr = ref.getToAddress();
 						break;
@@ -487,10 +487,7 @@ public class DecompileCallback {
 	public String getSymbol(String addrstring) { // Return first symbol name at this address
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -630,8 +627,8 @@ public class DecompileCallback {
 			buf.append("<comment");
 			SpecXmlUtils.encodeStringAttribute(buf, "type", "header");
 			buf.append(">\n");
-			AddressXML.buildXML(buf, addr);
-			AddressXML.buildXML(buf, addr);
+			buf.append(Varnode.buildXMLAddress(addr));
+			buf.append(Varnode.buildXMLAddress(addr));
 			buf.append("\n<text>");
 			SpecXmlUtils.xmlEscape(buf, text);
 			buf.append("</text>\n");
@@ -683,8 +680,8 @@ public class DecompileCallback {
 				buf.append("<comment");
 				SpecXmlUtils.encodeStringAttribute(buf, "type", typename);
 				buf.append(">\n");
-				AddressXML.buildXML(buf, addr);
-				AddressXML.buildXML(buf, commaddr);
+				buf.append(Varnode.buildXMLAddress(addr));
+				buf.append(Varnode.buildXMLAddress(commaddr));
 				buf.append("\n<text>");
 				SpecXmlUtils.xmlEscape(buf, text);
 				buf.append("</text>\n");
@@ -704,10 +701,7 @@ public class DecompileCallback {
 	public String getMappedSymbolsXML(String addrstring) { // Return XML describing data or functions at addr
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
 			if (addr == Address.NO_ADDRESS) {
 				// Unknown spaces may result from "spacebase" registers defined in cspec
 				return null;
@@ -749,10 +743,7 @@ public class DecompileCallback {
 	public String getExternalRefXML(String addrstring) { // Return any external reference at addr
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -801,7 +792,6 @@ public class DecompileCallback {
 			Namespace namespc = funcSymbol.getNamespace();
 			if (debug != null) {
 				debug.getFNTypes(hfunc);
-				debug.addPossiblePrototypeExtension(func);
 			}
 			return buildResult(funcSymbol, namespc);
 		}
@@ -839,8 +829,8 @@ public class DecompileCallback {
 	public String getRegisterName(String addrstring) {
 		try {
 
-			Address addr = AddressXML.readXML(addrstring, addrfactory);
-			int size = AddressXML.readXMLSize(addrstring);
+			Address addr = Varnode.readXMLAddress(addrstring, addrfactory, null);
+			int size = readXMLSize(addrstring);
 			Register reg = pcodelanguage.getRegister(addr, size);
 			if (reg == null) {
 				return null;
@@ -857,10 +847,7 @@ public class DecompileCallback {
 	public String getTrackedRegisters(String addrstring) {
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			addr = Varnode.readXMLAddress(addrstring, addrfactory, funcEntry.getAddressSpace());
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -871,7 +858,7 @@ public class DecompileCallback {
 		StringBuilder stringBuf = new StringBuilder();
 
 		stringBuf.append("<tracked_pointset");
-		AddressXML.appendAttributes(stringBuf, addr);
+		Varnode.appendSpaceOffset(stringBuf, addr);
 		stringBuf.append(">\n");
 		for (Register reg : context.getRegisters()) {
 			if (reg.isProcessorContext()) {
@@ -1033,8 +1020,8 @@ public class DecompileCallback {
 		if (entry.getAddressSpace().equals(addr.getAddressSpace())) {
 			long diff = addr.getOffset() - entry.getOffset();
 			if ((diff >= 0) && (diff < 8)) {
-				HighFunction hfunc =
-					new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
+				HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec,
+					dtmanage);
 
 				int extrapop = getExtraPopOverride(func, addr);
 				hfunc.grabFromFunction(extrapop, includeDefaultNames,
@@ -1044,7 +1031,6 @@ public class DecompileCallback {
 				Namespace namespc = functionSymbol.getNamespace();
 				if (debug != null) {
 					debug.getFNTypes(hfunc);
-					debug.addPossiblePrototypeExtension(func);
 				}
 				return buildResult(functionSymbol, namespc);
 			}
@@ -1318,11 +1304,8 @@ public class DecompileCallback {
 		Address addr;
 		int maxChars;
 		try {
-			addr = AddressXML.readXML(addrString, addrfactory);
-			maxChars = AddressXML.readXMLSize(addrString);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
+			maxChars = readXMLSize(addrString);
+			addr = Varnode.readXMLAddress(addrString, addrfactory, funcEntry.getAddressSpace());
 			if (addr == Address.NO_ADDRESS) {
 				throw new PcodeXMLException("Address does not physically map");
 			}

@@ -28,12 +28,10 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
-import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.Memory;
@@ -67,7 +65,7 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 
 		createInitialFragments(program, header, monitor);
 
-		ProgramCompilerSpec.enableJavaLanguageDecompilation(program);
+		BasicCompilerSpec.enableJavaLanguageDecompilation(program);
 		createNamespaces(program, header, monitor, log);
 		processMap(program, header, monitor, log);
 		processStrings(program, header, monitor, log);
@@ -174,8 +172,10 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 			return;
 		}
 
-		for (EncodedMethod encodedMethod : methods) {
+		for (int i = 0; i < methods.size(); ++i) {
 			monitor.checkCanceled();
+
+			EncodedMethod encodedMethod = methods.get(i);
 
 			MethodIDItem methodID = header.getMethods().get(encodedMethod.getMethodIndex());
 			String methodName = DexUtil.convertToString(header, methodID.getNameIndex());
@@ -213,8 +213,8 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 			Namespace classNameSpace, MessageLog log) {
 		program.getSymbolTable().addExternalEntryPoint(methodAddress);
 		try {
-			return program.getSymbolTable()
-					.createLabel(methodAddress, methodName, classNameSpace, SourceType.ANALYSIS);
+			return program.getSymbolTable().createLabel(methodAddress, methodName, classNameSpace,
+				SourceType.ANALYSIS);
 		}
 		catch (InvalidInputException e) {
 			log.appendException(e);
@@ -240,8 +240,8 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 			commentBuilder.append("Method Debug Info Offset: 0x" +
 				Integer.toHexString(codeItem.getDebugInfoOffset()) + "\n");
 		}
-		commentBuilder
-				.append("Method ID Offset: 0x" + Long.toHexString(methodID.getFileOffset()) + "\n");
+		commentBuilder.append(
+			"Method ID Offset: 0x" + Long.toHexString(methodID.getFileOffset()) + "\n");
 		setPlateComment(program, methodAddress, commentBuilder.toString());
 	}
 
@@ -522,8 +522,10 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 
 	private void processEncodedMethods(Program program, DexHeader header, ClassDefItem item,
 			List<EncodedMethod> methods, TaskMonitor monitor) throws Exception {
-		for (EncodedMethod method : methods) {
+		for (int i = 0; i < methods.size(); ++i) {
 			monitor.checkCanceled();
+
+			EncodedMethod method = methods.get(i);
 
 			MethodIDItem methodID = header.getMethods().get(method.getMethodIndex());
 
@@ -660,8 +662,7 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 					methodAddress.add(setItemDataType.getLength()));
 				processAnnotationSetItem(program, setItem, monitor, log);
 			}
-			for (ParameterAnnotation parameter : annotationsDirectoryItem
-					.getParameterAnnotations()) {
+			for (ParameterAnnotation parameter : annotationsDirectoryItem.getParameterAnnotations()) {
 				monitor.checkCanceled();
 				Address parameterAddress = toAddr(program, parameter.getAnnotationsOffset());
 				AnnotationSetReferenceList annotationSetReferenceList =
@@ -766,9 +767,9 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 						classNameSpace, log);
 					if (methodSymbol != null) {
 						String externalName = methodSymbol.getName(true);
-						program.getReferenceManager()
-								.addExternalReference(methodIndexAddress, "EXTERNAL.dex",
-									externalName, null, SourceType.ANALYSIS, 0, RefType.DATA);
+						program.getReferenceManager().addExternalReference(methodIndexAddress,
+							"EXTERNAL.dex", externalName, null, SourceType.ANALYSIS, 0,
+							RefType.DATA);
 					}
 				}
 			}

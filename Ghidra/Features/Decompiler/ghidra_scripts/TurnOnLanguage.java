@@ -15,17 +15,18 @@
  */
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.options.Options;
-import ghidra.program.database.ProgramCompilerSpec;
+import ghidra.program.model.lang.BasicCompilerSpec;
 
 public class TurnOnLanguage extends GhidraScript {
 
 	@Override
 	protected void run() throws Exception {
-		Options decompilerPropertyList =
-			currentProgram.getOptions(ProgramCompilerSpec.DECOMPILER_PROPERTY_LIST_NAME);
-		decompilerPropertyList.registerOption(ProgramCompilerSpec.DECOMPILER_OUTPUT_LANGUAGE,
-			ProgramCompilerSpec.DECOMPILER_OUTPUT_DEF, null,
-			ProgramCompilerSpec.DECOMPILER_OUTPUT_DESC);
+		Options decompilerPropertyList = currentProgram.getOptions(BasicCompilerSpec.DECOMPILER_PROPERTY_LIST_NAME);
+		decompilerPropertyList.registerOption(
+			BasicCompilerSpec.DECOMPILER_OUTPUT_LANGUAGE,
+			BasicCompilerSpec.DECOMPILER_OUTPUT_DEF,
+			null,
+			BasicCompilerSpec.DECOMPILER_OUTPUT_DESC);
 	}
 
 }

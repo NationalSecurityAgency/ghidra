@@ -15,10 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
-
 public class BitFieldPackingImpl implements BitFieldPacking {
 
 	private boolean useMSConvention = false;
@@ -69,73 +65,4 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 		this.zeroLengthBoundary = zeroLengthBoundary;
 	}
 
-	/**
-	 * Write configuration to a stream as an XML \<bitfield_packing> tag
-	 * @param buffer is the stream to write to
-	 */
-	public void saveXml(StringBuilder buffer) {
-		if (!useMSConvention && typeAlignmentEnabled && zeroLengthBoundary == 0) {
-			return;		// All defaults
-		}
-		buffer.append("<bitfield_packing>\n");
-		if (useMSConvention) {
-			buffer.append("<use_MS_convention value=\"yes\"/>\n");
-		}
-		if (!typeAlignmentEnabled) {
-			buffer.append("<type_alignment_enabled value=\"no\"/>\n");
-		}
-		if (zeroLengthBoundary != 0) {
-			buffer.append("<zero_length_boundary");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", zeroLengthBoundary);
-			buffer.append("/>\n");
-		}
-		buffer.append("</bitfield_packing>\n");
-	}
-
-	/**
-	 * Restore settings from a \<bitfield_packing> tag in an XML stream.
-	 * The XML is designed to override existing settings from the default constructor
-	 * @param parser is the XML stream
-	 */
-	protected void restoreXml(XmlPullParser parser) {
-		parser.start();
-		while (parser.peek().isStart()) {
-			XmlElement subel = parser.start();
-			String name = subel.getName();
-			String value = subel.getAttribute("value");
-
-			if (name.equals("use_MS_convention")) {
-				useMSConvention = SpecXmlUtils.decodeBoolean(value);
-			}
-			else if (name.equals("type_alignment_enabled")) {
-				typeAlignmentEnabled = SpecXmlUtils.decodeBoolean(value);
-			}
-			else if (name.equals("zero_length_boundary")) {
-				zeroLengthBoundary = SpecXmlUtils.decodeInt(value);
-			}
-
-			parser.end(subel);
-		}
-		parser.end();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		BitFieldPackingImpl op2 = (BitFieldPackingImpl) obj;
-		if (typeAlignmentEnabled != op2.typeAlignmentEnabled) {
-			return false;
-		}
-		if (useMSConvention != op2.useMSConvention) {
-			return false;
-		}
-		if (zeroLengthBoundary != op2.zeroLengthBoundary) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return (typeAlignmentEnabled ? 1 : 13) + (useMSConvention ? 5 : 27) + zeroLengthBoundary;
-	}
 }

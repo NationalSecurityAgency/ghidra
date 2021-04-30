@@ -28,6 +28,11 @@ public class InjectPutStatic extends InjectPayloadJava {
 	}
 
 	@Override
+	public String getName() {
+		return PcodeInjectLibraryJava.PUTSTATIC;
+	}
+
+	@Override
 	public PcodeOp[] getPcode(Program program, InjectContext con) {
 		AbstractConstantPoolInfoJava[] constantPool = getConstantPool(program);
 		int constantPoolIndex = (int) con.inputlist.get(0).getOffset();

@@ -16,7 +16,6 @@
 package ghidra.app.plugin.processors.sleigh;
 
 import java.io.InputStream;
-import java.io.StringReader;
 
 import org.iso_relax.verifier.*;
 import org.xml.sax.*;
@@ -27,32 +26,10 @@ import ghidra.util.Msg;
 import utilities.util.FileResolutionResult;
 import utilities.util.FileUtilities;
 
-/**
- * Validate SLEIGH related XML configuration files: .cspec .pspec and .ldefs
- * 
- * A ResourceFile containing an XML document can be verified with one of the
- * static methods:
- *    - validateCspecFile
- *    - validateLdefsFile
- *    - validatePspecFile
- * 
- * Alternately the class can be instantiated, which will allocate a single verifier
- * that can be run on multiple files.
- */
 public class SleighLanguageValidator {
 	private static final ResourceFile ldefsRelaxSchemaFile;
 	private static final ResourceFile pspecRelaxSchemaFile;
 	private static final ResourceFile cspecRelaxSchemaFile;
-	public static final int CSPEC_TYPE = 1;
-	public static final int PSPEC_TYPE = 2;
-	public static final int LDEFS_TYPE = 3;
-	public static final int CSPECTAG_TYPE = 4;
-	private static final String LANGUAGE_TYPESTRING = "language definitions";
-	private static final String COMPILER_TYPESTRING = "compiler specification";
-	private static final String PROCESSOR_TYPESTRING = "processor specification";
-
-	private int verifierType;
-	private Verifier verifier;
 
 	static {
 		ResourceFile file = null;
@@ -92,107 +69,16 @@ public class SleighLanguageValidator {
 		cspecRelaxSchemaFile = file;
 	}
 
-	public SleighLanguageValidator(int type) {
-		verifierType = type;
-		ResourceFile schemaFile = null;
-		switch (type) {
-			case CSPEC_TYPE:
-			case CSPECTAG_TYPE:
-				schemaFile = cspecRelaxSchemaFile;
-				break;
-			case PSPEC_TYPE:
-				schemaFile = pspecRelaxSchemaFile;
-				break;
-			case LDEFS_TYPE:
-				schemaFile = ldefsRelaxSchemaFile;
-				break;
-			default:
-				throw new SleighException("Bad verifier type");
-		}
-		verifier = null;
-		try {
-			verifier = getVerifier(schemaFile);
-		}
-		catch (Exception e) {
-			throw new SleighException("Error creating verifier", e);
-		}
-	}
-
-	private String getTypeString() {
-		if (verifierType == PSPEC_TYPE) {
-			return PROCESSOR_TYPESTRING;
-		}
-		if (verifierType == LDEFS_TYPE) {
-			return LANGUAGE_TYPESTRING;
-		}
-		return COMPILER_TYPESTRING;
-	}
-
-	/**
-	 * Verify the given file against this validator.
-	 * @param specFile is the file
-	 * @throws SleighException with an explanation if the file does not validate
-	 */
-	public void verify(ResourceFile specFile) throws SleighException {
-		FileResolutionResult result = FileUtilities.existsAndIsCaseDependent(specFile);
-		if (!result.isOk()) {
-			throw new SleighException(
-				specFile + " is not properly case dependent: " + result.getMessage());
-		}
-		try {
-			InputStream in = specFile.getInputStream();
-			verifier.setErrorHandler(new VerifierErrorHandler(specFile));
-			verifier.verify(new InputSource(in));
-			in.close();
-		}
-		catch (Exception e) {
-			throw new SleighException(
-				"Invalid " + getTypeString() + " file: " + specFile.getAbsolutePath(), e);
-		}
-	}
-
-	/**
-	 * Verify an XML document as a string against this validator.
-	 * Currently this only supports verifierType == CSPECTAG_TYPE.
-	 * @param title is a description of the document
-	 * @param document is the XML document body
-	 * @throws SleighException with an explanation if the document does not validate
-	 */
-	public void verify(String title, String document) throws SleighException {
-		if (verifierType != CSPECTAG_TYPE) {
-			throw new SleighException("Only cspec tag verification is supported");
-		}
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("<compiler_spec>\n");
-		buffer.append("<default_proto>\n");
-		buffer.append("<prototype name=\"a\" extrapop=\"0\" stackshift=\"0\">\n");
-		buffer.append("<input/><output/>\n");
-		buffer.append("</prototype>\n");
-		buffer.append("</default_proto>\n");
-		buffer.append(document);
-		buffer.append("</compiler_spec>\n");
-		ErrorHandler errorHandler = new VerifierErrorHandler(title, 6);
-		StringReader reader = new StringReader(buffer.toString());
-
-		verifier.setErrorHandler(errorHandler);
-		try {
-			verifier.verify(new InputSource(reader));
-		}
-		catch (Exception e) {
-			throw new SleighException("Invalid " + getTypeString() + ": " + title, e);
-		}
-	}
-
 	public static void validateLdefsFile(ResourceFile ldefsFile) throws SleighException {
-		validateSleighFile(ldefsRelaxSchemaFile, ldefsFile, LANGUAGE_TYPESTRING);
+		validateSleighFile(ldefsRelaxSchemaFile, ldefsFile, "language definitions");
 	}
 
 	public static void validatePspecFile(ResourceFile pspecFile) throws SleighException {
-		validateSleighFile(pspecRelaxSchemaFile, pspecFile, PROCESSOR_TYPESTRING);
+		validateSleighFile(pspecRelaxSchemaFile, pspecFile, "processor specification");
 	}
 
 	public static void validateCspecFile(ResourceFile cspecFile) throws SleighException {
-		validateSleighFile(cspecRelaxSchemaFile, cspecFile, COMPILER_TYPESTRING);
+		validateSleighFile(cspecRelaxSchemaFile, cspecFile, "compiler specification");
 	}
 
 	private static void validateSleighFile(ResourceFile relaxSchemaFile,
@@ -200,8 +86,8 @@ public class SleighLanguageValidator {
 
 		FileResolutionResult result = FileUtilities.existsAndIsCaseDependent(fileToValidate);
 		if (!result.isOk()) {
-			throw new SleighException(
-				fileToValidate + " is not properly case dependent: " + result.getMessage());
+			throw new SleighException(fileToValidate + " is not properly case dependent: " +
+				result.getMessage());
 		}
 
 		Verifier verifier = null;
@@ -213,7 +99,7 @@ public class SleighLanguageValidator {
 		}
 		try {
 			InputStream in = fileToValidate.getInputStream();
-			verifier.setErrorHandler(new VerifierErrorHandler(fileToValidate));
+			verifier.setErrorHandler(new MyErrorHandler(fileToValidate));
 			verifier.verify(new InputSource(in));
 			in.close();
 		}
@@ -230,18 +116,11 @@ public class SleighLanguageValidator {
 		return verifier;
 	}
 
-	private static class VerifierErrorHandler implements ErrorHandler {
-		final String documentTitle;
-		int lineNumberBase;
+	private static class MyErrorHandler implements ErrorHandler {
+		final ResourceFile file;
 
-		public VerifierErrorHandler(ResourceFile file) {
-			documentTitle = file.toString();
-			lineNumberBase = 0;
-		}
-
-		public VerifierErrorHandler(String title, int base) {
-			documentTitle = title;
-			lineNumberBase = base;
+		public MyErrorHandler(ResourceFile file) {
+			this.file = file;
 		}
 
 		@Override
@@ -251,10 +130,10 @@ public class SleighLanguageValidator {
 
 		@Override
 		public void error(SAXParseException e) throws SAXException {
-			int lineno = e.getLineNumber() - lineNumberBase;
-			Msg.error(SleighLanguageValidator.class,
-				"Error validating " + documentTitle + "  at " + lineno + ":" + e.getColumnNumber(),
-				e);
+			Msg.error(
+				SleighLanguageValidator.class,
+				"Error validating " + file + "  at " + e.getLineNumber() + ":" +
+					e.getColumnNumber(), e);
 			throw e;
 		}
 

@@ -101,8 +101,8 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 			if (mustFix) {
 				PcodeInjectLibrary snippetLibrary =
 					program.getCompilerSpec().getPcodeInjectLibrary();
-				InjectPayload callFixup =
-					snippetLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE, callFixupApplied);
+				InjectPayload callFixup = snippetLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE,
+					callFixupApplied, program, null);
 				boolean isfallthru = true;
 				if (callFixup != null) {
 					isfallthru = callFixup.isFallThru();
@@ -405,8 +405,8 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 			}
 		}
 
-		program.getBookmarkManager()
-				.removeBookmarks(repairedCallLocations, BookmarkType.ERROR, monitor);
+		program.getBookmarkManager().removeBookmarks(repairedCallLocations, BookmarkType.ERROR,
+			monitor);
 
 		if (!clearInstSet.isEmpty()) {
 			// entries including data flow referenced from instructions will be repaired
@@ -449,7 +449,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 		String[] callFixupNames = snippetLibrary.getCallFixupNames();
 		for (String fixupName : callFixupNames) {
 			InjectPayload payload =
-				snippetLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE, fixupName);
+				snippetLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE, fixupName, program, null);
 			List<String> callFixupTargets = ((InjectPayloadCallfixup) payload).getTargets();
 			for (String name : callFixupTargets) {
 				cachedTargetFixupMap.put(name, fixupName);

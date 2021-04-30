@@ -116,60 +116,56 @@ public class PcodeInjectLibraryJava extends PcodeInjectLibrary {
 	public static final int REFERENCE_SIZE = 4;
 
 	private Map<String, InjectPayloadJava> implementedOps;
+	private InjectPayloadJavaParameters paramPayload;
 
 	public PcodeInjectLibraryJava(SleighLanguage l) {
 		super(l);
+		long offset = l.getUniqueBase();
 		implementedOps = new HashMap<>();
-		implementedOps.put(GETFIELD, new InjectGetField(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(GETSTATIC, new InjectGetStatic(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(INVOKE_DYNAMIC, new InjectInvokeDynamic(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(INVOKE_INTERFACE, new InjectInvokeInterface(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(INVOKE_SPECIAL, new InjectInvokeSpecial(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(INVOKE_STATIC, new InjectInvokeStatic(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(INVOKE_VIRTUAL, new InjectInvokeVirtual(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(LDC, new InjectLdc(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(LDC2_W, new InjectLdc(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(LDC_W, new InjectLdc(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(MULTIANEWARRAY, new InjectMultiANewArray(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(PUTFIELD, new InjectPutField(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-		implementedOps.put(PUTSTATIC, new InjectPutStatic(SOURCENAME, l, uniqueBase));
-		uniqueBase += 0x100;
-	}
+		implementedOps.put(GETFIELD, new InjectGetField(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(GETSTATIC, new InjectGetStatic(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(INVOKE_DYNAMIC, new InjectInvokeDynamic(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(INVOKE_INTERFACE, new InjectInvokeInterface(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(INVOKE_SPECIAL, new InjectInvokeSpecial(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(INVOKE_STATIC, new InjectInvokeStatic(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(INVOKE_VIRTUAL, new InjectInvokeVirtual(SOURCENAME, l, offset));
+		offset += 0x100;
+		InjectPayloadJava ldcInject = new InjectLdc(SOURCENAME, l, offset);
+		offset += 0x100;
+		implementedOps.put(LDC, ldcInject);
+		implementedOps.put(LDC2_W, ldcInject);
+		implementedOps.put(LDC_W, ldcInject);
+		implementedOps.put(MULTIANEWARRAY, new InjectMultiANewArray(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(PUTFIELD, new InjectPutField(SOURCENAME, l, offset));
+		offset += 0x100;
+		implementedOps.put(PUTSTATIC, new InjectPutStatic(SOURCENAME, l, offset));
+		offset += 0x100;
 
-	public PcodeInjectLibraryJava(PcodeInjectLibraryJava op2) {
-		super(op2);
-		implementedOps = op2.implementedOps;	// Immutable
+		paramPayload = new InjectPayloadJavaParameters(l, offset);
 	}
 
 	@Override
-	public PcodeInjectLibrary clone() {
-		return new PcodeInjectLibraryJava(this);
-	}
+	/**
+	* This method is called by DecompileCallback.getPcodeInject.
+	*/
+	public InjectPayload getPayload(int type, String name, Program program, String context) {
+		if (type == InjectPayload.CALLMECHANISM_TYPE) {
+			return paramPayload;
+		}
 
-	@Override
-	public InjectPayload allocateInject(String sourceName, String name, int tp) {
-		if (tp == InjectPayload.CALLMECHANISM_TYPE) {
-			return new InjectPayloadJavaParameters(name, sourceName, language, tp);
+		InjectPayloadJava payload = implementedOps.get(name);
+		if (payload == null) {
+			return super.getPayload(type, name, program, context);
 		}
-		if (tp == InjectPayload.CALLOTHERFIXUP_TYPE) {
-			InjectPayloadJava payload = implementedOps.get(name);
-			if (payload != null) {
-				return payload;
-			}
-		}
-		return super.allocateInject(sourceName, name, tp);
+
+		return payload;
 	}
 
 	@Override

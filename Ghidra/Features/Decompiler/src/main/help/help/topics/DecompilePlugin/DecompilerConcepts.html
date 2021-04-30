@@ -4,7 +4,7 @@
 <title>Decompiler Concepts</title>
 <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerIntro.html" title="Decompiler">
@@ -183,7 +183,7 @@
 <div class="informalexample">
       <div class="table">
 <a name="ops.htmltable"></a><p class="title"><b>Table . P-code Operations</b></p>
-<div class="table-contents"><table width="90%" frame="box" rules="all" id="ops.htmltable">
+<div class="table-contents"><table width="90%" frame="box" rules="all">
         
         <col width="40%">
         <col width="60%">
@@ -283,7 +283,7 @@
     </p>
     <div class="informalexample">
       <div class="table">
-<a name="ref.htmltable"></a><table width="90%" frame="box" rules="rows" id="ref.htmltable">
+<a name="ref.htmltable"></a><table width="90%" frame="box" rules="rows">
 	<col width="25%">
 	<col width="25%">
 	<col width="50%">
@@ -725,35 +725,6 @@
 
   <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="ConceptCallother"></a>User-defined P-code Operations - CALLOTHER</h4></div></div></div>
-    
-    <p>
-      P-code allows for additional, processor specific, operations referred to
-      as <span class="emphasis"><em>user-defined</em></span> or CALLOTHER operations.
-      These may be defined as part of a Ghidra's specification for the processor and
-      are typically used as placeholders for what is otherwise unmodeled processor behavior.
-      Each CALLOTHER must have a unique name, and as a p-code operation, it still takes
-      varnode inputs and may produce a varnode output. But the exact affect of the operation is
-      not specified.
-    </p>
-    <p>
-      The decompiler treats a CALLOTHER operation as a black box. It will keep track of data
-      flowing into and out of the operation but won't simplify or transform it. In decompiler
-      output, a CALLOTHER is usually displayed using its unique name, with functional syntax
-      showing its inputs and output.
-    </p>
-    <p>
-      Ghidra or a user can provide the behavior details for a named CALLOTHER operation.  The
-      details are provided as a sequence of p-code operations, referred to as a
-      <span class="bold"><strong>Callother-Fixup</strong></span>, which is substituted for the
-      CALLOTHER operation during decompilation, or by other Analyzers that use p-code.
-      Callother-Fixups are applied by Ghidra for specific processor or compiler variants,
-      and a user can choose to apply them to an individual Program. (See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>)
-    </p>
-  </div>
-
-  <div class="sect3">
-<div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptInternalFunctions"></a>Internal Decompiler Functions</h4></div></div></div>
     
     <p>
@@ -1081,13 +1052,10 @@
       use of multiple models.  Subsequently, each distinct model has a name like <code class="code">__stdcall</code> or
       <code class="code">__thiscall</code>. The decompiler makes use of the prototype model, as assigned to the function by the user or
       discovered in some other way, when performing its analysis of parameters.
-      It is possible for users to extend the set of prototype models available to a Program,
-      see <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
     </p>
     <p>
       A prototype model is typically used as a whole and is assigned by name to individual functions.  But some of
-      the sub-concepts of the model may be relevant to reverse engineers. Concepts that a prototype
-      model encapsulates include:
+      the sub-concepts of the model may be relevant to reverse engineers.
     </p>
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
@@ -1136,151 +1104,6 @@
 	to be used to hold a value across the function.
       </p>
     </div>
-  </div>
-</div>
-
-<div class="section">
-<div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="ConceptSpecification"></a>SLEIGH Specification Files</h2></div></div></div>
-  
-  <p>
-    SLEIGH is Ghidra's specification language for describing processor instructions.
-    Specification files are read in for a Program, and once configured, Ghidra's SLEIGH engine can:
-    </p>
-<div class="informalexample">
-      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
-<li class="listitem" style="list-style-type: disc">
-	  Disassemble machine instructions from the underlying bytes and
-	</li>
-<li class="listitem" style="list-style-type: disc">
-	  Produce the raw p-code consumed by the decompiler and other analyzers.
-      </li>
-</ul></div>
-    </div>
-<p>
-  </p>
-  <p>
-    Specification files are selected based on the <span class="emphasis"><em>Language Id</em></span>
-    assigned to the Program at the time it is imported into Ghidra.
-    (See <a class="ulink" href="help/topics/ImporterPlugin/importer.htm" target="_top">Import Program</a>)
-    </p>
-<div class="informalexample">
-      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: none; ">
-<li class="listitem" style="list-style-type: none"><code class="code">x86:LE:32:default:windows</code></li>
-<li class="listitem" style="list-style-type: none"><code class="code">AARCH64:LE:64:default:v8A:default</code></li>
-<li class="listitem" style="list-style-type: none"><code class="code">MIPS:BE:32:micro:default</code></li>
-</ul></div>
-    </div>
-<p>
-    A <span class="bold"><strong>Language Id</strong></span> is a label with these 5 formal fields, separated
-    by a ':' character:
-    </p>
-<div class="informalexample">
-      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: disc; ">
-<li class="listitem">Processor family</li>
-<li class="listitem">Endianess</li>
-<li class="listitem">Size of the address bus</li>
-<li class="listitem">Process variant</li>
-<li class="listitem">Compiler producing the Program</li>
-</ul></div>
-    </div>
-<p>
-    A field with the value 'default' indicates either the preferred processor variant or the preferred compiler.
-  </p>
-  <p>
-    Within the Ghidra installation, specification files are stored based on the overarching
-    processor family, such as 'MIPS' or 'x86'.  For a specific family, files are located under
-    </p>
-<div class="informalexample">
-      <code class="code">&lt;Root&gt;/Ghidra/Processors/&lt;Family&gt;/data/languages</code>
-    </div>
-<p>
-    where <code class="code">&lt;Root&gt;</code> represents the root directory of the Ghidra installation and
-    <code class="code">&lt;Family&gt;</code> is the processor family.
-  </p>
-  <p>
-    There are several types of specification files that are distinguishable by their suffix.
-    These include:
-    </p>
-<div class="informalexample">
-      <div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="bold"><strong>SLEIGH files</strong></span> - *.slaspec or *.sinc</span></dt>
-<dd>
-	  <p>
-	    These are the human readable SLEIGH language files. A single specification is
-	    rooted in one of the <code class="code">*.slaspec</code> files, which may recursively include
-	    one or more <code class="code">*.sinc</code> files.  The format of these files is described
-	    in the document "SLEIGH: A Language for Rapid Processor Specification".
-	  </p>
-	</dd>
-<dt><span class="term"><span class="bold"><strong>Compiled SLEIGH files</strong></span> - *.sla</span></dt>
-<dd>
-	  <p>
-	    This is a compiled form of a single SLEIGH specification.  It is produced
-	    automatically by Ghidra from the corresponding <code class="code">*.slaspec</code>.
-	  </p>
-	</dd>
-<dt><span class="term"><span class="bold"><strong>Compiler specification files</strong></span> - *.cspec</span></dt>
-<dd>
-	  <p>
-	    These files contain configuration for a specific compiler.  Analysis of Programs whose
-	    executable content was produced using this compiler benefits from this information.
-	    The file is an XML document with tags describing details of data organization and
-	    other conventions used by the compiler.  In particular, the compiler specification
-	    contains tags:
-	  </p>
-	  <p>
-	    </p>
-<div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: none; ">
-<li class="listitem" style="list-style-type: none">&lt;prototype&gt; - describing a specific calling convention</li>
-<li class="listitem" style="list-style-type: none">&lt;callfixup&gt; - describing a Call-fixup</li>
-<li class="listitem" style="list-style-type: none">&lt;callotherfixup&gt; - describing a Callother-fixup</li>
-</ul></div>
-<p>
-	  </p>
-	</dd>
-<dt><span class="term"><span class="bold"><strong>Processor specification files</strong></span> - *.pspec</span></dt>
-<dd>
-	  <p>
-	    These files contain configuration information that is specific to a particular
-	    processor variant.
-	  </p>
-	</dd>
-</dl></div>
-    </div>
-<p>
-  </p>
-  <div class="sect2">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="ConceptModifySpec"></a>Modifying Specification Files</h3></div></div></div>
-    
-    <p>
-      Changing any of the specification files described here is not recommended.
-      To make additions to either the <span class="emphasis"><em>compiler specification</em></span>
-      or the <span class="emphasis"><em>processor specification</em></span> files, see
-      <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>, which describes a safe and portable way
-      to add specific elements.
-    </p>
-    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
-<th align="left"></th>
-</tr>
-<tr><td align="left" valign="top">
-      Making modifications to specification files within a Ghidra installation is possible,
-      but any analysis results obtained will likely not be portable to other installations.
-      In particular, saving a Program from a modified Ghidra and then reopening it using
-      an unmodified installation may corrupt the Program database.
-    </td></tr>
-</table></div>
-    <p>
-      When Ghidra starts, it checks for changes to <code class="code">*.slaspec</code>
-      and <code class="code">*.sinc</code> files and will rebuild the corresponding
-      <code class="code">*.sla</code> file automatically.  Also, specification files are read again when
-      Ghidra restarts. So analysts can and do make changes to these files.
-      However they need to be prepared to view any results as temporary and
-      should backup their installation and specific Programs being analyzed.
-    </p>
   </div>
 </div>
 

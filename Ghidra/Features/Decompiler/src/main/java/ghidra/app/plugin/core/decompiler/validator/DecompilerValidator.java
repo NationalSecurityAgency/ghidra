@@ -26,7 +26,6 @@ import ghidra.app.decompiler.parallel.*;
 import ghidra.app.plugin.core.analysis.validator.PostAnalysisValidator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
@@ -47,7 +46,7 @@ public class DecompilerValidator extends PostAnalysisValidator {
 		List<Function> functions = filterFunctions(program, iter, monitor);
 
 		DecompilerCallback<String> callback =
-			new DecompilerCallback<>(program, new DecompilerValidatorConfigurer()) {
+			new DecompilerCallback<String>(program, new DecompilerValidatorConfigurer()) {
 
 				@Override
 				public String process(DecompileResults results, TaskMonitor m) throws Exception {
@@ -148,8 +147,7 @@ public class DecompilerValidator extends PostAnalysisValidator {
 		private DecompileOptions getDecompilerOptions() {
 			try {
 				CompilerSpec spec = program.getCompilerSpec();
-				PrototypeModel model =
-					spec.getPrototypeEvaluationModel(EvaluationModelType.EVAL_CURRENT);
+				PrototypeModel model = (PrototypeModel) spec.getPrototypeEvaluationModel(program);
 				options.setProtoEvalModel(model.getName());
 			}
 			catch (Exception e) {

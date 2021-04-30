@@ -29,7 +29,6 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.program.model.pcode.HighFunction;
 import ghidra.test.AbstractProgramBasedTest;
 
 public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
@@ -171,35 +170,5 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 			String text = token.getText();
 			assertEquals(tokenText, text);
 		}
-	}
-
-	protected ClangTextField getLineStarting(String val) {
-		DecompilerPanel panel = provider.getDecompilerPanel();
-		List<Field> fields = panel.getFields();
-		for (Field field : fields) {
-			ClangTextField textField = (ClangTextField) field;
-			String text = textField.getText().trim();
-			if (text.startsWith(val)) {
-				return textField;
-			}
-		}
-		return null;
-	}
-
-	protected ClangTextField getLineContaining(String val) {
-		DecompilerPanel panel = provider.getDecompilerPanel();
-		List<Field> fields = panel.getFields();
-		for (Field field : fields) {
-			ClangTextField textField = (ClangTextField) field;
-			String text = textField.getText();
-			if (text.contains(val)) {
-				return textField;
-			}
-		}
-		return null;
-	}
-
-	protected HighFunction getHighFunction() {
-		return provider.getController().getHighFunction();
 	}
 }

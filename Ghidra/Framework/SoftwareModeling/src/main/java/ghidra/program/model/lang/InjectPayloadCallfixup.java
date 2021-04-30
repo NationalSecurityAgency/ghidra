@@ -18,39 +18,18 @@ package ghidra.program.model.lang;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.*;
+import ghidra.app.plugin.processors.sleigh.SleighException;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 public class InjectPayloadCallfixup extends InjectPayloadSleigh {
 
-	protected List<String> targetSymbolNames;
-
-	/**
-	 * Constructor for a partial clone of a payload whose p-code failed to parse.
-	 * @param pcode is the p-code to substitute
-	 * @param failedPayload is the failed callfixup
-	 */
-	protected InjectPayloadCallfixup(ConstructTpl pcode, InjectPayloadCallfixup failedPayload) {
-		super(pcode, failedPayload);
-		targetSymbolNames = failedPayload.targetSymbolNames;
-	}
-
-	/**
-	 * Construct a dummy payload
-	 * @param pcode is the dummy p-code sequence to use
-	 * @param nm is the name of the payload
-	 */
-	protected InjectPayloadCallfixup(ConstructTpl pcode, String nm) {
-		super(pcode, CALLFIXUP_TYPE, nm);
-		targetSymbolNames = new ArrayList<>();
-	}
+	private List<String> targetSymbolNames;
 
 	public InjectPayloadCallfixup(String sourceName) {
 		super(sourceName);
 		type = CALLFIXUP_TYPE;
-		targetSymbolNames = new ArrayList<>();
+		targetSymbolNames = new ArrayList<String>();
 	}
 
 	public List<String> getTargets() {
@@ -58,21 +37,22 @@ public class InjectPayloadCallfixup extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<callfixup");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
-		buffer.append(">\n");
-		for (String nm : targetSymbolNames) {
-			buffer.append("<target");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", nm);
-			buffer.append("/>\n");
-		}
-		super.saveXml(buffer);
-		buffer.append("</callfixup>\n");
+	public InjectPayloadSleigh clone() {
+		InjectPayloadSleigh res = new InjectPayloadCallfixup(source);
+		res.copy(this);
+		return res;
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage language) throws XmlParseException {
+	protected void copy(InjectPayloadSleigh op2) {
+		super.copy(op2);
+		InjectPayloadCallfixup fixup = (InjectPayloadCallfixup) op2;
+		for (String target : fixup.targetSymbolNames)
+			targetSymbolNames.add(target);
+	}
+
+	@Override
+	public void restoreXml(XmlPullParser parser) {
 		XmlElement fixupEl = parser.start("callfixup");
 		name = fixupEl.getAttribute("name");
 		boolean pcodeSubtag = false;
@@ -82,41 +62,21 @@ public class InjectPayloadCallfixup extends InjectPayloadSleigh {
 				XmlElement subel = parser.start();
 				String targetName = subel.getAttribute("name");
 				if (targetName == null) {
-					throw new XmlParseException("Invalid callfixup target, missing target name");
+					throw new SleighException("Invalid callfixup target, missing target name");
 				}
 				targetSymbolNames.add(targetName);
 				parser.end(subel);
 			}
 			else if (elname.equals("pcode")) {
-				super.restoreXml(parser, language);
+				super.restoreXml(parser);
 				pcodeSubtag = true;
 			}
 			else {
-				throw new XmlParseException("Unknown callfixup tag: " + elname);
+				throw new SleighException("Unknown callfixup tag: " + elname);
 			}
 		}
-		if (!pcodeSubtag) {
-			throw new XmlParseException("<callfixup> missing <pcode> subtag: " + name);
-		}
+		if (!pcodeSubtag)
+			throw new SleighException("<callfixup> missing <pcode> subtag: " + name);
 		parser.end(fixupEl);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		InjectPayloadCallfixup op2 = (InjectPayloadCallfixup) obj;
-		if (!targetSymbolNames.equals(op2.targetSymbolNames)) {
-			return false;
-		}
-		return super.equals(obj);
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = 13;
-		for (String target : targetSymbolNames) {
-			hash = 79 * hash + target.hashCode();
-		}
-		hash = 79 * hash + super.hashCode();
-		return hash;
 	}
 }

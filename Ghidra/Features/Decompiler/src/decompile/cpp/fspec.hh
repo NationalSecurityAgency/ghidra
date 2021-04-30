@@ -314,7 +314,7 @@ public:
   enum {
     unaffected = 1,	///< The sub-function does not change the value at all
     killedbycall = 2,	///< The memory is changed and is completely unrelated to its original value
-    return_address = 3,	///< The memory is being used to store the return address
+    return_address = 3,	///< The memory is being used to pass back a return value from the sub-function
     unknown_effect = 4	///< An unknown effect (indicates the absence of an EffectRecord)
   };
 private:

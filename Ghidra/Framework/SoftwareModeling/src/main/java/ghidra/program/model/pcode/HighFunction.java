@@ -183,7 +183,7 @@ public class HighFunction extends PcodeSyntaxTree {
 					JumpTable jumpTab = JumpTable.readOverride((Namespace) obj, symtab);
 					if (jumpTab != null) {
 						if (jumpTables == null) {
-							jumpTables = new ArrayList<>();
+							jumpTables = new ArrayList<JumpTable>();
 						}
 						jumpTables.add(jumpTab);
 					}
@@ -194,7 +194,7 @@ public class HighFunction extends PcodeSyntaxTree {
 					DataTypeSymbol protover = HighFunctionDBUtil.readOverride(sym);
 					if (protover != null) {
 						if (protoOverrides == null) {
-							protoOverrides = new ArrayList<>();
+							protoOverrides = new ArrayList<DataTypeSymbol>();
 						}
 						protoOverrides.add(protover);
 					}
@@ -259,13 +259,14 @@ public class HighFunction extends PcodeSyntaxTree {
 		XmlElement start = parser.start("function");
 		String name = start.getAttribute("name");
 		if (!func.getName().equals(name)) {
-			throw new PcodeXMLException("Function name mismatch: " + func.getName() + " + " + name);
+			throw new PcodeXMLException(
+				"Function name mismatch: " + func.getName() + " + " + name);
 		}
 		while (!parser.peek().isEnd()) {
 			XmlElement subel = parser.peek();
 			if (subel.getName().equals("addr")) {
 				subel = parser.start("addr");
-				Address addr = AddressXML.readXML(subel, getAddressFactory());
+				Address addr = Varnode.readXMLAddress(subel, getAddressFactory());
 				parser.end(subel);
 				addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
 				if (!func.getEntryPoint().equals(addr)) {
@@ -317,7 +318,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			table.restoreXml(parser, getAddressFactory());
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {
-					jumpTables = new ArrayList<>();
+					jumpTables = new ArrayList<JumpTable>();
 				}
 				jumpTables.add(table);
 			}
@@ -351,8 +352,8 @@ public class HighFunction extends PcodeSyntaxTree {
 	 */
 	public HighVariable splitOutMergeGroup(HighVariable high, Varnode vn) throws PcodeException {
 		try {
-			ArrayList<Varnode> newinst = new ArrayList<>();
-			ArrayList<Varnode> oldinst = new ArrayList<>();
+			ArrayList<Varnode> newinst = new ArrayList<Varnode>();
+			ArrayList<Varnode> oldinst = new ArrayList<Varnode>();
 			short ourgroup = vn.getMergeGroup();
 			Varnode[] curinst = high.getInstances();
 			for (Varnode curvn : curinst) {
@@ -456,10 +457,10 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 		resBuf.append(">\n");
 		if (entryPoint == null) {
-			AddressXML.buildXML(resBuf, func.getEntryPoint());
+			resBuf.append(Varnode.buildXMLAddress(func.getEntryPoint()));
 		}
 		else {
-			AddressXML.buildXML(resBuf, entryPoint);		// Address is forced on XML
+			resBuf.append(Varnode.buildXMLAddress(entryPoint)); // Address is forced on XML
 		}
 		localSymbols.buildLocalDbXML(resBuf, namespace);
 		proto.buildPrototypeXML(resBuf, getDataTypeManager());
@@ -481,7 +482,9 @@ public class HighFunction extends PcodeSyntaxTree {
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
 				resBuf.append("<protooverride>\n");
-				AddressXML.buildXML(resBuf, addr);
+				resBuf.append("<addr");
+				Varnode.appendSpaceOffset(resBuf, addr);
+				resBuf.append("/>\n");
 				fproto.buildPrototypeXML(resBuf, dtmanage);
 				resBuf.append("</protooverride>\n");
 			}
@@ -529,7 +532,7 @@ public class HighFunction extends PcodeSyntaxTree {
 
 	public static void createLabelSymbol(SymbolTable symtab, Address addr, String name,
 			Namespace namespace, SourceType source, boolean useLocalNamespace)
-			throws InvalidInputException {
+					throws InvalidInputException {
 		if (namespace == null && useLocalNamespace) {
 			namespace = symtab.getNamespace(addr);
 		}
@@ -557,8 +560,8 @@ public class HighFunction extends PcodeSyntaxTree {
 	public static boolean clearNamespace(SymbolTable symtab, Namespace space)
 			throws InvalidInputException {
 		SymbolIterator iter = symtab.getSymbols(space);
-		ArrayList<Address> addrlist = new ArrayList<>();
-		ArrayList<String> namelist = new ArrayList<>();
+		ArrayList<Address> addrlist = new ArrayList<Address>();
+		ArrayList<String> namelist = new ArrayList<String>();
 		while (iter.hasNext()) {
 			Symbol sym = iter.next();
 			if (!(sym instanceof CodeSymbol)) {
@@ -605,7 +608,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			throws PcodeXMLException {
 		try {
 			XmlPullParser parser =
-				XmlPullParserFactory.create(xml, "Decompiler Result Parser", handler, false);
+					XmlPullParserFactory.create(xml, "Decompiler Result Parser", handler, false);
 			return parser;
 		}
 		catch (Exception e) {
@@ -635,7 +638,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	static public void createNamespaceTag(StringBuilder buf, Namespace namespace) {
 		buf.append("<parent>\n");
 		if (namespace != null) {
-			ArrayList<Namespace> arr = new ArrayList<>();
+			ArrayList<Namespace> arr = new ArrayList<Namespace>();
 			Namespace curspc = namespace;
 			while (curspc != null) {
 				arr.add(0, curspc);

@@ -33,7 +33,7 @@ public interface ParamList {
 		int slot;
 		int slotsize;
 	}
-
+	
 	/**
 	 * Given a list of datatypes, calculate the storage locations used for passing those datatypes
 	 * @param prog is the active progra
@@ -42,34 +42,30 @@ public interface ParamList {
 	 * @param res is the vector for holding the VariableStorage corresponding to datatypes
 	 * @param addAutoParams if true add/process auto-parameters
 	 */
-	public void assignMap(Program prog, DataType[] proto, boolean isinput,
-			ArrayList<VariableStorage> res, boolean addAutoParams);
-
-	public void saveXml(StringBuilder buffer, boolean isInput);
-
-	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException;
+	public void assignMap(Program prog,DataType[] proto,boolean isinput,ArrayList<VariableStorage> res, boolean addAutoParams);
+	
+	public void restoreXml(XmlPullParser parser,CompilerSpec cspec,boolean normalstack) throws XmlParseException;
 
 	/**
 	 * Get a list of all parameter storage locations consisting of a single register
-	 * @param prog is the controlling program
-	 * @return an array of VariableStorage
+	 * @return
 	 */
 	public VariableStorage[] getPotentialRegisterStorage(Program prog);
-
+	
 	/**
 	 * Return the amount of alignment used for parameters passed on the stack, or -1 if there are no stack params
 	 * @return the alignment
 	 */
 	public int getStackParameterAlignment();
-
+	
 	/**
 	 * Find the boundary offset that separates parameters on the stack from other local variables
 	 * This is usually the address of the first stack parameter, but if the stack grows positive, this is
 	 * the first address AFTER the parameters on the stack
-	 * @return the boundary offset
+	 * @return
 	 */
 	public Long getStackParameterOffset();
-
+	
 	/**
 	 * Determine if a particular address range is a possible parameter, and if so what slot(s) it occupies
 	 * @param loc  is the starting address of the range
@@ -77,7 +73,7 @@ public interface ParamList {
 	 * @param res  holds the resulting slot and slotsize
 	 * @return  true if the range is a possible parameter
 	 */
-	public boolean possibleParamWithSlot(Address loc, int size, WithSlotRec res);
-
+	public boolean possibleParamWithSlot(Address loc,int size,WithSlotRec res);
+	
 	public boolean isThisBeforeRetPointer();
 }

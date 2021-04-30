@@ -211,7 +211,7 @@ public class FunctionManagerDB implements FunctionManager {
 	@Override
 	public List<String> getCallingConventionNames() {
 		CompilerSpec compilerSpec = program.getCompilerSpec();
-		PrototypeModel[] namedCallingConventions = compilerSpec.getCallingConventions();
+		PrototypeModel[] namedCallingConventions = compilerSpec.getNamedCallingConventions();
 		List<String> names = new ArrayList<>(namedCallingConventions.length + 2);
 		names.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 		names.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
@@ -1006,7 +1006,8 @@ public class FunctionManagerDB implements FunctionManager {
 			}
 			else {
 				it = program.getSymbolTable()
-						.getSymbols(program.getMemory(), SymbolType.FUNCTION, forward);
+						.getSymbols(program.getMemory(), SymbolType.FUNCTION,
+							forward);
 			}
 		}
 

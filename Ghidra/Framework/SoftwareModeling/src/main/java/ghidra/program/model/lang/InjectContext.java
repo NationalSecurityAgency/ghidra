@@ -15,20 +15,23 @@
  */
 package ghidra.program.model.lang;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.pcode.PcodeXMLException;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.util.xml.SpecXmlUtils;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 
 import javax.xml.parsers.SAXParser;
 
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.pcode.*;
-import ghidra.util.xml.SpecXmlUtils;
 
 public class InjectContext {
 	private class Handler extends DefaultHandler {
@@ -45,19 +48,18 @@ public class InjectContext {
 		@Override
 		public void startElement(String uri, String localName, String rawName, Attributes attr)
 				throws SAXException {
-			if (rawName.equals("context")) {
+			if (rawName.equals("context"))
 				state = 1;
-			}
 			else if (rawName.equals("input")) {
-				inputlist = new ArrayList<>();
+				inputlist = new ArrayList<Varnode>();
 				state = 3;
 			}
 			else if (rawName.equals("output")) {
-				output = new ArrayList<>();
+				output = new ArrayList<Varnode>();
 				state = 4;
 			}
 			else if (rawName.equals("addr")) {
-				curaddr = AddressXML.readXML(rawName, attr, addrFactory);
+				curaddr = Varnode.readXMLAddress(rawName, attr, addrFactory);
 				if (state == 1) {
 					baseAddr = curaddr;
 					state = 2;
@@ -67,22 +69,20 @@ public class InjectContext {
 				}
 				else if (state == 3) {
 					int size = SpecXmlUtils.decodeInt(attr.getValue("size"));
-					Varnode vn = new Varnode(curaddr, size);
+					Varnode vn = new Varnode(curaddr,size);
 					inputlist.add(vn);
 				}
 				else if (state == 4) {
 					int size = SpecXmlUtils.decodeInt(attr.getValue("size"));
-					Varnode vn = new Varnode(curaddr, size);
+					Varnode vn = new Varnode(curaddr,size);
 					output.add(vn);
 				}
 			}
-			else {
-				throw new SAXException("Unrecognized inject tag: " + rawName);
-			}
-
+			else
+				throw new SAXException("Unrecognized inject tag: "+rawName);
+				
 		}
 	}
-
 	public SleighLanguage language;
 	public Address baseAddr;		// Base address of op (call,userop) causing the inject
 	public Address nextAddr;		// Address of next instruction following the injecting instruction
@@ -93,19 +93,16 @@ public class InjectContext {
 
 	public InjectContext() {
 	}
-
-	public void restoreXml(SAXParser parser, String xml, AddressFactory addrFactory)
-			throws PcodeXMLException {
+	
+	public void restoreXml(SAXParser parser,String xml,AddressFactory addrFactory) throws PcodeXMLException {
 		Handler handler = new Handler(addrFactory);
 		try {
 			parser.parse(new InputSource(new StringReader(xml)), handler);
+		} catch (SAXException e) {
+			throw new PcodeXMLException("Problem parsing inject context: "+e.getMessage());
+		} catch (IOException e) {
+			throw new PcodeXMLException("Problem parsing inject context: "+e.getMessage());
 		}
-		catch (SAXException e) {
-			throw new PcodeXMLException("Problem parsing inject context: " + e.getMessage());
-		}
-		catch (IOException e) {
-			throw new PcodeXMLException("Problem parsing inject context: " + e.getMessage());
-		}
-
+		
 	}
 }

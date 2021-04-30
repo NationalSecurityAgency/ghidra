@@ -100,7 +100,7 @@ public class PcodeDataTypeManager {
 		progDataTypes = prog.getDataTypeManager();
 		dataOrganization = progDataTypes.getDataOrganization();
 		voidInputIsVarargs = true;				// By default, do not lock-in void parameter lists
-		displayLanguage = prog.getCompilerSpec().getDecompilerOutputLanguage();
+		displayLanguage = prog.getCompilerSpec().getDecompilerOutputLanguage(prog);
 		if (displayLanguage != DecompilerLanguage.C_LANGUAGE) {
 			voidInputIsVarargs = false;
 		}

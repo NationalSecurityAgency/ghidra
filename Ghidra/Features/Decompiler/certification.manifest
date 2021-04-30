@@ -30,7 +30,6 @@ src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
 src/decompile/datatests/twodim.xml||GHIDRA||||END|
 src/decompile/datatests/wayoffarray.xml||GHIDRA||||END|
-src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/cspec.xml||GHIDRA||||END|
 src/main/doc/cspec_html.xsl||GHIDRA||||END|
 src/main/doc/decompileplugin.xml||GHIDRA||||END|

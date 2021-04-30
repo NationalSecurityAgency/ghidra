@@ -359,9 +359,6 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private JComponent createCallFixupComboPanel() {
-
-		JPanel panel = new JPanel();
-
 		callFixupComboBox = new GComboBox<>();
 		String[] callFixupNames = model.getCallFixupNames();
 
@@ -380,8 +377,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			callFixupComboBox.setEnabled(false);
 		}
 
-		panel.add(callFixupComboBox);
-		return panel;
+		return callFixupComboBox;
 	}
 
 	private Component buildTable() {

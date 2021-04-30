@@ -15,10 +15,11 @@
  */
 package ghidra.dalvik.dex.inject;
 
+import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.InjectContext;
-import ghidra.program.model.lang.InjectPayloadCallother;
+import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -30,10 +31,44 @@ import ghidra.program.model.pcode.Varnode;
  * The registers are moved to the specially designated input registers iv0, iv1, iv2, ...
  *
  */
-public class InjectPayloadDexRange extends InjectPayloadCallother {
+public class InjectPayloadDexRange implements InjectPayload {
 
 	public InjectPayloadDexRange() {
-		super("dexrange");
+	}
+
+	@Override
+	public String getName() {
+		return "dexrange";
+	}
+
+	@Override
+	public int getType() {
+		return CALLOTHERFIXUP_TYPE;
+	}
+
+	@Override
+	public String getSource() {
+		return "dexrange";
+	}
+
+	@Override
+	public int getParamShift() {
+		return 0;
+	}
+
+	@Override
+	public InjectParameter[] getInput() {
+		return null;			// Not used
+	}
+
+	@Override
+	public InjectParameter[] getOutput() {
+		return null;			// Not used
+	}
+
+	@Override
+	public void inject(InjectContext context, PcodeEmit emit) {
+		// not used
 	}
 
 	@Override
@@ -61,4 +96,10 @@ public class InjectPayloadDexRange extends InjectPayloadCallother {
 		}
 		return resOps;
 	}
+
+	@Override
+	public boolean isFallThru() {
+		return true;
+	}
+
 }

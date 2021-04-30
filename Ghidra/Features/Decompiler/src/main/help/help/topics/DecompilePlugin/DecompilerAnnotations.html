@@ -4,7 +4,7 @@
 <title>Program Annotations Affecting the Decompiler</title>
 <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerConcepts.html" title="Decompiler Concepts">
@@ -983,8 +983,7 @@
 	  The calling convention used by the function can be specified as part of the function prototype. The convention
 	  is specified by name, referring to the formal <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">&#8220;Prototype Model&#8221;</a> that describes how storage
 	  locations are selected for individual parameters along with other information about how the compiler treats
-	  the function. Available models are determined by the processor and compiler, but can be extended by the user.
-	  See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
+	  the function.
 	</p>
 	<p>
 	  In the absence of parameter and return value annotations, the decompiler will use the prototype model as
@@ -1043,8 +1042,7 @@
 	</p>
 	<p>
 	  Call-fixups are specified by name.  The name and associated p-code chunk are typically defined in the
-	  <span class="emphasis"><em>compiler specification</em></span> for the Program. Users can extend the available set
-	  of call-fixups.  See <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a>.
+	  <span class="emphasis"><em>compiler specification</em></span> for the Program.
 	</p>
       </dd>
 </dl></div>

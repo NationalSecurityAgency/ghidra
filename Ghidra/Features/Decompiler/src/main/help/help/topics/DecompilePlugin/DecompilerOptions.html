@@ -4,7 +4,7 @@
 <title>Decompiler Options</title>
 <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler">
@@ -42,17 +42,14 @@
 <p>
   </p>
   <p>
-    Options that are specific to the particular Program being analyzed are accessed by
-    selecting the Code Browser menu
+    Another source of options can be accessed by selecting the Code Browser menu
     </p>
 <div class="informalexample">
       <span class="bold"><strong>Edit -&gt; Options for &lt;Program&gt;</strong></span>
     </div>
 <p>
-    Picking the <span class="emphasis"><em>Decompiler</em></span> tab shows <a class="xref" href="DecompilerOptions.html#ProgramOptions" title="Program Options">&#8220;Program Options&#8221;</a>
-    that only affect the decompiler.  Picking the <a class="xref" href="DecompilerOptions.html#ExtensionOptions" title="Specification Extensions">&#8220;Specification Extensions&#8221;</a> tab
-    shows a table of the available prototype models, call-fixups, and callother-fixups. These
-    affect more than just the decompiler but are also documented here.
+    and the picking the <span class="emphasis"><em>Decompiler</em></span> tab. These <a class="xref" href="DecompilerOptions.html#ProgramOptions" title="Program Options">&#8220;Program Options&#8221;</a>
+    are specific to the particular Program being analyzed.
   </p>
 </div>
 <div class="section">
@@ -576,8 +573,7 @@
 <a name="ProgramOptions"></a>Program Options</h2></div></div></div>
   
   <p>
-    Changes to these options affect only the decompiler and only for
-    the current Program being analyzed.
+    Changes to these options affect only the current Program being analyzed.
   </p>
   <p>
     </p>
@@ -598,284 +594,6 @@
     </div>
 <p>
   </p>
-</div>
-<div class="section">
-<div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="ExtensionOptions"></a>Specification Extensions</h2></div></div></div>
-  
-  <p>
-    This tab displays elements from the Program's <span class="emphasis"><em>compiler specification</em></span> and
-    <span class="emphasis"><em>processor specification</em></span> and allows the user to add or remove
-    <span class="bold"><strong>extensions</strong></span>, including prototype models, call-fixups, and
-    callother-fixups.
-  </p>
-  <p>
-    Every program has a <span class="emphasis"><em>core</em></span> set of specification elements,
-    loaded from the <a class="xref" href="DecompilerConcepts.html#ConceptSpecification" title="SLEIGH Specification Files">&#8220;SLEIGH Specification Files&#8221;</a>, that cannot
-    be modified or removed. Extensions, however, can be added to this core specification. Any extension
-    imported from this dialog is directly associated with the active Program and is stored permanently
-    with it.
-  </p>
-  <p>
-    Users can change or reimport an extension, if new information points to a better definition.
-    Users have full control over an extension, and unlike a core element, can tailor it specifically
-    to the Program.  
-  </p>
-  <p>
-    This options tab presents a table of all specification elements.
-    Each element, whether core or an extension, is displayed on a separate row with three columns:
-    </p>
-<div class="informalexample">
-      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: none; ">
-<li class="listitem" style="list-style-type: none">
-<span class="bold"><strong>Extension Type</strong></span> - indicating the type of element</li>
-<li class="listitem" style="list-style-type: none">
-<span class="bold"><strong>Name</strong></span> - showing the formal name of the element</li>
-<li class="listitem" style="list-style-type: none">
-<span class="bold"><strong>Status</strong></span> - indicating whether the element is core or an extension</li>
-</ul></div>
-    </div>
-<p>
-    The core elements of the specification have a blank Status column, and any extension
-    is labeled either as "extension" or "override".
-  </p>
-  <div class="sect2">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="ExtendTypes"></a>Extension Types</h3></div></div></div>
-    
-    <p>
-      Each of the element types described here represents an XML tag of the same name, which, if
-      present in the table, must either be in the <span class="emphasis"><em>compiler specification</em></span> file,
-      the <span class="emphasis"><em>processor specification</em></span> file, or provided to Ghidra as an
-      import document.
-      </p>
-<div class="informalexample">
-	<div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="bold"><strong>prototype</strong></span></span></dt>
-<dd>
-	    <p>
-	      This element is a <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">&#8220;Prototype Model&#8221;</a> that holds a specific named set
-	      of parameter passing details. It
-	      can be applied to individual functions by name, typically via the "Calling Convention" menu
-	      in the <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Editor Dialog</a>.
-	      See the documentation on <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">&#8220;Function Prototypes&#8221;</a> for how they affect decompilation.
-	    </p>
-	    <p>
-	      The XML tag, <code class="code">&lt;prototype&gt;</code> always has a <span class="bold"><strong>name</strong></span> attribute
-	      that defines the formal name of the prototype model, which must be unique across all models.
-	      </p>
-<pre class="programlisting">
-&lt;prototype name="__stdcall" extrapop="unknown" stackshift="4"&gt;
-  &lt;input&gt;
-    &lt;pentry minsize="1" maxsize="500" align="4"&gt;
-      &lt;addr offset="4" space="stack"/&gt;
-    &lt;/pentry&gt;
-  &lt;/input&gt;
-  &lt;output&gt;
-  ...
-	      </pre>
-<p>
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>callfixup</strong></span></span></dt>
-<dd>
-	    <p>
-	      This element is a Call-fixup, which can be used to substitute a specific p-code
-	      sequence for CALL instructions during decompilation, as described in
-	      <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">&#8220;Function Prototypes&#8221;</a>.
-	    </p>
-	    <p>
-	      The <code class="code">&lt;callfixup&gt;</code> tag has a <span class="bold"><strong>name</strong></span>
-	      attribute listing the formal name, which must be unique across all call-fixups.
-	      </p>
-<pre class="programlisting">
-&lt;callfixup name="EH_prolog3"&gt;
-  &lt;pcode&gt;
-    &lt;body&gt;&lt;![CDATA&lt;
-      EBP = ESP + 4;
-      tmp = * EBP;
-      ESP = ESP - tmp;
-      ESP = ESP - 24;
-    ]]&gt;&lt;/body&gt;
-  &lt;/pcode&gt;
-&lt;/callfixup&gt;
-	      </pre>
-<p>
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>callotherfixup</strong></span></span></dt>
-<dd>
-	    <p>
-	      This element is a Callother-fixup, which can be used to substitute a specific p-code
-	      sequence for CALLOTHER p-code operations.  A CALLOTHER
-	      is a black-box, or unspecified p-code operation, see <a class="xref" href="DecompilerConcepts.html#ConceptCallother" title="User-defined P-code Operations - CALLOTHER">&#8220;User-defined P-code Operations - CALLOTHER&#8221;</a>.
-	    </p>
-	    <p>
-	      The <code class="code">&lt;callotherfixup&gt;</code> tag has a
-	      <span class="bold"><strong>targetop</strong></span> attribute which lists the
-	      name of the particular CALLOTHER operation it substitutes for.
-	      </p>
-<pre class="programlisting">
-&lt;callotherfixup targetop="dynamicPush"&gt;
-  &lt;pcode&gt;
-    &lt;input name="amount"/&gt;
-    &lt;body&gt;&lt;![CDATA[
-      RSP = RSP + amount;
-    ]]&gt;&lt;/body&gt;
-  &lt;/pcode&gt;
-&lt;/callotherfixup&gt;
-	      </pre>
-<p>
-	    </p>
-	  </dd>
-</dl></div>
-      </div>
-<p>
-    </p>
-  </div>
-  <div class="sect2">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="ExtendStatus"></a>Status</h3></div></div></div>
-    
-    <p>
-      The Status column labels an element as either a core specification
-      or an extension; it also gives an indication of whether the element
-      is about to be installed or removed.
-    </p>
-    <p>
-      With no changes pending, the column will show one of the three main values:
-      </p>
-<div class="informalexample">
-	<div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="emphasis"><em>&lt;blank&gt;</em></span></span></dt>
-<dd>
-	    <p>
-	      A blank Status column indicates that the element is a core part of the
-	      specification, originating from one of the <span class="emphasis"><em>specification files</em></span>.
-	      These elements cannot be changed or removed.
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>extension</strong></span></span></dt>
-<dd>
-	    <p>
-	      Indicates that the element is a program specific extension that has been
-	      added to the specification.
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>override</strong></span></span></dt>
-<dd>
-	    <p>
-	      Indicates that the element, which must be a <span class="bold"><strong>callotherfixup</strong></span>,
-	      is an extension that overrides a core element with the same target.  The extension
-	      effectively replaces the p-code injection of the core element with a user supplied one.
-	      If this type of extension is later removed, the core element becomes active again.
-	    </p>
-	  </dd>
-</dl></div>
-      </div>
-<p>
-    </p>
-    <p>
-      If the user has either imported additional extensions or selected an extensions for removal but
-      has not yet clicked the <span class="emphasis"><em>Apply</em></span> button in the Options dialog, the Status column
-      may show one of the following values, indicating a pending change.
-      </p>
-<div class="informalexample">
-	<div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="bold"><strong>install</strong></span></span></dt>
-<dd>
-	    <p>
-	      Indicates a new extension that will be installed.
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>remove</strong></span></span></dt>
-<dd>
-	    <p>
-	      Indicates an extension that is about to be removed.
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>replace</strong></span></span></dt>
-<dd>
-	    <p>
-	      Indicates a new extension that will replace a current
-	      extension with the same name.
-	    </p>
-	  </dd>
-<dt><span class="term"><span class="bold"><strong>override pending</strong></span></span></dt>
-<dd>
-	    <p>
-	      Indicates a new extension that will override a core element when
-	      it is installed.
-	    </p>
-	  </dd>
-</dl></div>
-      </div>
-<p>
-    </p>
-  </div>
-  <div class="sect2">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="ExtendImport"></a>Importing a New Extension</h3></div></div></div>
-    
-    <p>
-      The <span class="emphasis"><em>Import</em></span> button at the bottom of the
-      "Specification Extensions" pane allows the user to import one of the
-      three element types, <span class="bold"><strong>prototype</strong></span>,
-      <span class="bold"><strong>callfixup</strong></span>, or <span class="bold"><strong>callotherfixup</strong></span>,
-      into the program as a new extension.
-      The user must supply a properly formed XML document, as a file, that fully describes the new
-      extension.  Clicking the <span class="emphasis"><em>Import</em></span> button brings up a File Chooser dialog,
-      from which the user must select their prepared XML file.  Once <span class="emphasis"><em>Ok</em></span> is
-      clicked, the file is read in and validated.  If there are any problems with the validation, or if
-      the new extension's name collides with a core element, the import does not succeed and
-      an error message will be displayed. Otherwise, the import is accepted, and the table is updated
-      to indicate the pending change.
-    </p>
-    <p>
-      The final change to the program, installing the new extension, will not happen until the
-      <span class="emphasis"><em>Apply</em></span> button, at the bottom of the Options dialog, is clicked.
-    </p>
-    <p>
-      The XML file describing the extension <span class="emphasis"><em>must</em></span> have one of the tags,
-      <code class="code">&lt;prototype&gt;</code>, <code class="code">&lt;callfixup&gt;</code>, or <code class="code">&lt;callotherfixup&gt;</code>,
-      as its single root element. Users can find numerous examples within the compiler
-      and processor specification files that come as part of Ghidra's installation.
-      See <a class="xref" href="DecompilerConcepts.html#ConceptSpecification" title="SLEIGH Specification Files">&#8220;SLEIGH Specification Files&#8221;</a>.
-    </p>
-    <p>
-      In the case of <span class="bold"><strong>prototype</strong></span> and <span class="bold"><strong>callfixup</strong></span>
-      elements, extensions cannot replace existing core elements, so the new extension <span class="emphasis"><em>must not</em></span>
-      have a name that matches an existing core element.  If a new <span class="bold"><strong>callotherfixup</strong></span>
-      extension has a targetop that matches a core element, the extension is automatically treated as an override.
-    </p>
-    <p>
-      Existing extensions can be replaced simply by importing a new extension with the same name or targetop.
-    </p>
-  </div>
-  <div class="sect2">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="ExtendRemove"></a>Removing an Extension</h3></div></div></div>
-    
-    <p>
-      The <span class="emphasis"><em>Remove</em></span> button at the bottom of the "Specification Extensions" pane allows
-      the user to remove a previously installed extension.  A row from the table is selected first, which
-      must have a Status of <span class="bold"><strong>extension</strong></span> or <span class="bold"><strong>override</strong></span>.
-      Core elements of the specification cannot be removed.
-      Clicking the <span class="emphasis"><em>Remove</em></span> button brings up a confirmation dialog, and if
-      <span class="emphasis"><em>Ok</em></span> is clicked, the selected extension is marked for removal.  The Status of the row
-      changes to <span class="bold"><strong>remove</strong></span>, reflecting this.
-    </p>
-    <p>
-      The final change to the program, removing the extension, will not happen until the
-      <span class="emphasis"><em>Apply</em></span> button, at the bottom of the Options dialog, is clicked.
-    </p>
-    <p>
-      If a <span class="bold"><strong>prototype</strong></span> or <span class="bold"><strong>callfixup</strong></span> is removed,
-      all functions are checked to see if they have the matching calling convention or call-fixup set.
-      A function with matching calling convention is changed to have the <span class="emphasis"><em>default</em></span> convention, which is always a core element.
-      A function with matching call-fixup is changed to have no call-fixup.
-    </p>
-  </div>
 </div>
 
 </div></body>
