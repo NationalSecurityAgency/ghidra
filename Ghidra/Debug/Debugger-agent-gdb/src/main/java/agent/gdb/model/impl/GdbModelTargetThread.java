@@ -70,6 +70,7 @@ public class GdbModelTargetThread
 	protected String display;
 	protected String shortDisplay;
 	protected GdbThreadInfo info;
+	protected TargetExecutionState state = TargetExecutionState.INACTIVE;
 	private Integer base = 10;
 
 	protected final GdbModelTargetStack stack;
@@ -85,7 +86,7 @@ public class GdbModelTargetThread
 		this.stack = new GdbModelTargetStack(this, inferior);
 
 		changeAttributes(List.of(), List.of(stack), Map.of( //
-			STATE_ATTRIBUTE_NAME, convertState(thread.getState()), //
+			STATE_ATTRIBUTE_NAME, state = convertState(thread.getState()), //
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
 			SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
 			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
@@ -119,7 +120,7 @@ public class GdbModelTargetThread
 			sb.append(" ");
 			sb.append(info.getInferiorName());
 			sb.append(" ");
-			sb.append(info.getState());
+			sb.append(state.name().toLowerCase());
 			sb.append(" ");
 			List<GdbFrameInfo> frames = info.getFrames();
 			if (!frames.isEmpty()) {
@@ -237,15 +238,15 @@ public class GdbModelTargetThread
 	}
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
-		GdbState state = sco.getState();
+		GdbState gdbState = sco.getState();
 		CompletableFuture<Void> result = AsyncUtils.NIL;
-		if (state == GdbState.STOPPED) {
+		if (gdbState == GdbState.STOPPED) {
 			Msg.debug(this, "Updating stack for " + this);
 			result = CompletableFuture.allOf(updateInfo(), stack.stateChanged(sco));
 		}
-		TargetExecutionState targetState = convertState(state);
 		changeAttributes(List.of(), Map.of( //
-			STATE_ATTRIBUTE_NAME, targetState //
+			STATE_ATTRIBUTE_NAME, state = convertState(gdbState), //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
 		), sco.getReason().desc());
 		return result;
 	}
