@@ -282,12 +282,12 @@ public class SymbolApplierFactory {
 //				case AnnotationMsSymbol.PDB_ID:
 //					symbol = new AnnotationMsSymbol(pdb, reader);
 //					break;
-//				case GlobalManagedProcedureStMsSymbol.PDB_ID:
-//					symbol = new GlobalManagedProcedureStMsSymbol(pdb, reader);
-//					break;
-//				case LocalManagedProcedureStMsSymbol.PDB_ID:
-//					symbol = new LocalManagedProcedureStMsSymbol(pdb, reader);
-//					break;
+			case GlobalManagedProcedureStMsSymbol.PDB_ID:
+				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				break;
+			case LocalManagedProcedureStMsSymbol.PDB_ID:
+				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				break;
 //				case Reserved1MsSymbol.PDB_ID:
 //					symbol = new Reserved1MsSymbol(pdb, reader);
 //					break;
@@ -455,12 +455,12 @@ public class SymbolApplierFactory {
 			case TokenReferenceToManagedProcedureMsSymbol.PDB_ID:
 				applier = new ReferenceSymbolApplier(applicator, iter);
 				break;
-//				case GlobalManagedProcedureMsSymbol.PDB_ID:
-//					symbol = new GlobalManagedProcedureMsSymbol(pdb, reader);
-//					break;
-//				case LocalManagedProcedureMsSymbol.PDB_ID:
-//					symbol = new LocalManagedProcedureMsSymbol(pdb, reader);
-//					break;
+			case GlobalManagedProcedureMsSymbol.PDB_ID:
+				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				break;
+			case LocalManagedProcedureMsSymbol.PDB_ID:
+				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				break;
 			case TrampolineMsSymbol.PDB_ID:
 				applier = new TrampolineSymbolApplier(applicator, iter);
 				break;

@@ -129,17 +129,15 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 		return (symbolBlockNestingLevel > 0) && iter.hasNext();
 	}
 
-	int endBlock() {
+	void endBlock() {
 		if (--symbolBlockNestingLevel < 0) {
 			applicator.appendLogMsg("Block Nesting went negative at " + specifiedAddress);
 		}
-		return symbolBlockNestingLevel;
 	}
 
-	private int beginBlock(Address startAddress) {
+	void beginBlock(Address startAddress) {
 		currentBlockAddress = startAddress;
 		++symbolBlockNestingLevel;
-		return symbolBlockNestingLevel;
 	}
 
 }
