@@ -16,86 +16,107 @@
 package ghidra.file.formats.cpio;
 
 import java.io.*;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FSUtilities.StreamCopyResult;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
-@FileSystemInfo(type = "cpio", description = "CPIO", factory = GFileSystemBaseFactory.class)
-public class CpioFileSystem extends GFileSystemBase {
+@FileSystemInfo(type = "cpio", description = "CPIO", factory = CpioFileSystemFactory.class)
+public class CpioFileSystem implements GFileSystem {
+	private FSRLRoot fsFSRL;
+	private FileSystemIndexHelper<CpioArchiveEntry> fsIndex;
+	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
+	private ByteProvider provider;
 
-	private Map<GFile, CpioArchiveEntry> map = new HashMap<>();
 
-	public CpioFileSystem(String fileSystemName, ByteProvider provider) {
-		super(fileSystemName, provider);
-	}
-
-	@Override
-	public boolean isValid(TaskMonitor monitor) throws IOException {
-		byte[] signature = provider.readBytes(0, 0x10);
-		return CpioArchiveInputStream.matches(signature, 0x10);
-	}
-
-	@Override
-	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
+	public CpioFileSystem(FSRLRoot fsFSRL, ByteProvider provider, TaskMonitor monitor)
+			throws IOException {
 		monitor.setMessage("Opening CPIO...");
+		this.fsFSRL = fsFSRL;
+		this.provider = provider;
+		this.fsIndex = new FileSystemIndexHelper<>(this, fsFSRL);
 
 		try (CpioArchiveInputStream cpioInputStream =
 			new CpioArchiveInputStream(provider.getInputStream(0))) {
 			CpioArchiveEntry entry;
+			int fileNum = 0;
 			while ((entry = cpioInputStream.getNextCPIOEntry()) != null) {
-				skipEntryContents(cpioInputStream, monitor);
-				storeEntry(entry, monitor);
+				FileUtilities.copyStreamToStream(cpioInputStream, OutputStream.nullOutputStream(),
+					monitor);
+
+				monitor.setMessage(entry.getName());
+				fsIndex.storeFile(entry.getName(), fileNum++, entry.isDirectory(),
+					entry.getSize(), entry);
 			}
 		}
 		catch (EOFException e) {
 			// silently ignore EOFExceptions
 		}
+		catch (IOException e) {
+			throw e;
+		}
 		catch (Exception e) {
-			FSUtilities.displayException(this, null, "Error While Opening CPIO", e.getMessage(), e);
+			throw new IOException(e);
 		}
 	}
 
 	@Override
 	public void close() throws IOException {
-		super.close();
-		map.clear();
+		fsRefManager.onClose();
+		fsIndex.clear();
+		if (provider != null) {
+			provider.close();
+			provider = null;
+		}
+	}
+
+	@Override
+	public FSRLRoot getFSRL() {
+		return fsFSRL;
+	}
+
+	@Override
+	public String getName() {
+		return fsFSRL.getContainer().getName();
+	}
+
+	@Override
+	public boolean isClosed() {
+		return provider == null;
+	}
+
+	@Override
+	public FileSystemRefManager getRefManager() {
+		return fsRefManager;
 	}
 
 	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
-		if (directory == null || directory.equals(root)) {
-			List<GFile> roots = new ArrayList<>();
-			for (GFile file : map.keySet()) {
-				if (file.getParentFile() == root || file.getParentFile().equals(root)) {
-					roots.add(file);
-				}
-			}
-			return roots;
-		}
-		List<GFile> tmp = new ArrayList<>();
-		for (GFile file : map.keySet()) {
-			if (file.getParentFile() == null) {
-				continue;
-			}
-			if (file.getParentFile().equals(directory)) {
-				tmp.add(file);
-			}
-		}
-		return tmp;
+		return fsIndex.getListing(directory);
+	}
+
+	@Override
+	public GFile lookup(String path) throws IOException {
+		return fsIndex.lookup(path);
 	}
 
 	@Override
 	public String getInfo(GFile file, TaskMonitor monitor) {
-		CpioArchiveEntry entry = map.get(file);
+		CpioArchiveEntry entry = fsIndex.getMetadata(file);
+		if (entry == null) {
+			return null;
+		}
 		StringBuilder buffer = new StringBuilder();
 		try {
 			buffer.append("Name: " + entry.getName() + "\n");
@@ -129,84 +150,46 @@ public class CpioFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-		CpioArchiveEntry fileEntry = map.get(file);
-		if (!fileEntry.isRegularFile()) {
+	public InputStream getInputStream(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		ByteProvider bp = getByteProvider(file, monitor);
+		return bp != null ? bp.getInputStream(0) : null;
+	}
+
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		CpioArchiveEntry targetEntry = fsIndex.getMetadata(file);
+		if (targetEntry == null) {
+			return null;
+		}
+		if (!targetEntry.isRegularFile()) {
 			throw new IOException("CPIO entry " + file.getName() + " is not a regular file.");
 		}
 		try (CpioArchiveInputStream cpioInputStream =
-			new CpioArchiveInputStream(provider.getInputStream(0));) {
+			new CpioArchiveInputStream(provider.getInputStream(0))) {
 
-			CpioArchiveEntry entry;
-			while ((entry = cpioInputStream.getNextCPIOEntry()) != null) {
-				if (!entry.equals(fileEntry)) {
-					skipEntryContents(cpioInputStream, monitor);
+			CpioArchiveEntry currentEntry;
+			while ((currentEntry = cpioInputStream.getNextCPIOEntry()) != null) {
+				if (currentEntry.equals(targetEntry)) {
+					return getByteProviderForEntry(cpioInputStream, file.getFSRL(), monitor);
 				}
-				else {
-					byte[] entryBytes = readEntryContents(cpioInputStream, monitor);
-					return new ByteArrayInputStream(entryBytes);
-				}
+				FileUtilities.copyStreamToStream(cpioInputStream, OutputStream.nullOutputStream(),
+					monitor);
 			}
 		}
 		catch (IllegalArgumentException e) {
-			//unknown MODES..
+			throw new IOException(e);
 		}
-		return null;
+		throw new IOException("Unable to seek to entry: " + file.getName());
 	}
 
-	private void storeEntry(CpioArchiveEntry entry, TaskMonitor monitor) {
-		monitor.setMessage(entry.getName());
-		GFileImpl file = GFileImpl.fromPathString(this, root, entry.getName(), null,
-			entry.isDirectory(), entry.getSize());
-		storeFile(file, entry, monitor);
-	}
-
-	private void storeFile(GFile file, CpioArchiveEntry entry, TaskMonitor monitor) {
-		if (monitor.isCancelled()) {
-			return;
-		}
-		if (file == null) {
-			return;
-		}
-		if (file.equals(root)) {
-			return;
-		}
-		if (!map.containsKey(file) || map.get(file) == null) {
-			map.put(file, entry);
-		}
-		GFile parentFile = file.getParentFile();
-		storeFile(parentFile, null, monitor);
-	}
-
-	private byte[] readEntryContents(CpioArchiveInputStream cpioInputStream, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	private ByteProvider getByteProviderForEntry(CpioArchiveInputStream cpioInputStream, FSRL fsrl,
+			TaskMonitor monitor) throws CancelledException, IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		byte[] buffer = new byte[64 * 1024];
-		while (true) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
-			int bytesRead = cpioInputStream.read(buffer);
-			if (bytesRead <= 0) {
-				break;
-			}
-			out.write(buffer, 0, bytesRead);
+		StreamCopyResult copyResult = FSUtilities.streamCopy(cpioInputStream, out, monitor);
+		if (fsrl.getMD5() == null) {
+			fsrl = fsrl.withMD5(NumericUtilities.convertBytesToString(copyResult.md5));
 		}
-		return out.toByteArray();
-	}
-
-	private void skipEntryContents(CpioArchiveInputStream cpioInputStream, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		byte[] buffer = new byte[64 * 1024];
-		while (true) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
-			int bytesRead = cpioInputStream.read(buffer);
-			if (bytesRead <= 0) {
-				break;
-			}
-		}
+		return new ByteArrayProvider(out.toByteArray(), fsrl);
 	}
 }
