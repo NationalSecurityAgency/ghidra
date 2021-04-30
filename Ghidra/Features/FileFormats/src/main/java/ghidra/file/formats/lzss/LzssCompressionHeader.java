@@ -15,20 +15,46 @@
  */
 package ghidra.file.formats.lzss;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
-
 public class LzssCompressionHeader implements StructConverter {
 
-	private int     signature;
-	private int     compressionType;
-	private int     checksum;
-	private int     decompressedLength;
-	private int     compressedLength;
-	private byte [] padding;
+	public static final int PROBE_BYTES_NEEDED = 8; // sizeof(signature) + sizeof(compressionType)
+
+	/**
+	 * Returns true if the bytes have the magic signature of a LzssCompressionHeader.
+	 * 
+	 * @param startBytes byte array
+	 * @return boolean true if the signature of a LzssCompressionHeader appears at the beginning
+	 * the byte array
+	 */
+	public static boolean probe(byte[] startBytes) {
+		try {
+			if (startBytes.length < PROBE_BYTES_NEEDED) {
+				return false;
+			}
+			BinaryReader reader = new BinaryReader(new ByteArrayProvider(startBytes), false);
+
+			int signature = reader.readNextInt();
+			int compressionType = reader.readNextInt();
+			return signature == LzssConstants.SIGNATURE_LZSS &&
+				compressionType == LzssConstants.SIGNATURE_COMPRESSION;
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	private int signature;
+	private int compressionType;
+	private int checksum;
+	private int decompressedLength;
+	private int compressedLength;
+	private byte[] padding;
 
 	public LzssCompressionHeader(ByteProvider provider) throws IOException {
 		BinaryReader reader = new BinaryReader(provider, false);
@@ -60,6 +86,7 @@ public class LzssCompressionHeader implements StructConverter {
 		return padding;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		return StructConverterUtil.toDataType(this);
 	}

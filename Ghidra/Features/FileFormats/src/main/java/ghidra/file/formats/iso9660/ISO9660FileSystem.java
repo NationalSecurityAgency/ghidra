@@ -15,10 +15,9 @@
  */
 package ghidra.file.formats.iso9660;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -148,10 +147,14 @@ public class ISO9660FileSystem extends GFileSystemBase {
 	protected InputStream getData(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException, CryptoException {
 
-		ISO9660Directory dir = fileToDirectoryMap.get(file);
-		InputStream inputStream = dir.getDataBytes(provider, logicalBlockSize);
+		ByteProvider bp = getByteProvider(file, monitor);
+		return bp != null ? bp.getInputStream(0) : null;
+	}
 
-		return inputStream;
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		ISO9660Directory dir = fileToDirectoryMap.get(file);
+		return dir.getByteProvider(provider, logicalBlockSize, file.getFSRL());
 	}
 
 	/*
