@@ -18,7 +18,7 @@ package agent.gdb.manager;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import agent.gdb.manager.GdbManager.ExecSuffix;
+import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInsertions;
 import agent.gdb.manager.impl.GdbThreadInfo;
 
@@ -121,7 +121,7 @@ public interface GdbThread
 	 * @param suffix specifies how far to step, or on what conditions stepping ends.
 	 * @return a future that completes once the thread is running
 	 */
-	CompletableFuture<Void> step(ExecSuffix suffix);
+	CompletableFuture<Void> step(StepCmd suffix);
 
 	/**
 	 * Detach from the entire process

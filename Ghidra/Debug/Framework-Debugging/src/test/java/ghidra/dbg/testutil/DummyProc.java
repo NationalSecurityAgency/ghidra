@@ -60,7 +60,9 @@ public class DummyProc implements AutoCloseable {
 
 	DummyProc(String... args) throws IOException {
 		args[0] = which(args[0]);
-		process = new ProcessBuilder(args).start();
+		process = new ProcessBuilder(args)
+				.inheritIO()
+				.start();
 
 		pid = process.pid();
 	}

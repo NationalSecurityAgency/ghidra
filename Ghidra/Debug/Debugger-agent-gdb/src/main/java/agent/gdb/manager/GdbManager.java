@@ -40,35 +40,34 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	public static final String DEFAULT_GDB_CMD = "/usr/bin/gdb";
 
 	/**
-	 * Possible values for {@link GdbThread#step(ExecSuffix)}
+	 * Possible values for {@link GdbThread#step(StepCmd)}
 	 */
-	public enum ExecSuffix {
-		/** Equivalent to {@code finish} in the CLI */
+	public enum StepCmd {
 		FINISH("finish"),
-		/** Equivalent to {@code next} in the CLI */
 		NEXT("next"),
-		/** Equivalent to {@code nexti} in the CLI */
-		NEXT_INSTRUCTION("next-instruction"),
-		/** Equivalent to {@code return} in the CLI */
+		NEXTI("nexti", "next-instruction"),
 		RETURN("return"),
-		/** Equivalent to {@code step} in the CLI */
 		STEP("step"),
-		/** Equivalent to {@code stepi} in the CLI */
-		STEP_INSTRUCTION("step-instruction"),
-		/** Equivalent to {@code until} in the CLI */
+		STEPI("stepi", "step-instruction"),
 		UNTIL("until"),
 		/** User-defined */
-		EXTENDED("until"),;
+		EXTENDED("echo extended-step?", "???"),;
 
-		final String str;
+		public final String mi2;
+		public final String cli;
 
-		ExecSuffix(String str) {
-			this.str = str;
+		StepCmd(String cli, String execSuffix) {
+			this.cli = cli;
+			this.mi2 = "-exec-" + execSuffix;
+		}
+
+		StepCmd(String cli) {
+			this(cli, cli);
 		}
 
 		@Override
 		public String toString() {
-			return str;
+			return mi2;
 		}
 	}
 
@@ -305,11 +304,22 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * 
 	 * <p>
 	 * This may be useful if the manager's command queue is stalled because an inferior is running.
+	 * If this doesn't clear the stall, try {@link #cancelCurrentCommand()}.
 	 * 
 	 * @throws IOException if an I/O error occurs
 	 * @throws InterruptedException
 	 */
 	void sendInterruptNow() throws IOException;
+
+	/**
+	 * Cancel the current command
+	 * 
+	 * <p>
+	 * Occasionally, a command gets stalled up waiting for an event, which for other reasons, will
+	 * no longer occur. This will free up the queue for other commands to (hopefully) be processed.
+	 * If {@link #sendInterruptNow()} doesn't clear the stall, try this.
+	 */
+	void cancelCurrentCommand();
 
 	/**
 	 * Get the state of the GDB session
@@ -521,5 +531,4 @@ public interface GdbManager extends AutoCloseable, GdbBreakpointInsertions {
 	 * @return the description
 	 */
 	String getPtyDescription();
-
 }
