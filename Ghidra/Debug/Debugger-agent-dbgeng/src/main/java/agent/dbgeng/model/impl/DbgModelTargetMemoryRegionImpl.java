@@ -90,6 +90,7 @@ public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 		isExec = region.isExec();
 
 		this.changeAttributes(List.of(), List.of(), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, computeDisplay(region), //
 			MEMORY_ATTRIBUTE_NAME, memory, //
 			RANGE_ATTRIBUTE_NAME, doGetRange(section), //
 			READABLE_ATTRIBUTE_NAME, isReadable(), //
@@ -108,6 +109,10 @@ public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 			"State", region.getState(), //
 			"Type", region.getType() //
 		), "Initialized");
+	}
+
+	protected String computeDisplay(DbgModuleMemory region) {
+		return region.getType() + " " + getName(); // NB. Name will contain []s
 	}
 
 	protected AddressRange doGetRange(DbgModuleMemory s) {

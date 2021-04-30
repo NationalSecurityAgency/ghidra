@@ -16,6 +16,7 @@
 package agent.gdb.pty.local;
 
 import agent.gdb.pty.PtySession;
+import ghidra.util.Msg;
 
 /**
  * A pty session consisting of a local process and its descendants
@@ -25,6 +26,7 @@ public class LocalProcessPtySession implements PtySession {
 
 	public LocalProcessPtySession(Process process) {
 		this.process = process;
+		Msg.info(this, "local Pty session. PID = " + process.pid());
 	}
 
 	@Override

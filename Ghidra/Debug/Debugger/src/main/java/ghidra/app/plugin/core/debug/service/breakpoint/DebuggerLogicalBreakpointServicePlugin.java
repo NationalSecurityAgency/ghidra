@@ -558,7 +558,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			if (progLoc != null) {
 				InfoPerProgram progInfo = programInfos.get(progLoc.getProgram());
 				lb = progInfo
-						.getOrCreateLogicalBreakpointFor(progLoc.getAddress(), breakpoint, c);
+						.getOrCreateLogicalBreakpointFor(progLoc.getByteAddress(), breakpoint, c);
 			}
 			else {
 				lb = getOrCreateLogicalBreakpointFor(traceAddr, breakpoint, c);
@@ -712,7 +712,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 						forgetProgramBreakpoint(bm, r);
 						continue;
 					}
-					if (!lb.getProgramLocation().getAddress().equals(bm.getAddress())) {
+					if (!lb.getProgramLocation().getByteAddress().equals(bm.getAddress())) {
 						forgetProgramBreakpoint(bm, r);
 						continue;
 					}
@@ -786,7 +786,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		if (pLoc != null) {
 			InfoPerProgram info = programInfos.get(pLoc.getProgram());
 			if (info != null) { // Maybe the program was just closed
-				info.removeLogicalBreakpoint(pLoc.getAddress(), lb);
+				info.removeLogicalBreakpoint(pLoc.getByteAddress(), lb);
 			}
 		}
 		for (Trace t : lb.getMappedTraces()) {

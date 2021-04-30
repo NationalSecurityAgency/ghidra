@@ -25,7 +25,6 @@ import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
@@ -101,7 +100,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		TargetMemory mem = region.getMemory();
 		recorder.getProcessMemory().addRegion(region, mem);
 		//recorder.objectManager.addMemory(mem);
-		String path = PathUtils.toString(region.getPath());
+		String path = region.getJoinedPath(".");
 		long snap = recorder.getSnap();
 		recorder.parTx.execute("Memory region " + path + " added", () -> {
 			try {
@@ -114,7 +113,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 				traceRegion = memoryManager.addRegion(path, Range.atLeast(snap),
 					recorder.getMemoryMapper().targetToTrace(region.getRange()),
 					getTraceFlags(region));
-				traceRegion.setName(region.getName());
+				traceRegion.setName(region.getDisplay());
 			}
 			catch (TraceOverlappedRegionException e) {
 				Msg.error(this, "Failed to create region due to overlap: " + e);
@@ -128,7 +127,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 	@Override
 	public void removeProcessRegion(TargetMemoryRegion region) {
 		// Already removed from processMemory. That's how we knew to go here.
-		String path = PathUtils.toString(region.getPath());
+		String path = region.getJoinedPath(".");
 		long snap = recorder.getSnap();
 		recorder.parTx.execute("Memory region " + path + " removed", () -> {
 			try {
@@ -148,7 +147,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 
 	@Override
 	public TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion region) {
-		String path = PathUtils.toString(region.getPath());
+		String path = region.getJoinedPath(".");
 		return memoryManager.getLiveRegionByPath(recorder.getSnap(), path);
 	}
 
@@ -167,4 +166,16 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		return flags;
 	}
 
+	public void regionChanged(TargetMemoryRegion region, String display) {
+		String path = region.getJoinedPath(".");
+		long snap = recorder.getSnap();
+		recorder.parTx.execute("Memory region " + path + " changed display", () -> {
+			TraceMemoryRegion traceRegion = memoryManager.getLiveRegionByPath(snap, path);
+			if (traceRegion == null) {
+				Msg.warn(this, "Could not find region " + path + " in trace to rename");
+				return;
+			}
+			traceRegion.setName(display);
+		}, path);
+	}
 }

@@ -944,7 +944,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			Address start = from.getAddress();
 			Address end = start.addNoWrap(length - 1);
 			// Also check end in the destination
-			Address toAddress = to.getAddress();
+			Address toAddress = to.getByteAddress();
 			toAddress.addNoWrap(length - 1); // Anticipate possible AddressOverflow
 			AddressRangeImpl range = new AddressRangeImpl(start, end);
 			if (truncateExisting) {
@@ -1117,12 +1117,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		TraceProgramView view = (TraceProgramView) loc.getProgram();
 		Trace trace = view.getTrace();
 		TraceLocation tloc = new DefaultTraceLocation(trace, null,
-			Range.singleton(getNonScratchSnap(view)), loc.getAddress());
+			Range.singleton(getNonScratchSnap(view)), loc.getByteAddress());
 		ProgramLocation mapped = getOpenMappedLocation(tloc);
 		if (mapped == null) {
 			return null;
 		}
-		return ProgramLocationUtils.replaceAddress(loc, mapped.getProgram(), mapped.getAddress());
+		return ProgramLocationUtils.replaceAddress(loc, mapped.getProgram(),
+			mapped.getByteAddress());
 	}
 
 	@Override
@@ -1131,7 +1132,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		if (info == null) {
 			return null;
 		}
-		return info.getOpenMappedTraceLocations(loc.getAddress());
+		return info.getOpenMappedTraceLocations(loc.getByteAddress());
 	}
 
 	@Override
@@ -1140,7 +1141,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		if (info == null) {
 			return null;
 		}
-		return info.getOpenMappedTraceLocation(trace, loc.getAddress(), snap);
+		return info.getOpenMappedTraceLocation(trace, loc.getByteAddress(), snap);
 	}
 
 	@Override
