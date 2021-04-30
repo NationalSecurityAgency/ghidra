@@ -8,4 +8,22 @@
 	</properties>
 	<programcounter register="PC"/>
 	<data_space space="ram"/>
+	<register_data>
+    	<register name="W0" alias="WREG0"/>
+    	<register name="W1" alias="WREG1"/>
+    	<register name="W2" alias="WREG2"/>
+    	<register name="W3" alias="WREG3"/>
+    	<register name="W4" alias="WREG4"/>
+    	<register name="W5" alias="WREG5"/>
+    	<register name="W6" alias="WREG6"/>
+    	<register name="W7" alias="WREG7"/>
+    	<register name="W8" alias="WREG8"/>
+    	<register name="W9" alias="WREG9"/>
+    	<register name="W10" alias="WREG10"/>
+    	<register name="W11" alias="WREG11"/>
+    	<register name="W12" alias="WREG12"/>
+    	<register name="W13" alias="WREG13"/>
+    	<register name="W14" alias="WREG14"/>
+    	<register name="W15" alias="WREG15"/>
+	</register_data>
 </processor_spec>
