@@ -72,7 +72,7 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 		}
 
 		BitFieldEditorDialog dlg = new BitFieldEditorDialog(editorModel.viewComposite,
-			provider.dtmService, dtComponent.getOrdinal(),
+			provider.dtmService, dtComponent.getOrdinal(), model.showHexNumbers,
 			ordinal -> refreshTableAndSelection(editorModel, ordinal));
 		Component c = provider.getComponent();
 		DockingWindowManager.showDialog(c, dlg);

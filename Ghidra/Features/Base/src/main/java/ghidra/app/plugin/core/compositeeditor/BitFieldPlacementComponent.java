@@ -38,6 +38,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	private static final int BYTE_SEPARATOR_THICKNESS = 2;
 	private static final int SCROLLBAR_THICKNESS = 15;
 	private static final int MY_HEIGHT = (2 * CELL_HEIGHT) + (3 * BYTE_SEPARATOR_THICKNESS);
+	private static final int BYTE_ROW_HEIGHT = CELL_HEIGHT + (2 * BYTE_SEPARATOR_THICKNESS);
 
 	private static final int LENEND_BOX_SIZE = 16;
 
@@ -66,6 +67,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	private EditMode editMode = EditMode.NONE;
 	private int editOrdinal = -1;
 	private DataTypeComponent editComponent;
+	private boolean showOffsetsInHex = false;
 
 	public static class BitFieldLegend extends JPanel {
 
@@ -161,6 +163,18 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		init(null);
 	}
 
+	public void setShowOffsetsInHex(boolean useHex) {
+		this.showOffsetsInHex = useHex;
+		if (bitFieldAllocation != null) {
+			bitFieldAllocation.refresh(true);
+			repaint();
+		}
+	}
+
+	public boolean isShowOffsetsInHex() {
+		return showOffsetsInHex;
+	}
+
 	@Override
 	public Dimension getPreferredScrollableViewportSize() {
 		return getPreferredSize();
@@ -246,6 +260,15 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	 */
 	public int getPreferredHeight() {
 		return MY_HEIGHT + SCROLLBAR_THICKNESS;
+	}
+
+	/**
+	 * Determine if specified point is within bit cell region
+	 * @param p point within this component's bounds
+	 * @return true if p is within bit cell region
+	 */
+	public boolean isWithinBitCell(Point p) {
+		return p.y < MY_HEIGHT && p.y > BYTE_ROW_HEIGHT;
 	}
 
 	private int getPreferredWidth() {
@@ -658,7 +681,13 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		g.setColor(TEXT_COLOR);
 
-		String offsetStr = Integer.toString(offset);
+		String offsetStr;
+		if (showOffsetsInHex) {
+			offsetStr = "0x" + Integer.toHexString(offset);
+		}
+		else {
+			offsetStr = Integer.toString(offset);
+		}
 		FontMetrics fontMetrics = g.getFontMetrics();
 		int textY = y + (CELL_HEIGHT + fontMetrics.getMaxAscent() - BYTE_SEPARATOR_THICKNESS) / 2;
 		int textX = x + (width - BYTE_SEPARATOR_THICKNESS - fontMetrics.stringWidth(offsetStr)) / 2;

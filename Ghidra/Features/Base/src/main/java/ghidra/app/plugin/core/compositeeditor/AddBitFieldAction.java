@@ -54,7 +54,8 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 
 		BitFieldEditorDialog dlg =
 			new BitFieldEditorDialog(editorModel.viewComposite, provider.dtmService,
-				-(rowIndex + 1), ordinal -> refreshTableAndSelection(editorModel, ordinal));
+				-(rowIndex + 1), model.showHexNumbers,
+				ordinal -> refreshTableAndSelection(editorModel, ordinal));
 		Component c = provider.getComponent();
 		DockingWindowManager.showDialog(c, dlg);
 		requestTableFocus();

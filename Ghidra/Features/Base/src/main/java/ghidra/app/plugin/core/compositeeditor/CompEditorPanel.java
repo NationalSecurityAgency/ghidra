@@ -118,6 +118,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	@Override
 	public void compositeInfoChanged() {
 		adjustCompositeInfo();
+		if (model.showHexNumbers != bitViewComponent.isShowOffsetsInHex()) {
+			bitViewComponent.setShowOffsetsInHex(model.showHexNumbers);
+		}
 	}
 
 	/**
@@ -156,6 +159,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	protected JPanel createBitViewerPanel() {
 
 		bitViewComponent = new BitFieldPlacementComponent(model.viewComposite, false);
+		bitViewComponent.setShowOffsetsInHex(model.showHexNumbers);
 		model.addCompositeViewerModelListener(new CompositeEditorModelAdapter() {
 			@Override
 			public void selectionChanged() {

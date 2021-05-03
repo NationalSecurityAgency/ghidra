@@ -17,13 +17,12 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.MouseEvent;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
+import javax.swing.*;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
-import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.*;
+import docking.action.*;
+import docking.menu.DockingCheckboxMenuItemUI;
+import docking.widgets.OptionDialog;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
@@ -42,7 +41,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 	private BitFieldEditorPanel bitFieldEditorPanel; // for unaligned use case
 
 	BitFieldEditorDialog(Composite composite, DataTypeManagerService dtmService, int editOrdinal,
-			CompositeChangeListener listener) {
+			boolean showOffsetsInHex, CompositeChangeListener listener) {
 		super("Edit " + getCompositeType(composite) + " Bitfield");
 		this.composite = composite;
 		this.listener = listener;
@@ -51,6 +50,8 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		addWorkPanel(buildWorkPanel(editOrdinal));
 		setRememberLocation(false);
 		setRememberSize(false);
+
+		bitFieldEditorPanel.setShowOffsetsInHex(showOffsetsInHex);
 
 		addActions();
 
@@ -79,6 +80,27 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		return null;
 	}
 
+	private boolean startEditAllowed() {
+		if (bitFieldEditorPanel.isEditing()) {
+			int option = OptionDialog.showOptionDialog(rootPanel, "Edit in Progress",
+				"Apply or Discard current changes before starting new edit?", "Apply", "Discard",
+				OptionDialog.QUESTION_MESSAGE);
+			if (option == OptionDialog.OPTION_ONE) {
+				if (!bitFieldEditorPanel.apply(listener)) {
+					return false;
+				}
+				setApplyEnabled(false);
+			}
+			else if (option == OptionDialog.CANCEL_OPTION) {
+				return false;
+			}
+			else if (!bitFieldEditorPanel.endCurrentEdit()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private class EditBitFieldAction extends DockingAction {
 
 		EditBitFieldAction() {
@@ -90,7 +112,10 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		@Override
 		public void actionPerformed(ActionContext context) {
 			DataTypeComponent bitfieldDtc = getEditComponent(context, true);
-			if (bitfieldDtc == null || !bitFieldEditorPanel.endCurrentEdit()) {
+			if (bitfieldDtc == null) {
+				return;
+			}
+			if (!startEditAllowed()) {
 				return;
 			}
 			initEdit(bitfieldDtc.getOrdinal(), true);
@@ -112,9 +137,10 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			if (!bitFieldEditorPanel.endCurrentEdit()) {
+			if (!startEditAllowed()) {
 				return;
 			}
+
 			BitFieldEditorPanel.BitFieldEditorContext editorContext =
 				(BitFieldEditorPanel.BitFieldEditorContext) context;
 
@@ -135,6 +161,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		DeleteComponentAction() {
 			super("Delete", "BitFieldEditorDialog");
 			setPopupMenuData(new MenuData(new String[] { getName() }, DELETE_ICON));
+			setHelpLocation(new HelpLocation("DataTypeEditors", "Structure_Bitfield_Editor"));
 		}
 
 		@Override
@@ -157,10 +184,56 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		}
 	}
 
+	private class ToggleHexUseAction extends DockingAction implements ToggleDockingActionIf {
+
+		private boolean isSelected;
+
+		ToggleHexUseAction() {
+			super("Show Byte Offsets in Hexadecimal", "BitFieldEditorDialog");
+			setEnabled(true);
+			setSelected(bitFieldEditorPanel.isShowOffsetsInHex());
+			setPopupMenuData(new MenuData(new String[] { getName() }));
+			setHelpLocation(new HelpLocation("DataTypeEditors", "Structure_Bitfield_Editor"));
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			bitFieldEditorPanel.setShowOffsetsInHex(isSelected);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return true;
+		}
+
+		@Override
+		public boolean isSelected() {
+			return isSelected;
+		}
+
+		@Override
+		public void setSelected(boolean newValue) {
+			if (isSelected == newValue) {
+				return;
+			}
+			isSelected = newValue;
+			firePropertyChanged(SELECTED_STATE_PROPERTY, !isSelected, isSelected);
+		}
+
+		@Override
+		protected JMenuItem doCreateMenuItem() {
+			DockingCheckBoxMenuItem menuItem = new DockingCheckBoxMenuItem(isSelected);
+			menuItem.setUI(
+				(DockingCheckboxMenuItemUI) DockingCheckboxMenuItemUI.createUI(menuItem));
+			return menuItem;
+		}
+	}
+
 	private void addActions() {
 		addAction(new AddBitFieldAction());
 		addAction(new EditBitFieldAction());
 		addAction(new DeleteComponentAction());
+		addAction(new ToggleHexUseAction());
 	}
 
 	@Override
@@ -196,7 +269,9 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel(int editOrdinal) {
-		bitFieldEditorPanel = new BitFieldEditorPanel(composite, dtmService);
+		bitFieldEditorPanel = new BitFieldEditorPanel(composite, dtmService, dt -> {
+			return baseDataTypeChanged(dt);
+		});
 		if (editOrdinal < 0) {
 			initAdd(-editOrdinal - 1);
 		}
@@ -204,6 +279,14 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 			initEdit(editOrdinal, false);
 		}
 		return bitFieldEditorPanel;
+	}
+
+	boolean baseDataTypeChanged(DataType bitfieldBaseDataType) {
+		// BitFieldEditorPanel checks should be adequate
+		boolean allowed = bitfieldBaseDataType != null;
+		setOkEnabled(allowed);
+		setApplyEnabled(allowed);
+		return allowed;
 	}
 
 	private static String getCompositeType(Composite composite) {
