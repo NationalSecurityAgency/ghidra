@@ -130,7 +130,11 @@ public class DebugControlImpl1 implements DebugControlInternal {
 			BitmaskSet<DebugExecute> flags) {
 		ULONG ctlMask = new ULONG(ctl.getBitmask());
 		ULONG flagMask = new ULONG(flags.getBitmask());
-		COMUtils.checkRC(jnaControl.Execute(ctlMask, cmd, flagMask));
+		HRESULT hr = jnaControl.Execute(ctlMask, cmd, flagMask);
+		if (hr.equals(COMUtilsExtra.E_INTERNALEXCEPTION)) {
+			return;
+		}
+		COMUtils.checkRC(hr);
 	}
 
 	@Override

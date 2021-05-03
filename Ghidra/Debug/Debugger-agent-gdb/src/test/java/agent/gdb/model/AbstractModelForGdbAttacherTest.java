@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
+import ghidra.async.AsyncUtils.TemperamentalRunnable;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.test.AbstractDebuggerModelAttacherTest;
@@ -48,5 +49,36 @@ public abstract class AbstractModelForGdbAttacherTest extends AbstractDebuggerMo
 		assertEquals("GNU/Linux", environment.getOperatingSystem());
 		assertEquals("little", environment.getEndian());
 		assertTrue(environment.getDebugger().toLowerCase().contains("gdb"));
+	}
+
+	// NB. Gradle/Java hangs on process clean-up if target is still attached
+	protected void withDetachAndForcefulDummyDestruction(TemperamentalRunnable test)
+			throws Throwable {
+		try {
+			test.run();
+			runTestDetach(getAttachSpecimen());
+		}
+		finally {
+			if (dummy == null) {
+				return;
+			}
+			dummy.process.destroy();
+			dummy.process.destroyForcibly();
+		}
+	}
+
+	@Override
+	public void testAttachByObj() throws Throwable {
+		withDetachAndForcefulDummyDestruction(() -> super.testAttachByObj());
+	}
+
+	@Override
+	public void testAttachByPid() throws Throwable {
+		withDetachAndForcefulDummyDestruction(() -> super.testAttachByPid());
+	}
+
+	@Override
+	public void testAttachByPidThenResumeInterrupt() throws Throwable {
+		withDetachAndForcefulDummyDestruction(() -> super.testAttachByPidThenResumeInterrupt());
 	}
 }

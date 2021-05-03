@@ -45,7 +45,11 @@ public class GdbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
+	@Override
 	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+		if (env == null) {
+			return Set.of();
+		}
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}
