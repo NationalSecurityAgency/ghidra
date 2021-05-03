@@ -118,7 +118,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	@Override
 	public void compositeInfoChanged() {
 		adjustCompositeInfo();
-		if (model.showHexNumbers != bitViewComponent.isShowOffsetsInHex()) {
+		if (bitViewComponent != null &&
+			model.showHexNumbers != bitViewComponent.isShowOffsetsInHex()) {
 			bitViewComponent.setShowOffsetsInHex(model.showHexNumbers);
 		}
 	}
