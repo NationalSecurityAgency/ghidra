@@ -161,7 +161,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				table.getCellEditor().cancelCellEditing();
 
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
-					provider.dtmService, editingRow, ordinal -> {
+					provider.dtmService, editingRow, model.showHexNumbers, ordinal -> {
 						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
