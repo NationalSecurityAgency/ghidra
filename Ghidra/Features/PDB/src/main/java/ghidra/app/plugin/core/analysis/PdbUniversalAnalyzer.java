@@ -255,10 +255,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 		PdbProgramAttributes programAttributes = new PdbProgramAttributes(program);
 		if (programAttributes.isPdbLoaded()) {
-			Msg.info(this, "Skipping PDB analysis since it has previouslu run.");
-			Msg.info(this,
-				">> Clear 'PDB Loaded' program property or use Load PDB action if " +
-					"additional PDB processing required.");
+			Msg.info(this, "Skipping PDB analysis since it has previously run.");
+			Msg.info(this, ">> Clear 'PDB Loaded' program property or use Load PDB action if " +
+				"additional PDB processing required.");
 			return true;
 		}
 
@@ -361,8 +360,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
 				DEFAULT_FORCE_LOAD_FILE, null, OPTION_DESCRIPTION_FORCELOAD_FILE);
 		}
-		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE,
-			symbolsRepositoryDir, null, OPTION_DESCRIPTION_SYMBOLPATH);
+		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE, symbolsRepositoryDir,
+			null, OPTION_DESCRIPTION_SYMBOLPATH);
 		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
 			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
 

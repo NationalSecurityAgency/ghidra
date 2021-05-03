@@ -22,9 +22,12 @@ import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 
+import com.google.common.base.Predicate;
+
 import docking.ActionContext;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
+import docking.widgets.label.GDLabel;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitFieldAllocation;
 import ghidra.app.services.DataTypeManagerService;
@@ -32,7 +35,6 @@ import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
-import ghidra.util.Msg;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.layout.*;
 import resources.ResourceManager;
@@ -46,10 +48,9 @@ public class BitFieldEditorPanel extends JPanel {
 	private static final Icon DECREMENT_ICON = ResourceManager.loadImage("images/Minus.png");
 	private static final Icon INCREMENT_ICON = ResourceManager.loadImage("images/Plus.png");
 
-	private static final String ENTRY_ERROR_DIALOG_TITLE = "Bitfield Entry Error";
-
 	private DataTypeManagerService dtmService;
 	private Composite composite;
+	private Predicate<DataType> dataTypeValidator;
 
 	private JLabel allocationOffsetLabel;
 	JButton decrementButton;
@@ -68,11 +69,15 @@ public class BitFieldEditorPanel extends JPanel {
 	private SpinnerNumberModel bitSizeModel;
 	private JSpinnerWithMouseWheel bitSizeInput;
 
+	private GDLabel statusTextField;
+
 	private BitSelectionHandler bitSelectionHandler;
+
 
 	private boolean updating = false;
 
-	BitFieldEditorPanel(Composite composite, DataTypeManagerService dtmService) {
+	BitFieldEditorPanel(Composite composite, DataTypeManagerService dtmService,
+			Predicate<DataType> dataTypeValidator) {
 		super();
 		this.composite = composite;
 
@@ -85,8 +90,9 @@ public class BitFieldEditorPanel extends JPanel {
 		setFocusTraversalKeysEnabled(true);
 
 		this.dtmService = dtmService;
+		this.dataTypeValidator = dataTypeValidator;
 
-		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		if (composite instanceof Structure) {
 			add(createAllocationOffsetPanel());
@@ -94,8 +100,18 @@ public class BitFieldEditorPanel extends JPanel {
 		add(createPlacementPanel());
 		add(createLegendPanel());
 		add(createEntryPanel());
+		add(createStatusPanel());
 
 		enableControls(false);
+	}
+
+	void setShowOffsetsInHex(boolean useHex) {
+		placementComponent.setShowOffsetsInHex(useHex);
+		updateAllocationOffsetLabel();
+	}
+
+	boolean isShowOffsetsInHex() {
+		return placementComponent.isShowOffsetsInHex();
 	}
 
 	private JPanel createLegendPanel() {
@@ -139,8 +155,16 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private void updateAllocationOffsetLabel() {
 		if (composite instanceof Structure) {
+			int allocOffset = placementComponent.getAllocationOffset();
+			String allocOffsetStr;
+			if (placementComponent.isShowOffsetsInHex()) {
+				allocOffsetStr = "0x" + Integer.toHexString(allocOffset);
+			}
+			else {
+				allocOffsetStr = Integer.toString(allocOffset);
+			}
 			String text =
-				"Structure Offset of Allocation Unit: " + placementComponent.getAllocationOffset();
+				"Structure Offset of Allocation Unit: " + allocOffsetStr;
 			allocationOffsetLabel.setText(text);
 
 			int offset = placementComponent.getAllocationOffset();
@@ -148,6 +172,31 @@ public class BitFieldEditorPanel extends JPanel {
 			int length = composite.isNotYetDefined() ? 0 : composite.getLength();
 			incrementButton.setEnabled(offset < length);
 		}
+	}
+
+	private Component createStatusPanel() {
+		JPanel statusPanel = new JPanel(new BorderLayout());
+
+		statusTextField = new GDLabel(" ");
+		statusTextField.setHorizontalAlignment(SwingConstants.CENTER);
+		statusTextField.setForeground(Color.red);
+
+		// use a strut panel so the size of the message area does not change if we make
+		// the message label not visible
+		int height = statusTextField.getPreferredSize().height;
+
+		statusPanel.add(Box.createVerticalStrut(height), BorderLayout.WEST);
+		statusPanel.add(statusTextField, BorderLayout.CENTER);
+
+		return statusPanel;
+	}
+
+	private void setStatus(String text) {
+		statusTextField.setText(text);
+	}
+
+	private void clearStatus() {
+		statusTextField.setText("");
 	}
 
 	private JPanel createEntryPanel() {
@@ -211,7 +260,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 		final DropDownSelectionTextField<DataType> dtChoiceTextField =
 			dtChoiceEditor.getDropDownTextField();
-		dtChoiceTextField.setBorder(UIManager.getBorder("TextField.border"));
+		dtChoiceTextField.setBorder((new JTextField()).getBorder());
 
 		dtChoiceEditor.addFocusListener(new FocusAdapter() {
 			@Override
@@ -242,10 +291,6 @@ public class BitFieldEditorPanel extends JPanel {
 					dtChoiceTextField.requestFocus();
 				}
 				else {
-					baseDataType = dtChoiceEditor.getCellEditorValueAsDataType();
-					if (baseDataType != null) {
-						baseDataType = baseDataType.clone(composite.getDataTypeManager());
-					}
 					updateBitSizeModel();
 					NavigationDirection direction = dtChoiceEditor.getNavigationDirection();
 					if (direction == NavigationDirection.FORWARD) {
@@ -271,10 +316,55 @@ public class BitFieldEditorPanel extends JPanel {
 		private boolean selectionActive = false;
 		private int startBit;
 		private int lastBit;
+		private int lastX;
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if (bitOffsetInput.isEnabled() || e.isConsumed() || e.getClickCount() != 2 ||
+				!placementComponent.isWithinBitCell(e.getPoint())) {
+				return;
+			}
+			BitAttributes bitAttributes = placementComponent.getBitAttributes(e.getPoint());
+			if (bitAttributes != null) {
+				DataTypeComponent dtc = bitAttributes.getDataTypeComponent(true);
+				if (dtc == null || !dtc.isBitFieldComponent()) {
+					return;
+				}
+				e.consume();
+				initEdit(dtc, placementComponent.getAllocationOffset(), true);
+			}
+		}
+
+		@Override
+		public void mouseMoved(MouseEvent e) {
+			if (!selectionActive && bitOffsetInput.isEnabled()) {
+				boolean inBounds = placementComponent.isWithinBitCell(e.getPoint());
+				setCursor(Cursor.getPredefinedCursor(
+					inBounds ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+			}
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			if (!selectionActive && bitOffsetInput.isEnabled() &&
+				placementComponent.isWithinBitCell(e.getPoint())) {
+				setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			}
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			if (!selectionActive) {
+				setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+			}
+		}
 
 		@Override
 		public void mousePressed(MouseEvent e) {
 			if (e.isConsumed()) {
+				return;
+			}
+			if (!placementComponent.isWithinBitCell(e.getPoint())) {
 				return;
 			}
 			if (e.getButton() == MouseEvent.BUTTON1) {
@@ -285,6 +375,10 @@ public class BitFieldEditorPanel extends JPanel {
 					startBit = setBitFieldOffset(e.getPoint());
 					lastBit = startBit;
 					selectionActive = startBit >= 0;
+					if (selectionActive) {
+						lastX = e.getPoint().x;
+						setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+					}
 				}
 			}
 		}
@@ -298,6 +392,15 @@ public class BitFieldEditorPanel extends JPanel {
 			e.consume();
 
 			Point p = e.getPoint();
+
+			if (p.x == lastX) {
+				return;
+			}
+			Cursor cursor = Cursor.getPredefinedCursor(
+				p.x < lastX ? Cursor.W_RESIZE_CURSOR : Cursor.E_RESIZE_CURSOR);
+			setCursor(cursor);
+			lastX = p.x;
+
 			int bitOffset = placementComponent.getBitOffset(p);
 			if (bitOffset == lastBit) {
 				return;
@@ -328,6 +431,11 @@ public class BitFieldEditorPanel extends JPanel {
 			if (selectionActive && !e.isConsumed()) {
 				e.consume();
 				selectionActive = false;
+
+				Point p = e.getPoint();
+				boolean inBounds = placementComponent.getVisibleRect().contains(p);
+				setCursor(Cursor.getPredefinedCursor(
+					inBounds ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
 			}
 		}
 
@@ -345,7 +453,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 		JPanel bitViewPanel = new JPanel(new PairLayout(0, 5));
 
-		JPanel labelPanel = new JPanel(new VerticalLayout(7));
+		JPanel labelPanel = new JPanel(new VerticalLayout(5));
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(7, 5, 0, 0));
 		JLabel byteOffsetLabel = new JLabel("Byte Offset:", SwingConstants.RIGHT);
 		labelPanel.add(byteOffsetLabel);
@@ -365,20 +473,32 @@ public class BitFieldEditorPanel extends JPanel {
 	private boolean checkValidBaseDataType() {
 		DropDownSelectionTextField<DataType> textField = dtChoiceEditor.getDropDownTextField();
 		String dtName = textField.getText().trim();
+		boolean isValid = true;
 		try {
 			if (dtName.length() == 0 || !dtChoiceEditor.validateUserSelection()) {
-				Msg.showError(BitFieldEditorPanel.class, textField, ENTRY_ERROR_DIALOG_TITLE,
-					"Valid bitfield base datatype entry required");
-				return false;
+				setStatus("Valid bitfield base datatype entry required");
+				isValid = false;
 			}
 		}
 		catch (InvalidDataTypeException e) {
-			Msg.showError(BitFieldEditorPanel.class, textField, ENTRY_ERROR_DIALOG_TITLE,
-				"Invalid bitfield base datatype: " + e.getMessage());
-			return false;
+			setStatus("Invalid bitfield base datatype: " + e.getMessage());
+			isValid = false;
 		}
-
-		return true;
+		if (isValid) {
+			DataType dt = dtChoiceEditor.getCellEditorValueAsDataType();
+			if (!dataTypeValidator.apply(baseDataType)) {
+				setStatus("Valid bitfield base datatype entry required");
+				isValid = false;
+			}
+			else {
+				baseDataType = dt.clone(composite.getDataTypeManager());
+				clearStatus();
+			}
+		}
+		else {
+			dataTypeValidator.apply(null); // affects button enablement
+		}
+		return isValid;
 	}
 
 	void initAdd(DataType initialBaseDataType, int allocationOffset, int bitOffset,
@@ -449,6 +569,7 @@ public class BitFieldEditorPanel extends JPanel {
 		updating = true;
 		try {
 			baseDataType = initialBaseDataType;
+			dataTypeValidator.apply(baseDataType);
 			dtChoiceEditor.setCellEditorValue(initialBaseDataType);
 			fieldNameTextField.setText(initialFieldName);
 			fieldCommentTextField.setText(initialComment);

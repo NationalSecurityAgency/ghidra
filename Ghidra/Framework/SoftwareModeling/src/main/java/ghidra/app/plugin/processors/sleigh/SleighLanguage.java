@@ -768,6 +768,7 @@ public class SleighLanguage implements Language {
 					XmlElement reg = parser.start();
 					String registerName = reg.getAttribute("name");
 					String registerRename = reg.getAttribute("rename");
+					String registerAlias = reg.getAttribute("alias");
 					String groupName = reg.getAttribute("group");
 					boolean isHidden = SpecXmlUtils.decodeBoolean(reg.getAttribute("hidden"));
 					if (registerRename != null) {
@@ -783,6 +784,9 @@ public class SleighLanguage implements Language {
 						if (!registerDataSet.add(registerName)) {
 							Msg.error(this, "duplicate register " + registerName + ": " +
 								description.getSpecFile());
+						}
+						if (registerAlias != null) {
+							registerBuilder.addAlias(registerName, registerAlias);
 						}
 						if (groupName != null) {
 							registerBuilder.setGroup(registerName, groupName);

@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.util.*;
-
 import java.math.BigInteger;
+import java.util.*;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
@@ -26,6 +25,7 @@ import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
@@ -123,6 +123,8 @@ public class PdbApplicator {
 	private PdbAddressManager pdbAddressManager;
 	private List<SymbolGroup> symbolGroups;
 
+	private PdbCliInfoManager pdbCliManagedInfoManager;
+
 	//==============================================================================================
 	// If we have symbols and memory with VBTs in them, then a better VbtManager is created.
 	VbtManager vbtManager;
@@ -140,7 +142,7 @@ public class PdbApplicator {
 	 * <PRE>
 	 *   false = simple namespace
 	 *   true = class namespace
-	 *  </PRE> 
+	 *  </PRE>
 	 */
 	private Map<SymbolPath, Boolean> isClassByNamespace;
 
@@ -309,6 +311,9 @@ public class PdbApplicator {
 		pdbApplicatorMetrics = new PdbApplicatorMetrics();
 
 		pdbAddressManager = new PdbAddressManager(this, imageBase);
+
+		pdbCliManagedInfoManager = new PdbCliInfoManager(this);
+
 		symbolGroups = createSymbolGroups();
 
 		categoryUtils = setPdbCatogoryUtils(pdbFilename);
@@ -415,6 +420,14 @@ public class PdbApplicator {
 	}
 
 	/**
+	 * Returns the MessageLog.
+	 * @return the MessageLog
+	 */
+	MessageLog getMessageLog() {
+		return log;
+	}
+
+	/**
 	 * Puts message to {@link PdbLog} and to Msg.info()
 	 * @param originator a Logger instance, "this", or YourClass.class
 	 * @param message the message to display
@@ -470,7 +483,7 @@ public class PdbApplicator {
 	// Information for a putative PdbTypeApplicator:
 
 	/**
-	 * Returns the {@link DataTypeManager} associated with this analyzer. 
+	 * Returns the {@link DataTypeManager} associated with this analyzer.
 	 * @return DataTypeManager which this analyzer is using.
 	 */
 	DataTypeManager getDataTypeManager() {
@@ -502,8 +515,8 @@ public class PdbApplicator {
 
 	/**
 	 * Returns the {@link CategoryPath} for a typedef with with the give {@link SymbolPath} and
-	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()}, 
-	 * except that modeleNumber of 0 represents publics/globals. 
+	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()},
+	 * except that modeleNumber of 0 represents publics/globals.
 	 * @param moduleNumber module number
 	 * @param symbolPath SymbolPath of the symbol
 	 * @return the CategoryPath
@@ -911,6 +924,13 @@ public class PdbApplicator {
 	}
 
 	//==============================================================================================
+	// CLI-Managed infor methods.
+	//==============================================================================================
+	CliAbstractTableRow getCliTableRow(int tableNum, int rowNum) throws PdbException {
+		return pdbCliManagedInfoManager.getCliTableRow(tableNum, rowNum);
+	}
+
+	//==============================================================================================
 	// Virtual-Base-Table-related methods.
 	//==============================================================================================
 	VbtManager getVbtManager() {
@@ -918,7 +938,7 @@ public class PdbApplicator {
 	}
 
 	//==============================================================================================
-	// 
+	//
 	//==============================================================================================
 	Register getRegister(String pdbRegisterName) {
 		return registerNameToRegisterMapper.getRegister(pdbRegisterName);
@@ -1140,7 +1160,7 @@ public class PdbApplicator {
 				num++;
 			}
 		}
-		appendLogMsg("Not processing linker symbols because linker module not found");
+		pdbLogAndInfoMessage(this, "Not processing linker symbols because linker module not found");
 		return -1;
 	}
 

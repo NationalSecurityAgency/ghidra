@@ -41,6 +41,7 @@ public class HintTextField extends JTextField {
 
 	private Color INVALID_COLOR = new Color(255, 225, 225);
 	private Color VALID_COLOR = Color.WHITE;
+	private Color defaultBackgroundColor;
 
 	/**
 	 * Constructor
@@ -128,10 +129,10 @@ public class HintTextField extends JTextField {
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 			RenderingHints.VALUE_ANTIALIAS_ON);
 
-		Rectangle bounds = getBounds();
+		Dimension size = getSize();
+		Insets insets = getInsets();
 		int x = 10; // offset
-		int y = bounds.height - bounds.y; // baseline of text; bottom of the text field
-
+		int y = size.height - insets.bottom - 1;
 		g2.drawString(hint, x, y);
 	}
 
@@ -143,6 +144,15 @@ public class HintTextField extends JTextField {
 	 */
 	public void setRequired(boolean required) {
 		this.required = required;
+	}
+
+	/**
+	 * Allows users to override the background color used by this field when the contents are
+	 * valid.  The invalid color is currently set by this class.
+	 * @param color the color
+	 */
+	public void setDefaultBackgroundColor(Color color) {
+		this.defaultBackgroundColor = color;
 	}
 
 	/**
@@ -177,6 +187,11 @@ public class HintTextField extends JTextField {
 	 * field attributes.
 	 */
 	private void validateField() {
-		setBackground(isFieldValid() ? VALID_COLOR : INVALID_COLOR);
+		if (isFieldValid()) {
+			setBackground(defaultBackgroundColor == null ? VALID_COLOR : defaultBackgroundColor);
+		}
+		else {
+			setBackground(INVALID_COLOR);
+		}
 	}
 }

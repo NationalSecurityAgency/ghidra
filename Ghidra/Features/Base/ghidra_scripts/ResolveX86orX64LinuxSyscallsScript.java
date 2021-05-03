@@ -65,6 +65,9 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 	//native "syscall" instruction
 	private static final String SYSCALL_X64_CALLOTHER = "syscall";
 
+	//a set of names of all syscalls that do not return
+	private static final Set<String> noreturnSyscalls = Set.of("exit", "exit_group");
+
 	//tests whether an instruction is making a system call
 	private Predicate<Instruction> tester;
 
@@ -179,6 +182,11 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 				}
 				callee = createFunction(callTarget, funcName);
 				callee.setCallingConvention(callingConvention);
+
+				//check if the function name is one of the non-returning syscalls
+				if (noreturnSyscalls.contains(funcName)) {
+					callee.setNoReturn(true);
+				}
 			}
 			Reference ref = currentProgram.getReferenceManager().addMemoryReference(callSite,
 				callTarget, overrideType, SourceType.USER_DEFINED, Reference.MNEMONIC);

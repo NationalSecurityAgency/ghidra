@@ -135,8 +135,7 @@ public class PdbVbtManager extends VbtManager {
 			vbtByAddress.put(address, vbt);
 		}
 		if (!(vbt instanceof PdbVirtualBaseTable)) {
-			int a = 1;
-			a = a + 1;
+			// investigate this
 		}
 		return (PdbVirtualBaseTable) vbt;
 	}

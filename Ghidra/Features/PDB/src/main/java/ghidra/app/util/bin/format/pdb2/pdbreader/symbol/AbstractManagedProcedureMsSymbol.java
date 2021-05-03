@@ -23,7 +23,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
  *  base class for more information.
  */
-public abstract class AbstractManagedProcedureMsSymbol extends AbstractMsSymbol {
+public abstract class AbstractManagedProcedureMsSymbol extends AbstractMsSymbol
+		implements AddressMsSymbol, NameMsSymbol {
 
 	protected long parentPointer;
 	protected long endPointer;
@@ -77,6 +78,105 @@ public abstract class AbstractManagedProcedureMsSymbol extends AbstractMsSymbol 
 			debugEndOffset));
 		builder.append(String.format("   %s\n", procedureFlags));
 		builder.append(String.format("   Return Reg: %s\n", registerContainingReturnValue));
+	}
+
+	/**
+	 * Returns the parent pointer.
+	 * @return Parent pointer.
+	 */
+	public long getParentPointer() {
+		return parentPointer;
+	}
+
+	/**
+	 * Returns the end pointer.
+	 * @return End pointer.
+	 */
+	public long getEndPointer() {
+		return endPointer;
+	}
+
+	/**
+	 * Returns the next pointer.
+	 * @return next pointer.
+	 */
+	public long getNextPointer() {
+		return nextPointer;
+	}
+
+	/**
+	 * Returns the procedure length.
+	 * @return Length.
+	 */
+	public long getProcedureLength() {
+		return procedureLength;
+	}
+
+	/**
+	 * Returns the debug start offset.
+	 * @return Debug start offset.
+	 */
+	public long getDebugStartOffset() {
+		return debugStartOffset;
+	}
+
+	/**
+	 * Returns the debug end offset.
+	 * @return Debug end offset.
+	 */
+	public long getDebugEndOffset() {
+		return debugEndOffset;
+	}
+
+	/**
+	 * Returns the offset.
+	 * @return Offset.
+	 */
+	@Override
+	public long getOffset() {
+		return symbolOffset;
+	}
+
+	/**
+	 * Returns the segment.
+	 * @return Segment.
+	 */
+	@Override
+	public int getSegment() {
+		return symbolSegment;
+	}
+
+	/**
+	 * Returns the {@link ProcedureFlags}.
+	 * @return Procedure flags.
+	 */
+	public ProcedureFlags getFlags() {
+		return procedureFlags;
+	}
+
+	/**
+	 * Returns the procedure name.
+	 * @return Name.
+	 */
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Returns the token.
+	 * @return token.
+	 */
+	public long getToken() {
+		return token;
+	}
+
+	/**
+	 * Returns the register containing the return value
+	 * @return the register.
+	 */
+	public RegisterName getReturnRegister() {
+		return registerContainingReturnValue;
 	}
 
 }
