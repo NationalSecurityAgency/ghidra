@@ -116,6 +116,27 @@ public class ParamEntry {
 		if ((type != TYPE_UNKNOWN)&&(op2.type != type)) {
 			return false;
 		}
+		if (joinrec != null) {
+			if (op2.joinrec != null) {
+				for (Varnode v2 : op2.joinrec) {
+					boolean contains = false;
+					for (int i = 0; i < joinrec.length && !contains; i++) {
+						contains = joinrec[i].contains(v2.getAddress());
+					}
+					if (!contains) {
+						return false;
+					}
+				}
+				return true;
+			}
+			Address addr = op2.getSpace().getAddress(op2.getAddressBase());
+			for (Varnode var : joinrec) {
+				if (var.contains(addr)) {
+					return true;
+				}
+			}
+			return false;
+		}
 		if (spaceid != op2.spaceid) {
 			return false;
 		}

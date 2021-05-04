@@ -87,10 +87,7 @@ public class ParamListStandard implements ParamList {
 			if (res.space == null)
 				continue;	// -tp- does not fit in this entry
 			if (element.isExclusion()) {
-				int maxgrp = grp + element.getGroupSize();
-				for (int j = grp; j < maxgrp; ++j)
-					// For an exclusion entry
-					status[j] = -1;			// some number of groups are taken up
+				excludeGroups(status, element);
 				if (element.isFloatExtended())		// If this is a small float datatype in a bigger container
 					sz = element.getSize();			// Still use the entire container size, when assigning storage
 			}
@@ -277,5 +274,45 @@ public class ParamListStandard implements ParamList {
 	@Override
 	public boolean isThisBeforeRetPointer() {
 		return thisbeforeret;
+	}
+
+	private void excludeGroups(int[] status, ParamEntry element) {
+		int grp = element.getGroup();
+		int maxgrp = grp + element.getGroupSize();
+		for (int j = grp; j < maxgrp; ++j)
+			// For an exclusion entry
+			status[j] = -1;			// some number of groups are taken up
+		
+		// any entries which this element contains must also be set as taken
+		for (ParamEntry e : entry) {
+			if (e == element) {
+				continue;
+			}
+			int group = e.getGroup();
+			if (status[group] < 0) {
+				continue;
+			}
+			if (element.contains(e) || e.contains(element)) {
+				status[group] -= 1;
+				continue;
+			}
+			if (element.getJoinRecord() != null && e.getJoinRecord() != null) {
+				// contains only returns true if one contains all of the other
+				if (containsAny(element, e)) {
+					status[group] -= 1;
+				}
+			}
+		}
+	}
+	
+	private static boolean containsAny(ParamEntry p1, ParamEntry p2) {
+		for (Varnode v1 : p1.getJoinRecord()) {
+			for (Varnode v2 : p2.getJoinRecord()) {
+				if (v1.contains(v2.getAddress())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }
