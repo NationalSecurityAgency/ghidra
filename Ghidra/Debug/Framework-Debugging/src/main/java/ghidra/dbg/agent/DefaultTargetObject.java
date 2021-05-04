@@ -20,15 +20,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A default implementation of {@link TargetObject} suitable for cases where the implementation
@@ -42,39 +39,16 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		extends AbstractTargetObject<P> {
 
 	/** Note modifying this directly subverts notifications */
-	protected final Map<String, E> elements = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
-	protected final Map<String, E> cbElements = new TreeMap<>(TargetObjectKeyComparator.ELEMENT);
+	protected final Map<String, E> elements = new HashMap<>();
+	protected final Map<String, E> cbElements = new HashMap<>();
 	protected final Map<String, E> roCbElements = Collections.unmodifiableMap(cbElements);
 	protected CompletableFuture<Void> curElemsRequest;
 
 	/** Note modifying this directly subverts notifications */
-	protected final Map<String, Object> attributes =
-		new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
-	protected final Map<String, Object> cbAttributes =
-		new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
+	protected final Map<String, Object> attributes = new HashMap<>();
+	protected final Map<String, Object> cbAttributes = new HashMap<>();
 	protected final Map<String, Object> roCbAttributes = Collections.unmodifiableMap(cbAttributes);
 	protected CompletableFuture<Void> curAttrsRequest;
-
-	/*protected static Set<Class<?>> dependencySet = Set.of(//
-		TargetProcess.class, //
-		TargetThread.class, //
-		TargetStack.class, //
-		TargetStackFrame.class, //
-		TargetRegisterBank.class, //
-		TargetRegisterContainer.class, //
-		TargetRegister.class, //
-		TargetMemory.class, //
-		TargetMemoryRegion.class, //
-		TargetModule.class, //
-		TargetModuleContainer.class, //
-		TargetSection.class, //
-		TargetBreakpointSpecContainer.class, //
-		TargetBreakpointSpec.class, //
-		TargetBreakpointLocation.class, //
-		TargetEventScope.class, //
-		TargetFocusScope.class, //
-		TargetExecutionStateful.class //
-	);*/
 
 	/**
 	 * Construct a new default target object whose schema is derived from the parent
@@ -564,82 +538,5 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			}
 		}
 		return delta;
-	}
-
-	@Override
-	public ListenerSet<DebuggerModelListener> getListeners() {
-		return listeners;
-	}
-
-	/*
-	private CompletableFuture<Void> findDependencies(TargetObjectListener l) {
-		//System.err.println("findDependencies " + this);
-		Map<String, TargetObject> resultAttrs = new HashMap<>();
-		Map<String, TargetObject> resultElems = new HashMap<>();
-		AsyncFence fence = new AsyncFence();
-		fence.include(fetchAttributes(false).thenCompose(attrs -> {
-			AsyncFence af = new AsyncFence();
-			for (String key : attrs.keySet()) { //requiredObjKeys) {
-				Object object = attrs.get(key);
-				if (!(object instanceof TargetObjectRef)) {
-					continue;
-				}
-				TargetObjectRef ref = (TargetObjectRef) object;
-				if (PathUtils.isLink(getPath(), key, ref.getPath())) {
-					continue;
-				}
-				af.include(ref.fetch().thenAccept(obj -> {
-					if (isDependency(obj)) {
-						synchronized (this) {
-							resultAttrs.put(key, obj);
-							obj.addListener(l);
-						}
-					}
-				}));
-			}
-			return af.ready();
-		}));
-		fence.include(fetchElements(false).thenCompose(elems -> {
-			AsyncFence ef = new AsyncFence();
-			for (Entry<String, ? extends TargetObjectRef> entry : elems.entrySet()) {
-				ef.include(entry.getValue().fetch().thenAccept(obj -> {
-					synchronized (this) {
-						resultElems.put(entry.getKey(), obj);
-						obj.addListener(l);
-					}
-				}));
-			}
-			return ef.ready();
-		}));
-		return fence.ready();
-	}
-	
-	public boolean isDependency(TargetObject object) {
-		String name = object.getName();
-		if (name != null) {
-			if (name.equals("Debug"))
-				return true;
-			if (name.equals("Stack"))
-				return true;
-		}
-	
-		Set<Class<? extends TargetObject>> interfaces = object.getSchema().getInterfaces();
-		for (Class<? extends TargetObject> ifc : interfaces) {
-			if (dependencySet.contains(ifc)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	*/
-
-	@Override
-	public void addListener(DebuggerModelListener l) {
-		listeners.add(l);
-		/*
-		if (isDependency(this)) {
-			findDependencies(l);
-		}
-		*/
 	}
 }
