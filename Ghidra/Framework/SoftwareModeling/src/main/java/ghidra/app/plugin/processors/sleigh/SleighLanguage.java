@@ -128,6 +128,7 @@ public class SleighLanguage implements Language {
 		}
 		compilerSpecs = new HashMap<>();
 		this.description = langDescription;
+		additionalInject = null;
 
 		SleighLanguageValidator.validatePspecFile(langDescription.getSpecFile());
 
