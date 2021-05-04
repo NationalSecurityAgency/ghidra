@@ -33,11 +33,11 @@ import docking.WindowPosition;
 import docking.action.*;
 import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.SelectRowsAction;
+import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.model.DomainObject;
@@ -115,7 +115,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	protected static class RegionTableModel
-			extends RowWrappedEnumeratedColumnTableModel< //
+			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					RegionTableColumns, ObjectKey, RegionRow, TraceMemoryRegion> {
 
 		public RegionTableModel() {

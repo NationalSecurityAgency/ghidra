@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import com.google.common.collect.*;
 
 import ghidra.framework.model.DomainObjectClosedListener;
-import ghidra.framework.model.DomainObjectException;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -31,7 +30,6 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.exception.ClosedException;
 
 /**
  * Computes and tracks the "viewport" resulting from forking patterns encoded in snapshot schedules
@@ -93,7 +91,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	protected final Trace trace;
 	protected final TraceTimeManager timeManager;
-	protected final List<Range<Long>> ordered = new ArrayList<>();
+	protected final List<Range<Long>> ordered = Collections.synchronizedList(new ArrayList<>());
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
 	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);

@@ -32,12 +32,14 @@ import com.google.common.collect.Range;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
-import docking.widgets.table.*;
+import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import docking.widgets.table.GTable;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.AutoService;
@@ -98,7 +100,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 	}
 
 	protected static class MappingTableModel
-			extends RowWrappedEnumeratedColumnTableModel< //
+			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
 
 		public MappingTableModel() {

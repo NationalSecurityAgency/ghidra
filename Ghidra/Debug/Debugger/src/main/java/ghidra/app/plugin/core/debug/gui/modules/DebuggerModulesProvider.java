@@ -34,14 +34,16 @@ import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
 import docking.widgets.filechooser.GhidraFileChooser;
-import docking.widgets.table.*;
+import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import docking.widgets.table.TableFilter;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.service.modules.MapModulesBackgroundCommand;
 import ghidra.app.plugin.core.debug.service.modules.MapSectionsBackgroundCommand;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
+import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStaticMappingService.*;
 import ghidra.async.AsyncUtils;
@@ -200,7 +202,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected static class ModuleTableModel
-			extends RowWrappedEnumeratedColumnTableModel< //
+			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					ModuleTableColumns, ObjectKey, ModuleRow, TraceModule> {
 
 		public ModuleTableModel() {
@@ -209,7 +211,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected static class SectionTableModel
-			extends RowWrappedEnumeratedColumnTableModel< //
+			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					SectionTableColumns, ObjectKey, SectionRow, TraceSection> {
 
 		public SectionTableModel() {
