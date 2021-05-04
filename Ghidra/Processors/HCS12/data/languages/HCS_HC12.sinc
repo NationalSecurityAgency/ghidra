@@ -1919,12 +1919,15 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	tmp:2 = inst_next;
 	Push2( tmp );
 
+	local ppage_tmp:1 = PPAGE;
 	Push1( PPAGE );	
 
     build CallDest;
     
     local dest:3 = CallDest;
 	call [dest];
+	
+	PPAGE = ppage_tmp;
 }
 
 :CALL indexed2_3, page    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed2_3; page 
@@ -1932,6 +1935,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	tmp:2 = inst_next;
 	Push2( tmp );
 
+	local ppage_tmp:1 = PPAGE;
 	Push1( PPAGE );
 	PPAGE = page;
 	
@@ -1940,6 +1944,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	local dest:3;	
 	GetPagedAddr(indexed2_3,dest);
 	call [dest];
+	PPAGE = ppage_tmp;
 }
 
 :CALL indexed0_2    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed0_2 
@@ -1947,6 +1952,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	tmp:2 = inst_next;
 	Push2( tmp );
 
+	local ppage_tmp:1 = PPAGE;
 	Push1( PPAGE );
 	Load1(PPAGE, indexed0_2 + 2);
 
@@ -1956,6 +1962,8 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	local dest:3;	
 	GetPagedAddr(addr,dest);
 	call [dest];
+	
+	PPAGE = ppage_tmp;
 }
 
 :CBA                is XGATE=0 & (Prefix18=1 & op8=0x17)
