@@ -1655,6 +1655,57 @@
     <symbol name="PSI5_RDM4_30_H" address="0xf0005af4" entry="false"/>
     <symbol name="PSI5_RDM4_31_L" address="0xf0005af8" entry="false"/>
     <symbol name="PSI5_RDM4_31_H" address="0xf0005afc" entry="false"/>
+    <symbol name="CAN_foo" address="0xf0018000" entry="false"/>
+    Global Module Registers
+    ---
+    LISTi 0100H + i × 4H
+    MSPNDk 0140H + k × 4H
+    MSIDk 0180H + k × 4H
+    MSIMASK 01C0H
+    PANCTR 01C4H
+    MCR 01C8H
+    MITR 01CCH
+    MECR 01D0H
+    MESTAT 01D4H
+    
+    CAN Node Registers
+    ---
+    NCRx 0200H + x × 100H
+    NSRx 0204H + x × 100H
+    x 0208H + x × 100H
+    NPCRx 020CH + x × 100H
+    NBTRx 0210H + x × 100H
+    NBTEVRx 0210H + x × 100H
+    NECNTx 0214H + x × 100H
+    NFCRx 0218H + x × 100H
+    NTCCRx 021cH + x × 100H
+    NTRTRx 0220H + x × 100H
+    NTATTRx 0224H + x × 100H
+    NTBTTRx 0228H + x × 100H
+    NTCTTRx 022CH + x × 100H
+    FNBTRx 0238H + x × 100H
+    NTDCRx 023CH + x × 100H
+    
+    Message Object Registers
+    ---
+    MOFCRn 1000H + n × 20H
+    MOFGPRn 1004H + n × 20H
+    MOIPRn 1008H + n × 20H
+    MOAMRn 100CH + n × 20H
+    MODATALn 1010H + n × 20H
+    MODATAHn 1014H +n × 20H
+    MOARn 1018H +n × 20H
+    MOCTRnMOSTATn 101CH + n × 20H
+    
+    Message Object Registers (extended, overlap?)
+    ---
+    EMOnDATA0 1000H +n × 20H
+    EMOnDATA1 1004H +n × 20H
+    EMOnDATA2 1008H +n × 20H
+    EMOnDATA3 100cH +n × 20H
+    EMOnDATA4 1010H +n × 20H
+    EMOnDATA5 1014H +n × 20H
+    EMOnDATA6 1018H +n × 20H
     <symbol name="ETH_CLC" address="0xf001d000" entry="false"/>
     <symbol name="ETH_ID" address="0xf001d004" entry="false"/>
     <symbol name="ETH_GPCTL" address="0xf001d008" entry="false"/>
