@@ -29,7 +29,7 @@ public abstract class AbstractModelForGdbLauncherTest extends AbstractDebuggerMo
 
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {
-		return GdbLinuxSpecimen.ECHO_HW;
+		return GdbLinuxSpecimen.PRINT;
 	}
 
 	@Override

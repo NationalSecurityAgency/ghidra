@@ -26,6 +26,7 @@ public interface DbgModelTargetTTD extends DbgModelTargetObject {
 			if (attrs == null) {
 				return CompletableFuture.completedFuture(null);
 			}
+			map.putAll(attrs);
 			DbgModelTargetObject attributes = (DbgModelTargetObject) attrs.get("Position");
 			if (attributes == null) {
 				return CompletableFuture.completedFuture(null);

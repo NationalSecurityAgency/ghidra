@@ -119,7 +119,6 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		if (proc == null) {
 			return;
 		}
-		//long pid = getPid(proc);
 		setStatusText("Attaching");
 		attacher.attach(proc).thenAccept(__ -> {
 			close();
@@ -130,14 +129,6 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		});
 	}
 
-	public long getPid(TargetAttachable proc) {
-		String name = proc.getName();
-		name = name.substring(1, name.length() - 1);
-		long pid = Long.parseLong(name, 16);
-		return pid;
-	}
-
-	@SuppressWarnings("unchecked")
 	public void fetchAndDisplayAttachable() {
 		AtomicReference<TargetObject> available = new AtomicReference<>();
 		AtomicReference<Map<String, ? extends TargetObject>> procs = new AtomicReference<>();

@@ -15,6 +15,7 @@
  */
 package ghidra.trace.model.breakpoint;
 
+import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.Range;
@@ -130,18 +131,18 @@ public interface TraceBreakpoint {
 	long getClearedSnap();
 
 	/**
-	 * Split this breakpoint at the given snap, the later having the given "enabled" value.
+	 * Split this breakpoint at the given snap, and set the later's fields.
 	 * 
 	 * <p>
 	 * This breakpoint's lifespan must contain the given snap. This method first creates a copy of
-	 * this breakpoint, replacing the copy's placed snap and "enabled" value with those given. Then,
-	 * it sets this breakpoint's cleared snap to one less than the given snap, so that the two
-	 * breakpoints do not overlap.
+	 * this breakpoint, replacing the copy's placed snap and additional fields. Then, it sets this
+	 * breakpoint's cleared snap to one less than the given snap, so that the two breakpoints do not
+	 * overlap.
 	 * 
 	 * <p>
 	 * Note the following special cases: 1) If the given snap is equal to the placed snap, this
-	 * method behaves like {@link #setEnabled(boolean)} and return this breakpoint. 2) If "enabled"
-	 * indicates no change, this method does nothing and returns this breakpoint.
+	 * method simply sets the fields on this breakpoint and returns this. 2) If the field values
+	 * indicate no change, this method does nothing and returns this breakpoint.
 	 * 
 	 * @implNote Listeners on breakpoint changes will see the added record before the lifespan
 	 *           change of the old record, despite those two records having the same path and
@@ -150,9 +151,10 @@ public interface TraceBreakpoint {
 	 * 
 	 * @param snap the placed snap for the later breakpoint
 	 * @param enabled true if the later breakpoint is enabled, false if disabled
+	 * @param kinds the kinds of the later breakpoint
 	 * @return the new breakpoint, or this breakpoint (see special case)
 	 */
-	TraceBreakpoint splitWithEnabled(long snap, boolean enabled);
+	TraceBreakpoint splitAndSet(long snap, boolean enabled, Collection<TraceBreakpointKind> kinds);
 
 	/**
 	 * Set whether this breakpoint was enabled or disabled
@@ -160,7 +162,7 @@ public interface TraceBreakpoint {
 	 * <p>
 	 * This change applies to the entire lifespan of this record. If a breakpoint is enabled for
 	 * some duration and then later disabled, this breakpoint should be split instead. See
-	 * {@link #splitWithEnabled(long,boolean)}.
+	 * {@link #splitAndSet(long,boolean, Collection)}.
 	 * 
 	 * @param enabled true if enabled, false if disabled
 	 */
@@ -174,11 +176,24 @@ public interface TraceBreakpoint {
 	boolean isEnabled();
 
 	/**
+	 * Set the kinds included in this breakpoint
+	 * 
+	 * <p>
+	 * See {@link #getKinds()}. Note that it is unusual for a breakpoint to change kinds during its
+	 * life. Nevertheless, in the course of recording a trace, it may happen, or at least appear to
+	 * happen. Rather than require the client to delete and re-create the breakpoint, this allows
+	 * the record to be updated. See also {@link #splitAndSet(long, boolean, Collection)}.
+	 * 
+	 * @param kinds the set of kinds
+	 */
+	void setKinds(Collection<TraceBreakpointKind> kinds);
+
+	/**
 	 * Get the kinds included in this breakpoint
 	 * 
 	 * <p>
 	 * For example, an "access breakpoint" or "access watchpoint," depending on terminology, would
-	 * have include both {@link TraceBreakpointKind#READ} and {@link TraceBreakpointKind#WRITE}.
+	 * include both {@link TraceBreakpointKind#READ} and {@link TraceBreakpointKind#WRITE}.
 	 * 
 	 * @return the set of kinds
 	 */

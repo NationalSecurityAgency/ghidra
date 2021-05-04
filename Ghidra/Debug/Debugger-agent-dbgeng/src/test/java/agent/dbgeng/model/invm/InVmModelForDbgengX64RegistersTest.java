@@ -18,6 +18,7 @@ package agent.dbgeng.model.invm;
 import agent.dbgeng.model.AbstractModelForDbgengX64RegistersTest;
 
 public class InVmModelForDbgengX64RegistersTest extends AbstractModelForDbgengX64RegistersTest {
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgengModelHost();

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
+import ghidra.app.services.TraceRecorder;
 import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncLazyMap;
 import ghidra.dbg.target.*;
@@ -30,6 +31,7 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
@@ -115,6 +117,7 @@ public class TraceObjectManager {
 		putAttributesHandler(TargetBreakpointSpec.class, this::attributesChangedBreakpointSpec);
 		putAttributesHandler(TargetBreakpointLocation.class,
 			this::attributesChangedBreakpointLocation);
+		putAttributesHandler(TargetMemoryRegion.class, this::attributesChangedMemoryRegion);
 		putAttributesHandler(TargetRegister.class, this::attributesChangedRegister);
 		putAttributesHandler(TargetStackFrame.class, this::attributesChangedStackFrame);
 		putAttributesHandler(TargetThread.class, this::attributesChangedThread);
@@ -471,20 +474,30 @@ public class TraceObjectManager {
 	}
 
 	public void attributesChangedBreakpointSpec(TargetObject bpt, Map<String, ?> added) {
-		if (added.containsKey(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME)) {
+		if (added.containsKey(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME) ||
+			added.containsKey(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME)) {
 			TargetBreakpointSpec spec = (TargetBreakpointSpec) bpt;
-			boolean enabled = (Boolean) added.get(TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME);
-			recorder.breakpointRecorder.breakpointToggled(spec, enabled);
+			boolean enabled = spec.isEnabled();
+			Set<TraceBreakpointKind> traceKinds =
+				TraceRecorder.targetToTraceBreakpointKinds(spec.getKinds());
+			recorder.breakpointRecorder.breakpointSpecChanged(spec, enabled, traceKinds);
 		}
 	}
 
-	public void attributesChangedBreakpointLocation(TargetObject bpt, Map<String, ?> added) {
-		if (added.containsKey(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME)) {
-			Address traceAddr = recorder.getMemoryMapper()
-					.targetToTrace(((TargetBreakpointLocation) bpt).getAddress());
-			String path = bpt.getJoinedPath(".");
-			Integer length = (Integer) added.get(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME);
-			recorder.breakpointRecorder.breakpointLengthChanged(length, traceAddr, path);
+	public void attributesChangedBreakpointLocation(TargetObject obj, Map<String, ?> added) {
+		TargetBreakpointLocation loc = (TargetBreakpointLocation) obj;
+		if (added.containsKey(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME) ||
+			added.containsKey(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME)) {
+			Address traceAddr = recorder.getMemoryMapper().targetToTrace(loc.getAddress());
+			String path = loc.getJoinedPath(".");
+			int length = loc.getLengthOrDefault(1);
+			recorder.breakpointRecorder.breakpointLocationChanged(length, traceAddr, path);
+		}
+	}
+
+	public void attributesChangedMemoryRegion(TargetObject region, Map<String, ?> added) {
+		if (added.containsKey(TargetObject.DISPLAY_ATTRIBUTE_NAME)) {
+			recorder.memoryRecorder.regionChanged((TargetMemoryRegion) region, region.getDisplay());
 		}
 	}
 

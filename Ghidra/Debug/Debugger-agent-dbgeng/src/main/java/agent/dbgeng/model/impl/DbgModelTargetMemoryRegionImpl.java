@@ -26,9 +26,14 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "MemoryRegion", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME, type = DbgModelTargetMemoryContainerImpl.class),
+@TargetObjectSchemaInfo(
+	name = "MemoryRegion",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = TargetMemoryRegion.MEMORY_ATTRIBUTE_NAME,
+			type = DbgModelTargetMemoryContainerImpl.class),
 		@TargetAttributeType(name = "BaseAddress", type = Address.class),
 		@TargetAttributeType(name = "EndAddress", type = Address.class),
 		@TargetAttributeType(name = "RegionSize", type = String.class),
@@ -85,6 +90,7 @@ public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 		isExec = region.isExec();
 
 		this.changeAttributes(List.of(), List.of(), Map.of( //
+			DISPLAY_ATTRIBUTE_NAME, computeDisplay(region), //
 			MEMORY_ATTRIBUTE_NAME, memory, //
 			RANGE_ATTRIBUTE_NAME, doGetRange(section), //
 			READABLE_ATTRIBUTE_NAME, isReadable(), //
@@ -103,6 +109,10 @@ public class DbgModelTargetMemoryRegionImpl extends DbgModelTargetObjectImpl
 			"State", region.getState(), //
 			"Type", region.getType() //
 		), "Initialized");
+	}
+
+	protected String computeDisplay(DbgModuleMemory region) {
+		return region.getType() + " " + getName(); // NB. Name will contain []s
 	}
 
 	protected AddressRange doGetRange(DbgModuleMemory s) {

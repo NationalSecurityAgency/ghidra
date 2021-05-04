@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
+import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -61,7 +62,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum LogicalBreakpointTableColumns
 		implements EnumeratedTableColumn<LogicalBreakpointTableColumns, LogicalBreakpointRow> {
-		ENABLED("Enabled", Boolean.class, LogicalBreakpointRow::isEnabled, LogicalBreakpointRow::setEnabled, true),
+		ENABLED("Enabled", Enablement.class, LogicalBreakpointRow::getEnablement, LogicalBreakpointRow::setEnablement, true),
 		IMAGE("Image", String.class, LogicalBreakpointRow::getImageName, true),
 		ADDRESS("Address", Address.class, LogicalBreakpointRow::getAddress, true),
 		LENGTH("Length", Long.class, LogicalBreakpointRow::getLength, true),
@@ -137,7 +138,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum BreakpointLocationTableColumns
 		implements EnumeratedTableColumn<BreakpointLocationTableColumns, BreakpointLocationRow> {
-		// TODO: ENABLED
+		ENABLED("Enabled", Boolean.class, BreakpointLocationRow::isEnabled, BreakpointLocationRow::setEnabled, true),
 		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName, true),
 		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true),
 		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true),
@@ -201,9 +202,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			extends RowWrappedEnumeratedColumnTableModel< //
 					BreakpointLocationTableColumns, ObjectKey, BreakpointLocationRow, TraceBreakpoint> {
 
-		public BreakpointLocationTableModel() {
+		public BreakpointLocationTableModel(DebuggerBreakpointsProvider provider) {
 			super("Locations", BreakpointLocationTableColumns.class, TraceBreakpoint::getObjectKey,
-				BreakpointLocationRow::new);
+				loc -> new BreakpointLocationRow(provider, loc));
 		}
 
 		@Override
@@ -540,7 +541,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	// @AutoServiceConsumed via method
 	private DebuggerLogicalBreakpointService breakpointService;
 	// @AutoServiceConsumed via method
-	private DebuggerModelService modelService;
+	DebuggerModelService modelService;
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;
 	@AutoServiceConsumed
@@ -562,7 +563,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	GhidraTable breakpointTable;
 	GhidraTableFilterPanel<LogicalBreakpointRow> breakpointFilterPanel;
 
-	BreakpointLocationTableModel locationTableModel = new BreakpointLocationTableModel();
+	BreakpointLocationTableModel locationTableModel = new BreakpointLocationTableModel(this);
 	GhidraTable locationTable;
 	GhidraTableFilterPanel<BreakpointLocationRow> locationFilterPanel;
 	private final LocationsBySelectedBreakpointsTableFilter filterLocationsBySelectedBreakpoints =
@@ -839,9 +840,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		});
 
 		TableColumnModel bptColModel = breakpointTable.getColumnModel();
-		TableColumn enCol = bptColModel.getColumn(LogicalBreakpointTableColumns.ENABLED.ordinal());
-		enCol.setCellRenderer(new DebuggerBreakpointEnablementTableCellRenderer());
-		enCol.setPreferredWidth(30);
+		TableColumn bptEnCol =
+			bptColModel.getColumn(LogicalBreakpointTableColumns.ENABLED.ordinal());
+		bptEnCol.setCellRenderer(new DebuggerBreakpointEnablementTableCellRenderer());
+		bptEnCol.setCellEditor(
+			new DebuggerBreakpointEnablementTableCellEditor(breakpointFilterPanel));
+		bptEnCol.setPreferredWidth(30);
 		TableColumn bptAddrCol =
 			bptColModel.getColumn(LogicalBreakpointTableColumns.ADDRESS.ordinal());
 		bptAddrCol.setPreferredWidth(150);
@@ -856,6 +860,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		locsCol.setPreferredWidth(20);
 
 		TableColumnModel locColModel = locationTable.getColumnModel();
+		TableColumn locEnCol =
+			locColModel.getColumn(BreakpointLocationTableColumns.ENABLED.ordinal());
+		locEnCol.setCellRenderer(new DebuggerBreakpointLocEnabledTableCellRenderer());
+		locEnCol.setCellEditor(new DebuggerBreakpointLocEnabledTableCellEditor());
+		locEnCol.setPreferredWidth(30);
 		TableColumn locAddrCol =
 			locColModel.getColumn(BreakpointLocationTableColumns.ADDRESS.ordinal());
 		locAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);

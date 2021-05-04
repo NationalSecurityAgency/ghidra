@@ -30,7 +30,6 @@ import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.Lock;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
@@ -51,20 +50,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	private volatile String cachedName;
 	private volatile long cachedNameModCount;
-
-	/**
-	 * Creates a Symbol that is just a placeholder for use when trying to find symbols by using
-	 * {@link Symbol#getID()}.   This is useful for locating symbols in Java collections when
-	 * a symbol has been deleted and the only remaining information is that symbol's ID.
-	 * 
-	 * @param manager the manager for the new symbol
-	 * @param address the address of the symbol
-	 * @param id the id of the symbol
-	 * @return the fake symbol
-	 */
-	static SymbolDB createSymbolPlaceholder(SymbolManager manager, Address address, long id) {
-		return new PlaceholderSymbolDB(manager, address, id);
-	}
 
 	SymbolDB(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
 			DBRecord record) {
@@ -940,59 +925,5 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	void setRecord(DBRecord record) {
 		this.record = record;
 		keyChanged(record.getKey());
-	}
-
-	private static class PlaceholderSymbolDB extends SymbolDB {
-
-		PlaceholderSymbolDB(SymbolManager symbolMgr, Address address, long key) {
-			super(symbolMgr, null, address, key);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ((obj == null) || (!(obj instanceof Symbol))) {
-				return false;
-			}
-			if (obj == this) {
-				return true;
-			}
-
-			// this class is only ever equal if the id matches
-			Symbol s = (Symbol) obj;
-			if (getID() == s.getID()) {
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public SymbolType getSymbolType() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public ProgramLocation getProgramLocation() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public boolean isExternal() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public Object getObject() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public boolean isPrimary() {
-			throw new IllegalArgumentException();
-		}
-
-		@Override
-		public boolean isValidParent(Namespace parent) {
-			throw new IllegalArgumentException();
-		}
 	}
 }

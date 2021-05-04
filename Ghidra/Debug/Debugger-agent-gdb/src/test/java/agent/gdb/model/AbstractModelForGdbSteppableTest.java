@@ -34,6 +34,6 @@ public abstract class AbstractModelForGdbSteppableTest extends AbstractDebuggerM
 
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {
-		return GdbLinuxSpecimen.ECHO_HW;
+		return GdbLinuxSpecimen.PRINT;
 	}
 }

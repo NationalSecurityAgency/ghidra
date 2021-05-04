@@ -16,10 +16,19 @@
 package agent.dbgeng.model.gadp;
 
 import agent.dbgeng.model.AbstractModelForDbgengBreakpointsTest;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
 
 public class GadpModelForDbgengBreakpointsTest extends AbstractModelForDbgengBreakpointsTest {
+
+	@Override
+	protected PathPattern getBreakPattern() {
+		return new PathPattern(PathUtils.parse("Sessions[0].Processes[].Debug.Breakpoints[]"));
+	}
+
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new GadpDbgengModelHost();
 	}
+
 }

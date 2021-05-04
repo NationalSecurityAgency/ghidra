@@ -208,7 +208,7 @@ public class GdbInferiorImpl implements GdbInferior {
 		 * longer be current for the actual command execution. NB: The select command will cancel
 		 * itself if this inferior is already current.
 		 */
-		return setActive().thenCombine(manager.execute(cmd), (s, e) -> e);
+		return setActive(true).thenCombine(manager.execute(cmd), (s, e) -> e);
 	}
 
 	@Override
@@ -347,8 +347,8 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public CompletableFuture<Void> setActive() {
-		return manager.setActiveInferior(this);
+	public CompletableFuture<Void> setActive(boolean internal) {
+		return manager.setActiveInferior(this, internal);
 	}
 
 	@Override

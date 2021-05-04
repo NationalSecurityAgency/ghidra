@@ -194,4 +194,40 @@ public class PathPattern implements PathPredicates {
 		}
 		return new PathPattern(result);
 	}
+
+	/**
+	 * If the given path matches, extract indices where matched by wildcards
+	 * 
+	 * <p>
+	 * This is essentially the inverse of {@link #applyIndices(List)}, but can only be asked of one
+	 * pattern. The keys are returned from left to right, in the order matched by the pattern. Only
+	 * those keys matched by a wildcard are included in the result. Indices are extracted with the
+	 * brackets {@code []} removed.
+	 * 
+	 * @param path the path to match
+	 * @return the list of matched indices or {@code null} if not matched
+	 */
+	public List<String> matchIndices(List<String> path) {
+		int length = pattern.size();
+		if (length != path.size()) {
+			return null;
+		}
+		List<String> result = new ArrayList<>();
+		for (int i = 0; i < length; i++) {
+			String pat = pattern.get(i);
+			String key = path.get(i);
+			if (!keyMatches(pat, key)) {
+				return null;
+			}
+			if (isWildcard(pat)) {
+				if (PathUtils.isIndex(pat)) {
+					result.add(PathUtils.parseIndex(key));
+				}
+				else {
+					result.add(key);
+				}
+			}
+		}
+		return result;
+	}
 }

@@ -46,7 +46,7 @@ public class DbgModel2TargetAvailableImpl extends DbgModel2TargetObjectImpl
 		this.name = name;
 
 		this.changeAttributes(List.of(), List.of(), Map.of(//
-			PID_ATTRIBUTE_NAME, pid, //
+			PID_ATTRIBUTE_NAME, (long) pid, //
 			DISPLAY_ATTRIBUTE_NAME, keyAttachable(pid) + " : " + name.trim() //
 		), "Initialized");
 	}
@@ -56,7 +56,7 @@ public class DbgModel2TargetAvailableImpl extends DbgModel2TargetObjectImpl
 		this.pid = pid;
 
 		this.changeAttributes(List.of(), List.of(), Map.of(//
-			PID_ATTRIBUTE_NAME, pid, //
+			PID_ATTRIBUTE_NAME, (long) pid, //
 			DISPLAY_ATTRIBUTE_NAME, keyAttachable(pid) //
 		), "Initialized");
 	}

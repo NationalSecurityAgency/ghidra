@@ -2312,7 +2312,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			SourceType originalSource = namespaceSymbol.getSource();
 
 			// no duplicate check, since this class name will be set to that of the existing namespace
-			String tempName = name + System.nanoTime();
+			String tempName = "_temp_" + System.nanoTime();
 			SymbolDB classSymbol =
 				doCreateSpecialSymbol(Address.NO_ADDRESS, tempName, namespace.getParentNamespace(),
 					SymbolType.CLASS, -1, -1, null, originalSource, false /*check for duplicate */);
@@ -2334,7 +2334,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return classNamespace;
 		}
 		catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
-			throw new AssertException("Unexpected exception creating class from namespace", e);
+			throw new AssertException("Unexpected exception creating class from namespace: " +
+				e.getMessage(), e);
 		}
 		finally {
 			lock.release();
@@ -2397,11 +2398,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		finally {
 			lock.release();
 		}
-	}
-
-	@Override
-	public Symbol createSymbolPlaceholder(Address address, long id) {
-		return SymbolDB.createSymbolPlaceholder(this, address, id);
 	}
 
 	/**

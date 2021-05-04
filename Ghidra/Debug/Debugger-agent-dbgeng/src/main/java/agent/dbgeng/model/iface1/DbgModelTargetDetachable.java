@@ -33,7 +33,7 @@ public interface DbgModelTargetDetachable extends DbgModelTargetObject, TargetDe
 	@Override
 	public default CompletableFuture<Void> detach() {
 		DbgProcess process = getManager().getCurrentProcess();
-		return process.detach();
+		return getModel().gateFuture(process.detach());
 	}
 
 }

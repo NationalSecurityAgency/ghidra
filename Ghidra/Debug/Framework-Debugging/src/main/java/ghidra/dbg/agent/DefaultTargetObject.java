@@ -319,12 +319,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		Delta<E, E> delta;
 		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.elements, elements, Delta.SAME);
-		}
-		getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
-		doInvalidateElements(delta.removed, reason);
-		if (!delta.isEmpty()) {
-			updateCallbackElements(delta);
-			listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
+			doInvalidateElements(delta.removed, reason);
+			if (!delta.isEmpty()) {
+				updateCallbackElements(delta);
+				listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			}
 		}
 		return delta;
 	}
@@ -361,12 +361,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		Delta<E, E> delta;
 		synchronized (model.lock) {
 			delta = Delta.apply(this.elements, remove, add, Delta.SAME);
-		}
-		getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
-		doInvalidateElements(delta.removed, reason);
-		if (!delta.isEmpty()) {
-			updateCallbackElements(delta);
-			listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
+			doInvalidateElements(delta.removed, reason);
+			if (!delta.isEmpty()) {
+				updateCallbackElements(delta);
+				listeners.fire.elementsChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			}
 		}
 		return delta;
 	}
@@ -497,12 +497,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		Delta<Object, ?> delta;
 		synchronized (model.lock) {
 			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
-		}
-		getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
-		doInvalidateAttributes(delta.removed, reason);
-		if (!delta.isEmpty()) {
-			updateCallbackAttributes(delta);
-			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
+			doInvalidateAttributes(delta.removed, reason);
+			if (!delta.isEmpty()) {
+				updateCallbackAttributes(delta);
+				listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			}
 		}
 		return delta;
 	}
@@ -556,12 +556,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		Delta<Object, ?> delta;
 		synchronized (model.lock) {
 			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
-		}
-		getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
-		doInvalidateAttributes(delta.removed, reason);
-		if (!delta.isEmpty()/* && !reason.equals("Default")*/) {
-			updateCallbackAttributes(delta);
-			listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
+			doInvalidateAttributes(delta.removed, reason);
+			if (!delta.isEmpty()/* && !reason.equals("Default")*/) {
+				updateCallbackAttributes(delta);
+				listeners.fire.attributesChanged(getProxy(), delta.getKeysRemoved(), delta.added);
+			}
 		}
 		return delta;
 	}

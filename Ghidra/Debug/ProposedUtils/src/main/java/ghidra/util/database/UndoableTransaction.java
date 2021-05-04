@@ -15,9 +15,12 @@
  */
 package ghidra.util.database;
 
+import javax.help.UnsupportedOperationException;
+
 import ghidra.framework.model.AbortedTransactionListener;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.listing.ProgramUserData;
 import ghidra.util.Msg;
 
 public interface UndoableTransaction extends AutoCloseable {
@@ -37,6 +40,11 @@ public interface UndoableTransaction extends AutoCloseable {
 			boolean commitByDefault) {
 		int tid = dataTypeManager.startTransaction(description);
 		return new DataTypeManagerUndoableTransaction(dataTypeManager, tid, commitByDefault);
+	}
+
+	public static UndoableTransaction start(ProgramUserData userData) {
+		int tid = userData.startTransaction();
+		return new ProgramUserDataUndoableTransaction(userData, tid);
 	}
 
 	abstract class AbstractUndoableTransaction implements UndoableTransaction {
@@ -106,6 +114,25 @@ public interface UndoableTransaction extends AutoCloseable {
 		@Override
 		void endTransaction(boolean commit) {
 			dataTypeManager.endTransaction(transactionID, commit);
+		}
+	}
+
+	class ProgramUserDataUndoableTransaction extends AbstractUndoableTransaction {
+		private final ProgramUserData userData;
+
+		private ProgramUserDataUndoableTransaction(ProgramUserData userData, int tid) {
+			super(tid, true);
+			this.userData = userData;
+		}
+
+		@Override
+		public void abort() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		void endTransaction(boolean commit) {
+			userData.endTransaction(transactionID);
 		}
 	}
 

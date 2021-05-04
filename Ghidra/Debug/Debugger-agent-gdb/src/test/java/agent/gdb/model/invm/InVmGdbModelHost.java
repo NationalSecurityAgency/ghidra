@@ -26,7 +26,7 @@ import ghidra.dbg.DebuggerModelFactory;
 class InVmGdbModelHost extends AbstractGdbModelHost {
 	@Override
 	public DebuggerModelFactory getModelFactory() {
-		assumeTrue(new File("/usr/bin/gdb").canExecute());
+		assumeTrue("GDB cannot be found", new File("/usr/bin/gdb").canExecute());
 		return new GdbInJvmDebuggerModelFactory();
 	}
 }

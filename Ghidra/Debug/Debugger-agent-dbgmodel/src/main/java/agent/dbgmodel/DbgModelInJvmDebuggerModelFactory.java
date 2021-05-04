@@ -18,21 +18,19 @@ package agent.dbgmodel;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgmodel.model.impl.DbgModel2Impl;
+import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.LocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
  * Note this is in the testing source because it's not meant to be shipped in the release.... That
  * may change if it proves stable, though, no?
  */
 @FactoryDescription( //
-		brief = "IN-VM MS dbgmodel local debugger", //
-		htmlDetails = "Launch a dbgmodel session in this same JVM" //
+	brief = "IN-VM MS dbgmodel local debugger", //
+	htmlDetails = "Launch a dbgmodel session in this same JVM" //
 )
-@ExtensionPointProperties(priority = 70)
-public class DbgModelInJvmDebuggerModelFactory implements LocalDebuggerModelFactory {
+public class DbgModelInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {

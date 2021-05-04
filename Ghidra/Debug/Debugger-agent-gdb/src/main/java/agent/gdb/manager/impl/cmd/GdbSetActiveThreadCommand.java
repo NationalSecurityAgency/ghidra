@@ -20,6 +20,8 @@ import agent.gdb.manager.impl.*;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 
 public class GdbSetActiveThreadCommand extends AbstractGdbCommandWithThreadAndFrameId<Void> {
+	private final boolean internal;
+
 	/**
 	 * Select the given thread and frame level
 	 * 
@@ -29,9 +31,12 @@ public class GdbSetActiveThreadCommand extends AbstractGdbCommandWithThreadAndFr
 	 * @param manager the manager to execute the command
 	 * @param threadId the desired thread Id
 	 * @param frameId the desired frame level
+	 * @param internal true to prevent announcement of the change
 	 */
-	public GdbSetActiveThreadCommand(GdbManagerImpl manager, int threadId, Integer frameId) {
+	public GdbSetActiveThreadCommand(GdbManagerImpl manager, int threadId, Integer frameId,
+			boolean internal) {
 		super(manager, threadId, frameId);
+		this.internal = internal;
 	}
 
 	@Override
@@ -72,5 +77,10 @@ public class GdbSetActiveThreadCommand extends AbstractGdbCommandWithThreadAndFr
 		GdbStackFrameImpl frame = GdbStackFrameImpl.fromFieldList(thread, fields);
 		manager.doThreadSelected(thread, frame, done.getCause());
 		return null;
+	}
+
+	@Override
+	public boolean isFocusInternallyDriven() {
+		return internal;
 	}
 }

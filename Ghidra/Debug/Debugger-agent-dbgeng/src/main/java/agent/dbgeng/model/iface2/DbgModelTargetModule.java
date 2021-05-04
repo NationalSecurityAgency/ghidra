@@ -32,6 +32,7 @@ public interface DbgModelTargetModule extends DbgModelTargetObject, TargetModule
 		AddressSpace space = getModel().getAddressSpace("ram");
 		return requestNativeAttributes().thenAccept(attrs -> {
 			if (attrs != null) {
+				map.putAll(attrs);
 				TargetObject baseOffset2 = (TargetObject) attrs.get("BaseAddress");
 				TargetObject nameAttr = (TargetObject) attrs.get("Name");
 				TargetObject size = (TargetObject) attrs.get("Size");

@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -101,6 +102,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR = "Object Colors.Subscribed";
 	public static final String OPTION_NAME_INVISIBLE_FOREGROUND_COLOR =
 		"Object Colors.Invisible (when toggled on)";
+	public static final String OPTION_NAME_INVALIDATED_FOREGROUND_COLOR =
+		"Object Colors.Invalidated";
 	public static final String OPTION_NAME_ERROR_FOREGROUND_COLOR = "Object Colors.Errors";
 	public static final String OPTION_NAME_INTRINSIC_FOREGROUND_COLOR = "Object Colors.Intrinsics";
 	public static final String OPTION_NAME_TARGET_FOREGROUND_COLOR = "Object Colors.Targets";
@@ -109,70 +112,76 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_DEFAULT_BACKGROUND_COLOR = "Object Colors.Background";
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
-			description = "The default foreground color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
+		description = "The default foreground color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
-			description = "The default background color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
+		description = "The default background color of items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color defaultBackgroundColor = Color.WHITE;
 
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
-			description = "The foreground color for items normally not visible (toggleable)", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
+		description = "The foreground color for items normally not visible (toggleable)", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color invisibleForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
-			description = "The foreground color for modified items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR, //
+		description = "The foreground color for items no longer valid", //
+		help = @HelpInfo(anchor = "colors") //
+	)
+	Color invalidatedForegroundColor = Color.LIGHT_GRAY;
+	@AutoOptionDefined( //
+		name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
+		description = "The foreground color for modified items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color modifiedForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
-			description = "The foreground color for subscribed items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
+		description = "The foreground color for subscribed items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color subscribedForegroundColor = Color.BLACK;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
-			description = "The foreground color for items in error", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
+		description = "The foreground color for items in error", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color errorForegroundColor = Color.RED;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
-			description = "The foreground color for intrinsic items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
+		description = "The foreground color for intrinsic items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color intrinsicForegroundColor = Color.BLUE;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
-			description = "The foreground color for target object items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
+		description = "The foreground color for target object items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color targetForegroundColor = Color.MAGENTA;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
-			description = "The foreground color for property accessor items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
+		description = "The foreground color for property accessor items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color accessorForegroundColor = Color.LIGHT_GRAY;
 	@AutoOptionDefined( //
-			name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
-			description = "The foreground color for links to items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
+		name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
+		description = "The foreground color for links to items in the objects tree", //
+		help = @HelpInfo(anchor = "colors") //
 	)
 	Color linkForegroundColor = Color.GREEN.darker();
 
 	@AutoOptionDefined( //
-			name = "Default Extended Step", //
-			description = "The default string for the extended step command" //
+		name = "Default Extended Step", //
+		description = "The default string for the extended step command" //
 	//help = @HelpInfo(anchor = "colors") //
 	)
 	String extendedStep = "";
@@ -388,6 +397,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 	}
 
+	@AutoOptionConsumed(name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR)
+	private void setInvalidatedForegroundColor(Color color) {
+		invalidatedForegroundColor = color;
+		if (pane != null) {
+			pane.getComponent().repaint();
+		}
+	}
+
 	@AutoOptionConsumed(name = OPTION_NAME_LINK_FOREGROUND_COLOR)
 	private void setLinkForegroundColor(Color color) {
 		linkForegroundColor = color;
@@ -486,16 +503,19 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (model != null && model.equals(currentModel)) {
 			this.requestFocus(); // COMPONENT
 			this.toFront();
+			setSubTitle(currentModel.getBrief());
 		}
 	}
 
 	// TODO: These events aren't being called anymore
 	// TraceActivatedEvents now carry complete "coordinates" (trace,thread,snap,frame,etc.)
 	public void traceActivated(DebuggerCoordinates coordinates) {
+
 		if (currentTrace == coordinates.getTrace()) {
 			return;
 		}
 		setTrace(coordinates.getTrace(), coordinates.getThread(), true);
+
 	}
 
 	public void setTrace(Trace trace, TraceThread thread, boolean select) {
@@ -731,16 +751,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			boolean usingAttributes) {
 		String xkey = usingAttributes ? key : "[" + key + "]";
 		if (val instanceof TargetObject) {
-			TargetObject ref = (TargetObject) val;
-			List<String> path = ref.getPath();
+			TargetObject to = (TargetObject) val;
+			List<String> path = to.getPath();
 			boolean isLink = PathUtils.isLink(parent.getPath(), xkey, path);
 			boolean isMethod = false;
-			if (ref instanceof TargetObject) {
-				TargetObject to = ref;
-				isMethod = to instanceof TargetMethod;
-			}
+			isMethod = to instanceof TargetMethod;
 			if (!(val instanceof DummyTargetObject) && !isMethod) {
-				return new ObjectContainer(ref, isLink ? xkey : null);
+				return new ObjectContainer(to, isLink ? xkey : null);
 			}
 		}
 		else {
@@ -1299,34 +1316,37 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		refresh("");
 	}
 
+	protected <T extends TargetObject> void performAction(ActionContext context,
+			boolean fallbackRoot, Class<T> cls,
+			Function<T, CompletableFuture<Void>> func, String errorMsg) {
+		TargetObject obj = getObjectFromContext(context);
+		if (obj == null && fallbackRoot) {
+			obj = root.getTargetObject();
+		}
+		if (!isLocalOnly()) {
+			DebugModelConventions.findSuitable(cls, obj).thenCompose(t -> {
+				return func.apply(t);
+			}).exceptionally(DebuggerResources.showError(getComponent(), errorMsg));
+		}
+		else {
+			T t = cls.cast(obj);
+			func.apply(t).exceptionally(DebuggerResources.showError(getComponent(), errorMsg));
+		}
+	}
+
 	public void performQuickLaunch(ActionContext context) {
 		if (currentProgram == null) {
 			return;
 		}
-		TargetObject obj = getObjectFromContext(context);
-		if (obj == null) {
-			obj = root.getTargetObject();
-		}
-		// TODO: A generic or pluggable way of deriving the launch arguments 
-		CompletableFuture<? extends TargetLauncher> fl =
-			DebugModelConventions.findSuitable(TargetLauncher.class, obj);
-		fl.thenCompose(launcher -> {
-			return launcher.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-				currentProgram.getExecutablePath()));
-		}).exceptionally(e -> {
-			Msg.showError(this, getComponent(), "Could not launch", e);
-			return null;
-		});
+		performAction(context, true, TargetLauncher.class, launcher -> {
+			// TODO: A generic or pluggable way of deriving the launch arguments
+			return launcher.launch(Map.of(
+				TargetCmdLineLauncher.CMDLINE_ARGS_NAME, currentProgram.getExecutablePath()));
+		}, "Couldn't launch");
 	}
 
 	public void performLaunch(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (obj == null) {
-			obj = root.getTargetObject();
-		}
-		CompletableFuture<? extends TargetLauncher> fl =
-			DebugModelConventions.findSuitable(TargetLauncher.class, obj);
-		fl.thenCompose(launcher -> {
+		performAction(context, true, TargetLauncher.class, launcher -> {
 			if (currentProgram != null) {
 				// TODO: A generic or pluggable way of deriving the default arguments
 				String path = currentProgram.getExecutablePath();
@@ -1344,30 +1364,22 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				return AsyncUtils.NIL;
 			}
 			return launcher.launch(args);
-		}).exceptionally(ex -> {
-			Msg.showError(this, null, "Launch", "Problem during launch", ex);
-			return null;
-		});
+		}, "Couldn't launch");
 	}
 
 	public void performAttach(ActionContext context) {
 		TargetObject obj = getObjectFromContext(context);
-		AtomicReference<TargetAttacher> attacher = new AtomicReference<>();
-		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			DebugModelConventions.findSuitable(TargetAttacher.class, obj).handle(seq::next);
-		}, attacher).then(seq -> {
-			TargetAttacher a = attacher.get();
-			attachDialog.setAttacher(a);
+		performAction(context, false, TargetAttacher.class, attacher -> {
+			attachDialog.setAttacher(attacher);
 			if (obj instanceof TargetAttachable) {
-				TargetAttachable attachable = (TargetAttachable) obj;
-				long pid = attachDialog.getPid(attachable);
-				a.attach(pid);
+				return attacher.attach((TargetAttachable) obj);
 			}
 			else {
 				attachDialog.fetchAndDisplayAttachable();
 				tool.showDialog(attachDialog);
+				return AsyncUtils.NIL;
 			}
-		}).finish();
+		}, "Couldn't attach");
 	}
 
 	public void performReattach(ActionContext context) {
@@ -1375,13 +1387,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (!(obj instanceof TargetAttachable)) {
 			return;
 		}
-		AtomicReference<TargetObject> parent = new AtomicReference<>();
-		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			DebugModelConventions.findSuitable(TargetAttacher.class, obj).handle(seq::next);
-		}, parent).then(seq -> {
-			TargetAttacher attacher = parent.get().as(TargetAttacher.class);
-			attacher.attach((TargetAttachable) obj).handle(seq::nextIgnore);
-		}).finish();
+		// NB. This doesn't really mean anything in local-only actions mode
+		DebugModelConventions.findSuitable(TargetAttacher.class, obj).thenCompose(attacher -> {
+			return attacher.attach((TargetAttachable) obj);
+		}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't re-attach"));
 	}
 
 	public void startRecording(TargetProcess targetObject, boolean prompt) {
@@ -1410,171 +1419,73 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performDetach(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetDetachable.class, obj)
-					.thenAccept(detachable -> {
-						detachable.detach();
-					})
-					.exceptionally(DebuggerResources.showError(getComponent(), "Couldn't detach"));
-		}
-		else {
-			TargetDetachable detachable = (TargetDetachable) obj;
-			detachable.detach();
-		}
+		performAction(context, false, TargetDetachable.class, TargetDetachable::detach,
+			"Couldn't detach");
 	}
 
 	public void performKill(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetKillable.class, obj).thenAccept(killable -> {
-				killable.kill();
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't kill"));
-		}
-		else {
-			TargetKillable killable = (TargetKillable) obj;
-			killable.kill();
-		}
+		performAction(context, false, TargetKillable.class, TargetKillable::kill, "Couldn't kill");
 	}
 
 	public void performStartRecording(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetProcess.class, obj).thenAccept(process -> {
-				TargetProcess valid = DebugModelConventions.liveProcessOrNull(process);
-				if (valid != null) {
-					startRecording(valid, true);
-				}
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't record"));
-		}
-		else {
-			TargetProcess valid = DebugModelConventions.liveProcessOrNull(obj);
+		performAction(context, false, TargetProcess.class, proc -> {
+			TargetProcess valid = DebugModelConventions.liveProcessOrNull(proc);
 			if (valid != null) {
 				startRecording(valid, true);
 			}
-		}
+			return AsyncUtils.NIL;
+		}, "Couldn't record");
 	}
 
 	public void performResume(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetResumable.class, obj).thenAccept(resumable -> {
-				resumable.resume();
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't resume"));
-		}
-		else {
-			TargetResumable resumable = (TargetResumable) obj;
-			resumable.resume();
-		}
+		performAction(context, false, TargetResumable.class, TargetResumable::resume,
+			"Couldn't resume");
 	}
 
 	public void performInterrupt(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetInterruptible.class, obj)
-					.thenAccept(interruptible -> {
-						interruptible.interrupt();
-					})
-					.exceptionally(
-						DebuggerResources.showError(getComponent(), "Couldn't interrupt"));
-		}
-		else {
-			TargetInterruptible interruptible = (TargetInterruptible) obj;
-			interruptible.interrupt();
-		}
+		performAction(context, false, TargetInterruptible.class, TargetInterruptible::interrupt,
+			"Couldn't interrupt");
 	}
 
 	public void performStepInto(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetSteppable.class, obj).thenAccept(steppable -> {
-				steppable.step();
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
-		}
-		else {
-			TargetSteppable steppable = (TargetSteppable) obj;
-			steppable.step();
-		}
+		performAction(context, false, TargetSteppable.class, TargetSteppable::step,
+			"Couldn't step into");
 	}
 
 	public void performStepOver(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetSteppable.class, obj).thenAccept(steppable -> {
-				steppable.step(TargetStepKind.OVER);
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
-		}
-		else {
-			TargetSteppable steppable = (TargetSteppable) obj;
-			steppable.step(TargetStepKind.OVER);
-		}
+		performAction(context, false, TargetSteppable.class, s -> s.step(TargetStepKind.OVER),
+			"Couldn't step over");
 	}
 
 	public void performStepFinish(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetSteppable.class, obj).thenAccept(steppable -> {
-				steppable.step(TargetStepKind.FINISH);
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
-		}
-		else {
-			TargetSteppable steppable = (TargetSteppable) obj;
-			steppable.step(TargetStepKind.FINISH);
-		}
+		performAction(context, false, TargetSteppable.class, s -> s.step(TargetStepKind.FINISH),
+			"Couldn't step finish");
 	}
 
 	public void performStepLast(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetSteppable.class, obj).thenAccept(steppable -> {
-				steppable.step(TargetStepKind.EXTENDED);
-			}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't step"));
-		}
-		else {
-			TargetSteppable steppable = (TargetSteppable) obj;
+		performAction(context, false, TargetSteppable.class, s -> {
 			if (extendedStep.equals("")) {
-				steppable.step(TargetStepKind.EXTENDED);
+				return s.step(TargetStepKind.EXTENDED);
 			}
 			else {
-				Map<String, String> args = new HashMap<String, String>();
-				args.put("Command", extendedStep);
-				steppable.step(args);
+				return s.step(Map.of("Command", extendedStep));
 			}
-		}
+		}, "Couldn't step extended(" + extendedStep + ")");
 	}
 
 	public void performSetBreakpoint(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetBreakpointSpecContainer.class, obj)
-					.thenAccept(suitable -> {
-						breakpointDialog.setContainer(suitable);
-						tool.showDialog(breakpointDialog);
-					})
-					.exceptionally(
-						DebuggerResources.showError(getComponent(), "Couldn't set breakpoint"));
-		}
-		else {
-			TargetBreakpointSpecContainer container = (TargetBreakpointSpecContainer) obj;
+		performAction(context, false, TargetBreakpointSpecContainer.class, container -> {
 			breakpointDialog.setContainer(container);
 			tool.showDialog(breakpointDialog);
-		}
+			return AsyncUtils.NIL;
+		}, "Couldn't set breakpoint");
 	}
 
 	public void initiateConsole(ActionContext context) {
-		TargetObject obj = getObjectFromContext(context);
-		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(TargetInterpreter.class, obj)
-					.thenAccept(interpreter -> {
-						getPlugin().showConsole(interpreter);
-					})
-					.exceptionally(
-						DebuggerResources.showError(getComponent(), "Couldn't launch interpreter"));
-		}
-		else {
-			TargetInterpreter interpreter = (TargetInterpreter) obj;
+		performAction(context, false, TargetInterpreter.class, interpreter -> {
 			getPlugin().showConsole(interpreter);
-		}
+			return AsyncUtils.NIL;
+		}, "Couldn't show interpreter");
 	}
 
 	public boolean isStopped(ActionContext context) {
@@ -1783,6 +1694,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				return intrinsicForegroundColor;
 			case OPTION_NAME_INVISIBLE_FOREGROUND_COLOR:
 				return invisibleForegroundColor;
+			case OPTION_NAME_INVALIDATED_FOREGROUND_COLOR:
+				return invalidatedForegroundColor;
 			case OPTION_NAME_MODIFIED_FOREGROUND_COLOR:
 				return modifiedForegroundColor;
 			case OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR:

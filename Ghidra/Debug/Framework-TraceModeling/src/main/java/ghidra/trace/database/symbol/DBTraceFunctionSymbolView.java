@@ -169,7 +169,7 @@ public class DBTraceFunctionSymbolView
 	}
 
 	public static List<String> getCallingConventionNames(CompilerSpec cs) {
-		PrototypeModel[] namedCCs = cs.getNamedCallingConventions();
+		PrototypeModel[] namedCCs = cs.getCallingConventions();
 		List<String> names = new ArrayList<>(2 + namedCCs.length);
 		names.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 		names.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
@@ -215,7 +215,7 @@ public class DBTraceFunctionSymbolView
 		if (cs == null) {
 			return EMPTY_MODEL_LIST;
 		}
-		return cs.getNamedCallingConventions();
+		return cs.getCallingConventions();
 	}
 
 	// TODO: Move this into a FunctionUtilities class?

@@ -115,7 +115,7 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 			Set<TraceThread> threads = new HashSet<TraceThread>();
 			Set<TraceBreakpointKind> kinds = new HashSet<TraceBreakpointKind>();
 			threads.add(thread1);
-			kinds.add(TraceBreakpointKind.EXECUTE);
+			kinds.add(TraceBreakpointKind.HW_EXECUTE);
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("bpt1", Range.closed(17L, 25L), tb.range(0x7fac1234, 0x7fc1238),
 						threads, kinds, true, "break here");

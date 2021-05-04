@@ -22,6 +22,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 /**
  * An object made active
  * 
+ * <p>
  * "Active" here describes which object in a given class the target should operate on
  */
 @DebuggerTargetObjectIface("ActiveScope")

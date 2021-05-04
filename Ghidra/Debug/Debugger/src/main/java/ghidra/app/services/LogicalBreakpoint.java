@@ -32,56 +32,260 @@ public interface LogicalBreakpoint {
 	String BREAKPOINT_ENABLED_BOOKMARK_TYPE = "BreakpointEnabled";
 	String BREAKPOINT_DISABLED_BOOKMARK_TYPE = "BreakpointDisabled";
 
+	public enum ProgramEnablement {
+		NONE {
+			@Override
+			public Enablement combineTrace(TraceEnablement traceEn) {
+				switch (traceEn) {
+					case NONE:
+						return Enablement.NONE;
+					case MISSING:
+						return Enablement.NONE;
+					case ENABLED:
+						return Enablement.ENABLED;
+					case MIXED:
+						return Enablement.DISABLED_ENABLED;
+					case DISABLED:
+						return Enablement.DISABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		MISSING {
+			@Override
+			public Enablement combineTrace(TraceEnablement traceEn) {
+				switch (traceEn) {
+					case NONE:
+						return Enablement.NONE;
+					case MISSING:
+						return Enablement.NONE;
+					case ENABLED:
+					case MIXED:
+						return Enablement.DISABLED_ENABLED;
+					case DISABLED:
+						return Enablement.DISABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		ENABLED {
+			@Override
+			public Enablement combineTrace(TraceEnablement traceEn) {
+				switch (traceEn) {
+					case NONE:
+					case MISSING:
+						return Enablement.INEFFECTIVE_ENABLED;
+					case ENABLED:
+						return Enablement.ENABLED;
+					case DISABLED:
+					case MIXED:
+						return Enablement.ENABLED_DISABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		DISABLED {
+			@Override
+			public Enablement combineTrace(TraceEnablement traceEn) {
+				switch (traceEn) {
+					case NONE:
+					case MISSING:
+						return Enablement.INEFFECTIVE_DISABLED;
+					case ENABLED:
+					case MIXED:
+						return Enablement.DISABLED_ENABLED;
+					case DISABLED:
+						return Enablement.DISABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		};
+
+		public abstract Enablement combineTrace(TraceEnablement traceEn);
+	}
+
+	public enum TraceEnablement {
+		NONE {
+			@Override
+			public TraceEnablement combine(TraceEnablement that) {
+				return that;
+			}
+
+			@Override
+			public Enablement combineProgram(ProgramEnablement progEn) {
+				switch (progEn) {
+					case NONE:
+					case MISSING:
+						return Enablement.NONE;
+					case ENABLED:
+						return Enablement.INEFFECTIVE_ENABLED;
+					case DISABLED:
+						return Enablement.INEFFECTIVE_DISABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		MISSING {
+			@Override
+			public TraceEnablement combine(TraceEnablement that) {
+				return that;
+			}
+
+			@Override
+			public Enablement combineProgram(ProgramEnablement progEn) {
+				switch (progEn) {
+					case NONE:
+					case MISSING:
+						return Enablement.NONE;
+					case ENABLED:
+						return Enablement.INEFFECTIVE_ENABLED;
+					case DISABLED:
+						return Enablement.INEFFECTIVE_DISABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		ENABLED {
+			@Override
+			public TraceEnablement combine(TraceEnablement that) {
+				switch (that) {
+					case NONE:
+					case MISSING:
+					case ENABLED:
+						return ENABLED;
+					case DISABLED:
+					case MIXED:
+						return MIXED;
+					default:
+						throw new AssertionError();
+				}
+			}
+
+			@Override
+			public Enablement combineProgram(ProgramEnablement progEn) {
+				switch (progEn) {
+					case NONE:
+					case MISSING:
+					case DISABLED:
+						return Enablement.ENABLED_DISABLED;
+					case ENABLED:
+						return Enablement.ENABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		DISABLED {
+			@Override
+			public TraceEnablement combine(TraceEnablement that) {
+				switch (that) {
+					case NONE:
+					case MISSING:
+					case DISABLED:
+						return DISABLED;
+					case ENABLED:
+					case MIXED:
+						return MIXED;
+					default:
+						throw new AssertionError();
+				}
+			}
+
+			@Override
+			public Enablement combineProgram(ProgramEnablement progEn) {
+				switch (progEn) {
+					case NONE:
+					case MISSING:
+					case DISABLED:
+						return Enablement.DISABLED;
+					case ENABLED:
+						return Enablement.DISABLED_ENABLED;
+					default:
+						throw new AssertionError();
+				}
+			}
+		},
+		MIXED {
+			@Override
+			public TraceEnablement combine(TraceEnablement that) {
+				return MIXED;
+			}
+
+			@Override
+			public Enablement combineProgram(ProgramEnablement progEn) {
+				return Enablement.ENABLED_DISABLED;
+			}
+		};
+
+		public static TraceEnablement fromBool(boolean en) {
+			return en ? ENABLED : DISABLED;
+		}
+
+		public abstract TraceEnablement combine(TraceEnablement that);
+
+		public abstract Enablement combineProgram(ProgramEnablement progEn);
+	}
+
 	public enum Enablement {
-		NONE(false, false, true) {
+		NONE(false, false, true, false) {
 			@Override
 			public Enablement getPrimary() {
 				return NONE;
 			}
 		},
-		ENABLED(true, false, true) {
+		ENABLED(true, false, true, true) {
 			@Override
 			public Enablement getPrimary() {
 				return ENABLED;
 			}
 		},
-		DISABLED(false, true, true) {
+		DISABLED(false, true, true, true) {
 			@Override
 			public Enablement getPrimary() {
 				return DISABLED;
 			}
 		},
-		ENABLED_DISABLED(true, false, false) {
+		INEFFECTIVE_ENABLED(true, false, true, false) {
 			@Override
 			public Enablement getPrimary() {
 				return ENABLED;
 			}
 		},
-		DISABLED_ENABLED(false, true, false) {
+		INEFFECTIVE_DISABLED(false, true, true, false) {
+			@Override
+			public Enablement getPrimary() {
+				return DISABLED;
+			}
+		},
+		ENABLED_DISABLED(true, false, false, true) {
+			@Override
+			public Enablement getPrimary() {
+				return ENABLED;
+			}
+		},
+		DISABLED_ENABLED(false, true, false, true) {
 			@Override
 			public Enablement getPrimary() {
 				return DISABLED;
 			}
 		};
 
-		public final boolean enabled;
-		public final boolean disabled;
-		public final boolean consistent;
+		public final boolean enabled; // indicates any enabled location
+		public final boolean disabled; // indicates any disabled location
+		public final boolean consistent; // bookmark and target locations all agree
+		public final boolean effective; // has a target location, even if disabled
 
-		Enablement(boolean enabled, boolean disabled, boolean consistent) {
+		Enablement(boolean enabled, boolean disabled, boolean consistent, boolean effective) {
 			this.enabled = enabled;
 			this.disabled = disabled;
 			this.consistent = consistent;
-		}
-
-		public Enablement combine(Enablement that) {
-			if (this == NONE) {
-				return that;
-			}
-			if (that == NONE) {
-				return this;
-			}
-			return fromBools(this.enabled, that.enabled);
+			this.effective = effective;
 		}
 
 		public Enablement sameAdddress(Enablement that) {
@@ -90,6 +294,9 @@ public interface LogicalBreakpoint {
 			}
 			if (that == NONE) {
 				return this;
+			}
+			if (!this.effective && !that.effective) {
+				return this.enabled || that.enabled ? INEFFECTIVE_ENABLED : INEFFECTIVE_DISABLED;
 			}
 			return fromBools(this.enabled || that.enabled, this.enabled && that.enabled);
 		}

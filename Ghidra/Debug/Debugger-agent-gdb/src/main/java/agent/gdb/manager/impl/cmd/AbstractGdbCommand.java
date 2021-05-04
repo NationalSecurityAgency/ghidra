@@ -106,4 +106,9 @@ public abstract class AbstractGdbCommand<T> implements GdbCommand<T> {
 	public Integer impliesCurrentFrameId() {
 		return null;
 	}
+
+	@Override
+	public boolean isFocusInternallyDriven() {
+		return true;
+	}
 }

@@ -615,8 +615,4 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 		}
 	}
 
-	@Override
-	public Symbol createSymbolPlaceholder(Address address, long id) {
-		return new DBTracePlaceholderSymbol(symbolManager, id);
-	}
 }

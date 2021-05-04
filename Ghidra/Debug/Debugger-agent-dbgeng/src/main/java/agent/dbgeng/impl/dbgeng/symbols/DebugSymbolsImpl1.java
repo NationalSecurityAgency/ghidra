@@ -220,4 +220,13 @@ public class DebugSymbolsImpl1 implements DebugSymbolsInternal {
 		COMUtils.checkRC(jnaSymbols.SetSymbolOptions(ulOptions));
 	}
 
+	@Override
+	public int getCurrentScopeFrameIndex() {
+		throw new UnsupportedOperationException("Not supported by this interface");
+	}
+
+	@Override
+	public void setCurrentScopeFrameIndex(int index) {
+		throw new UnsupportedOperationException("Not supported by this interface");
+	}
 }

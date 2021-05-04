@@ -30,6 +30,7 @@ import javax.swing.JLabel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.collections4.ComparatorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 
@@ -72,7 +73,6 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
@@ -656,7 +656,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		setSubTitle(computeSubTitle());
 	}
 
-	protected TraceSection getSmallestSectionAt(Address address) {
+	protected TraceSection getNearestSectionContaining(Address address) {
 		if (current.getView() == null) {
 			return null;
 		}
@@ -666,8 +666,36 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (sections.isEmpty()) {
 			return null;
 		}
-		sections.sort(Comparator.comparing(s -> s.getRange().getLength()));
-		return sections.get(0);
+		// TODO: DB's R-Tree could probably do this natively
+		sections.sort(ComparatorUtils.chainedComparator(List.of(
+			Comparator.comparing(s -> s.getRange().getMinAddress()),
+			Comparator.comparing(s -> -s.getRange().getLength()))));
+		return sections.get(sections.size() - 1);
+	}
+
+	protected TraceModule getNearestModuleContaining(Address address) {
+		if (current.getView() == null) {
+			return null;
+		}
+		Trace trace = current.getTrace();
+		List<TraceModule> modules =
+			new ArrayList<>(trace.getModuleManager().getModulesAt(current.getSnap(), address));
+		if (modules.isEmpty()) {
+			return null;
+		}
+		// TODO: DB's R-Tree could probably do this natively
+		modules.sort(ComparatorUtils.chainedComparator(List.of(
+			Comparator.comparing(m -> m.getRange().getMinAddress()),
+			Comparator.comparing(m -> -m.getRange().getLength()))));
+		return modules.get(modules.size() - 1);
+	}
+
+	protected TraceMemoryRegion getRegionContaining(Address address) {
+		if (current.getView() == null) {
+			return null;
+		}
+		Trace trace = current.getTrace();
+		return trace.getMemoryManager().getRegionContaining(current.getSnap(), address);
 	}
 
 	protected String computeLocationString() {
@@ -677,19 +705,22 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 		ProgramLocation location = getListingPanel().getProgramLocation();
 		if (location == null) {
-			return view.getDomainFile().getName();
+			return "(nowhere)";
 		}
 		Address address = location.getAddress();
-		TraceSection section = getSmallestSectionAt(address);
+		TraceSection section = getNearestSectionContaining(address);
 		if (section != null) {
-			return view.getDomainFile().getName() + " (" + section.getModule().getName() + ":" +
-				section.getName() + ")";
+			return section.getModule().getName() + ":" + section.getName();
 		}
-		MemoryBlock block = view.getMemory().getBlock(address);
-		if (block == null) {
-			return view.getDomainFile().getName();
+		TraceModule module = getNearestModuleContaining(address);
+		if (module != null) {
+			return module.getName();
 		}
-		return view.getDomainFile().getName() + " (" + block.getName() + ")";
+		TraceMemoryRegion region = getRegionContaining(address);
+		if (region != null) {
+			return region.getName();
+		}
+		return "(unknown)";
 	}
 
 	protected void updateLocationLabel() {

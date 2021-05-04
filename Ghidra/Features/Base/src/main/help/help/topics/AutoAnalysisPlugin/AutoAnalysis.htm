@@ -158,12 +158,48 @@
         <P><IMG alt="" src="images/note.png"> A separate dialog showing the <I>Analysis</I>
         options is also displayed after a new program has been imported, or the <B>Analysis<IMG
         alt="" src="images/arrow.gif"> Auto Analysis</B> menu item is chosen.</P>
-
+        
         <P><IMG alt="" src="images/warning.help.png"> <FONT color="red">Some analyzers only work
         on certain processors. For example, the MIPS Instruction Analyzer only works on MIPS
         processors. Their options will only show up if the currently open program can be analyzed
         with the analyzer.</FONT></P>
       </BLOCKQUOTE>
+      
+      <P style="background-color: #FFF0E0;">
+		<IMG SRC="../../shared/warning.png" />Note that multi-user merge does not currently support
+		merging of Program Options (including Analysis Options).  Options stored in shared Program database
+		following a conflicting checkin may not reflect option settings specified prior to checkin.
+	</P>
+       
+ 	<H3>Saved Options Configurations</H3>
+    <BLOCKQUOTE>
+		<P>The Options Configurations combo box at bottom of the analyzer enablement panel can be used to quickly
+		switch between sets of analyzer option values. The combo box will always contain two standard sets of options as well as any 
+		previously saved configurations. The two standard configurations are:
+		<UL>
+			<LI>Standard Defaults - This setting will put all the analyzer enablements and options to the original default values.</LI>
+			<LI>Current Program Options - This setting will put all the analyzer enablements and options to values as stored in 
+			the current program.</LI>
+		</UL>
+		
+		<P style="background-color: #FFF0E0;">
+		<IMG SRC="../../shared/warning.png" />Access to stored configurations is not currently
+		aupported across different versions of Ghidra.
+		</P>
+		
+    </BLOCKQUOTE>
+        
+   	<H3>Analysis Panel Buttons</H3>
+    <BLOCKQUOTE>
+		<UL>
+			<LI>Select All - Turns all analyzers on.</LI>
+			<LI>Deselect All - Turns all analyzers off.</LI>
+			<LI>Reset - Resets all the options to the currently selected configuration.</LI>
+			<LI>Save... - Saves the current analysis options to a named configuration.</LI>
+			<LI>Delete - Deletes the currently selected named configuration.</LI>
+		</UL>
+    </BLOCKQUOTE>
+  
     </BLOCKQUOTE>
 
     <H2><A name="Auto_Analyzers"></A>Auto Analyzers</H2>
@@ -617,3 +653,4 @@
      <BR>
   </BODY>
 </HTML>
+

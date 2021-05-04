@@ -21,8 +21,11 @@ import java.util.concurrent.CompletableFuture;
 
 import org.junit.Ignore;
 
-import agent.gdb.ffi.linux.Pty;
 import agent.gdb.manager.GdbManager;
+import agent.gdb.pty.PtyFactory;
+import agent.gdb.pty.PtySession;
+import agent.gdb.pty.linux.LinuxPty;
+import agent.gdb.pty.linux.LinuxPtyFactory;
 import ghidra.util.Msg;
 
 @Ignore("Need compatible GDB version for CI")
@@ -31,7 +34,7 @@ public class JoinedGdbManagerTest extends AbstractGdbManagerTest {
 		@Override
 		public void run() {
 			BufferedReader reader =
-				new BufferedReader(new InputStreamReader(ptyUserGdb.getMaster().getInputStream()));
+				new BufferedReader(new InputStreamReader(ptyUserGdb.getParent().getInputStream()));
 			String line;
 			try {
 				while (gdb != null && null != (line = reader.readLine())) {
@@ -44,20 +47,26 @@ public class JoinedGdbManagerTest extends AbstractGdbManagerTest {
 		}
 	}
 
-	protected Pty ptyUserGdb;
-	protected Process gdb;
+	protected LinuxPty ptyUserGdb;
+	protected PtySession gdb;
+
+	@Override
+	protected PtyFactory getPtyFactory() {
+		// TODO: Choose by host OS
+		return new LinuxPtyFactory();
+	}
 
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {
 		try {
-			ptyUserGdb = Pty.openpty();
+			ptyUserGdb = LinuxPty.openpty();
 			manager.start(null);
 			Msg.debug(this, "Starting GDB and invoking new-ui mi2 " + manager.getMi2PtyName());
 
-			gdb = ptyUserGdb.getSlave()
+			gdb = ptyUserGdb.getChild()
 					.session(new String[] { GdbManager.DEFAULT_GDB_CMD }, Map.of());
 			new ReaderThread().start();
-			PrintWriter gdbCmd = new PrintWriter(ptyUserGdb.getMaster().getOutputStream());
+			PrintWriter gdbCmd = new PrintWriter(ptyUserGdb.getParent().getOutputStream());
 			gdbCmd.println("new-ui mi2 " + manager.getMi2PtyName());
 			gdbCmd.flush();
 			return manager.runRC();

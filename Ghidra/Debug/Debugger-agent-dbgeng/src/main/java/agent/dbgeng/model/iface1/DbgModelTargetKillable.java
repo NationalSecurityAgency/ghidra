@@ -33,7 +33,7 @@ public interface DbgModelTargetKillable extends DbgModelTargetObject, TargetKill
 	@Override
 	public default CompletableFuture<Void> kill() {
 		DbgProcess process = getManager().getCurrentProcess();
-		return process.kill();
+		return getModel().gateFuture(process.kill());
 	}
 
 }

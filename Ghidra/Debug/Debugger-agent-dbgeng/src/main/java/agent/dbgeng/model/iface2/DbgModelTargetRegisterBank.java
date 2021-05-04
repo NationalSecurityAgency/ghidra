@@ -40,9 +40,13 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 		readRegistersNamed(getCachedElements().keySet());
 	}
 
-	// NB: Does anyone call this anymore?
 	@Override
 	public default CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(
+			Collection<String> names) {
+		return getModel().gateFuture(doReadRegistersNamed(names));
+	}
+
+	public default CompletableFuture<? extends Map<String, byte[]>> doReadRegistersNamed(
 			Collection<String> names) {
 		DbgManagerImpl manager = getManager();
 		if (manager.isWaiting()) {
@@ -101,6 +105,10 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 
 	@Override
 	public default CompletableFuture<Void> writeRegistersNamed(Map<String, byte[]> values) {
+		return getModel().gateFuture(doWriteRegistersNamed(values));
+	}
+
+	public default CompletableFuture<Void> doWriteRegistersNamed(Map<String, byte[]> values) {
 		DbgThread thread = getParentThread().getThread();
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 			requestNativeElements().handle(seq::nextIgnore);

@@ -39,14 +39,23 @@ public class LogicalBreakpointRow {
 		return lb;
 	}
 
-	public Boolean isEnabled() {
-		Enablement en = provider.isFilterByCurrentTrace() && provider.currentTrace != null
+	public Enablement getEnablement() {
+		return provider.isFilterByCurrentTrace() && provider.currentTrace != null
 				? lb.computeEnablementForTrace(provider.currentTrace)
 				: lb.computeEnablement();
+	}
+
+	public void setEnablement(Enablement en) {
+		assert en.consistent && en.effective;
+		setEnabled(en.enabled);
+	}
+
+	public Boolean isEnabled() {
+		Enablement en = getEnablement();
 		if (!en.consistent) {
 			return null;
 		}
-		return en.enabled;
+		return en.enabled && en.effective;
 	}
 
 	public void setEnabled(boolean enabled) {

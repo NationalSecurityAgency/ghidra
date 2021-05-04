@@ -22,6 +22,7 @@ import agent.dbgeng.manager.impl.DbgManagerImpl;
 public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 
 	private DbgThread thread;
+	private Integer frameId;
 
 	/**
 	 * Set the active thread
@@ -33,6 +34,7 @@ public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 	public DbgSetActiveThreadCommand(DbgManagerImpl manager, DbgThread thread, Integer frameId) {
 		super(manager);
 		this.thread = thread;
+		this.frameId = frameId;
 	}
 
 	@Override
@@ -40,6 +42,9 @@ public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 		DebugThreadId id = thread.getId();
 		if (id != null) {
 			manager.getSystemObjects().setCurrentThreadId(id);
+			if (frameId != null) {
+				manager.getSymbols().setCurrentScopeFrameIndex(frameId);
+			}
 		}
 	}
 }

@@ -68,9 +68,10 @@ public interface GdbThread
 	/**
 	 * Make this thread the current thread
 	 * 
+	 * @param internal true to prevent announcement of the change
 	 * @return a future that completes when the thread is the current thread
 	 */
-	CompletableFuture<Void> setActive();
+	CompletableFuture<Void> setActive(boolean internal);
 
 	/**
 	 * Set the value of an internal GDB variable

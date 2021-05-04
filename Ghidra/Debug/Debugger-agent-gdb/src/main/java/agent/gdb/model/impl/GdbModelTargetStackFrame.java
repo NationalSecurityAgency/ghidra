@@ -115,7 +115,7 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 	@Override
 	@Internal
 	public CompletableFuture<Void> setActive() {
-		return impl.gateFuture(frame.setActive());
+		return impl.gateFuture(frame.setActive(false));
 	}
 
 	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME)

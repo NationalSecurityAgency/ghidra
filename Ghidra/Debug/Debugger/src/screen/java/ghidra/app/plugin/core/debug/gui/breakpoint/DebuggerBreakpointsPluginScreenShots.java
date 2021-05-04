@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import static ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.waitForPass;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Set;
 
@@ -138,7 +139,8 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		waitOn(bc3.placeBreakpoint(mb.addr(0x7fac1234), Set.of(TargetBreakpointKind.SW_EXECUTE)));
 
 		TraceBreakpoint bpt = waitForValue(() -> Unique.assertAtMostOne(
-			trace3.getBreakpointManager().getBreakpointsAt(0, addr(trace3, 0x7fac1234))));
+			trace3.getBreakpointManager()
+					.getBreakpointsAt(recorder3.getSnap(), addr(trace3, 0x7fac1234))));
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(trace3, "Disable breakpoint", true)) {
 			bpt.setEnabled(false);
@@ -147,14 +149,15 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint", true)) {
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00401234),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SOFTWARE;1", "");
+						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00402345),
-						LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE, "SOFTWARE;1", "");
+						LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
 		}
 
 		waitForPass(() -> {
 			assertEquals(3, breakpointService.getAllBreakpoints().size());
+			assertFalse(bpt.isEnabled());
 		});
 
 		captureIsolatedProvider(provider, 600, 600);

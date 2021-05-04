@@ -342,22 +342,6 @@ public interface DebuggerObjectModel {
 	 * are refreshed; and {@code A}'s, {@code B[1]}'s, and {@code C[2]}'s attribute caches are
 	 * refreshed.
 	 * 
-	 * @implNote The returned value cannot be a {@link TargetObjectRef} unless the value represents
-	 *           a link. In other words, if the path refers to an object, the model must return the
-	 *           object, not a ref. When the value is a link, the implementation may optionally
-	 *           resolve the object, but should only do so if it doesn't incur a significant cost.
-	 *           Furthermore, such links cannot be resolved -- though they can be substituted for
-	 *           the target object at the linked path. In other words, the path of the returned ref
-	 *           (or object) must represent the link's target. Suppose {@code A[1]} is a link to
-	 *           {@code B[1]}, which is in turn a link to {@code C[1]} -- honestly, linked links
-	 *           ought to be a rare occurrence -- then fetching {@code A[1]} must return a ref to
-	 *           {@code B[1]}. It must not return {@code C[1]} nor a ref to it. The reason deals
-	 *           with caching and updates. If a request for {@code A[1]} were to return
-	 *           {@code C[1]}, a client may cache that result. Suppose that client then observes a
-	 *           change causing {@code B[1]} to link to {@code C[2]}. This implies that {@code A[1]}
-	 *           now resolves to {@code C[2]}; however, the client has not received enough
-	 *           information to update or invalidate its cache.
-	 * 
 	 * @param path the path
 	 * @param refresh true to refresh caches
 	 * @return the found value, or {@code null} if it does not exist

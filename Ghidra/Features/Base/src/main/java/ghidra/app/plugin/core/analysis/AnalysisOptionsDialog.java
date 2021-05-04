@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import docking.DialogComponentProvider;
@@ -29,8 +27,7 @@ import ghidra.util.Msg;
  * Dialog to show the panel for the auto analysis options.
  *
  */
-public class AnalysisOptionsDialog extends DialogComponentProvider implements
-		PropertyChangeListener {
+public class AnalysisOptionsDialog extends DialogComponentProvider {
 	private boolean doAnalysis;
 	private AnalysisPanel panel;
 	private EditorStateFactory editorStateFactory = new EditorStateFactory();
@@ -52,7 +49,7 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 	AnalysisOptionsDialog(List<Program> programs) {
 		super("Analysis Options");
 		setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions"));
-		panel = buildComponent(programs);
+		panel = new AnalysisPanel(programs, editorStateFactory);
 
 		addWorkPanel(panel);
 		addOKButton();
@@ -62,21 +59,6 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 		setOkEnabled(true);
 		setPreferredSize(1000, 600);
 		setRememberSize(true);
-	}
-
-	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-
-		// On any analyzer status change, update the options for all programs
-		// being analyzed. This is necessary to keep options consistent across all
-		// programs being analyzed.
-		//
-		// Note: It's possible to receive a property change notification before the 
-		//       analysis panel has finished being constructed, so protect against
-		//       that before calling the update method.
-		if (panel != null) {
-			panel.updateOptionForAllPrograms(evt.getPropertyName(), (Boolean) evt.getNewValue());
-		}
 	}
 
 	@Override
@@ -95,14 +77,5 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 		return doAnalysis;
 	}
 
-	/**
-	 * Constructs a new {@link AnalysisPanel}
-	 * 
-	 * @param programs the programs to analyze
-	 * @return the new analysis panel
-	 */
-	private AnalysisPanel buildComponent(List<Program> programs) {
-		AnalysisPanel panel = new AnalysisPanel(programs, editorStateFactory, this);
-		return panel;
-	}
 }
+

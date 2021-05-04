@@ -24,6 +24,8 @@ import javax.swing.tree.TreePath;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
+import ghidra.dbg.target.TargetExecutionStateful;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetObject;
 
 // TODO: In the new scheme, I'm not sure this is applicable anymore.
@@ -65,6 +67,14 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 			if (!node.isVisible() && !provider.isHideIntrinsics()) {
 				component.setForeground(provider
 						.getColor(DebuggerObjectsProvider.OPTION_NAME_INVISIBLE_FOREGROUND_COLOR));
+			}
+			if (container.getTargetObject() instanceof TargetExecutionStateful) {
+				TargetExecutionStateful stateful = (TargetExecutionStateful) targetObject;
+				if (stateful.getExecutionState().equals(TargetExecutionState.TERMINATED)) {
+					component.setForeground(provider
+							.getColor(
+								DebuggerObjectsProvider.OPTION_NAME_INVALIDATED_FOREGROUND_COLOR));
+				}
 			}
 			if (container.isLink()) {
 				component.setForeground(

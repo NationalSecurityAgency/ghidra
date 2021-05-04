@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.objects;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 
 import org.jdom.Element;
@@ -62,6 +63,14 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		nc.rebuildContainers(container.getElementMap(), container.getAttributeMap());
 		nc.propagateProvider(container.getProvider());
 		return nc;
+	}
+
+	public void updateUsing(ObjectContainer container) {
+		attributeMap.clear();
+		attributeMap.putAll(container.getAttributeMap());
+		elementMap.clear();
+		elementMap.putAll(container.getElementMap());
+		targetObject = container.targetObject;
 	}
 
 	public boolean hasElements() {
@@ -168,17 +177,30 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 	public void augmentElements(Collection<String> elementsRemoved,
 			Map<String, ? extends TargetObject> elementsAdded) {
 		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		Map<String, Object> newAdds = new HashMap<>();
+		for (Entry<String, ? extends TargetObject> entry : elementsAdded.entrySet()) {
+			newAdds.put(entry.getKey(), entry.getValue());
+		}
 		boolean structureChanged = false;
 		synchronized (elementMap) {
 			for (ObjectContainer child : currentChildren) {
-				String name = child.getName();
-				if (name.startsWith("[")) {
-					name = name.substring(1, name.length() - 1);
+				String key = child.getName();
+				if (key.startsWith("[")) {
+					key = key.substring(1, key.length() - 1);
 				}
-				if (elementsRemoved.contains(name) && !elementsAdded.containsKey(name)) {
-					elementMap.remove(name);
+				if (elementsRemoved.contains(key) && !elementsAdded.containsKey(key)) {
+					elementMap.remove(key);
 					structureChanged = true;
 					continue;
+				}
+				if (elementsAdded.containsKey(key)) {
+					Object val = elementsAdded.get(key);
+					ObjectContainer newChild =
+						DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val,
+							true);
+					child.updateUsing(newChild);
+					newAdds.remove(key);
+					provider.signalDataChanged(child);
 				}
 				result.add(child);
 			}
@@ -186,14 +208,9 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 				TargetObject val = elementsAdded.get(key);
 				ObjectContainer child =
 					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, false);
-				if (!elementMap.containsKey(key)) {
-					structureChanged = true;
-				}
-				else {
-					provider.signalDataChanged(child);
-				}
 				elementMap.put(key, val);
 				result.add(child);
+				structureChanged = true;
 			}
 		}
 		currentChildren = result;
@@ -207,30 +224,38 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 	public void augmentAttributes(Collection<String> attributesRemoved,
 			Map<String, ?> attributesAdded) {
 		Set<ObjectContainer> result = new TreeSet<ObjectContainer>();
+		Map<String, Object> newAdds = new HashMap<>();
+		for (Entry<String, ?> entry : attributesAdded.entrySet()) {
+			newAdds.put(entry.getKey(), entry.getValue());
+		}
 		boolean structureChanged = false;
 		synchronized (attributeMap) {
 			for (ObjectContainer child : currentChildren) {
-				String name = child.getName();
-				if (attributesRemoved.contains(name) && !attributesAdded.containsKey(name)) {
-					attributeMap.remove(name);
+				String key = child.getName();
+				if (attributesRemoved.contains(key) && !attributesAdded.containsKey(key)) {
+					attributeMap.remove(key);
 					structureChanged = true;
 					continue;
 				}
+				if (attributesAdded.containsKey(key)) {
+					Object val = attributesAdded.get(key);
+					ObjectContainer newChild =
+						DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val,
+							true);
+					child.updateUsing(newChild);
+					newAdds.remove(key);
+					provider.signalDataChanged(child);
+				}
 				result.add(child);
 			}
-			for (String key : attributesAdded.keySet()) {
-				Object val = attributesAdded.get(key);
+			for (String key : newAdds.keySet()) {
+				Object val = newAdds.get(key);
 				ObjectContainer child =
 					DebuggerObjectsProvider.buildContainerFromObject(targetObject, key, val, true);
 				if (child != null) {
-					if (!attributeMap.containsKey(key)) {
-						structureChanged = true;
-					}
-					else {
-						provider.signalDataChanged(child);
-					}
 					attributeMap.put(key, val);
 					result.add(child);
+					structureChanged = true;
 				}
 			}
 		}

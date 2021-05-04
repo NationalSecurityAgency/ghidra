@@ -47,9 +47,10 @@ public interface GdbStackFrame extends GdbStackFrameOperations {
 	/**
 	 * Make this frame the current frame
 	 * 
+	 * @param internal true to prevent announcement of the change
 	 * @return a future that completes when the frame is the current frame
 	 */
-	CompletableFuture<Void> setActive();
+	CompletableFuture<Void> setActive(boolean internal);
 
 	/**
 	 * Get the thread for this frame

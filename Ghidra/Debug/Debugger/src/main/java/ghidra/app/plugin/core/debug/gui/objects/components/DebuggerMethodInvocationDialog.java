@@ -35,7 +35,6 @@ import docking.DialogComponentProvider;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
@@ -95,7 +94,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	protected JButton invokeButton;
 
 	private final PluginTool tool;
-	private TargetParameterMap parameters;
+	private Map<String, ParameterDescription<?>> parameters;
 
 	// TODO: Not sure this is the best keying, but I think it works.
 	private Map<NameTypePair, Object> memorized = new HashMap<>();
@@ -115,14 +114,14 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 			ntp -> parameter.defaultValue);
 	}
 
-	public Map<String, ?> promptArguments(TargetParameterMap parameterMap) {
+	public Map<String, ?> promptArguments(Map<String, ParameterDescription<?>> parameterMap) {
 		setParameters(parameterMap);
 		tool.showDialog(this);
 
 		return getArguments();
 	}
 
-	public void setParameters(TargetParameterMap parameterMap) {
+	public void setParameters(Map<String, ParameterDescription<?>> parameterMap) {
 		this.parameters = parameterMap;
 		populateOptions();
 	}
@@ -210,13 +209,12 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		memorized.put(NameTypePair.fromParameter(param), editor.getValue());
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void writeConfigState(SaveState saveState) {
 		SaveState subState = new SaveState();
 		for (Map.Entry<NameTypePair, Object> ent : memorized.entrySet()) {
 			NameTypePair ntp = ent.getKey();
-			ConfigStateField.putState(subState, (Class) ntp.getType(), ntp.getName(),
-				ent.getValue());
+			ConfigStateField.putState(subState, ntp.getType().asSubclass(Object.class),
+				ntp.getName(), ent.getValue());
 		}
 		saveState.putXmlElement(KEY_MEMORIZED_ARGUMENTS, subState.saveToXml());
 	}

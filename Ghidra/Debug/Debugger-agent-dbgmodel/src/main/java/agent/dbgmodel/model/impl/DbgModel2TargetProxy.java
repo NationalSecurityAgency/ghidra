@@ -19,6 +19,7 @@ import agent.dbgeng.model.iface2.DbgModelTargetObject;
 
 public interface DbgModel2TargetProxy extends DbgModelTargetObject {
 
+	@Override
 	public DelegateDbgModel2TargetObject getDelegate();
 
 }

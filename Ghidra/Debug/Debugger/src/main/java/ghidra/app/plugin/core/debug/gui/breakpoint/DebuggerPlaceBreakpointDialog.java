@@ -71,8 +71,8 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		JLabel labelKinds = new JLabel("Kinds");
 		DefaultComboBoxModel<String> kindModel = new DefaultComboBoxModel<>();
 		// TODO: Let user select whatever combo?
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(SOFTWARE)));
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(EXECUTE)));
+		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(SW_EXECUTE)));
+		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(HW_EXECUTE)));
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ)));
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(WRITE)));
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ, WRITE)));
@@ -87,12 +87,11 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		addCancelButton();
 	}
 
-	@SuppressWarnings("hiding")
 	public void prompt(PluginTool tool, DebuggerLogicalBreakpointService service, String title,
 			ProgramLocation loc, long length, Collection<TraceBreakpointKind> kinds) {
 		this.service = service;
 		this.program = loc.getProgram();
-		this.address = loc.getAddress();
+		this.address = loc.getAddress(); // byte address can be confusing here.
 		this.length = length;
 		this.kinds = Set.copyOf(kinds);
 

@@ -17,18 +17,16 @@ package ghidra.dbg.jdi;
 
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.LocalDebuggerModelFactory;
 import ghidra.dbg.jdi.model.JdiModelImpl;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
 
 @FactoryDescription( //
-		brief = "JDI debugger", //
-		htmlDetails = "Debug a Java or Dalvik VM (supports JDWP)" //
+	brief = "JDI debugger", //
+	htmlDetails = "Debug a Java or Dalvik VM (supports JDWP)" //
 )
-@ExtensionPointProperties(priority = 50)
-public class JdiDebuggerModelFactory implements LocalDebuggerModelFactory {
+public class JdiDebuggerModelFactory implements DebuggerModelFactory {
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {

@@ -39,6 +39,8 @@ public interface TestDebuggerModelProvider {
 
 		boolean hasDetachableProcesses();
 
+		boolean hasInterpreter();
+
 		boolean hasInterruptibleProcesses();
 
 		boolean hasKillableProcesses();

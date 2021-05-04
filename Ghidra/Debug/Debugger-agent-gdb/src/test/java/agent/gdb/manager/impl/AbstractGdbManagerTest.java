@@ -35,6 +35,7 @@ import com.google.common.collect.*;
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.ExecSuffix;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
+import agent.gdb.pty.PtyFactory;
 import ghidra.async.AsyncReference;
 import ghidra.dbg.testutil.DummyProc;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -44,6 +45,8 @@ import ghidra.util.SystemUtilities;
 public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected static final long TIMEOUT_MILLISECONDS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
+
+	protected abstract PtyFactory getPtyFactory();
 
 	protected abstract CompletableFuture<Void> startManager(GdbManager manager);
 
@@ -67,7 +70,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testAddInferior() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			GdbInferior inferior = waitOn(mgr.addInferior());
 			assertEquals(2, inferior.getId());
@@ -77,7 +80,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testRemoveInferior() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			GdbInferior inf = waitOn(mgr.addInferior());
 			assertEquals(2, mgr.getKnownInferiors().size());
@@ -90,7 +93,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testRemoveCurrentInferior() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			List<Integer> selEvtIdsTemp = new ArrayList<>();
 			AsyncReference<List<Integer>, Void> selEvtIds = new AsyncReference<>(List.of());
 			mgr.addEventsListener(new GdbEventsListenerAdapter() {
@@ -114,7 +117,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testConsoleCapture() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			String out = waitOn(mgr.consoleCapture("echo test"));
 			assertEquals("test", out.trim());
@@ -123,7 +126,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testListInferiors() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			Map<Integer, GdbInferior> inferiors = waitOn(mgr.listInferiors());
 			assertEquals(new HashSet<>(Arrays.asList(new Integer[] { 1 })), inferiors.keySet());
@@ -132,7 +135,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testListAvailableProcesses() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			List<GdbProcessThreadGroup> procs = waitOn(mgr.listAvailableProcesses());
 			List<Integer> pids = procs.stream().map(p -> p.getPid()).collect(Collectors.toList());
@@ -142,7 +145,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testInfoOs() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			GdbTable infoThreads = waitOn(mgr.infoOs("threads"));
 			assertEquals(new LinkedHashSet<>(Arrays.asList("pid", "command", "tid", "core")),
@@ -153,7 +156,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testStart() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.console("break main"));
@@ -164,7 +167,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testAttachDetach() throws Throwable {
-		try (DummyProc echo = run("dd"); GdbManager mgr = GdbManager.newInstance()) {
+		try (DummyProc echo = run("dd"); GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			Set<GdbThread> threads = waitOn(mgr.currentInferior().attach(echo.pid));
 			// Attach stops the process, so no need to wait for STOPPED or prompt
@@ -212,7 +215,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	public void testStartInterrupt() throws Throwable {
 		assumeFalse("I know no way to get this to pass with these conditions",
 			this instanceof JoinedGdbManagerTest);
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			/*
 			 * Not sure the details here, but it seems GDB will give ^running as soon as the process
 			 * has started. I suspect there are some nuances between the time the process is started
@@ -239,7 +242,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 		assumeFalse("I know no way to get this to pass with these conditions",
 			this instanceof JoinedGdbManagerTest);
 		// Repeat the start-interrupt sequence, then verify we're preparing to step a syscall
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			LibraryWaiter libcLoaded = new LibraryWaiter(name -> name.contains("libc"));
 			mgr.addEventsListener(libcLoaded);
 			waitOn(startManager(mgr));
@@ -268,7 +271,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testSetVarEvaluate() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));
@@ -283,7 +286,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testSetVarGetVar() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			String val = waitOn(mgr.currentInferior().getVar("args"));
 			assertEquals(null, val);
@@ -295,7 +298,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testInsertListDeleteBreakpoint() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			GdbBreakpointInfo breakpoint = waitOn(mgr.insertBreakpoint("main"));
@@ -309,7 +312,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testListReadWriteReadRegisters() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));
@@ -345,7 +348,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	@Test
 	public void testWriteReadMemory() throws Throwable {
 		ByteBuffer rBuf = ByteBuffer.allocate(1024);
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));
@@ -375,7 +378,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testContinue() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));
@@ -390,7 +393,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testStep() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));
@@ -405,20 +408,20 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 
 	@Test
 	public void testThreadSelect() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			//waitOn(mgr.waitForPrompt());
-			waitOn(thread.setActive());
+			waitOn(thread.setActive(false));
 		}
 	}
 
 	@Test
 	public void testListFrames() throws Throwable {
-		try (GdbManager mgr = GdbManager.newInstance()) {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			waitOn(mgr.currentInferior().fileExecAndSymbols("/usr/bin/echo"));
 			waitOn(mgr.insertBreakpoint("main"));

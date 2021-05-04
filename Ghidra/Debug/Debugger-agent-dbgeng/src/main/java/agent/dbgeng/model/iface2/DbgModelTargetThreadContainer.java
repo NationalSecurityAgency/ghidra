@@ -25,10 +25,10 @@ public interface DbgModelTargetThreadContainer extends //
 		DbgModelTargetEventScope, //
 		DbgEventsListenerAdapter {
 
+	public DbgModelTargetThread getTargetThread(DbgThread thread);
+
 	public void threadCreated(DbgThread thread);
 
 	public void threadExited(DebugThreadId threadId);
-
-	public DbgModelTargetThread getTargetThread(DbgThread thread);
 
 }

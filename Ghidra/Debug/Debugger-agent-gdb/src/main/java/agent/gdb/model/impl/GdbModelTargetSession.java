@@ -21,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.*;
-import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand;
-import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.Output;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbReason;
 import ghidra.async.AsyncUtils;
@@ -34,6 +32,14 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
+/**
+ * TODO: We should probably expose the raw CLI (if available) via TargetConsole, and perhaps re-work
+ * the UI to use it when available. This could more generally solve the multi-line input thing, and
+ * provide a distinction between API access (where {@link TargetInterpreter} makes more sense), and
+ * I/O access (where {@link TargetConsole}) makes more sense. I'm hoping this will also allow the
+ * CLI to prompt the user when appropriate, e.g., on {@code quit} when an inferior is active. NOTE:
+ * Probably should not expose raw MI2 via TargetConsole
+ */
 @TargetObjectSchemaInfo(
 	name = "Session",
 	elements = {
@@ -150,6 +156,13 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		// Otherwise, we'll presumably get the =thread-selected event 
 	}
 
+	/**
+	 * TODO: This check should be done in the manager? This "internal" concept is either a manager
+	 * concept or a model concept. Right now, it breaches the interface.
+	 * 
+	 * @param cause the cause to examine
+	 * @return true if internal
+	 */
 	protected boolean isFocusInternallyDriven(GdbCause cause) {
 		if (cause == null || cause == GdbCause.Causes.UNCLAIMED) {
 			return false;
@@ -160,13 +173,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		if (cause instanceof GdbPendingCommand<?>) {
 			GdbPendingCommand<?> pcmd = (GdbPendingCommand<?>) cause;
 			GdbCommand<?> cmd = pcmd.getCommand();
-			if (cmd instanceof GdbConsoleExecCommand) {
-				GdbConsoleExecCommand exec = (GdbConsoleExecCommand) cmd;
-				if (exec.getOutputTo() == Output.CAPTURE) {
-					return true;
-				}
-				return false;
-			}
+			return cmd.isFocusInternallyDriven();
 		}
 		return true;
 	}
@@ -323,7 +330,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			if (impl.gdb.getKnownThreads().get(thread.getId()) != thread) {
 				return;
 			}
-			thread.setActive().exceptionally(ex -> {
+			thread.setActive(true).exceptionally(ex -> {
 				impl.reportError(this, "Could not restore event thread", ex);
 				return null;
 			});

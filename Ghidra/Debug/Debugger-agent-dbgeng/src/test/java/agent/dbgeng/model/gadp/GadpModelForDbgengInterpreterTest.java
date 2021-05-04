@@ -19,7 +19,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import agent.dbgeng.model.AbstractModelForDbgengInterpreterTest;
-import ghidra.dbg.error.DebuggerModelTerminatingException;
 
 public class GadpModelForDbgengInterpreterTest extends AbstractModelForDbgengInterpreterTest {
 
@@ -35,13 +34,6 @@ public class GadpModelForDbgengInterpreterTest extends AbstractModelForDbgengInt
 	@Test
 	public void testAttachViaInterpreterShowsInProcessContainer() throws Throwable {
 		super.testAttachViaInterpreterShowsInProcessContainer();
-	}
-
-	@Override
-	@Ignore
-	@Test(expected = DebuggerModelTerminatingException.class)
-	public void testExecuteQuit() throws Throwable {
-		// Hangs after DebuggerModelTerminatingException
 	}
 
 }

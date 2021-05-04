@@ -17,36 +17,55 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.awt.Component;
 
+import javax.swing.Icon;
+import javax.swing.SwingConstants;
+
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.services.LogicalBreakpoint.Enablement;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerBreakpointEnablementTableCellRenderer
-		extends AbstractGColumnRenderer<Boolean> {
+		extends AbstractGColumnRenderer<Enablement> {
+
+	protected static Icon iconForEnablement(Enablement en) {
+		switch (en) {
+			case NONE:
+				return null;
+			case ENABLED:
+				return DebuggerResources.ICON_BREAKPOINT_ENABLED_MARKER;
+			case DISABLED:
+				return DebuggerResources.ICON_BREAKPOINT_DISABLED_MARKER;
+			case INEFFECTIVE_ENABLED:
+				return DebuggerResources.ICON_BREAKPOINT_INEFFECTIVE_E_MARKER;
+			case INEFFECTIVE_DISABLED:
+				return DebuggerResources.ICON_BREAKPOINT_INEFFECTIVE_D_MARKER;
+			case ENABLED_DISABLED:
+				return DebuggerResources.ICON_BREAKPOINT_MIXED_ED_MARKER;
+			case DISABLED_ENABLED:
+				return DebuggerResources.ICON_BREAKPOINT_MIXED_DE_MARKER;
+			default:
+				throw new AssertionError(en);
+		}
+	}
+
+	public DebuggerBreakpointEnablementTableCellRenderer() {
+		setHorizontalAlignment(SwingConstants.CENTER);
+	}
+
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data);
-		Boolean enabled = (Boolean) data.getValue();
-		if (enabled == null) {
-			/**
-			 * TODO: Distinguish DE from ED. Will need Enablement, not just Boolean. Will also
-			 * require custom "cell editor".
-			 */
-			setIcon(DebuggerResources.ICON_BREAKPOINT_MIXED_ED_MARKER);
-		}
-		else if (enabled) {
-			setIcon(DebuggerResources.ICON_BREAKPOINT_ENABLED_MARKER);
-		}
-		else {
-			setIcon(DebuggerResources.ICON_BREAKPOINT_DISABLED_MARKER);
-		}
+		Enablement en = (Enablement) data.getValue();
+		setIcon(iconForEnablement(en));
+		setHorizontalAlignment(SwingConstants.CENTER);
 		setText("");
 		return this;
 	}
 
 	@Override
-	public String getFilterString(Boolean t, Settings settings) {
-		return t == null ? "Mixed" : t ? "Enabled" : "Disabled";
+	public String getFilterString(Enablement t, Settings settings) {
+		return t.name();
 	}
 }

@@ -218,7 +218,7 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 
 	public void removeExisting(List<String> path) {
 		TargetObject existing = getModelObject(path);
-		// It had better be. This also checks for null
+		// It's best if the implementation has already removed it, but just in case....
 		if (existing == null) {
 			return;
 		}
@@ -230,15 +230,27 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		if (!path.equals(existing.getPath())) {
 			return; // Is a link
 		}
-		if (parent instanceof DefaultTargetObject<?, ?>) { // It had better be
-			DefaultTargetObject<?, ?> dtoParent = (DefaultTargetObject<?, ?>) parent;
-			if (PathUtils.isIndex(path)) {
-				dtoParent.changeElements(List.of(PathUtils.getIndex(path)), List.of(), "Replaced");
-			}
-			else {
-				assert PathUtils.isName(path);
-				dtoParent.changeAttributes(List.of(PathUtils.getKey(path)), Map.of(), "Replaced");
-			}
+		if (!(parent instanceof SpiTargetObject)) { // It had better be
+			Msg.error(this, "Could not remove existing object " + existing +
+				", because parent is not an SpiTargetObject");
+			return;
+		}
+		SpiTargetObject spiParent = (SpiTargetObject) parent;
+		SpiTargetObject delegate = spiParent.getDelegate();
+		if (!(delegate instanceof DefaultTargetObject<?, ?>)) { // It had better be :)
+			Msg.error(this, "Could not remove existing object " + existing +
+				", because its parent's delegate is not a DefaultTargetObject");
+			return;
+		}
+		DefaultTargetObject<?, ?> dtoParent = (DefaultTargetObject<?, ?>) delegate;
+		if (PathUtils.isIndex(path)) {
+			dtoParent.changeElements(List.of(PathUtils.getIndex(path)), List.of(),
+				"Replaced");
+		}
+		else {
+			assert PathUtils.isName(path);
+			dtoParent.changeAttributes(List.of(PathUtils.getKey(path)), Map.of(),
+				"Replaced");
 		}
 	}
 

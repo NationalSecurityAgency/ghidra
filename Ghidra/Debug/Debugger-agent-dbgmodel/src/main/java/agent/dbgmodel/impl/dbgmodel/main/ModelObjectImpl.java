@@ -906,6 +906,10 @@ public class ModelObjectImpl implements ModelObjectInternal {
 			String valueString = map.get("BaseAddress").getValueString();
 			return valueString;
 		}
+		if (map.containsKey("UniqueID") && map.containsKey("Id")) {
+			String valueString = map.get("Id").getValueString();
+			return valueString;
+		}
 		return key;
 	}
 

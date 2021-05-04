@@ -57,7 +57,7 @@ public class KeyEnumeratorImpl implements KeyEnumeratorInternal {
 		PointerByReference ppValue = new PointerByReference();
 		PointerByReference ppMetaData = new PointerByReference();
 		HRESULT hr = jnaData.GetNext(bref, ppValue, ppMetaData);
-		if (hr.equals(COMUtilsExtra.E_BOUNDS)) {
+		if (hr.equals(COMUtilsExtra.E_BOUNDS) || hr.equals(COMUtilsExtra.E_FAIL)) {
 			//System.err.println("ret null");
 			return null;
 		}

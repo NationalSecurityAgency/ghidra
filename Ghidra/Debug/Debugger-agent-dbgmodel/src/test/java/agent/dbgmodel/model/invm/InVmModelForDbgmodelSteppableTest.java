@@ -22,4 +22,5 @@ public class InVmModelForDbgmodelSteppableTest extends AbstractModelForDbgengSte
 	public ModelHost modelHost() throws Throwable {
 		return new InVmDbgmodelModelHost();
 	}
+
 }

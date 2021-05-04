@@ -125,12 +125,12 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 		if (trace != breaks.getTrace()) {
 			return Enablement.NONE;
 		}
-		return breaks.computeEnablement();
+		return ProgramEnablement.NONE.combineTrace(breaks.computeEnablement());
 	}
 
 	@Override
 	public Enablement computeEnablement() {
-		return breaks.computeEnablement();
+		return ProgramEnablement.NONE.combineTrace(breaks.computeEnablement());
 	}
 
 	@Override
