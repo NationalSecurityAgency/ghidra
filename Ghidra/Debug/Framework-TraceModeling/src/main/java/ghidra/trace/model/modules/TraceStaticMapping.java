@@ -23,11 +23,12 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceObject;
 
 /**
  * A mapped range from this trace to a Ghidra {@link Program}
  */
-public interface TraceStaticMapping {
+public interface TraceStaticMapping extends TraceObject {
 
 	/**
 	 * Get the "from" trace, i.e., the trace containing this mapping

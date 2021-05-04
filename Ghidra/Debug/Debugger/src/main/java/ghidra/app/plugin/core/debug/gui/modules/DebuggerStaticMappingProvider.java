@@ -19,7 +19,8 @@ import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -54,6 +55,7 @@ import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
+import ghidra.util.database.ObjectKey;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.table.GhidraTableFilterPanel;
 
@@ -95,6 +97,16 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		}
 	}
 
+	protected static class MappingTableModel
+			extends RowWrappedEnumeratedColumnTableModel< //
+					StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
+
+		public MappingTableModel() {
+			super("Mappings", StaticMappingTableColumns.class, TraceStaticMapping::getObjectKey,
+				StaticMappingRow::new);
+		}
+	}
+
 	protected class ListenerForStaticMappingDisplay extends TraceDomainObjectListener {
 		public ListenerForStaticMappingDisplay() {
 			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
@@ -107,11 +119,11 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		}
 
 		private void staticMappingAdded(TraceStaticMapping mapping) {
-			addMapping(mapping);
+			mappingTableModel.addItem(mapping);
 		}
 
 		private void staticMappingDeleted(TraceStaticMapping mapping) {
-			mappingTableModel.deleteWith(rec -> rec.getMapping() == mapping);
+			mappingTableModel.deleteItem(mapping);
 		}
 	}
 
@@ -135,8 +147,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 
 	private ListenerForStaticMappingDisplay listener = new ListenerForStaticMappingDisplay();
 
-	protected final EnumeratedColumnTableModel<StaticMappingRow> mappingTableModel =
-		new DefaultEnumeratedColumnTableModel<>("Mappings", StaticMappingTableColumns.class);
+	protected final MappingTableModel mappingTableModel = new MappingTableModel();
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 	protected GTable mappingTable;
@@ -187,23 +198,13 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		return myActionContext;
 	}
 
-	private void addMapping(TraceStaticMapping mapping) {
-		mappingTableModel.add(new StaticMappingRow(mapping));
-	}
-
-	private void addMappings(Collection<? extends TraceStaticMapping> entries) {
-		for (TraceStaticMapping ent : entries) {
-			addMapping(ent);
-		}
-	}
-
 	private void loadMappings() {
 		mappingTableModel.clear();
 		if (currentTrace == null) {
 			return;
 		}
 		TraceStaticMappingManager manager = currentTrace.getStaticMappingManager();
-		addMappings(manager.getAllEntries());
+		mappingTableModel.addAllItems(manager.getAllEntries());
 	}
 
 	protected void buildMainPanel() {

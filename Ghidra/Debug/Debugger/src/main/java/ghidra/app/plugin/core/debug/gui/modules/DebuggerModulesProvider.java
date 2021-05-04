@@ -64,6 +64,7 @@ import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.modules.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.database.ObjectKey;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -198,6 +199,25 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		return sections.iterator().next();
 	}
 
+	protected static class ModuleTableModel
+			extends RowWrappedEnumeratedColumnTableModel< //
+					ModuleTableColumns, ObjectKey, ModuleRow, TraceModule> {
+
+		public ModuleTableModel() {
+			super("Modules", ModuleTableColumns.class, TraceModule::getObjectKey, ModuleRow::new);
+		}
+	}
+
+	protected static class SectionTableModel
+			extends RowWrappedEnumeratedColumnTableModel< //
+					SectionTableColumns, ObjectKey, SectionRow, TraceSection> {
+
+		public SectionTableModel() {
+			super("Sections", SectionTableColumns.class, TraceSection::getObjectKey,
+				SectionRow::new);
+		}
+	}
+
 	protected static Set<TraceModule> getSelectedModules(ActionContext context) {
 		if (context instanceof DebuggerModuleActionContext) {
 			DebuggerModuleActionContext ctx = (DebuggerModuleActionContext) context;
@@ -253,54 +273,39 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 
 		private void moduleAdded(TraceModule module) {
-			moduleMap.computeIfAbsent(module, m -> {
-				ModuleRow mr = new ModuleRow(m);
-				moduleTableModel.add(mr);
-				return mr;
-			});/**
-				 * NOTE: No need to add sections here. A TraceModule is created empty, so when each
-				 * section is added, we'll get the call.
-				 */
+			moduleTableModel.addItem(module);
+			/**
+			 * NOTE: No need to add sections here. A TraceModule is created empty, so when each
+			 * section is added, we'll get the call.
+			 */
 		}
 
 		private void moduleChanged(TraceModule module) {
-			moduleTableModel.notifyUpdated(moduleMap.get(module));
+			moduleTableModel.updateItem(module);
 			sectionTableModel.fireTableDataChanged(); // Because module name in section row
 		}
 
 		private void moduleDeleted(TraceModule module) {
-			ModuleRow mr = moduleMap.remove(module);
-			if (mr != null) {
-				moduleTableModel.delete(mr);
-			}
+			moduleTableModel.deleteItem(module);
 			// NOTE: module.getSections() will be empty, now
-			for (Iterator<Entry<TraceSection, SectionRow>> it = sectionMap.entrySet().iterator(); it
-					.hasNext();) {
-				Entry<TraceSection, SectionRow> ent = it.next();
-				if (ent.getKey().getModule() == module) {
-					it.remove();
-					sectionTableModel.delete(ent.getValue());
-				}
-			}
+			sectionTableModel.deleteAllItems(sectionTableModel.getMap()
+					.values()
+					.stream()
+					.filter(r -> r.getModule() == module)
+					.map(r -> r.getSection())
+					.collect(Collectors.toList()));
 		}
 
 		private void sectionAdded(TraceSection section) {
-			sectionMap.computeIfAbsent(section, s -> {
-				SectionRow sr = new SectionRow(s);
-				sectionTableModel.add(sr);
-				return sr;
-			});
+			sectionTableModel.addItem(section);
 		}
 
 		private void sectionChanged(TraceSection section) {
-			sectionTableModel.notifyUpdated(sectionMap.get(section));
+			sectionTableModel.updateItem(section);
 		}
 
 		private void sectionDeleted(TraceSection section) {
-			SectionRow sr = sectionMap.remove(section);
-			if (sr != null) {
-				sectionTableModel.delete(sr);
-			}
+			sectionTableModel.deleteItem(section);
 		}
 	}
 
@@ -516,15 +521,11 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private final RecordersChangedListener recordersChangedListener =
 		new RecordersChangedListener();
 
-	protected final Map<TraceModule, ModuleRow> moduleMap = new HashMap<>();
-	protected final EnumeratedColumnTableModel<ModuleRow> moduleTableModel =
-		new DefaultEnumeratedColumnTableModel<>("Modules", ModuleTableColumns.class);
+	protected final ModuleTableModel moduleTableModel = new ModuleTableModel();
 	protected GhidraTable moduleTable;
 	private GhidraTableFilterPanel<ModuleRow> moduleFilterPanel;
 
-	protected final Map<TraceSection, SectionRow> sectionMap = new HashMap<>();
-	protected final EnumeratedColumnTableModel<SectionRow> sectionTableModel =
-		new DefaultEnumeratedColumnTableModel<>("Sections", SectionTableColumns.class);
+	protected final SectionTableModel sectionTableModel = new SectionTableModel();
 	protected GhidraTable sectionTable;
 	protected GhidraTableFilterPanel<SectionRow> sectionFilterPanel;
 	private final SectionsBySelectedModulesTableFilter filterSectionsBySelectedModules =
@@ -598,22 +599,16 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	private void loadModules() {
-		moduleMap.clear();
 		moduleTableModel.clear();
-
-		sectionMap.clear();
 		sectionTableModel.clear();
 
 		if (currentTrace == null) {
 			return;
 		}
+
 		TraceModuleManager moduleManager = currentTrace.getModuleManager();
-		for (TraceModule module : moduleManager.getAllModules()) {
-			moduleTableModel.add(moduleMap.computeIfAbsent(module, ModuleRow::new));
-			for (TraceSection section : module.getSections()) {
-				sectionTableModel.add(sectionMap.computeIfAbsent(section, SectionRow::new));
-			}
-		}
+		moduleTableModel.addAllItems(moduleManager.getAllModules());
+		sectionTableModel.addAllItems(moduleManager.getAllSections());
 	}
 
 	protected void buildMainPanel() {
@@ -1092,13 +1087,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	public void setSelectedModules(Set<TraceModule> sel) {
-		DebuggerResources.setSelectedRows(sel, moduleMap, moduleTable, moduleTableModel,
-			moduleFilterPanel);
+		DebuggerResources.setSelectedRows(sel, moduleTableModel::getRow, moduleTable,
+			moduleTableModel, moduleFilterPanel);
 	}
 
 	public void setSelectedSections(Set<TraceSection> sel) {
-		DebuggerResources.setSelectedRows(sel, sectionMap, sectionTable, sectionTableModel,
-			sectionFilterPanel);
+		DebuggerResources.setSelectedRows(sel, sectionTableModel::getRow, sectionTable,
+			sectionTableModel, sectionFilterPanel);
 	}
 
 	private DataTreeDialog getProgramChooserDialog() {
