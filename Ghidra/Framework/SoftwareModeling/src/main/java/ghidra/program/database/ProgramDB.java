@@ -190,7 +190,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private ProgramUserDataDB programUserData;
 	private Table table;
 	private Language language;
-	private ProgramCompilerSpec compilerSpec;
+	private CompilerSpec compilerSpec;
 
 	private LanguageID languageID;
 	private CompilerSpecID compilerSpecID;
@@ -219,8 +219,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws IOException {
 		super(new DBHandle(), name, 500, 1000, consumer);
 
+		if (!(compilerSpec instanceof BasicCompilerSpec)) {
+			throw new IllegalArgumentException(
+				"unsupported compilerSpec: " + compilerSpec.getClass().getName());
+		}
+
 		this.language = language;
-		this.compilerSpec = new ProgramCompilerSpec(this, compilerSpec);
+		this.compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this, compilerSpec);
 
 		languageID = language.getLanguageID();
 		compilerSpecID = compilerSpec.getCompilerSpecID();
@@ -245,7 +250,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			programUserData = new ProgramUserDataDB(this);
 			endTransaction(id, true);
 			clearUndo(false);
-			this.compilerSpec.registerProgramOptions();
+			registerCompilerSpecOptions();
 			getCodeManager().activateContextLocking();
 			success = true;
 		}
@@ -355,8 +360,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			endTransaction(id, true);
 			clearUndo(false);
 			SpecExtension.checkFormatVersion(this);
-			compilerSpec.installExtensions();
-			compilerSpec.registerProgramOptions();
+			installExtensions();
+			registerCompilerSpecOptions();
 			getCodeManager().activateContextLocking();
 			success = true;
 		}
@@ -397,7 +402,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			}
 			compilerSpecID = compilerSpec.getCompilerSpecID();
 		}
-		compilerSpec = new ProgramCompilerSpec(this, langSpec);
+		compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this, langSpec);
 	}
 
 	/**
@@ -1837,7 +1842,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			for (int i = 0; i < NUM_MANAGERS; i++) {
 				managers[i].invalidateCache(all);
 			}
-			compilerSpec.installExtensions();		// Reload any extensions
+			installExtensions(); // Reload any extensions
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -2053,7 +2058,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				}
 
 				if (newCompilerSpecID != null) {
-					compilerSpec = new ProgramCompilerSpec(this,
+					compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this,
 						language.getCompilerSpecByID(newCompilerSpecID));
 				}
 				compilerSpecID = compilerSpec.getCompilerSpecID();
@@ -2112,7 +2117,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				setChanged(true);
 				clearCache(true);
 				invalidate();
-
 			}
 			catch (Throwable t) {
 				throw new IllegalStateException(
@@ -2465,12 +2469,23 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * See {@link SpecExtension}.
 	 */
 	protected void installExtensions() {
+		if (!(compilerSpec instanceof ProgramCompilerSpec)) {
+			return;
+		}
 		lock.acquire();
 		try {
-			compilerSpec.installExtensions();
+			((ProgramCompilerSpec) compilerSpec).installExtensions();
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	private void registerCompilerSpecOptions() {
+		if (!(compilerSpec instanceof ProgramCompilerSpec)) {
+			throw new AssertException(
+				"unsupported compilerSpec: " + compilerSpec.getClass().getName());
+		}
+		((ProgramCompilerSpec) compilerSpec).registerProgramOptions();
 	}
 }

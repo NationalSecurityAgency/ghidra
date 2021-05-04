@@ -66,13 +66,9 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 	 * @param program is the Program
 	 * @param langSpec is the CompilerSpec from Language to base this on
 	 */
-	public ProgramCompilerSpec(Program program, CompilerSpec langSpec) {
-		super((BasicCompilerSpec) langSpec);
+	private ProgramCompilerSpec(Program program, BasicCompilerSpec langSpec) {
+		super(langSpec);
 		this.program = program;
-		if (langSpec instanceof ProgramCompilerSpec) {
-			throw new IllegalArgumentException(
-				"Cannot instantiate ProgramCompilerSpec from another ProgramCompilerSpec");
-		}
 	}
 
 	/**
@@ -370,5 +366,24 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Transition specified compiler specification langSpec into a program-specific 
+	 * one which supports extensions.  If the specified langSpec is not a {@link BasicCompilerSpec}
+	 * instance, the langSpec argument will be returned unmodified.
+	 * @param program program to which langSpec applies
+	 * @param langSpec initial compiler specification which does not support extensions.
+	 * @return compiler specification to be used with program
+	 */
+	static CompilerSpec getProgramCompilerSpec(Program program, CompilerSpec langSpec) {
+		if (langSpec instanceof ProgramCompilerSpec) {
+			throw new IllegalArgumentException(
+				"Cannot instantiate ProgramCompilerSpec from another ProgramCompilerSpec");
+		}
+		if (langSpec instanceof BasicCompilerSpec) {
+			return new ProgramCompilerSpec(program, (BasicCompilerSpec) langSpec);
+		}
+		return langSpec;
 	}
 }

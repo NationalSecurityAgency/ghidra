@@ -53,6 +53,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 		try {
 			SpecExtension specExtension = new SpecExtension(program);
 			specExtension.addReplaceCompilerSpecExtension(myfixup, TaskMonitor.DUMMY);
+			fail("expected exception");
 		}
 		catch (SleighException | XmlParseException | SAXException | LockException ex) {
 			errMessage = ex.getMessage();
@@ -80,13 +81,16 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 		myfixup = "<callfixup name=\"mynewthing\"> </badendtag>";
 		errMessage = null;
 		String subError = null;
+		setErrorsExpected(true);
 		try {
 			specExtension.testExtensionDocument(myfixup);
+			fail("expected exception");
 		}
 		catch (Exception e) {
 			errMessage = e.getMessage();
 			subError = e.getCause().getMessage();
 		}
+		setErrorsExpected(true);
 		assertTrue(errMessage.contains("Invalid compiler specification"));
 		assertTrue(subError.contains("must be terminated by the matching"));
 
@@ -95,6 +99,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 		errMessage = null;
 		try {
 			specExtension.testExtensionDocument(myfixup);
+			fail("expected exception");
 		}
 		catch (Exception e) {
 			errMessage = e.getMessage();
@@ -111,6 +116,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 		SpecExtension specExtension = new SpecExtension(program);
 		try {
 			specExtension.addReplaceCompilerSpecExtension(myfixup, TaskMonitor.DUMMY);
+			fail("expected exception");
 		}
 		catch (SleighException | XmlParseException | SAXException | LockException ex) {
 			errMessage = ex.getMessage();
@@ -139,7 +145,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 			specExtension.addReplaceCompilerSpecExtension(defaultString, TaskMonitor.DUMMY);
 		}
 		catch (LockException | SleighException | SAXException | XmlParseException ex) {
-			throw new AssertionError("Unexpected exception: " + ex.getMessage());
+			fail("Unexpected exception: " + ex.getMessage());
 		}
 		program.endTransaction(id1, true);
 		PrototypeModel myproto = cspec.getCallingConvention("myproto");
@@ -180,7 +186,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 			specExtension.removeCompilerSpecExtension("prototype_myproto", TaskMonitor.DUMMY);
 		}
 		catch (LockException | CancelledException ex) {
-			throw new AssertionError("Unexpected exception: " + ex.getMessage());
+			fail("Unexpected exception: " + ex.getMessage());
 		}
 		program.endTransaction(id2, true);
 		myproto = cspec.getCallingConvention("myproto");
@@ -203,7 +209,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 			specExtension.addReplaceCompilerSpecExtension(myfixup, TaskMonitor.DUMMY);
 		}
 		catch (LockException | SleighException | SAXException | XmlParseException ex) {
-			throw new AssertionError("Unexpected exception: " + ex.getMessage());
+			fail("Unexpected exception: " + ex.getMessage());
 		}
 		program.endTransaction(id1, true);
 		PcodeInjectLibrary library = program.getCompilerSpec().getPcodeInjectLibrary();
@@ -244,7 +250,7 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 			specExtension.removeCompilerSpecExtension("callfixup_mynewthing", TaskMonitor.DUMMY);
 		}
 		catch (LockException | CancelledException ex) {
-			throw new AssertionError("Unexpected exception: " + ex.getMessage());
+			fail("Unexpected exception: " + ex.getMessage());
 		}
 		program.endTransaction(id2, true);
 		programPayloads = library.getProgramPayloads();
