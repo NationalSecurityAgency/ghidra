@@ -1316,15 +1316,15 @@ public class DecompileCallback {
 		}
 		Data data = program.getListing().getDataContaining(addr);
 		Settings settings = SettingsImpl.NO_SETTINGS;
-		AbstractStringDataType dataType = null;
 		StringDataInstance stringInstance = null;
 		int length = 0;
 		if (data != null) {
-			if (data.getDataType() instanceof AbstractStringDataType) {
-				// There is already a string here.  Use its configuration to
+			if (data.getDataType() instanceof AbstractStringDataType ||
+					data.getDataType() instanceof Array) {
+				// There is already a string here, or there's a possible array of chars
+				// that can be seen as a string.  Use its configuration to
 				// set up the StringDataInstance
 				settings = data;
-				dataType = (AbstractStringDataType) data.getDataType();
 				length = data.getLength();
 				if (length <= 0) {
 					return null;
@@ -1336,13 +1336,20 @@ public class DecompileCallback {
 				}
 				length -= diff;
 				MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
-				stringInstance = dataType.getStringDataInstance(buf, settings, length);
+				if (data.getDataType() instanceof AbstractStringDataType) {
+					AbstractStringDataType dataType = (AbstractStringDataType) data.getDataType();
+					stringInstance = dataType.getStringDataInstance(buf, settings, length);
+				} else {
+					Array dataType = (Array) data.getDataType();
+					stringInstance = dataType.getStringDataInstance(buf, settings, length);
+				}
 			}
 		}
 		if (stringInstance == null) {
 			// There is no string and/or something else at the address.
 			// Setup StringDataInstance based on raw memory
 			DataType dt = dtmanage.findBaseType(dtName, dtId);
+			AbstractStringDataType dataType = null;
 			if (dt instanceof AbstractStringDataType) {
 				dataType = (AbstractStringDataType) dt;
 			}
