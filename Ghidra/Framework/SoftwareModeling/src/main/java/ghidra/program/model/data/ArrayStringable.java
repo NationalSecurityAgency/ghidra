@@ -45,9 +45,26 @@ public interface ArrayStringable extends DataType {
 	 * @param length length of array
 	 * @return array value expressed as a string or null if data is not character data
 	 */
-	public default String getArrayString(MemBuffer buf, Settings settings, int length) {
+	public default StringDataInstance getArrayStringInstance(MemBuffer buf, Settings settings, int length) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, length, true).getStringValue();
+			return new StringDataInstance(this, settings, buf, length, true);
+		}
+		return null;
+	}
+
+	/**
+	 * For cases where an array of this type exists, get the array value as a String.
+	 * When data corresponds to character data it should generally be expressed as a string.
+	 * A null value is returned if not supported or memory is uninitialized.
+	 * @param buf data buffer
+	 * @param settings data settings
+	 * @param length length of array
+	 * @return array value expressed as a string or null if data is not character data
+	 */
+	public default String getArrayString(MemBuffer buf, Settings settings, int length) {
+		StringDataInstance instance = getArrayStringInstance(buf, settings, length);
+		if (instance != null) {
+			return instance.getStringValue();
 		}
 		return null;
 	}
