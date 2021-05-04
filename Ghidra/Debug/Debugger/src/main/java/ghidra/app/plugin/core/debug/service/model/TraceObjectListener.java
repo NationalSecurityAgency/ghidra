@@ -25,6 +25,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils.PathComparator;
 import ghidra.util.Msg;
+import ghidra.util.datastruct.PrivatelyQueuedListener;
 
 public class TraceObjectListener implements DebuggerModelListener {
 
@@ -35,10 +36,15 @@ public class TraceObjectListener implements DebuggerModelListener {
 	protected final NavigableMap<List<String>, TargetObject> initialized =
 		new TreeMap<>(PathComparator.KEYED);
 	protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
+	protected final PrivatelyQueuedListener<DebuggerModelListener> queue;
 
 	public TraceObjectListener(TraceObjectManager manager) {
 		this.objectManager = manager;
 		this.target = objectManager.getTarget();
+
+		DefaultTraceRecorder recorder = objectManager.getRecorder();
+		this.queue = new PrivatelyQueuedListener<>(DebuggerModelListener.class,
+			recorder.privateQueue, reorderer);
 	}
 
 	public void init() {
@@ -47,7 +53,7 @@ public class TraceObjectListener implements DebuggerModelListener {
 				processInit(added);
 			}
 			DebuggerObjectModel model = target.getModel();
-			model.addModelListener(reorderer, true);
+			model.addModelListener(queue.in, true);
 		});
 	}
 
