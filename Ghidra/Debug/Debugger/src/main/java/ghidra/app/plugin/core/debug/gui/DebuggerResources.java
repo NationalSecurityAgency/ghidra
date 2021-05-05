@@ -645,6 +645,22 @@ public interface DebuggerResources {
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
+	
+	interface InterpreterInterruptAction {
+		String NAME = "Interpreter Interrupt";
+		String DESCRIPTION = "Send an interrupt through this Interpreter";
+		Icon ICON = ICON_TERMINATE;
+		String HELP_ANCHOR = "interrupt";
+
+		public static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(ownerName, NAME)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.keyBinding("CTRL I")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
 
 	abstract class AbstractRecordAction extends DockingAction {
 		public static final String NAME = "Record";
