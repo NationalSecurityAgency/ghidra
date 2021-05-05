@@ -1318,9 +1318,7 @@ public class DecompileCallback {
 		Settings settings = SettingsImpl.NO_SETTINGS;
 		StringDataInstance stringInstance = null;
 		int length = 0;
-		if (data != null) {
-			stringInstance = StringDataInstance.getStringDataInstance(data);
-		}
+		stringInstance = StringDataInstance.getStringDataInstance(data);
 		if (stringInstance == StringDataInstance.NULL_INSTANCE) {
 			// There is no string and/or something else at the address.
 			// Setup StringDataInstance based on raw memory
