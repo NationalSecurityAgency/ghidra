@@ -68,6 +68,7 @@ public class ObjectTree implements ObjectPane {
 
 	public ObjectTree(ObjectContainer container) {
 		this.root = new ObjectNode(this, null, container);
+		addToMap(null, container, root);
 		this.tree = new GTree(root);
 
 		this.listingService = container.getProvider().getListingService();
