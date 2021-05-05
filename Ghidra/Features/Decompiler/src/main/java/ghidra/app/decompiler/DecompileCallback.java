@@ -1319,32 +1319,9 @@ public class DecompileCallback {
 		StringDataInstance stringInstance = null;
 		int length = 0;
 		if (data != null) {
-			if (data.getDataType() instanceof AbstractStringDataType
-					|| data.getDataType() instanceof Array) {
-				// There is already a string here, or there is a possible array of chars.
-				// Use its configuration to set up the StringDataInstance.
-				settings = data;
-				length = data.getLength();
-				if (length <= 0) {
-					return null;
-				}
-				long diff = addr.subtract(data.getAddress()) *
-					addr.getAddressSpace().getAddressableUnitSize();
-				if (diff < 0 || diff >= length) {
-					return null;
-				}
-				length -= diff;
-				MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
-				if (data.getDataType() instanceof AbstractStringDataType) {
-					AbstractStringDataType dataType = (AbstractStringDataType) data.getDataType();
-					stringInstance = dataType.getStringDataInstance(buf, settings, length);
-				} else {
-					Array dataType = (Array) data.getDataType();
-					stringInstance = dataType.getStringDataInstance(buf, settings, length);
-				}
-			}
+			stringInstance = StringDataInstance.getStringDataInstance(data);
 		}
-		if (stringInstance == null) {
+		if (stringInstance == StringDataInstance.NULL_INSTANCE) {
 			// There is no string and/or something else at the address.
 			// Setup StringDataInstance based on raw memory
 			DataType dt = dtmanage.findBaseType(dtName, dtId);
