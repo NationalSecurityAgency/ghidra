@@ -21,7 +21,7 @@ define register offset=0x500 size=$(SIZE) [
 	s_i0 s_i1 s_i2 s_i3 s_i4 s_i5 s_fp s_i7
 ];
 
-define register offset=0x1000 size=$(SIZE) [ PC nPC ASR TICK Y CCR FPRS PCR PIC GSR SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR STICK STICK_CMPR ];
+define register offset=0x1000 size=$(SIZE) [ PC nPC ASR TICK Y CCR _ PCR PIC GSR SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR STICK STICK_CMPR ];
 
 define register offset=0x1100 size=$(SIZE) [
 	asr7  asr8  asr9  asr10 asr11 asr12 asr13 asr14 asr15
@@ -31,8 +31,11 @@ define register offset=0x1100 size=$(SIZE) [
                                       
 define register offset=0x3000 size=1 [ x_nf x_zf x_vf x_cf i_nf i_zf i_vf i_cf ];
 
-define register offset=0x4000 size=1 [ ASI _ _ _ _ _ _ _ fprs _ _ _ _ _ _ _ ];
-define register offset=0x4000 size=$(SIZE)  [ ASIext            fprsext ];
+define register offset=0x4000 size=$(SIZE)  [ ASIext ];
+define register offset=0x4000 size=1 [ ASI ];
+
+define register offset=0x4008 size=$(SIZE)  [ fprsext ];
+define register offset=0x4008 size=1 [ fprs ];
 
 define register offset=0x5000 size=2 [ fsr ];
 define register offset=0x5002 size=1 [ fcc0 fcc1 fcc2 fcc3 ];
