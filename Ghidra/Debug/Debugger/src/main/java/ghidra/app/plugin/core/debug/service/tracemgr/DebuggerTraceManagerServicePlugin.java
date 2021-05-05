@@ -618,7 +618,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		else if (event instanceof TraceRecorderAdvancedPluginEvent) {
 			TraceRecorderAdvancedPluginEvent ev = (TraceRecorderAdvancedPluginEvent) event;
-			TimedMsg.info(this, "Processing trace-advanced event");
+			TimedMsg.debug(this, "Processing trace-advanced event");
 			doTraceRecorderAdvanced(ev.getRecorder(), ev.getSnap());
 		}
 	}

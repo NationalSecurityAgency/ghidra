@@ -31,7 +31,6 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
-import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
@@ -139,37 +138,5 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 		dialog.textExpression.setText("RAX");
 
 		captureDialog(dialog);
-	}
-
-	@Test
-	public void testCaptureDebuggerModuleImportDialog() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
-			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			tb.trace.getMemoryManager()
-					.addRegion("libc:.text", Range.atLeast(0L), tb.range(0x7fac0000, 0x7facffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-
-			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
-						tb.range(0x00400000, 0x0040ffff), snap);
-			bin.addSection("bash[.text]", tb.range(0x00400000, 0x0040ffff));
-			TraceModule lib = tb.trace.getModuleManager()
-					.addLoadedModule("/lib/libc.so.6", "/lib/libc.so.6",
-						tb.range(0x7fac0000, 0x7facffff), snap);
-			lib.addSection("libc[.text]", tb.range(0x7fac0000, 0x7facffff));
-
-			traceManager.openTrace(tb.trace);
-			traceManager.activateTrace(tb.trace);
-
-			listingPlugin.goTo(tb.addr(0x7fac1234), true);
-			waitForSwing();
-			listingPlugin.goTo(tb.addr(0x00401234), true);
-			waitForSwing();
-
-			captureDialog(DebuggerModuleImportDialog.class);
-		}
 	}
 }

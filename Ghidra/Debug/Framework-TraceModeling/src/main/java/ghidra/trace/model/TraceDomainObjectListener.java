@@ -165,7 +165,7 @@ public class TraceDomainObjectListener implements DomainObjectListener {
 			for (DomainObjectChangeRecord rec : ev) {
 				if (rec.getEventType() == DomainObject.DO_OBJECT_RESTORED) {
 					restoredHandler.accept(rec);
-					TimedMsg.info(this, "  Done: OBJECT_RESTORED");
+					TimedMsg.debug(this, "  Done: OBJECT_RESTORED");
 					return;
 				}
 			}
