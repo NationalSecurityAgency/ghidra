@@ -275,7 +275,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 		Address start = program.getImageBase().add(irfeHeader.getVirtualAddress());
 
 		List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = fileHeader.getImageRuntimeFunctionEntries();
-		if (irfes == null) {
+
+		if (irfes.isEmpty()) {
 			return;
 		}
 
