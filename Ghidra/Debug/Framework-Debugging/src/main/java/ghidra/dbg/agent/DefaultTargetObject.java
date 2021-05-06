@@ -267,6 +267,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<E, E> setElements(Collection<? extends E> autoKeyed,
 			Map<String, ? extends E> mapKeyed, String reason) {
+		if (!valid) {
+			return Delta.empty();
+		}
 		Map<String, E> elements = combineElements(autoKeyed, mapKeyed);
 		return setElements(elements, reason);
 	}
@@ -292,6 +295,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	private Delta<E, E> setElements(Map<String, E> elements, String reason) {
 		Delta<E, E> delta;
 		synchronized (model.lock) {
+			if (!valid) {
+				return Delta.empty();
+			}
 			delta = Delta.computeAndSet(this.elements, elements, Delta.SAME);
 			getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
 			doInvalidateElements(delta.removed, reason);
@@ -318,6 +324,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<E, E> changeElements(Collection<String> remove, Collection<? extends E> autoKeyed,
 			Map<String, ? extends E> mapKeyed, String reason) {
+		if (!valid) {
+			return Delta.empty();
+		}
 		Map<String, E> add = combineElements(autoKeyed, mapKeyed);
 		return changeElements(remove, add, reason);
 	}
@@ -334,6 +343,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			String reason) {
 		Delta<E, E> delta;
 		synchronized (model.lock) {
+			if (!valid) {
+				return Delta.empty();
+			}
 			delta = Delta.apply(this.elements, remove, add, Delta.SAME);
 			getSchema().validateElementDelta(getPath(), delta, enforcesStrictSchema());
 			doInvalidateElements(delta.removed, reason);
@@ -449,6 +461,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<?, ?> setAttributes(Collection<? extends TargetObject> autoKeyed,
 			Map<String, ?> mapKeyed, String reason) {
+		if (!valid) {
+			return Delta.empty();
+		}
 		Map<String, ?> attributes = combineAttributes(autoKeyed, mapKeyed);
 		return setAttributes(attributes, reason);
 	}
@@ -470,6 +485,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	public Delta<?, ?> setAttributes(Map<String, ?> attributes, String reason) {
 		Delta<Object, ?> delta;
 		synchronized (model.lock) {
+			if (!valid) {
+				return Delta.empty();
+			}
 			delta = Delta.computeAndSet(this.attributes, attributes, Delta.EQUAL);
 			getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 			doInvalidateAttributes(delta.removed, reason);
@@ -497,6 +515,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 */
 	public Delta<?, ?> changeAttributes(List<String> remove,
 			Collection<? extends TargetObject> autoKeyed, Map<String, ?> mapKeyed, String reason) {
+		if (!valid) {
+			return Delta.empty();
+		}
 		Map<String, ?> add = combineAttributes(autoKeyed, mapKeyed);
 		return changeAttributes(remove, add, reason);
 	}
@@ -529,6 +550,9 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		// add = filterValid("Attribute", add);
 		Delta<Object, ?> delta;
 		synchronized (model.lock) {
+			if (!valid) {
+				return Delta.empty();
+			}
 			delta = Delta.apply(this.attributes, remove, add, Delta.EQUAL);
 			getSchema().validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 			doInvalidateAttributes(delta.removed, reason);

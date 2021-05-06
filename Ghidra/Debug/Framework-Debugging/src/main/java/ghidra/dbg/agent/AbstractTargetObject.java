@@ -99,8 +99,10 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 	protected void fireCreated() {
 		SpiTargetObject proxy = getProxy();
 		assert proxy != null;
-		model.objectCreated(proxy);
-		listeners.fire.created(proxy);
+		synchronized (model.lock) {
+			model.objectCreated(proxy);
+			listeners.fire.created(proxy);
+		}
 	}
 
 	/**
