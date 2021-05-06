@@ -171,9 +171,10 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		waitForDomainObject(tb.trace);
 
 		// First check that all records are displayed
-		List<StaticMappingRow> correlationsDisplayed =
+		waitForPass(() -> assertEquals(3, mappingsProvider.mappingTable.getRowCount()));
+		List<StaticMappingRow> mappingsDisplayed =
 			mappingsProvider.mappingTableModel.getModelData();
-		assertEquals(3, correlationsDisplayed.size());
+		assertEquals(3, mappingsDisplayed.size());
 
 		// Select and remove the first 2 via the action
 		// NOTE: I'm not responsible for making the transaction here. The UI should do it.
@@ -182,9 +183,9 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		waitForDomainObject(tb.trace);
 
 		// Now, check that only the final one remains
-		correlationsDisplayed = mappingsProvider.mappingTableModel.getModelData();
-		assertEquals(1, correlationsDisplayed.size());
-		StaticMappingRow record = correlationsDisplayed.get(0);
+		mappingsDisplayed = mappingsProvider.mappingTableModel.getModelData();
+		assertEquals(1, mappingsDisplayed.size());
+		StaticMappingRow record = mappingsDisplayed.get(0);
 		assertEquals(tb.addr(0xdeadbeef + 0x180), record.getTraceAddress());
 
 		// Check that they were removed from the trace as well

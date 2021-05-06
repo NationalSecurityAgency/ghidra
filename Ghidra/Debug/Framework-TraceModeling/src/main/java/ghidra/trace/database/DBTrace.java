@@ -525,19 +525,23 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@Override
 	public DBTraceProgramView getFixedProgramView(long snap) {
-		DBTraceProgramView view = fixedProgramViews.computeIfAbsent(snap, t -> {
-			Msg.debug(this, "Creating fixed view at snap=" + snap);
-			return new DBTraceProgramView(this, snap, baseCompilerSpec);
-		});
-		return view;
+		synchronized (fixedProgramViews) {
+			DBTraceProgramView view = fixedProgramViews.computeIfAbsent(snap, t -> {
+				Msg.debug(this, "Creating fixed view at snap=" + snap);
+				return new DBTraceProgramView(this, snap, baseCompilerSpec);
+			});
+			return view;
+		}
 	}
 
 	@Override
 	public DBTraceVariableSnapProgramView createProgramView(long snap) {
-		DBTraceVariableSnapProgramView view =
-			new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
-		programViews.put(view, null);
-		return view;
+		synchronized (programViews) {
+			DBTraceVariableSnapProgramView view =
+				new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
+			programViews.put(view, null);
+			return view;
+		}
 	}
 
 	@Override
@@ -675,10 +679,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	protected void allViews(Consumer<DBTraceProgramView> action) {
-		for (DBTraceProgramView view : programViews.keySet()) {
-			action.accept(view);
+		Collection<DBTraceProgramView> all = new ArrayList<>();
+		synchronized (programViews) {
+			all.addAll(programViews.keySet());
 		}
-		for (DBTraceProgramView view : fixedProgramViews.values()) {
+		synchronized (fixedProgramViews) {
+			all.addAll(fixedProgramViews.values());
+		}
+		for (DBTraceProgramView view : all) {
 			action.accept(view);
 		}
 	}

@@ -180,7 +180,6 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		actionNewListing = new NewListingAction();
 	}
 
-	@Override
 	public DebuggerListingProvider createListingIfMissing(LocationTrackingSpec spec,
 			boolean followsCurrentThread) {
 		synchronized (disconnectedProviders) {
@@ -331,7 +330,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 
 	@Override
 	public void setCurrentSelection(ProgramSelection selection) {
-		getListingPanel().setSelection(selection);
+		getConnectedProvider().setSelection(selection);
 	}
 
 	@Override

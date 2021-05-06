@@ -454,7 +454,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				return;
 			}
 			Set<TraceModule> modules = getSelectedModules(myActionContext);
-			if (modules.size() != 1) {
+			if (modules == null || modules.size() != 1) {
 				return;
 			}
 			TraceModule mod = modules.iterator().next();
