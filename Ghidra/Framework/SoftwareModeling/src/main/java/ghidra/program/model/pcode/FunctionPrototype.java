@@ -190,8 +190,9 @@ public class FunctionPrototype {
 		}
 		// if the callfixup has no fallthru, set the noreturn property too
 		Program program = f.getProgram();
-		InjectPayload callFixup = program.getCompilerSpec().getPcodeInjectLibrary().getPayload(
-			InjectPayload.CALLFIXUP_TYPE, fixupname, program, null);
+		InjectPayload callFixup = program.getCompilerSpec()
+				.getPcodeInjectLibrary()
+				.getPayload(InjectPayload.CALLFIXUP_TYPE, fixupname);
 		if (callFixup == null) {
 			return false;
 		}
@@ -369,8 +370,8 @@ public class FunctionPrototype {
 			if (sz != returnstorage.size()) {	// If the sizes do no match
 				logicalsize = sz;		// force the logical size on the varnode
 			}
-			String addrstring = Varnode.buildXMLAddress(returnstorage.getVarnodes(), logicalsize);
-			res.append(addrstring).append("\n   ");
+			AddressXML.buildXML(res, returnstorage.getVarnodes(), logicalsize);
+			res.append("\n   ");
 		}
 		else {
 			// Decompiler will use model for storage

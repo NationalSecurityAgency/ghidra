@@ -216,10 +216,10 @@ void SegmentOp::restoreXml(const Element *el)
       throw LowlevelError("Bad segment pattern tag: "+subel->getName());
   }
   if (injectId < 0)
-    throw LowlevelError("Missing <execute> child in <segmentop> tag");
+    throw LowlevelError("Missing <pcode> child in <segmentop> tag");
   InjectPayload *payload = glb->pcodeinjectlib->getPayload(injectId);
   if (payload->sizeOutput() != 1)
-    throw LowlevelError("<execute> child of <segmentop> tag must declare one <output>");
+    throw LowlevelError("<pcode> child of <segmentop> tag must declare one <output>");
   if (payload->sizeInput() == 1) {
     innerinsize = payload->getInput(0).getSize();
   }
@@ -228,7 +228,7 @@ void SegmentOp::restoreXml(const Element *el)
     innerinsize = payload->getInput(1).getSize();
   }
   else
-    throw LowlevelError("<execute> child of <segmentop> tag must declare one or two <input> tags");
+    throw LowlevelError("<pcode> child of <segmentop> tag must declare one or two <input> tags");
 }
 
 /// \param g is the Architecture owning this set of jump assist scripts

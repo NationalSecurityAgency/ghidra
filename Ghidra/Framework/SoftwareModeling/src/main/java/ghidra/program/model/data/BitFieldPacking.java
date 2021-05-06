@@ -42,5 +42,4 @@ public interface BitFieldPacking {
 	 * a zero-length bit-field
 	 */
 	int getZeroLengthBoundary();
-
 }

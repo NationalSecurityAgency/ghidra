@@ -284,7 +284,7 @@ void ArchitectureGhidra::buildSpecFile(DocumentStorage &store)
   istringstream cstream(cspecxml);
   doc = store.parseDocument(cstream);
   store.registerTag(doc->getRoot());
-  
+
   istringstream tstream(tspecxml);
   doc = store.parseDocument(tstream);
   store.registerTag(doc->getRoot());
@@ -293,10 +293,10 @@ void ArchitectureGhidra::buildSpecFile(DocumentStorage &store)
   doc = store.parseDocument(corestream);
   store.registerTag(doc->getRoot());
 
-  pspecxml = "";		// Strings aren't used again free memory
-  cspecxml = "";
-  tspecxml = "";
-  corespecxml = "";
+  pspecxml.clear();		// Strings aren't used again free memory
+  cspecxml.clear();
+  tspecxml.clear();
+  corespecxml.clear();
 }
 
 void ArchitectureGhidra::postSpecFile(void)

@@ -174,6 +174,10 @@ void RegisterProgram::rawAction(void)
     }
   }
   ghidra = new ArchitectureGhidra(pspec,cspec,tspec,corespec,sin,sout);
+  pspec.clear();
+  cspec.clear();
+  tspec.clear();
+  corespec.clear();
 
   DocumentStorage store;	// temp storage of initialization xml docs
   ghidra->init(store);
