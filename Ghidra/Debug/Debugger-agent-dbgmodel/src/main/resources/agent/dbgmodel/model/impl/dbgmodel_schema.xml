@@ -18,8 +18,8 @@
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-        <attribute name="_event_process" schema="STRING" hidden="yes" />
-        <attribute name="_event_thread" schema="STRING" hidden="yes" />
+        <attribute name="_event_process" schema="OBJECT" hidden="yes" />
+        <attribute name="_event_thread" schema="OBJECT" hidden="yes" />
         <attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" hidden="yes" />
         <attribute name="_focus" schema="OBJECT" required="yes" hidden="yes" />
         <attribute name="_system" schema="OBJECT" hidden="yes" />

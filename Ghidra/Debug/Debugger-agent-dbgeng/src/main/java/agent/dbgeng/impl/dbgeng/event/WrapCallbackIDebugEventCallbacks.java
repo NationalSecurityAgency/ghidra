@@ -103,8 +103,8 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		try {
 			DebugBreakpoint bpt = DebugBreakpointInternal
 					.tryPreferredInterfaces(client.getControlInternal(), Bp::QueryInterface);
-			cb.breakpoint(bpt);
-			return WinError.S_OK;
+			DebugStatus status = cb.breakpoint(bpt);
+			return new HRESULT(status.ordinal());
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
@@ -125,8 +125,8 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 					Exception.ExceptionFlags.intValue(), Exception.ExceptionRecord.longValue(),
 					Exception.ExceptionAddress.longValue(), information);
 			boolean firstChance = FirstChance.intValue() != 0;
-			cb.exception(exc, firstChance);
-			return WinError.S_OK;
+			DebugStatus status = cb.exception(exc, firstChance);
+			return new HRESULT(status.ordinal());
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);

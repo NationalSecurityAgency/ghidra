@@ -1622,6 +1622,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				if (visibleChange) {
 					container.propagateProvider(DebuggerObjectsProvider.this);
 					update(container);
+					getComponent().repaint();
 				}
 			}
 		}
@@ -1645,6 +1646,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				if (visibleChange) {
 					container.propagateProvider(DebuggerObjectsProvider.this);
 					update(container);
+					getComponent().repaint();
 				}
 			}
 			if (parent != null && isAutorecord() &&

@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.manager.DbgStackFrame;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
@@ -83,32 +83,12 @@ public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 	}
 	*/
 
-	@Override
-	public void onRunning() {
-		// NB: We don't want to do this apparently
-		//invalidateRegisterCaches();
-		setAccessible(false);
-	}
-
-	@Override
-	public void onStopped() {
-		setAccessible(true);
-		if (thread.getThread().getId().equals(getManager().getEventThread().getId())) {
-			update();
+	public void threadStateChangedSpecific(DbgState state, DbgReason reason) {
+		if (!state.equals(DbgState.RUNNING)) {
+			requestElements(true).exceptionally(e -> {
+				Msg.error(this, "Could not update stack " + this + " on STOPPED");
+				return null;
+			});
 		}
-	}
-
-	/**
-	 * Re-fetch the stack frames, generating events for updates
-	 * 
-	 * GDB doesn't produce stack change events, but they should only ever happen by running a
-	 * target. Thus, every time we're STOPPED, this method should be called.
-	 */
-	@Override
-	public void update() {
-		requestElements(true).exceptionally(e -> {
-			Msg.error(this, "Could not update stack " + this + " on STOPPED");
-			return null;
-		});
 	}
 }

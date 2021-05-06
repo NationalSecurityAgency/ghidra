@@ -30,12 +30,16 @@ import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "ProcessContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetProcessImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ProcessContainer",
+	elements = { //
+		@TargetElementType(type = DbgModelTargetProcessImpl.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcessContainer, DbgModelTargetConfigurable {
 
@@ -99,12 +103,20 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		if (modules != null) {
 			modules.libraryLoaded(info.toString());
 		}
+		DbgModelTargetMemoryContainer memory = process.getMemory();
+		if (memory != null) {
+			memory.requestElements(false);
+		}
 	}
 
 	@Override
 	public void moduleUnloaded(DbgProcess proc, DebugModuleInfo info, DbgCause cause) {
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		process.getModules().libraryUnloaded(info.toString());
+		DbgModelTargetMemoryContainer memory = process.getMemory();
+		if (memory != null) {
+			memory.requestElements(false);
+		}
 	}
 
 	@Override

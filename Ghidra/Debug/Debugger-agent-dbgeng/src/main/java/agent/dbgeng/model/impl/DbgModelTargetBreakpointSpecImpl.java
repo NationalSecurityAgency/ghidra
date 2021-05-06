@@ -28,19 +28,30 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
 
-@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = { //
-	@TargetAttributeType( //
+@TargetObjectSchemaInfo(
+	name = "BreakpointSpec",
+	attributes = { //
+		@TargetAttributeType( //
 			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, //
 			type = DbgModelTargetBreakpointContainerImpl.class), //
-	@TargetAttributeType( //
+		@TargetAttributeType( //
 			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
 			type = DbgModelTargetBreakpointSpecImpl.class), //
-	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_TYPE_ATTRIBUTE_NAME, type = String.class), //
-	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_DISP_ATTRIBUTE_NAME, type = String.class), //
-	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_PENDING_ATTRIBUTE_NAME, type = String.class), //
-	@TargetAttributeType(name = DbgModelTargetBreakpointSpecImpl.BPT_TIMES_ATTRIBUTE_NAME, type = Integer.class), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+		@TargetAttributeType(
+			name = DbgModelTargetBreakpointSpecImpl.BPT_TYPE_ATTRIBUTE_NAME,
+			type = String.class), //
+		@TargetAttributeType(
+			name = DbgModelTargetBreakpointSpecImpl.BPT_DISP_ATTRIBUTE_NAME,
+			type = String.class), //
+		@TargetAttributeType(
+			name = DbgModelTargetBreakpointSpecImpl.BPT_PENDING_ATTRIBUTE_NAME,
+			type = String.class), //
+		@TargetAttributeType(
+			name = DbgModelTargetBreakpointSpecImpl.BPT_TIMES_ATTRIBUTE_NAME,
+			type = Integer.class), //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetBreakpointSpec {
 
@@ -117,10 +128,9 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	/**
 	 * Update the enabled field
 	 * 
-	 * This does not actually toggle the breakpoint. It just updates the field
-	 * and calls the proper listeners. To actually toggle the breakpoint, use
-	 * {@link #toggle(boolean)} instead, which if effective, should eventually
-	 * cause this method to be called.
+	 * This does not actually toggle the breakpoint. It just updates the field and calls the proper
+	 * listeners. To actually toggle the breakpoint, use {@link #toggle(boolean)} instead, which if
+	 * effective, should eventually cause this method to be called.
 	 * 
 	 * @param enabled true if enabled, false if disabled
 	 * @param reason a description of the cause (not really used, yet)

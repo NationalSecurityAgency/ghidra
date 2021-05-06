@@ -580,7 +580,11 @@ public class WrappedDbgModel
 
 	@Override
 	public void setCurrentThreadId(DebugThreadId dti) {
-		client.getSystemObjects().setCurrentThreadId(dti);
+		DebugSystemObjects so = client.getSystemObjects();
+		DebugThreadId currentThreadId = so.getCurrentThreadId();
+		if (dti.id != currentThreadId.id) {
+			so.setCurrentThreadId(dti);
+		}
 		/*
 		if (USE_CLIENT) {
 			System.err.println("setCurrentThread");

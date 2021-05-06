@@ -227,9 +227,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				attrs.put(TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible);
 			}
 			if (proxy instanceof TargetExecutionStateful) {
-				TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
-				TargetExecutionState state = stateful.getExecutionState();
-				attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
+				if (isValid()) {
+					TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
+					TargetExecutionState state = stateful.getExecutionState();
+					attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
+				}
 			}
 			if (proxy instanceof TargetAttacher) {
 				attrs.put(TargetAttacher.SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME,
@@ -271,6 +273,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					memory = new DbgModelTargetMemoryContainerImpl((DbgModelTargetProcess) proxy);
 				}
 				attrs.put(memory.getName(), memory);
+				memory.requestElements(true);
 			}
 			if (proxy instanceof TargetThread) {
 				DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;

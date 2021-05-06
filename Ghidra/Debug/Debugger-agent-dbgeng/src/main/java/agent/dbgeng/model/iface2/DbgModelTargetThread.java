@@ -24,7 +24,7 @@ import agent.dbgeng.manager.cmd.DbgSetActiveThreadCommand;
 import agent.dbgeng.manager.impl.*;
 import agent.dbgeng.model.iface1.*;
 import agent.dbgeng.model.impl.DbgModelTargetStackImpl;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.util.PathUtils;
 
 public interface DbgModelTargetThread extends //
@@ -55,15 +55,6 @@ public interface DbgModelTargetThread extends //
 		}
 	}
 
-	public default void threadStateChangedSpecific(DbgState state, DbgReason reason) {
-		TargetRegisterContainer container =
-			(TargetRegisterContainer) getCachedAttribute("Registers");
-		TargetRegisterBank bank = (TargetRegisterBank) container.getCachedAttribute("User");
-		if (state.equals(DbgState.STOPPED)) {
-			bank.readRegistersNamed(getCachedElements().keySet());
-		}
-	}
-
 	@Override
 	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
@@ -74,5 +65,7 @@ public interface DbgModelTargetThread extends //
 	public DbgModelTargetStackImpl getStack();
 
 	public String getExecutingProcessorType();
+
+	public void threadStateChangedSpecific(DbgState state, DbgReason reason);
 
 }

@@ -114,8 +114,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus //
 			), "Focus changed");
 			intrinsics.put(TargetFocusScope.FOCUS_ATTRIBUTE_NAME, focus);
-			DbgModelTargetSession session = focus.getParentSession();
-			session.setActive();
+			//DbgModelTargetSession session = focus.getParentSession();
+			//session.setActive();
 		}
 		return doFire;
 	}
@@ -179,7 +179,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				System.err.println("processAdded - null");
 				return;
 			}
-			System.err.println("SERVER:processAdded: " + proc);
 			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 				"Process " + proc.getId() + " started " + "notepad.exe" + " pid=" + proc.getPid(),
 				List.of(targetProcess));
@@ -194,9 +193,11 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				System.err.println("threadCreated - null");
 				return;
 			}
-			System.err.println("SERVER:threadCreated: " + targetThread);
 			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
 				"Thread " + thread.getId() + " started", List.of(targetThread));
+			DelegateDbgModel2TargetObject delegate =
+				(DelegateDbgModel2TargetObject) targetThread.getDelegate();
+			delegate.threadStateChangedSpecific(DbgState.STARTING, DbgReason.Reasons.UNKNOWN);
 		});
 	}
 
@@ -212,6 +213,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
 					"Library " + info.getModuleName() + " loaded", List.of(mod));
 			});
+			getObject(getManager().getEventProcess()).thenAccept(p -> {
+				DbgModelTargetProcess eventProcess = (DbgModelTargetProcess) p;
+				DbgModel2TargetObjectImpl memory =
+					(DbgModel2TargetObjectImpl) eventProcess.getCachedAttribute("Memory");
+				memory.requestElements(false);
+			});
 		});
 	}
 
@@ -226,6 +233,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				TargetThread eventThread = (TargetThread) t;
 				getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
 					"Library " + info.getModuleName() + " unloaded", List.of(mod));
+			});
+			getObject(getManager().getEventProcess()).thenAccept(p -> {
+				DbgModelTargetProcess eventProcess = (DbgModelTargetProcess) p;
+				DbgModel2TargetObjectImpl memory =
+					(DbgModel2TargetObjectImpl) eventProcess.getCachedAttribute("Memory");
+				memory.requestElements(false);
 			});
 		});
 	}
@@ -335,6 +348,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (!process.getExecutionState().equals(TargetExecutionState.TERMINATED)) {
 				process.setExecutionState(TargetExecutionState.INACTIVE, "Detached");
 			}
+			DbgModelTargetObject container = (DbgModelTargetObject) process.getParent();
+			DelegateDbgModel2TargetObject delegate =
+				(DelegateDbgModel2TargetObject) container.getDelegate();
+			delegate.changeElements(List.of( //
+				process.getIndex() //
+			), List.of(), Map.of(), "Removed");
 			process.getParent().resync();
 		});
 	}
@@ -344,10 +363,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		DbgModelTargetProcess targetProcess =
 			(DbgModelTargetProcess) getModel().getModelObject(proc);
 		if (targetProcess != null) {
-			targetProcess.changeAttributes(List.of(), Map.of( //
-				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
-				DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME, proc.getExitCode() //
-			), "Exited");
+			if (targetProcess.isValid()) {
+				targetProcess.changeAttributes(List.of(), Map.of( //
+					TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
+					DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME, proc.getExitCode() //
+				), "Exited");
+			}
 			getListeners().fire.event(targetProcess.getProxy(), null,
 				TargetEventType.PROCESS_EXITED,
 				"Process " + proc.getId() + " exited code=" + proc.getExitCode(),
@@ -382,7 +403,9 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			TargetEventType eventType = getEventType(state, cause, reason);
 			getListeners().fire.event(getProxy(), targetThread, eventType,
 				"Thread " + thread.getId() + " state changed", List.of(targetThread));
-			targetThread.threadStateChangedSpecific(state, reason);
+			DelegateDbgModel2TargetObject delegate =
+				(DelegateDbgModel2TargetObject) targetThread.getDelegate();
+			delegate.threadStateChangedSpecific(state, reason);
 		});
 	}
 
@@ -417,7 +440,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	@Override
 	public void breakpointCreated(DbgBreakpointInfo info, DbgCause cause) {
-		int id = info.getDebugBreakpoint().getId();
+		int id = info.getId();
 		bptInfoMap.put(id, info);
 		getObjectRevisited(info.getProc(), List.of("Debug", "Breakpoints"), info);
 	}
@@ -425,7 +448,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 	@Override
 	public void breakpointModified(DbgBreakpointInfo newInfo, DbgBreakpointInfo oldInfo,
 			DbgCause cause) {
-		int id = newInfo.getDebugBreakpoint().getId();
+		int id = newInfo.getId();
 		bptInfoMap.put(id, newInfo);
 		getObjectRevisited(newInfo.getProc(), List.of("Debug", "Breakpoints"), newInfo);
 	}

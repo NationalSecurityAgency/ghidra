@@ -1016,6 +1016,19 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		recorder.requestFocus(focus);
 	}
 
+	public void activateNoFocusChange(DebuggerCoordinates coordinates) {
+		DebuggerCoordinates prev;
+		DebuggerCoordinates resolved;
+		synchronized (listenersByTrace) {
+			prev = current;
+			resolved = doSetCurrent(coordinates);
+		}
+		if (resolved == null) {
+			return;
+		}
+		prepareViewAndFireEvent(resolved);
+	}
+
 	@Override
 	public void activateTrace(Trace trace) {
 		activate(DebuggerCoordinates.trace(trace));
@@ -1028,7 +1041,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void activateSnap(long snap) {
-		activate(DebuggerCoordinates.snap(snap));
+		activateNoFocusChange(DebuggerCoordinates.snap(snap));
 	}
 
 	@Override

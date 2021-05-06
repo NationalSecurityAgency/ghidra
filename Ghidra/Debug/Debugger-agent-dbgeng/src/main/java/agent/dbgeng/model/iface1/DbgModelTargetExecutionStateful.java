@@ -43,9 +43,11 @@ public interface DbgModelTargetExecutionStateful
 	}
 
 	public default void setExecutionState(TargetExecutionState state, String reason) {
-		changeAttributes(List.of(), Map.of( //
-			STATE_ATTRIBUTE_NAME, state //
-		), reason);
+		if (isValid()) {
+			changeAttributes(List.of(), Map.of( //
+				STATE_ATTRIBUTE_NAME, state //
+			), reason);
+		}
 	}
 
 }
