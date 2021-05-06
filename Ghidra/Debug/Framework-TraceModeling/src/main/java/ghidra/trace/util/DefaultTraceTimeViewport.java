@@ -81,7 +81,12 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	protected final Trace trace;
 	protected final TraceTimeManager timeManager;
-	protected final List<Range<Long>> ordered = Collections.synchronizedList(new ArrayList<>());
+	/**
+	 * NB: This is the syncing object for the viewport. If there's even a chance an operation may
+	 * need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire the
+	 * DB lock.
+	 */
+	protected final List<Range<Long>> ordered = new ArrayList<>();
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
 	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
@@ -107,48 +112,54 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public boolean containsAnyUpper(Range<Long> range) {
-		synchronized (ordered) {
-			// NB. This should only ever visit the first range intersecting that given
-			for (Range<Long> intersecting : spanSet.subRangeSet(range).asRanges()) {
-				if (range.contains(intersecting.upperEndpoint())) {
-					return true;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				// NB. This should only ever visit the first range intersecting that given
+				for (Range<Long> intersecting : spanSet.subRangeSet(range).asRanges()) {
+					if (range.contains(intersecting.upperEndpoint())) {
+						return true;
+					}
 				}
+				return false;
 			}
-			return false;
 		}
 	}
 
 	@Override
 	public <T> boolean isCompletelyVisible(AddressRange range, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion) {
-		synchronized (ordered) {
-			for (Range<Long> rng : ordered) {
-				if (lifespan.contains(rng.upperEndpoint())) {
-					return true;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				for (Range<Long> rng : ordered) {
+					if (lifespan.contains(rng.upperEndpoint())) {
+						return true;
+					}
+					if (occlusion.occluded(object, range, rng)) {
+						return false;
+					}
 				}
-				if (occlusion.occluded(object, range, rng)) {
-					return false;
-				}
+				return false;
 			}
-			return false;
 		}
 	}
 
 	@Override
 	public <T> AddressSet computeVisibleParts(AddressSetView set, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion) {
-		if (!containsAnyUpper(lifespan)) {
-			return new AddressSet();
-		}
-		AddressSet remains = new AddressSet(set);
-		synchronized (ordered) {
-			for (Range<Long> rng : ordered) {
-				if (lifespan.contains(rng.upperEndpoint())) {
-					return remains;
-				}
-				occlusion.remove(object, remains, rng);
-				if (remains.isEmpty()) {
-					return remains;
+		try (LockHold hold = trace.lockRead()) {
+			if (!containsAnyUpper(lifespan)) {
+				return new AddressSet();
+			}
+			AddressSet remains = new AddressSet(set);
+			synchronized (ordered) {
+				for (Range<Long> rng : ordered) {
+					if (lifespan.contains(rng.upperEndpoint())) {
+						return remains;
+					}
+					occlusion.remove(object, remains, rng);
+					if (remains.isEmpty()) {
+						return remains;
+					}
 				}
 			}
 		}
@@ -231,7 +242,9 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	protected void refreshSnapRanges() {
 		RangeSet<Long> spanSet = TreeRangeSet.create();
 		List<Range<Long>> ordered = new ArrayList<>();
-		collectForkRanges(timeManager, snap, spanSet, ordered);
+		try (LockHold hold = trace.lockRead()) {
+			collectForkRanges(timeManager, snap, spanSet, ordered);
+		}
 		synchronized (this.ordered) {
 			this.spanSet.clear();
 			this.ordered.clear();
@@ -248,35 +261,41 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected boolean checkSnapshotAddedNeedsRefresh(TraceSnapshot snapshot) {
-		synchronized (ordered) {
-			if (snapshot.getSchedule() == null) {
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (snapshot.getSchedule() == null) {
+					return false;
+				}
+				if (spanSet.contains(snapshot.getKey())) {
+					return true;
+				}
 				return false;
 			}
-			if (spanSet.contains(snapshot.getKey())) {
-				return true;
-			}
-			return false;
 		}
 	}
 
 	protected boolean checkSnapshotChangedNeedsRefresh(TraceSnapshot snapshot) {
-		synchronized (ordered) {
-			if (isLower(snapshot.getKey())) {
-				return true;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (isLower(snapshot.getKey())) {
+					return true;
+				}
+				if (spanSet.contains(snapshot.getKey()) && snapshot.getSchedule() != null) {
+					return true;
+				}
+				return false;
 			}
-			if (spanSet.contains(snapshot.getKey()) && snapshot.getSchedule() != null) {
-				return true;
-			}
-			return false;
 		}
 	}
 
 	protected boolean checkSnapshotDeletedNeedsRefresh(TraceSnapshot snapshot) {
-		synchronized (ordered) {
-			if (isLower(snapshot.getKey())) {
-				return true;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (isLower(snapshot.getKey())) {
+					return true;
+				}
+				return false;
 			}
-			return false;
 		}
 	}
 
@@ -324,13 +343,15 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	public <T> Iterator<T> mergedIterator(Function<Long, Iterator<T>> iterFunc,
 			Comparator<? super T> comparator) {
 		List<Iterator<T>> iters;
-		synchronized (ordered) {
-			if (!isForked()) {
-				return iterFunc.apply(snap);
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (!isForked()) {
+					return iterFunc.apply(snap);
+				}
+				iters = ordered.stream()
+						.map(rng -> iterFunc.apply(rng.upperEndpoint()))
+						.collect(Collectors.toList());
 			}
-			iters = ordered.stream()
-					.map(rng -> iterFunc.apply(rng.upperEndpoint()))
-					.collect(Collectors.toList());
 		}
 		return new UniqIterator<>(new MergeSortingIterator<>(iters, comparator));
 	}
@@ -338,13 +359,15 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	@Override
 	public AddressSetView unionedAddresses(Function<Long, AddressSetView> viewFunc) {
 		List<AddressSetView> views;
-		synchronized (ordered) {
-			if (!isForked()) {
-				return viewFunc.apply(snap);
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (!isForked()) {
+					return viewFunc.apply(snap);
+				}
+				views = ordered.stream()
+						.map(rng -> viewFunc.apply(rng.upperEndpoint()))
+						.collect(Collectors.toList());
 			}
-			views = ordered.stream()
-					.map(rng -> viewFunc.apply(rng.upperEndpoint()))
-					.collect(Collectors.toList());
 		}
 		return new UnionAddressSetView(views);
 	}
