@@ -21,7 +21,7 @@ define register offset=0x500 size=$(SIZE) [
 	s_i0 s_i1 s_i2 s_i3 s_i4 s_i5 s_fp s_i7
 ];
 
-define register offset=0x1000 size=$(SIZE) [ PC nPC ASR TICK Y CCR FPRS PCR PIC GSR SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR STICK STICK_CMPR ];
+define register offset=0x1000 size=$(SIZE) [ PC nPC _ TICK Y CCR _ PCR PIC GSR SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR STICK STICK_CMPR ];
 
 define register offset=0x1100 size=$(SIZE) [
 	asr7  asr8  asr9  asr10 asr11 asr12 asr13 asr14 asr15
@@ -31,8 +31,8 @@ define register offset=0x1100 size=$(SIZE) [
                                       
 define register offset=0x3000 size=1 [ x_nf x_zf x_vf x_cf i_nf i_zf i_vf i_cf ];
 
-define register offset=0x4000 size=1 [ ASI _ _ _ _ _ _ _ fprs _ _ _ _ _ _ _ ];
-define register offset=0x4000 size=$(SIZE)  [ ASIext            fprsext ];
+define register offset=0x4000 size=1 [ ASI ];
+define register offset=0x4008 size=1 [ FPRS ];
 
 define register offset=0x5000 size=2 [ fsr ];
 define register offset=0x5002 size=1 [ fcc0 fcc1 fcc2 fcc3 ];
@@ -168,6 +168,7 @@ define token instr(32)
 	p        = (19,19)
 	rd       = (25,29)
 	rd_d     = (25,29)
+	rd_asr   = (25,29)
 	rd_zero  = (25,29)
 	fsrd     = (25,29)
 	fdrd     = (25,29)
@@ -176,7 +177,7 @@ define token instr(32)
 	op3      = (19,24)
 	rs1      = (14,18)
 	rs1_zero = (14,18)
-	rs1_3    = (14,18)
+	rs_asr   = (14,18)
 	prs1     = (14,18)
 	fsrs1    = (14,18)
 	fdrs1    = (14,18)
@@ -234,11 +235,6 @@ attach variables [ rd_d ] [
 @endif
 
 attach variables [ fccn fccn2 fccn_4 ] [ fcc0 fcc1 fcc2 fcc3 ];
-                                  
-attach variables [ rs1_3 ] [ Y     _          CCR   _   TICK        PC       _    asr7
-                             asr8  asr9       asr10 asr11 asr12       asr13       asr14   asr15
-                             PCR   PIC        asr18 GSR   SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR
-                             STICK STICK_CMPR asr26 asr27 asr28       asr29       asr30   asr31 ];
 
 #attach  names    [ rd rs1 rs2 ] [ "%g0" "%g1" "%g2" "%g3" "%g4" "%g5" "%g6" "%g7"
 #                                 "%o0" "%o1" "%o2" "%o3" "%o4" "%o5" "%sp" "%o7"
@@ -831,27 +827,39 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 :sra     RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x27 & x=0 & RS1 & reg_or_shcnt { tmp:4=RS1:4; rd=sext(tmp s>> reg_or_shcnt); }
 :srax    RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x27 & x=1 & RS1 & reg_or_shcnt { rd=RS1 s>> reg_or_shcnt; }
 
-rreg: "%ASI"   is  rs1_3=3 & i=0      { tmp:$(SIZE) = zext(ASI); export tmp; }
-rreg: "%fprs"  is  rs1_3=6 & i=0      { tmp:$(SIZE) = zext(fprs); export tmp; }
-rreg: "%ccr"   is  rs1_3=2 & i=0      { tmp:$(SIZE) = zext(CCR); export tmp; }
-rreg: PC       is  rs1_3=5 & PC & i=0 { export inst_start; }
-rreg: rs1_3    is  rs1_3 & i=0        { export rs1_3; }
+# ASR read registers (some ASR #s not permitted for rd: 1, 7..15, other #s handled by rd: 3, 5, 6)                        
+attach variables [ rs_asr ] [ Y     _          CCR   _     TICK        _           _       _
+                              _     _          _     _     _           _           _       _
+                              PCR   PIC        asr18 GSR   SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR
+                              STICK STICK_CMPR asr26 asr27 asr28       asr29       asr30   asr31 ];
+                             
+# ASR read registers
+rsASR: "%"^ASI   	is  rs_asr=3 & ASI	{ tmp:$(SIZE) = zext(ASI); export tmp; }
+rsASR: "%"^PC		is  rs_asr=5 & PC 	{ export inst_start; }
+rsASR: "%"^FPRS  	is  rs_asr=6 & FPRS	{ tmp:$(SIZE) = zext(FPRS); export tmp; }
+rsASR: "%"^rs_asr	is  rs_asr        	{ export rs_asr; }
 
-#---------------RD special register
-:rd rreg,rd                          is op=0x2 & rd & op3=0x28 & rreg & i=0 { rd = rreg; }
-:rd rreg,rd                          is op=0x2 & rd & op3=0x28 & rs1_3=2 & rreg & i=0 { packflags(rd); }
+#---------------RD ASR special register (STBAR instruction must be defined after this instruction)
+:rd rsASR,rd        is op=0x2 & rd & op3=0x28 & rsASR & i=0 { rd = rsASR; }
+:rd rsASR,rd        is op=0x2 & rd & op3=0x28 & rs_asr=2 & rsASR & i=0 { packflags(rd); } # packed CCR register displayed
 
-wrASI: "%ASI"  is rd=3 { }
+# ASR write registers (some ASR #s not permitted for wr: 1, 4, 5, 7..15, other #s handled by wr: 2, 3, 6)                          
+attach variables [ rd_asr ] [ Y     _          _     _     _           _           _       _
+                              _     _          _     _     _           _           _       _
+                              PCR   PIC        asr18 GSR   SOFTINT_SET SOFTINT_CLR SOFTINT TICK_CMPR
+                              STICK STICK_CMPR asr26 asr27 asr28       asr29       asr30   asr31 ];
+                             
+# ASR write registers
+wrCCR: "%"^CCR		is rd_asr=2 & CCR { } # packed CCR register displayed
+wrASI: "%"^ASI		is rd_asr=3 & ASI { }
+wrFPRS: "%"^FPRS	is rd_asr=6 & FPRS { }
 
-wrFPRS: "%fprs"  is rd=6 { }
-
-wrCCR:  "%ccr"  is rd=2 { }
-
-#---------------WR special register
-:wr regorimm,wrASI                   is op=0x2 & regorimm & op3=0x30 & rd=3 & wrASI { ASI = regorimm:1; }
-:wr regorimm,wrFPRS                  is op=0x2 & regorimm & op3=0x30 & rd=6 & wrFPRS { fprs = regorimm:1; }
-:wr regorimm,wrCCR                   is op=0x2 & regorimm & op3=0x30 & rd=2 & wrCCR { unpackflags(regorimm); }
-:wr regorimm,rd                      is op=0x2 & regorimm & op3=0x30 & rd { rd = regorimm; }
+#---------------WR ASR special register (SIR instruction must be defined after this instruction)
+# NOTE: the following ASR register numbers are not allowed: 1, 4, 5, 7..14
+:wr regorimm,wrCCR                   is op=0x2 & regorimm & op3=0x30 & rd_asr=2 & wrCCR { unpackflags(regorimm); }
+:wr regorimm,wrASI                   is op=0x2 & regorimm & op3=0x30 & rd_asr=3 & wrASI { ASI = regorimm:1; }
+:wr regorimm,wrFPRS                  is op=0x2 & regorimm & op3=0x30 & rd_asr=6 & wrFPRS { FPRS = regorimm:1; }
+:wr regorimm,rd_asr                  is op=0x2 & regorimm & op3=0x30 & rd_asr { rd_asr = regorimm; }
 
 #---------------MISC
 sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE) hi; }
@@ -1255,4 +1263,3 @@ fmovrcc: "gez"  is rcond3=0x7 & RS1 { tmp:1 = (RS1 f>= 0); export tmp; }
 
 # Include support for the VIS1 vector instructions
 @include "SparcVIS.sinc"
-
