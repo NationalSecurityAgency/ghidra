@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 // This script searches for image base offset references of size 32 and 64 to the current cursor
-// location. This script only works on programs of size 32 and 64.
+// location. This script only works on programs of size 32 and 64. The results are both printed to
+// the console and are presented in a table with two tabs, one for each size. To apply data types to
+// undefined ones that are found simply select the desired ones from the table then drag either the
+// ImageBaseOffset32 or ImageBaseOffset64 data type, whichever is applicable, onto the selection in 
+// the listing from the Data Type Manager.
+// 
 //@category Search
 
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.util.exception.CancelledException;
 
 public class SearchForImageBaseOffsetsScript extends GhidraScript {
+
+	static final int POINTER_BYTE_LEN_64BIT = 8;
+	static final int POINTER_BYTE_LEN_32BIT = 4;
+	static final byte BYTE_MASK = (byte) 0xff;
+	static final int BITS_PER_BYTE = 8;
 
 	@Override
 	public void run() throws Exception {
@@ -46,13 +56,19 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 
 		long currentAddressIbo = imageBaseOffset ^ currentAddressOffset;
 
-		byte searchBytes[] = createSearchArray(currentAddressIbo, 8, isBigEndian);
+		byte searchBytes[] =
+			createSearchArray(currentAddressIbo, POINTER_BYTE_LEN_64BIT, isBigEndian);
 		println("searching for possible ibo64 references to " + currentAddress.toString() + " ...");
-		searchForByteArray(searchBytes);
+		AddressSet ibo64refs = searchForByteArray(searchBytes);
+		printAddresses(ibo64refs);
 
-		searchBytes = createSearchArray(currentAddressIbo, 4, isBigEndian);
+		searchBytes = createSearchArray(currentAddressIbo, POINTER_BYTE_LEN_32BIT, isBigEndian);
 		println("searching for possible ibo32 references to " + currentAddress.toString() + " ...");
-		searchForByteArray(searchBytes);
+		AddressSet ibo32refs = searchForByteArray(searchBytes);
+		printAddresses(ibo32refs);
+
+		show("64-bit ImageBaseOffset References", ibo64refs);
+		show("32-bit ImageBaseOffset References", ibo32refs);
 
 	}
 
@@ -87,7 +103,7 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 
 		for (int i = 0; i < numBytes; i++) {
 			monitor.checkCanceled();
-			byteArray[i] = (byte) (value >> (8 * i) & 0xff);
+			byteArray[i] = (byte) (value >> (BITS_PER_BYTE * i) & BYTE_MASK);
 		}
 
 		return byteArray;
@@ -117,14 +133,29 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 	 * @param byteArray the given byte array
 	 * @throws CancelledException if cancelled
 	 */
-	private void searchForByteArray(byte[] byteArray) throws CancelledException {
+	private AddressSet searchForByteArray(byte[] byteArray) throws CancelledException {
+
+		AddressSet addressSet = new AddressSet();
+
 		Address start = currentProgram.getMinAddress();
 		Address found = find(start, byteArray);
 		while (found != null) {
 			monitor.checkCanceled();
-			println(found.toString());
+			addressSet.add(found);
 			start = found.add(1);
 			found = find(start, byteArray);
+		}
+
+		return addressSet;
+	}
+
+	private void printAddresses(AddressSet addressSet) throws CancelledException {
+
+		AddressIterator addresses = addressSet.getAddresses(true);
+		while (addresses.hasNext()) {
+			monitor.checkCanceled();
+			Address address = addresses.next();
+			println(address.toString());
 		}
 	}
 
