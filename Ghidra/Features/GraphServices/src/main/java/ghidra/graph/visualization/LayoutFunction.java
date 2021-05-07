@@ -41,10 +41,12 @@ class LayoutFunction
 	static final String CIRCLE = "Circle";
 	static final String TIDIER_TREE = "Compact Hierarchical";
 	static final String TIDIER_RADIAL_TREE = "Compact Radial";
+	static final String MIN_CROSS = "Hierarchical MinCross"; //not an alg, just a parent category
 	static final String MIN_CROSS_TOP_DOWN = "Hierarchical MinCross Top Down";
 	static final String MIN_CROSS_LONGEST_PATH = "Hierarchical MinCross Longest Path";
 	static final String MIN_CROSS_NETWORK_SIMPLEX = "Hierarchical MinCross Network Simplex";
 	static final String MIN_CROSS_COFFMAN_GRAHAM = "Hierarchical MinCross Coffman Graham";
+	static final String VERT_MIN_CROSS = "Vertical Hierarchical MinCross"; //not an alg, just a parent category
 	static final String VERT_MIN_CROSS_TOP_DOWN = "Vertical Hierarchical MinCross Top Down";
 	static final String VERT_MIN_CROSS_LONGEST_PATH = "Vertical Hierarchical MinCross Longest Path";
 	static final String VERT_MIN_CROSS_NETWORK_SIMPLEX = "Vertical Hierarchical MinCross Network Simplex";
@@ -52,7 +54,7 @@ class LayoutFunction
 	static final String TREE = "Hierarchical";
 	static final String RADIAL = "Radial";
 	static final String BALLOON = "Balloon";
-	static final String GEM = "Gem (Graph Embedder)";
+	static final String GEM = "GEM";
 
 	Predicate<AttributedEdge> favoredEdgePredicate;
 	Comparator<AttributedEdge> edgeTypeComparator;

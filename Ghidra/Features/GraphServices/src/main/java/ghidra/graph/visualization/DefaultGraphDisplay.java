@@ -755,14 +755,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			ActionState<String> state = new ActionState<>(layoutName,
 				DefaultDisplayGraphIcons.LAYOUT_ALGORITHM_ICON, layoutName);
 
-			if (layoutName.contains("Vertical Hierarchical MinCross")) {
-				layoutName = "Vertical Hierarchical MinCross";
+			// condense hierarchical action help to the top-level help description
+			String anchor = layoutName;
+			if (layoutName.contains(LayoutFunction.VERT_MIN_CROSS)) {
+				anchor = LayoutFunction.VERT_MIN_CROSS;
 			}
-			else if (layoutName.contains("Hierarchical MinCross")) {
-				layoutName = "Hierarchical MinCross";
+			else if (layoutName.contains(LayoutFunction.MIN_CROSS)) {
+				anchor = LayoutFunction.MIN_CROSS;
 			}
 
-			state.setHelpLocation(new HelpLocation(ACTION_OWNER, layoutName));
+			state.setHelpLocation(new HelpLocation(ACTION_OWNER, anchor));
 			actionStates.add(state);
 		}
 		return actionStates;
