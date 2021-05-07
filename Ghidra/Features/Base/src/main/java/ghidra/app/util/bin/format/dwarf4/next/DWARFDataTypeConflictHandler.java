@@ -172,19 +172,46 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 				!SystemUtilities.isEqual(fullDTCAt.getFieldName(), partDTC.getFieldName())) {
 				return false;
 			}
-			DataType partDT = partDTC.getDataType();
-			DataType fullDT = fullDTCAt.getDataType();
-			if (doRelaxedCompare(partDT, fullDT, visitedDataTypes) == RENAME_AND_ADD) {
+			if (!isMemberFieldPartiallyCompatible(fullDTCAt, partDTC, visitedDataTypes)) {
 				return false;
 			}
 		}
 		if ( part.getFlexibleArrayComponent() != null ) {
-			return full.getFlexibleArrayComponent() != null
-					&& doRelaxedCompare(part.getFlexibleArrayComponent().getDataType(),
-							full.getFlexibleArrayComponent().getDataType(), visitedDataTypes) != RENAME_AND_ADD;
+			return full.getFlexibleArrayComponent() != null &&
+				isMemberFieldPartiallyCompatible(full.getFlexibleArrayComponent(),
+					part.getFlexibleArrayComponent(), visitedDataTypes);
 		}
 
 		return true;
+	}
+
+	boolean isMemberFieldPartiallyCompatible(DataTypeComponent fullDTC, DataTypeComponent partDTC,
+			Set<Long> visitedDataTypes) {
+		DataType partDT = partDTC.getDataType();
+		DataType fullDT = fullDTC.getDataType();
+		ConflictResult dtCompResult = doRelaxedCompare(partDT, fullDT, visitedDataTypes);
+		switch (dtCompResult) {
+			case RENAME_AND_ADD:
+				// The data type of the field in the 'full' structure is completely
+				// different than the field in the 'part' structure, therefore
+				// the candidate 'part' structure is not a partial definition of the full struct
+				return false;
+			case REPLACE_EXISTING:
+				// Return true (meaning the field from the 'full' struct is the same or better
+				// than the field from the 'part' structure) if the components are size compatible.
+				// This is an intentionally fuzzy match to allow structures with fields
+				// that are generally the same at a binary level to match.
+				// For example, the same structure defined in 2 separate compile units with
+				// slightly different types for the field (due to different compiler options
+				// or versions or languages)
+				return fullDTC.getLength() >= partDTC.getLength();
+			case USE_EXISTING:
+			default:
+				// the data type of the field in the 'full' structure is the same as
+				// or a better version of the field in the 'part' structure.
+				return true;
+		}
+
 	}
 
 	private DataTypeComponent getBitfieldByOffsets(Structure full, DataTypeComponent partDTC) {
