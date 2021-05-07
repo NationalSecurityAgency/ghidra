@@ -62,7 +62,7 @@ if ("win64".equals(getCurrentPlatformName())) {
 		def projectPath = projectDir.toString()
 		def solutionBatchFilePath = projectPath + "/build/buildSolution.bat"
 		def projectPathWindows = projectPath.replace("/", File.separator)
-		def solutionPathWindows = "${projectPathWindows}\\src\\pdb\\pdb.sln"
+		def solutionPathWindows = "\"${projectPathWindows}\\src\\pdb\\pdb.sln\""
 		
 		doFirst {
 			file("build/os/win64").mkdirs()
