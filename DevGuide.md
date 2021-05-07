@@ -127,9 +127,9 @@ directory populated with the following files:
  * flatRepo/hfsx.jar
  * flatRepo/hfsx_dmglib.jar
  * flatRepo/iharder-base64.jar
- * cdt-8.6.0.zip
- * PyDev 6.3.1.zip
- * yajsw-stable-12.12.zip
+ * GhidraDev/cdt-8.6.0.zip
+ * GhidraDev/PyDev 6.3.1.zip
+ * GhidraServer/yajsw-stable-12.12.zip
  * fidb/*.fidb
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
