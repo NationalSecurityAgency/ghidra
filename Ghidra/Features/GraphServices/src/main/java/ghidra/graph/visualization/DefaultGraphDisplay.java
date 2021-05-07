@@ -51,7 +51,6 @@ import org.jungrapht.visualization.renderers.Renderer;
 import org.jungrapht.visualization.renderers.Renderer.VertexLabel;
 import org.jungrapht.visualization.renderers.Renderer.VertexLabel.Position;
 import org.jungrapht.visualization.selection.MutableSelectedState;
-import org.jungrapht.visualization.selection.VertexEndpointsSelectedEdgeSelectedState;
 import org.jungrapht.visualization.transform.*;
 import org.jungrapht.visualization.transform.shape.MagnifyImageLensSupport;
 import org.jungrapht.visualization.transform.shape.MagnifyShapeTransformer;
@@ -755,6 +754,14 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		for (String layoutName : names) {
 			ActionState<String> state = new ActionState<>(layoutName,
 				DefaultDisplayGraphIcons.LAYOUT_ALGORITHM_ICON, layoutName);
+
+			if (layoutName.contains("Vertical Hierarchical MinCross")) {
+				layoutName = "Vertical Hierarchical MinCross";
+			}
+			else if (layoutName.contains("Hierarchical MinCross")) {
+				layoutName = "Hierarchical MinCross";
+			}
+
 			state.setHelpLocation(new HelpLocation(ACTION_OWNER, layoutName));
 			actionStates.add(state);
 		}
