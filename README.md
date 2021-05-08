@@ -53,7 +53,7 @@ repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
 
 ##### Download additional build dependencies into source repository: 
 ```
-$ gradle -I gradle/support/fetchDependencies init
+$ gradle -I gradle/support/fetchDependencies.gradle init
 ```
 
 ##### Create development build: 
