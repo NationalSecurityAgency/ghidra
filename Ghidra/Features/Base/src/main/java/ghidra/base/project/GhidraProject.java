@@ -158,7 +158,6 @@ public class GhidraProject {
 			return null;
 		}
 		try {
-			boolean exists = false;
 			for (String name : repositoryServer.getRepositoryNames()) {
 				if (name.equals(repositoryName)) {
 					return repositoryServer.getRepository(repositoryName);
