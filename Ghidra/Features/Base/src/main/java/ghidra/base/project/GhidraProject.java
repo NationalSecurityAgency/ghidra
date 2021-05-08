@@ -161,14 +161,12 @@ public class GhidraProject {
 			boolean exists = false;
 			for (String name : repositoryServer.getRepositoryNames()) {
 				if (name.equals(repositoryName)) {
-					exists = true;
-					break;
+					return repositoryServer.getRepository(repositoryName);
 				}
 			}
-			if (exists) {
-				return repositoryServer.getRepository(repositoryName);
+			if(createIfNeeded) {
+			    return repositoryServer.createRepository(repositoryName);
 			}
-			return repositoryServer.createRepository(repositoryName);
 		}
 		catch (NotConnectedException e) {
 			Msg.error(GhidraProject.class, "Unexpected exception getting server repository", e);
