@@ -206,12 +206,11 @@ public class ListenerMap<K, P, V extends P> {
 	 * 
 	 * @param iface the interface to multiplex
 	 */
-	@SuppressWarnings("unchecked")
 	public ListenerMap(Class<P> iface, Executor executor) {
 		this.iface = Objects.requireNonNull(iface);
 		this.executor = executor;
-		this.fire = (P) Proxy.newProxyInstance(this.getClass().getClassLoader(),
-			new Class[] { iface }, new ListenerHandler<>(iface));
+		this.fire = iface.cast(Proxy.newProxyInstance(this.getClass().getClassLoader(),
+			new Class[] { iface }, new ListenerHandler<>(iface)));
 	}
 
 	@Override

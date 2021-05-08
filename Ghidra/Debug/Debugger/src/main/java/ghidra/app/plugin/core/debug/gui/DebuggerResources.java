@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.debug.gui;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.*;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 
@@ -641,6 +642,22 @@ public interface DebuggerResources {
 			return new ToggleActionBuilder(ownerName, NAME)
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+	
+	interface InterpreterInterruptAction {
+		String NAME = "Interpreter Interrupt";
+		String DESCRIPTION = "Send an interrupt through this Interpreter";
+		Icon ICON = ICON_TERMINATE;
+		String HELP_ANCHOR = "interrupt";
+
+		public static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(ownerName, NAME)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.keyBinding("CTRL I")
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1560,11 +1577,11 @@ public interface DebuggerResources {
 		};
 	}
 
-	static <V, R> void setSelectedRows(Set<V> sel, Map<V, R> rowMap, GTable table,
+	static <V, R> void setSelectedRows(Set<V> sel, Function<V, R> rowMapper, GTable table,
 			RowObjectTableModel<R> model, GTableFilterPanel<R> filterPanel) {
 		table.clearSelection();
 		for (V v : sel) {
-			R row = rowMap.get(v);
+			R row = rowMapper.apply(v);
 			if (row == null) {
 				continue;
 			}

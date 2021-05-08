@@ -940,31 +940,36 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		if (toURL == null) {
 			noProject();
 		}
-		try {
-			Address start = from.getAddress();
-			Address end = start.addNoWrap(length - 1);
-			// Also check end in the destination
-			Address toAddress = to.getByteAddress();
-			toAddress.addNoWrap(length - 1); // Anticipate possible AddressOverflow
-			AddressRangeImpl range = new AddressRangeImpl(start, end);
-			if (truncateExisting) {
-				long truncEnd = DBTraceUtils.lowerEndpoint(from.getLifespan()) - 1;
-				for (TraceStaticMapping existing : List
-						.copyOf(manager.findAllOverlapping(range, from.getLifespan()))) {
-					existing.delete();
-					if (Long.compareUnsigned(existing.getStartSnap(), truncEnd) < 0) {
-						manager.add(existing.getTraceAddressRange(),
-							Range.closed(existing.getStartSnap(), truncEnd),
-							existing.getStaticProgramURL(), existing.getStaticAddress());
-					}
+		Address fromAddress = from.getAddress();
+		Address toAddress = to.getByteAddress();
+		long maxFromLengthMinus1 =
+			fromAddress.getAddressSpace().getMaxAddress().subtract(fromAddress);
+		long maxToLengthMinus1 =
+			toAddress.getAddressSpace().getMaxAddress().subtract(toAddress);
+		if (Long.compareUnsigned(length - 1, maxFromLengthMinus1) > 0) {
+			throw new IllegalArgumentException("Length would cause address overflow in trace");
+		}
+		if (Long.compareUnsigned(length - 1, maxToLengthMinus1) > 0) {
+			throw new IllegalArgumentException("Length would cause address overflow in program");
+		}
+		Address end = fromAddress.addWrap(length - 1);
+		// Also check end in the destination
+		AddressRangeImpl range = new AddressRangeImpl(fromAddress, end);
+		Range<Long> fromLifespan = from.getLifespan();
+		if (truncateExisting) {
+			long truncEnd = DBTraceUtils.lowerEndpoint(fromLifespan) - 1;
+			for (TraceStaticMapping existing : List
+					.copyOf(manager.findAllOverlapping(range, fromLifespan))) {
+				existing.delete();
+				if (fromLifespan.hasLowerBound() &&
+					Long.compare(existing.getStartSnap(), truncEnd) <= 0) {
+					manager.add(existing.getTraceAddressRange(),
+						Range.closed(existing.getStartSnap(), truncEnd),
+						existing.getStaticProgramURL(), existing.getStaticAddress());
 				}
 			}
-			manager.add(range, from.getLifespan(), toURL,
-				toAddress.toString(true));
 		}
-		catch (AddressOverflowException e) {
-			throw new IllegalArgumentException("Length would cause address overflow", e);
-		}
+		manager.add(range, fromLifespan, toURL, toAddress.toString(true));
 	}
 
 	@Override

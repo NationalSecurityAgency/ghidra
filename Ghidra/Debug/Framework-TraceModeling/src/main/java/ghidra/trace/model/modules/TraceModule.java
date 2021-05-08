@@ -21,6 +21,7 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceObject;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -29,7 +30,7 @@ import ghidra.util.exception.DuplicateNameException;
  * <p>
  * This also serves as a namespace for storing the module's sections.
  */
-public interface TraceModule {
+public interface TraceModule extends TraceObject {
 
 	/**
 	 * Get the trace containing this module

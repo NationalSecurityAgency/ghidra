@@ -13,29 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.table;
+package ghidra.trace.model;
 
-import java.util.*;
-import java.util.function.Predicate;
+import ghidra.util.database.ObjectKey;
 
-public interface EnumeratedColumnTableModel<R> extends RowObjectTableModel<R> {
-	interface RowIterator<R> extends ListIterator<R> {
-		void notifyUpdated();
-	}
-
-	void add(R row);
-
-	void addAll(Collection<R> c);
-
-	void notifyUpdated(R row);
-
-	List<R> notifyUpdatedWith(Predicate<R> predicate);
-
-	void delete(R row);
-
-	List<R> deleteWith(Predicate<R> predicate);
-
-	R findFirst(Predicate<R> predicate);
-
-	public void clear();
+public interface TraceObject {
+	/**
+	 * Get an opaque unique id for this object, whose hash is immutable
+	 * 
+	 * @return the opaque object id
+	 */
+	ObjectKey getObjectKey();
 }

@@ -23,28 +23,21 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.ObjectKey;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A breakpoint in a trace
  */
-public interface TraceBreakpoint {
+public interface TraceBreakpoint extends TraceObject {
 
 	/**
-	 * Get the trace containning this breakpoint
+	 * Get the trace containing this breakpoint
 	 * 
 	 * @return the trace
 	 */
 	Trace getTrace();
-
-	/**
-	 * Get an opaque unique id for this object, whose hash is immutable
-	 * 
-	 * @return the opaque object id
-	 */
-	ObjectKey getObjectKey();
 
 	/**
 	 * Get the "full name" of this breakpoint

@@ -214,11 +214,6 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 	}
 
 	@Override
-	public RowIterator<R> rowIterator() {
-		return new TableRowIterator();
-	}
-
-	@Override
 	public void notifyUpdated(R row) {
 		int rowIndex = modelData.indexOf(row);
 		fireTableRowsUpdated(rowIndex, rowIndex);

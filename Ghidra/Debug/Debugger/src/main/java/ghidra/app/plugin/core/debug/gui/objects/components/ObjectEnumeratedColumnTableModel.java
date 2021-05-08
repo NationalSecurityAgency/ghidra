@@ -215,11 +215,6 @@ public class ObjectEnumeratedColumnTableModel<C extends ObjectsEnumeratedTableCo
 	}
 
 	@Override
-	public RowIterator<R> rowIterator() {
-		return new TableRowIterator();
-	}
-
-	@Override
 	public void notifyUpdated(R row) {
 		int rowIndex = modelData.indexOf(row);
 		fireTableRowsUpdated(rowIndex, rowIndex);

@@ -154,8 +154,8 @@ public class DBTraceMemoryRegion
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			this.name = name;
 			update(NAME_COLUMN);
+			space.trace.updateViewsChangeBlockName(this);
 		}
-		space.trace.updateViewsChangeBlockName(this);
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
 	}
@@ -218,8 +218,8 @@ public class DBTraceMemoryRegion
 			oldRange = range;
 			checkOverlapConflicts(lifespan, newRange);
 			doSetRange(newRange);
+			space.trace.updateViewsChangeBlockRange(this, oldRange, newRange);
 		}
-		space.trace.updateViewsChangeBlockRange(this, oldRange, newRange);
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
 	}
@@ -278,8 +278,8 @@ public class DBTraceMemoryRegion
 				this.flags.add(f);
 			}
 			update(FLAGS_COLUMN);
+			space.trace.updateViewsChangeBlockFlags(this);
 		}
-		space.trace.updateViewsChangeBlockFlags(this);
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
 	}
@@ -293,8 +293,8 @@ public class DBTraceMemoryRegion
 				this.flags.add(f);
 			}
 			update(FLAGS_COLUMN);
+			space.trace.updateViewsChangeBlockFlags(this);
 		}
-		space.trace.updateViewsChangeBlockFlags(this);
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
 	}
@@ -308,8 +308,8 @@ public class DBTraceMemoryRegion
 				this.flags.remove(f);
 			}
 			update(FLAGS_COLUMN);
+			space.trace.updateViewsChangeBlockFlags(this);
 		}
-		space.trace.updateViewsChangeBlockFlags(this);
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
 	}

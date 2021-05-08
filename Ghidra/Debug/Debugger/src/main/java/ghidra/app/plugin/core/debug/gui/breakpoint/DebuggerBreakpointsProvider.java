@@ -971,14 +971,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	public void setSelectedBreakpoints(Set<LogicalBreakpoint> sel) {
-		DebuggerResources.setSelectedRows(sel, breakpointTableModel.getMap(), breakpointTable,
+		DebuggerResources.setSelectedRows(sel, breakpointTableModel::getRow, breakpointTable,
 			breakpointTableModel, breakpointFilterPanel);
 	}
 
 	public void setSelectedLocations(Set<TraceBreakpoint> sel) {
-		DebuggerResources.setSelectedRows(
-			sel.stream().map(b -> b.getObjectKey()).collect(Collectors.toSet()),
-			locationTableModel.getMap(), locationTable,
+		DebuggerResources.setSelectedRows(sel, locationTableModel::getRow, locationTable,
 			locationTableModel, locationFilterPanel);
 	}
 }

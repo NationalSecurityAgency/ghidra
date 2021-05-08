@@ -31,12 +31,13 @@ import com.google.common.collect.Range;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
-import docking.widgets.table.*;
+import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.SelectRowsAction;
+import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.model.DomainObject;
@@ -51,6 +52,7 @@ import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
@@ -112,6 +114,16 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	protected static class RegionTableModel
+			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
+					RegionTableColumns, ObjectKey, RegionRow, TraceMemoryRegion> {
+
+		public RegionTableModel() {
+			super("Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
+				RegionRow::new);
+		}
+	}
+
 	protected static RegionRow getSelectedRegionRow(ActionContext context) {
 		if (!(context instanceof DebuggerRegionActionContext)) {
 			return null;
@@ -150,26 +162,15 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		}
 
 		private void regionAdded(TraceMemoryRegion region) {
-			regionMap.computeIfAbsent(region, r -> {
-				RegionRow rr = new RegionRow(r);
-				regionTableModel.add(rr);
-				return rr;
-			});
-			/**
-			 * NOTE: No need to add sections here. A TraceModule is created empty, so when each
-			 * section is added, we'll get the call.
-			 */
+			regionTableModel.addItem(region);
 		}
 
 		private void regionChanged(TraceMemoryRegion region) {
-			regionTableModel.notifyUpdated(regionMap.get(region));
+			regionTableModel.updateItem(region);
 		}
 
 		private void regionDeleted(TraceMemoryRegion region) {
-			RegionRow rr = regionMap.remove(region);
-			if (rr != null) {
-				regionTableModel.delete(rr);
-			}
+			regionTableModel.deleteItem(region);
 		}
 	}
 
@@ -222,9 +223,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	private final RegionsListener regionsListener = new RegionsListener();
 
-	protected final Map<TraceMemoryRegion, RegionRow> regionMap = new HashMap<>();
-	protected final EnumeratedColumnTableModel<RegionRow> regionTableModel =
-		new DefaultEnumeratedColumnTableModel<>("Regions", RegionTableColumns.class);
+	protected final RegionTableModel regionTableModel = new RegionTableModel();
 	protected GhidraTable regionTable;
 	private GhidraTableFilterPanel<RegionRow> regionFilterPanel;
 
@@ -262,16 +261,13 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	private void loadRegions() {
-		regionMap.clear();
 		regionTableModel.clear();
 
 		if (currentTrace == null) {
 			return;
 		}
 		TraceMemoryManager memoryManager = currentTrace.getMemoryManager();
-		for (TraceMemoryRegion region : memoryManager.getAllRegions()) {
-			regionTableModel.add(regionMap.computeIfAbsent(region, RegionRow::new));
-		}
+		regionTableModel.addAllItems(memoryManager.getAllRegions());
 	}
 
 	protected void buildMainPanel() {
@@ -376,8 +372,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	public void setSelectedRegions(Set<TraceMemoryRegion> sel) {
-		DebuggerResources.setSelectedRows(sel, regionMap, regionTable, regionTableModel,
-			regionFilterPanel);
+		DebuggerResources.setSelectedRows(sel, regionTableModel::getRow, regionTable,
+			regionTableModel, regionFilterPanel);
 	}
 
 	public Collection<RegionRow> getSelectedRows() {

@@ -222,6 +222,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
+		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
 
 		modulesProvider.setSelectedSections(Set.of(secExeText));
 		performAction(modulesProvider.actionMapSections, false);
@@ -349,6 +350,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			addBlock(); // So the program has a size
 		}
 		waitForDomainObject(program);
+		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
 
 		modulesProvider.setSelectedModules(Set.of(modExe));
 		waitForSwing();
@@ -411,6 +413,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
+		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
 
 		modulesProvider.setSelectedSections(Set.of(secExeText));
 		waitForSwing();
@@ -470,6 +473,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing(); // NOTE: The table may select first by default, enabling action
+		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
+		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
 		modulesProvider.setSelectedModules(Set.of(modExe));
 		waitForSwing();
 		assertTrue(modulesProvider.actionSelectAddresses.isEnabled());
@@ -608,12 +613,18 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			modExe.setName("/bin/echo"); // File has to exist
 		}
+		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
+
 		modulesProvider.setSelectedModules(Set.of(modExe));
 		waitForSwing();
 		performAction(modulesProvider.actionImportFromFileSystem, false);
 
 		GhidraFileChooser dialog = waitForDialogComponent(GhidraFileChooser.class);
 		dialog.close();
+	}
+
+	protected Set<SectionRow> visibleSections() {
+		return Set.copyOf(modulesProvider.sectionFilterPanel.getTableFilterModel().getModelData());
 	}
 
 	@Test
@@ -623,35 +634,29 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		addModules();
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
+		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
+		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
 
-		Set<SectionRow> visible =
-			Set.copyOf(modulesProvider.sectionFilterPanel.getTableFilterModel().getModelData());
-		assertEquals(4, visible.size());
+		assertEquals(4, visibleSections().size());
 
 		modulesProvider.setSelectedModules(Set.of(modExe));
 		waitForSwing();
 
-		visible =
-			Set.copyOf(modulesProvider.sectionFilterPanel.getTableFilterModel().getModelData());
-		assertEquals(4, visible.size());
+		assertEquals(4, visibleSections().size());
 
 		assertTrue(modulesProvider.actionFilterSectionsByModules.isEnabled());
 		performAction(modulesProvider.actionFilterSectionsByModules);
 		waitForSwing();
 
-		visible =
-			Set.copyOf(modulesProvider.sectionFilterPanel.getTableFilterModel().getModelData());
-		assertEquals(2, visible.size());
-		for (SectionRow row : visible) {
+		assertEquals(2, visibleSections().size());
+		for (SectionRow row : visibleSections()) {
 			assertEquals(modExe, row.getModule());
 		}
 
 		modulesProvider.setSelectedModules(Set.of());
 		waitForSwing();
 
-		visible =
-			Set.copyOf(modulesProvider.sectionFilterPanel.getTableFilterModel().getModelData());
-		assertEquals(4, visible.size());
+		waitForPass(() -> assertEquals(4, visibleSections().size()));
 	}
 
 	protected static final Set<String> POPUP_ACTIONS = Set.of(
@@ -693,6 +698,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		addModules();
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
+		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
 
 		clickTableCellWithButton(modulesProvider.sectionTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
