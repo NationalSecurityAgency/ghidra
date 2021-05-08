@@ -363,7 +363,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return this size 
 	 */
 	public int getLength() {
-		if (viewComposite != null && !viewComposite.isNotYetDefined()) {
+		if (viewComposite != null && !viewComposite.isZeroLength()) {
 			return viewComposite.getLength();
 		}
 		return 0;
@@ -1386,8 +1386,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	protected void selectionChanged() {
 
 		updatingSelection(() -> {
-			for (int i = 0; i < modelListeners.size(); i++) {
-				CompositeViewerModelListener listener = modelListeners.get(i);
+			for (CompositeViewerModelListener listener : modelListeners) {
 				listener.selectionChanged();
 			}
 		});
@@ -1411,8 +1410,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 */
 	protected <T> void notify(List<T> listeners, Consumer<T> method) {
 		swing(() -> {
-			for (int i = 0; i < listeners.size(); i++) {
-				T listener = listeners.get(i);
+			for (T listener : listeners) {
 				method.accept(listener);
 			}
 		});

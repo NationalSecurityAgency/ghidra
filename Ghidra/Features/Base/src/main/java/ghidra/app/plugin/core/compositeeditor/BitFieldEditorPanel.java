@@ -41,7 +41,7 @@ import resources.ResourceManager;
 
 /**
  * <code>BitFieldEditorPanel</code> provides the ability to add or modify bitfields
- * within unaligned structures.
+ * within non-packed structures.
  */
 public class BitFieldEditorPanel extends JPanel {
 
@@ -81,9 +81,9 @@ public class BitFieldEditorPanel extends JPanel {
 		super();
 		this.composite = composite;
 
-		if (composite.isInternallyAligned()) {
+		if (composite.isPackingEnabled()) {
 			// A different bitfield editor should be used for aligned composites
-			throw new IllegalArgumentException("composite must be unaligned");
+			throw new IllegalArgumentException("composite must be non-packed");
 		}
 
 		setLayout(new VerticalLayout(5));
@@ -169,7 +169,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 			int offset = placementComponent.getAllocationOffset();
 			decrementButton.setEnabled(offset > 0);
-			int length = composite.isNotYetDefined() ? 0 : composite.getLength();
+			int length = composite.isZeroLength() ? 0 : composite.getLength();
 			incrementButton.setEnabled(offset < length);
 		}
 	}

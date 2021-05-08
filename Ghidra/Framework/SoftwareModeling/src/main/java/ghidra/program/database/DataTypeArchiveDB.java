@@ -201,7 +201,9 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	@Override
 	protected void close() {
 		super.close();
-		dataTypeManager.dispose();
+		if (dataTypeManager != null) {
+			dataTypeManager.dispose();
+		}
 	}
 
 	@Override
@@ -283,11 +285,15 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 * notification the a data type has changed
 	 * @param dataTypeID the id of the data type that changed.
 	 * @param type the type of the change (moved, renamed, etc.)
+	 * @param isAutoResponseChange true if change is an auto-response change caused by 
+	 * another datatype's change (e.g., size, alignment), else false in which case this
+	 * change will be added to archive change-set to aid merge conflict detection.
 	 * @param oldValue the old data type.
 	 * @param newValue the new data type.
 	 */
-	public void dataTypeChanged(long dataTypeID, int type, Object oldValue, Object newValue) {
-		if (recordChanges) {
+	public void dataTypeChanged(long dataTypeID, int type, boolean isAutoResponseChange,
+			Object oldValue, Object newValue) {
+		if (recordChanges && !isAutoResponseChange) {
 			((DataTypeArchiveDBChangeSet) changeSet).dataTypeChanged(dataTypeID);
 		}
 		changed = true;

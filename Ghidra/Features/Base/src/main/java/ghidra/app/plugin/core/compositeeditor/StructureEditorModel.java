@@ -25,7 +25,6 @@ import docking.widgets.dialogs.InputDialogListener;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.docking.settings.SettingsImpl;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.Msg;
@@ -201,17 +200,7 @@ class StructureEditorModel extends CompEditorModel {
 
 	@Override
 	public int getNumComponents() {
-		if (viewComposite == null) {
-			return 0;
-		}
-		if (isShowingUndefinedBytes()) {
-			if (viewComposite.isNotYetDefined()) {
-				return 0;
-			}
-			return viewComposite.getNumComponents();
-		}
-		DataTypeComponent[] definedComponents = ((Structure) viewComposite).getDefinedComponents();
-		return definedComponents.length;
+		return viewComposite == null ? 0 : viewComposite.getNumComponents();
 	}
 
 	@Override
@@ -252,14 +241,14 @@ class StructureEditorModel extends CompEditorModel {
 
 	@Override
 	protected boolean isSizeEditable() {
-		return !isAligned();
+		return !isPackingEnabled();
 	}
 
 	void setStructureSize(int size) {
 		if (viewComposite == null) {
 			return;
 		}
-		int currentLength = viewComposite.isNotYetDefined() ? 0 : viewComposite.getLength();
+		int currentLength = viewComposite.isZeroLength() ? 0 : viewComposite.getLength();
 		if (currentLength == size) {
 			return;
 		}
@@ -449,8 +438,8 @@ class StructureEditorModel extends CompEditorModel {
 		DataTypeComponent comp = deleteComponentAndResidual(startIndex - 1);
 
 		try {
-			if (!isAligned() && comp.isBitFieldComponent()) {
-				// insert residual undefined bytes before inserting unaligned bitfield
+			if (!isPackingEnabled() && comp.isBitFieldComponent()) {
+				// insert residual undefined bytes before inserting non-packed bitfield
 				int lenChange = len - getLength();
 				insert(endIndex, DataType.DEFAULT, 1, lenChange, TaskMonitor.DUMMY);
 			}
@@ -485,8 +474,8 @@ class StructureEditorModel extends CompEditorModel {
 		DataTypeComponent comp = deleteComponentAndResidual(endIndex + 1);
 
 		try {
-			if (!isAligned() && comp.isBitFieldComponent()) {
-				// insert residual undefined bytes before inserting unaligned bitfield
+			if (!isPackingEnabled() && comp.isBitFieldComponent()) {
+				// insert residual undefined bytes before inserting non-packed bitfield
 				int lenChange = len - getLength();
 				insert(startIndex, DataType.DEFAULT, 1, lenChange, TaskMonitor.DUMMY);
 			}
@@ -507,7 +496,7 @@ class StructureEditorModel extends CompEditorModel {
 		DataTypeComponent comp = getComponent(index);
 		deleteComponent(index);
 
-		if (isAligned() || !comp.isBitFieldComponent() || index >= getNumComponents()) {
+		if (isPackingEnabled() || !comp.isBitFieldComponent() || index >= getNumComponents()) {
 			return comp;
 		}
 
@@ -627,7 +616,7 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
+	public void deleteSelectedComponents() throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
@@ -646,7 +635,7 @@ class StructureEditorModel extends CompEditorModel {
 			selectionChanged();
 			return;
 		}
-		super.deleteSelectedComponents(monitor);
+		super.deleteSelectedComponents();
 	}
 
 	@Override
@@ -660,14 +649,14 @@ class StructureEditorModel extends CompEditorModel {
 		int rowIndex = getRow();
 		DataTypeComponent comp = getComponent(rowIndex);
 		DataType dt = comp.getDataType();
-		if (viewComposite.isInternallyAligned()) {
+		if (viewComposite.isPackingEnabled()) {
 			return true;
 		}
 		if (dt.equals(DataType.DEFAULT)) {
 			return true; // Insert an undefined and push everything down.
 		}
 		if (comp.isBitFieldComponent()) {
-			return false; // unable to place unaligned bitfield in a reasonable fashion
+			return false; // unable to place non-packed bitfield in a reasonable fashion
 		}
 		// Can always duplicate at the end.
 		if (isAtEnd(rowIndex) || onlyUndefinedsUntilEnd(rowIndex + 1)) {
@@ -956,7 +945,7 @@ class StructureEditorModel extends CompEditorModel {
 					dtc.getComment());
 			}
 			else {
-				if (isAligned() || !(dataType instanceof BitFieldDataType)) {
+				if (isPackingEnabled() || !(dataType instanceof BitFieldDataType)) {
 					dtc = ((Structure) viewComposite).insert(rowIndex, dataType, length, name,
 						comment);
 				}
@@ -1175,40 +1164,8 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void setAligned(boolean aligned) {
-		boolean currentViewIsAligned = viewComposite.isInternallyAligned();
-		if (currentViewIsAligned == aligned) {
-			return;
-		}
-		viewComposite.setInternallyAligned(aligned);
-		if (fixSelection()) {
-			selectionChanged();
-		}
-		notifyCompositeChanged();
-	}
-
-	public void adjustAlignment(PluginTool tool, int minAlignment) {
-		int currentViewAlignment = viewComposite.getMinimumAlignment();
-		if (currentViewAlignment == minAlignment) {
-			return;
-		}
-		viewComposite.setMinimumAlignment(minAlignment);
-		notifyCompositeChanged();
-	}
-
-	@Override
-	public void setAlignment(int minAlignment) throws InvalidInputException {
-		int currentViewAlignment = viewComposite.getMinimumAlignment();
-		if (currentViewAlignment == minAlignment) {
-			return;
-		}
-		viewComposite.setMinimumAlignment(minAlignment);
-		notifyCompositeChanged();
-	}
-
-	@Override
 	public boolean isShowingUndefinedBytes() {
-		return !viewComposite.isInternallyAligned();
+		return !viewComposite.isPackingEnabled();
 	}
 
 	public void createInternalStructure(TaskMonitor monitor)
@@ -1259,7 +1216,7 @@ class StructureEditorModel extends CompEditorModel {
 		final StructureDataType structureDataType =
 			new StructureDataType(originalCategoryPath, uniqueName, length, originalDTM);
 
-//		if (isAligned()) {
+//		if (isPackingEnabled()) {
 //			structureDataType.setPackingValue(getPackingValue());
 //		}
 
@@ -1281,7 +1238,7 @@ class StructureEditorModel extends CompEditorModel {
 
 			length += compLength;
 
-			if (!structureDataType.isInternallyAligned() && component.isBitFieldComponent()) {
+			if (!structureDataType.isPackingEnabled() && component.isBitFieldComponent()) {
 				BitFieldDataType bitfield = (BitFieldDataType) dt;
 				structureDataType.insertBitFieldAt(component.getOffset() - firstDtc.getOffset(),
 					compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
@@ -1296,8 +1253,8 @@ class StructureEditorModel extends CompEditorModel {
 			lastDtc = component;
 		}
 		DataType addedDataType = createDataTypeInOriginalDTM(structureDataType);
-		if (viewComposite.isInternallyAligned()) {
-			deleteSelectedComponents(monitor);
+		if (viewComposite.isPackingEnabled()) {
+			deleteSelectedComponents();
 			insert(minRow, addedDataType, addedDataType.getLength());
 		}
 		else {
@@ -1434,7 +1391,7 @@ class StructureEditorModel extends CompEditorModel {
 					DataTypeComponent dtc = struct.getComponent(i);
 					DataType dt = dtc.getDataType();
 					int compLength = dtc.getLength();
-					if (!isAligned()) {
+					if (!isPackingEnabled()) {
 						if (dtc.isBitFieldComponent()) {
 							BitFieldDataType bitfield = (BitFieldDataType) dt;
 							viewStruct.insertBitFieldAt(currentOffset + dtc.getOffset(), compLength,

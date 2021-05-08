@@ -64,16 +64,20 @@ public interface DataType {
 	public Settings getDefaultSettings();
 
 	/**
-	 * Returns a new instance of this DataType with its universalID and SourceArchive identity retained.
-	 * Note: for built-in DataType's, clone and copy should have the same affect.
+	 * Returns an instance of this DataType with its universalID and SourceArchive identity retained.
+	 * The current instanceof will be returned if this datatype's DataTypeManager matches 
+	 * the specified dtm. The recursion depth of a clone will stop on any datatype whose
+	 * DataTypeManager matches the specified dtm and simply use the existing datatype instance.
 	 * @param dtm the data-type manager instance whose data-organization should apply.
+	 * @return cloned instance which may be the same as this instance
 	 */
 	public DataType clone(DataTypeManager dtm);
 
 	/**
-	 * Returns a new instance of this DataType with a new identity.
-	 * Note: for built-in DataType's, clone and copy should have the same affect.
+	 * Returns a new instance (shallow copy) of this DataType with a new identity. 
+	 * Any reference to other datatypes will use {@link #clone(DataTypeManager)}.
 	 * @param dtm the data-type manager instance whose data-organization should apply.
+	 * @return new instanceof of this datatype
 	 */
 	public DataType copy(DataTypeManager dtm);
 
@@ -91,12 +95,14 @@ public interface DataType {
 
 	/**
 	 * @param path set the categoryPath associated with this data type
-	 * @throws DuplicateNameException
+	 * @throws DuplicateNameException if an attempt to place this datatype into the 
+	 * specified category resulted in a name collision.  This should not occur for non-DB 
+	 * DataType instances.
 	 */
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException;
 
 	/**
-	 * Returns the DataTypeManager that is associated with this dataType.
+	 * @return the DataTypeManager that is associated with this dataType.
 	 * This association should not be used to indicate whether this DataType has been 
 	 * resolved, but is intended to indicate whether the appropriate DataOrganization
 	 * is being used.
@@ -110,13 +116,13 @@ public interface DataType {
 	public String getDisplayName();
 
 	/**
-	 * Return that name of the data type
+	 * @return the name of this data type
 	 */
 	public String getName();
 
 	/**
-	 * Returns the full category path name that includes this dataType's name.  If
-	 * the category is null, then this just returns the dataType's name.
+	 * @return the full category path name that includes this dataType's name.  If
+	 * the category is null, then this just the dataType's name is returned.
 	 */
 	public String getPathName();
 
@@ -144,7 +150,7 @@ public interface DataType {
 
 	/**
 	 * Get the mnemonic for this DataType.
-	 *
+	 * @param settings settings which may influence the result or null
 	 * @return the mnemonic for this DataType.
 	 */
 	public String getMnemonic(Settings settings);
@@ -154,6 +160,17 @@ public interface DataType {
 	 * @return the length of this DataType
 	 */
 	public int getLength();
+
+	/**
+	 * Indicates is this datatype is defined with a zero length.
+	 * This method should not be confused with {@link #isNotYetDefined()}
+	 * which indicates that nothing but the name and basic type is known.
+	 * NOTE: Support for zero-length datatypes is not yet fully supported, as a result
+	 * they will generally return a non-zero length.
+	 * @return true if type definition has a length of 0 even though it may report
+	 * a length of 1, else false.  
+	 */
+	public boolean isZeroLength();
 
 	/**
 	 * Get a String briefly describing this DataType.
@@ -240,7 +257,7 @@ public interface DataType {
 	 * @param settings the Settings object
 	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
-	 * @param offcutOffset
+	 * @param offcutOffset offset into datatype
 	 * @return the default label prefix.
 	 */
 	public String getDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
@@ -277,18 +294,26 @@ public interface DataType {
 	 * Notification that the given dataType's size has changed.  DataTypes may
 	 * need to make internal changes in response.
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param dt the dataType that has changed.
 	 */
 	public void dataTypeSizeChanged(DataType dt);
 
 	/**
+	 * Notification that the given dataType's alignment has changed.  DataTypes may
+	 * need to make internal changes in response.
+	 * <br>
+	 * TODO: This method is reserved for internal DB use.
+	 * <br>
+	 * @param dt the dataType that has changed.
+	 */
+	public void dataTypeAlignmentChanged(DataType dt);
+
+	/**
 	 * Informs this dataType that the given dataType has been deleted.
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param dt the dataType that has been deleted.
 	 */
@@ -297,8 +322,7 @@ public interface DataType {
 	/**
 	 * Informs this data type that the given oldDT has been replaced with newDT
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param oldDt old data type
 	 * @param newDt new data type
@@ -308,8 +332,7 @@ public interface DataType {
 	/**
 	 * Set the default settings for this data type.
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param settings the settings to be used as this dataTypes default settings. 
 	 */
@@ -318,8 +341,7 @@ public interface DataType {
 	/**
 	 * Inform this data type that it has the given parent
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param dt parent data type
 	 */
@@ -328,8 +350,7 @@ public interface DataType {
 	/**
 	 * Remove a parent data type
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param dt parent data type
 	 */
@@ -338,8 +359,7 @@ public interface DataType {
 	/**
 	 * Informs this data type that its name has changed from the indicated old name.
 	 * <br>
-	 * TODO: This method is reserved for internal DB use and should be removed 
-	 * from the public DataType interface!!
+	 * TODO: This method is reserved for internal DB use.
 	 * <br>
 	 * @param dt the data type whose name changed
 	 * @param oldName the data type's old name
@@ -362,6 +382,8 @@ public interface DataType {
 	 * For example byte[] depends on byte.  If byte were deleted, then byte[] would
 	 * also be deleted.
 	 * @param dt the dataType to test that this dataType depends on.
+	 * @return true if the existence of this datatype relies on the existence
+	 * of the specified datatype dt.
 	 */
 	public boolean dependsOn(DataType dt);
 

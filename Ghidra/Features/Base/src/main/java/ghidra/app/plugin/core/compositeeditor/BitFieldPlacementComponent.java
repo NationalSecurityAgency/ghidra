@@ -157,7 +157,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 		allocationByteOffset = 0;
 		allocationByteSize = 1;
-		if (!editUseEnabled) {
+		if (!editUseEnabled && composite != null) {
 			allocationByteSize = composite.getLength();
 		}
 		init(null);
@@ -456,7 +456,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			composite.delete(editOrdinal);
 
 			int sizeChange = initialLength - composite.getLength();
-			if (!composite.isInternallyAligned() && editOrdinal < composite.getNumComponents()) {
+			if (!composite.isPackingEnabled() && editOrdinal < composite.getNumComponents()) {
 				// deletions cause shift which is bad - pad with defaults
 				for (int i = 0; i < sizeChange; i++) {
 					composite.insert(editOrdinal, DataType.DEFAULT);
@@ -851,7 +851,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				BitFieldDataType bitfield = (BitFieldDataType) component.getDataType();
 				int storageSize = 8 * bitfield.getStorageSize();
 				rightBit = leftAdj + storageSize - bitfield.getBitOffset() - 1;
-				// Use effective bit-size since unaligned uses are only concerned with actual 
+				// Use effective bit-size since non-packed uses are only concerned with actual 
 				// bits stored (NOTE: this may cause a transition from declared to effective
 				// bit-size when editing a bitfield where the these bit-sizes differ).
 				int bitSize = bitfield.getBitSize();

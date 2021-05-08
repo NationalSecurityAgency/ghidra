@@ -31,10 +31,7 @@ import ghidra.app.plugin.core.compositeeditor.FavoritesAction;
 import ghidra.program.model.data.*;
 
 public class StackEditorActions4Test extends AbstractStackEditorTest {
-	/**
-	 * Constructor for StackEditorActionsTest.
-	 * @param name the testcase name.
-	 */
+
 	public StackEditorActions4Test() {
 		super(false);
 	}

@@ -243,7 +243,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		DataType dt2 = getDataType(2);
 		DataType dt7 = getDataType(7);
 
-		invoke(duplicateMultipleAction);
+		invoke(duplicateMultipleAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		badInput(dialog, 3);
@@ -270,7 +270,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		boolean commit = false;
 		txId = program.startTransaction("Modify Program");
 		try {
-			simpleStructure.setInternallyAligned(true);
+			simpleStructure.setPackingEnabled(true);
 			commit = true;
 		}
 		finally {
@@ -288,7 +288,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		DataType originalDt4 = getDataType(4);
 
 		// Make selected components into internal structure.
-		invoke(createInternalStructureAction);
+		invoke(createInternalStructureAction, false);
 
 		// Specify name for structure.
 		JDialog inputDialog = waitForJDialog("Specify the Structure's Name");
@@ -331,7 +331,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		DataType originalDt4 = getDataType(4);
 
 		// Make selected components into internal structure.
-		invoke(createInternalStructureAction);
+		invoke(createInternalStructureAction, false);
 
 		// Specify name for structure.
 		JDialog inputDialog = waitForJDialog("Specify the Structure's Name");
@@ -365,7 +365,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		DataType originalDt4 = getDataType(4);
 
 		// Make selected components into internal structure.
-		invoke(createInternalStructureAction);
+		invoke(createInternalStructureAction, false);
 
 		// Specify name for structure.
 		JDialog inputDialog = waitForJDialog("Specify the Structure's Name");

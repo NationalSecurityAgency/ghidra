@@ -156,7 +156,7 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public void dataTypeChanged(DataType dataType) {
+	public void dataTypeChanged(DataType dataType, boolean isAutoChange) {
 		// stub
 
 	}

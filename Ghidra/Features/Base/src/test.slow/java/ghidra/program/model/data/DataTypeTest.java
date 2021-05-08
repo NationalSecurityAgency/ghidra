@@ -61,7 +61,7 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Structure structA = new StructureDataType("structA", 0);
 		structA.setCategoryPath(new CategoryPath("/catA"));
-		structA.setInternallyAligned(true);
+		structA.setPackingEnabled(true);
 
 		Pointer p = new PointerDataType(structA);
 

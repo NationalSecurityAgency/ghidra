@@ -133,11 +133,6 @@ public interface DataOrganization {
 	BitFieldPacking getBitFieldPacking();
 
 	/**
-	 * Remove all entries from the size alignment map
-	 */
-	void clearSizeAlignmentMap();
-
-	/**
 	 * Gets the number of sizes that have an alignment specified.
 	 * @return the number of sizes with an alignment mapped to them.
 	 */
@@ -161,24 +156,20 @@ public interface DataOrganization {
 
 	/**
 	 * Determines the alignment value for the indicated data type. (i.e. how the data type gets
-	 * aligned within other data types.)  NOTE: the alignment of bitfields is dependent upon packing
-	 * rules which must be considered at the composite level.
+	 * aligned within other data types.)  NOTE: this method should not be used for bitfields
+	 * which are highly dependent upon packing for a composite.  This method will always return 1
+	 * for Dynamic and FactoryDataTypes.
 	 * @param dataType the data type
-	 * @param dtSize the data type's size or component size
-	 * @return the alignment
+	 * @return the datatype alignment
 	 */
-	int getAlignment(DataType dataType, int dtSize);
+	int getAlignment(DataType dataType);
 
-	boolean isForcingAlignment(DataType dataType);
-
-	int getForcedAlignment(DataType dataType);
-
-	/**
-	 * Determines the offset where the specified data type should be placed to be properly aligned.
-	 * @param minimumOffset the minimum allowable offset where the data type can be placed.
-	 * @param dataType the data type
-	 * @param dtSize the data type's size
-	 * @return the aligned offset for the data type
-	 */
-	int getAlignmentOffset(int minimumOffset, DataType dataType, int dtSize);
+//	/**
+//	 * Determines the offset where the specified data type should be placed to be properly aligned.
+//	 * @param minimumOffset the minimum allowable offset where the data type can be placed.
+//	 * @param dataType the data type
+//	 * @param dtSize the data type's size
+//	 * @return the aligned offset for the data type
+//	 */
+//	int getAlignmentOffset(int minimumOffset, DataType dataType, int dtSize);
 }

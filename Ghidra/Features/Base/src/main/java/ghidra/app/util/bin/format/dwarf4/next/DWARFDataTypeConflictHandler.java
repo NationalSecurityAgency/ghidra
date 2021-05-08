@@ -82,8 +82,7 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	 * @return true if empty or default and false otherwise
 	 */
 	private boolean isCompositeDefault(Composite composite) {
-		return composite.isNotYetDefined()
-				|| ((composite instanceof Structure) && ((Structure) composite).getNumDefinedComponents() == 0);
+		return composite.isNotYetDefined() || (composite.getNumDefinedComponents() == 0);
 	}
 
 	private boolean isCompositePart(Composite full, Composite part, Set<Long> visitedDataTypes) {

@@ -487,14 +487,13 @@
         Archive</B></I> action.</P>
                 </BLOCKQUOTE>
 
-        <H3><A name="Align_All_Data_Types"></A>Aligning All Data Types In a Program or Archive</H3>
+        <H3><A name="Pack_All_Data_Types"></A>Pack All Data Types In a Program or Archive</H3>
 
         <BLOCKQUOTE>
-          <P>Right-click on the program or data type archive where data types are to be aligned,
-          and select the <I><B>Align All...</B></I> action. A confirmation dialog will appear to
-          make sure you want to align all the structures and unions in the program or data type
-          archive. If you continue, all structures and unions that are unaligned will be changed to
-          aligned data types with no minimum alignment (the default) and no packing.</P>
+          <P>Right-click on the program or data type archive where structures and unions are to be packed,
+          and select the <I><B>Pack All...</B></I> action. A confirmation dialog will appear to
+          make sure you want to pack all composites in the program or data type
+          archive. If you continue, all non-packed composites will have default packing enabled.</P>
         </BLOCKQUOTE>
 
         <H3><A name="synchronizing"></A> <A name="Update"></A> Updating an Archive From a Source
@@ -926,15 +925,14 @@
             </TBODY>
           </TABLE>
         </BLOCKQUOTE>
-
+<!-- disabled feature
       <H3><A name="Align_Data_Type"></A>Aligning a Data Type</H3>
 
       <BLOCKQUOTE>
-        <P>Right-click on the structure or union to be aligned. Select the <I><B>Align</B></I>
-        action. If the data type is unaligned it will be changed to an aligned data type with no
-        minimum alignment (the default) and no packing.</P>
+        <P>Right-click on the structure or union to be packed. Select the <I><B>Pack</B></I>
+        action. If the data type is non-packed it will be changed to be default packed.</P>
       </BLOCKQUOTE>
-
+-->
       <H3><A name="Commit_To_Archive"></A>Committing Changes To Source Archive</H3>
 
       <BLOCKQUOTE>

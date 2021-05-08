@@ -18,8 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.*;
 
-import db.Field;
 import db.DBRecord;
+import db.Field;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
@@ -268,7 +268,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			}
 			loadParameters();
 			funDefAdapter.updateRecord(record, true); // update last change time
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -293,7 +293,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 				dataMgr.getID(resolvedDt));
 			funDefAdapter.updateRecord(record, true);
 			resolvedDt.addParent(this);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -310,7 +310,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			checkDeleted();
 			record.setString(FunctionDefinitionDBAdapter.FUNCTION_DEF_COMMENT_COL, comment);
 			funDefAdapter.updateRecord(record, true);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -523,7 +523,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
 			try {
 				funDefAdapter.updateRecord(record, true);
-				dataMgr.dataTypeChanged(this);
+				dataMgr.dataTypeChanged(this, false);
 			}
 			catch (IOException e) {
 				dataMgr.dbError(e);
@@ -552,7 +552,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
 			try {
 				funDefAdapter.updateRecord(record, true);
-				dataMgr.dataTypeChanged(this);
+				dataMgr.dataTypeChanged(this, false);
 			}
 			catch (IOException e) {
 				dataMgr.dbError(e);
@@ -600,7 +600,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_LAST_CHANGE_TIME_COL,
 				lastChangeTime);
 			funDefAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -618,7 +618,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_SOURCE_SYNC_TIME_COL,
 				lastChangeTime);
 			funDefAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -642,7 +642,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_SOURCE_DT_ID_COL,
 				id.getValue());
 			funDefAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -666,7 +666,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_SOURCE_ARCHIVE_ID_COL,
 				id.getValue());
 			funDefAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);

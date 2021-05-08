@@ -26,7 +26,6 @@ import org.junit.Test;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.UsrException;
-import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorUnlockedActions4Test
 		extends AbstractStructureEditorUnlockedActionsTest {
@@ -56,7 +55,7 @@ public class StructureEditorUnlockedActions4Test
 		invoke(applyAction);
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		assertEquals(1, complexStructure.getLength());
-		assertTrue(complexStructure.isNotYetDefined());
+		assertTrue(complexStructure.isZeroLength());
 	}
 
 	@Test
@@ -74,7 +73,7 @@ public class StructureEditorUnlockedActions4Test
 		assertEquals(2, model.getComponent(5).getLength());
 
 		// Make array of 3 pointers
-		invoke(arrayAction);
+		invoke(arrayAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 3);
@@ -222,7 +221,7 @@ public class StructureEditorUnlockedActions4Test
 		runSwing(() -> {
 			try {
 				model.clearSelectedComponents();
-				model.deleteSelectedComponents(TaskMonitor.DUMMY);
+				model.deleteSelectedComponents();
 			}
 			catch (UsrException e) {
 				failWithException("Unexpected error", e);

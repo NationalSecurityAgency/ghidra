@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.swing.JTextField;
 
@@ -29,10 +28,6 @@ import ghidra.program.model.data.Pointer;
 
 public class PositiveStackEditorProviderTest extends AbstractStackEditorTest {
 
-	/**
-	  * Constructor for UnionEditorProviderTest.
-	  * @param name the testcase name.
-	  */
 	public PositiveStackEditorProviderTest() {
 		super(true);
 	}

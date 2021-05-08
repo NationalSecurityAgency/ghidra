@@ -68,8 +68,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 		this.returnAddressOffset = stackDt.returnAddressOffset;
 		this.stack = stackDt.stack;
 		this.defaultSettings = stackDt.defaultSettings;
-		for (int i = 0; i < stackDt.components.size(); i++) {
-			DataTypeComponent dtc = stackDt.components.get(i);
+		for (DataTypeComponentImpl dtc : stackDt.components) {
 			replaceAtOffset(dtc.getOffset(), dtc.getDataType(), dtc.getLength(), dtc.getFieldName(),
 				dtc.getComment());
 		}
@@ -216,7 +215,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	 * @see ghidra.program.model.listing.StackFrame#getFrameSize()
 	 */
 	public int getFrameSize() {
-		return structLength;
+		return getLength();
 	}
 
 	/* (non-Javadoc)
@@ -261,8 +260,9 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	private boolean adjustStackFrameSize(int newSize, int oldSize, boolean isNegative) {
-		if (newSize < 0)
+		if (newSize < 0) {
 			return false;
+		}
 
 		int delta = newSize - oldSize;
 		if (delta == 0) {

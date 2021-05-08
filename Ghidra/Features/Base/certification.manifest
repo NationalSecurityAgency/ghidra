@@ -203,10 +203,10 @@ src/main/help/help/topics/DataTypeEditors/images/NumElementsPrompt.png||GHIDRA||
 src/main/help/help/topics/DataTypeEditors/images/Plus.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditBitfield.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditor.png||GHIDRA||||END|
-src/main/help/help/topics/DataTypeEditors/images/StructureEditorAligned.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/StructureEditorPacked.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/StructureEditorWithFlexArray.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/UnionEditor.png||GHIDRA||||END|
-src/main/help/help/topics/DataTypeEditors/images/UnionEditorAligned.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/UnionEditorPacked.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Unpackage.gif||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/cstruct.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/DataTypeEditors/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

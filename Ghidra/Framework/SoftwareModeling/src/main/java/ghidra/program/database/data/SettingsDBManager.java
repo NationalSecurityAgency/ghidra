@@ -18,8 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.*;
 
-import db.Field;
 import db.DBRecord;
+import db.Field;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
@@ -63,11 +63,13 @@ class SettingsDBManager implements Settings {
 	}
 
 	private void settingsChanged() {
+		// NOTE: There is currently no merge support for settings so recording within
+		// domain object change set is unneccessary
 		if (dtc != null) {
-			dataMgr.dataTypeChanged(dtc.getParent());
+			dataMgr.dataTypeChanged(dtc.getParent(), true);
 		}
 		else {
-			dataMgr.dataTypeChanged(dataType);
+			dataMgr.dataTypeChanged(dataType, true);
 		}
 	}
 
@@ -178,11 +180,11 @@ class SettingsDBManager implements Settings {
 
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
-			for (int i = 0; i < keys.length; i++) {
-				DBRecord rec = adapter.getSettingsRecord(keys[i].getLongValue());
+			for (Field key : keys) {
+				DBRecord rec = adapter.getSettingsRecord(key.getLongValue());
 				String settingsName = rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
 				if (settingsName.equals(name)) {
-					adapter.removeSettingsRecord(keys[i].getLongValue());
+					adapter.removeSettingsRecord(key.getLongValue());
 					settingsChanged();
 					return;
 				}
@@ -197,8 +199,8 @@ class SettingsDBManager implements Settings {
 	public void clearAllSettings() {
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
-			for (int i = 0; i < keys.length; i++) {
-				adapter.removeSettingsRecord(keys[i].getLongValue());
+			for (Field key : keys) {
+				adapter.removeSettingsRecord(key.getLongValue());
 			}
 			settingsChanged();
 		}
@@ -212,8 +214,8 @@ class SettingsDBManager implements Settings {
 		List<String> list = new ArrayList<String>();
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
-			for (int i = 0; i < keys.length; i++) {
-				DBRecord rec = adapter.getSettingsRecord(keys[i].getLongValue());
+			for (Field key : keys) {
+				DBRecord rec = adapter.getSettingsRecord(key.getLongValue());
 				String name = rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL);
 				if (!list.contains(name)) {
 					list.add(name);
@@ -242,8 +244,8 @@ class SettingsDBManager implements Settings {
 	void update(Settings settings) {
 		clearAllSettings();
 		String[] names = settings.getNames();
-		for (int i = 0; i < names.length; i++) {
-			setValue(names[i], settings.getValue(names[i]));
+		for (String name : names) {
+			setValue(name, settings.getValue(name));
 		}
 	}
 
@@ -278,8 +280,8 @@ class SettingsDBManager implements Settings {
 	private DBRecord getRecord(String name) {
 		try {
 			Field[] keys = adapter.getSettingsKeys(dataTypeID);
-			for (int i = 0; i < keys.length; i++) {
-				DBRecord rec = adapter.getSettingsRecord(keys[i].getLongValue());
+			for (Field key : keys) {
+				DBRecord rec = adapter.getSettingsRecord(key.getLongValue());
 				if (rec.getString(SettingsDBAdapter.SETTINGS_NAME_COL).equals(name)) {
 					return rec;
 				}

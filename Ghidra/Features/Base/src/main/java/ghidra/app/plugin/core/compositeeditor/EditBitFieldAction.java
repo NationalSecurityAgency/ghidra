@@ -48,7 +48,7 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 	private DataTypeComponent getUnalignedBitFieldComponent() {
 		CompEditorModel editorModel = (CompEditorModel) model;
 		if ((editorModel.viewComposite instanceof Structure) &&
-			!editorModel.viewComposite.isInternallyAligned() &&
+			!editorModel.viewComposite.isPackingEnabled() &&
 			editorModel.getNumSelectedRows() == 1) {
 			int rowIndex = model.getSelectedRows()[0];
 			if (rowIndex < model.getNumComponents()) {

@@ -142,7 +142,7 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public void dataTypeChanged(DataType dataType) {
+	public void dataTypeChanged(DataType dataType, boolean isAutoChange) {
 		throw new UnsupportedOperationException();
 	}
 

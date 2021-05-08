@@ -383,35 +383,10 @@ public class EnumDataType extends GenericDataType implements Enum {
 		valueMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
-		for (int i = 0; i < names.length; i++) {
-			add(names[i], enumm.getValue(names[i]));
+		for (String name2 : names) {
+			add(name2, enumm.getValue(name2));
 		}
 		stateChanged(null);
-	}
-
-	@Override
-	public void dataTypeSizeChanged(DataType dt) {
-		// not applicable
-	}
-
-	@Override
-	public void dataTypeDeleted(DataType dt) {
-		// not applicable
-	}
-
-	@Override
-	public void dataTypeNameChanged(DataType dt, String oldName) {
-		// not applicable
-	}
-
-	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		// not applicable
-	}
-
-	@Override
-	public boolean dependsOn(DataType dt) {
-		return false;
 	}
 
 	@Override

@@ -142,6 +142,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	@Override
+	public boolean isZeroLength() {
+		return dataType.isZeroLength();
+	}
+
+	@Override
 	public int getLength() {
 		return dataType.getLength();
 	}
@@ -179,6 +184,13 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	public void dataTypeSizeChanged(DataType dt) {
 		if (dt == dataType) {
 			notifySizeChanged();
+		}
+	}
+
+	@Override
+	public void dataTypeAlignmentChanged(DataType dt) {
+		if (dt == dataType) {
+			notifyAlignmentChanged();
 		}
 	}
 

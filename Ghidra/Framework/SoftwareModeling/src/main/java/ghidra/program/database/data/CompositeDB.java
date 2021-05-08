@@ -28,17 +28,7 @@ import ghidra.util.exception.AssertException;
 /**
  * Database implementation for a structure or union.
  */
-abstract class CompositeDB extends DataTypeDB implements Composite {
-
-	// Internal Alignment Constants
-	protected static final int UNALIGNED = CompositeDBAdapter.UNALIGNED;
-	protected static final int ALIGNED_NO_PACKING = CompositeDBAdapter.ALIGNED_NO_PACKING;
-	// Otherwise the packing value (1 to (2**32 - 1)).
-
-	// External (Minimum) Alignment Constants
-	protected static final int MACHINE_ALIGNED = CompositeDBAdapter.MACHINE_ALIGNED;
-	protected static final int DEFAULT_ALIGNED = CompositeDBAdapter.DEFAULT_ALIGNED;
-	// Otherwise the alignment value (1 to (2**32 - 1)).
+abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	protected CompositeDBAdapter compositeAdapter;
 	protected ComponentDBAdapter componentAdapter;
@@ -81,7 +71,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	 * @return preferred component length
 	 */
 	protected int getPreferredComponentLength(DataType dataType, int length) {
-		if ((isInternallyAligned() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
+		if ((isPackingEnabled() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
 			length = -1; // force use of datatype size
 		}
 		int dtLength = dataType.getLength();
@@ -114,7 +104,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	 * @param bitfieldComponent bitfield component
 	 * @param oldDt             affected datatype which has been removed or replaced
 	 * @param newDt             replacement datatype
-	 * @param                   true if bitfield component was modified
+	 * @return                  true if bitfield component was modified
 	 * @throws InvalidDataTypeException if bitfield was based upon oldDt but new
 	 *                                  datatype is invalid for a bitfield
 	 */
@@ -200,7 +190,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 
 	@Override
 	public boolean isDynamicallySized() {
-		return isInternallyAligned();
+		return isPackingEnabled();
 	}
 
 	@Override
@@ -301,7 +291,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	 * @throws IllegalArgumentException if the data type is invalid.
 	 */
 	protected void validateDataType(DataType dataType) {
-		if (isInternallyAligned() && dataType == DataType.DEFAULT) {
+		if (isPackingEnabled() && dataType == DataType.DEFAULT) {
 			throw new IllegalArgumentException(
 				"The DEFAULT data type is not allowed in an aligned composite data type.");
 		}
@@ -335,7 +325,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
 			compositeAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -352,7 +342,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_SOURCE_SYNC_TIME_COL, lastChangeTime);
 			compositeAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -374,7 +364,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_UNIVERSAL_DT_ID, id.getValue());
 			compositeAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -398,7 +388,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 			checkDeleted();
 			record.setLongValue(CompositeDBAdapter.COMPOSITE_SOURCE_ARCHIVE_ID_COL, id.getValue());
 			compositeAdapter.updateRecord(record, false);
-			dataMgr.dataTypeChanged(this);
+			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -409,56 +399,134 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 
 	}
 
-	@Override
-	public int getPackingValue() {
-		int dbValue = record.getIntValue(CompositeDBAdapter.COMPOSITE_INTERNAL_ALIGNMENT_COL);
-		if (dbValue == CompositeDB.UNALIGNED || dbValue == CompositeDB.ALIGNED_NO_PACKING) {
-			return 0;
+	protected final int getNonPackedAlignment() {
+		int alignment;
+		int minimumAlignment = getStoredMinimumAlignment();
+		if (minimumAlignment == DEFAULT_ALIGNMENT) {
+			alignment = 1;
 		}
-		return dbValue;
+		else if (minimumAlignment == MACHINE_ALIGNMENT) {
+			alignment = getDataOrganization().getMachineAlignment();
+		}
+		else {
+			alignment = minimumAlignment;
+		}
+		return alignment;
+	}
+
+	/**
+	 * Get computed alignment and optionally update record.  May only be invoked with
+	 * lock acquired.
+	 * @param updateRecord if true record should be updated without timestamp change
+	 * @return computed alignment
+	 */
+	protected abstract int getComputedAlignment(boolean updateRecord);
+
+	@Override
+	public final int getAlignment() {
+		lock.acquire();
+		try {
+			return getComputedAlignment(checkIsValid() && dataMgr.isTransactionActive());
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
-	public void setPackingValue(int packingValue) {
-		boolean changed = false;
-		if (!isInternallyAligned()) {
-			doSetInternallyAligned(true);
-			changed = true;
+	public final void repack() {
+		lock.acquire();
+		try {
+			checkDeleted();
+			repack(false, true);
 		}
-		if (packingValue != getPackingValue()) {
-			doSetPackingValue(packingValue);
-			changed = true;
-		}
-		if (changed) {
-			adjustInternalAlignment(false);
-			notifyAlignmentChanged();
+		finally {
+			lock.release();
 		}
 	}
 
-	public void doSetPackingValue(int packingValue) {
-		if (packingValue < 0) {
-			packingValue = NOT_PACKING;
+	/**
+	 * Repack components within this composite based on the current packing, alignment 
+	 * and {@link DataOrganization} settings.  Non-packed Structures: change detection
+	 * is limited to component count and length is assumed to already be correct.
+	 * May only be invoked with lock acquired.
+	 * <p>
+	 * NOTE: If modifications to stored length are made prior to invoking this method, 
+	 * detection of a size change may not be possible.  
+	 * <p>
+	 * NOTE: Currently a change in calculated alignment can not be provided since
+	 * this value is not stored.
+	 * 
+	 * @param isAutoChange true if changes are in response to another another datatype's change.
+	 * @param notify if true notification will be sent to parents if a size change
+	 * or component placement change is detected.
+	 * @return true if a layout change was detected.
+	 */
+	protected abstract boolean repack(boolean isAutoChange, boolean notify);
+
+	@Override
+	public int getStoredPackingValue() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			return record.getIntValue(CompositeDBAdapter.COMPOSITE_PACKING_COL);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public PackingType getPackingType() {
+		int packing = getStoredPackingValue();
+		if (packing < DEFAULT_PACKING) {
+			return PackingType.DISABLED;
+		}
+		if (packing == DEFAULT_PACKING) {
+			return PackingType.DEFAULT;
+		}
+		return PackingType.EXPLICIT;
+	}
+
+	@Override
+	public int getExplicitPackingValue() {
+		return getStoredPackingValue();
+	}
+
+	@Override
+	public void setExplicitPackingValue(int packingValue) {
+		if (packingValue <= 0) {
+			throw new IllegalArgumentException(
+				"explicit packing value must be positive: " + packingValue);
+		}
+		setStoredPackingValue(packingValue);
+	}
+
+	@Override
+	public void setToDefaultPacking() {
+		setStoredPackingValue(DEFAULT_PACKING);
+	}
+
+	private void setStoredPackingValue(int packingValue) {
+		if (packingValue < NO_PACKING) {
+			throw new IllegalArgumentException("invalid packing value: " + packingValue);
 		}
 		lock.acquire();
 		try {
 			checkDeleted();
-			if (packingValue == getPackingValue()) {
+			int oldPackingValue = getStoredPackingValue();
+			if (packingValue == oldPackingValue) {
 				return;
 			}
-			int dbPackingValue;
-			if (packingValue == NOT_PACKING) {
-				if (isInternallyAligned()) {
-					dbPackingValue = ALIGNED_NO_PACKING;
-				}
-				else {
-					dbPackingValue = UNALIGNED;
-				}
+			if (oldPackingValue == NO_PACKING || packingValue == NO_PACKING) {
+				// force default alignment when transitioning to or from disabled packing
+				record.setIntValue(CompositeDBAdapter.COMPOSITE_MIN_ALIGN_COL, DEFAULT_ALIGNMENT);
 			}
-			else {
-				dbPackingValue = packingValue;
-			}
-			record.setIntValue(CompositeDBAdapter.COMPOSITE_INTERNAL_ALIGNMENT_COL, dbPackingValue);
+			record.setIntValue(CompositeDBAdapter.COMPOSITE_PACKING_COL, packingValue);
 			compositeAdapter.updateRecord(record, true);
+			if (!repack(false, true)) {
+				dataMgr.dataTypeChanged(this, false);
+			}
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -469,125 +537,72 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	@Override
-	public boolean isDefaultAligned() {
-		int dbValue = record.getIntValue(CompositeDBAdapter.COMPOSITE_EXTERNAL_ALIGNMENT_COL);
-		return (dbValue == CompositeDB.DEFAULT_ALIGNED);
+	public AlignmentType getAlignmentType() {
+		int minimumAlignment = getStoredMinimumAlignment();
+		if (minimumAlignment < DEFAULT_ALIGNMENT) {
+			return AlignmentType.MACHINE;
+		}
+		if (minimumAlignment == DEFAULT_ALIGNMENT) {
+			return AlignmentType.DEFAULT;
+		}
+		return AlignmentType.EXPLICIT;
 	}
 
 	@Override
-	public boolean isMachineAligned() {
-		int dbValue = record.getIntValue(CompositeDBAdapter.COMPOSITE_EXTERNAL_ALIGNMENT_COL);
-		return (dbValue == CompositeDB.MACHINE_ALIGNED);
+	public void setToDefaultAligned() {
+		setStoredMinimumAlignment(DEFAULT_ALIGNMENT);
 	}
 
 	@Override
-	public int getMinimumAlignment() {
-		int dbValue = record.getIntValue(CompositeDBAdapter.COMPOSITE_EXTERNAL_ALIGNMENT_COL);
-		if (dbValue == CompositeDB.MACHINE_ALIGNED) {
-			return getMachineAlignment();
-		}
-		if (dbValue == CompositeDB.DEFAULT_ALIGNED) {
-			return getDefaultAlignment();
-		}
-		return dbValue;
-	}
-
-	private int getDefaultAlignment() {
-		return Composite.DEFAULT_ALIGNMENT_VALUE;
-	}
-
-	private int getMachineAlignment() {
-		return dataMgr.getDataOrganization().getMachineAlignment();
+	public void setToMachineAligned() {
+		setStoredMinimumAlignment(MACHINE_ALIGNMENT);
 	}
 
 	@Override
-	public void setMinimumAlignment(int externalAlignment) {
-		boolean changed = false;
-		if (!isInternallyAligned()) {
-			doSetInternallyAligned(true);
-			changed = true;
-		}
-		if (doSetMinimumAlignment(externalAlignment)) {
-			changed = true;
-		}
-		if (changed) {
-			adjustInternalAlignment(false);
-			notifyAlignmentChanged();
-		}
-	}
-
-	public boolean doSetMinimumAlignment(int externalAlignment) {
-		if (externalAlignment < 1) {
-			externalAlignment = DEFAULT_ALIGNED;
-		}
-		return modifyAlignment(externalAlignment);
+	public int getExplicitMinimumAlignment() {
+		return getStoredMinimumAlignment();
 	}
 
 	@Override
-	public void setToDefaultAlignment() {
-		boolean changed = false;
-		if (!isInternallyAligned()) {
-			doSetInternallyAligned(true);
-			changed = true;
+	public int getStoredMinimumAlignment() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			return record.getIntValue(CompositeDBAdapter.COMPOSITE_MIN_ALIGN_COL);
 		}
-		if (doSetToDefaultAlignment()) {
-			changed = true;
+		finally {
+			lock.release();
 		}
-		if (changed) {
-			adjustInternalAlignment(false);
-			notifyAlignmentChanged();
-		}
-	}
-
-	public boolean doSetToDefaultAlignment() {
-		return modifyAlignment(CompositeDB.DEFAULT_ALIGNED);
 	}
 
 	@Override
-	public void setToMachineAlignment() {
-		boolean changed = false;
-		if (!isInternallyAligned()) {
-			doSetInternallyAligned(true);
-			changed = true;
+	public void setExplicitMinimumAlignment(int minimumAlignment) {
+		if (minimumAlignment <= 0) {
+			throw new IllegalArgumentException(
+				"explicit minimum alignment must be positive: " + minimumAlignment);
 		}
-		if (doSetToMachineAlignment()) {
-			changed = true;
-		}
-		if (changed) {
-			adjustInternalAlignment(false);
-			notifyAlignmentChanged();
-		}
+		setStoredMinimumAlignment(minimumAlignment);
 	}
 
-	public boolean doSetToMachineAlignment() {
-		return modifyAlignment(CompositeDB.MACHINE_ALIGNED);
-	}
-
-	private boolean modifyAlignment(int dbExternalAlignment) {
+	private void setStoredMinimumAlignment(int minimumAlignment) {
+		if (minimumAlignment < MACHINE_ALIGNMENT) {
+			throw new IllegalArgumentException(
+				"invalid minimum alignment value: " + minimumAlignment);
+		}
 		lock.acquire();
 		try {
 			checkDeleted();
-			if (isMachineAligned()) {
-				if (dbExternalAlignment == MACHINE_ALIGNED) {
-					return false;
-				}
+			if (minimumAlignment == getStoredMinimumAlignment()) {
+				return;
 			}
-			if (isDefaultAligned()) {
-				if (dbExternalAlignment == DEFAULT_ALIGNED) {
-					return false;
-				}
-			}
-			else if (dbExternalAlignment == getMinimumAlignment()) {
-				return false;
-			}
-			record.setIntValue(CompositeDBAdapter.COMPOSITE_EXTERNAL_ALIGNMENT_COL,
-				dbExternalAlignment);
+			record.setIntValue(CompositeDBAdapter.COMPOSITE_MIN_ALIGN_COL, minimumAlignment);
 			compositeAdapter.updateRecord(record, true);
-			return true;
+			if (!repack(false, true)) {
+				dataMgr.dataTypeChanged(this, false);
+			}
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-			return false;
 		}
 		finally {
 			lock.release();
@@ -618,184 +633,40 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 	}
 
-	/**
-	 * Notification that this composite data type's alignment has changed.
-	 */
-	protected void notifyAlignmentChanged() {
-		// TODO: This method is not properly invoked when new components are
-		// added which could change the alignment of this composite
-		for (DataType dt : dataMgr.getParentDataTypes(key)) {
-			if (dt instanceof Composite) {
-				Composite composite = (Composite) dt;
-				composite.dataTypeAlignmentChanged(this);
-			}
-		}
-		dataMgr.dataTypeChanged(this);
-	}
-
 	@Override
-	public boolean isInternallyAligned() {
-		int dbValue = record.getIntValue(CompositeDBAdapter.COMPOSITE_INTERNAL_ALIGNMENT_COL);
-		return dbValue != UNALIGNED;
-	}
-
-	@Override
-	public void setInternallyAligned(boolean aligned) {
-		if (aligned == isInternallyAligned()) {
+	public void setPackingEnabled(boolean enabled) {
+		if (enabled == isPackingEnabled()) {
 			return;
 		}
-		doSetInternallyAligned(aligned);
-		adjustInternalAlignment(true);
-		notifyAlignmentChanged();
-	}
-
-	protected void doSetInternallyAligned(boolean aligned) {
-		lock.acquire();
-		try {
-			checkDeleted();
-			if (aligned == isInternallyAligned()) {
-				return;
-			}
-			int dbValue = aligned ? CompositeDB.ALIGNED_NO_PACKING : CompositeDB.UNALIGNED;
-			record.setIntValue(CompositeDBAdapter.COMPOSITE_INTERNAL_ALIGNMENT_COL, dbValue);
-			if (!aligned) {
-				int dbExternalAlignment = CompositeDB.DEFAULT_ALIGNED;
-				record.setIntValue(CompositeDBAdapter.COMPOSITE_EXTERNAL_ALIGNMENT_COL,
-					dbExternalAlignment);
-			}
-			compositeAdapter.updateRecord(record, true);
-		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	protected void setAlignment(Composite composite, boolean notify) {
-		doSetInternallyAligned(composite.isInternallyAligned());
-
-		doSetPackingValue(composite.getPackingValue());
-
-		if (composite.isDefaultAligned()) {
-			doSetToDefaultAlignment();
-		}
-		else if (composite.isMachineAligned()) {
-			doSetToMachineAlignment();
-		}
-		else {
-			doSetMinimumAlignment(composite.getMinimumAlignment());
-		}
-		adjustInternalAlignment(notify);
+		setStoredPackingValue(enabled ? DEFAULT_PACKING : NO_PACKING);
 	}
 
 	/**
-	 * Adjusts the internal alignment of components within this composite based on
-	 * the current settings of the internal alignment, packing, alignment type and
-	 * minimum alignment value. This method should be called whenever any of the
-	 * above settings are changed or whenever a components data type is changed or a
-	 * component is added or removed.
-	 * 
-	 * @param notify
+	 * Copy packing and alignment settings from specified composite without
+	 * repacking or notification.
+	 * @param composite instance whose packing and alignment are to be copied
+	 * @throws IOException if database IO error occured
 	 */
-	protected abstract void adjustInternalAlignment(boolean notify);
-
-	@Override
-	public int getAlignment() {
-		// TODO: use cached value if available (requires DB change to facilitate)
-		return CompositeAlignmentHelper.getAlignment(getDataOrganization(), this);
-	}
-
-	/**
-	 * Dump all components for use in {@link #toString()} representation.
-	 * 
-	 * @param buffer string buffer
-	 * @param pad    padding to be used with each component output line
-	 */
-	protected void dumpComponents(StringBuilder buffer, String pad) {
-		// limit output of filler components for unaligned structures
-		DataTypeComponent[] components = getDefinedComponents();
-		for (DataTypeComponent dtc : components) {
-			DataType dataType = dtc.getDataType();
-			buffer.append(pad + dtc.getOffset());
-			buffer.append(pad + dataType.getName());
-			if (dataType instanceof BitFieldDataType) {
-				BitFieldDataType bfDt = (BitFieldDataType) dataType;
-				buffer.append("(");
-				buffer.append(Integer.toString(bfDt.getBitOffset()));
-				buffer.append(")");
-			}
-			buffer.append(pad + dtc.getLength());
-			buffer.append(pad + dtc.getFieldName());
-			String comment = dtc.getComment();
-			if (comment == null) {
-				comment = "";
-			}
-			buffer.append(pad + "\"" + comment + "\"");
-			buffer.append("\n");
-		}
+	protected void doSetPackingAndAlignment(CompositeInternal composite) throws IOException {
+		record.setIntValue(CompositeDBAdapter.COMPOSITE_MIN_ALIGN_COL,
+			composite.getStoredMinimumAlignment());
+		record.setIntValue(CompositeDBAdapter.COMPOSITE_PACKING_COL,
+			composite.getStoredPackingValue());
+		compositeAdapter.updateRecord(record, true);
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder stringBuffer = new StringBuilder();
-		stringBuffer.append(getPathName() + "\n");
-		stringBuffer.append(getAlignmentSettingsString() + "\n");
-		stringBuffer.append(getTypeName() + " " + getDisplayName() + " {\n");
-		dumpComponents(stringBuffer, "   ");
-		stringBuffer.append("}\n");
-		stringBuffer.append(
-			"Size = " + getLength() + "   Actual Alignment = " + getAlignment() + "\n");
-		return stringBuffer.toString();
+		return CompositeDataTypeImpl.toString(this);
 	}
-
-	private String getTypeName() {
-		if (this instanceof Structure) {
-			return "Structure";
-		}
-		else if (this instanceof Union) {
-			return "Union";
-		}
-		return "";
-	}
-
-	private String getAlignmentSettingsString() {
-		StringBuffer stringBuffer = new StringBuffer();
-		if (!isInternallyAligned()) {
-			stringBuffer.append("Unaligned");
-		}
-		else if (isDefaultAligned()) {
-			stringBuffer.append("Aligned");
-		}
-		else if (isMachineAligned()) {
-			stringBuffer.append("Machine aligned");
-		}
-		else {
-			long alignment = getMinimumAlignment();
-			stringBuffer.append("align(" + alignment + ")");
-		}
-		stringBuffer.append(getPackingString());
-		return stringBuffer.toString();
-	}
-
-	private String getPackingString() {
-		if (!isInternallyAligned()) {
-			return "";
-		}
-		long packingValue = getPackingValue();
-		if (packingValue == Composite.NOT_PACKING) {
-			return "";
-		}
-		return " pack(" + packingValue + ")";
-	}
-
+	
 	/**
 	 * Perform any neccessary component adjustments based on
 	 * sizes and alignment of components differing from their 
 	 * specification which may be influenced by the data organization.
 	 * If this composite changes parents will not be
 	 * notified - handling this is the caller's responsibility.
+	 * @throws IOException if database IO error occurs
 	 */
-	protected abstract void fixupComponents();
+	protected abstract void fixupComponents() throws IOException;
 }

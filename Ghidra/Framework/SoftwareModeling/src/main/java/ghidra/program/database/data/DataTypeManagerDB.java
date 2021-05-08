@@ -490,6 +490,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
+	/**
+	 * Determine if transaction is active.  With proper lock established
+	 * this method may be useful for determining if a lazy record update
+	 * may be performed.
+	 * @return true if database transaction if active, else false
+	 */
+	protected final boolean isTransactionActive() {
+		return dbHandle.isTransactionActive();
+	}
+
 	abstract protected String getDomainFileID();
 
 	abstract protected String getPath();
@@ -983,19 +993,19 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		try {
 			if (existingDataType instanceof StructureDB) {
-				if (!(dataType instanceof Structure)) {
+				if (!(dataType instanceof StructureInternal)) {
 					return false;
 				}
 				StructureDB existingStruct = (StructureDB) existingDataType;
-				existingStruct.doReplaceWith((Structure) dataType, true);
+				existingStruct.doReplaceWith((StructureInternal) dataType, true);
 				return true;
 			}
 			else if (existingDataType instanceof UnionDB) {
-				if (!(dataType instanceof Union)) {
+				if (!(dataType instanceof UnionInternal)) {
 					return false;
 				}
 				UnionDB existingUnion = (UnionDB) existingDataType;
-				existingUnion.doReplaceWith((Union) dataType, true);
+				existingUnion.doReplaceWith((UnionInternal) dataType, true);
 				return true;
 			}
 		}
@@ -1121,7 +1131,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		long lastChangeTime = dataType.getLastChangeTime();
 		existingDataType.setLastChangeTime(lastChangeTime);
 		existingDataType.setLastChangeTimeInSourceArchive(lastChangeTime);
-		dataTypeChanged(existingDataType);
+		dataTypeChanged(existingDataType, false);
 		return existingDataType;
 	}
 
@@ -1725,7 +1735,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				idsToDataTypeMap.removeDataType(sourceArchive, oldDtID);
 			}
 
-			dataTypeChanged(dataType);
+			dataTypeChanged(dataType, false);
 		}
 		finally {
 			lock.release();
@@ -2307,8 +2317,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				int len = ptr.isDynamicallySized() ? -1 : ptr.getLength();
 				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, handler);
 			}
-			else if (dt instanceof Structure) {
-				Structure structure = (Structure) dt;
+			else if (dt instanceof StructureInternal) {
+				StructureInternal structure = (StructureInternal) dt;
 				newDataType = createStructure(structure, name, cat, sourceArchiveIdValue,
 					id.getValue());
 			}
@@ -2317,8 +2327,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				newDataType =
 					createTypeDef(typedef, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof Union) {
-				Union union = (Union) dt;
+			else if (dt instanceof UnionInternal) {
+				UnionInternal union = (UnionInternal) dt;
 				newDataType =
 					createUnion(union, name, cat, sourceArchiveIdValue, id.getValue());
 			}
@@ -2352,7 +2362,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return null;
 	}
 
-	private Structure createStructure(Structure struct, String name, CategoryDB category,
+	private Structure createStructure(StructureInternal struct, String name, CategoryDB category,
 			long sourceArchiveIdValue, long universalIdValue)
 			throws IOException {
 		try {
@@ -2361,13 +2371,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 			creatingDataType++;
 			int len = struct.getLength();
-			if (struct.isNotYetDefined() || struct.isInternallyAligned()) {
+			if (struct.isZeroLength() || struct.isPackingEnabled()) {
 				len = 0;
 			}
 			DBRecord record = compositeAdapter.createRecord(name, struct.getDescription(), false,
-				category.getID(), len, sourceArchiveIdValue, universalIdValue,
-				struct.getLastChangeTime(), getInternalAlignment(struct),
-				getExternalAlignment(struct));
+				category.getID(), len, -1, sourceArchiveIdValue,
+				universalIdValue, struct.getLastChangeTime(),
+				struct.getStoredPackingValue(), struct.getStoredMinimumAlignment());
 
 			StructureDB structDB =
 				new StructureDB(this, dtCache, compositeAdapter, componentAdapter, record);
@@ -2378,7 +2388,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			structDB.doReplaceWith(struct, false);
 			structDB.setDescription(struct.getDescription());
 //			structDB.notifySizeChanged();
-			// doReplaceWith updated the last change time so set it back to what we want.
+			// doReplaceWith may have updated the last change time so set it back to what we want.
 			structDB.setLastChangeTime(struct.getLastChangeTime());
 
 			return structDB;
@@ -2395,32 +2405,32 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return dbHandle.isChanged();
 	}
 
-	private int getExternalAlignment(Composite struct) {
-		if (struct.isDefaultAligned()) {
-			return CompositeDB.DEFAULT_ALIGNED;
-		}
-		else if (struct.isMachineAligned()) {
-			return CompositeDB.MACHINE_ALIGNED;
-		}
-		else {
-			int alignment = struct.getMinimumAlignment();
-			if (alignment == 0) {
-				return CompositeDB.DEFAULT_ALIGNED;
-			}
-			return alignment;
-		}
-	}
+//	private int getExternalAlignment(Composite struct) {
+//		if (struct.isDefaultAligned()) {
+//			return CompositeDB.DEFAULT_ALIGNED;
+//		}
+//		else if (struct.isMachineAligned()) {
+//			return CompositeDB.MACHINE_ALIGNED;
+//		}
+//		else {
+//			int alignment = struct.getAlignment();
+//			if (alignment <= 0) {
+//				return CompositeDB.DEFAULT_ALIGNED;
+//			}
+//			return alignment;
+//		}
+//	}
 
-	private int getInternalAlignment(Composite struct) {
-		if (struct.isInternallyAligned()) {
-			int packingValue = struct.getPackingValue();
-			if (packingValue == 0) {
-				return CompositeDB.ALIGNED_NO_PACKING;
-			}
-			return packingValue;
-		}
-		return CompositeDB.UNALIGNED;
-	}
+//	private int getInternalAlignment(Composite struct) {
+//		if (struct.isPackingEnabled()) {
+//			int packingValue = struct.getPackingValue();
+//			if (packingValue == 0) {
+//				return CompositeDB.ALIGNED_NO_PACKING;
+//			}
+//			return packingValue;
+//		}
+//		return CompositeDB.UNALIGNED;
+//	}
 
 	private TypeDef createTypeDef(TypeDef typedef, String name, Category cat,
 			long sourceArchiveIdValue, long universalIdValue)
@@ -2437,7 +2447,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return typedefDB;
 	}
 
-	private Union createUnion(Union union, String name, CategoryDB category,
+	private Union createUnion(UnionInternal union, String name, CategoryDB category,
 			long sourceArchiveIdValue, long universalIdValue)
 			throws IOException {
 		if (name == null || name.length() == 0) {
@@ -2446,8 +2456,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		try {
 			creatingDataType++;
 			DBRecord record = compositeAdapter.createRecord(name, null, true, category.getID(), 0,
-				sourceArchiveIdValue, universalIdValue, union.getLastChangeTime(),
-				getInternalAlignment(union), getExternalAlignment(union));
+				-1, sourceArchiveIdValue, universalIdValue,
+				union.getLastChangeTime(), union.getStoredPackingValue(), union.getStoredMinimumAlignment());
 			UnionDB unionDB =
 				new UnionDB(this, dtCache, compositeAdapter, componentAdapter, record);
 
@@ -3585,7 +3595,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	@Override
-	public void dataTypeChanged(DataType dt) {
+	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
 		if (dt instanceof Enum) {
 			enumValueMap = null;
 		}
@@ -3851,6 +3861,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				monitor.setProgress(++count);
 			}
 
+		}
+		catch (IOException e) {
+			dbError(e);
 		}
 		finally {
 			lock.release();
