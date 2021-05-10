@@ -111,8 +111,8 @@ class ArrayDB extends DataTypeDB implements Array {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return getDataType().isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return getDataType().hasLanguageDependantLength();
 	}
 
 	@Override

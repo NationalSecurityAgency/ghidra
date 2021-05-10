@@ -947,7 +947,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			if (resolvedDt != null) {
 				return PointerDataType.getPointer(resolvedDt,
-					pointerDt.isDynamicallySized() ? -1 : pointerDt.getLength());
+					pointerDt.hasLanguageDependantLength() ? -1 : pointerDt.getLength());
 			}
 		}
 		return null;

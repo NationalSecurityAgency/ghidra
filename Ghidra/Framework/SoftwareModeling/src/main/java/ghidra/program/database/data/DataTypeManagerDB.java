@@ -2314,7 +2314,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 			else if (dt instanceof Pointer) {
 				Pointer ptr = (Pointer) dt;
-				int len = ptr.isDynamicallySized() ? -1 : ptr.getLength();
+				int len = ptr.hasLanguageDependantLength() ? -1 : ptr.getLength();
 				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, handler);
 			}
 			else if (dt instanceof StructureInternal) {

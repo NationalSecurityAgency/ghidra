@@ -1418,7 +1418,7 @@ public class DWARFDataTypeImporter {
 		for (int i = ptrChainTypes.size() - 1; i >= 0; i--) {
 			Pointer origPtr = ptrChainTypes.get(i);
 			result = new PointerDataType(result,
-				origPtr.isDynamicallySized() ? -1 : origPtr.getLength(), dataTypeManager);
+				origPtr.hasLanguageDependantLength() ? -1 : origPtr.getLength(), dataTypeManager);
 		}
 
 		return result;

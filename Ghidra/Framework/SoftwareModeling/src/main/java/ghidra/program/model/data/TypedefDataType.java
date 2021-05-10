@@ -104,8 +104,8 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return dataType.isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return dataType.hasLanguageDependantLength();
 	}
 
 	@Override

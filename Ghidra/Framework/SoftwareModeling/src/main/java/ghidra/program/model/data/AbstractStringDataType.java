@@ -196,11 +196,6 @@ abstract public class AbstractStringDataType extends BuiltIn
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
-	@Override
 	public int getLength() {
 		return -1;
 	}

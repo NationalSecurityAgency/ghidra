@@ -23,8 +23,6 @@ import ghidra.util.StringUtilities;
 
 public class WideChar16DataType extends BuiltIn implements ArrayStringable, DataTypeWithCharset {
 
-	private final static long serialVersionUID = 1;
-
 	/** A statically defined WideCharDataType instance.*/
 	public final static WideChar16DataType dataType = new WideChar16DataType();
 
@@ -39,11 +37,6 @@ public class WideChar16DataType extends BuiltIn implements ArrayStringable, Data
 	@Override
 	public int getLength() {
 		return 2;
-	}
-
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
 	}
 
 	@Override

@@ -99,7 +99,7 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 

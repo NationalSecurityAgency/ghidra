@@ -232,7 +232,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return false; // not applicable
 	}
 
