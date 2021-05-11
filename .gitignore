@@ -67,6 +67,7 @@ Release
 .project
 .classpath
 .settings/
+.prefs
 
 # Ignore XTEXT generated dirs/files
 */*/*/*/xtend-gen
