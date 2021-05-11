@@ -1022,7 +1022,7 @@ with : ARMcondCk=1 {
 @endif
 
 
-:adc^ItCond	Rd0002,Rm0305 		is TMode=1 & ItCond & op6=0x105 & Rm0305 & Rd0002 & CheckInIT_CZNO
+:adc^CheckInIT_CZNO^ItCond	Rd0002,Rm0305 		is TMode=1 & ItCond & op6=0x105 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
   th_add_with_carry_flags(Rd0002,Rm0305);
@@ -1055,7 +1055,7 @@ with : ARMcondCk=1 {
 }
 @endif # VERSION_6T2 || VERSION_7
 
-:add^ItCond	Rd0002,Rn0305,Immed3	is TMode=1 & ItCond & op9=0x0e & Immed3 & Rn0305 & Rd0002 & CheckInIT_CZNO
+:add^CheckInIT_CZNO^ItCond	Rd0002,Rn0305,Immed3	is TMode=1 & ItCond & op9=0x0e & Immed3 & Rn0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
   th_addflags(Rn0305,Immed3);
@@ -1064,7 +1064,7 @@ with : ARMcondCk=1 {
   build CheckInIT_CZNO;
 }
 
-:add^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=0x06 & Rd0810 & Immed8 & CheckInIT_CZNO
+:add^CheckInIT_CZNO^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=0x06 & Rd0810 & Immed8 & CheckInIT_CZNO
 {
   build ItCond;
   th_addflags(Rd0810,Immed8);
@@ -1135,7 +1135,7 @@ with : ARMcondCk=1 {
 
 @endif # VERSION_6T2 || VERSION_7
 
-:add^ItCond	Rd0002,Rn0305,Rm0608	is TMode=1 & ItCond & op9=0x0c & Rm0608 & Rn0305 & Rd0002 & CheckInIT_CZNO
+:add^CheckInIT_CZNO^ItCond	Rd0002,Rn0305,Rm0608	is TMode=1 & ItCond & op9=0x0c & Rm0608 & Rn0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
   th_addflags(Rn0305,Rm0608);
@@ -1206,7 +1206,7 @@ with : ARMcondCk=1 {
 
 @endif # VERSION_6T2 || VERSION_7
 
-:and^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x100 & Rd0002 & Rm0305 & CheckInIT_ZN
+:and^CheckInIT_ZN^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x100 & Rd0002 & Rm0305 & CheckInIT_ZN
 {
   build ItCond;
   Rd0002 = Rd0002 & Rm0305;
@@ -1241,7 +1241,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
 }
 
 #note that this is a special case where immed5 = 0, which corresponds to a shift amount of 32
-:asr^ItCond	Rd0002,Rm0305,"#0x20"	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
+:asr^CheckInIT_CZN^ItCond	Rd0002,Rm0305,"#0x20"	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
 {
   build ItCond;
   th_set_carry_for_asr(Rm0305,32:1);
@@ -1250,7 +1250,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
   build CheckInIT_CZN;
 }
 
-:asr^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
+:asr^CheckInIT_CZN^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
   th_set_carry_for_asr(Rm0305,Immed5);
@@ -1259,7 +1259,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
   build CheckInIT_CZN;
 }
 
-:asr^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x104 & Rd0002 & Rs0305 & CheckInIT_CZN
+:asr^CheckInIT_CZN^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x104 & Rd0002 & Rs0305 & CheckInIT_CZN
 {
   build ItCond;
   local shift_amount = Rs0305 & 0xff;
@@ -1348,7 +1348,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
 @endif # VERSION_6T2 || VERSION_7
 
 
-:bic^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10e & Rd0002 & Rm0305 & CheckInIT_ZN
+:bic^CheckInIT_ZN^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10e & Rd0002 & Rm0305 & CheckInIT_ZN
 {
   build ItCond;
   Rd0002 = Rd0002 & (~Rm0305);
@@ -1820,7 +1820,7 @@ th2_SetMode: "#"^31  is thc0004=0x1f  { setSystemMode(); }
 @endif # VERSION_6T2 || VERSION_7
 
 
-:eor^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x101 & Rm0305 & Rd0002 & CheckInIT_ZN
+:eor^CheckInIT_ZN^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x101 & Rm0305 & Rd0002 & CheckInIT_ZN
 {
   build ItCond;
   Rd0002 = Rd0002 ^ Rm0305;
@@ -2358,7 +2358,7 @@ macro th_set_carry_for_lsl(op1,shift_count) {
   tmpCY = ((shift_count == 0) && CY) || ((shift_count != 0) && (bit != 0));
 }
 
-:lsl^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x0 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
+:lsl^CheckInIT_CZN^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x0 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
   th_set_carry_for_lsl(Rm0305,Immed5);
@@ -2367,7 +2367,7 @@ macro th_set_carry_for_lsl(op1,shift_count) {
   build CheckInIT_CZN;
 }
 
-:lsl^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x102 & Rs0305 & Rd0002 & CheckInIT_CZN
+:lsl^CheckInIT_CZN^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x102 & Rs0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
   local shift_count = Rs0305 & 0xff;
@@ -2383,7 +2383,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 }
 
 #note that this is a special case where immed5 = 0, which corresponds to a shift amount of 32
-:lsr^ItCond	Rd0002,Rm0305,"#0x20"	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
+:lsr^CheckInIT_CZN^ItCond	Rd0002,Rm0305,"#0x20"	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
 {
   build ItCond;
   th_set_carry_for_lsr(Rm0305,32:1);
@@ -2392,7 +2392,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   build CheckInIT_CZN;
 }
 
-:lsr^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
+:lsr^CheckInIT_CZN^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
   local shift_amount = Immed5;
@@ -2402,7 +2402,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   build CheckInIT_CZN;
 }
 
-:lsr^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x103 & Rd0002 & Rs0305 & CheckInIT_CZN
+:lsr^CheckInIT_CZN^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x103 & Rd0002 & Rs0305 & CheckInIT_CZN
 {
   build ItCond;
   local shift_amount = (Rs0305 & 0xff);
@@ -2490,7 +2490,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 }
 
 
-:mov^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=4 & Rd0810 & Immed8 & CheckInIT_ZN
+:mov^CheckInIT_ZN^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=4 & Rd0810 & Immed8 & CheckInIT_ZN
 {
   build ItCond;
   Rd0810 = Immed8;
@@ -2498,7 +2498,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   build CheckInIT_ZN;
 }
 
-:mov^ItCond	Rd0002,Rn0305		is TMode=1 & ItCond & op6=0x000 & Rn0305 & Rd0002 & CheckInIT_ZN
+:mov^CheckInIT_ZN^ItCond	Rd0002,Rn0305		is TMode=1 & ItCond & op6=0x000 & Rn0305 & Rd0002 & CheckInIT_ZN
 {
  build ItCond;
   Rd0002 = Rn0305;
@@ -2898,7 +2898,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 
 @endif # VERSION_6T2 || VERSION_7
 
-:mul^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10d & Rm0305 & Rd0002 & CheckInIT_ZN
+:mul^CheckInIT_ZN^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10d & Rm0305 & Rd0002 & CheckInIT_ZN
 {
   build ItCond;
   Rd0002 = Rm0305 * Rd0002;
@@ -2928,7 +2928,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 
 @endif # VERSION_6T2 || VERSION_7
 
-:mvn^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10f & Rm0305 & Rd0002 & CheckInIT_ZN
+:mvn^CheckInIT_ZN^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10f & Rm0305 & Rd0002 & CheckInIT_ZN
 {
   build ItCond;
   Rd0002 = ~Rm0305;
@@ -2948,7 +2948,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 {
 }
 
-:orr^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10c & Rm0305 & Rd0002 & CheckInIT_ZN
+:orr^CheckInIT_ZN^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x10c & Rm0305 & Rd0002 & CheckInIT_ZN
 {
   build ItCond;
   Rd0002 = Rd0002 | Rm0305;
@@ -3398,7 +3398,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 
 @endif # THUMB_2
 
-:rsb^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x109 & Rm0305 & Rd0002 & CheckInIT_CZNO
+:rsb^CheckInIT_CZNO^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x109 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
   th_subflags0(Rm0305);
@@ -3585,7 +3585,7 @@ macro th_set_carry_for_ror(result, count) {
   tmpCY = ((count == 0) && CY) || ((count != 0) && (bit != 0));
 }
 
-:ror^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x107 & Rs0305 & Rd0002 & CheckInIT_CZN
+:ror^CheckInIT_CZN^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x107 & Rs0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
   local shift_amount = Rs0305 & 0x1f;
@@ -3685,7 +3685,7 @@ macro th_set_carry_for_ror(result, count) {
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
 
-:sbc^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x106 & Rm0305 & Rd0002 & CheckInIT_CZNO
+:sbc^CheckInIT_CZNO^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x106 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
   th_add_with_carry_flags(Rd0002,~Rm0305);
@@ -4492,7 +4492,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 @endif # VERSION_7
 
-:sub^ItCond	Rd0002,Rn0305,Immed3	is TMode=1 & ItCond & op9=0xf & Immed3 & Rn0305 & Rd0002 & CheckInIT_CZNO
+:sub^CheckInIT_CZNO^ItCond	Rd0002,Rn0305,Immed3	is TMode=1 & ItCond & op9=0xf & Immed3 & Rn0305 & Rd0002 & CheckInIT_CZNO
 {
    build ItCond;
   th_subflags(Rn0305,Immed3);
@@ -4501,7 +4501,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   build CheckInIT_CZNO;
 }
 
-:sub^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=7 & Rd0810 & Immed8 & CheckInIT_CZNO
+:sub^CheckInIT_CZNO^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=7 & Rd0810 & Immed8 & CheckInIT_CZNO
 {
    build ItCond;
   th_subflags(Rd0810,Immed8);
@@ -4510,7 +4510,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   build CheckInIT_CZNO;
 }
 
-:sub^ItCond	Rd0002,Rn0305,Rm0608	is TMode=1 & ItCond & op9=0xd & Rm0608 & Rn0305 & Rd0002 & CheckInIT_CZNO
+:sub^CheckInIT_CZNO^ItCond	Rd0002,Rn0305,Rm0608	is TMode=1 & ItCond & op9=0xd & Rm0608 & Rn0305 & Rd0002 & CheckInIT_CZNO
 {
    build ItCond;
   th_subflags(Rn0305,Rm0608);
