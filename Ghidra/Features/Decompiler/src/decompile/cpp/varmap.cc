@@ -612,46 +612,46 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
     for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
       op = *iter;
       switch(op->code()) {
-      case CPUI_COPY:
-	nonadduse = true;	// Treat COPY as both non-add use and part of ADD expression
-	subvn = op->getOut();
-	if (!subvn->isMark()) {
-	  subvn->setMark();
-	  vnqueue.push_back(AddBase(subvn,indexvn));
-	}
-	break;
-      case CPUI_INT_SUB:
-	if (vn == op->getIn(1)) {	// Subtracting the pointer
-	  nonadduse = true;
-	  break;
-	}
-	othervn = op->getIn(1);
-	if (!othervn->isConstant())
-	  indexvn = othervn;
-	subvn = op->getOut();
-	if (!subvn->isMark()) {
-	  subvn->setMark();
-	  vnqueue.push_back(AddBase(subvn,indexvn));
-	}
-	break;
-      case CPUI_INT_ADD:
-      case CPUI_PTRADD:
-	othervn = op->getIn(1);	// Check if something else is being added in besides a constant
-	if (othervn == vn)
-	  othervn = op->getIn(0);
-	if (!othervn->isConstant())
-	  indexvn = othervn;
-	// fallthru
-      case CPUI_PTRSUB:
-      case CPUI_SEGMENTOP:
-	subvn = op->getOut();
-	if (!subvn->isMark()) {
-	  subvn->setMark();
-	  vnqueue.push_back(AddBase(subvn,indexvn));
-	}
-	break;
-      default:
-	nonadduse = true;	// Used in non-additive expression
+        case CPUI_COPY:
+	        nonadduse = true;	// Treat COPY as both non-add use and part of ADD expression
+	        subvn = op->getOut();
+	        if (!subvn->isMark()) {
+	          subvn->setMark();
+	          vnqueue.push_back(AddBase(subvn,indexvn));
+	        }
+	        break;
+        case CPUI_INT_SUB:
+	        if (vn == op->getIn(1)) {	// Subtracting the pointer
+	          nonadduse = true;
+	          break;
+	        }
+	        othervn = op->getIn(1);
+	        if (!othervn->isConstant())
+	          indexvn = othervn;
+	        subvn = op->getOut();
+	        if (!subvn->isMark()) {
+	          subvn->setMark();
+	          vnqueue.push_back(AddBase(subvn,indexvn));
+	        }
+	        break;
+        case CPUI_INT_ADD:
+        case CPUI_PTRADD:
+	        othervn = op->getIn(1);	// Check if something else is being added in besides a constant
+	        if (othervn == vn)
+	          othervn = op->getIn(0);
+	        if (!othervn->isConstant())
+	          indexvn = othervn;
+	        // fallthru
+        case CPUI_PTRSUB:
+        case CPUI_SEGMENTOP:
+	        subvn = op->getOut();
+	        if (!subvn->isMark()) {
+	          subvn->setMark();
+	          vnqueue.push_back(AddBase(subvn,indexvn));
+	        }
+	        break;
+        default:
+	        nonadduse = true;	// Used in non-additive expression
       }
     }
     if (nonadduse)
@@ -910,9 +910,9 @@ void MapState::gatherVarnodes(const Funcdata &fd)
     if (vn->isFree()) continue;
     uintb start = vn->getOffset();
     Datatype *ct = vn->getType();
-				// Do not force Varnode flags on the entry
-				// as the flags were inherited from the previous
-				// (now obsolete) entry
+		// Do not force Varnode flags on the entry
+		// as the flags were inherited from the previous
+		// (now obsolete) entry
     addRange(start,ct,0,RangeHint::fixed,-1);
   }
 }
@@ -965,7 +965,7 @@ void MapState::gatherOpen(const Funcdata &fd)
     if (ct->getMetatype() == TYPE_PTR) {
       ct = ((TypePointer *)ct)->getPtrTo();
       while(ct->getMetatype() == TYPE_ARRAY)
-	ct = ((TypeArray *)ct)->getBase();
+	      ct = ((TypeArray *)ct)->getBase();
     }
     else
       ct = (Datatype *)0;	// Do unknown array
@@ -1067,15 +1067,15 @@ bool ScopeLocal::restructure(MapState &state)
     next = state.next();
     if (next->sstart < cur.sstart+cur.size) {	// Do the ranges intersect
       if (cur.merge(next,space,glb->types))	// Union them
-	overlapProblems = true;
-    }
+	      overlapProblems = true;
+      }
     else {
       if (!cur.absorb(next)) {
-	if (cur.rangeType == RangeHint::open)
-	  cur.size = next->sstart-cur.sstart;
-	if (adjustFit(cur))
-	  createEntry(cur);
-	cur = *next;
+	      if (cur.rangeType == RangeHint::open)
+	        cur.size = next->sstart-cur.sstart;
+	      if (adjustFit(cur))
+	        createEntry(cur);
+	      cur = *next;
       }
     }
   }
