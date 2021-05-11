@@ -132,13 +132,13 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 		if (extreloff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + extreloff);
 			for (int i = 0; i < nextrel; ++i) {
-				externalRelocations.add(RelocationFactory.readRelocation(reader, header.is32bit()));
+				externalRelocations.add(RelocationInfo.createRelocationInfo(reader));
 			}
 		}
 		if (locreloff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + locreloff);
 			for (int i = 0; i < nlocrel; ++i) {
-				localRelocations.add(RelocationFactory.readRelocation(reader, header.is32bit()));
+				localRelocations.add(RelocationInfo.createRelocationInfo(reader));
 			}
 		}
 
