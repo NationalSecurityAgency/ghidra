@@ -34,7 +34,7 @@ You may not need all of these, depending on which portions you are building or d
       - https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot
     - Amazon Corretto
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 5.0 or later - We use version 5.0, and tested with up to 6.8.3.
+* Gradle 5.x or 6.x - We use version 5.0, and have tested with up to 6.8.3.
     - https://gradle.org/next-steps/?version=5.0&format=bin
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/
