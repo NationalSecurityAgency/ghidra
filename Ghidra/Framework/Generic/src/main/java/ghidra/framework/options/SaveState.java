@@ -1411,6 +1411,11 @@ public class SaveState {
 		return getAsType(name, null, SaveState.class);
 	}
 
+	@Override
+	public String toString() {
+		return XmlUtilities.toString(saveToXml());
+	}
+
 	private <T> T getAsType(String name, T defaultValue, Class<T> clazz) {
 		if (map.containsKey(name)) {
 			Object value = map.get(name);

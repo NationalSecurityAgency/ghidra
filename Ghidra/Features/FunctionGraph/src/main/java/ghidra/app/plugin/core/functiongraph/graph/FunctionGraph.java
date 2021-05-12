@@ -161,12 +161,10 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		settings.clearVertexLocation(vertex);
 	}
 
-	// TODO make private?
 	public void clearSavedVertexLocations() {
 		settings.clearVertexLocations(this);
 	}
 
-	// TODO make private?
 	public void clearAllUserLayoutSettings() {
 		clearSavedVertexLocations();
 		settings.clearGroupSettings(this);
@@ -585,6 +583,15 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		Collection<FGVertex> v = getVertices();
 		Collection<FGEdge> e = getEdges();
 		FunctionGraph newGraph = new FunctionGraph(getFunction(), getSettings(), v, e);
+
+		FGLayout originalLayout = getLayout();
+		FGLayout newLayout = originalLayout.cloneLayout(newGraph);
+
+		// setSize() must be called after setGraphLayout() due to callbacks performed when 
+		// setSize() is called
+		newGraph.setGraphLayout(newLayout);
+		newLayout.setSize(originalLayout.getSize());
+
 		newGraph.setOptions(getOptions());
 		return newGraph;
 	}
