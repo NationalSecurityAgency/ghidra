@@ -62,20 +62,6 @@ ext.deps = [
 		}
 	],
 	[
-		name: 'hfsexplorer-0_21-bin.zip',
-		url: 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip',
-		sha256: '90c9b54798abca5b12f4a678db7d0a4c970f4702cb153c11919536d0014dedbf',
-		destination: {
-			def hfsxdir = new File (DOWNLOADS_DIR, "hfsx")
-			hfsxdir.mkdir()
-			unzip (DOWNLOADS_DIR, hfsxdir, 'hfsexplorer-0_21-bin.zip')
-			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/csframework.jar"), FLAT_REPO_DIR);
-			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx_dmglib.jar"), FLAT_REPO_DIR);
-			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/hfsx.jar"), FLAT_REPO_DIR);
-			FileUtils.copyFileToDirectory(new File(DOWNLOADS_DIR, "hfsx/lib/iharder-base64.jar"), FLAT_REPO_DIR);
-		}
-	],
-	[
 		name: 'AXMLPrinter2.jar',
 		url: 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar',
 		sha256: '00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d',
