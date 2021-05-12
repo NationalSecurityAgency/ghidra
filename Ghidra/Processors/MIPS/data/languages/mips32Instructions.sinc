@@ -1647,10 +1647,9 @@ define pcodeop SYNC;
     goto [pc];
 }
 
-:jic RTsrc, simmed                                      is $(AMODE) & REL6=1 & prime=0x36 & jsub=0x00 & RTsrc & simmed & rt=0x1f {
+:jic RTsrc, simmed                                      is $(AMODE) & REL6=1 & prime=0x36 & jsub=0x00 & RTsrc & simmed & immed=0x00 & rt=0x1f {
         build RTsrc;
-        tmp:$(REGSIZE) = sext(simmed:2) + RTsrc;
-        JXWritePC(tmp);
+        JXWritePC(ra);
 	return [pc];
 }
 
