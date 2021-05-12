@@ -27,7 +27,7 @@ public class SparcAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_rd_Y_g2() {
-		assertOneCompatRestExact("rd Y,g2", "85:40:00:00");
+		assertOneCompatRestExact("rd %Y,g2", "85:40:00:00");
 	}
 
 	// Too many reserved/undefined bits: 524288 instructions to test
@@ -38,6 +38,6 @@ public class SparcAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_wr_g3_g0() {
-		assertOneCompatRestExact("wr g3,g0", "81:80:00:03");
+		assertOneCompatRestExact("wr g0,g3,%Y", "81:80:00:03");
 	}
 }

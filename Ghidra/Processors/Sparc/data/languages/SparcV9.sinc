@@ -850,16 +850,17 @@ attach variables [ rd_asr ] [ Y     _          _     _     _           _        
                               STICK STICK_CMPR asr26 asr27 asr28       asr29       asr30   asr31 ];
                              
 # ASR write registers
-wrCCR: "%"^CCR		is rd_asr=2 & CCR { } # packed CCR register displayed
-wrASI: "%"^ASI		is rd_asr=3 & ASI { }
-wrFPRS: "%"^FPRS	is rd_asr=6 & FPRS { }
+wrCCR: "%"^CCR		is rd_asr=2 & CCR { export CCR; } # packed CCR register displayed
+wrASI: "%"^ASI		is rd_asr=3 & ASI { export ASI; }
+wrFPRS: "%"^FPRS	is rd_asr=6 & FPRS { export FPRS; }
+wrASR: "%"^rd_asr	is rd_asr { export rd_asr; }
 
 #---------------WR ASR special register (SIR instruction must be defined after this instruction)
 # NOTE: the following ASR register numbers are not allowed: 1, 4, 5, 7..14
-:wr regorimm,wrCCR                   is op=0x2 & regorimm & op3=0x30 & rd_asr=2 & wrCCR { unpackflags(regorimm); }
-:wr regorimm,wrASI                   is op=0x2 & regorimm & op3=0x30 & rd_asr=3 & wrASI { ASI = regorimm:1; }
-:wr regorimm,wrFPRS                  is op=0x2 & regorimm & op3=0x30 & rd_asr=6 & wrFPRS { FPRS = regorimm:1; }
-:wr regorimm,rd_asr                  is op=0x2 & regorimm & op3=0x30 & rd_asr { rd_asr = regorimm; }
+:wr RS1,regorimm,wrCCR                   is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=2 & wrCCR { local tmp = RS1 ^ regorimm; unpackflags(tmp); }
+:wr RS1,regorimm,wrASI                   is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=3 & wrASI { local tmp = RS1 ^ regorimm; wrASI = tmp:1; }
+:wr RS1,regorimm,wrFPRS                  is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=6 & wrFPRS { local tmp = RS1 ^ regorimm; FPRS = tmp:1; }
+:wr RS1,regorimm,wrASR                  is op=0x2 & RS1 & regorimm & op3=0x30 & wrASR { wrASR = RS1 ^ regorimm; }
 
 #---------------MISC
 sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE) hi; }
