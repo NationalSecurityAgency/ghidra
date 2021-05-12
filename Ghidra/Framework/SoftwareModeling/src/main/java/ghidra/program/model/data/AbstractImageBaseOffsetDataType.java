@@ -59,11 +59,6 @@ abstract class AbstractImageBaseOffsetDataType extends BuiltIn {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		Address addr = (Address) getValue(buf, settings, length);
 		if (addr == null) { // could not create address, so return "Not a pointer (NaP)"

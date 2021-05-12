@@ -43,7 +43,7 @@ public class TestDoubleDataType implements DataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		throw new UnsupportedOperationException();
 	}
 

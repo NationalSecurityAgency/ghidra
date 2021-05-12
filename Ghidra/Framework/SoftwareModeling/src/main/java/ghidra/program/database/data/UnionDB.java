@@ -130,7 +130,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	private DataTypeComponent doAdd(DataType dataType, int length, String name, String comment,
 			boolean validateAlignAndNotify) throws DataTypeDependencyException {
 
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		dataType = adjustBitField(dataType);
 
@@ -178,7 +178,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		lock.acquire();
 		try {
 			checkDeleted();
-			validateDataType(dataType);
+			dataType = validateDataType(dataType);
 
 			dataType = adjustBitField(dataType);
 
@@ -469,6 +469,12 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		finally {
 			lock.release();
 		}
+	}
+
+	@Override
+	public boolean hasLanguageDependantLength() {
+		// Assume any component may have a language-dependent length
+		return true;
 	}
 
 	@Override

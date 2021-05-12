@@ -32,11 +32,6 @@ public class HTMLResourceDataType extends BuiltIn implements Dynamic {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
-	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;

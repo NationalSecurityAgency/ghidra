@@ -48,14 +48,6 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	}
 
 	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	/**
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
@@ -125,7 +117,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 
 	@Override
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
-		return isDynamicallySized() ? null : name;
+		return hasLanguageDependantLength() ? null : name;
 	}
 
 	private static TreeMap<Integer, AbstractFloatDataType> floatTypes; // fixed-size float types

@@ -28,8 +28,6 @@ import ghidra.program.model.mem.MemoryAccessException;
  */
 public class BooleanDataType extends AbstractIntegerDataType {
 
-	private final static long serialVersionUID = 1;
-
 	private static SettingsDefinition[] SETTINGS_DEFS = {};
 
 	public static final BooleanDataType dataType = new BooleanDataType();
@@ -52,8 +50,9 @@ public class BooleanDataType extends AbstractIntegerDataType {
 
 	@Override
 	public String getDecompilerDisplayName(DecompilerLanguage language) {
-		if (language == DecompilerLanguage.JAVA_LANGUAGE)
+		if (language == DecompilerLanguage.JAVA_LANGUAGE) {
 			return "boolean";
+		}
 		return name;
 	}
 
@@ -65,11 +64,6 @@ public class BooleanDataType extends AbstractIntegerDataType {
 	@Override
 	public int getLength() {
 		return 1; // TODO: Size should probably be based upon data organization
-	}
-
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
 	}
 
 	@Override

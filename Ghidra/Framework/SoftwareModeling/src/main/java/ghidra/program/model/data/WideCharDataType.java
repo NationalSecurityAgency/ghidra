@@ -26,8 +26,6 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	final static SettingsDefinition[] DEFAULT_WIDE_CHAR_SETTINGS = new SettingsDefinition[] {
 		EndianSettingsDefinition.DEF, RenderUnicodeSettingsDefinition.RENDER };
 
-	private final static long serialVersionUID = 1;
-
 	/** A statically defined WideCharDataType instance.*/
 	public final static WideCharDataType dataType = new WideCharDataType();
 
@@ -45,7 +43,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 

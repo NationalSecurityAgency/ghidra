@@ -165,9 +165,4 @@ public abstract class AbstractLeb128DataType extends BuiltIn implements Dynamic 
 		return false;
 	}
 
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
 }

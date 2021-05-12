@@ -111,9 +111,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return true; // assume dynamically sized component datatype may be present
-	}
+	public abstract boolean hasLanguageDependantLength();
 
 	@Override
 	public boolean isPartOf(DataType dataTypeOfInterest) {
@@ -142,23 +140,33 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * This method throws an exception if the indicated data type is not a valid
-	 * data type for a component of this composite data type.
+	 * data type for a component of this composite data type.  If the DEFAULT 
+	 * datatype is specified when unsupported an Undefined1 will be returned 
+	 * in its place (e.g., packing enabled, Union).
 	 * 
 	 * @param dataType the data type to be checked.
+	 * @return datatype to be used for insert/add
 	 * @throws IllegalArgumentException if the data type is invalid.
 	 */
-	protected void validateDataType(DataType dataType) {
-		if (dataType instanceof FactoryDataType) {
-			throw new IllegalArgumentException("The \"" + dataType.getName() +
-				"\" data type is not allowed in a composite data type.");
+	protected DataType validateDataType(DataType dataType) {
+		if (dataType == DataType.DEFAULT) {
+			if (isPackingEnabled() || (this instanceof Union)) {
+				return Undefined1DataType.dataType;
+			}
+			return dataType;
 		}
-		else if (dataType instanceof Dynamic) {
+		if (dataType instanceof Dynamic) {
 			Dynamic dynamicDataType = (Dynamic) dataType;
 			if (!dynamicDataType.canSpecifyLength()) {
 				throw new IllegalArgumentException("The \"" + dataType.getName() +
 					"\" data type is not allowed in a composite data type.");
 			}
 		}
+		else if (dataType instanceof FactoryDataType || dataType.getLength() <= 0) {
+			throw new IllegalArgumentException("The \"" + dataType.getName() +
+				"\" data type is not allowed in a composite data type.");
+		}
+		return dataType;
 	}
 
 	/**

@@ -38,10 +38,11 @@ public interface DataType {
 	static final long NO_LAST_CHANGE_TIME = 0L;
 
 	/**
-	 * Indicates if this data-type is dynamically sized based upon DataOrganization.
-	 * @return true if dynamically sized
+	 * Indicates if the length of this data-type is determined based
+	 * upon the {@link DataOrganization} obtained from the associated {@link DataTypeManager}.
+	 * @return true length is language/compiler-specification dependent, else false
 	 */
-	public boolean isDynamicallySized();
+	public boolean hasLanguageDependantLength();
 
 	/**
 	 * Indicates if type has not yet been defined.

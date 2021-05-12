@@ -74,11 +74,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	@Override
 	public long getValue(String valueName) throws NoSuchElementException {
 		Long value = nameMap.get(valueName);
 		if (value == null) {

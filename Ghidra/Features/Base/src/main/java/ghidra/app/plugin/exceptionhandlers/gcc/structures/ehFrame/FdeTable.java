@@ -84,8 +84,17 @@ public class FdeTable {
 
 		DataType encodedDt = decoder.getDataType(prog);
 
-		if (encodedDt.isDynamicallySized()) {
-			throw new ExceptionHandlerFrameException("Cannot build FDE structure with dynamically-encoded values");
+		if (encodedDt.getLength() <= 0) {
+			throw new ExceptionHandlerFrameException(
+				"Cannot build FDE structure with Dynamic or Void value type: " +
+					encodedDt.getClass().getName());
+		}
+
+		if (encodedDt.hasLanguageDependantLength()) {
+			// Should avoid using value types whose size fluctuates with Data Organization
+			throw new ExceptionHandlerFrameException(
+				"Cannot build FDE structure with dynamically-sized value type: " +
+					encodedDt.getClass().getName());
 		}
 
 		fdeTableEntry.deleteAll();
