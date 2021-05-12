@@ -192,19 +192,20 @@ public class PdbApplicator {
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
-		switch (applicatorOptions.getRestrictions()) {
+		switch (applicatorOptions.getProcessingControl()) {
 			case DATA_TYPES_ONLY:
 				processTypes();
 				break;
 			case PUBLIC_SYMBOLS_ONLY:
 				processPublicSymbols();
 				break;
-			case NONE:
+			case ALL:
 				processTypes();
 				processSymbols();
 				break;
 			default:
-				throw new PdbException("Invalid Restriction");
+				throw new PdbException("PDB: Invalid Application Control: " +
+					applicatorOptions.getProcessingControl());
 		}
 
 		if (program != null) {
@@ -351,15 +352,16 @@ public class PdbApplicator {
 		if (programParam == null) {
 			if (dataTypeManagerParam == null) {
 				throw new PdbException(
-					"programParam and dataTypeManagerParam may not both be null.");
+					"PDB: programParam and dataTypeManagerParam may not both be null.");
 			}
 			if (imageBaseParam == null) {
-				throw new PdbException("programParam and imageBaseParam may not both be null.");
-			}
-			if (applicatorOptions.getRestrictions() != PdbApplicatorRestrictions.DATA_TYPES_ONLY) {
 				throw new PdbException(
-					"programParam may not be null for the chosen PdbApplicatorRestrictions: " +
-						applicatorOptions.getRestrictions());
+					"PDB: programParam and imageBaseParam may not both be null.");
+			}
+			if (applicatorOptions.getProcessingControl() != PdbApplicatorControl.DATA_TYPES_ONLY) {
+				throw new PdbException(
+					"PDB: programParam may not be null for the chosen Applicator Control: " +
+						applicatorOptions.getProcessingControl());
 			}
 		}
 		monitor = (monitorParam != null) ? monitorParam : TaskMonitor.DUMMY;
@@ -641,7 +643,7 @@ public class PdbApplicator {
 				return sectionContribution.getModule();
 			}
 		}
-		throw new PdbException("Module not found for section/offset");
+		throw new PdbException("PDB: Module not found for section/offset");
 	}
 
 	//==============================================================================================

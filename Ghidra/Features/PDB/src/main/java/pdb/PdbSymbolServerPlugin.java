@@ -37,7 +37,7 @@ import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
 import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
-import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorRestrictions;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -808,7 +808,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 		}
 
 		boolean useMsDiaParser = optionsDialog.useMsDiaParser();
-		PdbApplicatorRestrictions restrictions = optionsDialog.getApplicatorRestrictions();
+		PdbApplicatorControl control = optionsDialog.getApplicatorControl();
 
 		tool.setStatusInfo("");
 
@@ -822,7 +822,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 
 			TaskLauncher
 				.launch(
-						new LoadPdbTask(currentProgram, downloadedPdb, useMsDiaParser, restrictions,
+						new LoadPdbTask(currentProgram, downloadedPdb, useMsDiaParser, control,
 						service));
 		}
 		catch (Exception pe) {

@@ -16,6 +16,8 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
+import ghidra.framework.options.Options;
+import ghidra.util.HelpLocation;
 
 /**
  * Options used while using a {@link PdbApplicator} to apply a PDB ({@link AbstractPdb}) to a
@@ -24,54 +26,215 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
  */
 public class PdbApplicatorOptions {
 
-	public static final boolean DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS = false;
-	public static final boolean DEFAULT_APPLY_INSTRUCTION_LABELS = false;
-	public static final PdbApplicatorRestrictions DEFAULT_RESTRICTIONS =
-		PdbApplicatorRestrictions.NONE;
-	public static final boolean DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS = false;
-	public static final boolean DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS = true;
+	// Developer turn on/off options that are in still in development.
+	private static final boolean developerMode = false;
 
-	// TODO: set the following to true if we come up with a reasonably good solution
-	public static final boolean DEFAULT_APPLY_FUNCTION_VARIABLES = false;
+	// Applicator Control.
+	private static final String OPTION_NAME_PROCESSING_CONTROL = "Control";
+	private static final String OPTION_DESCRIPTION_PROCESSING_CONTROL =
+		"Applicator processing control.";
+	private static final PdbApplicatorControl DEFAULT_CONTROL = PdbApplicatorControl.ALL;
+	private PdbApplicatorControl control;
 
-	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
-		ObjectOrientedClassLayout.MEMBERS_ONLY;
-//	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
-//		ObjectOrientedClassLayout.BASIC_SIMPLE_COMPLEX;
-//	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
-//		ObjectOrientedClassLayout.SIMPLE_COMPLEX;
-//	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
-//		ObjectOrientedClassLayout.COMPLEX;
-
-	//==============================================================================================
+	// Apply Code Block Comments.
+	private static final String OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS =
+		"Apply Code Scope Block Comments";
+	private static final String OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS =
+		"If checked, pre/post-comments will be applied when code scope blocks are specified.";
+	private static final boolean DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS = false;
 	private boolean applyCodeScopeBlockComments;
+
+	// Apply Instruction Labels information.
+	// Mechanism to apply instruction labels is not yet implemented-> does nothing
+	private static final String OPTION_NAME_APPLY_INSTRUCTION_LABELS = "Apply Instruction Labels";
+	private static final String OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS =
+		"If checked, labels associated with instructions will be applied.";
+	private static final boolean DEFAULT_APPLY_INSTRUCTION_LABELS = false;
 	private boolean applyInstructionLabels;
-	private PdbApplicatorRestrictions restrictions;
-	private boolean remapAddressesUsingExistingPublicSymbols;
+
+	// Attempt to map address using existing mangled symbols.
+	private static final String OPTION_NAME_ADDRESS_REMAP = "Address Remap Using Existing Symbols";
+	private static final String OPTION_DESCRIPTION_ADDRESS_REMAP =
+		"If checked, attempts to remap address to those matching existing public symbols.";
+	private static final boolean DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS = false;
+	private boolean remapAddressUsingExistingPublicMangledSymbols;
+
+	// Allow a mangled symbol to be demoted from being a primary symbol if another symbol and
+	//  associated explicit data type will be laid down at the location.  This option exists
+	//  because we expect the PDB explicit data type will be more accurate than trying to
+	//  have the demangler lay down the data type.
+	private static final String OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY =
+		"Allow demote mangled symbol from primary";
+	private static final String OPTION_DESCRIPTION_ALLOW_DEMOTE_MANGLED_PRIMARY =
+		"If checked, allows a mangled symbol to be demoted from primary if a possibly " +
+			"better data type can be laid down with a nonmangled symbol.";
+	private static final boolean DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS = true;
 	private boolean allowDemotePrimaryMangledSymbols;
 
-	private boolean applyFunctionVariables; // investigation. might produce bad results.
+	// Apply Function Variables
+	// Investigation. might produce bad results.
+	private static final String OPTION_NAME_APPLY_FUNCTION_VARIABLES = "Apply Function Variables";
+	private static final String OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES =
+		"If checked, attempts to apply function parameters and local variables for program functions.";
+	// TODO: set the following to true if we come up with a reasonably good solution
+	private static final boolean DEFAULT_APPLY_FUNCTION_VARIABLES = false;
+	private boolean applyFunctionVariables;
 
-	private ObjectOrientedClassLayout classLayout;
+	// Sets the composite layout.
+	// Legacy
+	//   - similar to existing DIA-based PDB Analyzer, only placing current composite direct
+	//     members (none from parent classes.
+	// Warning: the remaining experimental layout choices may not be kept and are not guaranteed
+	//          to result in data types that will be compatible with future Ghidra releases:
+	// Complex with Basic Fallback
+	//   - Performs Complex layout, but if the current class has no parent classes, it will not
+	//     encapsulate the current class's 'direct' members.
+	// Simple
+	//   - Performs Complex layout, except in rare instances where , so in most cases is the same
+	//     as 'Complex with Basic Fallback' layout.
+	// Complex
+	//   - Puts all current class members and 'direct' parents' 'direct' components into an
+	//     encapsulating 'direct' container
+	private static final String OPTION_NAME_COMPOSITE_LAYOUT = "Composite Layout Choice";
+	private static final String OPTION_DESCRIPTION_COMPOSITE_LAYOUT =
+		"Legacy layout like original PDB Analyzer. Warning: other choices have no compatibility" +
+			" guarantee with future Ghidra releases or minor PDB Analyzer changes";
+	private static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+		ObjectOrientedClassLayout.MEMBERS_ONLY;
+	private ObjectOrientedClassLayout compositeLayout;
+//	private static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//	ObjectOrientedClassLayout.BASIC_SIMPLE_COMPLEX;
+//private static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//	ObjectOrientedClassLayout.SIMPLE_COMPLEX;
+//private static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//	ObjectOrientedClassLayout.COMPLEX;
+
+	//==============================================================================================
 
 	/**
 	 * Constructor
 	 */
 	public PdbApplicatorOptions() {
-		restoreDefaults();
+		setDefaults();
 	}
 
 	/**
-	 * Set the options back to their default values
+	 * Register the PdbApplicatorOptions for "Analysis."
+	 * @param options the Options that will have PdbApplicator options registered in.
 	 */
-	public void restoreDefaults() {
+	public void registerAnalyzerOptions(Options options) {
+		registerOptions(options, false);
+	}
+
+	/**
+	 * Load the PdbApplicatorOptions for used for "Analysis."
+	 * @param options the Options that have PdbApplicator options registered in.
+	 */
+	public void loadAnalyzerOptions(Options options) {
+		loadOptions(options, false);
+	}
+
+	/**
+	 * Register the PdbApplicatorOptions for "Load PDB."
+	 * @param options the Options that will have PdbApplicator options registered in.
+	 */
+	public void registerLoaderOptions(Options options) {
+		registerOptions(options, true);
+	}
+
+	/**
+	 * Load the PdbApplicatorOptions for used for "Load PDB."
+	 * @param options the Options that have PdbApplicator options registered in.
+	 */
+	public void loadLoaderOptions(Options options) {
+		loadOptions(options, true);
+	}
+
+	private void registerOptions(Options options, boolean enableControl) {
+		HelpLocation help = null;
+
+		if (developerMode || enableControl) {
+			options.registerOption(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL, help,
+				OPTION_DESCRIPTION_PROCESSING_CONTROL);
+		}
+
+		// PdbApplicatorOptions
+		if (developerMode) {
+
+			options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
+				applyCodeScopeBlockComments, help,
+				OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS);
+
+			// Mechanism to apply instruction labels is not yet implemented-> does nothing
+			options.registerOption(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels,
+				help, OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS);
+
+			// The remap capability is not completely implemented... do not turn on.
+			options.registerOption(OPTION_NAME_ADDRESS_REMAP,
+				remapAddressUsingExistingPublicMangledSymbols, help,
+				OPTION_DESCRIPTION_ADDRESS_REMAP);
+
+			options.registerOption(OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY,
+				allowDemotePrimaryMangledSymbols, help,
+				OPTION_DESCRIPTION_ALLOW_DEMOTE_MANGLED_PRIMARY);
+
+			// Function params and local implementation is not complete... do not turn on.
+			options.registerOption(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables,
+				help, OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES);
+
+			// Object-oriented composite layout is fairly far along, but its use will likely not
+			// be forward compatible with future Ghidra work in this area; i.e., it might leave
+			// the data type manager in a bad state for future revisions.  While the current
+			// layout mechanism might work, I will likely change it to, instead, create a
+			// syntactic intermediate representation before creating the final layout.  This will
+			// aid portability between tool chains and versions and yield a standard way of
+			// data-basing and presenting the information to a user.
+			options.registerOption(OPTION_NAME_COMPOSITE_LAYOUT, compositeLayout, help,
+				OPTION_DESCRIPTION_COMPOSITE_LAYOUT);
+		}
+	}
+
+	private void loadOptions(Options options, boolean enableControl) {
+
+		if (developerMode || enableControl) {
+			control = options.getEnum(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL);
+		}
+
+		// PdbApplicatorOptions
+		if (developerMode) {
+
+			applyCodeScopeBlockComments = options.getBoolean(
+				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
+
+			// Mechanism to apply instruction labels is not yet implemented-> does nothing
+			applyInstructionLabels =
+				options.getBoolean(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels);
+
+			remapAddressUsingExistingPublicMangledSymbols = options.getBoolean(
+				OPTION_NAME_ADDRESS_REMAP, remapAddressUsingExistingPublicMangledSymbols);
+
+			allowDemotePrimaryMangledSymbols = options.getBoolean(
+				OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY, allowDemotePrimaryMangledSymbols);
+
+			applyFunctionVariables =
+				options.getBoolean(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables);
+
+			compositeLayout = options.getEnum(OPTION_NAME_COMPOSITE_LAYOUT, compositeLayout);
+		}
+	}
+
+	/**
+	 * Set the options to their default values
+	 */
+	public void setDefaults() {
 		applyCodeScopeBlockComments = DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
 		applyInstructionLabels = DEFAULT_APPLY_INSTRUCTION_LABELS;
-		restrictions = DEFAULT_RESTRICTIONS;
-		remapAddressesUsingExistingPublicSymbols = DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
+		control = DEFAULT_CONTROL;
+		remapAddressUsingExistingPublicMangledSymbols =
+			DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
 		allowDemotePrimaryMangledSymbols = DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
 		applyFunctionVariables = DEFAULT_APPLY_FUNCTION_VARIABLES;
-		classLayout = DEFAULT_CLASS_LAYOUT;
+		compositeLayout = DEFAULT_CLASS_LAYOUT;
 	}
 
 	/**
@@ -107,19 +270,19 @@ public class PdbApplicatorOptions {
 	}
 
 	/**
-	 * Set processing restrictions for PdbApplicator
-	 * @param restrictions the restrictions
+	 * Set processing control for PdbApplicator
+	 * @param control the processing control
 	 */
-	public void setRestrictions(PdbApplicatorRestrictions restrictions) {
-		this.restrictions = restrictions;
+	public void setProcessingControl(PdbApplicatorControl control) {
+		this.control = control;
 	}
 
 	/**
-	 * Returns the current restrictions on PdbApplicator processing
-	 * @return the restrictions
+	 * Returns the current processing control for the PdbApplicator
+	 * @return the processing control
 	 */
-	public PdbApplicatorRestrictions getRestrictions() {
-		return restrictions;
+	public PdbApplicatorControl getProcessingControl() {
+		return control;
 	}
 
 	/**
@@ -128,7 +291,7 @@ public class PdbApplicatorOptions {
 	 * @param enable {@code true} to turn remapAddressesUsingExistingPublicSymbols on
 	 */
 	public void setRemapAddressUsingExistingPublicSymbols(boolean enable) {
-		this.remapAddressesUsingExistingPublicSymbols = enable;
+		this.remapAddressUsingExistingPublicMangledSymbols = enable;
 	}
 
 	/**
@@ -136,7 +299,7 @@ public class PdbApplicatorOptions {
 	 * @return {@code true} if remapAddressesUsingExistingPublicSymbols is "on."
 	 */
 	public boolean remapAddressUsingExistingPublicSymbols() {
-		return remapAddressesUsingExistingPublicSymbols;
+		return remapAddressUsingExistingPublicMangledSymbols;
 	}
 
 	/**
@@ -179,16 +342,15 @@ public class PdbApplicatorOptions {
 	 * Set the class layout.
 	 * @param classLayout composite layout
 	 */
-	public void setClassLayout(ObjectOrientedClassLayout classLayout) {
-		this.classLayout = classLayout;
+	public void setCompositeLayout(ObjectOrientedClassLayout classLayout) {
+		this.compositeLayout = classLayout;
 	}
 
 	/**
 	 * Returns the physical layout out classes.
 	 * @return the class layout.
 	 */
-	public ObjectOrientedClassLayout getClassLayout() {
-		return classLayout;
+	public ObjectOrientedClassLayout getCompositeLayout() {
+		return compositeLayout;
 	}
-
 }
