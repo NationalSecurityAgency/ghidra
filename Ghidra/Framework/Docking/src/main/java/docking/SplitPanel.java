@@ -26,7 +26,7 @@ public class SplitPanel extends JPanel {
 	private static int DIVIDER_SIZE = 4;
 	private Component leftComp;
 	private Component rightComp;
-	private Component divider;
+	private JPanel divider;
 	private boolean isHorizontal;
 	//private int dividerLocation = Integer.MIN_VALUE;
 	private float dividerPosition = 0;
@@ -100,7 +100,7 @@ public class SplitPanel extends JPanel {
 			}
 
 			if (horizontal) {
-				width -= DIVIDER_SIZE;
+				//width -= DIVIDER_SIZE;
 				int minWidth = minSize1.width + minSize2.width;
 				int dividerPixelPosition = Math.round(width * dividerPosition);
 
@@ -118,11 +118,12 @@ public class SplitPanel extends JPanel {
 				leftComp.setBounds(insets.left, insets.top, dividerPixelPosition, height);
 				divider.setBounds(insets.left + dividerPixelPosition, insets.top, DIVIDER_SIZE,
 					height);
-				rightComp.setBounds(insets.left + dividerPixelPosition + DIVIDER_SIZE, insets.top,
+				//rightComp.setBounds(insets.left + dividerPixelPosition + DIVIDER_SIZE, insets.top,
+				rightComp.setBounds(insets.left + dividerPixelPosition, insets.top,
 					width - dividerPixelPosition, height);
 			}
 			else {
-				height -= DIVIDER_SIZE;
+				//height -= DIVIDER_SIZE;
 				int minHeight = minSize1.height + minSize2.height;
 				int dividerPixelPosition = Math.round(height * dividerPosition);
 
@@ -141,10 +142,14 @@ public class SplitPanel extends JPanel {
 				leftComp.setBounds(insets.left, insets.top, width, dividerPixelPosition);
 				divider.setBounds(insets.left, insets.top + dividerPixelPosition, width,
 					DIVIDER_SIZE);
-				rightComp.setBounds(insets.left, dividerPixelPosition + DIVIDER_SIZE + insets.top,
+				//rightComp.setBounds(insets.left, dividerPixelPosition + DIVIDER_SIZE + insets.top,
+				rightComp.setBounds(insets.left, dividerPixelPosition + insets.top,
 					width, height - dividerPixelPosition);
 
 			}
+
+			// make divider transparent
+			divider.setOpaque(false);
 		}
 
 		@Override
@@ -154,11 +159,13 @@ public class SplitPanel extends JPanel {
 			Insets insets = parent.getInsets();
 			if (horizontal) {
 				return new Dimension(
-					d1.width + d2.width + DIVIDER_SIZE + insets.left + insets.right,
+					//d1.width + d2.width + DIVIDER_SIZE + insets.left + insets.right,
+					d1.width + d2.width + insets.left + insets.right,
 					Math.max(d1.height, d2.height) + insets.top + insets.bottom);
 			}
 			return new Dimension(Math.max(d1.width, d2.width) + insets.left + insets.right,
-				d1.height + d2.height + DIVIDER_SIZE + insets.top + insets.bottom);
+				//d1.height + d2.height + DIVIDER_SIZE + insets.top + insets.bottom);
+				d1.height + d2.height + insets.top + insets.bottom);
 		}
 
 		@Override
@@ -168,11 +175,13 @@ public class SplitPanel extends JPanel {
 			Insets insets = parent.getInsets();
 			if (horizontal) {
 				return new Dimension(
-					d1.width + d2.width + DIVIDER_SIZE + insets.left + insets.right,
+					//d1.width + d2.width + DIVIDER_SIZE + insets.left + insets.right,
+					d1.width + d2.width + insets.left + insets.right,
 					Math.max(d1.height, d2.height) + insets.top + insets.bottom);
 			}
 			return new Dimension(Math.max(d1.width, d2.width) + insets.left + insets.right,
-				d1.height + d2.height + DIVIDER_SIZE + insets.top + insets.bottom);
+				//d1.height + d2.height + DIVIDER_SIZE + insets.top + insets.bottom);
+				d1.height + d2.height + insets.top + insets.bottom);
 		}
 
 		@Override

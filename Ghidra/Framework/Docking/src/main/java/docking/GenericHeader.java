@@ -66,9 +66,10 @@ public class GenericHeader extends JPanel {
 		this.focusColor = focusColor;
 
 		BorderLayout layout = new BorderLayout();
-		layout.setVgap(1);
+		//layout.setVgap(1);
 		setLayout(layout);
-		setBorder(BorderFactory.createLineBorder(Color.GRAY));
+		//setBorder(BorderFactory.createLineBorder(Color.GRAY));
+		setBorder(BorderFactory.createEmptyBorder());
 		setFocusable(false);
 
 		titlePanel = new TitlePanel();
