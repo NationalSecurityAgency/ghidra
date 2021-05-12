@@ -30,7 +30,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorRestrictions;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
@@ -124,7 +124,7 @@ public class PdbPlugin extends Plugin {
 			}
 
 			boolean useMsDiaParser = optionsDialog.useMsDiaParser();
-			PdbApplicatorRestrictions restrictions = optionsDialog.getApplicatorRestrictions();
+			PdbApplicatorControl control = optionsDialog.getApplicatorControl();
 
 			tool.setStatusInfo("");
 
@@ -139,7 +139,7 @@ public class PdbPlugin extends Plugin {
 			//       dialog prompts.  We want the task progress dialog to be showing before any
 			//       prompts appear.
 
-			LoadPdbTask task = new LoadPdbTask(program, pdb, useMsDiaParser, restrictions, service);
+			LoadPdbTask task = new LoadPdbTask(program, pdb, useMsDiaParser, control, service);
 			TaskBuilder.withTask(task)
 					.setStatusTextAlignment(SwingConstants.LEADING)
 					.setLaunchDelay(0);

@@ -27,12 +27,12 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
-import ghidra.app.util.pdb.pdbapplicator.*;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicator;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.Application;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.CharsetInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -91,105 +91,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH =
 		"If checked, specifically searching for PDB in PE-Header-Specified Location.";
 	private boolean includePeSpecifiedPdbPath = false;
-
-	//==============================================================================================
-	// Logging options
-	//==============================================================================================
-	// Perform logging of PDB information for debugging/development.
-	//  NOTE: This logging mechanism is not intended to live the full life of this tool, but to
-	//  aid in getting feedback from the field during its early development.
-	private static final String OPTION_NAME_PDB_READER_ANALYZER_LOGGING =
-		"[PDB Reader/Analyzer Debug Logging]";
-	private static final String OPTION_DESCRIPTION_PDB_READER_ANALYZER_LOGGING =
-		"If checked, logs information to the pdb.analyzer.log file for debug/development.";
-	private boolean pdbLogging = false;
-
-	//==============================================================================================
-	// PdbReader options
-	//==============================================================================================
-	// Sets the one-byte Charset to be used for PDB processing.
-	//  NOTE: This "Option" is not intended as a permanent part of this analyzer.  Should be
-	//  replaced by target-specific Charset.
-	private static final String OPTION_NAME_ONE_BYTE_CHARSET_NAME = "PDB One-Byte Charset Name";
-	private static final String OPTION_DESCRIPTION_ONE_BYTE_CHARSET_NAME =
-		"Charset used for processing of one-byte (or multi) encoded Strings: " +
-			PdbReaderOptions.getOneByteCharsetNames();
-	private String oneByteCharsetName = CharsetInfo.UTF8;
-
-	// Sets the wchar_t Charset to be used for PDB processing.
-	//  NOTE: This "Option" is not intended as a permanent part of this analyzer.  Should be
-	//  replaced by target-program-specific Charset.
-	private static final String OPTION_NAME_WCHAR_CHARSET_NAME = "PDB Wchar_t Charset Name";
-	private static final String OPTION_DESCRIPTION_WCHAR_CHARSET_NAME =
-		"Charset used for processing of wchar_t encoded Strings: " +
-			PdbReaderOptions.getTwoByteCharsetNames();
-	private String wideCharCharsetName = CharsetInfo.UTF16;
-
-	//==============================================================================================
-	// PdbApplicator options
-	//==============================================================================================
-	// Applicator Restrictions.
-	private static final String OPTION_NAME_PROCESSING_RESTRICTIONS = "Processing Restrictions";
-	private static final String OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS =
-		"Restrictions on applicator processing.";
-	private static PdbApplicatorRestrictions restrictions;
-
-	// Apply Code Block Comments.
-	private static final String OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS =
-		"Apply Code Scope Block Comments";
-	private static final String OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS =
-		"If checked, pre/post-comments will be applied when code scope blocks are specified.";
-	private boolean applyCodeScopeBlockComments;
-
-	// Apply Instruction Labels information.
-	private static final String OPTION_NAME_APPLY_INSTRUCTION_LABELS = "Apply Instruction Labels";
-	private static final String OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS =
-		"If checked, labels associated with instructions will be applied.";
-	private boolean applyInstructionLabels;
-
-	// Attempt to map address using existing mangled symbols.
-	private static final String OPTION_NAME_ADDRESS_REMAP = "Address Remap Using Existing Symbols";
-	private static final String OPTION_DESCRIPTION_ADDRESS_REMAP =
-		"If checked, attempts to remap address to those matching existing public symbols.";
-	private boolean remapAddressUsingExistingPublicMangledSymbols;
-
-	// Allow a mangled symbol to be demoted from being a primary symbol if another symbol and
-	//  associated explicit data type will be laid down at the location.  This option exists
-	//  because we expect the PDB explicit data type will be more accurate than trying to
-	//  have the demangler lay down the data type.
-	private static final String OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY =
-		"Allow demote mangled symbol from primary";
-	private static final String OPTION_DESCRIPTION_ALLOW_DEMOTE_MANGLED_PRIMARY =
-		"If checked, allows a mangled symbol to be demoted from primary if a possibly " +
-			"better data type can be laid down with a nonmangled symbol.";
-	private boolean allowDemotePrimaryMangledSymbol;
-
-	// Apply Function Variables
-	private static final String OPTION_NAME_APPLY_FUNCTION_VARIABLES = "Apply Function Variables";
-	private static final String OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES =
-		"If checked, attempts to apply function parameters and local variables for program functions.";
-	private boolean applyFunctionVariables;
-
-	// Sets the composite layout.
-	// Legacy
-	//   - similar to existing DIA-based PDB Analyzer, only placing current composite direct
-	//     members (none from parent classes.
-	// Warning: the remaining experimental layout choices may not be kept and are not guaranteed
-	//          to result in data types that will be compatible with future Ghidra releases: 
-	// Complex with Basic Fallback
-	//   - Performs Complex layout, but if the current class has no parent classes, it will not
-	//     encapsulate the current class's 'direct' members.
-	// Simple
-	//   - Performs Complex layout, except in rare instances where , so in most cases is the same
-	//     as 'Complex with Basic Fallback' layout.
-	// Complex
-	//   - Puts all current class members and 'direct' parents' 'direct' components into an
-	//     encapsulating 'direct' container
-	private static final String OPTION_NAME_COMPOSITE_LAYOUT = "Composite Layout Choice";
-	private static final String OPTION_DESCRIPTION_COMPOSITE_LAYOUT =
-		"Legacy layout like original PDB Analyzer. Warning: other choices have no compatibility" +
-			" guarantee with future Ghidra releases or minor PDB Analyzer changes";
-	private ObjectOrientedClassLayout compositeLayout;
 
 	//==============================================================================================
 	// Additional instance data
@@ -256,9 +157,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		PdbProgramAttributes programAttributes = new PdbProgramAttributes(program);
 		if (programAttributes.isPdbLoaded()) {
 			Msg.info(this, "Skipping PDB analysis since it has previouslu run.");
-			Msg.info(this,
-				">> Clear 'PDB Loaded' program property or use Load PDB action if " +
-					"additional PDB processing required.");
+			Msg.info(this, ">> Clear 'PDB Loaded' program property or use Load PDB action if " +
+				"additional PDB processing required.");
 			return true;
 		}
 
@@ -266,8 +166,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			failMissingAttributes(programAttributes, log)) {
 			return true;
 		}
-
-		setPdbLogging(log);
 
 		String pdbFilename;
 		if (doForceLoad) {
@@ -361,53 +259,16 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
 				DEFAULT_FORCE_LOAD_FILE, null, OPTION_DESCRIPTION_FORCELOAD_FILE);
 		}
-		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE,
-			symbolsRepositoryDir, null, OPTION_DESCRIPTION_SYMBOLPATH);
+		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE, symbolsRepositoryDir,
+			null, OPTION_DESCRIPTION_SYMBOLPATH);
 		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
 			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
 
-		// PdbReaderOptions
-		getPdbReaderOptions();
-		options.registerOption(OPTION_NAME_PDB_READER_ANALYZER_LOGGING, pdbLogging, null,
-			OPTION_DESCRIPTION_PDB_READER_ANALYZER_LOGGING);
-		if (developerMode) {
-			options.registerOption(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName, null,
-				OPTION_DESCRIPTION_ONE_BYTE_CHARSET_NAME);
-			options.registerOption(OPTION_NAME_WCHAR_CHARSET_NAME, wideCharCharsetName, null,
-				OPTION_DESCRIPTION_WCHAR_CHARSET_NAME);
-		}
+		pdbReaderOptions.registerOptions(options);
+		pdbApplicatorOptions.registerAnalyzerOptions(options);
 
-		// PdbApplicatorOptions
-		getPdbApplicatorOptions();
-		if (developerMode) {
-			options.registerOption(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions, null,
-				OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS);
-			options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
-				applyCodeScopeBlockComments, null,
-				OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS);
-			// Mechanism to apply instruction labels is not yet implemented-> does nothing
-			options.registerOption(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels,
-				null, OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS);
-			// The remap capability is not completely implemented... do not turn on.
-			options.registerOption(OPTION_NAME_ADDRESS_REMAP,
-				remapAddressUsingExistingPublicMangledSymbols, null,
-				OPTION_DESCRIPTION_ADDRESS_REMAP);
-			options.registerOption(OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY,
-				allowDemotePrimaryMangledSymbol, null,
-				OPTION_DESCRIPTION_ALLOW_DEMOTE_MANGLED_PRIMARY);
-			// Function params and local implementation is not complete... do not turn on.
-			options.registerOption(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables,
-				null, OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES);
-			// Object-oriented composite layout is fairly far along, but its use will likely not
-			// be forward compatible with future Ghidra work in this area; i.e., it might leave
-			// the data type manager in a bad state for future revisions.  While the current
-			// layout mechanism might work, I will likely change it to, instead, create a
-			// syntactic intermediate representation before creating the final layout.  This will
-			// aid portability between tool chains and versions and yield a standard way of
-			// data-basing and presenting the information to a user.
-			options.registerOption(OPTION_NAME_COMPOSITE_LAYOUT, compositeLayout, null,
-				OPTION_DESCRIPTION_COMPOSITE_LAYOUT);
-		}
+		pdbReaderOptions.loadOptions(options);
+		pdbApplicatorOptions.loadAnalyzerOptions(options);
 	}
 
 	@Override
@@ -427,33 +288,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		includePeSpecifiedPdbPath =
 			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
 
-		// PdbReaderOptions
-		pdbLogging = options.getBoolean(OPTION_NAME_PDB_READER_ANALYZER_LOGGING, pdbLogging);
-		if (developerMode) {
-			oneByteCharsetName =
-				options.getString(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName);
-			wideCharCharsetName =
-				options.getString(OPTION_NAME_WCHAR_CHARSET_NAME, wideCharCharsetName);
-		}
-		setPdbReaderOptions();
-
-		// PdbApplicatorOptions
-		if (developerMode) {
-			restrictions = options.getEnum(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions);
-			applyCodeScopeBlockComments = options.getBoolean(
-				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
-			// Mechanism to apply instruction labels is not yet implemented-> does nothing
-			applyInstructionLabels =
-				options.getBoolean(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels);
-			remapAddressUsingExistingPublicMangledSymbols = options.getBoolean(
-				OPTION_NAME_ADDRESS_REMAP, remapAddressUsingExistingPublicMangledSymbols);
-			allowDemotePrimaryMangledSymbol = options.getBoolean(
-				OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY, allowDemotePrimaryMangledSymbol);
-			applyFunctionVariables =
-				options.getBoolean(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables);
-			compositeLayout = options.getEnum(OPTION_NAME_COMPOSITE_LAYOUT, compositeLayout);
-		}
-		setPdbApplicatorOptions();
+		pdbReaderOptions.loadOptions(options);
+		pdbApplicatorOptions.loadAnalyzerOptions(options);
 	}
 
 	//==============================================================================================
@@ -495,54 +331,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		}
 		logFailure(error, log);
 		return true;
-	}
-
-	private void setPdbLogging(MessageLog log) {
-		try {
-			PdbLog.setEnabled(pdbLogging);
-		}
-		catch (IOException e) {
-			// Probably could not open the file.
-			if (log != null) {
-				log.appendMsg(getName(), "IOException when trying to open PDB log file: ");
-				log.appendException(e);
-			}
-		}
-	}
-
-	private void getPdbReaderOptions() {
-		oneByteCharsetName = pdbReaderOptions.getOneByteCharsetName();
-		wideCharCharsetName = pdbReaderOptions.getTwoByteCharsetName();
-	}
-
-	private void setPdbReaderOptions() {
-		pdbReaderOptions.setOneByteCharsetForName(oneByteCharsetName);
-		pdbReaderOptions.setWideCharCharsetForName(wideCharCharsetName);
-	}
-
-	private void getPdbApplicatorOptions() {
-		applyCodeScopeBlockComments = PdbApplicatorOptions.DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
-		restrictions = PdbApplicatorOptions.DEFAULT_RESTRICTIONS;
-
-		applyInstructionLabels = PdbApplicatorOptions.DEFAULT_APPLY_INSTRUCTION_LABELS;
-		remapAddressUsingExistingPublicMangledSymbols =
-			PdbApplicatorOptions.DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
-		allowDemotePrimaryMangledSymbol =
-			PdbApplicatorOptions.DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
-		applyFunctionVariables = PdbApplicatorOptions.DEFAULT_APPLY_FUNCTION_VARIABLES;
-		compositeLayout = PdbApplicatorOptions.DEFAULT_CLASS_LAYOUT;
-	}
-
-	private void setPdbApplicatorOptions() {
-		pdbApplicatorOptions.setRestrictions(restrictions);
-
-		pdbApplicatorOptions.setApplyCodeScopeBlockComments(applyCodeScopeBlockComments);
-		pdbApplicatorOptions.setApplyInstructionLabels(applyInstructionLabels);
-		pdbApplicatorOptions.setRemapAddressUsingExistingPublicSymbols(
-			remapAddressUsingExistingPublicMangledSymbols);
-		pdbApplicatorOptions.setAllowDemotePrimaryMangledSymbols(allowDemotePrimaryMangledSymbol);
-		pdbApplicatorOptions.setApplyFunctionVariables(applyFunctionVariables);
-		pdbApplicatorOptions.setClassLayout(compositeLayout);
 	}
 
 	private boolean confirmDirectory(File path) {

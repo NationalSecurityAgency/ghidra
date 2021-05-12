@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.util.*;
-
 import java.math.BigInteger;
+import java.util.*;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
@@ -140,7 +139,7 @@ public class PdbApplicator {
 	 * <PRE>
 	 *   false = simple namespace
 	 *   true = class namespace
-	 *  </PRE> 
+	 *  </PRE>
 	 */
 	private Map<SymbolPath, Boolean> isClassByNamespace;
 
@@ -190,19 +189,20 @@ public class PdbApplicator {
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
-		switch (applicatorOptions.getRestrictions()) {
+		switch (applicatorOptions.getProcessingControl()) {
 			case DATA_TYPES_ONLY:
 				processTypes();
 				break;
 			case PUBLIC_SYMBOLS_ONLY:
 				processPublicSymbols();
 				break;
-			case NONE:
+			case ALL:
 				processTypes();
 				processSymbols();
 				break;
 			default:
-				throw new PdbException("Invalid Restriction");
+				throw new PdbException("PDB: Invalid Application Control: " +
+					applicatorOptions.getProcessingControl());
 		}
 
 		if (program != null) {
@@ -346,15 +346,16 @@ public class PdbApplicator {
 		if (programParam == null) {
 			if (dataTypeManagerParam == null) {
 				throw new PdbException(
-					"programParam and dataTypeManagerParam may not both be null.");
+					"PDB: programParam and dataTypeManagerParam may not both be null.");
 			}
 			if (imageBaseParam == null) {
-				throw new PdbException("programParam and imageBaseParam may not both be null.");
-			}
-			if (applicatorOptions.getRestrictions() != PdbApplicatorRestrictions.DATA_TYPES_ONLY) {
 				throw new PdbException(
-					"programParam may not be null for the chosen PdbApplicatorRestrictions: " +
-						applicatorOptions.getRestrictions());
+					"PDB: programParam and imageBaseParam may not both be null.");
+			}
+			if (applicatorOptions.getProcessingControl() != PdbApplicatorControl.DATA_TYPES_ONLY) {
+				throw new PdbException(
+					"PDB: programParam may not be null for the chosen Applicator Control: " +
+						applicatorOptions.getProcessingControl());
 			}
 		}
 		monitor = (monitorParam != null) ? monitorParam : TaskMonitor.DUMMY;
@@ -470,7 +471,7 @@ public class PdbApplicator {
 	// Information for a putative PdbTypeApplicator:
 
 	/**
-	 * Returns the {@link DataTypeManager} associated with this analyzer. 
+	 * Returns the {@link DataTypeManager} associated with this analyzer.
 	 * @return DataTypeManager which this analyzer is using.
 	 */
 	DataTypeManager getDataTypeManager() {
@@ -502,8 +503,8 @@ public class PdbApplicator {
 
 	/**
 	 * Returns the {@link CategoryPath} for a typedef with with the give {@link SymbolPath} and
-	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()}, 
-	 * except that modeleNumber of 0 represents publics/globals. 
+	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()},
+	 * except that modeleNumber of 0 represents publics/globals.
 	 * @param moduleNumber module number
 	 * @param symbolPath SymbolPath of the symbol
 	 * @return the CategoryPath
@@ -628,7 +629,7 @@ public class PdbApplicator {
 				return sectionContribution.getModule();
 			}
 		}
-		throw new PdbException("Module not found for section/offset");
+		throw new PdbException("PDB: Module not found for section/offset");
 	}
 
 	//==============================================================================================
@@ -918,7 +919,7 @@ public class PdbApplicator {
 	}
 
 	//==============================================================================================
-	// 
+	//
 	//==============================================================================================
 	Register getRegister(String pdbRegisterName) {
 		return registerNameToRegisterMapper.getRegister(pdbRegisterName);

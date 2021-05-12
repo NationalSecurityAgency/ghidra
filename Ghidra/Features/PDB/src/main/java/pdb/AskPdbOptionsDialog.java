@@ -24,7 +24,7 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.combobox.GComboBox;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorRestrictions;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
 import ghidra.util.layout.PairLayout;
 
 class AskPdbOptionsDialog extends DialogComponentProvider {
@@ -32,12 +32,12 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 	private boolean isCanceled;
 
 	private boolean useMsDiaParser;
-	private PdbApplicatorRestrictions restrictions = PdbApplicatorRestrictions.NONE;
+	private PdbApplicatorControl control = PdbApplicatorControl.ALL;
 
 	/**
 	 * Popup PDB loader options
 	 * @param parent parent component or null
-	 * @param isPdbFile true if file to be loaded is a PDB file, false 
+	 * @param isPdbFile true if file to be loaded is a PDB file, false
 	 * if MsDia XML file.
 	 */
 	AskPdbOptionsDialog(Component parent, boolean isPdbFile) {
@@ -48,11 +48,11 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 
 		JPanel optionsPanel = new JPanel(new PairLayout(10, 10));
 
-		final GComboBox<PdbApplicatorRestrictions> restrictionsCombo =
-			new GComboBox<>(PdbApplicatorRestrictions.values());
-		restrictionsCombo.setSelectedItem(PdbApplicatorRestrictions.NONE);
-		restrictionsCombo.addActionListener(e -> {
-			restrictions = (PdbApplicatorRestrictions) restrictionsCombo.getSelectedItem();
+		final GComboBox<PdbApplicatorControl> controlCombo =
+			new GComboBox<>(PdbApplicatorControl.values());
+		controlCombo.setSelectedItem(PdbApplicatorControl.ALL);
+		controlCombo.addActionListener(e -> {
+			control = (PdbApplicatorControl) controlCombo.getSelectedItem();
 		});
 
 		optionsPanel.add(new JLabel("PDB Parser:"));
@@ -63,12 +63,12 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 				final GComboBox<String> combo =
 					new GComboBox<>(new String[] { "PDB Universal", "PDB MSDIA" });
 				combo.setSelectedIndex(0);
-				restrictionsCombo.setEnabled(!useMsDiaParser);
+				controlCombo.setEnabled(!useMsDiaParser);
 				combo.addActionListener(e -> {
 					useMsDiaParser = (combo.getSelectedIndex() == 1);
-					restrictionsCombo.setEnabled(!useMsDiaParser);
+					controlCombo.setEnabled(!useMsDiaParser);
 					if (useMsDiaParser) {
-						restrictionsCombo.setSelectedItem(PdbApplicatorRestrictions.NONE);
+						controlCombo.setSelectedItem(PdbApplicatorControl.ALL);
 					}
 				});
 				optionsPanel.add(combo);
@@ -85,8 +85,8 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 			return; // no interaction currently required
 		}
 
-		optionsPanel.add(new JLabel("Restrictions:"));
-		optionsPanel.add(restrictionsCombo);
+		optionsPanel.add(new JLabel("Control:"));
+		optionsPanel.add(controlCombo);
 
 		panel.add(optionsPanel, BorderLayout.CENTER);
 
@@ -100,7 +100,6 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 
 		DockingWindowManager.showDialog(parent, AskPdbOptionsDialog.this);
 	}
-
 
 	@Override
 	protected void applyCallback() {
@@ -122,8 +121,8 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 		return useMsDiaParser;
 	}
 
-	PdbApplicatorRestrictions getApplicatorRestrictions() {
-		return restrictions;
+	PdbApplicatorControl getApplicatorControl() {
+		return control;
 	}
 
 }
