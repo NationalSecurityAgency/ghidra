@@ -140,14 +140,11 @@ public class DWARFDataTypeImporter {
 		if (result != null) {
 			return result;
 		}
+
+		// Query the dwarfDTM for plain Ghidra dataTypes that were previously
+		// registered in a different import session.
 		DataType alreadyImportedDT = dwarfDTM.getDataType(diea.getOffset(), null);
-		if (alreadyImportedDT != null &&
-			!(alreadyImportedDT instanceof Array &&
-				((Array) alreadyImportedDT).getNumElements() == 1)) {
-			// HACK: don't re-use previously imported single-element 
-			// Ghidra array datatype because they may have actually been an empty array
-			// definition we need the special meta-data flag DWARFDataType.isEmptyArrayType
-			// which is only available in a freshly created DWARFDataType.
+		if (shouldReuseAlreadyImportedDT(alreadyImportedDT)) {
 			return new DWARFDataType(alreadyImportedDT, null, diea.getOffset());
 		}
 
@@ -221,6 +218,28 @@ public class DWARFDataTypeImporter {
 		recordTempDataType(result);
 
 		return result;
+	}
+
+	/**
+	 * Returns true if the previously imported data type should be reused.
+	 * <p>
+	 * Don't re-use previously imported single-element
+	 * Ghidra array datatypes because they may have actually been an empty array
+	 * definition and we need the special meta-data flag DWARFDataType.isEmptyArrayType
+	 * which is only available in a freshly created DWARFDataType.
+	 * <p>
+	 * Don't re-use empty structs (isNotYetDefined) to ensure that newer
+	 * definitions of the same struct are given a chance to be resolved() 
+	 * into the DTM. 
+	 * 
+	 * @param alreadyImportedDT dataType to check
+	 * @return boolean true if its okay to reuse the data type
+	 */
+	private boolean shouldReuseAlreadyImportedDT(DataType alreadyImportedDT) {
+		return alreadyImportedDT != null &&
+			!alreadyImportedDT.isNotYetDefined() &&
+			!(alreadyImportedDT instanceof Array &&
+				((Array) alreadyImportedDT).getNumElements() == 1);
 	}
 
 	/*
