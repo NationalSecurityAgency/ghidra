@@ -28,6 +28,20 @@ import ghidra.dbg.util.ConfigurableFactory.Property;
 import ghidra.dbg.util.PathUtils.PathComparator;
 
 public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestUtils {
+
+	public class WithoutThreadValidationImpl implements WithoutThreadValidation {
+		public WithoutThreadValidationImpl() {
+			withoutThreadValCount++;
+		}
+
+		@Override
+		public void close() throws Exception {
+			withoutThreadValCount--;
+		}
+	}
+
+	private int withoutThreadValCount = 0;
+
 	protected DebuggerObjectModel model;
 	public CallbackValidator callbackValidator;
 	public EventValidator eventValidator;
@@ -74,7 +88,7 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 
 	@Override
 	public void validateCompletionThread() {
-		if (callbackValidator != null) {
+		if (callbackValidator != null && withoutThreadValCount == 0) {
 			callbackValidator.validateCompletionThread();
 		}
 	}
@@ -167,6 +181,11 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 	@Override
 	public boolean hasProcessContainer() {
 		return true;
+	}
+
+	@Override
+	public WithoutThreadValidation withoutThreadValidation() {
+		return new WithoutThreadValidationImpl();
 	}
 
 	@Override

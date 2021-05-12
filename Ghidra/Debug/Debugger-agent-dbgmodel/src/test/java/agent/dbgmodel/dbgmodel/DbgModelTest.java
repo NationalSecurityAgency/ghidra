@@ -33,13 +33,12 @@ import com.sun.jna.platform.win32.COM.Unknown;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugBreakpoint.BreakType;
-import agent.dbgeng.dbgeng.DebugClient.*;
+import agent.dbgeng.dbgeng.DebugClient.DebugStatus;
 import agent.dbgeng.dbgeng.DebugDataSpaces.*;
 import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
 import agent.dbgeng.dbgeng.DebugRegisters.DebugRegisterDescription;
 import agent.dbgeng.dbgeng.DebugRegisters.DebugRegisterSource;
 import agent.dbgeng.dbgeng.DebugValue.DebugInt64Value;
-import agent.dbgeng.dbgeng.util.DebugEventCallbacksAdapter;
 import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
 import agent.dbgmodel.dbgmodel.datamodel.DataModelManager1;
 import agent.dbgmodel.dbgmodel.datamodel.script.*;
@@ -51,9 +50,7 @@ import agent.dbgmodel.impl.dbgmodel.debughost.DebugHostModuleImpl1;
 import agent.dbgmodel.impl.dbgmodel.main.ModelPropertyAccessorInternal;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.*;
 import agent.dbgmodel.jna.dbgmodel.UnknownWithUtils;
-import ghidra.comm.util.BitmaskSet;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -99,7 +96,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testServer() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			control.execute(".server tcp:port=54321");
@@ -118,7 +115,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testOpenTrace() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			// NB:  This does not work!  TTDReplay must live in TTD\TTReplay.dll wherever
@@ -189,7 +186,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testInterfaces() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -210,7 +207,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testHammerEnumerate() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -283,7 +280,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetChild() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -296,7 +293,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testEnv() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			//control.execute(".server tcp:port=54321");
@@ -339,7 +336,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testEnvEx() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			//control.execute(".server tcp:port=54321");
@@ -402,7 +399,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetProcessSystemIds() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -420,7 +417,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testGetProcesses() {
 		DebugSystemObjects so = access.getClient().getSystemObjects();
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 			System.out.println(so.getNumberProcesses());
 
@@ -439,7 +436,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetProcessDescriptions() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -462,7 +459,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetRegistersNew() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -479,7 +476,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetAllRegisters() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			WrappedDbgModel dbgmodel = new WrappedDbgModel(access);
@@ -492,7 +489,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetRegisters() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			List<String> out = maker.execCapture("r");
@@ -521,7 +518,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testSetCurrentThread() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -539,7 +536,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetElements() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -553,7 +550,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testGetAttributes() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -566,7 +563,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testCall() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -584,7 +581,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testCallWithParameter() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -608,7 +605,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testCallWithParametersEx() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -630,7 +627,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 /*
 	@Test
 	public void testSetSingleRegister() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
 			maker.start();
 
 			DebugRegisters regs = client.getRegisters();
@@ -645,7 +642,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testSetRegisters() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
 			maker.start();
 
 			DebugRegisters regs = client.getRegisters();
@@ -666,7 +663,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testQueryVirtual() {
 		// Also, an experiment to figure out how it works
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
 			maker.start();
 
 			List<DebugMemoryBasicInformation> collected1 = new ArrayList<>();
@@ -702,7 +699,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testModules() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -733,7 +730,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testStack() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			HDMAUtil util = new HDMAUtil(access);
@@ -762,7 +759,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testReadMemory() throws FileNotFoundException, IOException {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			int len = 256;
@@ -800,7 +797,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testScriptInterface() throws FileNotFoundException, IOException {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			client.getControl()
@@ -835,7 +832,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testBreakpoints() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			DebugBreakpoint bpt = control.addBreakpoint(BreakType.CODE);
@@ -862,7 +859,8 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testSymbols() {
-		try (ProcMaker maker = new ProcMaker("c:\\Users\\user\\Desktop\\ConsoleApplication1.exe")) {
+		try (ProcMaker maker =
+			new ProcMaker(client, "c:\\Users\\user\\Desktop\\ConsoleApplication1.exe")) {
 			maker.start();
 
 			DebugSymbols ds = client.getSymbols();
@@ -932,7 +930,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	//@Test(expected = COMException.class)
 	public void testModuleOutOfBounds() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			DebugModule umod = client.getSymbols()
@@ -943,7 +941,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testQueryVirtualWithModule() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			for (DebugMemoryBasicInformation info : client.getDataSpaces().iterateVirtual(0)) {
@@ -967,7 +965,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testSymbolInfo() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			int count = 0;
@@ -986,7 +984,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	//@Test
 	public void testWriteMemory() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client, "notepad")) {
 			maker.start();
 
 			// TODO: How to write to protected memory?
@@ -1022,7 +1020,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	/*
 	@Test
 	public void testFreezeUnfreeze() {
-		try (ProcMaker maker = new ProcMaker("notepad")) {
+		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
 			maker.start();
 	
 			// Trying to see if any events will help me track frozen threads
@@ -1126,178 +1124,4 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 	}
 	*/
-
-	public static abstract class NoisyDebugEventCallbacksAdapter
-			extends DebugEventCallbacksAdapter {
-		final DebugStatus defaultStatus;
-
-		public NoisyDebugEventCallbacksAdapter(DebugStatus defaultStatus) {
-			this.defaultStatus = defaultStatus;
-		}
-
-		@Override
-		public DebugStatus createProcess(DebugProcessInfo debugProcessInfo) {
-			Msg.info(this, "createProcess: " + debugProcessInfo);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus createThread(DebugThreadInfo debugThreadInfo) {
-			Msg.info(this, "createThread: " + debugThreadInfo);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus exitProcess(int exitCode) {
-			Msg.info(this, "exitProcess: " + Integer.toHexString(exitCode));
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus breakpoint(DebugBreakpoint bp) {
-			Msg.info(this, "breakpoint: " + bp);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus changeDebuggeeState(BitmaskSet<ChangeDebuggeeState> flags,
-				long argument) {
-			Msg.info(this, "changeDebuggeeState: " + flags + ", " + argument);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus changeEngineState(BitmaskSet<ChangeEngineState> flags, long argument) {
-			Msg.info(this, "changeEngineState: " + flags + ", " + argument);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus changeSymbolState(BitmaskSet<ChangeSymbolState> flags, long argument) {
-			Msg.info(this, "changeSymbolState: " + flags + ", " + argument);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus exception(DebugExceptionRecord64 exception, boolean firstChance) {
-			Msg.info(this, "exception: " + exception + ", " + firstChance);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus exitThread(int exitCode) {
-			Msg.info(this, "exitThread: " + Integer.toHexString(exitCode));
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus loadModule(DebugModuleInfo debugModuleInfo) {
-			Msg.info(this, "loadModule: " + debugModuleInfo);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus sessionStatus(SessionStatus status) {
-			Msg.info(this, "sessionStatus: " + status);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus systemError(int error, int level) {
-			Msg.info(this, "systemError: " + error + ", " + level);
-			return defaultStatus;
-		}
-
-		@Override
-		public DebugStatus unloadModule(String imageBaseName, long baseOffset) {
-			Msg.info(this, "unloadModule: " + imageBaseName + ", " + baseOffset);
-			return defaultStatus;
-		}
-	}
-
-	protected class ProcMaker implements AutoCloseable {
-		public ProcMaker(String cmdLine) {
-			this.cmdLine = cmdLine;
-		}
-
-		final String cmdLine;
-
-		final CompletableFuture<DebugProcessInfo> procInfo = new CompletableFuture<>();
-		final CompletableFuture<DebugThreadInfo> threadInfo = new CompletableFuture<>();
-		final CompletableFuture<Integer> procExit = new CompletableFuture<>();
-
-		StringBuilder outputCapture = null;
-
-		public void start() {
-			client.setEventCallbacks(new NoisyDebugEventCallbacksAdapter(DebugStatus.NO_CHANGE) {
-				@Override
-				public DebugStatus createProcess(DebugProcessInfo debugProcessInfo) {
-					super.createProcess(debugProcessInfo);
-					procInfo.complete(debugProcessInfo);
-					return DebugStatus.BREAK;
-				}
-
-				@Override
-				public DebugStatus createThread(DebugThreadInfo debugThreadInfo) {
-					super.createThread(debugThreadInfo);
-					threadInfo.complete(debugThreadInfo);
-					return DebugStatus.BREAK;
-				}
-
-				@Override
-				public DebugStatus exitProcess(int exitCode) {
-					super.exitProcess(exitCode);
-					procExit.complete(exitCode);
-					return DebugStatus.BREAK;
-				}
-			});
-			client.setOutputCallbacks(new DebugOutputCallbacks() {
-				@Override
-				public void output(int mask, String text) {
-					System.out.print(text);
-					if (outputCapture != null) {
-						outputCapture.append(text);
-					}
-				}
-			});
-
-			Msg.debug(this, "Starting " + cmdLine + " with client " + client);
-			control.execute(".create " + cmdLine);
-			control.waitForEvent();
-			DebugProcessInfo pi = procInfo.getNow(null);
-			assertNotNull(pi);
-			control.execute("g");
-			control.waitForEvent();
-			DebugThreadInfo ti = threadInfo.getNow(null);
-			assertNotNull(ti);
-		}
-
-		public void kill() {
-			Msg.debug(this, "Killing " + cmdLine);
-			control.execute(".kill");
-			control.waitForEvent();
-			Integer exitCode = procExit.getNow(null);
-			client.setOutputCallbacks(null);
-			assertNotNull(exitCode);
-		}
-
-		public List<String> execCapture(String command) {
-			try {
-				outputCapture = new StringBuilder();
-				control.execute(command);
-				return Arrays.asList(outputCapture.toString().split("\n"));
-			}
-			finally {
-				outputCapture = null;
-			}
-		}
-
-		@Override
-		public void close() {
-			if (procInfo.isDone() && !procExit.isDone()) {
-				kill();
-			}
-		}
-	}
-
 }

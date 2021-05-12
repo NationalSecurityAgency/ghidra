@@ -40,6 +40,8 @@ import ghidra.comm.util.BitmaskSet;
 import ghidra.util.Msg;
 
 public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCallbacks {
+	private static final HRESULT ERROR_RESULT = new HRESULT(WinError.E_UNEXPECTED);
+
 	private final DebugClientInternal client;
 	private final DebugEventCallbacks cb;
 	private ListenerIDebugEventCallbacks listener;
@@ -108,7 +110,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -130,7 +132,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -143,7 +145,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -155,7 +157,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -177,7 +179,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -189,7 +191,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -211,7 +213,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -223,7 +225,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -235,7 +237,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -248,7 +250,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -262,7 +264,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -276,7 +278,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 
@@ -290,7 +292,7 @@ public class WrapCallbackIDebugEventCallbacks implements CallbackIDebugEventCall
 		}
 		catch (Throwable e) {
 			Msg.error(this, "Error during callback", e);
-			return new HRESULT(WinError.E_UNEXPECTED);
+			return ERROR_RESULT;
 		}
 	}
 }

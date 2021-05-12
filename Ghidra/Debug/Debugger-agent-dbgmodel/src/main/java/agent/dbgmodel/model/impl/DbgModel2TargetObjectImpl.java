@@ -93,6 +93,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		return (DbgModel2Impl) super.getModel();
 	}
 
+	@Override
 	public CompletableFuture<List<TargetObject>> requestNativeElements() {
 		DbgManager2Impl manager2 = (DbgManager2Impl) getManager();
 		List<String> pathX = PathUtils.extend(List.of("Debugger"), path);
@@ -106,6 +107,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		return manager2.listAttributes(pathX, this);
 	}
 
+	@Override
 	public CompletableFuture<Void> requestAugmentedAttributes() {
 		return requestAttributes(false);
 	}
@@ -137,6 +139,22 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		});
 	}
 
+	protected boolean isReallyValid() {
+		//synchronized (model.lock) {
+		//System.out.println("checking validity: " + getJoinedPath(".") + "," +
+		//	this.getDelegate().getClass());
+		for (TargetObject p = this; p != null; p = p.getParent()) {
+			//System.out.print("  .");
+			if (!p.isValid()) {
+				//System.out.println("x");
+				return false;
+			}
+		}
+		//System.out.println("_");
+		//}
+		return true;
+	}
+
 	@Override
 	public CompletableFuture<Void> requestAttributes(boolean refresh) {
 		Map<String, Object> nmap = new HashMap<>();
@@ -162,6 +180,10 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				return addModelObjectAttributes(nmap);
 			}
 		}).thenAccept(__ -> {
+			// Meh
+			if (!isReallyValid()) {
+				return;
+			}
 			changeAttributes(List.of(), nmap, "Refreshed");
 		});
 	}
@@ -188,7 +210,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	}
 
 	protected CompletableFuture<Void> addModelObjectAttributes(Map<String, Object> attrs) {
-		if (modelObject == null) {
+		if (modelObject == null || !valid) {
 			return CompletableFuture.completedFuture(null);
 		}
 		String key = modelObject.getSearchKey();
@@ -354,7 +376,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		this.modelObject = modelObject;
 		Map<String, Object> attrs = new HashMap<>();
 		addModelObjectAttributes(attrs).thenAccept(__ -> {
-			if (!attrs.isEmpty()) {
+			if (isReallyValid() && !attrs.isEmpty()) {
 				changeAttributes(List.of(), List.of(), attrs, "Refreshed");
 			}
 		}).exceptionally(ex -> {
