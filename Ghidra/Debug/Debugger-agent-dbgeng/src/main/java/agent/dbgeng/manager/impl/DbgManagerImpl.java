@@ -41,7 +41,8 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.evt.*;
-import agent.dbgeng.model.iface1.*;
+import agent.dbgeng.model.iface1.DbgModelTargetActiveScope;
+import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgeng.model.iface2.DbgModelTargetThread;
 import ghidra.async.*;
@@ -597,6 +598,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.putVoid(DbgStoppedEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgRunningEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgConsoleOutputEvent.class, this::processConsoleOutput);
+		handlerMap.putVoid(DbgPromptChangedEvent.class, this::processPromptChanged);
 		handlerMap.putVoid(DbgBreakpointCreatedEvent.class, this::processBreakpointCreated);
 		handlerMap.putVoid(DbgBreakpointModifiedEvent.class, this::processBreakpointModified);
 		handlerMap.putVoid(DbgBreakpointDeletedEvent.class, this::processBreakpointDeleted);
@@ -925,6 +927,7 @@ public class DbgManagerImpl implements DbgManager {
 						dbgState = DbgState.STOPPED;
 						//System.err.println("STOPPED " + id);
 						processEvent(new DbgStoppedEvent(eventThread.getId()));
+						processEvent(new DbgPromptChangedEvent(getControl().getPromptText()));
 					}
 					if (status.threadState.equals(ExecutionState.RUNNING)) {
 						//System.err.println("RUNNING " + id);
@@ -949,6 +952,7 @@ public class DbgManagerImpl implements DbgManager {
 				if (process != null) {
 					processEvent(new DbgProcessSelectedEvent(process));
 				}
+				processEvent(new DbgPromptChangedEvent(getControl().getPromptText()));
 				return DebugStatus.BREAK;
 			}
 			if (status.equals(DebugStatus.GO)) {
@@ -972,6 +976,7 @@ public class DbgManagerImpl implements DbgManager {
 					if (thread != null) {
 						getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 					}
+					processEvent(new DbgPromptChangedEvent(getControl().getPromptText()));
 					break;
 				}
 			}
@@ -1031,6 +1036,10 @@ public class DbgManagerImpl implements DbgManager {
 
 	protected void processConsoleOutput(DbgConsoleOutputEvent evt, Void v) {
 		getEventListeners().fire.consoleOutput(evt.getInfo(), evt.getMask());
+	}
+
+	protected void processPromptChanged(DbgPromptChangedEvent evt, Void v) {
+		getEventListeners().fire.promptChanged(evt.getPrompt());
 	}
 
 	/**
@@ -1480,8 +1489,8 @@ public class DbgManagerImpl implements DbgManager {
 	@Override
 	public CompletableFuture<Void> console(String command) {
 		if (continuation != null) {
-			String prompt = command.equals("") ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
-			getEventListeners().fire.promptChanged(prompt);
+			//String prompt = command.equals("") ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
+			//getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
 			return AsyncUtils.NIL;

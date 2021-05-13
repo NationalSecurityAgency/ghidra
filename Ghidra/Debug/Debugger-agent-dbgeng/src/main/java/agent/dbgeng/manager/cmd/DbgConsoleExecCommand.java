@@ -15,10 +15,10 @@
  */
 package agent.dbgeng.manager.cmd;
 
+import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.manager.DbgEvent;
 import agent.dbgeng.manager.DbgManager;
-import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
-import agent.dbgeng.manager.evt.DbgConsoleOutputEvent;
+import agent.dbgeng.manager.evt.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
@@ -63,6 +63,8 @@ public class DbgConsoleExecCommand extends AbstractDbgCommand<String> {
 
 	@Override
 	public void invoke() {
-		manager.getControl().execute(command);
+		DebugControl control = manager.getControl();
+		control.execute(command);
+		manager.processEvent(new DbgPromptChangedEvent(control.getPromptText()));
 	}
 }
