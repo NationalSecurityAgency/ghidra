@@ -61,7 +61,7 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement COMMENT_AUTO =
 		new ScreenElement("Comment, Automatic", Color.LIGHT_GRAY);
 	public static final ScreenElement ADDRESS = new ScreenElement("Address", Color.BLACK);
-	public static final ScreenElement BACKGROUND = new ScreenElement("Background", Color.WHITE);
+	public static final ScreenElement BACKGROUND = new ScreenElement("Background", new Color(0x38, 0x38, 0x38));
 	public static final ScreenElement BAD_REF_ADDR =
 		new ScreenElement("Bad Reference Address", Color.RED);
 	public static final ScreenElement BYTES = new ScreenElement("Bytes", Color.BLUE);

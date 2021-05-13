@@ -28,7 +28,6 @@ public class SplitPanel extends JPanel {
 	private Component rightComp;
 	private JPanel divider;
 	private boolean isHorizontal;
-	//private int dividerLocation = Integer.MIN_VALUE;
 	private float dividerPosition = 0;
 
 	public SplitPanel(SplitNode splitNode, Component leftComp, Component rightComp,
@@ -100,7 +99,6 @@ public class SplitPanel extends JPanel {
 			}
 
 			if (horizontal) {
-				//width -= DIVIDER_SIZE;
 				int minWidth = minSize1.width + minSize2.width;
 				int dividerPixelPosition = Math.round(width * dividerPosition);
 
@@ -118,12 +116,10 @@ public class SplitPanel extends JPanel {
 				leftComp.setBounds(insets.left, insets.top, dividerPixelPosition, height);
 				divider.setBounds(insets.left + dividerPixelPosition, insets.top, DIVIDER_SIZE,
 					height);
-				//rightComp.setBounds(insets.left + dividerPixelPosition + DIVIDER_SIZE, insets.top,
 				rightComp.setBounds(insets.left + dividerPixelPosition, insets.top,
 					width - dividerPixelPosition, height);
 			}
 			else {
-				//height -= DIVIDER_SIZE;
 				int minHeight = minSize1.height + minSize2.height;
 				int dividerPixelPosition = Math.round(height * dividerPosition);
 
@@ -142,7 +138,6 @@ public class SplitPanel extends JPanel {
 				leftComp.setBounds(insets.left, insets.top, width, dividerPixelPosition);
 				divider.setBounds(insets.left, insets.top + dividerPixelPosition, width,
 					DIVIDER_SIZE);
-				//rightComp.setBounds(insets.left, dividerPixelPosition + DIVIDER_SIZE + insets.top,
 				rightComp.setBounds(insets.left, dividerPixelPosition + insets.top,
 					width, height - dividerPixelPosition);
 

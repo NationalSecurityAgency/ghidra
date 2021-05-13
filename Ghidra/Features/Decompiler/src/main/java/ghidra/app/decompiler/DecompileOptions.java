@@ -335,7 +335,7 @@ public class DecompileOptions {
 	private Color defaultColor;
 
 	private static final String CODE_VIEWER_BACKGROUND_COLOR_MSG = "Display.Background Color";
-	private static final Color CODE_VIEWER_BACKGROUND_COLOR = Color.WHITE;
+	private static final Color CODE_VIEWER_BACKGROUND_COLOR = new Color(56, 56, 56);
 	private Color codeViewerBackgroundColor;
 
 	private static final String SEARCH_HIGHLIGHT_MSG =

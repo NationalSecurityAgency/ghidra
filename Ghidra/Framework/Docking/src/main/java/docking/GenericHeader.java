@@ -366,21 +366,6 @@ public class GenericHeader extends JPanel {
 		public void paintComponent(Graphics g) {
 
 			super.paintComponent(g);
-
-			Graphics2D g2d = (Graphics2D) g;
-			Rectangle r = getBounds();
-
-			GradientPaint gp;
-			if (isSelected) {
-				gp = new GradientPaint(r.x, r.y, focusColor, r.x + r.width, r.y, getBackground());
-			}
-			else {
-				gp = new GradientPaint(r.x, r.y, nonFocusColor, r.x + r.width, r.y,
-					getBackground());
-			}
-
-			g2d.setPaint(gp);
-			g2d.fill(r);
 		}
 
 		/**
