@@ -37,8 +37,8 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.HexOrDecimalInput;
 import docking.widgets.textfield.HintTextField;
-import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
 import ghidra.framework.preferences.Preferences;
@@ -92,7 +92,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		LoadPdbResults results = new LoadPdbResults();
 		results.pdbFile = pdbFile;
 		results.control =
-			(PdbApplicatorControl) choosePdbDlg.restrictionsCombo.getSelectedItem();
+			(PdbApplicatorControl) choosePdbDlg.applicatorControlCombo.getSelectedItem();
 		results.useMsDiaParser = choosePdbDlg.msdiaParserButton.isSelected();
 		results.debugLogging = choosePdbDlg.debugLoggingCheckbox.isSelected();
 		return results;
@@ -119,7 +119,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private GCheckBox overridePdbPathCheckBox;
 	private JTextField pdbUniqueIdTextField;
 	private GCheckBox overridePdbUniqueIdCheckBox;
-	private IntegerTextField pdbAgeTextField;
+	private HexOrDecimalInput pdbAgeTextField;
 	private GCheckBox overridePdbAgeCheckBox;
 	private HintTextField pdbLocationTextField;
 	private GIconLabel exactMatchIconLabel;
@@ -138,7 +138,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private JPanel parserOptionsPanel;
 	private JRadioButton universalParserButton;
 	private JRadioButton msdiaParserButton;
-	private GComboBox<PdbApplicatorControl> restrictionsCombo;
+	private GComboBox<PdbApplicatorControl> applicatorControlCombo;
 	private GCheckBox debugLoggingCheckbox;
 
 	/**
@@ -327,7 +327,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		if (symbolServerService == null || !symbolServerService.isValid()) {
 			return;
 		}
-		if (pdbAgeTextField.getText().isBlank()) {
+		if (pdbAgeTextField.getText().isBlank() ||
+			pdbAgeTextField.getValue() > NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG) {
 			Msg.showWarn(this, null, "Bad PDB Age", "Invalid PDB Age value");
 			return;
 		}
@@ -390,7 +391,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	}
 
 	private void buildSymbolFilePanel() {
-		symbolFilePanel = new SymbolFilePanel(this::searchForPdbs);	// panel will be added in layoutAdvanced()
+		// panel will be added in layoutAdvanced()
+		symbolFilePanel = new SymbolFilePanel(this::searchForPdbs);
 
 		symbolFilePanel.getTable()
 				.getSelectionModel()
@@ -464,9 +466,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
 						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
-		pdbAgeTextField = new IntegerTextField(8);
-		pdbAgeTextField.setAllowNegativeValues(false);
-		pdbAgeTextField.setShowNumberMode(true);
+		pdbAgeTextField = new BetterNonEditableHexTextField(8);
+		pdbAgeTextField.setAllowNegative(false);
 		pdbAgeTextField.setHexMode();
 		pdbAgeTextField.setEditable(false);
 
@@ -502,7 +503,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 		programPdbPanel.add(
 			join(null, new GLabel("PDB Age:", SwingConstants.RIGHT), overridePdbAgeCheckBox));
-		programPdbPanel.add(join(pdbAgeTextField.getComponent(), new JPanel(), null));
+		programPdbPanel.add(join(pdbAgeTextField, new JPanel(), null));
 
 		return programPdbPanel;
 	}
@@ -547,7 +548,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		if (universalParserButton.isSelected() && !universalParserButton.isEnabled()) {
 			universalParserButton.setSelected(false);
 		}
-		restrictionsCombo.setEnabled(universalParserButton.isSelected());
+		applicatorControlCombo.setEnabled(universalParserButton.isSelected());
 		debugLoggingCheckbox.setEnabled(universalParserButton.isSelected());
 	}
 
@@ -573,8 +574,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		radioButtons.add(universalParserButton);
 		radioButtons.add(msdiaParserButton);
 
-		restrictionsCombo = new GComboBox<>(PdbApplicatorControl.values());
-		restrictionsCombo.setSelectedItem(PdbApplicatorControl.ALL);
+		applicatorControlCombo = new GComboBox<>(PdbApplicatorControl.values());
+		applicatorControlCombo.setSelectedItem(PdbApplicatorControl.ALL);
 
 		debugLoggingCheckbox = new GCheckBox();
 		debugLoggingCheckbox.setToolTipText(
@@ -591,7 +592,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		parserOptionsPanel.add(radioButtons);
 
 		parserOptionsPanel.add(new GLabel("Control:"));
-		parserOptionsPanel.add(restrictionsCombo);
+		parserOptionsPanel.add(applicatorControlCombo);
 
 		parserOptionsPanel.add(new GLabel("[Dev] PDB Reader/Applicator Debug Logging:"));
 		parserOptionsPanel.add(debugLoggingCheckbox);
@@ -928,7 +929,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		@Override
 		public Color getBackground() {
 			Container parent = getParent();
-			if (parent != null && isEditable() == false) {
+			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
 				// mint a new Color object to avoid it being
 				// ignored because the parent handed us a DerivedColor
@@ -939,4 +940,23 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		}
 	}
 
+	static class BetterNonEditableHexTextField extends HexOrDecimalInput {
+
+		BetterNonEditableHexTextField(int columns) {
+			super(columns);
+		}
+
+		@Override
+		public Color getBackground() {
+			Container parent = getParent();
+			if (parent != null && !isEditable()) {
+				Color bg = parent.getBackground();
+				// mint a new Color object to avoid it being
+				// ignored because the parent handed us a DerivedColor
+				// instance
+				return new Color(bg.getRGB());
+			}
+			return super.getBackground();
+		}
+	}
 }

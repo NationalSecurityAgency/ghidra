@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-import docking.DockingWindowManager;
-import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.services.DataTypeManagerService;
@@ -32,7 +30,6 @@ import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -43,6 +40,8 @@ class LoadPdbTask extends Task {
 	private final boolean useMsDiaParser;
 	private final PdbApplicatorControl control; // PDB Universal Parser only
 	private boolean debugLogging;
+	private String resultMessages;
+	private Exception resultException;
 
 	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser, PdbApplicatorControl control,
 			boolean debugLogging, DataTypeManagerService service) {
@@ -98,37 +97,25 @@ class LoadPdbTask extends Task {
 		try {
 			AutoAnalysisManager.getAnalysisManager(program).scheduleWorker(worker, null, true,
 				wrappedMonitor);
-			if (log.hasMessages()) {
-				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Load PDB File",
-					"There were warnings/errors loading the PDB file.", log.toString(),
-					MultiLineMessageDialog.WARNING_MESSAGE, false);
-				DockingWindowManager.showDialog(null, dialog);
-			}
 		}
-		catch (InterruptedException | CancelledException e1) {
+		catch (InterruptedException | CancelledException e) {
 			// ignore
 		}
 		catch (InvocationTargetException e) {
-			String message;
-
-			Throwable t = e.getCause();
-
-			if (t == null) {
-				message = "Unknown cause";
-			}
-			else {
-				message = t.getMessage();
-
-				if (message == null) {
-					message = t.toString();
-				}
-			}
-
-			message = "Error processing PDB file:  " + pdbFile + ".\n" + message;
-
-			Msg.showError(getClass(), null, "Load PDB Failed", message, t);
+			resultException = e;
+		}
+		if (log.hasMessages()) {
+			resultMessages = log.toString();
 		}
 
+	}
+
+	String getResultMessages() {
+		return resultMessages;
+	}
+
+	Exception getResultException() {
+		return resultException;
 	}
 
 	private boolean parseWithMsDiaParser(MessageLog log, TaskMonitor monitor)

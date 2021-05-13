@@ -17,14 +17,17 @@ package pdb;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.SwingConstants;
 
+import docking.DockingWindowManager;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
+import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -118,12 +121,14 @@ public class PdbPlugin extends Plugin {
 			}
 		}
 
+		File pdbFile = null;
 		try {
 			LoadPdbResults loadPdbResults = LoadPdbDialog.choosePdbForProgram(program);
 			if (loadPdbResults == null) {
 				tool.setStatusInfo("Loading PDB was cancelled.");
 				return;
 			}
+			pdbFile = loadPdbResults.pdbFile;
 
 			tool.setStatusInfo("");
 
@@ -138,16 +143,39 @@ public class PdbPlugin extends Plugin {
 			// note: We intentionally use a 0-delay here.  Our underlying task may show modal
 			//       dialog prompts.  We want the task progress dialog to be showing before any
 			//       prompts appear.
-			LoadPdbTask loadPdbTask = new LoadPdbTask(program, loadPdbResults.pdbFile,
-				loadPdbResults.useMsDiaParser, loadPdbResults.control,
-				loadPdbResults.debugLogging, dataTypeManagerService);
+			LoadPdbTask loadPdbTask =
+				new LoadPdbTask(program, pdbFile, loadPdbResults.useMsDiaParser,
+					loadPdbResults.control, loadPdbResults.debugLogging, dataTypeManagerService);
 			TaskBuilder.withTask(loadPdbTask)
 					.setStatusTextAlignment(SwingConstants.LEADING)
 					.setLaunchDelay(0);
 			new TaskLauncher(loadPdbTask, null, 0);
+
+			// Check for error messages & exceptions and handle them here
+			// (previously handled by the task, but dialog parenting issues in a modal
+			// task cause timing issues)
+			if (loadPdbTask.getResultException() != null) {
+				throw loadPdbTask.getResultException();
+			}
+			else if (loadPdbTask.getResultMessages() != null) {
+				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Load PDB File",
+					"There were warnings/errors loading PDB file: " + pdbFile,
+					loadPdbTask.getResultMessages(),
+					MultiLineMessageDialog.WARNING_MESSAGE, false);
+				DockingWindowManager.showDialog(null, dialog);
+			}
 		}
-		catch (Exception pe) {
-			Msg.showError(getClass(), null, "Error Loading PDB", pe.getMessage(), pe);
+		catch (Exception e) {
+			String message = null;
+			if (e instanceof InvocationTargetException && e.getCause() != null) {
+				message =
+					Objects.requireNonNullElse(e.getCause().getMessage(), e.getCause().toString());
+			}
+			else {
+				message = Objects.requireNonNullElse(e.getMessage(), e.toString());
+			}
+			Msg.showError(this, null, "Error Loading PDB",
+				"Error processing PDB file: " + pdbFile + "\n" + message, e);
 		}
 	}
 
