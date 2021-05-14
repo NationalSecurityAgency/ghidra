@@ -195,7 +195,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			model.getManager().addEventsListener((DbgEventsListener) proxy);
 		}
 		setModelObject(modelObject);
-		update0();
+		init();
 	}
 
 	public DelegateDbgModel2TargetObject clone(String key, ModelObject modelObject) {
@@ -222,6 +222,12 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			ret += " " + obj.getValueString();
 		}
 		return ret;
+	}
+
+	@Override
+	protected void doInvalidate(TargetObject branch, String reason) {
+		super.doInvalidate(branch, reason);
+		getManager().removeStateListener(accessListener);
 	}
 
 	protected void checkExited(DbgState state, DbgCause cause) {
@@ -274,7 +280,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 	}
 
-	public void update0() {
+	public void init() {
 		if (PathUtils.isLink(parent.getPath(), proxy.getName(), proxy.getPath())) {
 			return;
 		}
@@ -285,66 +291,17 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			return;
 		}
 		if (proxy instanceof DbgModelTargetRegisterContainer || //
-			proxy.getName().equals("Stack")) {
+			proxy.getName().equals("Stack") ||
+			proxy.getName().equals("Debug")) {
 			requestAttributes(false);
 			return;
 		}
-		/*
-		if (proxy instanceof DbgModelTargetRegisterBank) {
-			requestAttributes(false).thenAccept(__ -> {
-				DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) proxy;
-				Map<String, byte[]> result = bank.getValues();
-				System.err.println("SERVER:fire.registersUpdated " + bank);
-				listeners.fire.registersUpdated(bank, result);
-			});
-			return;
-		}
-		*/
-
 		if (proxy instanceof DbgModelTargetProcessContainer || //
 			proxy instanceof DbgModelTargetThreadContainer || //
 			proxy instanceof DbgModelTargetModuleContainer || //
 			proxy instanceof DbgModelTargetBreakpointContainer || //
 			proxy instanceof DbgModelTargetStack) {
 			requestElements(false);
-			return;
-		}
-	}
-
-	private void update() {
-		if (PathUtils.isLink(parent.getPath(), proxy.getName(), proxy.getPath())) {
-			return;
-		}
-		if (proxy instanceof DbgModelTargetProcessContainer || //
-			proxy instanceof DbgModelTargetThreadContainer || //
-			proxy instanceof DbgModelTargetModuleContainer || //
-			proxy instanceof DbgModelTargetBreakpointContainer || //
-			proxy instanceof DbgModelTargetRegisterContainer || //
-			proxy instanceof DbgModelTargetRegisterBank || //
-			proxy instanceof DbgModelTargetStack || //
-			proxy instanceof DbgModelTargetTTD) {
-			requestElements(false);
-			requestAttributes(false);
-			return;
-		}
-		/*
-		if (proxy instanceof DbgModelTargetRegisterBank) {
-			requestAttributes(false).thenAccept(__ -> {
-				DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) proxy;
-				Map<String, byte[]> result = bank.getValues();
-				System.err.println("SERVER:fire.registersUpdated " + bank);
-				listeners.fire.registersUpdated(bank, result);
-			});
-			return;
-		}
-		*/
-		if (proxy instanceof DbgModelTargetRegister || //
-			proxy instanceof DbgModelTargetStackFrame) {
-			requestAttributes(false);
-			return;
-		}
-		if (proxy.getName().equals("Debug")) {
-			requestAttributes(false);
 			return;
 		}
 	}
@@ -356,7 +313,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 	public void onStopped() {
 		setAccessible(true);
-		update();
 	}
 
 	public void onExit() {
@@ -416,7 +372,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 	@Override
 	public void setBreakpointEnabled(boolean enabled) {
-		update();
 		this.breakpointEnabled = enabled;
 	}
 
@@ -425,4 +380,53 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		return breakpointActions;
 	}
 
+	public void threadStateChangedSpecific(DbgState state, DbgReason reason) {
+		if (state.equals(DbgState.RUNNING)) {
+			return;
+		}
+		if (proxy instanceof TargetThread) {
+			List<DelegateDbgModel2TargetObject> delegates = new ArrayList<>();
+			TargetObject stack =
+				(TargetObject) getCachedAttribute("Stack");
+			DbgModelTargetStack frames =
+				(DbgModelTargetStack) stack.getCachedAttribute("Frames");
+			delegates.add((DelegateDbgModel2TargetObject) frames.getDelegate());
+			DbgModelTargetRegisterContainer container =
+				(DbgModelTargetRegisterContainer) getCachedAttribute("Registers");
+			delegates.add((DelegateDbgModel2TargetObject) container.getDelegate());
+			DbgModelTargetRegisterBank bank =
+				(DbgModelTargetRegisterBank) container.getCachedAttribute("User");
+			delegates.add((DelegateDbgModel2TargetObject) bank.getDelegate());
+			for (DelegateDbgModel2TargetObject delegate : delegates) {
+				delegate.threadStateChangedSpecific(state, reason);
+			}
+		}
+		if (proxy instanceof TargetRegisterContainer) {
+			requestElements(false);
+			requestAttributes(false);
+		}
+		if (proxy instanceof TargetRegisterBank) {
+			TargetRegisterBank bank = (TargetRegisterBank) proxy;
+			//requestElements(false);
+			requestAttributes(false).thenAccept(__ -> {
+				bank.readRegistersNamed(getCachedAttributes().keySet());
+			});
+		}
+		if (proxy instanceof TargetStack) {
+			requestAttributes(false);
+			requestElements(false).thenAccept(__ -> {
+				for (TargetObject obj : getCachedElements().values()) {
+					if (obj instanceof TargetStackFrame) {
+						DbgModelTargetObject frame = (DbgModelTargetObject) obj;
+						DelegateDbgModel2TargetObject delegate =
+							(DelegateDbgModel2TargetObject) frame.getDelegate();
+						delegate.threadStateChangedSpecific(state, reason);
+					}
+				}
+			});
+		}
+		if (proxy instanceof TargetStackFrame) {
+			requestAttributes(false);
+		}
+	}
 }

@@ -31,11 +31,17 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.ConversionUtils;
 
-@TargetObjectSchemaInfo(name = "RegisterContainer", elements = {
-	@TargetElementType(type = DbgModelTargetRegisterImpl.class) }, elementResync = ResyncMode.ONCE, //
-		attributes = {
-			@TargetAttributeType(name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, type = DbgModelTargetRegisterContainerImpl.class),
-			@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "RegisterContainer",
+	elements = {
+		@TargetElementType(type = DbgModelTargetRegisterImpl.class) },
+	elementResync = ResyncMode.ONCE, //
+	attributes = {
+		@TargetAttributeType(
+			name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME,
+			type = DbgModelTargetRegisterContainerImpl.class),
+		@TargetAttributeType(type = Void.class) },
+	canonicalContainer = true)
 public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetRegisterContainerAndBank {
 
@@ -78,7 +84,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 	}
 
 	public void threadStateChangedSpecific(DbgState state, DbgReason reason) {
-		if (state.equals(DbgState.STOPPED)) {
+		if (!state.equals(DbgState.RUNNING)) {
 			readRegistersNamed(getCachedElements().keySet());
 		}
 	}

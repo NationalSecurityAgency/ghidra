@@ -15,8 +15,8 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
 
 import com.sun.jna.platform.win32.COM.COMException;
 
@@ -27,6 +27,7 @@ import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
 import agent.dbgeng.manager.DbgModuleMemory;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgModuleMemoryImpl;
+import ghidra.util.Msg;
 
 public class DbgListMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModuleMemory>> {
 
@@ -38,6 +39,23 @@ public class DbgListMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModu
 
 	@Override
 	public List<DbgModuleMemory> complete(DbgPendingCommand<?> pending) {
+		Map<Long, DbgModuleMemory> memory = manager.getKnownMemoryRegions();
+		for (DbgModuleMemory region : memoryRegions) {
+			if (memory.containsValue(region)) {
+				continue; // Do nothing, we're in sync
+			}
+			// Need to create the thread as if we receive =thread-created
+			if (!memory.isEmpty()) {
+				Msg.warn(this, "Resync: Was missing memory: " + region.getId());
+			}
+			manager.addMemory(region);
+		}
+		for (Entry<Long, DbgModuleMemory> entry : memory.entrySet()) {
+			if (memoryRegions.contains(entry.getValue())) {
+				continue; // Do nothing, we're in sync
+			}
+			manager.removeMemory(entry.getKey());
+		}
 		return memoryRegions;
 	}
 
@@ -83,10 +101,10 @@ public class DbgListMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModu
 				isWrite |= protect.isWrite();
 				isExec |= protect.isExecute();
 			}
-			DbgModuleMemoryImpl section =
+			DbgModuleMemoryImpl region =
 				new DbgModuleMemoryImpl(Long.toHexString(vmaStart), vmaStart, vmaEnd,
 					info.allocationBase, ap, ip, info.state, type, isRead, isWrite, isExec);
-			memoryRegions.add(section);
+			memoryRegions.add(region);
 		}
 	}
 

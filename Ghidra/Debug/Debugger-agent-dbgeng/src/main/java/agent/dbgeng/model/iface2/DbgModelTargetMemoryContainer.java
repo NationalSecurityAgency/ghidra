@@ -31,4 +31,6 @@ public interface DbgModelTargetMemoryContainer extends DbgModelTargetObject, Tar
 	@Override
 	public CompletableFuture<Void> writeMemory(Address address, byte[] data);
 
+	public CompletableFuture<Void> requestElements(boolean refresh);
+
 }

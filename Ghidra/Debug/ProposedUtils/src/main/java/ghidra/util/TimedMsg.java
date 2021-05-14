@@ -34,7 +34,7 @@ public class TimedMsg {
 		}
 	}
 
-	public static void info(Object originator, String message) {
-		doMsg(Msg::info, originator, message);
+	public static void debug(Object originator, String message) {
+		doMsg(Msg::debug, originator, message);
 	}
 }

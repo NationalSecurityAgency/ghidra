@@ -29,13 +29,34 @@ import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "Process", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = "Debug", type = DbgModelTargetDebugContainerImpl.class, required = true, fixed = true),
-		@TargetAttributeType(name = "Memory", type = DbgModelTargetMemoryContainerImpl.class, required = true, fixed = true),
-		@TargetAttributeType(name = "Modules", type = DbgModelTargetModuleContainerImpl.class, required = true, fixed = true),
-		@TargetAttributeType(name = "Threads", type = DbgModelTargetThreadContainerImpl.class, required = true, fixed = true),
-		@TargetAttributeType(name = DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME, type = Long.class),
+@TargetObjectSchemaInfo(
+	name = "Process",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = "Debug",
+			type = DbgModelTargetDebugContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Memory",
+			type = DbgModelTargetMemoryContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Modules",
+			type = DbgModelTargetModuleContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Threads",
+			type = DbgModelTargetThreadContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME,
+			type = Long.class),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcess {
@@ -217,6 +238,11 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public DbgModelTargetModuleContainer getModules() {
 		return modules;
+	}
+
+	@Override
+	public DbgModelTargetMemoryContainer getMemory() {
+		return memory;
 	}
 
 	@Override

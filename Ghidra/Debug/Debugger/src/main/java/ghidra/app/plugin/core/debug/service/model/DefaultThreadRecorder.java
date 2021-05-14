@@ -264,7 +264,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
 		long snap = recorder.getSnap();
 		String path = bank.getJoinedPath(".");
-		TimedMsg.info(this, "Reg values changed: " + updates.keySet());
+		TimedMsg.debug(this, "Reg values changed: " + updates.keySet());
 		recorder.parTx.execute("Registers " + path + " changed", () -> {
 			TraceCodeManager codeManager = trace.getCodeManager();
 			TraceCodeRegisterSpace codeRegisterSpace =
@@ -377,7 +377,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		if (targetRange == null) {
 			return AsyncUtils.NIL;
 		}
-		TimedMsg.info(this,
+		TimedMsg.debug(this,
 			"  Reading memory at " + name + " (" + targetAddress + " -> " + targetRange + ")");
 		// NOTE: Recorder takes data via memoryUpdated callback
 		// TODO: In that callback, sort out process memory from thread memory?

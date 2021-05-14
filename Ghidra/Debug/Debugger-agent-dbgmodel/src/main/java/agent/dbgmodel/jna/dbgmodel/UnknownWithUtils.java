@@ -265,7 +265,7 @@ public class UnknownWithUtils extends Unknown {
 	}
 
 	protected HRESULT _invokeHR(VTableIndex idx, Object... args) {
-		//System.err.println(idx);
+		//Msg.info(this, Thread.currentThread() + " invoked " + idx + Arrays.asList(args));
 		return (HRESULT) this._invokeNativeObject(idx.getIndex(), args, HRESULT.class);
 	}
 

@@ -31,17 +31,26 @@ public interface DbgModelTargetModule extends DbgModelTargetObject, TargetModule
 	public default CompletableFuture<Void> init(Map<String, Object> map) {
 		AddressSpace space = getModel().getAddressSpace("ram");
 		return requestNativeAttributes().thenAccept(attrs -> {
+			if (!isValid()) {
+				return;
+			}
 			if (attrs != null) {
 				map.putAll(attrs);
-				TargetObject baseOffset2 = (TargetObject) attrs.get("BaseAddress");
+				TargetObject baseAttr = (TargetObject) attrs.get("BaseAddress");
 				TargetObject nameAttr = (TargetObject) attrs.get("Name");
-				TargetObject size = (TargetObject) attrs.get("Size");
-				String basestr = baseOffset2 == null ? "0"
-						: baseOffset2.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
-				String namestr = nameAttr == null ? ""
-						: nameAttr.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
-				String sizestr =
-					size == null ? "1" : size.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
+				TargetObject sizeAttr = (TargetObject) attrs.get("Size");
+
+				Object baseval = baseAttr == null ? null
+						: baseAttr.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
+				Object nameval = nameAttr == null ? null
+						: nameAttr.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
+				Object sizeval = sizeAttr == null ? null
+						: sizeAttr.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
+
+				String basestr = baseval == null ? "0" : baseval.toString();
+				String namestr = nameval == null ? "" : nameval.toString();
+				String sizestr = sizeval == null ? "1" : sizeval.toString();
+
 				String shortnamestr = namestr;
 				int sep = shortnamestr.lastIndexOf('\\');
 				if (sep > 0 && sep < shortnamestr.length()) {

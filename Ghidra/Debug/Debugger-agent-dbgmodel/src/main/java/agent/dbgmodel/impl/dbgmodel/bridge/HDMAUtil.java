@@ -94,7 +94,10 @@ public class HDMAUtil {
 		if (kind.equals(ModelObjectKind.OBJECT_INTRINSIC) ||
 			kind.equals(ModelObjectKind.OBJECT_TARGET_OBJECT) ||
 			kind.equals(ModelObjectKind.OBJECT_TARGET_OBJECT_REFERENCE)) {
-			return target.getRawValueMap();
+			Map<String, ModelObject> map = target.getRawValueMap();
+			if (!map.isEmpty()) {
+				return map;
+			}
 		}
 		return target.getKeyValueMap();
 	}

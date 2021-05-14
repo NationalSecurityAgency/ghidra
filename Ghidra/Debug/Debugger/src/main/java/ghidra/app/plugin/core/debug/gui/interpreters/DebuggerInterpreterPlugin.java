@@ -31,19 +31,18 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-	shortDescription = "Debugger interpreter panel service", //
-	description = "Manage interpreter panels within debug sessions", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	servicesRequired = { //
-		InterpreterPanelService.class //
-	}, //
+@PluginInfo(
+	shortDescription = "Debugger interpreter panel service",
+	description = "Manage interpreter panels within debug sessions",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	servicesRequired = {
+		InterpreterPanelService.class,
+	},
 	servicesProvided = {
-		DebuggerInterpreterService.class //
-	} //
-)
+		DebuggerInterpreterService.class,
+	})
 public class DebuggerInterpreterPlugin extends AbstractDebuggerPlugin
 		implements DebuggerInterpreterService {
 

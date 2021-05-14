@@ -49,6 +49,8 @@ public interface DbgModelTargetProcess extends //
 
 	public DbgModelTargetModuleContainer getModules();
 
+	public DbgModelTargetMemoryContainer getMemory();
+
 	public void threadStateChangedSpecific(DbgThread thread, DbgState state);
 
 	public default DbgProcess getProcess() {

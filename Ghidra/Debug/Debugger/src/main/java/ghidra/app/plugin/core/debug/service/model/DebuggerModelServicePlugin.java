@@ -159,14 +159,14 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected class ListenerOnRecorders implements TraceRecorderListener {
 		@Override
 		public void snapAdvanced(TraceRecorder recorder, long snap) {
-			TimedMsg.info(this, "Got snapAdvanced callback");
+			TimedMsg.debug(this, "Got snapAdvanced callback");
 			fireSnapEvent(recorder, snap);
 			List<DebuggerModelServiceProxyPlugin> copy;
 			synchronized (proxies) {
 				copy = List.copyOf(proxies);
 			}
 			for (DebuggerModelServiceProxyPlugin proxy : copy) {
-				TimedMsg.info(this, "Firing SnapEvent on " + proxy);
+				TimedMsg.debug(this, "Firing SnapEvent on " + proxy);
 				proxy.fireSnapEvent(recorder, snap);
 			}
 		}

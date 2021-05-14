@@ -66,6 +66,6 @@ public class DbgWriteRegistersCommand extends AbstractDbgCommand<Void> {
 			}
 		}
 		registers.setValues(DebugRegisterSource.DEBUG_REGSRC_DEBUGGEE, values);
-		//so.setCurrentThreadId(previous);
+		so.setCurrentThreadId(previous);
 	}
 }

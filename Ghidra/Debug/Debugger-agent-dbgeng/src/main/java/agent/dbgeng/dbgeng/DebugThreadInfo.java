@@ -18,6 +18,7 @@ package agent.dbgeng.dbgeng;
 /**
  * Information about a thread.
  * 
+ * <p>
  * The fields correspond to parameters taken by {@code CreateThread} of
  * {@code IDebugEventCallbacks}. They also appear as a subset of parameters taken by
  * {@code CreateProcess} of {@code IDebugEventCallbacks}.
@@ -31,5 +32,12 @@ public class DebugThreadInfo {
 		this.handle = handle;
 		this.dataOffset = dataOffset;
 		this.startOffset = startOffset;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("<%s@%08x handle=0x%04x,dataOffset=0x%08x,startOffset=0x%08x>",
+			getClass().getSimpleName(), System.identityHashCode(this),
+			handle, dataOffset, startOffset);
 	}
 }

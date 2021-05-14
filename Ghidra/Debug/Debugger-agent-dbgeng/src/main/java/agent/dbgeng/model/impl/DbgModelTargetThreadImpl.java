@@ -123,6 +123,7 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		), reason.desc());
 		//setExecutionState(targetState, reason.desc());
 		registers.threadStateChangedSpecific(state, reason);
+		stack.threadStateChangedSpecific(state, reason);
 	}
 
 	@Override
