@@ -51,7 +51,6 @@ import org.jungrapht.visualization.renderers.Renderer;
 import org.jungrapht.visualization.renderers.Renderer.VertexLabel;
 import org.jungrapht.visualization.renderers.Renderer.VertexLabel.Position;
 import org.jungrapht.visualization.selection.MutableSelectedState;
-import org.jungrapht.visualization.selection.VertexEndpointsSelectedEdgeSelectedState;
 import org.jungrapht.visualization.transform.*;
 import org.jungrapht.visualization.transform.shape.MagnifyImageLensSupport;
 import org.jungrapht.visualization.transform.shape.MagnifyShapeTransformer;
@@ -755,7 +754,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		for (String layoutName : names) {
 			ActionState<String> state = new ActionState<>(layoutName,
 				DefaultDisplayGraphIcons.LAYOUT_ALGORITHM_ICON, layoutName);
-			state.setHelpLocation(new HelpLocation(ACTION_OWNER, layoutName));
+
+			// condense hierarchical action help to the top-level help description
+			String anchor = layoutName;
+			if (layoutName.contains(LayoutFunction.VERT_MIN_CROSS)) {
+				anchor = LayoutFunction.VERT_MIN_CROSS;
+			}
+			else if (layoutName.contains(LayoutFunction.MIN_CROSS)) {
+				anchor = LayoutFunction.MIN_CROSS;
+			}
+
+			state.setHelpLocation(new HelpLocation(ACTION_OWNER, anchor));
 			actionStates.add(state);
 		}
 		return actionStates;

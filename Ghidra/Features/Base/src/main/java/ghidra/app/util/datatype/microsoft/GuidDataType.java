@@ -21,9 +21,9 @@ package ghidra.app.util.datatype.microsoft;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.ProcessorContext;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.*;
+import ghidra.util.Conv;
+import ghidra.util.DataConverter;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
@@ -77,11 +77,6 @@ public class GuidDataType extends BuiltIn {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	@Override
 	public String getDescription() {
 		return NAME;
 	}
@@ -130,8 +125,9 @@ public class GuidDataType extends BuiltIn {
 		retVal += Conv.toHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
 			retVal += Conv.toHexString((byte) (data[2] >> i * 8));
-			if (i == 1)
+			if (i == 1) {
 				retVal += delim;
+			}
 		}
 		for (int i = 0; i < 4; i++) {
 			retVal += Conv.toHexString((byte) (data[3] >> i * 8));
@@ -166,6 +162,7 @@ public class GuidDataType extends BuiltIn {
 		return NAME;
 	}
 
+	@Override
 	public DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
 			return this;

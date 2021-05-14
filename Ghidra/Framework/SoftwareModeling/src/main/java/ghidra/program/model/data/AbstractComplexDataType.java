@@ -91,11 +91,6 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 		return "The data type for a complex number: a + bi";
 	}
 
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
 	private static double toDouble(Object obj) {
 		if (obj instanceof Double) {
 			return (Double) obj;

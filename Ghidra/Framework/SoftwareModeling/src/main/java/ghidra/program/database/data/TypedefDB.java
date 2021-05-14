@@ -61,8 +61,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
-		return getDataType().isDynamicallySized();
+	public boolean hasLanguageDependantLength() {
+		return getDataType().hasLanguageDependantLength();
 	}
 
 	@Override

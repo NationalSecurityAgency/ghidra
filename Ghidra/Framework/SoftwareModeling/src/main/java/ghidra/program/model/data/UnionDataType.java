@@ -170,7 +170,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	DataTypeComponent doAdd(DataType dataType, int length, String componentName, String comment)
 			throws IllegalArgumentException {
 
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		dataType = adjustBitField(dataType);
 
@@ -190,7 +190,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length,
 			String componentName, String comment) throws IllegalArgumentException {
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		int oldAlignment = getAlignment();
 
@@ -246,6 +246,12 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			return 1; // 0-length datatype not supported
 		}
 		return unionLength;
+	}
+
+	@Override
+	public boolean hasLanguageDependantLength() {
+		// Assume any component may have a language-dependent length
+		return true;
 	}
 
 	@Override

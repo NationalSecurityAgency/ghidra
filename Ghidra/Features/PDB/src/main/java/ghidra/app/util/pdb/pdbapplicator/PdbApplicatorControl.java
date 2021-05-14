@@ -16,10 +16,12 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 /**
- * PDB Applicator restrictions of actions performed.  Used by {@link PdbApplicatorOptions}
+ * PDB Applicator control for actions performed.  Used by {@link PdbApplicatorOptions}
  */
-public enum PdbApplicatorRestrictions {
-	NONE("None"), DATA_TYPES_ONLY("Data Types Only"), PUBLIC_SYMBOLS_ONLY("Public Symbols Only");
+public enum PdbApplicatorControl {
+	ALL("Process All"),
+	DATA_TYPES_ONLY("Data Types Only"),
+	PUBLIC_SYMBOLS_ONLY("Public Symbols Only");
 
 	private final String label;
 
@@ -28,7 +30,7 @@ public enum PdbApplicatorRestrictions {
 		return label;
 	}
 
-	private PdbApplicatorRestrictions(String label) {
+	private PdbApplicatorControl(String label) {
 		this.label = label;
 	}
 

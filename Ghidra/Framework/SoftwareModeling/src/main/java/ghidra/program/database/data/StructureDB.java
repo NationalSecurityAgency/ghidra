@@ -119,7 +119,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			checkDeleted();
 
 			if (validatePackAndNotify) {
-				validateDataType(dataType);
+				dataType = validateDataType(dataType);
 				dataType = resolve(dataType);
 				checkAncestry(dataType);
 			}
@@ -178,12 +178,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			checkDeleted();
 
 			if (validatePackAndNotify) {
-				validateDataType(dataType);
-				dataType = resolve(dataType);
+
 				if (isInvalidFlexArrayDataType(dataType)) {
 					throw new IllegalArgumentException(
 						"Unsupported flexType: " + dataType.getDisplayName());
 				}
+
+				validateDataType(dataType);
+				dataType = resolve(dataType);
 				checkAncestry(dataType);
 			}
 
@@ -262,7 +264,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (ordinal == numComponents) {
 				return add(dataType, length, name, comment);
 			}
-			validateDataType(dataType);
+			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
 			checkAncestry(dataType);
@@ -820,6 +822,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	@Override
+	public boolean hasLanguageDependantLength() {
+		return isPackingEnabled();
+	}
+
+	@Override
 	public void clearComponent(int ordinal) {
 		lock.acquire();
 		try {
@@ -1047,7 +1054,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		lock.acquire();
 		try {
 			checkDeleted();
-			validateDataType(dataType);
+			dataType = validateDataType(dataType);
 
 			dataType = resolve(dataType);
 			checkAncestry(dataType);
@@ -1121,7 +1128,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				throw new IndexOutOfBoundsException(ordinal);
 			}
 
-			validateDataType(dataType);
+			dataType = validateDataType(dataType);
 
 			DataTypeComponent origDtc = getComponent(ordinal);
 			if (origDtc.isBitFieldComponent()) {
@@ -1182,7 +1189,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		try {
 			checkDeleted();
 
-			validateDataType(dataType);
+			dataType = validateDataType(dataType);
 
 			DataTypeComponent origDtc = getComponentAt(offset);
 			if (origDtc.isBitFieldComponent()) {

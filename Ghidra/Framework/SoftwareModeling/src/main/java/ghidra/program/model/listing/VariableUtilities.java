@@ -272,7 +272,9 @@ public class VariableUtilities {
 			}
 			dataType = Undefined.getUndefinedDataType(defaultSize);
 		}
-		else if (dataType.isDynamicallySized()) {
+		else if (dataType.hasLanguageDependantLength()) {
+			// A clone is done to ensure that any affects of the data organization
+			// are properly reflected in the sizing of the datatype
 			dataType = dataType.clone(program.getDataTypeManager());
 		}
 		else if (dataType instanceof FunctionDefinition || (dataType instanceof TypeDef &&

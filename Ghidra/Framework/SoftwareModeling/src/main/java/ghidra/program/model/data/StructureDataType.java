@@ -204,6 +204,11 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	@Override
+	public boolean hasLanguageDependantLength() {
+		return isPackingEnabled();
+	}
+
+	@Override
 	public void delete(int ordinal) {
 		if (ordinal < 0 || ordinal >= numComponents) {
 			throw new IndexOutOfBoundsException(ordinal);
@@ -374,16 +379,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	@Override
-	protected void validateDataType(DataType dataType) {
-// TODO: need tests - questionable if transitioning to/from no-packing works properly
-		if (isPackingEnabled() && dataType == DataType.DEFAULT) {
-			throw new IllegalArgumentException(
-				"The DEFAULT data type is not allowed in an aligned composite data type.");
-		}
-		super.validateDataType(dataType);
-	}
-
-	@Override
 	public final DataTypeComponentImpl insertAtOffset(int offset, DataType dataType, int length) {
 		return insertAtOffset(offset, dataType, length, null, null);
 	}
@@ -410,7 +405,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			}
 		}
 
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
@@ -487,13 +482,15 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			String componentName, String comment, boolean packAndNotify)
 			throws IllegalArgumentException {
 
-		validateDataType(dataType);
-
-		dataType = dataType.clone(dataMgr);
 		if (isFlexibleArray && isInvalidFlexArrayDataType(dataType)) {
 			throw new IllegalArgumentException(
 				"Unsupported flexType: " + dataType.getDisplayName());
 		}
+
+		dataType = validateDataType(dataType);
+
+		dataType = dataType.clone(dataMgr);
+
 		checkAncestry(dataType);
 
 		DataTypeComponentImpl dtc;
@@ -566,7 +563,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		if (index == numComponents) {
 			return add(dataType, length, componentName, comment);
 		}
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		dataType = dataType.clone(dataMgr);
 		checkAncestry(dataType);
@@ -1311,7 +1308,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			throw new IndexOutOfBoundsException(index);
 		}
 
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		DataTypeComponentImpl origDtc = (DataTypeComponentImpl) getComponent(index);
 		if (origDtc.isBitFieldComponent()) {
@@ -1354,7 +1351,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 				"Offset " + offset + " is beyond end of structure (" + getLength() + ").");
 		}
 
-		validateDataType(dataType);
+		dataType = validateDataType(dataType);
 
 		DataTypeComponentImpl origDtc = (DataTypeComponentImpl) getComponentAt(offset);
 		if (origDtc.isBitFieldComponent()) {

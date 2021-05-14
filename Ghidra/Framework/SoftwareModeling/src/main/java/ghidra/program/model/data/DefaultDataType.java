@@ -55,14 +55,6 @@ public class DefaultDataType extends DataTypeImpl {
 	}
 
 	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	/**
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */

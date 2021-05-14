@@ -34,7 +34,7 @@ You may not need all of these, depending on which portions you are building or d
       - https://adoptopenjdk.net/releases.html?variant=openjdk11&jvmVariant=hotspot
     - Amazon Corretto
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 5.0 or later - We use version 5.0, and tested with up to 6.8.3.
+* Gradle 5.x or 6.x - We use version 5.0, and have tested with up to 6.8.3.
     - https://gradle.org/next-steps/?version=5.0&format=bin
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/
@@ -55,9 +55,6 @@ You may not need all of these, depending on which portions you are building or d
     - https://github.com/pxb1988/dex2jar/releases
 * AXMLPrinter2
     - https://code.google.com/archive/p/android4me/downloads
-* HFS Explorer. We use version 0.21.
-    - https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/
-    - https://github.com/unsound/hfsexplorer/releases (newer versions)
 * Yet Another Java Service Wrapper. We use version 12.12 - Only to build Ghidra package.
     - https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/
 * Eclipse PDE - Environment for developing the GhidraDev plugin.
@@ -117,16 +114,12 @@ The Gradle task to be executed, in this case _init_, is unimportant. The point i
 the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/dependencies/` 
 directory populated with the following files:
  * flatRepo/AXMLPrinter2.jar
- * flatRepo/csframework.jar
  * flatRepo/dex-ir-2.0.jar
  * flatRepo/dex-reader-2.0.jar
  * flatRepo/dex-reader-api-2.0.jar
  * flatRepo/dex-tools-2.0.jar
  * flatRepo/dex-translator-2.0.jar
  * flatRepo/dex-writer-2.0.jar
- * flatRepo/hfsx.jar
- * flatRepo/hfsx_dmglib.jar
- * flatRepo/iharder-base64.jar
  * GhidraDev/cdt-8.6.0.zip
  * GhidraDev/PyDev 6.3.1.zip
  * GhidraServer/yajsw-stable-12.12.zip
@@ -166,21 +159,6 @@ Place it in `~/git/ghidra/dependencies/flatRepo`:
 ```bash
 cd ~/git/ghidra/dependencies/flatRepo
 curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
-```
-
-#### Get Dependencies for DMG:
-
-Download `hfsexplorer-0_21-bin.zip` from www.catacombae.org.
-Unpack the `lib` directory to `~/git/ghidra/dependencies/flatRepo`:
-
-```bash
-cd ~/Downloads   # Or wherever
-curl -OL https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip
-mkdir hfsx
-cd hfsx
-unzip ../hfsexplorer-0_21-bin.zip
-cd lib
-cp csframework.jar hfsx_dmglib.jar hfsx.jar iharder-base64.jar ~/git/ghidra/dependencies/flatRepo/
 ```
 
 #### Get Dependencies for GhidraServer
