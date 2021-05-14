@@ -1290,18 +1290,21 @@ void TypeCode::saveXml(ostream &s) const
 void TypeCode::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  if (iter != list.end()) {
+    // Traditionally a <prototype> tag implies variable length, without a "varlength" attribute
+    flags |= variable_length;
+  }
   restoreXmlBasic(el);
   if (proto != (FuncProto *)0) {
     delete proto;
     proto = (FuncProto *)0;
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
   if (iter == list.end()) return; // No underlying prototype
   Architecture *glb = typegrp.getArch();
   factory = &typegrp;
-  flags |= variable_length;
   proto = new FuncProto();
   proto->setInternal( glb->defaultfp, typegrp.getTypeVoid() );
   proto->restoreXml(*iter,glb);
