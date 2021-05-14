@@ -295,7 +295,7 @@ public class AssembleDockingAction extends DockingAction {
 				lang.getProperty(ASSEMBLY_MESSAGE + ":" + lang.getLanguageID(), rating.message);
 			if (!shownWarning.get(lang)) {
 				Msg.showWarn(this, cv.getComponent(), "Assembler Rating",
-					"<html><body><p style='width: 300px;'>" + message + "</p></body></html>");
+					message);
 				shownWarning.put(lang, true);
 			}
 		}
