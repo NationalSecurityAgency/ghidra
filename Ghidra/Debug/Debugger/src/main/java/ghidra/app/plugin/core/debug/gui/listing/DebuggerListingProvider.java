@@ -50,8 +50,7 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
-import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
-import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
+import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.plugin.core.exporter.ExporterDialog;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.*;
@@ -870,7 +869,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	public void programLocationChanged(ProgramLocation location, EventTrigger trigger) {
 		updateLocationLabel();
 		if (traceManager != null) {
-			location = traceManager.fixLocation(location, false);
+			location = ProgramLocationUtils.fixLocation(location, false);
 		}
 		super.programLocationChanged(location, trigger);
 		if (trigger == EventTrigger.GUI_ACTION) {
