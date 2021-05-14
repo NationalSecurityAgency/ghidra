@@ -28,9 +28,9 @@ configurations {
 }
 
 dependencies {
-	compile project(":FileSystem")
-	compile project(":DB")
-	compile project(":Generic")
+	api project(":FileSystem")
+	api project(":DB")
+	api project(":Generic")
 	
 	runGhidraServer project
 }

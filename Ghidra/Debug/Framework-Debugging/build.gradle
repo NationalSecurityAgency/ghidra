@@ -23,12 +23,12 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Framework-Debugging'
 
 dependencies {
-	compile project(':Framework-AsyncComm')
-	compile project(':Generic')
-	compile project(':SoftwareModeling')
-	compile project(':ProposedUtils')
+	api project(':Framework-AsyncComm')
+	api project(':Generic')
+	api project(':SoftwareModeling')
+	api project(':ProposedUtils')
 
-	testCompile project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 }
 
 task testSpecimenWin64 {

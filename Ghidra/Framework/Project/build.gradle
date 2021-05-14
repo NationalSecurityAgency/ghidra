@@ -22,13 +22,13 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Project'
 
 dependencies {
-	compile project(':Generic')
-	compile project(':DB')
-	compile project(':Docking')
-	compile project(':FileSystem')
-	compile project(':Utility')
+	api project(':Generic')
+	api project(':DB')
+	api project(':Docking')
+	api project(':FileSystem')
+	api project(':Utility')
 	
-	testCompile project(path: ':Generic', configuration: 'testArtifacts')
-	compile "org.apache.commons:commons-compress:1.19"
+	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
+	api "org.apache.commons:commons-compress:1.19"
 }
 

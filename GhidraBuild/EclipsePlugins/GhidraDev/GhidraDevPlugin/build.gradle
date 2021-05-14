@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 //This project requires the eclpse PDE plugin. To create eclipse files for this project, run 
 //	"gradle eclipse -PeclipsePDE" 
@@ -48,8 +48,8 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-	compile project(':Utility')
-	compile project(':LaunchSupport')
+	api project(':Utility')
+	api project(':LaunchSupport')
 }
 
 // We are currently building this with Eclipse, so prevent gradle from trying.

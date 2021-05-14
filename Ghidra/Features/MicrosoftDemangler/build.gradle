@@ -23,6 +23,6 @@ eclipse.project.name = 'Features MicrosoftDemangler'
 
 
 dependencies {
-	compile project(":Base")
-	compile project(":MicrosoftDmang")
+	api project(":Base")
+	api project(":MicrosoftDmang")
 }

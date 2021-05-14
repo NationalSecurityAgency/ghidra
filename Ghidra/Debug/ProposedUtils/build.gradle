@@ -24,16 +24,16 @@ eclipse.project.name = 'Debug ProposedUtils'
 // val autoServiceVersion = "1.0-rc5"
 
 dependencies {
-	compile project(':DB')
-	compile project(':Project')
-	compile project(':SoftwareModeling')
-	compile project(':Utility')
+	api project(':DB')
+	api project(':Project')
+	api project(':SoftwareModeling')
+	api project(':Utility')
 
-	compile project(':Base') // Boo!: (Where to put DefaultEnumeratedColumnProgramTableModel?)
+	api project(':Base') // Boo!: (Where to put DefaultEnumeratedColumnProgramTableModel?)
 	
 	// TODO: Evaluate these dependencies
-	// compile("com.google.auto.service:auto-service-annotations:$autoServiceVersion")
+	// api("com.google.auto.service:auto-service-annotations:$autoServiceVersion")
 	// annotationProcessor("com.google.auto.service:auto-service:$autoServiceVersion")
 
-	testCompile project(':Base')
+	testImplementation project(':Base')
 }

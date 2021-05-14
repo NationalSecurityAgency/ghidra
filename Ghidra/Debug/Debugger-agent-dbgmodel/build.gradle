@@ -23,9 +23,12 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgmodel'
 
 dependencies {
-	compile project(":Debugger-agent-dbgeng")
+	api project(":Debugger-agent-dbgeng")
 
-	testCompile project(path: ":Debugger-agent-dbgeng", configuration: 'testArtifacts')
+	testImplementation project(path: ":Debugger-agent-dbgeng", configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
 }
 
 def boolean filterJar(File jarfile) {
@@ -47,7 +50,7 @@ jar {
 
 task configureNodepJar {
 	doLast {
-		configurations.runtime.files.forEach {
+		configurations.runtimeOnly.files.forEach {
 			if (filterJar(it)) {
 				nodepJar.from(zipTree(it))
 			}

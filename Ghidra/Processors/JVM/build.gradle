@@ -26,6 +26,6 @@ eclipse.project.name = 'Processors JVM'
 apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 

@@ -33,28 +33,28 @@ configurations {
 }
 
 dependencies {
-	compile project(':Utility')
-	compile project(':Generic')
-	compile project(':Docking')
-	compile project(':Graph')
-	compile project(':SoftwareModeling')
-	compile project(':DB')
-	compile project(':Help')
+	api project(':Utility')
+	api project(':Generic')
+	api project(':Docking')
+	api project(':Graph')
+	api project(':SoftwareModeling')
+	api project(':DB')
+	api project(':Help')
 
-	compile 'org.apache.felix:org.apache.felix.framework:6.0.3'
-	compile 'com.github.rotty3000:phidias:0.3.7'
-	compile 'biz.aQute.bnd:biz.aQute.bndlib:5.1.2'
-	compile 'org.slf4j:slf4j-api:1.7.25'
+	api 'org.apache.felix:org.apache.felix.framework:6.0.3'
+	api 'com.github.rotty3000:phidias:0.3.7'
+	api 'biz.aQute.bnd:biz.aQute.bndlib:5.1.2'
+	api 'org.slf4j:slf4j-api:1.7.25'
 	
-	runtime "org.slf4j:slf4j-nop:1.7.25"
+	runtimeOnly "org.slf4j:slf4j-nop:1.7.25"
 	
    	compileOnly "junit:junit:4.12"
 	
 	// These have abstract test classes and stubs needed by this module	
-	testCompile project(path: ':Docking', configuration: 'testArtifacts')
-	testCompile project(path: ':Generic', configuration: 'testArtifacts')
-	testCompile project(path: ':Project', configuration: 'testArtifacts')
-	testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':Docking', configuration: 'testArtifacts')
+	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
+	testImplementation project(path: ':Project', configuration: 'testArtifacts')
+	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 	
 	javacc 'net.java.dev.javacc:javacc:5.0'
 }

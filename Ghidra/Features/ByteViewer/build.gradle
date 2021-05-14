@@ -23,9 +23,9 @@ eclipse.project.name = 'Features ByteViewer'
 
 dependencies {
 
-	compile project(':Base')
+	api project(':Base')
 	
-	testCompile project(path: ':SoftwareModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 	
 	helpPath project(path: ':Base', configuration: 'helpPath')  // this module's help has links to Base help files
 }

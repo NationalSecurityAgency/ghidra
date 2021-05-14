@@ -59,8 +59,8 @@ sourceSets {
 }
 
 dependencies {
-	helpIndexCompile "javax.help:javahelp:2.0.05"
-	helpIndexCompile project(path: ':Help', configuration: 'archives')
+	helpIndexImplementation "javax.help:javahelp:2.0.05"
+	helpIndexImplementation project(':Help')
 }
 
 // Task for calling the java help indexer, which creates a searchable index of the 
@@ -193,7 +193,8 @@ jar {
 }
 
 // build the help whenever this module's jar file is built
-jar.dependsOn buildHelp		
+processResources.dependsOn buildHelp
+jar.dependsOn buildHelp
 
 
 // make sure generated help directories exist during prepdev so that the directories are created and 

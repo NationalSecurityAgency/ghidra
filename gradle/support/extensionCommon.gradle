@@ -20,8 +20,8 @@ task zipExtensions (type: Zip) {
 	
 	it.group 'private'
 	it.description "Creates a zip file for an extension module.  [gradle/support/extensionCommon.gradle]"
-	it.archiveName "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
-	it.destinationDir rootProject.ext.DISTRIBUTION_DIR
+	it.archiveFileName = "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
+	it.destinationDirectory = rootProject.ext.DISTRIBUTION_DIR
 	
 	// Make sure that we don't try to copy the same file with the same path into the
 	// zip (this can happen!)
