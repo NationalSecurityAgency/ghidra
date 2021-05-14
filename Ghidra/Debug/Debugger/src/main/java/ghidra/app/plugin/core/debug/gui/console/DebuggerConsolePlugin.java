@@ -29,6 +29,7 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.services.DebuggerConsoleService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -105,8 +106,13 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	}
 
 	@Override
-	public void remove(ActionContext context) {
-		provider.remove(context);
+	public void removeFromLog(ActionContext context) {
+		provider.removeFromLog(context);
+	}
+
+	@Override
+	public boolean logContains(ActionContext context) {
+		return provider.logContains(context);
 	}
 
 	@Override
@@ -126,5 +132,15 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 */
 	public long getRowCount(Class<? extends ActionContext> ctxCls) {
 		return provider.getRowCount(ctxCls);
+	}
+
+	/**
+	 * For testing: to verify the contents of a message delivered to the console log
+	 * 
+	 * @param ctx the context
+	 * @return the the log entry
+	 */
+	public LogRow getLogRow(ActionContext ctx) {
+		return provider.getLogRow(ctx);
 	}
 }

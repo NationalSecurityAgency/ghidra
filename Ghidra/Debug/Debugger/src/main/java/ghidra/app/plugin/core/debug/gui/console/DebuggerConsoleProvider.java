@@ -109,9 +109,15 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class BoundAction {
-		protected final DockingActionIf action;
-		protected final ActionContext context;
+	/**
+	 * An action bound to a context
+	 * 
+	 * <p>
+	 * This class is public for access by test cases only.
+	 */
+	public static class BoundAction {
+		public final DockingActionIf action;
+		public final ActionContext context;
 
 		public BoundAction(DockingActionIf action, ActionContext context) {
 			this.action = action;
@@ -144,10 +150,22 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected static class ActionList extends ArrayList<BoundAction> {
+	/**
+	 * A list of bound actions
+	 * 
+	 * <p>
+	 * This class is public for access by test cases only.
+	 */
+	public static class ActionList extends ArrayList<BoundAction> {
 	}
 
-	protected static class LogRow {
+	/**
+	 * An entry in the console's log
+	 * 
+	 * <p>
+	 * This class is public for access by test cases only.
+	 */
+	public static class LogRow {
 		private final Icon icon;
 		private final String message;
 		private final Date date;
@@ -419,10 +437,16 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			new Date(event.getTimeMillis()), context, computeToolbarActions(context)));
 	}
 
-	protected void remove(ActionContext context) {
+	protected void removeFromLog(ActionContext context) {
 		synchronized (buffer) {
 			LogRow r = logTableModel.deleteKey(context);
 			buffer.remove(r);
+		}
+	}
+
+	protected boolean logContains(ActionContext context) {
+		synchronized (buffer) {
+			return logTableModel.getMap().containsKey(context);
 		}
 	}
 
@@ -479,9 +503,17 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	}
 
 	protected long getRowCount(Class<? extends ActionContext> ctxCls) {
-		return logTableModel.getModelData()
-				.stream()
-				.filter(r -> ctxCls.isInstance(r.context))
-				.count();
+		synchronized (buffer) {
+			return logTableModel.getModelData()
+					.stream()
+					.filter(r -> ctxCls.isInstance(r.context))
+					.count();
+		}
+	}
+
+	public LogRow getLogRow(ActionContext ctx) {
+		synchronized (buffer) {
+			return logTableModel.getMap().get(ctx);
+		}
 	}
 }

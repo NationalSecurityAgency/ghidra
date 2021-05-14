@@ -867,12 +867,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			Msg.error(this, "Import service is not present");
 		}
 		importModuleFromFileSystem(context.getModule());
-		consoleService.remove(context); // TODO: Should remove when mapping is created
+		consoleService.removeFromLog(context); // TODO: Should remove when mapping is created
 	}
 
 	private void activatedMapMissingModule(DebuggerMissingModuleActionContext context) {
 		mapModuleTo(context.getModule());
-		consoleService.remove(context); // TODO: Should remove when mapping is created
+		consoleService.removeFromLog(context); // TODO: Should remove when mapping is created
 	}
 
 	private void toggledFilter(ActionContext ignored) {
