@@ -113,6 +113,12 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 	}
 
 	@Override
+	protected void condenseEdges(List<Row<FGVertex>> rows,
+			Map<FGEdge, List<Point2D>> newEdgeArticulations, double centerX, double centerY) {
+		// do not condense, as we route our edges at the preferred positions
+	}
+
+	@Override
 	protected double getCondenseFactor() {
 		// our layout needs more spacing because we have custom edge routing that we want to
 		// stand out
@@ -714,7 +720,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 					 -p2 - just past the left edge
 					 -p3 - just past the bottom of the vertex
 					 -p4 - back at the original x value
-
+				
 					 	   |
 					   .___|
 					   | .-----.
