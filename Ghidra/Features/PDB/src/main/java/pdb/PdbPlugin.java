@@ -143,9 +143,8 @@ public class PdbPlugin extends Plugin {
 			// note: We intentionally use a 0-delay here.  Our underlying task may show modal
 			//       dialog prompts.  We want the task progress dialog to be showing before any
 			//       prompts appear.
-			LoadPdbTask loadPdbTask =
-				new LoadPdbTask(program, pdbFile, loadPdbResults.useMsDiaParser,
-					loadPdbResults.control, loadPdbResults.debugLogging, dataTypeManagerService);
+			LoadPdbTask loadPdbTask = new LoadPdbTask(program, pdbFile,
+				loadPdbResults.useMsDiaParser, loadPdbResults.control, dataTypeManagerService);
 			TaskBuilder.withTask(loadPdbTask)
 					.setStatusTextAlignment(SwingConstants.LEADING)
 					.setLaunchDelay(0);

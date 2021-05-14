@@ -15,14 +15,12 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.CharsetInfo;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 /**
  * Options used while reading a PDB ({@link AbstractPdb}) that control various aspects.  These
@@ -97,7 +95,6 @@ public class PdbReaderOptions extends Exception {
 	public void loadOptions(Options options) {
 
 		pdbLogging = options.getBoolean(OPTION_NAME_PDB_READER_APPLICATOR_LOGGING, pdbLogging);
-		setPdbLogging();
 
 		if (developerMode) {
 			oneByteCharsetName =
@@ -114,20 +111,10 @@ public class PdbReaderOptions extends Exception {
 	 */
 	public void setDefaults() {
 		pdbLogging = DEFAULT_PDB_READER_APPLICATOR_LOGGING;
-		setPdbLogging();
 		oneByteCharsetName = DEFAULT_ONE_BYTE_CHARSET_NAME;
 		wideCharCharsetName = DEFAULT_TWO_BYTE_CHARSET_NAME;
 		setOneByteCharsetForName(oneByteCharsetName);
 		setWideCharCharsetForName(wideCharCharsetName);
-	}
-
-	private void setPdbLogging() {
-		try {
-			PdbLog.setEnabled(pdbLogging);
-		}
-		catch (IOException e) {
-			Msg.info(this, "Failure opening PDB log file: ", e);
-		}
 	}
 
 	/**

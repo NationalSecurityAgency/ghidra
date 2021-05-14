@@ -24,7 +24,8 @@ import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.framework.options.Options;
@@ -39,18 +40,16 @@ class LoadPdbTask extends Task {
 	private final Program program;
 	private final boolean useMsDiaParser;
 	private final PdbApplicatorControl control; // PDB Universal Parser only
-	private boolean debugLogging;
 	private String resultMessages;
 	private Exception resultException;
 
 	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser, PdbApplicatorControl control,
-			boolean debugLogging, DataTypeManagerService service) {
+			DataTypeManagerService service) {
 		super("Load PDB", true, false, true, true);
 		this.program = program;
 		this.pdbFile = pdbFile;
 		this.useMsDiaParser = useMsDiaParser;
 		this.control = control;
-		this.debugLogging = debugLogging;
 		this.service = service;
 	}
 
@@ -135,8 +134,6 @@ class LoadPdbTask extends Task {
 
 	private boolean parseWithNewParser(MessageLog log, TaskMonitor monitor)
 			throws IOException, CancelledException {
-
-		PdbLog.setEnabled(debugLogging);
 
 		PdbReaderOptions pdbReaderOptions = new PdbReaderOptions(); // use defaults
 

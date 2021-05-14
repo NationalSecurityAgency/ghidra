@@ -71,7 +71,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		public File pdbFile;
 		public PdbApplicatorControl control;
 		public boolean useMsDiaParser;
-		public boolean debugLogging;
 	}
 
 	/**
@@ -94,7 +93,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		results.control =
 			(PdbApplicatorControl) choosePdbDlg.applicatorControlCombo.getSelectedItem();
 		results.useMsDiaParser = choosePdbDlg.msdiaParserButton.isSelected();
-		results.debugLogging = choosePdbDlg.debugLoggingCheckbox.isSelected();
 		return results;
 	}
 
@@ -139,7 +137,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private JRadioButton universalParserButton;
 	private JRadioButton msdiaParserButton;
 	private GComboBox<PdbApplicatorControl> applicatorControlCombo;
-	private GCheckBox debugLoggingCheckbox;
 
 	/**
 	 * Creates a new instance of the LoadPdbDialog class.
@@ -549,7 +546,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			universalParserButton.setSelected(false);
 		}
 		applicatorControlCombo.setEnabled(universalParserButton.isSelected());
-		debugLoggingCheckbox.setEnabled(universalParserButton.isSelected());
 	}
 
 	private JPanel buildParserOptionsPanel() {
@@ -577,10 +573,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		applicatorControlCombo = new GComboBox<>(PdbApplicatorControl.values());
 		applicatorControlCombo.setSelectedItem(PdbApplicatorControl.ALL);
 
-		debugLoggingCheckbox = new GCheckBox();
-		debugLoggingCheckbox.setToolTipText(
-			"If checked, logs information to the pdb.analyzer.log file for debug/development.");
-
 		parserOptionsPanel = new JPanel(new PairLayout(5, 5));
 		parserOptionsPanel.setBorder(BorderFactory.createTitledBorder("PDB Parser"));
 		DockingWindowManager.getHelpService()
@@ -593,9 +585,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 		parserOptionsPanel.add(new GLabel("Control:"));
 		parserOptionsPanel.add(applicatorControlCombo);
-
-		parserOptionsPanel.add(new GLabel("[Dev] PDB Reader/Applicator Debug Logging:"));
-		parserOptionsPanel.add(debugLoggingCheckbox);
 
 		return parserOptionsPanel;
 	}

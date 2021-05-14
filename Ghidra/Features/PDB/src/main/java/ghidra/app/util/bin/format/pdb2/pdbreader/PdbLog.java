@@ -32,7 +32,8 @@ public class PdbLog {
 
 	private static Writer nullWriter;
 	private static Writer fileWriter;
-	private static boolean enabled = false;
+	private static final boolean SYSTEM_LOGGING_ENABLED = Boolean.getBoolean("pdb.logging");
+	private static boolean enabled = SYSTEM_LOGGING_ENABLED;
 
 	/**
 	 * Enable or disable future messages to be output to the appropriate log resource.  This

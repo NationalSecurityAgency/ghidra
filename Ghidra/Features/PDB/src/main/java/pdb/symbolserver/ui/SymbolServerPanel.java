@@ -15,15 +15,14 @@
  */
 package pdb.symbolserver.ui;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -200,8 +199,7 @@ class SymbolServerPanel extends JPanel {
 	}
 
 	private JPanel buildButtonPanel() {
-		refreshSearchLocationsStatusButton =
-			ButtonPanelFactory.createImageButton(Icons.REFRESH_ICON, "Refresh Status",
+		refreshSearchLocationsStatusButton = createImageButton(Icons.REFRESH_ICON, "Refresh Status",
 				ButtonPanelFactory.ARROW_SIZE);
 		refreshSearchLocationsStatusButton.addActionListener(e -> refreshSearchLocationStatus());
 		DockingWindowManager.getHelpService()
@@ -226,7 +224,7 @@ class SymbolServerPanel extends JPanel {
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
 						"SymbolServerConfig MoveUpDown"));
 
-		deleteLocationButton = ButtonPanelFactory.createImageButton(Icons.DELETE_ICON, "Delete",
+		deleteLocationButton = createImageButton(Icons.DELETE_ICON, "Delete",
 			ButtonPanelFactory.ARROW_SIZE);
 		deleteLocationButton.addActionListener(e -> deleteLocation());
 		DockingWindowManager.getHelpService()
@@ -234,7 +232,7 @@ class SymbolServerPanel extends JPanel {
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
 						"SymbolServerConfig Delete"));
 
-		addLocationButton = ButtonPanelFactory.createImageButton(Icons.ADD_ICON, "Add",
+		addLocationButton = createImageButton(Icons.ADD_ICON, "Add",
 			ButtonPanelFactory.ARROW_SIZE);
 		addLocationButton.addActionListener(e -> addLocation());
 		DockingWindowManager.getHelpService()
@@ -589,6 +587,17 @@ class SymbolServerPanel extends JPanel {
 			return dirContents != null && dirContents.length == 0;
 		}
 		return false;
+	}
+
+	private static JButton createImageButton(ImageIcon buttonIcon, String alternateText,
+			Dimension preferredSize) {
+
+		JButton button = ButtonPanelFactory.createButton("");
+		button.setIcon(buttonIcon);
+		button.setToolTipText(alternateText);
+		button.setPreferredSize(preferredSize);
+
+		return button;
 	}
 
 }
