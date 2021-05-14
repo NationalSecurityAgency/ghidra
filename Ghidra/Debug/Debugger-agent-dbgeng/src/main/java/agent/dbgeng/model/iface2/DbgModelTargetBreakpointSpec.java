@@ -67,11 +67,21 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	@Override
 	public default TargetBreakpointKindSet getKinds() {
-		return TargetBreakpointKindSet.of(
-			TargetBreakpointKind.SW_EXECUTE,
-			TargetBreakpointKind.HW_EXECUTE,
-			TargetBreakpointKind.READ,
-			TargetBreakpointKind.WRITE);
+		switch (getBreakpointInfo().getType()) {
+			case BREAKPOINT:
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
+			case HW_BREAKPOINT:
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.HW_EXECUTE);
+			case HW_WATCHPOINT:
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.WRITE);
+			case READ_WATCHPOINT:
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.READ);
+			case ACCESS_WATCHPOINT:
+				return TargetBreakpointKindSet.of(TargetBreakpointKind.READ,
+					TargetBreakpointKind.WRITE);
+			default:
+				return TargetBreakpointKindSet.of();
+		}
 	}
 
 	@Override
