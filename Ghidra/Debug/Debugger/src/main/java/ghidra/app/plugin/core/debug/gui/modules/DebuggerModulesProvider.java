@@ -816,6 +816,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	private boolean isContextSectionsOfOneModule(ActionContext ignored) {
 		Set<TraceSection> sel = getSelectedSections(myActionContext);
+		if (sel == null || sel.isEmpty()) {
+			return false;
+		}
 		return sel.stream().map(TraceSection::getModule).distinct().count() == 1;
 	}
 
