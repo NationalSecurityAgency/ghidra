@@ -106,9 +106,9 @@ void Funcdata::opSetInput(PcodeOp *op,Varnode *vn,int4 slot)
   if (vn->isConstant()) {	// Constants should have only one descendant
     if (!vn->hasNoDescend())
       if (!vn->isSpacebase()) {	// Unless they are a spacebase
-	Varnode *cvn = newConstant(vn->getSize(),vn->getOffset());
-	cvn->copySymbol(vn);
-	vn = cvn;
+	      Varnode *cvn = newConstant(vn->getSize(),vn->getOffset());
+	      cvn->copySymbol(vn);
+	      vn = cvn;
       }
   }
 #ifdef OPACTION_DEBUG

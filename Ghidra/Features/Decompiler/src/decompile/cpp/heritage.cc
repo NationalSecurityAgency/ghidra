@@ -896,11 +896,11 @@ bool Heritage::protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
       PcodeOp *defOp = vn->getDef();
       OpCode opc = defOp->code();
       if (opc == CPUI_COPY)
-	vn = defOp->getIn(0);
+        vn = defOp->getIn(0);
       else if (opc == CPUI_INT_ADD && defOp->getIn(1)->isConstant())
-	vn = defOp->getIn(0);
+	      vn = defOp->getIn(0);
       else
-	break;
+	      break;
     }
     if (vn->isFree() && vn->getSpace() == spc) {
       fd->opMarkSpacebasePtr(op);	// Mark op as spacebase STORE, even though we're not sure
@@ -939,93 +939,92 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
     while(!path.empty()) {
       StackNode &curNode(path.back());
       if (curNode.iter == curNode.vn->endDescend()) {
-	path.pop_back();
-	continue;
+        path.pop_back();
+        continue;
       }
       PcodeOp *op = *curNode.iter;
       ++curNode.iter;
       Varnode *outVn = op->getOut();
       if (outVn != (Varnode *)0 && outVn->isMark()) continue;		// Don't revisit Varnodes
-      switch(op->code()) {
-	case CPUI_INT_ADD:
-	{
-	  Varnode *otherVn = op->getIn(1-op->getSlot(curNode.vn));
-	  if (otherVn->isConstant()) {
-	    uintb newOffset = spc->wrapOffset(curNode.offset + otherVn->getOffset());
-	    StackNode nextNode(outVn,newOffset,curNode.traversals);
-	    if (nextNode.iter != nextNode.vn->endDescend()) {
-	      outVn->setMark();
-	      path.push_back(nextNode);
-	      markedVn.push_back(outVn);
-	    }
-	    else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
-	      unknownStackStorage = true;
-	  }
-	  else {
-	    StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::nonconstant_index);
-	    if (nextNode.iter != nextNode.vn->endDescend()) {
-	      outVn->setMark();
-	      path.push_back(nextNode);
-	      markedVn.push_back(outVn);
-	    }
-	    else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
-	      unknownStackStorage = true;
-	  }
-	  break;
-	}
-	case CPUI_INDIRECT:
-	case CPUI_COPY:
-	{
-	  StackNode nextNode(outVn,curNode.offset,curNode.traversals);
-	  if (nextNode.iter != nextNode.vn->endDescend()) {
-	    outVn->setMark();
-	    path.push_back(nextNode);
-	    markedVn.push_back(outVn);
-	  }
-	  else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
-	    unknownStackStorage = true;
-	  break;
-	}
-	case CPUI_MULTIEQUAL:
-	{
-	  StackNode nextNode(outVn,curNode.offset,curNode.traversals | StackNode::multiequal);
-	  if (nextNode.iter != nextNode.vn->endDescend()) {
-	    outVn->setMark();
-	    path.push_back(nextNode);
-	    markedVn.push_back(outVn);
-	  }
-	  else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
-	    unknownStackStorage = true;
-	  break;
-	}
-	case CPUI_LOAD:
-	{
-	  // Note that if ANY path has one of the traversals (non-constant ADD or MULTIEQUAL), then
-	  // THIS path must have one of the traversals, because the only other acceptable path elements
-	  // (INDIRECT/COPY/constant ADD) have only one path through.
-	  if (curNode.traversals != 0) {
-	    generateLoadGuard(curNode,op,spc);
-	  }
-	  break;
-	}
-	case CPUI_STORE:
-	{
-	  if (op->getIn(1) == curNode.vn) {	// Make sure the STORE pointer comes from our path
-	    if (curNode.traversals != 0) {
-	      generateStoreGuard(curNode, op, spc);
-	    }
-	    else {
-	      // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
-	      // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
-	      // This will likely get resolved in the next heritage pass, but we leave the
-	      // spacebaseptr mark on, so that that the indirects don't get removed
-	      fd->opMarkSpacebasePtr(op);
-	    }
-	  }
-	  break;
-	}
-	default:
-	  break;
+      switch (op->code()) {
+        case CPUI_INT_ADD:
+        {
+          Varnode *otherVn = op->getIn(1 - op->getSlot(curNode.vn));
+          if (otherVn->isConstant()) {
+            uintb newOffset = spc->wrapOffset(curNode.offset + otherVn->getOffset());
+            StackNode nextNode(outVn, newOffset, curNode.traversals);
+            if (nextNode.iter != nextNode.vn->endDescend()) {
+              outVn->setMark();
+              path.push_back(nextNode);
+              markedVn.push_back(outVn);
+            }
+            else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+              unknownStackStorage = true;
+          } else {
+            StackNode nextNode(outVn, curNode.offset, curNode.traversals | StackNode::nonconstant_index);
+            if (nextNode.iter != nextNode.vn->endDescend()) {
+              outVn->setMark();
+              path.push_back(nextNode);
+              markedVn.push_back(outVn);
+            }
+            else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+              unknownStackStorage = true;
+          }
+          break;
+        }
+        case CPUI_INDIRECT:
+        case CPUI_COPY:
+        {
+          StackNode nextNode(outVn, curNode.offset, curNode.traversals);
+          if (nextNode.iter != nextNode.vn->endDescend()) {
+            outVn->setMark();
+            path.push_back(nextNode);
+            markedVn.push_back(outVn);
+          }
+          else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+            unknownStackStorage = true;
+          break;
+        }
+        case CPUI_MULTIEQUAL:
+        {
+          StackNode nextNode(outVn, curNode.offset, curNode.traversals | StackNode::multiequal);
+          if (nextNode.iter != nextNode.vn->endDescend()) {
+            outVn->setMark();
+            path.push_back(nextNode);
+            markedVn.push_back(outVn);
+          }
+          else if (outVn->getSpace()->getType() == IPTR_SPACEBASE)
+            unknownStackStorage = true;
+          break;
+        }
+        case CPUI_LOAD:
+        {
+          // Note that if ANY path has one of the traversals (non-constant ADD or MULTIEQUAL), then
+          // THIS path must have one of the traversals, because the only other acceptable path elements
+          // (INDIRECT/COPY/constant ADD) have only one path through.
+          if (curNode.traversals != 0) {
+            generateLoadGuard(curNode, op, spc);
+          }
+          break;
+        }
+        case CPUI_STORE:
+        {
+          if (op->getIn(1) == curNode.vn) {     // Make sure the STORE pointer comes from our path
+            if (curNode.traversals != 0) {
+              generateStoreGuard(curNode, op, spc);
+            }
+            else {
+              // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
+              // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
+              // This will likely get resolved in the next heritage pass, but we leave the
+              // spacebaseptr mark on, so that that the indirects don't get removed
+              fd->opMarkSpacebasePtr(op);
+            }
+          }
+          break;
+        }
+        default:
+          break;
       }
     }
   }
@@ -1067,8 +1066,8 @@ void Heritage::reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
       if (op != PcodeOp::getOpFromConst(iopVn->getAddr())) break;
       PcodeOp *nextOp = indOp->previousOp();
       if (indOp->getOut()->getSpace() == spc) {
-	fd->totalReplace(indOp->getOut(),indOp->getIn(0));
-	fd->opDestroy(indOp);		// Get rid of the INDIRECT
+        fd->totalReplace(indOp->getOut(),indOp->getIn(0));
+	      fd->opDestroy(indOp);		// Get rid of the INDIRECT
       }
       indOp = nextOp;
     }
@@ -2162,38 +2161,38 @@ void Heritage::renameRecurse(BlockBasic *bl,VariableStack &varstack)
   for(oiter=bl->beginOp();oiter!=bl->endOp();++oiter) {
     op = *oiter;
     if (op->code() != CPUI_MULTIEQUAL) {
-				// First replace reads with top of stack
+			// First replace reads with top of stack
       for(slot=0;slot<op->numInput();++slot) {
-	vnin = op->getIn(slot);
-	if (vnin->isHeritageKnown()) continue; // not free
-	if (!vnin->isActiveHeritage()) continue; // Not being heritaged this round
-	vnin->clearActiveHeritage();
-	vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
-	if (stack.empty()) {
-	  vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
-	  vnnew = fd->setInputVarnode(vnnew);
-	  stack.push_back(vnnew);
-	}
-	else
-	  vnnew = stack.back();
+	      vnin = op->getIn(slot);
+	      if (vnin->isHeritageKnown()) continue; // not free
+	      if (!vnin->isActiveHeritage()) continue; // Not being heritaged this round
+	      vnin->clearActiveHeritage();
+	      vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
+	      if (stack.empty()) {
+	        vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
+	        vnnew = fd->setInputVarnode(vnnew);
+	        stack.push_back(vnnew);
+	      }
+	      else
+	        vnnew = stack.back();
 				// INDIRECTs and their op really happen AT SAME TIME
-	if (vnnew->isWritten() && (vnnew->getDef()->code()==CPUI_INDIRECT)) {
-	  if (PcodeOp::getOpFromConst(vnnew->getDef()->getIn(1)->getAddr()) == op) {
-	    if (stack.size()==1) {
-	      vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
-	      vnnew = fd->setInputVarnode(vnnew);
-	      stack.insert(stack.begin(),vnnew);
-	    }
-	    else
-	      vnnew = stack[stack.size()-2];
-	  }
-	}
-	fd->opSetInput(op,vnnew,slot);
-	if (vnin->hasNoDescend())
-	  fd->deleteVarnode(vnin);
+	      if (vnnew->isWritten() && (vnnew->getDef()->code()==CPUI_INDIRECT)) {
+	        if (PcodeOp::getOpFromConst(vnnew->getDef()->getIn(1)->getAddr()) == op) {
+	          if (stack.size()==1) {
+	            vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
+	            vnnew = fd->setInputVarnode(vnnew);
+	            stack.insert(stack.begin(),vnnew);
+	          }
+	          else
+	            vnnew = stack[stack.size()-2];
+	        }
+	      }
+	      fd->opSetInput(op,vnnew,slot);
+	      if (vnin->hasNoDescend())
+	        fd->deleteVarnode(vnin);
       }
     }
-				// Then push writes onto stack
+	  // Then push writes onto stack
     vnout = op->getOut();
     if (vnout == (Varnode *)0) continue;
     if (!vnout->isActiveHeritage()) continue; // Not a normalized write
@@ -2209,25 +2208,25 @@ void Heritage::renameRecurse(BlockBasic *bl,VariableStack &varstack)
       if (multiop->code()!=CPUI_MULTIEQUAL) break; // For each MULTIEQUAL
       vnin = multiop->getIn(slot);
       if (!vnin->isHeritageKnown()) {
-	vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
-	if (stack.empty()) {
-	  vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
-	  vnnew = fd->setInputVarnode(vnnew);
-	  stack.push_back(vnnew);
-	}
-	else
-	  vnnew = stack.back();
-	fd->opSetInput(multiop,vnnew,slot);
-	if (vnin->hasNoDescend())
-	  fd->deleteVarnode(vnin);
+	      vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
+	      if (stack.empty()) {
+	        vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
+	        vnnew = fd->setInputVarnode(vnnew);
+	        stack.push_back(vnnew);
+	      }
+	      else
+	        vnnew = stack.back();
+	      fd->opSetInput(multiop,vnnew,slot);
+	      if (vnin->hasNoDescend())
+	        fd->deleteVarnode(vnin);
       }
     }
   }
-				// Now we recurse to subtrees
+	// Now we recurse to subtrees
   i = bl->getIndex();
   for(slot=0;slot<domchild[i].size();++slot)
     renameRecurse((BlockBasic *)domchild[i][slot],varstack);
-				// Now we pop this blocks writes of the stack
+	// Now we pop this blocks writes of the stack
   for(i=0;i<writelist.size();++i) {
     vnout = writelist[i];
     varstack[vnout->getAddr()].pop_back();
@@ -2373,8 +2372,8 @@ void Heritage::heritage(void)
     if (!info->loadGuardSearch) {
       info->loadGuardSearch = true;
       if (discoverIndexedStackPointers(info->space,freeStores,true)) {
-	    reprocessStackCount += 1;
-	    stackSpace = info->space;
+	      reprocessStackCount += 1;
+	      stackSpace = info->space;
       }
     }
     needwarning = false;
@@ -2384,47 +2383,47 @@ void Heritage::heritage(void)
     while(iter != enditer) {
       vn = *iter++;
       if ((!vn->isWritten())&&vn->hasNoDescend()&&(!vn->isUnaffected())&&(!vn->isInput()))
-	continue;
+	      continue;
       if (vn->isWriteMask()) continue;
       int4 prev = 0;
       LocationMap::iterator liter = globaldisjoint.add(vn->getAddr(),vn->getSize(),pass,prev);
       if (prev == 0)		// All new location being heritaged, or intersecting with something new
-	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
+	      disjoint.add((*liter).first,(*liter).second.size,pass,prev);
       else if (prev==2) { // If completely contained in range from previous pass
-	if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to 
-	if (vn->hasNoDescend()) continue;
-	if ((!needwarning)&&(info->deadremoved>0)) {
-	  needwarning = true;
-	  bumpDeadcodeDelay(vn);
-	  warnvn = vn;
-	}
-	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
+	      if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to 
+	      if (vn->hasNoDescend()) continue;
+	      if ((!needwarning)&&(info->deadremoved>0)) {
+	        needwarning = true;
+	        bumpDeadcodeDelay(vn);
+	        warnvn = vn;
+	      }
+	      disjoint.add((*liter).first,(*liter).second.size,pass,prev);
       }
       else {
-	if ((!needwarning)&&(info->deadremoved>0)) {
-	  // TODO: We should check if this varnode is tiled by previously heritaged ranges
-	  if (vn->isHeritageKnown()) continue;		// Assume that it is tiled and produced by merging
-		  // In most cases, a truly new overlapping read will hit the bumpDeadcodeDelay either here or in prev==2
-	  needwarning = true;
-	  bumpDeadcodeDelay(vn);
-	  warnvn = vn;
-	}
-	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
+	      if ((!needwarning)&&(info->deadremoved>0)) {
+	        // TODO: We should check if this varnode is tiled by previously heritaged ranges
+	        if (vn->isHeritageKnown()) continue;		// Assume that it is tiled and produced by merging
+		        // In most cases, a truly new overlapping read will hit the bumpDeadcodeDelay either here or in prev==2
+	        needwarning = true;
+	        bumpDeadcodeDelay(vn);
+	        warnvn = vn;
+	      }
+	      disjoint.add((*liter).first,(*liter).second.size,pass,prev);
       }
     }
 
     if (needwarning) {
       if (!info->warningissued) {
-	info->warningissued = true;
-	ostringstream errmsg;
-	errmsg << "Heritage AFTER dead removal. Example location: ";
-	warnvn->printRawNoMarkup(errmsg);
-	if (!warnvn->hasNoDescend()) {
-	  PcodeOp *warnop = *warnvn->beginDescend();
-	  errmsg << " : ";
-	  warnop->getAddr().printRaw(errmsg);
-	}
-	fd->warningHeader(errmsg.str());
+	      info->warningissued = true;
+	      ostringstream errmsg;
+	      errmsg << "Heritage AFTER dead removal. Example location: ";
+	      warnvn->printRawNoMarkup(errmsg);
+	      if (!warnvn->hasNoDescend()) {
+	        PcodeOp *warnop = *warnvn->beginDescend();
+	        errmsg << " : ";
+	        warnop->getAddr().printRaw(errmsg);
+	      }
+	      fd->warningHeader(errmsg.str());
       }
     }
   }

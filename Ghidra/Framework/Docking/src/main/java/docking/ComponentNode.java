@@ -282,7 +282,7 @@ class ComponentNode extends Node {
 
 			top = activeComponents.get(0);
 			comp = top.getComponent();
-			comp.setBorder(BorderFactory.createRaisedBevelBorder());
+			comp.setBorder(BorderFactory.createEmptyBorder());
 
 			installRenameMenu(top, null);
 		}

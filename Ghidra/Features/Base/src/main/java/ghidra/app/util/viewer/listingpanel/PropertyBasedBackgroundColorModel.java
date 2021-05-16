@@ -40,7 +40,7 @@ public class PropertyBasedBackgroundColorModel
 	public static final String COLOR_PROPERTY_NAME = "LISTING_COLOR";
 	private IntRangeMap colorMap;
 	private AddressIndexMap indexMap;
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = new Color(56, 56 , 56);
 	private Map<Integer, Color> colorCache = new HashMap<>();
 	private Program program;
 	private boolean enabled = false;

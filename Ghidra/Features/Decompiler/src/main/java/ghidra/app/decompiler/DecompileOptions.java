@@ -297,50 +297,50 @@ public class DecompileOptions {
 	private final static IntegerFormatEnum INTEGERFORMAT_OPTIONDEFAULT = IntegerFormatEnum.BestFit;		// Must match PrintLanguage::resetDefaultsInternal
 	private IntegerFormatEnum integerFormat;
 
-	private final static Color HIGHLIGHT_MIDDLE_MOUSE_DEF = new Color(255, 255, 0, 128);
+	private final static Color HIGHLIGHT_MIDDLE_MOUSE_DEF = new Color(173, 214, 255, 38);
 	private Color middleMouseHighlightColor;
 	private int middleMouseHighlightButton = MouseEvent.BUTTON2;
 
 	private final static String HIGHLIGHT_CURRENT_VARIABLE_MSG =
 		"Display.Color for Current Variable Highlight";
-	private final static Color HIGHLIGHT_CURRENT_VARIABLE_DEF = new Color(255, 255, 0, 128);
+	private final static Color HIGHLIGHT_CURRENT_VARIABLE_DEF = new Color(173, 214, 255, 38);
 	private Color currentVariableHighlightColor;
 
 	private final static String HIGHLIGHT_KEYWORD_MSG = "Display.Color for Keywords";
-	private final static Color HIGHLIGHT_KEYWORD_DEF = Color.decode("0x0001E6");
+	private final static Color HIGHLIGHT_KEYWORD_DEF = Color.decode("0xC586C0");
 	private Color keywordColor;
 	private final static String HIGHLIGHT_FUNCTION_MSG = "Display.Color for Function names";
-	private final static Color HIGHLIGHT_FUNCTION_DEF = Color.decode("0x0000FF");
+	private final static Color HIGHLIGHT_FUNCTION_DEF = Color.decode("0xDCDCAA");
 	private Color functionColor;
 	private final static String HIGHLIGHT_COMMENT_MSG = "Display.Color for Comments";
-	private final static Color HIGHLIGHT_COMMENT_DEF = Color.decode("0x9600FF");
+	private final static Color HIGHLIGHT_COMMENT_DEF = Color.decode("0x6A9955");
 	private Color commentColor;
 	private final static String HIGHLIGHT_VARIABLE_MSG = "Display.Color for Variables";
-	private final static Color HIGHLIGHT_VARIABLE_DEF = Color.decode("0x999900");
+	private final static Color HIGHLIGHT_VARIABLE_DEF = Color.decode("0x9CDCFE");
 	private Color variableColor;
 	private final static String HIGHLIGHT_CONST_MSG = "Display.Color for Constants";
-	private final static Color HIGHLIGHT_CONST_DEF = Color.decode("0x008E00");
+	private final static Color HIGHLIGHT_CONST_DEF = Color.decode("0x4FC1FF");
 	private Color constantColor;
 	private final static String HIGHLIGHT_TYPE_MSG = "Display.Color for Types";
-	private final static Color HIGHLIGHT_TYPE_DEF = Color.decode("0x0033CC");
+	private final static Color HIGHLIGHT_TYPE_DEF = Color.decode("0x4EC9B0");
 	private Color typeColor;
 	private final static String HIGHLIGHT_PARAMETER_MSG = "Display.Color for Parameters";
-	private final static Color HIGHLIGHT_PARAMETER_DEF = Color.decode("0x9B009B");
+	private final static Color HIGHLIGHT_PARAMETER_DEF = Color.decode("0x9CDCFE");
 	private Color parameterColor;
 	private final static String HIGHLIGHT_GLOBAL_MSG = "Display.Color for Globals";
-	private final static Color HIGHLIGHT_GLOBAL_DEF = Color.decode("0x009999");
+	private final static Color HIGHLIGHT_GLOBAL_DEF = Color.decode("0x569cd6");
 	private Color globalColor;
 	private final static String HIGHLIGHT_DEFAULT_MSG = "Display.Color Default";
-	private final static Color HIGHLIGHT_DEFAULT_DEF = Color.BLACK;
+	private final static Color HIGHLIGHT_DEFAULT_DEF = Color.WHITE;
 	private Color defaultColor;
 
 	private static final String CODE_VIEWER_BACKGROUND_COLOR_MSG = "Display.Background Color";
-	private static final Color CODE_VIEWER_BACKGROUND_COLOR = Color.WHITE;
+	private static final Color CODE_VIEWER_BACKGROUND_COLOR = new Color(56, 56, 56);
 	private Color codeViewerBackgroundColor;
 
 	private static final String SEARCH_HIGHLIGHT_MSG =
 		"Display.Color for Highlighting Find Matches";
-	private static final Color SEARCH_HIGHLIGHT_DEF = new Color(100, 100, 255);
+	private static final Color SEARCH_HIGHLIGHT_DEF = Color.decode("0x5183cf");
 	private Color defaultSearchHighlightColor = SEARCH_HIGHLIGHT_DEF;
 
 	final static String FONT_MSG = "Display.Font";

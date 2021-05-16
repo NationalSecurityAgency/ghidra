@@ -225,28 +225,28 @@ void Funcdata::spacebase(void)
     numspace = spc->numSpacebase();
     for(i=0;i<numspace;++i) {
       const VarnodeData &point(spc->getSpacebase(i));
-				// Find input varnode at this size and location
+			// Find input varnode at this size and location
       Datatype *ct = glb->types->getTypeSpacebase(spc,getAddress());
       Datatype *ptr = glb->types->getTypePointer(point.size,ct,spc->getWordSize());
     
       iter = vbank.beginLoc(point.size,Address(point.space,point.offset));
       enditer = vbank.endLoc(point.size,Address(point.space,point.offset));
       while(iter != enditer) {
-	vn = *iter++;
-	if (vn->isFree()) continue;
-	if (vn->isSpacebase()) { // This has already been marked spacebase
-				// We have given it a chance for descendants to
-				// be eliminated naturally, now force a split if
-				// it still has multiple descendants
-	  PcodeOp *op = vn->getDef();
-	  if ((op != (PcodeOp *)0)&&(op->code() == CPUI_INT_ADD))
-	    splitUses(vn);
-	}
-	else {
-	  vn->setFlags(Varnode::spacebase); // Mark all base registers (not just input)
-	  if (vn->isInput())	// Only set type on the input spacebase register
-	    vn->updateType(ptr,true,true);
-	}
+	      vn = *iter++;
+	      if (vn->isFree()) continue;
+	      if (vn->isSpacebase()) { // This has already been marked spacebase
+				  // We have given it a chance for descendants to
+				  // be eliminated naturally, now force a split if
+				  // it still has multiple descendants
+	        PcodeOp *op = vn->getDef();
+	        if ((op != (PcodeOp *)0)&&(op->code() == CPUI_INT_ADD))
+	          splitUses(vn);
+	      }
+	      else {
+	        vn->setFlags(Varnode::spacebase); // Mark all base registers (not just input)
+	        if (vn->isInput())	// Only set type on the input spacebase register
+	          vn->updateType(ptr,true,true);
+	      }
       }
     }
   }

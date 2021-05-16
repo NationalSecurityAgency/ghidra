@@ -79,7 +79,8 @@ class RootNode extends WindowNode {
 		c.setLayout(new BorderLayout());
 
 		childPanel = new JPanel(new BorderLayout());
-		childPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
+		//childPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
+		childPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 		c.add(childPanel, BorderLayout.CENTER);
 
 		if (mgr.hasStatusBar()) {

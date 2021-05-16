@@ -25,8 +25,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.ComponentUI;
 
 import ghidra.docking.util.painting.GRepaintManager;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 
@@ -59,6 +57,11 @@ public class DockingWindowsLookAndFeelUtils {
 	 * The most stable Linux LaF.
 	 */
 	private static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
+
+	/**
+	 * Modern Darcula LaF
+	 */
+	private static final String DARCULA_LOOK_AND_FEEL = "FlatDarcula";
 
 	private static RepaintManager defaultSwingRepaintManager = null;
 
@@ -145,11 +148,13 @@ public class DockingWindowsLookAndFeelUtils {
 	public static List<String> getLookAndFeelNames() {
 		List<String> list = new ArrayList<>();
 		list.add(DockingWindowsLookAndFeelUtils.SYSTEM_LOOK_AND_FEEL);
+		list.add(DockingWindowsLookAndFeelUtils.DARCULA_LOOK_AND_FEEL);
 
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
 		for (LookAndFeelInfo info : installedLookAndFeels) {
 			list.add(info.getName());
 		}
+
 		return list;
 	}
 
@@ -165,6 +170,8 @@ public class DockingWindowsLookAndFeelUtils {
 	private static String findLookAndFeelClassName(String lookAndFeelName) {
 		if (lookAndFeelName.equalsIgnoreCase(SYSTEM_LOOK_AND_FEEL)) {
 			return UIManager.getSystemLookAndFeelClassName();
+		} else if (lookAndFeelName.equalsIgnoreCase(DARCULA_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatDarculaLaf";
 		}
 
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
@@ -299,11 +306,14 @@ public class DockingWindowsLookAndFeelUtils {
 	 * Returns the name of the default LookAndFeel for the current OS.
 	 */
 	private static String getDefaultLookAndFeelName() {
+		return DARCULA_LOOK_AND_FEEL;
+		/*
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
 		if (OS == OperatingSystem.LINUX) {
 			return NIMBUS_LOOK_AND_FEEL;
 		}
 		return SYSTEM_LOOK_AND_FEEL;
+		*/
 	}
 
 	/**

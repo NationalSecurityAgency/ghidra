@@ -41,11 +41,13 @@ import ghidra.util.layout.MiddleLayout;
  */
 public class StatusBar extends JPanel {
 
-	private static final Border STATUS_BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createLoweredBevelBorder(), BorderFactory.createEmptyBorder(1, 2, 1, 2));
+	//private static final Border STATUS_BORDER = BorderFactory.createCompoundBorder(
+	//	BorderFactory.createLoweredBevelBorder(), BorderFactory.createEmptyBorder(1, 2, 1, 2));
+	private static final Border STATUS_BORDER = BorderFactory.createEmptyBorder();
 
-	private static final Border STATUS_ITEM_BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createEmptyBorder(0, 3, 0, 0), STATUS_BORDER);
+	//private static final Border STATUS_ITEM_BORDER = BorderFactory.createCompoundBorder(
+	//	BorderFactory.createEmptyBorder(0, 3, 0, 0), STATUS_BORDER);
+	private static final Border STATUS_ITEM_BORDER = BorderFactory.createEmptyBorder();
 
 	private static final int STATUS_BAR_GAP = 3;
 	private static final int MESSAGE_QUEUE_MAX_SIZE = 10;

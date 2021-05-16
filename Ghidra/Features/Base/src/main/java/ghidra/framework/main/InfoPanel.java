@@ -69,14 +69,14 @@ class InfoPanel extends JPanel {
 		setLayout(new BorderLayout());
 		add(createImagePanel(), BorderLayout.CENTER);
 		add(createSouthPanel(), BorderLayout.SOUTH);
-		setBackground(bgColor);
+		//setBackground(bgColor);
 	}
 
 	private Component buildTextPanel() {
 
 		JPanel panel = new JPanel(new VerticalLayout(10));
 		panel.setBorder(BorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, MARGIN));
-		panel.setBackground(bgColor);
+		//panel.setBackground(bgColor);
 
 		if (Application.isTestBuild()) {
 			panel.add(buildTestBuildLabel());
@@ -135,7 +135,7 @@ class InfoPanel extends JPanel {
 
 	private Component buildVersionPanel() {
 		JPanel vPanel = new JPanel(new BorderLayout());
-		vPanel.setBackground(bgColor);
+		//vPanel.setBackground(bgColor);
 		vPanel.add(buildVersionLabel(), BorderLayout.CENTER);
 		vPanel.add(buildJavaVersionComponent(), BorderLayout.SOUTH);
 		return vPanel;
@@ -164,7 +164,7 @@ class InfoPanel extends JPanel {
 		}
 
 		panel.add(buildTextPanel(), BorderLayout.CENTER);
-		panel.setBackground(bgColor);
+		//panel.setBackground(bgColor);
 
 		return panel;
 	}
@@ -174,13 +174,13 @@ class InfoPanel extends JPanel {
 		Font font = versionLabel.getFont();
 		font = font.deriveFont(14f).deriveFont(Font.BOLD);
 		versionLabel.setFont(font);
-		versionLabel.setForeground(Color.BLACK);
+		//versionLabel.setForeground(Color.BLACK);
 		return versionLabel;
 	}
 
 	private Component createImagePanel() {
 		JPanel imagePanel = new JPanel();
-		imagePanel.setBackground(bgColor);
+		//imagePanel.setBackground(bgColor);
 
 		imagePanel.setLayout(new BorderLayout());
 		ImageIcon ghidraSplashImage = ResourceManager.loadImage(GHIDRA_FILENAME);

@@ -51,7 +51,7 @@ public class FieldPanel extends JPanel
 	private boolean inFocus;
 
 	private BackgroundColorModel backgroundColorModel =
-		new DefaultBackgroundColorModel(Color.WHITE);
+		new DefaultBackgroundColorModel(new Color(56, 56, 56));
 	private PaintContext paintContext = new PaintContext();
 
 	private AnchoredLayoutHandler layoutHandler;
