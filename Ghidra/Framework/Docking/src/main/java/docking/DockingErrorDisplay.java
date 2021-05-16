@@ -17,13 +17,16 @@ package docking;
 
 import java.awt.Component;
 import java.awt.Window;
+import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
 import ghidra.util.*;
 import ghidra.util.exception.MultipleCauses;
+import ghidra.util.html.HtmlLineSplitter;
 
 public class DockingErrorDisplay implements ErrorDisplay {
 
@@ -60,6 +63,31 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			throwable);
 	}
 
+	private static String wrap(String text) {
+
+		StringBuilder buffy = new StringBuilder();
+		List<String> lines = HtmlLineSplitter.split(text, 100, true);
+		String newline = "\n";
+		for (String line : lines) {
+
+			if (buffy.length() != 0) {
+				buffy.append(newline);
+			}
+
+			if (StringUtils.isBlank(line)) {
+				// this will trim all leading blank lines, but preserve internal blank lines, 
+				// which clients may be providing for visual line separation
+				continue;
+			}
+
+			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
+			// a reasonable line length based on historical print margins
+			String wrapped = WordUtils.wrap(line, 100, null, true);
+			buffy.append(wrapped);
+		}
+		return buffy.toString();
+	}
+
 	private void displayMessage(MessageType messageType, ErrorLogger errorLogger, Object originator,
 			Component parent, String title, Object message, Throwable throwable) {
 
@@ -73,7 +101,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 
 			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
 			// a reasonable line length based on historical print margins
-			messageString = WordUtils.wrap(safeMessage, 100, null, true);
+			messageString = wrap(safeMessage);
 		}
 
 		String unformattedMessage = HTMLUtilities.fromHTML(messageString);

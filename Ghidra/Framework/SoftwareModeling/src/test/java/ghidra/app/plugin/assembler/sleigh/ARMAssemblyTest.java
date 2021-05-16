@@ -67,7 +67,7 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_T_and_r0_r5() {
-		assertOneCompatRestExact("and r0,r5", "28:40", THUMB, 0x00400000, "and r0,r5");
+		assertOneCompatRestExact("ands r0,r5", "28:40", THUMB, 0x00400000, "ands r0,r5");
 	}
 
 	@Test

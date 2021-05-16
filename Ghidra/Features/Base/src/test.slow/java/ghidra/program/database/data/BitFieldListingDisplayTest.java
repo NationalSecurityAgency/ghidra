@@ -51,7 +51,7 @@ public class BitFieldListingDisplayTest extends AbstractGhidraHeadedIntegrationT
 			TaskMonitor.DUMMY, false);
 
 		struct = createStructure("Test", 0);
-		struct.setInternallyAligned(true);
+		struct.setPackingEnabled(true);
 		struct.addBitField(IntegerDataType.dataType, 3, "bf1", "Nuts");
 		struct.addBitField(IntegerDataType.dataType, 24, "bf2", null);
 		struct.addBitField(IntegerDataType.dataType, 4, "bf3", null);

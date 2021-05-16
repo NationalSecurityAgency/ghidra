@@ -126,6 +126,7 @@ public class TestUtils {
 			result = field.get(ownerInstance);
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException("Unable to use reflection to obtain " + "field: " +
 				fieldName + " from class: " + objectClass, e);
 		}

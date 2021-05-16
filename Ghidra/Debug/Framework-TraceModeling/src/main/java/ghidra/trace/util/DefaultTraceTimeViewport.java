@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import com.google.common.collect.*;
 
 import ghidra.framework.model.DomainObjectClosedListener;
-import ghidra.framework.model.DomainObjectException;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -31,7 +30,6 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.exception.ClosedException;
 
 /**
  * Computes and tracks the "viewport" resulting from forking patterns encoded in snapshot schedules
@@ -58,30 +56,20 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {
-			if (snapshot.getSchedule() == null) {
-				return;
-			}
-			if (spanSet.contains(snapshot.getKey())) {
-				recomputeSnapRanges();
-				return;
+			if (checkSnapshotAddedNeedsRefresh(snapshot)) {
+				refreshSnapRanges();
 			}
 		}
 
 		private void snapshotChanged(TraceSnapshot snapshot) {
-			if (isLower(snapshot.getKey())) {
-				recomputeSnapRanges();
-				return;
-			}
-			if (spanSet.contains(snapshot.getKey()) && snapshot.getSchedule() != null) {
-				recomputeSnapRanges();
-				return;
+			if (checkSnapshotChangedNeedsRefresh(snapshot)) {
+				refreshSnapRanges();
 			}
 		}
 
 		private void snapshotDeleted(TraceSnapshot snapshot) {
-			if (isLower(snapshot.getKey())) {
-				recomputeSnapRanges();
-				return;
+			if (checkSnapshotDeletedNeedsRefresh(snapshot)) {
+				refreshSnapRanges();
 			}
 		}
 
@@ -93,6 +81,11 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	protected final Trace trace;
 	protected final TraceTimeManager timeManager;
+	/**
+	 * NB: This is the syncing object for the viewport. If there's even a chance an operation may
+	 * need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire the
+	 * DB lock.
+	 */
 	protected final List<Range<Long>> ordered = new ArrayList<>();
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
 	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
@@ -119,43 +112,55 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public boolean containsAnyUpper(Range<Long> range) {
-		// NB. This should only ever visit the first range intersecting that given
-		for (Range<Long> intersecting : spanSet.subRangeSet(range).asRanges()) {
-			if (range.contains(intersecting.upperEndpoint())) {
-				return true;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				// NB. This should only ever visit the first range intersecting that given
+				for (Range<Long> intersecting : spanSet.subRangeSet(range).asRanges()) {
+					if (range.contains(intersecting.upperEndpoint())) {
+						return true;
+					}
+				}
+				return false;
 			}
 		}
-		return false;
 	}
 
 	@Override
 	public <T> boolean isCompletelyVisible(AddressRange range, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion) {
-		for (Range<Long> rng : ordered) {
-			if (lifespan.contains(rng.upperEndpoint())) {
-				return true;
-			}
-			if (occlusion.occluded(object, range, rng)) {
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				for (Range<Long> rng : ordered) {
+					if (lifespan.contains(rng.upperEndpoint())) {
+						return true;
+					}
+					if (occlusion.occluded(object, range, rng)) {
+						return false;
+					}
+				}
 				return false;
 			}
 		}
-		return false;
 	}
 
 	@Override
 	public <T> AddressSet computeVisibleParts(AddressSetView set, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion) {
-		if (!containsAnyUpper(lifespan)) {
-			return new AddressSet();
-		}
-		AddressSet remains = new AddressSet(set);
-		for (Range<Long> rng : ordered) {
-			if (lifespan.contains(rng.upperEndpoint())) {
-				return remains;
+		try (LockHold hold = trace.lockRead()) {
+			if (!containsAnyUpper(lifespan)) {
+				return new AddressSet();
 			}
-			occlusion.remove(object, remains, rng);
-			if (remains.isEmpty()) {
-				return remains;
+			AddressSet remains = new AddressSet(set);
+			synchronized (ordered) {
+				for (Range<Long> rng : ordered) {
+					if (lifespan.contains(rng.upperEndpoint())) {
+						return remains;
+					}
+					occlusion.remove(object, remains, rng);
+					if (remains.isEmpty()) {
+						return remains;
+					}
+				}
 			}
 		}
 		// This condition should have been detected by !containsAnyUpper
@@ -163,14 +168,17 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected boolean isLower(long lower) {
-		Range<Long> range = spanSet.rangeContaining(lower);
-		if (range == null) {
-			return false;
+		synchronized (ordered) {
+			Range<Long> range = spanSet.rangeContaining(lower);
+			if (range == null) {
+				return false;
+			}
+			return range.lowerEndpoint().longValue() == lower;
 		}
-		return range.lowerEndpoint().longValue() == lower;
 	}
 
-	protected boolean addSnapRange(long lower, long upper) {
+	protected static boolean addSnapRange(long lower, long upper, RangeSet<Long> spanSet,
+			List<Range<Long>> ordered) {
 		if (spanSet.contains(lower)) {
 			return false;
 		}
@@ -180,7 +188,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		return true;
 	}
 
-	protected TraceSnapshot locateMostRecentFork(long from) {
+	protected static TraceSnapshot locateMostRecentFork(TraceTimeManager timeManager, long from) {
 		while (true) {
 			TraceSnapshot prev = timeManager.getMostRecentSnapshot(from);
 			if (prev == null) {
@@ -205,11 +213,23 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		}
 	}
 
-	protected void traverseAndAddForkRanges(long curSnap) {
+	/**
+	 * Construct the ranges (set and ordered)
+	 * 
+	 * <p>
+	 * NOTE: I cannot hold the lock during this, because I also require the DB's read lock. There
+	 * are other operations, e.g., addRegion, that will hold the DB's write lock, and then also
+	 * require the viewport's lock to check if it is visible. That would cause the classic tango of
+	 * death.
+	 * 
+	 * @param curSnap the seed snap
+	 */
+	protected static void collectForkRanges(TraceTimeManager timeManager, long curSnap,
+			RangeSet<Long> spanSet, List<Range<Long>> ordered) {
 		while (true) {
-			TraceSnapshot fork = locateMostRecentFork(curSnap);
+			TraceSnapshot fork = locateMostRecentFork(timeManager, curSnap);
 			long prevSnap = fork == null ? Long.MIN_VALUE : fork.getKey();
-			if (!addSnapRange(prevSnap, curSnap)) {
+			if (!addSnapRange(prevSnap, curSnap, spanSet, ordered)) {
 				return;
 			}
 			if (fork == null) {
@@ -219,71 +239,136 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		}
 	}
 
-	protected void recomputeSnapRanges() {
-		spanSet.clear();
-		ordered.clear();
-		traverseAndAddForkRanges(snap);
+	protected void refreshSnapRanges() {
+		RangeSet<Long> spanSet = TreeRangeSet.create();
+		List<Range<Long>> ordered = new ArrayList<>();
+		try (LockHold hold = trace.lockRead()) {
+			collectForkRanges(timeManager, snap, spanSet, ordered);
+		}
+		synchronized (this.ordered) {
+			this.spanSet.clear();
+			this.ordered.clear();
+			this.spanSet.addAll(spanSet);
+			this.ordered.addAll(ordered);
+		}
 		assert !ordered.isEmpty();
 		changeListeners.fire.run();
 	}
 
 	public void setSnap(long snap) {
 		this.snap = snap;
-		recomputeSnapRanges();
+		refreshSnapRanges();
+	}
+
+	protected boolean checkSnapshotAddedNeedsRefresh(TraceSnapshot snapshot) {
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (snapshot.getSchedule() == null) {
+					return false;
+				}
+				if (spanSet.contains(snapshot.getKey())) {
+					return true;
+				}
+				return false;
+			}
+		}
+	}
+
+	protected boolean checkSnapshotChangedNeedsRefresh(TraceSnapshot snapshot) {
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (isLower(snapshot.getKey())) {
+					return true;
+				}
+				if (spanSet.contains(snapshot.getKey()) && snapshot.getSchedule() != null) {
+					return true;
+				}
+				return false;
+			}
+		}
+	}
+
+	protected boolean checkSnapshotDeletedNeedsRefresh(TraceSnapshot snapshot) {
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (isLower(snapshot.getKey())) {
+					return true;
+				}
+				return false;
+			}
+		}
 	}
 
 	@Override
 	public boolean isForked() {
-		return ordered.size() > 1;
+		synchronized (ordered) {
+			return ordered.size() > 1;
+		}
 	}
 
 	@Override
 	public List<Long> getOrderedSnaps() {
-		return ordered
-				.stream()
-				.map(Range::upperEndpoint)
-				.collect(Collectors.toList());
+		synchronized (ordered) {
+			return ordered
+					.stream()
+					.map(Range::upperEndpoint)
+					.collect(Collectors.toList());
+		}
 	}
 
 	@Override
 	public List<Long> getReversedSnaps() {
-		return Lists.reverse(ordered)
-				.stream()
-				.map(Range::upperEndpoint)
-				.collect(Collectors.toList());
+		synchronized (ordered) {
+			return Lists.reverse(ordered)
+					.stream()
+					.map(Range::upperEndpoint)
+					.collect(Collectors.toList());
+		}
 	}
 
 	@Override
 	public <T> T getTop(Function<Long, T> func) {
-		for (Range<Long> rng : ordered) {
-			T t = func.apply(rng.upperEndpoint());
-			if (t != null) {
-				return t;
+		synchronized (ordered) {
+			for (Range<Long> rng : ordered) {
+				T t = func.apply(rng.upperEndpoint());
+				if (t != null) {
+					return t;
+				}
 			}
+			return null;
 		}
-		return null;
 	}
 
 	@Override
 	public <T> Iterator<T> mergedIterator(Function<Long, Iterator<T>> iterFunc,
 			Comparator<? super T> comparator) {
-		if (!isForked()) {
-			return iterFunc.apply(snap);
+		List<Iterator<T>> iters;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (!isForked()) {
+					return iterFunc.apply(snap);
+				}
+				iters = ordered.stream()
+						.map(rng -> iterFunc.apply(rng.upperEndpoint()))
+						.collect(Collectors.toList());
+			}
 		}
-		List<Iterator<T>> iters = ordered.stream()
-				.map(rng -> iterFunc.apply(rng.upperEndpoint()))
-				.collect(Collectors.toList());
 		return new UniqIterator<>(new MergeSortingIterator<>(iters, comparator));
 	}
 
 	@Override
 	public AddressSetView unionedAddresses(Function<Long, AddressSetView> viewFunc) {
-		if (!isForked()) {
-			return viewFunc.apply(snap);
+		List<AddressSetView> views;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				if (!isForked()) {
+					return viewFunc.apply(snap);
+				}
+				views = ordered.stream()
+						.map(rng -> viewFunc.apply(rng.upperEndpoint()))
+						.collect(Collectors.toList());
+			}
 		}
-		List<AddressSetView> views = ordered.stream()
-				.map(rng -> viewFunc.apply(rng.upperEndpoint()))
-				.collect(Collectors.toList());
 		return new UnionAddressSetView(views);
 	}
 }

@@ -28,10 +28,10 @@ import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.ShellUtils;
 
 public enum GdbLinuxSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUtils {
-	DD {
+	SLEEP {
 		@Override
 		String getCommandLine() {
-			return "dd";
+			return "sleep 100000";
 		}
 	},
 	FORK_EXIT {

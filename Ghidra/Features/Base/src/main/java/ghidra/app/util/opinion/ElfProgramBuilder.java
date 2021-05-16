@@ -21,6 +21,8 @@ import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
@@ -40,6 +42,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Array;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.RelocationTable;
@@ -1091,6 +1094,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return program.getLanguage().getDefaultDataSpace();
 	}
 
+	private AddressSpace getConstantSpace() {
+		return program.getAddressFactory().getConstantSpace();
+	}
+
 	private void allocateUndefinedSymbolData(HashMap<Address, Integer> dataAllocationMap) {
 		for (Address addr : dataAllocationMap.keySet()) {
 			// Create undefined data for each data/object symbol
@@ -1442,6 +1449,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 		}
 		else if (sectionIndex == ElfSectionHeaderConstants.SHN_UNDEF) { // Not section relative 0x0000 (e.g., no sections defined)
+
+			Address regAddr = findMemoryRegister(elfSymbol);
+			if (regAddr != null) {
+				return regAddr;
+			}
+
 			// FIXME: No sections defined or refers to external symbol
 			// Uncertain what if any offset adjustments should apply, although the
 			// EXTERNAL block is affected by the program image base
@@ -1457,7 +1470,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// TODO: it may be inappropriate to adjust since value may not actually be a memory address - what to do?
 			// symOffset = loadAdapter.adjustMemoryOffset(symOffset, space);
 
-			symbolSpace = getDefaultDataSpace();
+			Address regAddr = findMemoryRegister(elfSymbol);
+			if (regAddr != null) {
+				return regAddr;
+			}
+
+			symbolSpace = getConstantSpace();
 		}
 		else if (sectionIndex == ElfSectionHeaderConstants.SHN_COMMON) { // Common symbols - 0xfff2 (
 			// TODO: Which space ? Can't distinguish data vs. code/default space
@@ -1523,6 +1541,33 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		return address;
+	}
+	
+	/**
+	 * Find memory register with matching name (ignoring leading and trailing underscore chars).
+	 * @param elfSymbol ELF symbol
+	 * @return register address if found or null
+	 */
+	private Address findMemoryRegister(ElfSymbol elfSymbol) {
+		String name = elfSymbol.getNameAsString();
+		Address regAddr = getMemoryRegister(name, elfSymbol.getValue());
+		if (regAddr == null) {
+			name = StringUtils.stripStart(name, "_");
+			name = StringUtils.stripEnd(name, "_");
+			regAddr = getMemoryRegister(name, elfSymbol.getValue());
+		}
+		return regAddr;
+	}
+	
+	private Address getMemoryRegister(String name, long value) {
+		Register reg = program.getRegister(name);
+		if (reg != null && reg.getAddress().isMemoryAddress()) {
+			Address a = reg.getAddress();
+			if (value == 0 || value == a.getAddressableWordOffset()) {
+				return a;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1674,6 +1719,19 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			// Remember where in memory Elf symbols have been mapped
 			setElfSymbolAddress(elfSymbol, address);
+
+			if (address.isConstantAddress()) {
+				// Do not add constant symbols to program symbol table
+				// define as equate instead
+				try {
+					program.getEquateTable()
+							.createEquate(elfSymbol.getNameAsString(), address.getOffset());
+				}
+				catch (DuplicateNameException | InvalidInputException e) {
+					// ignore
+				}
+				return;
+			}
 
 			if (elfSymbol.isSection()) {
 				// Do not add section symbols to program symbol table

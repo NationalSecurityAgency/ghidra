@@ -535,7 +535,7 @@ public interface DebuggerStaticMappingService {
 	 * 
 	 * @param from the source trace location, including lifespan
 	 * @param to the destination program location
-	 * @param length the length of the mapped region
+	 * @param length the length of the mapped region, where 0 indicates {@code 1 << 64}.
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries
 	 * @throws TraceConflictedMappingException if a conflicting mapping overlaps the source and
 	 *             {@code truncateExisting} is false.

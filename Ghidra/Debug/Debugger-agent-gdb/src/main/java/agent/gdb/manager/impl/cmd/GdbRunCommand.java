@@ -22,7 +22,7 @@ import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 /**
  * Implementation of {@link GdbInferior#run()}
  */
-public class GdbRunCommand extends AbstractGdbCommandExpectRunning {
+public class GdbRunCommand extends AbstractLaunchGdbCommand {
 
 	public GdbRunCommand(GdbManagerImpl manager) {
 		super(manager);
@@ -30,23 +30,11 @@ public class GdbRunCommand extends AbstractGdbCommandExpectRunning {
 
 	@Override
 	public Interpreter getInterpreter() {
-		if (manager.hasCli()) {
-			return Interpreter.CLI;
-		}
 		return Interpreter.MI2;
 	}
 
 	@Override
 	public String encode() {
-		switch (getInterpreter()) {
-			case CLI:
-				// The significance is the Pty, not so much the actual command
-				// Using MI2 simplifies event processing (no console output parsing)
-				return "interpreter-exec mi2 \"-exec-run\"";
-			case MI2:
-				return "-exec-run";
-			default:
-				throw new AssertionError();
-		}
+		return "-exec-run";
 	}
 }

@@ -41,6 +41,10 @@ sourceSets {
 
 eclipse.classpath.plusConfigurations += [configurations.dmgCompile]
 
+repositories {
+	flatDir name: "flat", dirs:["data/lib"]
+}
+
 dependencies {
 	dmgCompile ':csframework@jar'
 	dmgCompile ':hfsx@jar'

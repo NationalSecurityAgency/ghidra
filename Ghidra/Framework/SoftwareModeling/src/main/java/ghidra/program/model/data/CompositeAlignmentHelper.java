@@ -18,14 +18,14 @@ package ghidra.program.model.data;
 public class CompositeAlignmentHelper {
 
 	private static int getCompositeAlignmentMultiple(DataOrganization dataOrganization,
-			Composite composite) {
+			CompositeInternal composite) {
 		int allComponentsLCM = 1;
-		int packingAlignment = composite.getPackingValue();
+		int packingValue = composite.getStoredPackingValue();
 
 		DataTypeComponent[] dataTypeComponents = composite.getDefinedComponents();
 		for (DataTypeComponent dataTypeComponent : dataTypeComponents) {
 			int impartedAlignment = CompositeAlignmentHelper.getPackedAlignment(dataOrganization,
-				packingAlignment, dataTypeComponent);
+				packingValue, dataTypeComponent);
 			if (impartedAlignment != 0) {
 				allComponentsLCM = DataOrganizationImpl.getLeastCommonMultiple(allComponentsLCM,
 					impartedAlignment);
@@ -36,7 +36,7 @@ public class CompositeAlignmentHelper {
 			DataTypeComponent flexibleArrayComponent = struct.getFlexibleArrayComponent();
 			if (flexibleArrayComponent != null) {
 				allComponentsLCM = getComponentAlignmentLCM(dataOrganization, allComponentsLCM,
-					packingAlignment, flexibleArrayComponent);
+					packingValue, flexibleArrayComponent);
 			}
 		}
 		return allComponentsLCM;
@@ -58,53 +58,33 @@ public class CompositeAlignmentHelper {
 			// Zero-length bitfields ignored within unions for non-MSVC cases
 			return 0;
 		}
-
 		DataType componentDt = component.getDataType();
-		int dtSize = componentDt.getLength();
-		if (dtSize <= 0) {
-			dtSize = component.getLength();
-		}
-		return getPackedAlignment(dataOrganization, packingValue, componentDt, dtSize);
+		return getPackedAlignment(componentDt.getAlignment(), packingValue);
 	}
 
-	private static int getPackedAlignment(int componentAlignment, int forcedAlignment,
-			int packingAlignment) {
-		// Only do packing if we are not forcing an alignment.
+	static int getPackedAlignment(int componentAlignment, int packingValue) {
 		int alignment = componentAlignment;
-		if (packingAlignment != Composite.NOT_PACKING) { // TODO Should this be packingValue > 0?
-			if (forcedAlignment > packingAlignment) {
-				alignment = forcedAlignment;
-			}
-			else if (alignment > packingAlignment) {
-				alignment = packingAlignment;
-			}
+		if (packingValue > 0 && packingValue < componentAlignment) {
+			alignment = packingValue;
 		}
 		return alignment;
 	}
 
-	public static int getPackedAlignment(DataOrganization dataOrganization, int packingAlignment,
-			DataType componentDt, int dtSize) {
-		int componentAlignment = dataOrganization.getAlignment(componentDt, dtSize);
-		int componentForcedAlignment = dataOrganization.getForcedAlignment(componentDt);
-		boolean componentForcingAlignment = componentForcedAlignment > 0;
-		if (componentForcingAlignment) {
-			componentAlignment = DataOrganizationImpl.getLeastCommonMultiple(componentAlignment,
-				componentForcedAlignment);
-		}
-		return getPackedAlignment(componentAlignment, componentForcedAlignment, packingAlignment);
-	}
-
-	public static int getAlignment(DataOrganization dataOrganization, Composite dataType) {
+	public static int getAlignment(DataOrganization dataOrganization, CompositeInternal composite) {
 
 		// TODO: goal is to eliminate this method in favor of pack once and remember alignment
 
-		if (!dataType.isInternallyAligned()) {
-			return 1; // Unaligned
+		int minimumAlignment = composite.getStoredMinimumAlignment();
+		if (minimumAlignment < CompositeInternal.DEFAULT_ALIGNMENT) {
+			minimumAlignment = dataOrganization.getMachineAlignment();
+		}
+		
+		if (!composite.isPackingEnabled()) {
+			return minimumAlignment == CompositeInternal.DEFAULT_ALIGNMENT ? 1 : minimumAlignment;
 		}
 
-		int lcm = getCompositeAlignmentMultiple(dataOrganization, dataType);
-		int minimumAlignment = dataType.getMinimumAlignment();
-		if ((minimumAlignment != Composite.DEFAULT_ALIGNMENT_VALUE) &&
+		int lcm = getCompositeAlignmentMultiple(dataOrganization, composite);
+		if ((minimumAlignment != CompositeInternal.DEFAULT_ALIGNMENT) &&
 			(lcm % minimumAlignment != 0)) {
 			lcm = DataOrganizationImpl.getLeastCommonMultiple(lcm, minimumAlignment);
 		}

@@ -51,14 +51,6 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	}
 
 	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
-	/**
 	 * Gets the number of component data types in this data type.
 	 * @param buf a membuffer to be used by dataTypes that change depending on
 	 * their data context.  A null value is acceptable to indicate that a memory

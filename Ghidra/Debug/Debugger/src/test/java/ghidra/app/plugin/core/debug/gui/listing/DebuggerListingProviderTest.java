@@ -743,15 +743,13 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 		assertEquals(traceManager.getCurrentView(), listingProvider.getProgram());
-		assertEquals("dynamic-testCloseCurrentTraceBlanksListings",
-			listingProvider.locationLabel.getText());
+		assertEquals("(nowhere)", listingProvider.locationLabel.getText());
 
 		DebuggerListingProvider extraProvider = runSwing(
 			() -> listingPlugin.createListingIfMissing(trackNone, false));
 		waitForSwing();
 		assertEquals(traceManager.getCurrentView(), extraProvider.getProgram());
-		assertEquals("dynamic-testCloseCurrentTraceBlanksListings",
-			extraProvider.locationLabel.getText());
+		assertEquals("(nowhere)", extraProvider.locationLabel.getText());
 
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
@@ -1140,26 +1138,30 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		assertEquals("dynamic-testLocationLabel", listingProvider.locationLabel.getText());
+		assertEquals("(nowhere)", listingProvider.locationLabel.getText());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x55550000, 0x555500ff),
+					.addRegion("test_region", Range.atLeast(0L), tb.range(0x55550000, 0x555502ff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		waitForDomainObject(tb.trace);
-		waitForPass(() -> assertEquals("dynamic-testLocationLabel (exe:.text)",
-			listingProvider.locationLabel.getText()));
+		waitForPass(() -> assertEquals("test_region", listingProvider.locationLabel.getText()));
+
+		TraceModule modExe;
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			modExe = tb.trace.getModuleManager()
+					.addModule("modExe", "modExe",
+						tb.range(0x55550000, 0x555501ff), Range.atLeast(0L));
+		}
+		waitForDomainObject(tb.trace);
+		waitForPass(() -> assertEquals("modExe", listingProvider.locationLabel.getText()));
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceModule modExe = tb.trace.getModuleManager()
-					.addModule("modExe", "modExe",
-						tb.range(0x55550000, 0x555500ff), Range.atLeast(0L));
 			modExe.addSection(".text", tb.range(0x55550000, 0x555500ff));
 		}
 		waitForDomainObject(tb.trace);
-		waitForPass(() -> assertEquals("dynamic-testLocationLabel (modExe:.text)",
-			listingProvider.locationLabel.getText()));
+		waitForPass(() -> assertEquals("modExe:.text", listingProvider.locationLabel.getText()));
 	}
 
 	@Test

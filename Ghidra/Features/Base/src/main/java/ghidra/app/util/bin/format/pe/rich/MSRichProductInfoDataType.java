@@ -34,7 +34,7 @@ class MSRichProductInfoDataType extends StructureDataType {
 	}
 
 	@Override
-	public boolean isDynamicallySized() {
+	public boolean hasLanguageDependantLength() {
 		return false;
 	}
 

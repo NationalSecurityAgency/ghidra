@@ -24,7 +24,7 @@
         <register name="SP"/>
       </unaffected>
       <localrange>
-        <range space="stack" first="0xffff" last="0xf000" />
+        <range space="stack" first="0xf000" last="0xffff" />
       </localrange>
     </prototype>
   </default_proto>

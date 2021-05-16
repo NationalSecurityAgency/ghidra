@@ -55,6 +55,10 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		return c.stream().map(this::rowFor).collect(Collectors.toList());
 	}
 
+	public synchronized R getRow(T t) {
+		return map.get(keyFunc.apply(t));
+	}
+
 	public void addItem(T t) {
 		add(rowFor(t));
 	}
@@ -82,5 +86,11 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 
 	public synchronized Map<K, R> getMap() {
 		return Map.copyOf(map);
+	}
+
+	@Override
+	public synchronized void clear() {
+		map.clear();
+		super.clear();
 	}
 }

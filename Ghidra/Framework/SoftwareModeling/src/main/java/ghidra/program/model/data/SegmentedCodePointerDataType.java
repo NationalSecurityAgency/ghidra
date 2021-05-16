@@ -54,14 +54,6 @@ public class SegmentedCodePointerDataType extends BuiltIn {
 		return 4;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
 	@Override
 	public String getDescription() {
 		return "Code address from 16 bit segment and 16 bit offset";
@@ -98,8 +90,9 @@ public class SegmentedCodePointerDataType extends BuiltIn {
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 
 		Object obj = getValue(buf, settings, length);
-		if (obj == null)
+		if (obj == null) {
 			return "??";
+		}
 		return obj.toString();
 	}
 

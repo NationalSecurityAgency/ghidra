@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
@@ -57,13 +58,17 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	@Override
 	public void recordStack() {
 		long snap = recorder.getSnap();
+		Map<Integer, Address> pcsByLevel = stack.entrySet()
+				.stream()
+				.collect(Collectors.toMap(e -> e.getKey(), e -> {
+					return recorder.getMemoryMapper()
+							.targetToTrace(e.getValue().getProgramCounter());
+				}));
 		recorder.parTx.execute("Stack changed", () -> {
 			TraceStack traceStack = stackManager.getStack(thread, snap, true);
 			traceStack.setDepth(stackDepth(), false);
-			for (Map.Entry<Integer, TargetStackFrame> ent : stack.entrySet()) {
-				Address tracePc =
-					recorder.getMemoryMapper().targetToTrace(ent.getValue().getProgramCounter());
-				doRecordFrame(traceStack, ent.getKey(), tracePc);
+			for (Map.Entry<Integer, Address> ent : pcsByLevel.entrySet()) {
+				doRecordFrame(traceStack, ent.getKey(), ent.getValue());
 			}
 		}, thread.getPath());
 	}
@@ -82,6 +87,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 	}
 
 	public void recordFrame(TargetStackFrame frame) {
+		long snap = recorder.getSnap();
 		stack.put(getFrameLevel(frame), frame);
 		recorder.parTx.execute("Stack frame added", () -> {
 			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
@@ -90,7 +96,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 			}
 			Address pc = frame.getProgramCounter();
 			Address tracePc = pc == null ? null : memoryMapper.targetToTrace(pc);
-			TraceStack traceStack = stackManager.getStack(thread, recorder.getSnap(), true);
+			TraceStack traceStack = stackManager.getStack(thread, snap, true);
 			doRecordFrame(traceStack, getFrameLevel(frame), tracePc);
 		}, thread.getPath());
 	}

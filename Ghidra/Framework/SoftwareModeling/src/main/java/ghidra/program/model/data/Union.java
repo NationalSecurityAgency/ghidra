@@ -24,9 +24,12 @@ package ghidra.program.model.data;
  */
 public interface Union extends Composite {
 
+	@Override
+	public Union clone(DataTypeManager dtm);
+
 	/**
 	 * Inserts a new bitfield at the specified ordinal position in this union.
-	 * For both aligned and unaligned unions the bitfield starts with bit-0 (lsb) of the first byte 
+	 * For all Unions, bitfield starts with bit-0 (lsb) of the first byte 
 	 * for little-endian, and with bit-7 (msb) of the first byte for big-endian.  This is the 
 	 * default behavior for most compilers.  Insertion behavior may not work as expected if 
 	 * packing rules differ from this.
@@ -40,10 +43,10 @@ public interface Union extends Composite {
 	 * be BitFieldDataType.
 	 * @throws InvalidDataTypeException if the specified baseDataType is
 	 * not a valid base type for bitfields.
-	 * @throws ArrayIndexOutOfBoundsException if ordinal is less than 0 or greater than the 
+	 * @throws IndexOutOfBoundsException if ordinal is less than 0 or greater than the 
 	 * current number of components.
 	 */
 	public DataTypeComponent insertBitField(int ordinal, DataType baseDataType, int bitSize,
 			String componentName, String comment)
-			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException;
+			throws InvalidDataTypeException, IndexOutOfBoundsException;
 }

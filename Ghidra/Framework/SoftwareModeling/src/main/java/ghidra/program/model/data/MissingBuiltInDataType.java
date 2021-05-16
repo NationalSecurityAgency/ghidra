@@ -85,14 +85,6 @@ public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {
 		return -1;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
-
 	@Override
 	public boolean canSpecifyLength() {
 		return true;

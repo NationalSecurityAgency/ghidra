@@ -18,6 +18,7 @@ package ghidra.dalvik.dex.inject;
 import java.io.IOException;
 
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.file.formats.android.dex.analyzer.DexAnalysisState;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
@@ -30,6 +31,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
+import ghidra.util.xml.SpecXmlUtils;
+import ghidra.xml.*;
 
 /**
  * The "uponentry" injection for a DEX method.  We simulate DEX's register stack by copying values from
@@ -39,17 +42,21 @@ import ghidra.util.Msg;
 public class InjectPayloadDexParameters implements InjectPayload {
 	public final static int INPUT_REGISTER_START = 0x100;
 	public final static int REGISTER_START = 0x1000;
+	private String name;
+	private String sourceName;
 	private InjectParameter[] noParams;
 	private boolean analysisStateRecoverable;
 
-	public InjectPayloadDexParameters() {
+	public InjectPayloadDexParameters(String nm, String srcName) {
+		name = nm;
+		sourceName = srcName;
 		noParams = new InjectParameter[0];
 		analysisStateRecoverable = true;
 	}
 
 	@Override
 	public String getName() {
-		return "dexparameters";
+		return name;
 	}
 
 	@Override
@@ -57,10 +64,9 @@ public class InjectPayloadDexParameters implements InjectPayload {
 		return CALLMECHANISM_TYPE;
 	}
 
-	
 	@Override
 	public String getSource() {
-		return "dexparameters";
+		return sourceName;
 	}
 
 	@Override
@@ -76,6 +82,11 @@ public class InjectPayloadDexParameters implements InjectPayload {
 	@Override
 	public InjectParameter[] getOutput() {
 		return noParams;
+	}
+
+	@Override
+	public boolean isErrorPlaceholder() {
+		return false;
 	}
 
 	@Override
@@ -101,23 +112,27 @@ public class InjectPayloadDexParameters implements InjectPayload {
 		PcodeOp[] resOps;
 		Function func = program.getFunctionManager().getFunctionContaining(con.baseAddr);
 		EncodedMethod encodedMethod = null;
-		if (func != null)
+		if (func != null) {
 			encodedMethod = analysisState.getEncodedMethod(func.getEntryPoint());
-		if (encodedMethod == null)
+		}
+		if (encodedMethod == null) {
 			return new PcodeOp[0];
+		}
 		int paramCount = 0;
-		if (!encodedMethod.isStatic())
+		if (!encodedMethod.isStatic()) {
 			paramCount += 1;			// A this pointer at least
+		}
 		CodeItem codeItem = encodedMethod.getCodeItem();
 		int registerIndex = codeItem.getRegistersSize() - codeItem.getIncomingSize();
-		MethodIDItem methodIDItem = header.getMethods().get( encodedMethod.getMethodIndex() );
+		MethodIDItem methodIDItem = header.getMethods().get(encodedMethod.getMethodIndex());
 		int prototypeIndex = methodIDItem.getProtoIndex() & 0xffff;
 		PrototypesIDItem prototype = header.getPrototypes().get(prototypeIndex);
 		TypeList parameters = prototype.getParameters();
-		if (parameters != null)
+		if (parameters != null) {
 			paramCount += parameters.getItems().size();
+		}
 		AddressSpace registerSpace = program.getAddressFactory().getAddressSpace("register");
-		resOps = new PcodeOp[ paramCount ];
+		resOps = new PcodeOp[paramCount];
 		long fromOffset = INPUT_REGISTER_START;		// Base of designated input registers
 		long toOffset = REGISTER_START + 4 * registerIndex;	// Base of registers in method's frame
 		int i = 0;
@@ -126,16 +141,16 @@ public class InjectPayloadDexParameters implements InjectPayload {
 			Address toAddr = registerSpace.getAddress(toOffset);
 			fromOffset += 4;
 			toOffset += 4;
-			PcodeOp op = new PcodeOp(con.baseAddr,i,PcodeOp.COPY);
-			op.setInput(new Varnode(fromAddr,4), 0);
-			op.setOutput(new Varnode(toAddr,4));	
+			PcodeOp op = new PcodeOp(con.baseAddr, i, PcodeOp.COPY);
+			op.setInput(new Varnode(fromAddr, 4), 0);
+			op.setOutput(new Varnode(toAddr, 4));
 			resOps[i] = op;
 			i += 1;
 		}
 		if (parameters != null) {
 			for (TypeItem parameterTypeItem : parameters.getItems()) {
-				String parameterTypeString = DexUtil.convertTypeIndexToString(
-						header, parameterTypeItem.getType());
+				String parameterTypeString =
+					DexUtil.convertTypeIndexToString(header, parameterTypeItem.getType());
 				int size;
 				char firstChar = parameterTypeString.charAt(0);
 				Address fromAddr = registerSpace.getAddress(fromOffset);
@@ -155,5 +170,43 @@ public class InjectPayloadDexParameters implements InjectPayload {
 	@Override
 	public boolean isFallThru() {
 		return true;
+	}
+
+	@Override
+	public boolean isIncidentalCopy() {
+		return false;
+	}
+
+	@Override
+	public void saveXml(StringBuilder buffer) {
+		// Provide a minimal tag so decompiler can call-back
+		buffer.append("<pcode");
+		SpecXmlUtils.encodeStringAttribute(buffer, "inject", "uponentry");
+		SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
+		buffer.append("/>\n");
+	}
+
+	@Override
+	public void restoreXml(XmlPullParser parser, SleighLanguage language) throws XmlParseException {
+		XmlElement el = parser.start();
+		String injectString = el.getAttribute("inject");
+		if (injectString == null || !injectString.equals("uponentry")) {
+			throw new XmlParseException("Expecting inject=\"uponentry\" attribute");
+		}
+		boolean isDynamic = SpecXmlUtils.decodeBoolean(el.getAttribute("dynamic"));
+		if (!isDynamic) {
+			throw new XmlParseException("Expecting dynamic attribute");
+		}
+		parser.end(el);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof InjectPayloadDexParameters);		// All instances are equal
+	}
+
+	@Override
+	public int hashCode() {
+		return 123474219;		// All instances are equal
 	}
 }

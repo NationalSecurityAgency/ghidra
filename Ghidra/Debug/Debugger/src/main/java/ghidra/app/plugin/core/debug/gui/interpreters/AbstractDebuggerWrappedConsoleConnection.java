@@ -25,16 +25,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.ImageIcon;
 
 import docking.ActionContext;
+import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.InterpreterInterruptAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.PinInterpreterAction;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
+import ghidra.dbg.DebugModelConventions;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetInterpreter;
-import ghidra.dbg.target.TargetObject;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 
@@ -191,6 +193,11 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 				.selected(pinned)
 				.build();
 		guiConsole.addAction(actionPin);
+
+		DockingAction interruptAction =	InterpreterInterruptAction.builder(plugin)
+				.onAction(this::sendInterrupt)
+				.build();
+		guiConsole.addAction(interruptAction);
 	}
 
 	public void setStdOut(OutputStream stdOut) {
@@ -213,6 +220,19 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 
 	private void activatedPin(ActionContext ignore) {
 		pinned = actionPin.isSelected();
+	}
+
+	private void sendInterrupt(ActionContext ignore) {
+		CompletableFuture<TargetInterruptible> futureInterruptible =
+			DebugModelConventions.suitable(TargetInterruptible.class, targetConsole);
+		if (futureInterruptible != null) {
+			futureInterruptible.thenCompose(i -> i.interrupt())
+					.thenRun(() -> guiConsole.getOutWriter().println("Interrupt sent"))
+					.exceptionally(exc -> {
+						guiConsole.getErrWriter().println("Failed to send Interrupt");
+						return null;
+					});
+		}
 	}
 
 	protected void run() {

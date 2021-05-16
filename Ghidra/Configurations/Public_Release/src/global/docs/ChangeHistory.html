@@ -344,7 +344,7 @@
 <ul>
     <li><I>Data Types</I>. Improved PDB composite reconstruction to attempt <code>pack(1)</code> alignment if default alignment fails. (GT-3401)</li>
     <li><I>Data Types</I>. Added missing support for multi-user merge of unions and structures containing bitfields or a trailing flexible array member. (GT-3479)</li>
-    <li><I>Data Types</I>. Corrected structure editor save button enablement issue when editing bitfields within an unaligned structure. (GT-3519, Issue #1297)</li>
+    <li><I>Data Types</I>. Corrected structure editor save button enablement issue when editing bitfields within a non-packed structure. (GT-3519, Issue #1297)</li>
     <li><I>Disassembly</I>. Corrected potential infinite loop with disassembler caused by branch to self with invalid delay slot instruction. (GT-3511, Issue #1486)</li>
     <li><I>GUI</I>. Corrected processor manual display for Microsoft Windows users, which was not displaying processor manual and was, instead, rendering a blank page in web browser. (GT-3444)</li>
     <li><I>GUI:Bitfield Editor</I>. Added field comment support to composite bitfield editor. (GT-3410)</li>
@@ -393,7 +393,7 @@
 <H1 align="center">Ghidra 9.1 Change History (October 2019)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
-    <li><I>Data Types</I>. Added bit-field support to Structure and Union editor.  An additional Bit-field Editor was also added for explicit bit-field placement within unaligned structures. (GT-559)</li>
+    <li><I>Data Types</I>. Added bit-field support to Structure and Union editor.  An additional Bit-field Editor was also added for explicit bit-field placement within non-packed structures. (GT-559)</li>
     <li><I>Eclipse Integration</I>. Added new GhidraSleighEditor Eclipse plugin in the installation directory under Extensions/Eclipse. (GT-113)</li>
     <li><I>GUI</I>. Added method for turning off table sorting by control-clicking the only sorted table column. (GT-2763, Issue #87)</li>
     <li><I>GUI</I>. Hovering on an address will now show where the byte at that address came from in the imported file. (GT-3016, Issue #154)</li>

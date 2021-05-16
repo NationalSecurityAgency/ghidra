@@ -19,9 +19,11 @@ import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinDef.ULONGByReference;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.COM.COMUtils;
 import com.sun.jna.ptr.PointerByReference;
 
+import agent.dbgeng.dbgeng.COMUtilsExtra;
 import agent.dbgeng.dbgeng.DebugBreakpoint;
 import agent.dbgeng.dbgeng.DebugBreakpoint.BreakType;
 import agent.dbgeng.dbgeng.DebugValue.DebugValueType;
@@ -90,7 +92,11 @@ public class DebugControlImpl4 extends DebugControlImpl3 {
 			BitmaskSet<DebugExecute> flags) {
 		ULONG ctlMask = new ULONG(ctl.getBitmask());
 		ULONG flagMask = new ULONG(flags.getBitmask());
-		COMUtils.checkRC(jnaControl.ExecuteWide(ctlMask, new WString(cmd), flagMask));
+		HRESULT hr = jnaControl.ExecuteWide(ctlMask, new WString(cmd), flagMask);
+		if (hr.equals(COMUtilsExtra.E_INTERNALEXCEPTION)) {
+			return;
+		}
+		COMUtils.checkRC(hr);
 	}
 
 	@Override

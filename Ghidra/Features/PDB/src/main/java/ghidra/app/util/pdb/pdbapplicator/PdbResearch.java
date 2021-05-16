@@ -44,10 +44,16 @@ public class PdbResearch {
 	private static Set<Integer> developerDebugOrderIndexNumbers;
 
 	//==============================================================================================
+	// This method exists so we can place breakpoints on call locations to it wherever we
+	// would like to break during debugging.
+	private static void doNothingSetBreakPointHere() {
+		// Do nothing.
+	}
+
 	/**
 	 * This method is used to populate debugIndexNumbers set that gets used by
-	 * {@link #checkBreak(int recordNumber)} in which we set a breakpoint on {@code int a = 1;} to
-	 * then allow us to debug into other code.
+	 * {@link #checkBreak(int recordNumber)} in which we set a breakpoint on
+	 * {@code #doNothingSetBreakPointHere();} to then allow us to debug into other code.
 	 */
 	static void initBreakPointRecordNumbers() {
 		debugIndexNumbers = new TreeSet<>();
@@ -284,28 +290,28 @@ public class PdbResearch {
 //		debugIndexNumbers.add(6236); // fwdref is 6168
 //
 //		// member of 6236
-//		debugIndexNumbers.add(6251); // fwdref is 6220 
+//		debugIndexNumbers.add(6251); // fwdref is 6220
 //
 //		// member of 6251
 //		debugIndexNumbers.add(6263); // fwdref is 6237
 //
 //		// base class / member of 6263
-//		debugIndexNumbers.add(6284); // fwdref is 6252 
+//		debugIndexNumbers.add(6284); // fwdref is 6252
 //
 //		// base class / member of 6284
-//		debugIndexNumbers.add(6328); // fwdref is 6264 
+//		debugIndexNumbers.add(6328); // fwdref is 6264
 //
 //		// member of 6328
-//		debugIndexNumbers.add(6335); // fwdref is 6285 
+//		debugIndexNumbers.add(6335); // fwdref is 6285
 //
 //		// base class of 6335
-//		debugIndexNumbers.add(6341); // fwdref is 6329 
+//		debugIndexNumbers.add(6341); // fwdref is 6329
 	}
 
 	/**
 	 * Developmental method for breakpoints.  TODO: will delete this from production.
-	 * Set breakpoint on {@code int a = 1;}
-	 * @param recordNumber the record number tha is being processed (set negative to ignore)
+	 * Set breakpoint on {@code #doNothingSetBreakPointHere();}
+	 * @param recordNumber the record number that is being processed (set negative to ignore)
 	 * <p>
 	 * This code is useful for developer debugging because the PDB is records-based and we often
 	 * need to set breakpoints elsewhere, determine what RecordNumber we are interested in, and
@@ -315,8 +321,7 @@ public class PdbResearch {
 	 */
 	static void checkBreak(int recordNumber) {
 		if (debugIndexNumbers.contains(recordNumber)) {
-			int a = 1;
-			a = a + 1;
+			doNothingSetBreakPointHere();
 		}
 	}
 
@@ -331,16 +336,13 @@ public class PdbResearch {
 		String nn = applier.getMsType().getName();
 		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>".equals(
 			nn)) {
-			int a = 1;
-			a = a + 1;
+			doNothingSetBreakPointHere();
 		}
 		if ("class std::__1::__iostream_category".equals(nn)) {
-			int a = 1;
-			a = a + 1;
+			doNothingSetBreakPointHere();
 		}
 		if ("std::__1::__do_message".equals(nn)) {
-			int a = 1;
-			a = a + 1;
+			doNothingSetBreakPointHere();
 		}
 
 		//checkBreak(recordNumber);
@@ -445,9 +447,10 @@ public class PdbResearch {
 		}
 		else if (applier instanceof ReferenceSymbolApplier) {
 			ReferenceSymbolApplier refSymbolApplier = (ReferenceSymbolApplier) applier;
-			SymbolGroup refSymbolGroup = refSymbolApplier.getInitializedReferencedSymbolGroup();
+			AbstractMsSymbolIterator refIter =
+				refSymbolApplier.getInitializedReferencedSymbolGroupIterator();
 			// recursion
-			childWalkSym(applicator, refSymbolGroup.getModuleNumber(), refSymbolGroup.iterator());
+			childWalkSym(applicator, refIter.getModuleNumber(), refIter);
 		}
 		else if (applier instanceof DataSymbolApplier) {
 			DataSymbolApplier dataSymbolApplier = (DataSymbolApplier) applier;
@@ -464,19 +467,16 @@ public class PdbResearch {
 //			ConstantSymbolApplier constantSymbolApplier = (ConstantSymbolApplier) applier;
 //		}
 		else {
-			int a = 1;
-			a = a + 1;
+			doNothingSetBreakPointHere();
 		}
 		return true;
 	}
 
 	//==============================================================================================
 	static private boolean childWalkType(int moduleNumber, MsTypeApplier applier) {
-		int b = 1;
-		b = b + 1;
+		doNothingSetBreakPointHere();
 		if (applier instanceof AbstractFunctionTypeApplier) {
-			int a = 1;
-			a = a + 1;
+			doNothingSetBreakPointHere();
 		}
 		return true;
 	}
@@ -861,21 +861,18 @@ public class PdbResearch {
 						p = compType.getMsProperty();
 						isForwardReference = p.isForwardReference();
 						if (c == 0 && !isForwardReference) {
-							int a = 1;
-							a = a + 1;
+							doNothingSetBreakPointHere();
 							// For PDBs that we have looked at, if count is zero
 							// for a forward reference, then the field list record number is zero;
 							// if count is zero for a definition, then, the field list record
 							// number refers to an actual field list.
 							// So... seems we can trust forward reference and ignore count.
 							if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
-								int b = 1;
-								b = b + 1;
+								doNothingSetBreakPointHere();
 							}
 						}
 						else if (c != 0 && isForwardReference) {
-							int a = 1;
-							a = a + 1;
+							doNothingSetBreakPointHere();
 						}
 //					ps = c + (p.isForwardReference() ? "fwdref" : "");
 					}
@@ -916,13 +913,11 @@ public class PdbResearch {
 										// list. So... seems we can trust forward reference and
 										// ignore count.
 										if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
-											int a = 1;
-											a = a + 1;
+											doNothingSetBreakPointHere();
 										}
 									}
 									else if (c != 0 && isForwardReference) {
-										int a = 1;
-										a = a + 1;
+										doNothingSetBreakPointHere();
 									}
 //								ps = c + (p.isForwardReference() ? "fwdref" : "");
 								}

@@ -44,15 +44,15 @@ class LoadPdbTask extends Task {
 	private DataTypeManagerService service;
 	private final Program program;
 	private final boolean useMsDiaParser;
-	private final PdbApplicatorRestrictions restrictions; // PDB Universal Parser only
+	private final PdbApplicatorControl control; // PDB Universal Parser only
 
-	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser,
-			PdbApplicatorRestrictions restrictions, DataTypeManagerService service) {
+	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser, PdbApplicatorControl control,
+			DataTypeManagerService service) {
 		super("Load PDB", true, false, true, true);
 		this.program = program;
 		this.pdbFile = pdbFile;
 		this.useMsDiaParser = useMsDiaParser;
-		this.restrictions = restrictions;
+		this.control = control;
 		this.service = service;
 	}
 
@@ -97,8 +97,8 @@ class LoadPdbTask extends Task {
 		};
 
 		try {
-			AutoAnalysisManager.getAnalysisManager(program)
-					.scheduleWorker(worker, null, true, wrappedMonitor);
+			AutoAnalysisManager.getAnalysisManager(program).scheduleWorker(worker, null, true,
+				wrappedMonitor);
 			if (log.hasMessages()) {
 				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Load PDB File",
 					"There were warnings/errors loading the PDB file.", log.toString(),
@@ -147,7 +147,7 @@ class LoadPdbTask extends Task {
 		return false;
 	}
 
-	// NOTE: OptionDialog will not display an empty line 
+	// NOTE: OptionDialog will not display an empty line
 	private static final String BLANK_LINE = " \n";
 
 	private boolean parseWithNewParser(MessageLog log, TaskMonitor monitor)
@@ -157,12 +157,12 @@ class LoadPdbTask extends Task {
 
 		PdbApplicatorOptions pdbApplicatorOptions = new PdbApplicatorOptions();
 
-		pdbApplicatorOptions.setRestrictions(restrictions);
+		pdbApplicatorOptions.setProcessingControl(control);
 
 		PdbProgramAttributes programAttributes = new PdbProgramAttributes(program);
 
-		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser
-				.parse(pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
+		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(
+			pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
 
 			PdbIdentifiers identifiers = pdb.getIdentifiers();
 			if (!PdbLocator.verifyPdbSignature(programAttributes, identifiers)) {

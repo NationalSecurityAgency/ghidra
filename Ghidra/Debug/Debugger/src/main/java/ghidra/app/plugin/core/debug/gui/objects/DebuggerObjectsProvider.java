@@ -68,6 +68,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.*;
+import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
 
@@ -1523,6 +1524,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	class MyObjectListener extends AnnotatedDebuggerAttributeListener {
 		protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
+		protected final PrivatelyQueuedListener<DebuggerModelListener> queue =
+			new PrivatelyQueuedListener<>(DebuggerModelListener.class, "ObjectsProvider-EventQueue",
+				reorderer);
 
 		public MyObjectListener() {
 			super(MethodHandles.lookup());
@@ -1768,7 +1772,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public DebuggerModelListener getListener() {
-		return listener.reorderer;
+		return listener.queue.in;
 	}
 
 }

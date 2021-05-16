@@ -220,6 +220,10 @@ public class FileHeader implements StructConverter {
 		return symbols;
 	}
 
+	/**
+	 * Returns the array of RUNTIME_INFO entries, if any are present.
+	 * @return An array of _IMAGE_RUNTIME_FUNCTION_ENTRY. The array can be empty.
+	 */
 	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getImageRuntimeFunctionEntries() {
 		return irfes;
 	}

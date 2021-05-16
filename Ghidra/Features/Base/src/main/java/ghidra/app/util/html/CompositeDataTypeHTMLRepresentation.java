@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.html;
 
-import static ghidra.util.HTMLUtilities.friendlyEncodeHTML;
+import static ghidra.util.HTMLUtilities.*;
 
 import java.awt.Color;
 import java.util.*;
@@ -77,7 +77,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 	}
 
 	protected List<String> buildWarnings(Composite comp) {
-		if (!comp.isNotYetDefined()) {
+		if (!comp.isZeroLength()) {
 			return Collections.emptyList();
 		}
 		List<String> list = new ArrayList<>();
@@ -87,7 +87,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 	@Override
 	protected TextLine buildFooterText(DataType dataType) {
-		if (dataType.isNotYetDefined()) {
+		if (dataType.isZeroLength()) {
 			return new TextLine("0");
 		}
 		return super.buildFooterText(dataType);
@@ -95,35 +95,15 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 	protected List<ValidatableLine> buildAlignmentText(Composite dataType) {
 		List<ValidatableLine> list = new ArrayList<>();
-		if (!dataType.isInternallyAligned()) {
-			list.add(new TextLine("unaligned"));
+		String alignStr = CompositeDataTypeImpl.getMinAlignmentString(dataType);
+		if (alignStr != null && alignStr.length() != 0) {
+			list.add(new TextLine(alignStr));
 		}
-		else if (dataType.isDefaultAligned()) {
-			list.add(new TextLine("align()"));
-		}
-		else if (dataType.isMachineAligned()) {
-			list.add(new TextLine("align(machine)"));
-		}
-		else {
-			long alignment = dataType.getMinimumAlignment();
-			list.add(new TextLine("align(" + alignment + ")"));
-		}
-		TextLine packingText = buildPackingText(dataType);
-		if (packingText != null) {
-			list.add(packingText);
+		String packStr = CompositeDataTypeImpl.getPackingString(dataType);
+		if (packStr != null && packStr.length() != 0) {
+			list.add(new TextLine(packStr));
 		}
 		return list;
-	}
-
-	protected TextLine buildPackingText(Composite dataType) {
-		if (!dataType.isInternallyAligned()) {
-			return null;
-		}
-		long packingValue = dataType.getPackingValue();
-		if (packingValue == Composite.NOT_PACKING) {
-			return null;
-		}
-		return new TextLine(" pack(" + packingValue + ")");
 	}
 
 	protected TextLine buildAlignmentValueText(Composite composite) {
@@ -132,7 +112,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 	private List<ValidatableLine> buildContent(Composite comp) {
 		List<ValidatableLine> list = new ArrayList<>();
-		if (comp.isNotYetDefined()) {
+		if (comp.isZeroLength()) {
 			return list;
 		}
 

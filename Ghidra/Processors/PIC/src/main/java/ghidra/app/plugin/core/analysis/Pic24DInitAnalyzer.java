@@ -75,7 +75,7 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 		long available = dinitBlock.getSize();
 		
 		Structure dataRecordType = new StructureDataType("data_record", 0, program.getDataTypeManager());
-		dataRecordType.setInternallyAligned(true);
+		dataRecordType.setPackingEnabled(true);
 		dataRecordType.add(PointerDataType.dataType, "dst", null);
 		// NOTE: long is used instead of int to ensure that 4-bytes within ROM are consumed
 		dataRecordType.add(LongDataType.dataType, "len", null);

@@ -16,62 +16,39 @@
 package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbInferior;
-import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
 /**
  * Implementation of {@link GdbInferior#cont()}
  */
-public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void> {
+public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void>
+		implements MixinResumeInCliGdbCommand {
 	public GdbContinueCommand(GdbManagerImpl manager, Integer threadId) {
 		super(manager, threadId);
 	}
 
 	@Override
 	public Interpreter getInterpreter() {
-		if (manager.hasCli()) {
-			return Interpreter.CLI;
-		}
-		return Interpreter.MI2;
+		return getInterpreter(manager);
 	}
 
 	@Override
 	public String encode(String threadPart) {
-		switch (getInterpreter()) {
-			case CLI:
-				// The significance is the Pty, not so much the actual command
-				// Using MI2 simplifies event processing (no console output parsing)
-				return "interpreter-exec mi2 \"-exec-continue" + threadPart + "\"";
-			case MI2:
-				return "-exec-continue" + threadPart;
-			default:
-				throw new AssertionError();
+		if (getInterpreter() == Interpreter.CLI) {
+			return "continue";
 		}
+		return "-exec-continue" + threadPart;
 	}
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		evt = checkErrorViaCli(evt);
-		if (evt instanceof GdbCommandRunningEvent) {
-			pending.claim(evt);
-			return pending.hasAny(GdbRunningEvent.class);
-		}
-		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true; // Not the expected Completed event 
-		}
-		else if (evt instanceof GdbRunningEvent) {
-			// Event happens no matter which interpreter received the command
-			pending.claim(evt);
-			return pending.hasAny(GdbCommandRunningEvent.class);
-		}
-		return false;
+		evt = checkErrorViaCli(evt); // TODO: Deprecated, since that hack can crash GDB
+		return handleExpectingRunning(evt, pending);
 	}
 
 	@Override
 	public Void complete(GdbPendingCommand<?> pending) {
-		pending.checkCompletion(GdbCommandRunningEvent.class);
-		return null;
+		return completeOnRunning(pending);
 	}
 }

@@ -36,6 +36,7 @@ public class ElfDataType extends FactoryStructureDataType {
 		super("ELF", dtm);
 	}
 
+	@Override
 	public String getMnemonic(Settings settings) {
 		return "ELF";
 	}
@@ -44,13 +45,6 @@ public class ElfDataType extends FactoryStructureDataType {
     public String getDescription() { 
         return "ELF Data Type";
     }
-	
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	public boolean isDynamicallySized() {
-		return true;
-	}
 
 	@Override
 	protected void populateDynamicStructure(MemBuffer buf, Structure struct) {

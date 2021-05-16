@@ -15,35 +15,30 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-		shortDescription = "Debugger static mapping manager", //
-		description = "GUI to manage static mappings", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			TraceActivatedPluginEvent.class, //
-			ProgramLocationPluginEvent.class, //
-			ProgramSelectionPluginEvent.class, //
-			TraceLocationPluginEvent.class, //
-			TraceSelectionPluginEvent.class //
-		}, //
-		servicesRequired = { //
-			DebuggerStaticMappingService.class, //
-			DebuggerTraceManagerService.class, //
-		} // 
-)
+@PluginInfo(
+	shortDescription = "Debugger static mapping manager",
+	description = "GUI to manage static mappings",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+		ProgramActivatedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerStaticMappingService.class,
+		DebuggerTraceManagerService.class,
+	})
 public class DebuggerStaticMappingPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerStaticMappingProvider provider;
 
@@ -70,17 +65,9 @@ public class DebuggerStaticMappingPlugin extends AbstractDebuggerPlugin {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
 			provider.setTrace(ev.getActiveCoordinates().getTrace());
 		}
-		if (event instanceof ProgramLocationPluginEvent) {
-			provider.contextChanged();
-		}
-		if (event instanceof ProgramSelectionPluginEvent) {
-			provider.contextChanged();
-		}
-		if (event instanceof TraceLocationPluginEvent) {
-			provider.contextChanged();
-		}
-		if (event instanceof TraceSelectionPluginEvent) {
-			provider.contextChanged();
+		if (event instanceof ProgramActivatedPluginEvent) {
+			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+			provider.setProgram(ev.getActiveProgram());
 		}
 	}
 }

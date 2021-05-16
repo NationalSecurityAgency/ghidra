@@ -735,7 +735,9 @@ public class GdbManagerImpl implements GdbManager {
 		}).exceptionally((exc) -> {
 			pcmd.completeExceptionally(exc);
 			//Msg.debug(this, "ON_EXCEPTION: CURCMD = " + curCmd);
-			curCmd = null;
+			synchronized (this) {
+				curCmd = null;
+			}
 			//Msg.debug(this, "SET CURCMD = null");
 			//Msg.debug(this, "RELEASING cmdLock");
 			Hold hold = cmdLockHold.getAndSet(null);
@@ -745,6 +747,23 @@ public class GdbManagerImpl implements GdbManager {
 			return null;
 		});
 		return pcmd;
+	}
+
+	@Override
+	public void cancelCurrentCommand() {
+		GdbPendingCommand<?> curCmd;
+		synchronized (this) {
+			curCmd = this.curCmd;
+			this.curCmd = null;
+		}
+		if (curCmd != null) {
+			Msg.info(this, "Cancelling current command: " + curCmd);
+			curCmd.cancel(false);
+		}
+		Hold hold = cmdLockHold.getAndSet(null);
+		if (hold != null) {
+			hold.release();
+		}
 	}
 
 	protected PrintWriter getWriter(Interpreter interpreter) {
@@ -1481,7 +1500,7 @@ public class GdbManagerImpl implements GdbManager {
 			os.write(3);
 			os.flush();
 		}
-		if (mi2Thread != null) {
+		else if (mi2Thread != null) {
 			OutputStream os = mi2Thread.pty.getParent().getOutputStream();
 			os.write(3);
 			os.flush();

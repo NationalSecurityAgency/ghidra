@@ -13,23 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.pdb.pdbapplicator;
+package ghidra.program.model.data;
 
-/**
- * PDB Applicator restrictions of actions performed.  Used by {@link PdbApplicatorOptions}
- */
-public enum PdbApplicatorRestrictions {
-	NONE("None"), DATA_TYPES_ONLY("Data Types Only"), PUBLIC_SYMBOLS_ONLY("Public Symbols Only");
-
-	private final String label;
-
-	@Override
-	public String toString() {
-		return label;
-	}
-
-	private PdbApplicatorRestrictions(String label) {
-		this.label = label;
-	}
+public interface StructureInternal extends Structure, CompositeInternal {
 
 }

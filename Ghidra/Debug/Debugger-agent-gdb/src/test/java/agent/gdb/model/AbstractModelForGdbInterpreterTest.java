@@ -54,7 +54,7 @@ public abstract class AbstractModelForGdbInterpreterTest
 
 	@Override
 	public DebuggerTestSpecimen getAttachSpecimen() {
-		return GdbLinuxSpecimen.DD;
+		return GdbLinuxSpecimen.SLEEP;
 	}
 
 	@Override

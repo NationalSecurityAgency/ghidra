@@ -103,6 +103,8 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 
 	@Override
 	public void setProgramCounter(Address pc) {
+		//System.err.println("setPC(threadKey=" + stack.getThread().getKey() + ",snap=" +
+		//	stack.getSnap() + ",level=" + level + ",pc=" + pc + ");");
 		manager.trace.assertValidAddress(pc);
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			if (Objects.equals(this.pc, pc)) {

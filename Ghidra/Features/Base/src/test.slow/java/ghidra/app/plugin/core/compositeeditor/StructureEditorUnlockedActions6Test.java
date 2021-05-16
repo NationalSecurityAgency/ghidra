@@ -43,7 +43,7 @@ public class StructureEditorUnlockedActions6Test
 		assertTrue(dt15 instanceof Array);
 
 		// Make array of 2 arrays
-		invoke(arrayAction);
+		invoke(arrayAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
@@ -70,7 +70,7 @@ public class StructureEditorUnlockedActions6Test
 		assertEquals("dword", dt3.getDisplayName());
 
 		// Make array of 5 quadwords
-		invoke(arrayAction);
+		invoke(arrayAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 5);
@@ -88,6 +88,7 @@ public class StructureEditorUnlockedActions6Test
 		init(emptyStructure, pgmRootCat);
 		int originalLength = 0;
 		assertTrue(emptyStructure.isNotYetDefined());
+		assertTrue(emptyStructure.isZeroLength());
 		int newLength = 5;
 
 		assertEquals(originalLength, model.getLength());
@@ -151,7 +152,7 @@ public class StructureEditorUnlockedActions6Test
 
 		assertEquals(0, model.getLength());
 		assertEquals(0, model.getNumComponents());
-		invoke(fav);
+		invoke(fav, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 7);

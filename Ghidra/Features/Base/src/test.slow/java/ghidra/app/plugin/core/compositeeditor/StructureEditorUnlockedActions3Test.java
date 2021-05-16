@@ -44,7 +44,7 @@ public class StructureEditorUnlockedActions3Test
 		DataType dt2 = getDataType(2);// word
 		DataType dt7 = getDataType(7);// SimpleUnion
 
-		invoke(duplicateMultipleAction);
+		invoke(duplicateMultipleAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);
@@ -73,7 +73,7 @@ public class StructureEditorUnlockedActions3Test
 		DataType dt0 = getDataType(0);
 		DataType dt1 = getDataType(1);
 
-		invoke(duplicateMultipleAction);
+		invoke(duplicateMultipleAction, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 2);

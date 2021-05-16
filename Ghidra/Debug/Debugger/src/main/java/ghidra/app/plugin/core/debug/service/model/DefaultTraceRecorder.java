@@ -16,7 +16,9 @@
 package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
+
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
@@ -71,6 +73,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	//protected final PermanentTransactionExecutor seqTx;
 	protected final PermanentTransactionExecutor parTx;
+	protected final Executor privateQueue = Executors.newSingleThreadExecutor(
+		new BasicThreadFactory.Builder().namingPattern("DTR-EventQueue-%d").build());
 
 	protected final AsyncLazyValue<Void> lazyInit = new AsyncLazyValue<>(this::doInit);
 	private boolean valid = true;

@@ -309,7 +309,7 @@ public class CppCompositeType {
 	 * These "insert" methods should be used judiciously.  You need to know what/why you are doing
 	 * this.  Changing the order of "normal" members can mess up the layout algorithms from
 	 * {@link DefaultCompositeMember}.  The only place we currently think we can use these is
-	 * when trying to place vbptr members.  Not all of these methods are used too. 
+	 * when trying to place vbptr members.  Not all of these methods are used too.
 	 * @param isFlexibleArray TODO
 	 */
 	public void insertMember(String memberName, DataType dataType, boolean isFlexibleArray,
@@ -583,8 +583,7 @@ public class CppCompositeType {
 		return builder.toString();
 	}
 
-	public ObjectOrientedClassLayout getLayout(
-			ObjectOrientedClassLayout layoutOptions) {
+	public ObjectOrientedClassLayout getLayout(ObjectOrientedClassLayout layoutOptions) {
 		if (classLayout == null) {
 			classLayout = determineClassLayout(layoutOptions);
 		}
@@ -644,8 +643,8 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createVbtBasedLayout(ObjectOrientedClassLayout layoutOptions,
-			VbtManager vbtManager, TaskMonitor monitor) throws PdbException, CancelledException {
+	public void createVbtBasedLayout(ObjectOrientedClassLayout layoutOptions, VbtManager vbtManager,
+			TaskMonitor monitor) throws PdbException, CancelledException {
 		CategoryPath cn;
 		hasDirect = false;
 		switch (getLayout(layoutOptions)) {
@@ -699,8 +698,7 @@ public class CppCompositeType {
 						}
 						directClassLength = getCompositeLength(directDataType);
 					}
-					if (getLayout(
-						layoutOptions) == ObjectOrientedClassLayout.SIMPLE_COMPLEX) {
+					if (getLayout(layoutOptions) == ObjectOrientedClassLayout.SIMPLE_COMPLEX) {
 						// Not using the dummy/direct type (only used it to get the
 						//  directClassLength), so remove it and add the members to the main
 						//  type instead.
@@ -836,8 +834,7 @@ public class CppCompositeType {
 						}
 						directClassLength = getCompositeLength(directDataType);
 					}
-					if (getLayout(
-						layoutOptions) == ObjectOrientedClassLayout.SIMPLE_COMPLEX) {
+					if (getLayout(layoutOptions) == ObjectOrientedClassLayout.SIMPLE_COMPLEX) {
 						// Not using the dummy/direct type (only used it to get the
 						//  directClassLength), so remove it and add the members to the main
 						//  type instead.
@@ -947,8 +944,6 @@ public class CppCompositeType {
 			throws PdbException {
 		if (placeholderVirtualBaseTables.size() > 1) {
 			// study this.
-			int a = 1;
-			a = a + 1;
 		}
 
 		boolean allVbtFound = true;
@@ -957,8 +952,6 @@ public class CppCompositeType {
 			PlaceholderVirtualBaseTable table = tableEntry.getValue();
 			if (!table.validateOffset()) {
 				// TODO study this.
-				int a = 1;
-				a = a + 1;
 			}
 			DataType vbptr = getVbptrDataType(dtm, vbtManager, table);
 			allVbtFound &=
@@ -1153,7 +1146,7 @@ public class CppCompositeType {
 //			// If last base is empty, then its comment and any accumulated to this point
 //			//  will not be seen (not applied to a PdbMember).  TODO: Consider options,
 //			//  though we know we have left it in this state and are OK with it for now.
-//			//  We have not considered fall-out from this. 
+//			//  We have not considered fall-out from this.
 //		}
 //	}
 
@@ -1201,7 +1194,7 @@ public class CppCompositeType {
 			// If last base is empty, then its comment and any accumulated to this point
 			//  will not be seen (not applied to a PdbMember).  TODO: Consider options,
 			//  though we know we have left it in this state and are OK with it for now.
-			//  We have not considered fall-out from this. 
+			//  We have not considered fall-out from this.
 		}
 	}
 
@@ -1260,7 +1253,7 @@ public class CppCompositeType {
 			// If last base is empty, then its comment and any accumulated to this point
 			//  will not be seen (not applied to a PdbMember).  TODO: Consider options,
 			//  though we know we have left it in this state and are OK with it for now.
-			//  We have not considered fall-out from this. 
+			//  We have not considered fall-out from this.
 		}
 	}
 
@@ -1314,7 +1307,7 @@ public class CppCompositeType {
 		return new CategoryPath(cn, baseName);
 	}
 
-	// TODO: 
+	// TODO:
 	// Taken from PdbUtil without change.  Would have had to change access on class PdbUtil and
 	//  this ensureSize method to public to make it accessible.  Can revert to using PdbUtil
 	//  once we move this new module from Contrib to Features/PDB.
@@ -1352,8 +1345,7 @@ public class CppCompositeType {
 			return attributes;
 		}
 
-		ObjectOrientedClassLayout getLayoutMode(
-				ObjectOrientedClassLayout layoutOptions) {
+		ObjectOrientedClassLayout getLayoutMode(ObjectOrientedClassLayout layoutOptions) {
 			return baseClassType.getLayout(layoutOptions);
 		}
 
@@ -1391,7 +1383,7 @@ public class CppCompositeType {
 	}
 
 	//----------------------------------------------------------------------------------------------
-	// Syntactic description of base classes. 
+	// Syntactic description of base classes.
 	//----------------------------------------------------------------------------------------------
 	private class SyntacticBaseClass extends BaseClass {
 		private SyntacticBaseClass(CppCompositeType baseClassType,
@@ -1430,8 +1422,7 @@ public class CppCompositeType {
 
 		Structure getLayout() {
 			if (layout == null) {
-				int a = 1;
-				a = a + 1;
+				// consider what to do here...
 			}
 			return layout;
 		}

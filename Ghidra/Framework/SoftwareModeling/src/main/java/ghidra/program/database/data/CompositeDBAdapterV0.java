@@ -18,8 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.VersionException;
@@ -69,8 +68,8 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 
 	@Override
 	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
-			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
-			int internalAlignment, int externalAlignment) throws IOException {
+			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
+			long lastChangeTime, int packValue, int minAlignment) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
 			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
@@ -92,7 +91,8 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 
 	@Override
 	public boolean removeRecord(long compositeID) throws IOException {
-		return compositeTable.deleteRecord(compositeID);
+		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
+			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
 
 	@Override
@@ -129,8 +129,8 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 		rec.setLongValue(COMPOSITE_UNIVERSAL_DT_ID, UniversalIdGenerator.nextID().getValue());
 		rec.setLongValue(COMPOSITE_SOURCE_SYNC_TIME_COL, DataType.NO_SOURCE_SYNC_TIME);
 		rec.setLongValue(COMPOSITE_LAST_CHANGE_TIME_COL, DataType.NO_LAST_CHANGE_TIME);
-		rec.setIntValue(COMPOSITE_INTERNAL_ALIGNMENT_COL, CompositeDBAdapter.UNALIGNED);
-		rec.setIntValue(COMPOSITE_EXTERNAL_ALIGNMENT_COL, CompositeDBAdapter.DEFAULT_ALIGNED);
+		rec.setIntValue(COMPOSITE_PACKING_COL, CompositeInternal.NO_PACKING);
+		rec.setIntValue(COMPOSITE_MIN_ALIGN_COL, CompositeInternal.DEFAULT_ALIGNMENT);
 		return rec;
 	}
 

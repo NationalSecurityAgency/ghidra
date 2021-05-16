@@ -21,8 +21,7 @@ import java.util.*;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedThreadRecorder;
-import ghidra.dbg.AnnotatedDebuggerAttributeListener;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
@@ -37,6 +36,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.TimedMsg;
+import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.exception.DuplicateNameException;
 
 public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
@@ -48,10 +48,15 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 
 	private boolean valid = true;
 	protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
+	protected final PrivatelyQueuedListener<DebuggerModelListener> queue;
 
 	public TraceEventListener(TraceObjectManager collection) {
 		super(MethodHandles.lookup());
 		this.recorder = collection.getRecorder();
+
+		this.queue = new PrivatelyQueuedListener<>(DebuggerModelListener.class,
+			recorder.privateQueue, reorderer);
+
 		this.target = recorder.getTarget();
 		this.trace = recorder.getTrace();
 		this.memoryManager = trace.getMemoryManager();
@@ -59,7 +64,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 
 	public void init() {
 		DebuggerObjectModel model = target.getModel();
-		model.addModelListener(reorderer, true);
+		model.addModelListener(queue.in, true);
 	}
 
 	private boolean successor(TargetObject ref) {

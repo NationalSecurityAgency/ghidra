@@ -15,12 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Set;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.google.common.collect.Range;
 
@@ -186,6 +186,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
+		waitForPass(() -> assertEquals(1, provider.regionTable.getRowCount()));
 
 		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
 		assertEquals(region, row.getRegion());
@@ -198,7 +199,6 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	@Ignore("TODO: Seems the error is in the listing")
 	public void testActionSelectAddresses() throws Exception {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		DebuggerListingProvider listing = waitForComponentProvider(DebuggerListingProvider.class);
@@ -217,16 +217,17 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
+		waitForPass(() -> assertEquals(1, provider.regionTable.getRowCount()));
 		assertEquals(region, row.getRegion());
+		assertFalse(tb.trace.getProgramView().getMemory().isEmpty());
 
 		provider.setSelectedRegions(Set.of(region));
 		waitForSwing();
 		assertTrue(provider.actionSelectAddresses.isEnabled());
 		performAction(provider.actionSelectAddresses);
 
-		// TODO: This seems to me an error in the listing....
-		// When debugging, I see the selection in the listing, but this still returns empty...
-		assertEquals(tb.range(0x00400000, 0x0040ffff), new AddressSet(listing.getSelection()));
+		waitForPass(() -> assertEquals(tb.set(tb.range(0x00400000, 0x0040ffff)),
+			new AddressSet(listing.getSelection())));
 	}
 
 	@Test
@@ -249,12 +250,16 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
 		assertEquals(region, row.getRegion());
+		assertFalse(tb.trace.getProgramView().getMemory().isEmpty());
 
 		listing.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))));
+		waitForPass(() -> assertEquals(tb.set(tb.range(0x00401234, 0x00404321)),
+			new AddressSet(listing.getSelection())));
+
 		waitForSwing();
 		assertTrue(provider.actionSelectRows.isEnabled());
 		performAction(provider.actionSelectRows);
 
-		assertEquals(Set.of(row), Set.copyOf(provider.getSelectedRows()));
+		waitForPass(() -> assertEquals(Set.of(row), Set.copyOf(provider.getSelectedRows())));
 	}
 }

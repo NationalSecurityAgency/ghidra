@@ -128,20 +128,24 @@ public class GdbModelTargetThreadContainer
 		 * =thread-exited, we will wind up invalidating that thread early.
 		 */
 		if (sco.getState() != GdbState.STOPPED) {
-			return AsyncUtils.NIL;
+			return updateThreadStates(sco);
 		}
 		return requestElements(false).thenCompose(__ -> {
-			AsyncFence fence = new AsyncFence();
-			for (GdbThread thread : inferior.getKnownThreads().values()) {
-				GdbModelTargetThread targetThread =
-					(GdbModelTargetThread) impl.getModelObject(thread);
-				fence.include(targetThread.stateChanged(sco));
-			}
-			return fence.ready();
+			return updateThreadStates(sco);
 		}).exceptionally(__ -> {
 			Msg.error(this, "Could not update threads " + this + " on STOPPED");
 			return null;
 		});
+	}
+
+	protected CompletableFuture<Void> updateThreadStates(GdbStateChangeRecord sco) {
+		AsyncFence fence = new AsyncFence();
+		for (GdbThread thread : inferior.getKnownThreads().values()) {
+			GdbModelTargetThread targetThread =
+				(GdbModelTargetThread) impl.getModelObject(thread);
+			fence.include(targetThread.stateChanged(sco));
+		}
+		return fence.ready();
 	}
 
 	public GdbModelTargetBreakpointLocation breakpointHit(GdbBreakpointHitReason reason) {

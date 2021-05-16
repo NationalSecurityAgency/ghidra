@@ -152,10 +152,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new DeleteArchiveAction(plugin));
 		addLocalAction(new RenameAction(plugin));
 		addLocalAction(new EditAction(plugin));
-		addLocalAction(new AlignDataTypeAction(plugin));
+		// NOTE: it make very little sense to blindly enable packing
+//		  addLocalAction(new PackDataTypeAction(plugin));
 //        addLocalAction( new PackDataTypeAction( plugin ));
 //        addLocalAction( new PackSizeDataTypeAction( plugin ));
-		addLocalAction(new AlignAllDataTypesAction(plugin));
+//		  addLocalAction(new PackAllDataTypesAction(plugin));
 //        addLocalAction( new DefineDataTypeAlignmentAction( plugin ));
 		addLocalAction(new CreateEnumFromSelectionAction(plugin));
 

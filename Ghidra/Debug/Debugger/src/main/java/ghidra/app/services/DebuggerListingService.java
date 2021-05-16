@@ -16,19 +16,16 @@
 package ghidra.app.services;
 
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
-import ghidra.app.plugin.core.debug.gui.listing.*;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramSelection;
 
 @ServiceInfo( //
-		defaultProvider = DebuggerListingPlugin.class, //
-		description = "Replacement CodeViewerService for Debugger" //
+	defaultProvider = DebuggerListingPlugin.class, //
+	description = "Replacement CodeViewerService for Debugger" //
 )
 public interface DebuggerListingService extends CodeViewerService {
-	@Deprecated
-	DebuggerListingProvider createListingIfMissing(LocationTrackingSpec spec,
-			boolean followsCurrentThread);
 
 	void setTrackingSpec(LocationTrackingSpec spec);
 

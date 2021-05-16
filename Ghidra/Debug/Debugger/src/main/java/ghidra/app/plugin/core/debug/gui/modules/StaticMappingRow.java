@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import java.math.BigInteger;
 import java.net.URL;
 
 import com.google.common.collect.Range;
@@ -24,6 +25,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
 
 public class StaticMappingRow {
+	private static final BigInteger BIT64 = BigInteger.ONE.shiftLeft(64);
 	private final TraceStaticMapping mapping;
 
 	public StaticMappingRow(TraceStaticMapping mapping) {
@@ -52,6 +54,19 @@ public class StaticMappingRow {
 
 	public long getLength() {
 		return mapping.getLength();
+	}
+
+	public BigInteger getBigLength() {
+		long length = mapping.getLength();
+		if (length == 0) {
+			return BIT64;
+		}
+		else if (length < 0) {
+			return BigInteger.valueOf(length).add(BIT64);
+		}
+		else {
+			return BigInteger.valueOf(length);
+		}
 	}
 
 	public long getShift() {

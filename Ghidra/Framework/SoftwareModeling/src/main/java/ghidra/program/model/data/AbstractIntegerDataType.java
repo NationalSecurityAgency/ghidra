@@ -66,14 +66,6 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	/**
 	 * Return the Format settings definition included in the settings
 	 * definition array
 	 * @see #getSettingsDefinitions()

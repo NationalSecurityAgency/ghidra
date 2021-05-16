@@ -105,32 +105,6 @@ final class PdbUtil {
 		return false;
 	}
 
-//	final static void ensureSize(int expectedLength, Composite composite, MessageLog log) {
-//		int actualLength = composite.getLength();
-//		if (actualLength < expectedLength) {
-//
-//			composite.setInternallyAligned(false);
-//			if (composite instanceof Structure) {
-//				Structure struct = (Structure) composite;
-//				// if this is an empty structure, the structure will lie to us
-//				//    and say it has one element so add 1 to growth factor
-//				struct.growStructure(
-//					expectedLength - actualLength + (struct.isNotYetDefined() ? 1 : 0));
-//			}
-//			// must be a union data type
-//			else {
-//				DataType datatype = new ArrayDataType(DataType.DEFAULT, expectedLength,
-//					DataType.DEFAULT.getLength());
-//				composite.add(datatype);
-//			}
-//		}
-//		else if (actualLength > expectedLength) {
-//			log.appendMsg("PDB", "Composite data type generated from PDB has size mismatch. " +
-//				composite.getName() + ": expected 0x" + Integer.toHexString(expectedLength) +
-//				", but was 0x" + Integer.toHexString(actualLength));
-//		}
-//	}
-
 	final static void clearComponents(Composite composite) {
 		if (composite instanceof Structure) {
 			((Structure) composite).deleteAll();

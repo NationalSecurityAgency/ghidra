@@ -31,13 +31,13 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class AlignedStructureInspector extends AlignedStructurePacker {
 
-	private AlignedStructureInspector(Structure structure) {
+	private AlignedStructureInspector(StructureInternal structure) {
 		super(structure, getComponentWrappers(structure));
 	}
 
 	private static List<ReadOnlyComponentWrapper> getComponentWrappers(Structure structure) {
 		List<ReadOnlyComponentWrapper> list = new ArrayList<>();
-		for (DataTypeComponent c : structure.getComponents()) {
+		for (DataTypeComponent c : structure.getDefinedComponents()) {
 			list.add(new ReadOnlyComponentWrapper(c));
 		}
 		return list;
@@ -168,7 +168,7 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 	 * @param structure
 	 * @return aligned packing result
 	 */
-	public static StructurePackResult packComponents(Structure structure) {
+	public static StructurePackResult packComponents(StructureInternal structure) {
 		AlignedStructureInspector packer = new AlignedStructureInspector(structure);
 		return packer.pack();
 	}

@@ -23,14 +23,14 @@ import java.util.Comparator;
  * NOTE: Structures containing only a flexible array will report a length of 1 which will result in
  * improper code unit sizing since we are unable to support a defined data of length 0.
  * <p>
- * NOTE: The use of zero-length bitfields within unaligned structures is discouraged since they have
- * no real affect and are easily misplaced. Their use should be reserved for aligned/packed
+ * NOTE: The use of zero-length bitfields within non-packed structures is discouraged since they have
+ * no real affect and are easily misplaced. Their use should be reserved for packed
  * structures.
  */
 public interface Structure extends Composite {
 
 	@Override
-	Structure clone(DataTypeManager dtm);
+	public Structure clone(DataTypeManager dtm);
 
 	/**
 	 * Returns the component of this structure with the indicated ordinal. If the specified ordinal
@@ -39,12 +39,12 @@ public interface Structure extends Composite {
 	 * {@link #getFlexibleArrayComponent()} is preferred for obtaining this special trailing
 	 * component.
 	 * 
-	 * @param ordinal the component's ordinal (zero based).
+	 * @param ordinal the ordinal of the component requested.
 	 * @return the data type component.
-	 * @throws ArrayIndexOutOfBoundsException if the ordinal is out of bounds
+	 * @throws IndexOutOfBoundsException if the ordinal is out of bounds
 	 */
 	@Override
-	public abstract DataTypeComponent getComponent(int ordinal);
+	public abstract DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
 	 * Gets the immediate child component that contains the byte at the given offset. If the
@@ -68,23 +68,23 @@ public interface Structure extends Composite {
 	public abstract DataTypeComponent getDataTypeAt(int offset);
 
 	/**
-	 * Inserts a new bitfield at the specified ordinal position in this structure. Within aligned
+	 * Inserts a new bitfield at the specified ordinal position in this structure. Within packed
 	 * structures the specified byteWidth and bitOffset will be ignored since packing will occur at
 	 * the specified ordinal position. The resulting component length and bitfield details will
 	 * reflect the use of minimal storage sizing.
 	 * <p>
-	 * For unaligned structures, a component shift will only occur if the bitfield placement
+	 * For structures with packing disabled, a component shift will only occur if the bitfield placement
 	 * conflicts with another component. If no conflict occurs, the bitfield will be placed at the
 	 * specified location consuming any DEFAULT components as needed. When a conflict does occur a
 	 * shift will be performed at the ordinal position based upon the specified byteWidth. When
 	 * located onto existing bitfields they will be packed together provided they do not conflict,
 	 * otherwise the conflict rule above applies.
 	 * <p>
-	 * Supported aligned packing starts with bit-0 (lsb) of the first byte for little-endian, and
+	 * Supported packing starts with bit-0 (lsb) of the first byte for little-endian, and
 	 * with bit-7 (msb) of the first byte for big-endian. This is the default behavior for most
 	 * compilers. Insertion behavior may not work as expected if packing rules differ from this.
 	 * 
-	 * @param ordinal the ordinal where the new datatype is to be inserted.
+	 * @param ordinal the ordinal of the component to be inserted.
 	 * @param byteWidth the storage allocation unit width which contains the bitfield. Must be large
 	 *            enough to contain the "effective bit size" and corresponding bitOffset. The actual
 	 *            component size used will be recomputed during insertion.
@@ -99,22 +99,22 @@ public interface Structure extends Composite {
 	 * @return the bitfield component created whose associated data type will be BitFieldDataType.
 	 * @throws InvalidDataTypeException if the specified baseDataType is not a valid base type for
 	 *             bitfields.
-	 * @throws ArrayIndexOutOfBoundsException if ordinal is less than 0 or greater than the current
+	 * @throws IndexOutOfBoundsException if ordinal is less than 0 or greater than the current
 	 *             number of components.
 	 */
 	public DataTypeComponent insertBitField(int ordinal, int byteWidth, int bitOffset,
 			DataType baseDataType, int bitSize, String componentName, String comment)
-			throws InvalidDataTypeException, ArrayIndexOutOfBoundsException;
+			throws InvalidDataTypeException, IndexOutOfBoundsException;
 
 	/**
 	 * Inserts a new bitfield at the specified location in this composite. This method is intended
-	 * to be used with unaligned structures where the bitfield will be precisely placed. Within an
-	 * aligned structure the specified byteOffset, byteWidth and bitOffset will be used to identify
+	 * to be used with structures with packing disabled where the bitfield will be precisely placed. Within an
+	 * packed structure the specified byteOffset, byteWidth and bitOffset will be used to identify
 	 * the appropriate ordinal but may not be preserved. The component length will be computed based
 	 * upon the specified parameters and will be reduced from byteWidth to its minimal size for the
 	 * new component.
 	 * <p>
-	 * For unaligned mode, a component shift will only occur if the bitfield placement conflicts
+	 * When packing disabled, a component shift will only occur if the bitfield placement conflicts
 	 * with another component. If no conflict occurs, the bitfield will be placed at the specified
 	 * location consuming any DEFAULT components as needed. When a conflict does occur a shift will
 	 * be performed at the point of conflict based upon the specified byteWidth. When located onto
@@ -125,8 +125,8 @@ public interface Structure extends Composite {
 	 * Insertion behavior may not work as expected if packing rules differ from this.
 	 * <p>
 	 * 
-	 * Zero length bitfields may be inserted although they have no real affect for unaligned
-	 * structures. Only the resulting byte offset within the structure is of significance in
+	 * Zero length bitfields may be inserted although they have no real affect when packing disabled. 
+	 * Only the resulting byte offset within the structure is of significance in
 	 * determining its ordinal placement.
 	 * <p>
 	 * 
@@ -200,67 +200,69 @@ public interface Structure extends Composite {
 
 	/**
 	 * Remove all components from this structure (including flex-array), effectively setting the
-	 * length to zero.
+	 * length to zero.  Packing and minimum alignment settings are unaffected.
 	 */
 	public void deleteAll();
 
 	/**
-	 * Clears the defined component at the given component index. Clearing a component causes a
-	 * defined component to be replaced with a number of undefined dataTypes to offset the removal
-	 * of the defined dataType.
+	 * Clears the defined component at the given component ordinal. Clearing a component within
+	 * a non-packed structure causes a defined component to be replaced with a number of undefined 
+	 * dataTypes to offset the removal of the defined dataType.  In the case of a packed 
+	 * structure the component is deleted without backfill. 
 	 * 
-	 * @param index the index of the component to clear.
-	 * @throws ArrayIndexOutOfBoundsException if component ordinal is out of bounds
+	 * @param ordinal the ordinal of the component to clear.
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public void clearComponent(int index) throws ArrayIndexOutOfBoundsException;
+	public void clearComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Replaces the component at the given component index with a new component of the indicated
+	 * Replaces the component at the given component ordinal with a new component of the indicated
 	 * data type.
 	 * 
-	 * @param index the index where the datatype is to be replaced.
+	 * @param ordinal the ordinal of the component to be replaced.
 	 * @param dataType the datatype to insert.
 	 * @param length the length of the dataType to insert. For fixed length types a length &lt;= 0
 	 *            will use the length of the resolved dataType.
-	 * @return the new componentDataType at the index.
+	 * @return the new component 
 	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
 	 *             component in this composite data type or an invalid length is specified. For
 	 *             example, suppose dt1 contains dt2. Therefore it is not valid to replace a dt2
 	 *             component with dt1 since this would cause a cyclic dependency. In addition, any
 	 *             attempt to replace an existing bit-field component or specify a
 	 *             {@link BitFieldDataType} will produce this error.
-	 * @throws ArrayIndexOutOfBoundsException if component index is out of bounds
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public DataTypeComponent replace(int index, DataType dataType, int length)
-			throws ArrayIndexOutOfBoundsException, IllegalArgumentException;
+	public DataTypeComponent replace(int ordinal, DataType dataType, int length)
+			throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
-	 * Replaces the component at the given component index with a new component of the indicated
+	 * Replaces the component at the given component ordinal with a new component of the indicated
 	 * data type.
 	 * 
-	 * @param index the index where the datatype is to be replaced.
+	 * @param ordinal the ordinal of the component to be replaced.
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the dataType. For fixed length types a length
 	 *            &lt;= 0 will use the length of the resolved dataType.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
-	 * @return the new componentDataType at the index.
+	 * @return the new component.
 	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
 	 *             component in this composite data type or an invalid length is specified. For
 	 *             example, suppose dt1 contains dt2. Therefore it is not valid to replace a dt2
 	 *             component with dt1 since this would cause a cyclic dependency. In addition, any
 	 *             attempt to replace an existing bit-field component or specify a
 	 *             {@link BitFieldDataType} will produce this error.
-	 * @throws ArrayIndexOutOfBoundsException if component index is out of bounds
+	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
-	public DataTypeComponent replace(int index, DataType dataType, int length, String name,
-			String comment) throws ArrayIndexOutOfBoundsException, IllegalArgumentException;
+	public DataTypeComponent replace(int ordinal, DataType dataType, int length, String name,
+			String comment) throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
 	 * Replaces the component at the specified byte offset with a new component of the indicated
 	 * data type. If the offset corresponds to a bit-field, all bit-fields at that offset will be
 	 * removed and replaced by the specified component. Keep in mind bit-field or any component
-	 * removal must clear sufficient space for an unaligned structure to complete the replacement.
+	 * removal must clear sufficient space in a structure with packing disabled to complete
+	 * the replacement.
 	 * 
 	 * @param offset the byte offset into the structure where the datatype is to be replaced.
 	 * @param dataType the datatype to insert.
@@ -268,7 +270,7 @@ public interface Structure extends Composite {
 	 *            &lt;= 0 will use the length of the resolved dataType.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
-	 * @return the new componentDataType at the index.
+	 * @return the new component.
 	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
 	 *             component in this composite data type or an invalid length is specified. For
 	 *             example, suppose dt1 contains dt2. Therefore it is not valid to replace a dt2
@@ -288,6 +290,12 @@ public interface Structure extends Composite {
 
 	/**
 	 * Get the optional trailing flexible array component associated with this structure.
+	 * <p>
+	 * NOTE: The trailing flexable array may be assigned an incorrect offset
+	 * when packing is enabled and the minimum alignment is specified.  In such cases, 
+	 * the flex array may be less than the overall structure length.  Currently, it is
+	 * assumed the trailing flex array will have an offset equal to the overall
+	 * structure length.
 	 * 
 	 * @return optional trailing flexible array component associated with this structure or null if
 	 *         not present.
@@ -314,24 +322,13 @@ public interface Structure extends Composite {
 	public void clearFlexibleArrayComponent();
 
 	/**
-	 * Increases the size of the structure by the given amount by adding undefined datatypes at the
-	 * end of the structure.
+	 * Increases the size of the structure by the given amount by adding undefined filler at the
+	 * end of the structure.  NOTE: This method only has an affect on structures with packing disabled.
 	 * 
 	 * @param amount the amount by which to grow the structure.
 	 * @throws IllegalArgumentException if amount &lt; 1
 	 */
 	public void growStructure(int amount);
-
-	/**
-	 * Sets the current packing value (usually a power of 2). A value of NOT_PACKING should be
-	 * passed if this isn't a packed data type. Otherwise this value indicates a maximum alignment
-	 * for any component within this data type. Calling this method will cause the data type to
-	 * become an internally aligned data type. (Same as {@link Composite#setPackingValue(int)})
-	 * 
-	 * @param maxAlignment the new packing value or 0 for NOT_PACKING. A negative value will be
-	 *            treated the same as 0.
-	 */
-	public void pack(int maxAlignment);
 
 	/**
 	 * <code>BitOffsetComparator</code> provides ability to compare an normalized bit offset (see
@@ -364,6 +361,9 @@ public interface Structure extends Composite {
 	 * </pre>
 	 */
 	public static class BitOffsetComparator implements Comparator<Object> {
+
+		public static final Comparator<Object> INSTANCE_LE = new BitOffsetComparator(false);
+		public static final Comparator<Object> INSTANCE_BE = new BitOffsetComparator(true);
 
 		private boolean bigEndian;
 
@@ -439,47 +439,4 @@ public interface Structure extends Composite {
 
 	}
 
-	/**
-	 * <code>OffsetComparator</code> provides ability to compare an Integer offset with a
-	 * DataTypeComponent object. The offset will be consider equal (0) if the component contains the
-	 * offset.
-	 */
-	public static class OffsetComparator implements Comparator<Object> {
-
-		@Override
-		public int compare(Object o1, Object o2) {
-			if (o1 instanceof Integer) {
-				return -compare(o2, o1);
-			}
-			DataTypeComponent dtc = (DataTypeComponent) o1;
-			int offset = ((Integer) o2).intValue();
-			if (offset < dtc.getOffset()) {
-				return 1;
-			}
-			else if (offset > dtc.getEndOffset()) {
-				return -1;
-			}
-			return 0;
-		}
-
-	}
-
-	/**
-	 * <code>OrdinalComparator</code> provides ability to compare an Integer ordinal with a
-	 * DataTypeComponent object. The offset will be consider equal (0) if the component corresponds
-	 * to the specified ordinal.
-	 */
-	public static class OrdinalComparator implements Comparator<Object> {
-
-		@Override
-		public int compare(Object o1, Object o2) {
-			if (o1 instanceof Integer) {
-				return -compare(o2, o1);
-			}
-			DataTypeComponent dtc = (DataTypeComponent) o1;
-			int ordinal = ((Integer) o2).intValue();
-			return dtc.getOrdinal() - ordinal;
-		}
-
-	}
 }

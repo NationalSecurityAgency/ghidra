@@ -106,7 +106,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 
 	@Test
 	public void testAddAction() throws Exception {
-		assertFalse(mappingsProvider.actionAdd.isEnabled());
+		assertTrue(mappingsProvider.actionAdd.isEnabled());
 
 		createProgramFromTrace(tb.trace);
 		intoProject(tb.trace);
@@ -135,16 +135,18 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		programManager.openProgram(program);
 		waitForSwing();
 
-		assertFalse(mappingsProvider.actionAdd.isEnabled());
-
 		ProgramSelection traceSel =
 			new ProgramSelection(tb.addr(0xdeadbeefL), tb.addr(0xdeadbeefL + 0x0f));
 		listingPlugin.getProvider().setSelection(traceSel);
 		codeViewerPlugin.goTo(new ProgramLocation(program, addr(program, 0xc0de1234L)), true);
 		waitForSwing();
 
-		assertTrue(mappingsProvider.actionAdd.isEnabled());
-		performAction(mappingsProvider.actionAdd, true);
+		performAction(mappingsProvider.actionAdd, false);
+
+		DebuggerAddMappingDialog dialog = waitForDialogComponent(DebuggerAddMappingDialog.class);
+		dialog.applyCallback();
+		dialog.close();
+		waitForDomainObject(tb.trace);
 
 		TraceStaticMapping entry = Unique.assertOne(manager.getAllEntries());
 		assertEquals(Range.atLeast(0L), entry.getLifespan());
@@ -169,9 +171,10 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		waitForDomainObject(tb.trace);
 
 		// First check that all records are displayed
-		List<StaticMappingRow> correlationsDisplayed =
+		waitForPass(() -> assertEquals(3, mappingsProvider.mappingTable.getRowCount()));
+		List<StaticMappingRow> mappingsDisplayed =
 			mappingsProvider.mappingTableModel.getModelData();
-		assertEquals(3, correlationsDisplayed.size());
+		assertEquals(3, mappingsDisplayed.size());
 
 		// Select and remove the first 2 via the action
 		// NOTE: I'm not responsible for making the transaction here. The UI should do it.
@@ -180,9 +183,9 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		waitForDomainObject(tb.trace);
 
 		// Now, check that only the final one remains
-		correlationsDisplayed = mappingsProvider.mappingTableModel.getModelData();
-		assertEquals(1, correlationsDisplayed.size());
-		StaticMappingRow record = correlationsDisplayed.get(0);
+		mappingsDisplayed = mappingsProvider.mappingTableModel.getModelData();
+		assertEquals(1, mappingsDisplayed.size());
+		StaticMappingRow record = mappingsDisplayed.get(0);
 		assertEquals(tb.addr(0xdeadbeef + 0x180), record.getTraceAddress());
 
 		// Check that they were removed from the trace as well

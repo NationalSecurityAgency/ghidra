@@ -30,7 +30,8 @@ import docking.action.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.HorizontalTabPanel;
 import docking.widgets.HorizontalTabPanel.TabListCellRenderer;
-import docking.widgets.table.*;
+import docking.widgets.table.GTable;
+import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import docking.widgets.timeline.TimelineListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -55,6 +56,7 @@ import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Swing;
+import ghidra.util.database.ObjectKey;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -249,6 +251,16 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	protected static class ThreadTableModel
+			extends RowWrappedEnumeratedColumnTableModel< //
+					ThreadTableColumns, ObjectKey, ThreadRow, TraceThread> {
+
+		public ThreadTableModel(DebuggerThreadsProvider provider) {
+			super("Threads", ThreadTableColumns.class, TraceThread::getObjectKey,
+				t -> new ThreadRow(provider.modelService, t));
+		}
+	}
+
 	private class ThreadsListener extends TraceDomainObjectListener {
 		public ThreadsListener() {
 			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
@@ -267,23 +279,15 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 
 		private void threadAdded(TraceThread thread) {
-			threadMap.computeIfAbsent(thread, t -> {
-				ThreadRow tr = new ThreadRow(modelService, t);
-				threadTableModel.add(tr);
-				doSetThread(thread);
-				return tr;
-			});
+			threadTableModel.addItem(thread);
 		}
 
 		private void threadChanged(TraceThread thread) {
-			threadTableModel.notifyUpdatedWith(row -> row.getThread() == thread);
+			threadTableModel.updateItem(thread);
 		}
 
 		private void threadDeleted(TraceThread thread) {
-			ThreadRow tr = threadMap.remove(thread);
-			if (tr != null) {
-				threadTableModel.delete(tr);
-			}
+			threadTableModel.deleteItem(thread);
 		}
 
 		private void snapAdded(TraceSnapshot snapshot) {
@@ -333,9 +337,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	private final CollectionChangeListener<TraceRecorder> recordersListener =
 		new RecordersChangeListener();
 
-	protected final Map<TraceThread, ThreadRow> threadMap = new HashMap<>();
-	protected final EnumeratedColumnTableModel<ThreadRow> threadTableModel =
-		new DefaultEnumeratedColumnTableModel<>("Threads", ThreadTableColumns.class);
+	protected final ThreadTableModel threadTableModel = new ThreadTableModel(this);
 
 	private JPanel mainPanel;
 	private JSplitPane splitPane;
@@ -453,7 +455,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 		try (Suppression supp = cbCoordinateActivation.suppress(null)) {
 			if (thread != null) {
-				threadFilterPanel.setSelectedItem(threadMap.get(thread));
+				threadFilterPanel.setSelectedItem(threadTableModel.getRow(thread));
 			}
 			else {
 				threadTable.clearSelection();
@@ -495,20 +497,13 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void loadThreads() {
-		threadMap.clear();
 		threadTableModel.clear();
 		Trace curTrace = current.getTrace();
 		if (curTrace == null) {
 			return;
 		}
 		TraceThreadManager manager = curTrace.getThreadManager();
-		for (TraceThread thread : manager.getAllThreads()) {
-			threadMap.computeIfAbsent(thread, t -> {
-				ThreadRow tr = new ThreadRow(modelService, t);
-				threadTableModel.add(tr);
-				return tr;
-			});
-		}
+		threadTableModel.addAllItems(manager.getAllThreads());
 		updateTimelineMax();
 	}
 

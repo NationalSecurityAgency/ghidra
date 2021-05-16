@@ -23,9 +23,14 @@ import javax.swing.JTextField;
 import org.junit.Test;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Composite.AlignmentType;
 
 public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTest {
+
+	// NOTE: The trailing flexable array may be assigned an incorrect offset
+	// when packing is enabled and the minimum alignment is specified.  In such cases, 
+	// the flex array may be less than the overall structure length.  Currently, it is
+	// assumed the trailing flex array will have an offset equal to the overall
+	// structure length.
 
 	@Test
 	public void testUnalignedStructure() {
@@ -40,10 +45,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 			structureModel.getOriginalCategoryPath().getPath());
 		assertEquals(0, structureModel.getNumComponents());// no components
 		assertEquals(1, structureModel.getRowCount());// blank row
-		assertIsInternallyAligned(false);
-		assertPackingValue(Composite.NOT_PACKING);
-		assertMinimumAlignmentType(AlignmentType.DEFAULT_ALIGNED);
-		assertMinimumAlignmentValue(Composite.DEFAULT_ALIGNMENT_VALUE);
+		assertIsPackingEnabled(false);
+		assertIsDefaultAligned();
 		assertLength(0);
 		assertActualAlignment(1);
 		assertEquals(0, structureModel.getNumSelectedComponentRows());
@@ -83,7 +86,9 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertLength(2);
 		assertActualAlignment(1);
 
-		pressButtonByName(getPanel(), "Internally Aligned");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
 
 		assertEquals(2, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -105,8 +110,12 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		waitForSwing();
 
-		pressButtonByName(getPanel(), "Internally Aligned");
-		pressButtonByName(getPanel(), "Machine Minimum Alignment");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
+
+		pressButtonByName(getPanel(), "Machine Alignment");
+		assertIsMachineAligned();
 
 		assertEquals(2, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -130,19 +139,22 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		waitForSwing();
 
-		pressButtonByName(editorPanel, "Internally Aligned");
+		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		assertIsPackingEnabled(true);
+		assertDefaultPacked();
+
 		JTextField minAlignField =
-			(JTextField) getInstanceField("minAlignValueTextField", editorPanel);
+			(JTextField) getInstanceField("explicitAlignTextField", editorPanel);
 		assertNotNull(minAlignField);
-		JRadioButton byValueMinAlignButton =
-			(JRadioButton) getInstanceField("byValueMinAlignButton", editorPanel);
-		assertNotNull(byValueMinAlignButton);
-		pressButton(byValueMinAlignButton);
-		assertEquals("4", minAlignField.getText());
+		JRadioButton explicitAlignButton =
+			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
+		assertNotNull(explicitAlignButton);
+		pressButton(explicitAlignButton);
+		assertEquals("8", minAlignField.getText()); // toy.cspec machine alignment is default value
 
 		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(4, structureModel.getMinimumAlignment());
+		assertEquals(8, structureModel.getExplicitMinimumAlignment());
 
 		assertEquals(2, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -151,9 +163,9 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
 		checkBlankRow(2);
-		checkRow(3, 4, 0, "ddw[0]", DWordDataType.dataType, "", "");
-		assertLength(4);
-		assertActualAlignment(4);
+		checkRow(3, 8, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		assertLength(8);
+		assertActualAlignment(8);
 	}
 
 	@Test
@@ -183,8 +195,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 	public void checkByValueAlignedStructure(int value, int alignment, int length)
 			throws Exception {
-		emptyStructure.setInternallyAligned(true);
-		emptyStructure.setMinimumAlignment(value);
+		emptyStructure.setPackingEnabled(true);
+		emptyStructure.setExplicitMinimumAlignment(value);
 
 		emptyStructure.add(ByteDataType.dataType);
 		emptyStructure.add(CharDataType.dataType);
@@ -193,19 +205,19 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		init(emptyStructure, pgmRootCat, false);
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
 
-		JRadioButton byValueMinAlignButton =
-			(JRadioButton) getInstanceField("byValueMinAlignButton", editorPanel);
-		assertNotNull(byValueMinAlignButton);
-		assertEquals(true, byValueMinAlignButton.isSelected());
+		JRadioButton explicitAlignButton =
+			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
+		assertNotNull(explicitAlignButton);
+		assertEquals(true, explicitAlignButton.isSelected());
 
 		JTextField minAlignField =
-			(JTextField) getInstanceField("minAlignValueTextField", editorPanel);
+			(JTextField) getInstanceField("explicitAlignTextField", editorPanel);
 		assertNotNull(minAlignField);
 		assertEquals("" + value, minAlignField.getText());
 
 		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(value, structureModel.getMinimumAlignment());
+		assertEquals(value, structureModel.getExplicitMinimumAlignment());
 
 		assertEquals(2, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -220,8 +232,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 	@Test
 	public void testDefaultAlignedPacked1Structure() throws Exception {
 		int value = 1;
-		emptyStructure.setInternallyAligned(true);
-		emptyStructure.setPackingValue(value);
+		emptyStructure.setPackingEnabled(true);
+		emptyStructure.setExplicitPackingValue(value);
 
 		init(emptyStructure, pgmRootCat, false);
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
@@ -231,17 +243,17 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		addFlexDataType(DWordDataType.dataType, null, null);
 
 		JRadioButton byValuePackingButton =
-			(JRadioButton) findComponentByName(editorPanel, "By Value Packing");
+			(JRadioButton) findComponentByName(editorPanel, "Explicit Packing");
 		assertNotNull(byValuePackingButton);
 		JTextField packingValueField =
 			(JTextField) findComponentByName(editorPanel, "Packing Value");
 		assertNotNull(packingValueField);
 		assertEquals(true, byValuePackingButton.isSelected());
-		assertEquals("" + value, packingValueField.getText());
+		assertEquals(Integer.toString(value), packingValueField.getText());
 
 		assertEquals(true, structureModel.viewComposite.isDefaultAligned());
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(Composite.DEFAULT_ALIGNMENT_VALUE, structureModel.getMinimumAlignment());
+		assertEquals(false, structureModel.viewComposite.hasExplicitMinimumAlignment());
 
 		assertEquals(2, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
