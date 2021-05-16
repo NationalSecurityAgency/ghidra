@@ -16,56 +16,20 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.DataTypeNamingUtil;
-import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEndianity;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.Array;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.BitFieldDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataTypeImpl;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.DefaultDataType;
-import ghidra.program.model.data.Dynamic;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.data.EnumDataType;
-import ghidra.program.model.data.FactoryDataType;
-import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.data.ParameterDefinition;
-import ghidra.program.model.data.ParameterDefinitionImpl;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.TypeDef;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.program.model.data.Undefined;
-import ghidra.program.model.data.UnionDataType;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -176,14 +140,11 @@ public class DWARFDataTypeImporter {
 		if (result != null) {
 			return result;
 		}
+
+		// Query the dwarfDTM for plain Ghidra dataTypes that were previously
+		// registered in a different import session.
 		DataType alreadyImportedDT = dwarfDTM.getDataType(diea.getOffset(), null);
-		if (alreadyImportedDT != null &&
-			!(alreadyImportedDT instanceof Array &&
-				((Array) alreadyImportedDT).getNumElements() == 1)) {
-			// HACK: don't re-use previously imported single-element 
-			// Ghidra array datatype because they may have actually been an empty array
-			// definition we need the special meta-data flag DWARFDataType.isEmptyArrayType
-			// which is only available in a freshly created DWARFDataType.
+		if (shouldReuseAlreadyImportedDT(alreadyImportedDT)) {
 			return new DWARFDataType(alreadyImportedDT, null, diea.getOffset());
 		}
 
@@ -257,6 +218,28 @@ public class DWARFDataTypeImporter {
 		recordTempDataType(result);
 
 		return result;
+	}
+
+	/**
+	 * Returns true if the previously imported data type should be reused.
+	 * <p>
+	 * Don't re-use previously imported single-element
+	 * Ghidra array datatypes because they may have actually been an empty array
+	 * definition and we need the special meta-data flag DWARFDataType.isEmptyArrayType
+	 * which is only available in a freshly created DWARFDataType.
+	 * <p>
+	 * Don't re-use empty structs (isNotYetDefined) to ensure that newer
+	 * definitions of the same struct are given a chance to be resolved() 
+	 * into the DTM. 
+	 * 
+	 * @param alreadyImportedDT dataType to check
+	 * @return boolean true if its okay to reuse the data type
+	 */
+	private boolean shouldReuseAlreadyImportedDT(DataType alreadyImportedDT) {
+		return alreadyImportedDT != null &&
+			!alreadyImportedDT.isNotYetDefined() &&
+			!(alreadyImportedDT instanceof Array &&
+				((Array) alreadyImportedDT).getNumElements() == 1);
 	}
 
 	/*
@@ -828,6 +811,8 @@ public class DWARFDataTypeImporter {
 	private void populateStubStruct_worker(DWARFDataType ddt, StructureDataType structure,
 			DIEAggregate diea, int childTagType) throws IOException, DWARFExpressionException {
 
+		Set<Long> conflictingZeroLenFields = getConflictingZeroLenFields(diea, childTagType);
+
 		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(childTagType)) {
 
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
@@ -883,6 +868,16 @@ public class DWARFDataTypeImporter {
 						"failed to parse location", memberName, childDT, -1, bitSize, -1), "\n");
 					continue;
 				}
+			}
+
+			if (conflictingZeroLenFields.contains(childEntry.getOffset())) {
+				// Skip adding this member because it is a problematic zero-length
+				// field
+				DWARFUtil.appendDescription(structure,
+					memberDesc("Missing member", "zero-length member", memberName, childDT,
+						memberOffset, -1, -1),
+					"\n");
+				continue;
 			}
 
 			boolean isDynamicSizedType = (childDT.dataType instanceof Dynamic ||
@@ -993,7 +988,10 @@ public class DWARFDataTypeImporter {
 				}
 
 				int childLength = getUnpaddedDataTypeLength(childDT.dataType);
-				if (memberOffset + childLength > structure.getLength()) {
+				if (structure.isNotYetDefined() ||
+					(memberOffset + childLength > structure.getLength())) {
+					// zero len struct can't have members added, even if they are zero len, or
+					// member is longer than struct has storage for
 					DWARFUtil.appendDescription(structure, memberDesc("Missing member",
 						"exceeds parent struct len", memberName, childDT, memberOffset, -1, -1),
 						"\n");
@@ -1030,6 +1028,74 @@ public class DWARFDataTypeImporter {
 				}
 			}
 		}
+	}
+
+	private Set<Long> getConflictingZeroLenFields(DIEAggregate diea, int childTagType)
+			throws IOException, DWARFExpressionException {
+		// Returns a set of DIE offsets of zero len fields that are fighting for
+		// the same offset in the parent struct
+		Map<Integer, Set<Long>> zeroLenMembers = new HashMap<>();
+
+		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(childTagType)) {
+
+			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			if (childDIEA.hasAttribute(DWARFAttribute.DW_AT_external)) {
+				continue;
+			}
+
+			int bitSize = childDIEA.parseInt(DWARFAttribute.DW_AT_bit_size, -1);
+			boolean isBitField = bitSize != -1;
+			if (isBitField) {
+				continue;
+			}
+
+			DWARFDataType childDT = getDataType(childDIEA.getTypeRef(), null);
+			if (childDT == null) {
+				continue;
+			}
+			if (childDT.isZeroLenDT()) {
+				try {
+					int memberOffset =
+						childDIEA.parseDataMemberOffset(DWARFAttribute.DW_AT_data_member_location,
+							0);
+					zeroLenMembers.computeIfAbsent(memberOffset, k -> new HashSet<>())
+							.add(childEntry.getOffset());
+				}
+				catch (DWARFExpressionException e) {
+					continue;
+				}
+			}
+		}
+
+		Set<Long> conflictingZeroLenFields = new HashSet<>();
+		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(childTagType)) {
+			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			if (childDIEA.hasAttribute(DWARFAttribute.DW_AT_external)) {
+				continue;
+			}
+			int bitSize = childDIEA.parseInt(DWARFAttribute.DW_AT_bit_size, -1);
+			boolean isBitField = bitSize != -1;
+			if (isBitField) {
+				continue;
+			}
+
+			DWARFDataType childDT = getDataType(childDIEA.getTypeRef(), null);
+			if (childDT == null) {
+				continue;
+			}
+			int memberOffset = 0;
+			try {
+				memberOffset =
+					childDIEA.parseDataMemberOffset(DWARFAttribute.DW_AT_data_member_location, 0);
+			}
+			catch (DWARFExpressionException e) {
+				continue;
+			}
+			if (!childDT.isZeroLenDT() && zeroLenMembers.containsKey(memberOffset)) {
+				conflictingZeroLenFields.addAll(zeroLenMembers.get(memberOffset));
+			}
+		}
+		return conflictingZeroLenFields;
 	}
 
 	private static String memberDesc(String prefix, String errorStr, String memberName,
@@ -1119,7 +1185,14 @@ public class DWARFDataTypeImporter {
 				}
 				numElements = 1;
 			}
-			else if (numElements == 0 || numElements > Integer.MAX_VALUE) {
+			else if (numElements == 0) {
+				Msg.error(this,
+					"Unsupported value [" + numElements + "] for array's size in DIE: " +
+						diea.getOffset() + ", forcing to 1");
+				numElements = 1;
+				isEmptyArray = true;
+			}
+			else if (numElements > Integer.MAX_VALUE) {
 				Msg.error(this, "Bad value [" + numElements + "] for array's size in DIE: " +
 					diea.getOffset() + ", forcing to 1");
 				numElements = 1;
@@ -1364,7 +1437,7 @@ public class DWARFDataTypeImporter {
 		for (int i = ptrChainTypes.size() - 1; i >= 0; i--) {
 			Pointer origPtr = ptrChainTypes.get(i);
 			result = new PointerDataType(result,
-				origPtr.isDynamicallySized() ? -1 : origPtr.getLength(), dataTypeManager);
+				origPtr.hasLanguageDependantLength() ? -1 : origPtr.getLength(), dataTypeManager);
 		}
 
 		return result;
@@ -1399,5 +1472,13 @@ public class DWARFDataTypeImporter {
 			return offsets.stream().sorted().map(Long::toHexString).collect(
 				Collectors.joining(","));
 		}
+
+		boolean isZeroLenDT() {
+			DataType tmpDt =
+				(dataType instanceof TypeDef) ? ((TypeDef) dataType).getBaseDataType() : dataType;
+			return isEmptyArrayType || tmpDt.isNotYetDefined() ||
+				tmpDt.getLength() == 0 /* this can't happen right now, but never know for future */;
+		}
+
 	}
 }

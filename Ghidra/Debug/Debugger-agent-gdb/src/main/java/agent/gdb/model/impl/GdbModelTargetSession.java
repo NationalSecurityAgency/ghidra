@@ -229,6 +229,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		//return impl.gdb.interrupt();
 		try {
 			impl.gdb.sendInterruptNow();
+			impl.gdb.cancelCurrentCommand();
 		}
 		catch (IOException e) {
 			Msg.error(this, "Could not interrupt", e);

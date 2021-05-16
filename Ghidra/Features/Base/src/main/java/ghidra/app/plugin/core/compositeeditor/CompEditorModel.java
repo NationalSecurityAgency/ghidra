@@ -21,7 +21,6 @@ import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -232,7 +231,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int numComps = getNumComponents();
 
 		// Make sure we don't have a selection with rows outside the table.
-		// This can happen due to switching between aligned and unaligned.
+		// This can happen due to switching between packed and non-packed.
 		FieldSelection allRows = new FieldSelection();
 		allRows.addRange(0, numComps + 1);
 		selection.intersect(allRows);
@@ -346,30 +345,31 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * and does not perform any edit notification.
 	 *
 	 * @param rows array with each row (component) index to delete
-	 * @param monitor the task monitor
 	 * @throws CancelledException if cancelled 
 	 */
-	private void delete(int[] rows, TaskMonitor monitor) throws CancelledException {
+	private void delete(int[] rows) throws CancelledException {
 
 		int n = rows.length;
-		monitor.initialize(n);
-
-		int[] selectedRows = getSelectedRows();
 		Arrays.sort(rows);
+
+		Set<Integer> rowSet = new HashSet<>();
+
 		for (int i = n - 1; i >= 0; i--) {
-			monitor.checkCanceled();
-			monitor.setMessage("Deleting " + (n - i + 1) + " of " + n);
 			int rowIndex = rows[i];
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
-			doDelete(componentOrdinal);
-			monitor.incrementProgress(1);
+			if (componentOrdinal < row) {
+				row--;
+			}
+			rowSet.add(componentOrdinal);
 		}
+
+		viewComposite.delete(rowSet);
 
 		// Not sure if this is the right behavior.  Assuming the deleted rows were selected, 
 		// restore the selection to be the first row that was deleted so that the UI leaves the
 		// user's selection close to where it was.
-		if (selectedRows.length > 0) {
-			setSelection(new int[] { selectedRows[0] });
+		if (rows.length > 0) {
+			setSelection(new int[] { rows[0] });
 		}
 
 		notifyCompositeChanged();
@@ -409,14 +409,13 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 
 		final int entries = endRowIndex - startRowIndex + 1;
-		int[] ordinals = new int[entries];
+		Set<Integer> ordinals = new HashSet<>();
 
 		monitor.initialize(entries);
-		int i = 0;
-		for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--, i++) {
+		for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--) {
 			monitor.checkCanceled();
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
-			ordinals[i] = componentOrdinal;
+			ordinals.add(componentOrdinal);
 			if (componentOrdinal < row) {
 				row--;
 			}
@@ -432,7 +431,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void deleteSelectedComponents(TaskMonitor monitor) throws UsrException {
+	public void deleteSelectedComponents() throws UsrException {
 		if (!isDeleteAllowed()) {
 			throw new UsrException("Deleting is not allowed.");
 		}
@@ -443,7 +442,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int[] selectedComponents = getSelectedComponentRows();
 		int firstRowIndex = !selection.isEmpty() ? selectedComponents[0] : getRowCount();
 		try {
-			delete(selectedComponents, monitor);
+			delete(selectedComponents);
 		}
 		finally {
 			componentEdited();
@@ -1531,7 +1530,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		DataType dt = getComponent(rowIndex).getDataType();
 		int maxDups = Integer.MAX_VALUE;
-		// If editModel is showing undefined bytes (unaligned) 
+		// If editModel is showing undefined bytes (non-packed) 
 		// then constrain by number of undefined bytes that follow.
 		if (isShowingUndefinedBytes() && (dt != DataType.DEFAULT)) {
 			int numBytes = getNumUndefinedBytesAt(rowIndex + 1);
@@ -1609,23 +1608,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return rowIndex;
 	}
 
-	public boolean isAligned() {
-		return viewComposite.isInternallyAligned();
-	}
-
-	public void setAligned(boolean aligned) {
-		boolean currentViewIsAligned = viewComposite.isInternallyAligned();
-		if (currentViewIsAligned == aligned) {
-			return;
-		}
-		viewComposite.setInternallyAligned(aligned);
-		notifyCompositeChanged();
-	}
-
-	public int getPackingValue() {
-		return viewComposite.getPackingValue();
-	}
-
 	protected boolean isSizeEditable() {
 		return false;
 	}
@@ -1644,69 +1626,102 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			hadChanges = false;
 			return hadChanges;
 		}
-		hadChanges = !(viewComposite.isInternallyAligned() == oldComposite.isInternallyAligned() &&
-			viewComposite.getPackingValue() == oldComposite.getPackingValue() &&
-			viewComposite.isDefaultAligned() == oldComposite.isDefaultAligned() &&
-			viewComposite.isMachineAligned() == oldComposite.isMachineAligned() &&
-			viewComposite.getMinimumAlignment() == oldComposite.getMinimumAlignment());
+
+		PackingType packingType = getPackingType();
+		AlignmentType alignmentType = getAlignmentType();
+
+		hadChanges = (packingType != oldComposite.getPackingType()) ||
+			(alignmentType != oldComposite.getAlignmentType()) ||
+			(packingType == PackingType.EXPLICIT &&
+				getExplicitPackingValue() != oldComposite.getExplicitPackingValue()) ||
+			(alignmentType == AlignmentType.EXPLICIT &&
+				getExplicitMinimumAlignment() != oldComposite.getExplicitMinimumAlignment());
 		return hadChanges;
 	}
 
 	/**
-	 * Return the external (minimum) alignment type for the structure or union being viewed
+	 * Return the (minimum) alignment type for the structure or union being viewed
 	 * @return the alignment type
 	 */
-	public AlignmentType getMinimumAlignmentType() {
-		if (viewComposite.isDefaultAligned()) {
-			return AlignmentType.DEFAULT_ALIGNED;
-		}
-		if (viewComposite.isMachineAligned()) {
-			return AlignmentType.MACHINE_ALIGNED;
-		}
-		return AlignmentType.ALIGNED_BY_VALUE;
+	public AlignmentType getAlignmentType() {
+		return viewComposite.getAlignmentType();
 	}
 
-	/**
-	 * Return the external (minimum) alignment value for the structure or union being viewed.
-	 * @return the alignment
-	 */
-	public int getMinimumAlignment() {
-		if (viewComposite != null) {
-			return viewComposite.getMinimumAlignment();
-		}
-		return 0;
+	public int getExplicitMinimumAlignment() {
+		return viewComposite.getExplicitMinimumAlignment();
 	}
 
-	public void setAlignmentType(AlignmentType alignmentType) {
-		if (alignmentType == AlignmentType.DEFAULT_ALIGNED) {
-			viewComposite.setToDefaultAlignment();
+	public void setAlignmentType(AlignmentType alignmentType, int explicitValue) {
+		AlignmentType currentAlignType = getAlignmentType();
+		if (alignmentType == AlignmentType.DEFAULT) {
+			if (currentAlignType == AlignmentType.DEFAULT) {
+				return;
+			}
+			viewComposite.setToDefaultAligned();
 		}
-		else if (alignmentType == AlignmentType.MACHINE_ALIGNED) {
-			viewComposite.setToMachineAlignment();
+		else if (alignmentType == AlignmentType.MACHINE) {
+			if (currentAlignType == AlignmentType.MACHINE) {
+				return;
+			}
+			viewComposite.setToMachineAligned();
 		}
 		else {
-			int alignment = viewComposite.getMinimumAlignment();
-			if (alignment == 0) {
-				alignment = viewDTM.getDataOrganization().getAlignment(viewComposite, getLength());
+			if (currentAlignType == AlignmentType.EXPLICIT &&
+				explicitValue == viewComposite.getExplicitMinimumAlignment()) {
+				return;
 			}
-			viewComposite.setMinimumAlignment(alignment); // Causes the type to change, but not the value.
+			viewComposite.setExplicitMinimumAlignment(explicitValue);
+		}
+		if (fixSelection()) {
+			selectionChanged();
 		}
 		notifyCompositeChanged();
 	}
 
-	public abstract void setAlignment(int alignmentValue) throws InvalidInputException;
+	public boolean isPackingEnabled() {
+		return viewComposite.isPackingEnabled();
+	}
 
-	public void setPackingValue(int packingValue) {
-		int currentViewPackingValue = viewComposite.getPackingValue();
-		if (currentViewPackingValue == packingValue) {
-			return;
+	public PackingType getPackingType() {
+		return viewComposite.getPackingType();
+	}
+
+	public int getExplicitPackingValue() {
+		return viewComposite.getExplicitPackingValue();
+	}
+
+	public void setPackingType(PackingType packingType, int explicitValue) {
+		PackingType currentPacktype = getPackingType();
+		if (packingType == PackingType.DISABLED) {
+			if (currentPacktype == PackingType.DISABLED) {
+				return;
+			}
+			viewComposite.setPackingEnabled(false);
 		}
-		viewComposite.setPackingValue(packingValue);
+		else if (packingType == PackingType.DEFAULT) {
+			if (currentPacktype == PackingType.DEFAULT) {
+				return;
+			}
+			viewComposite.setToDefaultPacking();
+		}
+		else {
+			if (currentPacktype == PackingType.EXPLICIT &&
+				explicitValue == viewComposite.getExplicitPackingValue()) {
+				return;
+			}
+			viewComposite.setExplicitPackingValue(explicitValue);
+		}
+		if (fixSelection()) {
+			selectionChanged();
+		}
 		notifyCompositeChanged();
 	}
 
 	public int getActualAlignment() {
-		return viewDTM.getDataOrganization().getAlignment(viewComposite, getLength());
+		return viewComposite.getAlignment();
+//		return viewDTM.getDataOrganization().getAlignment(viewComposite, getLength());
 	}
+
+
 
 }

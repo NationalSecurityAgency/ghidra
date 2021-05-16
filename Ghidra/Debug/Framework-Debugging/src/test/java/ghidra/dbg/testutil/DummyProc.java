@@ -16,10 +16,12 @@
 package ghidra.dbg.testutil;
 
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 
 public class DummyProc implements AutoCloseable {
 	public final Process process;
@@ -60,14 +62,18 @@ public class DummyProc implements AutoCloseable {
 
 	DummyProc(String... args) throws IOException {
 		args[0] = which(args[0]);
-		process = new ProcessBuilder(args).start();
+		process = new ProcessBuilder(args)
+				.inheritIO()
+				.start();
 
 		pid = process.pid();
+		Msg.info(this, "Started dummy process pid = " + pid + ": " + List.of(args));
 	}
 
 	@Override
 	public void close() throws Exception {
 		if (!process.destroyForcibly().waitFor(1000, TimeUnit.MILLISECONDS)) {
+			Msg.error(this, "Could not terminate process " + pid);
 			throw new TimeoutException("Could not terminate process " + pid);
 		}
 	}

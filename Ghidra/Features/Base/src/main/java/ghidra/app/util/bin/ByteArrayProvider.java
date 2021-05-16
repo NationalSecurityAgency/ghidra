@@ -17,6 +17,8 @@ package ghidra.app.util.bin;
 
 import java.io.*;
 
+import ghidra.formats.gfilesystem.FSRL;
+
 /**
  * An implementation of {@link ByteProvider} where the underlying bytes are supplied by a static 
  * byte array.
@@ -26,6 +28,7 @@ import java.io.*;
 public class ByteArrayProvider implements ByteProvider {
 	private byte[] srcBytes;
 	private String name;
+	private FSRL fsrl;
 
 	/**
 	 * Constructs a {@link ByteArrayProvider} using the specified byte array
@@ -33,7 +36,18 @@ public class ByteArrayProvider implements ByteProvider {
 	 * @param bytes the underlying byte array
 	 */
 	public ByteArrayProvider(byte[] bytes) {
+		this(bytes, null);
+	}
+
+	/**
+	 * Constructs a {@link ByteArrayProvider} using the specified byte array
+	 * 
+	 * @param bytes the underlying byte array
+	 * @param fsrl FSRL identity of the file
+	 */
+	public ByteArrayProvider(byte[] bytes, FSRL fsrl) {
 		this.srcBytes = bytes;
+		this.fsrl = fsrl;
 	}
 
 	/**
@@ -50,6 +64,11 @@ public class ByteArrayProvider implements ByteProvider {
 	@Override
 	public void close() {
 		// don't do anything for now
+	}
+
+	@Override
+	public FSRL getFSRL() {
+		return fsrl;
 	}
 
 	@Override

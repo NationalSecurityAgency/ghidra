@@ -295,8 +295,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		try {
 			checkIsValid();
 			return manager.getCodeManager()
-					.getComment(CodeUnit.REPEATABLE_COMMENT,
-						getEntryPoint());
+					.getComment(CodeUnit.REPEATABLE_COMMENT, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -314,8 +313,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		try {
 			checkDeleted();
 			manager.getCodeManager()
-					.setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT,
-						comment);
+					.setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT, comment);
 		}
 		finally {
 			manager.lock.release();
@@ -809,9 +807,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		if (baseType instanceof TypeDef) {
 			baseType = ((TypeDef) baseType).getBaseDataType();
 		}
-		returnParam.setDynamicStorage(
-			(baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
-					: VariableStorage.UNASSIGNED_STORAGE);
+		returnParam
+				.setDynamicStorage((baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
+						: VariableStorage.UNASSIGNED_STORAGE);
 
 		PrototypeModel callingConvention = getCallingConvention();
 		if (callingConvention == null) {
@@ -898,8 +896,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 		}
 		program.getBookmarkManager()
-				.setBookmark(getEntryPoint(), BookmarkType.ERROR,
-					"Bad Variables Removed", "Removed " + badSymbols.size() + " bad variables");
+				.setBookmark(getEntryPoint(), BookmarkType.ERROR, "Bad Variables Removed",
+					"Removed " + badSymbols.size() + " bad variables");
 		for (Symbol s : badSymbols) {
 			s.delete();
 		}
@@ -2711,8 +2709,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			else {
 				if (program.getCompilerSpec()
 						.getPcodeInjectLibrary()
-						.getPayload(
-							InjectPayload.CALLFIXUP_TYPE, name, null, null) == null) {
+						.getPayload(InjectPayload.CALLFIXUP_TYPE, name) == null) {
 					Msg.warn(this, "Undefined CallFixup set at " + entryPoint + ": " + name);
 				}
 				callFixupMap.add(entryPoint, name);
@@ -2829,8 +2826,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				tagManager.applyFunctionTag(getID(), tag.getId());
 
 				Address addr = getEntryPoint();
-				program.setChanged(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION, addr, addr, tag,
-					tag);
+				program.setChanged(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION, addr, addr, tag, tag);
 			}
 
 			// Add to local cache

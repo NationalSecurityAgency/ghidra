@@ -32,6 +32,14 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 		DEFAULT, MONOSPACED, BOLD;
 	}
 
+	public static String longToPrefixedHexString(long v) {
+		return v < 0 ? "-0x" + Long.toString(-v, 16) : "0x" + Long.toString(v, 16);
+	}
+
+	public static String bigIntToPrefixedHexString(BigInteger v) {
+		return v.signum() < 0 ? "-0x" + v.negate().toString(16) : "0x" + v.toString(16);
+	}
+
 	public static final CustomToStringCellRenderer<Object> MONO_OBJECT =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Object.class,
 			(v, s) -> v == null ? "<null>" : v.toString(), false);
@@ -40,13 +48,13 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 			(v, s) -> v == null ? "<null>" : v, true);
 	public static final CustomToStringCellRenderer<Long> MONO_LONG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Long.class,
-			(v, s) -> v == null ? "<null>" : "0x" + Long.toString(v, 16), false);
+			(v, s) -> v == null ? "<null>" : longToPrefixedHexString(v), false);
 	public static final CustomToStringCellRenderer<Long> MONO_ULONG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Long.class,
 			(v, s) -> v == null ? "<null>" : "0x" + Long.toUnsignedString(v, 16), false);
 	public static final CustomToStringCellRenderer<BigInteger> MONO_BIG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, BigInteger.class,
-			(v, s) -> v == null ? "<null>" : "0x" + v.toString(16), false);
+			(v, s) -> v == null ? "<null>" : bigIntToPrefixedHexString(v), false);
 
 	private final CustomFont customFont;
 	private final Class<T> cls;

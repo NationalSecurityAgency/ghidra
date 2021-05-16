@@ -456,7 +456,7 @@ public class DataTypeUtils {
 		if (dataType instanceof Pointer) {
 			Pointer pdt = (Pointer) dataType;
 			return new PointerDataType(copyToNamedBaseDataType(pdt.getDataType(), dtm),
-				pdt.isDynamicallySized() ? -1 : pdt.getLength(), dtm);
+				pdt.hasLanguageDependantLength() ? -1 : pdt.getLength(), dtm);
 		}
 		else if (dataType instanceof Array) {
 			Array adt = (Array) dataType;

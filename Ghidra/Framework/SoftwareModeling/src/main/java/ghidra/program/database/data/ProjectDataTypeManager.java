@@ -97,12 +97,12 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 
 	////////////////////
 	@Override
-	public void dataTypeChanged(DataType dt) {
-		super.dataTypeChanged(dt);
+	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
+		super.dataTypeChanged(dt, isAutoChange);
 //		dataTypeArchive.getCodeManager().invalidateCache(false);
 		// TODO
 		dataTypeArchive.dataTypeChanged(getID(dt),
-			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_CHANGED, null, dt);
+			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_CHANGED, isAutoChange, null, dt);
 	}
 
 	@Override
@@ -118,14 +118,15 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 			DataType replacementDt) {
 		super.dataTypeReplaced(existingDtID, existingPath, replacementDt);
 		dataTypeArchive.dataTypeChanged(existingDtID,
-			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_REPLACED, existingPath, replacementDt);
+			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_REPLACED, false, existingPath,
+			replacementDt);
 	}
 
 	@Override
 	protected void dataTypeDeleted(long deletedID, DataTypePath deletedDataTypePath) {
 		super.dataTypeDeleted(deletedID, deletedDataTypePath);
 		dataTypeArchive.dataTypeChanged(deletedID,
-			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_REMOVED, deletedDataTypePath, null);
+			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_REMOVED, false, deletedDataTypePath, null);
 	}
 
 	@Override
@@ -133,14 +134,14 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		super.dataTypeMoved(dt, oldPath, newPath);
 		Category category = getCategory(oldPath.getCategoryPath());
 		dataTypeArchive.dataTypeChanged(getID(dt),
-			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_MOVED, category, dt);
+			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_MOVED, false, category, dt);
 	}
 
 	@Override
 	protected void dataTypeNameChanged(DataType dt, String oldName) {
 		super.dataTypeNameChanged(dt, oldName);
 		dataTypeArchive.dataTypeChanged(getID(dt),
-			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_RENAMED, oldName, dt);
+			DataTypeArchiveChangeManager.DOCR_DATA_TYPE_RENAMED, false, oldName, dt);
 	}
 
 	@Override

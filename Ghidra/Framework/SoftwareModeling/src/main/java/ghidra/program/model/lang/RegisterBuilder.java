@@ -188,6 +188,25 @@ public class RegisterBuilder {
 	}
 
 	/**
+	 * Add an alias to a previously defined register.
+	 * @param registerName defined register
+	 * @param alias alias to be added to defined register
+	 * @return true if alias addition was successful, else false
+	 */
+	public boolean addAlias(String registerName, String alias) {
+		Register register = registerMap.get(registerName);
+		if (register == null) {
+			return false;
+		}
+		if (registerMap.containsKey(alias)) {
+			return false;
+		}
+		register.addAlias(alias);
+		addRegisterToNameMap(alias, register);
+		return true;
+	}
+
+	/**
 	 * Set the group name for the specified register
 	 * @param registerName register name
 	 * @param groupName group name

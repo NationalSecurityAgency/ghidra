@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.collect.RangeSet;
 
 import agent.gdb.manager.*;
-import agent.gdb.manager.GdbManager.ExecSuffix;
+import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointType;
 import agent.gdb.manager.impl.cmd.*;
@@ -249,7 +249,7 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
-	public CompletableFuture<Void> step(ExecSuffix suffix) {
+	public CompletableFuture<Void> step(StepCmd suffix) {
 		return execute(new GdbStepCommand(manager, id, suffix));
 	}
 

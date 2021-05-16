@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.macho;
+package ghidra.app.util.pdb.pdbapplicator;
 
-public enum RelocationTypePPC {
-	PPC_RELOC_VANILLA,
-	PPC_RELOC_PAIR,
-	PPC_RELOC_BR14,
-	PPC_RELOC_BR24,
-	PPC_RELOC_HI16,
-	PPC_RELOC_LO16,
-	PPC_RELOC_HA16,
-	PPC_RELOC_LO14,
-	PPC_RELOC_SECTDIFF,
-	PPC_RELOC_PB_LA_PTR,
-	PPC_RELOC_HI16_SECTDIFF,
-	PPC_RELOC_LO16_SECTDIFF,
-	PPC_RELOC_HA16_SECTDIFF,
-	PPC_RELOC_JBSR,
-	PPC_RELOC_LO14_SECTDIFF,
-	PPC_RELOC_LOCAL_SECTDIFF;
+/**
+ * PDB Applicator control for actions performed.  Used by {@link PdbApplicatorOptions}
+ */
+public enum PdbApplicatorControl {
+	ALL("Process All"),
+	DATA_TYPES_ONLY("Data Types Only"),
+	PUBLIC_SYMBOLS_ONLY("Public Symbols Only");
+
+	private final String label;
+
+	@Override
+	public String toString() {
+		return label;
+	}
+
+	private PdbApplicatorControl(String label) {
+		this.label = label;
+	}
 
 }

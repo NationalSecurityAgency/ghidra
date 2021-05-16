@@ -36,11 +36,11 @@ import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.HighlightProvider;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.util.ServiceListener;
+import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -307,17 +307,33 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!isVisible()) {
-			return;
-		}
-
+		// Check for events that signal that a decompiler process' data is stale
+		// and if so force a new process to be spawned
 		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
+			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
+			ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
 			controller.resetDecompiler();
 		}
+		else if (ev.containsEvent(DomainObject.DO_PROPERTY_CHANGED)) {
+			Iterator<DomainObjectChangeRecord> iter = ev.iterator();
+			while (iter.hasNext()) {
+				DomainObjectChangeRecord record = iter.next();
+				if (record.getEventType() == DomainObject.DO_PROPERTY_CHANGED) {
+					if (record.getOldValue() instanceof String) {
+						String value = (String) record.getOldValue();
+						if (value.startsWith(SpecExtension.SPEC_EXTENSION)) {
+							controller.resetDecompiler();
+							break;
+						}
+					}
+				}
+			}
+		}
 
-		redecompileUpdater.update();
-
+		// Trigger a redecompile an any program change if the window is active
+		if (isVisible()) {
+			redecompileUpdater.update();
+		}
 	}
 
 	private void doRefresh() {

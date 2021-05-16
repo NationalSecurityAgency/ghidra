@@ -165,11 +165,10 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * @throws DWARFException
 	 */
 	@Test
-	@SuppressWarnings("unused")
 	public void testStructDanglingDecl() throws CancelledException, IOException, DWARFException {
 
 		// CU1
-		DebugInfoEntry declDIE = newDeclStruct("mystruct").create(cu);
+		newDeclStruct("mystruct").create(cu);
 
 		// CU2
 		DebugInfoEntry intDIE = addInt(cu2);
@@ -188,11 +187,85 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertNull(structdt2);
 	}
 
-	/**
+	/*
+	 * This test is more about the StructureDB implementation updating ordinals of
+	 * components correctly when an embedded datatype changes size.
+	 * <p>
+	 * The initial version of struct2.guardfield will have an ordinal of 15 to account for
+	 * all the invisible undefines that are between the first field and the guardfield at offset
+	 * 16.  When the data type for struct1 is overwritten with new information that
+	 * changes it size, the undefines are no longer needed and the ordinal of guardfield should
+	 * just be 1.
+	 */
+	@Test
+	public void testStructDeclThenGrow() throws CancelledException, IOException, DWARFException {
+
+		// CU1
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry struct1Decl = newDeclStruct("struct1").create(cu);
+		DebugInfoEntry struct2 = newStruct("struct2", 20).create(cu);
+		newMember(struct2, "struct1field", struct1Decl, 0).create(cu);
+		newMember(struct2, "guardfield", intDIE, 16).create(cu);
+
+		// CU2
+		DebugInfoEntry int2DIE = addInt(cu2);
+
+		DebugInfoEntry struct1Impl = newStruct("struct1", 16).create(cu2);
+		newMember(struct1Impl, "f1", int2DIE, 0).create(cu2);
+		newMember(struct1Impl, "f2", int2DIE, 4).create(cu2);
+		newMember(struct1Impl, "f3", int2DIE, 8).create(cu2);
+		newMember(struct1Impl, "f4", int2DIE, 12).create(cu2);
+
+		importAllDataTypes();
+
+		Structure struct2dt = (Structure)dataMgr.getDataType(rootCP, "struct2");
+
+		assertEquals(2, struct2dt.getNumComponents());
+		assertEquals(2, struct2dt.getNumDefinedComponents());
+	}
+
+	@Test
+	public void testStructDeclThatIsLaterDefined()
+			throws CancelledException, IOException, DWARFException {
+
+		// CU1
+		// struct structA; // fwd decl
+		// struct structB { structA struct1field; int guardfield; }
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry structADecl = newDeclStruct("structA").create(cu);
+		DebugInfoEntry structB = newStruct("structB", 20).create(cu);
+		newMember(structB, "structAfield", structADecl, 0).create(cu);
+		newMember(structB, "guardfield", intDIE, 16).create(cu);
+
+		// CU2
+		// struct structB { structA struct1field; int guardfield; }
+		// struct structA { int f1, f2, f3, f4; }
+		// Redefine structB with the same info, but to a fully
+		// specified structA instance instead of missing fwd decl.
+		// The order of the DIE records is important.  The structure (structB) 
+		// containing the problematic structA needs to be hit first so we can
+		// test that cached types are handled correctly.
+		DebugInfoEntry int2DIE = addInt(cu2);
+		DebugInfoEntry structB_cu2 = newStruct("structB", 20).create(cu2);
+		newMember(structB_cu2, "structAfield", getForwardOffset(cu2, 2), 0).create(cu2);
+		newMember(structB_cu2, "guardfield", int2DIE, 16).create(cu2);
+
+		DebugInfoEntry structA_cu2 = newStruct("structA", 16).create(cu2);
+		newMember(structA_cu2, "f1", int2DIE, 0).create(cu2);
+		newMember(structA_cu2, "f2", int2DIE, 4).create(cu2);
+		newMember(structA_cu2, "f3", int2DIE, 8).create(cu2);
+		newMember(structA_cu2, "f4", int2DIE, 12).create(cu2);
+
+		importAllDataTypes();
+
+		Structure structAdt = (Structure) dataMgr.getDataType(rootCP, "structA");
+		Structure structBdt = (Structure) dataMgr.getDataType(rootCP, "structB");
+		assertEquals(2, structBdt.getNumComponents());
+		assertEquals(4, structAdt.getNumComponents());
+	}
+
+	/*
 	 * Test structure definition when the same structure is defined in two different CUs.
-	 * @throws CancelledException
-	 * @throws IOException
-	 * @throws DWARFException
 	 */
 	@Test
 	public void testStructDup() throws CancelledException, IOException, DWARFException {
@@ -648,6 +721,49 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	}
 
+	/*
+	 * Test flex array where dims were specified with no value, relying on
+	 * default.
+	 */
+	@Test
+	public void testStructFlexarray_noValue()
+			throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArray(cu, intDIE, true, -1);
+
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		assertNotNull(structdt.getFlexibleArrayComponent());
+
+	}
+
+	/*
+	 * Test flex array where dims were specified using a count=0 value instead of a
+	 * upperbound=-1.
+	 */
+	@Test
+	public void testStructFlexarray_0count()
+			throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, intDIE, 0);
+
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		assertNotNull(structdt.getFlexibleArrayComponent());
+	}
+
 	@Test
 	public void testStructInteriorFlexarray()
 			throws CancelledException, IOException, DWARFException {
@@ -691,7 +807,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
 		List<DataTypeComponent> bitfields = getBitFieldComponents(structdt);
-		Set<Integer> expectedBitfieldSizes = new HashSet<Integer>(Set.of(2, 3, 9));
+		Set<Integer> expectedBitfieldSizes = new HashSet<>(Set.of(2, 3, 9));
 		for (DataTypeComponent dtc : bitfields) {
 			BitFieldDataType bfdt = (BitFieldDataType) dtc.getDataType();
 			expectedBitfieldSizes.remove(bfdt.getBitSize());
@@ -824,6 +940,9 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// anon struct
 	}
 
+	/*
+	 * Test array defintions that use upper_bound attribute
+	 */
 	@Test
 	public void testArray() throws CancelledException, IOException, DWARFException {
 		DebugInfoEntry intDIE = addInt(cu);
@@ -833,8 +952,24 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		Array arr = (Array) dwarfDTM.getDataType(arrayDIE.getOffset(), null);
 		assertNotNull(arr);
+		assertEquals(11, arr.getNumElements());
 	}
 
+	/*
+	 * Tests array definitions that use count attribute instead of upper_bounds
+	 */
+	@Test
+	public void testArrayWithCountAttr() throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, intDIE, 10);
+
+		importAllDataTypes();
+
+		Array arr = (Array) dwarfDTM.getDataType(arrayDIE.getOffset(), null);
+		assertNotNull(arr);
+		assertEquals(10, arr.getNumElements());
+	}
+	
 	// not implemented yet
 	public void testSubr() {
 		// func ptrs

@@ -180,7 +180,7 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		plugin.addDataType(ShortDataType.dataType);
 
 		Structure struct = new StructureDataType("test", 0);
-		struct.setInternallyAligned(true);
+		struct.setPackingEnabled(true);
 		struct.add(IntegerDataType.dataType, "intField", "");
 		struct.add(LongDataType.dataType, "longField", "");
 		struct.add(ShortDataType.dataType, "shortField", "");

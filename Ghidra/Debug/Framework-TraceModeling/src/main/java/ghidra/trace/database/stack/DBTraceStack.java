@@ -99,7 +99,10 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 		}
 	}
 
-	@DBAnnotatedField(column = THREAD_SNAP_COLUMN_NAME, indexed = true, codec = ThreadSnapDBFieldCodec.class)
+	@DBAnnotatedField(
+		column = THREAD_SNAP_COLUMN_NAME,
+		indexed = true,
+		codec = ThreadSnapDBFieldCodec.class)
 	private ThreadSnap threadSnap;
 	@DBAnnotatedField(column = FRAMES_COLUMN_NAME)
 	private long[] frameKeys;
@@ -109,7 +112,8 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 	private DBTraceThread thread;
 	private final List<DBTraceStackFrame> frames = new ArrayList<>();
 
-	public DBTraceStack(DBTraceStackManager manager, DBCachedObjectStore<?> store, DBRecord record) {
+	public DBTraceStack(DBTraceStackManager manager, DBCachedObjectStore<?> store,
+			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}
@@ -170,6 +174,8 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 
 	@Override
 	public void setDepth(int depth, boolean atInner) {
+		//System.err.println("setDepth(threadKey=" + thread.getKey() + "snap=" + getSnap() +
+		//	",depth=" + depth + ",inner=" + atInner + ");");
 		int curDepth = frameKeys == null ? 0 : frameKeys.length;
 		if (depth == curDepth) {
 			return;

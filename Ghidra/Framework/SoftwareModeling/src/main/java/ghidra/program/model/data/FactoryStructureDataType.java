@@ -24,7 +24,6 @@ import ghidra.util.exception.DuplicateNameException;
  * a Structure and create a new Dynamic structure each time they are used.
  */
 public abstract class FactoryStructureDataType extends BuiltIn implements FactoryDataType {
-	private final static long serialVersionUID = 1;
 
 	/**
 	 * Constructs a new DynamicStructureDataType with the given name
@@ -41,7 +40,7 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	 * @see ghidra.program.model.data.DataType#getLength()
 	 */
 	@Override
-	public int getLength() {
+	public final int getLength() {
 		return -1;
 	}
 

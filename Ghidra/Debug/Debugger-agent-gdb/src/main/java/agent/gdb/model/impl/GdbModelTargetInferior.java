@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.*;
-import agent.gdb.manager.GdbManager.ExecSuffix;
+import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.*;
 import ghidra.async.AsyncFence;
@@ -160,24 +160,24 @@ public class GdbModelTargetInferior
 		return impl.gateFuture(inferior.cont());
 	}
 
-	protected ExecSuffix convertToGdb(TargetStepKind kind) {
+	protected StepCmd convertToGdb(TargetStepKind kind) {
 		switch (kind) {
 			case FINISH:
-				return ExecSuffix.FINISH;
+				return StepCmd.FINISH;
 			case INTO:
-				return ExecSuffix.STEP_INSTRUCTION;
+				return StepCmd.STEPI;
 			case LINE:
-				return ExecSuffix.STEP;
+				return StepCmd.STEP;
 			case OVER:
-				return ExecSuffix.NEXT_INSTRUCTION;
+				return StepCmd.NEXTI;
 			case OVER_LINE:
-				return ExecSuffix.NEXT;
+				return StepCmd.NEXT;
 			case RETURN:
-				return ExecSuffix.RETURN;
+				return StepCmd.RETURN;
 			case UNTIL:
-				return ExecSuffix.UNTIL;
+				return StepCmd.UNTIL;
 			case EXTENDED:
-				return ExecSuffix.EXTENDED;
+				return StepCmd.EXTENDED;
 			default:
 				throw new AssertionError();
 		}

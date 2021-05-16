@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.model.data.CompositeInternal;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
 
@@ -37,13 +38,13 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 	static final int V1_COMPOSITE_SOURCE_SYNC_TIME_COL = 8;
 	static final int V1_COMPOSITE_LAST_CHANGE_TIME_COL = 9;
 
-	static final Schema V1_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
-		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
-			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
-			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
-		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
-			"Number Of Components", "Source Archive ID", "Source Data Type ID", "Source Sync Time",
-			"Last Change Time" });
+//	static final Schema V1_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
+//		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
+//			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, LongField.INSTANCE,
+//			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
+//		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
+//			"Number Of Components", "Source Archive ID", "Source Data Type ID", "Source Sync Time",
+//			"Last Change Time" });
 
 	private Table compositeTable;
 
@@ -72,8 +73,8 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 
 	@Override
 	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
-			int length, long sourceArchiveID, long sourceDataTypeID, long lastChangeTime,
-			int internalAlignment, int externalAlignment) throws IOException {
+			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
+			long lastChangeTime, int packValue, int minAlignment) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
 			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
@@ -95,7 +96,8 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 
 	@Override
 	public boolean removeRecord(long compositeID) throws IOException {
-		return compositeTable.deleteRecord(compositeID);
+		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
+			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
 
 	@Override
@@ -130,6 +132,7 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 			oldRec.getBooleanValue(V1_COMPOSITE_IS_UNION_COL));
 		rec.setLongValue(COMPOSITE_CAT_COL, oldRec.getLongValue(V1_COMPOSITE_CAT_COL));
 		rec.setIntValue(COMPOSITE_LENGTH_COL, oldRec.getIntValue(V1_COMPOSITE_LENGTH_COL));
+		rec.setIntValue(COMPOSITE_ALIGNMENT_COL, oldRec.getIntValue(-1));
 		rec.setIntValue(COMPOSITE_NUM_COMPONENTS_COL,
 			oldRec.getIntValue(V1_COMPOSITE_NUM_COMPONENTS_COL));
 		rec.setLongValue(COMPOSITE_SOURCE_ARCHIVE_ID_COL,
@@ -140,8 +143,8 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 			oldRec.getLongValue(V1_COMPOSITE_SOURCE_SYNC_TIME_COL));
 		rec.setLongValue(COMPOSITE_LAST_CHANGE_TIME_COL,
 			oldRec.getLongValue(V1_COMPOSITE_LAST_CHANGE_TIME_COL));
-		rec.setIntValue(COMPOSITE_INTERNAL_ALIGNMENT_COL, CompositeDBAdapter.UNALIGNED);
-		rec.setIntValue(COMPOSITE_EXTERNAL_ALIGNMENT_COL, CompositeDBAdapter.DEFAULT_ALIGNED);
+		rec.setIntValue(COMPOSITE_PACKING_COL, CompositeInternal.NO_PACKING);
+		rec.setIntValue(COMPOSITE_MIN_ALIGN_COL, CompositeInternal.DEFAULT_ALIGNMENT);
 		return rec;
 	}
 
@@ -150,8 +153,8 @@ class CompositeDBAdapterV1 extends CompositeDBAdapter implements RecordTranslato
 		Field[] keys = compositeTable.findRecords(new LongField(datatypeID.getValue()),
 			V1_COMPOSITE_UNIVERSAL_DT_ID_COL);
 
-		for (int i = 0; i < keys.length; i++) {
-			DBRecord record = compositeTable.getRecord(keys[i]);
+		for (Field key : keys) {
+			DBRecord record = compositeTable.getRecord(key);
 			if (record.getLongValue(V1_COMPOSITE_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return translateRecord(record);
 			}

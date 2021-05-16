@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 import com.google.common.collect.RangeSet;
 
 import agent.gdb.manager.*;
-import agent.gdb.manager.GdbManager.ExecSuffix;
+import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.*;
 import ghidra.async.AsyncLazyValue;
 import ghidra.lifecycle.Internal;
@@ -394,7 +394,7 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public CompletableFuture<Void> step(ExecSuffix suffix) {
+	public CompletableFuture<Void> step(StepCmd suffix) {
 		return execute(new GdbStepCommand(manager, null, suffix));
 	}
 

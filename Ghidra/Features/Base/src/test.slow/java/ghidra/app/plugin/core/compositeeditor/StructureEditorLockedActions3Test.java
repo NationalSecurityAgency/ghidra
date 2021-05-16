@@ -47,7 +47,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 		DataType originalDt4 = getDataType(4);
 
 		// Make selected components into internal structure.
-		invoke(createInternalStructureAction);
+		invoke(createInternalStructureAction, false);
 
 		// Specify name for structure.
 		InputDialog inputDialog = waitForDialogComponent(InputDialog.class);
@@ -173,7 +173,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 		assertEquals(29, getModel().getLength());
 		assertEquals(8, getModel().getNumComponents());
 		setSelection(new int[] { 4 });
-		invoke(fav);
+		invoke(fav, false);
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		okInput(dialog, 8);
@@ -213,7 +213,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		setSelection(new int[] {1});
 	//		DataType dt1 = getDataType(1);
 	//		assertTrue(getDataType(1).isEquivalent(new WordDataType()));
-	//		invoke(pointerAction);
+	//		invoke(pointerAction, false);
 	//		dialog = (NumberInputDialog)env.waitForDialogComponent(NumberInputDialog.class, 1000);
 	//		assertNotNull(dialog);
 	//		cancelInput(dialog, 2);
@@ -259,7 +259,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		DataType dt1 = getDataType(1);
 	//		assertTrue(getDataType(1).isEquivalent(new StringDataType()));
 	//		assertEquals(5, getModel().getComponent(1).getLength());
-	//		invoke(pointerAction);
+	//		invoke(pointerAction, false);
 	//		dialog = (NumberInputDialog)env.waitForDialogComponent(NumberInputDialog.class, 1000);
 	//		assertNotNull(dialog);
 	//		okInput(dialog, 8);
@@ -299,7 +299,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		
 	//		setSelection(new int[] {10});
 	//		DataType dt10 = getDataType(10);
-	//		invoke(pointerAction);
+	//		invoke(pointerAction, false);
 	//		dialog = (NumberInputDialog)env.waitForDialogComponent(NumberInputDialog.class, 1000);
 	//		assertNotNull(dialog);
 	//		okInput(dialog, 2);
@@ -321,7 +321,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		
 	//		setSelection(new int[] {15});
 	//		DataType dt15 = getDataType(15);
-	//		invoke(pointerAction);
+	//		invoke(pointerAction, false);
 	//		dialog = (NumberInputDialog)env.waitForDialogComponent(NumberInputDialog.class, 1000);
 	//		assertNotNull(dialog);
 	//		okInput(dialog, 4);

@@ -68,12 +68,12 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 			// NB. We should already be on the clientExecutor
 			Map<String, ?> attributes = obj.getCallbackAttributes();
 			if (!attributes.isEmpty()) {
-				defensive(() -> listener.attributesChanged(obj, List.of(), attributes),
+				defensive(() -> listener.attributesChanged(obj, List.of(), Map.copyOf(attributes)),
 					"attributesChanged(r)");
 			}
 			Map<String, ? extends TargetObject> elements = obj.getCallbackElements();
 			if (!elements.isEmpty()) {
-				defensive(() -> listener.elementsChanged(obj, List.of(), elements),
+				defensive(() -> listener.elementsChanged(obj, List.of(), Map.copyOf(elements)),
 					"elementsChanged(r)");
 			}
 			return obj;

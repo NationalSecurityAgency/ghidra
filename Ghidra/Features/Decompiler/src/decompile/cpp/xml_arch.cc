@@ -127,6 +127,12 @@ void XmlArchitecture::restoreXml(DocumentStorage &store)
       ++iter;
     }
   }
+  if (iter != list.end()) {
+    if ((*iter)->getName() == "specextensions") {
+      store.registerTag(*iter);
+      ++iter;
+    }
+  }
   if (iter!=list.end()) {
     if ((*iter)->getName() == "coretypes") {
       store.registerTag(*iter);

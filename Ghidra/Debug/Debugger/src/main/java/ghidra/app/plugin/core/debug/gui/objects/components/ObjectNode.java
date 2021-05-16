@@ -59,7 +59,9 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	public void setContainer(ObjectTree tree, ObjectContainer parent, ObjectContainer container) {
 		this.container = container;
 		name = container.getName();
-		tree.addToMap(parent, container, this);
+		if (parent != null) {
+			tree.addToMap(parent, container, this);
+		}
 		//fireNodeStructureChanged(this);
 	}
 

@@ -149,28 +149,8 @@ class DataTypePanel extends JPanel {
 	}
 
 	private void formatAlignment(Composite composite) {
-		StringBuffer alignmentBuffer = new StringBuffer();
-		if (!composite.isInternallyAligned()) {
-			alignmentBuffer.append("Unaligned");
-		}
-		else if (composite.isDefaultAligned()) {
-			alignmentBuffer.append("Aligned");
-		}
-		else if (composite.isMachineAligned()) {
-			alignmentBuffer.append("Machine aligned");
-		}
-		else {
-			long alignment = composite.getMinimumAlignment();
-			alignmentBuffer.append("align(" + alignment + ")");
-		}
-		if (composite.isInternallyAligned()) {
-			long packingValue = composite.getPackingValue();
-			if (packingValue != Composite.NOT_PACKING) {
-				alignmentBuffer.append(" pack(" + packingValue + ")");
-			}
-		}
-
-		insertString(alignmentBuffer.toString() + "\n\n", sourceAttrSet);
+		String str = CompositeDataTypeImpl.getAlignmentAndPackingString(composite);
+		insertString(str + "\n\n", sourceAttrSet);
 	}
 
 	private void insertAlignment(Composite composite) {
@@ -202,7 +182,7 @@ class DataTypePanel extends JPanel {
 			buffer.append("[0]");
 		}
 		else if (dt instanceof BitFieldDataType &&
-			!((Composite) dtc.getParent()).isInternallyAligned()) {
+			!((Composite) dtc.getParent()).isPackingEnabled()) {
 			BitFieldDataType bfDt = (BitFieldDataType) dt;
 			buffer.append("(");
 			buffer.append(Integer.toString(bfDt.getBitOffset()));
@@ -255,24 +235,24 @@ class DataTypePanel extends JPanel {
 		DataTypeComponent[] components = comp.getDefinedComponents();
 		DataTypeComponent flexDtc = null;
 		if (comp instanceof Structure) {
-			showComponentOffset = !comp.isInternallyAligned();
+			showComponentOffset = !comp.isPackingEnabled();
 			flexDtc = ((Structure) comp).getFlexibleArrayComponent();
 		}
 
 		int offsetLength = showComponentOffset ? Integer.toHexString(comp.getLength()).length() : 0;
 		int maxDtNameLength = 10;
 		int maxFieldNameLength = 1;
-		for (int i = 0; i < components.length; i++) {
-			maxDtNameLength = max(getDataTypeName(components[i]), maxDtNameLength);
-			maxFieldNameLength = max(components[i].getFieldName(), maxFieldNameLength);
+		for (DataTypeComponent component : components) {
+			maxDtNameLength = max(getDataTypeName(component), maxDtNameLength);
+			maxFieldNameLength = max(component.getFieldName(), maxFieldNameLength);
 		}
 		if (flexDtc != null) {
 			maxDtNameLength = max(getDataTypeName(flexDtc), maxDtNameLength);
 			maxFieldNameLength = max(flexDtc.getFieldName(), maxFieldNameLength);
 		}
 
-		for (int i = 0; i < components.length; i++) {
-			renderComponent(components[i], maxDtNameLength, maxFieldNameLength, offsetLength);
+		for (DataTypeComponent component : components) {
+			renderComponent(component, maxDtNameLength, maxFieldNameLength, offsetLength);
 		}
 		if (flexDtc != null) {
 			renderComponent(flexDtc, maxDtNameLength, maxFieldNameLength, offsetLength);
@@ -293,9 +273,9 @@ class DataTypePanel extends JPanel {
 
 		String[] names = enuum.getNames();
 		int maxLength = 0;
-		for (int i = 0; i < names.length; i++) {
-			if (names[i].length() > maxLength) {
-				maxLength = names[i].length();
+		for (String name : names) {
+			if (name.length() > maxLength) {
+				maxLength = name.length();
 			}
 		}
 		long[] values = enuum.getValues();
@@ -336,8 +316,8 @@ class DataTypePanel extends JPanel {
 			return;
 		}
 		int maxLength = 0;
-		for (int i = 0; i < vars.length; i++) {
-			String typeName = vars[i].getDataType().getDisplayName();
+		for (ParameterDefinition var : vars) {
+			String typeName = var.getDataType().getDisplayName();
 			if (typeName.length() > maxLength) {
 				maxLength = typeName.length();
 			}

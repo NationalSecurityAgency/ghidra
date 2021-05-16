@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.macho;
+package ghidra.program.model.data;
 
-public enum RelocationTypeARM {
-
-	ARM_RELOC_VANILLA,
-	ARM_RELOC_PAIR,
-	ARM_RELOC_SECTDIFF,
-	ARM_RELOC_LOCAL_SECTDIFF,
-	ARM_RELOC_PB_LA_PTR,
-	ARM_RELOC_BR24,
-	ARM_THUMB_RELOC_BR22,
-	ARM_THUMB_32_BRANCH,//obsolete
-	ARM_RELOC_HALF,
-	ARM_RELOC_HALF_SECTDIFF;
+public interface UnionInternal extends Union, CompositeInternal {
 
 }

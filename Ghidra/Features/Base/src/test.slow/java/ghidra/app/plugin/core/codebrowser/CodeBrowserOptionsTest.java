@@ -90,12 +90,12 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		struct.add(CharDataType.dataType);
 		struct.add(IntegerDataType.dataType);
 		struct.add(CharDataType.dataType);
-		struct.setInternallyAligned(true);
+		struct.setPackingEnabled(true);
 		builder.applyDataType("0x1001100", struct);
 
 		builder.setBytes("0x1001200", "01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f");
 		struct = new StructureDataType("struct2", 12);
-		struct.setInternallyAligned(false);
+		struct.setPackingEnabled(false);
 		struct.insertAtOffset(0, CharDataType.dataType, -1);
 		struct.insertAtOffset(4, IntegerDataType.dataType, -1);
 		struct.insertAtOffset(8, CharDataType.dataType, -1);
@@ -486,7 +486,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		showTool(tool);
 		loadProgram();
 
-		// turn alignment bytes option on but it has no impact on displayed bytes for unaligned structure
+		// turn alignment bytes option on but it has no impact on displayed bytes for non-packed structure
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		options.setBoolean("Bytes Field.Display Structure Alignment Bytes", true);
 

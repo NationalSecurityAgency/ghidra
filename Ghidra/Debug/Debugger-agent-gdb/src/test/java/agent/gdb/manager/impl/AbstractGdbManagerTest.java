@@ -33,7 +33,7 @@ import org.junit.*;
 import com.google.common.collect.*;
 
 import agent.gdb.manager.*;
-import agent.gdb.manager.GdbManager.ExecSuffix;
+import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.pty.PtyFactory;
 import ghidra.async.AsyncReference;
@@ -259,7 +259,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			assertTrue("Didn't stop at syscall", out.contains("syscall"));
 
 			// Now the real test
-			waitOn(mgr.currentInferior().step(ExecSuffix.STEP_INSTRUCTION));
+			waitOn(mgr.currentInferior().step(StepCmd.STEPI));
 			CompletableFuture<Void> stopped = mgr.waitForState(GdbState.STOPPED);
 			Thread.sleep(100); // NB: Not exactly reliable, but verify we're waiting
 			assertFalse(stopped.isDone());
@@ -400,7 +400,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			GdbThread thread = waitOn(mgr.currentInferior().run());
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			//waitOn(mgr.waitForPrompt());
-			waitOn(thread.step(ExecSuffix.NEXT_INSTRUCTION));
+			waitOn(thread.step(StepCmd.NEXTI));
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			assertNull(mgr.currentInferior().getExitCode());
 		}

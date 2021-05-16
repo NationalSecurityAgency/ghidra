@@ -21,12 +21,13 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceObject;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A region of mapped target memory in a trace
  */
-public interface TraceMemoryRegion {
+public interface TraceMemoryRegion extends TraceObject {
 
 	/**
 	 * Get the trace containing this region
@@ -105,7 +106,8 @@ public interface TraceMemoryRegion {
 	/**
 	 * @see #setLifespan(Range)
 	 * 
-	 * @param destructionSnap the destruction snap, or {@link Long#MAX_VALUE} for "to the end of time"
+	 * @param destructionSnap the destruction snap, or {@link Long#MAX_VALUE} for "to the end of
+	 *            time"
 	 */
 	void setDestructionSnap(long destructionSnap)
 			throws DuplicateNameException, TraceOverlappedRegionException;

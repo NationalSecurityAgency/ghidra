@@ -31,7 +31,6 @@ import ghidra.util.exception.DuplicateNameException;
  * A datatype for creating portable executable data structures.
  */
 public class PeDataType extends FactoryStructureDataType {
-    private final static long serialVersionUID = 1;
 
     /**
      * Constructs a new PE datatype.
@@ -53,14 +52,6 @@ public class PeDataType extends FactoryStructureDataType {
     public String getDescription() { 
         return "Windows Portable Executable Data Type";
     }
-    
-    /**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return true;
-	}
 
     @Override
 	protected void populateDynamicStructure(MemBuffer buf, Structure struct) {

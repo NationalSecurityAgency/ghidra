@@ -15,67 +15,44 @@
  */
 package agent.gdb.manager.impl.cmd;
 
-import agent.gdb.manager.GdbManager.ExecSuffix;
+import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.GdbThread;
-import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 
 /**
  * Implementation of {@link GdbThread#stepInstruction()}
  */
-public class GdbStepCommand extends AbstractGdbCommandWithThreadId<Void> {
-	protected final ExecSuffix suffix;
+public class GdbStepCommand extends AbstractGdbCommandWithThreadId<Void>
+		implements MixinResumeInCliGdbCommand {
+	protected final StepCmd cmd;
 
-	public GdbStepCommand(GdbManagerImpl manager, Integer threadId, ExecSuffix suffix) {
+	public GdbStepCommand(GdbManagerImpl manager, Integer threadId, StepCmd cmd) {
 		super(manager, threadId);
-		this.suffix = suffix;
+		this.cmd = cmd;
 	}
 
 	@Override
 	public Interpreter getInterpreter() {
-		if (manager.hasCli()) {
-			return Interpreter.CLI;
-		}
-		return Interpreter.MI2;
+		return getInterpreter(manager);
 	}
 
 	@Override
 	protected String encode(String threadPart) {
-		String mi2Cmd = "-exec-" + suffix + threadPart;
-		switch (getInterpreter()) {
-			case CLI:
-				// The significance is the Pty, not so much the actual command
-				// Using MI2 simplifies event processing (no console output parsing)
-				return "interpreter-exec mi2 \"" + mi2Cmd + "\"";
-			case MI2:
-				return mi2Cmd;
-			default:
-				throw new AssertionError();
+		if (getInterpreter() == Interpreter.CLI) {
+			return cmd.cli;
 		}
+		return cmd.mi2 + threadPart;
 	}
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		evt = checkErrorViaCli(evt);
-		if (evt instanceof GdbCommandRunningEvent) {
-			pending.claim(evt);
-			return pending.hasAny(GdbRunningEvent.class);
-		}
-		else if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true; // Not the expected Completed event
-		}
-		else if (evt instanceof GdbRunningEvent) {
-			pending.claim(evt);
-			return pending.hasAny(GdbCommandRunningEvent.class);
-		}
-		return false;
+		evt = checkErrorViaCli(evt); // TODO: Deprecated, since that hack can crash GDB
+		return handleExpectingRunning(evt, pending);
 	}
 
 	@Override
 	public Void complete(GdbPendingCommand<?> pending) {
-		pending.checkCompletion(GdbCommandRunningEvent.class);
-		return null;
+		return completeOnRunning(pending);
 	}
 }

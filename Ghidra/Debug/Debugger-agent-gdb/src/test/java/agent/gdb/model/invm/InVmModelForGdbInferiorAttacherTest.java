@@ -15,9 +15,14 @@
  */
 package agent.gdb.model.invm;
 
+import static org.junit.Assume.assumeFalse;
+
 import org.junit.Ignore;
+import org.junit.Test;
 
 import agent.gdb.model.AbstractModelForGdbInferiorAttacherTest;
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 
 public class InVmModelForGdbInferiorAttacherTest extends AbstractModelForGdbInferiorAttacherTest {
 	@Override
@@ -29,5 +34,22 @@ public class InVmModelForGdbInferiorAttacherTest extends AbstractModelForGdbInfe
 	@Ignore("Some hang. I don't know why")
 	public void testAttachableContainerIsWhereExpected() throws Throwable {
 		// nop
+	}
+
+	/**
+	 * Run a dummy process without a tty. It seems when GDB (I tested with 8.0.1) attaches to such a
+	 * process, it is unable to interrupt it from the opposite interpreter that resumed it.
+	 */
+	@Test
+	@Ignore("Not a real test")
+	public void testRunADummy() throws Throwable {
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+
+		DebuggerTestSpecimen specimen = getAttachSpecimen();
+		dummy = specimen.runDummy();
+
+		Msg.info(this, "Dummy pid: " + dummy.pid);
+		dummy.process.waitFor();
+		Msg.info(this, "Dummy terminated");
 	}
 }

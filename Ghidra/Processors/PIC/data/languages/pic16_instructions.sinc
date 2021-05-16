@@ -387,7 +387,9 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 :ASRF srcREG, D				is op6=0x37 & srcREG & D & destREG					{
 	#  --11 0111 dfff ffff
 	$(C) = srcREG & 0x1;
-	destREG = srcREG s>> 1;
+	val:1 = srcREG s>> 1;
+	setResultFlags(val);
+	destREG = val;
 }
 
 :BCF srcREG, bit			is op4=0x4 & srcREG & bit							{
@@ -750,13 +752,17 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 :LSLF srcREG, D				is op6=0x35 & srcREG & D & destREG					{
 	#  --11 0101 dfff ffff
 	$(C) = (srcREG & 80) != 0;
-	destREG = srcREG << 1;
+	val:1 = srcREG << 1;
+	setResultFlags(val);
+	destREG = val;
 }
 
 :LSRF srcREG, D				is op6=0x36 & srcREG & D & destREG					{
 	#  --11 0110 dfff ffff
 	$(C) = srcREG & 0x1;
-	destREG = srcREG >> 1;
+	val:1 = srcREG >> 1;
+	setResultFlags(val);
+	destREG = val;
 }
 
 :MOVIW srcFSR			is op11=2 & srcFSR {

@@ -170,6 +170,21 @@ public class HashUtilities {
 		return NumericUtilities.convertBytesToString(messageDigest.digest());
 	}
 
+	/**
+	 * Generate combined message digest hash for the bytes in the specified array.
+	 *  
+	 * @param algorithm message digest algorithm
+	 * @param values array of bytes to hash
+	 * @return message digest hash
+	 * @throws IllegalArgumentException if specified algorithm is not supported
+	 * @see MessageDigest for supported hash algorithms
+	 */
+	public static String getHash(String algorithm, byte[] values) {
+		MessageDigest messageDigest = getMessageDigest(algorithm);
+		messageDigest.update(values);
+		return NumericUtilities.convertBytesToString(messageDigest.digest());
+	}
+
 	private static MessageDigest getMessageDigest(String algorithm) {
 		try {
 			return MessageDigest.getInstance(algorithm);

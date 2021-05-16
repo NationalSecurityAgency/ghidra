@@ -157,6 +157,8 @@ class OptionsDB extends AbstractOptions {
 	public synchronized void removeOption(String propertyName) {
 		super.removeOption(propertyName);
 		removePropertyFromDB(propertyName);
+		// NOTE: AbstractOptions does not provide removal notification
+		notifyOptionChanged(propertyName, null, null);
 	}
 
 	private void removePropertyFromDB(String propertyName) {
@@ -331,7 +333,7 @@ class OptionsDB extends AbstractOptions {
 
 	@Override
 	protected boolean notifyOptionChanged(String optionName, Object oldValue, Object newValue) {
-		return domainObj.propertyChanged(name, oldValue, newValue);
+		return domainObj.propertyChanged(optionName, oldValue, newValue);
 	}
 
 }

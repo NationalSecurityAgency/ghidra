@@ -18,12 +18,13 @@ package ghidra.trace.model.modules;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceObject;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A section of a module in a trace
  */
-public interface TraceSection {
+public interface TraceSection extends TraceObject {
 
 	/**
 	 * Get the trace containing this section

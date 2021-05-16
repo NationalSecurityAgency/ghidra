@@ -27,8 +27,6 @@ public interface EnumeratedColumnTableModel<R> extends RowObjectTableModel<R> {
 
 	void addAll(Collection<R> c);
 
-	ListIterator<R> rowIterator();
-
 	void notifyUpdated(R row);
 
 	List<R> notifyUpdatedWith(Predicate<R> predicate);

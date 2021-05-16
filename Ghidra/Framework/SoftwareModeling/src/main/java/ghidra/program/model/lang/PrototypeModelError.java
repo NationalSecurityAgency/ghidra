@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.macho;
+package ghidra.program.model.lang;
 
-public enum RelocationTypeGeneric {
-	
-    GENERIC_RELOC_VANILLA,
-    GENERIC_RELOC_PAIR,
-    GENERIC_RELOC_SECTDIFF,
-    GENERIC_RELOC_PB_LA_PTR,
-    GENERIC_RELOC_LOCAL_SECTDIFF,
-    GENERIC_RELOC_TLV;
+/**
+ * A PrototypeModel cloned from another, but marked as an error placeholder
+ */
+public class PrototypeModelError extends PrototypeModel {
+
+	public PrototypeModelError(String name, PrototypeModel copyModel) {
+		super(name, copyModel);
+	}
+
+	@Override
+	public boolean isErrorPlaceholder() {
+		return true;
+	}
 }

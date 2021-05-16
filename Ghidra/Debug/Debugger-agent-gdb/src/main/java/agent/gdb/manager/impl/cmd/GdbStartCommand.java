@@ -22,7 +22,7 @@ import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 /**
  * Implementation of {@link GdbInferior#start()}
  */
-public class GdbStartCommand extends AbstractGdbCommandExpectRunning {
+public class GdbStartCommand extends AbstractLaunchGdbCommand {
 
 	public GdbStartCommand(GdbManagerImpl manager) {
 		super(manager);
@@ -35,6 +35,6 @@ public class GdbStartCommand extends AbstractGdbCommandExpectRunning {
 
 	@Override
 	public String encode() {
-		return "-interpreter-exec console start";
+		return "-exec-run --start";
 	}
 }

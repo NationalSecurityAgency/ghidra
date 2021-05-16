@@ -107,7 +107,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	@Override
 	public int getOffset() {
 		if (isFlexibleArrayComponent) {
-			if (parent.isNotYetDefined()) {
+			if (parent.isZeroLength()) {
 				// some structures have only a flexible array defined
 				return 0;
 			}
@@ -179,7 +179,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		if (parent == null) {
 			return; // Bad situation
 		}
-		for (DataTypeComponent comp : parent.getComponents()) {
+		for (DataTypeComponent comp : parent.getDefinedComponents()) {
 			if (comp != this && name.equals(comp.getFieldName())) {
 				throw new DuplicateNameException("Duplicate field name: " + name);
 			}
@@ -328,7 +328,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		DataType otherDt = dtc.getDataType();
 		DataType myParent = getParent();
 		boolean aligned =
-			(myParent instanceof Composite) ? ((Composite) myParent).isInternallyAligned() : false;
+			(myParent instanceof Composite) ? ((Composite) myParent).isPackingEnabled() : false;
 		// Components don't need to have matching offset when they are aligned
 		// NOTE: use getOffset() method since returned values will differ from
 		// stored values for flexible array component

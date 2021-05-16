@@ -42,21 +42,16 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
 	 */
+	@Override
 	public String getMnemonic(Settings settings) {
 		return name;
-	}
-
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	public boolean isDynamicallySized() {
-		return false;
 	}
 
 	/**
 	 * 
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
+	@Override
 	public String getDescription() {
 		return "IEEE-754 Float";
 	}
@@ -65,6 +60,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 */
+	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		try {
 			int len = getLength(); // use type length (ignore length arg)
@@ -97,10 +93,12 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	 * 
 	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		Object obj = getValue(buf, settings, length);
-		if (obj == null)
+		if (obj == null) {
 			return "??";
+		}
 		return obj.toString();
 	}
 
@@ -119,7 +117,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 
 	@Override
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
-		return isDynamicallySized() ? null : name;
+		return hasLanguageDependantLength() ? null : name;
 	}
 
 	private static TreeMap<Integer, AbstractFloatDataType> floatTypes; // fixed-size float types

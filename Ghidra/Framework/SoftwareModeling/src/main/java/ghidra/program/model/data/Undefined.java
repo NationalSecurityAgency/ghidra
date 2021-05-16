@@ -40,14 +40,6 @@ public abstract class Undefined extends BuiltIn {
 	}
 
 	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
-	@Override
-	public boolean isDynamicallySized() {
-		return false;
-	}
-
-	/**
 	 * Get an Undefined data-type instance of the requested size
 	 * @param size data type size, sizes greater than 8 will cause an Undefined1[size] (i.e., Array) to be returned.
 	 * @return Undefined data type
@@ -74,10 +66,12 @@ public abstract class Undefined extends BuiltIn {
 	 * its various forms, else false.
 	 */
 	public static boolean isUndefined(DataType dataType) {
-		if (dataType instanceof DefaultDataType)
+		if (dataType instanceof DefaultDataType) {
 			return true;
-		if (dataType instanceof Undefined)
+		}
+		if (dataType instanceof Undefined) {
 			return true;
+		}
 		return isUndefinedArray(dataType);
 	}
 

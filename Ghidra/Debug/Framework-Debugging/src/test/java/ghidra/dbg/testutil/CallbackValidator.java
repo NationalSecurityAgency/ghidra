@@ -43,11 +43,21 @@ import ghidra.util.NumericUtilities;
 
 public class CallbackValidator implements DebuggerModelListener, AutoCloseable {
 
+	protected static class CreationRecord {
+		private final TargetObject object;
+		private final Throwable stack;
+
+		public CreationRecord(TargetObject object) {
+			this.object = object;
+			this.stack = new Throwable("Existing object created here");
+		}
+	}
+
 	public CatchOffThread off = new CatchOffThread();
 
 	public final DebuggerObjectModel model;
 	public Thread thread = null;
-	public Map<TargetObject, TargetObject> valid = new HashMap<>();
+	public Map<TargetObject, CreationRecord> valid = new HashMap<>();
 
 	// Knobs
 	// TODO: Make these methods instead?
@@ -256,10 +266,13 @@ public class CallbackValidator implements DebuggerModelListener, AutoCloseable {
 		if (log) {
 			Msg.info(this, "created(object=" + object + ")");
 		}
-		TargetObject exists = valid.put(object, object);
+		CreationRecord record = new CreationRecord(object);
+		CreationRecord exists = valid.put(object, record);
 		off.catching(() -> {
 			if (exists != null) {
-				if (exists == object) {
+				Msg.error(this, "Original creation: ", exists.stack);
+				Msg.error(this, "New creation: ", record.stack);
+				if (exists.object == object) {
 					fail("created twice (same object): " + object.getJoinedPath("."));
 				}
 				else {

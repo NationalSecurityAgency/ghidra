@@ -450,13 +450,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			structDT = createNewStruct(var, (int) componentMap.getSize(), f, isThisParam);
 		}
 		else {
-			int len;
-			if (structDT.isNotYetDefined()) {
-				len = 0;
-			}
-			else {
-				len = structDT.getLength();
-			}
+			// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
+			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
 			if (componentMap.getSize() > len) {
 				structDT.growStructure((int) componentMap.getSize() - len);
 			}
@@ -521,13 +516,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				return null;
 			}
 			Structure structDT = VariableUtilities.findOrCreateClassStruct(f);
-			int len;
-			if (structDT.isNotYetDefined()) {
-				len = 0; // getLength reports as at least size 1
-			}
-			else {
-				len = structDT.getLength();
-			}
+// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
+			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
 			if (len < size) {
 				structDT.growStructure(size - len);
 			}

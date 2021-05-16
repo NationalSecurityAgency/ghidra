@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.*;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
@@ -29,6 +30,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	/**
 	 * Query all known opinions for recording/tracing a debug session
 	 * 
+	 * <p>
 	 * The returned offers are ordered highest-confidence first.
 	 * 
 	 * @param target the target to be recorded, usually a process
@@ -38,8 +40,15 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 		List<DebuggerMappingOffer> result = new ArrayList<>();
 		for (DebuggerMappingOpinion opinion : ClassSearcher
 				.getInstances(DebuggerMappingOpinion.class)) {
-			synchronized (result) {
-				result.addAll(opinion.getOffers(target));
+			try {
+				Set<DebuggerMappingOffer> offers = opinion.getOffers(target);
+				synchronized (result) {
+					result.addAll(offers);
+				}
+			}
+			catch (Throwable t) {
+				Msg.error(DebuggerMappingOpinion.class,
+					"Problem querying opinion " + opinion + " for recording/mapping offers");
 			}
 		}
 		result.sort(HIGHEST_CONFIDENCE_FIRST);

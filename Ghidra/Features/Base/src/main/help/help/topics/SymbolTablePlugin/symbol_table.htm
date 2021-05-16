@@ -134,7 +134,7 @@
       <P>See <A href="symbol_references.htm">Symbol References</A></P>
     </BLOCKQUOTE>
 
-    <H2><A name="Delete_Symbols"></A>Deleting Symbols&nbsp;<IMG src="images/edit-delete.png"></H2>
+    <H2><A name="Delete_Symbols"></A>Deleting Symbols <IMG src="images/edit-delete.png"></H2>
 
     <BLOCKQUOTE>
       <P>You can use the <I>Symbol Table</I> to delete symbols from the program.</P>
@@ -199,7 +199,7 @@
       for more discussion on the use of the edit dialog). 
     </BLOCKQUOTE>
 
-    <H2><A name="Make_Selection"></A>Making a Selection&nbsp;<IMG src="Icons.MAKE_SELECTION_ICON"></H2>
+    <H2><A name="Make_Selection"></A>Making a Selection <IMG src="Icons.MAKE_SELECTION_ICON"></H2>
 
     <BLOCKQUOTE>
       <P>You can make a selection that corresponds to the symbol addresses that are selected in the
@@ -215,7 +215,7 @@
           Right-mouse-click and select "Make Selection" from the popup menu. 
 
           <UL>
-            <LI>Or, click the&nbsp;<IMG src="Icons.MAKE_SELECTION_ICON"> &nbsp;button in the <I>Symbol
+            <LI>Or, click the <IMG src="Icons.MAKE_SELECTION_ICON">  button in the <I>Symbol
             Table</I> toolbar.</LI>
           </UL>
         </LI>
@@ -250,7 +250,7 @@
         </LI>
       </OL>
     </BLOCKQUOTE>
-    <H2><A name="Set_Filter"></A>Filtering&nbsp;<IMG src="images/view-filter.png"></H2>
+    <H2><A name="Set_Filter"></A>Filtering <IMG src="images/view-filter.png"></H2>
 
     <BLOCKQUOTE>
       <P>The list of displayed symbols is determined by the current symbol table settings. These
@@ -266,57 +266,55 @@
 
     <P align="center"><IMG src="images/Filter.png"></P>
 
-    <P align="center">&nbsp;</P>
+    <P align="center"> </P>
 
     <BLOCKQUOTE>
       <P align="left">The Symbol Table Filter dialog consists of three sets of filters - Symbol
       Source, Symbol Types, and miscellaneous <I><A href="#AdvancedFilters">Advanced
-      filters</A></I> which are not initially shown.&nbsp; The Symbol Types are further divided
-      into label symbols and non-label symbols.&nbsp; This grouping is for informational purposes
-      only. For most situations, only the Source and Type filters need to be set.&nbsp; This will
+      filters</A></I> which are not initially shown.  The Symbol Types are further divided
+      into label symbols and non-label symbols.  This grouping is for informational purposes
+      only. For most situations, only the Source and Type filters need to be set.  This will
       generate a query that will include all symbols that have one of the selected sources AND have
-      one of the selected types.&nbsp;&nbsp;</P>
+      one of the selected types.  </P>
 
       <P align="left"><B>Symbol Source Filters</B>- this group determines which symbols (based on
-      how they originated) should be included in the query.&nbsp; At least one of the source
+      how they originated) should be included in the query.  At least one of the source
       filters must be selected.</P>
 
       <UL>
         <LI>
-          <P align="left"><B>User Defined</B> - &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;
-          &nbsp;This filter includes all symbols named by the user in the query.</P>
+          <P align="left"><B>User Defined</B> - This filter includes all symbols named by the 
+          user in the query.</P>
         </LI>
 
         <LI>
-          <P align="left"><B>Imported -&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-          &nbsp;&nbsp;&nbsp; &nbsp;</B> &nbsp;This filter includes all symbols named by some
+          <P align="left"><B>Imported - </B> This filter includes all symbols named by some
           imported information.</P>
         </LI>
 
         <LI>
-          <P align="left"><B>Analysis</B> -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
-          &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; This filter includes all symbols created by
+          <P align="left"><B>Analysis</B> - This filter includes all symbols created by
           auto-analysis that do not have default names.</P>
         </LI>
 
         <LI>
-          <P align="left"><B>Default</B> <B>(Function)</B> -&nbsp; &nbsp; This filter includes all
+          <P align="left"><B>Default (Function)</B> - This filter includes all
           function symbols that have default names.</P>
         </LI>
 
-        <LI><B>Default (Labels)</B> - &nbsp; &nbsp; &nbsp;&nbsp; This filter includesl all
+        <LI><P align="left"><B>Default (Labels)</B> - This filter includes all
         non-function symbols that have default names (Ghidra generally creates default-named
         symbols at any address that is referenced by some other location.)<BR>
         </LI>
       </UL>
 
       <P align="left"><B>Symbol Type Filters -</B> This group of filters determines which types of
-      symbols to include in the query.&nbsp; All symbols in Ghidra are one of the following types.
+      symbols to include in the query.  All symbols in Ghidra are one of the following types.
       At least one of these type filters must be selected.</P>
 
       <UL>
         <LI>
-          <P align="left"><B>Instruction Labels -</B> labels at addresses with instructions .&nbsp;
+          <P align="left"><B>Instruction Labels -</B> labels at addresses with instructions.
           Note these do NOT include labels where functions exist.</P>
         </LI>
 
@@ -327,7 +325,7 @@
 
         <LI>
           <P align="left"><B>Functions -</B> labels at addresses where functions have been defined
-          (includes external functions).&nbsp;</P>
+          (includes external functions).</P>
         </LI>
 
         <LI>
@@ -357,16 +355,16 @@
       </UL>
 
       <P align="left">Use the <I><B>Select All</B></I> button to select all symbol types and the
-      <B><I>Clear All</I></B> to de-select all types.&nbsp;&nbsp;</P>
+      <B><I>Clear All</I></B> to de-select all types.</P>
 
       <P align="left"><A name="AdvancedFilters"></A><B>Advanced Symbol Filters -</B> Advanced
       filters are used to further refine a query to only include symbols that meet various specific
-      criteria.&nbsp; Each of the advanced filters only applies to a subset of the symbol types, so
-      to use one of these filters, the appropriate symbol type filter must also be selected.&nbsp;
+      criteria. Each of the advanced filters only applies to a subset of the symbol types, so
+      to use one of these filters, the appropriate symbol type filter must also be selected. 
       Advanced filters that do not have any of their associated type filters set, are
-      disabled.&nbsp; Advanced filters can be tricky to use because each filter only applies to a
+      disabled. Advanced filters can be tricky to use because each filter only applies to a
       subset of the types and has no effect on the other selected types during the
-      query.&nbsp;&nbsp;See the <A href="#examples">examples</A> below for more information.</P>
+      query.  See the <A href="#examples">examples</A> below for more information.</P>
 
       <UL>
         <LI>
@@ -380,7 +378,7 @@
 
         <LI>
           <P align="left"><B>Primary Labels -</B> Accepts only labels that are the primary label at
-          an address.&nbsp; Applies to <I>Labels and Functions.</I></P>
+          an address.  Applies to <I>Labels and Functions.</I></P>
         </LI>
 
         <LI>
@@ -390,12 +388,12 @@
 
         <LI>
           <P align="left"><B>Globals -</B> Accepts the symbol if it is in the global
-          namespace.&nbsp; Applies to <I>Labels, Functions, Namespaces,</I> and <I>classes.</I></P>
+          namespace.  Applies to <I>Labels, Functions, Namespaces,</I> and <I>classes.</I></P>
         </LI>
 
         <LI>
           <P align="left"><B>Locals -</B> Accepts the symbol if it is NOT in the global
-          namespace.&nbsp; Applies to <I>Labels, Functions, Namespaces,</I> and <I>classes.</I></P>
+          namespace.  Applies to <I>Labels, Functions, Namespaces,</I> and <I>classes.</I></P>
         </LI>
 
         <LI>
@@ -406,12 +404,12 @@
 
         <LI>
           <P align="left"><B>Stack Variables -</B> Accepts function parameters or local variables
-          that are stack based. Applies to <I>Parameters</I> and <I>local variables.</I>&nbsp;</P>
+          that are stack based. Applies to <I>Parameters</I> and <I>local variables.</I></P>
         </LI>
 
         <LI>
           <P align="left"><B>Entry Points -</B> Accepts labels or functions at external entry
-          points.&nbsp; Applies to&nbsp; <I>Labels</I> and <I>Functions.</I>&nbsp;</P>
+          points. Applies to <I>Labels</I> and <I>Functions.</I></P>
         </LI>
 
         <LI>
@@ -422,22 +420,22 @@
 
         <LI>
           <P align="left"><B>Not In Memory -</B> Accepts labels that are at an address not
-          contained in memory. Applies to&nbsp; <I>Labels.</I></P>
+          contained in memory. Applies to <I>Labels.</I></P>
         </LI>
 
         <LI>
-          <P align="left"><B>Unreferenced -&nbsp;</B> Accepts labels or functions that have no
-          references to them (also known as "dead code").&nbsp; Applies to <I>Labels</I> and
+          <P align="left"><B>Unreferenced - </B> Accepts labels or functions that have no
+          references to them (also known as "dead code"). Applies to <I>Labels</I> and
           <I>functions.</I></P>
         </LI>
 
         <LI>
           <P align="left"><B>Offcut Labels -</B> Accepts labels that are at an address that is not
-          the start of an instruction or data.&nbsp; Applies to <I>Labels.</I></P>
+          the start of an instruction or data. Applies to <I>Labels.</I></P>
         </LI>
       </UL>
 
-      <P align="left"><I>Advanced Filters</I> affect the query using the following algorithm.&nbsp;
+      <P align="left"><I>Advanced Filters</I> affect the query using the following algorithm.
       For each symbol that matches the selected source(s) and symbol type(s):</P>
 
       <BLOCKQUOTE>
@@ -470,18 +468,18 @@
       <H3 align="left"><A name="examples"></A><B>Sample Queries</B></H3>
 
       <BLOCKQUOTE>
-        <H4 align="left">Example 1:&nbsp;&nbsp;</H4>
+        <H4 align="left">Example 1: </H4>
 
         <BLOCKQUOTE>
           <P align="left">Setup - the following checkboxes are selected:</P>
 
           <UL>
             <LI>
-              <P align="left">Symbol Source:&nbsp; User Defined</P>
+              <P align="left">Symbol Source:  User Defined</P>
             </LI>
 
             <LI>
-              <P align="left">Symbol Types:&nbsp; Instruction Labels, Data Labels,&nbsp; and
+              <P align="left">Symbol Types:  Instruction Labels, Data Labels,  and
               Function Labels</P>
             </LI>
 
@@ -490,7 +488,7 @@
             </LI>
           </UL>
 
-          <P align="left">Result:&nbsp;&nbsp;</P>
+          <P align="left">Result:  </P>
 
           <UL>
             <LI>
@@ -500,7 +498,7 @@
           </UL>
         </BLOCKQUOTE>
 
-        <H4 align="left">Example 2:&nbsp;</H4>
+        <H4 align="left">Example 2: </H4>
 
         <BLOCKQUOTE>
           <P align="left">Setup:</P>
@@ -524,7 +522,7 @@
           <UL>
             <LI>
               <P align="left">All labels that are the start of a subroutine (not including
-              functions) are displayed.&nbsp;</P>
+              functions) are displayed. </P>
             </LI>
           </UL>
 
@@ -534,7 +532,7 @@
           </BLOCKQUOTE>
         </BLOCKQUOTE>
 
-        <H4 align="left">Example 3:&nbsp;</H4>
+        <H4 align="left">Example 3: </H4>
 
         <BLOCKQUOTE>
           <P align="left">Setup:</P>
@@ -567,10 +565,10 @@
           </UL>
 
           <P align="left">Note that the advanced filter <I>Stack Variables</I> is applicable only
-          to Parameters, and&nbsp; therefore did not affect the display of functions.</P>
+          to Parameters, and  therefore did not affect the display of functions.</P>
         </BLOCKQUOTE>
 
-        <H4 align="left">Example 4:&nbsp;</H4>
+        <H4 align="left">Example 4: </H4>
 
         <BLOCKQUOTE>
           <P align="left">Setup:</P>
@@ -599,10 +597,10 @@
           </UL>
 
           <P align="left">Note that since all labels are either Primary labels or Non-primary
-          Labels, selecting both of these advanced filters accomplished nothing.&nbsp; The results
+          Labels, selecting both of these advanced filters accomplished nothing.  The results
           would have been the same if neither was selected.</P>
 
-          <P align="left">&nbsp;</P>
+          <P align="left"> </P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
