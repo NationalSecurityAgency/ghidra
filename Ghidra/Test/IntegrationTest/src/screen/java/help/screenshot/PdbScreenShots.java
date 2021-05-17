@@ -15,11 +15,11 @@
  */
 package help.screenshot;
 
-import java.util.List;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.junit.*;
@@ -143,12 +143,12 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 1)),
 			new SymbolFileLocation("HelloWorld_ver2.pdb", sameDirSymbolStoreWithFakePath,
 				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 2)));
+		Set<FindOption> findOptions = FindOption.of(FindOption.ALLOW_REMOTE, FindOption.ANY_AGE);
 		runSwing(() -> {
-			loadPdbDialog
-					.setSearchOptions(FindOption.of(FindOption.ALLOW_REMOTE, FindOption.ANY_AGE));
+			loadPdbDialog.setSearchOptions(findOptions);
 			loadPdbDialog.setSymbolServers(symbolServers);
 			loadPdbDialog.setSymbolStorageDirectoryTextOnly("/home/user/symbols");
-			loadPdbDialog.setSearchResults(symbolFileLocations);
+			loadPdbDialog.setSearchResults(symbolFileLocations, findOptions);
 			loadPdbDialog.selectRowByLocation(symbolFileLocations.get(0));
 		});
 		waitForSwing();

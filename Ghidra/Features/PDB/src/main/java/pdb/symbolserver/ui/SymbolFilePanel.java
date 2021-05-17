@@ -15,12 +15,10 @@
  */
 package pdb.symbolserver.ui;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionListener;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -39,6 +37,9 @@ import pdb.symbolserver.FindOption;
  * Also allows the user to tweak search options.
  */
 class SymbolFilePanel extends JPanel {
+	interface SearchCallback {
+		void searchForPdbs(boolean allowRemote);
+	}
 	static final String SEARCH_OPTIONS_HELP_ANCHOR = "PDB_Search_Search_Options";
 	private SymbolFileTableModel tableModel;
 	private GhidraTable table;
@@ -46,17 +47,18 @@ class SymbolFilePanel extends JPanel {
 	private JPanel tablePanel;
 	private JPanel welcomePanel;
 
-	private JButton searchButton;
-	private GCheckBox allowRemote;
+	private JButton searchLocalButton;
+	private JButton searchAllButton;
 	private GCheckBox ignorePdbUid;
 	private GCheckBox ignorePdbAge;
 
-	SymbolFilePanel(ActionListener searchButtonActionListener) {
+	SymbolFilePanel(SearchCallback searchButtonsCallback) {
 		super(new BorderLayout());
 
 		build();
 		setEnablement(false);
-		searchButton.addActionListener(searchButtonActionListener);
+		searchLocalButton.addActionListener(e -> searchButtonsCallback.searchForPdbs(false));
+		searchAllButton.addActionListener(e -> searchButtonsCallback.searchForPdbs(true));
 	}
 
 	SymbolFileTableModel getTableModel() {
@@ -69,9 +71,6 @@ class SymbolFilePanel extends JPanel {
 
 	Set<FindOption> getFindOptions() {
 		Set<FindOption> findOptions = EnumSet.noneOf(FindOption.class);
-		if (allowRemote.isSelected()) {
-			findOptions.add(FindOption.ALLOW_REMOTE);
-		}
 		if (ignorePdbAge.isSelected()) {
 			findOptions.add(FindOption.ANY_AGE);
 		}
@@ -82,13 +81,13 @@ class SymbolFilePanel extends JPanel {
 	}
 
 	void setFindOptions(Set<FindOption> findOptions) {
-		allowRemote.setSelected(findOptions.contains(FindOption.ALLOW_REMOTE));
 		ignorePdbAge.setSelected(findOptions.contains(FindOption.ANY_AGE));
 		ignorePdbUid.setSelected(findOptions.contains(FindOption.ANY_ID));
 	}
 
 	void setEnablement(boolean hasSymbolServerService) {
-		searchButton.setEnabled(hasSymbolServerService);
+		searchLocalButton.setEnabled(hasSymbolServerService);
+		searchAllButton.setEnabled(hasSymbolServerService);
 
 		if (welcomePanel != null && hasSymbolServerService) {
 			remove(welcomePanel);
@@ -149,13 +148,15 @@ class SymbolFilePanel extends JPanel {
 	}
 
 	private JPanel buildButtonPanel() {
-		searchButton = new JButton("Search");
-
-		allowRemote = new GCheckBox("Allow Remote");
-		allowRemote.setToolTipText("Allow searching remote symbol servers.");
+		searchLocalButton = new JButton("Search Local");
+		searchLocalButton.setToolTipText("Search local symbol servers only.");
+		searchAllButton = new JButton("Search All");
+		searchAllButton.setToolTipText("Search local and remote symbol servers.");
 
 		ignorePdbUid = new GCheckBox("Ignore GUID/ID");
-		ignorePdbUid.setToolTipText("Find any PDB with same name (local locations only).");
+		ignorePdbUid.setToolTipText(
+			"Find any PDB with same name (local locations only).  Age ignored also.");
+		ignorePdbUid.addChangeListener(l -> updateSearchOptionEnablement());
 
 		ignorePdbAge = new GCheckBox("Ignore Age");
 		ignorePdbAge.setToolTipText("Find PDB with any age value (local locations only).");
@@ -168,15 +169,19 @@ class SymbolFilePanel extends JPanel {
 		panel.add(ignorePdbAge);
 		panel.add(Box.createHorizontalStrut(10));
 		panel.add(ignorePdbUid);
-		panel.add(Box.createHorizontalStrut(10));
-		panel.add(allowRemote);
 		panel.add(Box.createHorizontalGlue());
-		panel.add(searchButton);
+		panel.add(searchLocalButton);
+		panel.add(Box.createHorizontalStrut(10));
+		panel.add(searchAllButton);
 
 		DockingWindowManager.getHelpService()
 				.registerHelp(panel,
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SEARCH_OPTIONS_HELP_ANCHOR));
 
 		return panel;
+	}
+
+	private void updateSearchOptionEnablement() {
+		ignorePdbAge.setEnabled(!ignorePdbUid.isSelected());
 	}
 }

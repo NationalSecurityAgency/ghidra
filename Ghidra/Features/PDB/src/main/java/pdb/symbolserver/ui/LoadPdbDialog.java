@@ -16,7 +16,8 @@
 package pdb.symbolserver.ui;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -104,7 +105,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private SymbolFileInfo programSymbolFileInfo;
 
 	private List<Supplier<StatusText>> statusTextSuppliers = new ArrayList<>();
-	private boolean hasPerformedSearch;
+	private Set<FindOption> lastSearchOptions;
 	private boolean searchCanceled;
 
 	private Program program;
@@ -181,7 +182,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					symbolServerService.getLocalSymbolFileLocation(results.get(0), monitor);
 				File symbolFile = getLocalSymbolFile(symbolFileLocation);
 				Swing.runLater(() -> {
-					setSearchResults(results);
+					setSearchResults(results, null);
 					setPdbLocationValue(symbolFileLocation, symbolFile);
 					setSelectedPdbFile(symbolFileLocation);
 					selectRowByLocation(symbolFileLocation);
@@ -247,8 +248,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * 
 	 * @param results list of {@link SymbolFileLocation}s to add to results
 	 */
-	public void setSearchResults(List<SymbolFileLocation> results) {
-		hasPerformedSearch = true;
+	public void setSearchResults(List<SymbolFileLocation> results, Set<FindOption> findOptions) {
+		lastSearchOptions = findOptions;
 		symbolFilePanel.getTableModel().setSearchResults(programSymbolFileInfo, results);
 	}
 
@@ -320,7 +321,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		return SymbolFileInfo.fromValues(pdbPath, uid, age);
 	}
 
-	private void searchForPdbs(ActionEvent e) {
+	private void searchForPdbs(boolean allowRemote) {
 		if (symbolServerService == null || !symbolServerService.isValid()) {
 			return;
 		}
@@ -336,13 +337,16 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			return;
 		}
 		Set<FindOption> findOptions = symbolFilePanel.getFindOptions();
+		if (allowRemote) {
+			findOptions.add(FindOption.ALLOW_REMOTE);
+		}
 		executeMonitoredRunnable("Search for PDBs", true, true, 0, monitor -> {
 			try {
 				searchCanceled = false;
 				List<SymbolFileLocation> results =
 					symbolServerService.find(symbolFileInfo, findOptions, monitor);
 				Swing.runLater(() -> {
-					setSearchResults(results);
+					setSearchResults(results, findOptions);
 					if (results.size() == 1) {
 						selectRowByLocation(results.get(0));
 					}
@@ -366,7 +370,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		buildParserOptionsPanel();
 		setHelpLocation(new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "Load PDB File"));
 
-		addStatusTextSupplier(() -> hasPerformedSearch && advancedToggleButton.isSelected()
+		addStatusTextSupplier(() -> lastSearchOptions != null && advancedToggleButton.isSelected()
 				? symbolServerConfigPanel.getSymbolServerWarnings()
 				: null);
 		addStatusTextSupplier(this::getSelectedPdbNoticeText);
@@ -647,11 +651,10 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private StatusText getAllowRemoteWarning() {
 		int remoteSymbolServerCount =
 			symbolServerService != null ? symbolServerService.getRemoteSymbolServerCount() : 0;
-		Set<FindOption> findOptions = symbolFilePanel.getFindOptions();
-		return hasPerformedSearch && advancedToggleButton.isSelected() &&
-			remoteSymbolServerCount != 0 && !findOptions.contains(FindOption.ALLOW_REMOTE)
+		return lastSearchOptions != null && advancedToggleButton.isSelected() &&
+			remoteSymbolServerCount != 0 && !lastSearchOptions.contains(FindOption.ALLOW_REMOTE)
 					? new StatusText(
-						"Remote servers were excluded.  Select \"Allow Remote\" checkbox to search remote servers.",
+						"Remote servers were excluded.  Use \"Search All\" button to also search remote servers.",
 						MessageType.INFO, false)
 					: null;
 	}
@@ -661,7 +664,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			if (searchCanceled) {
 				return new StatusText("Search canceled", MessageType.INFO, false);
 			}
-			if (hasPerformedSearch) {
+			if (lastSearchOptions != null) {
 				int foundCount = symbolFilePanel.getTableModel().getModelData().size();
 				return new StatusText(
 					"Found " + foundCount + " file" + (foundCount != 1 ? "s" : ""),
@@ -751,11 +754,10 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					SameDirSymbolStore.createManuallySelectedSymbolFileLocation(file,
 						pdbSymbolFileInfo);
 				Swing.runLater(() -> {
-					setSearchResults(List.of(symbolFileLocation));
+					setSearchResults(List.of(symbolFileLocation), null);
 					setSelectedPdbFile(symbolFileLocation);
 					setPdbLocationValue(symbolFileLocation, file);
 					selectRowByLocation(symbolFileLocation);
-					hasPerformedSearch = false;
 					updateStatusText();
 					updateButtonEnablement();
 					updateParserOptionEnablement(true);
