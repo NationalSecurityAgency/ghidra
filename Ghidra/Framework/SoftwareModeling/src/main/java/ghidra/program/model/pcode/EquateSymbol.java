@@ -17,6 +17,7 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -71,20 +72,22 @@ public class EquateSymbol extends HighSymbol {
 		convert = FORMAT_DEFAULT;
 		String formString = symel.getAttribute("format");
 		if (formString != null) {
-			if (formString.equals("hex")) {
-				convert = FORMAT_HEX;
-			}
-			else if (formString.equals("dec")) {
-				convert = FORMAT_DEC;
-			}
-			else if (formString.equals("char")) {
-				convert = FORMAT_CHAR;
-			}
-			else if (formString.equals("oct")) {
-				convert = FORMAT_OCT;
-			}
-			else if (formString.equals("bin")) {
-				convert = FORMAT_BIN;
+			switch (formString) {
+				case "hex":
+					convert = FORMAT_HEX;
+					break;
+				case "dec":
+					convert = FORMAT_DEC;
+					break;
+				case "char":
+					convert = FORMAT_CHAR;
+					break;
+				case "oct":
+					convert = FORMAT_OCT;
+					break;
+				case "bin":
+					convert = FORMAT_BIN;
+					break;
 			}
 		}
 		parser.start("value");
@@ -132,6 +135,10 @@ public class EquateSymbol extends HighSymbol {
 			else {
 				return FORMAT_DEFAULT;			// Bad equate name, just print number normally
 			}
+		}else if (nm.contains("-")) {        //Characteristics of the current double type
+			Msg.showWarn(EquateSymbol.class, null, "Conversion Not Implemented",
+					"Currently decompiler does not support Double or Float type to convert");
+			return FORMAT_DEC;
 		}
 		if (firstChar == '\'') {
 			return FORMAT_CHAR;
