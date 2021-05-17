@@ -176,10 +176,8 @@ public class ImageRuntimeFunctionEntries {
 			unwindInfo.unwindCodes[i] = code;
 		}
 
-		// You can have an exception handler (three possible share common handler function) or you
-		// can have chained exception handling info only.
-		if (unwindInfo.hasExceptionHandler() || unwindInfo.hasUnwindHandler() ||
-			unwindInfo.hasFinallyHandler()) {
+		// You can have an exception handler or you can have chained exception handling info only.
+		if (unwindInfo.hasExceptionHandler() || unwindInfo.hasUnwindHandler()) {
 			unwindInfo.exceptionHandlerFunction = reader.readNextInt();
 		}
 		else if (unwindInfo.hasChainedUnwindInfo()) {
@@ -295,7 +293,6 @@ public class ImageRuntimeFunctionEntries {
 		private final static int UNW_FLAG_NHANDLER = 0x0;
 		private final static int UNW_FLAG_EHANDLER = 0x1;
 		private final static int UNW_FLAG_UHANDLER = 0x2;
-		private final static int UNW_FLAG_FHANDLER = 0x3;
 		private final static int UNW_FLAG_CHAININFO = 0x4;
 
 		private final static int UNWIND_VERSION_FIELD_LENGTH = 0x03;
@@ -345,7 +342,7 @@ public class ImageRuntimeFunctionEntries {
 				throw new AssertException(e); // should never happen with byte bit-fields
 			}
 
-			if (hasExceptionHandler() || hasUnwindHandler() || hasFinallyHandler()) {
+			if (hasExceptionHandler() || hasUnwindHandler()) {
 				struct.add(IBO32, "ExceptionHandler", null);
 				if (hasUnwindHandler()) {
 					struct.setFlexibleArrayComponent(UnsignedLongDataType.dataType, "ExceptionData",
@@ -365,10 +362,6 @@ public class ImageRuntimeFunctionEntries {
 			return (flags & UNW_FLAG_EHANDLER) == UNW_FLAG_EHANDLER;
 		}
 
-		public boolean hasFinallyHandler() {
-			return (flags & UNW_FLAG_FHANDLER) == UNW_FLAG_FHANDLER;
-		}
-
 		public boolean hasUnwindHandler() {
 			return (flags & UNW_FLAG_UHANDLER) == UNW_FLAG_UHANDLER;
 		}
@@ -382,9 +375,7 @@ public class ImageRuntimeFunctionEntries {
 			flagsField.add("UNW_FLAG_NHANDLER", UNW_FLAG_NHANDLER);
 			flagsField.add("UNW_FLAG_EHANDLER", UNW_FLAG_EHANDLER);
 			flagsField.add("UNW_FLAG_UHANDLER", UNW_FLAG_UHANDLER);
-			flagsField.add("UNW_FLAG_FHANDLER", UNW_FLAG_FHANDLER);
 			flagsField.add("UNW_FLAG_CHAININFO", UNW_FLAG_CHAININFO);
-
 			return flagsField;
 		}
 
