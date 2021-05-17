@@ -823,7 +823,6 @@ void BlockGraph::forceOutputNum(int4 i)
 void BlockGraph::selfIdentify(void)
 
 {
-  vector<BlockEdge>::iterator tmp;
   vector<FlowBlock *>::iterator iter;
   FlowBlock *mybl,*otherbl;
 
