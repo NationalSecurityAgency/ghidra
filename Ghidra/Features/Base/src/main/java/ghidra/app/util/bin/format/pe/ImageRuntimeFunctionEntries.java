@@ -22,6 +22,7 @@ import java.util.List;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -175,15 +176,11 @@ public class ImageRuntimeFunctionEntries {
 			unwindInfo.unwindCodes[i] = code;
 		}
 
-		// You can have an exception handler and/or an unwind handler, or you
+		// You can have an exception handler (three possible share common handler function) or you
 		// can have chained exception handling info only.
-		if (unwindInfo.hasExceptionHandler() || unwindInfo.hasUnwindHandler()) {
-			if (unwindInfo.hasExceptionHandler()) {
-				unwindInfo.exceptionHandlerFunction = reader.readNextInt();
-			}
-			if (unwindInfo.hasUnwindHandler()) {
-				unwindInfo.unwindHandlerFunction = reader.readNextInt();
-			}
+		if (unwindInfo.hasExceptionHandler() || unwindInfo.hasUnwindHandler() ||
+			unwindInfo.hasFinallyHandler()) {
+			unwindInfo.exceptionHandlerFunction = reader.readNextInt();
 		}
 		else if (unwindInfo.hasChainedUnwindInfo()) {
 			unwindInfo.unwindHandlerChainInfo = new _IMAGE_RUNTIME_FUNCTION_ENTRY();
@@ -298,12 +295,15 @@ public class ImageRuntimeFunctionEntries {
 		private final static int UNW_FLAG_NHANDLER = 0x0;
 		private final static int UNW_FLAG_EHANDLER = 0x1;
 		private final static int UNW_FLAG_UHANDLER = 0x2;
+		private final static int UNW_FLAG_FHANDLER = 0x3;
 		private final static int UNW_FLAG_CHAININFO = 0x4;
 
 		private final static int UNWIND_VERSION_FIELD_LENGTH = 0x03;
 		private final static int UNWIND_FLAGS_FIELD_LENGTH = 0x05;
 		private final static int UNWIND_FRAME_REGISTER_LENGTH = 0x04;
+		private final static int UNWIND_FRAME_OFFSET_LENGTH = 0x04;
 		private final static int UNWIND_OP_FIELD_LENGTH = 0x04;
+		private final static int UNWIND_OP_INFO_FIELD_LENGTH = 0x04;
 
 		byte version;
 		byte flags;
@@ -313,7 +313,6 @@ public class ImageRuntimeFunctionEntries {
 		byte frameOffset;
 		UNWIND_CODE[] unwindCodes;
 		int exceptionHandlerFunction;
-		int unwindHandlerFunction;
 		_IMAGE_RUNTIME_FUNCTION_ENTRY unwindHandlerChainInfo;
 
 		long startOffset;
@@ -324,80 +323,39 @@ public class ImageRuntimeFunctionEntries {
 
 		@Override
 		public DataType toDataType() throws DuplicateNameException, IOException {
+
 			StructureDataType struct = new StructureDataType(NAME + "_" + startOffset, 0);
+			struct.setPackingEnabled(true);
 			try {
-				StructureDataType vf = new StructureDataType("VersionFlags", 0);
-				vf.insertBitField(0, 1, 0, BYTE, UNWIND_VERSION_FIELD_LENGTH, "Version", null);
-				vf.insertBitField(0, 1, UNWIND_VERSION_FIELD_LENGTH, defineFlagsField(),
-					UNWIND_FLAGS_FIELD_LENGTH, "Flags", null);
+				struct.addBitField(BYTE, UNWIND_VERSION_FIELD_LENGTH, "Version", null);
+				struct.addBitField(defineFlagsEnum(), UNWIND_FLAGS_FIELD_LENGTH, "Flags", null);
+				struct.add(BYTE, "SizeOfProlog", null);
+				struct.add(BYTE, "CountOfUnwindCodes", null);
+				struct.addBitField(BYTE, UNWIND_FRAME_REGISTER_LENGTH, "FrameRegister", null);
+				struct.addBitField(BYTE, UNWIND_FRAME_OFFSET_LENGTH, "FrameOffset", null);
 
-				struct.add(vf, "Version + Flags", null);
+				if (countOfUnwindCodes > 0) {
+					ArrayDataType unwindInfoArray =
+						new ArrayDataType(defineUnwindCodeStructure(), countOfUnwindCodes, -1);
+					struct.add(unwindInfoArray, "UnwindCodes", null);
+				}
+
 			}
 			catch (InvalidDataTypeException e) {
-				struct.add(BYTE, "Version + Flags", null);
+				throw new AssertException(e); // should never happen with byte bit-fields
 			}
 
-			struct.add(BYTE, "SizeOfProlog", null);
-			struct.add(BYTE, "CountOfUnwindCodes", null);
-
-			try {
-				StructureDataType fr = new StructureDataType("FrameRegisterAndOffset", 0);
-				fr.insertBitField(0, 1, 0, BYTE, UNWIND_FRAME_REGISTER_LENGTH, "FrameRegister",
-					null);
-				fr.insertBitField(0, 1, UNWIND_FRAME_REGISTER_LENGTH, BYTE,
-					UNWIND_FRAME_REGISTER_LENGTH, "FrameOffset", null);
-				struct.add(fr, "FrameRegister + FrameOffset", null);
-			}
-			catch (InvalidDataTypeException e) {
-				struct.add(BYTE, "FrameRegister + FrameOffset", null);
-			}
-
-			for (int i = 0; i < countOfUnwindCodes; i++) {
-				StructureDataType unwindCode = new StructureDataType("UnwindCode", 0);
-				unwindCode.add(BYTE, "OffsetInProlog", null);
-
-				StructureDataType unwindCodeInfo = new StructureDataType("UnwindCodeInfo", 0);
-				try {
-					if (unwindCodes[i].opCode != null) {
-						unwindCodeInfo.insertBitField(0, 1, 0, defineUnwindOpCodeField(),
-							UNWIND_OP_FIELD_LENGTH, "UnwindOpCode", null);
-					}
-					else {
-						unwindCodeInfo.insertBitField(0, 1, 0, BYTE, UNWIND_OP_FIELD_LENGTH,
-							"UnwindOpCode", null);
-					}
-
-					if (unwindCodes[i].opInfoRegister != null) {
-						unwindCodeInfo.insertBitField(0, 1, UNWIND_OP_FIELD_LENGTH,
-							defineUnwindCodeRegisterField(), UNWIND_OP_FIELD_LENGTH, "OpInfo",
-							null);
-					}
-					else {
-						unwindCodeInfo.insertBitField(0, 1, UNWIND_OP_FIELD_LENGTH, BYTE,
-							UNWIND_OP_FIELD_LENGTH, "OpInfo", null);
-					}
-				}
-				catch (InvalidDataTypeException e) {
-				}
-				unwindCode.add(unwindCodeInfo, "UnwindCodeInfo", null);
-
-				struct.add(unwindCode, "UnwindCode", null);
-			}
-
-			if (hasExceptionHandler() || hasUnwindHandler()) {
-				if (hasExceptionHandler()) {
-					struct.add(IBO32, "ExceptionHandler", null);
-				}
+			if (hasExceptionHandler() || hasUnwindHandler() || hasFinallyHandler()) {
+				struct.add(IBO32, "ExceptionHandler", null);
 				if (hasUnwindHandler()) {
-					struct.add(IBO32, "UnwindHandler", null);
+					struct.setFlexibleArrayComponent(UnsignedLongDataType.dataType, "ExceptionData",
+						null);
 				}
 			}
-			else {
-				if (hasChainedUnwindInfo()) {
-					struct.add(IBO32, "FunctionStartAddress", null);
-					struct.add(IBO32, "FunctionEndAddress", null);
-					struct.add(IBO32, "FunctionUnwindInfoAddress", null);
-				}
+			else if (hasChainedUnwindInfo()) {
+				struct.add(IBO32, "FunctionStartAddress", null);
+				struct.add(IBO32, "FunctionEndAddress", null);
+				struct.add(IBO32, "FunctionUnwindInfoAddress", null);
 			}
 
 			return struct;
@@ -405,6 +363,10 @@ public class ImageRuntimeFunctionEntries {
 
 		public boolean hasExceptionHandler() {
 			return (flags & UNW_FLAG_EHANDLER) == UNW_FLAG_EHANDLER;
+		}
+
+		public boolean hasFinallyHandler() {
+			return (flags & UNW_FLAG_FHANDLER) == UNW_FLAG_FHANDLER;
 		}
 
 		public boolean hasUnwindHandler() {
@@ -415,18 +377,35 @@ public class ImageRuntimeFunctionEntries {
 			return (flags & UNW_FLAG_CHAININFO) == UNW_FLAG_CHAININFO;
 		}
 
-		private EnumDataType defineFlagsField() {
-			EnumDataType flagsField = new EnumDataType("Flags", 5);
+		private EnumDataType defineFlagsEnum() {
+			EnumDataType flagsField = new EnumDataType("UNW_FLAGS", 1);
 			flagsField.add("UNW_FLAG_NHANDLER", UNW_FLAG_NHANDLER);
 			flagsField.add("UNW_FLAG_EHANDLER", UNW_FLAG_EHANDLER);
 			flagsField.add("UNW_FLAG_UHANDLER", UNW_FLAG_UHANDLER);
+			flagsField.add("UNW_FLAG_FHANDLER", UNW_FLAG_FHANDLER);
 			flagsField.add("UNW_FLAG_CHAININFO", UNW_FLAG_CHAININFO);
 
 			return flagsField;
 		}
 
+		private Structure defineUnwindCodeStructure() {
+			StructureDataType unwindCode = new StructureDataType("UnwindCode", 0);
+			unwindCode.setPackingEnabled(true);
+			try {
+				unwindCode.add(BYTE, "OffsetInProlog", null);
+				unwindCode.addBitField(defineUnwindOpCodeField(), UNWIND_OP_FIELD_LENGTH,
+					"UnwindOpCode", null);
+				unwindCode.addBitField(defineUnwindCodeRegisterField(), UNWIND_OP_INFO_FIELD_LENGTH,
+					"OpInfo", null);
+			}
+			catch (InvalidDataTypeException e) {
+				throw new AssertException(e); // should never happen with byte bit-fields
+			}
+			return unwindCode;
+		}
+
 		private EnumDataType defineUnwindOpCodeField() {
-			EnumDataType unwindOpCodeField = new EnumDataType("UNWIND_CODE_OPCODE", 4);
+			EnumDataType unwindOpCodeField = new EnumDataType("UNWIND_CODE_OPCODE", 1);
 			unwindOpCodeField.add("UWOP_PUSH_NONVOL", UNWIND_CODE_OPCODE.UWOP_PUSH_NONVOL.id);
 			unwindOpCodeField.add("UWOP_ALLOC_LARGE", UNWIND_CODE_OPCODE.UWOP_ALLOC_LARGE.id);
 			unwindOpCodeField.add("UWOP_ALLOC_SMALL", UNWIND_CODE_OPCODE.UWOP_ALLOC_SMALL.id);
@@ -446,7 +425,7 @@ public class ImageRuntimeFunctionEntries {
 
 		private EnumDataType defineUnwindCodeRegisterField() {
 			EnumDataType unwindCodeRegisterField =
-				new EnumDataType("UNWIND_CODE_OPINFO_REGISTER", 4);
+				new EnumDataType("UNWIND_CODE_OPINFO_REGISTER", 1);
 			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RAX",
 				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RAX.id);
 			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RCX",
