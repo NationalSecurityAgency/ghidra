@@ -546,6 +546,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			universalParserButton.setSelected(false);
 		}
 		applicatorControlCombo.setEnabled(universalParserButton.isSelected());
+		if (!applicatorControlCombo.isEnabled()) {
+			applicatorControlCombo.setSelectedItem(PdbApplicatorControl.ALL);
+		}
 	}
 
 	private JPanel buildParserOptionsPanel() {
@@ -647,7 +650,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		return hasPerformedSearch && advancedToggleButton.isSelected() &&
 			remoteSymbolServerCount != 0 && !findOptions.contains(FindOption.ALLOW_REMOTE)
 					? new StatusText(
-						"Remote servers were excluded.  Select \"Allow remote\" checkbox to search remote servers.",
+						"Remote servers were excluded.  Select \"Allow Remote\" checkbox to search remote servers.",
 						MessageType.INFO, false)
 					: null;
 	}
