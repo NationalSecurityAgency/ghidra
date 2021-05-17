@@ -266,6 +266,8 @@ class SymbolServerPanel extends JPanel {
 	private JPanel buildSymbolStorageLocationPanel() {
 		symbolStorageLocationTextField = new HintTextField(" Required ");
 		symbolStorageLocationTextField.setEditable(false);
+		symbolStorageLocationTextField
+				.setToolTipText("User-specified directory where PDB files are stored.  Required.");
 
 		chooseSymbolStorageLocationButton =
 			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
@@ -273,8 +275,8 @@ class SymbolServerPanel extends JPanel {
 
 		symbolStorageLocationPanel = new JPanel(new PairLayout(5, 5));
 		GLabel symbolStorageLocLabel = new GLabel("Local Symbol Storage:", SwingConstants.RIGHT);
-		symbolStorageLocLabel
-				.setToolTipText("User-specified directory where PDB files are stored.  Required.");
+		symbolStorageLocLabel.setToolTipText(symbolStorageLocationTextField.getToolTipText());
+
 		symbolStorageLocationPanel.add(symbolStorageLocLabel);
 		symbolStorageLocationPanel.add(LoadPdbDialog.join(null, symbolStorageLocationTextField,
 			chooseSymbolStorageLocationButton));

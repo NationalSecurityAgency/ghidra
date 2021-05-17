@@ -331,7 +331,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		}
 		SymbolFileInfo symbolFileInfo = getCurrentSymbolFileInfo();
 		if (symbolFileInfo == null) {
-			Msg.showWarn(this, null, "Bad PDB GUID/Id",
+			Msg.showWarn(this, null, "Bad PDB GUID/ID",
 				"Invalid PDB GUID / UID value: " + pdbUniqueIdTextField.getText());
 			return;
 		}
@@ -441,14 +441,14 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		pdbUniqueIdTextField = new BetterNonEditableTextField(36);
 		pdbUniqueIdTextField.setEditable(false);
 		pdbUniqueIdTextField.setToolTipText(
-			"<html>PDB GUID - either 36 or 32 hexadecimal characters:<br>" +
-				"&nbsp;&nbsp;<b>'012345678-0123-0123-0123-0123456789ABC'</b> or <b>'0123456780123012301230123456789ABC'</b>, or<br>" +
-				"PDB Signature Id - 8 hexadecimal character Id:<br>" +
+			"<html>PDB GUID - 32 hexadecimal characters:<br>" +
+				"&nbsp;&nbsp;<b>'012345678-0123-0123-0123-0123456789ABC'</b> (with or without dashes) or<br>" +
+				"PDB Signature ID - 8 hexadecimal characters:<br>" +
 				"&nbsp;&nbsp;<b>'11223344'</b>");
 
 		overridePdbUniqueIdCheckBox = new GCheckBox();
 		overridePdbUniqueIdCheckBox.setVisible(false);
-		overridePdbUniqueIdCheckBox.setToolTipText("Override PDB unique id (when searching).");
+		overridePdbUniqueIdCheckBox.setToolTipText("Override PDB Unique ID (when searching).");
 		overridePdbUniqueIdCheckBox.addItemListener(e -> {
 			pdbUniqueIdTextField.setEditable(overridePdbUniqueIdCheckBox.isSelected());
 			if (overridePdbUniqueIdCheckBox.isSelected()) {
@@ -494,7 +494,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			join(null, new GLabel("PDB Name:", SwingConstants.RIGHT), overridePdbPathCheckBox));
 		programPdbPanel.add(pdbPathTextField);
 
-		programPdbPanel.add(join(null, new GLabel("PDB Unique Id:", SwingConstants.RIGHT),
+		programPdbPanel.add(join(null, new GLabel("PDB Unique ID:", SwingConstants.RIGHT),
 			overridePdbUniqueIdCheckBox));
 		programPdbPanel.add(pdbUniqueIdTextField);
 
@@ -574,6 +574,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		radioButtons.add(msdiaParserButton);
 
 		applicatorControlCombo = new GComboBox<>(PdbApplicatorControl.values());
+		applicatorControlCombo.setToolTipText("Selects which subsets of information to parse.");
 		applicatorControlCombo.setSelectedItem(PdbApplicatorControl.ALL);
 
 		parserOptionsPanel = new JPanel(new PairLayout(5, 5));

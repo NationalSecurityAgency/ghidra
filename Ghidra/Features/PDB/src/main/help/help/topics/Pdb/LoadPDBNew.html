@@ -184,7 +184,7 @@
 			change the search criteria, they are not persisted to your program's metadata.</P>
 			<UL>
 				<LI><B>PDB Name Checkbox</B> - this checkbox allows entering a custom value for the desired PDB file name.</LI>
-				<LI><B>PDB Unique Id Checkbox</B> - this checkbox allows entering a custom GUID or ID value.</LI>
+				<LI><B>PDB Unique ID Checkbox</B> - this checkbox allows entering a custom GUID or ID value.</LI>
 				<LI><B>PDB Age Checkbox</B> - this checkbox allows entering a custom age value.</LI>
 			</UL>
 			<P>After changing a search option, you will need to perform another search to use the new options.</P>
@@ -198,7 +198,12 @@
 			<UL>
 				<LI><B>Universal</B> - Platform-independent PDB analyzer (No PDB.XML support).</LI>
 				<LI><B>MSDIA</B> - Legacy PDB Analyzer.  Requires MS DIA-SDK for raw PDB processing (Windows only), or preprocessed PDB.XML file.</LI>
-				<LI><B>Control</B> - Process All, Data Types Only, Public Symbols Only.</LI>
+			</UL>
+			<P><B>Control</B> (Universal only) - Controls how the PDB is applied to the Program</P>
+			<UL>
+				<LI><B>Process All</B>: Applies Data Types and Public, Global, and Module Symbols.</LI>
+				<LI><B>Data Types Only</B>: Applies Data Types and Typedefs found in the Global Symbols.</LI>
+				<LI><B>Public Symbols Only</B>: Applies only Public symbols to the program.  It ignores Global symbols and Module symbols.</LI>
 			</UL>
 		</BLOCKQUOTE>
 	</BLOCKQUOTE>

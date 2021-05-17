@@ -15,9 +15,8 @@
  */
 package pdb.symbolserver;
 
-import java.util.*;
-
 import java.io.*;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -33,6 +32,8 @@ import utilities.util.FileUtilities;
  */
 public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStore {
 	private static final String ADMIN_DIRNAME = "000admin"; // per MS custom
+	private static final Set<File> ALREADY_WARNED_ABOUT =
+		Collections.synchronizedSet(new HashSet<>());
 
 	/**
 	 * Predicate that returns true if the location string is a LocalSymbolStore path
@@ -152,7 +153,47 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 		if (pingMeFile.isFile() && adminDir.isDirectory()) {
 			return super.detectStorageLevel(monitor);
 		}
+		return doHackyStorageLevelDetection(monitor);
+	}
+
+	private int doHackyStorageLevelDetection(TaskMonitor monitor) {
+		// dig through the files in the rootDir and see if there is anything
+		// that looks like a level1 or level2 directory.
+		if (containsPdbSymbolDirsWithFiles(rootDir)) {
+			if (ALREADY_WARNED_ABOUT.add(rootDir)) {
+				Msg.warn(this,
+					"Symbol directory missing control files, guessing storage scheme as level 1: " +
+						rootDir);
+			}
+			return 1;
+		}
+		File[] possibleLevel2SymbolDirs =
+			list(rootDir, f -> f.isDirectory() && f.getName().length() == 2);
+		for (File dir : possibleLevel2SymbolDirs) {
+			if (containsPdbSymbolDirsWithFiles(dir)) {
+				if (ALREADY_WARNED_ABOUT.add(rootDir)) {
+					Msg.warn(this,
+						"Symbol directory missing control files, guessing storage scheme as level 2: " +
+							rootDir);
+				}
+				return 2;
+			}
+		}
 		return 0;
+	}
+
+	private boolean containsPdbSymbolDirsWithFiles(File testDir) {
+		File[] possibleLevel1SymbolDirs =
+			list(testDir, f -> f.isDirectory() && f.getName().toLowerCase().endsWith(".pdb"));
+		for (File dir : possibleLevel1SymbolDirs) {
+			if (list(dir, f -> f.isDirectory() &&
+				SymbolFileInfo.fromSubdirectoryPath("doesntmatter", f.getName()) != null &&
+				new File(f, dir.getName()).isFile()).length > 0) {
+				Msg.debug(this, "Detected symbol file directory: " + dir);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -294,6 +335,12 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 		FileUtilities.checkedMkdirs(destinationFile.getParentFile());
 		if (destinationFile.isFile()) {
 			Msg.info(this, logPrefix() + ": File already exists: " + destinationFile);
+			return relativeDestinationFilename;
+		}
+		if (destinationFile.isDirectory()) {
+			Msg.error(this, logPrefix() + ": File's location already exists and is a directory: " +
+				destinationFile);
+			Msg.error(this, logPrefix() + ": Possible symbol storage directory misconfiguration!");
 			return relativeDestinationFilename;
 		}
 
