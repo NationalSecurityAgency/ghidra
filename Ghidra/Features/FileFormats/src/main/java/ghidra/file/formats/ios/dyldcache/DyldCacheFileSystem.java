@@ -57,8 +57,8 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		}
 		long machHeaderStartIndexInProvider = data.getAddress() - header.getBaseAddress();
 		try {
-			return DyldCacheDylibExtractor.extractDylib(file, machHeaderStartIndexInProvider,
-				provider, monitor);
+			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider, provider,
+				monitor);
 		}
 		catch (MachException e) {
 			throw new IOException("Invalid Mach-O header detected at 0x" +
@@ -153,11 +153,8 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 			monitor.incrementProgress(1);
 
-			GFileImpl file = GFileImpl.fromPathString(this, root, data.getPath(), null, false,
-				0/*TODO compute length?*/ );
+			GFileImpl file = GFileImpl.fromPathString(this, root, data.getPath(), null, false, -1);
 			storeFile(file, data);
-
-			file.setLength(provider.length() - (data.getAddress() - header.getBaseAddress()));
 		}
 	}
 

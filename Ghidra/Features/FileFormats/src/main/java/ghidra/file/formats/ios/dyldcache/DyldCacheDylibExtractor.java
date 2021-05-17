@@ -24,7 +24,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
-import ghidra.formats.gfilesystem.GFile;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
@@ -38,7 +37,6 @@ public class DyldCacheDylibExtractor {
 	 * Gets an {@link InputStream} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
 	 * DYLIB's header will be altered to account for its segment bytes being packed down.   
 	 * 
-	 * @param file The {@link GFile DYLIB}
 	 * @param dylibOffset The offset of the DYLIB in the given provider
 	 * @param provider The DYLD
 	 * @param monitor A cancellable {@link TaskMonitor}
@@ -47,7 +45,7 @@ public class DyldCacheDylibExtractor {
 	 * @throws IOException If there was an IO-related issue with extracting the DYLIB
 	 * @throws MachException If there was an error parsing the DYLIB headers
 	 */
-	public static InputStream extractDylib(GFile file, long dylibOffset, ByteProvider provider,
+	public static InputStream extractDylib(long dylibOffset, ByteProvider provider,
 			TaskMonitor monitor) throws IOException, MachException {
 
 		// Make sure Mach-O header is valid
@@ -56,7 +54,7 @@ public class DyldCacheDylibExtractor {
 		header.parse();
 
 		// Pack the DYLIB
-		PackedDylib packedDylib = new PackedDylib(header, provider);
+		PackedDylib packedDylib = new PackedDylib(header, dylibOffset, provider);
 
 		// Fixup indices, offsets, etc in the packed DYLIB's header
 		for (LoadCommand cmd : header.getLoadCommands()) {
@@ -206,20 +204,34 @@ public class DyldCacheDylibExtractor {
 		 * Creates a new {@link PackedDylib} object
 		 * 
 		 * @param header The DYLD's DYLIB's Mach-O header
+		 * @param dylibOffset The offset of the DYLIB in the given provider
 		 * @param provider The DYLD's bytes
 		 * @throws IOException If there was an IO-related error
 		 */
-		public PackedDylib(MachHeader header, ByteProvider provider) throws IOException {
+		public PackedDylib(MachHeader header, long dylibOffset, ByteProvider provider)
+				throws IOException {
 			reader = new BinaryReader(provider, true);
 			packedStarts = new HashMap<>();
 			int size = 0;
 			for (SegmentCommand segment : header.getAllSegments()) {
 				packedStarts.put(segment, size);
 				size += segment.getFileSize();
+
+				// Some older DYLDs use relative file offsets for only their __TEXT segment.
+				// Adjust these segments to be consistent with all the other segments.
+				if (segment.getFileOffset() == 0) {
+					segment.setFileOffset(dylibOffset);
+				}
 			}
 			packed = new byte[size];
 			for (SegmentCommand segment : header.getAllSegments()) {
-				byte[] bytes = provider.readBytes(segment.getFileOffset(), segment.getFileSize());
+				long segmentSize = segment.getFileSize();
+				if (segment.getFileOffset() + segmentSize > provider.length()) {
+					segmentSize = provider.length() - segment.getFileOffset();
+					Msg.warn(this, segment.getSegmentName() +
+						" segment extends beyond end of file.  Truncating...");
+				}
+				byte[] bytes = provider.readBytes(segment.getFileOffset(), segmentSize);
 				System.arraycopy(bytes, 0, packed, packedStarts.get(segment), bytes.length);
 			}
 		}
@@ -246,8 +258,7 @@ public class DyldCacheDylibExtractor {
 			if (size != 4 && size != 8) {
 				throw new IllegalArgumentException("Size must be 4 or 8 (got " + size + ")");
 			}
-			long orig = size == 8 ? reader.readLong(fileOffset)
-					: Conv.intToLong(reader.readInt(fileOffset));
+			long orig = reader.readUnsignedValue(fileOffset, size);
 			try {
 				byte[] newBytes = toBytes(getPackedOffset(orig), size);
 				System.arraycopy(newBytes, 0, packed, (int) getPackedOffset(fileOffset),
