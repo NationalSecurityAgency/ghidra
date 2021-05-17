@@ -56,7 +56,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	static final int ACTION_BUTTON_SIZE = 32;
 	static final Dimension ACTION_BUTTON_DIM =
 		new Dimension(ACTION_BUTTON_SIZE, ACTION_BUTTON_SIZE);
-	static final int MAX_ROW_HEIGHT = 300;
+	static final int MIN_ROW_HEIGHT = 16;
 
 	protected enum LogTableColumns implements EnumeratedTableColumn<LogTableColumns, LogRow> {
 		LEVEL("Level", Icon.class, LogRow::getIcon, SortDirection.ASCENDING, false),
@@ -242,7 +242,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			int rows = model.getRowCount();
 			int cols = getColumnCount();
 			for (int r = 0; r < rows; r++) {
-				int height = 0;
+				int height = MIN_ROW_HEIGHT;
 				for (int c = 0; c < cols; c++) {
 					height = Math.max(height, computePreferredHeight(r, c));
 				}
@@ -398,6 +398,10 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 				logTableModel.deleteItem(buffer.removeFirst());
 			}
 		}
+	}
+
+	protected void log(Icon icon, String message) {
+		log(icon, message, new LogRowConsoleActionContext());
 	}
 
 	protected void log(Icon icon, String message, ActionContext context) {

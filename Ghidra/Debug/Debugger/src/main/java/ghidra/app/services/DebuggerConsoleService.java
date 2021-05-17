@@ -28,6 +28,17 @@ import ghidra.util.HTMLUtilities;
 public interface DebuggerConsoleService extends DebuggerConsoleLogger {
 
 	/**
+	 * Log a message to the console
+	 * 
+	 * <p>
+	 * <b>WARNING:</b> See {@link #log(Icon, String, ActionContext)} regarding HTML.
+	 * 
+	 * @param icon an icon for the message
+	 * @param message the HTML-formatted message
+	 */
+	void log(Icon icon, String message);
+
+	/**
 	 * Log an actionable message to the console
 	 * 
 	 * <p>

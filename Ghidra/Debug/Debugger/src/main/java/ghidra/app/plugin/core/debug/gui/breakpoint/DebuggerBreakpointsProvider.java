@@ -254,8 +254,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 					(DebuggerLogicalBreakpointsActionContext) context;
 				Collection<LogicalBreakpoint> sel = ctx.getSelection();
 				breakpointService.enableAll(sel, null).exceptionally(ex -> {
-					Msg.showError(this, getComponent(), "Enable Breakpoints",
-						"Could not enable breakpoints", ex);
+					breakpointError("Enable Breakpoints", "Could not enable breakpoints", ex);
 					return null;
 				});
 			}
@@ -286,8 +285,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		public void actionPerformed(ActionContext context) {
 			Set<LogicalBreakpoint> all = breakpointService.getAllBreakpoints();
 			breakpointService.enableAll(all, null).exceptionally(ex -> {
-				Msg.showError(this, getComponent(), "Enable All Breakpoints",
-					"Could not enable breakpoints", ex);
+				breakpointError("Enable All Breakpoints", "Could not enable breakpoints", ex);
 				return null;
 			});
 		}
@@ -320,8 +318,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 					(DebuggerLogicalBreakpointsActionContext) context;
 				Collection<LogicalBreakpoint> sel = ctx.getSelection();
 				breakpointService.disableAll(sel, null).exceptionally(ex -> {
-					Msg.showError(this, getComponent(), "Disable Breakpoints",
-						"Could not disable breakpoints", ex);
+					breakpointError("Disable Breakpoints", "Could not disable breakpoints", ex);
 					return null;
 				});
 			}
@@ -352,8 +349,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		public void actionPerformed(ActionContext context) {
 			Set<LogicalBreakpoint> all = breakpointService.getAllBreakpoints();
 			breakpointService.disableAll(all, null).exceptionally(ex -> {
-				Msg.showError(this, getComponent(), "Disable All Breakpoints",
-					"Could not disable breakpoints", ex);
+				breakpointError("Disable All Breakpoints", "Could not disable breakpoints", ex);
 				return null;
 			});
 		}
@@ -382,8 +378,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 					(DebuggerLogicalBreakpointsActionContext) context;
 				Collection<LogicalBreakpoint> sel = ctx.getSelection();
 				breakpointService.deleteAll(sel, null).exceptionally(ex -> {
-					Msg.showError(this, getComponent(), "Clear Breakpoints",
-						"Could not clear breakpoints", ex);
+					breakpointError("Clear Breakpoints", "Could not clear breakpoints", ex);
 					return null;
 				});
 			}
@@ -414,8 +409,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		public void actionPerformed(ActionContext context) {
 			Set<LogicalBreakpoint> all = breakpointService.getAllBreakpoints();
 			breakpointService.deleteAll(all, null).exceptionally(ex -> {
-				Msg.showError(this, getComponent(), "Clear All Breakpoints",
-					"Could not clear breakpoints", ex);
+				breakpointError("Clear All Breakpoints", "Could not clear breakpoints", ex);
 				return null;
 			});
 		}
@@ -598,7 +592,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	// @AutoServiceConsumed via method
 	private DebuggerLogicalBreakpointService breakpointService;
-	// @AutoServiceConsumed via method
+	// @AutoServiceConsumed via method, package access for BreakpointLogicalRow
 	DebuggerModelService modelService;
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;
@@ -1084,5 +1078,14 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	public void setSelectedLocations(Set<TraceBreakpoint> sel) {
 		DebuggerResources.setSelectedRows(sel, locationTableModel::getRow, locationTable,
 			locationTableModel, locationFilterPanel);
+	}
+
+	protected void breakpointError(String title, String message, Throwable ex) {
+		if (consoleService == null) {
+			Msg.showError(this, null, title, message, ex);
+			return;
+		}
+		Msg.error(this, message, ex);
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message + " (" + ex + ")");
 	}
 }
