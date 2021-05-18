@@ -155,7 +155,7 @@ public class PEx64UnwindInfoDataType extends DynamicDataType {
 	}
 
 	private Structure defineUnwindCodeStructure() {
-		StructureDataType unwindCode = new StructureDataType("UnwindCode", 0);
+		StructureDataType unwindCode = new StructureDataType("UnwindCode", 0, dataMgr);
 		unwindCode.setPackingEnabled(true);
 		try {
 			unwindCode.add(BYTE, "OffsetInProlog", null);
