@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.feature.vt.gui.duallisting;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Icon;
+
 import ghidra.app.nav.*;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
@@ -25,20 +29,16 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.UniversalIdGenerator;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.Icon;
-
 public class VTListingNavigator implements Navigatable {
 
 	private final ListingCodeComparisonPanel dualListingPanel;
 	private final ListingPanel listingPanel;
 	private List<NavigatableRemovalListener> listeners =
-		new ArrayList<NavigatableRemovalListener>();
+		new ArrayList<>();
 	private long id;
 
-	public VTListingNavigator(ListingCodeComparisonPanel dualListingPanel, ListingPanel listingPanel) {
+	public VTListingNavigator(ListingCodeComparisonPanel dualListingPanel,
+			ListingPanel listingPanel) {
 
 		this.dualListingPanel = dualListingPanel;
 		this.listingPanel = listingPanel;
@@ -51,8 +51,18 @@ public class VTListingNavigator implements Navigatable {
 	}
 
 	@Override
+	public ProgramSelection getSelection() {
+		return listingPanel.getProgramSelection();
+	}
+
+	@Override
 	public ProgramSelection getHighlight() {
 		return listingPanel.getProgramHighlight();
+	}
+
+	@Override
+	public String getTextSelection() {
+		return listingPanel.getTextSelection();
 	}
 
 	@Override
@@ -78,11 +88,6 @@ public class VTListingNavigator implements Navigatable {
 	@Override
 	public Program getProgram() {
 		return listingPanel.getProgram();
-	}
-
-	@Override
-	public ProgramSelection getSelection() {
-		return listingPanel.getProgramSelection();
 	}
 
 	@Override
@@ -133,6 +138,7 @@ public class VTListingNavigator implements Navigatable {
 
 	@Override
 	public void setMemento(LocationMemento memento) {
+		// unsupported
 	}
 
 	@Override

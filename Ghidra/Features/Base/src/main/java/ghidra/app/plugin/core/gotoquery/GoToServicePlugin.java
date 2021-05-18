@@ -58,6 +58,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 
 	/**
 	 * Creates a new instance of the <CODE>GoToServicePlugin</CODE>
+	 * @param plugintool the tool
 	 */
 	public GoToServicePlugin(PluginTool plugintool) {
 		super(plugintool, true, true);
@@ -82,7 +83,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 	int getMaxHits() {
 		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
 		int maxSearchHits =
-				opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 
 		return maxSearchHits;
 	}
@@ -125,7 +126,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		@Override
 		public void setMemento(LocationMemento memento) {
 			DefaultNavigatableLocationMemento defaultMemento =
-					(DefaultNavigatableLocationMemento) memento;
+				(DefaultNavigatableLocationMemento) memento;
 			defaultMemento.setMementos();
 			focusedNavigatable = defaultMemento.getFocusedNavigatable();
 		}
@@ -176,11 +177,13 @@ public final class GoToServicePlugin extends ProgramPlugin {
 
 		@Override
 		public void addNavigatableListener(NavigatableRemovalListener listener) {
-		} // do nothing, default Navigatable never goes away
+			// do nothing, default Navigatable never goes away
+		}
 
 		@Override
 		public void removeNavigatableListener(NavigatableRemovalListener listener) {
-		}// do nothing, default Navigatable never goes away
+			// do nothing, default Navigatable never goes away
+		}
 
 		@Override
 		public void setHighlight(ProgramSelection highlight) {
@@ -207,6 +210,11 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		@Override
 		public ProgramSelection getHighlight() {
 			return currentHighlight;
+		}
+
+		@Override
+		public String getTextSelection() {
+			return null;
 		}
 
 		@Override

@@ -1194,6 +1194,22 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
+	public String getTextSelection() {
+
+		FGData currentData = controller.getFunctionGraphData();
+		if (!currentData.hasResults()) {
+			return null;
+		}
+
+		FGVertex focusedVertex = controller.getFocusedVertex();
+		if (focusedVertex == null) {
+			return null;
+		}
+
+		return focusedVertex.getTextSelection();
+	}
+
+	@Override
 	public boolean supportsHighlight() {
 		return true;
 	}

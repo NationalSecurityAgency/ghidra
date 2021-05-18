@@ -476,9 +476,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		}
 
 		CodeViewerService codeViewerService = tool.getService(CodeViewerService.class);
-		String textSelection = codeViewerService.getCurrentFieldTextSelection();
-		ProgramLocation textField = codeViewerService.getCurrentLocation();
-		Address address = textField.getAddress();
+		String textSelection = navigatable.getTextSelection();
+		ProgramLocation location = codeViewerService.getCurrentLocation();
+		Address address = location.getAddress();
 		Listing listing = context.getProgram().getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(address);
 		boolean isInstruction = false;
@@ -490,9 +490,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				else {
 					isInstruction = false;
 				}
-				searchDialog.setValueFieldText(textSelection);
-				searchDialog.setCurrentField(textField, isInstruction);
+				searchDialog.setCurrentField(location, isInstruction);
 			}
+			searchDialog.setValueFieldText(textSelection);
 		}
 		searchDialog.show(context.getComponentProvider());
 	}
