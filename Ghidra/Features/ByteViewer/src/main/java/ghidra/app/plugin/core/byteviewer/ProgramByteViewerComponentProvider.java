@@ -160,6 +160,11 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		return currentHighlight;
 	}
 
+	@Override
+	public String getTextSelection() {
+		return getTextSelection();
+	}
+
 	private void setSelection(ProgramSelection selection, boolean notify) {
 		currentSelection = selection;
 		if (selection == null) {
