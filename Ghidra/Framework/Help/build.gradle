@@ -22,9 +22,9 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Help'
 
 dependencies {
-	compile project(':Utility')
-	compile project(':Docking')
+	api project(':Utility')
+	api project(':Docking')
 	
-//	compile name:'jh' - provided by Docking
+//	api name:'jh' - provided by Docking
 
 }

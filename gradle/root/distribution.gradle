@@ -119,7 +119,7 @@ def getGitRev(repoPath) {
  *********************************************************************************/
 task createJavadocs(type: Javadoc, description: 'Generate javadocs for all projects', group: 'Documentation') {
 	
-	destinationDir = file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
+	destinationDir file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
 	
 	failOnError false
 		
@@ -177,7 +177,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	
 	String ROOT_PROJECT_DIR = rootProject.projectDir.toString()
 	
-	destinationDir = file(ROOT_PROJECT_DIR + "/build/tmp/jsondoc")
+	destinationDir file(ROOT_PROJECT_DIR + "/build/tmp/jsondoc")
 	
 	failOnError false
 		
@@ -222,8 +222,8 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
  *********************************************************************************/
 task zipJavadocs(type: Zip) {
 	group 'private'
-	archiveName 'GhidraAPI_javadoc.zip'	
-	destinationDir file(rootProject.projectDir.toString() + "/build/tmp")
+	archiveFileName = 'GhidraAPI_javadoc.zip'	
+	destinationDirectory = file(rootProject.projectDir.toString() + "/build/tmp")
 
 	from createJavadocs {
 		into "api"
@@ -233,7 +233,7 @@ task zipJavadocs(type: Zip) {
 		into "api"
 	}
 	
-	description "Zips javadocs for Ghidra API.  [gradle/root/distribution.gradle]"
+	description "Zips javadocs for Ghidra api.  [gradle/root/distribution.gradle]"
 }
 
 
@@ -491,12 +491,12 @@ task createInstallationZip(type: Zip) { t ->
 	}
 
 	if (project.hasProperty("allPlatforms")) {
-		archiveName "${ZIP_NAME_PREFIX}.zip"
+		archiveFileName = "${ZIP_NAME_PREFIX}.zip"
 	}
 	else {
-		archiveName "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
+		archiveFileName = "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
 	}
-	destinationDir DISTRIBUTION_DIR
+	destinationDirectory = DISTRIBUTION_DIR
 	
 	// Make sure that we don't try to copy the same file with the same path.
 	duplicatesStrategy 'exclude'

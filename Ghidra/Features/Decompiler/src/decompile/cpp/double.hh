@@ -183,7 +183,7 @@ class LessThreeWay {
   Varnode *vnhil1,*vnhil2,*vnhie1,*vnhie2;
   Varnode *vnlo1,*vnlo2;
   Varnode *hi,*lo,*hi2,*lo2;
-  int4 hislot,loslot;
+  int4 hislot;
   bool hiflip,equalflip,loflip;
   bool lolessiszerocomp;
   bool lolessequalform,hilessequalform,signcompare;
@@ -240,7 +240,7 @@ public:
 class MultForm {
   SplitVarnode in;
   PcodeOp *add1,*add2;
-  PcodeOp *subhi,*sublo;
+  PcodeOp *subhi;
   PcodeOp *multlo,*multhi1,*multhi2;
   Varnode *midtmp,*lo1zext,*lo2zext;
   Varnode *hi1,*lo1,*hi2,*lo2;

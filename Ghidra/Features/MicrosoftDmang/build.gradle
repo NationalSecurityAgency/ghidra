@@ -25,7 +25,7 @@ project.ext.excludeFromParallelTests = true
 project.ext.excludeFromParallelIntegrationTests = true
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
 /*

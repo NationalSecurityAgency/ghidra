@@ -22,21 +22,21 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Graph'
 
 dependencies {
-	compile project(':Docking')
+	api project(':Docking')
 	
 	// these are not used by the project, but indirectly by the jars listed below
-	compile "net.sf.jung:jung-api:2.1.1"        // used by jung-graph-impl
-	compile "net.sf.jung:jung-algorithms:2.1.1" // used by jung-visualization
+	api "net.sf.jung:jung-api:2.1.1"        // used by jung-graph-impl
+	api "net.sf.jung:jung-algorithms:2.1.1" // used by jung-visualization
 	
 	// this project uses these directly
-	compile "net.sf.jung:jung-graph-impl:2.1.1"
-	compile "net.sf.jung:jung-visualization:2.1.1"
+	api "net.sf.jung:jung-graph-impl:2.1.1"
+	api "net.sf.jung:jung-visualization:2.1.1"
 	
-	compile "org.jgrapht:jgrapht-core:1.5.0"
+	api "org.jgrapht:jgrapht-core:1.5.0"
 	
 	// not using jgrapht-io code that depends on antlr, so exclude antlr
-	compile ("org.jgrapht:jgrapht-io:1.5.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
+	api ("org.jgrapht:jgrapht-io:1.5.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
 	
 	// These have abstract test classes and stubs needed by this module	
-	testCompile project(path: ':Docking', configuration: 'testArtifacts')
+	testImplementation project(path: ':Docking', configuration: 'testArtifacts')
 }

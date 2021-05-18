@@ -23,5 +23,5 @@ eclipse.project.name = 'Xtra SampleTablePlugin'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }

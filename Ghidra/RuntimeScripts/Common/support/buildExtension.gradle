@@ -17,7 +17,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 defaultTasks 'buildExtension'
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 /*****************************************************************************************
  *
@@ -48,9 +48,9 @@ compileJava {
 }
 
 dependencies {
-	compile fileTree(dir: 'lib', include: "*.jar")
-	compile fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
-	compile fileTree(dir: ghidraDir + '/Features', include: "**/*.jar")
+	api fileTree(dir: 'lib', include: "*.jar")
+	api fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
+	api fileTree(dir: ghidraDir + '/Features', include: "**/*.jar")
 	helpPath fileTree(dir: ghidraDir + '/Features/Base', include: "**/Base.jar")
 }
 	
@@ -75,8 +75,8 @@ task zipSource (type: Zip) {
 				
 task buildExtension (type: Zip) {
 				
-	baseName "${ZIP_NAME_PREFIX}_${project.name}"
-	extension 'zip'
+	archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
+	archiveExtension = 'zip'
 	destinationDir DISTRIBUTION_DIR
 	version ''
 	
@@ -152,7 +152,7 @@ task buildExtension (type: Zip) {
 	}
 
 	doLast {
-		println "\nCreated " + baseName + "." + extension + " in " + destinationDir
+		println "\nCreated " + archiveBaseName + "." + archiveExtension + " in " + destinationDir
 	}
 }
 

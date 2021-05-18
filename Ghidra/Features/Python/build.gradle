@@ -31,10 +31,10 @@ configurations {
 }
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
         helpPath project(path: ":Base", configuration: "helpPath")
 	jython JYTHON
-	compile JYTHON
+	api JYTHON
 }
 
 task jythonUnpack(type: Copy) {

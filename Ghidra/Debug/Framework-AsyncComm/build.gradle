@@ -22,9 +22,9 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Framework-AsyncComm'
 
 dependencies {
-	compile project(':Generic')
-	compile project(':Graph')
-	compile project(':ProposedUtils')
+	api project(':Generic')
+	api project(':Graph')
+	api project(':ProposedUtils')
 }
 
 task genTestPy(type: JavaExec) {

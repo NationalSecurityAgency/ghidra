@@ -23,6 +23,6 @@ eclipse.project.name = 'Processors x86'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 

@@ -24,9 +24,9 @@ eclipse.project.name = 'Features FunctionID'
 
 
 dependencies {
-	compile project(":Base")
-	compile project(":DB")
-	compile project(":SoftwareModeling")    
+	api project(":Base")
+	api project(":DB")
+	api project(":SoftwareModeling")    
 	helpPath project(path: ":Base", configuration: 'helpPath')
 	
 }

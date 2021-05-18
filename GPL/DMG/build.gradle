@@ -16,7 +16,7 @@ if (findProject(':Generic') != null) {
 	}
 }
 else {
-	apply plugin: 'java'
+	apply plugin: 'java-library'
 }
 apply plugin: 'eclipse'
 
@@ -39,16 +39,14 @@ sourceSets {
 	}
 }
 
-eclipse.classpath.plusConfigurations += [configurations.dmgCompile]
-
 repositories {
 	flatDir name: "flat", dirs:["data/lib"]
 }
 
 dependencies {
-	dmgCompile ':csframework@jar'
-	dmgCompile ':hfsx@jar'
-	dmgCompile ':hfsx_dmglib@jar'
+	dmgImplementation ':csframework@jar'
+	dmgImplementation ':hfsx@jar'
+	dmgImplementation ':hfsx_dmglib@jar'
 }
 
 /***************************************************************************************
@@ -58,6 +56,6 @@ dependencies {
  ***************************************************************************************/
 
 jar {
-	destinationDir = file("build/data/lib")
+	destinationDirectory = file("build/data/lib")
 	from sourceSets.dmg.output
 }

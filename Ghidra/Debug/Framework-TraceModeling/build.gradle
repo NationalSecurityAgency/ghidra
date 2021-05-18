@@ -22,11 +22,11 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Framework-TraceModeling'
 
 dependencies {
-	compile project(':Generic')
-	compile project(':SoftwareModeling')
-	compile project(':ProposedUtils')
+	api project(':Generic')
+	api project(':SoftwareModeling')
+	api project(':ProposedUtils')
 	annotationProcessor project(':AnnotationValidator')
 
-	testCompile project(':Base')
-	testRuntime project(':ARM')  // For its emulator state modifier
+	testImplementation project(':Base')
+	testRuntimeOnly project(':ARM')  // For its emulator state modifier
 }

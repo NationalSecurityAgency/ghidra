@@ -31,7 +31,7 @@ import org.gradle.plugins.ide.eclipse.model.Library;
  *  - all subs will have access to these properties.
  *********************************************************************************/
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 compileJava {
 	options.compilerArgs << '-Xlint:none'
@@ -45,6 +45,14 @@ compileTestJava {
 	options.compilerArgs << '-XDignore.symbol.file'
 	options.fork = true
 	options.warnings = false
+}
+
+processResources {
+	duplicatesStrategy = 'exclude'
+}
+
+processTestResources {
+	duplicatesStrategy = 'exclude'
 }
 	
 plugins.withId('java') {
@@ -120,12 +128,12 @@ sourceSets {
 }
 	
 configurations {
-	integrationTestCompile.extendsFrom testCompile
-	integrationTestRuntime.extendsFrom testRuntime, integrationTestCompile
-	pcodeTestCompile.extendsFrom compile
-	testArtifacts.extendsFrom testRuntime
-	integrationTestArtifacts.extendsFrom integrationTestRuntime
-	screenShotsCompile.extendsFrom integrationTestCompile
+	integrationTestImplementation.extendsFrom testImplementation
+	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly, integrationTestImplementation
+	pcodeTestImplementation.extendsFrom implementation
+	testArtifacts.extendsFrom testRuntimeOnly
+	integrationTestArtifacts.extendsFrom integrationTestRuntimeOnly
+	screenShotsImplementation.extendsFrom integrationTestImplemenation
 }
 
 task testJar(type: Jar) {
@@ -147,14 +155,14 @@ artifacts {
 	Provide test dependencies here so each build file does not have to.
 */  
 dependencies {
-	integrationTestCompile "org.hamcrest:hamcrest-all:1.3"
-	integrationTestCompile "org.jmockit:jmockit:1.44"
+	integrationTestImplementation "org.hamcrest:hamcrest-all:1.3"
+	integrationTestImplementation "org.jmockit:jmockit:1.44"
 
-	testCompile "org.hamcrest:hamcrest-all:1.3"
-	testCompile "org.jmockit:jmockit:1.44"
+	testImplementation "org.hamcrest:hamcrest-all:1.3"
+	testImplementation "org.jmockit:jmockit:1.44"
 
-	testCompile "junit:junit:4.12"
-	pcodeTestCompile "junit:junit:4.12"
+	testImplementation "junit:junit:4.12"
+	pcodeTestImplementation "junit:junit:4.12"
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.
@@ -190,10 +198,12 @@ eclipse.classpath.file.whenMerged { classpath ->
 	// Prevent Gradle 5.6 from setting the 'test' attribute on our test source folders and jars. 
 	// If we don't do this, things that we have outside of test directories that depend on test 
 	// libraries (like junit) will not compile in Eclipse.
+	// Also prevent Gradle 7.0 from adding jars to the modulepath instead of the classpath.
 	classpath.entries.findAll {
 		it.kind == 'src' || it.kind == 'lib'
 	}.each { 
 		it.entryAttributes['test'] = 'false' 
+		it.entryAttributes['module'] = 'false'
 	}
 }
 

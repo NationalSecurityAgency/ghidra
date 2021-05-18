@@ -26,8 +26,8 @@ plugins.withType(JavaPlugin) {
 		// Define some metadata about the zip (name, location, version, etc....)
 		t.group 'private'
 		t.description "Creates the source zips for java modules"
-		t.archiveName project.name + "-src.zip"
-		t.destinationDir file(projectDir.path + "/build/tmp/src")
+		t.archiveFileName = project.name + "-src.zip"
+		t.destinationDirectory = file(projectDir.path + "/build/tmp/src")
 		// Without this we get duplicate files but it's unclear why. It doesn't seem that this
 		// task is being executed multiple times, and sourceSets.main.java contains the 
 		// correct elements. Whatever the cause, this fixes the problem.

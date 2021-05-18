@@ -21,6 +21,6 @@ eclipse.project.name = 'Processors Toy'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
