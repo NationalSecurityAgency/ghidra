@@ -129,6 +129,10 @@ public class OSGiUtils {
 	static List<BundleRequirement> parseImportPackage(String importPackageString)
 			throws BundleException {
 		Map<String, Object> headerMap = new HashMap<>();
+		// assume version 2 for a more robust parse
+		headerMap.put(Constants.BUNDLE_MANIFESTVERSION, "2");
+		// symbolic name is required for version 2 bundle manifest
+		headerMap.put(Constants.BUNDLE_SYMBOLICNAME, Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
 		headerMap.put(Constants.IMPORT_PACKAGE, importPackageString);
 		ManifestParser manifestParser = new ManifestParser(null, null, null, headerMap);
 		return manifestParser.getRequirements();
@@ -144,6 +148,10 @@ public class OSGiUtils {
 	static List<BundleCapability> parseExportPackage(String exportPackageString)
 			throws BundleException {
 		Map<String, Object> headerMap = new HashMap<>();
+		// assume version 2 for a more robust parse 
+		headerMap.put(Constants.BUNDLE_MANIFESTVERSION, "2");
+		// symbolic name is required for version 2 bundle manifest
+		headerMap.put(Constants.BUNDLE_SYMBOLICNAME, Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
 		headerMap.put(Constants.EXPORT_PACKAGE, exportPackageString);
 		ManifestParser manifestParser = new ManifestParser(null, null, null, headerMap);
 		return manifestParser.getCapabilities();
@@ -205,15 +213,64 @@ public class OSGiUtils {
 		}
 	}
 
+	static private boolean hasEvenQuoteCount(String s) {
+		return s.chars().filter(c -> c == '"').count() % 2 == 0;
+	}
+
 	static void collectPackagesFromJar(Path jarPath, Set<String> packages) {
 		try {
-			try (JarFile j = new JarFile(jarPath.toFile())) {
-				j.stream().filter(entry -> entry.getName().endsWith(".class")).forEach(jarEntry -> {
-					String entryName = jarEntry.getName();
-					int lastSlash = entryName.lastIndexOf('/');
-					packages.add(
-						lastSlash > 0 ? entryName.substring(0, lastSlash).replace('/', '.') : "");
-				});
+			try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+				// if this jar is an OSGi bundle, use its declared exports
+				String exportPackageString =
+					jarFile.getManifest().getMainAttributes().getValue(Constants.EXPORT_PACKAGE);
+				if (exportPackageString != null) {
+					String saved = null;
+					/*
+					 *	split on commas not contained in quotes.
+					 * 
+					 *	e.g.
+					 *		org.foo,org.bar;uses="org.baz,org.qux"
+					 *		       ^- should split here  ^- not here
+					 *
+					 *	We first split on all commas. The first entry, 
+					 *		org.foo    
+					 *	has an even number of quotes, so it's added as is to packages.
+					 *	The second entry,
+					 *		        org.bar;uses="org.baz
+					 *	has an odd number of quotes, so we save
+					 *		        org.bar;uses="org.baz,
+					 *	Then the third entry,
+					 *		                              org.qux"
+					 *	is appended, and the result has an even number of quotes, so is added.
+					 */
+
+					for (String packageName : exportPackageString.split(",")) {
+						boolean evenQuoteCount = hasEvenQuoteCount(packageName);
+						if (saved != null) {
+							packageName = saved + packageName;
+							evenQuoteCount = !evenQuoteCount;
+							saved = null;
+						}
+						if (evenQuoteCount) {
+							packages.add(packageName);
+						}
+						else {
+							saved = packageName + ',';
+						}
+					}
+				}
+				else {
+					jarFile.stream()
+							.filter(entry -> entry.getName().endsWith(".class"))
+							.forEach(jarEntry -> {
+								String entryName = jarEntry.getName();
+								int lastSlash = entryName.lastIndexOf('/');
+								if (lastSlash > 0) {
+									packages.add(
+										entryName.substring(0, lastSlash).replace('/', '.'));
+								}
+							});
+				}
 			}
 		}
 		catch (IOException e) {

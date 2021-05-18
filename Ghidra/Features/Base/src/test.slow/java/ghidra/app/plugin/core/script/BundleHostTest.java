@@ -34,6 +34,10 @@ import utilities.util.FileUtilities;
 
 public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	private static final String TEMP_NAME_PREFIX = "sourcebundle";
+
+	// the version of Guava Ghidra is currently using.
+	private static final int GUAVA_MAJOR_VERSION = 19;
+
 	private BundleHost bundleHost;
 	private CapturingBundleHostListener capturingBundleHostListener;
 
@@ -330,6 +334,52 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		buildAndActivate();
 		assertEquals("wrong response from instantiated class", "lib says yupyup",
 			getInstance("AClass").toString());
+		// @formatter:on
+	}
+
+	@Test
+	public void testImportFromExtraSystemPackagesWithVersionConstraint() throws Exception {
+		// @formatter:off
+		String goodRange = String.format("[%d,%d)", GUAVA_MAJOR_VERSION, GUAVA_MAJOR_VERSION+1);
+		addClass(
+			"//@importpackage com.google.common.io;version=\""+goodRange+"\"\n",
+			"import com.google.common.io.BaseEncoding;",
+			"AClass", 
+			"@Override\n" + 
+			"public String toString() {\n" + 
+			"	return BaseEncoding.base16().encode(new byte[] {0x42});\n" + 
+			"}\n"
+		);
+
+		buildAndActivate();
+		assertEquals("wrong response from instantiated class", "42",
+			getInstance("AClass").toString());
+		// @formatter:on
+	}
+
+	@Test
+	public void testImportFromExtraSystemPackagesWithBadVersionConstraint() throws Exception {
+		// @formatter:off
+		String badRange = String.format("[%d,%d)", GUAVA_MAJOR_VERSION+1, GUAVA_MAJOR_VERSION+2);
+		addClass(
+			"//@importpackage com.google.common.io;version=\""+badRange+"\"\n",
+			"import com.google.common.io.BaseEncoding;",
+			"AClass", 
+			"@Override\n" + 
+			"public String toString() {\n" + 
+			"	return BaseEncoding.base16().encode(new byte[] {0x42});\n" + 
+			"}\n"
+		);
+
+		buildWithExpectations(
+			"1 import requirement remains unresolved:\n" + 
+			"  [null] osgi.wiring.package; (&(osgi.wiring.package=com.google.common.io)" +
+			  "(version>="+(GUAVA_MAJOR_VERSION+1)+".0.0)" +
+			  "(!(version>="+(GUAVA_MAJOR_VERSION+2)+".0.0))), " +
+			  "from /tmp/ghidra.dev2tmp/sourcebundle000/AClass.java\n",
+			"1 missing package import:com.google.common.io (version>="+(GUAVA_MAJOR_VERSION+1)+".0.0)" +
+			  ", 1 source file with errors"
+		);
 		// @formatter:on
 	}
 
