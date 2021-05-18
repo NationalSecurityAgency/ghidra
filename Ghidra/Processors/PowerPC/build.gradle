@@ -24,7 +24,7 @@ eclipse.project.name = 'Processors PowerPC'
 
 
 dependencies {
-	compile project(':Base')
-	compile project(':BytePatterns')
+	api project(':Base')
+	api project(':BytePatterns')
 }
 

@@ -22,7 +22,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features Recognizers'
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
 test {

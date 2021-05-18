@@ -131,7 +131,9 @@
     computed using information about loaded modules reported by the debugger. For the finer
     details, see the <A href=
     "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
-    window.</P>
+    window. When you navigate to a location contained by a module, but there is no corresponding
+    static location, the listing logs a "missing module" to the console, offering either to import
+    the module or map it to an existing program.</P>
 
     <H3><A name="capture_memory"></A>Capture Memory</H3>
 
@@ -161,29 +163,6 @@
       <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
       neglect to capture read-only ranges that have been captured previously.</LI>
     </UL>
-
-    <H3><A name="auto_import_module"></A>Auto-Import Current Module</H3>
-
-    <P>This toggle is available whenever Sync to Static Listing is enabled. It causes Ghidra to
-    prompt the user to import unknown modules. Specifically, when Ghidra cannot map the dynamic
-    listing's location to a static location, but the debugger reports a module containing the
-    dynamic address, it prompts the user to import that module:</P>
-
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerModuleImportDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
-
-    <P>This non-modal dialog collects those prompts and appears whenever a new module is suggested.
-    To import a module, click the import icon to the suggestion's right. To remove an entry, click
-    the delete icon to the suggestions's left. To ignore an entry, check the box to the left of the
-    suggestion and dismiss the dialog. Note that a removed suggestion is not ignored. Ghidra may
-    suggest that module again. To import modules manually, see the <A href=
-    "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html">Modules</A> window.</P>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>
 

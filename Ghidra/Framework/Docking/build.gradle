@@ -22,19 +22,19 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Docking'
 
 dependencies {
-	compile project(':Generic')
-	compile 'net.java.dev.timingframework:timingframework:1.0'
+	api project(':Generic')
+	api 'net.java.dev.timingframework:timingframework:1.0'
 
 	// better GUI
-	compile 'com.formdev:flatlaf:1.1.2'
+	api 'com.formdev:flatlaf:1.1.2'
 	
 	// Only include this debug version of the jh library if necessary.
-	//compile name:'jh2.with.debug'
-	compile 'javax.help:javahelp:2.0.05'
+	//api name:'jh2.with.debug'
+	api 'javax.help:javahelp:2.0.05'
 	
 	
 	// include code from src/test in Generic
-	testCompile project(path: ':Generic', configuration: 'testArtifacts')
+	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	compileOnly "junit:junit:4.12"
 }
 

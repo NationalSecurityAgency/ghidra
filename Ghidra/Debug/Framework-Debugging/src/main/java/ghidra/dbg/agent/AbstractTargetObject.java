@@ -80,15 +80,17 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 			this.path = PathUtils.extend(parent.getPath(), key);
 		}
 
-		model.removeExisting(path);
+		synchronized (model.lock) {
+			model.removeExisting(path);
 
-		this.hash = computeHashCode();
-		this.typeHint = typeHint;
+			this.hash = computeHashCode();
+			this.typeHint = typeHint;
 
-		this.schema = schema;
-		this.proxy = proxyFactory.createProxy(this, proxyInfo);
+			this.schema = schema;
+			this.proxy = proxyFactory.createProxy(this, proxyInfo);
 
-		fireCreated();
+			fireCreated();
+		}
 	}
 
 	public AbstractTargetObject(AbstractDebuggerObjectModel model, P parent, String key,

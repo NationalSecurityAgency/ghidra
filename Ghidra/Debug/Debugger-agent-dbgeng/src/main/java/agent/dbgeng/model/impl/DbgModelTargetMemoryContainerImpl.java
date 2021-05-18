@@ -35,9 +35,13 @@ import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "Memory", elements = {
-	@TargetElementType(type = DbgModelTargetMemoryRegionImpl.class) }, attributes = {
-		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "Memory",
+	elements = {
+		@TargetElementType(type = DbgModelTargetMemoryRegionImpl.class) },
+	attributes = {
+		@TargetAttributeType(type = Void.class) },
+	canonicalContainer = true)
 public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetMemoryContainer {
 
@@ -49,12 +53,13 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 	public DbgModelTargetMemoryContainerImpl(DbgModelTargetProcess process) {
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
+		requestElements(true);
 	}
 
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		DbgModelTargetProcess targetProcess = getParentProcess();
-		if (!targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
+		if (!refresh || !targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
 			return AsyncUtils.NIL;
 		}
 		return listMemory().thenAccept(byName -> {
@@ -258,8 +263,4 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		return CompletableFuture.completedFuture(null);
 	}
 
-	@Override
-	protected void update() {
-		requestElements(true);
-	}
 }

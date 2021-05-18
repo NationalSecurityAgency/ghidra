@@ -15,8 +15,7 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import agent.dbgeng.dbgeng.DebugControl;
-import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
@@ -56,7 +55,9 @@ public class DbgThreadHoldCommand extends AbstractDbgCommand<Void> {
 	public void invoke() {
 		DebugThreadId id = thread.getId();
 		if (id != null) {
-			manager.getSystemObjects().setCurrentThreadId(id);
+			DebugSystemObjects so = manager.getSystemObjects();
+			DebugThreadId previous = so.getCurrentThreadId();
+			so.setCurrentThreadId(id);
 			if (!manager.isKernelMode()) {
 				DebugControl control = manager.getControl();
 				if (preferFreeze) {
@@ -68,6 +69,7 @@ public class DbgThreadHoldCommand extends AbstractDbgCommand<Void> {
 						set ? SUSPEND_CURRENT_THREAD_COMMAND : RESUME_CURRENT_THREAD_COMMAND);
 				}
 			}
+			so.setCurrentThreadId(previous);
 		}
 	}
 }

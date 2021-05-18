@@ -16,10 +16,10 @@
 apply plugin: 'eclipse'
 eclipse.project.name = '_JsonDoclet'
 
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 dependencies {
-	compile "com.google.code.gson:gson:2.8.6"
+	api "com.google.code.gson:gson:2.8.6"
 }
 
 rootProject.createJsondocs.dependsOn jar

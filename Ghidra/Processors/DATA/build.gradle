@@ -22,6 +22,6 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Processors DATA'
 
 dependencies {
-	compile project(':Base')
-	compile project(':SoftwareModeling')
+	api project(':Base')
+	api project(':SoftwareModeling')
 }

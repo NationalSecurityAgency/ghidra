@@ -22,7 +22,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug AnnotationValidator'
 
 dependencies {
-	compile project(':ProposedUtils')
+	api project(':ProposedUtils')
 }
 
 // no-dep jar for experiments in loading annotation processor into Eclipse

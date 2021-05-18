@@ -85,6 +85,10 @@ public class DbgBreakpointInfo {
 			offset, expression);
 	}
 
+	public int getId() {
+		return bpt.getId();
+	}
+
 	@Override
 	public String toString() {
 		return Integer.toHexString(bpt.getId());

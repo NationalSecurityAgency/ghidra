@@ -36,6 +36,8 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
@@ -1078,9 +1080,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testActionAutoImportCurrentModuleWithSections() throws Exception {
+	public void testPromptImportCurrentModuleWithSections() throws Exception {
 		addPlugin(tool, ImporterPlugin.class);
-		assertTrue(listingProvider.actionAutoImportCurrentModule.isEnabled());
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -1099,16 +1101,19 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// In the module, but not in its section
 		listingPlugin.goTo(tb.addr(0x00411234), true);
 		waitForSwing();
-		assertFalse(listingProvider.importDialog.isVisible());
+		waitForPass(() -> assertEquals(0,
+			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 
 		listingPlugin.goTo(tb.addr(0x00401234), true);
-		waitForDialogComponent(DebuggerModuleImportDialog.class);
+		waitForSwing();
+		waitForPass(() -> assertEquals(1,
+			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 	}
 
 	@Test
-	public void testActionAutoImportCurrentModuleWithoutSections() throws Exception {
+	public void testPromptImportCurrentModuleWithoutSections() throws Exception {
 		addPlugin(tool, ImporterPlugin.class);
-		assertTrue(listingProvider.actionAutoImportCurrentModule.isEnabled());
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -1116,7 +1121,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					.addRegion("bash:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0041ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
-			TraceModule bin = tb.trace.getModuleManager()
+			tb.trace.getModuleManager()
 					.addLoadedModule("/bin/bash", "/bin/bash",
 						tb.range(0x00400000, 0x0041ffff), 0);
 
@@ -1125,7 +1130,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// In the module, but not in its section
 		listingPlugin.goTo(tb.addr(0x00411234), true);
-		waitForDialogComponent(DebuggerModuleImportDialog.class);
+		waitForSwing();
+		waitForPass(() -> assertEquals(1,
+			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 	}
 
 	@Test

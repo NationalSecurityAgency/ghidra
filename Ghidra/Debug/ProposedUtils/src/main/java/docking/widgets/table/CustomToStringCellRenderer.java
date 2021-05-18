@@ -18,10 +18,15 @@ package docking.widgets.table;
 import java.awt.Component;
 import java.awt.Font;
 import java.math.BigInteger;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.function.BiFunction;
 
-import javax.swing.JTable;
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.table.TableModel;
+import javax.swing.text.View;
 
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
@@ -40,6 +45,14 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 		return v.signum() < 0 ? "-0x" + v.negate().toString(16) : "0x" + v.toString(16);
 	}
 
+	public static final DateFormat TIME_FORMAT_24HMSms = new SimpleDateFormat("HH:mm:ss.SSS");
+
+	public static final CustomToStringCellRenderer<Date> TIME_24HMSms =
+		new CustomToStringCellRenderer<>(CustomFont.DEFAULT, Date.class,
+			(v, s) -> v == null ? "<null>" : TIME_FORMAT_24HMSms.format(v), false);
+	public static final CustomToStringCellRenderer<String> HTML =
+		new CustomToStringCellRenderer<String>(CustomFont.DEFAULT, String.class,
+			(v, s) -> v == null ? "<null>" : v, true);
 	public static final CustomToStringCellRenderer<Object> MONO_OBJECT =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Object.class,
 			(v, s) -> v == null ? "<null>" : v.toString(), false);
@@ -60,6 +73,9 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 	private final Class<T> cls;
 	private final BiFunction<T, Settings, String> toString;
 
+	private final JPanel panelForSize = new JPanel();
+	private final BoxLayout layoutForSize = new BoxLayout(panelForSize, BoxLayout.Y_AXIS);
+
 	public CustomToStringCellRenderer(Class<T> cls, BiFunction<T, Settings, String> toString,
 			boolean enableHtml) {
 		this(null, cls, toString, enableHtml);
@@ -71,6 +87,8 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 		this.customFont = font;
 		this.cls = cls;
 		this.toString = toString;
+
+		panelForSize.setLayout(layoutForSize);
 	}
 
 	@Override
@@ -100,6 +118,21 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data);
 		setText(toString.apply(cls.cast(data.getValue()), data.getColumnSettings()));
+		if (getHTMLRenderingEnabled()) {
+			setVerticalAlignment(SwingConstants.TOP);
+		}
+		else {
+			setVerticalAlignment(SwingConstants.CENTER);
+		}
 		return this;
+	}
+
+	public int getRowHeight(int colWidth) {
+		View v = (View) getClientProperty(BasicHTML.propertyKey);
+		if (v == null) {
+			return 0;
+		}
+		v.setSize(colWidth, Short.MAX_VALUE);
+		return (int) v.getPreferredSpan(View.Y_AXIS);
 	}
 }

@@ -23,28 +23,28 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features FileFormats'
 
 dependencies {
-	compile project(':Base')
-	compile project(':Recognizers')
-	compile project(':Python')
+	api project(':Base')
+	api project(':Recognizers')
+	api project(':Python')
 	
-	compile ':dex-ir:2.0'
-	compile ':dex-reader:2.0'
-	compile ':dex-reader-api:2.0'
-	compile ':dex-translator:2.0'
+	api ':dex-ir:2.0'
+	api ':dex-reader:2.0'
+	api ':dex-reader-api:2.0'
+	api ':dex-translator:2.0'
 
-	compile 'org.ow2.asm:asm-debug-all:4.1'
+	api 'org.ow2.asm:asm-debug-all:4.1'
 
-	compile 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
-	compile 'org.smali:dexlib:1.4.0'
-	compile 'org.smali:util:1.4.0'
+	api 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
+	api 'org.smali:dexlib:1.4.0'
+	api 'org.smali:util:1.4.0'
 
-	compile 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'
-	compile ':AXMLPrinter2'
+	api 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'
+	api ':AXMLPrinter2'
 	
-	runtime 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:16.02-2.01'
+	runtimeOnly 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:16.02-2.01'
 	
 	helpPath project(path: ":Base", configuration: 'helpPath')
 
 	// include code from src/test/slow in Base
-	testCompile project(path: ':Base', configuration: 'integrationTestArtifacts')	
+	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
 }

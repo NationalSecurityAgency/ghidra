@@ -23,14 +23,16 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgeng'
 
 dependencies {
-	compile project(":Framework-AsyncComm")
-	compile project(":Framework-Debugging")
-	compile project(":Debugger-gadp")
-	compile "net.java.dev.jna:jna:5.4.0"
-	compile "net.java.dev.jna:jna-platform:5.4.0"
+	api project(":Framework-AsyncComm")
+	api project(":Framework-Debugging")
+	api project(":Debugger-gadp")
+	api "net.java.dev.jna:jna:5.4.0"
+	api "net.java.dev.jna:jna-platform:5.4.0"
 
-	//testCompile project(":Base")
-	testCompile project(path: ":Debugger-gadp", configuration: 'testArtifacts')
+	//testImplementation project(":Base")
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
 }
 
 def boolean filterJar(File jarfile) {
@@ -52,7 +54,7 @@ jar {
 
 task configureNodepJar {
 	doLast {
-		configurations.runtime.files.forEach {
+		configurations.runtimeOnly.files.forEach {
 			if (filterJar(it)) {
 				nodepJar.from(zipTree(it))
 			}

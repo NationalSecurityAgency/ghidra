@@ -47,8 +47,12 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		return map.computeIfAbsent(keyFunc.apply(t), k -> wrapper.apply(t));
 	}
 
-	protected synchronized R delFor(T t) {
-		return map.remove(keyFunc.apply(t));
+	protected R delFor(T t) {
+		return delKey(keyFunc.apply(t));
+	}
+
+	protected synchronized R delKey(K k) {
+		return map.remove(k);
 	}
 
 	protected synchronized List<R> rowsFor(Collection<? extends T> c) {
@@ -79,9 +83,15 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		delete(delFor(t));
 	}
 
+	public R deleteKey(K k) {
+		R r = delKey(k);
+		delete(r);
+		return r;
+	}
+
 	public synchronized void deleteAllItems(Collection<T> c) {
 		deleteWith(rowsFor(c)::contains);
-		map.keySet().removeAll(c);
+		map.keySet().removeAll(c.stream().map(keyFunc).collect(Collectors.toList()));
 	}
 
 	public synchronized Map<K, R> getMap() {

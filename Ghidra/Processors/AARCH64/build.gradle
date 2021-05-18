@@ -27,6 +27,6 @@ sleighCompileOptions = [
 ]
 
 dependencies {
-	compile project(':Base')
-	compile project(':BytePatterns')
+	api project(':Base')
+	api project(':BytePatterns')
 }

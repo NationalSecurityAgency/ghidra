@@ -328,14 +328,16 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public <T> T getTop(Function<Long, T> func) {
-		synchronized (ordered) {
-			for (Range<Long> rng : ordered) {
-				T t = func.apply(rng.upperEndpoint());
-				if (t != null) {
-					return t;
+		try (LockHold hold = trace.lockRead()) {
+			synchronized (ordered) {
+				for (Range<Long> rng : ordered) {
+					T t = func.apply(rng.upperEndpoint());
+					if (t != null) {
+						return t;
+					}
 				}
+				return null;
 			}
-			return null;
 		}
 	}
 

@@ -22,10 +22,10 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework FileSystem'
 
 dependencies {
-	compile project(':Generic')
-	compile project(':DB')
-	compile project(':Docking')
-	compile "ch.ethz.ganymed:ganymed-ssh2:262@jar"
+	api project(':Generic')
+	api project(':DB')
+	api project(':Docking')
+	api "ch.ethz.ganymed:ganymed-ssh2:262@jar"
 	
 }
 

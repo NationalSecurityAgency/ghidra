@@ -23,8 +23,8 @@ eclipse.project.name = 'Features DecompilerDependent'
 
 
 dependencies {
-	compile project(':Base')
-	compile project(':Decompiler')
+	api project(':Base')
+	api project(':Decompiler')
 }
 
 

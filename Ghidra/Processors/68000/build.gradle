@@ -25,5 +25,5 @@ eclipse.project.name = 'Processors 68000'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }

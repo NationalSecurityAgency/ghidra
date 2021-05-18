@@ -342,7 +342,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		//cbGoTo.invoke(() -> {
 		DebuggerListingProvider provider = getConnectedProvider();
 		provider.doSyncToStatic(location);
-		provider.doAutoImportCurrentModule();
+		provider.doCheckCurrentModuleMissing();
 		//});
 		return true;
 	}

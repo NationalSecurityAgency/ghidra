@@ -193,6 +193,16 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 	Map<Long, DbgBreakpointInfo> getKnownBreakpoints();
 
 	/**
+	 * Get all memory regions known to the manager
+	 * 
+	 * This does not ask dbgeng to list its regions. Rather it returns a read-only view of the
+	 * manager's understanding of the current ememory based on its tracking of dbgeng events.
+	 * 
+	 * @return a map of dbgeng-assigned breakpoint IDs to corresponding breakpoint information
+	 */
+	Map<Long, DbgModuleMemory> getKnownMemoryRegions();
+
+	/**
 	 * Send an interrupt to dbgeng regardless of other queued commands
 	 * 
 	 * This may be useful if the manager's command queue is stalled because an inferior is running.
@@ -241,6 +251,21 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 	 * @return a future which completes then dbgeng has executed the command
 	 */
 	CompletableFuture<Void> removeSession(DbgSession session);
+
+	/**
+	 * Add a memory region
+	 * 
+	 * @return a future which completes with the handle to the new process
+	 */
+	CompletableFuture<Void> addMemory(DbgModuleMemory region);
+
+	/**
+	 * Remove a memory region
+	 * 
+	 * @param regionId the region to remove
+	 * @return a future which completes then dbgeng has executed the command
+	 */
+	CompletableFuture<Void> removeMemory(Long regionId);
 
 	/**
 	 * Execute an arbitrary CLI command, printing output to the CLI console
