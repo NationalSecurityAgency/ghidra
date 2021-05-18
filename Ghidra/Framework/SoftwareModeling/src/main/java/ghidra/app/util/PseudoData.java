@@ -330,7 +330,9 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 			Structure struct = (Structure) baseDataType;
 			DataTypeComponent dtc = struct.getComponentAt(offset);
 			// Logic handles overlapping bit-fields
-			while (dtc != null && offset <= (dtc.getOffset() + dtc.getLength() - 1)) {
+			// Include if offset is contained within bounds of component
+			while (dtc != null && (offset >= dtc.getOffset()) &&
+				(offset <= (dtc.getOffset() + dtc.getLength() - 1))) {
 				int ordinal = dtc.getOrdinal();
 				list.add(getComponent(ordinal++));
 				dtc = ordinal < struct.getNumComponents() ? struct.getComponent(ordinal) : null;
@@ -339,8 +341,13 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		else if (baseDataType instanceof DynamicDataType) {
 			DynamicDataType ddt = (DynamicDataType) baseDataType;
 			DataTypeComponent dtc = ddt.getComponentAt(offset, this);
-			if (dtc != null) {
-				list.add(getComponent(dtc.getOrdinal()));
+			// Logic handles overlapping bit-fields
+			// Include if offset is contained within bounds of component
+			while (dtc != null && (offset >= dtc.getOffset()) &&
+				(offset <= (dtc.getOffset() + dtc.getLength() - 1))) {
+				int ordinal = dtc.getOrdinal();
+				list.add(getComponent(ordinal++));
+				dtc = ordinal < ddt.getNumComponents(this) ? ddt.getComponent(ordinal, this) : null;
 			}
 		}
 		else if (baseDataType instanceof Union) {

@@ -67,6 +67,16 @@ public class BitFieldDataTypeTest extends AbstractGTest {
 		BitFieldDataType bf = new BitFieldDataType(typeDef, 1);
 		assertEquals(typeDef, bf.getBaseDataType());
 		assertEquals(typeDef, bf.clone(null).getBaseDataType());
+
+		EnumDataType enumDt = new EnumDataType("MyEnum", 1);
+		enumDt.add("A", 0);
+		enumDt.add("B", 1);
+		enumDt.add("C", 2);
+		enumDt.add("D", 4);
+		bf = new BitFieldDataType(enumDt, 4);
+		assertEquals(enumDt, bf.getBaseDataType());
+		assertEquals(enumDt, bf.clone(null).getBaseDataType());
+
 	}
 
 	@Test
@@ -155,6 +165,21 @@ public class BitFieldDataTypeTest extends AbstractGTest {
 		assertEquals("1", getDecimalRepresentation(unsignedBitField(2, 0), 0x55));
 		assertEquals("5", getDecimalRepresentation(unsignedBitField(3, 0), 0x55));
 		assertEquals("5", getDecimalRepresentation(unsignedBitField(4, 0), 0x55));
+	}
+
+	@Test
+	public void testEnumRepresentation() throws Exception {
+
+		EnumDataType enumDt = new EnumDataType("MyEnum", 1);
+		enumDt.add("A", 1);
+		enumDt.add("B", 2);
+		enumDt.add("C", 4);
+		enumDt.add("D", 8);
+		BitFieldDataType bf = new BitFieldDataType(enumDt, 4);
+		assertEquals(enumDt, bf.getBaseDataType());
+		assertEquals(enumDt, bf.clone(null).getBaseDataType());
+
+		assertEquals("A | B | C | D", getRepresentation(bf, 0x0f));
 	}
 
 	private String getRepresentation(BitFieldDataType bitField, int... unsignedBytes)
