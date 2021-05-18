@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.SoftCacheMap;
 
 /**
@@ -52,10 +53,8 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 
 	/**
 	 * Gets the number of component data types in this data type.
-	 * @param buf a membuffer to be used by dataTypes that change depending on
-	 * their data context.  A null value is acceptable to indicate that a memory
-	 * context is not available.  DataTypes that need a context will return -1
-	 * if the context is null.
+	 * @param buf a memory buffer to be used by dataTypes that change depending on
+	 * their data context. 
 	 * @return the number of components that make up this data prototype
 	 *   - if this is an Array, return the number of elements in the array.
 	 *   - if this datatype is a subcomponent of another datatype and it
@@ -63,10 +62,12 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	 */
 	public final int getNumComponents(MemBuffer buf) {
 		DataTypeComponent[] comps = getComps(buf);
-		if (comps != null) {
-			return comps.length;
+		if (comps == null || comps.length == 0) {
+			return -1;
 		}
-		return -1;
+		DataTypeComponent last = comps[comps.length - 1];
+		return (last != null && last.isFlexibleArrayComponent()) ? (comps.length - 1)
+				: comps.length;
 	}
 
 	protected DataTypeComponent[] getComps(MemBuffer buf) {
@@ -78,6 +79,15 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 				// data-type not valid at buf location
 				return null;
 			}
+			for (int i = 0; i < comps.length - 1; i++) {
+				// TODO: should we verify ordinals
+				if (comps[i] != null && comps[i].isFlexibleArrayComponent()) {
+					// Only the last component may be a flexible array
+					Msg.error(this,
+						getClass().getName() + " produced invalid flexible array component");
+					return null;
+				}
+			}
 			map.put(addr, comps);
 		}
 		return comps;
@@ -85,67 +95,69 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 
 	/**
 	 * Returns the immediate n'th component of this data type.
-	 * @param index the components index (zero based).
-	 * @param buf a membuffer to be used by dataTypes that change depending on
-	 * their data context.  A null value is acceptable to indicate that a memory
-	 * context is not available.  DataTypes that need a context will return -1
-	 * if the context is null.
+	 * @param ordinal the components ordinal (zero based).
+	 * @param buf a memory buffer to be used by dataTypes that change depending on
+	 * their data context.
 	 * @return the component data type or null if there is no component at the 
 	 * indicated index.
+	 * @throws ArrayIndexOutOfBoundsException if index is out of bounds
 	 */
-	public final DataTypeComponent getComponent(int index, MemBuffer buf) {
+	public final DataTypeComponent getComponent(int ordinal, MemBuffer buf) {
 		DataTypeComponent[] comps = getComps(buf);
 		if (comps != null) {
-			return comps[index];
+			DataTypeComponent dtc = comps[ordinal];
+			if (dtc != null && !dtc.isFlexibleArrayComponent()) {
+				return dtc;
+			}
 		}
 		return null;
 	}
 
 	/**
-	 * Returns an array of DataTypes that make up this data type.
-	 * Could return null if there are no subcomponents.
-	 * If this is an Array, then only one element will be returned
-	 * which is the Data Prototype for the elements in the array.
-	 * Will return null if this is a subcomponent that doesn't fit in it's
-	 * alloted space.
-	 * @param buf a membuffer to be used by dataTypes that change depending on
-	 * their data context.  A null value is acceptable to indicate that a memory
-	 * context is not available.  DataTypes that need a context will return -1
-	 * if the context is null.
+	 * Returns an array of components that make up this data type.
+	 * Could return null if there are no subcomponents.  The last component
+	 * in the array may be a flexible array component.
+	 * @param buf a memory buffer to be used by dataTypes that change depending on
+	 * their data context.
+	 * @return datatype component array or null.  Last component may be a flexible array component.
 	 */
 	public final DataTypeComponent[] getComponents(MemBuffer buf) {
 		return getComps(buf);
 	}
 
 	/**
-	 * Returns the component containing the byte at the given offset
+	 * Returns the first component containing the byte at the given offset
 	 * @param offset the offset into the dataType
-	 * @param buf the memoryBuffer containing the bytes.
-	 * @return the component containing the byte at the given offset
+	 * @param buf the memory buffer containing the bytes.
+	 * @return the component containing the byte at the given offset or null if no
+	 * component defined.
 	 */
 	public final DataTypeComponent getComponentAt(int offset, MemBuffer buf) {
 		DataTypeComponent[] comps = getComps(buf);
 		if (comps == null) {
 			return null;
 		}
-		for (int i = 0; i < comps.length; i++) {
-			if (comps[i].getOffset() > offset) {
-				return comps[i - 1];
+		// TODO: could use binary search (watchout for bitfields at same offset)
+		for (DataTypeComponent comp : comps) {
+			if (comp == null) {
+				continue;
+			}
+			if (comp.isFlexibleArrayComponent()) {
+				return null;
+			}
+			if (offset >= comp.getOffset() &&
+				(offset <= (comp.getOffset() + comp.getLength() - 1))) {
+				return comp;
 			}
 		}
-		int index = comps.length - 1;
-		if (index < 0) {
-			return null;
-		}
-		return comps[index];
-
+		return null;
 	}
 
 	/**
 	 * Get all dynamic components associated with the specified MemBuffer
 	 * @param buf memory buffer positioned at start of data type instance
 	 * @return all components or null if memory data is not valid for this
-	 * data type.
+	 * data type.  Last component may be a flexible array component.
 	 */
 	protected abstract DataTypeComponent[] getAllComponents(MemBuffer buf);
 
@@ -156,8 +168,8 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 			return -1;
 		}
 		DataTypeComponent last = comps[comps.length - 1];
-		if (last == null) {
-			return -1;
+		if (last != null && last.isFlexibleArrayComponent()) {
+			return last.getOffset();
 		}
 		return last.getOffset() + last.getLength();
 	}
@@ -174,5 +186,21 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	@Override
 	public DataType getReplacementBaseType() {
 		return ByteDataType.dataType;
+	}
+
+	/**
+	 * Get trailing flexible array component.
+	 * @return flexible array component or null if not applicable or valie.
+	 */
+	public final DataTypeComponent getFlexibleArrayComponent(MemBuffer buf) {
+		DataTypeComponent[] comps = getComps(buf);
+		if (comps == null || comps.length == 0) {
+			return null;
+		}
+		DataTypeComponent last = comps[comps.length - 1];
+		if (last != null && last.isFlexibleArrayComponent()) {
+			return last;
+		}
+		return null;
 	}
 }
