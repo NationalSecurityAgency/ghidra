@@ -304,18 +304,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		// which also needs to be laid out. When they contain chaining data
 		// they're recursive but the toDataType() function handles that.
 		for (_IMAGE_RUNTIME_FUNCTION_ENTRY entry : irfes) {
-			if (entry.unwindInfoAddressOrData > 0) {
-				try {
-					dt = (StructureDataType) entry.unwindInfo.toDataType();
-					start = program.getImageBase().add(entry.unwindInfoAddressOrData);
-
-					DataUtilities.createData(program, start, dt, dt.getLength(), true,
-						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				}
-				catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
-					continue;
-				}
-			}
+			entry.createData(program);
 		}
 	}
 

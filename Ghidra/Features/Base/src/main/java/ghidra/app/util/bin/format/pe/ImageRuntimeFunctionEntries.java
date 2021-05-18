@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.AssertException;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -65,12 +67,7 @@ import ghidra.util.exception.DuplicateNameException;
  * } UNWIND_INFO, *PUNWIND_INFO;
  */
 public class ImageRuntimeFunctionEntries {
-	private final static int UNWIND_INFO_VERSION_BITMASK = 0x07;
-	private final static int UNWIND_INFO_FLAGS_SHIFT = 0x03;
-	private final static int UNWIND_INFO_FRAME_REGISTER_MASK = 0x0F;
-	private final static int UNWIND_INFO_FRAME_OFFSET_SHIFT = 0x04;
-	private final static int UNWIND_INFO_OPCODE_MASK = 0x0F;
-	private final static int UNWIND_INFO_OPCODE_INFO_SHIFT = 0x04;
+
 	private final static int UNWIND_INFO_SIZE = 0x0C;
 
 	List<_IMAGE_RUNTIME_FUNCTION_ENTRY> functionEntries = new ArrayList<>();
@@ -132,7 +129,8 @@ public class ImageRuntimeFunctionEntries {
 
 			// Read and process the UNWIND_INFO structures the RUNTIME_INFO
 			// structures point to
-			entry.unwindInfo = readUnwindInfo(reader, entry.unwindInfoAddressOrData, ntHeader);
+			entry.unwindInfo =
+				PEx64UnwindInfo.readUnwindInfo(reader, entry.unwindInfoAddressOrData, ntHeader);
 
 			functionEntries.add(entry);
 		}
@@ -140,317 +138,32 @@ public class ImageRuntimeFunctionEntries {
 		reader.setPointerIndex(origIndex);
 	}
 
-	private UNWIND_INFO readUnwindInfo(FactoryBundledWithBinaryReader reader, long offset,
-			NTHeader ntHeader) throws IOException {
-		long origIndex = reader.getPointerIndex();
-
-		long pointer = ntHeader.rvaToPointer(offset);
-		UNWIND_INFO unwindInfo = new UNWIND_INFO(pointer);
-
-		if (pointer < 0) {
-			return unwindInfo;
-		}
-
-		reader.setPointerIndex(pointer);
-		byte splitByte = reader.readNextByte();
-		unwindInfo.version = (byte) (splitByte & UNWIND_INFO_VERSION_BITMASK);
-		unwindInfo.flags = (byte) (splitByte >> UNWIND_INFO_FLAGS_SHIFT);
-
-		unwindInfo.sizeOfProlog = reader.readNextUnsignedByte();
-		unwindInfo.countOfUnwindCodes = reader.readNextUnsignedByte();
-
-		splitByte = reader.readNextByte();
-		unwindInfo.frameRegister = (byte) (splitByte & UNWIND_INFO_FRAME_REGISTER_MASK);
-		unwindInfo.frameOffset = (byte) (splitByte >> UNWIND_INFO_FRAME_OFFSET_SHIFT);
-
-		unwindInfo.unwindCodes = new UNWIND_CODE[unwindInfo.countOfUnwindCodes];
-		for (int i = 0; i < unwindInfo.countOfUnwindCodes; i++) {
-			UNWIND_CODE code = new UNWIND_CODE();
-			code.offsetInProlog = reader.readNextByte();
-
-			int opCodeData = reader.readNextUnsignedByte();
-			code.opCode = UNWIND_CODE_OPCODE.fromInt((opCodeData & UNWIND_INFO_OPCODE_MASK));
-			code.opInfoRegister =
-				UNWIND_CODE_OPINFO_REGISTER.fromInt(opCodeData >> UNWIND_INFO_OPCODE_INFO_SHIFT);
-
-			unwindInfo.unwindCodes[i] = code;
-		}
-
-		// You can have an exception handler or you can have chained exception handling info only.
-		if (unwindInfo.hasExceptionHandler() || unwindInfo.hasUnwindHandler()) {
-			unwindInfo.exceptionHandlerFunction = reader.readNextInt();
-		}
-		else if (unwindInfo.hasChainedUnwindInfo()) {
-			unwindInfo.unwindHandlerChainInfo = new _IMAGE_RUNTIME_FUNCTION_ENTRY();
-			unwindInfo.unwindHandlerChainInfo.beginAddress = reader.readNextInt();
-			unwindInfo.unwindHandlerChainInfo.endAddress = reader.readNextInt();
-			unwindInfo.unwindHandlerChainInfo.unwindInfoAddressOrData = reader.readNextInt();
-
-			// Follow the chain to the referenced UNWIND_INFO structure until we
-			// get to the end
-			unwindInfo.unwindHandlerChainInfo.unwindInfo = readUnwindInfo(reader,
-				unwindInfo.unwindHandlerChainInfo.unwindInfoAddressOrData, ntHeader);
-		}
-
-		reader.setPointerIndex(origIndex);
-
-		return unwindInfo;
-	}
-
 	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getRuntimeFunctionEntries() {
 		return functionEntries;
 	}
 
-	public class _IMAGE_RUNTIME_FUNCTION_ENTRY {
-		public long beginAddress;
-		public long endAddress;
-		public long unwindInfoAddressOrData;
-		public UNWIND_INFO unwindInfo;
-	}
+	// FIXME: change name to conform to Java naming standards
+	// FIXME: If public visibility is required improved member protection is needed
+	public static class _IMAGE_RUNTIME_FUNCTION_ENTRY {
+		long beginAddress;
+		long endAddress;
+		long unwindInfoAddressOrData;
+		PEx64UnwindInfo unwindInfo;
 
-	public enum UNWIND_CODE_OPCODE {
-		UWOP_PUSH_NONVOL(0x00),
-		UWOP_ALLOC_LARGE(0x01),
-		UWOP_ALLOC_SMALL(0x02),
-		UWOP_SET_FPREG(0x03),
-		UWOP_SAVE_NONVOL(0x04),
-		UWOP_SAVE_NONVOL_FAR(0x05),
-		UWOP_SAVE_XMM(0x06),
-		UWOP_SAVE_XMM_FAR(0x07),
-		UWOP_SAVE_XMM128(0x08),
-		UWOP_SAVE_XMM128_FAR(0x09),
-		UWOP_PUSH_MACHFRAME(0x0A);
+		public void createData(Program program) {
+			if (unwindInfoAddressOrData > 0) {
+				try {
+					DataType dt = unwindInfo.toDataType();
+					Address start = program.getImageBase().add(unwindInfoAddressOrData);
 
-		private final int id;
-
-		UNWIND_CODE_OPCODE(int value) {
-			id = value;
-		}
-
-		public int id() {
-			return id;
-		}
-
-		public static UNWIND_CODE_OPCODE fromInt(int id) {
-			UNWIND_CODE_OPCODE[] values = UNWIND_CODE_OPCODE.values();
-			for (UNWIND_CODE_OPCODE value : values) {
-				if (value.id == id) {
-					return value;
+					DataUtilities.createData(program, start, dt, dt.getLength(), true,
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
+					// ignore
 				}
 			}
-			return null;
 		}
 	}
 
-	public enum UNWIND_CODE_OPINFO_REGISTER {
-		UNWIND_OPINFO_REGISTER_RAX(0x00),
-		UNWIND_OPINFO_REGISTER_RCX(0x01),
-		UNWIND_OPINFO_REGISTER_RDX(0x02),
-		UNWIND_OPINFO_REGISTER_RBX(0x03),
-		UNWIND_OPINFO_REGISTER_RSP(0x04),
-		UNWIND_OPINFO_REGISTER_RBP(0x05),
-		UNWIND_OPINFO_REGISTER_RSI(0x06),
-		UNWIND_OPINFO_REGISTER_RDI(0x07),
-		UNWIND_OPINFO_REGISTER_R8(0x08),
-		UNWIND_OPINFO_REGISTER_R9(0x09),
-		UNWIND_OPINFO_REGISTER_R10(0x0A),
-		UNWIND_OPINFO_REGISTER_R11(0x0B),
-		UNWIND_OPINFO_REGISTER_R12(0x0C),
-		UNWIND_OPINFO_REGISTER_R13(0x0D),
-		UNWIND_OPINFO_REGISTER_R14(0x0E),
-		UNWIND_OPINFO_REGISTER_R15(0x0F);
-
-		private final int id;
-
-		UNWIND_CODE_OPINFO_REGISTER(int value) {
-			id = value;
-		}
-
-		public int id() {
-			return id;
-		}
-
-		public static UNWIND_CODE_OPINFO_REGISTER fromInt(int id) {
-			UNWIND_CODE_OPINFO_REGISTER[] values = UNWIND_CODE_OPINFO_REGISTER.values();
-			for (UNWIND_CODE_OPINFO_REGISTER value : values) {
-				if (value.id == id) {
-					return value;
-				}
-			}
-			return null;
-		}
-	}
-
-	public class UNWIND_CODE {
-		public byte offsetInProlog;
-		public UNWIND_CODE_OPCODE opCode;
-		public UNWIND_CODE_OPINFO_REGISTER opInfoRegister;
-	}
-
-	public class UNWIND_INFO implements StructConverter {
-		private static final String NAME = "UNWIND_INFO";
-
-		private final static int UNW_FLAG_NHANDLER = 0x0;
-		private final static int UNW_FLAG_EHANDLER = 0x1;
-		private final static int UNW_FLAG_UHANDLER = 0x2;
-		private final static int UNW_FLAG_CHAININFO = 0x4;
-
-		private final static int UNWIND_VERSION_FIELD_LENGTH = 0x03;
-		private final static int UNWIND_FLAGS_FIELD_LENGTH = 0x05;
-		private final static int UNWIND_FRAME_REGISTER_LENGTH = 0x04;
-		private final static int UNWIND_FRAME_OFFSET_LENGTH = 0x04;
-		private final static int UNWIND_OP_FIELD_LENGTH = 0x04;
-		private final static int UNWIND_OP_INFO_FIELD_LENGTH = 0x04;
-
-		byte version;
-		byte flags;
-		int sizeOfProlog;
-		int countOfUnwindCodes;
-		byte frameRegister;
-		byte frameOffset;
-		UNWIND_CODE[] unwindCodes;
-		int exceptionHandlerFunction;
-		_IMAGE_RUNTIME_FUNCTION_ENTRY unwindHandlerChainInfo;
-
-		long startOffset;
-
-		public UNWIND_INFO(long offset) {
-			startOffset = offset;
-		}
-
-		@Override
-		public DataType toDataType() throws DuplicateNameException, IOException {
-
-			StructureDataType struct = new StructureDataType(NAME + "_" + startOffset, 0);
-			struct.setPackingEnabled(true);
-			try {
-				struct.addBitField(BYTE, UNWIND_VERSION_FIELD_LENGTH, "Version", null);
-				struct.addBitField(defineFlagsEnum(), UNWIND_FLAGS_FIELD_LENGTH, "Flags", null);
-				struct.add(BYTE, "SizeOfProlog", null);
-				struct.add(BYTE, "CountOfUnwindCodes", null);
-				struct.addBitField(BYTE, UNWIND_FRAME_REGISTER_LENGTH, "FrameRegister", null);
-				struct.addBitField(BYTE, UNWIND_FRAME_OFFSET_LENGTH, "FrameOffset", null);
-
-				if (countOfUnwindCodes > 0) {
-					ArrayDataType unwindInfoArray =
-						new ArrayDataType(defineUnwindCodeStructure(), countOfUnwindCodes, -1);
-					struct.add(unwindInfoArray, "UnwindCodes", null);
-				}
-
-			}
-			catch (InvalidDataTypeException e) {
-				throw new AssertException(e); // should never happen with byte bit-fields
-			}
-
-			if (hasExceptionHandler() || hasUnwindHandler()) {
-				struct.add(IBO32, "ExceptionHandler", null);
-				if (hasUnwindHandler()) {
-					struct.setFlexibleArrayComponent(UnsignedLongDataType.dataType, "ExceptionData",
-						null);
-				}
-			}
-			else if (hasChainedUnwindInfo()) {
-				struct.add(IBO32, "FunctionStartAddress", null);
-				struct.add(IBO32, "FunctionEndAddress", null);
-				struct.add(IBO32, "FunctionUnwindInfoAddress", null);
-			}
-
-			return struct;
-		}
-
-		public boolean hasExceptionHandler() {
-			return (flags & UNW_FLAG_EHANDLER) == UNW_FLAG_EHANDLER;
-		}
-
-		public boolean hasUnwindHandler() {
-			return (flags & UNW_FLAG_UHANDLER) == UNW_FLAG_UHANDLER;
-		}
-
-		public boolean hasChainedUnwindInfo() {
-			return (flags & UNW_FLAG_CHAININFO) == UNW_FLAG_CHAININFO;
-		}
-
-		private EnumDataType defineFlagsEnum() {
-			EnumDataType flagsField = new EnumDataType("UNW_FLAGS", 1);
-			flagsField.add("UNW_FLAG_NHANDLER", UNW_FLAG_NHANDLER);
-			flagsField.add("UNW_FLAG_EHANDLER", UNW_FLAG_EHANDLER);
-			flagsField.add("UNW_FLAG_UHANDLER", UNW_FLAG_UHANDLER);
-			flagsField.add("UNW_FLAG_CHAININFO", UNW_FLAG_CHAININFO);
-			return flagsField;
-		}
-
-		private Structure defineUnwindCodeStructure() {
-			StructureDataType unwindCode = new StructureDataType("UnwindCode", 0);
-			unwindCode.setPackingEnabled(true);
-			try {
-				unwindCode.add(BYTE, "OffsetInProlog", null);
-				unwindCode.addBitField(defineUnwindOpCodeField(), UNWIND_OP_FIELD_LENGTH,
-					"UnwindOpCode", null);
-				unwindCode.addBitField(defineUnwindCodeRegisterField(), UNWIND_OP_INFO_FIELD_LENGTH,
-					"OpInfo", null);
-			}
-			catch (InvalidDataTypeException e) {
-				throw new AssertException(e); // should never happen with byte bit-fields
-			}
-			return unwindCode;
-		}
-
-		private EnumDataType defineUnwindOpCodeField() {
-			EnumDataType unwindOpCodeField = new EnumDataType("UNWIND_CODE_OPCODE", 1);
-			unwindOpCodeField.add("UWOP_PUSH_NONVOL", UNWIND_CODE_OPCODE.UWOP_PUSH_NONVOL.id);
-			unwindOpCodeField.add("UWOP_ALLOC_LARGE", UNWIND_CODE_OPCODE.UWOP_ALLOC_LARGE.id);
-			unwindOpCodeField.add("UWOP_ALLOC_SMALL", UNWIND_CODE_OPCODE.UWOP_ALLOC_SMALL.id);
-			unwindOpCodeField.add("UWOP_SET_FPREG", UNWIND_CODE_OPCODE.UWOP_SET_FPREG.id);
-			unwindOpCodeField.add("UWOP_SAVE_NONVOL", UNWIND_CODE_OPCODE.UWOP_SAVE_NONVOL.id);
-			unwindOpCodeField.add("UWOP_SAVE_NONVOL_FAR",
-				UNWIND_CODE_OPCODE.UWOP_SAVE_NONVOL_FAR.id);
-			unwindOpCodeField.add("UWOP_SAVE_XMM", UNWIND_CODE_OPCODE.UWOP_SAVE_XMM.id);
-			unwindOpCodeField.add("UWOP_SAVE_XMM_FAR", UNWIND_CODE_OPCODE.UWOP_SAVE_XMM_FAR.id);
-			unwindOpCodeField.add("UWOP_SAVE_XMM128", UNWIND_CODE_OPCODE.UWOP_SAVE_XMM128.id);
-			unwindOpCodeField.add("UWOP_SAVE_XMM128_FAR",
-				UNWIND_CODE_OPCODE.UWOP_SAVE_XMM128_FAR.id);
-			unwindOpCodeField.add("UWOP_PUSH_MACHFRAME", UNWIND_CODE_OPCODE.UWOP_PUSH_MACHFRAME.id);
-
-			return unwindOpCodeField;
-		}
-
-		private EnumDataType defineUnwindCodeRegisterField() {
-			EnumDataType unwindCodeRegisterField =
-				new EnumDataType("UNWIND_CODE_OPINFO_REGISTER", 1);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RAX",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RAX.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RCX",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RCX.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RDX",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RDX.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RBX",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RBX.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RSP",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RSP.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RBP",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RBP.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RSI",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RSI.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_RDI",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_RDI.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R8",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R8.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R9",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R9.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R10",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R10.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R11",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R11.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R12",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R12.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R13",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R13.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R14",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R14.id);
-			unwindCodeRegisterField.add("UNWIND_OPINFO_REGISTER_R15",
-				UNWIND_CODE_OPINFO_REGISTER.UNWIND_OPINFO_REGISTER_R15.id);
-
-			return unwindCodeRegisterField;
-		}
-	}
 }
