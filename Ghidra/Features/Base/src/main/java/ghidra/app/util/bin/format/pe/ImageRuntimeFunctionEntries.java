@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
@@ -140,6 +139,30 @@ public class ImageRuntimeFunctionEntries {
 
 	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getRuntimeFunctionEntries() {
 		return functionEntries;
+	}
+
+	public static void createData(Program program, Address headerStart,
+			List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes) {
+		// TODO: This is x86-64 architecture-specific and needs to be generalized.
+		StructureDataType dt = new StructureDataType(".PDATA", 0);
+		dt.setCategoryPath(new CategoryPath("/PE"));
+
+		// Lay an array of RUNTIME_INFO structure out over the data
+		StructureDataType irfeStruct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
+		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "BeginAddress", null);
+		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "EndAddress", null);
+		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "UnwindInfoAddressOrData", null);
+
+		ArrayDataType irfeArray =
+			new ArrayDataType(irfeStruct, irfes.size(), irfeStruct.getLength());
+
+		try {
+			DataUtilities.createData(program, headerStart, irfeArray, irfeArray.getLength(), true,
+				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+		}
+		catch (CodeUnitInsertionException e) {
+			return;
+		}
 	}
 
 	// FIXME: change name to conform to Java naming standards

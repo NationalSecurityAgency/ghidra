@@ -141,6 +141,7 @@ public class FileHeader implements StructConverter {
 	/**
 	 * Values for the Machine field indicating the intended processor architecture
 	 */
+	public final static int IMAGE_FILE_MACHINE_MASK = 0xFFFF;
 	public final static int IMAGE_FILE_MACHINE_UNKNOWN = 0x0; 		//	The content of this field is assumed to be applicable to any machine type
 	public final static int IMAGE_FILE_MACHINE_AM33 = 0x1d3; 		//	Matsushita AM33
 	public final static int IMAGE_FILE_MACHINE_AMD64 = 0x8664; 		//	x64
@@ -177,6 +178,8 @@ public class FileHeader implements StructConverter {
 
 	private SectionHeader[] sectionHeaders;
 	private List<DebugCOFFSymbol> symbols = new ArrayList<>();
+
+	// TODO: This is x86-64 architecture-specific and needs to be generalized.
 	private List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = new ArrayList<>();
 
 	private FactoryBundledWithBinaryReader reader;
@@ -252,6 +255,7 @@ public class FileHeader implements StructConverter {
 	/**
 	 * Returns the array of RUNTIME_INFO entries, if any are present.
 	 * @return An array of _IMAGE_RUNTIME_FUNCTION_ENTRY. The array can be empty.
+	 * TODO: This is x86-64 architecture-specific and needs to be generalized.
 	 */
 	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getImageRuntimeFunctionEntries() {
 		return irfes;
