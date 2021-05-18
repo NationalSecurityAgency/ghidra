@@ -54,7 +54,7 @@ public class PEx64UnwindInfoDataType extends DynamicDataType {
 
 	@Override
 	public String getDescription() {
-		return "Dynamic structure for PE Exception UNWIND_INFO";
+		return "Dynamic structure for PE x86-64 Exception UNWIND_INFO";
 	}
 
 	@Override
