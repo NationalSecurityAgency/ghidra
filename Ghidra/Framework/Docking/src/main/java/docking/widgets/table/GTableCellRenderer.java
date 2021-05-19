@@ -128,7 +128,6 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 
 		Object value = data.getValue();
 		JTable table = data.getTable();
-		int row = data.getRowViewIndex();
 		int column = data.getColumnViewIndex();
 		boolean isSelected = data.isSelected();
 		boolean hasFocus = data.hasFocus();
@@ -148,21 +147,19 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 
 		if (isSelected) {
 			setForeground(table.getSelectionForeground());
-			setBackground(table.getSelectionBackground());
 			setOpaque(true);
 		}
 		else {
 			setForegroundColor(table, model, value);
-
-			if (row == dropRow) {
-				setBackground(Color.CYAN);
-			}
-			else {
-				setBackground(getOSDependentBackgroundColor(table, row));
-			}
 		}
 
-		setBorder(hasFocus ? focusBorder : noFocusBorder);
+		//setBorder(hasFocus ? focusBorder : noFocusBorder);
+
+		if (hasFocus) {
+			setBackground(new Color(42, 82, 133));
+		} else {
+			setBackground(table.getBackground());
+		}
 		return this;
 	}
 

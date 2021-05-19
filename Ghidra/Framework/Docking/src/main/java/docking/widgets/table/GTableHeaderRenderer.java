@@ -204,6 +204,7 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 		// return DockingWindowsLookAndFeelUtils.isUsingAquaUI(getUI());
 	}
 
+		/*
 	@Override
 	protected void paintComponent(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
@@ -217,15 +218,7 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 		g2d.setPaint(oldPaint);
 		super.paintComponent(g);
 	}
-
-	protected Paint getBackgroundPaint() {
-		if (isPaintingPrimarySortColumn) {
-			return new GradientPaint(0, 0, PRIMARY_SORT_GRADIENT_START, 0, getHeight() - 11,
-				PRIMARY_SORT_GRADIENT_END, true);
-		}
-		return new GradientPaint(0, 0, DEFAULT_GRADIENT_START, 0, getHeight() - 11,
-			DEFAULT_GRADIENT_END, true);
-	}
+		*/
 
 	private void updateHelpIcon(JTable table, int currentColumnIndex, Icon icon) {
 		JTableHeader tableHeader = table.getTableHeader();
