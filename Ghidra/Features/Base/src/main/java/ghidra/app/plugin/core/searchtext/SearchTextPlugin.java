@@ -62,8 +62,7 @@ import ghidra.util.task.*;
 import resources.ResourceManager;
 
 /**
- * Plugin to search text as it is displayed in the fields of the
- * Code Browser.
+ * Plugin to search text as it is displayed in the fields of the Code Browser.
  */
 //@formatter:off
 @PluginInfo(
@@ -114,6 +113,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 	/**
 	 * The constructor for the SearchTextPlugin.
+	 * 
 	 * @param plugintool The tool required by this plugin.
 	 */
 	public SearchTextPlugin(PluginTool plugintool) {
@@ -260,10 +260,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	private ProgramLocation getStartLocation() {
-		if (currentLocation == null) {
-			currentLocation = navigatable.getLocation();
-		}
-		return currentLocation;
+		return currentLocation = navigatable.getLocation();
 	}
 
 	private void searchNext(Program program, Navigatable searchNavigatable, Searcher textSearcher) {
@@ -475,9 +472,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			searchDialog.setHasSelection(context.hasSelection());
 		}
 
-		CodeViewerService codeViewerService = tool.getService(CodeViewerService.class);
 		String textSelection = navigatable.getTextSelection();
-		ProgramLocation location = codeViewerService.getCurrentLocation();
+		ProgramLocation location = navigatable.getLocation();
 		Address address = location.getAddress();
 		Listing listing = context.getProgram().getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(address);
@@ -499,6 +495,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 	/**
 	 * Get the address set for the selection.
+	 * 
 	 * @return null if there is no selection
 	 */
 	private AddressSetView getAddressSet(Navigatable searchNavigatable, SearchOptions options) {

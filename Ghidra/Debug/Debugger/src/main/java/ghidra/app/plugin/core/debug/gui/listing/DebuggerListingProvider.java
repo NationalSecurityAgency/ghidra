@@ -381,10 +381,13 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	protected final ForStaticSyncMappingChangeListener mappingChangeListener =
 		new ForStaticSyncMappingChangeListener();
 
+	protected final boolean isMainListing;
+
 	public DebuggerListingProvider(DebuggerListingPlugin plugin, FormatManager formatManager,
 			boolean isConnected) {
 		super(plugin, formatManager, isConnected);
 		this.plugin = plugin;
+		this.isMainListing = isConnected;
 
 		goToDialog = new DebuggerGoToDialog(this);
 
@@ -421,6 +424,34 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	@Override
+	public boolean isConnected() {
+		/*
+		 * NB. Other plugins ask isConnected meaning the main static listing. We don't want to be
+		 * mistaken for it.
+		 */
+		return false;
+	}
+
+	/**
+	 * Check if this is the main dynamic listing.
+	 * 
+	 * <p>
+	 * The method {@link #isConnected()} is not quite the same as this, although the concepts are a
+	 * little conflated, since before the debugger, no one else presented a listing that could claim
+	 * to be "main" except the "connected" one. Here, we treat "connected" to mean that the address
+	 * is synchronized exactly with the other providers. "Main" on the other hand, does not
+	 * necessarily have that property, but it is still <em>not</em> a snapshot. It is the main
+	 * listing presented by this plugin, and so it has certain unique features. Calling
+	 * {@link DebuggerListingPlugin#getConnectedProvider()} will return the main dynamic listing,
+	 * despite it not really being "connected."
+	 * 
+	 * @return true if this is the main listing for the plugin.
+	 */
+	public boolean isMainListing() {
+		return isMainListing;
+	}
+
+	@Override
 	public String getWindowGroup() {
 		//TODO: Overriding this to align disconnected providers
 		return "Core";
@@ -428,7 +459,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 	@Override
 	public void writeDataState(SaveState saveState) {
-		if (!isConnected()) {
+		if (!isMainListing()) {
 			current.writeDataState(tool, saveState, KEY_DEBUGGER_COORDINATES);
 		}
 		super.writeDataState(saveState);
@@ -436,7 +467,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 	@Override
 	public void readDataState(SaveState saveState) {
-		if (!isConnected()) {
+		if (!isMainListing()) {
 			DebuggerCoordinates coordinates =
 				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES, true);
 			coordinatesActivated(coordinates);
@@ -466,7 +497,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 
 		actionTrackLocation.setCurrentActionStateByUserData(trackingSpec);
-		if (isConnected()) {
+		if (isMainListing()) {
 			actionSyncToStaticListing.setSelected(syncToStaticListing);
 			followsCurrentThread = true;
 		}
@@ -549,7 +580,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		this.markerService = markerService;
 		createNewStaticTrackingMarker();
 
-		if (this.markerService != null && !isConnected()) {
+		if (this.markerService != null && !isMainListing()) {
 			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
 			this.markerService.addChangeListener(markerChangeListener);
 		}
@@ -735,7 +766,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 				.onAction(this::activatedGoTo)
 				.buildAndInstallLocal(this);
 
-		if (isConnected()) {
+		if (isMainListing()) {
 			actionSyncToStaticListing = new SyncToStaticListingAction();
 		}
 		else {
@@ -999,7 +1030,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	public void setSyncToStaticListing(boolean sync) {
-		if (!isConnected()) {
+		if (!isMainListing()) {
 			throw new IllegalStateException(
 				"Only the main dynamic listing can be synced to the main static listing");
 		}
@@ -1018,7 +1049,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	public void setFollowsCurrentThread(boolean follows) {
-		if (isConnected()) {
+		if (isMainListing()) {
 			throw new IllegalStateException(
 				"The main dynamic listing always follows the current trace and thread");
 		}

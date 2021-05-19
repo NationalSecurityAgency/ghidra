@@ -240,8 +240,10 @@ public abstract class AbstractDBTraceProgramViewMemory
 		ByteBuffer bufBytes = ByteBuffer.wrap(bytes);
 		ByteBuffer bufMasks = masks == null ? null : ByteBuffer.wrap(masks);
 
+		Address minAddr = forward ? startAddr : endAddr;
+		Address maxAddr = forward ? endAddr : startAddr;
 		Iterator<AddressRange> it =
-			program.getAddressFactory().getAddressSet(startAddr, endAddr).iterator(forward);
+			program.getAddressFactory().getAddressSet(minAddr, maxAddr).iterator(forward);
 		while (it.hasNext()) {
 			AddressRange range = it.next();
 			DBTraceMemorySpace space = memoryManager.getMemorySpace(range.getAddressSpace(), false);
