@@ -150,9 +150,9 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 				}
 
 				if (!eq.isValidUUID()) { // Error equate
-					label.setForeground((isSelected) ? Color.WHITE : Color.RED);
+					label.setForeground((isSelected) ? Color.BLACK: Color.RED);
 				} else if (!eq.isEnumBased()) { // User label
-					label.setForeground((isSelected) ? Color.WHITE : Color.BLUE.brighter());
+					label.setForeground((isSelected) ? Color.BLACK: Color.BLUE.brighter());
 				}
 
 				String tooltip = getEquateToolTip(eq);

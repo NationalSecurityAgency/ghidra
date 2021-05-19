@@ -35,7 +35,7 @@ public class MemoryBox {
 	protected long stopAddr = -1;
 	protected long startTime;
 	protected long stopTime = -1;
-	protected Color color = Color.BLUE;
+	protected Color color = new Color(181, 197, 245);
 
 	protected int pixAstart;
 	protected int pixAend;

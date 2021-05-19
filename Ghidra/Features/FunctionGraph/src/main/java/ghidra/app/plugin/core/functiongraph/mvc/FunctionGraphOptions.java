@@ -84,20 +84,20 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
 
-	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = Color.WHITE;
-	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new Color(226, 255, 155);
+	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = new Color(56, 56, 56);
+	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new Color(48, 44, 61);
 	private static final Color HOVER_HIGHLIGHT_FALL_THROUGH_COLOR = new Color(255, 127, 127);
 	private static final Color HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR = new Color(127, 127, 255);
-	private static final Color HOVER_HIGHLIGHT_CONDITIONAL_COLOR = Color.GREEN;
+	private static final Color HOVER_HIGHLIGHT_CONDITIONAL_COLOR = new Color(93, 222, 117);
 
 	private Color defaultVertexBackgroundColor = DEFAULT_VERTEX_BACKGROUND_COLOR;
 
 	private boolean updateGroupColorsAutomatically = true;
 	private Color defaultGroupBackgroundColor = DEFAULT_GROUP_BACKGROUND_COLOR;
 
-	private Color fallthroughEdgeColor = Color.RED;
-	private Color unconditionalJumpEdgeColor = Color.BLUE;
-	private Color conditionalJumpEdgeColor = Color.GREEN.darker().darker();
+	private Color fallthroughEdgeColor = new Color(222, 93, 93);
+	private Color unconditionalJumpEdgeColor = new Color(93, 102, 222);
+	private Color conditionalJumpEdgeColor = new Color(94, 201, 40);
 
 	private Color fallthroughEdgeHighlightColor = HOVER_HIGHLIGHT_FALL_THROUGH_COLOR;
 	private Color unconditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;

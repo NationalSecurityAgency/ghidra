@@ -176,8 +176,8 @@ public class AssemblyDualTextField {
 		public AssemblyInstruction(String text, byte[] data, int preference) {
 			// TODO?: Description to display constructor tree information
 			super("", NumericUtilities.convertBytesToString(data, " "),
-				preference == 10000 ? Color.BLUE
-						: preference == 5000 ? new Color(0, 0, 128) : new Color(0, 128, 0),
+				preference == 10000 ? new Color(100, 100, 209)
+						: preference == 5000 ? new Color(100, 100, 209) : new Color(75, 201, 75),
 				-preference);
 			this.data = data;
 		}
