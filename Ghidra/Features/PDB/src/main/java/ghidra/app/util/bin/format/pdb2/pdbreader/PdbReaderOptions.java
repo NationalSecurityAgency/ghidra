@@ -15,14 +15,12 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.CharsetInfo;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 /**
  * Options used while reading a PDB ({@link AbstractPdb}) that control various aspects.  These
@@ -33,16 +31,6 @@ public class PdbReaderOptions extends Exception {
 
 	// Developer turn on/off options that are in still in development.
 	private static final boolean developerMode = false;
-
-	// Perform logging of PDB information for debugging/development.
-	//  NOTE: This logging mechanism is not intended to live the full life of this tool, but to
-	//  aid in getting feedback from the field during its early development.
-	private static final String OPTION_NAME_PDB_READER_APPLICATOR_LOGGING =
-		"[Dev] PDB Reader/Applicator Debug Logging";
-	private static final String OPTION_DESCRIPTION_PDB_READER_APPLICATOR_LOGGING =
-		"If checked, logs information to the pdb.analyzer.log file for debug/development.";
-	private static final boolean DEFAULT_PDB_READER_APPLICATOR_LOGGING = false;
-	private boolean pdbLogging;
 
 	// Sets the one-byte Charset to be used for PDB processing.
 	//  NOTE: This "Option" is not intended as a permanent part of this analyzer.  Should be
@@ -83,9 +71,6 @@ public class PdbReaderOptions extends Exception {
 	public void registerOptions(Options options) {
 		HelpLocation help = null;
 
-		options.registerOption(OPTION_NAME_PDB_READER_APPLICATOR_LOGGING, pdbLogging, null,
-			OPTION_DESCRIPTION_PDB_READER_APPLICATOR_LOGGING);
-
 		if (developerMode) {
 			options.registerOption(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName, help,
 				OPTION_DESCRIPTION_ONE_BYTE_CHARSET_NAME);
@@ -95,9 +80,6 @@ public class PdbReaderOptions extends Exception {
 	}
 
 	public void loadOptions(Options options) {
-
-		pdbLogging = options.getBoolean(OPTION_NAME_PDB_READER_APPLICATOR_LOGGING, pdbLogging);
-		setPdbLogging();
 
 		if (developerMode) {
 			oneByteCharsetName =
@@ -113,21 +95,10 @@ public class PdbReaderOptions extends Exception {
 	 * Set the options to their default values
 	 */
 	public void setDefaults() {
-		pdbLogging = DEFAULT_PDB_READER_APPLICATOR_LOGGING;
-		setPdbLogging();
 		oneByteCharsetName = DEFAULT_ONE_BYTE_CHARSET_NAME;
 		wideCharCharsetName = DEFAULT_TWO_BYTE_CHARSET_NAME;
 		setOneByteCharsetForName(oneByteCharsetName);
 		setWideCharCharsetForName(wideCharCharsetName);
-	}
-
-	private void setPdbLogging() {
-		try {
-			PdbLog.setEnabled(pdbLogging);
-		}
-		catch (IOException e) {
-			Msg.info(this, "Failure opening PDB log file: ", e);
-		}
 	}
 
 	/**

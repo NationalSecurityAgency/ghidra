@@ -83,6 +83,8 @@ public abstract class DockingAction implements DockingActionIf {
 	private Predicate<ActionContext> enabledPredicate;
 	private Predicate<ActionContext> popupPredicate;
 	private Predicate<ActionContext> validContextPredicate;
+	private boolean shouldAddToAllWindows = false;
+	private Class<? extends ActionContext> addToWindowWhenContextClass = null;
 
 	private boolean supportsDefaultToolContext;
 
@@ -193,15 +195,42 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Default behavior is to add to main window;
+	 * Determines if this action should be added to a window.
+	 * <P>
+	 * If the client wants the action on all windows, then they can call {@link #shouldAddToAllWindows}
+	 * <P>
+	 * If the client wants the action to be on a window only when the window can produce 
+	 * a certain context type, the the client should call 
+	 * {@link #addToWindowWhen(Class)}
+	 * <P>
+	 * Otherwise, by default, the action will only be on the main window.
+	 * 
 	 */
 	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		if (isMainWindow) {
-			// only return true if it is a tool menu or toolbar action
-			return menuBarData != null || toolBarData != null;
+	public final boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
+		// this method only applies to actions with top level menus or tool bars.
+		if (menuBarData == null && toolBarData == null) {
+			return false;
 		}
-		return false;
+		
+		// clients can specify that the action should be on all windows.
+		if (shouldAddToAllWindows) {
+			return true;
+		}
+
+		// clients can specify a context class that determines if an action should
+		// be added to a window.
+		if (addToWindowWhenContextClass != null) {
+			for (Class<?> class1 : contextTypes) {
+				if (addToWindowWhenContextClass.isAssignableFrom(class1)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// default to only appearing in main window
+		return isMainWindow;
 	}
 
 	/**
@@ -584,6 +613,30 @@ public abstract class DockingAction implements DockingActionIf {
 		validContextPredicate = predicate;
 	}
 
+	/**
+	 * Sets the ActionContext class for when this action should be added to a window
+	 * <P>
+	 * If this is set, the the action will only be added to windows that have providers
+	 * that can produce an ActionContext that is appropriate for this action.
+	 * <P>
+	 * @param contextClass the ActionContext class required to be producible by a
+	 * provider that is hosted in that window before this action is added to that 
+	 * window. 
+	 * 
+	 */
+	public void addToWindowWhen(Class<? extends ActionContext> contextClass) {
+		addToWindowWhenContextClass = contextClass;
+	}
+	
+	/**
+	 * Tells this action to add itself to all windows
+	 * <P>
+	 * @param b to add to all windows or not
+	 */
+	public void setAddToAllWindows(boolean b) {
+		shouldAddToAllWindows = b;
+	}
+
 //==================================================================================================
 // Non-public methods
 //==================================================================================================
@@ -611,4 +664,5 @@ public abstract class DockingAction implements DockingActionIf {
 		String classInfo = trace[0].toString();
 		return classInfo;
 	}
+	
 }

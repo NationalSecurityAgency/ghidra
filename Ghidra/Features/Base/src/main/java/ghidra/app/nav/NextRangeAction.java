@@ -15,8 +15,6 @@
  */
 package ghidra.app.nav;
 
-import java.util.Set;
-
 import ghidra.app.context.*;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.services.GoToService;
@@ -36,6 +34,7 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 		this.tool = tool;
 		this.navOptions = navOptions;
 		setEnabled(false);
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	@Override
@@ -99,14 +98,4 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 	}
 
 	abstract protected ProgramSelection getSelection(ProgramLocationActionContext context);
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (NavigatableRangeActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }

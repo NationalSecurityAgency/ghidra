@@ -33,8 +33,16 @@ public class HexOrDecimalInput extends JTextField {
 		this(null);
 	}
 
+	public HexOrDecimalInput(int columns) {
+		super(columns);
+		init(null);
+	}
+
 	public HexOrDecimalInput(Long initialValue) {
-		super();
+		init(initialValue);
+	}
+
+	private void init(Long initialValue) {
 		currentValue = initialValue;
 		setDocument(new MyDocument());
 		updateText();
@@ -53,6 +61,17 @@ public class HexOrDecimalInput extends JTextField {
 
 	public Long getValue() {
 		return currentValue;
+	}
+
+	public int getIntValue() {
+		if (currentValue == null) {
+			return 0;
+		}
+		return currentValue.intValue();
+	}
+
+	public void setValue(int newValue) {
+		setValue((long) newValue);
 	}
 
 	public void setValue(Long newValue) {

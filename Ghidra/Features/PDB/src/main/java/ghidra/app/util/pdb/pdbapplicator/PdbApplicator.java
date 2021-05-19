@@ -928,6 +928,16 @@ public class PdbApplicator {
 	//==============================================================================================
 	// CLI-Managed infor methods.
 	//==============================================================================================
+	// Currently in CLI, but could move.
+	boolean isDll() {
+		return pdbCliManagedInfoManager.isDll();
+	}
+
+	// Currently in CLI, but could move.
+	boolean isAslr() {
+		return pdbCliManagedInfoManager.isAslr();
+	}
+
 	CliAbstractTableRow getCliTableRow(int tableNum, int rowNum) throws PdbException {
 		return pdbCliManagedInfoManager.getCliTableRow(tableNum, rowNum);
 	}

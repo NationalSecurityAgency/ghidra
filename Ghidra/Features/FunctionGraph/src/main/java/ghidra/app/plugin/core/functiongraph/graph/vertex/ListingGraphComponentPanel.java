@@ -405,6 +405,11 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	}
 
 	@Override
+	String getTextSelection() {
+		return listingPanel.getTextSelection();
+	}
+
+	@Override
 	ProgramLocation getProgramLocation() {
 		return listingPanel.getProgramLocation();
 	}

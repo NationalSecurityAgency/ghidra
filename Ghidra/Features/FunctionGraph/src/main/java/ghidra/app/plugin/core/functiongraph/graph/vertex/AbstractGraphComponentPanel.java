@@ -121,6 +121,8 @@ public abstract class AbstractGraphComponentPanel extends JPanel {
 
 	abstract ProgramSelection getProgramSelection();
 
+	abstract String getTextSelection();
+
 	abstract void setProgramHighlight(ProgramSelection highlight);
 
 	void setProgramLocation(ProgramLocation location) {

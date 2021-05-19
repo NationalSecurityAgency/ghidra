@@ -540,6 +540,11 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	}
 
 	@Override
+	String getTextSelection() {
+		return null; // can't select text in a group vertex
+	}
+
+	@Override
 	void setProgramHighlight(ProgramSelection highlight) {
 		Set<FGVertex> vertices = groupVertex.getVertices();
 		for (FGVertex v : vertices) {

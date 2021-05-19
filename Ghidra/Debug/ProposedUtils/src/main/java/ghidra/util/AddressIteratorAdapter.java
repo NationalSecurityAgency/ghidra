@@ -89,6 +89,11 @@ public class AddressIteratorAdapter extends NestedIterator<AddressRange, Address
 		}
 	}
 
+	public static Iterable<Address> forRange(AddressRange range, boolean forward) {
+		return () -> forward ? new ForwardAddressIterator(range)
+				: new BackwardAddressIterator(range);
+	}
+
 	public AddressIteratorAdapter(Iterator<AddressRange> outer, boolean forward) {
 		super(outer, forward ? ForwardAddressIterator::new : BackwardAddressIterator::new);
 	}
