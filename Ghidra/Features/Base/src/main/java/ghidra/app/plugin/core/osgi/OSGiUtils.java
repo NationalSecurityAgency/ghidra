@@ -21,6 +21,7 @@ import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -220,9 +221,12 @@ public class OSGiUtils {
 	static void collectPackagesFromJar(Path jarPath, Set<String> packages) {
 		try {
 			try (JarFile jarFile = new JarFile(jarPath.toFile())) {
+				Manifest manifest = jarFile.getManifest();
+
 				// if this jar is an OSGi bundle, use its declared exports
-				String exportPackageString =
-					jarFile.getManifest().getMainAttributes().getValue(Constants.EXPORT_PACKAGE);
+				String exportPackageString = manifest != null
+						? manifest.getMainAttributes().getValue(Constants.EXPORT_PACKAGE)
+						: null;
 				if (exportPackageString != null) {
 					String saved = null;
 					/*
