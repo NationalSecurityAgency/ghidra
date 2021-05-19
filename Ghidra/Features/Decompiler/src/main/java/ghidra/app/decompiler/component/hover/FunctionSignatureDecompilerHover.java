@@ -24,6 +24,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.ClangTextField;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.PluginTool;
@@ -34,7 +35,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighConstant;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 
 /**
@@ -83,7 +83,7 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 		ClangToken token = ((ClangTextField) field).getToken(fieldLocation);
 		if (token instanceof ClangFuncNameToken) {
 
-			Function function = ((ClangFuncNameToken)token).getHighFunction().getFunction();
+			Function function = DecompilerUtils.getFunction(program, (ClangFuncNameToken) token);
 			String content = ToolTipUtils.getToolTipText(function, false);
 			return createTooltipComponent(content);
 		}
@@ -91,48 +91,59 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 
 			// Reference to function-address: "x = &foo;" where 'foo' is a function
 			Varnode vn = ((ClangVariableToken) token).getVarnode();
-			if (vn == null) {
-				return null;
-			}
-
-			if (!(vn.getHigh() instanceof HighConstant)) {
-				return null;
-			}
-
-			HighConstant hv = (HighConstant) vn.getHigh();
-			long offset = vn.getOffset();
-			int sz = vn.getSize();
-			boolean isSigned = true;
-			if (hv.getDataType() instanceof AbstractIntegerDataType) {
-				isSigned = ((AbstractIntegerDataType) hv.getDataType()).isSigned();
-			}
-
-			if (sz > 8) {
-				// our Scalar can currently only handle long values
-				return null;
-			}
-
-			Scalar scalar = new Scalar(sz * 8, offset, isSigned);
-			long scalarLong = scalar.getValue();
-			AddressFactory factory = program.getAddressFactory();
-			AddressSpace space = factory.getDefaultAddressSpace();
-			try {
-				Address asAddress = factory.getAddress(space.getSpaceID(), scalarLong);
-				Function function = program.getListing().getFunctionAt(asAddress);
-				if (function != null) {
-					String content = ToolTipUtils.getToolTipText(function, false);
-					content = content.replaceFirst(HTML,
-						HTML + italic(bold("Reference to Function")) + "<br/><br/>");
-
-					return createTooltipComponent(content);
-				}
-			}
-			catch (AddressOutOfBoundsException ex) {
-				return null;	// Constant does not make sense as an address
+			Scalar scalar = getScalar(vn);
+			Function function = getFunctionAtAddress(program, scalar);
+			if (function != null) {
+				String content = ToolTipUtils.getToolTipText(function, false);
+				content = content.replaceFirst(HTML,
+					HTML + italic(bold("Reference to Function")) + "<br/><br/>");
+				return createTooltipComponent(content);
 			}
 		}
 
 		return null;
+	}
+
+	private Scalar getScalar(Varnode vn) {
+		if (vn == null) {
+			return null;
+		}
+
+		if (!(vn.getHigh() instanceof HighConstant)) {
+			return null;
+		}
+
+		HighConstant hv = (HighConstant) vn.getHigh();
+		long offset = vn.getOffset();
+		int sz = vn.getSize();
+		boolean isSigned = true;
+		if (hv.getDataType() instanceof AbstractIntegerDataType) {
+			isSigned = ((AbstractIntegerDataType) hv.getDataType()).isSigned();
+		}
+
+		if (sz > 8) {
+			return null; // our Scalar can currently only handle long values
+		}
+
+		return new Scalar(sz * 8, offset, isSigned);
+	}
+
+	private Function getFunctionAtAddress(Program program, Scalar scalar) {
+
+		if (scalar == null) {
+			return null;
+		}
+
+		long scalarLong = scalar.getValue();
+		AddressFactory factory = program.getAddressFactory();
+		AddressSpace space = factory.getDefaultAddressSpace();
+		try {
+			Address asAddress = factory.getAddress(space.getSpaceID(), scalarLong);
+			return program.getListing().getFunctionAt(asAddress);
+		}
+		catch (AddressOutOfBoundsException ex) {
+			return null; // scalar is not an address
+		}
 	}
 
 }
