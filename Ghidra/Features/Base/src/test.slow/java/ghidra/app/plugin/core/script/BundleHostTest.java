@@ -376,7 +376,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"  [null] osgi.wiring.package; (&(osgi.wiring.package=com.google.common.io)" +
 			  "(version>="+(GUAVA_MAJOR_VERSION+1)+".0.0)" +
 			  "(!(version>="+(GUAVA_MAJOR_VERSION+2)+".0.0))), " +
-			  "from /tmp/ghidra.dev2tmp/sourcebundle000/AClass.java\n",
+			  "from "+generic.util.Path.toPathString(currentBundle.getFile())+"/AClass.java\n",
 			"1 missing package import:com.google.common.io (version>="+(GUAVA_MAJOR_VERSION+1)+".0.0)" +
 			  ", 1 source file with errors"
 		);
