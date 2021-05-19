@@ -84,7 +84,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		this.tableServicePlugin = plugin;
 		this.navigatable = navigatable;
-		this.program = plugin.getProgram();
+		this.program = navigatable.getProgram();
 		this.model = model;
 		this.programName = programName;
 		this.markerService = markerService;
@@ -152,7 +152,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectAction = new MakeProgramSelectionAction(tableServicePlugin, table) {
 			@Override
 			protected ProgramSelection makeSelection(ActionContext context) {
-
 				ProgramSelection selection = table.getProgramSelection();
 				navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
 				navigatable.setSelection(selection);

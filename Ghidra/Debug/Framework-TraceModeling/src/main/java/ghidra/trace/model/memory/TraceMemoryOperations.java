@@ -418,7 +418,7 @@ public interface TraceMemoryOperations {
 	 * @param snap the time to search
 	 * @param range the address range to search
 	 * @param data the values to search for
-	 * @param mask a mask on the bits of {@code data}
+	 * @param mask a mask on the bits of {@code data}; or null to match all bytes exactly
 	 * @param forward true to return the match with the lowest address in {@code range}, false for
 	 *            the highest address.
 	 * @param monitor a monitor for progress reporting and canceling
