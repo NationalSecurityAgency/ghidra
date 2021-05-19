@@ -51,6 +51,7 @@ public class IconButtonTableCellEditor<R> extends AbstractCellEditor
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
 			int row, int column) {
 		this.row = filterPanel.getRowObject(row);
+		button.setToolTipText(value.toString());
 		return button;
 	}
 

@@ -24,7 +24,6 @@ import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
-import ghidra.util.Msg;
 
 public class LogicalBreakpointRow {
 	private final DebuggerBreakpointsProvider provider;
@@ -64,7 +63,7 @@ public class LogicalBreakpointRow {
 					? lb.enableForTrace(provider.currentTrace)
 					: lb.enable();
 			future.exceptionally(ex -> {
-				Msg.showError(this, null, "Toggle Breakpoint", "Could not enable breakpoint", ex);
+				provider.breakpointError("Toggle Breakpoint", "Could not enable breakpoint", ex);
 				return null;
 			});
 		}
@@ -73,7 +72,7 @@ public class LogicalBreakpointRow {
 					? lb.disableForTrace(provider.currentTrace)
 					: lb.disable();
 			future.exceptionally(ex -> {
-				Msg.showError(this, null, "Toggle Breakpoint", "Could not disable breakpoint", ex);
+				provider.breakpointError("Toggle Breakpoint", "Could not disable breakpoint", ex);
 				return null;
 			});
 		}
