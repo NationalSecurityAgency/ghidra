@@ -103,6 +103,7 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 				return true;
 			}
 		};
+		action.addToWindowWhen(NavigatableActionContext.class);
 		action.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, action.getName()));
 		action.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, "Go To..." }, null, "GoTo",

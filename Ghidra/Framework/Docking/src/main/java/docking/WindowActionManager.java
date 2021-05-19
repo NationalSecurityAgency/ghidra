@@ -50,6 +50,7 @@ public class WindowActionManager {
 	public void setActions(List<DockingActionIf> actionList) {
 		menuBarMgr.clearActions();
 		toolBarMgr.clearActions();
+		actionToProxyMap.clear();
 		for (DockingActionIf action : actionList) {
 			addAction(action);
 		}

@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.navigation;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -27,7 +28,8 @@ import docking.action.*;
 import docking.menu.MultiActionDockingAction;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.*;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.ProgramActionContext;
 import ghidra.app.nav.LocationMemento;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -183,16 +185,6 @@ public class NextPrevAddressPlugin extends Plugin {
 			}
 
 			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				for (Class<?> class1 : contextTypes) {
-					if (NavigationActionContext.class.isAssignableFrom(class1)) {
-						return true;
-					}
-				}
-				return false;
-			}
-
-			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				if (!(context instanceof ProgramActionContext)) {
 					return false;
@@ -204,6 +196,7 @@ public class NextPrevAddressPlugin extends Plugin {
 				return hasNext || hasPrevious;
 			}
 		};
+		clearAction.addToWindowWhen(NavigatableActionContext.class);
 		clearAction.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, clearAction.getName()));
 		MenuData menuData = new MenuData(CLEAR_MENUPATH, HISTORY_MENU_GROUP);
 		menuData.setMenuSubGroup("1"); // first in menu!
@@ -314,6 +307,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			int keycode = isNext ? KeyEvent.VK_RIGHT : KeyEvent.VK_LEFT;
 			setKeyBindingData(new KeyBindingData(keycode, InputEvent.ALT_DOWN_MASK));
 			setDescription(isNext ? "Go to next location" : "Go to previous location");
+			addToWindowWhen(NavigatableActionContext.class);
 		}
 
 		@Override
@@ -337,16 +331,6 @@ public class NextPrevAddressPlugin extends Plugin {
 			else {
 				historyService.previous(navigatable);
 			}
-		}
-
-		@Override
-		public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-			for (Class<?> class1 : contextTypes) {
-				if (NavigationActionContext.class.isAssignableFrom(class1)) {
-					return true;
-				}
-			}
-			return false;
 		}
 
 		@Override
@@ -414,6 +398,7 @@ public class NextPrevAddressPlugin extends Plugin {
 				new MenuData(new String[] { "Navigation", menuItemName }, HISTORY_MENU_GROUP);
 			menuData.setMenuSubGroup("2"); // after clear
 			setMenuBarData(menuData);
+			addToWindowWhen(NavigatableActionContext.class);
 		}
 
 		@Override
@@ -437,16 +422,6 @@ public class NextPrevAddressPlugin extends Plugin {
 			else {
 				historyService.previousFunction(navigatable);
 			}
-		}
-
-		@Override
-		public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-			for (Class<?> class1 : contextTypes) {
-				if (NavigationActionContext.class.isAssignableFrom(class1)) {
-					return true;
-				}
-			}
-			return false;
 		}
 	}
 

@@ -115,6 +115,7 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 					return false;
 				}
 			};
+			aboutAction.addToWindowWhen(ProgramActionContext.class);
 			aboutAction.setSupportsDefaultToolContext(true);
 
 			aboutAction.setMenuBarData(

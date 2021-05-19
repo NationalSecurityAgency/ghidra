@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.navigation;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Iterator;
-import java.util.Set;
 
 import javax.swing.*;
 
@@ -64,6 +63,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 
+		addToWindowWhen(CodeViewerActionContext.class);
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
 
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
@@ -257,15 +257,5 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		return context instanceof ListingActionContext;
-	}
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (CodeViewerActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
 	}
 }

@@ -15,19 +15,19 @@
  */
 package ghidra.app.plugin.core.select;
 
+import docking.ActionContext;
+import docking.ComponentProvider;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
-import docking.ActionContext;
-import docking.ComponentProvider;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-import docking.tool.ToolConstants;
 
 /**
  * This plugin class contains the structure needed for the user to
@@ -72,9 +72,11 @@ public class SelectBlockPlugin extends Plugin {
 			}
 		};
 		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_SELECTION, "Bytes..." }, null, "Select");
+			new MenuData(new String[] { ToolConstants.MENU_SELECTION, "Bytes..." }, null,
+				"Select Group 2");
 		menuData.setMenuSubGroup("1");
 		toolBarAction.setMenuBarData(menuData);
+		toolBarAction.addToWindowWhen(NavigatableActionContext.class);
 
 		toolBarAction.setEnabled(false);
 		toolBarAction.setDescription("Allows user to select blocks of data.");

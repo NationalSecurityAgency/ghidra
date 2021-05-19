@@ -383,6 +383,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.supportsDefaultToolContext(true)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
@@ -398,6 +399,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
 				.withContext(NavigatableActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.enabledWhen(c -> searchedOnce)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
