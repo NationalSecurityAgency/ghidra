@@ -54,7 +54,7 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 		long currentAddressOffset = currentAddress.getOffset();
 		long imageBaseOffset = imageBase.getOffset();
 
-		long currentAddressIbo = imageBaseOffset ^ currentAddressOffset;
+		long currentAddressIbo = currentAddressOffset - imageBaseOffset;
 
 		byte searchBytes[] =
 			createSearchArray(currentAddressIbo, POINTER_BYTE_LEN_64BIT, isBigEndian);
