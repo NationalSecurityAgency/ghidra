@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.navigation;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
@@ -83,9 +82,11 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		setMenuBarData(menuData);
 
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
+		addToWindowWhen(CodeViewerActionContext.class);
 
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
 		setDescription("Set marker options");
+		addToWindowWhen(CodeViewerActionContext.class);
 
 		ActionState<String> allMarkers =
 			new ActionState<String>("All Types", markerIcon, "All Types");
@@ -310,13 +311,4 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		return isEnabledForContext(context);
 	}
 
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (CodeViewerActionContext.class.isAssignableFrom(class1)) {
-				return true;
-			}
-		}
-		return false;
-	}
 }
