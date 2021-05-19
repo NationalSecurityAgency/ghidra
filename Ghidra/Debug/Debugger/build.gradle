@@ -35,4 +35,5 @@ dependencies {
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 }
