@@ -153,8 +153,6 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 			setForegroundColor(table, model, value);
 		}
 
-		//setBorder(hasFocus ? focusBorder : noFocusBorder);
-
 		if (hasFocus) {
 			setBackground(new Color(42, 82, 133));
 		} else {
