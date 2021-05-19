@@ -51,8 +51,8 @@
 <tocroot>
     <tocref id="Program Annotation">
         <tocdef id="PDB" sortgroup="q" text="PDB" target="help/topics/Pdb/PDB.htm" >
-        	<tocdef id="README_PDB" sortgroup="a" text="PDB Parser (README_PDB)" target="docs/README_PDB.html" />
-            <tocdef id="Download PDB" sortgroup="b" text="Download PDB File"     target="help/topics/Pdb/download_pdb_file.html" />
+			<tocdef id="LoadPDBNew" sortgroup="a" text="Load PDB File"     target="help/topics/Pdb/LoadPDBNew.html" />
+        	<tocdef id="README_PDB" sortgroup="b" text="PDB Parser (README_PDB)" target="docs/README_PDB.html" />
         </tocdef>
     </tocref>
 </tocroot>
