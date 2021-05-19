@@ -253,7 +253,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		protected int computePreferredHeight(int r, int c) {
 			TableCellRenderer renderer = getCellRenderer(r, c);
 			if (renderer instanceof ConsoleActionsCellRenderer) {
-				ActionList actions = (ActionList) getModel().getValueAt(r, c);
+				ActionList actions =
+					(ActionList) getModel().getValueAt(r, convertColumnIndexToModel(c));
 				if (!actions.isEmpty()) {
 					return ACTION_BUTTON_SIZE;
 				}
