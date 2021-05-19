@@ -98,6 +98,7 @@ define token xb8 (8)
 	xb2_1  = (1,2) # actually needed this instead of xb2_2
 	z1_1   = (1,1)
 	s0_0   = (0,0)
+	ss0_0  = (0,0) signed
 	
 	xb2_0  = (0,2)
 
@@ -423,15 +424,9 @@ IDX_h: D, rr4_3			is  xb7_5=0b111 & rr4_3 & xb2_0=0b110 & D
 #
 # 111rr0zs imm8
 #
-# Constant offset (9-bit signed, positive)
-IDX_i: imm8, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & s0_0=0; imm8
-	{ address:2 = rr4_3 + imm8; export address; }	
-
-# Constant offset (9-bit signed, negative)
-# TODO make sure that the -256 case works
-IDX_j: -neg, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & s0_0=1; imm8 [ neg = -imm8; ]
-	{ address:2 = rr4_3 - neg; export address; }		
-
+# Constant offset (9-bit signed)
+IDX_i: opr9, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & ss0_0 ; imm8 [ opr9 = (ss0_0 << 8) | imm8; ]
+	{ address:2 = rr4_3 + opr9; export address; }		
 
 #**********
 #  IDX2
@@ -481,8 +476,7 @@ indexed3: IDX_e is IDX_e { export IDX_e; }
 indexed3: IDX_f is IDX_f { export IDX_f; }		
 indexed3: IDX_g is IDX_g { export IDX_g; }		
 indexed3: IDX_h is IDX_h { export IDX_h; }		
-indexed3: IDX_i is IDX_i { export IDX_i; }		
-indexed3: IDX_j is IDX_j { export IDX_j; }		
+indexed3: IDX_i is IDX_i { export IDX_i; }				
 indexed3: IDX_k is IDX_k { export IDX_k; }		
 # not indexed3: IDX_l is IDX_l { export IDX_l; }		
 # not indexed3: IDX_m is IDX_m { export IDX_m; }		
@@ -498,8 +492,7 @@ indexed3: IDX_k is IDX_k { export IDX_k; }
 # not indexedindexed3: IDX_f is IDX_f { export IDX_f; }		
 # not indexedindexed3: IDX_g is IDX_g { export IDX_g; }		
 # not indexedindexed3: IDX_h is IDX_h { export IDX_h; }		
-# not indexedindexed3: IDX_i is IDX_i { export IDX_i; }		
-# not indexedindexed3: IDX_j is IDX_j { export IDX_j; }		
+# not indexedindexed3: IDX_i is IDX_i { export IDX_i; }			
 # not indexedindexed3: IDX_k is IDX_k { export IDX_k; }		
 indexed2: IDX_l is IDX_l { export IDX_l; }		
 indexed2: IDX_m is IDX_m { export IDX_m; }		
@@ -516,7 +509,6 @@ indexed5: IDX_f is IDX_f { export IDX_f; }
 indexed5: IDX_g is IDX_g { export IDX_g; }		
 indexed5: IDX_h is IDX_h { export IDX_h; }		
 indexed5: IDX_i is IDX_i { export IDX_i; }		
-indexed5: IDX_j is IDX_j { export IDX_j; }		
 indexed5: IDX_k is IDX_k { export IDX_k; }		
 indexed5: IDX_l is IDX_l { export IDX_l; }		
 indexed5: IDX_m is IDX_m { export IDX_m; }
@@ -532,8 +524,7 @@ indexed1: IDX_e is IDX_e { export IDX_e; }
 indexed1: IDX_f is IDX_f { export IDX_f; }		
 indexed1: IDX_g is IDX_g { export IDX_g; }		
 indexed1: IDX_h is IDX_h { export IDX_h; }		
-# not indexed1: IDX_i is IDX_i { export IDX_i; }		
-# not indexed1: IDX_j is IDX_j { export IDX_j; }		
+# not indexed1: IDX_i is IDX_i { export IDX_i; }			
 # not indexed1: IDX_k is IDX_k { export IDX_k; }		
 # not indexed1: iIDX_l is iIDX_l { export iIDX_l; }		
 # not indexed1: IDX_m is IDX_m { export IDX_m; }		
