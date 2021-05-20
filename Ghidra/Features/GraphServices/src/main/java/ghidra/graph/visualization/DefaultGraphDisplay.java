@@ -38,6 +38,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jungrapht.visualization.*;
 import org.jungrapht.visualization.annotations.MultiSelectedVertexPaintable;
+import org.jungrapht.visualization.annotations.SelectedEdgePaintable;
 import org.jungrapht.visualization.annotations.SingleSelectedVertexPaintable;
 import org.jungrapht.visualization.control.*;
 import org.jungrapht.visualization.decorators.*;
@@ -201,6 +202,13 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private PopupRegulator<AttributedVertex, AttributedEdge> popupRegulator;
 	private GhidraGraphCollapser graphCollapser;
 
+	private MultiSelectedVertexPaintable<AttributedVertex, AttributedEdge> multiSelectedVertexPaintable;
+
+	// manages highlight painting of a single selected vertex
+	private SingleSelectedVertexPaintable<AttributedVertex, AttributedEdge> singleSelectedVertexPaintable;
+
+	private SelectedEdgePaintable<AttributedVertex, AttributedEdge> selectedEdgePaintable;
+
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
 	 * @param displayProvider provides a {@link PluginTool} for Docking features
@@ -311,16 +319,24 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * create the highlighters ({@code Paintable}s to show which vertices have been selected or focused)
 	 */
 	private void buildHighlighers() {
+
+		viewer.removePostRenderPaintable(multiSelectedVertexPaintable);
+
+		viewer.removePostRenderPaintable(singleSelectedVertexPaintable);
+
 		// for highlighting of multiple selected vertices
-		MultiSelectedVertexPaintable<AttributedVertex, AttributedEdge> multiSelectedVertexPaintable =
+		this.multiSelectedVertexPaintable =
 			MultiSelectedVertexPaintable.builder(viewer)
-					.selectionStrokeMin(4.f)
+					.selectionStrokeMin(15.f)
 					.selectionPaint(getSelectedVertexColor())
-					.useBounds(false)
+					.useBounds(true)
+					.useOval(true)
+					.highlightScale(1.15)
+					.fillHighlight(false)
 					.build();
 
 		// manages highlight painting of a single selected vertex
-		SingleSelectedVertexPaintable<AttributedVertex, AttributedEdge> singleSelectedVertexPaintable =
+		this.singleSelectedVertexPaintable =
 			SingleSelectedVertexPaintable.builder(viewer)
 					.selectionStrokeMin(4.f)
 					.selectionPaint(getSelectedVertexColor())
@@ -328,10 +344,19 @@ public class DefaultGraphDisplay implements GraphDisplay {
 					.build();
 
 		// draws the selection highlights
-		viewer.addPostRenderPaintable(multiSelectedVertexPaintable);
+		viewer.addPreRenderPaintable(multiSelectedVertexPaintable);
 
 		// draws the location arrow
 		viewer.addPostRenderPaintable(singleSelectedVertexPaintable);
+
+		viewer.removePreRenderPaintable(selectedEdgePaintable);
+
+		this.selectedEdgePaintable = SelectedEdgePaintable.builder(viewer)
+				.selectionPaintFunction(e -> getSelectedEdgeColor())
+				.selectionStrokeMultiplier(2)
+				.build();
+
+		viewer.addPreRenderPaintable(selectedEdgePaintable);
 
 	}
 
@@ -629,7 +654,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private void growSelection(Set<AttributedVertex> vertices) {
 		viewer.getSelectedVertexState().select(vertices);
-		selectEdgesConnecting(vertices);
 	}
 
 	// select all the edges that connect the supplied vertices
@@ -967,6 +991,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			nodeSelectedState.clear();
 			if (!vertices.isEmpty()) {
 				nodeSelectedState.select(vertices, fireEvents);
+				if (!fireEvents) {
+					// need to make explicit call since event not fired
+					selectEdgesConnecting(vertices);
+				}
 				scrollToSelected(vertices);
 			}
 			viewer.repaint();
@@ -1286,21 +1314,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		this.iconCache = new GhidraIconCache();
 		RenderContext<AttributedVertex, AttributedEdge> renderContext = vv.getRenderContext();
 
+		renderContext.getSelectedVertexState().addItemListener(item -> {
+			renderContext.getSelectedEdgeState().clear();
+				selectEdgesConnecting(renderContext.getSelectedVertexState().getSelected());
+				});
+
 		setVertexPreferences(vv);
 
-		// selected edges will be drawn with a wider stroke
-		renderContext.setEdgeStrokeFunction(
-			e -> isSelected(e) ? new BasicStroke(20.f)
-					: ProgramGraphFunctions.getEdgeStroke(e));
-
-		// selected edges will be drawn in red (instead of default)
-		Color selectedEdgeColor = getSelectedEdgeColor();
-		renderContext.setEdgeDrawPaintFunction(
-			e -> isSelected(e) ? selectedEdgeColor : Colors.getColor(e));
-		renderContext.setArrowDrawPaintFunction(
-			e -> isSelected(e) ? selectedEdgeColor : Colors.getColor(e));
-		renderContext.setArrowFillPaintFunction(
-			e -> isSelected(e) ? selectedEdgeColor : Colors.getColor(e));
+		renderContext.setEdgeStrokeFunction(e -> ProgramGraphFunctions.getEdgeStroke(e));
+		renderContext.setEdgeDrawPaintFunction(e -> Colors.getColor(e));
+		renderContext.setArrowDrawPaintFunction(e -> Colors.getColor(e));
+		renderContext.setArrowFillPaintFunction(e -> Colors.getColor(e));
 
 		// assign the shapes to the modal renderer
 		ModalRenderer<AttributedVertex, AttributedEdge> modalRenderer = vv.getRenderer();
