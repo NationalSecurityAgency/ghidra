@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.graph.program;
+package ghidra.graph;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
@@ -84,7 +83,12 @@ public class TestGraphDisplay implements GraphDisplay {
 	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor)
 			throws CancelledException {
-		this.graph = graph;
+		if (append) {
+			this.graph = mergeGraphs(graph, this.graph);
+		}
+		else {
+			this.graph = graph;
+		}
 		this.title = title;
 	}
 
@@ -119,5 +123,21 @@ public class TestGraphDisplay implements GraphDisplay {
 	@Override
 	public void addAction(DockingActionIf action) {
 		// do nothing, actions are not supported by this display
+	}
+
+	private AttributedGraph mergeGraphs(AttributedGraph newGraph, AttributedGraph oldGraph) {
+		for (AttributedVertex vertex : oldGraph.vertexSet()) {
+			newGraph.addVertex(vertex);
+		}
+		for (AttributedEdge edge : oldGraph.edgeSet()) {
+			AttributedVertex from = oldGraph.getEdgeSource(edge);
+			AttributedVertex to = oldGraph.getEdgeTarget(edge);
+			AttributedEdge newEdge = newGraph.addEdge(from, to);
+			Map<String, String> attributeMap = edge.getAttributeMap();
+			for (String key : attributeMap.keySet()) {
+				newEdge.setAttribute(key, edge.getAttribute(key));
+			}
+		}
+		return newGraph;
 	}
 }

@@ -20,8 +20,8 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.graph.program.TestGraphDisplay;
-import ghidra.graph.program.TestGraphService;
+import ghidra.graph.TestGraphDisplay;
+import ghidra.graph.TestGraphService;
 import ghidra.program.model.data.*;
 import ghidra.service.graph.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;

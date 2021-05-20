@@ -23,6 +23,8 @@ import java.util.Set;
 import org.junit.Test;
 
 import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.graph.TestGraphDisplay;
+import ghidra.graph.TestGraphService;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.util.ProgramLocation;

@@ -22,6 +22,8 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import ghidra.graph.TestGraphDisplay;
+import ghidra.graph.TestGraphService;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -38,6 +40,9 @@ public class DataReferenceGraphEventTest extends AbstractDataReferenceGraphTest 
 		super.setUp();
 		TestGraphService graphService = new TestGraphService();
 		ProgramLocation location = new ProgramLocation(program, addr(0x01000000));
+
+		//	env.showTool(program);
+
 		DataReferenceGraphTask task = new DataReferenceGraphTask(false, false, tool, null, location,
 			graphService, 0, 10, DataReferenceGraph.Directions.BOTH_WAYS);
 
