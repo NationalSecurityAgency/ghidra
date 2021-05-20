@@ -168,11 +168,13 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 
 	@Override
 	void apply() throws PdbException, CancelledException {
-		boolean result = applyTo(applicator.getCancelOnlyWrappingMonitor());
-		if (result == false) {
-			throw new PdbException(this.getClass().getSimpleName() + ": failure at " + address +
-				" applying " + getName());
-		}
+		// TODO.  Investigate more.  This is not working for at least one CLI dll in that we are
+		// not getting correct addresses.  There is no omap and the one section is unnamed.
+//		boolean result = applyTo(applicator.getCancelOnlyWrappingMonitor());
+//		if (result == false) {
+//			throw new PdbException(this.getClass().getSimpleName() + ": failure at " + address +
+//				" applying " + getName());
+//		}
 	}
 
 	boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
@@ -291,6 +293,8 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 		}
 		// Rest presumes procedureSymbol.
 		long token = procedureSymbol.getToken();
+		// TODO: once GP-328 is merged, use static methods to get table and row.
+		// CliIndexUtils.getTableIdUnencoded(token) and .getRowIdUnencoded(token).
 		int table = (int) (token >> 24) & 0xff;
 		int row = (int) (token & 0xffffff);
 

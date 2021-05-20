@@ -250,6 +250,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 			}
 
 		};
+		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		searchAction.setHelpLocation(new HelpLocation("Search", "Instruction_Pattern_Search"));
 		searchAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Instruction Patterns" },

@@ -25,6 +25,9 @@ eclipse.project.name = 'Features Graph ProgramGraph'
 
 dependencies {
 	api project(":Base")
+	
+	// some tests use classes in SoftwareModeling
+	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
    
 	helpPath project(path: ":Base", configuration: 'helpPath')
 	helpPath project(path: ":GraphServices", configuration: 'helpPath')

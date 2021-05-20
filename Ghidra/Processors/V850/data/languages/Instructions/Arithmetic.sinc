@@ -21,8 +21,8 @@
 }
 
 # MUL imm9, reg2, reg3 - rrrrr111111iiiii|wwwww01001IIII00
-:mul imm9, R1115, R2731 is op0510=0x3F & s0004 & R1115; op2226=0x9 & op1617=0x0 & s1821 & R2731 
-[ imm9 = (s1821 << 5) | s0004; ] 
+:mul imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x0 & s1821 & R2731 
+[ imm9 = (s1821 << 5) | op0004; ] 
 {
 	local res:8 = sext(R1115) * imm9;
 	R1115 = res:4;

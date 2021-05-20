@@ -1118,7 +1118,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc) {
-		loc = traceManager.fixLocation(loc, true);
+		loc = ProgramLocationUtils.fixLocation(loc, true);
 		TraceProgramView view = (TraceProgramView) loc.getProgram();
 		Trace trace = view.getTrace();
 		TraceLocation tloc = new DefaultTraceLocation(trace, null,

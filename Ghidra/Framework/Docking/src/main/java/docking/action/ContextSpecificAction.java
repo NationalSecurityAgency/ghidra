@@ -15,8 +15,6 @@
  */
 package docking.action;
 
-import java.util.Set;
-
 import docking.ActionContext;
 
 /**
@@ -64,16 +62,6 @@ public abstract class ContextSpecificAction<T> extends DockingAction {
 	public boolean isAddToPopup(ActionContext actionContext) {
 		if (contextClass.isInstance(actionContext)) {
 			return isAddToPopup(contextClass.cast(actionContext));
-		}
-		return false;
-	}
-
-	@Override
-	public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-		for (Class<?> class1 : contextTypes) {
-			if (contextClass.isAssignableFrom(class1)) {
-				return true;
-			}
 		}
 		return false;
 	}

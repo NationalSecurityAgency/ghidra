@@ -42,6 +42,7 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.util.database.*;
 import ghidra.util.task.ConsoleTaskMonitor;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDBTraceMemoryManagerTest
 		extends AbstractGhidraHeadlessIntegrationTest {
@@ -713,6 +714,66 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		ByteBuffer read = ByteBuffer.allocate(4);
 		assertEquals(4, memory.getBytes(3, addr(0x4000), read));
 		assertArrayEquals(arr(1, 2, 3, 4), read.array());
+	}
+
+	@Test
+	public void testFindBytes() {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing", true)) {
+			assertEquals(4, memory.putBytes(3, addr(0x4000), buf(1, 2, 3, 4)));
+		}
+
+		try {
+			memory.findBytes(3, range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1),
+				true, TaskMonitor.DUMMY);
+		}
+		catch (IllegalArgumentException e) {
+			// pass
+		}
+
+		// Degenerate
+		assertNull(
+			memory.findBytes(2, range(0x4000, 0x4003), buf(), buf(),
+				true, TaskMonitor.DUMMY));
+
+		// Too soon
+		assertNull(
+			memory.findBytes(2, range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Too small
+		assertNull(
+			memory.findBytes(3, range(0x4000, 0x4002), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Too high
+		assertNull(
+			memory.findBytes(3, range(0x4001, 0x4004), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Too low
+		assertNull(
+			memory.findBytes(3, range(0x3fff, 0x4002), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Perfect match
+		assertEquals(addr(0x4000),
+			memory.findBytes(3, range(0x4000, 0x4003), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Make it work for the match
+		assertEquals(addr(0x4000),
+			memory.findBytes(3, range(0x0, -1), buf(1, 2, 3, 4), buf(-1, -1, -1, -1),
+				true, TaskMonitor.DUMMY));
+
+		// Make it work for the match
+		assertEquals(addr(0x4000),
+			memory.findBytes(3, range(0x0, -1), buf(1), buf(-1),
+				true, TaskMonitor.DUMMY));
+
+		// Sub match
+		assertEquals(addr(0x4001),
+			memory.findBytes(3, range(0x4000, 0x4003), buf(2, 3, 4), buf(-1, -1, -1),
+				true, TaskMonitor.DUMMY));
 	}
 
 	@Test

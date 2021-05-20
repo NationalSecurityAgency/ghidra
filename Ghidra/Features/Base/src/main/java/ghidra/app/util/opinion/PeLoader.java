@@ -280,42 +280,14 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		StructureDataType dt = new StructureDataType(".PDATA", 0);
-		dt.setCategoryPath(new CategoryPath("/PE"));
-
-		// Lay an array of RUNTIME_INFO structure out over the data
-		StructureDataType irfeStruct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
-		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "BeginAddress", null);
-		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "EndAddress", null);
-		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "UnwindInfoAddressOrData", null);
-
-		ArrayDataType irfeArray =
-			new ArrayDataType(irfeStruct, irfes.size(), irfeStruct.getLength());
-
-		try {
-			DataUtilities.createData(program, start, irfeArray, irfeArray.getLength(), true,
-				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-		}
-		catch (CodeUnitInsertionException e) {
-			return;
-		}
+		// TODO: This is x86-64 architecture-specific and needs to be generalized.
+		ImageRuntimeFunctionEntries.createData(program, start, irfes);
 
 		// Each RUNTIME_INFO contains an address to an UNWIND_INFO structure
 		// which also needs to be laid out. When they contain chaining data
 		// they're recursive but the toDataType() function handles that.
 		for (_IMAGE_RUNTIME_FUNCTION_ENTRY entry : irfes) {
-			if (entry.unwindInfoAddressOrData > 0) {
-				try {
-					dt = (StructureDataType) entry.unwindInfo.toDataType();
-					start = program.getImageBase().add(entry.unwindInfoAddressOrData);
-
-					DataUtilities.createData(program, start, dt, dt.getLength(), true,
-						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				}
-				catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
-					continue;
-				}
-			}
+			entry.createData(program);
 		}
 	}
 

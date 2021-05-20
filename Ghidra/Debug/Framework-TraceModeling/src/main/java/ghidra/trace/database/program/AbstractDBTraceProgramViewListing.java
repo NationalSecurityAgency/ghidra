@@ -424,8 +424,10 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	@Override
 	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
 			boolean forward) {
-		// TODO Auto-generated method stub
-		return null;
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter()
+					.getAddressSetView(Range.singleton(s), e -> e.getType() == commentType)))
+							.getAddresses(forward);
 	}
 
 	@Override

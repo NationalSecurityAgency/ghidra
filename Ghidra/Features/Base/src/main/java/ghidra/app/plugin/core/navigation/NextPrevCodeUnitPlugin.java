@@ -135,6 +135,7 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 			setHelpLocation(
 				new HelpLocation(HelpTopics.NAVIGATION, longName));
 			setDescription(longName);
+			addToWindowWhen(NavigatableActionContext.class);
 
 		}
 

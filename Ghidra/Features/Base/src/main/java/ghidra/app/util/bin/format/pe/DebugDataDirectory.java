@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.app.util.bin.format.pdb.PdbInfoDotNetIface;
-import ghidra.app.util.bin.format.pdb.PdbInfoIface;
+import ghidra.app.util.bin.format.pdb.PdbInfoCodeView;
+import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
 import ghidra.app.util.bin.format.pe.debug.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -112,12 +112,12 @@ public class DebugDataDirectory extends DataDirectory {
 		if (dcv != null) {
 			Address dataAddr = getDataAddress(dcv.getDebugDirectory(), isBinary, space, ntHeader);
 			if (dataAddr != null) {
-				PdbInfoIface pdbInfo = dcv.getPdbInfo();
+				PdbInfoCodeView pdbInfo = dcv.getPdbInfo();
 				if (pdbInfo != null) {
 					setPlateComment(program, dataAddr, "CodeView PDB Info");
 					PeUtils.createData(program, dataAddr, pdbInfo.toDataType(), log);
 				}
-				PdbInfoDotNetIface dotNetPdbInfo = dcv.getDotNetPdbInfo();
+				PdbInfoDotNet dotNetPdbInfo = dcv.getDotNetPdbInfo();
 				if (dotNetPdbInfo != null) {
 					setPlateComment(program, dataAddr, ".NET PDB Info");
 					PeUtils.createData(program, dataAddr, dotNetPdbInfo.toDataType(), log);

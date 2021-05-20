@@ -191,8 +191,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new FindReferencesToFieldAction(plugin)); // DataType
 //    	addLocalAction( new FindDataTypesContainingAction(plugin) ); // DataType
 		addLocalAction(new FindBaseDataTypeAction(plugin)); // DataType
+		addLocalAction(new DisplayTypeAsGraphAction(plugin));
 
-		// toolbar actions		
+		// toolbar actions
 		previousAction = new NextPreviousDataTypeAction(this, plugin.getName(), false);
 		addLocalAction(previousAction);
 		nextAction = new NextPreviousDataTypeAction(this, plugin.getName(), true);
@@ -344,8 +345,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			isToolbarAction = false;
 		}
 
-		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree,
-			clickedNode, isToolbarAction);
+		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree, clickedNode,
+			isToolbarAction);
 	}
 
 	@Override // overridden to handle special logic in plugin

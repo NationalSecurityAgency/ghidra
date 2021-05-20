@@ -20,7 +20,7 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import org.python.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.*;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.file.crypto.CryptoKey;
