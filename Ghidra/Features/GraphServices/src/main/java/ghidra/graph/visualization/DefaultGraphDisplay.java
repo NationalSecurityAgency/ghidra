@@ -187,7 +187,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * Multi-selection is done in a free-form traced shape instead of a rectangle
 	 */
 	private boolean freeFormSelection;
-
+	
 	/**
 	 * Handles all mouse interaction
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskLauncher;
 
 /**
- * Plugin for generating program graphs. It uses the GraphServiceBroker to consume/display 
+ * Plugin for generating program graphs. It uses the GraphServiceBroker to consume/display
  * the graphs that it generates. This plugin generates several different types of program graphs.
  * Both the "Block flow" and "code flow" actions generate graph of basic block flows. The only
  * difference is that the "code flow" action generates a graph that
@@ -73,6 +73,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	private static final String REUSE_GRAPH = "Reuse Graph";
 	private static final String GRAPH_ENTRY_POINT_NEXUS = "Graph Entry Point Nexus";
 	private static final String FORCE_LOCATION_DISPLAY_OPTION = "Force Location Visible on Graph";
+	private static final String MAX_DEPTH_OPTION = "Max Reference Depth";
 	public static final String MENU_GRAPH = "&Graph";
 
 	private BlockModelService blockModelService;
@@ -86,6 +87,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private boolean graphEntryPointNexus = false;
 	private int codeLimitPerBlock = 10;
+	private int dataMaxDepth = 1;
 
 	private ToggleDockingAction forceLocationVisibleAction;
 
@@ -117,6 +119,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 			"Specifies whether or not " +
 				"graph displays should force the visible graph to pan and/or scale to ensure that focused " +
 				"locations are visible.");
+		options.registerOption(MAX_DEPTH_OPTION, 1, help,
+			"Specifies max depth of data references to graph (0 for no limit)");
 
 		setOptions(options);
 		options.addOptionsChangeListener(this);
@@ -147,7 +151,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	/**
 	 * Notification that an option changed.
-	 * 
+	 *
 	 * @param options
 	 *            options object containing the property that changed
 	 * @param optionName
@@ -170,21 +174,20 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		if (reuseGraphAction != null) {
 			reuseGraphAction.setSelected(reuseGraph);
 		}
+		dataMaxDepth = options.getInt(MAX_DEPTH_OPTION, dataMaxDepth);
 		// Note: we don't care about the FORCE_LOCATION_DISPLAY_OPTION. We register it, but its
 		// the actually the various GraphDisplays the make use of it.
 	}
 
 	private void createActions() {
 
-		new ActionBuilder("Graph Block Flow", getName())
-				.menuPath(MENU_GRAPH, "&Block Flow")
+		new ActionBuilder("Graph Block Flow", getName()).menuPath(MENU_GRAPH, "&Block Flow")
 				.menuGroup("Graph", "A")
 				.onAction(c -> graphBlockFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Graph Code Flow", getName())
-				.menuPath(MENU_GRAPH, "C&ode Flow")
+		new ActionBuilder("Graph Code Flow", getName()).menuPath(MENU_GRAPH, "C&ode Flow")
 				.menuGroup("Graph", "B")
 				.onAction(c -> graphCodeFlow())
 				.enabledWhen(this::canGraph)
@@ -197,21 +200,48 @@ public class ProgramGraphPlugin extends ProgramPlugin
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		reuseGraphAction = new ToggleActionBuilder("Reuse Graph", getName())
-				.menuPath(MENU_GRAPH, "Reuse Graph")
-				.menuGroup("Graph Options")
-				.selected(reuseGraph)
-				.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
+		tool.setMenuGroup(new String[] { MENU_GRAPH, "Data" }, "Graph", "Data");
+		HelpLocation helpLoc = new HelpLocation(getName(), "Data_Reference_Graph");
+
+		new ActionBuilder("Graph To/From Data References", getName())
+				.menuPath(MENU_GRAPH, "Data", "To/From &References")
+				.menuGroup(MENU_GRAPH, "Data")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		appendGraphAction = new ToggleActionBuilder("Append Graph", getName())
-				.menuPath(MENU_GRAPH, "Append Graph")
-				.menuGroup("Graph Options")
-				.selected(false)
-				.onAction(c -> updateAppendAndReuseGraph())
+		new ActionBuilder("Graph To Data References", getName())
+				.menuPath(MENU_GRAPH, "Data", "&To References")
+				.menuGroup(MENU_GRAPH, "Data")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphToDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
+
+		new ActionBuilder("Graph From Data References", getName())
+				.menuPath(MENU_GRAPH, "Data", "&From References")
+				.menuGroup(MENU_GRAPH, "Data")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphFromDataReferences())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
+
+		reuseGraphAction =
+			new ToggleActionBuilder("Reuse Graph", getName()).menuPath(MENU_GRAPH, "Reuse Graph")
+					.menuGroup("Graph Options")
+					.selected(reuseGraph)
+					.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
+					.enabledWhen(this::canGraph)
+					.buildAndInstall(tool);
+
+		appendGraphAction =
+			new ToggleActionBuilder("Append Graph", getName()).menuPath(MENU_GRAPH, "Append Graph")
+					.menuGroup("Graph Options")
+					.selected(false)
+					.onAction(c -> updateAppendAndReuseGraph())
+					.enabledWhen(this::canGraph)
+					.buildAndInstall(tool);
 
 		forceLocationVisibleAction = new ToggleActionBuilder("Show Location in Graph", getName())
 				.menuPath(MENU_GRAPH, "Show Location")
@@ -248,7 +278,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 			tool.removeAction(action);
 		}
 
-		// Create subroutine graph actions for each subroutine provided by BlockModelService		
+		// Create subroutine graph actions for each subroutine provided by BlockModelService
 
 		String[] subModels =
 			blockModelService.getAvailableModelNames(BlockModelService.SUBROUTINE_MODEL);
@@ -263,13 +293,13 @@ public class ProgramGraphPlugin extends ProgramPlugin
 			subUsingGraphActions.add(action);
 		}
 
-		tool.setMenuGroup(new String[] { "Graph", "Calls Using Model" }, "Graph");
+		tool.setMenuGroup(new String[] { MENU_GRAPH, "Calls Using Model" }, "Graph", "C");
 	}
 
 	private DockingAction buildGraphActionWithModel(String blockModelName, HelpLocation helpLoc) {
 		return new ActionBuilder("Graph Calls using " + blockModelName, getName())
-				.menuPath("Graph", "Calls Using Model", blockModelName)
-				.menuGroup("Graph")
+				.menuPath(MENU_GRAPH, "Calls Using Model", blockModelName)
+				.menuGroup(MENU_GRAPH, "C")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphSubroutinesUsing(blockModelName))
 				.enabledWhen(this::canGraph)
@@ -292,14 +322,25 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		graph("Call Graph (" + modelName + ")", modelName, false);
 	}
 
+	private void graphDataReferences() {
+		graphData(DataReferenceGraph.Directions.BOTH_WAYS);
+	}
+
+	private void graphToDataReferences() {
+		graphData(DataReferenceGraph.Directions.TO_ONLY);
+	}
+
+	private void graphFromDataReferences() {
+		graphData(DataReferenceGraph.Directions.FROM_ONLY);
+	}
+
 	private void graph(String actionName, String modelName, boolean showCode) {
 		try {
 			CodeBlockModel model =
 				blockModelService.getNewModelByName(modelName, currentProgram, true);
-			BlockGraphTask task =
-				new BlockGraphTask(actionName, graphEntryPointNexus, showCode, reuseGraph,
-					appendToGraph, tool, currentSelection, currentLocation, model,
-					defaultGraphService);
+			BlockGraphTask task = new BlockGraphTask(actionName, graphEntryPointNexus, showCode,
+				reuseGraph, appendToGraph, tool, currentSelection, currentLocation, model,
+				defaultGraphService);
 			task.setCodeLimitPerBlock(codeLimitPerBlock);
 			new TaskLauncher(task, tool.getToolFrame());
 		}
@@ -307,6 +348,13 @@ public class ProgramGraphPlugin extends ProgramPlugin
 			Msg.showError(this, null, "Error That Can't Happen",
 				"Can't find a block model from a name that we got from the existing block models!");
 		}
+	}
+
+	void graphData(DataReferenceGraph.Directions direction) {
+		DataReferenceGraphTask task =
+			new DataReferenceGraphTask(reuseGraph, appendToGraph, tool, currentSelection,
+				currentLocation, defaultGraphService, dataMaxDepth, codeLimitPerBlock, direction);
+		new TaskLauncher(task, tool.getToolFrame());
 	}
 
 	String getProgramName() {

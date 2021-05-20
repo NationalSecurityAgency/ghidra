@@ -27,10 +27,16 @@
     another. The nodes of the graph represent blocks of code and the edges represent flow between
     the blocks of code.</P>
 
-    <P>There are two basic graph types, <A href="#Graph_Block_Flow">Block Flow</A> and <A href=
+    <P>There are two basic flow graph types, <A href="#Graph_Block_Flow">Block Flow</A> and <A href=
     "#Graph_Calls_Using_Default_Model">Call Graph</A>. Different colors and shapes are used to
-    depict each node and the flow between them. Multiple graphs of either type can exist at any
-    time.</P>
+    depict each node and the flow between them.</P>
+    
+    <P><A href="#Data_Reference_Graph">Data graphs</A> show reference relationships between memory 
+    locations. They can be constrained to just <B>"To References"</B>, just <B>"From References"</B>,
+    or both. By default a single hop is graphed with the option to extend from within the 
+    graph.</P>
+    
+    <P>Multiple graphs of any or all types can exist at any time.</P>
 
     <BLOCKQUOTE>
       <P>A <I>Call Graph</I> depicts subroutines as nodes. Calls between subroutines are shown as
@@ -433,7 +439,56 @@
         set of block models configured into the tool.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
+    
+    <H2><A name="Data_Reference_Graph"></A>Graph Data References</H2>
+	<P>A graph of data references can be created with <B>Graph<IMG src="../../shared/arrow.gif"> 
+	Data</B> then selecting <B>To References</B>, <B>From References</B> or <B>To/From References</B>.
+	Only the selected references will be included. By default only a single layer of references will 
+	be graphed, this can be adjusted using the <B>Edit <IMG src="../../shared/arrow.gif"> 
+	Tool Options <IMG src="../../shared/arrow.gif"> Graph <IMG src="../../shared/arrow.gif"> 
+	Max Reference Depth</B> 
+	
+	<BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png"> Unlike flow graphs, where only the selection is 
+        included in the graph, the selection and its references are included.</P>
+      </BLOCKQUOTE>
 
+      <P>To graph Data References,</P>
+
+      <OL>
+      	<LI>Select the data to start from in the listing
+      	<LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Data<IMG src=
+        "../../shared/arrow.gif"></B></LI>
+      <LI>
+          Select one of 
+
+          <UL>
+            <LI>To References - selected data and all references to it</LI>
+
+            <LI>From References - selected data all references from it</LI>
+
+            <LI>To/From References - selected data and all references to and from it</LI>
+          </UL>
+        </LI>
+
+        <LI>A new graph window is created with the selected data and the specified references.
+        By default this includes one layer of references but this may be adjusted in the options
+        as specified above, or dynamically using the <A href="#Add_References">Add References 
+        action</A> on the desired node</LI>
+      </OL>
+    </BLOCKQUOTE>
+    
+    <BLOCKQUOTE>
+    
+    	<H3><A NAME="Add_References"></A>Add References</H3>
+    	<BLOCKQUOTE>
+          <P>Allows the user to add references starting from 
+          the selected nodes, with To References, From References or Bidirectional as selected.
+          </P>
+        </BLOCKQUOTE>
+    
+    </BLOCKQUOTE>
  
     <BR>
      <BR>
