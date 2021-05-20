@@ -128,6 +128,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 					ProjectArchive projectArchive = (ProjectArchive) archive;
 					projectArchive.getDomainObject().removeListener(DataTypeManagerPlugin.this);
 				}
+
+				provider.archiveClosed(archive.getDataTypeManager());
 			}
 
 			@Override
@@ -197,7 +199,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	/**
 	 * Add project archive name to recently opened list
 	 * @param projectName the project name
-	 * @param pathname the pathname 
+	 * @param pathname the pathname
 	 */
 	public void addRecentlyOpenedProjectArchive(String projectName, String pathname) {
 		String projectPathname = DataTypeManagerHandler.getProjectPathname(projectName, pathname);
@@ -215,7 +217,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	/**
 	 * Add project archive to recently opened list provided it is contained within the
-	 * active project and is not a specific version (i.e., only latest version can be 
+	 * active project and is not a specific version (i.e., only latest version can be
 	 * remembered).
 	 * @param pa project archive
 	 */
@@ -238,8 +240,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		Project project = tool.getProjectManager().getActiveProject();
 		if (project != null && project.getName().equals(projectName)) {
 			DomainFile df = project.getProjectData().getFile(pathname);
-			if (df != null && DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-				df.getContentType())) {
+			if (df != null && DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+					.equals(df.getContentType())) {
 				return df;
 			}
 		}
@@ -305,7 +307,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	protected void programClosed(Program program) {
-		// assumption: at this point programDeactivated(Program) has been called, so we don't 
+		// assumption: at this point programDeactivated(Program) has been called, so we don't
 		// have to perform any cleanup that is done by that method.
 		provider.programClosed();
 		editorManager.dismissEditors(program.getDataTypeManager());
@@ -395,8 +397,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private void createStandardArchivesMenu() {
 		installArchiveMap = new TreeMap<>();
-		for (ResourceFile archiveFile : Application.findFilesByExtensionInApplication(
-			FileDataTypeManager.SUFFIX)) {
+		for (ResourceFile archiveFile : Application
+				.findFilesByExtensionInApplication(FileDataTypeManager.SUFFIX)) {
 			Path path = new Path(archiveFile);
 			String absoluteFilePath = path.getPathAsString();
 			if (absoluteFilePath.indexOf("data/typeinfo") < 0) {
@@ -524,6 +526,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public void closeArchive(DataTypeManager dtm) {
 		dataTypeManagerHandler.closeArchive(dtm);
+		provider.archiveClosed(dtm);
 	}
 
 	@Override
