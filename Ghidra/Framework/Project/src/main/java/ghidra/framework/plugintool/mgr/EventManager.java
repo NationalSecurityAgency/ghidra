@@ -28,8 +28,8 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 
 /**
- * Helper class to manage the events that plugins consume and produce.  This class keeps 
- * track of the last events that went out so that when a plugin is added, it receives those events.
+ * Helper class to manage the events that plugins consume and produce. This class keeps track of the
+ * last events that went out so that when a plugin is added, it receives those events.
  */
 public class EventManager {
 	private List<ToolListener> toolListeners = new ArrayList<>();
@@ -51,6 +51,7 @@ public class EventManager {
 
 	/**
 	 * Construct a new EventManager.
+	 * 
 	 * @param tool plugin tool associated with this EventManager
 	 */
 	public EventManager(PluginTool tool) {
@@ -58,8 +59,9 @@ public class EventManager {
 	}
 
 	/**
-	 * Add a plugin event listener that will be notified when an event of
-	 * the given event class is generated.
+	 * Add a plugin event listener that will be notified when an event of the given event class is
+	 * generated.
+	 * 
 	 * @param eventClass class of the event of interest
 	 * @param listener listener to notify
 	 */
@@ -84,8 +86,9 @@ public class EventManager {
 	}
 
 	/**
-	 * Remove the plugin event listener from the list of listeners notified
-	 * when an event of the given event class is generated.
+	 * Remove the plugin event listener from the list of listeners notified when an event of the
+	 * given event class is generated.
+	 * 
 	 * @param eventClass class of the event of interest
 	 * @param listener listener to remove
 	 */
@@ -112,6 +115,7 @@ public class EventManager {
 
 	/**
 	 * Add the given tool listener to be notified notified when tool events are generated
+	 * 
 	 * @param listener listener to add
 	 */
 	public void addToolListener(ToolListener listener) {
@@ -120,6 +124,7 @@ public class EventManager {
 
 	/**
 	 * Remove the given tool listener from the list of tool listeners
+	 * 
 	 * @param listener listener to remove
 	 */
 	public void removeToolListener(ToolListener listener) {
@@ -127,7 +132,7 @@ public class EventManager {
 	}
 
 	/**
-	 * Return whether there are any registered tool listeners for the tool associated with class 
+	 * Return whether there are any registered tool listeners for the tool associated with class
 	 * 
 	 * @return true if there are any listeners
 	 */
@@ -137,6 +142,7 @@ public class EventManager {
 
 	/**
 	 * Add the class for the PluginEvent that a plugin will produce
+	 * 
 	 * @param eventClass class for the PluginEvent
 	 */
 	public void addEventProducer(Class<? extends PluginEvent> eventClass) {
@@ -149,6 +155,7 @@ public class EventManager {
 
 	/**
 	 * Remove the class of a PluginEvent that a plugin produces.
+	 * 
 	 * @param eventClass class for the PluginEvent
 	 */
 	public void removeEventProducer(Class<? extends PluginEvent> eventClass) {
@@ -165,6 +172,7 @@ public class EventManager {
 
 	/**
 	 * Get the names of all events produced by plugins in the tool.
+	 * 
 	 * @return array of PluginEvent names
 	 */
 	public String[] getEventsProduced() {
@@ -173,6 +181,7 @@ public class EventManager {
 
 	/**
 	 * Get the names of all events consumed by plugins in the tool.
+	 * 
 	 * @return array of PluginEvent names
 	 */
 	public String[] getEventsConsumed() {
@@ -180,8 +189,9 @@ public class EventManager {
 	}
 
 	/**
-	 * Notify all plugin listeners that are registered to consume the given
-	 * event. Events are fired in the SwingThread. 
+	 * Notify all plugin listeners that are registered to consume the given event. Events are fired
+	 * in the SwingThread.
+	 * 
 	 * @param event event to fire
 	 */
 	public void fireEvent(PluginEvent event) {
@@ -218,8 +228,9 @@ public class EventManager {
 	}
 
 	/**
-	 * Convert the given tool event to a plugin event; notify the appropriate plugin listeners.
-	 * This method allows one tool's event manager to send events to another connected tool.
+	 * Convert the given tool event to a plugin event; notify the appropriate plugin listeners. This
+	 * method allows one tool's event manager to send events to another connected tool.
+	 * 
 	 * @param event tool event
 	 */
 	public void processToolEvent(PluginEvent event) {
@@ -249,7 +260,7 @@ public class EventManager {
 	}
 
 	/**
-	 * Return an array of the last plugin events fired. EventManager maps the event class to the 
+	 * Return an array of the last plugin events fired. EventManager maps the event class to the
 	 * last event fired.
 	 * 
 	 * @return array of plugin events
@@ -326,8 +337,9 @@ public class EventManager {
 	}
 
 	/**
-	 * Remove the event listener by className; the plugin registered for
-	 * events, but the construction failed.
+	 * Remove the event listener by className; the plugin registered for events, but the
+	 * construction failed.
+	 * 
 	 * @param className class name of the plugin (event listener)
 	 */
 	public void removeEventListener(String className) {
