@@ -144,8 +144,7 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 		if (highSymbol == null) {
 			return false;
 		}
-		EquateTable equateTable = context.getProgram().getEquateTable();
-		if (equateTable.getEquate(tokenAtCursor.getText()) != null) {
+		if (highSymbol instanceof EquateSymbol) {
 			return false;
 		}
 		return !highSymbol.isGlobal();
