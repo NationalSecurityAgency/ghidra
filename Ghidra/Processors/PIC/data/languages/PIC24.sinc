@@ -2277,22 +2277,10 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 :call  dest24_t is ( OP_23_20=0x0 & OP_19_16=0x2 & OP_0=0x0 & WordInstNext4;
                      OP_23_20=0x0 & OP_19_16=0x0 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7=0x0 ) & dest24_t  {
 
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2;
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15	= tmp(2);
-  W15 			= W15 + 2;
-
-  call dest24_t;
-@else
   *[ram]:4 W15  = WordInstNext4;
   W15           = W15 + 4;
 
   call dest24_t;
-@endif
 } 
 @endif
 
@@ -2301,25 +2289,10 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 :call  dest24_t is ( OP_23_20=0x0 & OP_19_16=0x2 & OP_0=0x0;
                      OP_23_20=0x0 & OP_19_16=0x0 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7=0x0 ) & dest24_t {
 
-@ifdef NEVER
-  # inst_next is byte oriented here, and word oriented inside of [ ];
-  PC 			= inst_next / 2;
-  *[ram]:2 W15 	= PC:2 | zext(CORCON_SFA);
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  CORCON_SFA = 0;
-
-  call dest24_t;
-@else
   *[ram]:4 W15  = (inst_next / 2) | zext(CORCON_SFA);
   W15           = W15 + 4;
 
   call dest24_t;
-@endif
 } 
 @endif
 
@@ -2327,22 +2300,10 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :call  WnDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & WnDest_t & WordInstNext4 {
 
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2;
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  call [WnDest_t];
-@else
   *[ram]:4 W15  = WordInstNext4;
   W15           = W15 + 4;
 
   call [WnDest_t];
-@endif
 } 
 @endif
 
@@ -2350,24 +2311,10 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :call  WnDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & WnDest_t & WordInstNext4 {
 
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2 | zext(CORCON_SFA);
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  CORCON_SFA = 0;
-
-  call [WnDest_t];
-@else
   *[ram]:4 W15  = WordInstNext4 | zext(CORCON_SFA);
   W15           = W15 + 4;
 
   call [WnDest_t];
-@endif
 } 
 @endif
 
@@ -2375,24 +2322,10 @@ cond1: "z" is  TOK_CCCC=0x2 { tmpBool:1 = (SRL_Z); export tmpBool; }
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :call.l  WnWn1_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15=0x1 & WnWn1_t & OP_10_8=0x0 & OP_7_4=0x0 & WordInstNext4 {
 
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2 | zext(CORCON_SFA);
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  CORCON_SFA = 0;
-
-  call [WnWn1_t];
-@else
   *[ram]:4 W15  = WordInstNext4 | zext(CORCON_SFA);
   W15           = W15 + 4;
 
   call [WnWn1_t];
-@endif
 } 
 @endif
 
@@ -6886,98 +6819,42 @@ define pcodeop pwrsavOp;
 
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :rcall  n16_t is OP_23_20=0x0 & OP_19_16=0x7 & n16_t & WordInstNext4 {
-
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2;
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  call n16_t;
-@else
   *[ram]:4 W15  = WordInstNext4;
   W15           = W15 + 4;
 
   call n16_t;
-@endif
 } 
 @endif
 
 
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :rcall  n16_t is OP_23_20=0x0 & OP_19_16=0x7 & n16_t & WordInstNext4 {
-
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2 | zext(CORCON_SFA);
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  CORCON_SFA = 0;
-
-  call n16_t;
-@else
   *[ram]:4 W15  = WordInstNext4 | zext(CORCON_SFA);
   W15           = W15 + 4;
   CORCON_SFA    = 0;
 
   call n16_t;   
-@endif
 } 
 @endif
 
 
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :rcall  WnRDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x2 & OP_11_8=0x0 & OP_7_4=0x0 & WnRDest_t & WordInstNext4 {
-
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2;
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  call [WnRDest_t];
-@else
   *[ram]:4 W15  = WordInstNext4;
   W15           = W15 + 4;
 
   call [WnRDest_t];
-@endif
 } 
 @endif
 
 
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :rcall  WnRDest_t is OP_23_20=0x0 & OP_19_16=0x1 & OP_15_12=0x0 & OP_11_8=0x2 & OP_7_4=0x0 & WnRDest_t & WordInstNext4 {
-
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2 | zext(CORCON_SFA);
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-
-  CORCON_SFA = 0;
-
-  call [WnRDest_t];
-@else
   *[ram]:4 W15  = WordInstNext4 | zext(CORCON_SFA);
   W15           = W15 + 4;
   CORCON_SFA    = 0;
 
   call [WnRDest_t];   
-@endif
 } 
 @endif
 
@@ -7043,285 +6920,95 @@ define pcodeop pwrsavOp;
 
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
-
-@ifdef NEVER
-  W15 		= W15 - 2;
-  tos1:2 	= *[ram]:2 W15;
-
-  # (TOS<15:8>) (SR<7:0>)
-  tos1H:1 	= tos1(1);
-  unpackSRL( tos1H );
-
-  # (TOS<7>) (IPL3, CORCON<3>)
-  CORCON_IPL3 = ( tos1 & 0x0080 ) != 0;
-
-  W15 		= W15 - 2;
-  tos2:2 	= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:0>) (PC<15:0>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2);
-  
-  return [PC];
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   tmpSRL:1 = tmp(1);
-  unpackSRL( tmpSRL >> 8 );
+  unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   return [tmp & 0x7FFFFF];
-@endif
 }
 @endif
 
 
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
-
-@ifdef NEVER
-  W15 		= W15 - 2;
-  tos1:2 	= *[ram]:2 W15;
-
-  # (TOS<15:8>) (SR<7:0>)
-  tos1H:1 	= tos1(1);
-  unpackSRL( tos1H );
-
-  # (TOS<7>) (IPL3, CORCON<3>)
-  CORCON_IPL3 = ( tos1 & 0x0080 ) != 0;
-
-  W15 = W15 - 2;
-  tos2:2 	= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:1>) (PC<15:1>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2 & 0xFFFE);
-
-  # TOS<0> SFA bit
-  CORCON_SFA = ( tos2 & 0x0001 ) != 0;
-  
-  return [PC];
-  
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   tmpSRL:1 = tmp(1);
-  unpackSRL( tmpSRL >> 8 );
+  unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = (tmp & 0x1) != 0;
   return [tmp & 0x7FFFFE];
-@endif
 }
 @endif
 
 
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
-
-@ifdef NEVER
-  W15 		= W15 - 2;
-  tos1:2 	= *[ram]:2 W15;
-
-  # (TOS<15:8>) (SR<7:0>)
-  tos1H:1 	= tos1(1);
-  unpackSRL( tos1H );
-
-  # (TOS<7>) (IPL3, CORCON<3>)
-  CORCON_IPL3 = ( tos1 & 0x0080 ) != 0;
-
-  W15 = W15 - 2;
-  tos2:2 	= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:0>) (PC<15:0>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2);
-
-  # lit10 Wn
-  Wn_t =         k10_t;
-  
-  return [PC];
-  
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   tmpSRL:1 = tmp(1);
-  unpackSRL( tmpSRL >> 8 );
+  unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   Wn_t =         k10_t;
   return [tmp & 0x7FFFFF];
-@endif
 } 
 
 
 :retlw.b   k10byte_t,Wnbyte_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10byte_t & Wnbyte_t {
-
-@ifdef NEVER
-  W15 		= W15 - 2;
-  tos1:2 	= *[ram]:2 W15;
-
-  # (TOS<15:8>) (SR<7:0>)
-  tos1H:1 	= tos1(1);
-  unpackSRL( tos1H );
-
-  # (TOS<7>) (IPL3, CORCON<3>)
-  CORCON_IPL3 = ( tos1 & 0x0080 ) != 0;
-
-  W15 		= W15 - 2;
-  tos2:2 	= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:0>) (PC<15:0>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2);
-
-  # lit10 Wn
-  Wnbyte_t =     k10byte_t;
-  
-  return [PC];
-  
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   tmpSRL:1 = tmp(1);
-  unpackSRL( tmpSRL >> 8 );
+  unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   Wnbyte_t =     k10byte_t;
   return [tmp & 0x7FFFFF];
-@endif
 }
 @endif
 
 
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
-
-@ifdef NEVER
-  W15 = W15 - 2;
-  tos1:2 		= *[ram]:2 W15;
-
-  # (TOS<15:8>) (SR<7:0>)
-  tos1H:1 		= tos1(1);
-  unpackSRL( tos1H );
-
-  # (TOS<7>) (IPL3, CORCON<3>)
-  CORCON_IPL3 	= ( tos1 & 0x0080 ) != 0;
-
-  W15 = W15 - 2;
-  tos2:2 		= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:1>) (PC<15:1>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2 & 0xFFFE);
-
-  # TOS<0> SFA bit
-  CORCON_SFA = ( tos2 & 0x0001 ) != 0;
-
-  # lit10 Wn
-  Wn_t =         k10_t;
-  
-  return [PC];
-  
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   tmpSRL:1 = tmp(1);
-  unpackSRL( tmpSRL >> 8 );
+  unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = (tmp & 0x1) != 0;
   Wn_t = k10_t;
   return [tmp & 0x7FFFFE];
-@endif
 } 
 
 
 :retlw.b   k10byte_t,Wnbyte_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10byte_t & Wnbyte_t {
-
-@ifdef NEVER
-  W15 			= W15 - 2;
-  tos1:2 		= *[ram]:2 W15;
-
-  # (TOS<15:8>) (SR<7:0>)
-  tos1H:1 		= tos1(1);
-  unpackSRL( tos1H );
-
-  # (TOS<7>) (IPL3, CORCON<3>)
-  CORCON_IPL3 	= ( tos1 & 0x0080 ) != 0;
-
-  W15 			= W15 - 2;
-  tos2:2 		= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:1>) (PC<15:1>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2 & 0xFFFE);
-
-  # TOS<0> SFA bit
-  CORCON_SFA = ( tos2 & 0x0001 ) != 0;
-
-  # lit10 Wn
-  Wnbyte_t =     k10byte_t;
-  
-  return [PC];
-  
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   tmpSRL:1 = tmp(1);
-  unpackSRL( tmpSRL >> 8 );
+  unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = 	(tmp & 0x1) != 0;
   Wnbyte_t =     k10byte_t;
   return [tmp & 0x7FFFFE];
-@endif
 }
 @endif
 
 
 @if defined(PIC24F) || defined(PIC24H) || defined(dsPIC30F) || defined(dsPIC33F) 
 :return is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
-
-@ifdef NEVER
-  W15 			= W15 - 2;
-  tos1:2 		= *[ram]:2 W15;
-
-  W15 			= W15 - 2;
-  tos2:2 		= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:0>) (PC<15:0>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2);
-  return [PC];
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   return [tmp & 0x7FFFFF];
-@endif
 }
 @endif
 
 
 @if defined(PIC24E) || defined(dsPIC33E) || defined(dsPIC33C)
 :return is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x0 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
-
-@ifdef NEVER
-  W15 			= W15 - 2;
-  tos1:2 		= *[ram]:2 W15;
-
-  W15 			= W15 - 2;
-  tos2:2 		= *[ram]:2 W15;
-  
-  # (TOS<6:0>) (PC<22:16>)
-  # (TOS<15:1>) (PC<15:1>)
-  PC = ( zext(tos1:1 & 0x7F) << 16 ) | zext(tos2 & 0xFFFE);
-
-  # TOS<0> SFA bit
-  CORCON_SFA = ( tos2 & 0x0001 ) != 0;
-
-  return [PC];
-@else
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
   CORCON_SFA = ( tmp & 0x0001 ) != 0;
   tmp = tmp & 0x7FFFFE;
   return [tmp];
-@endif
 }
 @endif
 
@@ -8205,19 +7892,8 @@ define pcodeop pwrsavOp;
 define pcodeop Vector;
 
 :trap TOK_n,TOK_k16t is OP_23_20=0 & OP_19_17=5 & TOK_n & TOK_k16t & WordInstNext4 {
-
-@ifdef NEVER
-  PC 			= WordInstNext;
-  *[ram]:2 W15 	= PC:2;
-  W15 			= W15 + 2;
-
-  tmp:4 		= zext(PC);
-  *[ram]:2 W15 	= tmp(2);
-  W15 			= W15 + 2;
-@else
   *[ram]:4 W15  = WordInstNext4;
   W15           = W15 + 4;
-@endif
 
   *[ram]:2 W15 	= TOK_k16t;
   
