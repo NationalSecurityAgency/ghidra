@@ -23,7 +23,7 @@ import ghidra.util.ascii.Sequence;
 public class PascalUtil {
 
 	private static final int ONE_BYTE_OFFSET = -1;
-	private static final int TWO_BYTE_OFFSET = -2;
+	private static final int TWO_BYTE_OFFSET = -4;
 	private static final int NO_OFFSET = 0;
 	private static final int ASCII_CHAR_WIDTH = 1;
 	private static final int UNICODE16_CHAR_WIDTH = 2;
@@ -92,7 +92,7 @@ public class PascalUtil {
 		if (pascalLengthOffset < 0) {
 			return null;
 		}
-		int length = getShort(buf, pascalLengthOffset);
+		int length = getInt(buf, pascalLengthOffset);
 		int sequenceLength =
 			(sequence.getLength() - offset - PASCAL_LENGTH_SIZE) / UNICODE16_CHAR_WIDTH;
 		if (sequence.isNullTerminated()) {
@@ -157,6 +157,15 @@ public class PascalUtil {
 	private static int getShort(MemBuffer buf, int offset) {
 		try {
 			return buf.getShort(offset);
+		}
+		catch (MemoryAccessException e) {
+			return ONE_BYTE_OFFSET;
+		}
+	}
+
+	private static int getInt(MemBuffer buf, int offset) {
+		try {
+			return buf.getInt(offset);
 		}
 		catch (MemoryAccessException e) {
 			return ONE_BYTE_OFFSET;

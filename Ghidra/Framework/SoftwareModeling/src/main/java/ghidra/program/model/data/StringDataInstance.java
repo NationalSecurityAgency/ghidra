@@ -221,7 +221,7 @@ public class StringDataInstance {
 	private static final String BOM_RESULT_STR = "\ufeff";
 
 	private static final int SIZEOF_PASCAL255_STR_LEN_FIELD = 1;
-	private static final int SIZEOF_PASCAL64k_STR_LEN_FIELD = 2;
+	private static final int SIZEOF_PASCAL64k_STR_LEN_FIELD = 4;
 
 	private final String charsetName;
 	private final int charSize;
@@ -477,7 +477,7 @@ public class StringDataInstance {
 						(buf.getUnsignedByte(0) * paddedCharSize);
 				case PASCAL_64k:
 					return SIZEOF_PASCAL64k_STR_LEN_FIELD +
-						(buf.getUnsignedShort(0) * paddedCharSize);
+						((int)buf.getUnsignedInt(0) * paddedCharSize);
 				default:
 					return -1;
 			}
