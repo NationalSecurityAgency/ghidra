@@ -478,6 +478,8 @@ task createInstallationZip(type: Zip) { t ->
 	
 	group 'private'
 	description "Creates local installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
+
+	project.logger.debug("${currentPlatform}")
 	
 	dependsOn assembleDistribution
 	dependsOn assembleSource
@@ -488,6 +490,8 @@ task createInstallationZip(type: Zip) { t ->
 		dependsOn ":assembleDistribution_win64"
 		dependsOn ":assembleDistribution_linux64"
 		dependsOn ":assembleDistribution_osx64"
+		dependsOn ":assembleDistribution_arm64"
+		dependsOn ":assembleDistribution_aarch64"
 	}
 
 	if (project.hasProperty("allPlatforms")) {

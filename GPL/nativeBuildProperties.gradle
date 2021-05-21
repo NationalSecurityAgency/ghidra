@@ -42,6 +42,14 @@ model {
 			architecture 'x86_64'
 			operatingSystem 'osx'
 		}
+		arm64 {
+			architecture 'aarch64'
+			operatingSystem 'osx'
+		}
+		aarch64 {
+			architecture 'aarch64'
+			operatingSystem 'osx'
+		}
 	}	
 }
 
