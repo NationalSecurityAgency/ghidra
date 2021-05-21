@@ -6922,7 +6922,7 @@ define pcodeop pwrsavOp;
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
-  tmpSRL:1 = tmp(1);
+  tmpSRL:1 = tmp(3);
   unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   return [tmp & 0x7FFFFF];
@@ -6934,7 +6934,7 @@ define pcodeop pwrsavOp;
 :retfie is OP_23_20=0x0 & OP_19_16=0x6 & OP_15_12=0x4 & OP_11_8=0x0 & OP_7_4=0x0 & OP_3_0=0x0 {
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
-  tmpSRL:1 = tmp(1);
+  tmpSRL:1 = tmp(3);
   unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = (tmp & 0x1) != 0;
@@ -6947,7 +6947,7 @@ define pcodeop pwrsavOp;
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
-  tmpSRL:1 = tmp(1);
+  tmpSRL:1 = tmp(3);
   unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   Wn_t =         k10_t;
@@ -6958,7 +6958,7 @@ define pcodeop pwrsavOp;
 :retlw.b   k10byte_t,Wnbyte_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10byte_t & Wnbyte_t {
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
-  tmpSRL:1 = tmp(1);
+  tmpSRL:1 = tmp(3);
   unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   Wnbyte_t =     k10byte_t;
@@ -6971,7 +6971,7 @@ define pcodeop pwrsavOp;
 :retlw.w   k10_t,Wn_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10_t & Wn_t {
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
-  tmpSRL:1 = tmp(1);
+  tmpSRL:1 = tmp(3);
   unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = (tmp & 0x1) != 0;
@@ -6983,7 +6983,7 @@ define pcodeop pwrsavOp;
 :retlw.b   k10byte_t,Wnbyte_t is OP_23_20=0x0 & OP_19_16=0x5 & OP_15=0 & k10byte_t & Wnbyte_t {
   W15 	= W15 - 4;
   local tmp 	= *[ram]:4 W15;
-  tmpSRL:1 = tmp(1);
+  tmpSRL:1 = tmp(3);
   unpackSRL( tmpSRL );
   CORCON_IPL3 = (tmp & 0x00800000) != 0;
   CORCON_SFA = 	(tmp & 0x1) != 0;
