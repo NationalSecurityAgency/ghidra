@@ -391,36 +391,44 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		private final List<T> trackedItems = new ArrayList<>();
 
 		public List<T> itemsInserted(int firstIndex, int lastIndex) {
-			List<T> inserted =
-				new ArrayList<>(tableModel.getModelData().subList(firstIndex, lastIndex + 1));
-			trackedItems.addAll(firstIndex, inserted);
-			assert Objects.equals(tableModel.getModelData(), trackedItems);
-			return inserted;
+			synchronized (tableModel) {
+				List<T> inserted =
+					new ArrayList<>(tableModel.getModelData().subList(firstIndex, lastIndex + 1));
+				trackedItems.addAll(firstIndex, inserted);
+				assert Objects.equals(tableModel.getModelData(), trackedItems);
+				return inserted;
+			}
 		}
 
 		public List<T> itemsUpdated(int firstIndex, int lastIndex) {
-			List<T> updated = new ArrayList<>(lastIndex - firstIndex + 1);
-			for (int i = firstIndex; i <= lastIndex; i++) {
-				T t = tableModel.getModelData().get(i);
-				updated.add(t);
-				trackedItems.set(i, t);
+			synchronized (tableModel) {
+				List<T> updated = new ArrayList<>(lastIndex - firstIndex + 1);
+				for (int i = firstIndex; i <= lastIndex; i++) {
+					T t = tableModel.getModelData().get(i);
+					updated.add(t);
+					trackedItems.set(i, t);
+				}
+				assert Objects.equals(tableModel.getModelData(), trackedItems);
+				return updated;
 			}
-			assert Objects.equals(tableModel.getModelData(), trackedItems);
-			return updated;
 		}
 
 		public List<T> itemsDeleted(int firstIndex, int lastIndex) {
-			List<T> sub = trackedItems.subList(firstIndex, lastIndex + 1);
-			List<T> deleted = new ArrayList<>(sub);
-			sub.clear();
-			assert Objects.equals(tableModel.getModelData(), trackedItems);
-			return deleted;
+			synchronized (tableModel) {
+				List<T> sub = trackedItems.subList(firstIndex, lastIndex + 1);
+				List<T> deleted = new ArrayList<>(sub);
+				sub.clear();
+				assert Objects.equals(tableModel.getModelData(), trackedItems);
+				return deleted;
+			}
 		}
 
 		public List<T> itemsRefreshed() {
-			trackedItems.clear();
-			trackedItems.addAll(tableModel.getModelData());
-			return trackedItems;
+			synchronized (tableModel) {
+				trackedItems.clear();
+				trackedItems.addAll(tableModel.getModelData());
+				return trackedItems;
+			}
 		}
 
 		public void clear() {
@@ -462,12 +470,12 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 	protected class CellFocusListener extends FocusAdapter {
 		@Override
 		public void focusGained(FocusEvent e) {
-			recolor(); // TODO: Way to draconian
+			focusGainedOrLost();
 		}
 
 		@Override
 		public void focusLost(FocusEvent e) {
-			recolor(); // TODO: Way to draconian
+			focusGainedOrLost();
 		}
 	}
 
@@ -497,6 +505,10 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		this();
 		setTableModel(model, info);
 		setSelectionModel(new DefaultListSelectionModel());
+	}
+
+	private synchronized void focusGainedOrLost() {
+		recolor(); // TODO: Way too draconian
 	}
 
 	public void addTimelineListener(TimelineListener listener) {
@@ -544,7 +556,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		}
 	}
 
-	protected void assignTrack(T t) {
+	protected synchronized void assignTrack(T t) {
 		Range<N> range = info.getRange(t);
 		for (TimelineTrack<T, N> track : tracks) {
 			if (track.fits(range)) {
@@ -568,7 +580,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		}
 	}
 
-	protected void adjustTrack(T t) {
+	protected synchronized void adjustTrack(T t) {
 		Range<N> range = info.getRange(t);
 		TimelineTrack<T, N> track = trackMap.get(t);
 		track.remove(t);
@@ -579,11 +591,11 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		assignTrack(t);
 	}
 
-	protected Component getComponent(T key) {
+	protected synchronized Component getComponent(T key) {
 		return trackMap.get(key).componentMap.get(key);
 	}
 
-	protected void reAssignTracks() {
+	protected synchronized void reAssignTracks() {
 		for (T t : rows.items()) { // Prefer to move earlier rows to the top tracks
 			TimelineTrack<T, N> fromTrack = trackMap.get(t);
 			for (TimelineTrack<T, N> toTrack : tracks) {
@@ -623,10 +635,11 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		reAssignTracks();
 	}
 
-	private void tableChanged(TableModelEvent e) {
+	private synchronized void tableChanged(TableModelEvent e) {
 		switch (e.getType()) {
 			case TableModelEvent.INSERT:
-				assignTracks(rows.itemsInserted(e.getFirstRow(), e.getLastRow()));
+				List<T> itemsInserted = rows.itemsInserted(e.getFirstRow(), e.getLastRow());
+				assignTracks(itemsInserted);
 				reSortTracks();
 				fitView();
 				recolor();
@@ -640,7 +653,8 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 				else {
 					int column = e.getColumn();
 					if (info.columnAffectsBounds(column)) {
-						adjustTracks(rows.itemsUpdated(e.getFirstRow(), e.getLastRow()));
+						List<T> itemsUpdated = rows.itemsUpdated(e.getFirstRow(), e.getLastRow());
+						adjustTracks(itemsUpdated);
 						reSortTracks();
 						fitView();
 						recolor();
@@ -648,7 +662,8 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 				}
 				break;
 			case TableModelEvent.DELETE:
-				cleanTracks(rows.itemsDeleted(e.getFirstRow(), e.getLastRow()));
+				List<T> itemsDeleted = rows.itemsDeleted(e.getFirstRow(), e.getLastRow());
+				cleanTracks(itemsDeleted);
 				reSortTracks();
 				fitView();
 				recolor();
@@ -717,14 +732,14 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		recolor();
 	}
 
-	protected void clear() {
+	protected synchronized void clear() {
 		this.rows.clear();
 		this.tracks.clear();
 		this.trackMap.clear();
 		this.removeAll();
 	}
 
-	protected void reload() {
+	protected synchronized void reload() {
 		clear();
 		if (tableModel == null) {
 			return;
@@ -733,7 +748,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 		recolor();
 	}
 
-	protected void recolor() {
+	protected synchronized void recolor() {
 		//dumpkeys(Border.class, Border::toString);
 		List<T> items = rows.items();
 		for (int i = 0; i < items.size(); i++) {
@@ -814,7 +829,7 @@ public class TimelinePanel<T, N extends Number & Comparable<N>> extends JPanel {
 	 * @param t the item
 	 * @return the rectangle, or {@code null} if the given item is not present
 	 */
-	public Rectangle getCellBounds(T t) {
+	public synchronized Rectangle getCellBounds(T t) {
 		TimelineTrack<T, N> track = trackMap.get(t);
 		if (track == null) {
 			return null;

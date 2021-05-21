@@ -103,12 +103,16 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		codeViewer = tool.getService(CodeViewerService.class);
 	}
 
-	protected boolean goToDyn(Address address) {
-		return goToDyn(new ProgramLocation(traceManager.getCurrentView(), address));
+	protected void goToDyn(Address address) {
+		goToDyn(new ProgramLocation(traceManager.getCurrentView(), address));
 	}
 
-	protected boolean goToDyn(ProgramLocation location) {
-		return listingProvider.goTo(location.getProgram(), location);
+	protected void goToDyn(ProgramLocation location) {
+		waitForPass(() -> {
+			runSwing(() -> listingProvider.goTo(location.getProgram(), location));
+			ProgramLocation confirm = listingProvider.getLocation();
+			assertEquals(location.getAddress(), confirm.getAddress());
+		});
 	}
 
 	protected static byte[] incBlock() {
@@ -680,19 +684,14 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
-		runSwing(() -> goToDyn(addr(trace, 0x55550800)));
+		goToDyn(addr(trace, 0x55550800));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
-		runSwing(() -> goToDyn(addr(trace, 0x55551800)));
-		waitForPass(() -> {
-			ProgramLocation location = listingProvider.getLocation();
-			assertNotNull(location);
-			assertEquals(addr(trace, 0x55551800), location.getAddress());
-		});
+		goToDyn(addr(trace, 0x55551800));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
@@ -713,13 +712,16 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		/**
 		 * We're now moving to the written block
 		 */
-		runSwing(() -> goToDyn(addr(trace, 0x55550800)));
+		goToDyn(addr(trace, 0x55550800));
 		waitForSwing();
 		waitForDomainObject(trace);
-		buf.clear();
-		assertEquals(data.length,
-			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
-		assertArrayEquals(data, buf.array());
+		// NB. Recorder can delay writing in a thread / queue
+		waitForPass(() -> {
+			buf.clear();
+			assertEquals(data.length, trace.getMemoryManager()
+					.getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
+			assertArrayEquals(data, buf.array());
+		});
 	}
 
 	@Test
@@ -845,7 +847,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		runSwing(() -> goToDyn(tb.addr(0x00400000)));
+		goToDyn(tb.addr(0x00400000));
 		// Ensure it's changed so we know the action is effective
 		waitForSwing();
 		assertEquals(tb.addr(0x00400000), listingProvider.getLocation().getAddress());

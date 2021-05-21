@@ -1006,6 +1006,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return;
 		}
 		TraceRecorder recorder = resolved.getRecorder();
+		if (recorder == null) {
+			return;
+		}
 		TargetObject focus = translateToFocus(prev, resolved);
 		if (focus == null) {
 			return;
