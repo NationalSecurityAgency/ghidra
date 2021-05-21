@@ -759,6 +759,11 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	protected Address doFindBytesInRange(long snap, AddressRange range, ByteBuffer data,
 			ByteBuffer mask, boolean forward, TaskMonitor monitor) {
 		int len = data.capacity();
+		assert len != 0; // Caller should have checked
+		if (range.getLength() > 0 /*treat length unsigned*/ && range.getLength() < len) {
+			return null;
+		}
+
 		AddressRange rangeOfStarts =
 			new AddressRangeImpl(range.getMinAddress(), range.getMaxAddress().subtract(len - 1));
 		ByteBuffer read = ByteBuffer.allocate(len);
@@ -790,7 +795,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (mask != null && mask.capacity() != len) {
 			throw new IllegalArgumentException("data and mask must have same capacity");
 		}
-		if (len == 0 || range.getLength() > 0 && range.getLength() < len) {
+		if (len == 0 ||
+			range.getLength() > 0 /*treat length unsigned*/ && range.getLength() < len) {
 			return null;
 		}
 
