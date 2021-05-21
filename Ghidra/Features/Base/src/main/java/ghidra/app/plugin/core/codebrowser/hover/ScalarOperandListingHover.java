@@ -102,7 +102,12 @@ public class ScalarOperandListingHover extends AbstractScalarOperandHover
 		if (list == null) {
 			return null;
 		}
-		return list.get(loc.getSubOperandIndex());
+		// make sure operand sub-opIndex is in bounds
+		int subOpIndex = loc.getSubOperandIndex();
+		if (subOpIndex < 0 || subOpIndex >= list.size()) {
+			return null;
+		}
+		return list.get(subOpIndex);
 	}
 
 }
