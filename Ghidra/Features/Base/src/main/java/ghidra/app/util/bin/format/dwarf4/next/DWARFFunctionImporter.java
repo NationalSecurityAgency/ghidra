@@ -24,6 +24,7 @@ import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -286,7 +287,20 @@ public class DWARFFunctionImporter {
 		processFuncChildren(diea, dfunc);
 
 		Function gfunc = createFunction(dfunc, diea);
-		if (gfunc != null) {
+
+		boolean updateSignature = true;
+
+		DWARFCompilationUnit firstCompilationUnit = prog.getCompilationUnits().get(0);
+		if (firstCompilationUnit != null) {
+			Number dwarfLanguage = firstCompilationUnit.getCompileUnit().getLanguage();
+
+			// Rust does not have associated function signature
+			if (dwarfLanguage == (Number) DWARFSourceLanguage.DW_LANG_Rust) {
+				updateSignature = false;
+			}
+		}
+
+		if (gfunc != null && updateSignature) {
 
 			if (formalParams.isEmpty() && dfunc.localVarErrors) {
 				// if there were no defined parameters and we had problems decoding local variables,
