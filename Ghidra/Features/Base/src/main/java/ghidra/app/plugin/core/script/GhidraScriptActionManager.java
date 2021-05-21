@@ -263,31 +263,11 @@ class GhidraScriptActionManager {
 				.onAction(context -> showGhidraScriptJavadoc())
 				.buildAndInstallLocal(provider);
 
-		// XXX In order to override a method of the new DockingAction and use the builder, we
-		// need to override the build method of the ActionBuilder.  When the ActionBuilder is 
-		// updated, this code can be cleaned up.
-		new ActionBuilder("Ghidra API Help", plugin.getName()) {
-			@Override
-			public DockingAction build() {
-				validate();
-				DockingAction action = new DockingAction(name, owner, keyBindingType) {
-					@Override
-					public void actionPerformed(ActionContext context) {
-						actionCallback.accept(context);
-					}
-
-					@Override
-					public boolean shouldAddToWindow(boolean isMainWindow,
-							Set<Class<?>> contextTypes) {
-						return true;
-					}
-				};
-				decorateAction(action);
-				return action;
-			}
-		}.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+		new ActionBuilder("Ghidra API Help", plugin.getName())
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
 				.menuPath(ToolConstants.MENU_HELP, "Ghidra API Help")
 				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+				.inWindow(ActionBuilder.When.ALWAYS)
 				.onAction(context -> showGhidraScriptJavadoc())
 				.buildAndInstall(plugin.getTool());
 	}

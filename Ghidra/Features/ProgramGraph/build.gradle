@@ -25,7 +25,7 @@ eclipse.project.name = 'Features Graph ProgramGraph'
 
 dependencies {
 	api project(":Base")
-   
+	   
 	helpPath project(path: ":Base", configuration: 'helpPath')
 	helpPath project(path: ":GraphServices", configuration: 'helpPath')
 	

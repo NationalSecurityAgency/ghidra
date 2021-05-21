@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,22 @@
  */
 package ghidra.app.plugin.core.select.reference;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+
+import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.nav.NavigationUtils;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-
-import docking.action.KeyBindingData;
-import docking.action.MenuData;
 
 public class SelectBackRefsAction extends NavigatableContextAction {
 
@@ -47,6 +45,7 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 		
 		setKeyBindingData( new KeyBindingData(KeyEvent.VK_SEMICOLON, InputEvent.CTRL_MASK ) );
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, "Backward"));
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 	
 	@Override

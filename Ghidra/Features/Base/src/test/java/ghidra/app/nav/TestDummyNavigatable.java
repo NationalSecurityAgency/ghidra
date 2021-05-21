@@ -115,6 +115,12 @@ public class TestDummyNavigatable implements Navigatable {
 	}
 
 	@Override
+	public String getTextSelection() {
+		// stub
+		return null;
+	}
+
+	@Override
 	public void addNavigatableListener(NavigatableRemovalListener listener) {
 		// stub
 	}

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.diff;
 
+import javax.swing.Icon;
+
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.codebrowser.CodeViewerLocationMemento;
 import ghidra.app.util.HighlightProvider;
@@ -23,8 +25,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
-
-import javax.swing.Icon;
 
 /**
  * This is a navigatable for use by the right-hand listing of the Diff.
@@ -138,6 +138,11 @@ class DiffNavigatable implements Navigatable {
 	public ProgramSelection getHighlight() {
 		// CodeViewer is designed to handle this based on focus.
 		return navigatable.getHighlight();
+	}
+
+	@Override
+	public String getTextSelection() {
+		return navigatable.getTextSelection();
 	}
 
 	@Override

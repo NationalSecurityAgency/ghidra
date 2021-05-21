@@ -65,6 +65,7 @@ import utilities.util.SuppressableCallback.Suppression;
 	eventsConsumed = {
 		// ProgramSelectionPluginEvent.class, // TODO: Later or remove
 		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
+		ProgramOpenedPluginEvent.class, // For auto-open log cleanup
 		ProgramClosedPluginEvent.class, // For marker set cleanup
 		ProgramLocationPluginEvent.class, // For static listing sync
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
@@ -274,6 +275,10 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 					getConnectedProvider().staticProgramLocationChanged(ev.getLocation());
 				}
 			});
+		}
+		if (event instanceof ProgramOpenedPluginEvent) {
+			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+			allProviders(p -> p.programOpened(ev.getProgram()));
 		}
 		if (event instanceof ProgramClosedPluginEvent) {
 			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;

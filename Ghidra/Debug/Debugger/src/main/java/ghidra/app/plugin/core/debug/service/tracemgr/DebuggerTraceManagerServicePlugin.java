@@ -31,7 +31,6 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.async.AsyncReference;
@@ -47,8 +46,6 @@ import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.lifecycle.Internal;
-import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
@@ -1145,23 +1142,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void removeAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener) {
 		autoCloseOnTerminate.removeChangeListener(listener);
-	}
-
-	@Override
-	// TODO: Move this into some static util, now that canonical view is a trace concept
-	public ProgramLocation fixLocation(ProgramLocation location, boolean matchSnap) {
-		Program program = location.getProgram();
-		if (!(program instanceof TraceProgramView)) {
-			return location;
-		}
-		TraceProgramView itsView = (TraceProgramView) program;
-		Trace trace = itsView.getTrace();
-		TraceProgramView canonicalView = trace.getProgramView();
-		if (canonicalView == itsView ||
-			(matchSnap && canonicalView.getSnap() != itsView.getSnap())) {
-			return location;
-		}
-		return ProgramLocationUtils.replaceProgram(location, canonicalView);
 	}
 
 	@Override

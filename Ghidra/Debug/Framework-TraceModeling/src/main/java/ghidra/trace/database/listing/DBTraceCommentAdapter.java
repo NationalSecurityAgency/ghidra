@@ -34,8 +34,12 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
+import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.Trace.TraceCommentChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -49,7 +53,7 @@ public class DBTraceCommentAdapter
 	protected static final int MAX_COMMENT_TYPE = CodeUnit.REPEATABLE_COMMENT;
 
 	@DBAnnotatedObjectInfo(version = 0)
-	protected static class DBTraceCommentEntry
+	public static class DBTraceCommentEntry
 			extends AbstractDBTraceAddressSnapRangePropertyMapData<DBTraceCommentEntry> {
 		static final String TYPE_COLUMN_NAME = "Type";
 		static final String COMMENT_COLUMN_NAME = "Comment";
@@ -89,6 +93,10 @@ public class DBTraceCommentAdapter
 		void setLifespan(Range<Long> lifespan) {
 			super.doSetLifespan(lifespan);
 		}
+
+		public int getType() {
+			return type;
+		}
 	}
 
 	public DBTraceCommentAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
@@ -106,10 +114,15 @@ public class DBTraceCommentAdapter
 		if (commentType < MIN_COMMENT_TYPE || commentType > MAX_COMMENT_TYPE) {
 			throw new IllegalArgumentException("commentType");
 		}
+		String oldValue = null;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery.intersecting(
 				new AddressRangeImpl(address, address), lifespan)).values()) {
 				if (entry.type == commentType) {
+					if (lifespan.hasLowerBound() &&
+						entry.getLifespan().contains(lifespan.lowerEndpoint())) {
+						oldValue = entry.comment;
+					}
 					makeWay(entry, lifespan);
 				}
 			}
@@ -118,6 +131,11 @@ public class DBTraceCommentAdapter
 				entry.set((byte) commentType, comment);
 			}
 		}
+		trace.setChanged(new TraceChangeRecord<TraceAddressSnapRange, String>(
+			TraceCommentChangeType.byType(commentType),
+			DBTraceSpaceKey.create(address.getAddressSpace(), null, 0),
+			new ImmutableTraceAddressSnapRange(address, lifespan),
+			oldValue, comment));
 	}
 
 	public static String commentFromArray(String[] comment) {

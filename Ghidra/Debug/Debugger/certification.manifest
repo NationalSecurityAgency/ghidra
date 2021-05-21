@@ -132,6 +132,7 @@ src/main/resources/images/breakpoint-set.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-clear-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-disable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-enable-all.png||GHIDRA||||END|
+src/main/resources/images/breakpoints-make-effective.png||GHIDRA||||END|
 src/main/resources/images/breakpoints.png||GHIDRA||||END|
 src/main/resources/images/closedFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/connect.png||GHIDRA||||END|
@@ -179,6 +180,7 @@ src/main/svg/breakpoint-set.svg||GHIDRA||||END|
 src/main/svg/breakpoints-clear-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-disable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-enable-all.svg||GHIDRA||||END|
+src/main/svg/breakpoints-make-effective.svg||GHIDRA||||END|
 src/main/svg/breakpoints.svg||GHIDRA||||END|
 src/main/svg/connect.svg||GHIDRA||||END|
 src/main/svg/console.svg||GHIDRA||||END|

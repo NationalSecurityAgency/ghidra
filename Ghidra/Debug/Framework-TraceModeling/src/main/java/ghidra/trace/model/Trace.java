@@ -15,6 +15,8 @@
  */
 package ghidra.trace.model;
 
+import java.util.*;
+
 import javax.swing.ImageIcon;
 
 import com.google.common.collect.Range;
@@ -104,6 +106,33 @@ public interface Trace extends DataTypeManagerDomainObject {
 		// Long is data type ID
 		public static final TraceCodeChangeType<TraceAddressSnapRange, Long> DATA_TYPE_REPLACED =
 			new TraceCodeChangeType<>();
+	}
+
+	public static final class TraceCommentChangeType
+			extends DefaultTraceChangeType<TraceAddressSnapRange, String> {
+		private static final Map<Integer, TraceCommentChangeType> BY_TYPE = new HashMap<>();
+
+		public static final TraceCommentChangeType PLATE_CHANGED =
+			new TraceCommentChangeType(CodeUnit.PLATE_COMMENT);
+		public static final TraceCommentChangeType PRE_CHANGED =
+			new TraceCommentChangeType(CodeUnit.PRE_COMMENT);
+		public static final TraceCommentChangeType POST_CHANGED =
+			new TraceCommentChangeType(CodeUnit.POST_COMMENT);
+		public static final TraceCommentChangeType EOL_CHANGED =
+			new TraceCommentChangeType(CodeUnit.EOL_COMMENT);
+		public static final TraceCommentChangeType REPEATABLE_CHANGED =
+			new TraceCommentChangeType(CodeUnit.REPEATABLE_COMMENT);
+
+		public static TraceCommentChangeType byType(int type) {
+			return Objects.requireNonNull(BY_TYPE.get(type));
+		}
+
+		public final int type;
+
+		private TraceCommentChangeType(int type) {
+			this.type = type;
+			BY_TYPE.put(type, this);
+		}
 	}
 
 	public static final class TraceCompositeDataChangeType<T, U>

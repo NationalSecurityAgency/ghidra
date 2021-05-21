@@ -41,8 +41,7 @@ abstract class ProgramGraphFunctions {
 	/**
 	 * a default implementation of a {@link ShapeFactory} to supply shapes for attributed vertices and edges
 	 */
-	private static ShapeFactory<Attributed> shapeFactory =
-		new ShapeFactory<>(n -> 50, n -> 1.0f);
+	private static ShapeFactory<Attributed> shapeFactory = new ShapeFactory<>(n -> 50, n -> 1.0f);
 
 	/**
 	 * return various 'Shapes' based on an attribute name
@@ -79,33 +78,35 @@ abstract class ProgramGraphFunctions {
 		}
 	}
 
+	/*
+	 * Gets the Shape object to use when drawing this vertex. If "Icon" attribute
+	 * is set it will use that, otherwise "VertexType" to will translate a code flow
+	 * name to a shape
+	 *
+	 * @param vertex the Attributed object to get a shape for
+	 * @return a Shape object to use when displaying the object
+	 */
 	public static Shape getVertexShape(Attributed vertex) {
-		try {
-			String vertexType = vertex.getAttribute("VertexType");
-			Shape shape = byShapeName(vertex, vertex.getAttribute("Icon"));
-			if (shape != null) {
-				return shape;
-			}
-			if (vertexType == null) {
-				return shapeFactory.getRectangle(vertex);
-			}
-			switch (vertexType) {
-				case "Entry":
-					return shapeFactory.getRegularPolygon(vertex, 3, Math.PI);
-				case "Exit":
-					return shapeFactory.getRegularPolygon(vertex, 3);
-				case "Switch":
-					return shapeFactory.getRectangle(vertex, Math.PI / 4);
-				case "Body":
-				case "External":
-					return shapeFactory.getRectangle(vertex);
-				default:
-					return shapeFactory.getEllipse(vertex);
-			}
+		Shape shape = byShapeName(vertex, vertex.getAttribute("Icon"));
+		if (shape != null) {
+			return shape;
 		}
-		catch (Exception ex) {
-			// just return a rectangle
+		String vertexType = vertex.getAttribute("VertexType");
+		if (vertexType == null) {
 			return shapeFactory.getRectangle(vertex);
+		}
+		switch (vertexType) {
+			case "Entry":
+				return shapeFactory.getRegularPolygon(vertex, 3, Math.PI);
+			case "Exit":
+				return shapeFactory.getRegularPolygon(vertex, 3);
+			case "Switch":
+				return shapeFactory.getRectangle(vertex, Math.PI / 4);
+			case "Body":
+			case "External":
+				return shapeFactory.getRectangle(vertex);
+			default:
+				return shapeFactory.getEllipse(vertex);
 		}
 	}
 

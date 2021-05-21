@@ -22,7 +22,6 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
@@ -194,21 +193,6 @@ public interface DebuggerTraceManagerService {
 	void addAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener);
 
 	void removeAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener);
-
-	/**
-	 * Swap out the trace view of a {@link ProgramLocation} if it is not the debugger's view
-	 * 
-	 * <p>
-	 * If the program location is not associated with a trace, the same location is returned.
-	 * Otherwise, this ensures that the given view is the one found in the debugger plugin for the
-	 * same trace. If matchSnap is true, the view is only replaced when the replacement shares the
-	 * same snap.
-	 * 
-	 * @param location a location possibly in a trace view
-	 * @param matchSnap true to only replace is snap matches, false to always replace
-	 * @return the adjusted location
-	 */
-	ProgramLocation fixLocation(ProgramLocation location, boolean matchSnap);
 
 	/**
 	 * Fill in an incomplete coordinate specification, using the manager's "best judgement"

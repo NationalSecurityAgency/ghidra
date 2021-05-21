@@ -98,7 +98,7 @@ public class SelectByScopedFlowPlugin extends ProgramPlugin {
 		action.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SELECTION, "Scoped Flow", "Forward Scoped Flow" },
 			null, "Select"));
-
+		action.addToWindowWhen(NavigatableActionContext.class);
 		action.setDescription("Allows user to select scoped flow from current location.");
 		action.setHelpLocation(new HelpLocation("FlowSelection", "Scoped_Flow"));
 		tool.addAction(action);
@@ -131,7 +131,7 @@ public class SelectByScopedFlowPlugin extends ProgramPlugin {
 		action.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SELECTION, "Scoped Flow", "Reverse Scoped Flow" },
 			null, "Select"));
-
+		action.addToWindowWhen(NavigatableActionContext.class);
 		action.setDescription("Allows user to select scoped flow to the current location.");
 		action.setHelpLocation(new HelpLocation("FlowSelection", "Scoped_Flow"));
 		tool.addAction(action);

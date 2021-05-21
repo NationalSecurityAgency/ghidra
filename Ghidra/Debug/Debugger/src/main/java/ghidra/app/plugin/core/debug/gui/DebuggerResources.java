@@ -99,6 +99,8 @@ public interface DebuggerResources {
 		ResourceManager.loadImage("images/breakpoints-disable-all.png");
 	ImageIcon ICON_CLEAR_ALL_BREAKPOINTS =
 		ResourceManager.loadImage("images/breakpoints-clear-all.png");
+	ImageIcon ICON_MAKE_BREAKPOINTS_EFFECTIVE =
+		ResourceManager.loadImage("images/breakpoints-make-effective.png");
 
 	// TODO: Some overlay to indicate dynamic, or new icon altogether
 	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.gif");
@@ -986,9 +988,25 @@ public interface DebuggerResources {
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
 					.menuGroup(GROUP)
 					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface OpenProgramAction {
+		String NAME = "Open Program";
+		Icon ICON = ICON_PROGRAM;
+		String DESCRIPTION = "Open the program";
+		String HELP_ANCHOR = "open_program";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1138,6 +1156,18 @@ public interface DebuggerResources {
 			super(NAME, owner.getName());
 			setDescription("Clear all breakpoints in the table");
 			// TODO: Should combine help with other clear actions?
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
+	}
+
+	abstract class AbstractMakeBreakpointsEffectiveAction extends DockingAction {
+		public static final String NAME = "Make Breakpoints Effective";
+		public static final Icon ICON = ICON_MAKE_BREAKPOINTS_EFFECTIVE;
+		public static final String HELP_ANCHOR = "make_breakpoints_effective";
+
+		public AbstractMakeBreakpointsEffectiveAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Place enabled but ineffective breakpoints where possible");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}

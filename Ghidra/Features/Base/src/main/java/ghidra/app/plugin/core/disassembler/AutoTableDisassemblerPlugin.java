@@ -23,6 +23,7 @@ import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
@@ -151,7 +152,7 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 		findTableAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SEARCH, "For Address Tables" }, null, "search for"));
 		findTableAction.setDescription(getPluginDescription().getDescription());
-
+		findTableAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(findTableAction);
 
 	} // end of createActions()

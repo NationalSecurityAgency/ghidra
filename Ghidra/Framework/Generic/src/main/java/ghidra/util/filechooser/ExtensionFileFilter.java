@@ -15,25 +15,23 @@
  */
 package ghidra.util.filechooser;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Enumeration;
-import java.util.Hashtable;
 
 /**
  * A convenience implementation of FileFilter that filters out
  * all files except for those type extensions that it knows about.
- *
- * Extensions are of the type ".foo", which is typically found on
- * Windows and Unix boxes, but not on Mac. Case is ignored.
- *
+ * <p>
+ * Extensions are of the type "foo" (no leading dot). Case is ignored.
+ * <p>
  * Example - create a new filter that filters out all files
  * but gif and jpg image files:
  * <pre>
  *     GhidraFileChooser chooser = new GhidraFileChooser();
- *     ExtensionFileFilter filter = new ExtensionFileFilter(
- *                   new String{"gif", "jpg"}, "JPEG and GIF Images")
- *     chooser.addFileFilter(filter);
+ *     chooser.addFileFilter(ExtensionFilFilter.forExtensions("JPEG and GIF Images", "gif", "jpg"));
  *</pre>
  */
 public class ExtensionFileFilter implements GhidraFileFilter {
@@ -50,19 +48,16 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 		return eff;
 	}
 
-	private Hashtable<String, ExtensionFileFilter> filters = null;
-	private String description = null;
-	private String fullDescription = null;
-	private boolean useExtensionsInDescription = true;
+	private List<String> extensions;
+	private String description;
+	private String fullDescription;
 
 	/**
 	 * Creates a file filter that accepts the given file type.
-	 * Example: new ExtensionFileFilter("jpg", "JPEG Image Images");
+	 * Example: new ExtensionFileFilter("jpg", "JPEG Images");
 	 *
-	 * Note that the "." before the extension is not needed. If
-	 * provided, it will be ignored.
-	 *
-	 * @see #addExtension
+	 * @param extension file extension to match, without leading dot
+	 * @param description descriptive string of the filter
 	 */
 	public ExtensionFileFilter(String extension, String description) {
 		this(new String[] { extension }, description);
@@ -72,16 +67,15 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 	 * Creates a file filter from the given string array and description.
 	 * Example: new ExtensionFileFilter(String {"gif", "jpg"}, "Gif and JPG Images");
 	 *
-	 * Note that the "." before the extension is not needed and will be ignored.
-	 *
-	 * @see #addExtension
+	 * @param filters array of file name extensions, each without a leading dot
+	 * @param description descriptive string of the filter
 	 */
 	public ExtensionFileFilter(String[] filters, String description) {
-		this.filters = new Hashtable<String, ExtensionFileFilter>(filters.length);
-		for (String filter : filters) {
-			addExtension(filter);//add filters one by one
-		}
-		setDescription(description);
+		this.extensions = Arrays.asList(filters)
+				.stream()
+				.map(String::toLowerCase)
+				.collect(Collectors.toList());
+		this.description = description;
 	}
 
 	/**
@@ -90,7 +84,6 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 	 *
 	 * Files that begin with "." are ignored.
 	 *
-	 * @see #getExtension
 	 * @see FileFilter#accept
 	 */
 	@Override
@@ -101,133 +94,37 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 		if (model.isDirectory(f)) {
 			return true;
 		}
-		if (filters.size() == 0) {
+		if (extensions.isEmpty()) {
 			return true;
 		}
-		String extension = getExtension(f);
-		return extension != null && filters.get(extension) != null;
-	}
-
-	/**
-	 * Return the extension portion of the file's name .
-	 *
-	 * @see #getExtension
-	 * @see FileFilter#accept
-	 */
-	public String getExtension(File f) {
-		if (f != null) {
-			String filename = f.getName();
-			int i = filename.lastIndexOf('.');
-			if (i > 0 && i < filename.length() - 1) {
-				return filename.substring(i + 1).toLowerCase();
+		String filename = f.getName().toLowerCase();
+		if (filename.startsWith(".")) {
+			return false;
+		}
+		int fnLen = filename.length();
+		for (String ext : extensions) {
+			int extLen = ext.length();
+			int extStart = fnLen - extLen;
+			if (extStart > 0 && filename.substring(extStart).equals(ext) &&
+				filename.charAt(extStart - 1) == '.') {
+				return true;
 			}
 		}
-		return null;
+		return false;
 	}
 
-	/**
-	 * Adds a filetype "dot" extension to filter against.
-	 *
-	 * For example: the following code will create a filter that filters
-	 * out all files except those that end in ".jpg" and ".tif":
-	 *
-	 *   ExtensionFileFilter filter = new ExtensionFileFilter();
-	 *   filter.addExtension("jpg");
-	 *   filter.addExtension("tif");
-	 *
-	 * Note that the "." before the extension is not needed and will be ignored.
-	 */
-	public void addExtension(String extension) {
-		if (filters == null) {
-			filters = new Hashtable<String, ExtensionFileFilter>(5);
-		}
-		filters.put(extension.toLowerCase(), this);
-		fullDescription = null;
-	}
-
-	/**
-	 * Returns the human readable description of this filter. For
-	 * example: "JPEG and GIF Image Files (*.jpg, *.gif)"
-	 */
 	@Override
 	public String getDescription() {
 		if (fullDescription == null) {
-			fullDescription = "";
-			if (description == null || isExtensionListInDescription()) {
-				if (description != null) {
-					fullDescription = description;
-				}
-				fullDescription += " (";
-				// build the description from the extension list
+			fullDescription = Objects.requireNonNullElse(description, "");
 
-				if (filters.size() == 0) {
-					fullDescription += "*.*";
-				}
-				else {
-					boolean firstExt = true;
-					Enumeration<String> extensions = filters.keys();
-					if (extensions != null) {
-						while (extensions.hasMoreElements()) {
-							if (!firstExt) {
-								fullDescription += ",";
-							}
-							else {
-								firstExt = false;
-							}
-							fullDescription += "*." + extensions.nextElement();
-						}
-					}
-				}
-				fullDescription += ")";
-			}
-			else {
-				fullDescription = description;
-			}
+			// add prettified extensions to the description string
+			fullDescription += " (";
+			fullDescription += extensions.isEmpty()
+					? "*.*"
+					: extensions.stream().map(s -> "*." + s).collect(Collectors.joining(","));
+			fullDescription += ")";
 		}
 		return fullDescription;
-	}
-
-	/**
-	 * Sets the human readable description of this filter. For
-	 * example: filter.setDescription("Gif and JPG Images");
-	 *
-	 * @see #setDescription
-	 * @see #setExtensionListInDescription
-	 * @see #isExtensionListInDescription
-	 */
-	public void setDescription(String description) {
-		this.description = description;
-		fullDescription = null;
-	}
-
-	/**
-	 * Determines whether the extension list (.jpg, .gif, etc) should
-	 * show up in the human readable description.
-	 *
-	 * Only relevant if a description was provided in the constructor
-	 * or using setDescription();
-	 *
-	 * @see #getDescription
-	 * @see #setDescription
-	 * @see #isExtensionListInDescription
-	 */
-	public void setExtensionListInDescription(boolean b) {
-		useExtensionsInDescription = b;
-		fullDescription = null;
-	}
-
-	/**
-	 * Returns whether the extension list (.jpg, .gif, etc) should
-	 * show up in the human readable description.
-	 *
-	 * Only relevant if a description was provided in the constructor
-	 * or using setDescription();
-	 *
-	 * @see #getDescription
-	 * @see #setDescription
-	 * @see #setExtensionListInDescription
-	 */
-	public final boolean isExtensionListInDescription() {
-		return useExtensionsInDescription;
 	}
 }
