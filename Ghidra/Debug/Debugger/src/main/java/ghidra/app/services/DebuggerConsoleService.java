@@ -28,6 +28,17 @@ import ghidra.util.HTMLUtilities;
 public interface DebuggerConsoleService extends DebuggerConsoleLogger {
 
 	/**
+	 * Log a message to the console
+	 * 
+	 * <p>
+	 * <b>WARNING:</b> See {@link #log(Icon, String, ActionContext)} regarding HTML.
+	 * 
+	 * @param icon an icon for the message
+	 * @param message the HTML-formatted message
+	 */
+	void log(Icon icon, String message);
+
+	/**
 	 * Log an actionable message to the console
 	 * 
 	 * <p>
@@ -51,7 +62,15 @@ public interface DebuggerConsoleService extends DebuggerConsoleLogger {
 	 * 
 	 * @param context the context of the entry to remove
 	 */
-	void remove(ActionContext context);
+	void removeFromLog(ActionContext context);
+
+	/**
+	 * Check if the console contains an actionable message for the given context
+	 * 
+	 * @param context the context to check for
+	 * @return true if present, false if absent
+	 */
+	boolean logContains(ActionContext context);
 
 	/**
 	 * Add an action which might be applied to an actionable log message

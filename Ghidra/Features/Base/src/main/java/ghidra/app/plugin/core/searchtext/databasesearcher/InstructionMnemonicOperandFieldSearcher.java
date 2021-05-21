@@ -75,7 +75,7 @@ public class InstructionMnemonicOperandFieldSearcher extends ProgramDatabaseFiel
 
 	@Override
 	protected Address advance(List<ProgramLocation> currentMatches) {
-		Instruction instruction = iterator.next();
+		Instruction instruction = iterator.hasNext() ? iterator.next() : null;
 		Address nextAddress = null;
 		if (instruction != null) {
 			nextAddress = instruction.getMinAddress();

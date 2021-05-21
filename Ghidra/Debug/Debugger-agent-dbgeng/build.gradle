@@ -54,7 +54,7 @@ jar {
 
 task configureNodepJar {
 	doLast {
-		configurations.runtimeOnly.files.forEach {
+		configurations.default.files.forEach {
 			if (filterJar(it)) {
 				nodepJar.from(zipTree(it))
 			}

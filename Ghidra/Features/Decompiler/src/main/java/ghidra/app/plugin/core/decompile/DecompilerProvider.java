@@ -480,6 +480,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		return null;
 	}
 
+	@Override
+	public String getTextSelection() {
+		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
+		return decompilerPanel.getTextSelection();
+	}
+
 	boolean isBusy() {
 		return redecompileUpdater.isBusy() || controller.isDecompiling();
 	}

@@ -867,12 +867,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			Msg.error(this, "Import service is not present");
 		}
 		importModuleFromFileSystem(context.getModule());
-		consoleService.remove(context); // TODO: Should remove when mapping is created
+		consoleService.removeFromLog(context); // TODO: Should remove when mapping is created
 	}
 
 	private void activatedMapMissingModule(DebuggerMissingModuleActionContext context) {
 		mapModuleTo(context.getModule());
-		consoleService.remove(context); // TODO: Should remove when mapping is created
+		consoleService.removeFromLog(context); // TODO: Should remove when mapping is created
 	}
 
 	private void toggledFilter(ActionContext ignored) {
@@ -972,12 +972,19 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void promptModuleProposal(Collection<ModuleMapEntry> proposal) {
+		if (proposal.isEmpty()) {
+			Msg.showInfo(this, getComponent(), "Map Modules",
+				"Could not formulate a proposal for any selected module." +
+					" You may need to import and/or open the destination images first.");
+			return;
+		}
 		Collection<ModuleMapEntry> adjusted =
 			moduleProposalDialog.adjustCollection(getTool(), proposal);
-		if (adjusted != null && staticMappingService != null) {
-			tool.executeBackgroundCommand(
-				new MapModulesBackgroundCommand(staticMappingService, adjusted), currentTrace);
+		if (adjusted == null || staticMappingService == null) {
+			return;
 		}
+		tool.executeBackgroundCommand(
+			new MapModulesBackgroundCommand(staticMappingService, adjusted), currentTrace);
 	}
 
 	protected void mapModules(Set<TraceModule> modules) {
@@ -1004,12 +1011,19 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void promptSectionProposal(Collection<SectionMapEntry> proposal) {
+		if (proposal.isEmpty()) {
+			Msg.showInfo(this, getComponent(), "Map Sections",
+				"Could not formulate a proposal for any selected section." +
+					" You may need to import and/or open the destination images first.");
+			return;
+		}
 		Collection<SectionMapEntry> adjusted =
 			sectionProposalDialog.adjustCollection(getTool(), proposal);
-		if (adjusted != null && staticMappingService != null) {
-			tool.executeBackgroundCommand(
-				new MapSectionsBackgroundCommand(staticMappingService, adjusted), currentTrace);
+		if (adjusted == null || staticMappingService == null) {
+			return;
 		}
+		tool.executeBackgroundCommand(
+			new MapSectionsBackgroundCommand(staticMappingService, adjusted), currentTrace);
 	}
 
 	protected void mapSections(Set<TraceSection> sections) {

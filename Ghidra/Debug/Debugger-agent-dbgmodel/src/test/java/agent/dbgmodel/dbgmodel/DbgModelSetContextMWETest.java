@@ -18,6 +18,7 @@ package agent.dbgmodel.dbgmodel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.*;
 import java.util.*;
 
 import org.junit.Before;
@@ -44,7 +45,7 @@ public class DbgModelSetContextMWETest extends AbstractGhidraHeadlessIntegration
 	}
 
 	@Test
-	public void testMWE() {
+	public void testMWE() throws IOException {
 		HostDataModelAccess access = DbgModel.debugCreate();
 		DebugClient client = access.getClient();
 		DebugControl control = client.getControl();
@@ -272,12 +273,6 @@ public class DbgModelSetContextMWETest extends AbstractGhidraHeadlessIntegration
 				DebugStatus status = super.exitThread(exitCode);
 				return status;
 			}
-
-			@Override
-			public DebugStatus changeSymbolState(BitmaskSet<ChangeSymbolState> flags,
-					long argument) {
-				return defaultStatus;
-			}
 		};
 
 		try (ProcMaker maker = new ProcMaker(client, "C:\\Software\\Winmine__XP.exe")) {
@@ -316,6 +311,17 @@ public class DbgModelSetContextMWETest extends AbstractGhidraHeadlessIntegration
 							.getKeyValue("InstructionOffset")));
 			}
 			cb.dumpFrame0ViaDX();
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+			while (true) {
+				System.err.print(control.getPromptText());
+				//control.prompt(BitmaskSet.of(), "Hello?>");
+				String cmd = in.readLine();
+				control.execute(cmd);
+				if (control.getExecutionStatus().shouldWait) {
+					control.waitForEvent();
+				}
+			}
 
 			/**
 			 * TODO: Didn't finish because the SetContext failed issue turned out to be mixed and/or

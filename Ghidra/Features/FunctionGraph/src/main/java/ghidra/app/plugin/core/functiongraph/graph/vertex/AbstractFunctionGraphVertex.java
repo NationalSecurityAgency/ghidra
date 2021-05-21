@@ -391,6 +391,11 @@ public abstract class AbstractFunctionGraphVertex implements FGVertex {
 	}
 
 	@Override
+	public String getTextSelection() {
+		return doGetComponent().getTextSelection();
+	}
+
+	@Override
 	public void setProgramHighlight(ProgramSelection highlight) {
 		doGetComponent().setProgramHighlight(highlight);
 	}

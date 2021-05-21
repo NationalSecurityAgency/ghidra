@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -34,18 +35,17 @@ import ghidra.util.Swing;
 public class DebuggerModuleMapProposalDialog
 		extends AbstractDebuggerMapProposalDialog<ModuleMapEntry> {
 
-	static final String BLANK = "";
 	static final int BUTTON_SIZE = 32;
 
 	protected enum ModuleMapTableColumns
 		implements EnumeratedTableColumn<ModuleMapTableColumns, ModuleMapEntry> {
-		REMOVE("Remove", String.class, e -> BLANK, (e, v) -> nop()),
+		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
 		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
 		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getModule().getBase()),
+		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> e.getProgram().getName()),
 		STATIC_BASE("Static Base", Address.class, e -> e.getProgram().getImageBase()),
-		SIZE("Size", Long.class, e -> e.getModuleRange().getLength()),
-		CHOOSE("Choose", String.class, e -> BLANK, (e, v) -> nop());
+		SIZE("Size", Long.class, e -> e.getModuleRange().getLength());
 
 		private final String header;
 		private final Class<?> cls;
@@ -94,6 +94,19 @@ public class DebuggerModuleMapProposalDialog
 		}
 	}
 
+	protected static class ModuleMapPropsalTableModel extends
+			DefaultEnumeratedColumnTableModel<ModuleMapTableColumns, ModuleMapEntry> {
+
+		public ModuleMapPropsalTableModel() {
+			super("Module Map", ModuleMapTableColumns.class);
+		}
+
+		@Override
+		public List<ModuleMapTableColumns> defaultSortOrder() {
+			return List.of(ModuleMapTableColumns.MODULE_NAME);
+		}
+	}
+
 	private final DebuggerModulesProvider provider;
 
 	protected DebuggerModuleMapProposalDialog(DebuggerModulesProvider provider) {
@@ -102,8 +115,8 @@ public class DebuggerModuleMapProposalDialog
 	}
 
 	@Override
-	protected EnumeratedColumnTableModel<ModuleMapEntry> createTableModel() {
-		return new DefaultEnumeratedColumnTableModel<>("Module Map", ModuleMapTableColumns.class);
+	protected ModuleMapPropsalTableModel createTableModel() {
+		return new ModuleMapPropsalTableModel();
 	}
 
 	@Override
@@ -117,9 +130,19 @@ public class DebuggerModuleMapProposalDialog
 		CellEditorUtils.installButton(table, filterPanel, removeCol,
 			DebuggerResources.ICON_DELETE, BUTTON_SIZE, this::removeEntry);
 
+		TableColumn dynBaseCol =
+			columnModel.getColumn(ModuleMapTableColumns.DYNAMIC_BASE.ordinal());
+		dynBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+
 		TableColumn chooseCol = columnModel.getColumn(ModuleMapTableColumns.CHOOSE.ordinal());
 		CellEditorUtils.installButton(table, filterPanel, chooseCol,
 			DebuggerResources.ICON_PROGRAM, BUTTON_SIZE, this::chooseAndSetProgram);
+
+		TableColumn stBaseCol = columnModel.getColumn(ModuleMapTableColumns.STATIC_BASE.ordinal());
+		stBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+
+		TableColumn sizeCol = columnModel.getColumn(ModuleMapTableColumns.SIZE.ordinal());
+		sizeCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
 	}
 
 	private void chooseAndSetProgram(ModuleMapEntry entry) {

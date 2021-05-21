@@ -1124,4 +1124,9 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 	}
 	*/
+
+	@Test
+	public void testPrompt() throws Exception {
+
+	}
 }

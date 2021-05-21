@@ -50,6 +50,7 @@ public class GotoPreviousFunctionAction extends NavigatableContextAction {
 		KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_DOWN_MASK);
 		setKeyBindingData(new KeyBindingData(keyStroke));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, "Next_Previous_Function"));
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	private Function getPreviousFunction(Program program, Address address) {

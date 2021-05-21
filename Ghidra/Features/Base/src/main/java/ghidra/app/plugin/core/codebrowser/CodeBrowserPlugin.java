@@ -43,7 +43,6 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.actions.*;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.*;
@@ -169,17 +168,38 @@ public class CodeBrowserPlugin extends Plugin
 	}
 
 	private void createActions() {
-		DockingAction selectAllAction = new SelectAllAction(getName());
-		selectAllAction.getMenuBarData().setMenuSubGroup("a");
-		tool.addAction(selectAllAction);
+		new ActionBuilder("Select All", getName())
+				.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
+				.menuGroup("Select Group", "a")
+				.keyBinding("ctrl A")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SELECTION, getName()))
+				.withContext(CodeViewerActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
+				.buildAndInstall(tool);
 
-		DockingAction selectNoneAction = new ClearSelectionAction(getName());
-		selectNoneAction.getMenuBarData().setMenuSubGroup("a");
-		tool.addAction(selectNoneAction);
+		new ActionBuilder("Clear Selection", getName())
+				.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
+				.menuGroup("Select Group", "b")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SELECTION, getName()))
+				.withContext(CodeViewerActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
+						.setSelection(new ProgramSelection()))
+				.buildAndInstall(tool);
 
-		DockingAction selectComplementAction = new SelectComplementAction(getName());
-		selectComplementAction.getMenuBarData().setMenuSubGroup("b");
-		tool.addAction(selectComplementAction);
+		new ActionBuilder("Select Complement", getName())
+				.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
+				.menuGroup("Select Group", "c")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SELECTION, getName()))
+				.withContext(CodeViewerActionContext.class)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
+				.buildAndInstall(tool);
+
 	}
 
 	protected void viewChanged(AddressSetView addrSet) {

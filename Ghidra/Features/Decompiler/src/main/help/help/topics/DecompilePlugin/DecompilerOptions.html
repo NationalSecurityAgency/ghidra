@@ -104,6 +104,17 @@
 	  plug-ins that make use of the decompiler service.
 	</p>
       </dd>
+<dt>
+<a name="GeneralMaxInstruction"></a><span class="term"><span class="bold"><strong>Max Instructions per Function</strong></span></span>
+</dt>
+<dd>
+    <p>
+      This option sets a maximum number of machine instructions that the decompiler will attempt
+      to analyze for a single function, as a safeguard against analyzing a long sequence
+      of zeroes or other constant data. The decompiler will quickly throw an exception if it
+      traces control-flow into more than the indicated number of instructions.
+    </p>
+      </dd>
 </dl></div>
     </div>
 <p>
@@ -776,7 +787,7 @@
 <p>
     </p>
     <p>
-      If the user has either imported additional extensions or selected an extensions for removal but
+      If the user has either imported additional extensions or selected an extension for removal but
       has not yet clicked the <span class="emphasis"><em>Apply</em></span> button in the Options dialog, the Status column
       may show one of the following values, indicating a pending change.
       </p>

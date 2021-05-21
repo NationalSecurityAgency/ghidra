@@ -889,6 +889,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return null;
 	}
 
+	public String getTextSelection() {
+		FieldSelection selection = fieldPanel.getSelection();
+		if (selection.isEmpty()) {
+			return null;
+		}
+
+		return FieldSelectionHelper.getFieldSelectionText(selection, fieldPanel);
+	}
+
 	public ClangToken getTokenAtCursor() {
 		FieldLocation cursorPosition = fieldPanel.getCursorLocation();
 		Field field = fieldPanel.getCurrentField();

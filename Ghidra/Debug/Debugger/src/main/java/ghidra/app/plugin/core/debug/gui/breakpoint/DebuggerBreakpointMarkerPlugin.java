@@ -532,7 +532,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			if (bs == null || bs.isEmpty()) {
 				Set<TraceBreakpointKind> supported = getSupportedKindsFromContext(context);
 				if (supported.isEmpty()) {
-					Msg.showError(this, null, NAME,
+					breakpointError(NAME,
 						"It seems this target does not support breakpoints.");
 					return;
 				}
@@ -545,13 +545,13 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			Trace trace = getTraceFromContext(context); // OK if null - means all traces
 			if (en.enabled) {
 				breakpointService.disableAll(bs, trace).exceptionally(ex -> {
-					Msg.showError(this, null, NAME, "Could not disable breakpoints", ex);
+					breakpointError(NAME, "Could not disable breakpoints", ex);
 					return null;
 				});
 			}
 			else {
 				breakpointService.enableAll(bs, trace).exceptionally(ex -> {
-					Msg.showError(this, null, NAME, "Could not enable breakpoints", ex);
+					breakpointError(NAME, "Could not enable breakpoints", ex);
 					return null;
 				});
 			}
@@ -628,7 +628,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			ProgramLocation location = getLocationFromContext(context);
 			Set<LogicalBreakpoint> col = breakpointService.getBreakpointsAt(location);
 			breakpointService.enableAll(col, getTraceFromContext(context)).exceptionally(ex -> {
-				Msg.showError(this, null, NAME, "Could not enable breakpoint", ex);
+				breakpointError(NAME, "Could not enable breakpoint", ex);
 				return null;
 			});
 		}
@@ -665,7 +665,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			ProgramLocation location = getLocationFromContext(context);
 			Set<LogicalBreakpoint> col = breakpointService.getBreakpointsAt(location);
 			breakpointService.disableAll(col, getTraceFromContext(context)).exceptionally(ex -> {
-				Msg.showError(this, null, NAME, "Could not disable breakpoint", ex);
+				breakpointError(NAME, "Could not disable breakpoint", ex);
 				return null;
 			});
 		}
@@ -704,7 +704,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			ProgramLocation location = getLocationFromContext(context);
 			Set<LogicalBreakpoint> col = breakpointService.getBreakpointsAt(location);
 			breakpointService.deleteAll(col, getTraceFromContext(context)).exceptionally(ex -> {
-				Msg.showError(this, null, NAME, "Could not delete breakpoint", ex);
+				breakpointError(NAME, "Could not delete breakpoint", ex);
 				return null;
 			});
 		}
@@ -733,6 +733,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -1083,5 +1085,22 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				removeMarkers(view);
 			}
 		}
+	}
+
+	protected void breakpointError(String title, String message) {
+		if (consoleService == null) {
+			Msg.showError(this, null, title, message);
+			return;
+		}
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message);
+	}
+
+	protected void breakpointError(String title, String message, Throwable ex) {
+		if (consoleService == null) {
+			Msg.showError(this, null, title, message, ex);
+			return;
+		}
+		Msg.error(this, message, ex);
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message + " (" + ex + ")");
 	}
 }

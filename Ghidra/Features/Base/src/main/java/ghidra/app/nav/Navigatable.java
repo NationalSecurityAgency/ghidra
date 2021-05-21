@@ -124,6 +124,12 @@ public interface Navigatable {
 	public ProgramSelection getHighlight();
 
 	/**
+	 * Returns the current text selection or null
+	 * @return the text selection
+	 */
+	public String getTextSelection();
+
+	/**
 	 * Adds a listener to be notified if this Navigatable is terminated
 	 * @param listener the listener to be notified when this Navigatable is closed
 	 */

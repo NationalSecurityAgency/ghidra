@@ -153,6 +153,8 @@ public class MnemonicSearchPlugin extends Plugin {
 			MENU_PULLRIGHT, "Include Operands (except constants)" }, null, group,
 			MenuData.NO_MNEMONIC, "3"));
 		setSearchMnemonicOpsNoConstAction.setHelpLocation(helpLocation);
+		setSearchMnemonicOpsNoConstAction
+				.addToWindowWhen(NavigatableActionContext.class);
 
 		//
 		// ACTION 2: Search for instructions, including operands. 
@@ -174,6 +176,8 @@ public class MnemonicSearchPlugin extends Plugin {
 		setSearchMnemonicOpsConstAction.setMenuBarData(new MenuData(new String[] { "&Search",
 			MENU_PULLRIGHT, "Include Operands" }, null, group, MenuData.NO_MNEMONIC, "2"));
 		setSearchMnemonicOpsConstAction.setHelpLocation(helpLocation);
+		setSearchMnemonicOpsConstAction
+				.addToWindowWhen(NavigatableActionContext.class);
 
 		//
 		// ACTION 3: Search for instructions, excluding constants. 
@@ -195,6 +199,8 @@ public class MnemonicSearchPlugin extends Plugin {
 		setSearchMnemonicNoOpsNoConstAction.setMenuBarData(new MenuData(new String[] { "&Search",
 			MENU_PULLRIGHT, "Exclude Operands" }, null, group, MenuData.NO_MNEMONIC, "1"));
 		setSearchMnemonicNoOpsNoConstAction.setHelpLocation(helpLocation);
+		setSearchMnemonicNoOpsNoConstAction
+				.addToWindowWhen(NavigatableActionContext.class);
 
 		// Add the actions to the tool...
 		tool.addAction(setSearchMnemonicOpsNoConstAction);

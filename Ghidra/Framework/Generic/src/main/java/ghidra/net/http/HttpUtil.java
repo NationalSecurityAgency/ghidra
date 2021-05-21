@@ -15,39 +15,15 @@
  */
 package ghidra.net.http;
 
-import ghidra.net.ApplicationKeyManagerFactory;
-import ghidra.util.Msg;
-
 import java.io.*;
 import java.net.*;
 import java.util.Properties;
 
+import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.util.Msg;
+
 public class HttpUtil {
 
-	public static void main(String[] args) {
-
-		Properties properties = new Properties();
-		properties.setProperty("User-Agent", "Microsoft-Symbol-Server/6.3.9600.17298");
-
-		String urlStr =
-			"http://msdl.microsoft.com/download/symbols/write.pdb/4FD8CA6696F445A7B969AB9BBD76E4591/write.pd_";
-
-		String homeDir = System.getProperty("user.home");
-		File f = new File(homeDir + "/Downloads", "write.pdb.deleteme");
-
-		try {
-			getFile(urlStr, properties, true, f);
-			System.out.println("getFile completed: " + f);
-		}
-		catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
 	/**
 	 * Execute an HTTP/HTTPS GET request and return the resulting HttpURLConnection.
@@ -155,4 +131,5 @@ public class HttpUtil {
 
 		return connection.getContentType();
 	}
+
 }

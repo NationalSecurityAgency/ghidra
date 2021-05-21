@@ -24,8 +24,7 @@ import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.conditiontestpanel.ConditionTester;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.ProgramActionContext;
-import ghidra.app.context.ProgramContextAction;
+import ghidra.app.context.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.analysis.validator.PostAnalysisValidator;
 import ghidra.framework.plugintool.*;
@@ -95,7 +94,7 @@ public class ValidateProgramPlugin extends Plugin {
 				return true;
 			}
 		};
-
+		validateAction.addToWindowWhen(ListingActionContext.class);
 		validateAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_ANALYSIS,
 			ACTION_NAME }, null, "ZZZ"));
 

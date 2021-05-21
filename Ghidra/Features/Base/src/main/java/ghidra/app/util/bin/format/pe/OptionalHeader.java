@@ -24,6 +24,62 @@ import ghidra.util.DataConverter;
 import ghidra.util.task.TaskMonitor;
 
 public interface OptionalHeader extends StructConverter {
+
+	/**
+	 * ASLR with 64 bit address space.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020;
+
+	/**
+	 * The DLL can be relocated at load time.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE = 0x0040;
+
+	/**
+	 * Code integrity checks are forced.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY = 0x0080;
+
+	/**
+	 * The image is compatible with data execution prevention (DEP)
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_NX_COMPAT = 0x0100;
+
+	/**
+	 * The image is isolation aware, but should not be isolated.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_NO_ISOLATION = 0x0200;
+
+	/**
+	 * The image does not use structured exception handling (SEH).
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_NO_SEH = 0x0400;
+
+	/**
+	 * Do not bind the image.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_NO_BIND = 0x0800;
+
+	/**
+	 * Image should execute in an AppContainer.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_APPCONTAINER = 0x1000;
+
+	/**
+	 * A WDM driver.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_WDM_DRIVER = 0x2000;
+
+	/**
+	 * Image supports Control Flow Guard.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_GUARD_CF = 0x4000;
+
+	/**
+	 * The image is terminal server aware.
+	 */
+	public final static int IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000;
+
 	/**
 	 * The count of data directories in the optional header.
 	 */
@@ -262,7 +318,7 @@ public interface OptionalHeader extends StructConverter {
 	public void setSizeOfInitializedData(long size);
 
 	/**
-	 * Returns the size of all sections with the uninitialized 
+	 * Returns the size of all sections with the uninitialized
 	 * data attributes.
 	 * @return the size of all sections with the uninitialized data attributes
 	 */
@@ -307,10 +363,10 @@ public interface OptionalHeader extends StructConverter {
 
 	/**
 	 * Writes this optional header to the specified random access file.
-	 * 
+	 *
 	 * @param raf the random access file
 	 * @param dc  the data converter
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException;

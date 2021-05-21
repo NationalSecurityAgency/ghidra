@@ -318,7 +318,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	private List<BitGroup> getBitGroups() {
 		if (bitGroups == null) {
-			bitGroups = EnumValuePartitioner.partition(getValues());
+			bitGroups = EnumValuePartitioner.partition(getValues(), getLength());
 		}
 		return bitGroups;
 	}

@@ -284,10 +284,9 @@ public interface DockingActionIf extends HelpDescriptor {
 	/**
 	 * Determines whether this action should be added to a window (either the main window or a
 	 * secondary detached window).  By default, this method will return true for the main window
-	 * and false otherwise.  Actions that want to also appear in other windows should override this
-	 * method to return true when appropriate for the context types
-	 * @param isMainWindow true if the window in question is the main window. Otherwise, the window
-	 * is a secondary window.
+	 * and false otherwise. 
+	 * 
+	 * @param isMainWindow true if the window in question is the main window
 	 * @param contextTypes a list of contextTypes (Classes) based on the providers that are currently
 	 * in the window.
 	 * @return true if this action should be added to the window, false otherwise.

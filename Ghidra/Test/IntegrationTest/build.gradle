@@ -55,10 +55,11 @@ dependencies {
 		}	
 	}
 
-	// some tests use classes in Base/src/test and test.slow
+	// some tests use classes in Base, FunctionGraph and PDB
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
 	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
+	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.

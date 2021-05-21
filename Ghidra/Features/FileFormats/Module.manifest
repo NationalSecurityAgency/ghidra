@@ -9,3 +9,4 @@ MODULE FILE LICENSE: lib/sevenzipjbinding-16.02-2.01.jar LGPL 2.1
 MODULE FILE LICENSE: lib/sevenzipjbinding-all-platforms-16.02-2.01.jar LGPL 2.1
 MODULE FILE LICENSE: lib/AXMLPrinter2.jar Apache License 2.0
 MODULE FILE LICENSE: lib/util-1.4.0.jar BSD
+MODULE FILE LICENSE: lib/bcprov-jdk15on-1.68.jar Bouncy Castle License

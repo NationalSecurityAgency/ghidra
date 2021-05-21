@@ -172,7 +172,6 @@ class LaneDivide : public TransformManager {
   /// \brief Description of a large Varnode that needs to be traced (in the worklist)
   class WorkNode {
     friend class LaneDivide;
-    Varnode *vn;	///< The underlying Varnode with lanes
     TransformVar *lanes;	///< Lane placeholders for underyling Varnode
     int4 numLanes;	///< Number of lanes in the particular Varnode
     int4 skipLanes;	///< Number of lanes to skip in the global description

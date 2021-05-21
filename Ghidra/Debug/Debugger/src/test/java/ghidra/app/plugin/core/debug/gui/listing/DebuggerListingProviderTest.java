@@ -19,6 +19,7 @@ import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -37,10 +38,13 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
+import ghidra.framework.model.*;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -57,6 +61,9 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	static LocationTrackingSpec getLocationTrackingSpec(String name) {
@@ -1350,5 +1357,128 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForDomainObject(tb.trace);
 
 		assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress());
+	}
+
+	@Test
+	public void testSyncToStaticListingOpensModule() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		createAndOpenTrace();
+		createAndOpenProgramFromTrace();
+		intoProject(tb.trace);
+		intoProject(program);
+
+		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+			program.getMemory()
+					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
+						monitor, false);
+		}
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
+			memory.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			TraceLocation from =
+				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
+			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
+			mappingService.addMapping(from, to, 0x8000, false);
+		}
+		waitForProgram(program);
+		waitForDomainObject(tb.trace);
+
+		programManager.closeAllPrograms(true);
+		waitForPass(() -> assertEquals(0, programManager.getAllOpenPrograms().length));
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		listingProvider.getListingPanel()
+				.setCursorPosition(
+					new ProgramLocation(tb.trace.getProgramView(), tb.addr(0x00401234)),
+					EventTrigger.GUI_ACTION);
+		waitForSwing();
+
+		waitForPass(() -> assertEquals(1, programManager.getAllOpenPrograms().length));
+		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
+
+		assertFalse(consolePlugin
+				.logContains(new DebuggerOpenProgramActionContext(program.getDomainFile())));
+	}
+
+	@Test
+	public void testSyncToStaticLogsRecoverableProgram() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "root");
+		DomainFile df = new TestDummyDomainFile(root, "dummyFile") {
+			@Override
+			public boolean canRecover() {
+				return true;
+			}
+		};
+
+		listingProvider.doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
+			ProgramManager.OPEN_CURRENT);
+		waitForSwing();
+
+		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
+		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
+		assertTrue(consolePlugin.getLogRow(ctx).getMessage().contains("recovery"));
+	}
+
+	@Test
+	public void testSyncToStaticLogsUpgradeableProgram() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "root");
+		DomainFile df = new TestDummyDomainFile(root, "dummyFile") {
+			@Override
+			public boolean canRecover() {
+				return false;
+			}
+
+			@Override
+			public DomainObject getDomainObject(Object consumer, boolean okToUpgrade,
+					boolean okToRecover, TaskMonitor monitor)
+					throws VersionException, IOException, CancelledException {
+				throw new VersionException();
+			}
+		};
+
+		listingProvider.doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
+			ProgramManager.OPEN_CURRENT);
+		waitForSwing();
+
+		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
+		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
+		assertTrue(consolePlugin.getLogRow(ctx).getMessage().contains("version"));
+	}
+
+	@Test
+	public void testActionOpenProgram() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		createProgram();
+		intoProject(program);
+
+		assertEquals(0, programManager.getAllOpenPrograms().length);
+
+		DebuggerOpenProgramActionContext ctx =
+			new DebuggerOpenProgramActionContext(program.getDomainFile());
+		consolePlugin.log(DebuggerResources.ICON_MODULES, "Test resolution", ctx);
+		waitForSwing();
+
+		LogRow row = consolePlugin.getLogRow(ctx);
+		assertEquals(1, row.getActions().size());
+		BoundAction boundAction = row.getActions().get(0);
+		assertEquals(listingProvider.actionOpenProgram, boundAction.action);
+
+		boundAction.perform();
+		waitForSwing();
+
+		waitForPass(() -> assertEquals(1, programManager.getAllOpenPrograms().length));
+		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
+		// TODO: Test this independent of this particular action?
+		assertNull(consolePlugin.getLogRow(ctx));
 	}
 }
