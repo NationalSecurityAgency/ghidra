@@ -40,18 +40,143 @@
     code and generating deep insights for NSA analysts who seek a better understanding of potential
     vulnerabilities in networks and systems.
     </P>
-
-	<BR />
-    <H1> What's New in Ghidra 10.0</H1>
     
+
+    <H1> What's new in Ghidra 10.0 beta</H1>
+
+	<H2>Ghidra 10.0 Final Release<H2>
+	
+	<P>We anticipate pushing out the final Ghidra 10.0 release sometime towards mid to end of June 2021.  We appreciate any feedback you can provide, especially in any
+	new feature areas such as the debugger, and thanks for all your contributions and feedback you've already given!<P>
+	
     <H2>Debugger</H2>
     
-    <P>Stay tuned...
+    <P>With the release of Ghidra 10.0-BETA, we are excited to officially introduce our new Debugger. It is still geared primarily for user-mode application debugging on Linux and Windows;
+    however, you may find its components usable in other scenarios. To get started, please Ghidra Functionality / Debugger / Getting Started in the Help. For most, it is as easy as importing
+    your program, opening it with the Debugger tool, and clicking the "bug" icon in the main toolbar. The Debugger's features include:</P>
+    <BLOCKQUOTE><UL>
+    
+    <li>Debugging user-mode Windows applications on x64 hosts via dbgeng.dll/WinDbg (including 32-bit x86 applications via WoW64)</li>
+    <li>Debugging user-mode Linux applicaitons on amd64/x86_64 hosts via GDB (including 32-bit i686/x86 applications)</li>
+    <li>Quick launch to locally debug the current program</li>
+    <li>Recording of observations from a live debug session into a Ghidra Trace database</li>
+       <BLOCKQUOTE><UL>
+       <li>NOTE: We do <em>not</em> currently plan to support Trace database upgrades in future releases</li>
+       </UL></BLOCKQUOTE>
+
+    <li>Sharing of Trace databases via a Ghidra server</li>
+    <li>Time-travel(-like) exploration and annotation of Trace databases.</li>
+       <BLOCKQUOTE><UL>
+       <li>Includes capture of memory and register values over time</li>
+       <li>Utilizes p-code emulation to interpolate and extrapolate ahead of the target</li>
+       </UL></BLOCKQUOTE>
+    <li>Export a Trace's memory / listing (at a given time) to ASCII, Binary, HTML, Intel Hex, and XML</li>
+    </UL></BLOCKQUOTE>
+    <H3>New Views:</H3>
+        <BLOCKQUOTE><UL>
+        <li>Targets list for managing platform debugger connections</li>
+        <li>Interpreter Panel for accessing the platform debugger's command-line interface</li>
+        <li>Console Panel for viewing log messages and resolving problems</li>
+        <li>Objects Tree for accessing and commanding the platform debugger via a graphical user interface
+        <BLOCKQUOTE>
+            Includes Resume, Interrupt, Step, Launch, etc.
+        </BLOCKQUOTE>
+        <li>Dynamic Listing for viewing and annotating memory in a Trace</li>
+        <li>Breakpoint management:</li>
+            <BLOCKQUOTE>
+                <li>Breakpoints viewer showing breakpoints from all live sessions, as well as breakpoints bookmarked in Program databases</li>
+                <li>Dynamic Listing actions permitting placement, toggling, and removal of breakpoints at the current address</li>
+                <li>(Static) Listing actions permitting the bookmarking, placement, toggling, and removal of breakpoints</li>
+            </BLOCKQUOTE>
+        <li>Registers Table for viewing and annotating values in a Trace and/or modifying values of the target</li>
+        <li>Watches Table for evaluating SLEIGH expressions on the Trace or target machine state</li>
+            <BLOCKQUOTE>
+            NOTE: Dependent registers and memory are captured to the Trace, if recording from a live target
+            </BLOCKQUOTE>
+        <li>Stack / Frame Table for navigating frame contexts</li>
+        <li>Threads Timeline for listng threads and for navigating thread and time contexts</li>
+        <li>Modules Table for viewing modules and sections, and for mapping live Trace addresses to static Program database addresses</li>
+        <li>P-code Stepper/Emulator for debugging SLEIGH language specifications in-situ</li>
+        <li>Memory/Time plotter for viewing trace events</li>
+        </UL></BLOCKQUOTE>
+    <H3>New APIs:</H3>
+        <BLOCKQUOTE><UL>
+        <li>Trace database (backs our time-travel features and populates our machine-state UIs)</li>
+        <li>Platform debugger model (our abstraction of platform debuggers into a reflexive API)</li>
+        <li>Abstract SLEIGH / p-code execution (backs our emulation, trace interpolation, and SLEIGH watches)</li>
+        </UL></BLOCKQUOTE>
+    <H3>Nascent support for the following:</H3>
+        <BLOCKQUOTE><UL>
+        <li>Other modes, including kernel-mode, and remote debugging, as supported by the platform debugger.</li>
+            <BLOCKQUOTE>
+            WARNING: Ghidra's Trace recorder may not know how to cope with the environment and objects presented, causing it to behave poorly, e.g., it may greedily record things,
+             exhaust resources, crash Ghidra, crash your debugger, crash your target, etc.
+            </BLOCKQUOTE>
+        <li>Connection to WinDbg Preview (via dbgmodel.dll) on Windows</li>
+        <li>Connection to a JVM or DalvikVM via JDI (JDWP)</li>
+        <li>Support for tracing the following architectures via GDB: arm, m68k, mips, powerpc (depending on versions and variants)</li>
+        <li>Support for tracing the following architectures via JDI: Java, Dalvik (depending on versions and variants)</li>
+        </UL></BLOCKQUOTE>
+	<BR />
+        
+    <H2>User-defined Compiler Specification Extensions</H2>
+    
+        <P>Ghidra 10.0 adds support for user-defined extensions to the <b>compiler specification</b> assigned to a specific Program.  In particular,
+            users can now define their own:</P>
+        <BLOCKQUOTE><UL>
+            <LI><B>Calling Conventions</B> - which inform analyis and decompilation how parameters are passed between functions,</LI>
+            <LI><B>Call-Fixups</B> - which substitute behavior for specific CALLs when analyzing a function that makes them, and</LI>
+            <LI><B>Callother-Fixups</B> - which substitute behavior for certain Instructions when analyzing a function that contains them.</LI>
+        </UL></BLOCKQUOTE>
+
+    <P>Prior releases only provided compiler specifications statically via <B>.cspec</B> files in the distribution.  The new extensions
+      are stored as part of the Program and can be added or adjusted dynamically as users build up their understanding.
+      Extensions can be added from the <B>Specification Extensions</B> tab under the <I>Options</I> dialog for the Program.</P>
+
+    <BR />
+    
+    <H2>Prototype Class Recovery From RTTI</H2>
+    <P> A new prototype script <B>RecoverClassesFromRTTIScript</B> to recover class information using RTTI structures and PDB information has been added.  The script recovers class hierarchy, inheritance types,
+    constructors and destructors, class data types, and more. If available, pdb information is used to help fill in class structures with known names and types for class
+    member data.  If PDB is unavailable, the decompiler structure recovery is utilized to populate class data structure members.<P>
+    <BLOCKQUOTE><UL>
+        <P> NOTE: As this is a prototype script, the location, names, layout of data types, and default virtual function names created by this script are
+        likely to change in the future once an official design for Object Oriented representation is determined.<P>
+        <P>NOTE: Windows class recovery is fairly complete and tested, however GCC class recovery is still in early development.
+        GCC class data types have not been recovered yet but if the program has DWARF, there will be some amount of data recovered by the DWARF analyzer in the DWARF data folder.</P>
+        <P>NOTE: For best results, run this script on freshly imported and analyzed programs. No testing has been done on programs previously imported with pre-existing user mark-up.</P>
+    </UL></BLOCKQUOTE>
+    
+    <BR />
+
+    <H2>PDB Symbol Server</H2
+    <P>Managing and applying PDB files has a much improved GUI, including support for multiple symbol server locations.</P>
+    
+    <BR />
+
+    <H2>Saved Analysis Options Configuration</H2>
+    
+    <P>Analysis options configurations can be saved by name and quickly changed using a new feature in the Analysis configuration menu. The
+    last used named configuration will be used as the default option the next time a program is analyzed even after exiting Ghidra.  This can be useful
+    to disable one or more options, such as Stack Analysis, if the analyzer is providing poor results or the analysis is not desired for a type of binary
+    you will be working with.  For example some analysis options should be turned off by default for all suspect malware binaries on the first pass to avoid
+    issues with some types of obfuscation.<P>
+    
+    <H2>Graphs</H2>
+    
+    <P>Data types can get complicated and might have many references to other data structures, either by declaring them as a field or as a pointer at another data type.
+    A general graph of data type relationships from the Data Type manager has been added. In addition defined data structures in memory can be graphed by following all references
+    to other defined data or code using the Graph->Data menu.<P>
+    
+    <P>A new favored edge and associated layout has been added for hierarchical graphs.  This edge can help closely align graph nodes that should
+    be arranged more closely to a neighboring node, for example the node from a fall-thru edge should be arranged closer than from a branching edge.<P>
+    
+    <BR />     
     
     <H2>Structure/Union Changes</H2>
     
     <P>A significant refactor of the Composite datatype interfaces and internals has been completed which affects
-    Structures and Unions.  The intent of these changes was to provide a more unstandable API and allow an alignment 
+    Structures and Unions.  The changes are intended to provide a more understandable API and allow an alignment 
     to be specified for non-packed composites (aka, composites with internal alignment disabled).</P>
     
     <H3>Editor Changes</H3>
@@ -68,7 +193,7 @@
     <P>The <B>align</B> setting may know be used when packing is disabled with the composite adopting 
     the specified alignment.  The default alignment for a non-packed composite is <B>1</B> which is consistent 
     with the current behavior in Ghidra 9.x.</P>
-    
+     
     <H3>Composite API Changes</H3>
     
     <P>The various pack and align methods of the <I>Composite</I> (i.e., <I>Structure</I> and <I>Union</I>) 
@@ -179,7 +304,23 @@
        </TR>
     </TABLE>
     </BLOCKQUOTE>
+    </P>
     
+    <H2>Gradle</H2>
+    <P>The build infrastructure has been moved to version gradle 6.8 or later.  If you wish to build Ghidra, you will need to move to at least gradle 6.8.x<P>
+
+    <H2>New Processors</H2>
+    <P>We are working on .NET/CIL that may make it into the final 10.0 release, but most likely into 10.1</P>
+
+    <H2>Binary Exporter</H2>    
+    <P>New exporters that write programs imported with the PE and ELF loaders back to their original file layout have been added.
+    Any file-backed bytes that were modified by the user in the program database will be reflected in the written file.
+    Bytes that are part of the import process such as relocations or modified Memory Maps are not currently handled.</P>
+    
+    <H2> 
+     <H2>Bug Fixes and Enhancements</H2>
+    		<P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
+    		   
     <BR />
     <H1> What's New in Ghidra 9.2</H1>
         
