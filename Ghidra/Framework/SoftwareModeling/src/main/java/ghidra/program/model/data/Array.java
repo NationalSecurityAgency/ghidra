@@ -113,20 +113,21 @@ public interface Array extends DataType {
 
 	/**
 	 * Get the value object which corresponds to an array in memory.  This will either be a
-	 * String for the ArrayStringable case or null.
+	 * StringDataInstance for the ArrayStringable case or null.
 	 * 
 	 * @param buf data buffer
 	 * @param settings data settings
 	 * @param length length of array
-	 * @return a String if it is an array of chars; otherwise null.
+	 * @return a StringDataInstance if it is an array of chars; otherwise null.
 	 */
-	public default StringDataInstance getStringDataInstance(MemBuffer buf, Settings settings, int length) {
+	default StringDataInstance getStringDataInstance(MemBuffer buf, Settings settings, int length) {
 		if (!buf.getMemory().getAllInitializedAddressSet().contains(buf.getAddress())) {
 			return null;
 		}
 		ArrayStringable as = ArrayStringable.getArrayStringable(getDataType());
 		return (as != null) ? as.getArrayStringInstance(buf, settings, length) : null;
 	}
+
 
 	/**
 	 * Get the value object which corresponds to an array in memory.  This will either be a

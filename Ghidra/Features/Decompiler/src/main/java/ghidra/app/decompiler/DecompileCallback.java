@@ -1361,33 +1361,33 @@ public class DecompileCallback {
 				}
 			}
 		}
-		if (stringInstance == null) {
+		if (stringInstance == StringDataInstance.NULL_INSTANCE) {
 			// There is no string and/or something else at the address.
 			// Setup StringDataInstance based on raw memory
 			DataType dt = dtmanage.findBaseType(dtName, dtId);
-			AbstractStringDataType dataType = null;
+			AbstractStringDataType tmpStringdataType = null;
 			if (dt instanceof AbstractStringDataType) {
-				dataType = (AbstractStringDataType) dt;
+				tmpStringdataType = (AbstractStringDataType) dt;
 			}
 			else {
 				if (dt != null) {
 					int size = dt.getLength();
 					if (size == 2) {
-						dataType = TerminatedUnicodeDataType.dataType;
+						tmpStringdataType = TerminatedUnicodeDataType.dataType;
 					}
 					else if (size == 4) {
-						dataType = TerminatedUnicode32DataType.dataType;
+						tmpStringdataType = TerminatedUnicode32DataType.dataType;
 					}
 					else {
-						dataType = TerminatedStringDataType.dataType;
+						tmpStringdataType = TerminatedStringDataType.dataType;
 					}
 				}
 				else {
-					dataType = TerminatedStringDataType.dataType;
+					tmpStringdataType = TerminatedStringDataType.dataType;
 				}
 			}
 			MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
-			stringInstance = dataType.getStringDataInstance(buf, settings, maxChars);
+			stringInstance = tmpStringdataType.getStringDataInstance(buf, settings, maxChars);
 			length = stringInstance.getStringLength();
 			if (length < 0 || length > maxChars) {
 				return null;
