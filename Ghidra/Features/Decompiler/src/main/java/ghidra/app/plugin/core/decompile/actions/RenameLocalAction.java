@@ -26,6 +26,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.EquateSymbol;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
