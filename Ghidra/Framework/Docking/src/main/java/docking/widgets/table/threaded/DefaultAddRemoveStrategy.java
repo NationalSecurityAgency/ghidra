@@ -15,9 +15,10 @@
  */
 package docking.widgets.table.threaded;
 
-import java.util.List;
+import java.util.*;
 
 import docking.widgets.table.AddRemoveListItem;
+import docking.widgets.table.TableSortingContext;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -25,37 +26,70 @@ import ghidra.util.task.TaskMonitor;
  * A strategy that uses the table's sort state to perform a binary search of items to be added
  * and removed.   
  *
+ * <P>This strategy is aware that some items may not be correctly removed, such as database items
+ * that have been deleted externally to the table.   These items may require a brute force update
+ * to achieve removal.
+ *
  * @param <T> the row type
  */
 public class DefaultAddRemoveStrategy<T> implements TableAddRemoveStrategy<T> {
 
 	@Override
-	public void process(List<AddRemoveListItem<T>> addRemoveList, TableData<T> updatedData,
+	public void process(List<AddRemoveListItem<T>> addRemoveList, TableData<T> tableData,
 			TaskMonitor monitor) throws CancelledException {
 
 		int n = addRemoveList.size();
 		monitor.setMessage("Adding/Removing " + n + " items...");
 		monitor.initialize(n);
 
-		// Note: this class does not directly perform a binary such, but instead relies on that
+		Set<T> failedToRemove = new HashSet<>();
+
+		// Note: this class does not directly perform a binary search, but instead relies on that
 		//       work to be done by the call to TableData.remove()
 		for (int i = 0; i < n; i++) {
 			AddRemoveListItem<T> item = addRemoveList.get(i);
 			T value = item.getValue();
 			if (item.isChange()) {
-				updatedData.remove(value);
-				updatedData.insert(value);
+				tableData.remove(value);
+				tableData.insert(value);
 			}
 			else if (item.isRemove()) {
-				updatedData.remove(value);
+				if (!tableData.remove(value)) {
+					failedToRemove.add(value);
+				}
 			}
 			else if (item.isAdd()) {
-				updatedData.insert(value);
+				tableData.insert(value);
 			}
 			monitor.checkCanceled();
 			monitor.setProgress(i);
 		}
+
+		if (!failedToRemove.isEmpty()) {
+			int size = failedToRemove.size();
+			String message = size == 1 ? "1 deleted item..." : size + " deleted items...";
+			monitor.setMessage("Removing " + message);
+
+			tableData.process((data, sortContext) -> {
+				return expungeLostItems(failedToRemove, data, sortContext);
+			});
+		}
+
 		monitor.setMessage("Done adding/removing");
+	}
+
+	private List<T> expungeLostItems(Set<T> toRemove, List<T> data,
+			TableSortingContext<T> sortContext) {
+
+		List<T> newList = new ArrayList<>(data.size() - toRemove.size());
+		for (int i = 0; i < data.size(); i++) {
+			T rowObject = data.get(i);
+			if (!toRemove.contains(rowObject)) {
+				newList.add(rowObject);
+			}
+		}
+
+		return newList;
 	}
 
 }
