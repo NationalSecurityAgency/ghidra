@@ -316,19 +316,19 @@ List<String> getExternalRuntimeDependencies(Project project) {
 	List<String> list = new ArrayList<String>()
 
 	if (project.configurations.find { it.name == 'api' }) {
-		list.addAll(getExternalDependencies(project, project.configurations.api));
+		list.addAll(getExternalRuntimeDependencies(project, project.configurations.api));
 	}
 	if (project.configurations.find { it.name == 'implementation' }) {
-		list.addAll(getExternalDependencies(project, project.configurations.implementation));
+		list.addAll(getExternalRuntimeDependencies(project, project.configurations.implementation));
 	}
 	if (project.configurations.find { it.name == 'runtimeOnly' }) {
-		list.addAll(getExternalDependencies(project, project.configurations.runtimeOnly));
+		list.addAll(getExternalRuntimeDependencies(project, project.configurations.runtimeOnly));
 	}
 
 	return list
 }
 
-List<String> getExternalDependencies(Project project, Configuration configuration) {
+List<String> getExternalRuntimeDependencies(Project project, Configuration configuration) {
 	List<String> list = new ArrayList<>();
 	configuration.dependencies.each { dep ->
 
@@ -350,14 +350,11 @@ List<String> getExternalDependencies(Project project, Configuration configuratio
 					searchString+= "-$cls"
 				}
 			}
-
-			// loop back through all the dependency files, looking for one that contains the dependency name.	
-			String depPath = project.configurations
-				.findAll {it.isCanBeResolved()}
-				.collect {it.resolve()}
-				.flatten()
-				.find {it.getAbsolutePath().contains(searchString)
+			// search for the dependency in the runtime class path
+			String depPath = project.configurations.runtimeClasspath.find {
+				it.name.contains(searchString)
 			}
+
 			if (depPath == null) {
 				println("****************DID NOT FIND DEPENDENCY: name = "+name+" version = "+version)
 			}
@@ -370,20 +367,7 @@ List<String> getExternalDependencies(Project project, Configuration configuratio
 	return list;
 }
 
-/*********************************************************************************
- * Returns a list of all the external library paths declared as dependencies for the 
- *         given project  
- *
- *********************************************************************************/
-Set<String> getAllExternalDependencies(Project project) {
-	Set<String> set = new HashSet<String>()
-	
-	project.getConfigurations().each { config ->
-		set.addAll(getExternalDependencies(project, config))
-	}
-	
-	return set
-}
+
 
 /******************************************************************************************
  * 
@@ -415,37 +399,6 @@ String generateLibraryDependencyMapping() {
 	}
 	return libsFile.absolutePath
 }
-/******************************************************************************************
- * 
- * Creates a file that lists all external jars used to build and run Ghidra
- *
- ******************************************************************************************/
-String generateAllExternalLibsFile() {
-	File libsFile = file("$buildDir/AllExternalLibs.txt")
-	
-	// Check to make sure the build folder exists - if it doesn't, the 'libsFile.withWriter'
-	// call (below) will fail miserably.
-	def buildFolder = file ("$buildDir")
-	if (!buildFolder.exists()) {
-		buildFolder.mkdirs()
-	}
-	Set<String> allLibs = new HashSet<>();
-	subprojects { p ->
-		p.plugins.withType(JavaPlugin) {
-			Set<String> libs = getAllExternalDependencies(p);
-			if (libs != null) {
-				allLibs.addAll(libs);
-			}
-		}
-	}
-	libsFile.withWriter { out ->
-		allLibs.each { path ->
-			out.println "$path"
-		}
-	}
-	return libsFile.absolutePath
-}
-
 
 task allSleighCompile {
 }
