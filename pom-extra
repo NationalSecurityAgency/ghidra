@@ -1,0 +1,22 @@
+    <url>https://github.com/ShiftLeftSecurity/ghidra/</url>
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <name>ghidra</name>
+    <scm>
+        <url>https://github.com/ShiftLeftSecurity/ghidra</url>
+        <connection>scm:git@github.com:ShiftLeftSecurity/ghidra.git</connection>
+    </scm>
+    <developers>
+        <developer>
+            <id>itsacoderepo</id>
+            <name>Niko Schmidt</name>
+            <url>https://github.com/itsacoderepo</url>
+            <email>niko@shiftleft.io</email>
+        </developer>
+    </developers>
+</project>
