@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.tree.*;
+import generic.test.AbstractGenericTest;
 
 /**
  * Class to test the {@link DepthFirstIterator} and {@link BreadthFirstIterator} classes for
@@ -46,12 +47,15 @@ public class TreeIteratorTest {
 		node0_0 = new GTestNode("Node0_0");
 		node0_1 = new GTestNode("Node0_1");
 		node1_0 = new GTestNode("Node1_0");
-		root.addNode(node0);
-		root.addNode(node1);
-		root.addNode(node2);
-		node0.addNode(node0_0);
-		node0.addNode(node0_1);
-		node1.addNode(node1_0);
+
+		AbstractGenericTest.runSwing(() -> {
+			root.addNode(node0);
+			root.addNode(node1);
+			root.addNode(node2);
+			node0.addNode(node0_0);
+			node0.addNode(node0_1);
+			node1.addNode(node1_0);
+		});
 	}
 
 	@Test

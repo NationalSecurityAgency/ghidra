@@ -833,6 +833,19 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		archiveGTree.cancelWork();
 	}
 
+	void archiveClosed(DataTypeManager dtm) {
+		if (lastPreviewNode == null || !(lastPreviewNode instanceof DataTypeNode)) {
+			return;
+		}
+
+		DataTypeNode dtNode = (DataTypeNode) lastPreviewNode;
+		DataType dt = dtNode.getDataType();
+		DataTypeManager dtManager = dt.getDataTypeManager();
+		if (dtm.equals(dtManager)) {
+			lastPreviewNode = null;
+		}
+	}
+
 	void programRenamed() {
 		ArchiveRootNode rootNode = (ArchiveRootNode) archiveGTree.getModelRoot();
 		List<GTreeNode> allChildren = rootNode.getChildren();

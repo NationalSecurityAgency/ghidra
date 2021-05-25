@@ -671,6 +671,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		addModules();
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
+		// NB. Table is debounced
+		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
 
 		clickTableCellWithButton(modulesProvider.moduleTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();

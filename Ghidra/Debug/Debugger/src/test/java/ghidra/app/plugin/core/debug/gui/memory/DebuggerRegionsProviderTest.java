@@ -249,6 +249,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
+		// NB. Table is debounced
+		waitForPass(() -> assertEquals(1, provider.regionTable.getRowCount()));
 		assertEquals(region, row.getRegion());
 		assertFalse(tb.trace.getProgramView().getMemory().isEmpty());
 

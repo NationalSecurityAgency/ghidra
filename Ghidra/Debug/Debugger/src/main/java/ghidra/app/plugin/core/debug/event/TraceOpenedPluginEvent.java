@@ -21,12 +21,12 @@ import ghidra.framework.plugintool.PluginEvent;
 import ghidra.trace.model.Trace;
 
 public class TraceOpenedPluginEvent extends PluginEvent {
-	static final String NAME = "Trace Opened";
+	static final String NAME = "Trace Opened @";
 
 	private final WeakReference<Trace> newTraceRef;
 
 	public TraceOpenedPluginEvent(String source, Trace trace) {
-		super(source, NAME);
+		super(source, NAME + Integer.toHexString(System.identityHashCode(trace)));
 		this.newTraceRef = new WeakReference<>(trace);
 	}
 

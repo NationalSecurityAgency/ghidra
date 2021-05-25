@@ -444,20 +444,26 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		assertNull(modelService.getTargetFocus(mb.testProcess3));
 
 		waitOn(mb.testModel.requestFocus(mb.testThread1));
-		assertEquals(mb.testThread1, modelService.getTargetFocus(mb.testProcess1));
-		assertNull(modelService.getTargetFocus(mb.testProcess3));
+		waitForPass(
+			() -> assertEquals(mb.testThread1, modelService.getTargetFocus(mb.testProcess1)));
+		waitForPass(() -> assertNull(modelService.getTargetFocus(mb.testProcess3)));
 
 		waitOn(mb.testModel.requestFocus(mb.testThread2));
-		assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1));
-		assertNull(modelService.getTargetFocus(mb.testProcess3));
+		waitForPass(
+			() -> assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1)));
+		waitForPass(() -> assertNull(modelService.getTargetFocus(mb.testProcess3)));
 
 		waitOn(mb.testModel.requestFocus(mb.testThread3));
-		assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1));
-		assertEquals(mb.testThread3, modelService.getTargetFocus(mb.testProcess3));
+		waitForPass(
+			() -> assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1)));
+		waitForPass(
+			() -> assertEquals(mb.testThread3, modelService.getTargetFocus(mb.testProcess3)));
 
 		waitOn(mb.testModel.requestFocus(mb.testThread4));
-		assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1));
-		assertEquals(mb.testThread4, modelService.getTargetFocus(mb.testProcess3));
+		waitForPass(
+			() -> assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1)));
+		waitForPass(
+			() -> assertEquals(mb.testThread4, modelService.getTargetFocus(mb.testProcess3)));
 	}
 
 	@Test
