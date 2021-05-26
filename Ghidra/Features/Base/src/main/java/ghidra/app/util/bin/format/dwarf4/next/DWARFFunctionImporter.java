@@ -288,24 +288,25 @@ public class DWARFFunctionImporter {
 
 		Function gfunc = createFunction(dfunc, diea);
 
-		boolean updateSignature = true;
+		Number dwarfLanguage = -1;
+
 
 		DWARFCompilationUnit firstCompilationUnit = prog.getCompilationUnits().get(0);
 		if (firstCompilationUnit != null) {
-			Number dwarfLanguage = firstCompilationUnit.getCompileUnit().getLanguage();
-
-			// Rust does not have associated function signature
-			if (dwarfLanguage == (Number) DWARFSourceLanguage.DW_LANG_Rust) {
-				updateSignature = false;
-			}
+			dwarfLanguage = firstCompilationUnit.getCompileUnit().getLanguage();
 		}
 
-		if (gfunc != null && updateSignature) {
+		if (gfunc != null) {
 
 			if (formalParams.isEmpty() && dfunc.localVarErrors) {
 				// if there were no defined parameters and we had problems decoding local variables,
 				// don't force the method to have an empty param signature because there are other
 				// issues afoot.
+				skipFuncSignature = true;
+			} else if (formalParams.isEmpty() && dwarfLanguage == (Number) DWARFSourceLanguage.DW_LANG_Rust) {
+				// if there were no defined parameters and the language is Rust, don't force an
+				// empty param signature. Rust language emit dwarf info without types (signatures)
+				// when used without -g.
 				skipFuncSignature = true;
 			}
 
