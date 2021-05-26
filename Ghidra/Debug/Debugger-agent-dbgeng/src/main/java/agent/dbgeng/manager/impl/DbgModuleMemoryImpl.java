@@ -56,6 +56,11 @@ public class DbgModuleMemoryImpl implements DbgModuleMemory {
 	}
 
 	@Override
+	public Long getId() {
+		return vmaStart;
+	}
+
+	@Override
 	public long getVmaStart() {
 		return vmaStart;
 	}

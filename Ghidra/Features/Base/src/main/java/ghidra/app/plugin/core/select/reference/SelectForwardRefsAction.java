@@ -46,6 +46,7 @@ public class SelectForwardRefsAction extends NavigatableContextAction {
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, "Forward"));
 //		setKeyBindingData( new KeyBindingData(KeyEvent.VK_SEMICOLON, InputEvent.CTRL_MASK ) );
 //		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, "Backward"));
+		addToWindowWhen(NavigatableActionContext.class);
 	}
 
 	@Override

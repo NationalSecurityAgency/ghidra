@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -35,20 +36,19 @@ import ghidra.util.Swing;
 public class DebuggerSectionMapProposalDialog
 		extends AbstractDebuggerMapProposalDialog<SectionMapEntry> {
 
-	static final String BLANK = "";
 	static final int BUTTON_SIZE = 32;
 
 	protected enum SectionMapTableColumns
 		implements EnumeratedTableColumn<SectionMapTableColumns, SectionMapEntry> {
-		REMOVE("Remove", String.class, e -> BLANK, (e, v) -> nop()),
+		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
 		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
 		SECTION_NAME("Section", String.class, e -> e.getSection().getName()),
 		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSection().getStart()),
+		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> e.getProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),
 		STATIC_BASE("Static Base", Address.class, e -> e.getBlock().getStart()),
-		SIZE("Size", Long.class, e -> e.getLength()),
-		CHOOSE("Choose", String.class, e -> BLANK, (e, s) -> nop());
+		SIZE("Size", Long.class, e -> e.getLength());
 
 		private final String header;
 		private final Class<?> cls;
@@ -98,6 +98,19 @@ public class DebuggerSectionMapProposalDialog
 		}
 	}
 
+	protected static class SectionMapPropsalTableModel extends
+			DefaultEnumeratedColumnTableModel<SectionMapTableColumns, SectionMapEntry> {
+
+		public SectionMapPropsalTableModel() {
+			super("Section Map", SectionMapTableColumns.class);
+		}
+
+		@Override
+		public List<SectionMapTableColumns> defaultSortOrder() {
+			return List.of(SectionMapTableColumns.MODULE_NAME, SectionMapTableColumns.SECTION_NAME);
+		}
+	}
+
 	private final DebuggerModulesProvider provider;
 
 	public DebuggerSectionMapProposalDialog(DebuggerModulesProvider provider) {
@@ -106,8 +119,8 @@ public class DebuggerSectionMapProposalDialog
 	}
 
 	@Override
-	protected EnumeratedColumnTableModel<SectionMapEntry> createTableModel() {
-		return new DefaultEnumeratedColumnTableModel<>("Section Map", SectionMapTableColumns.class);
+	protected SectionMapPropsalTableModel createTableModel() {
+		return new SectionMapPropsalTableModel();
 	}
 
 	@Override
@@ -121,9 +134,19 @@ public class DebuggerSectionMapProposalDialog
 		CellEditorUtils.installButton(table, filterPanel, removeCol,
 			DebuggerResources.ICON_DELETE, BUTTON_SIZE, this::removeEntry);
 
+		TableColumn dynBaseCol =
+			columnModel.getColumn(SectionMapTableColumns.DYNAMIC_BASE.ordinal());
+		dynBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+
 		TableColumn chooseCol = columnModel.getColumn(SectionMapTableColumns.CHOOSE.ordinal());
 		CellEditorUtils.installButton(table, filterPanel, chooseCol, DebuggerResources.ICON_PROGRAM,
 			BUTTON_SIZE, this::chooseAndSetBlock);
+
+		TableColumn stBaseCol = columnModel.getColumn(SectionMapTableColumns.STATIC_BASE.ordinal());
+		stBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+
+		TableColumn sizeCol = columnModel.getColumn(SectionMapTableColumns.SIZE.ordinal());
+		sizeCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
 	}
 
 	private void chooseAndSetBlock(SectionMapEntry entry) {

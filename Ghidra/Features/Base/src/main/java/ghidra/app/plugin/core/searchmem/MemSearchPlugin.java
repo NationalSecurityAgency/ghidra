@@ -359,6 +359,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		searchAction.setMenuBarData(new MenuData(menuPath, "search"));
 		searchAction.setKeyBindingData(new KeyBindingData('S', 0));
 		searchAction.setDescription("Search Memory for byte sequence");
+		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);
 
 		searchAgainAction = new NavigatableContextAction("Repeat Memory Search", getName()) {
@@ -379,6 +380,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		searchAgainAction.setMenuBarData(new MenuData(menuPath, "search"));
 		searchAgainAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
 		searchAgainAction.setDescription("Search Memory for byte sequence");
+		searchAgainAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAgainAction);
 	}
 

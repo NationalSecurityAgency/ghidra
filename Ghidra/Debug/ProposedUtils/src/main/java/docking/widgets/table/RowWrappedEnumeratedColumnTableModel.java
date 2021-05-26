@@ -18,6 +18,7 @@ package docking.widgets.table;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 
@@ -48,23 +49,35 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 	}
 
 	protected synchronized R delFor(T t) {
-		return map.remove(keyFunc.apply(t));
+		return delKey(keyFunc.apply(t));
+	}
+
+	protected synchronized R delKey(K k) {
+		return map.remove(k);
+	}
+
+	protected synchronized List<R> rowsFor(Stream<? extends T> s) {
+		return s.map(this::rowFor).collect(Collectors.toList());
 	}
 
 	protected synchronized List<R> rowsFor(Collection<? extends T> c) {
-		return c.stream().map(this::rowFor).collect(Collectors.toList());
+		return rowsFor(c.stream());
 	}
 
 	public synchronized R getRow(T t) {
 		return map.get(keyFunc.apply(t));
 	}
 
-	public void addItem(T t) {
+	public synchronized void addItem(T t) {
+		if (map.containsKey(keyFunc.apply(t))) {
+			return;
+		}
 		add(rowFor(t));
 	}
 
-	public void addAllItems(Collection<? extends T> c) {
-		addAll(rowsFor(c));
+	public synchronized void addAllItems(Collection<? extends T> c) {
+		Stream<? extends T> s = c.stream().filter(t -> !map.containsKey(keyFunc.apply(t)));
+		addAll(rowsFor(s));
 	}
 
 	public void updateItem(T t) {
@@ -79,9 +92,15 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		delete(delFor(t));
 	}
 
+	public R deleteKey(K k) {
+		R r = delKey(k);
+		delete(r);
+		return r;
+	}
+
 	public synchronized void deleteAllItems(Collection<T> c) {
 		deleteWith(rowsFor(c)::contains);
-		map.keySet().removeAll(c);
+		map.keySet().removeAll(c.stream().map(keyFunc).collect(Collectors.toList()));
 	}
 
 	public synchronized Map<K, R> getMap() {

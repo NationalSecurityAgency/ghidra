@@ -19,7 +19,6 @@ import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_M
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS;
 
 import java.awt.Color;
-import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -50,8 +49,8 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
-import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
-import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
+import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.plugin.core.exporter.ExporterDialog;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.*;
@@ -85,8 +84,10 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.util.TraceAddressSpace;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.*;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
@@ -323,6 +324,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	//@AutoServiceConsumed via method
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
+	@AutoServiceConsumed
 	private ProgramManager programManager;
 	@AutoServiceConsumed
 	private FileImporterService importerService;
@@ -349,20 +352,17 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 	protected DockingAction actionGoTo;
 	protected SyncToStaticListingAction actionSyncToStaticListing;
-	protected ToggleDockingAction actionAutoImportCurrentModule;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
 	protected DockingAction actionExportView;
+	protected DockingAction actionOpenProgram;
 
-	protected final DebuggerModuleImportDialog importDialog;
 	protected final DebuggerGoToDialog goToDialog;
 
 	@AutoConfigStateField(codec = TrackingSpecConfigFieldCodec.class)
 	protected LocationTrackingSpec trackingSpec = defaultTrackingSpec;
 	@AutoConfigStateField
 	protected boolean syncToStaticListing;
-	@AutoConfigStateField
-	protected boolean autoImportCurrentModule;
 	@AutoConfigStateField
 	protected boolean followsCurrentThread = true;
 	@AutoConfigStateField(codec = AutoReadMemorySpecConfigFieldCodec.class)
@@ -384,12 +384,14 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	protected final ForStaticSyncMappingChangeListener mappingChangeListener =
 		new ForStaticSyncMappingChangeListener();
 
+	protected final boolean isMainListing;
+
 	public DebuggerListingProvider(DebuggerListingPlugin plugin, FormatManager formatManager,
 			boolean isConnected) {
 		super(plugin, formatManager, isConnected);
 		this.plugin = plugin;
+		this.isMainListing = isConnected;
 
-		importDialog = new DebuggerModuleImportDialog(tool);
 		goToDialog = new DebuggerGoToDialog(this);
 
 		ListingPanel listingPanel = getListingPanel();
@@ -403,7 +405,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		autoOptionsWiring = AutoOptions.wireOptionsConsumed(plugin, this);
 
 		syncToStaticListing = isConnected;
-		autoImportCurrentModule = isConnected;
 		setVisible(true);
 		createActions();
 
@@ -426,6 +427,34 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	@Override
+	public boolean isConnected() {
+		/*
+		 * NB. Other plugins ask isConnected meaning the main static listing. We don't want to be
+		 * mistaken for it.
+		 */
+		return false;
+	}
+
+	/**
+	 * Check if this is the main dynamic listing.
+	 * 
+	 * <p>
+	 * The method {@link #isConnected()} is not quite the same as this, although the concepts are a
+	 * little conflated, since before the debugger, no one else presented a listing that could claim
+	 * to be "main" except the "connected" one. Here, we treat "connected" to mean that the address
+	 * is synchronized exactly with the other providers. "Main" on the other hand, does not
+	 * necessarily have that property, but it is still <em>not</em> a snapshot. It is the main
+	 * listing presented by this plugin, and so it has certain unique features. Calling
+	 * {@link DebuggerListingPlugin#getConnectedProvider()} will return the main dynamic listing,
+	 * despite it not really being "connected."
+	 * 
+	 * @return true if this is the main listing for the plugin.
+	 */
+	public boolean isMainListing() {
+		return isMainListing;
+	}
+
+	@Override
 	public String getWindowGroup() {
 		//TODO: Overriding this to align disconnected providers
 		return "Core";
@@ -433,7 +462,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 	@Override
 	public void writeDataState(SaveState saveState) {
-		if (!isConnected()) {
+		if (!isMainListing()) {
 			current.writeDataState(tool, saveState, KEY_DEBUGGER_COORDINATES);
 		}
 		super.writeDataState(saveState);
@@ -441,7 +470,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 
 	@Override
 	public void readDataState(SaveState saveState) {
-		if (!isConnected()) {
+		if (!isMainListing()) {
 			DebuggerCoordinates coordinates =
 				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES, true);
 			coordinatesActivated(coordinates);
@@ -471,14 +500,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 
 		actionTrackLocation.setCurrentActionStateByUserData(trackingSpec);
-		if (isConnected()) {
+		if (isMainListing()) {
 			actionSyncToStaticListing.setSelected(syncToStaticListing);
-			actionAutoImportCurrentModule.setSelected(autoImportCurrentModule);
 			followsCurrentThread = true;
 		}
 		else {
 			syncToStaticListing = false;
-			autoImportCurrentModule = false;
 			actionFollowsCurrentThread.setSelected(followsCurrentThread);
 			updateBorder();
 		}
@@ -556,9 +583,18 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		this.markerService = markerService;
 		createNewStaticTrackingMarker();
 
-		if (this.markerService != null && !isConnected()) {
+		if (this.markerService != null && !isMainListing()) {
 			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
 			this.markerService.addChangeListener(markerChangeListener);
+		}
+	}
+
+	@AutoServiceConsumed
+	private void setConsoleService(DebuggerConsoleService consoleService) {
+		if (consoleService != null) {
+			if (actionOpenProgram != null) {
+				consoleService.addResolutionAction(actionOpenProgram);
+			}
 		}
 	}
 
@@ -581,6 +617,17 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 				createNewStaticTrackingMarker();
 			}
 		});
+	}
+
+	public void programOpened(Program program) {
+		if (!isMainListing()) {
+			return;
+		}
+		DomainFile df = program.getDomainFile();
+		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
+		if (consoleService != null) {
+			consoleService.removeFromLog(ctx);
+		}
 	}
 
 	public void programClosed(Program program) {
@@ -742,13 +789,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 				.onAction(this::activatedGoTo)
 				.buildAndInstallLocal(this);
 
-		if (isConnected()) {
+		if (isMainListing()) {
 			actionSyncToStaticListing = new SyncToStaticListingAction();
-			actionAutoImportCurrentModule = AutoImportCurrentModuleAction.builder(plugin)
-					.enabledWhen(ctx -> syncToStaticListing)
-					.onAction(this::autoImportCurrentModuleActionToggled)
-					.selected(autoImportCurrentModule)
-					.buildAndInstallLocal(this);
 		}
 		else {
 			actionFollowsCurrentThread = new FollowsCurrentThreadAction();
@@ -764,6 +806,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 				.enabledWhen(ctx -> current.getView() != null)
 				.onAction(this::activatedExportView)
 				.buildAndInstallLocal(this);
+
+		actionOpenProgram = OpenProgramAction.builder(plugin)
+				.withContext(DebuggerOpenProgramActionContext.class)
+				.onAction(this::activatedOpenProgram)
+				.build();
 
 		contextChanged();
 	}
@@ -794,6 +841,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		tool.showDialog(dialog);
 	}
 
+	private void activatedOpenProgram(DebuggerOpenProgramActionContext context) {
+		programManager.openProgram(context.getDomainFile(), DomainFile.DEFAULT_VERSION,
+			ProgramManager.OPEN_CURRENT);
+	}
+
 	protected void activatedLocationTracking(ActionContext ctx) {
 		doTrackSpec();
 	}
@@ -801,10 +853,6 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	protected void changedLocationTracking(ActionState<LocationTrackingSpec> newState,
 			EventTrigger trigger) {
 		doSetTrackingSpec(newState.getUserData());
-	}
-
-	protected void autoImportCurrentModuleActionToggled(ActionContext ctx) {
-		doSetAutoImportCurrentModule(actionAutoImportCurrentModule.isSelected());
 	}
 
 	protected void activatedAutoReadMemory(ActionContext ctx) {
@@ -886,12 +934,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	public void programLocationChanged(ProgramLocation location, EventTrigger trigger) {
 		updateLocationLabel();
 		if (traceManager != null) {
-			location = traceManager.fixLocation(location, false);
+			location = ProgramLocationUtils.fixLocation(location, false);
 		}
 		super.programLocationChanged(location, trigger);
 		if (trigger == EventTrigger.GUI_ACTION) {
 			doSyncToStatic(location);
-			doAutoImportCurrentModule();
+			doCheckCurrentModuleMissing();
 		}
 	}
 
@@ -920,7 +968,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	protected void doSyncToStatic(ProgramLocation location) {
-		if (syncToStaticListing && location != null) {
+		if (isSyncToStaticListing() && location != null) {
 			ProgramLocation staticLoc = mappingService.getStaticLocationFromDynamic(location);
 			if (staticLoc != null) {
 				Swing.runIfSwingOrRunLater(() -> plugin.fireStaticLocationEvent(staticLoc));
@@ -928,11 +976,58 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		}
 	}
 
-	protected void doAutoImportCurrentModule() {
-		if (!autoImportCurrentModule) {
+	protected void doTryOpenProgram(DomainFile df, int version, int state) {
+		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
+		if (consoleService != null && consoleService.logContains(ctx)) {
 			return;
 		}
-		if (importerService == null) {
+		if (df.canRecover()) {
+			if (consoleService != null) {
+				consoleService.log(DebuggerResources.ICON_MODULES, "<html>Program <b>" +
+					HTMLUtilities.escapeHTML(df.getPathname()) +
+					"</b> has recovery data. It must be opened manually.</html>", ctx);
+			}
+			return;
+		}
+		new TaskLauncher(new Task("Open " + df, true, false, false) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				Program program = null;
+				try {
+					program = (Program) df.getDomainObject(this, false, false, monitor);
+					programManager.openProgram(program, state);
+				}
+				catch (VersionException e) {
+					if (consoleService != null) {
+						consoleService.log(DebuggerResources.ICON_MODULES, "<html>Program <b>" +
+							HTMLUtilities.escapeHTML(df.getPathname()) +
+							"</b> was created with a different version of Ghidra." +
+							" It must be opened manually.</html>", ctx);
+					}
+					return;
+				}
+				catch (Exception e) {
+					if (consoleService != null) {
+						consoleService.log(DebuggerResources.ICON_LOG_ERROR, "<html>Program <b>" +
+							HTMLUtilities.escapeHTML(df.getPathname()) +
+							"</b> could not be opened: " + e + ". Try opening it manually.</html>",
+							ctx);
+					}
+					return;
+				}
+				finally {
+					if (program != null) {
+						program.release(this);
+					}
+				}
+			}
+		}, tool.getToolFrame());
+	}
+
+	protected void doCheckCurrentModuleMissing() {
+		// Is there any reason to try to open the module if we're not syncing listings?
+		// I don't think so.
+		if (!isSyncToStaticListing()) {
 			return;
 		}
 		Trace trace = current.getTrace();
@@ -956,14 +1051,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 			DomainFile df = ProgramURLUtils.getFileForHackedUpGhidraURL(tool.getProject(),
 				mapping.getStaticProgramURL());
 			if (df != null) {
-				// We're almost certainly preparing to goTo, so make it current
-				programManager.openProgram(df, DomainFile.DEFAULT_VERSION,
-					ProgramManager.OPEN_CURRENT);
+				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_CURRENT);
 			}
 		}
 
-		Map<TraceModule, File> missing = new LinkedHashMap<>();
-		Set<DomainFile> toOpen = new LinkedHashSet<>();
+		Set<TraceModule> missing = new HashSet<>();
+		Set<DomainFile> toOpen = new HashSet<>();
 		TraceModuleManager modMan = trace.getModuleManager();
 		Collection<TraceModule> modules = Stream.concat(
 			modMan.getModulesAt(snap, address).stream().filter(m -> m.getSections().isEmpty()),
@@ -975,7 +1068,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		for (TraceModule mod : modules) {
 			Set<DomainFile> matches = mappingService.findProbableModulePrograms(mod);
 			if (matches.isEmpty()) {
-				missing.put(mod, new File(mod.getName()));
+				missing.add(mod);
 			}
 			else {
 				toOpen.addAll(matches);
@@ -984,11 +1077,21 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (programManager != null && !toOpen.isEmpty()) {
 			for (DomainFile df : toOpen) {
 				// Do not presume a goTo is about to happen. There are no mappings, yet.
-				programManager.openProgram(df, DomainFile.DEFAULT_VERSION,
+				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
 					ProgramManager.OPEN_VISIBLE);
 			}
 		}
-		importDialog.addFiles(missing.values());
+
+		if (importerService == null || consoleService == null) {
+			return;
+		}
+
+		for (TraceModule mod : missing) {
+			consoleService.log(DebuggerResources.ICON_LOG_ERROR,
+				"<html>The module <b><tt>" + HTMLUtilities.escapeHTML(mod.getName()) +
+					"</tt></b> was not found in the project</html>",
+				new DebuggerMissingModuleActionContext(mod));
+		}
 		/**
 		 * Once the programs are opened, including those which are successfully imported, the
 		 * section mapper should take over, eventually invoking callbacks to our mapping change
@@ -1013,7 +1116,7 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	}
 
 	public void setSyncToStaticListing(boolean sync) {
-		if (!isConnected()) {
+		if (!isMainListing()) {
 			throw new IllegalStateException(
 				"Only the main dynamic listing can be synced to the main static listing");
 		}
@@ -1027,17 +1130,12 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		doSyncToStatic(getLocation());
 	}
 
-	protected void doSetAutoImportCurrentModule(boolean autoImport) {
-		this.autoImportCurrentModule = autoImport;
-		doAutoImportCurrentModule();
-	}
-
 	public boolean isSyncToStaticListing() {
 		return syncToStaticListing;
 	}
 
 	public void setFollowsCurrentThread(boolean follows) {
-		if (isConnected()) {
+		if (isMainListing()) {
 			throw new IllegalStateException(
 				"The main dynamic listing always follows the current trace and thread");
 		}
@@ -1117,13 +1215,13 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 		if (!syncToStaticListing || trackedStatic == null) {
 			Swing.runIfSwingOrRunLater(() -> {
 				goTo(curView, loc);
-				doAutoImportCurrentModule();
+				doCheckCurrentModuleMissing();
 			});
 		}
 		else {
 			Swing.runIfSwingOrRunLater(() -> {
 				goTo(curView, loc);
-				doAutoImportCurrentModule();
+				doCheckCurrentModuleMissing();
 				plugin.fireStaticLocationEvent(trackedStatic);
 			});
 		}
@@ -1133,6 +1231,11 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Listi
 	public void dispose() {
 		super.dispose();
 		removeOldListeners();
+		if (consoleService != null) {
+			if (actionOpenProgram != null) {
+				consoleService.removeResolutionAction(actionOpenProgram);
+			}
+		}
 	}
 
 	@Override

@@ -276,7 +276,7 @@ public class CallbackValidator implements DebuggerModelListener, AutoCloseable {
 					fail("created twice (same object): " + object.getJoinedPath("."));
 				}
 				else {
-					fail("replaced before invalidation. old= " + exists + ", new=" + object);
+					fail("replaced before invalidation. old=" + exists.object + ", new=" + object);
 				}
 			}
 			validateCallbackThread("created");

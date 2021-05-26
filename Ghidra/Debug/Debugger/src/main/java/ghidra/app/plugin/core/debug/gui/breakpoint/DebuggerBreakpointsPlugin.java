@@ -25,19 +25,20 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
 @PluginInfo( // 
-		shortDescription = "Debugger breakpoints manager", //
-		description = "GUI to manage breakpoints", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		servicesRequired = { //
-			DebuggerLogicalBreakpointService.class, //
-			DebuggerModelService.class, //
-		}, eventsConsumed = {
-			TraceOpenedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-			TraceActivatedPluginEvent.class, //
-		} //
+	shortDescription = "Debugger breakpoints manager", //
+	description = "GUI to manage breakpoints", //
+	category = PluginCategoryNames.DEBUGGER, //
+	packageName = DebuggerPluginPackage.NAME, //
+	status = PluginStatus.RELEASED, //
+	servicesRequired = { //
+		DebuggerLogicalBreakpointService.class, //
+		DebuggerModelService.class, //
+	},
+	eventsConsumed = {
+		TraceOpenedPluginEvent.class, //
+		TraceClosedPluginEvent.class, //
+		TraceActivatedPluginEvent.class, //
+	} //
 )
 public class DebuggerBreakpointsPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerBreakpointsProvider provider;
@@ -54,6 +55,7 @@ public class DebuggerBreakpointsPlugin extends AbstractDebuggerPlugin {
 
 	@Override
 	protected void dispose() {
+		provider.dispose();
 		tool.removeComponentProvider(provider);
 		super.dispose();
 	}

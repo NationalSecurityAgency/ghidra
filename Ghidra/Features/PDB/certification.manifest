@@ -1,4 +1,7 @@
 ##VERSION: 2.0
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||||END|
 src/global/docs/README_PDB.html||GHIDRA||||END|
@@ -13,13 +16,19 @@ src/main/help/help/shared/redo.png||GHIDRA||||END|
 src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/help/help/shared/undo.png||GHIDRA||||END|
 src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/help/help/topics/Pdb/LoadPDBNew.html||GHIDRA||||END|
 src/main/help/help/topics/Pdb/PDB.htm||GHIDRA||||END|
-src/main/help/help/topics/Pdb/download_pdb_file.html||GHIDRA||||END|
-src/main/help/help/topics/Pdb/images/KnownSymbolServerURLsDialog.png||GHIDRA||||END|
-src/main/help/help/topics/Pdb/images/PdbOrXmlDialog.png||GHIDRA||||END|
-src/main/help/help/topics/Pdb/images/PeSpecifiedPathDialog.png||GHIDRA||||END|
-src/main/help/help/topics/Pdb/images/SuccessDialog.png||GHIDRA||||END|
-src/main/help/help/topics/Pdb/images/SymbolServerURLDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/LoadPdb_Advanced_NeedsConfig.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/LoadPdb_Advanced_Screenshot.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/LoadPdb_Initial_Screenshot.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/Plus2.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/SymbolServerConfig_AddButtonMenu.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/SymbolServerConfig_Screenshot.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/disk.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/help/help/topics/Pdb/images/down.png||GHIDRA||||END|
+src/main/help/help/topics/Pdb/images/error.png||Nuvola Icons - LGPL 2.1||||END|
+src/main/help/help/topics/Pdb/images/reload3.png||Crystal Clear Icons - LGPL 2.1||||END|
+src/main/help/help/topics/Pdb/images/up.png||GHIDRA||||END|
 src/pdb/README.txt||GHIDRA||||END|
 src/pdb/pdb.sln||GHIDRA||||END|
 src/pdb/pdb.vcxproj||GHIDRA||||END|

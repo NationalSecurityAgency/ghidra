@@ -22,5 +22,5 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Processors SuperH4'
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }

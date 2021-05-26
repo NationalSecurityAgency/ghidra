@@ -904,6 +904,10 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	private void traceOpened(Trace trace) {
 		synchronized (lock) {
+			if (trace.isClosed()) {
+				Msg.warn(this, "Got traceOpened for a close trace");
+				return;
+			}
 			InfoPerTrace newInfo = new InfoPerTrace(trace);
 			InfoPerTrace mustBeNull = trackedTraceInfo.put(trace, newInfo);
 			assert mustBeNull == null;
@@ -922,6 +926,10 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private void traceClosed(Trace trace) {
 		synchronized (lock) {
 			InfoPerTrace traceInfo = trackedTraceInfo.remove(trace);
+			if (traceInfo == null) {
+				Msg.warn(this, "Got traceClosed without/before traceOpened");
+				return;
+			}
 			traceInfo.dispose();
 			doAffectedByTraceClosed(trace);
 		}
@@ -1118,7 +1126,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc) {
-		loc = traceManager.fixLocation(loc, true);
+		loc = ProgramLocationUtils.fixLocation(loc, true);
 		TraceProgramView view = (TraceProgramView) loc.getProgram();
 		Trace trace = view.getTrace();
 		TraceLocation tloc = new DefaultTraceLocation(trace, null,

@@ -458,15 +458,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				return;
 			}
 			TraceModule mod = modules.iterator().next();
-			GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
-			chooser.setSelectedFile(new File(mod.getName()));
-			File file = chooser.getSelectedFile();
-			if (file == null) { // Perhaps cancelled
-				return;
-			}
-			Project activeProject = Objects.requireNonNull(AppInfo.getActiveProject());
-			DomainFolder root = activeProject.getProjectData().getRootFolder();
-			importerService.importFile(root, file);
+			importModuleFromFileSystem(mod);
 		}
 
 		@Override
@@ -507,6 +499,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;
+	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
 	@AutoServiceConsumed
 	ProgramManager programManager;
 	@AutoServiceConsumed
@@ -551,6 +545,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	DockingAction actionMapSectionTo;
 	DockingAction actionMapSectionsTo;
 
+	DockingAction actionImportMissingModule;
+	DockingAction actionMapMissingModule;
+
 	SelectAddressesAction actionSelectAddresses;
 	CaptureTypesAction actionCaptureTypes;
 	CaptureSymbolsAction actionCaptureSymbols;
@@ -580,6 +577,18 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		createActions();
 	}
 
+	private void importModuleFromFileSystem(TraceModule module) {
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.setSelectedFile(new File(module.getName()));
+		File file = chooser.getSelectedFile();
+		if (file == null) { // Perhaps cancelled
+			return;
+		}
+		Project activeProject = Objects.requireNonNull(AppInfo.getActiveProject());
+		DomainFolder root = activeProject.getProjectData().getRootFolder();
+		importerService.importFile(root, file);
+	}
+
 	@AutoServiceConsumed
 	private void setModelService(DebuggerModelService modelService) {
 		if (this.modelService != null) {
@@ -590,6 +599,29 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			this.modelService.addTraceRecordersChangedListener(recordersChangedListener);
 		}
 		contextChanged();
+	}
+
+	@AutoServiceConsumed
+	private void setConsoleService(DebuggerConsoleService consoleService) {
+		if (consoleService != null) {
+			if (actionImportMissingModule != null) {
+				consoleService.addResolutionAction(actionImportMissingModule);
+			}
+			if (actionMapMissingModule != null) {
+				consoleService.addResolutionAction(actionMapMissingModule);
+			}
+		}
+	}
+
+	protected void dispose() {
+		if (consoleService != null) {
+			if (actionImportMissingModule != null) {
+				consoleService.removeResolutionAction(actionImportMissingModule);
+			}
+			if (actionMapMissingModule != null) {
+				consoleService.removeResolutionAction(actionMapMissingModule);
+			}
+		}
 	}
 
 	@Override
@@ -743,6 +775,15 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.onAction(this::activatedMapSectionsTo)
 				.buildAndInstallLocal(this);
 
+		actionImportMissingModule = ImportMissingModuleAction.builder(plugin)
+				.withContext(DebuggerMissingModuleActionContext.class)
+				.onAction(this::activatedImportMissingModule)
+				.build();
+		actionMapMissingModule = MapMissingModuleAction.builder(plugin)
+				.withContext(DebuggerMissingModuleActionContext.class)
+				.onAction(this::activatedMapMissingModule)
+				.build();
+
 		actionSelectAddresses = new SelectAddressesAction();
 		actionCaptureTypes = new CaptureTypesAction();
 		actionCaptureSymbols = new CaptureSymbolsAction();
@@ -775,6 +816,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	private boolean isContextSectionsOfOneModule(ActionContext ignored) {
 		Set<TraceSection> sel = getSelectedSections(myActionContext);
+		if (sel == null || sel.isEmpty()) {
+			return false;
+		}
 		return sel.stream().map(TraceSection::getModule).distinct().count() == 1;
 	}
 
@@ -816,6 +860,19 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			return;
 		}
 		mapSectionTo(sel.iterator().next());
+	}
+
+	private void activatedImportMissingModule(DebuggerMissingModuleActionContext context) {
+		if (importerService == null) {
+			Msg.error(this, "Import service is not present");
+		}
+		importModuleFromFileSystem(context.getModule());
+		consoleService.removeFromLog(context); // TODO: Should remove when mapping is created
+	}
+
+	private void activatedMapMissingModule(DebuggerMissingModuleActionContext context) {
+		mapModuleTo(context.getModule());
+		consoleService.removeFromLog(context); // TODO: Should remove when mapping is created
 	}
 
 	private void toggledFilter(ActionContext ignored) {
@@ -915,12 +972,19 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void promptModuleProposal(Collection<ModuleMapEntry> proposal) {
+		if (proposal.isEmpty()) {
+			Msg.showInfo(this, getComponent(), "Map Modules",
+				"Could not formulate a proposal for any selected module." +
+					" You may need to import and/or open the destination images first.");
+			return;
+		}
 		Collection<ModuleMapEntry> adjusted =
 			moduleProposalDialog.adjustCollection(getTool(), proposal);
-		if (adjusted != null && staticMappingService != null) {
-			tool.executeBackgroundCommand(
-				new MapModulesBackgroundCommand(staticMappingService, adjusted), currentTrace);
+		if (adjusted == null || staticMappingService == null) {
+			return;
 		}
+		tool.executeBackgroundCommand(
+			new MapModulesBackgroundCommand(staticMappingService, adjusted), currentTrace);
 	}
 
 	protected void mapModules(Set<TraceModule> modules) {
@@ -947,12 +1011,19 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void promptSectionProposal(Collection<SectionMapEntry> proposal) {
+		if (proposal.isEmpty()) {
+			Msg.showInfo(this, getComponent(), "Map Sections",
+				"Could not formulate a proposal for any selected section." +
+					" You may need to import and/or open the destination images first.");
+			return;
+		}
 		Collection<SectionMapEntry> adjusted =
 			sectionProposalDialog.adjustCollection(getTool(), proposal);
-		if (adjusted != null && staticMappingService != null) {
-			tool.executeBackgroundCommand(
-				new MapSectionsBackgroundCommand(staticMappingService, adjusted), currentTrace);
+		if (adjusted == null || staticMappingService == null) {
+			return;
 		}
+		tool.executeBackgroundCommand(
+			new MapSectionsBackgroundCommand(staticMappingService, adjusted), currentTrace);
 	}
 
 	protected void mapSections(Set<TraceSection> sections) {

@@ -22,5 +22,5 @@ eclipse.project.name = 'Features DebugUtils'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }

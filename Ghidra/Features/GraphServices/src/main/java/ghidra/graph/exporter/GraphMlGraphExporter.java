@@ -17,7 +17,11 @@ package ghidra.graph.exporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.jgrapht.nio.AttributeType;
+import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.graphml.GraphMLExporter;
 
 import ghidra.service.graph.*;
@@ -27,9 +31,36 @@ public class GraphMlGraphExporter extends AbstractAttributedGraphExporter {
 	@Override
 	public void exportGraph(AttributedGraph graph, File file) throws IOException {
 		GraphMLExporter<AttributedVertex, AttributedEdge> exporter =
-			new GraphMLExporter<>(vertexIdProvider);
+				new GraphMLExporter<>(vertexIdProvider);
 
 		exporter.setEdgeIdProvider(edgeIdProvider);
+		exporter.setVertexAttributeProvider(
+				vertex -> vertex.entrySet()
+						.stream()
+						.collect(
+								Collectors.toMap(
+										Map.Entry::getKey,
+										entry -> new DefaultAttribute(entry.getValue(), AttributeType.STRING))));
+		exporter.setEdgeAttributeProvider(
+				edge -> edge.entrySet()
+						.stream()
+						.collect(
+								Collectors.toMap(
+										Map.Entry::getKey,
+										entry -> new DefaultAttribute<>(entry.getValue(), AttributeType.STRING))));
+
+		graph.vertexSet().stream()
+				.map(Attributed::getAttributeMap)
+				.flatMap(m -> m.entrySet().stream())
+				.map(Map.Entry::getKey)
+				.forEach(key -> exporter.registerAttribute(key, GraphMLExporter.AttributeCategory.NODE, AttributeType.STRING));
+
+		graph.edgeSet().stream()
+				.map(Attributed::getAttributeMap)
+				.flatMap(m -> m.entrySet().stream())
+				.map(Map.Entry::getKey)
+				.forEach(key -> exporter.registerAttribute(key, GraphMLExporter.AttributeCategory.EDGE, AttributeType.STRING));
+
 		try {
 			exporter.exportGraph(graph, file);
 		}

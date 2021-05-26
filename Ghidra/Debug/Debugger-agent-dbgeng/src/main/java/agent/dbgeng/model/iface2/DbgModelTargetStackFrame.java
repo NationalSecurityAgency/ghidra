@@ -23,6 +23,7 @@ import agent.dbgeng.manager.DbgStackFrame;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgThreadImpl;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.program.model.address.Address;
@@ -62,26 +63,38 @@ public interface DbgModelTargetStackFrame extends //
 		AddressSpace space = getModel().getAddressSpace("ram");
 		return requestNativeAttributes().thenCompose(attrs -> {
 			if (attrs == null) {
-				return CompletableFuture.completedFuture(null);
+				return AsyncUtils.NIL;
 			}
 			map.putAll(attrs);
 			DbgModelTargetObject attributes = (DbgModelTargetObject) attrs.get("Attributes");
 			if (attributes == null) {
-				return CompletableFuture.completedFuture(null);
+				return AsyncUtils.NIL;
 			}
 			return attributes.requestAugmentedAttributes().thenCompose(ax -> {
-				Map<String, ?> subattrs = attributes.getCachedAttributes();
-				if (subattrs == null) {
-					return CompletableFuture.completedFuture(null);
+				if (!isValid()) {
+					return AsyncUtils.NIL;
 				}
+				Map<String, ?> subattrs = attributes.getCachedAttributes();
 				DbgModelTargetObject frameNumber =
 					(DbgModelTargetObject) subattrs.get("FrameNumber");
+				if (frameNumber == null) {
+					return AsyncUtils.NIL;
+				}
 				return frameNumber.requestAugmentedAttributes().thenCompose(bx -> {
+					if (!isValid()) {
+						return AsyncUtils.NIL;
+					}
 					Object noval = frameNumber.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
 					String nostr = noval.toString();
 					DbgModelTargetObject instructionOffset =
 						(DbgModelTargetObject) subattrs.get("InstructionOffset");
+					if (instructionOffset == null) {
+						return AsyncUtils.NIL;
+					}
 					return instructionOffset.requestAugmentedAttributes().thenAccept(cx -> {
+						if (!isValid()) {
+							return;
+						}
 						String oldval = (String) getCachedAttribute(DISPLAY_ATTRIBUTE_NAME);
 						Object pcval = instructionOffset.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
 						String pcstr = pcval.toString();

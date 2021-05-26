@@ -22,7 +22,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgmodel-traceloader'
 
 dependencies {
-	compile project(":Debugger")
-	compile project(":Debugger-agent-dbgeng")
-	compile project(':Debugger-agent-dbgmodel') 
+	api project(":Debugger")
+	api project(":Debugger-agent-dbgeng")
+	api project(':Debugger-agent-dbgmodel') 
 }

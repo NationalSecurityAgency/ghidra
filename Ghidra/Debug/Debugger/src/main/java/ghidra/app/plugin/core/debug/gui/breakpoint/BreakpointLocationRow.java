@@ -22,7 +22,6 @@ import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 
 public class BreakpointLocationRow {
@@ -43,17 +42,18 @@ public class BreakpointLocationRow {
 	}
 
 	public void setEnabled(boolean enabled) {
+		// TODO: Make this toggle the individual location, if possible, not the whole spec.
 		TraceRecorder recorder = provider.modelService.getRecorder(loc.getTrace());
 		TargetBreakpointLocation bpt = recorder.getTargetBreakpoint(loc);
 		if (enabled) {
 			bpt.getSpecification().enable().exceptionally(ex -> {
-				Msg.showError(this, null, "Toggle breakpoint", "Could not enable breakpoint", ex);
+				provider.breakpointError("Toggle breakpoint", "Could not enable breakpoint", ex);
 				return null;
 			});
 		}
 		else {
 			bpt.getSpecification().disable().exceptionally(ex -> {
-				Msg.showError(this, null, "Toggle breakpoint", "Could not disable breakpoint", ex);
+				provider.breakpointError("Toggle breakpoint", "Could not disable breakpoint", ex);
 				return null;
 			});
 		}

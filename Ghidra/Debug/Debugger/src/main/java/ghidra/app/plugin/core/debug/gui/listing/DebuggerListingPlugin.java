@@ -65,6 +65,7 @@ import utilities.util.SuppressableCallback.Suppression;
 	eventsConsumed = {
 		// ProgramSelectionPluginEvent.class, // TODO: Later or remove
 		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
+		ProgramOpenedPluginEvent.class, // For auto-open log cleanup
 		ProgramClosedPluginEvent.class, // For marker set cleanup
 		ProgramLocationPluginEvent.class, // For static listing sync
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
@@ -275,6 +276,10 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 				}
 			});
 		}
+		if (event instanceof ProgramOpenedPluginEvent) {
+			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+			allProviders(p -> p.programOpened(ev.getProgram()));
+		}
 		if (event instanceof ProgramClosedPluginEvent) {
 			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
 			allProviders(p -> p.programClosed(ev.getProgram()));
@@ -342,7 +347,7 @@ public class DebuggerListingPlugin extends CodeBrowserPlugin implements Debugger
 		//cbGoTo.invoke(() -> {
 		DebuggerListingProvider provider = getConnectedProvider();
 		provider.doSyncToStatic(location);
-		provider.doAutoImportCurrentModule();
+		provider.doCheckCurrentModuleMissing();
 		//});
 		return true;
 	}

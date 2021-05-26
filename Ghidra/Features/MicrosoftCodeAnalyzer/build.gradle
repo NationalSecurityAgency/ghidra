@@ -22,6 +22,6 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features MicrosoftCodeAnalyzer'
 
 dependencies {
-	compile project(":MicrosoftDmang")
-	compile project(":Base")
+	api project(":MicrosoftDmang")
+	api project(":Base")
 }

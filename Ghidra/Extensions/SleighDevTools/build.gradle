@@ -20,5 +20,5 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Xtra SleighDevTools'
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }

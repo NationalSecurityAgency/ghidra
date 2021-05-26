@@ -134,6 +134,12 @@ public interface FGVertex extends VisualVertex {
 
 	public ProgramSelection getProgramSelection();
 
+	/**
+	 * Returns any selected text within the vertex that does not span multiple fields
+	 * @return the text
+	 */
+	public String getTextSelection();
+
 	public void setProgramHighlight(ProgramSelection highlight);
 
 	public ProgramLocation getProgramLocation();

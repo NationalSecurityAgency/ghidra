@@ -59,6 +59,9 @@ public interface DbgModelTargetSession extends //
 	@Override
 	public default void consoleOutput(String output, int mask) {
 
+		if (!isValid()) {
+			return;
+		}
 		Channel chan = TargetConsole.Channel.STDOUT;
 		if (((mask & DebugOutputFlags.DEBUG_OUTPUT_ERROR.getValue()) //
 				== DebugOutputFlags.DEBUG_OUTPUT_ERROR.getValue()) || //
@@ -67,6 +70,9 @@ public interface DbgModelTargetSession extends //
 			chan = TargetConsole.Channel.STDERR;
 		}
 		if (output.contains("loaded *kernel* extension dll for usermode")) {
+			return;
+		}
+		if (!isValid()) {
 			return;
 		}
 		getListeners().fire.consoleOutput(getProxy(), chan, output);

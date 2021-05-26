@@ -32,6 +32,7 @@ import org.jdom.Element;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
@@ -921,11 +922,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 				optionsMgr.editOptions();
 			}
 
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return isMainWindow || !contextTypes.isEmpty();
-			}
 		};
+		optionsAction.setAddToAllWindows(true);
 		optionsAction.setHelpLocation(
 			new HelpLocation(ToolConstants.FRONT_END_HELP_TOPIC, "Tool Options"));
 		MenuData menuData =
@@ -1016,90 +1014,43 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	protected void addHelpActions() {
+		new ActionBuilder("About Ghidra", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
+				.menuGroup("ZZA")
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
+				.buildAndInstall(this);
 
-		DockingAction action = new DockingAction("About Ghidra", ToolConstants.TOOL_OWNER) {
-
-			@Override
-			public void actionPerformed(ActionContext context) {
-				DockingWindowManager.showDialog(new AboutDialog());
-			}
-
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;
-			}
-		};
-		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, "&About Ghidra" }, null, "ZZA"));
-
-		action.setHelpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"));
-		action.setEnabled(true);
-		addAction(action);
-
-		DockingAction userAgreementAction = new DockingAction("User Agreement",
-			ToolConstants.TOOL_OWNER, KeyBindingType.UNSUPPORTED) {
-
-			@Override
-			public void actionPerformed(ActionContext context) {
-				DockingWindowManager.showDialog(new UserAgreementDialog(false, false));
-			}
-
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;
-			}
-		};
-		userAgreementAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, "&User Agreement" }, null,
-				ToolConstants.HELP_CONTENTS_MENU_GROUP));
-		userAgreementAction.setHelpLocation(
-			new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"));
-
-		userAgreementAction.setEnabled(true);
-		addAction(userAgreementAction);
+		new ActionBuilder("User Agreement", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(
+					c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
+				.buildAndInstall(this);
 
 		final ErrorReporter reporter = ErrLogDialog.getErrorReporter();
 		if (reporter != null) {
-			action = new DockingAction("Report Bug", ToolConstants.TOOL_OWNER) {
-
-				@Override
-				public void actionPerformed(ActionContext context) {
-					reporter.report(getToolFrame(), "User Bug Report", null);
-				}
-
-				@Override
-				public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-					return true;
-				}
-			};
-			action.setMenuBarData(new MenuData(
-				new String[] { ToolConstants.MENU_HELP, "&Report Bug..." }, null, "BBB"));
-
-			action.setHelpLocation(new HelpLocation("ErrorReporting", "Report_Bug"));
-			action.setEnabled(true);
-			addAction(action);
+			new ActionBuilder("Report Bug", ToolConstants.TOOL_OWNER)
+					.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
+					.menuGroup("BBB")
+					.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
+					.inWindow(ActionBuilder.When.ALWAYS)
+					.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
+					.buildAndInstall(this);
 		}
 
 		HelpService help = Help.getHelpService();
-		action = new DockingAction("Contents", ToolConstants.TOOL_OWNER) {
 
-			@Override
-			public void actionPerformed(ActionContext context) {
-				help.showHelp(null, false, getToolFrame());
-			}
-
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;
-			}
-		};
-		action.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_HELP, "&Contents" },
-			null, ToolConstants.HELP_CONTENTS_MENU_GROUP));
-
-		action.setEnabled(true);
-		action.setHelpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"));
-
-		addAction(action);
+		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&Contents")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> help.showHelp(null, false, getToolFrame()))
+				.buildAndInstall(this);
 	}
 
 	/**

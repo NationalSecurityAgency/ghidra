@@ -24,11 +24,11 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features Decompiler'
 
 dependencies {
-	compile project(':Base')
-	compile project(':SoftwareModeling')
+	api project(':Base')
+	api project(':SoftwareModeling')
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
-	integrationTestRuntime project(path: ':Base', configuration: 'testArtifacts')
-	testCompile "org.jmockit:jmockit:1.44"
+	integrationTestImplementation project(path: ':Base', configuration: 'testArtifacts')
+	testImplementation "org.jmockit:jmockit:1.44"
 	
     helpPath project(path: ":Base", configuration: 'helpPath')
 }

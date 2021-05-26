@@ -19,9 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -29,16 +27,16 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
+import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.framework.model.DomainFile;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.SystemUtilities;
 import ghidra.util.database.UndoableTransaction;
 
-public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
-	protected static final long TIMEOUT_MILLIS =
-		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
+public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest
+		implements DebuggerModelTestUtils {
 
 	@Test
 	public void testGetOpenTraces() throws Exception {
@@ -341,6 +339,8 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 
 		waitForValue(() -> modelService.getTarget(trace));
+		// TODO: Fragile. This depends on the recorder advancing the snap for each thread
+		waitForPass(() -> assertEquals(2, trace.getTimeManager().getSnapshotCount()));
 
 		traceManager.openTrace(trace);
 		waitForSwing();
@@ -352,13 +352,13 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		// No default thread/frame when live with focus support
 		assertNull(traceManager.getCurrentThread());
-		assertEquals(mb.testProcess1, mb.testModel.session.getFocus());
+		waitForPass(() -> assertEquals(mb.testProcess1, mb.testModel.session.getFocus()));
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertEquals(mb.testThread1, mb.testModel.session.getFocus());
+		waitForPass(() -> assertEquals(mb.testThread1, mb.testModel.session.getFocus()));
 
 		TestTargetStack stack = mb.testThread1.addStack();
 		// Note, push simply moves the data, the new frame still has the higher index
@@ -375,23 +375,22 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateFrame(1);
 		waitForSwing();
 
-		assertEquals(frame1, mb.testModel.session.getFocus());
+		waitForPass(() -> assertEquals(frame1, mb.testModel.session.getFocus()));
 
 		traceManager.activateFrame(0);
 		waitForSwing();
 
-		assertEquals(frame0, mb.testModel.session.getFocus());
+		waitForPass(() -> assertEquals(frame0, mb.testModel.session.getFocus()));
 
 		traceManager.setSynchronizeFocus(false);
 		traceManager.activateFrame(1);
 		waitForSwing();
 
-		assertEquals(frame0, mb.testModel.session.getFocus());
+		waitForPass(() -> assertEquals(frame0, mb.testModel.session.getFocus()));
 	}
 
 	@Test
-	@Ignore("TODO") // Not sure why this fails under Gradle but not my IDE
-	public void testSynchronizeFocusModelToTrace() throws Exception {
+	public void testSynchronizeFocusModelToTrace() throws Throwable {
 		assertTrue(traceManager.isSynchronizeFocus());
 
 		createTestModel();
@@ -406,43 +405,40 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertNull(traceManager.getCurrentTrace());
 
-		mb.testModel.session.requestFocus(mb.testProcess1)
-				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		waitForSwing();
+		waitOn(mb.testModel.session.requestFocus(mb.testProcess1));
 
 		// No default thread/frame when live with focus support
 		assertNull(traceManager.getCurrentThread());
-		assertEquals(recorder.getTrace(), traceManager.getCurrentTrace());
+		waitForPass(() -> assertEquals(recorder.getTrace(), traceManager.getCurrentTrace()));
 
-		mb.testModel.session.requestFocus(mb.testThread1)
-				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		waitForSwing();
+		waitOn(mb.testModel.session.requestFocus(mb.testThread1));
 
-		assertEquals(recorder.getTraceThread(mb.testThread1), traceManager.getCurrentThread());
+		TraceThread thread1 = recorder.getTraceThread(mb.testThread1);
+		waitForPass(() -> assertEquals(thread1, traceManager.getCurrentThread()));
 
 		TestTargetStack stack = mb.testThread1.addStack();
 		// Note, push simply moves the data, the new frame still has the higher index
 		TestTargetStackFrameHasRegisterBank frame0 = stack.pushFrameHasBank(mb.addr(0x00400000));
 		TestTargetStackFrameHasRegisterBank frame1 = stack.pushFrameHasBank(mb.addr(0x00400100));
-		waitForDomainObject(trace);
+		waitForPass(() -> {
+			TraceStack s = trace.getStackManager().getLatestStack(thread1, recorder.getSnap());
+			assertNotNull(s);
+			assertEquals(2, s.getDepth());
+		});
 
 		// Starting with 0 results in no change in coordinates, so ignored
-		mb.testModel.session.requestFocus(frame1)
-				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		waitForSwing();
+		waitOn(mb.testModel.session.requestFocus(frame1));
 
-		assertEquals(1, traceManager.getCurrentFrame());
+		waitForPass(() -> assertEquals(1, traceManager.getCurrentFrame()));
 
-		mb.testModel.session.requestFocus(frame0)
-				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		waitForSwing();
+		waitOn(mb.testModel.session.requestFocus(frame0));
 
-		assertEquals(0, traceManager.getCurrentFrame());
+		waitForPass(() -> assertEquals(0, traceManager.getCurrentFrame()));
 
 		traceManager.setSynchronizeFocus(false);
-		mb.testModel.session.requestFocus(frame1)
-				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		waitForSwing();
+		waitOn(mb.testModel.session.requestFocus(frame1));
+		// Not super reliable, but at least wait for it to change in case it does
+		Thread.sleep(200);
 
 		assertEquals(0, traceManager.getCurrentFrame());
 	}

@@ -110,6 +110,10 @@ public class SSLContextInitializer implements ModuleInitializer {
 			// Establish default HTTPS socket factory
 			HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 
+			// Force the HttpClient to be re-created by the next request to
+			// HttpClients.getHttpClient() so that the new SSLContext is used
+			HttpClients.clearHttpClient();
+
 			return true;
 
 		}

@@ -16,6 +16,7 @@
 package agent.dbgeng.manager.cmd;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugSystemObjects;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
@@ -39,7 +40,11 @@ public class DbgSetActiveProcessCommand extends AbstractDbgCommand<Void> {
 		if (process != null) {
 			DebugProcessId id = process.getId();
 			if (id != null) {
-				manager.getSystemObjects().setCurrentProcessId(id);
+				DebugSystemObjects so = manager.getSystemObjects();
+				DebugProcessId currentProcessId = so.getCurrentProcessId();
+				if (id.id != currentProcessId.id) {
+					so.setCurrentProcessId(id);
+				}
 			}
 		}
 	}

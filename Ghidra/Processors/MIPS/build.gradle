@@ -22,7 +22,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Processors MIPS'
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
 
 sleighCompileOptions = [

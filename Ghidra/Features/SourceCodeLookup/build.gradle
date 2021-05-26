@@ -23,7 +23,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features SourceCodeLookup'
 
 dependencies {
-	compile project(":Base")
-	compile project(":Decompiler")
+	api project(":Base")
+	api project(":Decompiler")
 	helpPath project(path: ":Decompiler", configuration: 'helpPath')
 }

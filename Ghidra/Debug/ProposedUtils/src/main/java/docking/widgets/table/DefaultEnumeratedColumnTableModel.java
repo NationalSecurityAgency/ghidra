@@ -163,18 +163,22 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-		R row = modelData.get(rowIndex);
-		C col = cols[columnIndex];
-		Class<?> cls = col.getValueClass();
-		col.setValueOf(row, cls.cast(aValue));
+		synchronized (modelData) {
+			R row = modelData.get(rowIndex);
+			C col = cols[columnIndex];
+			Class<?> cls = col.getValueClass();
+			col.setValueOf(row, cls.cast(aValue));
+		}
 		fireTableCellUpdated(rowIndex, columnIndex);
 	}
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		R row = modelData.get(rowIndex);
-		C col = cols[columnIndex];
-		return col.isEditable(row);
+		synchronized (modelData) {
+			R row = modelData.get(rowIndex);
+			C col = cols[columnIndex];
+			return col.isEditable(row);
+		}
 	}
 
 	@Override
@@ -200,35 +204,47 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 
 	@Override
 	public void add(R row) {
-		int rowIndex = modelData.size();
-		modelData.add(row);
+		int rowIndex;
+		synchronized (modelData) {
+			rowIndex = modelData.size();
+			modelData.add(row);
+		}
 		fireTableRowsInserted(rowIndex, rowIndex);
 	}
 
 	@Override
 	public void addAll(Collection<R> c) {
-		int startIndex = modelData.size();
-		modelData.addAll(c);
-		int endIndex = modelData.size() - 1;
+		int startIndex;
+		int endIndex;
+		synchronized (modelData) {
+			startIndex = modelData.size();
+			modelData.addAll(c);
+			endIndex = modelData.size() - 1;
+		}
 		fireTableRowsInserted(startIndex, endIndex);
 	}
 
 	@Override
 	public void notifyUpdated(R row) {
-		int rowIndex = modelData.indexOf(row);
+		int rowIndex;
+		synchronized (modelData) {
+			rowIndex = modelData.indexOf(row);
+		}
 		fireTableRowsUpdated(rowIndex, rowIndex);
 	}
 
 	@Override
 	public List<R> notifyUpdatedWith(Predicate<R> predicate) {
 		int lastIndexUpdated = 0;
-		ListIterator<R> rit = modelData.listIterator();
 		List<R> updated = new ArrayList<>();
-		while (rit.hasNext()) {
-			R row = rit.next();
-			if (predicate.test(row)) {
-				lastIndexUpdated = rit.previousIndex();
-				updated.add(row);
+		ListIterator<R> rit = modelData.listIterator();
+		synchronized (modelData) {
+			while (rit.hasNext()) {
+				R row = rit.next();
+				if (predicate.test(row)) {
+					lastIndexUpdated = rit.previousIndex();
+					updated.add(row);
+				}
 			}
 		}
 		int size = updated.size();
@@ -245,25 +261,30 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 
 	@Override
 	public void delete(R row) {
-		int rowIndex = modelData.indexOf(row);
-		if (rowIndex == -1) {
-			return;
+		int rowIndex;
+		synchronized (modelData) {
+			rowIndex = modelData.indexOf(row);
+			if (rowIndex == -1) {
+				return;
+			}
+			modelData.remove(rowIndex);
 		}
-		modelData.remove(rowIndex);
 		fireTableRowsDeleted(rowIndex, rowIndex);
 	}
 
 	@Override
 	public List<R> deleteWith(Predicate<R> predicate) {
 		int lastIndexRemoved = 0;
-		ListIterator<R> rit = modelData.listIterator();
 		List<R> removed = new ArrayList<>();
-		while (rit.hasNext()) {
-			R row = rit.next();
-			if (predicate.test(row)) {
-				lastIndexRemoved = rit.previousIndex();
-				rit.remove();
-				removed.add(row);
+		synchronized (modelData) {
+			ListIterator<R> rit = modelData.listIterator();
+			while (rit.hasNext()) {
+				R row = rit.next();
+				if (predicate.test(row)) {
+					lastIndexRemoved = rit.previousIndex();
+					rit.remove();
+					removed.add(row);
+				}
 			}
 		}
 		int size = removed.size();
@@ -280,17 +301,28 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 
 	@Override
 	public R findFirst(Predicate<R> predicate) {
-		for (R row : modelData) {
-			if (predicate.test(row)) {
-				return row;
+		synchronized (modelData) {
+			for (R row : modelData) {
+				if (predicate.test(row)) {
+					return row;
+				}
 			}
+			return null;
 		}
-		return null;
 	}
 
 	@Override
 	public void clear() {
-		modelData.clear();
+		synchronized (modelData) {
+			modelData.clear();
+		}
 		fireTableDataChanged();
+	}
+
+	@Override
+	protected void sort(List<R> data, TableSortingContext<R> sortingContext) {
+		synchronized (data) {
+			super.sort(data, sortingContext);
+		}
 	}
 }

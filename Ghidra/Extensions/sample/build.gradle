@@ -22,5 +22,5 @@ eclipse.project.name = 'Xtra sample'
 
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }

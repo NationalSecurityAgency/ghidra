@@ -19,6 +19,7 @@ import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -36,9 +37,14 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
+import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
+import ghidra.framework.model.*;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -55,6 +61,9 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	static LocationTrackingSpec getLocationTrackingSpec(String name) {
@@ -94,12 +103,16 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		codeViewer = tool.getService(CodeViewerService.class);
 	}
 
-	protected boolean goToDyn(Address address) {
-		return goToDyn(new ProgramLocation(traceManager.getCurrentView(), address));
+	protected void goToDyn(Address address) {
+		goToDyn(new ProgramLocation(traceManager.getCurrentView(), address));
 	}
 
-	protected boolean goToDyn(ProgramLocation location) {
-		return listingProvider.goTo(location.getProgram(), location);
+	protected void goToDyn(ProgramLocation location) {
+		waitForPass(() -> {
+			runSwing(() -> listingProvider.goTo(location.getProgram(), location));
+			ProgramLocation confirm = listingProvider.getLocation();
+			assertEquals(location.getAddress(), confirm.getAddress());
+		});
 	}
 
 	protected static byte[] incBlock() {
@@ -671,19 +684,14 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
-		runSwing(() -> goToDyn(addr(trace, 0x55550800)));
+		goToDyn(addr(trace, 0x55550800));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
-		runSwing(() -> goToDyn(addr(trace, 0x55551800)));
-		waitForPass(() -> {
-			ProgramLocation location = listingProvider.getLocation();
-			assertNotNull(location);
-			assertEquals(addr(trace, 0x55551800), location.getAddress());
-		});
+		goToDyn(addr(trace, 0x55551800));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
@@ -704,13 +712,16 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		/**
 		 * We're now moving to the written block
 		 */
-		runSwing(() -> goToDyn(addr(trace, 0x55550800)));
+		goToDyn(addr(trace, 0x55550800));
 		waitForSwing();
 		waitForDomainObject(trace);
-		buf.clear();
-		assertEquals(data.length,
-			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
-		assertArrayEquals(data, buf.array());
+		// NB. Recorder can delay writing in a thread / queue
+		waitForPass(() -> {
+			buf.clear();
+			assertEquals(data.length, trace.getMemoryManager()
+					.getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
+			assertArrayEquals(data, buf.array());
+		});
 	}
 
 	@Test
@@ -836,7 +847,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		runSwing(() -> goToDyn(tb.addr(0x00400000)));
+		goToDyn(tb.addr(0x00400000));
 		// Ensure it's changed so we know the action is effective
 		waitForSwing();
 		assertEquals(tb.addr(0x00400000), listingProvider.getLocation().getAddress());
@@ -1078,9 +1089,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testActionAutoImportCurrentModuleWithSections() throws Exception {
+	public void testPromptImportCurrentModuleWithSections() throws Exception {
 		addPlugin(tool, ImporterPlugin.class);
-		assertTrue(listingProvider.actionAutoImportCurrentModule.isEnabled());
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -1099,16 +1110,19 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// In the module, but not in its section
 		listingPlugin.goTo(tb.addr(0x00411234), true);
 		waitForSwing();
-		assertFalse(listingProvider.importDialog.isVisible());
+		waitForPass(() -> assertEquals(0,
+			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 
 		listingPlugin.goTo(tb.addr(0x00401234), true);
-		waitForDialogComponent(DebuggerModuleImportDialog.class);
+		waitForSwing();
+		waitForPass(() -> assertEquals(1,
+			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 	}
 
 	@Test
-	public void testActionAutoImportCurrentModuleWithoutSections() throws Exception {
+	public void testPromptImportCurrentModuleWithoutSections() throws Exception {
 		addPlugin(tool, ImporterPlugin.class);
-		assertTrue(listingProvider.actionAutoImportCurrentModule.isEnabled());
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -1116,7 +1130,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					.addRegion("bash:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0041ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
-			TraceModule bin = tb.trace.getModuleManager()
+			tb.trace.getModuleManager()
 					.addLoadedModule("/bin/bash", "/bin/bash",
 						tb.range(0x00400000, 0x0041ffff), 0);
 
@@ -1125,7 +1139,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// In the module, but not in its section
 		listingPlugin.goTo(tb.addr(0x00411234), true);
-		waitForDialogComponent(DebuggerModuleImportDialog.class);
+		waitForSwing();
+		waitForPass(() -> assertEquals(1,
+			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 	}
 
 	@Test
@@ -1343,5 +1359,128 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForDomainObject(tb.trace);
 
 		assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress());
+	}
+
+	@Test
+	public void testSyncToStaticListingOpensModule() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		createAndOpenTrace();
+		createAndOpenProgramFromTrace();
+		intoProject(tb.trace);
+		intoProject(program);
+
+		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+			program.getMemory()
+					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
+						monitor, false);
+		}
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
+			memory.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			TraceLocation from =
+				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
+			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
+			mappingService.addMapping(from, to, 0x8000, false);
+		}
+		waitForProgram(program);
+		waitForDomainObject(tb.trace);
+
+		programManager.closeAllPrograms(true);
+		waitForPass(() -> assertEquals(0, programManager.getAllOpenPrograms().length));
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		listingProvider.getListingPanel()
+				.setCursorPosition(
+					new ProgramLocation(tb.trace.getProgramView(), tb.addr(0x00401234)),
+					EventTrigger.GUI_ACTION);
+		waitForSwing();
+
+		waitForPass(() -> assertEquals(1, programManager.getAllOpenPrograms().length));
+		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
+
+		assertFalse(consolePlugin
+				.logContains(new DebuggerOpenProgramActionContext(program.getDomainFile())));
+	}
+
+	@Test
+	public void testSyncToStaticLogsRecoverableProgram() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "root");
+		DomainFile df = new TestDummyDomainFile(root, "dummyFile") {
+			@Override
+			public boolean canRecover() {
+				return true;
+			}
+		};
+
+		listingProvider.doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
+			ProgramManager.OPEN_CURRENT);
+		waitForSwing();
+
+		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
+		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
+		assertTrue(consolePlugin.getLogRow(ctx).getMessage().contains("recovery"));
+	}
+
+	@Test
+	public void testSyncToStaticLogsUpgradeableProgram() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "root");
+		DomainFile df = new TestDummyDomainFile(root, "dummyFile") {
+			@Override
+			public boolean canRecover() {
+				return false;
+			}
+
+			@Override
+			public DomainObject getDomainObject(Object consumer, boolean okToUpgrade,
+					boolean okToRecover, TaskMonitor monitor)
+					throws VersionException, IOException, CancelledException {
+				throw new VersionException();
+			}
+		};
+
+		listingProvider.doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
+			ProgramManager.OPEN_CURRENT);
+		waitForSwing();
+
+		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
+		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
+		assertTrue(consolePlugin.getLogRow(ctx).getMessage().contains("version"));
+	}
+
+	@Test
+	public void testActionOpenProgram() throws Exception {
+		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
+
+		createProgram();
+		intoProject(program);
+
+		assertEquals(0, programManager.getAllOpenPrograms().length);
+
+		DebuggerOpenProgramActionContext ctx =
+			new DebuggerOpenProgramActionContext(program.getDomainFile());
+		consolePlugin.log(DebuggerResources.ICON_MODULES, "Test resolution", ctx);
+		waitForSwing();
+
+		LogRow row = consolePlugin.getLogRow(ctx);
+		assertEquals(1, row.getActions().size());
+		BoundAction boundAction = row.getActions().get(0);
+		assertEquals(listingProvider.actionOpenProgram, boundAction.action);
+
+		boundAction.perform();
+		waitForSwing();
+
+		waitForPass(() -> assertEquals(1, programManager.getAllOpenPrograms().length));
+		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
+		// TODO: Test this independent of this particular action?
+		assertNull(consolePlugin.getLogRow(ctx));
 	}
 }

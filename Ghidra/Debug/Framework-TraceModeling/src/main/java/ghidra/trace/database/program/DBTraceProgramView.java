@@ -110,6 +110,12 @@ public class DBTraceProgramView implements TraceProgramView {
 			listenFor(TraceCodeChangeType.FRAGMENT_CHANGED, this::codeFragmentChanged);
 			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::codeDataTypeReplaced);
 
+			listenFor(TraceCommentChangeType.EOL_CHANGED, this::commentEolChanged);
+			listenFor(TraceCommentChangeType.PLATE_CHANGED, this::commentPlateChanged);
+			listenFor(TraceCommentChangeType.POST_CHANGED, this::commentPostChanged);
+			listenFor(TraceCommentChangeType.PRE_CHANGED, this::commentPreChanged);
+			listenFor(TraceCommentChangeType.REPEATABLE_CHANGED, this::commentRepeatableChanged);
+
 			listenFor(TraceCompositeDataChangeType.ADDED, this::compositeDataAdded);
 			listenFor(TraceCompositeDataChangeType.LIFESPAN_CHANGED,
 				this::compositeLifespanChanged);
@@ -326,6 +332,48 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_CODE_REPLACED,
 				range.getX1(), range.getX2(), null, null, null));
+		}
+
+		private void commentChanged(int docrType, TraceAddressSpace space,
+				TraceAddressSnapRange range,
+				String oldValue, String newValue) {
+			DomainObjectEventQueues queues = isVisible(space, range);
+			if (queues == null) {
+				return;
+			}
+			queues.fireEvent(new ProgramChangeRecord(docrType,
+				range.getX1(), range.getX2(), null, oldValue, newValue));
+		}
+
+		private void commentEolChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+				String oldValue, String newValue) {
+			commentChanged(ChangeManager.DOCR_EOL_COMMENT_CHANGED, space, range, oldValue,
+				newValue);
+		}
+
+		private void commentPlateChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+				String oldValue, String newValue) {
+			commentChanged(ChangeManager.DOCR_PLATE_COMMENT_CHANGED, space, range, oldValue,
+				newValue);
+		}
+
+		private void commentPostChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+				String oldValue, String newValue) {
+			commentChanged(ChangeManager.DOCR_POST_COMMENT_CHANGED, space, range, oldValue,
+				newValue);
+		}
+
+		private void commentPreChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+				String oldValue, String newValue) {
+			commentChanged(ChangeManager.DOCR_PRE_COMMENT_CHANGED, space, range, oldValue,
+				newValue);
+		}
+
+		private void commentRepeatableChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+				String oldValue, String newValue) {
+			// TODO: The "repeatable" semantics are not implemented, yet.
+			commentChanged(ChangeManager.DOCR_REPEATABLE_COMMENT_CHANGED, space, range, oldValue,
+				newValue);
 		}
 
 		private void compositeDataAdded(TraceAddressSpace space, TraceAddressSnapRange range,

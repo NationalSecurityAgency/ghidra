@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import java.io.*;
 import java.util.*;
+
+import java.io.*;
 
 import org.xml.sax.SAXException;
 
@@ -27,9 +28,7 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
-import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
@@ -83,6 +82,7 @@ public class PdbParser {
 	private PdbErrorHandler errHandler;
 	private PdbErrorReaderThread thread;
 	private boolean parsed = false;
+	private boolean allowNonExactMatch;
 
 	private CategoryPath pdbCategory;
 
@@ -94,13 +94,40 @@ public class PdbParser {
 	private PdbDataTypeParser dataTypeParser;
 	private Map<SymbolPath, Boolean> namespaceMap = new TreeMap<>(); // false: simple namespace, true: class namespace
 
+	/**
+	 * Creates a PdbParser instance.
+	 * 
+	 * @param pdbFile the pdb file to parse, either .pdb or .pdb.xml
+	 * @param program the {@link Program} to modify
+	 * @param service {@link DataTypeManagerService}
+	 * @param forceAnalysis boolean flag, currently always true, needs to be refactored out 
+	 * @param allowNonExactMatch boolean flag, if true skips warning user about mismatch
+	 * between the program's PDB guid/id/age and the specified PDB file's guid/id/age, which
+	 * can terminate the pdb import in headless  
+	 * @param monitor {@link TaskMonitor}, null ok
+	 */
 	public PdbParser(File pdbFile, Program program, DataTypeManagerService service,
-			boolean forceAnalysis, TaskMonitor monitor) {
-		this(pdbFile, program, service, getPdbAttributes(program), forceAnalysis, monitor);
+			boolean forceAnalysis, boolean allowNonExactMatch, TaskMonitor monitor) {
+		this(pdbFile, program, service, getPdbAttributes(program), forceAnalysis,
+			allowNonExactMatch, monitor);
 	}
 
+	/**
+	 * Creates a PdbParser instance.
+	 * 
+	 * @param pdbFile the pdb file to parse, either .pdb or .pdb.xml
+	 * @param program the {@link Program} to modify
+	 * @param service {@link DataTypeManagerService}
+	 * @param programAttributes the PDB information specified by the program
+	 * @param forceAnalysis boolean flag, currently always true, needs to be refactored out 
+	 * @param allowNonExactMatch boolean flag, if true skips warning user about mismatch
+	 * between the program's PDB guid/id/age and the specified PDB file's guid/id/age, which
+	 * can terminate the pdb import in headless  
+	 * @param monitor {@link TaskMonitor}, null ok
+	 */
 	public PdbParser(File pdbFile, Program program, DataTypeManagerService service,
-			PdbProgramAttributes programAttributes, boolean forceAnalysis, TaskMonitor monitor) {
+			PdbProgramAttributes programAttributes, boolean forceAnalysis,
+			boolean allowNonExactMatch, TaskMonitor monitor) {
 		this.pdbFile = pdbFile;
 		this.pdbCategory = new CategoryPath(CategoryPath.ROOT, pdbFile.getName());
 		this.program = program;
@@ -108,8 +135,9 @@ public class PdbParser {
 		this.service = service;
 		this.forceAnalysis = forceAnalysis;
 		this.monitor = monitor != null ? monitor : TaskMonitor.DUMMY;
-		this.isXML = pdbFile.getAbsolutePath().endsWith(PdbFileType.XML.toString());
+		this.isXML = pdbFile.getName().toLowerCase().endsWith(PdbFileType.XML.toString());
 		this.programAttributes = programAttributes;
+		this.allowNonExactMatch = allowNonExactMatch;
 	}
 
 	/**
@@ -184,12 +212,12 @@ public class PdbParser {
 	}
 
 	private void checkFileType() throws PdbException {
-		String pdbFilename = pdbFile.getName();
+		String pdbFilename = pdbFile.getName().toLowerCase();
 
 		if (!pdbFilename.endsWith(PdbFileType.PDB.toString()) &&
 			!pdbFilename.endsWith(PdbFileType.XML.toString())) {
 			throw new PdbException(
-				"\nInvalid file type (expecting .pdb or .pdb.xml): '" + pdbFilename + "'");
+				"\nInvalid file type (expecting .pdb or .pdb.xml): '" + pdbFile.getName() + "'");
 		}
 	}
 
@@ -616,18 +644,21 @@ public class PdbParser {
 			pdbGuid = pdbGuid.toUpperCase();
 			pdbGuid = "{" + pdbGuid + "}";
 
-			if (!xmlGuid.equals(pdbGuid)) {
-				warning = "PDB signature does not match.\n" + "Program GUID: " + pdbGuid +
-						"\nXML GUID: " + xmlGuid;			}
-			else {
-				// Also check that PDB ages match, if they are both available
-				if ((xmlAge != null) && (pdbAge != null)) {
+			if (!allowNonExactMatch) {
+				if (!xmlGuid.equals(pdbGuid)) {
+					warning = "PDB signature does not match.\n" + "Program GUID: " + pdbGuid +
+						"\nXML GUID: " + xmlGuid;
+				}
+				else {
+					// Also check that PDB ages match, if they are both available
+					if ((xmlAge != null) && (pdbAge != null)) {
 
-					int pdbAgeDecimal = Integer.parseInt(pdbAge, 16);
-					int xmlAgeDecimal = Integer.parseInt(xmlAge);
+						int pdbAgeDecimal = Integer.parseInt(pdbAge, 16);
+						int xmlAgeDecimal = Integer.parseInt(xmlAge);
 
-					if (xmlAgeDecimal != pdbAgeDecimal) {
-						warning = "PDB ages do not match.";
+						if (xmlAgeDecimal != pdbAgeDecimal) {
+							warning = "PDB ages do not match.";
+						}
 					}
 				}
 			}
@@ -1043,290 +1074,12 @@ public class PdbParser {
 	}
 
 	/**
-	 * Find the PDB associated with the given program using its attributes.
-	 * The PDB path information within the program information will not be used.
-	 *
-	 * @param program  program for which to find a matching PDB
-	 * @return  matching PDB for program, or null
-	 */
-	public static File findPDB(Program program) {
-		return findPDB(getPdbAttributes(program), false, null, null);
-	}
-
-	/**
 	 * Determine if the PDB has previously been loaded for the specified program.
 	 * @param program  program for which to find a matching PDB
 	 * @return true if PDB has already been loaded
 	 */
 	public static boolean isAlreadyLoaded(Program program) {
 		return getPdbAttributes(program).isPdbLoaded();
-	}
-
-	/**
-	 * Find the PDB associated with the given program using its attributes, specifying the
-	 * location where symbols are stored.
-	 *
-	 * @param program  program for which to find a matching PDB
-	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
-	 * @param symbolsRepositoryDir  location where downloaded symbols are stored
-	 * @return  matching PDB for program, or null
-	 */
-	public static File findPDB(Program program, boolean includePeSpecifiedPdbPath,
-			File symbolsRepositoryDir) {
-		return findPDB(getPdbAttributes(program), includePeSpecifiedPdbPath, symbolsRepositoryDir,
-			null);
-	}
-
-	/**
-	 * Find a matching PDB file using attributes associated with the program. User can specify the
-	 * type of file to search from (.pdb or .pdb.xml).
-	 *
-	 * @param pdbAttributes  PDB attributes associated with the program
-	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
-	 * @param symbolsRepositoryDir  location of the local symbols repository (can be null)
-	 * @param fileType  type of file to search for (can be null)
-	 * @return matching PDB file (or null, if not found)
-	 */
-	public static File findPDB(PdbProgramAttributes pdbAttributes,
-			boolean includePeSpecifiedPdbPath, File symbolsRepositoryDir, PdbFileType fileType) {
-
-		// Store potential names of PDB files and potential locations of those files,
-		// so that all possible combinations can be searched.
-		// LinkedHashSet is used when we need to preserve order
-		Set<String> guidSubdirPaths = new HashSet<>();
-
-		String guidAgeString = pdbAttributes.getGuidAgeCombo();
-		if (guidAgeString == null) {
-			return null;
-		}
-
-		List<String> potentialPdbNames = pdbAttributes.getPotentialPdbFilenames();
-		for (String potentialName : potentialPdbNames) {
-			guidSubdirPaths.add(File.separator + potentialName + File.separator + guidAgeString);
-		}
-
-		return checkPathsForPdb(symbolsRepositoryDir, guidSubdirPaths, potentialPdbNames, fileType,
-			pdbAttributes, includePeSpecifiedPdbPath);
-	}
-
-	/**
-	 * Check potential paths in a specific order. If the symbolsRepositoryPath parameter is
-	 * supplied and the directory exists, that directory will be searched first for the
-	 * matching PDB file.
-	 *
-	 * If the file type is supplied, then only that file type will be searched for. Otherwise,
-	 * the search process depends on the current operating system that Ghidra is running from:
-	 *
-	 *  - Windows: look in the symbolsRepositoryPath for a matching .pdb file. If one does not
-	 *  		exist, look for a .pdb.xml file in symbolsRepositoryPath. If not found, then
-	 *  		search for a matching .pdb file, then .pdb.xml file, in other directories.
-	 *  - non-Windows: look in the symbolsRepositoryPath for a matching .pdb.xml file. If one does
-	 *  		not exist, look for a .pdb file. If a .pdb file is found, return an error saying
-	 *  		that it was found, but could not be processed. If no matches found in
-	 *  		symbolsRepositoryPath, then look for .pdb.xml file, then .pdb.xml file in other
-	 *  		directories.
-	 *
-	 * @param symbolsRepositoryDir  location of the local symbols repository (can be null)
-	 * @param guidSubdirPaths  subdirectory paths (that include the PDB's GUID) that may contain
-	 * 							a matching PDB
-	 * @param potentialPdbNames  all potential filenames for the PDB file(s) that match the program
-	 * @param fileType         file type to search for (can be null)
-	 * @param pdbAttributes    PDB attributes associated with the program
-	 * @return  matching PDB file, if found (else null)
-	 */
-	private static File checkPathsForPdb(File symbolsRepositoryDir, Set<String> guidSubdirPaths,
-			List<String> potentialPdbNames, PdbFileType fileType,
-			PdbProgramAttributes pdbAttributes, boolean includePeSpecifiedPdbPath) {
-
-		File foundPdb = null;
-		Set<File> symbolsRepoPaths =
-			getSymbolsRepositoryPaths(symbolsRepositoryDir, guidSubdirPaths);
-		Set<File> predefinedPaths =
-			getPredefinedPaths(guidSubdirPaths, pdbAttributes, includePeSpecifiedPdbPath);
-		boolean fileTypeSpecified = (fileType != null);
-		boolean checkForXml;
-
-		// If the file type is specified, look for that type of file only.
-		if (fileTypeSpecified) {
-			checkForXml = (fileType == PdbFileType.XML) ? true : false;
-
-			foundPdb = checkForPDBorXML(symbolsRepoPaths, potentialPdbNames, checkForXml);
-
-			if (foundPdb != null) {
-				return foundPdb;
-			}
-
-			foundPdb = checkForPDBorXML(predefinedPaths, potentialPdbNames, checkForXml);
-
-			return foundPdb;
-		}
-
-		// If the file type is not specified, look for both file types, starting with the
-		// file type that's most appropriate for the Operating System (PDB for Windows, XML for
-		// non-Windows).
-		checkForXml = onWindows ? false : true;
-
-		// Start by searching in symbolsRepositoryPath, if available.
-		if (!symbolsRepoPaths.isEmpty()) {
-			foundPdb = checkSpecificPathsForPdb(symbolsRepoPaths, potentialPdbNames, checkForXml);
-		}
-
-		if (foundPdb != null) {
-			return foundPdb;
-		}
-
-		return checkSpecificPathsForPdb(predefinedPaths, potentialPdbNames, checkForXml);
-
-	}
-
-	private static File checkSpecificPathsForPdb(Set<File> paths, List<String> potentialPdbNames,
-			boolean checkForXmlFirst) {
-
-		File foundPdb = checkForPDBorXML(paths, potentialPdbNames, checkForXmlFirst);
-
-		if (foundPdb != null) {
-			return foundPdb;
-		}
-
-		foundPdb = checkForPDBorXML(paths, potentialPdbNames, !checkForXmlFirst);
-
-		return foundPdb;
-	}
-
-	private static Set<File> getSymbolsRepositoryPaths(File symbolsRepositoryDir,
-			Set<String> guidSubdirPaths) {
-
-		Set<File> symbolsRepoPaths = new LinkedHashSet<>();
-
-		// Collect sub-directories of the symbol repository that exist
-		if (symbolsRepositoryDir != null && symbolsRepositoryDir.isDirectory()) {
-
-			for (String guidSubdir : guidSubdirPaths) {
-				File testDir = new File(symbolsRepositoryDir, guidSubdir);
-				if (testDir.isDirectory()) {
-					symbolsRepoPaths.add(testDir);
-				}
-			}
-
-			// Check outer folder last
-			symbolsRepoPaths.add(symbolsRepositoryDir);
-		}
-
-		return symbolsRepoPaths;
-	}
-
-	// Get list of "paths we know about" to search for PDBs
-	private static Set<File> getPredefinedPaths(Set<String> guidSubdirPaths,
-			PdbProgramAttributes pdbAttributes, boolean includePeSpecifiedPdbPath) {
-
-		Set<File> predefinedPaths = new LinkedHashSet<>();
-
-		getPathsFromAttributes(pdbAttributes, includePeSpecifiedPdbPath, predefinedPaths);
-		getSymbolPaths(PdbLocator.DEFAULT_SYMBOLS_DIR, guidSubdirPaths, predefinedPaths);
-		getSymbolPaths(PdbLocator.WINDOWS_SYMBOLS_DIR, guidSubdirPaths, predefinedPaths);
-		getLibraryPaths(guidSubdirPaths, predefinedPaths);
-
-		return predefinedPaths;
-	}
-
-	private static void getLibraryPaths(Set<String> guidSubdirPaths, Set<File> predefinedPaths) {
-		String[] libraryPaths = LibrarySearchPathManager.getLibraryPaths();
-
-		File libFile, subDir;
-
-		for (String path : libraryPaths) {
-
-			if ((libFile = new File(path)).isDirectory()) {
-				predefinedPaths.add(libFile);
-
-				// Check alternate locations
-				for (String guidSubdir : guidSubdirPaths) {
-					if ((subDir = new File(path, guidSubdir)).isDirectory()) {
-						predefinedPaths.add(subDir);
-					}
-				}
-			}
-		}
-	}
-
-	private static void getSymbolPaths(File symbolsDir, Set<String> guidSubdirPaths,
-			Set<File> predefinedPaths) {
-		// Don't have to call .exists(), since .isDirectory() does that already
-		if (symbolsDir == null || !symbolsDir.isDirectory()) {
-			return;
-		}
-		predefinedPaths.add(symbolsDir);
-
-		// Check alternate locations
-		String specialPdbPath = symbolsDir.getAbsolutePath();
-
-		for (String guidSubdir : guidSubdirPaths) {
-			File testDir = new File(specialPdbPath + guidSubdir);
-			if (testDir.isDirectory()) {
-				predefinedPaths.add(testDir);
-			}
-		}
-	}
-
-	private static void getPathsFromAttributes(PdbProgramAttributes pdbAttributes,
-			boolean includePeSpecifiedPdbPath, Set<File> predefinedPaths) {
-		if (pdbAttributes != null) {
-
-			String currentPath = pdbAttributes.getPdbFile();
-
-			if (currentPath != null && includePeSpecifiedPdbPath) {
-				File parentDir = new File(currentPath).getParentFile();
-
-				if (parentDir != null && parentDir.exists()) {
-					predefinedPaths.add(parentDir);
-				}
-			}
-
-			currentPath = pdbAttributes.getExecutablePath();
-
-			if (currentPath != null && !currentPath.equals("unknown")) {
-				File parentDir = new File(currentPath).getParentFile();
-
-				if (parentDir != null && parentDir.exists()) {
-					predefinedPaths.add(parentDir);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Returns the first PDB-type file found. Assumes list of potentialPdbDirs is in the order
-	 * in which the directories should be searched.
-	 *
-	 * @param potentialPdbDirs potential PDB directories
-	 * @param potentialPdbNames potential PDB names
-	 * @param findXML - if true, only searches for the .pdb.xml version of the .pdb file
-	 * @return the first file found
-	 */
-	private static File checkForPDBorXML(Set<File> potentialPdbDirs, List<String> potentialPdbNames,
-			boolean findXML) {
-
-		File pdb;
-
-		for (File pdbPath : potentialPdbDirs) {
-
-			for (String filename : potentialPdbNames) {
-
-				if (findXML) {
-					pdb = new File(pdbPath, filename + PdbFileType.XML.toString());
-				}
-				else {
-					pdb = new File(pdbPath, filename);
-				}
-
-				// Note: isFile() also checks for existence
-				if (pdb.isFile()) {
-					return pdb;
-				}
-			}
-		}
-
-		return null;
 	}
 
 	PdbDataTypeParser getDataTypeParser() {

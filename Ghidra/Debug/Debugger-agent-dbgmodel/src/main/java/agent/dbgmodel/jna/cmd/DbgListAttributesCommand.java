@@ -49,26 +49,32 @@ public class DbgListAttributesCommand extends AbstractDbgCommand<Map<String, ?>>
 
 	@Override
 	public void invoke() {
-		updatedAttributes = new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
-		Map<String, ModelObject> map = access.getAttributes(path);
-		Map<String, ?> existingAttributes = targetObject.getCachedAttributes();
-		for (String key : map.keySet()) {
-			DbgModel2TargetProxy proxyAttribute;
-			ModelObject obj = map.get(key);
-			String atKey = obj.getSearchKey();
-			Object object = existingAttributes.get(atKey);
-			if (object != null && (object instanceof DbgModelTargetObject)) {
-				proxyAttribute = (DbgModel2TargetProxy) object;
-				DelegateDbgModel2TargetObject delegate = proxyAttribute.getDelegate();
-				delegate.setModelObject(obj);
-				updatedAttributes.put(key, proxyAttribute);
+		try {
+			updatedAttributes = new TreeMap<>(TargetObjectKeyComparator.ATTRIBUTE);
+			Map<String, ModelObject> map = access.getAttributes(path);
+			Map<String, ?> existingAttributes = targetObject.getCachedAttributes();
+			for (String key : map.keySet()) {
+				DbgModel2TargetProxy proxyAttribute;
+				ModelObject obj = map.get(key);
+				String atKey = obj.getSearchKey();
+				Object object = existingAttributes.get(atKey);
+				if (object != null && (object instanceof DbgModelTargetObject)) {
+					proxyAttribute = (DbgModel2TargetProxy) object;
+					DelegateDbgModel2TargetObject delegate = proxyAttribute.getDelegate();
+					delegate.setModelObject(obj);
+					updatedAttributes.put(key, proxyAttribute);
+				}
+				else {
+					proxyAttribute = (DbgModel2TargetProxy) DelegateDbgModel2TargetObject
+							.makeProxy(targetObject.getModel(), targetObject, atKey, obj);
+					updatedAttributes.put(key, proxyAttribute);
+				}
 			}
-			else {
-				proxyAttribute = (DbgModel2TargetProxy) DelegateDbgModel2TargetObject
-						.makeProxy(targetObject.getModel(), targetObject, atKey, obj);
-				updatedAttributes.put(key, proxyAttribute);
-			}
+			updatedAttributes.putAll(targetObject.getIntrinsics());
 		}
-		updatedAttributes.putAll(targetObject.getIntrinsics());
+		catch (Exception e) {
+			System.err.println("Failure in ListAttributes " + targetObject);
+			e.printStackTrace();
+		}
 	}
 }

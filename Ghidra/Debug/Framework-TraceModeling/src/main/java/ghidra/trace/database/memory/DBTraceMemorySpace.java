@@ -15,8 +15,6 @@
  */
 package ghidra.trace.database.memory;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -47,8 +45,8 @@ import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceViewportSpanIterator;
-import ghidra.util.LockHold;
-import ghidra.util.MathUtilities;
+import ghidra.util.*;
+import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 import ghidra.util.exception.DuplicateNameException;
@@ -758,10 +756,59 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		return len;
 	}
 
+	protected Address doFindBytesInRange(long snap, AddressRange range, ByteBuffer data,
+			ByteBuffer mask, boolean forward, TaskMonitor monitor) {
+		int len = data.capacity();
+		AddressRange rangeOfStarts =
+			new AddressRangeImpl(range.getMinAddress(), range.getMaxAddress().subtract(len - 1));
+		ByteBuffer read = ByteBuffer.allocate(len);
+		for (Address addr : AddressIteratorAdapter.forRange(rangeOfStarts, forward)) {
+			monitor.incrementProgress(1);
+			if (monitor.isCancelled()) {
+				return null;
+			}
+			read.clear();
+			int l = getBytes(snap, addr, read);
+			if (l != len) {
+				continue;
+			}
+			if (!ByteBufferUtils.maskedEquals(mask, data, read)) {
+				continue;
+			}
+			return addr;
+		}
+		return null;
+	}
+
 	@Override
 	public Address findBytes(long snap, AddressRange range, ByteBuffer data, ByteBuffer mask,
 			boolean forward, TaskMonitor monitor) {
-		return TODO();
+		// ProgramDB uses the naive method with some skipping, so here we go....
+		// TODO: This could be made faster by skipping over non-initialized blocks
+		// TODO: DFA method would be complicated by masks....
+		int len = data.capacity();
+		if (mask != null && mask.capacity() != len) {
+			throw new IllegalArgumentException("data and mask must have same capacity");
+		}
+		if (len == 0 || range.getLength() > 0 && range.getLength() < len) {
+			return null;
+		}
+
+		// TODO: Could do better, but have to worry about viewport, too
+		// This will reduce the search to ranges that have been written at any snap
+		// We could do for this and previous snaps, but that's where the viewport comes in.
+		// TODO: Potentially costly to pre-compute the set concretely
+		AddressSet known = new AddressSet(
+			stateMapSpace.getAddressSetView(Range.all(), s -> s == TraceMemoryState.KNOWN))
+					.intersect(new AddressSet(range));
+		monitor.initialize(known.getNumAddresses());
+		for (AddressRange knownRange : known.getAddressRanges(forward)) {
+			Address found = doFindBytesInRange(snap, knownRange, data, mask, forward, monitor);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
 	}
 
 	// TODO: Test this

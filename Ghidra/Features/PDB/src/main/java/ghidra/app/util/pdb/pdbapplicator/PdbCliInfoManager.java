@@ -16,11 +16,12 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 import generic.continues.GenericFactory;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
@@ -28,6 +29,7 @@ import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTable;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -36,6 +38,11 @@ import ghidra.program.model.listing.Program;
 public class PdbCliInfoManager {
 
 	private CliStreamMetadata metadataStream;
+
+	// TODO: May move these out from this class to a higher level.  Would mean passing in
+	// the appropriate header to this constructor if we want to reuse that code.
+	private boolean isDll = false;
+	private boolean isAslr = false;
 
 	/**
 	 * Manager of CLI-related tables that we might need access to for PDB processing.
@@ -46,7 +53,15 @@ public class PdbCliInfoManager {
 		metadataStream = getCliStreamMetadata(applicator);
 	}
 
-	public CliAbstractTableRow getCliTableRow(int tableNum, int rowNum) throws PdbException {
+	boolean isDll() {
+		return isDll;
+	}
+
+	boolean isAslr() {
+		return isAslr;
+	}
+
+	CliAbstractTableRow getCliTableRow(int tableNum, int rowNum) throws PdbException {
 		if (metadataStream == null) {
 			throw new PdbException("CliStreamMetadata is null");
 		}
@@ -63,18 +78,28 @@ public class PdbCliInfoManager {
 			return null;
 		}
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), program.getImageBase());
+		List<FileBytes> allFileBytes = program.getMemory().getAllFileBytes();
+		FileBytes fileBytes = allFileBytes.get(0); // Should be that of main imported file
+		ByteProvider provider = new FileBytesProvider(fileBytes);
 		PortableExecutable pe = null;
 		try {
 			GenericFactory factory = MessageLogContinuesFactory.create(applicator.getMessageLog());
-			pe = PortableExecutable.createPortableExecutable(factory, provider,
-				SectionLayout.MEMORY, true, true);
+			pe = PortableExecutable.createPortableExecutable(factory, provider, SectionLayout.FILE,
+				true, true);
 			NTHeader ntHeader = pe.getNTHeader();
 			OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
+			int characteristics = ntHeader.getFileHeader().getCharacteristics();
+			isDll = (characteristics & FileHeader.IMAGE_FILE_DLL) == FileHeader.IMAGE_FILE_DLL;
 			DataDirectory[] dataDirectory = optionalHeader.getDataDirectories();
+			int optionalHeaderCharaceristics = optionalHeader.getDllCharacteristics();
+			isAslr = (optionalHeaderCharaceristics &
+				OptionalHeader.IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) == OptionalHeader.IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
 			COMDescriptorDataDirectory comDir =
 				(COMDescriptorDataDirectory) dataDirectory[OptionalHeader.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR];
 			ImageCor20Header header = comDir.getHeader();
+			if (header == null) {
+				return null;
+			}
 			return header.getMetadata().getMetadataRoot().getMetadataStream();
 		}
 		catch (Exception e) {

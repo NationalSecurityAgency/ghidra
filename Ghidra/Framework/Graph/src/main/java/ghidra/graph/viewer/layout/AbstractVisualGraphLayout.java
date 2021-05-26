@@ -313,20 +313,27 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		Map<V, Point2D> vertexLayoutLocations =
 			positionVerticesInLayoutSpace(transformer, vertices, layoutLocations);
 
-		Map<E, List<Point2D>> edgeLayoutArticulationLocations = new HashMap<>();
-		Rectangle graphBounds =
-			getTotalGraphSize(vertexLayoutLocations, edgeLayoutArticulationLocations, transformer);
+		Rectangle graphBounds = getTotalGraphSize(vertexLayoutLocations, transformer);
 		double centerX = graphBounds.getCenterX();
 		double centerY = graphBounds.getCenterY();
 
+		//
+		// Condense vertices before placing edges.  This allows layouts to perform custom routing
+		// of edges around vertices *after* condensing.
+		//
 		if (isCondensed) {
 			List<Row<V>> rows = gridLocations.rows();
-			condense(rows, vertexLayoutLocations, edgeLayoutArticulationLocations, transformer,
-				centerX, centerY);
+			condenseVertices(rows, vertexLayoutLocations, transformer, centerX, centerY);
 		}
 
-		edgeLayoutArticulationLocations = positionEdgeArticulationsInLayoutSpace(transformer,
-			vertexLayoutLocations, edges, layoutLocations);
+		Map<E, List<Point2D>> edgeLayoutArticulations = positionEdgeArticulationsInLayoutSpace(
+			transformer, vertexLayoutLocations, edges, layoutLocations);
+
+		if (isCondensed) {
+			// note: some layouts will not condense the edges, as they perform custom routing
+			List<Row<V>> rows = gridLocations.rows();
+			condenseEdges(rows, edgeLayoutArticulations, centerX, centerY);
+		}
 
 		// DEGUG triggers grid lines to be printed; useful for debugging
 		// VisualGraphRenderer.DEBUG_ROW_COL_MAP.put(this, layoutLocations.copy());
@@ -334,8 +341,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		layoutLocations.dispose();
 		gridLocations.dispose();
 
-		return LayoutPositions.createNewPositions(vertexLayoutLocations,
-			edgeLayoutArticulationLocations);
+		return LayoutPositions.createNewPositions(vertexLayoutLocations, edgeLayoutArticulations);
 	}
 
 	private Map<V, Point2D> positionVerticesInLayoutSpace(
@@ -430,11 +436,12 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	}
 
 	private Rectangle getTotalGraphSize(Map<V, Point2D> vertexLocationMap,
-			Map<E, List<Point2D>> edgeArticulations,
 			com.google.common.base.Function<V, Shape> vertexShapeTransformer) {
 
+		// note: do not include edges in the size of the graph at this point, as some layouts use
+		//       custom edge routing after this method is called
 		Set<V> vertices = vertexLocationMap.keySet();
-		Set<E> edges = edgeArticulations.keySet();
+		Set<E> edges = Collections.emptySet();
 
 		Function<V, Rectangle> vertexToBounds = v -> {
 
@@ -452,14 +459,13 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			return bounds;
 		}
 
-		Function<E, List<Point2D>> edgeToArticulations = e -> edgeArticulations.get(e);
+		Function<E, List<Point2D>> edgeToArticulations = e -> Collections.emptyList();
 		Rectangle bounds = GraphViewerUtils.getTotalGraphSizeInLayoutSpace(vertices, edges,
 			vertexToBounds, edgeToArticulations);
 		return bounds;
 	}
 
-	private void condense(List<Row<V>> rows, Map<V, Point2D> newLocations,
-			Map<E, List<Point2D>> newEdgeArticulations,
+	protected void condenseVertices(List<Row<V>> rows, Map<V, Point2D> newLocations,
 			VisualGraphVertexShapeTransformer<V> transformer, double centerX, double centerY) {
 
 		//
@@ -480,6 +486,22 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			point.setLocation(offsetX, currentY);
 		}
 
+		//
+		// The above aggressive condensing may lead to neighboring node overlapping for
+		// nodes in the same row.  Check to see if we need to move the nodes to avoid this case.
+		//
+		unclip(rows, newLocations, transformer);
+	}
+
+	protected void condenseEdges(List<Row<V>> rows, Map<E, List<Point2D>> newEdgeArticulations,
+			double centerX, double centerY) {
+
+		//
+		// Note: we move the articulations and vertices closer together on the x-axis.  We do
+		//       not move the y-axis, as that is already as close together as we would like at
+		//       this point.
+		//
+		double condenseFactor = getCondenseFactor();
 		Collection<List<Point2D>> edgeArticulations = newEdgeArticulations.values();
 		for (List<Point2D> edgePoints : edgeArticulations) {
 			for (Point2D point : edgePoints) {
@@ -493,12 +515,6 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 				point.setLocation(offsetX, currentY);
 			}
 		}
-
-		//
-		// The above aggressive condensing may lead to neighboring node overlapping for
-		// nodes in the same row.  Check to see if we need to move the nodes to avoid this case.
-		//
-		unclip(rows, newLocations, transformer);
 	}
 
 	/**
@@ -527,7 +543,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	private void moveLeft(Row<V> row, int moveLeftStartIndex, Map<V, Point2D> vertexLocations,
 			VisualGraphVertexShapeTransformer<V> transformer) {
 
-		for (int i = moveLeftStartIndex; i >= 0; i--) {
+		for (int i = moveLeftStartIndex; i >= row.getStartColumn(); i--) {
 			V vertex = row.getVertex(i);
 			V rightVertex = getRightVertex(row, i);
 			moveLeftIfOverlaps(vertexLocations, transformer, vertex, rightVertex);
@@ -537,7 +553,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	private void moveRight(Row<V> row, int moveRightStartIndex, Map<V, Point2D> vertexLocations,
 			VisualGraphVertexShapeTransformer<V> transformer) {
 
-		for (int i = moveRightStartIndex; i < row.getColumnCount(); i++) {
+		for (int i = moveRightStartIndex; i <= row.getEndColumn(); i++) {
 			V vertex = row.getVertex(i);
 			V leftVertex = getLeftVertex(row, i);
 			moveRightIfOverlaps(vertexLocations, transformer, vertex, leftVertex);

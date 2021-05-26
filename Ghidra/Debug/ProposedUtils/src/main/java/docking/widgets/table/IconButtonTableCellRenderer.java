@@ -15,27 +15,31 @@
  */
 package docking.widgets.table;
 
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.*;
 
-import javax.swing.Icon;
-import javax.swing.JButton;
+import javax.swing.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 
 public class IconButtonTableCellRenderer
 		extends AbstractGhidraColumnRenderer<String> {
+	protected final JPanel panel = new JPanel();
 	protected final JButton button = new JButton("");
 
 	public IconButtonTableCellRenderer(Icon icon, int buttonSize) {
 		button.setIcon(icon);
 		button.setMinimumSize(new Dimension(buttonSize, buttonSize));
+		panel.setMinimumSize(new Dimension(buttonSize, buttonSize));
+		panel.setLayout(new BorderLayout());
+		panel.add(button);
 	}
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-		return button;
+		super.getTableCellRendererComponent(data); // Waste, but sets background
+		panel.setBackground(getBackground());
+		return panel;
 	}
 
 	@Override

@@ -41,7 +41,10 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.evt.*;
-import agent.dbgeng.model.iface1.*;
+import agent.dbgeng.model.iface1.DbgModelTargetActiveScope;
+import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import agent.dbgeng.model.iface2.DbgModelTargetThread;
 import ghidra.async.*;
 import ghidra.comm.util.BitmaskSet;
 import ghidra.dbg.target.TargetObject;
@@ -92,6 +95,10 @@ public class DbgManagerImpl implements DbgManager {
 	private final Map<Long, DbgBreakpointInfo> unmodifiableBreakpoints =
 		Collections.unmodifiableMap(breakpoints);
 
+	private final NavigableMap<Long, DbgModuleMemory> memory = new TreeMap<>();
+	private final NavigableMap<Long, DbgModuleMemory> unmodifiableMemory =
+		Collections.unmodifiableNavigableMap(memory);
+
 	protected final AsyncReference<DbgState, DbgCause> state =
 		new AsyncReference<>(DbgState.NOT_STARTED);
 	private final HandlerMap<DbgEvent<?>, Void, DebugStatus> handlerMap = new HandlerMap<>();
@@ -109,6 +116,7 @@ public class DbgManagerImpl implements DbgManager {
 	private DbgThread eventThread;
 	private volatile boolean waiting = false;
 	private boolean kernelMode = false;
+	private boolean ignoreEventThread = false;
 	private CompletableFuture<String> continuation;
 	private long processCount = 0;
 
@@ -265,6 +273,11 @@ public class DbgManagerImpl implements DbgManager {
 	@Override
 	public Map<Long, DbgBreakpointInfo> getKnownBreakpoints() {
 		return unmodifiableBreakpoints;
+	}
+
+	@Override
+	public Map<Long, DbgModuleMemory> getKnownMemoryRegions() {
+		return unmodifiableMemory;
 	}
 
 	private DbgBreakpointInfo addKnownBreakpoint(DbgBreakpointInfo bkpt, boolean expectExisting) {
@@ -585,6 +598,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.putVoid(DbgStoppedEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgRunningEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgConsoleOutputEvent.class, this::processConsoleOutput);
+		handlerMap.putVoid(DbgPromptChangedEvent.class, this::processPromptChanged);
 		handlerMap.putVoid(DbgBreakpointCreatedEvent.class, this::processBreakpointCreated);
 		handlerMap.putVoid(DbgBreakpointModifiedEvent.class, this::processBreakpointModified);
 		handlerMap.putVoid(DbgBreakpointDeletedEvent.class, this::processBreakpointDeleted);
@@ -606,8 +620,8 @@ public class DbgManagerImpl implements DbgManager {
 		DebugControl control = dbgeng.getControl();
 		int execType = WinNTExtra.Machine.IMAGE_FILE_MACHINE_AMD64.val;
 		try {
-			so.setCurrentProcessId(epid);
-			so.setCurrentThreadId(etid);
+			//so.setCurrentProcessId(epid);
+			//so.setCurrentThreadId(etid);
 			execType = control.getExecutingProcessorType();
 		}
 		catch (Exception e) {
@@ -652,6 +666,7 @@ public class DbgManagerImpl implements DbgManager {
 
 		DebugBreakpoint bp = evt.getInfo();
 		DbgBreakpointInfo info = new DbgBreakpointInfo(bp, getEventProcess(), getEventThread());
+		getEventListeners().fire.threadSelected(eventThread, null, evt.getCause());
 		getEventListeners().fire.breakpointHit(info, evt.getCause());
 
 		String key = Integer.toHexString(bp.getId());
@@ -670,6 +685,7 @@ public class DbgManagerImpl implements DbgManager {
 	 */
 	protected DebugStatus processException(DbgExceptionEvent evt, Void v) {
 		DebugThreadId eventId = updateState();
+		getEventListeners().fire.threadSelected(eventThread, null, evt.getCause());
 
 		DebugExceptionRecord64 info = evt.getInfo();
 		String key = Integer.toHexString(info.code);
@@ -764,16 +780,17 @@ public class DbgManagerImpl implements DbgManager {
 		DebugProcessInfo info = evt.getInfo();
 		long handle = info.handle;
 		DebugProcessId id = so.getProcessIdByHandle(handle);
-		so.setCurrentProcessId(id);
+		//so.setCurrentProcessId(id);
 		int pid = so.getCurrentProcessSystemId();
 		DbgProcessImpl proc = getProcessComputeIfAbsent(id, pid);
-		getEventListeners().fire.processAdded(proc, DbgCause.Causes.UNCLAIMED);
+		getEventListeners().fire.processAdded(proc, evt.getCause());
 		getEventListeners().fire.processSelected(proc, evt.getCause());
 
 		handle = info.initialThreadInfo.handle;
 		DebugThreadId idt = so.getThreadIdByHandle(handle);
 		int tid = so.getCurrentThreadSystemId();
 		DbgThreadImpl thread = getThreadComputeIfAbsent(idt, proc, tid);
+		getEventListeners().fire.threadCreated(thread, evt.getCause());
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
 		//proc.moduleLoaded(info.moduleInfo);
@@ -910,6 +927,7 @@ public class DbgManagerImpl implements DbgManager {
 						dbgState = DbgState.STOPPED;
 						//System.err.println("STOPPED " + id);
 						processEvent(new DbgStoppedEvent(eventThread.getId()));
+						processEvent(new DbgPromptChangedEvent(getControl().getPromptText()));
 					}
 					if (status.threadState.equals(ExecutionState.RUNNING)) {
 						//System.err.println("RUNNING " + id);
@@ -934,6 +952,7 @@ public class DbgManagerImpl implements DbgManager {
 				if (process != null) {
 					processEvent(new DbgProcessSelectedEvent(process));
 				}
+				processEvent(new DbgPromptChangedEvent(getControl().getPromptText()));
 				return DebugStatus.BREAK;
 			}
 			if (status.equals(DebugStatus.GO)) {
@@ -957,6 +976,7 @@ public class DbgManagerImpl implements DbgManager {
 					if (thread != null) {
 						getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 					}
+					processEvent(new DbgPromptChangedEvent(getControl().getPromptText()));
 					break;
 				}
 			}
@@ -1018,6 +1038,10 @@ public class DbgManagerImpl implements DbgManager {
 		getEventListeners().fire.consoleOutput(evt.getInfo(), evt.getMask());
 	}
 
+	protected void processPromptChanged(DbgPromptChangedEvent evt, Void v) {
+		getEventListeners().fire.promptChanged(evt.getPrompt());
+	}
+
 	/**
 	 * Handler for breakpoint-created event
 	 * 
@@ -1041,24 +1065,25 @@ public class DbgManagerImpl implements DbgManager {
 			if (bptId == DbgEngUtil.DEBUG_ANY_ID.longValue()) {
 				changeBreakpoints();
 			}
-			DebugBreakpoint bpt = getControl().getBreakpointById((int) bptId);
-			if (bpt == null) {
-				doBreakpointDeleted(bptId, evt.getCause());
-				return;
-			}
-			DbgBreakpointInfo knownBreakpoint = getKnownBreakpoint(bptId);
-			if (knownBreakpoint == null) {
-				breakpointInfo = new DbgBreakpointInfo(bpt, getCurrentProcess());
-				if (breakpointInfo.getOffset() != null) {
-					doBreakpointCreated(breakpointInfo, evt.getCause());
+			else {
+				DebugBreakpoint bpt = getControl().getBreakpointById((int) bptId);
+				if (bpt == null && bptId != DbgEngUtil.DEBUG_ANY_ID.longValue()) {
+					doBreakpointDeleted(bptId, evt.getCause());
+					return;
 				}
-				return;
+				DbgBreakpointInfo knownBreakpoint = getKnownBreakpoint(bptId);
+				if (knownBreakpoint == null) {
+					breakpointInfo = new DbgBreakpointInfo(bpt, getCurrentProcess());
+					if (breakpointInfo.getOffset() != null) {
+						doBreakpointCreated(breakpointInfo, evt.getCause());
+					}
+					return;
+				}
+				breakpointInfo = knownBreakpoint;
+				breakpointInfo.setBreakpoint(bpt);
+				doBreakpointModified(breakpointInfo, evt.getCause());
 			}
-			breakpointInfo = knownBreakpoint;
-			breakpointInfo.setBreakpoint(bpt);
-
 		}
-		doBreakpointModified(breakpointInfo, evt.getCause());
 	}
 
 	/**
@@ -1275,6 +1300,18 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	@Override
+	public CompletableFuture<Void> addMemory(DbgModuleMemory region) {
+		memory.put(region.getId(), region);
+		return AsyncUtils.NIL;
+	}
+
+	@Override
+	public CompletableFuture<Void> removeMemory(Long id) {
+		memory.remove(id);
+		return AsyncUtils.NIL;
+	}
+
+	@Override
 	public CompletableFuture<?> launch(List<String> args) {
 		return execute(new DbgLaunchProcessCommand(this, args));
 	}
@@ -1452,8 +1489,8 @@ public class DbgManagerImpl implements DbgManager {
 	@Override
 	public CompletableFuture<Void> console(String command) {
 		if (continuation != null) {
-			String prompt = command.equals("") ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
-			getEventListeners().fire.promptChanged(prompt);
+			//String prompt = command.equals("") ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
+			//getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
 			return AsyncUtils.NIL;
@@ -1492,6 +1529,7 @@ public class DbgManagerImpl implements DbgManager {
 		//System.err.println("EXIT");
 		waiting = false;
 		updateState();
+		getEventListeners().fire.threadSelected(eventThread, null, Causes.UNCLAIMED);
 		return CompletableFuture.completedFuture(null);
 	}
 
@@ -1509,6 +1547,18 @@ public class DbgManagerImpl implements DbgManager {
 	@Override
 	public DebugEventInformation getLastEventInformation() {
 		return lastEventInformation;
+	}
+
+	public boolean shouldUpdate(TargetObject object) {
+		if (ignoreEventThread || !(object instanceof DbgModelTargetObject)) {
+			return true;
+		}
+		DbgModelTargetObject modelObject = (DbgModelTargetObject) object;
+		DbgModelTargetThread parentThread = modelObject.getParentThread();
+		if (parentThread == null) {
+			return true;
+		}
+		return parentThread.getThread().equals(eventThread);
 	}
 
 	public CompletableFuture<? extends Map<String, ?>> getRegisterMap(List<String> path) {

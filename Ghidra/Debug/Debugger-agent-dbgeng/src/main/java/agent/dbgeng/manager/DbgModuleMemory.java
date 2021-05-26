@@ -21,6 +21,8 @@ public interface DbgModuleMemory {
 
 	String getName();
 
+	Long getId();
+
 	long getVmaStart();
 
 	long getVmaEnd();

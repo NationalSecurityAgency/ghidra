@@ -119,7 +119,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		if (!valid) {
 			return;
 		}
-		TimedMsg.info(this, "Event: " + type + " thread=" + eventThread + " description=" +
+		TimedMsg.debug(this, "Event: " + type + " thread=" + eventThread + " description=" +
 			description + " params=" + parameters);
 		// Just use this to step the snaps. Creation/destruction still handled in add/remove
 		if (eventThread == null) {
@@ -162,7 +162,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		if (!valid) {
 			return;
 		}
-		TimedMsg.info(this, "State " + state + " for " + stateful);
+		TimedMsg.debug(this, "State " + state + " for " + stateful);
 		TargetObject x = recorder.objectManager.findThreadOrProcess(stateful);
 		if (x != null) {
 			if (x == target && state == TargetExecutionState.TERMINATED) {
@@ -204,7 +204,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		}
 		Address traceAddr = recorder.getMemoryMapper().targetToTrace(address);
 		long snap = recorder.getSnap();
-		TimedMsg.info(this, "Memory updated: " + address + " (" + data.length + ")");
+		TimedMsg.debug(this, "Memory updated: " + address + " (" + data.length + ")");
 		String path = memory.getJoinedPath(".");
 		recorder.parTx.execute("Memory observed: " + path, () -> {
 			memoryManager.putBytes(snap, traceAddr, ByteBuffer.wrap(data));

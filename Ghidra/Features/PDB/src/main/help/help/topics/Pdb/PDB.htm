@@ -1,36 +1,130 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
 
 <HTML>
   <HEAD>
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Searching</TITLE>
-    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <TITLE>Microsoft Program Databases (PDB)</TITLE>
     <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
-    <META name="generator" content="Microsoft FrontPage 4.0">
   </HEAD>
 
   <BODY lang="EN-US">
-    <H1>PDB</H1>
+    <H1><A name="Using_Microsoft_PDB_Files"></A>Using Microsoft Program Database (PDB) Files</H1>
 
-    <P>Ghidra offers the ability to download and apply PDB debug information for programs that run
-    on Microsoft Windows operating systems.
-    The <I><A href="download_pdb_file.html">Download PDB File</A></I> feature allows users to
-    download and optionally load/apply a PDB file that matches the user's current program, given an
-    accessible Symbol Server.
-    The <I><A href="help/topics/ImporterPlugin/load_pdb.html">Load PDB File</A></I> feature 
-    allows users to apply a local PDB file to the current program. The <I>PDB Analyzer</I> also
-    automatically applies PDB symbols (attempting a search for matching PDB files locally) during
-    <A href="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Auto-Analysis</A>.</P>
+    <P>A program database (PDB) file holds debugging and project state information about a program
+    and can be created in a number of ways. Historically, it has been created using a Microsoft
+    compiler and written in <CODE>C/C++</CODE>, <CODE>C#</CODE>, and <CODE>Visual Basic</CODE>.
+    A user generates a PDB file using the <CODE>/ZI or /Zi</CODE> flag (for C/C++ programs) or the
+    <CODE>/debug</CODE> flag (for Visual Basic/C# programs).</P>
 
+    <P>There are two mechanisms for processing a PDB file. First, the platform-independent
+    PDB Universal Reader/Analyzer, which can read a raw PDB file and apply it. Its capabilities
+    are expected to be expanded in future releases.  Second, the legacy capability that uses the
+    <A href="#dia">DIA SDK</A> to read information from the PDB file. This mechanism can only run
+    on a Windows platform, however it creates an XML representation of information gleaned using
+    the DIA SDK. These XML files can be saved and then used on Windows and non-Windows platforms
+    hosting Ghidra.</P>
+
+    <P>If loading a PDB, this should be done prior to other analysis, except in special cases,
+    such as when only loading data types.</P>
+    
+    <P>Restricted loading of data types or public symbols is
+    supported by PDB Universal.</P>
+
+    <H2>To Load a PDB</H2>
+
+    <BLOCKQUOTE>
+      <P>PDB files can be loaded in two ways:</P>
+      <UL>
+        <LI><B>File &rarr; <a href="LoadPDBNew.html#Load_PDB_File">Load PDB File</a></B></LI>
+        <LI>PDB Analyzer via <B>Analysis &rarr; 
+        <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyze">Auto Analyze</A></B> or
+        <B>Analysis &rarr; <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Analyze_One_Shot">One Shot</A></B>.
+      </UL>
+    </BLOCKQUOTE>
+
+    <H2>Information Loaded From PDB</H2>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>Structure and union definitions</LI>
+
+        <LI>Typedefs</LI>
+
+        <LI>Enumerations</LI>
+
+        <LI>Class definitions</LI>
+
+        <LI>Function prototypes</LI>
+
+        <LI>Stack variable names and data types</LI>
+
+        <LI>Source line numbers</LI>
+
+        <LI>Instruction and data symbols</LI>
+      </OL>
+    </BLOCKQUOTE>
+
+    <H2>The DIA SDK-Based Capability</H2>
+	 
+	<P>*.PDB.XML files can be created in three different ways:
+	
+	<BLOCKQUOTE><UL>
+	  <LI>From the Ghidra GUI in Windows, use the
+	  <A href="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm">Ghidra Script Manager</A>
+	  to run the <I>CreatePdbXmlFilesScript.java</I> script. Follow the prompts to choose
+	  the .PDB file (or directory containing .PDB file(s)) to be converted to .PDB.XML form. 
+	  When given a directory, the script recursively traverses all subfolders to find .PDB
+	  files. A created .PDB.XML file is placed in the same location as the corresponding original 
+	  .PDB file.</LI>
+	  <br>
+	  <LI>From a Windows command line, navigate to the following directory:
+	  <I>&lt;ghidra install root&gt;/support</I>
+	  and run the <I>createPdbXmlFiles.bat</I> script. The script takes one argument representing
+	  either one .PDB file or a directory of .PDB files. When given a directory, the script
+	  recursively traverses all subdirectories to find .PDB files. A created .PDB.XML file is
+	  placed in the same location as the corresponding original .PDB file. Sample calls to the
+	  script are shown below.
+	  <br><br>
+	      <CODE>&nbsp;&nbsp;&nbsp;&nbsp;createPdbXmlFiles.bat C:\Symbols\samplePdb.pdb</CODE>
+	  <br>
+	      <CODE>&nbsp;&nbsp;&nbsp;&nbsp;createPdbXmlFiles.bat C:\Symbols</CODE>
+	  <br>
+	  </LI>
+      <br>
+	  <LI>Run the included <I>pdb.exe</I> executable (found in the <I>&lt;ghidra install
+	  root&gt;/Ghidra/Features/PDB/os/win64</I> directory) and redirect (save) its output to an
+	  XML file as shown below:
+	  <br><br>
+	    <CODE>&nbsp;&nbsp;&nbsp;&nbsp;pdb.exe samplePdb.pdb > samplePdb.pdb.xml</CODE>
+	  </LI>
+	</UL></BLOCKQUOTE>
+	</P>
+	<P><B>NOTE:</B> Execution of <i>pdb.exe</i> has runtime dependencies which must be satisfied.
+	Please refer to the <a href="docs/README_PDB.html">README_PDB</a> document for details.</P>
+	
+	<H2><A name="dia"></A>Debug Interface Access SDK</H2>
+
+    <BLOCKQUOTE>
+      <P>The Microsoft Debug Interface Access Software Development Kit (DIA SDK) provides access to
+      debug information stored in program database (.PDB) files generated by Microsoft
+      post-compiler tools. Because the format of the .PDB file generated by the post-compiler tools
+      undergoes constant revision, exposing the format is impractical. Using the DIA API, you can
+      develop applications that search for and browse debug information stored in a .PDB file. Such
+      applications could, for example, report stack trace-back information and analyze performance
+      data.</P>
+      
+      <P><IMG src="../../shared/note.png" border="0">If you are attempting to load a PDB on a 
+      Windows machine and see an error message such as &quot;Unable to locate the DIA SDK,&quot;
+      you will need to add and register one or more files on your computer. Refer to the 
+      <a href="docs/README_PDB.html">README_PDB</a> document for detailed instructions. 
+      </P> 
+    </BLOCKQUOTE>
     <P class="relatedtopic">Related Topics:</P>
 
     <UL>
-      <LI><A href="download_pdb_file.html">Download PDB File</A></LI>
-
-      <LI><A href="help/topics/ImporterPlugin/load_pdb.html">Load PDB File</A></LI>
-
+      <LI><A href="LoadPDBNew.html">Load PDB File</A></LI>
       <LI><A href="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A></LI>
     </UL>
 

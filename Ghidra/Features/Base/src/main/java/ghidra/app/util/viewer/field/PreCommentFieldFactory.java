@@ -274,7 +274,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 		else {
 			Program p = data.getProgram();
 			data = p.getListing().getDefinedDataContaining(addr);
-			if (data == null || !data.isStructure()) {
+			if (data == null || !(data.isStructure() || data.isDynamic())) {
 				return null;
 			}
 			Symbol s = p.getSymbolTable().getPrimarySymbol(data.getAddress());
@@ -297,11 +297,15 @@ public class PreCommentFieldFactory extends FieldFactory {
 	private String[] buildFlexArrayComment(Data data, int levelsToIgnore, String label) {
 
 		DataType dt = data.getBaseDataType();
-		if (!(dt instanceof Structure)) {
-			return null;
+
+		DataTypeComponent flexComponent = null;
+		if (dt instanceof Structure) {
+			flexComponent = ((Structure) dt).getFlexibleArrayComponent();
+		}
+		else if (dt instanceof DynamicDataType) {
+			flexComponent = ((DynamicDataType) dt).getFlexibleArrayComponent(data);
 		}
 
-		DataTypeComponent flexComponent = ((Structure) dt).getFlexibleArrayComponent();
 		if (flexComponent == null) {
 			return null;
 		}

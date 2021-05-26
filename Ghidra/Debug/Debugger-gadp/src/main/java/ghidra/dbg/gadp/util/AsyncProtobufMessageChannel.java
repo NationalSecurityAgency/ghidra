@@ -26,7 +26,7 @@ import com.google.protobuf.*;
 import com.google.protobuf.CodedOutputStream.OutOfSpaceException;
 
 import ghidra.async.*;
-import ghidra.comm.util.ByteBufferUtils;
+import ghidra.util.ByteBufferUtils;
 import ghidra.util.Msg;
 
 public class AsyncProtobufMessageChannel<S extends GeneratedMessageV3, R extends GeneratedMessageV3> {

@@ -84,20 +84,10 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 
 	public void onStopped() {
 		setAccessible(true);
-		update();
 	}
 
 	public void onExit() {
 		setAccessible(true);
-	}
-
-	protected void update() {
-		Map<String, ?> existingAttributes = getCachedAttributes();
-		Boolean autoupdate = (Boolean) existingAttributes.get("autoupdate");
-		if (autoupdate != null && autoupdate) {
-			requestAttributes(true);
-			requestElements(true);
-		}
 	}
 
 	protected void checkExited(DbgState state, DbgCause cause) {

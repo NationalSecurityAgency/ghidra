@@ -55,7 +55,7 @@ public class DbgReadRegistersCommand extends AbstractDbgCommand<Map<DbgRegister,
 				}
 			}
 		}
-		//so.setCurrentThreadId(previous);
+		so.setCurrentThreadId(previous);
 		return result;
 	}
 
