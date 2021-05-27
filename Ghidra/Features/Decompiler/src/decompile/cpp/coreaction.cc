@@ -5049,7 +5049,6 @@ void ActionDatabase::universalAction(Architecture *conf)
         actprop->addRule(new RulePtrsubUndo("typerecovery"));
         actprop->addRule(new RuleSegment("segment"));
         actprop->addRule(new RulePiecePathology("protorecovery"));
-        actprop->addRule(new RulePieceExpand("analysis"));
 
         actprop->addRule(new RuleDoubleLoad("doubleload"));
         actprop->addRule(new RuleDoubleIn("doubleprecis"));
@@ -5106,6 +5105,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new Rule2Comp2Sub("cleanup") );
     actcleanup->addRule( new RuleSubRight("cleanup") );
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
+    actcleanup->addRule(new RulePieceExpand("cleanup"));
   }
   act->addAction( actcleanup );
 
