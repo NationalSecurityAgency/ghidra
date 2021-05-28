@@ -15,6 +15,7 @@
  */
 #include "printc.hh"
 #include "funcdata.hh"
+#include <iomanip>
 // Operator tokens for expressions
 //                        token #in prec assoc   optype       space bump
 OpToken PrintC::hidden = { "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };
@@ -1136,12 +1137,13 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
     const FloatFormat *format = glb->translate->getFloatFormat(sizeof(val));
     FloatFormat::floatclass type;
     double floatval = format->getHostFloat(val,&type);
-    t << std::setprecision(7) << floatval;
+
+    t << showpoint << std::setprecision(7) << floatval;
   }else if (displayFormat == Symbol::force_double) {
     const FloatFormat *format = glb->translate->getFloatFormat(sizeof(val));
     FloatFormat::floatclass type;
     double doubleval = format->getHostFloat(val,&type);
-    t << std::setprecision(16) << doubleval;
+    t << showpoint << std::setprecision(16) << doubleval;
   }else if (displayFormat == Symbol::force_oct)
     t << oct << '0' << val;
   else if (displayFormat == Symbol::force_char) {
