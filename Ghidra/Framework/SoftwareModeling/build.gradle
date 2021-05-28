@@ -17,11 +17,15 @@ apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Framework SoftwareModeling'
 
 apply plugin: 'antlr'
+
+rootProject.createJavadocs.exclude '**/pcodeCPort/**'
+rootProject.createJsondocs.exclude '**/pcodeCPort/**'
 
 // make sure antlr code gets built during prepdev so that the directories are created and 
 // eclipse doesn't complain about missing src directories.
@@ -103,3 +107,5 @@ generateGrammarSource {
 		}
 	}
 }
+// must generate grammar before zipping if we want to include it in the source zip
+zipSourceSubproject.dependsOn generateGrammarSource
