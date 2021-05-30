@@ -1,0 +1,9 @@
+<dwarf>
+  <register_mappings>
+    <register_mapping dwarf="0" ghidra="r0" auto_count="26" /> <!-- r0..r25 -->
+    <register_mapping dwarf="26" ghidra="gp" />
+    <register_mapping dwarf="27" ghidra="fp" />
+    <register_mapping dwarf="28" ghidra="sp" stackpointer="true" />
+    <register_mapping dwarf="29" ghidra="r29" auto_count="35" /> <!-- r29..r63 -->
+  </register_mappings>
+</dwarf>
