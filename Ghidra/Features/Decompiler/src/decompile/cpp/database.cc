@@ -387,6 +387,10 @@ void Symbol::saveXmlHeader(ostream &s) const
       s << "oct\"";
     else if (format == force_bin)
       s << "bin\"";
+    else if (format == force_float)
+      s << "float\"";
+    else if (format == force_float)
+      s << "double\"";
     else
       s << "hex\"";
   }
@@ -425,6 +429,10 @@ void Symbol::restoreXmlHeader(const Element *el)
 	    dispflags |= force_oct;
 	  else if (formString == "bin")
 	    dispflags |= force_bin;
+      else if (formString == "float")
+        dispflags |= force_float;
+      else if (formString == "double")
+        dispflags |= force_double;
 	}
 	break;
       case 'h':
