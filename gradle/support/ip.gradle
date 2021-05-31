@@ -133,6 +133,11 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/data/build.xml" // language build file (generated for dev only)
 		exclude "**/.vs/**"
 		exclude "**/*.vcxproj.user"
+		exclude "**/*.toml"
+		exclude "**/*.lock"
+		exclude "**/com_dbg/**"
+		exclude "**/decomp_dbg"
+		exclude "**/target/**"
 	}
 	tree.each { file ->
 			String ip = getIp(p.projectDir, file)
@@ -182,7 +187,8 @@ def isCSourceFile(File file) {
 		   filename.endsWith(".hh") ||
 		   filename.endsWith(".css") ||
 		   filename.endsWith(".jj") ||
-		   filename.endsWith(".proto");
+		   filename.endsWith(".proto") ||
+		   filename.endsWith(".rs");
 }
 
 /*********************************************************************************
@@ -339,6 +345,7 @@ def Set<String> getAllowedIP(Project p) {
 		}
 	}
 	
+	set.add("BinCraft")
 	set.add("GHIDRA")
 	set.add("LICENSE")
 	set.add("Copyright_Distribution_Permitted")

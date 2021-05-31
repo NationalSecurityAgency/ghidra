@@ -234,4 +234,6 @@ public:
 extern void connect_to_console(Funcdata *fd);
 #endif
 
+void ghidra_process_main();
+
 #endif
