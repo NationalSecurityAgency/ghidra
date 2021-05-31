@@ -87,12 +87,12 @@ public strictfp class FloatFormat {
 			displayContext = new MathContext(7, RoundingMode.HALF_EVEN);
 		}
 		else if (size == 4) {
-			signbit_pos = 31;
-			exp_pos = 23;
-			exp_size = 8;
+			signbit_pos = 63;
+			exp_pos = 52;
+			exp_size = 11;
 			frac_pos = 0;
-			frac_size = 23;
-			bias = 127;
+			frac_size = 52;
+			bias = 1023;
 			jbitimplied = true;
 			displayContext = new MathContext(7, RoundingMode.HALF_EVEN);
 		}

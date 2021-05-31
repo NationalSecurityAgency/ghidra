@@ -15,6 +15,7 @@
  */
 #include "printc.hh"
 #include "funcdata.hh"
+#include <iomanip>
 
 // Operator tokens for expressions
 //                        token #in prec assoc   optype       space bump
@@ -1133,6 +1134,20 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
     t << hex << "0x" << val;
   else if (displayFormat == Symbol::force_dec)
     t << dec << val;
+  else if (displayFormat == Symbol::force_float) {
+      const FloatFormat *format = glb->translate->getFloatFormat(sizeof(val));
+      FloatFormat::floatclass type;
+      double floatval = format->getHostFloat(val,&type);
+
+      t << showpoint << std::setprecision(7) << floatval;
+  }
+  else if (displayFormat == Symbol::force_double) {
+      const FloatFormat *format = glb->translate->getFloatFormat(sizeof(val));
+      FloatFormat::floatclass type;
+      double doubleval = format->getHostFloat(val,&type);
+
+      t << showpoint << std::setprecision(16) << doubleval;
+  }
   else if (displayFormat == Symbol::force_oct)
     t << oct << '0' << val;
   else if (displayFormat == Symbol::force_char) {
