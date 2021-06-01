@@ -18,9 +18,14 @@ apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Features Base'
 
+
+
+rootProject.createJavadocs.exclude '**/ghidra/app/plugin/core/**'
+rootProject.createJsondocs.exclude '**/ghidra/app/plugin/core/**' 
 
 /*
 	This build file is a bit different than most project build files, as it initializes
@@ -174,3 +179,7 @@ rootProject.prepDev.dependsOn buildJavacc
 
 // 'indexHelp' is defined in the buildHelp.gradle 'script plugin'
 indexHelp.dependsOn generateExtraHelpFiles
+
+zipSourceSubproject.dependsOn buildCPPParser
+zipSourceSubproject.dependsOn buildCParser
+
