@@ -46,17 +46,6 @@ if (extensionsList.isFile()) {
 	}
 }
 
-FileTree javadocFiles = fileTree (rootProject.projectDir.toString()) {
-	include '**/Framework/**/*.java'
-	include '**/Features/Base/src/main/java/**/*.java'
-	exclude '**/Features/Base/src/main/java/ghidra/app/plugin/**/*.java';
-	include '**/Features/Decompiler/src/main/java/ghidra/app/decompiler/**/*.java'
-	include '**/Features/Python/**/*.java'
-	exclude '**/GhidraBuild/**/*.java';
-	exclude '**/src/test/**'
-	exclude '**/src/test.slow/**'
-	exclude '**/pcodeCPort/**'  // not intended for general consumption
-}
 ext.ghidraPath = files()
 
 /********************************************************************************
@@ -122,12 +111,14 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	destinationDir file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
 	
 	failOnError false
+
+	// the "source" property must be set in individual project's build.gradle files.
+	// projects that want to be included in the Jsondocs should add the following to 
+	// their build.gradle file:
+	//
+	//	apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
+	//
 		
-	// Here for reference. If we want to turn on javadoc for all source files, uncomment
-	// the following line (and comment out the next one):
-	// source subprojects.collect { it.sourceSets.main.allJava }
-	source javadocFiles
-	
 	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
 	// find referenced classes.
 	classpath =  rootProject.ext.ghidraPath
@@ -170,6 +161,7 @@ configurations {
 dependencies {
 	jsondoc project('JsonDoclet')
 }
+
  
 task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all projects', group: 'Documentation') {
 	
@@ -181,14 +173,18 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	
 	failOnError false
 		
-	// Here for reference. If we want to turn on javadoc for all source files, uncomment
-	// the following line (and comment out the next one):
-	// source subprojects.collect { it.sourceSets.main.allJava }
-	source javadocFiles
 	
 	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
 	// find referenced classes.
 	classpath =  rootProject.ext.ghidraPath
+
+	// the "source" property must be set in individual project's build.gradle files.
+	// projects that want to be included in the Jsondocs should add the following to 
+	// their build.gradle file:
+	//
+	//	apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
+	//
+	
 
 	// Generate at package level because user may try to get help directly on an object they have 
 	// rather than its public interface.
