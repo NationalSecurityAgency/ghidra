@@ -583,6 +583,17 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	}
 
 	@Override
+	public void setPcode(PcodeOp[] pcodeOps) {
+		lock.acquire();
+		try {
+			checkIsValid();
+			proto.setPcode(pcodeOps);
+		} finally {
+			lock.release();
+		}
+	}
+
+	@Override
 	public PcodeOp[] getPcode() {
 		return getPcode(false);
 	}
@@ -592,6 +603,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		lock.acquire();
 		try {
 			checkIsValid();
+
 			if (!includeOverrides) {
 				return proto.getPcode(this, null, null);
 			}

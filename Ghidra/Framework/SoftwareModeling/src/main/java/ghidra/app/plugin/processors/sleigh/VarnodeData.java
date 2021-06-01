@@ -20,7 +20,9 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * 
@@ -31,4 +33,23 @@ public class VarnodeData {
 	public AddressSpace space;
 	public long offset;
 	public int size;
+
+	public VarnodeData() {
+	}
+
+	public VarnodeData(AddressSpace space, long offset, int size) {
+		this.space = space;
+		this.offset = offset;
+		this.size = size;
+	}
+
+	public static VarnodeData Of(Varnode varnode) {
+		Address addr = varnode.getAddress();
+		VarnodeData data = new VarnodeData(
+			addr.getAddressSpace(),
+			addr.getOffset(),
+			addr.getSize()
+		);
+		return data;
+	}
 }

@@ -392,6 +392,11 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	}
 
 	@Override
+	public void setPcode(PcodeOp[] pcodeOps) {
+		instrProto.setPcode(pcodeOps);
+	}
+
+	@Override
 	public PcodeOp[] getPcode() {
 		return instrProto.getPcode(this, null, null);
 	}

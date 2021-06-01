@@ -186,6 +186,13 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	public void setFlowOverride(FlowOverride flowOverride);
 
 	/**
+	 * Set the expected pcodes to this instructions.
+	 * 
+	 * @param pcodes expected pcodes to be returned
+	 */
+	public void setPcode(PcodeOp[] pcodeOps);
+
+	/**
 	 * Get an array of PCode operations (micro code) that this instruction
 	 * performs.  Flow overrides are not factored into pcode.
 	 * 

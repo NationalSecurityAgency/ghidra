@@ -470,6 +470,11 @@ public class InstructionStub implements Instruction {
 	}
 
 	@Override
+	public void setPcode(PcodeOp[] pcodeOps) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public PcodeOp[] getPcode() {
 		throw new UnsupportedOperationException();
 	}

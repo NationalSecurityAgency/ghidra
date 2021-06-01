@@ -285,6 +285,14 @@ public interface InstructionPrototype {
 	public Object[] getResultObjects(InstructionContext context);
 
 	/**
+	 * Set an array of PCode operations to this instruction to overwrite
+	 * original operations.
+	 * 
+	 * @param pcodeOps the ops that overwrite the original pcode operations
+	 */
+	public void setPcode(PcodeOp[] pcodeOps);
+
+	/**
 	 * Get an array of PCode operations (micro code) that this instruction
 	 * performs.
 	 * 
