@@ -98,4 +98,20 @@ public class NoisyStructureBuilderTest extends AbstractGTest {
 		testNextField(iter, 8, DWordDataType.dataType);
 		Assert.assertFalse(iter.hasNext());
 	}
+
+	@Test
+	public void testPointerNulls() {
+		NoisyStructureBuilder builder = new NoisyStructureBuilder();
+		DataType pointerNull = new Pointer32DataType(null);
+		builder.addDataType(4, Undefined4DataType.dataType);
+		builder.addDataType(8, Undefined4DataType.dataType);
+		builder.addDataType(4, pointerNull);
+		builder.addReference(16, pointerNull);
+
+		Iterator<Entry<Long, DataType>> iter = builder.iterator();
+		testNextField(iter, 4, pointerNull);
+		testNextField(iter, 8, Undefined4DataType.dataType);
+		Assert.assertFalse(iter.hasNext());
+		Assert.assertEquals(builder.getSize(), 17);
+	}
 }
