@@ -198,6 +198,11 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return "*/";
 	}
 
+	@Override
+	protected String getCertificationBodyPrefix() {
+		return "*";
+	}
+
 	/**
 	 *
 	 * Fix script name for search in script directories, such as Java package parts in the name and inner class names.
