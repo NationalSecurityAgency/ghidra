@@ -94,7 +94,7 @@ else {
  *		project.OS_NAMES.each {...}
  ****************************************************************************/
 
-project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
+project.ext.set("OS_NAMES", ["osxaarch64","osx64", "win32", "win64", "linux64"])
 
 /****************************************************************************
  * Establish Visual Studio configuration environment for Windows native builds
@@ -301,7 +301,7 @@ String getCurrentPlatformName() {
 			return 'osx64'
 		}
 		if (isAARCH_64) {
-			return 'aarch64'
+			return 'osxaarch64'
 		}
 	}
 	throw new GradleException("Unrecognized current platform -> osName = $osName, archName = $archName")
