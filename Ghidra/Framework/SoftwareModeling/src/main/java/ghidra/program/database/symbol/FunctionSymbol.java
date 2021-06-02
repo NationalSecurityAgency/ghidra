@@ -260,6 +260,21 @@ public class FunctionSymbol extends SymbolDB {
 		return super.doGetName();
 	}
 
+	@Override
+	protected Namespace doGetParentNamespace() {
+
+		// Check for default thunk function which should return the
+		// parent namespace of the thunked-function
+		if (getSource() == SourceType.DEFAULT) {
+			Symbol thunkedSymbol = getThunkedSymbol();
+			if (thunkedSymbol instanceof FunctionSymbol) {
+				FunctionSymbol thunkedFuncSym = (FunctionSymbol) thunkedSymbol;
+				return thunkedFuncSym.getParentNamespace();
+			}
+		}
+		return super.doGetParentNamespace();
+	}
+
 //	@Override
 //	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
 //			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
