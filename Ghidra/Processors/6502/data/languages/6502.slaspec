@@ -373,6 +373,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 {
 	SP = SP + 1;
 	A = *:1 (SP);
+	resultFlags(A);
 }
 
 :ROL OP2     is (op=0x26 | op=0x2A | op=0x2E | op=0x36 | op=0x3E) ... & OP2
@@ -448,29 +449,28 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :STA OP1     is (cc=1 & aaa=4) ... & OP1
 {
 	OP1 = A;
-	resultFlags(A);
 }
 
 :STX OP2ST     is (op=0x86 | op=0x8E | op=0x96) ... & OP2ST
 {
 	OP2ST = X;
-	resultFlags(X);
 }
 
 :STY OP2     is (op=0x84 | op=0x8C | op=0x94) ... & OP2
 {
 	OP2 = Y;
-	resultFlags(Y);
 }
 
 :TAX     is op=0xAA
 {
 	X = A;
+	resultFlags(X);
 }
 
 :TAY     is op=0xA8
 {
 	Y = A;
+	resultFlags(Y);
 }
 
 :TSX     is op=0xBA
@@ -481,6 +481,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :TXA     is op=0x8A
 {
 	A = X;
+	resultFlags(A);
 }
 
 :TXS     is op=0x9A
@@ -491,4 +492,5 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :TYA     is op=0x98
 {
 	A = Y;
+	resultFlags(A);
 }
