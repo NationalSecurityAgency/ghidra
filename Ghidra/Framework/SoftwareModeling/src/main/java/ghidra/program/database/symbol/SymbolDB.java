@@ -712,6 +712,10 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	@Override
 	public Namespace getParentNamespace() {
+		return doGetParentNamespace();
+	}
+
+	protected Namespace doGetParentNamespace() {
 		Symbol parent = getParentSymbol();
 		if (parent != null) {
 			return (Namespace) parent.getObject();
