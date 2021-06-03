@@ -51,6 +51,8 @@ dependencies {
 	api fileTree(dir: 'lib', include: "*.jar")
 	api fileTree(dir: ghidraDir + '/Framework', include: "**/*.jar")
 	api fileTree(dir: ghidraDir + '/Features', include: "**/*.jar")
+	api fileTree(dir: ghidraDir + '/Debug', include: "**/*.jar")
+	api fileTree(dir: ghidraDir + '/Processors', include: "**/*.jar")
 	helpPath fileTree(dir: ghidraDir + '/Features/Base', include: "**/Base.jar")
 }
 	
