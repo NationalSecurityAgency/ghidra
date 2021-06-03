@@ -277,6 +277,7 @@ public class PcodeDataTypeManager {
 				// construct a <typeref> tag but must build a full <type> tag.
 				return buildType(type, size);
 			}
+			size = 1;
 		}
 		else if (type.getLength() <= 0) {
 			return buildType(type, size);
@@ -293,6 +294,9 @@ public class PcodeDataTypeManager {
 			long id = progDataTypes.getID(type);
 			if (id > 0) {
 				SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+			}
+			if (type.getLength() <= 0 && size > 0) {
+				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 			}
 		}
 		resBuf.append("/>");
