@@ -17,7 +17,6 @@ package docking.widgets;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,15 +25,13 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.Timer;
 
-import generic.json.Json;
 import generic.util.WindowUtilities;
-import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 
 public class PopupWindow {
-	private static final int X_PADDING = 20;
-	private static final int Y_PADDING = 20;
+	private static final int X_PADDING = 25;
+	private static final int Y_PADDING = 25;
 	private static final List<WeakReference<PopupWindow>> VISIBLE_POPUPS = new ArrayList<>();
 
 	public static void hideAllWindows() {
@@ -46,11 +43,20 @@ public class PopupWindow {
 		}
 	}
 
-	private JWindow popup;
+	private static final PopupWindowPlacer DEFAULT_WINDOW_PLACER =
+		new PopupWindowPlacerBuilder()
+				.rightEdge(Location.BOTTOM)
+				.leftEdge(Location.BOTTOM)
+				.bottomEdge(Location.RIGHT)
+				.topEdge(Location.CENTER)
+				.leastOverlapCorner()
+				.throwsAssertException()
+				.build();
 
-	private Component sourceComponent;
 	/** Area where user can mouse without hiding the window (in screen coordinates) */
-	private Rectangle neutralMotionZone;
+	private Rectangle mouseMovementArea;
+	private JWindow popup;
+	private Component sourceComponent;
 
 	private MouseMotionListener sourceMouseMotionListener;
 	private MouseListener sourceMouseListener;
@@ -90,7 +96,7 @@ public class PopupWindow {
 
 		popup = new JWindow(parentWindow);
 		popup.setFocusableWindowState(false);
-// this is bad, as it keeps tooltips above all apps and they don't go away, as normal tooltips do        
+// this is bad, as it keeps tooltips above all apps and they don't go away, as normal tooltips do
 //        popup.setAlwaysOnTop( true );
 
 		popup.getContentPane().add(displayComponent);
@@ -118,7 +124,7 @@ public class PopupWindow {
 
 				Point localPoint = e.getPoint();
 				SwingUtilities.convertPointToScreen(localPoint, e.getComponent());
-				if (!neutralMotionZone.contains(localPoint)) {
+				if (!mouseMovementArea.contains(localPoint)) {
 					hide();
 				}
 				else {
@@ -186,8 +192,8 @@ public class PopupWindow {
 	}
 
 	private void removeOldPopupReferences() {
-		for (Iterator<WeakReference<PopupWindow>> iterator =
-			VISIBLE_POPUPS.iterator(); iterator.hasNext();) {
+		for (Iterator<WeakReference<PopupWindow>> iterator = VISIBLE_POPUPS.iterator(); iterator
+				.hasNext();) {
 			WeakReference<PopupWindow> reference = iterator.next();
 			PopupWindow window = reference.get();
 			if (window == this) {
@@ -205,7 +211,7 @@ public class PopupWindow {
 	/**
 	 * Sets the amount of time that will pass before the popup window is closed <b>after</b> the
 	 * user moves away from the popup window and out of the neutral zone
-	 * 
+	 *
 	 * @param delayInMillis the timer delay
 	 */
 	public void setCloseWindowDelay(int delayInMillis) {
@@ -213,42 +219,32 @@ public class PopupWindow {
 		closeTimer.setRepeats(false);
 	}
 
-	public void showOffsetPopup(MouseEvent e, Dimension keepVisibleArea) {
-		doShowPopup(e, keepVisibleArea);
+	public void showOffsetPopup(MouseEvent e, Rectangle keepVisibleSize) {
+		doShowPopup(e, keepVisibleSize, DEFAULT_WINDOW_PLACER);
 	}
 
 	public void showPopup(MouseEvent e) {
-		doShowPopup(e, null);
+		doShowPopup(e, null, DEFAULT_WINDOW_PLACER);
 	}
 
-	private void doShowPopup(MouseEvent e, Dimension keepVisibleArea) {
+	private void doShowPopup(MouseEvent e, Rectangle keepVisibleSize, PopupWindowPlacer placer) {
 		hideAllWindows();
 
 		sourceComponent = e.getComponent();
 		sourceComponent.addMouseListener(sourceMouseListener);
 		sourceComponent.addMouseMotionListener(sourceMouseMotionListener);
 
-		Point point = e.getPoint();
-		SwingUtilities.convertPointToScreen(point, sourceComponent);
-		if (keepVisibleArea == null) {
-			keepVisibleArea = new Dimension(0, 0);
-		}
+		Dimension popupDimension = popup.getSize();
+		ensureSize(popupDimension);
 
-		Rectangle popupBounds = popup.getBounds();
-
-		int x = point.x + keepVisibleArea.width + X_PADDING;
-		int y = point.y + keepVisibleArea.height + Y_PADDING;
-		popupBounds.setLocation(x, y);
-
-		ensureSize(popupBounds);
-
-		Rectangle hoverArea = new Rectangle(point, keepVisibleArea);
-		Rectangle adjustedBounds = adjustBoundsForCursorLocation(popupBounds, hoverArea);
-		neutralMotionZone = createNeutralMotionZone(adjustedBounds, hoverArea);
+		Rectangle keepVisibleArea = createKeepVisibleArea(e, keepVisibleSize);
+		Rectangle screenBounds = WindowUtilities.getVisibleScreenBounds().getBounds();
+		Rectangle placement = placer.getPlacement(popupDimension, keepVisibleArea, screenBounds);
+		mouseMovementArea = createMovementArea(placement, keepVisibleArea);
 
 		installDebugPainter(e);
 
-		popup.setBounds(adjustedBounds);
+		popup.setBounds(placement);
 		popup.setVisible(true);
 
 		removeOldPopupReferences();
@@ -256,252 +252,62 @@ public class PopupWindow {
 		VISIBLE_POPUPS.add(new WeakReference<>(this));
 	}
 
-	private void ensureSize(Rectangle popupBounds) {
-		Shape screenShape = WindowUtilities.getVisibleScreenBounds();
-		Rectangle screenBounds = screenShape.getBounds();
-		if (screenBounds.width < popupBounds.width) {
-			popupBounds.width = screenBounds.width / 2;
+	private Rectangle createKeepVisibleArea(MouseEvent e, Rectangle keepVisibleAea) {
+
+		Rectangle newArea;
+		if (keepVisibleAea == null) {
+			Point point = new Point(e.getPoint());
+			newArea = new Rectangle(point);
+			newArea.grow(X_PADDING, Y_PADDING); // pad to avoid placing the popup too close 
+		}
+		else {
+			newArea = new Rectangle(keepVisibleAea);
 		}
 
-		if (screenBounds.height < popupBounds.height) {
-			popupBounds.height = screenBounds.height / 2;
+		Point point = newArea.getLocation();
+		SwingUtilities.convertPointToScreen(point, sourceComponent);
+		newArea.setLocation(point);
+
+		return newArea;
+	}
+
+	private void ensureSize(Dimension popupDimension) {
+		Dimension screenDimension = WindowUtilities.getVisibleScreenBounds().getBounds().getSize();
+
+		if (screenDimension.width < popupDimension.width) {
+			popupDimension.width = screenDimension.width / 2;
+		}
+
+		if (screenDimension.height < popupDimension.height) {
+			popupDimension.height = screenDimension.height / 2;
 		}
 	}
 
-	private void installDebugPainter(List<GridCell> grid) {
-//		GGlassPane glassPane = GGlassPane.getGlassPane(sourceComponent);
-//		ShapeDebugPainter painter = new ShapeDebugPainter(null, grid, neutralMotionZone);
-//		glassPane.addPainter(painter);
-//		painters.add(painter);
+	/**
+	 * Creates a rectangle that contains both given rectangles entirely and includes padding.
+	 * The padding allows users to mouse over the edge of the hovered area without triggering the
+	 * popup to close.
+	 */
+	private Rectangle createMovementArea(Rectangle popupBounds, Rectangle hoverRectangle) {
+		Rectangle result = popupBounds.union(hoverRectangle);
+		return result;
 	}
 
 	private void installDebugPainter(MouseEvent e) {
 //		GGlassPane glassPane = GGlassPane.getGlassPane(sourceComponent);
 //		ShapeDebugPainter painter = new ShapeDebugPainter(e, null, neutralMotionZone);
+//		painters.forEach(p -> glassPane.removePainter(p));
+//
 //		glassPane.addPainter(painter);
 //		painters.add(painter);
 	}
 
-	/**
-	 * Adjusts the given bounds to make sure that they do not cover the given location.
-	 * <p>
-	 * When the <tt>hoverArea</tt> is obscured, this method will create a grid of possible locations
-	 * in which to place the given bounds.   The grid will be searched for the location that is
-	 * closest to the hover area without touching it.
-	 * 
-	 * @param bounds The bounds to move as necessary.
-	 * @param hoverArea The area that should not be covered by the given bounds
-	 * @return the original bounds adjusted so that they do not cover the given <tt>hoverArea</tt>,
-	 *         if possible.
-	 */
-	private Rectangle adjustBoundsForCursorLocation(Rectangle bounds, Rectangle hoverArea) {
-		Shape screenShape = WindowUtilities.getVisibleScreenBounds();
-		Rectangle screenBounds = screenShape.getBounds();
-		if (!bounds.intersects(hoverArea) && screenBounds.contains(bounds)) {
-			return bounds;
-		}
-
-		// center bounds over hover area; we intend not to block the hover area
-		int dx = (hoverArea.width / 2) - (bounds.width / 2);
-		int dy = (hoverArea.height / 2) - (bounds.height / 2);
-		Point hoverCenter = bounds.getLocation();
-		hoverCenter.x += dx;
-		hoverCenter.y += dy;
-
-		List<GridCell> grid = createSortedGrid(screenBounds, hoverCenter, bounds.getSize());
-
-		installDebugPainter(grid);
-
-		// try placing the bounds in each grid cell in order until no clipping
-		Rectangle match = null;
-		for (GridCell cell : grid) {
-			Rectangle r = cell.getRectangle();
-			if (!hoverArea.intersects(r) &&
-				screenBounds.contains(r)) {
-				match = r;
-				break;
-			}
-		}
-
-		if (match == null) {
-			Msg.debug(null, "Could not find a place to put the rectangle" + bounds);
-			return bounds;
-		}
-
-		return match;
-	}
-
-	private List<GridCell> createSortedGrid(Rectangle screen, Point targetCenter, Dimension size) {
-
-		List<GridCell> grid = new ArrayList<>();
-
-		//
-		// Rather than just a simple grid of rows and columns of the given size, this loop will
-		// create twice as many rows and columns, each half the size, resulting in 4 time the 
-		// number of potential locations.   This allows for potential closer placement to the 
-		// target center.
-		//
-		int row = 0;
-		Rectangle r = new Rectangle(new Point(0, 0), size);
-		while (screen.contains(r)) {
-
-			int x = r.x;
-			int y = r.y;
-
-			int col = 0;
-			while (screen.contains(r)) {
-				grid.add(new GridCell(r, targetCenter, row, col));
-
-				// add another cell halfway over
-				col++;
-				int half = size.width / 2;
-				x += half;
-				r = new Rectangle(x, r.y, r.width, r.height);
-
-				if (screen.contains(r)) {
-					grid.add(new GridCell(r, targetCenter, row, col));
-				}
-
-				col++;
-				x += half;
-				r = new Rectangle(x, r.y, r.width, r.height);
-			}
-
-			row++;
-			x = 0;
-			int halfHeight = r.height / 2;
-			y += halfHeight;
-			r = new Rectangle(x, y, r.width, r.height);
-
-			// loop again for another row halfway down
-			col = 0;
-			while (screen.contains(r)) {
-				grid.add(new GridCell(r, targetCenter, row, col));
-
-				// add another cell halfway over
-				col++;
-				int half = size.width / 2;
-				x += half;
-				r = new Rectangle(x, r.y, r.width, r.height);
-
-				if (screen.contains(r)) {
-					grid.add(new GridCell(r, targetCenter, row, col));
-				}
-
-				col++;
-				x += half;
-				r = new Rectangle(x, r.y, r.width, r.height);
-			}
-
-			row++;
-			x = 0;
-			y += halfHeight;
-			r = new Rectangle(x, y, r.width, r.height);
-		}
-
-		grid.sort(null);
-
-		return grid;
-	}
-
-	/**
-	 * Creates a rectangle that contains both given rectangles entirely.
-	 */
-	private Rectangle createNeutralMotionZone(Rectangle popupBounds, Rectangle hoverRectangle) {
-		int newX = Math.min(hoverRectangle.x, popupBounds.x);
-		int newY = Math.min(hoverRectangle.y, popupBounds.y);
-
-		double hoverLowestCornerX = hoverRectangle.x + hoverRectangle.getWidth();
-		double popupLowestCornerX = popupBounds.x + popupBounds.getWidth();
-		int lowestCornerX = (int) Math.max(hoverLowestCornerX, popupLowestCornerX);
-
-		double hoverLowestCornerY = hoverRectangle.y + hoverRectangle.getHeight();
-		double popupLowestCornerY = popupBounds.y + popupBounds.getHeight();
-		int lowestCornerY = (int) Math.max(hoverLowestCornerY, popupLowestCornerY);
-
-		int width = difference(newX, lowestCornerX);
-		int height = difference(newY, lowestCornerY);
-
-		// add in some padding around the edges of the area, so that moving just over the edge
-		// of the popup will not close it (this can happen when the user sloppy-scrolls)
-		int padding = 25;
-		newX -= padding;
-		newY -= padding;
-		width += (padding * 2); // * 2 to give the padding and to compensate for the shifted x
-		height += (padding * 2); // * 2 to give the padding and to compensate for the shifted y
-
-		return new Rectangle(newX, newY, width, height);
-	}
-
-	private int difference(int value1, int value2) {
-		int abs1 = Math.abs(value1);
-		int abs2 = Math.abs(value2);
-		if (abs1 > abs2) {
-			return abs1 - abs2;
-		}
-		return abs2 - abs1;
-	}
+	// for debug
+//	private static List<GGlassPanePainter> painters = new ArrayList<>();
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
-	/**
-	 * A cell of a grid.   This cell is given the target center point of the screen space, which
-	 * is used to determine how close this cell is to the target. 
-	 */
-	private class GridCell implements Comparable<GridCell> {
-		private Rectangle rectangle;
-		private int distanceFromCenter;
-		private boolean isRight;
-		private boolean isBelow;
-		private int row;
-		private int col;
-
-		GridCell(Rectangle rectangle, Point targetCenter, int row, int col) {
-			this.rectangle = rectangle;
-			this.row = row;
-			this.col = col;
-
-			double cx = rectangle.getCenterX();
-			double cy = rectangle.getCenterY();
-			double scx = targetCenter.getX();
-			double scy = targetCenter.getY();
-			double dx = cx - scx;
-			double dy = cy - scy;
-			distanceFromCenter = (int) Math.sqrt(dx * dx + dy * dy);
-			isRight = cx > scx;
-			isBelow = cy > scy;
-		}
-
-		public Rectangle getRectangle() {
-			return rectangle;
-		}
-
-		@Override
-		public int compareTo(GridCell other) {
-			// smaller distances come first
-			int delta = distanceFromCenter - other.distanceFromCenter;
-			if (delta != 0) {
-				return delta;
-			}
-
-			if (isRight != other.isRight) {
-				return isRight ? -1 : 1;  // prefer right side
-			}
-
-			if (isBelow != other.isBelow) {
-				return isBelow ? -1 : 1; // prefer below
-			}
-
-			return 0;
-		}
-
-		@Override
-		public String toString() {
-			return Json.toString(this);
-		}
-	}
 
 	// for debug
 	//private static List<GGlassPanePainter> painters = new ArrayList<>();
@@ -513,11 +319,9 @@ public class PopupWindow {
 
 		private MouseEvent sourceEvent;
 		private Rectangle bounds;
-		private List<GridCell> grid;
 
-		ShapeDebugPainter(MouseEvent sourceEvent, List<GridCell> grid, Rectangle bounds) {
+		ShapeDebugPainter(MouseEvent sourceEvent, Rectangle bounds) {
 			this.sourceEvent = sourceEvent;
-			this.grid = grid;
 			this.bounds = bounds;
 		}
 
@@ -542,47 +346,6 @@ public class PopupWindow {
 				g.setColor(Color.RED);
 				int offset = 10;
 				g.fillRect(p.x - offset, p.y - offset, (offset * 2), (offset * 2));
-			}
-
-			if (grid != null) {
-
-				Graphics2D g2d = (Graphics2D) g;
-				Font font = g2d.getFont().deriveFont(12).deriveFont(Font.BOLD);
-				g2d.setFont(font);
-
-				g.setColor(new Color(55, 0, 0, 100));
-				for (GridCell cell : grid) {
-
-					Rectangle r = cell.getRectangle();
-					Point p = r.getLocation();
-					int oldY = p.y;
-					SwingUtilities.convertPointFromScreen(p, glassPane);
-					int x = p.x;
-					int y = p.y;
-					int w = r.width;
-					int h = r.height;
-					g2d.fillRect(x, y, w, h);
-				}
-
-				g2d.setColor(Color.PINK);
-				for (GridCell cell : grid) {
-					String coord = "(" + cell.row + "," + cell.col + ")";
-					Rectangle r = cell.getRectangle();
-
-					int cx = r.x + r.width;
-					int cy = r.y + r.height;
-					Point p = new Point(cx, cy);
-					SwingUtilities.convertPointFromScreen(p, glassPane);
-					FontMetrics fm = g2d.getFontMetrics();
-					Rectangle2D sbounds = fm.getStringBounds(coord, g2d);
-					int textWidth = (int) sbounds.getWidth();
-					int textHeight = (int) sbounds.getHeight();
-					int scx = (int) sbounds.getCenterX();
-					int scy = (int) sbounds.getCenterY();
-					int textx = p.x - textWidth;
-					int texty = p.y - textHeight;
-					g2d.drawString(coord, p.x, p.y);
-				}
 			}
 		}
 	}
