@@ -3399,7 +3399,11 @@ define pcodeop readgsbase;
 @endif
 
 define pcodeop rdmsr;
-:RDMSR          is vexMode=0 & byte=0xf; byte=0x32                  { tmp:8 = rdmsr(ECX); EDX = tmp(4); EAX = tmp(0); }
+:RDMSR          is vexMode=0 & byte=0xf; byte=0x32 & check_EAX_dest & check_EDX_dest {
+	tmp:8 = rdmsr(ECX);
+	EDX = tmp(4); build check_EDX_dest;
+	EAX = tmp(0); build check_EAX_dest;
+}
 
 define pcodeop readPID;
 :RDPID r32      is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0xc7; reg_opcode=7 & r32 { r32 = readPID(); }

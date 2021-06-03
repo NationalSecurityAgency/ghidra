@@ -309,7 +309,14 @@ void Datatype::saveXmlRef(ostream &s) const
   if ((id!=0)&&(metatype != TYPE_VOID)) {
     s << "<typeref";
     a_v(s,"name",name);
-    s << " id=\"0x" << hex << id << '\"';
+    if (isVariableLength()) {			// For a type with a "variable length" base
+      uintb origId = hashSize(id, size);	// Emit the size independent version of the id
+      s << " id=\"0x" << hex << origId << '\"';
+      s << " size=\"" << dec << size << '\"';	// but also emit size of this instance
+    }
+    else {
+      s << " id=\"0x" << hex << id << '\"';
+    }
     s << "/>";
   }
   else
@@ -1656,13 +1663,20 @@ Datatype *TypeFactory::findByIdLocal(const string &n,uint8 id) const
   return *iter;
 }
 
-/// Search for a Datatype by \b name and/or \b id. Derived classes may search outside this container.
+/// The id is expected to resolve uniquely.  Internally, different length instances
+/// of a variable length data-type are stored as separate Datatype objects. A non-zero
+/// size can be given to distinguish these cases.
+/// Derived classes may search outside this container.
 /// \param n is the name of the data-type
 /// \param id is the type id of the data-type
+/// \param sz is the given distinguishign size if non-zero
 /// \return the matching Datatype object
-Datatype *TypeFactory::findById(const string &n,uint8 id)
+Datatype *TypeFactory::findById(const string &n,uint8 id,int4 sz)
 
 {
+  if (sz > 0) {				// If the id is for a "variable length" base data-type
+    id = Datatype::hashSize(id, sz);	// Construct the id for the "sized" variant
+  }
   return findByIdLocal(n,id);
 }
 
@@ -1672,7 +1686,7 @@ Datatype *TypeFactory::findById(const string &n,uint8 id)
 Datatype *TypeFactory::findByName(const string &n)
 
 {
-  return findById(n,0);
+  return findById(n,0,0);
 }
 
 /// Find data-type without reference to name, using the functional comparators
@@ -2197,18 +2211,25 @@ Datatype *TypeFactory::restoreXmlType(const Element *el)
   Datatype *ct;
   if (el->getName() == "typeref") {
     uint8 newid = 0;
+    int4 size = -1;
     int4 num = el->getNumAttributes();
     for(int4 i=0;i<num;++i) {
-      if (el->getAttributeName(i) == "id") {
+      const string &nm(el->getAttributeName(i));
+      if (nm == "id") {
 	istringstream s(el->getAttributeValue(i));
 	s.unsetf(ios::dec | ios::hex | ios::oct);
 	s >> newid;
+      }
+      else if (nm == "size") {		// A "size" attribute indicates a "variable length" base
+	istringstream s(el->getAttributeValue(i));
+	s.unsetf(ios::dec | ios::hex | ios::oct);
+	s >> size;
       }
     }
     const string &newname( el->getAttributeValue("name"));
     if (newid == 0)		// If there was no id, use the name hash
       newid = Datatype::hashName(newname);
-    ct = findById(newname,newid);
+    ct = findById(newname,newid,size);
     if (ct == (Datatype *)0)
       throw LowlevelError("Unable to resolve type: "+newname);
     return ct;

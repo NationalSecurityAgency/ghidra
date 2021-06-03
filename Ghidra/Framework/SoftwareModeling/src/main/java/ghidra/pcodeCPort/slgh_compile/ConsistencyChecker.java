@@ -29,24 +29,22 @@ import ghidra.pcodeCPort.space.AddrSpace;
 
 class ConsistencyChecker {
 
-	int unnecessarypcode;
-	int readnowrite;
-	int writenoread;
-	// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
-	int largetemp;           
-	boolean printextwarning;
-	boolean printdeadwarning;
-	//if true, print information about constructors using temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
-	boolean printlargetempwarning; 
-	SleighCompile compiler;
-	SubtableSymbol root_symbol;
-	VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
+	private int unnecessarypcode;
+	private int readnowrite;
+	private int writenoread;
+
+	private int largetemp;			// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
+	private boolean printextwarning;
+	private boolean printdeadwarning;
+	private boolean printlargetempwarning;	// if true, warning about temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
+	private SleighCompile compiler;
+	private SubtableSymbol root_symbol;
+	private VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
 
 	// Sizes associated with tables
-	MapSTL<SubtableSymbol, Integer> sizemap =
-			new MapSTL<>((s1, s2) -> s1.compareTo(s2));
+	private MapSTL<SubtableSymbol, Integer> sizemap = new MapSTL<>((s1, s2) -> s1.compareTo(s2));
 
-	OperandSymbol getOperandSymbol(int slot, OpTpl op, Constructor ct) {
+	private OperandSymbol getOperandSymbol(int slot, OpTpl op, Constructor ct) {
 		VarnodeTpl vn;
 		OperandSymbol opsym = null;
 		int handindex;
@@ -69,9 +67,8 @@ class ConsistencyChecker {
 		return opsym;
 	}
 
-	boolean sizeRestriction(OpTpl op, Constructor ct)
-
-	{ // Make sure op template meets size restrictions
+	private boolean sizeRestriction(OpTpl op, Constructor ct) {
+		// Make sure op template meets size restrictions
 		// Return false and any info about mismatched sizes
 		int vnout, vn0, vn1;
 		AddrSpace spc;
@@ -103,7 +100,7 @@ class ConsistencyChecker {
 					return true;
 				}
 				printOpError(op, ct, -1, 0, "Input and output sizes must match; " +
-						op.getIn(0).getSize() + " != " + op.getOut().getSize());
+					op.getIn(0).getSize() + " != " + op.getOut().getSize());
 				return false;
 			case CPUI_INT_ADD:
 			case CPUI_INT_SUB:
@@ -240,8 +237,8 @@ class ConsistencyChecker {
 					return false;
 				}
 				return true;
-				// The shift amount does not necessarily have to be the same size
-				// But the output and first parameter must be same size
+			// The shift amount does not necessarily have to be the same size
+			// But the output and first parameter must be same size
 			case CPUI_INT_LEFT:
 			case CPUI_INT_RIGHT:
 			case CPUI_INT_SRIGHT:
@@ -284,7 +281,7 @@ class ConsistencyChecker {
 				}
 				else if (vnout < vn0) {
 					printOpError(op, ct, -1, 0,
-							"Output size must be strictly bigger than input size");
+						"Output size must be strictly bigger than input size");
 					return false;
 				}
 				return true;
@@ -349,7 +346,7 @@ class ConsistencyChecker {
 		return true;
 	}
 
-	String getOpName(OpTpl op) {
+	private String getOpName(OpTpl op) {
 		switch (op.getOpcode()) {
 			case CPUI_COPY:
 				return "Copy(=)";
@@ -484,7 +481,7 @@ class ConsistencyChecker {
 		}
 	}
 
-	void printOpError(OpTpl op, Constructor ct, int err1, int err2, String message) {
+	private void printOpError(OpTpl op, Constructor ct, int err1, int err2, String message) {
 		SubtableSymbol sym = ct.getParent();
 		OperandSymbol op1, op2;
 
@@ -498,10 +495,10 @@ class ConsistencyChecker {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Size restriction error in table '")
-		.append(sym.getName())
-		.append("' in constructor at ").append(ct.location)
-		.append("\n");
-
+				.append(sym.getName())
+				.append("' in constructor at ")
+				.append(ct.location)
+				.append("\n");
 
 		sb.append("  Problem");
 		if ((op1 != null) && (op2 != null)) {
@@ -521,7 +518,7 @@ class ConsistencyChecker {
 
 	}
 
-	int recoverSize(ConstTpl sizeconst, Constructor ct) {
+	private int recoverSize(ConstTpl sizeconst, Constructor ct) {
 		int size = 0, handindex;
 		OperandSymbol opsym;
 		SubtableSymbol tabsym;
@@ -572,7 +569,7 @@ class ConsistencyChecker {
 			"\" (or did you mean to use signed comparison?)", ct);
 	}
 
-	boolean checkOpMisuse(OpTpl op, Constructor ct) {
+	private boolean checkOpMisuse(OpTpl op, Constructor ct) {
 		switch (op.getOpcode()) {
 			case CPUI_INT_LESS: {
 				VarnodeTpl vn0 = op.getIn(0);
@@ -594,7 +591,7 @@ class ConsistencyChecker {
 					handleBetter("!= 0", ct);
 				}
 			}
-			break;
+				break;
 			case CPUI_INT_LESSEQUAL: {
 				VarnodeTpl vn0 = op.getIn(0);
 				VarnodeTpl vn1 = op.getIn(1);
@@ -615,14 +612,14 @@ class ConsistencyChecker {
 					handleBetter("== 0", ct);
 				}
 			}
-			break;
+				break;
 			default:
 				break;
 		}
 		return true;
 	}
 
-	boolean checkConstructorSection(Constructor ct, ConstructTpl cttpl) {
+	private boolean checkConstructorSection(Constructor ct, ConstructTpl cttpl) {
 		// Check all the OpTpl s within the given section for consistency, return true if all tests pass
 		if (cttpl == null) {
 			return true;		// Nothing to check
@@ -649,7 +646,7 @@ class ConsistencyChecker {
 	 * @param opTpl the op to check
 	 * @return true if {@code opTpl} uses a large temporary varnode
 	 */
-	boolean hasLargeTemporary(OpTpl opTpl) {
+	private boolean hasLargeTemporary(OpTpl opTpl) {
 		VarnodeTpl out = opTpl.getOut();
 		if (out != null && isTemporaryAndTooBig(out)) {
 			return true;
@@ -659,7 +656,7 @@ class ConsistencyChecker {
 			if (isTemporaryAndTooBig(in)) {
 				return true;
 			}
-		}	
+		}
 		return false;
 	}
 
@@ -669,12 +666,12 @@ class ConsistencyChecker {
 	 * @param vn varnode template to check
 	 * @return true if it uses a large temporary
 	 */
-	boolean isTemporaryAndTooBig(VarnodeTpl vn) {
-		return vn.getSpace().isUniqueSpace() && 
-				vn.getSize().getReal() > SleighBase.MAX_UNIQUE_SIZE;
+	private boolean isTemporaryAndTooBig(VarnodeTpl vn) {
+		return vn.getSpace().isUniqueSpace() && vn.getSize().getReal() > SleighBase.MAX_UNIQUE_SIZE;
 	}
 
-	boolean checkVarnodeTruncation(Constructor ct,int slot,OpTpl op,VarnodeTpl vn,boolean isbigendian) {
+	private boolean checkVarnodeTruncation(Constructor ct, int slot, OpTpl op, VarnodeTpl vn,
+			boolean isbigendian) {
 		ConstTpl off = vn.getOffset();
 		if (off.getType() != const_type.handle) {
 			return true;
@@ -683,24 +680,25 @@ class ConsistencyChecker {
 			return true;
 		}
 		const_type sztype = vn.getSize().getType();
-		if ((sztype != const_type.real)&&(sztype != const_type.handle)){
-			printOpError(op,ct,slot,slot,"Bad truncation expression");
+		if ((sztype != const_type.real) && (sztype != const_type.handle)) {
+			printOpError(op, ct, slot, slot, "Bad truncation expression");
 			return false;
 		}
-		int sz = recoverSize(off,ct);		// Recover the size of the original operand
+		int sz = recoverSize(off, ct);		// Recover the size of the original operand
 		if (sz <= 0) {
-			printOpError(op,ct,slot,slot,"Could not recover size");
+			printOpError(op, ct, slot, slot, "Could not recover size");
 			return false;
 		}
 		boolean res = vn.adjustTruncation(sz, isbigendian);
 		if (!res) {
-			printOpError(op,ct,slot,slot,"Truncation operator out of bounds");
+			printOpError(op, ct, slot, slot, "Truncation operator out of bounds");
 			return false;
 		}
 		return true;
 	}
 
-	boolean checkSectionTruncations(Constructor ct,ConstructTpl cttpl,boolean isbigendian) {
+	private boolean checkSectionTruncations(Constructor ct, ConstructTpl cttpl,
+			boolean isbigendian) {
 		// Check all the varnodes that have an offset_plus template
 		//     adjust the plus if we are big endian
 		//     make sure the truncation is valid
@@ -709,16 +707,16 @@ class ConsistencyChecker {
 		Iterator<OpTpl> iter;
 
 		iter = ops.iterator();
-		while(iter.hasNext()) {
+		while (iter.hasNext()) {
 			OpTpl op = iter.next();
 			VarnodeTpl outvn = op.getOut();
 			if (outvn != null) {
-				if (!checkVarnodeTruncation(ct,-1,op,outvn,isbigendian)) {
+				if (!checkVarnodeTruncation(ct, -1, op, outvn, isbigendian)) {
 					testresult = false;
 				}
 			}
-			for(int i=0;i<op.numInput();++i) {
-				if (!checkVarnodeTruncation(ct,i,op,op.getIn(i),isbigendian)) {
+			for (int i = 0; i < op.numInput(); ++i) {
+				if (!checkVarnodeTruncation(ct, i, op, op.getIn(i), isbigendian)) {
 					testresult = false;
 				}
 			}
@@ -726,7 +724,7 @@ class ConsistencyChecker {
 		return testresult;
 	}
 
-	boolean checkSubtable(SubtableSymbol sym) {
+	private boolean checkSubtable(SubtableSymbol sym) {
 		int tablesize = 0;
 		int numconstruct = sym.getNumConstructors();
 		Constructor ct;
@@ -796,7 +794,7 @@ class ConsistencyChecker {
 
 	// Deal with detected extension (SEXT or ZEXT) where the
 	// input size is the same as the output size
-	void dealWithUnnecessaryExt(OpTpl op, Constructor ct) {
+	private void dealWithUnnecessaryExt(OpTpl op, Constructor ct) {
 		if (printextwarning) {
 			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
@@ -804,7 +802,7 @@ class ConsistencyChecker {
 		unnecessarypcode += 1;
 	}
 
-	void dealWithUnnecessaryTrunc(OpTpl op, Constructor ct) {
+	private void dealWithUnnecessaryTrunc(OpTpl op, Constructor ct) {
 		if (printextwarning) {
 			compiler.reportWarning(op.location, "Unnecessary '" + getOpName(op) + "'");
 		}
@@ -814,7 +812,7 @@ class ConsistencyChecker {
 	}
 
 	// Establish table ordering
-	void setPostOrder(SubtableSymbol root) {
+	private void setPostOrder(SubtableSymbol root) {
 		postorder.clear();
 		sizemap.clear();
 
@@ -869,8 +867,8 @@ class ConsistencyChecker {
 	}
 
 	// Optimization routines
-	static void examineVn(MapSTL<Long, OptimizeRecord> recs, VarnodeTpl vn, int i, int inslot,
-			int secnum) {
+	private static void examineVn(MapSTL<Long, OptimizeRecord> recs, VarnodeTpl vn, int i,
+			int inslot, int secnum) {
 		if (vn == null) {
 			return;
 		}
@@ -900,7 +898,7 @@ class ConsistencyChecker {
 		}
 	}
 
-	static boolean possibleIntersection(VarnodeTpl vn1, VarnodeTpl vn2) {
+	private static boolean possibleIntersection(VarnodeTpl vn1, VarnodeTpl vn2) {
 		// Conservatively test whether vn1 and vn2 can intersect
 		if (vn1.getSpace().isConstSpace()) {
 			return false;
@@ -958,7 +956,7 @@ class ConsistencyChecker {
 	// This is extremely conservative. Basically any op where
 	// we can't see exactly what might be written is considered
 	// interference
-	boolean readWriteInterference(VarnodeTpl vn, OpTpl op, boolean checkread) {
+	private boolean readWriteInterference(VarnodeTpl vn, OpTpl op, boolean checkread) {
 		switch (op.getOpcode()) {
 			case CPUI_MULTIEQUAL:
 			case CPUI_PTRSUB:
@@ -999,7 +997,7 @@ class ConsistencyChecker {
 	}
 
 	// Look for reads and writes to temporaries
-	void optimizeGather1(Constructor ct, MapSTL<Long, OptimizeRecord> recs, int secnum) {
+	private void optimizeGather1(Constructor ct, MapSTL<Long, OptimizeRecord> recs, int secnum) {
 		ConstructTpl tpl;
 		if (secnum < 0) {
 			tpl = ct.getTempl();
@@ -1023,7 +1021,7 @@ class ConsistencyChecker {
 	}
 
 	// Make sure any temp used by the export is not optimized away
-	void optimizeGather2(Constructor ct, MapSTL<Long, OptimizeRecord> recs, int secnum) {
+	private void optimizeGather2(Constructor ct, MapSTL<Long, OptimizeRecord> recs, int secnum) {
 		ConstructTpl tpl;
 		if (secnum < 0) {
 			tpl = ct.getTempl();
@@ -1053,7 +1051,7 @@ class ConsistencyChecker {
 		}
 		if (hand.getSpace().isUniqueSpace()) {
 			if ((hand.getPtrSpace().getType() == ConstTpl.const_type.real) &&
-					(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
+				(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
 				long offset = hand.getPtrOffset().getReal();
 				recs.put(offset, new OptimizeRecord());
 				IteratorSTL<Pair<Long, OptimizeRecord>> res = recs.find(offset);
@@ -1067,7 +1065,7 @@ class ConsistencyChecker {
 		}
 	}
 
-	OptimizeRecord findValidRule(Constructor ct, MapSTL<Long, OptimizeRecord> recs) {
+	private OptimizeRecord findValidRule(Constructor ct, MapSTL<Long, OptimizeRecord> recs) {
 		IteratorSTL<Pair<Long, OptimizeRecord>> iter;
 		iter = recs.begin();
 		while (!iter.isEnd()) {
@@ -1075,7 +1073,7 @@ class ConsistencyChecker {
 			iter.increment();
 
 			if ((currec.writecount == 1) && (currec.readcount == 1) &&
-					(currec.readsection == currec.writesection)) {
+				(currec.readsection == currec.writesection)) {
 				// Temporary must be read and written exactly once
 				ConstructTpl tpl;
 				if (currec.readsection < 0) {
@@ -1123,7 +1121,7 @@ class ConsistencyChecker {
 		return null;
 	}
 
-	void applyOptimization(Constructor ct, OptimizeRecord rec) {
+	private void applyOptimization(Constructor ct, OptimizeRecord rec) {
 		VectorSTL<Integer> deleteops = new VectorSTL<>();
 		ConstructTpl ctempl;
 		if (rec.readsection < 0) {
@@ -1150,7 +1148,7 @@ class ConsistencyChecker {
 		ctempl.deleteOps(deleteops);
 	}
 
-	void checkUnusedTemps(Constructor ct, MapSTL<Long, OptimizeRecord> recs) {
+	private void checkUnusedTemps(Constructor ct, MapSTL<Long, OptimizeRecord> recs) {
 		IteratorSTL<Pair<Long, OptimizeRecord>> iter = recs.begin();
 		while (!iter.isEnd()) {
 			Pair<Long, OptimizeRecord> pair = iter.get();
@@ -1168,30 +1166,29 @@ class ConsistencyChecker {
 			iter.increment();
 		}
 	}
-	
+
 	/**
-	 * Checks {@code ct} to see whether it contains an {@link OpTpl} which
+	 * Checks {@code ct} to see whether p-code section contains an {@link OpTpl} which
 	 * uses a varnode in the unique space which is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
 	 * @param ct constructor to check
+	 * @param ctpl is the specific p-code section
 	 */
-	void checkLargeTemporaries(Constructor ct) {
-		ConstructTpl ctTpl = ct.getTempl();
-		if (ctTpl == null) {
-			return;
-		}
-		VectorSTL<OpTpl> ops = ctTpl.getOpvec();
+	private void checkLargeTemporaries(Constructor ct, ConstructTpl ctpl) {
+		VectorSTL<OpTpl> ops = ctpl.getOpvec();
 		for (IteratorSTL<OpTpl> iter = ops.begin(); !iter.isEnd(); iter.increment()) {
 			if (hasLargeTemporary(iter.get())) {
-			    if (printlargetempwarning) {
-			    	compiler.reportWarning(ct.location, "Constructor uses temporary varnode larger than " + SleighBase.MAX_UNIQUE_SIZE + " bytes.");
-			    }
+				if (printlargetempwarning) {
+					compiler.reportWarning(ct.location,
+						"Constructor uses temporary varnode larger than " +
+							SleighBase.MAX_UNIQUE_SIZE + " bytes.");
+				}
 				largetemp++;
-				return;		    
-			}		
+				return;
+			}
 		}
 	}
 
-	void optimize(Constructor ct) {
+	private void optimize(Constructor ct) {
 		OptimizeRecord currec;
 		MapSTL<Long, OptimizeRecord> recs = new ComparableMapSTL<>();
 		int numsections = ct.getNumSections();
@@ -1208,17 +1205,17 @@ class ConsistencyChecker {
 		}
 		while (currec != null);
 		checkUnusedTemps(ct, recs);
-		checkLargeTemporaries(ct);
 	}
 
-	ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary, boolean warndead, boolean warnlargetemp) {
+	public ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary,
+			boolean warndead, boolean warnlargetemp) {
 		compiler = cp;
 		root_symbol = rt;
 		unnecessarypcode = 0;
 		readnowrite = 0;
 		writenoread = 0;
 		//number of constructors which reference a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
-		largetemp = 0;      
+		largetemp = 0;
 		printextwarning = unnecessary;
 		printdeadwarning = warndead;
 		//whether to print information about constructors which reference large temporary varnodes
@@ -1226,7 +1223,7 @@ class ConsistencyChecker {
 	}
 
 	// Main entry point for size consistency check
-	boolean test() {
+	public boolean testSizeRestrictions() {
 		setPostOrder(root_symbol);
 		boolean testresult = true;
 
@@ -1239,18 +1236,19 @@ class ConsistencyChecker {
 		return testresult;
 	}
 
-	boolean testTruncations(boolean isbigendian) {
+	public boolean testTruncations() {
 		// Now that the sizemap is calculated, we can check/adjust the offset_plus templates
 		boolean testresult = true;
-		for(int i=0;i<postorder.size();++i) {
+		boolean isbigendian = compiler.isBigEndian();
+		for (int i = 0; i < postorder.size(); ++i) {
 			SubtableSymbol sym = postorder.get(i);
 			int numconstruct = sym.getNumConstructors();
 			Constructor ct;
-			for(int j=0;j<numconstruct;++j) {
+			for (int j = 0; j < numconstruct; ++j) {
 				ct = sym.getConstructor(j);
 
 				int numsections = ct.getNumSections();
-				for(int k=-1;k<numsections;++k) {
+				for (int k = -1; k < numsections; ++k) {
 					ConstructTpl tpl;
 					if (k < 0) {
 						tpl = ct.getTempl();
@@ -1261,7 +1259,7 @@ class ConsistencyChecker {
 					if (tpl == null) {
 						continue;
 					}
-					if (!checkSectionTruncations(ct,tpl,isbigendian)) {
+					if (!checkSectionTruncations(ct, tpl, isbigendian)) {
 						testresult = false;
 					}
 				}
@@ -1270,7 +1268,33 @@ class ConsistencyChecker {
 		return testresult;
 	}
 
-	void optimizeAll() {
+	public void testLargeTemporary() {
+		for (int i = 0; i < postorder.size(); ++i) {
+			SubtableSymbol sym = postorder.get(i);
+			int numconstruct = sym.getNumConstructors();
+			Constructor ct;
+			for (int j = 0; j < numconstruct; ++j) {
+				ct = sym.getConstructor(j);
+
+				int numsections = ct.getNumSections();
+				for (int k = -1; k < numsections; ++k) {
+					ConstructTpl tpl;
+					if (k < 0) {
+						tpl = ct.getTempl();
+					}
+					else {
+						tpl = ct.getNamedTempl(k);
+					}
+					if (tpl == null) {
+						continue;
+					}
+					checkLargeTemporaries(ct, tpl);
+				}
+			}
+		}
+	}
+
+	public void optimizeAll() {
 		for (int i = 0; i < postorder.size(); ++i) {
 			SubtableSymbol sym = postorder.get(i);
 			int numconstruct = sym.getNumConstructors();
@@ -1282,24 +1306,24 @@ class ConsistencyChecker {
 		}
 	}
 
-	int getNumUnnecessaryPcode() {
+	public int getNumUnnecessaryPcode() {
 		return unnecessarypcode;
 	}
 
-	int getNumReadNoWrite() {
+	public int getNumReadNoWrite() {
 		return readnowrite;
 	}
 
-	int getNumWriteNoRead() {
+	public int getNumWriteNoRead() {
 		return writenoread;
 	}
-	
+
 	/**
 	 * Returns the number of constructors which reference a varnode in the
 	 * unique space with size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
 	 * @return num constructors with large temp varnodes
 	 */
-	int getNumLargeTemporaries() {
+	public int getNumLargeTemporaries() {
 		return largetemp;
 	}
 }

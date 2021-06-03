@@ -17,7 +17,7 @@ package ghidra.program.model.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.*;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
@@ -247,9 +247,8 @@ public interface Memory extends AddressSetView {
 	 * @throws IllegalArgumentException if invalid block name
 	 */
 	public MemoryBlock createByteMappedBlock(String name, Address start, Address mappedAddress,
-			long length, ByteMappingScheme byteMappingScheme, boolean overlay)
-			throws LockException, MemoryConflictException, AddressOverflowException,
-			IllegalArgumentException;
+			long length, ByteMappingScheme byteMappingScheme, boolean overlay) throws LockException,
+			MemoryConflictException, AddressOverflowException, IllegalArgumentException;
 
 	/**
 	 * Create a memory block that uses the bytes located at a different location with a 1:1
@@ -271,8 +270,7 @@ public interface Memory extends AddressSetView {
 	 */
 	default public MemoryBlock createByteMappedBlock(String name, Address start,
 			Address mappedAddress, long length, boolean overlay) throws LockException,
-			MemoryConflictException,
-			AddressOverflowException, IllegalArgumentException {
+			MemoryConflictException, AddressOverflowException, IllegalArgumentException {
 		return createByteMappedBlock(name, start, mappedAddress, length, null, overlay);
 	}
 
@@ -830,4 +828,23 @@ public interface Memory extends AddressSetView {
 		return true;
 	}
 
+	/**
+	 * Gets a {@link Set} of {@link Address addresses} that correspond to the given file offset.
+	 * 
+	 * @param fileOffset the file offset that will be used to locate the corresponding memory 
+	 *   addresses
+	 * @return a {@link Set} of {@link Address}es that are associated with the provided file offset 
+	 */
+	public default Set<Address> locateAddressesForFileOffset(long fileOffset) {
+		Set<Address> set = new HashSet<>();
+		for (MemoryBlock memBlock : getBlocks()) {
+			for (MemoryBlockSourceInfo info : memBlock.getSourceInfos()) {
+				Address addr = info.locateAddressForFileOffset(fileOffset);
+				if (addr != null) {
+					set.add(addr);
+				}
+			}
+		}
+		return set;
+	}
 }

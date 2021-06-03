@@ -59,16 +59,17 @@ public interface MemoryBlockSourceInfo {
 	Optional<FileBytes> getFileBytes();
 
 	/**
-	 * Returns the offset into the {@link FileBytes} object where this section starts getting its bytes or
-	 * -1 if this SourceInfo does not have an associated {@link FileBytes}
+	 * Returns the offset into the underlying {@link FileBytes} object where this sub-block 
+	 * starts getting its bytes from or -1 if this sub-block does not have an associated {@link FileBytes}
+	 * or a complex bit/byte-mapping is used.
 	 * @return  the offset into the {@link FileBytes} object where this section starts getting its bytes.
 	 */
 	long getFileBytesOffset();
 
 	/**
 	 * Returns the offset into the {@link FileBytes} object for the given address or
-	 * -1 if this MemoryBlockSourceInfo does not have an associated {@link FileBytes} or the address doesn't
-	 * belong to this MemoryBlockSourceInfo.
+	 * -1 if this sub-block if address is out of range or this sub-block does not have 
+	 * an associated {@link FileBytes}, or a complex bit/byte-mapping is used.
 	 * 
 	 * @param address the address for which to get an offset into the {@link FileBytes} object.
 	 * @return  the offset into the {@link FileBytes} object for the given address. 
@@ -102,5 +103,43 @@ public interface MemoryBlockSourceInfo {
 	 * @return  true if this SourceInfo object applies to the given address;
 	 */
 	boolean contains(Address address);
+
+	/**
+	 * Determine if this block source contains the specified file offset.
+	 * 
+	 * @param fileOffset file offset within underlying FileBytes (if applicable) within the loaded 
+	 *   range associated with this source info.
+	 * @return true if file offset is within the loaded range of the corresponding FileBytes, else 
+	 *   false if method is not supported by the sub-block type (e.g., bit/byte-mapped sub-block).
+	 */
+	default boolean containsFileOffset(long fileOffset) {
+		long startOffset = getFileBytesOffset();
+		if (startOffset < 0 || fileOffset < 0) {
+			return false;
+		}
+		// NOTE: logic does not handle bit/byte-mapped blocks (assumes 1:1 mapping)
+		long endOffset = startOffset + (getLength() - 1);
+		return (fileOffset >= startOffset) && (fileOffset <= endOffset);
+	}
+
+	/**
+	 * Get the Address within this sub-block which corresponds to the specified file offset.
+	 *  
+	 * @param fileOffset file offset
+	 * @return {@link Address} within this sub-block or null if file offset is out of range
+	 * or method is not supported by the sub-block type (e.g., bit/byte-mapped sub-block).
+	 */
+	default Address locateAddressForFileOffset(long fileOffset) {
+		long startOffset = getFileBytesOffset();
+		if (!containsFileOffset(fileOffset)) {
+			return null;
+		}
+		// NOTE: logic does not handle bit/byte-mapped blocks (assumes 1:1 mapping)
+		long offset = fileOffset - startOffset;
+		if (offset >= getLength()) {
+			return null;
+		}
+		return getMinAddress().add(offset);
+	}
 
 }
